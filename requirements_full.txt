@@ -1,14 +1,10 @@
-# Orden de instalacion por PRIORIDAD DE USO
+﻿# Orden de instalacion por PRIORIDAD DE USO
 # 1. Hardware inmediato (impresora, cajon, scanner)
 python-escpos
 pywin32
 pyserial
-# 2. Reportes y exportacion
-openpyxl
 # 3. Codigos de barra
 python-barcode
-# 4. Graficos (admin)
-matplotlib
 # 5. Extras opcionales
 pyttsx3
 comtypes

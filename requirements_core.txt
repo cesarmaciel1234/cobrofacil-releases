@@ -1,4 +1,6 @@
-# Paquetes ESENCIALES — la app abre con estos (45 segundos)
+﻿# Paquetes ESENCIALES — la app abre con estos (45 segundos)
 PyQt5
 requests
 pillow
+matplotlib
+openpyxl
