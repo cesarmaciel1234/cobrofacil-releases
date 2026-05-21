@@ -1,4 +1,4 @@
-"""
+﻿"""
 CajaFacil Pro - Instalador Universal (Windows 8 a Windows 11)
 Compila con:
   pyinstaller --onefile --windowed --name CajaFacil_Pro_Setup scratch\\installer_build.py
@@ -65,7 +65,7 @@ def make_shortcut(lnk, target, workdir):
 class Installer(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"{APP_NAME} — Instalador v{VERSION}")
+        self.title(f"{APP_NAME} â€” Instalador v{VERSION}")
         self.geometry("520x420")
         self.resizable(False, False)
         self.configure(bg=C_BG)
@@ -75,27 +75,27 @@ class Installer(tk.Tk):
     def _ui(self):
         # Header
         hdr = tk.Frame(self, bg=C_ACC, height=78); hdr.pack(fill="x"); hdr.pack_propagate(False)
-        tk.Label(hdr, text="🏆", font=("Segoe UI", 30), bg=C_ACC, fg="white").pack(side="left", padx=16, pady=14)
+        tk.Label(hdr, text="ðŸ†", font=("Segoe UI", 30), bg=C_ACC, fg="white").pack(side="left", padx=16, pady=14)
         fr = tk.Frame(hdr, bg=C_ACC); fr.pack(side="left", pady=14)
-        tk.Label(fr, text="CajaFácil Pro", font=("Segoe UI", 20, "bold"), bg=C_ACC, fg="white").pack(anchor="w")
-        tk.Label(fr, text="Vendé rápido · Sin experiencia · Sin complicaciones",
+        tk.Label(fr, text="CajaFÃ¡cil Pro", font=("Segoe UI", 20, "bold"), bg=C_ACC, fg="white").pack(anchor="w")
+        tk.Label(fr, text="VendÃ© rÃ¡pido Â· Sin experiencia Â· Sin complicaciones",
                  font=("Segoe UI", 9), bg=C_ACC, fg="#bfdbfe").pack(anchor="w")
 
         # Card
         card = tk.Frame(self, bg=C_CARD); card.pack(fill="both", expand=True, padx=24, pady=14)
 
-        tk.Label(card, text="Se instalará en:", font=("Segoe UI", 10),
+        tk.Label(card, text="Se instalarÃ¡ en:", font=("Segoe UI", 10),
                  bg=C_CARD, fg=C_SUB).pack(anchor="w", padx=20, pady=(16, 2))
         tk.Label(card, text=DESTINO, font=("Consolas", 11, "bold"),
                  bg=C_CARD, fg=C_TXT).pack(anchor="w", padx=20)
 
         info = tk.Frame(card, bg="#172033"); info.pack(fill="x", padx=20, pady=12)
-        for txt in ["Descarga automática desde internet",
-                     "Python se instala si no está presente",
+        for txt in ["Descarga automÃ¡tica desde internet",
+                     "Python se instala si no estÃ¡ presente",
                      "Acceso directo en el Escritorio",
                      "Compatible: Windows 8 / 10 / 11 (32 y 64 bits)"]:
             row = tk.Frame(info, bg="#172033"); row.pack(fill="x", padx=12, pady=2)
-            tk.Label(row, text="✓", font=("Segoe UI", 10), bg="#172033", fg=C_OK).pack(side="left")
+            tk.Label(row, text="âœ“", font=("Segoe UI", 10), bg="#172033", fg=C_OK).pack(side="left")
             tk.Label(row, text=f"  {txt}", font=("Segoe UI", 10), bg="#172033", fg=C_TXT).pack(side="left")
 
         self.lbl = tk.Label(card, text="Listo para instalar", font=("Segoe UI", 10),
@@ -110,7 +110,7 @@ class Installer(tk.Tk):
         self.bar.pack(padx=20, pady=(0, 14))
 
         bf = tk.Frame(card, bg=C_CARD); bf.pack(fill="x", padx=20, pady=(0, 16))
-        self.btn = tk.Button(bf, text="  ⚡  INSTALAR AHORA  ",
+        self.btn = tk.Button(bf, text="  âš¡  INSTALAR AHORA  ",
                               font=("Segoe UI", 12, "bold"), bg=C_BTN, fg="white",
                               activebackground="#1d4ed8", activeforeground="white",
                               relief="flat", cursor="hand2", bd=0, padx=20, pady=12,
@@ -122,7 +122,7 @@ class Installer(tk.Tk):
                                 bd=0, padx=20, pady=12, command=self.destroy)
         self.btn_x.pack(side="right", padx=(10, 0))
 
-        tk.Label(self, text=f"v{VERSION}  ·  Windows 8 / 10 / 11",
+        tk.Label(self, text=f"v{VERSION}  Â·  Windows 8 / 10 / 11",
                  font=("Segoe UI", 8), bg=C_BG, fg="#475569").pack(pady=(0, 7))
 
     def status(self, msg, pct=None):
@@ -134,9 +134,9 @@ class Installer(tk.Tk):
     def start(self):
         if not is_admin():
             if not messagebox.askyesno("Permisos",
-                "Se recomienda ejecutar como Administrador.\n¿Continuar de todas formas?"):
+                "Se recomienda ejecutar como Administrador.\nÂ¿Continuar de todas formas?"):
                 return
-        self.btn.config(state="disabled", text="  ⏳  Instalando...  ")
+        self.btn.config(state="disabled", text="  â³  Instalando...  ")
         self.btn_x.config(state="disabled")
         threading.Thread(target=self._run, daemon=True).start()
 
@@ -147,12 +147,12 @@ class Installer(tk.Tk):
             zip_path = os.path.join(tmp, "app.zip")
 
             # 1. Descargar
-            self.status("Descargando CajaFácil Pro...", 5)
+            self.status("Descargando CajaFÃ¡cil Pro...", 5)
             def prog(done, total):
                 self.status(f"Descargando... {int(done/total*100)}%",
                              int(5 + 40 * done / total))
             download(DOWNLOAD_URL, zip_path, prog)
-            self.status("Descarga completa ✓", 47)
+            self.status("Descarga completa âœ“", 47)
 
             # 2. Extraer
             self.status("Extrayendo archivos...", 50)
@@ -168,7 +168,7 @@ class Installer(tk.Tk):
             self.status("Instalando en " + DESTINO + "...", 55)
             os.makedirs(DESTINO, exist_ok=True)
             for item in ["src", "main.py", "version.json",
-                          "requirements.txt", "CajaFacil_Pro.bat", "ACTUALIZAR.bat"]:
+                          "requirements_core.txt", "CajaFacil_Pro.bat", "ACTUALIZAR.bat"]:
                 s = os.path.join(src, item)
                 d = os.path.join(DESTINO, item)
                 if not os.path.exists(s): continue
@@ -208,12 +208,12 @@ class Installer(tk.Tk):
             # 6. Dependencias
             self.status("Instalando dependencias (2-3 min)...", 74)
             pip = os.path.join(venv, "Scripts", "pip.exe")
-            req = os.path.join(DESTINO, "requirements.txt")
+            req = os.path.join(DESTINO, "requirements_core.txt")
             subprocess.run([pip, "install", "-q", "--upgrade", "pip"],
                            capture_output=True, timeout=60)
             subprocess.run([pip, "install", "-q", "-r", req],
                            check=True, capture_output=True, timeout=300)
-            self.status("Dependencias instaladas ✓", 90)
+            self.status("Dependencias instaladas âœ“", 90)
 
             # 7. Limpiar config
             try:
@@ -237,7 +237,7 @@ class Installer(tk.Tk):
             self.status("Limpiando temporales...", 97)
             shutil.rmtree(tmp, ignore_errors=True)
 
-            self.status("✅  Instalación completa!", 100)
+            self.status("âœ…  InstalaciÃ³n completa!", 100)
             self.after(0, self._ok)
 
         except Exception as e:
@@ -245,18 +245,18 @@ class Installer(tk.Tk):
             self.after(0, lambda: self._err(str(e)))
 
     def _ok(self):
-        self.btn.config(state="normal", text="  ✅  Abrir CajaFácil Pro  ",
+        self.btn.config(state="normal", text="  âœ…  Abrir CajaFÃ¡cil Pro  ",
                          bg=C_OK, command=self._open)
         self.btn_x.config(state="normal", text="Cerrar", command=self.destroy)
-        messagebox.showinfo("✅ Listo",
-                             f"CajaFácil Pro instalado en:\n{DESTINO}\n\n"
+        messagebox.showinfo("âœ… Listo",
+                             f"CajaFÃ¡cil Pro instalado en:\n{DESTINO}\n\n"
                              "Doble clic en 'CajaFacil Pro' del escritorio.")
 
     def _err(self, e):
-        self.btn.config(state="normal", text="  ⚡  Reintentar  ")
+        self.btn.config(state="normal", text="  âš¡  Reintentar  ")
         self.btn_x.config(state="normal")
-        self.status("❌ Error — revisá tu conexión a internet", 0)
-        messagebox.showerror("Error", f"Ocurrió un error:\n\n{e}")
+        self.status("âŒ Error â€” revisÃ¡ tu conexiÃ³n a internet", 0)
+        messagebox.showerror("Error", f"OcurriÃ³ un error:\n\n{e}")
 
     def _open(self):
         bat = os.path.join(DESTINO, "CajaFacil_Pro.bat")

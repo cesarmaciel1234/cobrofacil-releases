@@ -1,0 +1,10 @@
+# Paquetes COMPLETOS — se descargan en segundo plano mientras el cliente usa la app
+python-escpos
+pywin32
+openpyxl
+python-barcode
+matplotlib
+pyttsx3
+comtypes
+pypiwin32
+pyserial

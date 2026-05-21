@@ -553,6 +553,14 @@ class MainWindow(QMainWindow):
             self.overlay_transition.raise_()
             self.overlay_transition.start_animation()
 
+        # Iniciar instalacion de modulos opcionales en segundo plano
+        try:
+            from src.utils.background_installer import BackgroundInstaller
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(3000, lambda: BackgroundInstaller.iniciar(self))
+        except Exception:
+            pass
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         try:
@@ -560,6 +568,11 @@ class MainWindow(QMainWindow):
                 self.marco_alerta.setGeometry(0, 0, self.width(), self.height())
             if hasattr(self, 'overlay_transition') and self.overlay_transition and not self.overlay_transition.isHidden():
                 self.overlay_transition.setGeometry(0, 0, self.width(), self.height())
+            try:
+                from src.utils.background_installer import BackgroundInstaller
+                BackgroundInstaller.redimensionar(self.width(), self.height())
+            except Exception:
+                pass
             if hasattr(self, 'btn_flotante') and self.btn_flotante.isVisible():
                 self.btn_flotante.move(self.width() - 100, 80)
             self._posicionar_banner()
