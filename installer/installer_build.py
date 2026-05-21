@@ -427,7 +427,8 @@ class Installer(tk.Tk):
             lnk_path = os.path.join(desk, "CajaFacil Pro.lnk")
             self.log(f"  Escritorio: {desk}")
             make_shortcut(lnk_path,
-                          os.path.join(DESTINO, "CajaFacil_Pro.bat"), DESTINO)
+                          os.path.join(DESTINO, "CajaFacil_Pro.bat"), DESTINO,
+                          os.path.join(DESTINO, "logo.ico"))
             if os.path.exists(lnk_path):
                 self.log("✓ Acceso directo creado")
             else:
