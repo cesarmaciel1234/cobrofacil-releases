@@ -171,6 +171,9 @@ def launch_app():
                     result = app.exec_()
                     main_window.close()
                     main_window = None
+                    # Si va a reiniciar, aplicar update de GitHub en silencio
+                    if result in (99, 888):
+                        _aplicar_update_silencioso()
                     return result
             else:
                 main_window.apply_roles()
@@ -180,9 +183,37 @@ def launch_app():
                 result = app.exec_()
                 main_window.close()
                 main_window = None
+                # Si va a reiniciar, aplicar update de GitHub en silencio
+                if result in (99, 888):
+                    _aplicar_update_silencioso()
                 return result
     
     return 0
+
+
+def _aplicar_update_silencioso():
+    """
+    Descarga actualizaciones de GitHub en silencio durante el reinicio.
+    No muestra ningun dialogo — solo actualiza los archivos si hay cambios.
+    Se ejecuta ANTES de que la app se relance para que el reinicio ya use
+    la version nueva.
+    """
+    try:
+        from src.config import config
+        if not config.get('github_update_enabled', True):
+            return
+        if not config.get('auto_update_check', True):
+            return
+        from src.updater.github_updater import verificar_actualizaciones_github
+        logging.info("[AUTO-UPDATE] Verificando actualizaciones en GitHub...")
+        res = verificar_actualizaciones_github(dry_run=False)
+        if res.actualizados:
+            logging.info(f"[AUTO-UPDATE] {len(res.actualizados)} archivos actualizados: {res.actualizados}")
+        elif res.errores:
+            logging.debug(f"[AUTO-UPDATE] Sin conexion o sin cambios: {res.errores[0]}")
+    except Exception as e:
+        logging.debug(f"[AUTO-UPDATE] Error silencioso: {e}")
+
 
 def start_hardware_watchdog():
     """ Hilo de vigilancia que asegura que el hardware responda. """
