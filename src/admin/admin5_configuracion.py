@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (
+﻿from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
@@ -1595,8 +1595,39 @@ class DialogoActualizaciones(QDialog):
         config.set('auto_update_when', self.cmb_when.currentText())
 
     def checar_actualizacion(self):
-        # Lógica real de chequeo (Simulada para la interfaz)
-        QMessageBox.information(self, "Buscando...", "Conectando al servidor principal...\n\n¡Felicidades! Actualmente cuentas con la versión más reciente del sistema CAJAFACIL PRO.")
+        self.btn_check.setText("Verificando en GitHub...")
+        self.btn_check.setEnabled(False)
+        self.repaint()
+        try:
+            from src.updater.github_updater import verificar_actualizaciones_github
+            res = verificar_actualizaciones_github(dry_run=True)
+            self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+            self.btn_check.setEnabled(True)
+            if res.errores:
+                QMessageBox.warning(self, "Sin conexion", f"No se pudo conectar a GitHub:\n{res.errores[0]}")
+                return
+            if not res.hay_cambios:
+                QMessageBox.information(self, "Al dia", f"CajaFacil Pro esta actualizado.\nVersion: {res.version_local}")
+                return
+            reply = QMessageBox.question(self, "Actualizacion Disponible",
+                f"Nueva version disponible!\nActual: {res.version_local}\nNueva: {res.version_nueva}\nArchivos: {len(res.actualizados)}\n\nDescargar e instalar ahora?",
+                QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.btn_check.setText("Descargando...")
+                self.btn_check.setEnabled(False)
+                self.repaint()
+                res2 = verificar_actualizaciones_github(dry_run=False)
+                self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+                self.btn_check.setEnabled(True)
+                if res2.actualizados:
+                    extra = "\n\nReinicia el programa para aplicar los cambios." if res2.necesita_reinicio else ""
+                    QMessageBox.information(self, "Listo", f"{len(res2.actualizados)} archivos actualizados.{extra}")
+                else:
+                    QMessageBox.warning(self, "Error", "No se completo la actualizacion.")
+        except Exception as e:
+            self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+            self.btn_check.setEnabled(True)
+            QMessageBox.critical(self, "Error", f"Error al verificar:\n{e}")
 
 
 class DialogoRed(QDialog):
