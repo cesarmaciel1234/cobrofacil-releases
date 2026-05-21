@@ -21,16 +21,28 @@ from datetime import datetime
 
 # ── Config ────────────────────────────────────────────────────────────────────
 GITHUB_REPO  = "cesarmaciel1234/cajafacil-pro"
-GITHUB_TOKEN = ""   # <-- completar con tu Personal Access Token
 ISSUES_URL   = f"https://api.github.com/repos/{GITHUB_REPO}/issues"
 
 BASE_DIR     = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 CRASH_LOG    = os.path.join(BASE_DIR, "crash.log")
+CONFIG_FILE  = os.path.join(BASE_DIR, "config.json")
 
 # Etiqueta para los issues de error
 LABEL_BUG    = "bug"
 LABEL_AUTO   = "auto-reportado"
+
+
+def _get_token() -> str:
+    """Lee el token de GitHub desde config.json (nunca del codigo fuente)."""
+    try:
+        with open(CONFIG_FILE, encoding='utf-8') as f:
+            cfg = json.load(f)
+        if not cfg.get('github_error_reporting', True):
+            return ""
+        return cfg.get('github_error_token', '')
+    except:
+        return ""
 
 
 def _get_version() -> str:
@@ -68,7 +80,8 @@ def _ya_reportado(titulo: str) -> bool:
     Verifica si ya existe un Issue abierto con el mismo título
     para evitar duplicados cuando el mismo error se repite.
     """
-    if not GITHUB_TOKEN:
+    token = _get_token()
+    if not token:
         return False
     try:
         ctx = ssl.create_default_context()
@@ -76,7 +89,7 @@ def _ya_reportado(titulo: str) -> bool:
         ctx.verify_mode = ssl.CERT_NONE
         url = f"{ISSUES_URL}?state=open&per_page=20"
         req = urllib.request.Request(url, headers={
-            "Authorization": f"token {GITHUB_TOKEN}",
+            "Authorization": f"token {token}",
             "Accept": "application/vnd.github+json",
             "User-Agent": "CajaFacilPro-ErrorReporter"
         })
@@ -100,7 +113,7 @@ def reportar_error(
     Envía un reporte de error como Issue a GitHub.
     Retorna True si se envió correctamente.
     """
-    if not GITHUB_TOKEN:
+    if not _get_token():
         logging.debug("[ERROR-REPORTER] Sin token configurado, no se reporta.")
         return False
 
@@ -168,6 +181,9 @@ def reportar_error(
 """
 
         # Enviar a GitHub
+        token = _get_token()
+        if not token:
+            return False
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -183,7 +199,7 @@ def reportar_error(
             data=payload,
             method="POST",
             headers={
-                "Authorization": f"token {GITHUB_TOKEN}",
+                "Authorization": f"token {token}",
                 "Accept": "application/vnd.github+json",
                 "Content-Type": "application/json",
                 "User-Agent": "CajaFacilPro-ErrorReporter"
