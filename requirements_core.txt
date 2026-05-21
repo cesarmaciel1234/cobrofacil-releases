@@ -1,6 +1,13 @@
-﻿# Paquetes ESENCIALES — la app abre con estos (45 segundos)
+# Todos los paquetes necesarios para arrancar la app
 PyQt5
 requests
 pillow
 matplotlib
 openpyxl
+python-barcode
+pywin32
+pyserial
+python-escpos
+pyttsx3
+comtypes
+pypiwin32
