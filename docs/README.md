@@ -1,4 +1,4 @@
-# Punto de Venta Pro (Carnicería)
+# Punto de Venta Pro 
 
 Sistema completo y editable de Punto de Venta.
 
