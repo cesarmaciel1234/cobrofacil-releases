@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 if sys.platform.startswith('win'):
@@ -41,6 +41,13 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
     except: pass
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 sys.excepthook = global_excepthook
+
+# Instalar reporte automatico de errores hacia GitHub Issues
+try:
+    from src.utils.error_reporter import instalar_hook_global
+    instalar_hook_global()
+except Exception:
+    pass  # Si falla, el excepthook basico sigue funcionando
 
 # Nota: Los módulos pesados se cargan dentro de launch_app para acelerar el inicio.
 
