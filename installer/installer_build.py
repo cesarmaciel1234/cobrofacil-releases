@@ -114,12 +114,15 @@ def get_desktop():
     return os.path.join(os.path.expanduser("~"), "Desktop")
 
 
-def make_shortcut(lnk, target, workdir):
+def make_shortcut(lnk, target, workdir, icon_path=None):
     ps = (f'$ws=New-Object -ComObject WScript.Shell;'
           f'$s=$ws.CreateShortcut("{lnk}");'
           f'$s.TargetPath="{target}";'
           f'$s.WorkingDirectory="{workdir}";'
-          f'$s.Description="CajaFacil Pro";$s.Save()')
+          f'$s.Description="CajaFacil Pro";')
+    if icon_path and os.path.exists(icon_path):
+        ps += f'$s.IconLocation="{icon_path}";'
+    ps += f'$s.Save()'
     subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-Command", ps],
                    capture_output=True, timeout=10, creationflags=NO_WINDOW)
 
