@@ -67,3 +67,8 @@ desktop.ini
 
 # Gemini/AI
 .gemini/
+
+build_installer/
+dist_installer/
+CajaFacil_Pro_Setup.zip
+*.spec
