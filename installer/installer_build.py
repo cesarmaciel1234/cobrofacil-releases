@@ -1,4 +1,4 @@
-"""
+﻿"""
 CajaFacil Pro - Instalador Universal (Windows 8 a Windows 11)
 Compila con:
   pyinstaller --onefile --windowed --name CajaFacil_Pro_Setup installer\\installer_build.py
@@ -321,10 +321,17 @@ class Installer(tk.Tk):
             with zipfile.ZipFile(zip_path, "r") as zf:
                 zf.extractall(tmp)
             src = tmp
+            # Detectar raiz real: buscar carpeta que contenga main.py
             for d in os.listdir(tmp):
                 full = os.path.join(tmp, d)
                 if os.path.isdir(full) and d != "__MACOSX":
-                    src = full; break
+                    if os.path.exists(os.path.join(full, "main.py")):
+                        src = full
+                        break
+            # Si main.py esta directamente en tmp (ZIP sin subcarpeta raiz)
+            if not os.path.exists(os.path.join(src, "main.py")):
+                src = tmp
+            self.log(f"  Raiz detectada: {os.path.relpath(src, tmp) or chr(46)}")
             self.log("✓ Archivos extraídos")
 
             # 3. Copiar al destino
