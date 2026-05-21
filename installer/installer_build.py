@@ -1,4 +1,4 @@
-﻿"""
+"""
 CajaFacil Pro - Instalador Universal (Windows 8 a Windows 11)
 Compila con:
   pyinstaller --onefile --windowed --name CajaFacil_Pro_Setup installer\\installer_build.py
@@ -396,17 +396,14 @@ class Installer(tk.Tk):
             self.status("Actualizando gestor de paquetes...", 73)
             run_cmd([pip, "install", "--upgrade", "pip"], self.log, timeout=60)
 
-            # 7. PyQt5
-            self.log("► Instalando PyQt5 (interfaz gráfica)...")
-            self.status("Instalando motor de interfaz (PyQt5)...", 75)
-            run_cmd([pip, "install", "PyQt5"], self.log, timeout=180)
-            self.log("✓ PyQt5 instalado")
-            self.status("✓ Interfaz gráfica lista", 86)
-
-            # 8. Pillow + requests
-            self.log("► Instalando pillow y requests...")
-            self.status("Instalando módulos de imágenes y red...", 88)
-            run_cmd([pip, "install", "pillow", "requests"], self.log, timeout=120)
+            # 7. Modulos base
+            self.log("► Instalando módulos esenciales...")
+            self.status("Instalando motor de interfaz y módulos...", 75)
+            req = os.path.join(DESTINO, "requirements_core.txt")
+            if os.path.exists(req):
+                run_cmd([pip, "install", "-r", req], self.log, timeout=600)
+            else:
+                run_cmd([pip, "install", "PyQt5", "matplotlib", "openpyxl", "pillow", "requests", "python-barcode", "reportlab"], self.log, timeout=600)
             self.log("✓ Módulos esenciales completos")
             self.status("✓ Módulos esenciales instalados", 91)
 
