@@ -93,6 +93,27 @@ def download(url, path, on_progress=None):
                 if on_progress and total:
                     on_progress(done, total)
 
+def get_desktop():
+    """Obtiene la ruta real del escritorio, incluso si OneDrive lo redirige."""
+    try:
+        # Metodo 1: PowerShell (maneja OneDrive correctamente)
+        r = subprocess.run(
+            ["powershell", "-Command", "[Environment]::GetFolderPath('Desktop')"],
+            capture_output=True, text=True, timeout=5, creationflags=NO_WINDOW
+        )
+        path = r.stdout.strip()
+        if path and os.path.isdir(path):
+            return path
+    except: pass
+    # Metodo 2: Variable de entorno USERPROFILE
+    for base in [os.environ.get("USERPROFILE", ""), os.path.expanduser("~")]:
+        for sub in ["OneDrive\\Desktop", "Desktop"]:
+            p = os.path.join(base, sub)
+            if os.path.isdir(p):
+                return p
+    return os.path.join(os.path.expanduser("~"), "Desktop")
+
+
 def make_shortcut(lnk, target, workdir):
     ps = (f'$ws=New-Object -ComObject WScript.Shell;'
           f'$s=$ws.CreateShortcut("{lnk}");'
@@ -395,10 +416,15 @@ class Installer(tk.Tk):
             # 10. Acceso directo
             self.log("► Creando acceso directo en el escritorio...")
             self.status("Creando acceso directo...", 94)
-            desk = os.path.join(os.path.expanduser("~"), "Desktop")
-            make_shortcut(os.path.join(desk, "CajaFacil Pro.lnk"),
+            desk = get_desktop()
+            lnk_path = os.path.join(desk, "CajaFacil Pro.lnk")
+            self.log(f"  Escritorio: {desk}")
+            make_shortcut(lnk_path,
                           os.path.join(DESTINO, "CajaFacil_Pro.bat"), DESTINO)
-            self.log("✓ Acceso directo creado")
+            if os.path.exists(lnk_path):
+                self.log("✓ Acceso directo creado")
+            else:
+                self.log("⚠ No se pudo crear acceso directo (crear manualmente)")
 
             # 11. Limpiar temp
             self.log("► Limpiando archivos temporales...")
@@ -440,8 +466,8 @@ class Installer(tk.Tk):
     def _open(self):
         bat = os.path.join(DESTINO, "CajaFacil_Pro.bat")
         if os.path.exists(bat):
-            subprocess.Popen(["cmd", "/c", bat], cwd=DESTINO,
-                             creationflags=NO_WINDOW)
+            # NO usar NO_WINDOW aqui — el .bat necesita correr normalmente
+            subprocess.Popen(["cmd", "/c", bat], cwd=DESTINO)
         self.destroy()
 
 
