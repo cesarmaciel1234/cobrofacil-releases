@@ -1,0 +1,12 @@
+PyQt5
+python-escpos
+pywin32
+openpyxl
+python-barcode
+pillow
+matplotlib
+requests
+pyttsx3
+comtypes
+pypiwin32
+pyserial

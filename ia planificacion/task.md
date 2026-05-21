@@ -1,0 +1,22 @@
+# Tareas para versión Comercial
+
+- [x] Planificación y Revisión
+  - [x] Revisión del código base ([database.py](file:///c:/Users/cesar/OneDrive/Desktop/proyecto%20enero/PunPro_COMPLETO_EDITABLE/src/database.py), [main_window.py](file:///c:/Users/cesar/OneDrive/Desktop/proyecto%20enero/PunPro_COMPLETO_EDITABLE/src/main_window.py)).
+  - [x] Aprobación del plan de implementación por el usuario.
+- [/] Autenticación y Usuarios
+  - [ ] Actualizar BD para tabla `usuarios` (id, username, password_hash, rol).
+  - [ ] Crear pantalla de Login.
+  - [ ] Modificar [main.py](file:///c:/Users/cesar/OneDrive/Desktop/proyecto%20enero/PunPro_COMPLETO_EDITABLE/main.py) para abrir Login antes de la ventana principal.
+  - [ ] Lógica de roles (Cajero vs Admin).
+- [ ] Configuración del Comercio
+  - [ ] Tabla/Archivo para datos del comercio (Nombre, CUIT, Dirección, Logo).
+  - [ ] Pantalla de Configuración en la interfaz principal.
+  - [ ] Actualización del ticket de venta con datos del comercio.
+- [ ] Sistema de Licencia
+  - [ ] Añadir validación de licencia/trial (local).
+- [ ] Estilización Comercial
+  - [ ] Pulido de interfaz (tema comercial profesional).
+- [ ] Verificación y Pruebas
+  - [ ] Pruebas del flujo de Login.
+  - [ ] Pruebas del cobro como Cajero.
+  - [ ] Emisión de ticket.

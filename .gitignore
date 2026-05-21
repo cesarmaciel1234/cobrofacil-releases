@@ -1,0 +1,69 @@
+# ==========================================
+#  CajaFacil Pro — .gitignore
+#  Protege datos sensibles del negocio
+# ==========================================
+
+# Base de datos (datos reales del cliente)
+*.db
+*.db-wal
+*.db-shm
+
+# Configuracion con tokens privados
+# (se sube config_template.json en su lugar)
+config.json
+
+# Entorno virtual Python (muy pesado, ~500MB)
+.venv/
+venv/
+env/
+
+# Cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs y crashes
+*.log
+crash.log
+logs/
+
+# Reportes y archivos generados
+reportes/
+Etiquetas_Impresas/
+Folletos_Oferta/
+Carteles_Oferta/
+ofertas_pdf/
+
+# Backups
+backups/
+
+# Build y distribucion
+build/
+dist/
+*.spec
+
+# ZIPs de distribucion
+*.zip
+*.rar
+
+# Certificados fiscales (privados)
+certificados/
+
+# Archivos temporales
+scratch/
+data/
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.suo
+
+# Sistema
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Gemini/AI
+.gemini/
