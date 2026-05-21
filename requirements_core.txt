@@ -11,3 +11,4 @@ python-escpos
 pyttsx3
 comtypes
 pypiwin32
+reportlab
