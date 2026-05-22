@@ -1213,86 +1213,179 @@ class Admin7Cierre(QWidget):
 
     def cargar_monitoreo_red(self):
         try:
-            # Consultar todas las cajas físicas que han operado en el sistema
+            activos = db_manager.execute_query(
+                "SELECT hardware_id, caja_id, hostname, cajero, last_seen FROM terminales_activos"
+            ) or []
+            
             cajas_ids = db_manager.execute_query(
                 "SELECT DISTINCT caja_id FROM movimientos_caja UNION SELECT DISTINCT caja_id FROM ventas"
             ) or []
-            cajas_list = [c["caja_id"] for c in cajas_ids if c["caja_id"] is not None]
-            if 1 not in cajas_list:
-                cajas_list.append(1)
-            cajas_list.sort()
+            cajas_viejas = [c["caja_id"] for c in cajas_ids if c["caja_id"] is not None]
+            
+            hardware_seen = set()
+            cajas_seen = set()
+            grouped = {}
+            
+            for act in activos:
+                hardware_seen.add(act["hardware_id"])
+                cajas_seen.add(act["caja_id"])
+                hn = act["hostname"]
+                if hn not in grouped: grouped[hn] = []
+                grouped[hn].append({
+                    "hw_id": act["hardware_id"],
+                    "caja_id": act["caja_id"],
+                    "hostname": act["hostname"],
+                    "user": act["cajero"],
+                    "last_seen": act["last_seen"],
+                    "is_header": False
+                })
+                
+            for cid in cajas_viejas:
+                if cid not in cajas_seen:
+                    hn = f"CAJA {cid}"
+                    if hn not in grouped: grouped[hn] = []
+                    grouped[hn].append({
+                        "hw_id": f"OLD_{cid}",
+                        "caja_id": cid,
+                        "hostname": hn,
+                        "user": "-",
+                        "last_seen": None,
+                        "is_header": False
+                    })
+                    
+            if not grouped:
+                grouped["CAJA 1"] = [{
+                    "hw_id": "DEFAULT_1", "caja_id": 1, "hostname": "CAJA 1", "user": "-", "last_seen": None, "is_header": False
+                }]
+                
+            cajas_list = []
+            for hn, items in grouped.items():
+                cajas_list.append({
+                    "is_header": True,
+                    "hw_id": f"HDR_{hn}",
+                    "hostname": hn,
+                    "caja_id": items[0]["caja_id"]
+                })
+                cajas_list.extend(items)
+                
         except Exception as e:
-            print(f"Error consultando cajas operativas: {e}")
-            cajas_list = [1]
+            print(f"Error consultando terminales: {e}")
+            cajas_list = []
 
         self.cajas_data = {}
 
-        for cid in cajas_list:
-            key_caja = f"caja_{cid}"
+        for item in cajas_list:
+            is_header = item.get("is_header", False)
+            cid = item["caja_id"]
+            hw_id = item["hw_id"]
+            key_caja = f"hw_{hw_id}"
             
-            # Consultar el último movimiento de esta caja específica que determine el turno
-            mov = db_manager.execute_query(
-                "SELECT tipo, fecha, monto, usuario FROM movimientos_caja WHERE caja_id = ? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'SOLICITUD_CIERRE') ORDER BY id DESC LIMIT 1",
-                (cid,)
-            )
+            if is_header:
+                bg_color = "#E2E8F0"
+                if key_caja in getattr(self, "caja_cards", {}):
+                    card = self.caja_cards[key_caja]
+                    card.lbl_c_name.setText(f"🖥️ {item['hostname']}")
+                else:
+                    card = QFrame()
+                    card.setFrameShape(QFrame.StyledPanel)
+                    card.setStyleSheet(f"""
+                        QFrame {{ background-color: {bg_color}; border: none; border-radius: 6px; padding: 5px; margin-top: 10px; }}
+                    """)
+                    card_lay = QHBoxLayout(card)
+                    card_lay.setContentsMargins(10, 5, 10, 5)
+                    lbl_c_name = QLabel(f"🖥️ {item['hostname']}")
+                    lbl_c_name.setStyleSheet("font-weight: 900; font-size: 11px; color: #1E293B; border: none; background: transparent;")
+                    card_lay.addWidget(lbl_c_name)
+                    card_lay.addStretch()
+                    
+                    card.lbl_c_name = lbl_c_name
+                    if not hasattr(self, "caja_cards"): self.caja_cards = {}
+                    self.caja_cards[key_caja] = card
+                    self.layout_grid_cajas.insertWidget(self.layout_grid_cajas.count() - 1, card)
+                continue
+
+            user_val = item["user"]
+            user_sql = user_val if user_val != "-" else None
+            
+            mov = None
+            if user_sql:
+                mov = db_manager.execute_query(
+                    "SELECT tipo, fecha, monto FROM movimientos_caja WHERE caja_id=? AND usuario=? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'SOLICITUD_CIERRE') ORDER BY id DESC LIMIT 1",
+                    (cid, user_sql)
+                )
+            else:
+                mov = db_manager.execute_query(
+                    "SELECT tipo, fecha, monto FROM movimientos_caja WHERE caja_id=? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'SOLICITUD_CIERRE') ORDER BY id DESC LIMIT 1",
+                    (cid,)
+                )
 
             is_online = False
             apertura_date = "1970-01-01 00:00:00"
             fondo = 0.0
-            user = "Cerrada"
-            rol = "cajero"
+            
+            from datetime import datetime, timedelta
+            hw_online = False
+            if item["last_seen"]:
+                try:
+                    last_seen_dt = datetime.strptime(item["last_seen"], "%Y-%m-%d %H:%M:%S")
+                    if datetime.now() - last_seen_dt < timedelta(minutes=2):
+                        hw_online = True
+                except: pass
 
             if mov:
                 tipo_mov = mov[0]["tipo"]
-                user = mov[0]["usuario"]
                 if tipo_mov == 'APERTURA':
                     is_online = True
                     apertura_date = mov[0]["fecha"]
                     fondo = float(mov[0]["monto"] or 0.0)
                 elif tipo_mov == 'SOLICITUD_CIERRE':
                     is_online = True
-                    ant = db_manager.execute_query(
-                        "SELECT tipo, fecha, monto FROM movimientos_caja WHERE caja_id = ? AND tipo='APERTURA' ORDER BY id DESC LIMIT 1",
-                        (cid,)
-                    )
+                    if user_sql:
+                        ant = db_manager.execute_query("SELECT tipo, fecha, monto FROM movimientos_caja WHERE caja_id=? AND usuario=? AND tipo='APERTURA' ORDER BY id DESC LIMIT 1", (cid, user_sql))
+                    else:
+                        ant = db_manager.execute_query("SELECT tipo, fecha, monto FROM movimientos_caja WHERE caja_id=? AND tipo='APERTURA' ORDER BY id DESC LIMIT 1", (cid,))
                     if ant:
                         apertura_date = ant[0]["fecha"]
                         fondo = float(ant[0]["monto"] or 0.0)
-            else:
-                if cid == 1:
-                    is_online = False
-                    apertura_date = None
-                    fondo = 0.0
-                    user = "-"
+            
+            if hw_online: is_online = True
 
-            # Calcular datos acumulados en caliente para esta caja específica
             v_efec = 0.0
             v_dig = 0.0
             alertas = 0
 
             if is_online:
                 try:
-                    res_v = db_manager.execute_query(
-                        "SELECT SUM(total) as t, SUM(pago_otro) as ta FROM ventas WHERE estado='COMPLETADA' AND caja_id=? AND fecha>=?",
-                        (cid, apertura_date)
-                    )
+                    if user_sql:
+                        res_v = db_manager.execute_query(
+                            "SELECT SUM(total) as t, SUM(pago_otro) as ta FROM ventas WHERE estado='COMPLETADA' AND caja_id=? AND usuario=? AND fecha>=?",
+                            (cid, user_sql, apertura_date)
+                        )
+                        alertas = db_manager.execute_scalar(
+                            "SELECT COUNT(*) FROM movimientos_caja WHERE tipo='ALERTA_SEGURIDAD' AND caja_id=? AND usuario=? AND fecha>=?",
+                            (cid, user_sql, apertura_date)
+                        ) or 0
+                    else:
+                        res_v = db_manager.execute_query(
+                            "SELECT SUM(total) as t, SUM(pago_otro) as ta FROM ventas WHERE estado='COMPLETADA' AND caja_id=? AND fecha>=?",
+                            (cid, apertura_date)
+                        )
+                        alertas = db_manager.execute_scalar(
+                            "SELECT COUNT(*) FROM movimientos_caja WHERE tipo='ALERTA_SEGURIDAD' AND caja_id=? AND fecha>=?",
+                            (cid, apertura_date)
+                        ) or 0
+
                     if res_v and res_v[0]["t"] is not None:
                         total_sales = float(res_v[0]["t"] or 0.0)
                         v_dig = float(res_v[0]["ta"] or 0.0)
                         v_efec = total_sales - v_dig
-                    
-                    alertas = db_manager.execute_scalar(
-                        "SELECT COUNT(*) FROM movimientos_caja WHERE tipo='ALERTA_SEGURIDAD' AND caja_id=? AND fecha>=?",
-                        (cid, apertura_date)
-                    ) or 0
-                except Exception as e:
-                    print(f"Error calculando totales para caja {cid}: {e}")
+                except Exception as e: pass
 
             esperado = fondo + v_efec
             self.cajas_data[key_caja] = {
                 "caja_id": cid,
-                "user": user,
-                "rol": rol,
+                "user": user_val,
+                "rol": "cajero",
                 "online": is_online,
                 "fondo": fondo,
                 "v_efec": v_efec,
@@ -1300,65 +1393,45 @@ class Admin7Cierre(QWidget):
                 "v_total": v_efec + v_dig,
                 "alertas": alertas,
                 "esperado": esperado,
-                "apertura_date": apertura_date
+                "apertura_date": apertura_date,
+                "hostname": item["hostname"]
             }
 
             border_color = "#10B981" if is_online else "#E2E8F0"
             bg_color = "#F0FDF4" if is_online else "white"
 
-            # Si ya está en caché, simplemente actualizar las etiquetas y colores
-            if cid in self.caja_cards:
-                card = self.caja_cards[cid]
+            if key_caja in getattr(self, "caja_cards", {}):
+                card = self.caja_cards[key_caja]
                 card.setStyleSheet(f"""
                     QFrame {{
-                        background-color: {bg_color};
-                        border: 2px solid {border_color};
-                        border-radius: 12px;
-                        padding: 10px;
+                        background-color: {bg_color}; border: 2px solid {border_color}; border-radius: 12px; padding: 10px; margin-left: 15px;
                     }}
-                    QFrame:hover {{
-                        border-color: #3b82f6;
-                        background-color: #f8fafc;
-                    }}
+                    QFrame:hover {{ border-color: #3b82f6; background-color: #f8fafc; }}
                 """)
-                card.lbl_c_name.setText(f"CAJA 0{cid} - {user.upper()}")
-                badge_text = "🟢 ACTIVA / ONLINE" if is_online else "🔴 CERRADA / OFFLINE"
+                card.lbl_c_name.setText(f"👤 {user_val.upper()}")
+                badge_text = "🟢 ONLINE" if is_online else "🔴 OFFLINE"
                 badge_style = "color: #059669; font-weight: 800; font-size: 9px;" if is_online else "color: #94a3b8; font-weight: 800; font-size: 9px;"
                 card.lbl_c_badge.setText(badge_text)
                 card.lbl_c_badge.setStyleSheet(badge_style + " border: none; background: transparent;")
                 total_tot = v_efec + v_dig
                 card.lbl_ac_val.setText(fmt_moneda(total_tot) if is_online else "$ 0.00")
             else:
-                # Crear tarjeta de caja visual nueva
                 card = QFrame()
                 card.setFrameShape(QFrame.StyledPanel)
                 card.setCursor(Qt.PointingHandCursor)
-                
                 card.setStyleSheet(f"""
-                    QFrame {{
-                        background-color: {bg_color};
-                        border: 2px solid {border_color};
-                        border-radius: 12px;
-                        padding: 10px;
-                    }}
-                    QFrame:hover {{
-                        border-color: #3b82f6;
-                        background-color: #f8fafc;
-                    }}
+                    QFrame {{ background-color: {bg_color}; border: 2px solid {border_color}; border-radius: 12px; padding: 10px; margin-left: 15px; }}
+                    QFrame:hover {{ border-color: #3b82f6; background-color: #f8fafc; }}
                 """)
                 
                 card_lay = QHBoxLayout(card)
                 card_lay.setContentsMargins(10, 8, 10, 8)
                 
-                lbl_c_ico = QLabel("📟")
-                lbl_c_ico.setStyleSheet("font-size: 24px; border: none; background: transparent;")
-                card_lay.addWidget(lbl_c_ico)
-
                 info_lay = QVBoxLayout()
-                lbl_c_name = QLabel(f"CAJA 0{cid} - {user.upper()}")
-                lbl_c_name.setStyleSheet("font-weight: 900; font-size: 12px; color: #1e3a8a; border: none; background: transparent;")
+                lbl_c_name = QLabel(f"👤 {user_val.upper()}")
+                lbl_c_name.setStyleSheet("font-weight: 900; font-size: 12px; color: #1D4ED8; border: none; background: transparent;")
                 
-                badge_text = "🟢 ACTIVA / ONLINE" if is_online else "🔴 CERRADA / OFFLINE"
+                badge_text = "🟢 ONLINE" if is_online else "🔴 OFFLINE"
                 badge_style = "color: #059669; font-weight: 800; font-size: 9px;" if is_online else "color: #94a3b8; font-weight: 800; font-size: 9px;"
                 lbl_c_badge = QLabel(badge_text)
                 lbl_c_badge.setStyleSheet(badge_style + " border: none; background: transparent;")
@@ -1366,13 +1439,12 @@ class Admin7Cierre(QWidget):
                 info_lay.addWidget(lbl_c_name)
                 info_lay.addWidget(lbl_c_badge)
                 card_lay.addLayout(info_lay)
-                
                 card_lay.addStretch()
 
                 ac_lay = QVBoxLayout()
                 lbl_ac_t = QLabel("VENTAS")
                 lbl_ac_t.setAlignment(Qt.AlignRight)
-                lbl_ac_t.setStyleSheet("font-size: 9px; font-weight: 700; color: #64748b; border: none; background: transparent;")
+                lbl_ac_t.setStyleSheet("font-size: 9px; font-weight: 700; color: #475569; border: none; background: transparent;")
                 
                 total_tot = v_efec + v_dig
                 lbl_ac_val = QLabel(fmt_moneda(total_tot) if is_online else "$ 0.00")
@@ -1383,15 +1455,13 @@ class Admin7Cierre(QWidget):
                 ac_lay.addWidget(lbl_ac_val)
                 card_lay.addLayout(ac_lay)
 
-                # Guardar referencias
                 card.lbl_c_name = lbl_c_name
                 card.lbl_c_badge = lbl_c_badge
                 card.lbl_ac_val = lbl_ac_val
-
-                # Enlazar evento click de forma segura usando la clave caja_{cid}
                 card.mousePressEvent = lambda event, kc=key_caja: self.seleccionar_caja(kc)
                 
-                self.caja_cards[cid] = card
+                if not hasattr(self, "caja_cards"): self.caja_cards = {}
+                self.caja_cards[key_caja] = card
                 self.layout_grid_cajas.insertWidget(self.layout_grid_cajas.count() - 1, card)
 
         if self.cajas_data:
@@ -1401,9 +1471,7 @@ class Admin7Cierre(QWidget):
                 self.seleccionar_caja(self.selected_lane_user)
 
     def seleccionar_caja(self, key_caja):
-        if key_caja not in self.cajas_data:
-            return
-            
+        if key_caja not in self.cajas_data: return
         self.selected_lane_user = key_caja
         data = self.cajas_data[key_caja]
         c_id = data["caja_id"]
@@ -1412,10 +1480,25 @@ class Admin7Cierre(QWidget):
         self.lbl_hdr_vivo_titulo.setText(f"💎 CajaFacil Pro - CONTROL DE CIERRE: CAJA 0{c_id} ({cajero_actual.upper()})")
         self.lbl_hdr_vivo_usuario.setText(f"👤 ROL: {data['rol'].upper()}")
         
+        for k, c in getattr(self, "caja_cards", {}).items():
+            if not isinstance(c.layout(), QHBoxLayout): continue
+            is_on = self.cajas_data.get(k, {}).get("online", False)
+            bc = "#10B981" if is_on else "#E2E8F0"
+            bg = "#F0FDF4" if is_on else "white"
+            c.setStyleSheet(f"""
+                QFrame {{ background-color: {bg}; border: 2px solid {bc}; border-radius: 12px; padding: 10px; margin-left: 15px; }}
+                QFrame:hover {{ border-color: #3b82f6; background-color: #f8fafc; }}
+            """)
+            
+        if key_caja in self.caja_cards:
+            self.caja_cards[key_caja].setStyleSheet("""
+                QFrame { background-color: #E0F2FE; border: 3px solid #3B82F6; border-radius: 12px; padding: 10px; margin-left: 15px; }
+            """)
+
         if data['online']:
             self.fase_bar.setStyleSheet("background-color: #eff6ff; border-bottom: 1px solid #bfdbfe;")
             for child in self.fase_bar.findChildren(QLabel):
-                child.setText("🟢 LÍNEA DE CHECKOUT ACTIVA - LECTURA EN VIVO DE RED")
+                child.setText(f"🟢 {data['hostname']} - VIGILANCIA EN VIVO")
                 child.setStyleSheet("color: #1d4ed8; font-weight: 800; font-size: 11px; background: transparent;")
             self.btn_live_confirmar.setEnabled(True)
             self.btn_live_corte.setEnabled(True)
@@ -1426,7 +1509,7 @@ class Admin7Cierre(QWidget):
         else:
             self.fase_bar.setStyleSheet("background-color: #fef2f2; border-bottom: 1px solid #fecaca;")
             for child in self.fase_bar.findChildren(QLabel):
-                child.setText("🔴 TERMINAL DESCONECTADA / TURNO CERRADO POR ADMINISTRACIÓN")
+                child.setText("🔴 TERMINAL DESCONECTADA")
                 child.setStyleSheet("color: #991b1b; font-weight: 800; font-size: 11px; background: transparent;")
             self.btn_live_confirmar.setEnabled(False)
             self.btn_live_corte.setEnabled(False)
@@ -1438,13 +1521,12 @@ class Admin7Cierre(QWidget):
         self.lbl_vd_val.setText(fmt_moneda(data['v_dig']))
         self.lbl_vf_val.setText(fmt_moneda(data['fondo']))
         self.lbl_va_val.setText(str(data['alertas']))
-
         self.lbl_live_esperado.setText(fmt_moneda(data['esperado']))
-        # No machacar lo que está escribiendo el usuario si tiene el foco
+        
         if not self.txt_live_fisico.hasFocus():
             self.txt_live_fisico.setText(f"{data['esperado']:.2f}" if data['online'] else "0.00")
-        self._calcular_live_diferencia()
-
+        
+    
     def _calcular_live_diferencia(self):
         if not self.selected_lane_user or self.selected_lane_user not in self.cajas_data:
             return

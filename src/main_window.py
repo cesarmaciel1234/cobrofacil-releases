@@ -1,4 +1,5 @@
 import sys
+from src.network.api_server import NetworkServer
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QShortcut,
@@ -204,6 +205,13 @@ class MainWindow(QMainWindow):
         drawer_manager.reset_all()
         self._init_screens()
         self._init_shortcuts()
+        
+        # Iniciar Servidor API y Broadcaster UDP si usamos DB Local
+        from src.database import db_manager
+        if not db_manager.db_path.startswith("http"):
+            from src.network.api_server import NetworkServer
+            NetworkServer.start()
+
         # NOTA: apply_roles() NO se llama aquí porque muestra la ventana.
         # Se llama después del login en launch_app() de main.py.
         self._init_global_alarm()

@@ -1,4 +1,5 @@
 import sqlite3
+import requests
 import os
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
@@ -15,26 +16,59 @@ class DatabaseManager:
         return cls._instance
 
     def _init_db(self):
-        # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
         import json
         from src.utils.paths import get_base_path
+        import random, string
         base_app_path = get_base_path()
         config_path = os.path.join(base_app_path, "config.json")
+        
+        db_name = "punpro.db"
+        custom_path = ""
+        
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config_data = json.load(f)
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+                
                 custom_path = config_data.get("db_path", "")
-                # Si el json tiene un path de red y el directorio (Ej: Z:\) es accesible
-                if custom_path and os.path.exists(os.path.dirname(custom_path)):
-                    self.db_path = custom_path
-                else:
-                    self.db_path = os.path.join(base_app_path, "punpro.db")
-        except Exception:
+                db_name = config_data.get("db_name", "")
+                
+                # Generar ID si no existe
+                if not db_name:
+                    new_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+                    db_name = f"{new_id}.db"
+                    config_data["db_name"] = db_name
+                    
+                    old_path = os.path.join(base_app_path, "punpro.db")
+                    new_path = os.path.join(base_app_path, db_name)
+                    if os.path.exists(old_path):
+                        try:
+                            os.rename(old_path, new_path)
+                            logger.info(f"Database renamed from punpro.db to {db_name}")
+                        except Exception as e:
+                            logger.error(f"Error renaming DB: {e}")
+                    
+                    with open(config_path, "w", encoding="utf-8") as fw:
+                        json.dump(config_data, fw, indent=4)
+            else:
+                config_data = {}
+                new_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+                db_name = f"{new_id}.db"
+                config_data["db_name"] = db_name
+                with open(config_path, "w", encoding="utf-8") as fw:
+                    json.dump(config_data, fw, indent=4)
+                    
+            if custom_path and custom_path.startswith("http"):
+                self.db_path = custom_path
+            else:
+                self.db_path = os.path.join(base_app_path, db_name)
+        except Exception as e:
+            logger.error(f"Error loading config in database.py: {e}")
             self.db_path = os.path.join(base_app_path, "punpro.db")
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
         self._create_tables()
-        self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
+        self._migrate_db()
         self._ensure_test_users()
 
     def _migrate_db(self):
@@ -300,8 +334,10 @@ class DatabaseManager:
             # 8. TERMINALES ACTIVOS (Para conteo en red)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS terminales_activos (
-                    caja_id INTEGER PRIMARY KEY,
+                    hardware_id TEXT PRIMARY KEY,
+                    caja_id INTEGER,
                     hostname TEXT,
+                    cajero TEXT,
                     last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -351,8 +387,34 @@ class DatabaseManager:
             logger.error(f"Error connecting to database: {e}")
             raise
 
+    def _is_remote(self):
+        return self.db_path.startswith("http://") or self.db_path.startswith("https://")
+
+    def _remote_request(self, endpoint, payload):
+        import requests
+        from src.config import config
+        url = f"{self.db_path}{endpoint}"
+        api_key = config.get("api_key", "1234")
+        try:
+            res = requests.post(url, json=payload, headers={"x-api-key": api_key}, timeout=5)
+            if res.status_code == 200:
+                return res.json()
+            else:
+                logger.error(f"Remote DB error {res.status_code}: {res.text}")
+                return None
+        except Exception as e:
+            logger.error(f"Remote DB exception: {e}")
+            return None
+
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
         """Executes a query and returns all matching rows (for SELECT)."""
+        if self._is_remote():
+            res = self._remote_request("/query", {"query": query, "params": params, "type": "query"})
+            if res and res.get("status") in ("ok", "success"):
+                # Convert list of dicts to something resembling sqlite3.Row if needed, 
+                # but dicts usually work fine since row_factory acts like a dict.
+                return res.get("data", [])
+            return None
         conn = None
         try:
             conn = self.get_connection()
@@ -369,6 +431,9 @@ class DatabaseManager:
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
         """Executes a non-query (INSERT, UPDATE, DELETE) and commits changes."""
+        if self._is_remote():
+            res = self._remote_request("/non_query", {"query": query, "params": params, "type": "non_query"})
+            return res is not None and res.get("status") in ("ok", "success")
         conn = None
         try:
             conn = self.get_connection()
@@ -387,6 +452,11 @@ class DatabaseManager:
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
+        if self._is_remote():
+            res = self._remote_request("/query", {"query": query, "params": params, "type": "scalar"})
+            if res and res.get("status") in ("ok", "success"):
+                return res.get("data")
+            return None
         conn = None
         try:
             conn = self.get_connection()
@@ -559,13 +629,13 @@ class DatabaseManager:
             if conn: conn.close()
 
 
-    def registrar_heartbeat(self, caja_id, hostname):
+    def registrar_heartbeat(self, hardware_id, caja_id, hostname, cajero):
         """ Registra el estado activo de este terminal. """
         from datetime import datetime
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.execute_non_query(
-            "INSERT OR REPLACE INTO terminales_activos (caja_id, hostname, last_seen) VALUES (?, ?, ?)",
-            (caja_id, hostname, now_str)
+            "INSERT OR REPLACE INTO terminales_activos (hardware_id, caja_id, hostname, cajero, last_seen) VALUES (?, ?, ?, ?, ?)",
+            (hardware_id, caja_id, hostname, cajero, now_str)
         )
 
     def get_terminales_activos_count(self) -> int:

@@ -1632,6 +1632,180 @@ class DialogoActualizaciones(QDialog):
 
 class DialogoRed(QDialog):
     """
+    Panel de configuración de Base de Datos.
+    Muestra el ID único de la base de datos y la configuración del Servidor LAN.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Configuración de Base de Datos")
+        self.setFixedSize(450, 300)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        
+        lbl_title = QLabel("⚙️ IDENTIDAD DE BASE DE DATOS")
+        lbl_title.setStyleSheet("color: #1E3A8A; font-weight: bold; font-size: 14px;")
+        layout.addWidget(lbl_title)
+        
+        self.info_box = QFrame()
+        self.info_box.setStyleSheet("background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;")
+        info_lay = QVBoxLayout(self.info_box)
+        
+        from src.config import config
+        db_name = config.get("db_name", "Local")
+        self.lbl_path = QLabel(f"<b>Base de Datos Activa:</b><br><span style='font-size: 18px; color: #10B981;'>{db_name}</span>")
+        self.lbl_path.setWordWrap(True)
+        self.lbl_path.setStyleSheet("font-size: 12px; color: #334155; border: none; background: transparent;")
+        info_lay.addWidget(self.lbl_path)
+        layout.addWidget(self.info_box)
+        
+        # --- CONFIGURACION SERVIDOR ---
+        v_server = QVBoxLayout()
+        v_server.setSpacing(10)
+        
+        lbl_s = QLabel("<b>🛡️ SEGURIDAD DE RED (SERVIDOR)</b>")
+        lbl_s.setStyleSheet("color: #1E3A8A; font-size: 11px; font-weight: bold;")
+        v_server.addWidget(lbl_s)
+        
+        lbl_s_desc = QLabel("PIN de seguridad para que otros Administradores puedan monitorear esta PC.")
+        lbl_s_desc.setWordWrap(True)
+        lbl_s_desc.setStyleSheet("color: #64748B; font-size: 11px;")
+        v_server.addWidget(lbl_s_desc)
+        
+        form_s = QFormLayout()
+        self.txt_api_key = QLineEdit(config.get("api_key", "admin123"))
+        self.txt_api_key.setStyleSheet("padding: 5px; border: 1px solid #CBD5E1; border-radius: 4px;")
+        form_s.addRow("PIN de Red:", self.txt_api_key)
+        
+        self.txt_caja_id = QLineEdit(str(config.get("caja_id", 1)))
+        self.txt_caja_id.setStyleSheet("padding: 5px; border: 1px solid #CBD5E1; border-radius: 4px;")
+        form_s.addRow("ID Físico (Caja):", self.txt_caja_id)
+        
+        v_server.addLayout(form_s)
+        layout.addLayout(v_server)
+        
+        btn_save = QPushButton("💾 Guardar Configuración")
+        btn_save.setStyleSheet("""
+            QPushButton { background-color: #0F172A; color: white; font-weight: bold; padding: 12px; border-radius: 6px; }
+            QPushButton:hover { background-color: #1E293B; }
+        """)
+        btn_save.clicked.connect(self.guardar_servidor)
+        layout.addWidget(btn_save)
+        
+    def guardar_servidor(self):
+        from src.config import config
+        config.set("api_key", self.txt_api_key.text().strip())
+        try:
+            cid = int(self.txt_caja_id.text().strip())
+            config.set("caja_id", cid)
+        except: pass
+        QMessageBox.information(self, "Guardado", "Configuración de servidor guardada exitosamente.")
+        self.accept()
+
+class DialogoActualizaciones(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Actualizaciones Automáticas")
+        self.setFixedSize(550, 220)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        layout = QVBoxLayout(self)
+        layout.setSpacing(10)
+        
+        lbl_title = QLabel("ACTUALIZACIONES AUTOMATICAS")
+        lbl_title.setStyleSheet("color: #082c63; font-size: 13px; font-weight: bold;")
+        layout.addWidget(lbl_title)
+        
+        # Fila de Auto-Check
+        row1 = QHBoxLayout()
+        self.chk_auto = QCheckBox("Checar si hay actualizaciones disponibles automáticamente al")
+        self.chk_auto.setChecked(config.get('auto_update_check', True))
+        
+        self.cmb_when = QComboBox()
+        self.cmb_when.addItems(["Salir del programa", "Iniciar el programa"])
+        self.cmb_when.setCurrentText(config.get('auto_update_when', "Salir del programa"))
+        
+        lbl_icon = QLabel("🔄")
+        lbl_icon.setStyleSheet("font-size: 20px; color: #3B82F6;")
+        
+        row1.addWidget(self.chk_auto)
+        row1.addWidget(self.cmb_when)
+        row1.addWidget(lbl_icon)
+        row1.addStretch()
+        layout.addLayout(row1)
+        
+        # Botón de Chequeo Manual
+        self.btn_check = QPushButton("📦 Checar si hay una actualización disponible ...")
+        self.btn_check.setStyleSheet("""
+            QPushButton {
+                background-color: #F8FAFC; 
+                border: 1px solid #CBD5E1; 
+                padding: 8px 15px; 
+                border-radius: 4px;
+                color: #333333;
+            }
+            QPushButton:hover { background-color: #F1F5F9; border-color: #94A3B8; }
+        """)
+        self.btn_check.clicked.connect(self.checar_actualizacion)
+        layout.addWidget(self.btn_check, alignment=Qt.AlignLeft)
+        
+        # Mensaje de Información (Firewall)
+        frame_info = QFrame()
+        frame_info.setStyleSheet("background-color: #FEF9C3; border: 1px solid #FDE047; border-radius: 4px;")
+        lay_info = QHBoxLayout(frame_info)
+        lbl_info = QLabel("ℹ️ No olvides permitir que el programa tenga acceso a Internet permitiéndole el paso a través\nde Firewalls ya sea de Windows o de tu antivirus.")
+        lbl_info.setStyleSheet("color: #854D0E; font-size: 11px; border: none;")
+        lay_info.addWidget(lbl_info)
+        layout.addWidget(frame_info)
+        
+        layout.addStretch()
+        
+        # Guardar al cerrar
+        self.chk_auto.toggled.connect(self.guardar_estado)
+        self.cmb_when.currentTextChanged.connect(self.guardar_estado)
+
+    def guardar_estado(self):
+        config.set('auto_update_check', self.chk_auto.isChecked())
+        config.set('auto_update_when', self.cmb_when.currentText())
+
+    def checar_actualizacion(self):
+        self.btn_check.setText("Verificando en GitHub...")
+        self.btn_check.setEnabled(False)
+        self.repaint()
+        try:
+            from src.updater.github_updater import verificar_actualizaciones_github
+            res = verificar_actualizaciones_github(dry_run=True)
+            self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+            self.btn_check.setEnabled(True)
+            if res.errores:
+                QMessageBox.warning(self, "Sin conexion", f"No se pudo conectar a GitHub:\n{res.errores[0]}")
+                return
+            if not res.hay_cambios:
+                QMessageBox.information(self, "Al dia", f"CajaFacil Pro esta actualizado.\nVersion: {res.version_local}")
+                return
+            reply = QMessageBox.question(self, "Actualizacion Disponible",
+                f"Nueva version disponible!\nActual: {res.version_local}\nNueva: {res.version_nueva}\nArchivos: {len(res.actualizados)}\n\nDescargar e instalar ahora?",
+                QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.btn_check.setText("Descargando...")
+                self.btn_check.setEnabled(False)
+                self.repaint()
+                res2 = verificar_actualizaciones_github(dry_run=False)
+                self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+                self.btn_check.setEnabled(True)
+                if res2.actualizados:
+                    extra = "\n\nReinicia el programa para aplicar los cambios." if res2.necesita_reinicio else ""
+                    QMessageBox.information(self, "Listo", f"{len(res2.actualizados)} archivos actualizados.{extra}")
+                else:
+                    QMessageBox.warning(self, "Error", "No se completo la actualizacion.")
+        except Exception as e:
+            self.btn_check.setText("Checar si hay una actualizacion disponible ...")
+            self.btn_check.setEnabled(True)
+            QMessageBox.critical(self, "Error", f"Error al verificar:\n{e}")
+
+
+class DialogoRed(QDialog):
+    """
     Panel de auto-enlace de red. Escanea la LAN mediante UDP Broadcast para localizar
     la PC Maestra y configurar db_path de manera automática con verificación cifrada.
     También permite configurar los parámetros de servidor (contraseña de red, caja_id y carpeta compartida).

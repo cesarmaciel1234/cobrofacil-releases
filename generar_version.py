@@ -42,7 +42,7 @@ def recopilar_modulos():
             full = os.path.join(root, fname)
             rel = os.path.relpath(full, BASE).replace('\\', '/')
             modulos[rel] = {
-                "version": "2026.2.0",
+                "version": "2026.3.0",
                 "checksum": md5(full),
                 "channel": "stable"
             }
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     modulos = recopilar_modulos()
 
     manifest = {
-        "app_version": "2026.2.0",
+        "app_version": "2026.3.0",
         "channel": "stable",
         "build_date": datetime.now().strftime("%Y-%m-%d"),
         "modules": modulos

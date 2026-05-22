@@ -223,3 +223,4 @@ class Paso3Login(QDialog):
                 return
         QMessageBox.critical(self, "Error", "Credenciales inválidas.")
         self.txt_pass.clear(); self.txt_pass.setFocus()
+
