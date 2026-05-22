@@ -22,6 +22,38 @@ class ClickableComboBox(QComboBox):
             self.showPopup()
         return super().eventFilter(obj, event)
 
+from PyQt5.QtCore import QThread, pyqtSignal
+
+class UserLoadWorker(QThread):
+    finished = pyqtSignal(list)
+    def __init__(self, role):
+        super().__init__()
+        self.role = role
+    def run(self):
+        try:
+            if self.role == "cajero":
+                res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'cajero'")
+            elif self.role == "admin":
+                res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'admin'")
+            else:
+                res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = ? OR rol = 'admin'", (self.role,))
+            self.finished.emit(res if res else [])
+        except Exception:
+            self.finished.emit([])
+
+class LoginWorker(QThread):
+    finished = pyqtSignal(list)
+    def __init__(self, user):
+        super().__init__()
+        self.user = user
+    def run(self):
+        try:
+            res = db_manager.execute_query("SELECT id, username, password_hash, rol FROM usuarios WHERE username = ?", (self.user,))
+            self.finished.emit(res if res else [])
+        except Exception:
+            self.finished.emit([])
+
+
 class Paso3Login(QDialog):
     """
     PASO 3: LOGIN ELITE 2026
@@ -35,6 +67,7 @@ class Paso3Login(QDialog):
         self.setFixedSize(500, 480)
         self.setup_ui()
         self.apply_glow()
+        self.load_users()
 
     def apply_glow(self):
         glow = QGraphicsDropShadowEffect(self)
@@ -86,17 +119,7 @@ class Paso3Login(QDialog):
 
         # Inputs esmerilados con estilo iPhone Glass
         self.txt_user = ClickableComboBox()
-        # Cargar usuarios según rol (ocultando admin en el login de cajero)
-        if self.role == "cajero":
-            res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'cajero'")
-        elif self.role == "admin":
-            res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'admin'")
-        else:
-            res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = ? OR rol = 'admin'", (self.role,))
-            
-        if res_users:
-            self.txt_user.addItems([row['username'] for row in res_users])
-        self.txt_user.setPlaceholderText("Selecciona o escribe el usuario...")
+        self.txt_user.setPlaceholderText("Cargando usuarios...")
         
         self.txt_user.setStyleSheet("""
             QComboBox {
@@ -132,11 +155,6 @@ class Paso3Login(QDialog):
                 background: transparent; border: none; color: #1E293B; font-weight: bold;
             }
         """)
-        
-        if self.role == "admin": 
-            self.txt_user.setCurrentText("admin")
-        else:
-            self.txt_user.setCurrentIndex(-1) # Vacío por defecto
             
         content.addWidget(self.txt_user)
 
@@ -169,9 +187,9 @@ class Paso3Login(QDialog):
         content.addWidget(self.txt_pass)
 
         # Botón de Login Estilo iOS Glass Azul
-        btn_login = QPushButton("VERIFICAR CREDENCIALES")
-        btn_login.setCursor(Qt.PointingHandCursor)
-        btn_login.setStyleSheet("""
+        self.btn_login = QPushButton("VERIFICAR CREDENCIALES")
+        self.btn_login.setCursor(Qt.PointingHandCursor)
+        self.btn_login.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
                     stop:0 rgba(30, 58, 138, 0.95), 
@@ -191,9 +209,14 @@ class Paso3Login(QDialog):
                 );
                 border-color: #3B82F6;
             }
+            QPushButton:disabled {
+                background: rgba(100, 100, 100, 0.5);
+                color: #A0A0A0;
+                border-color: transparent;
+            }
         """)
-        btn_login.clicked.connect(self.verificar)
-        content.addWidget(btn_login)
+        self.btn_login.clicked.connect(self.verificar)
+        content.addWidget(self.btn_login)
 
         btn_cancel = QPushButton("CANCELAR")
         btn_cancel.setStyleSheet("color: #EF4444; font-weight: bold; font-size: 11px; border: none; background: transparent;")
@@ -203,24 +226,67 @@ class Paso3Login(QDialog):
         main_lay.addLayout(content)
         QTimer.singleShot(100, self.txt_pass.setFocus if self.txt_user.currentText() else self.txt_user.setFocus)
 
+    def load_users(self):
+        self.txt_user.setEnabled(False)
+        self.user_worker = UserLoadWorker(self.role)
+        self.user_worker.finished.connect(self.on_users_loaded)
+        self.user_worker.start()
+
+    def on_users_loaded(self, res_users):
+        self.txt_user.setEnabled(True)
+        self.txt_user.clear()
+        if res_users:
+            self.txt_user.addItems([row['username'] for row in res_users])
+        self.txt_user.setPlaceholderText("Selecciona o escribe el usuario...")
+        if self.role == "admin": 
+            self.txt_user.setCurrentText("admin")
+        else:
+            self.txt_user.setCurrentIndex(-1)
+
     def verificar(self):
         user = self.txt_user.currentText().strip()
         pwd = self.txt_pass.text().strip()
         if not user or not pwd: return
 
-        res = db_manager.execute_query("SELECT id, username, password_hash, rol FROM usuarios WHERE username = ?", (user,))
+        self.btn_login.setText("VERIFICANDO...")
+        self.btn_login.setEnabled(False)
+        self.txt_user.setEnabled(False)
+        self.txt_pass.setEnabled(False)
+        
+        self.login_worker = LoginWorker(user)
+        self.login_worker.finished.connect(lambda res: self.on_login_finished(res, pwd))
+        self.login_worker.start()
+
+    def on_login_finished(self, res, pwd):
+        self.btn_login.setText("VERIFICAR CREDENCIALES")
+        self.btn_login.setEnabled(True)
+        self.txt_user.setEnabled(True)
+        self.txt_pass.setEnabled(True)
+        
         if res:
             db_user = res[0]
-            if hashlib.sha256(pwd.encode()).hexdigest() == db_user['password_hash']:
-                if self.role == "cajero" and db_user['rol'].lower() == "admin":
+            try:
+                p_hash = db_user['password_hash']
+                r_rol = db_user['rol']
+                u_id = db_user['id']
+                u_name = db_user['username']
+            except Exception:
+                p_hash = db_user[2]
+                r_rol = db_user[3]
+                u_id = db_user[0]
+                u_name = db_user[1]
+            
+            if hashlib.sha256(pwd.encode()).hexdigest() == p_hash:
+                if self.role == "cajero" and r_rol.lower() == "admin":
                     QMessageBox.critical(self, "Acceso Denegado", "El usuario Administrador no está permitido en este acceso. Inicie desde el perfil correspondiente o F11.")
                     return
-                if db_user['rol'].lower() != self.role.lower() and self.role != "any" and db_user['rol'].lower() != "admin":
+                if r_rol.lower() != self.role.lower() and self.role != "any" and r_rol.lower() != "admin":
                     QMessageBox.critical(self, "Acceso Denegado", f"No tienes permisos de {self.role.upper()}.")
                     return
-                config.current_user = {"id": db_user['id'], "username": db_user['username'], "role": db_user['rol']}
+                config.current_user = {"id": u_id, "username": u_name, "role": r_rol}
                 self.accept()
                 return
-        QMessageBox.critical(self, "Error", "Credenciales inválidas.")
+        QMessageBox.critical(self, "Error", "Credenciales inválidas o error de red.")
         self.txt_pass.clear(); self.txt_pass.setFocus()
+
 

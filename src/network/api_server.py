@@ -23,7 +23,7 @@ class APIRequestHandler(BaseHTTPRequestHandler):
     def _auth_check(self):
         from src.config import config
         api_key = self.headers.get("x-api-key", "")
-        local_key = config.get("api_key", "admin123")
+        local_key = config.get("api_key", "1234")
         if api_key == local_key:
             return True
         return False
@@ -49,6 +49,8 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             # Ejecutar con el manager nativo
             if q_type == "query":
                 result = db_manager.execute_query(query, params)
+                if result is not None:
+                    result = [dict(row) for row in result]
                 resp = {"status": "success", "data": result}
             elif q_type == "non_query":
                 db_manager.execute_non_query(query, params)
@@ -59,11 +61,13 @@ class APIRequestHandler(BaseHTTPRequestHandler):
             else:
                 resp = {"status": "error", "message": "Unknown query type"}
 
+            body = json.dumps(resp).encode('utf-8')
             self.send_response(200)
             self._send_cors_headers()
             self.send_header("Content-type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(json.dumps(resp).encode('utf-8'))
+            self.wfile.write(body)
             
         except Exception as e:
             self.send_response(500)
