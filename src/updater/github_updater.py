@@ -73,8 +73,8 @@ def buscar_actualizacion_background(parent_widget=None):
 
 def aplicar_actualizacion(tag, zip_url, app_instance):
     """ Descarga el ZIP, lo extrae y ejecuta el instalador """
-    temp_zip = os.path.join(os.environ.get('TEMP', 'C:\'), "CajaFacil_Update.zip")
-    temp_dir = os.path.join(os.environ.get('TEMP', 'C:\'), "CajaFacil_Update_Extract")
+    temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update.zip")
+    temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update_Extract")
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
