@@ -42,7 +42,7 @@ def recopilar_modulos():
             full = os.path.join(root, fname)
             rel = os.path.relpath(full, BASE).replace('\\', '/')
             modulos[rel] = {
-                "version": "2026.3.3",
+                "version": "2027.9",
                 "checksum": md5(full),
                 "channel": "stable"
             }
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     modulos = recopilar_modulos()
 
     manifest = {
-        "app_version": "2026.3.3",
+        "app_version": "2027.9",
         "channel": "stable",
         "build_date": datetime.now().strftime("%Y-%m-%d"),
         "modules": modulos
@@ -64,5 +64,5 @@ if __name__ == '__main__':
         json.dump(manifest, f, indent=2, ensure_ascii=False)
 
     print(f"OK: version.json generado con {len(modulos)} modulos")
-    print(f"   Version: 2026.2.0")
+    print(f"   Version: {manifest['app_version']}")
     print(f"   Fecha: {manifest['build_date']}")
