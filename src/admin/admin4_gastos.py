@@ -5,10 +5,11 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 
 # Imports pesados movidos al inicio para evitar crashes de Qt
-import matplotlib
 try:
+    import matplotlib
     matplotlib.use("Qt5Agg")
-except: pass
+except ImportError:
+    pass
 
 class Admin4Gastos(QWidget):
     """
