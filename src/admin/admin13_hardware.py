@@ -449,7 +449,7 @@ class Admin13Hardware(QWidget):
         if not com: com = "USB DIRECTO / OPOS"
         
         self.matrix_lines = [
-            "> INICIALIZANDO NÚCLEO INDUSTRIAL CAJAFACIL PRO...",
+            "> INICIALIZANDO NÚCLEO INDUSTRIAL TPV PRO 2026...",
             "> COMPROBANDO FIRMWARE...",
             "[SYS] INTEGRIDAD CONFIRMADA. (OK)",
             "> ESCANEANDO PUERTOS DE COMUNICACIÓN (COM/USB)...",
@@ -589,7 +589,7 @@ class Admin13Hardware(QWidget):
             data = bytearray()
             data.extend(b"\x1B\x40") # Reset
             data.extend(b"\x1B\x61\x01") # Center
-            data.extend(f"CajaFacil Pro\n".encode())
+            data.extend(f"PUNPRO ELITE 2026\n".encode())
             data.extend(f"TEST HARDWARE OK\n".encode())
             data.extend(b"--------------------------------\n")
             data.extend(f"Impresora: {printer_name}\n".encode())

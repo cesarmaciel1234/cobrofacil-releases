@@ -114,12 +114,6 @@ class PosPrinter:
     def abrir_cajon(self):
         """ Envía el comando ESC/POS estándar para patear el cajón de dinero. """
         p_name = config.get('ticket_printer', config.get('printer_name', ''))
-        try:
-            from src.cajero.paso5_terminal import CajeroActivo
-            key = CajeroActivo.printer_key()
-            p_name = config.get(key, p_name)
-        except Exception:
-            pass
         logger.info(f"Enviando señal de apertura a {p_name}...")
         
         # Seleccionar pin (0=Pin 2, 1=Pin 5)
@@ -425,13 +419,6 @@ class PosPrinter:
             data.extend(kick)
         
         p_principal = config.get('ticket_printer', config.get('printer_name', ''))
-        try:
-            from src.cajero.paso5_terminal import CajeroActivo
-            key = CajeroActivo.printer_key()
-            p_principal = config.get(key, p_principal)
-        except Exception:
-            pass
-            
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         
         # Segunda tiketera: si está configurada y habilitada, imprimir copia
@@ -646,13 +633,6 @@ class PosPrinter:
 
         # ── Envío ──────────────────────────────────────────────────────────
         p_principal = config.get('ticket_printer', config.get('printer_name', ''))
-        try:
-            from src.cajero.paso5_terminal import CajeroActivo
-            key = CajeroActivo.printer_key()
-            p_principal = config.get(key, p_principal)
-        except Exception:
-            pass
-            
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
 
         # Copia en segunda tiketera si está configurada

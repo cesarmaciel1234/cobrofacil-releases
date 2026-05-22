@@ -1,6 +1,6 @@
 """
 admin15_actualizaciones.py
-Panel de Actualizaciones — CajaFacil Pro
+Panel de Actualizaciones — TPV Pro 2026
 ========================================
 Vista para el ADMINISTRADOR:
   • Publicar nuevas versiones (generar manifest + marcar módulos como beta/estable)
@@ -87,25 +87,9 @@ class Admin15Actualizaciones(QWidget):
         self._refrescar_info_local()
 
     def _detectar_si_es_servidor(self) -> bool:
-        """
-        Detecta si ESTA PC es el servidor maestro.
-        Estrategia: hacer ping a localhost:38001.
-        Si responde es porque el servidor corre en este equipo.
-        (No intentamos bindear el puerto porque la app ya lo tiene abierto.)
-        """
-        try:
-            import urllib.request
-            url = f"http://127.0.0.1:{UPDATE_PORT}/status"
-            with urllib.request.urlopen(url, timeout=1) as r:
-                import json as _json
-                data = _json.loads(r.read().decode())
-                return data.get("ok", False)
-        except:
-            pass
-        # Segunda verificación: intentar bindear (caso en que el server no arrancó aún)
+        """Si el port 38001 se puede abrir localmente, somos el servidor."""
         try:
             s = socket.socket()
-            s.settimeout(1)
             s.bind(("0.0.0.0", UPDATE_PORT))
             s.close()
             return True
@@ -133,7 +117,7 @@ class Admin15Actualizaciones(QWidget):
         hhl.addWidget(btn_volver)
         hhl.addSpacing(18)
 
-        lbl = QLabel("🔄  Sistema de Actualizaciones por Red — CajaFacil Pro")
+        lbl = QLabel("🔄  Sistema de Actualizaciones por Red — TPV Pro 2026")
         lbl.setStyleSheet("font-size:19px; font-weight:800;")
         hhl.addWidget(lbl)
         hhl.addStretch()

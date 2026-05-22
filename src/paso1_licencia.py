@@ -48,7 +48,7 @@ class Paso1Licencia(QDialog):
         main_lay.addWidget(lbl_icon)
         
         # Título
-        lbl_tit = QLabel("CajaFacil Pro")
+        lbl_tit = QLabel("PUNPRO ELITE 2026")
         lbl_tit.setStyleSheet("""
             font-size: 24px; font-weight: 900; color: #F8FAFC; 
             letter-spacing: 4px; background: transparent; border: none;

@@ -27,13 +27,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 
 # ── Generar / actualizar el manifest ────────────────────────────────────────
-EXCLUDED_DIRS = {
-    '.venv', '__pycache__', '.git', 'build', 'dist',
-    'reportes', '.gemini', 'scratch', 'backups',
-    'Instalador_Final', 'utilidades_hardware',
-    'ia planificacion', 'data', 'docs'
-}
-EXCLUDED_EXTS = {'.pyc', '.pyo', '.db', '.log', '.csv', '.zip', '.exe', '.bat', '.ps1'}
+EXCLUDED_DIRS = {'.venv', '__pycache__', '.git', 'build', 'dist', 'reportes', '.gemini'}
+EXCLUDED_EXTS = {'.pyc', '.pyo', '.db', '.log', '.csv'}
 
 def calcular_checksum(path: str) -> str:
     with open(path, 'rb') as f:
@@ -80,7 +75,7 @@ def generar_manifest(canal: str = "stable") -> dict:
         "server_host": socket.gethostname(),
         "modules": modules
     }
-    with open(VERSION_FILE, 'w', encoding='utf-8') as f:
+    with open(VERSION_FILE, 'w') as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
     return manifest
 

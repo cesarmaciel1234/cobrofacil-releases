@@ -182,7 +182,7 @@ class Paso7CierreCaja(QDialog):
         h_lay = QHBoxLayout(header)
         h_lay.setContentsMargins(30, 0, 30, 0)
         
-        lbl_tit = QLabel("💎 CajaFacil Pro - CONTROL DE CIERRE")
+        lbl_tit = QLabel("💎 PUNPRO ELITE - CONTROL DE CIERRE")
         lbl_tit.setStyleSheet("color: white; font-size: 14px; font-weight: 900; letter-spacing: 2px;")
         h_lay.addWidget(lbl_tit)
         h_lay.addStretch()

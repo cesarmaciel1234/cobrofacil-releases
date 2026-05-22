@@ -1,5 +1,4 @@
 import sqlite3
-import requests
 import os
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
@@ -16,216 +15,193 @@ class DatabaseManager:
         return cls._instance
 
     def _init_db(self):
+        # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
         import json
+        import random
+        import string
         from src.utils.paths import get_base_path
-        import random, string
         base_app_path = get_base_path()
         config_path = os.path.join(base_app_path, "config.json")
-        
-        db_name = "punpro.db"
-        custom_path = ""
-        
         try:
-            if os.path.exists(config_path):
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_data = json.load(f)
                 
-                custom_path = config_data.get("db_path", "")
-                db_name = config_data.get("db_name", "")
-                
-                # Generar ID si no existe
-                if not db_name:
-                    new_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-                    db_name = f"{new_id}.db"
-                    config_data["db_name"] = db_name
-                    
-                    old_path = os.path.join(base_app_path, "punpro.db")
-                    new_path = os.path.join(base_app_path, db_name)
-                    if os.path.exists(old_path):
-                        try:
-                            os.rename(old_path, new_path)
-                            logger.info(f"Database renamed from punpro.db to {db_name}")
-                        except Exception as e:
-                            logger.error(f"Error renaming DB: {e}")
-                    
-                    with open(config_path, "w", encoding="utf-8") as fw:
-                        json.dump(config_data, fw, indent=4)
-            else:
-                config_data = {}
-                new_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-                db_name = f"{new_id}.db"
-                config_data["db_name"] = db_name
-                with open(config_path, "w", encoding="utf-8") as fw:
-                    json.dump(config_data, fw, indent=4)
-                    
-            if custom_path and custom_path.startswith("http"):
+            custom_path = config_data.get("db_path", "")
+            # Si el json tiene un path de red y el directorio (Ej: Z:\) es accesible
+            if custom_path and os.path.exists(os.path.dirname(custom_path)):
                 self.db_path = custom_path
             else:
+                db_name = config_data.get("db_name")
+                if not db_name:
+                    suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+                    db_name = f"punpro_{suffix}.db"
+                    config_data["db_name"] = db_name
+                    with open(config_path, "w", encoding="utf-8") as fw:
+                        json.dump(config_data, fw, indent=4)
                 self.db_path = os.path.join(base_app_path, db_name)
-        except Exception as e:
-            logger.error(f"Error loading config in database.py: {e}")
+        except Exception:
             self.db_path = os.path.join(base_app_path, "punpro.db")
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
         self._create_tables()
-        self._migrate_db()
+        self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
         self._ensure_test_users()
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
-        conn = None
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # MODO PRESIÓN EXTREMA (Evitar 'Database is Locked' en 1000+ ventas simultáneas)
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA temp_store=MEMORY;")
+
+        # Estandarizar estados de ventas existentes
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # MODO PRESIÓN EXTREMA (Evitar 'Database is Locked' en 1000+ ventas simultáneas)
-            cursor.execute("PRAGMA journal_mode=WAL;")
-            cursor.execute("PRAGMA synchronous=NORMAL;")
-            cursor.execute("PRAGMA temp_store=MEMORY;")
+            cursor.execute("UPDATE ventas SET estado = 'COMPLETADA' WHERE estado = 'COMPLETADO'")
+            cursor.execute("UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'")
+            cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'")
+        except Exception as e:
+            logger.warning(f"Error estandarizando estados de ventas: {e}")
 
-            # Estandarizar estados de ventas existentes
+
+        
+        def add_column_if_not_exists(table, col_name, col_type):
             try:
-                cursor.execute("UPDATE ventas SET estado = 'COMPLETADA' WHERE estado = 'COMPLETADO'")
-                cursor.execute("UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'")
-                cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'")
+                cursor.execute(f"PRAGMA table_info({table})")
+                columns = [col[1] for col in cursor.fetchall()]
+                if col_name not in columns:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
             except Exception as e:
-                logger.warning(f"Error estandarizando estados de ventas: {e}")
+                logger.warning(f"Error migrando columna {col_name} en tabla {table}: {e}")
 
-            def add_column_if_not_exists(table, col_name, col_type):
-                try:
-                    cursor.execute(f"PRAGMA table_info({table})")
-                    columns = [col[1] for col in cursor.fetchall()]
-                    if col_name not in columns:
-                        cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
-                except Exception as e:
-                    logger.warning(f"Error migrando columna {col_name} en tabla {table}: {e}")
+        # Columnas industriales necesarias
+        add_column_if_not_exists('productos', 'nombre', 'TEXT')
+        add_column_if_not_exists('productos', 'precio', 'REAL')
+        add_column_if_not_exists('productos', 'stock', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'categoria', 'TEXT DEFAULT \'GENERAL\'')
+        add_column_if_not_exists('productos', 'unidad', 'TEXT DEFAULT \'UN\'')
+        add_column_if_not_exists('productos', 'costo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'precio_mayoreo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'stock_minimo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'stock_maximo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'codigo', 'TEXT')
+        add_column_if_not_exists('productos', 'departamento', 'TEXT')
+        add_column_if_not_exists('productos', 'es_pesable', 'INTEGER DEFAULT 0')
+        add_column_if_not_exists('productos', 'cant_oferta', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'precio_oferta', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
+        
+        # Verificar columnas de ventas
+        add_column_if_not_exists('ventas', 'pago_con', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'cambio', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'pago_efectivo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'pago_otro', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'usuario', 'TEXT DEFAULT \'cajero\'')
+        add_column_if_not_exists('ventas', 'estado', 'TEXT DEFAULT \'COMPLETADA\'')
+        add_column_if_not_exists('ventas', 'metodo_pago', 'TEXT DEFAULT \'Efectivo\'')
+        add_column_if_not_exists('ventas', 'caja_id', 'INTEGER DEFAULT 1')
+        add_column_if_not_exists('ventas', 'descuento', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'recargo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('movimientos_caja', 'caja_id', 'INTEGER DEFAULT 1')
+        add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
+        
+        # Crear tabla departamentos si no existe (migración)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS departamentos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    iva REAL DEFAULT 21.0
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla departamentos en migración: {e}")
 
-            # Columnas industriales necesarias
-            add_column_if_not_exists('productos', 'nombre', 'TEXT')
-            add_column_if_not_exists('productos', 'precio', 'REAL')
-            add_column_if_not_exists('productos', 'stock', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'categoria', 'TEXT DEFAULT \'GENERAL\'')
-            add_column_if_not_exists('productos', 'unidad', 'TEXT DEFAULT \'UN\'')
-            add_column_if_not_exists('productos', 'costo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'precio_mayoreo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'stock_minimo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'stock_maximo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'codigo', 'TEXT')
-            add_column_if_not_exists('productos', 'departamento', 'TEXT')
-            add_column_if_not_exists('productos', 'es_pesable', 'INTEGER DEFAULT 0')
-            add_column_if_not_exists('productos', 'cant_oferta', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'precio_oferta', 'REAL DEFAULT 0')
-            add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
-            
-            # Verificar columnas de ventas
-            add_column_if_not_exists('ventas', 'pago_con', 'REAL DEFAULT 0')
-            add_column_if_not_exists('ventas', 'cambio', 'REAL DEFAULT 0')
-            add_column_if_not_exists('ventas', 'pago_efectivo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('ventas', 'pago_otro', 'REAL DEFAULT 0')
-            add_column_if_not_exists('ventas', 'usuario', 'TEXT DEFAULT \'cajero\'')
-            add_column_if_not_exists('ventas', 'estado', 'TEXT DEFAULT \'COMPLETADA\'')
-            add_column_if_not_exists('ventas', 'metodo_pago', 'TEXT DEFAULT \'Efectivo\'')
-            add_column_if_not_exists('ventas', 'caja_id', 'INTEGER DEFAULT 1')
-            add_column_if_not_exists('ventas', 'descuento', 'REAL DEFAULT 0')
-            add_column_if_not_exists('ventas', 'recargo', 'REAL DEFAULT 0')
-            add_column_if_not_exists('movimientos_caja', 'caja_id', 'INTEGER DEFAULT 1')
-            add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
-            
-            # Crear tabla departamentos si no existe (migración)
+        # Asegurar columna 'iva' en tabla departamentos si ya existía sin ella
+        add_column_if_not_exists('departamentos', 'iva', 'REAL DEFAULT 21.0')
+
+        # Sembrar departamentos por defecto si está vacía
+        try:
+            cursor.execute("SELECT COUNT(*) FROM departamentos")
+            if cursor.fetchone()[0] == 0:
+                deps = [("ALMACEN", 21.0), ("CARNICERIA", 10.5), ("VERDULERIA", 10.5), ("GENERAL", 21.0)]
+                cursor.executemany("INSERT INTO departamentos (nombre, iva) VALUES (?, ?)", deps)
+        except Exception as e:
+            logger.warning(f"Error sembrando departamentos: {e}")
+
+        # ── COMPATIBILIDAD RETROACTIVA: tabla 'detalle_ventas' (alias de 'detalles_ventas') ──
+        # Algunos módulos usan el nombre sin la 's' final. Creamos la tabla con ese nombre
+        # como copia de estructura, y un trigger que redirige INSERT/DELETE a la tabla real.
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS detalle_ventas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_venta INTEGER,
+                    id_producto TEXT,
+                    nombre_producto TEXT,
+                    cantidad REAL,
+                    precio_unitario REAL,
+                    subtotal REAL,
+                    FOREIGN KEY(id_venta) REFERENCES ventas(id)
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla detalle_ventas (compat): {e}")
+
+        # ── COMPATIBILIDAD RETROACTIVA: tabla 'configuracion' ──
+        # Módulos legacy pueden consultar SELECT/INSERT aquí. La poblamos desde config.json.
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS configuracion (
+                    clave TEXT PRIMARY KEY,
+                    valor TEXT
+                )
+            """)
+            # Sincronizar claves básicas desde config.json al iniciar
+            import json
+            from src.utils.paths import get_base_path
+            _base = get_base_path()
+            _cfg_path = os.path.join(_base, "config.json")
             try:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS departamentos (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        nombre TEXT UNIQUE NOT NULL,
-                        iva REAL DEFAULT 21.0
+                with open(_cfg_path, "r", encoding="utf-8") as _f:
+                    _cfg_data = json.load(_f)
+                _sync_map = {
+                    "negocio_nombre":    _cfg_data.get("business_name", ""),
+                    "negocio_cuit":      _cfg_data.get("business_cuit", ""),
+                    "negocio_direccion": _cfg_data.get("address", ""),
+                    "negocio_telefono":  _cfg_data.get("phone", ""),
+                    "moneda_simbolo":    _cfg_data.get("currency_symbol", "$"),
+                    "impresora_fiscal":  _cfg_data.get("fiscal_printer_mode", "0"),
+                }
+                for _k, _v in _sync_map.items():
+                    cursor.execute(
+                        "INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?, ?)",
+                        (_k, str(_v))
                     )
-                """)
-            except Exception as e:
-                logger.warning(f"Error creando tabla departamentos en migración: {e}")
+            except Exception as _e:
+                logger.warning(f"No se pudo sincronizar configuracion desde config.json: {_e}")
+        except Exception as e:
+            logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
-            # Asegurar columna 'iva' en tabla departamentos si ya existía sin ella
-            add_column_if_not_exists('departamentos', 'iva', 'REAL DEFAULT 21.0')
-
-            # Sembrar departamentos por defecto si está vacía
-            try:
-                cursor.execute("SELECT COUNT(*) FROM departamentos")
-                if cursor.fetchone()[0] == 0:
-                    deps = [("ALMACEN", 21.0), ("CARNICERIA", 10.5), ("VERDULERIA", 10.5), ("GENERAL", 21.0)]
-                    cursor.executemany("INSERT INTO departamentos (nombre, iva) VALUES (?, ?)", deps)
-            except Exception as e:
-                logger.warning(f"Error sembrando departamentos: {e}")
-
-            # ── COMPATIBILIDAD RETROACTIVA: tabla 'detalle_ventas' (alias de 'detalles_ventas') ──
-            # Algunos módulos usan el nombre sin la 's' final. Creamos la tabla con ese nombre
-            # como copia de estructura, y un trigger que redirige INSERT/DELETE a la tabla real.
-            try:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS detalle_ventas (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        id_venta INTEGER,
-                        id_producto TEXT,
-                        nombre_producto TEXT,
-                        cantidad REAL,
-                        precio_unitario REAL,
-                        subtotal REAL,
-                        FOREIGN KEY(id_venta) REFERENCES ventas(id)
-                    )
-                """)
-            except Exception as e:
-                logger.warning(f"Error creando tabla detalle_ventas (compat): {e}")
-
-            # ── COMPATIBILIDAD RETROACTIVA: tabla 'configuracion' ──
-            # Módulos legacy pueden consultar SELECT/INSERT aquí. La poblamos desde config.json.
-            try:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS configuracion (
-                        clave TEXT PRIMARY KEY,
-                        valor TEXT
-                    )
-                """)
-                # Sincronizar claves básicas desde config.json al iniciar
-                import json
-                from src.utils.paths import get_base_path
-                _base = get_base_path()
-                _cfg_path = os.path.join(_base, "config.json")
-                try:
-                    with open(_cfg_path, "r", encoding="utf-8") as _f:
-                        _cfg_data = json.load(_f)
-                    _sync_map = {
-                        "negocio_nombre":    _cfg_data.get("business_name", ""),
-                        "negocio_cuit":      _cfg_data.get("business_cuit", ""),
-                        "negocio_direccion": _cfg_data.get("address", ""),
-                        "negocio_telefono":  _cfg_data.get("phone", ""),
-                        "moneda_simbolo":    _cfg_data.get("currency_symbol", "$"),
-                        "impresora_fiscal":  _cfg_data.get("fiscal_printer_mode", "0"),
-                    }
-                    for _k, _v in _sync_map.items():
-                        cursor.execute(
-                            "INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?, ?)",
-                            (_k, str(_v))
-                        )
-                except Exception as _e:
-                    logger.warning(f"No se pudo sincronizar configuracion desde config.json: {_e}")
-            except Exception as e:
-                logger.warning(f"Error creando tabla configuracion (compat): {e}")
-
-            # Crear índice para optimizar búsqueda instantánea
-            try:
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_tipo_fecha ON movimientos_caja (tipo, fecha)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_usuario_fecha ON ventas (usuario, fecha)")
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)")
-            except Exception as e:
-                logger.warning(f"Error creando índices: {e}")
-                
+        # Crear índice para optimizar búsqueda instantánea
+        try:
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_tipo_fecha ON movimientos_caja (tipo, fecha)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_usuario_fecha ON ventas (usuario, fecha)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)")
+        except Exception as e:
+            logger.warning(f"Error creando índices: {e}")
+            
+        try:
             conn.commit()
         except Exception as e:
-            logger.error(f"Error en _migrate_db: {e}")
+            logger.error(f"Error haciendo commit en _migrate_db: {e}")
         finally:
-            if conn:
-                conn.close()
+            conn.close()
 
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
@@ -334,10 +310,8 @@ class DatabaseManager:
             # 8. TERMINALES ACTIVOS (Para conteo en red)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS terminales_activos (
-                    hardware_id TEXT PRIMARY KEY,
-                    caja_id INTEGER,
+                    caja_id INTEGER PRIMARY KEY,
                     hostname TEXT,
-                    cajero TEXT,
                     last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -387,34 +361,8 @@ class DatabaseManager:
             logger.error(f"Error connecting to database: {e}")
             raise
 
-    def _is_remote(self):
-        return self.db_path.startswith("http://") or self.db_path.startswith("https://")
-
-    def _remote_request(self, endpoint, payload):
-        import requests
-        from src.config import config
-        url = f"{self.db_path}{endpoint}"
-        api_key = config.get("api_key", "1234")
-        try:
-            res = requests.post(url, json=payload, headers={"x-api-key": api_key}, timeout=5)
-            if res.status_code == 200:
-                return res.json()
-            else:
-                logger.error(f"Remote DB error {res.status_code}: {res.text}")
-                return None
-        except Exception as e:
-            logger.error(f"Remote DB exception: {e}")
-            return None
-
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
         """Executes a query and returns all matching rows (for SELECT)."""
-        if self._is_remote():
-            res = self._remote_request("/query", {"query": query, "params": params, "type": "query"})
-            if res and res.get("status") in ("ok", "success"):
-                # Convert list of dicts to something resembling sqlite3.Row if needed, 
-                # but dicts usually work fine since row_factory acts like a dict.
-                return res.get("data", [])
-            return None
         conn = None
         try:
             conn = self.get_connection()
@@ -431,9 +379,6 @@ class DatabaseManager:
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
         """Executes a non-query (INSERT, UPDATE, DELETE) and commits changes."""
-        if self._is_remote():
-            res = self._remote_request("/non_query", {"query": query, "params": params, "type": "non_query"})
-            return res is not None and res.get("status") in ("ok", "success")
         conn = None
         try:
             conn = self.get_connection()
@@ -452,11 +397,6 @@ class DatabaseManager:
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
-        if self._is_remote():
-            res = self._remote_request("/query", {"query": query, "params": params, "type": "scalar"})
-            if res and res.get("status") in ("ok", "success"):
-                return res.get("data")
-            return None
         conn = None
         try:
             conn = self.get_connection()
@@ -629,13 +569,13 @@ class DatabaseManager:
             if conn: conn.close()
 
 
-    def registrar_heartbeat(self, hardware_id, caja_id, hostname, cajero):
+    def registrar_heartbeat(self, caja_id, hostname):
         """ Registra el estado activo de este terminal. """
         from datetime import datetime
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.execute_non_query(
-            "INSERT OR REPLACE INTO terminales_activos (hardware_id, caja_id, hostname, cajero, last_seen) VALUES (?, ?, ?, ?, ?)",
-            (hardware_id, caja_id, hostname, cajero, now_str)
+            "INSERT OR REPLACE INTO terminales_activos (caja_id, hostname, last_seen) VALUES (?, ?, ?)",
+            (caja_id, hostname, now_str)
         )
 
     def get_terminales_activos_count(self) -> int:

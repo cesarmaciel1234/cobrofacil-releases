@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 if sys.platform.startswith('win'):
@@ -11,20 +11,6 @@ if sys.platform.startswith('win'):
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# ─────────────────────────────────────────────────────────────────
-# 🛡️ PORTABILIDAD: Se ejecuta ANTES de cualquier import de módulos
-#    Limpia rutas del desarrollador y crea carpetas necesarias.
-#    Funciona igual en cualquier PC donde se instale el ejecutable.
-# ─────────────────────────────────────────────────────────────────
-from src.utils.paths import get_base_path, sanitize_config, ensure_app_folders
-
-# 1. Crear carpetas necesarias si no existen (primera instalación)
-ensure_app_folders()
-
-# 2. Limpiar rutas hardcodeadas del desarrollador en config.json
-_config_path = os.path.join(get_base_path(), "config.json")
-sanitize_config(_config_path)
-# ─────────────────────────────────────────────────────────────────
 
 import traceback
 import threading
@@ -42,53 +28,36 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 sys.excepthook = global_excepthook
 
-# Instalar reporte automatico de errores hacia GitHub Issues
-try:
-    from src.utils.error_reporter import instalar_hook_global
-    instalar_hook_global()
-except Exception:
-    pass  # Si falla, el excepthook basico sigue funcionando
-
 # Nota: Los módulos pesados se cargan dentro de launch_app para acelerar el inicio.
 
 # Variable global para mantener viva la ventana principal
 main_window = None
 
-
 def launch_app():
     global main_window
+    from src.config import config
+    config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
+    
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
     
-    # --- SPLASH SCREEN ---
-    splash_pix = QPixmap(420, 280)
+    # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
+    splash_pix = QPixmap(400, 300)
     splash_pix.fill(Qt.transparent)
     splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setStyleSheet("background: qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #1e3a8a,stop:1 #0f172a); border-radius: 18px; border: 2px solid #3B82F6;")
-
-    # Icono trofeo grande
-    lbl_icon = QLabel("\U0001f3c6", splash)
-    lbl_icon.setAlignment(Qt.AlignCenter)
-    lbl_icon.setGeometry(0, 30, 420, 60)
-    lbl_icon.setStyleSheet("font-size: 48px; background: transparent; border: none;")
-
-    # Título principal
-    lbl_splash = QLabel("CajaFácil Pro", splash)
+    splash.setStyleSheet("background-color: #1E3A8A; color: white; border-radius: 20px; border: 2px solid #3B82F6;")
+    
+    # Label de Título en el Splash
+    lbl_splash = QLabel("PUNPRO ELITE 2026", splash)
     lbl_splash.setAlignment(Qt.AlignCenter)
-    lbl_splash.setGeometry(0, 95, 420, 50)
-    lbl_splash.setStyleSheet("font-size: 28px; font-weight: 900; color: white; background: transparent; border: none; letter-spacing: 1px;")
-
-    # Subtítulo
-    lbl_sub = QLabel("Vendé rápido · Sin experiencia · Sin complicaciones", splash)
-    lbl_sub.setAlignment(Qt.AlignCenter)
-    lbl_sub.setGeometry(0, 148, 420, 28)
-    lbl_sub.setStyleSheet("font-size: 11px; color: #93C5FD; background: transparent; border: none;")
-
-    lbl_status = QLabel("Iniciando...", splash)
+    lbl_splash.setGeometry(0, 80, 400, 50)
+    lbl_splash.setStyleSheet("font-size: 24px; font-weight: bold; color: white; background: transparent; border: none;")
+    
+    lbl_status = QLabel("Iniciando motor industrial...", splash)
     lbl_status.setAlignment(Qt.AlignCenter)
-    lbl_status.setGeometry(0, 230, 420, 28)
-    lbl_status.setStyleSheet("font-size: 11px; color: #64748b; background: transparent; border: none;")
+    lbl_status.setGeometry(0, 220, 400, 30)
+    lbl_status.setStyleSheet("font-size: 12px; color: #93C5FD; background: transparent; border: none;")
     
     splash.show()
     app.processEvents()
@@ -141,6 +110,28 @@ def launch_app():
             "El sistema funcionará en modo simulación.")
 
     # --- FLUJO DE VENTANAS ---
+    # Verificar si estamos en modo "Espectador LAN"
+    from src.config import config
+    from PyQt5.QtWidgets import QInputDialog, QLineEdit
+    
+    db_path = config.get("db_path", "")
+    is_remote = bool(db_path and (db_path.startswith("\\\\") or db_path.startswith("//") or ":" in db_path and ".db" in db_path and not "Desktop" in db_path))
+    # Una forma más sencilla: Si hay un db_path configurado, asumimos que es remoto/custom
+    if db_path and db_path != "":
+        local_pin = config.get("local_pin", "1234")
+        pin, ok_pin = QInputDialog.getText(None, "Modo Espectador LAN", f"Ingrese PIN de Acceso ({local_pin}):", QLineEdit.Password)
+        if ok_pin and pin == local_pin:
+            config.current_user = {"username": "Espectador LAN", "role": "admin"}
+            main_window.apply_roles()
+            main_window.show()
+            main_window.iniciar_reconstruccion_scifi()
+            result = app.exec_()
+            main_window.close()
+            return result
+        else:
+            QMessageBox.critical(None, "Error", "PIN incorrecto o cancelado.")
+            return 0
+
     perfil_dlg = Paso2Perfil()
     role_selected = None
     
@@ -178,9 +169,6 @@ def launch_app():
                     result = app.exec_()
                     main_window.close()
                     main_window = None
-                    # Si va a reiniciar, aplicar update de GitHub en silencio
-                    if result in (99, 888):
-                        _aplicar_update_silencioso()
                     return result
             else:
                 main_window.apply_roles()
@@ -190,37 +178,9 @@ def launch_app():
                 result = app.exec_()
                 main_window.close()
                 main_window = None
-                # Si va a reiniciar, aplicar update de GitHub en silencio
-                if result in (99, 888):
-                    _aplicar_update_silencioso()
                 return result
     
     return 0
-
-
-def _aplicar_update_silencioso():
-    """
-    Descarga actualizaciones de GitHub en silencio durante el reinicio.
-    No muestra ningun dialogo — solo actualiza los archivos si hay cambios.
-    Se ejecuta ANTES de que la app se relance para que el reinicio ya use
-    la version nueva.
-    """
-    try:
-        from src.config import config
-        if not config.get('github_update_enabled', True):
-            return
-        if not config.get('auto_update_check', True):
-            return
-        from src.updater.github_updater import verificar_actualizaciones_github
-        logging.info("[AUTO-UPDATE] Verificando actualizaciones en GitHub...")
-        res = verificar_actualizaciones_github(dry_run=False)
-        if res.actualizados:
-            logging.info(f"[AUTO-UPDATE] {len(res.actualizados)} archivos actualizados: {res.actualizados}")
-        elif res.errores:
-            logging.debug(f"[AUTO-UPDATE] Sin conexion o sin cambios: {res.errores[0]}")
-    except Exception as e:
-        logging.debug(f"[AUTO-UPDATE] Error silencioso: {e}")
-
 
 def start_hardware_watchdog():
     """ Hilo de vigilancia que asegura que el hardware responda. """
@@ -291,7 +251,7 @@ def start_udp_discovery_server():
                         from src.config import config
                         import hashlib
                         hostname = socket.gethostname()
-                        shared_folder = config.get("shared_folder_name", "cajafacil pro")
+                        shared_folder = config.get("shared_folder_name", "tpv pro 2026")
                         shared_db_path = f"\\\\{hostname}\\{shared_folder}\\punpro.db"
                         server_ip = socket.gethostbyname(hostname)
                         
@@ -313,19 +273,6 @@ def start_udp_discovery_server():
     return thread
 
 if __name__ == "__main__":
-    # Solución para pantallas de distintos tamaños (14", 15", 19", 24", 32")
-    # NO usamos AA_EnableHighDpiScaling porque agranda todo demasiado en laptops.
-    # En su lugar, forzamos escala 1:1 y la app ajusta sus propios tamaños
-    # con _get_ui_scale() basado en la resolución real del monitor.
-    import os
-    os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
-    os.environ["QT_SCALE_FACTOR"] = "1"
-    from PyQt5.QtCore import Qt
-    if hasattr(Qt, 'AA_EnableHighDpiScaling'):
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
-    if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
-        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-
     # 1. Inicializar QApplication de primero para tener un contexto Qt válido para QObjects
     app = QApplication(sys.argv)
     

@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QGridLayout, QGraphicsDropShadowEffect, QPushButton, QScrollArea,
-    QApplication, QSizePolicy
+    QGridLayout, QGraphicsDropShadowEffect, QPushButton, QScrollArea
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QRect
 from PyQt5.QtGui import QColor, QFont, QPainter, QBrush
@@ -11,72 +10,45 @@ try:
 except ImportError:
     from database import db_manager
 
-def _get_ui_scale():
-    """Calcula un factor de escala basado en la resolución real del monitor.
-    - 14" (1366px) → 0.71   tarjetas compactas que caben bien
-    - 15" (1920px) → 1.0    tamaño de referencia
-    - 24" (1920px) → 1.0    igual (píxeles más grandes físicamente)
-    - 32" (2560px) → 1.33   tarjetas más grandes y premium
-    """
-    screen = QApplication.primaryScreen()
-    if screen:
-        w = screen.availableGeometry().width()
-        # Base de referencia: 1920px = factor 1.0
-        return max(0.6, w / 1920.0)
-    return 1.0
-
 class AdminCard(QFrame):
     clicked = pyqtSignal()
     def __init__(self, title, icon_char, color):
         super().__init__()
-        s = _get_ui_scale()
-        # Tamaño mínimo proporcional, expandible
-        self.setMinimumSize(int(200 * s), int(170 * s))
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setFixedSize(300, 240)
         self.color = color
-        border_r = int(18 * s)
-        self._base_style = f"""
+        self.setStyleSheet(f"""
             QFrame {{ 
                 background-color: #ffffff; 
-                border-radius: {border_r}px; 
+                border-radius: 20px; 
                 border: 1px solid #cbd5e1; 
             }}
             QFrame:hover {{ 
-                background-color: #f8fafc; 
+                background-color: #ffffff; 
                 border: 2px solid #6366f1; 
             }}
-        """
-        self.setStyleSheet(self._base_style)
+        """)
         
-        # Sombra sutil premium
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(int(15 * s))
-        shadow.setColor(QColor(0, 0, 0, 25))
-        shadow.setOffset(0, int(4 * s))
-        self.setGraphicsEffect(shadow)
+        # Simplificamos el efecto para evitar lentitud
+        self.shadow = None
         
-        pad = int(20 * s)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(pad, pad, pad, pad)
-        layout.setSpacing(int(10 * s))
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(15)
         
-        icon_size = max(36, int(60 * s))
         self.lbl_icon = QLabel(icon_char)
         self.lbl_icon.setAlignment(Qt.AlignCenter)
-        self.lbl_icon.setStyleSheet(f"font-size: {icon_size}px; color: {color}; background: none; border: none;")
+        self.lbl_icon.setStyleSheet(f"font-size: 70px; color: {color}; background: none; border: none;")
         layout.addWidget(self.lbl_icon)
         
-        title_size = max(12, int(16 * s))
         self.lbl_title = QLabel(title)
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setWordWrap(True)
-        self.lbl_title.setStyleSheet(f"font-size: {title_size}px; font-weight: 800; color: #1e293b; background: none; border: none; letter-spacing: 1px;")
+        self.lbl_title.setStyleSheet("font-size: 18px; font-weight: 800; color: #1e293b; background: none; border: none; letter-spacing: 1px;")
         layout.addWidget(self.lbl_title)
         
-        info_size = max(9, int(11 * s))
         self.lbl_info = QLabel("ACCEDER AL MÓDULO →")
         self.lbl_info.setAlignment(Qt.AlignCenter)
-        self.lbl_info.setStyleSheet(f"font-size: {info_size}px; font-weight: bold; color: {color}; background: none; border: none; letter-spacing: 2px;")
+        self.lbl_info.setStyleSheet(f"font-size: 11px; font-weight: bold; color: {color}; background: none; border: none; letter-spacing: 2px;")
         layout.addWidget(self.lbl_info)
 
     def mousePressEvent(self, event):
@@ -108,52 +80,44 @@ class Admin0Dashboard(QWidget):
             QWidget#ScrollContainer { background: transparent; }
         """)
         
-        s = _get_ui_scale()
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
         # --- TOP NAVIGATION BAR LIGHT ---
         nav_bar = QFrame()
-        nav_h = max(50, int(65 * s))
-        nav_bar.setFixedHeight(nav_h)
+        nav_bar.setFixedHeight(85)
         nav_bar.setStyleSheet("background-color: white; border-bottom: 1px solid #e2e8f0; border-top: 3px solid #6366f1;")
         nav_layout = QHBoxLayout(nav_bar)
-        nav_pad = int(25 * s)
-        nav_layout.setContentsMargins(nav_pad, 0, nav_pad, 0)
+        nav_layout.setContentsMargins(40, 0, 40, 0)
         
-        title_fs = max(16, int(20 * s))
         lbl_welcome = QLabel("🛡️ TPV PRO <span style='color: #6366f1;'>2026</span>")
-        lbl_welcome.setStyleSheet(f"font-size: {title_fs}px; font-weight: 900; color: #0f172a; letter-spacing: 1px;")
+        lbl_welcome.setStyleSheet("font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: 1px;")
         nav_layout.addWidget(lbl_welcome)
         
-        sub_fs = max(10, int(12 * s))
         lbl_subtitle = QLabel("| Dashboard Esencial")
-        lbl_subtitle.setStyleSheet(f"color: #64748b; font-size: {sub_fs}px; font-weight: bold; margin-left: 10px;")
+        lbl_subtitle.setStyleSheet("color: #64748b; font-size: 14px; font-weight: bold; margin-left: 10px;")
         nav_layout.addWidget(lbl_subtitle)
         
         nav_layout.addStretch()
         
         btn_logout = QPushButton("🚪 CERRAR SESIÓN")
         btn_logout.setCursor(Qt.PointingHandCursor)
-        btn_fs = max(10, int(11 * s))
-        btn_pad_v = int(8 * s)
-        btn_pad_h = int(18 * s)
-        btn_logout.setStyleSheet(f"""
-            QPushButton {{
+        btn_logout.setStyleSheet("""
+            QPushButton {
                 background-color: transparent;
                 color: #ef4444;
-                padding: {btn_pad_v}px {btn_pad_h}px;
+                padding: 10px 25px;
                 font-weight: 900;
                 border: 2px solid #ef4444;
                 border-radius: 10px;
-                font-size: {btn_fs}px;
+                font-size: 12px;
                 letter-spacing: 1px;
-            }}
-            QPushButton:hover {{
+            }
+            QPushButton:hover {
                 background-color: #ef4444;
                 color: white;
-            }}
+            }
         """)
         btn_logout.clicked.connect(self.logout)
         nav_layout.addWidget(btn_logout)
@@ -167,52 +131,66 @@ class Admin0Dashboard(QWidget):
         container = QWidget()
         container.setObjectName("ScrollContainer")
         content_layout = QVBoxLayout(container)
-        margin_h = int(30 * s)
-        margin_v = int(20 * s)
-        content_layout.setContentsMargins(margin_h, margin_v, margin_h, margin_v)
-        content_layout.setSpacing(int(20 * s))
+        content_layout.setContentsMargins(60, 40, 60, 40)
+        content_layout.setSpacing(40)
         
-        # Determinar columnas según DPI físico del monitor
-        # 14" FHD ≈ 157 DPI  →  pantalla pequeña  →  3 columnas
-        # 24" FHD ≈  92 DPI  →  pantalla grande   →  4 columnas
-        # Umbral: > 110 DPI = pantalla pequeña (laptop)
-        screen = QApplication.primaryScreen()
-        if screen:
-            dpi = screen.physicalDotsPerInch()
-            cols = 3 if dpi > 110 else 4
-        else:
-            cols = 4
-
-        # Lista de todas las tarjetas con sus datos
-        cards_data = [
-            ("card_inv",   "GESTIÓN DE INVENTARIO",        "📦",  "#0284c7", 2),
-            ("card_ofertas","OFERTAS Y DESCUENTOS",         "🏷️", "#ea580c", 3),
-            ("card_rep",   "REPORTES Y VENTAS",             "📊",  "#059669", 4),
-            ("card_mp",    "PAGOS DIGITALES (MP)",          "📱",  "#0284c7", 10),
-            ("card_etiq",  "ETIQUETAS PARA GONDOLAS",       "🖨️", "#db2777", 8),
-            ("card_z",     "CIERRE Z / AUDITORÍA",          "💰",  "#d97706", 6),
-            ("card_conf",  "CONFIGURACIÓN",                 "⚙️",  "#475569", 5),
-            ("card_hw",    "HARDWARE Y TEST",               "🔌",  "#6366f1", 13),
-            ("card_vd",    "VENTAS DIGITALES\nPANEL FISCAL","🏦",  "#1e3a5f", 14),
-            ("card_upd",   "ACTUALIZACIONES\nPOR RED WiFi/LAN","🔄","#0f172a",15),
-        ]
-
+        # Grid of Cards (Tema Claro Esencial)
         grid = QGridLayout()
-        grid.setSpacing(int(20 * s))
-        # Columnas con peso igual para distribución uniforme
-        for c in range(cols):
-            grid.setColumnStretch(c, 1)
-
-        for idx, (attr, title, icon, color, screen_id) in enumerate(cards_data):
-            row = idx // cols
-            col = idx % cols
-            card = AdminCard(title, icon, color)
-            sid = screen_id
-            card.clicked.connect(lambda checked=False, x=sid: self.request_screen.emit(x))
-            setattr(self, attr, card)
-            grid.addWidget(card, row, col)
-
+        grid.setSpacing(40)
+        
+        # Row 1
+        self.card_inv = AdminCard("GESTIÓN DE INVENTARIO", "📦", "#0284c7")
+        self.card_inv.clicked.connect(lambda: self.request_screen.emit(2))
+        grid.addWidget(self.card_inv, 0, 0)
+        
+        self.card_ofertas = AdminCard("OFERTAS Y DESCUENTOS", "🏷️", "#ea580c")
+        self.card_ofertas.clicked.connect(lambda: self.request_screen.emit(3))
+        grid.addWidget(self.card_ofertas, 0, 1)
+        
+        self.card_rep = AdminCard("REPORTES Y VENTAS", "📊", "#059669")
+        self.card_rep.clicked.connect(lambda: self.request_screen.emit(4))
+        grid.addWidget(self.card_rep, 0, 2)
+        
+        self.card_mp = AdminCard("PAGOS DIGITALES (MP)", "📱", "#0284c7")
+        self.card_mp.clicked.connect(lambda: self.request_screen.emit(10))
+        grid.addWidget(self.card_mp, 0, 3)
+        
+        # Row 2
+        self.card_etiq = AdminCard("ETIQUETAS PARA GONDOLAS", "🖨️", "#db2777")
+        self.card_etiq.clicked.connect(lambda: self.request_screen.emit(8))
+        grid.addWidget(self.card_etiq, 1, 0)
+        
+        self.card_z = AdminCard("CIERRE Z / AUDITORÍA", "💰", "#d97706")
+        self.card_z.clicked.connect(lambda: self.request_screen.emit(6))
+        grid.addWidget(self.card_z, 1, 1)
+        
+        self.card_conf = AdminCard("CONFIGURACIÓN", "⚙️", "#475569")
+        self.card_conf.clicked.connect(lambda: self.request_screen.emit(5))
+        grid.addWidget(self.card_conf, 1, 2)
+        
+        self.card_hw = AdminCard("HARDWARE Y TEST", "🔌", "#6366f1")
+        self.card_hw.clicked.connect(lambda: self.request_screen.emit(13))
+        grid.addWidget(self.card_hw, 1, 3)
+        
         content_layout.addLayout(grid)
+        
+        # Row 3 — Fiscal & Herramientas
+        grid2 = QGridLayout()
+        grid2.setSpacing(40)
+        
+        self.card_vd = AdminCard("VENTAS DIGITALES\nPANEL FISCAL", "🏦", "#1e3a5f")
+        self.card_vd.clicked.connect(lambda: self.request_screen.emit(14))
+        grid2.addWidget(self.card_vd, 0, 0)
+        
+        self.card_upd = AdminCard("ACTUALIZACIONES\nPOR RED WiFi/LAN", "🔄", "#0f172a")
+        self.card_upd.clicked.connect(lambda: self.request_screen.emit(15))
+        grid2.addWidget(self.card_upd, 0, 1)
+        
+        self.card_lan = AdminCard("CONEXIÓN REMOTA\nLAN ESPECTADOR", "📡", "#dc2626")
+        self.card_lan.clicked.connect(lambda: self.request_screen.emit(16))
+        grid2.addWidget(self.card_lan, 0, 2)
+        
+        content_layout.addLayout(grid2)
         
         content_layout.addStretch()
         

@@ -108,16 +108,6 @@ class DialogoProducto(QDialog):
         self._precio_oferta = datos.get('precio_oferta', 0.0) if datos else 0.0
         self.setup_ui(datos)
 
-    def keyPressEvent(self, event):
-        from PyQt5.QtWidgets import QPushButton
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            if isinstance(self.focusWidget(), QPushButton):
-                super().keyPressEvent(event)
-            else:
-                self.focusNextChild()
-        else:
-            super().keyPressEvent(event)
-
     def setup_ui(self, datos):
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(30, 30, 30, 30)
@@ -185,16 +175,19 @@ class DialogoProducto(QDialog):
         else:
             self._actualizar_info_iva()
 
+        self.txt_cat = QLineEdit(datos.get('categoria', 'GENERAL') if datos else 'GENERAL')
+        self.add_field(grid, "Categoría Interna:", self.txt_cat, 2, 0)
+
         self.cmb_uni = QComboBox()
         self.cmb_uni.addItems(['UN','KG','LT','MT','CJ'])
         idx = self.cmb_uni.findText(datos.get('unidad', 'UN') if datos else 'UN')
         if idx >= 0: self.cmb_uni.setCurrentIndex(idx)
-        self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 2, 0)
+        self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 3, 0)
 
         self.chk_pes = QCheckBox("Es pesable / fraccionable (Balanza)")
         self.chk_pes.setChecked(bool(datos.get('es_pesable', 0)) if datos else False)
         self.chk_pes.setStyleSheet("font-weight: bold; color: #1E3A8A; margin-top: 10px;")
-        grid.addWidget(self.chk_pes, 3, 0)
+        grid.addWidget(self.chk_pes, 4, 0)
 
         # Columna 2: Precios y Stock
         price_card = QFrame()
@@ -302,7 +295,7 @@ class DialogoProducto(QDialog):
             'stock_minimo':parse_f(self.txt_min.text()),
             'stock_maximo':parse_f(self.txt_max.text()),
             'departamento':self.cmb_depto.currentText().strip() or None,
-            'categoria': 'GENERAL',
+            'categoria':self.txt_cat.text().strip() or 'GENERAL',
             'unidad':self.cmb_uni.currentText(),
             'es_pesable':1 if self.chk_pes.isChecked() else 0,
         }
@@ -589,9 +582,8 @@ class CatalogoProductos(QWidget):
         q = "SELECT p.*, d.iva AS depto_iva FROM productos p LEFT JOIN departamentos d ON UPPER(p.departamento) = UPPER(d.nombre) WHERE 1=1"
         p = []
         if buscar:
-            for palabra in buscar.split():
-                q += " AND (p.nombre LIKE ? OR CAST(p.id AS TEXT) LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
-                p += [f"%{palabra}%"] * 3
+            q += " AND (p.nombre LIKE ? OR CAST(p.id AS TEXT) LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
+            p += [f"%{buscar}%"] * 3
         if depto:
             q += " AND p.departamento=?"
             p.append(depto)
@@ -894,6 +886,34 @@ class Admin1Inventario(QWidget):
 
         self.stack.setCurrentIndex(0)
         root.addWidget(self.stack)
+        
+        # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
+        from src.config import config
+        from PyQt5.QtCore import QTimer
+        db_path = config.get("db_path", "")
+        if db_path and db_path != "":
+            self.sync_timer = QTimer(self)
+            self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
+            self.sync_timer.start(5000) # Cada 5 segundos
+
+    def sincronizacion_silenciosa(self):
+        if not self.isVisible(): return
+        if self.stack.currentIndex() != 0: return
+        if self.catalogo.txt_buscar.hasFocus(): return
+        
+        bar = self.catalogo.tabla.verticalScrollBar()
+        scroll_pos = bar.value() if bar else 0
+        target_count = self.catalogo.loaded_count # Cuántos registros ya cargó el usuario con scroll
+        
+        self.cargar_datos()
+        
+        # Forzar recarga de las páginas que ya tenía scrolleadas
+        if target_count > 50:
+            while self.catalogo.loaded_count < target_count and self.catalogo.loaded_count < len(self.catalogo.all_rows):
+                self.catalogo._cargar_siguiente_pagina()
+        
+        if bar:
+            bar.setValue(scroll_pos)
 
     def _mostrar_departamentos(self, *args, **kwargs):
         self.toolbar.setVisible(False) # Elimina los botones duplicados de la vista principal
@@ -923,44 +943,18 @@ class Admin1Inventario(QWidget):
                 QMessageBox.warning(self,"Error","No se pudo guardar.")
 
     def _borrar_desde_catalogo(self, *args, **kwargs):
-        rows_to_delete = []
-        for i in range(self.catalogo.tabla.rowCount()):
-            chk = self.catalogo.tabla.item(i, 0)
-            if chk and chk.checkState() == Qt.Checked:
-                rows_to_delete.append(i)
-                
-        if not rows_to_delete:
-            selected_items = self.catalogo.tabla.selectedItems()
-            rows_to_delete = list(set(item.row() for item in selected_items))
-            
-        if not rows_to_delete:
-            QMessageBox.information(self, "Aviso", "Selecciona al menos un producto para eliminar.")
-            return
-            
-        if len(rows_to_delete) == 1:
-            row = rows_to_delete[0]
-            item_id = self.catalogo.tabla.item(row, 1)
-            item_nom = self.catalogo.tabla.item(row, 2)
-            if not item_id or not item_nom: return
-            id_p = item_id.text()
-            nombre = item_nom.text()
-            msg = f"¿Estás seguro de eliminar [{id_p}] {nombre}?"
-        else:
-            msg = f"¿Estás seguro de eliminar los {len(rows_to_delete)} productos seleccionados?"
-            
-        if QMessageBox.question(self, "Confirmar", msg, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
-            ids_to_delete = []
-            for row in rows_to_delete:
-                item_id = self.catalogo.tabla.item(row, 1)
-                if item_id:
-                    ids_to_delete.append(item_id.text())
-                    
-            if ids_to_delete:
-                from src.database import db_manager
-                placeholders = ",".join("?" * len(ids_to_delete))
-                ok = db_manager.execute_non_query(f"DELETE FROM productos WHERE id IN ({placeholders})", tuple(ids_to_delete))
-                if ok:
-                    self.catalogo._cargar_deptos()
-                    self.catalogo.cargar_datos()
-                else:
-                    QMessageBox.warning(self, "Error", "No se pudo eliminar los productos seleccionados.")
+        row = self.catalogo.tabla.currentRow()
+        if row == -1: return
+        item_id = self.catalogo.tabla.item(row, 1)
+        item_nom = self.catalogo.tabla.item(row, 2)
+        if not item_id or not item_nom: return
+        id_p   = item_id.text()
+        nombre = item_nom.text()
+        if QMessageBox.question(self,"Confirmar",f"¿Borrar [{id_p}] {nombre}?",
+                                QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
+            ok = db_manager.execute_non_query("DELETE FROM productos WHERE id=?",(id_p,))
+            if ok:
+                self.catalogo._cargar_deptos()
+                self.catalogo.cargar_datos()
+            else:
+                QMessageBox.warning(self, "Error", "No se pudo eliminar el producto de la base de datos.")

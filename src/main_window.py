@@ -1,5 +1,4 @@
 import sys
-from src.network.api_server import NetworkServer
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QShortcut,
@@ -174,21 +173,8 @@ class ScifiReconstructionOverlay(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CajaFacil Pro - CajaFacil Pro")
-        # Ajustar el tamaño de la ventana al 90 % del área disponible del monitor
-        screen = QApplication.primaryScreen()
-        if screen:
-            geom = screen.availableGeometry()
-            scale = 0.9
-            width = int(geom.width() * scale)
-            height = int(geom.height() * scale)
-            self.resize(width, height)
-            # Centrar la ventana
-            self.move(geom.x() + (geom.width() - width) // 2,
-                      geom.y() + (geom.height() - height) // 2)
-        else:
-            # Fallback si no se puede obtener la pantalla
-            self.resize(1240, 820)
+        self.setWindowTitle("PunPro Elite 2026 - Industrial POS")
+        self.resize(1240, 820)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget); self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -205,15 +191,7 @@ class MainWindow(QMainWindow):
         drawer_manager.reset_all()
         self._init_screens()
         self._init_shortcuts()
-        
-        # Iniciar Servidor API y Broadcaster UDP si usamos DB Local
-        from src.database import db_manager
-        if not db_manager.db_path.startswith("http"):
-            from src.network.api_server import NetworkServer
-            NetworkServer.start()
-
-        # NOTA: apply_roles() NO se llama aquí porque muestra la ventana.
-        # Se llama después del login en launch_app() de main.py.
+        self.apply_roles()
         self._init_global_alarm()
         self._init_security_monitor()
         self._init_update_banner()
@@ -418,6 +396,7 @@ class MainWindow(QMainWindow):
         self.switch_tab(1)
 
     def _init_screens(self):
+        from src.admin.admin16_lan_connection import Admin16LANConnection
         self.pantalla_dashboard = Admin0Dashboard()
         self.pantalla_ventas = Paso5Terminal()
         self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
@@ -439,7 +418,8 @@ class MainWindow(QMainWindow):
             Admin12AIBoss(),             # 12
             Admin13Hardware(),          # 13
             Admin14VentasDigitales(),   # 14
-            Admin15Actualizaciones()    # 15
+            Admin15Actualizaciones(),   # 15
+            Admin16LANConnection()      # 16
         ]
         for s in self.screens:
             self.stacked_widget.addWidget(s)
@@ -561,31 +541,15 @@ class MainWindow(QMainWindow):
             self.overlay_transition.raise_()
             self.overlay_transition.start_animation()
 
-        # Iniciar instalacion de modulos opcionales en segundo plano
-        try:
-            from src.utils.background_installer import BackgroundInstaller
-            from PyQt5.QtCore import QTimer
-            QTimer.singleShot(3000, lambda: BackgroundInstaller.iniciar(self))
-        except Exception:
-            pass
-
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        try:
-            if hasattr(self, 'marco_alerta'):
-                self.marco_alerta.setGeometry(0, 0, self.width(), self.height())
-            if hasattr(self, 'overlay_transition') and self.overlay_transition and not self.overlay_transition.isHidden():
-                self.overlay_transition.setGeometry(0, 0, self.width(), self.height())
-            try:
-                from src.utils.background_installer import BackgroundInstaller
-                BackgroundInstaller.redimensionar(self.width(), self.height())
-            except Exception:
-                pass
-            if hasattr(self, 'btn_flotante') and self.btn_flotante.isVisible():
-                self.btn_flotante.move(self.width() - 100, 80)
-            self._posicionar_banner()
-        except RuntimeError:
-            pass
+        if hasattr(self, 'marco_alerta'):
+            self.marco_alerta.setGeometry(0, 0, self.width(), self.height())
+        if hasattr(self, 'overlay_transition') and self.overlay_transition and not self.overlay_transition.isHidden():
+            self.overlay_transition.setGeometry(0, 0, self.width(), self.height())
+        if self.btn_flotante.isVisible():
+            self.btn_flotante.move(self.width() - 100, 80)
+        self._posicionar_banner()
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
         if visible:

@@ -1,5 +1,5 @@
 # ==============================================================================
-# CajaFacil Pro - REDIRECCIONAMIENTO DE SEGURIDAD
+# PUNPRO ELITE 2026 - REDIRECCIONAMIENTO DE SEGURIDAD
 # ==============================================================================
 # Este archivo legacy ha sido unificado y modularizado para evitar duplicidad.
 # Todo el código de producción y lógica de impresión reside en:

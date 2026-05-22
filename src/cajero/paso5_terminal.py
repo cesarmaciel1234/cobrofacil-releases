@@ -652,21 +652,11 @@ class Paso5Terminal(QWidget):
     def actualizar_red_heartbeat(self):
         try:
             import socket
-            import uuid
             caja_id = config.get("caja_id", 1)
-            try:
-                ip = socket.gethostbyname(socket.gethostname())
-            except:
-                ip = "127.0.0.1"
-            hostname = f"{socket.gethostname().upper()} [{ip}]"
-            hardware_id = f"{uuid.getnode():012X}_{numero_cajero}"
-            
-            
-            numero_cajero = CajeroActivo.get()
-            cajero_name = config.get(f"nombre_cajero_{numero_cajero}", "CAJERO")
+            hostname = socket.gethostname().upper()
             
             # Registrar presencia de este terminal
-            db_manager.registrar_heartbeat(hardware_id, caja_id, hostname, cajero_name)
+            db_manager.registrar_heartbeat(caja_id, hostname)
             
             # Obtener cantidad de terminales activos
             total_activos = db_manager.get_terminales_activos_count()
@@ -684,11 +674,7 @@ class Paso5Terminal(QWidget):
             self.led_status.setStyleSheet("background-color: #EF4444; border-radius: 7px; border: 1.5px solid white;")
             try:
                 caja_id = config.get("caja_id", 1)
-                try:
-                    ip = socket.gethostbyname(socket.gethostname())
-                except:
-                    ip = "127.0.0.1"
-                hostname = f"{socket.gethostname().upper()} [{ip}]"
+                hostname = socket.gethostname().upper()
                 self.lbl_caja_num.setText(f"Caja №:        [{caja_id:02d}]{hostname}  (Desconectado)")
             except Exception:
                 self.lbl_caja_num.setText("Caja №:        Desconectado")
@@ -1016,7 +1002,7 @@ class Paso5Terminal(QWidget):
         status_bar.setStyleSheet("background: #0F172A; border-top: 1px solid #334155;")
         sl = QHBoxLayout(status_bar); sl.setContentsMargins(15, 0, 5, 0)
         
-        self.lbl_version = QLabel("🚀 CajaFacil Pro v2026.0 | TERMINAL ACTIVA")
+        self.lbl_version = QLabel("🚀 PUNPRO ELITE v2026.0 | TERMINAL ACTIVA")
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version); sl.addStretch()
         
@@ -1213,63 +1199,9 @@ class Paso5Terminal(QWidget):
             
         QTimer.singleShot(10000, reset_style) # Duración extendida a 10 segundos
 
-    def _guardar_sesion_cajero(self, numero_cajero):
-        self.sesiones_cajero[numero_cajero] = {
-            'cart': list(self.productos_en_ticket),
-            'total': self.total
-        }
-
-    def _cargar_sesion_cajero(self, numero_cajero):
-        sesion = self.sesiones_cajero[numero_cajero]
-        self.productos_en_ticket = list(sesion['cart'])
-        self.total = sesion['total']
-        
-        self.tabla.setRowCount(0)
-        for i, it in enumerate(self.productos_en_ticket):
-            self.tabla.insertRow(i)
-            # Recrear celdas
-            from PyQt5.QtWidgets import QTableWidgetItem, QPushButton
-            from PyQt5.QtCore import Qt
-            from PyQt5.QtGui import QColor, QFont
-            
-            c0 = QTableWidgetItem(str(it['cant']))
-            c0.setTextAlignment(Qt.AlignCenter)
-            c0.setFont(QFont("Inter", 12, QFont.Bold))
-            
-            c1 = QTableWidgetItem(it['nombre'])
-            if "🔥" in it['nombre'] or "🏷️" in it['nombre']:
-                c1.setForeground(QColor("#059669"))
-            c1.setFont(QFont("Inter", 10, QFont.Bold))
-            
-            c2 = QTableWidgetItem(f"")
-            c2.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            
-            c3 = QTableWidgetItem(f"")
-            c3.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            c3.setFont(QFont("Inter", 11, QFont.Bold))
-            
-            # Botón Eliminar
-            btn_del = QPushButton("🗑️")
-            btn_del.setCursor(Qt.PointingHandCursor)
-            btn_del.setStyleSheet("QPushButton { background: transparent; border: none; font-size: 14px; } QPushButton:hover { background: #fee2e2; border-radius: 4px; }")
-            btn_del.clicked.connect(lambda ch, row=i: self.eliminar_fila(row))
-            
-            self.tabla.setItem(i, 0, c0)
-            self.tabla.setItem(i, 1, c1)
-            self.tabla.setItem(i, 2, c2)
-            self.tabla.setItem(i, 3, c3)
-            self.tabla.setCellWidget(i, 4, btn_del)
-            
-        self.lbl_total.setText(f"")
-
     def bloquear_terminal(self):
-        """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo con su propio carrito."""
+        """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo."""
         from PyQt5.QtWidgets import QGraphicsBlurEffect
-        
-        # 1. Guardar la sesión del cajero ACTUAL antes de bloquear
-        cajero_anterior = CajeroActivo.numero
-        self._guardar_sesion_cajero(cajero_anterior)
-        
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(15)
         self.setGraphicsEffect(blur_effect)
@@ -1279,21 +1211,15 @@ class Paso5Terminal(QWidget):
         
         self.setGraphicsEffect(None)
 
-        # 2. Si el cajero cambió, cargar su carrito independiente
-        cajero_nuevo = CajeroActivo.numero
-        if cajero_anterior != cajero_nuevo:
-            self._cargar_sesion_cajero(cajero_nuevo)
-
         # Actualizar barra de estado según el cajero activo
         self._actualizar_barra_cajero()
-        from PyQt5.QtCore import QTimer
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
     def _actualizar_barra_cajero(self):
         """Refresca el label de la barra de estado con el cajero activo."""
         nombre_str = CajeroActivo.nombre.upper()
         if CajeroActivo.numero == 2:
-            self.lbl_version.setText(f"🟢 {nombre_str}  |  CajaFacil Pro v2026.0")
+            self.lbl_version.setText(f"🟢 {nombre_str}  |  PUNPRO ELITE v2026.0")
             self.lbl_version.setStyleSheet("color: #10b981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {
@@ -1303,7 +1229,7 @@ class Paso5Terminal(QWidget):
                 QPushButton:hover { background: #EF4444; border-color: #EF4444; }
             """)
         else:
-            self.lbl_version.setText(f"🔵 {nombre_str}  |  CajaFacil Pro v2026.0")
+            self.lbl_version.setText(f"🔵 {nombre_str}  |  PUNPRO ELITE v2026.0")
             self.lbl_version.setStyleSheet("color: #60a5fa; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {

@@ -72,3 +72,10 @@ build_installer/
 dist_installer/
 CajaFacil_Pro_Setup.zip
 *.spec
+
+# Backups y pruebas locales de desarrollo
+src_backup/
+temp_restore/
+test_quit.py
+test_run.py
+

@@ -160,6 +160,27 @@ class Admin3Reportes(QWidget):
         super().__init__()
         self.setup_ui()
         self.cargar_datos("Semana Actual")
+        
+        # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
+        from src.config import config
+        from PyQt5.QtCore import QTimer
+        db_path = config.get("db_path", "")
+        if db_path and db_path != "":
+            self.sync_timer = QTimer(self)
+            self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
+            self.sync_timer.start(10000) # Cada 10 segundos para reportes (pesados)
+
+    def sincronizacion_silenciosa(self):
+        if not self.isVisible(): return
+        
+        # Si está en la pestaña de auditoría y tiene algo escrito en el buscador, no actualizar para no borrarlo
+        if self.stack_views.currentIndex() == 1:
+            if self.txt_audit_prod.hasFocus(): return
+            self._buscar_auditoria()
+        else:
+            # Si está en resumen de ventas, recargar la vista actual de forma segura
+            periodo = getattr(self, "current_period", "Semana Actual")
+            self.cargar_datos(periodo)
 
     def setup_ui(self):
         self.setStyleSheet("""
@@ -273,6 +294,7 @@ class Admin3Reportes(QWidget):
         main_layout.addWidget(self.stack_views)
 
     def cargar_datos(self, periodo="Semana Actual"):
+        self.current_period = periodo # Guardar estado para auto-sync
         self.lbl_main_title.setText(f"{periodo.upper()}")
         today = datetime.date.today()
         if periodo == "Semana Actual":
