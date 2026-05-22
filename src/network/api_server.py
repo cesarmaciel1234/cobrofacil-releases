@@ -21,14 +21,10 @@ class APIRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def _auth_check(self):
-        # Validar la llave API con el PIN del admin
         from src.config import config
         api_key = self.headers.get("x-api-key", "")
-        # Obtener el hash del admin real de la base de datos (u omitirlo si es igual al api_key)
-        # Para mantenerlo simple, comparamos con el PIN almacenado
-        from src.database import db_manager
-        res = db_manager.execute_query("SELECT pin FROM usuarios WHERE rol='admin' LIMIT 1")
-        if res and res[0]['pin'] == api_key:
+        local_key = config.get("api_key", "admin123")
+        if api_key == local_key:
             return True
         return False
 
