@@ -64,8 +64,40 @@ class DatabaseManager:
             self.db_path = os.path.join(base_app_path, "punpro.db")
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
-        self._create_tables()
-        self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
+        
+        # Intentar conectar. Si falla (ej. red caída), mostrar alerta y volver a local.
+        import sqlite3
+        try:
+            # Prueba de conexión rápida
+            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn.close()
+            
+            self._create_tables()
+            self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
+        except sqlite3.OperationalError as e:
+            import ctypes
+            import json
+            from src.utils.paths import get_base_path
+            
+            msg = f"No se pudo conectar a la base de datos en red:\n{self.db_path}\n\nEl sistema volverá al Modo Local automáticamente para evitar fallos."
+            ctypes.windll.user32.MessageBoxW(0, msg, "Error de Red LAN", 0x10)
+            
+            base_path = get_base_path()
+            cfg_path = os.path.join(base_path, "config.json")
+            try:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg_data = json.load(f)
+                cfg_data["db_path"] = ""
+                with open(cfg_path, "w", encoding="utf-8") as f:
+                    json.dump(cfg_data, f, indent=4)
+                self.db_path = os.path.join(base_path, cfg_data.get("db_name", "punpro.db"))
+            except:
+                self.db_path = os.path.join(base_path, "punpro.db")
+                
+            self._create_tables()
+            self._migrate_db()
+            
+        self._ensure_test_users()
         self._ensure_test_users()
 
     def _migrate_db(self):
