@@ -98,7 +98,18 @@ class Admin0Dashboard(QWidget):
         lbl_subtitle = QLabel("| Dashboard Esencial")
         lbl_subtitle.setStyleSheet("color: #64748b; font-size: 14px; font-weight: bold; margin-left: 10px;")
         nav_layout.addWidget(lbl_subtitle)
-        
+
+        # Indicador de estado de conexión LAN (Modo Espectador)
+        self.lbl_connection_status = QLabel("🟢 ONLINE")
+        self.lbl_connection_status.setStyleSheet("color: #059669; font-size: 13px; font-weight: bold; margin-left: 20px; border: 1px solid #10b981; padding: 4px 10px; border-radius: 10px; background: #f0fdf4;")
+        self.lbl_connection_status.hide()
+        nav_layout.addWidget(self.lbl_connection_status)
+
+        from PyQt5.QtCore import QTimer
+        self.timer_ping = QTimer(self)
+        self.timer_ping.timeout.connect(self.check_connection)
+        self.timer_ping.start(3000)
+
         nav_layout.addStretch()
         
         btn_logout = QPushButton("🚪 CERRAR SESIÓN")
@@ -206,6 +217,25 @@ class Admin0Dashboard(QWidget):
     def cargar_datos(self):
         """Metodo requerido para refrescar datos al entrar al dashboard."""
         pass
+
+    def check_connection(self):
+        try:
+            from src.config import config
+            # Solo mostrar indicador si es Espectador LAN
+            if config.current_user and config.current_user.get("username") == "Espectador LAN":
+                self.lbl_connection_status.show()
+                # Intentar una consulta rápida (Ping a la BD remota)
+                try:
+                    db_manager.execute_scalar("SELECT 1")
+                    self.lbl_connection_status.setText("🟢 ONLINE (LAN)")
+                    self.lbl_connection_status.setStyleSheet("color: #059669; font-size: 13px; font-weight: bold; margin-left: 20px; border: 1px solid #10b981; padding: 4px 10px; border-radius: 10px; background: #f0fdf4;")
+                except Exception:
+                    self.lbl_connection_status.setText("🔴 OFFLINE (SEÑAL CAÍDA)")
+                    self.lbl_connection_status.setStyleSheet("color: #ef4444; font-size: 13px; font-weight: bold; margin-left: 20px; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 10px; background: #fef2f2;")
+            else:
+                self.lbl_connection_status.hide()
+        except Exception:
+            pass
 
     def logout(self):
         from PyQt5.QtWidgets import QApplication

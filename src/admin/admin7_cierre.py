@@ -322,7 +322,17 @@ class Admin7Cierre(QWidget):
         layout_izq.setContentsMargins(12, 12, 12, 12)
         layout_izq.setSpacing(10)
 
-        lbl_izq_tit = QLabel("📟 CENTRAL DE CAJAS EN RED LOCAL")
+        # Determinar si estamos conectados a una IP remota
+        db_path_str = str(db_manager.db_path).replace("\\", "/")
+        ip_conectada = ""
+        if db_path_str.startswith("//"):
+            partes = db_path_str.split("/")
+            if len(partes) >= 3:
+                ip_conectada = partes[2]
+
+        titulo_central = f"📟 CENTRAL DE CAJAS EN RED LOCAL (IP: {ip_conectada})" if ip_conectada else "📟 CENTRAL DE CAJAS EN RED LOCAL"
+
+        lbl_izq_tit = QLabel(titulo_central)
         lbl_izq_tit.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 13px; border: none; background: transparent;")
         layout_izq.addWidget(lbl_izq_tit)
 

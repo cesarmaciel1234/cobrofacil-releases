@@ -31,15 +31,37 @@ class DatabaseManager:
             if custom_path and os.path.exists(os.path.dirname(custom_path)):
                 self.db_path = custom_path
             else:
-                db_name = config_data.get("db_name")
-                if not db_name:
-                    suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-                    db_name = f"punpro_{suffix}.db"
+                db_name = config_data.get("db_name", "")
+                import re
+                
+                # Expresión regular para validar exactamente 5 caracteres alfanuméricos + .db
+                es_valido = bool(re.match(r"^[A-Z0-9]{5}\.db$", db_name))
+                
+                if not es_valido:
+                    # Generar nuevo nombre seguro de 5 caracteres
+                    nuevo_codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+                    nuevo_db_name = f"{nuevo_codigo}.db"
+                    
+                    viejo_path = os.path.join(base_app_path, db_name) if db_name else os.path.join(base_app_path, "punpro.db")
+                    nuevo_path = os.path.join(base_app_path, nuevo_db_name)
+                    
+                    # Intentar renombrar si el viejo existe
+                    if os.path.exists(viejo_path):
+                        try:
+                            import shutil
+                            shutil.move(viejo_path, nuevo_path)
+                            logger.info(f"Base de datos migrada: {viejo_path} -> {nuevo_path}")
+                        except Exception as e:
+                            logger.error(f"Error renombrando base de datos: {e}")
+                    
+                    db_name = nuevo_db_name
                     config_data["db_name"] = db_name
                     with open(config_path, "w", encoding="utf-8") as fw:
                         json.dump(config_data, fw, indent=4)
+                        
                 self.db_path = os.path.join(base_app_path, db_name)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error inicializando config BD: {e}")
             self.db_path = os.path.join(base_app_path, "punpro.db")
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
@@ -49,7 +71,7 @@ class DatabaseManager:
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         cursor = conn.cursor()
         
         # MODO PRESIÓN EXTREMA (Evitar 'Database is Locked' en 1000+ ventas simultáneas)
@@ -206,7 +228,7 @@ class DatabaseManager:
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
             cursor = conn.cursor()
             
             # 1. USUARIOS
@@ -324,7 +346,7 @@ class DatabaseManager:
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
             cursor = conn.cursor()
             
             # Asegurar tabla usuarios por si acaso
@@ -354,7 +376,7 @@ class DatabaseManager:
     def get_connection(self) -> sqlite3.Connection:
         """Returns a new connection to the database."""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row  # Allow access by column name
             return conn
         except sqlite3.Error as e:
@@ -520,7 +542,7 @@ class DatabaseManager:
         from datetime import datetime
         conn = None
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             

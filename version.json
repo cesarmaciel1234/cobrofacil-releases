@@ -15,7 +15,7 @@
     },
     "config.json": {
       "version": "2027.9",
-      "checksum": "1d846860a8bf9594b6a41b2c2dbd0b12",
+      "checksum": "862c274fd7f62ae60c7c18b4973df40a",
       "channel": "stable"
     },
     "crear_actualizacion_lan.py": {
@@ -95,7 +95,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "5a91732298677dd77d979aeaf70c66dd",
+      "checksum": "35cc059677cb8143145c2fb66b3c92bf",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
@@ -120,7 +120,7 @@
     },
     "src/database.py": {
       "version": "2027.9",
-      "checksum": "0906385dffe2116575ab7fc7e30e5750",
+      "checksum": "1aa9ddc184bfe8131914a6dd7e086931",
       "channel": "stable"
     },
     "src/logger.py": {
@@ -165,7 +165,7 @@
     },
     "src/admin/admin0_dashboard.py": {
       "version": "2027.9",
-      "checksum": "6e052cba0c2f82b96dbc078470a4e003",
+      "checksum": "0b0f3d43d6926a3beffb6e895022e9c2",
       "channel": "stable"
     },
     "src/admin/admin10_mp.py": {
@@ -235,7 +235,7 @@
     },
     "src/admin/admin7_cierre.py": {
       "version": "2027.9",
-      "checksum": "d2da643ba9b581844a78d6234b63c320",
+      "checksum": "30e01413d0d76121c98a432c866fa892",
       "channel": "stable"
     },
     "src/admin/admin9_contabilidad.py": {
