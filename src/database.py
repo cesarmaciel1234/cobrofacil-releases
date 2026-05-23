@@ -77,11 +77,22 @@ class DatabaseManager:
         except sqlite3.OperationalError as e:
             import ctypes
             import json
+            import sys
             from src.utils.paths import get_base_path
             
-            msg = f"No se pudo conectar a la base de datos en red:\n{self.db_path}\n\nEl sistema volverá al Modo Local automáticamente para evitar fallos."
-            ctypes.windll.user32.MessageBoxW(0, msg, "Error de Red LAN", 0x10)
+            msg = (f"🚨 ERROR CRÍTICO DE RED LAN 🚨\n\n"
+                   f"No se pudo contactar con la base de datos en la PC Principal:\n{self.db_path}\n\n"
+                   f"¿Deseas desvincular esta PC de la red y volver a usar tu base de datos local?\n\n"
+                   f"► Elige 'SÍ' para desconectarte de la red permanentemente y cobrar local.\n"
+                   f"► Elige 'NO' para cerrar el programa y volver a intentar cuando la PC Principal esté encendida.")
             
+            # 4 = MB_YESNO, 0x10 = ICONERROR. Retorna 6 si Yes, 7 si No
+            respuesta = ctypes.windll.user32.MessageBoxW(0, msg, "Conexión Perdida", 4 | 0x10)
+            
+            if respuesta == 7: # Eligió NO
+                sys.exit(1)
+                
+            # Eligió SÍ, procedemos a borrar configuración y volver a local
             base_path = get_base_path()
             cfg_path = os.path.join(base_path, "config.json")
             try:

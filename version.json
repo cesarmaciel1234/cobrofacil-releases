@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "a6538b175ec25bce95f046a5ab9eab0e",
+      "checksum": "5c383c4857d23c4ed36325e374c5275b",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
@@ -115,7 +115,7 @@
     },
     "src/database.py": {
       "version": "2027.9",
-      "checksum": "878025a07101ba8dcd622d00b18a89b5",
+      "checksum": "1980a53961096310dca3269549f57c95",
       "channel": "stable"
     },
     "src/logger.py": {
