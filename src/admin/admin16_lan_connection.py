@@ -89,7 +89,8 @@ class Admin16LANConnection(QWidget):
         conf_frame.setStyleSheet("background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 20px;")
         clay = QVBoxLayout(conf_frame)
         
-        lbl_current = QLabel(f"Ruta actual de la base de datos:\n<b>{db_manager.db_path}</b>")
+        lbl_current = QLabel(f"Ruta actual de la base de datos:<br><b>{db_manager.db_path}</b>")
+        lbl_current.setTextFormat(Qt.RichText)
         lbl_current.setStyleSheet("font-size: 13px; color: #0f172a; border: none;")
         clay.addWidget(lbl_current)
         
@@ -100,7 +101,7 @@ class Admin16LANConnection(QWidget):
         self.txt_path = QLineEdit()
         current_config_path = config.get("db_path", "")
         self.txt_path.setText(current_config_path)
-        self.txt_path.setPlaceholderText("\\\\192.168.X.X\\...\\punpro.db")
+        self.txt_path.setPlaceholderText("\\\\192.168.X.X\\...\\A8X2M.db")
         self.txt_path.setStyleSheet("padding: 10px; font-size: 14px; border: 1px solid #94a3b8; border-radius: 5px;")
         clay.addWidget(self.txt_path)
         
@@ -226,7 +227,7 @@ class Admin16LANConnection(QWidget):
             return
             
         if not new_path.endswith(".db"):
-            QMessageBox.warning(self, "Error", "La ruta debe apuntar al archivo de base de datos (.db). Ejemplo: punpro.db")
+            QMessageBox.warning(self, "Error", "La ruta debe apuntar al archivo de base de datos (.db). Ejemplo: A8X2M.db")
             return
             
         reply = QMessageBox.question(self, "Confirmar Cambio", 

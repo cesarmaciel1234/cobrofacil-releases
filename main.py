@@ -252,7 +252,8 @@ def start_udp_discovery_server():
                         import hashlib
                         hostname = socket.gethostname()
                         shared_folder = config.get("shared_folder_name", "tpv pro 2026")
-                        shared_db_path = f"\\\\{hostname}\\{shared_folder}\\punpro.db"
+                        current_db_name = config.get("db_name", "punpro.db")
+                        shared_db_path = f"\\\\{hostname}\\{shared_folder}\\{current_db_name}"
                         server_ip = socket.gethostbyname(hostname)
                         
                         srv_pass = config.get("server_password", "admin")

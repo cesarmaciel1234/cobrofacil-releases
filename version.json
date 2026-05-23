@@ -45,7 +45,7 @@
     },
     "main.py": {
       "version": "2027.9",
-      "checksum": "d801a0a2b1a1c87bc8f9fe1e83bc064c",
+      "checksum": "2a3f29719fed73ca33ea8419ba412fd8",
       "channel": "stable"
     },
     "organize_docs.py": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "e170959a5c98695d6f6e6371970069ce",
+      "checksum": "742f603036527b4fe367d2007d58e3b4",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
@@ -195,7 +195,7 @@
     },
     "src/admin/admin16_lan_connection.py": {
       "version": "2027.9",
-      "checksum": "cd1e38e16d2e411b80f8edf6b57aa87b",
+      "checksum": "65175f155d37857b581117bf16446575",
       "channel": "stable"
     },
     "src/admin/admin1_inventario.py": {
