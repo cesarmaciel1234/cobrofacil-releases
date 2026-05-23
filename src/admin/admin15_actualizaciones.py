@@ -87,14 +87,24 @@ class Admin15Actualizaciones(QWidget):
         self._refrescar_info_local()
 
     def _detectar_si_es_servidor(self) -> bool:
-        """Si el port 38001 se puede abrir localmente, somos el servidor."""
+        """Si el port 38001 se puede abrir localmente, o si ya responde localmente, somos el servidor."""
         try:
             s = socket.socket()
             s.bind(("0.0.0.0", UPDATE_PORT))
             s.close()
             return True
         except:
-            return False
+            pass
+            
+        try:
+            from src.updater.update_client import ping_servidor
+            if ping_servidor("127.0.0.1"):
+                return True
+        except:
+            pass
+            
+        return False
+
 
     # ── UI ──────────────────────────────────────────────────────────────────
     def setup_ui(self):
@@ -480,7 +490,7 @@ class Admin15Actualizaciones(QWidget):
         if self.worker and self.worker.isRunning():
             return
         
-        server_ip   = self.txt_server_ip.text().strip()
+        server_ip   = self.txt_server_ip.text().strip().replace(" ", "")
         canal       = self.cmb_canal.currentText()
         solo_mod    = self.txt_solo_modulo.text().strip()
         solo_lista  = [solo_mod] if solo_mod else None

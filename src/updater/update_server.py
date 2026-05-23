@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 
 # ── Generar / actualizar el manifest ────────────────────────────────────────
-EXCLUDED_DIRS = {'.venv', '__pycache__', '.git', 'build', 'dist', 'reportes', '.gemini'}
+EXCLUDED_DIRS = {'.venv', '__pycache__', '.git', 'build', 'dist', 'reportes', '.gemini', 'temp_restore', 'src_backup'}
 EXCLUDED_EXTS = {'.pyc', '.pyo', '.db', '.log', '.csv'}
 
 def calcular_checksum(path: str) -> str:

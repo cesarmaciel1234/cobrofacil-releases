@@ -9,7 +9,8 @@ EXCLUIR = {
     'backups', 'scratch', 'logs', 'reportes',
     'Etiquetas_Impresas', 'Folletos_Oferta', 'Carteles_Oferta',
     'ofertas_pdf', 'data', 'docs', 'ia planificacion',
-    'utilidades_hardware', 'Instalador_Final',
+    'utilidades_hardware', 'Instalador_Final', 'temp_restore',
+    'src_backup',
 }
 EXCLUIR_EXT = {'.db', '.log', '.pyc', '.spec', '.zip', '.bat',
                '.iss', '.pdf', '.png', '.jpg', '.ico', '.exe',
