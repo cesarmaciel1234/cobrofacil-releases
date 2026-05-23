@@ -1,7 +1,7 @@
 {
   "app_version": "2027.9",
   "channel": "stable",
-  "build_date": "2026-05-22",
+  "build_date": "2026-05-23",
   "modules": {
     ".gitignore": {
       "version": "2027.9",
@@ -20,7 +20,7 @@
     },
     "crear_actualizacion_lan.py": {
       "version": "2027.9",
-      "checksum": "9034b42c8a556b287fffd66fc9c25eee",
+      "checksum": "67a52fb552021179c005e3bcd6bbc1ab",
       "channel": "stable"
     },
     "crear_respaldo_total.py": {
@@ -95,7 +95,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "7ac8c9f7715c59e76a5dfbb12b638945",
+      "checksum": "5a91732298677dd77d979aeaf70c66dd",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
@@ -230,7 +230,7 @@
     },
     "src/admin/admin5_configuracion.py": {
       "version": "2027.9",
-      "checksum": "7d7a797cb65e20e0f867cccd4839317a",
+      "checksum": "1b99d7c034868a22c9270ddf15e4795a",
       "channel": "stable"
     },
     "src/admin/admin7_cierre.py": {
@@ -361,6 +361,11 @@
     "src/ui_components/__init__.py": {
       "version": "2027.9",
       "checksum": "ad0df287ab8911ea88ce62d1754de37b",
+      "channel": "stable"
+    },
+    "src/updater/github_updater.py": {
+      "version": "2027.9",
+      "checksum": "3afcebb086ebd0f08de6a6d43873590c",
       "channel": "stable"
     },
     "src/updater/update_client.py": {
