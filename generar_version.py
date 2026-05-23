@@ -20,7 +20,7 @@ EXCLUIR = {
 EXCLUIR_EXT = {'.db', '.log', '.pyc', '.spec', '.zip', '.bat',
                '.iss', '.pdf', '.png', '.jpg', '.ico', '.exe',
                '.ps1', '.ini', '.json'}
-INCLUIR_JSON = {'version.json', 'config.json'}  # estos sí se incluyen
+INCLUIR_JSON = {'version.json'}  # estos sí se incluyen
 
 def md5(filepath):
     h = hashlib.md5()

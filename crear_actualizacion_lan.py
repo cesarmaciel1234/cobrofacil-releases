@@ -15,7 +15,7 @@ EXCLUIR = {
 EXCLUIR_EXT = {'.db', '.log', '.pyc', '.spec', '.zip', '.bat',
                '.iss', '.pdf', '.png', '.jpg', '.ico', '.exe',
                '.ps1', '.ini', '.json'}
-INCLUIR_JSON = {'version.json', 'config.json'}
+INCLUIR_JSON = {'version.json'}
 
 # Leer version
 with open(os.path.join(BASE, 'version.json'), 'r', encoding='utf-8') as f:

@@ -13,14 +13,9 @@
       "checksum": "444bcb3a3fcf8389296c49467f27e1d6",
       "channel": "stable"
     },
-    "config.json": {
-      "version": "2027.9",
-      "checksum": "862c274fd7f62ae60c7c18b4973df40a",
-      "channel": "stable"
-    },
     "crear_actualizacion_lan.py": {
       "version": "2027.9",
-      "checksum": "67a52fb552021179c005e3bcd6bbc1ab",
+      "checksum": "90544593f8e97a2f1fe334197c11c785",
       "channel": "stable"
     },
     "crear_respaldo_total.py": {
@@ -40,7 +35,7 @@
     },
     "generar_version.py": {
       "version": "2027.9",
-      "checksum": "c68f8ea00f628aab3d23645a5b8f7f0b",
+      "checksum": "8800b83d886783210e783b065337d50c",
       "channel": "stable"
     },
     "init_db.py": {
@@ -95,7 +90,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "35cc059677cb8143145c2fb66b3c92bf",
+      "checksum": "e170959a5c98695d6f6e6371970069ce",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
