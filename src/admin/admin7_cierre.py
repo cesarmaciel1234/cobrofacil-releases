@@ -330,7 +330,7 @@ class Admin7Cierre(QWidget):
             if len(partes) >= 3:
                 ip_conectada = partes[2]
 
-        titulo_central = f"📟 CENTRAL DE CAJAS EN RED LOCAL (IP: {ip_conectada})" if ip_conectada else "📟 CENTRAL DE CAJAS EN RED LOCAL"
+        titulo_central = f"📟 CENTRAL DE CAJAS EN RED LOCAL (HOST: {ip_conectada})" if ip_conectada else f"📟 CENTRAL DE CAJAS EN RED LOCAL [{db_path_str}]"
 
         lbl_izq_tit = QLabel(titulo_central)
         lbl_izq_tit.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 13px; border: none; background: transparent;")

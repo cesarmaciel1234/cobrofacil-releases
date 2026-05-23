@@ -27,8 +27,7 @@ class DatabaseManager:
                 config_data = json.load(f)
                 
             custom_path = config_data.get("db_path", "")
-            # Si el json tiene un path de red y el directorio (Ej: Z:\) es accesible
-            if custom_path and os.path.exists(os.path.dirname(custom_path)):
+            if custom_path:
                 self.db_path = custom_path
             else:
                 db_name = config_data.get("db_name", "")

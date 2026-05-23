@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "742f603036527b4fe367d2007d58e3b4",
+      "checksum": "3f1900063cb3cbf55b6dd501ce766038",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
@@ -115,7 +115,7 @@
     },
     "src/database.py": {
       "version": "2027.9",
-      "checksum": "1aa9ddc184bfe8131914a6dd7e086931",
+      "checksum": "10a128fa74af34b2a5fda33b914e0019",
       "channel": "stable"
     },
     "src/logger.py": {
@@ -230,7 +230,7 @@
     },
     "src/admin/admin7_cierre.py": {
       "version": "2027.9",
-      "checksum": "30e01413d0d76121c98a432c866fa892",
+      "checksum": "7b257ffdd21d449eaaa0a95029bad70d",
       "channel": "stable"
     },
     "src/admin/admin9_contabilidad.py": {
