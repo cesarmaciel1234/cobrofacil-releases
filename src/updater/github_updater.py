@@ -126,6 +126,9 @@ class ResultadoGitHub:
         return bool(self.actualizados)
 
 def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
+    if getattr(sys, 'frozen', False):
+        return verificar_actualizaciones_exe(dry_run, callback_progreso)
+        
     res = ResultadoGitHub()
     
     def progreso(pct, msg):
@@ -239,3 +242,116 @@ def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
             
     progreso(100, f"✅ {len(res.actualizados)} módulos actualizados desde GitHub.")
     return res
+
+def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
+    res = ResultadoGitHub()
+    
+    def progreso(pct, msg):
+        if callback_progreso:
+            callback_progreso(pct, msg)
+            
+    progreso(10, "Buscando actualizaciones globales (Versión Instalada)...")
+    
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    
+    try:
+        req = urllib.request.Request(API_URL, headers={'User-Agent': 'CajaFacil-Updater'})
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
+            data = json.loads(r.read().decode('utf-8'))
+            
+        latest_tag = data.get("tag_name", "")
+        res.version_nueva = latest_tag
+        res.version_local = get_local_version()
+        
+        # Simple string comparison (e.g. v2026.3 > v2026.2)
+        if latest_tag and latest_tag > res.version_local:
+            zip_url = None
+            for asset in data.get("assets", []):
+                if asset["name"].endswith(".zip"):
+                    zip_url = asset["browser_download_url"]
+                    break
+            
+            if not zip_url:
+                res.errores.append("Hay una nueva versión pero no se encontró un archivo .zip instalador adjunto en GitHub Releases.")
+                return res
+                
+            res.actualizados = ["CajaFacil_Pro_Update.zip"]
+            
+            if dry_run:
+                progreso(100, "Nueva versión lista para descargar.")
+                return res
+                
+            progreso(30, "Descargando nuevo sistema (esto puede tardar unos minutos)...")
+            
+            # Realizar la descarga y extracción
+            temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update.zip")
+            temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update_Extract")
+            
+            # Limpiar extract dir previo si existe
+            import shutil
+            if os.path.exists(temp_dir):
+                try: shutil.rmtree(temp_dir)
+                except: pass
+            
+            with urllib.request.urlopen(zip_url, context=ctx) as r, open(temp_zip, 'wb') as f:
+                f.write(r.read())
+                
+            progreso(80, "Extrayendo el nuevo ejecutable...")
+            with zipfile.ZipFile(temp_zip, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+                
+            # Buscar el ejecutable descargado
+            exe_path = None
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    if file.lower().endswith(".exe"):
+                        exe_path = os.path.join(root, file)
+                        break
+                if exe_path: break
+                
+            if not exe_path:
+                res.errores.append("No se encontró ningún archivo .exe dentro del ZIP descargado.")
+                res.actualizados = []
+                return res
+                
+            progreso(90, "Preparando inyección de actualización...")
+            
+            # Guardar versión
+            set_local_version(latest_tag)
+            
+            # Crear script BAT transitorio para reemplazar el EXE
+            import sys
+            current_exe = sys.executable
+            bat_path = os.path.join(os.environ.get('TEMP', 'C:\\'), "actualizar_tpv.bat")
+            
+            bat_content = f'''@echo off
+echo Actualizando TPV Pro... Por favor espere.
+timeout /t 3 /nobreak >nul
+copy /y "{exe_path}" "{current_exe}"
+start "" "{current_exe}"
+del "%~f0"
+'''
+            with open(bat_path, "w", encoding="utf-8") as f:
+                f.write(bat_content)
+                
+            progreso(100, "¡Actualización completada! Reiniciando...")
+            res.necesita_reinicio = True
+            
+            # Lanzar el BAT y salir
+            subprocess.Popen([bat_path], creationflags=subprocess.CREATE_NO_WINDOW)
+            
+            from PyQt5.QtWidgets import QApplication
+            app = QApplication.instance()
+            if app: app.quit()
+            sys.exit(0)
+            
+        else:
+            progreso(100, "✅ Ya estás en la última versión.")
+            return res
+            
+    except Exception as e:
+        res.errores.append(f"Error en la actualización global: {e}")
+        return res
+
