@@ -75,24 +75,37 @@ class DatabaseManager:
             self._create_tables()
             self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
         except sqlite3.OperationalError as e:
-            import ctypes
             import json
             import sys
             from src.utils.paths import get_base_path
+            from PyQt5.QtWidgets import QApplication, QMessageBox
             
+            # Asegurar QApplication para poder mostrar la alerta bonita
+            if not QApplication.instance():
+                app = QApplication(sys.argv)
+            else:
+                app = QApplication.instance()
+                
             msg = (f"🚨 ERROR CRÍTICO DE RED LAN 🚨\n\n"
                    f"No se pudo contactar con la base de datos en la PC Principal:\n{self.db_path}\n\n"
-                   f"¿Deseas desvincular esta PC de la red y volver a usar tu base de datos local?\n\n"
-                   f"► Elige 'SÍ' para desconectarte de la red permanentemente y cobrar local.\n"
-                   f"► Elige 'NO' para cerrar el programa y volver a intentar cuando la PC Principal esté encendida.")
+                   f"¿Qué deseas hacer?\n\n"
+                   f"► COBRO LOCAL: Desvincula esta PC de la red para que puedas cobrar localmente.\n"
+                   f"► SALIR Y REINTENTAR: Cierra el programa para intentar reconectar cuando la PC Principal esté lista.")
+                   
+            box = QMessageBox()
+            box.setIcon(QMessageBox.Critical)
+            box.setWindowTitle("Conexión Perdida")
+            box.setText(msg)
             
-            # 4 = MB_YESNO, 0x10 = ICONERROR. Retorna 6 si Yes, 7 si No
-            respuesta = ctypes.windll.user32.MessageBoxW(0, msg, "Conexión Perdida", 4 | 0x10)
+            btn_local = box.addButton("Cobro Local", QMessageBox.AcceptRole)
+            btn_salir = box.addButton("Salir y Reintentar", QMessageBox.RejectRole)
             
-            if respuesta == 7: # Eligió NO
+            box.exec_()
+            
+            if box.clickedButton() == btn_salir:
                 sys.exit(1)
                 
-            # Eligió SÍ, procedemos a borrar configuración y volver a local
+            # Eligió COBRO LOCAL, procedemos a borrar configuración y volver a local
             base_path = get_base_path()
             cfg_path = os.path.join(base_path, "config.json")
             try:
