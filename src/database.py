@@ -106,13 +106,13 @@ class DatabaseManager:
                 
                 t = threading.Thread(target=check_access)
                 t.start()
-                t.join(timeout=2.0)
+                t.join(timeout=8.0) # Aumentado a 8s porque Windows suele tardar en despertar discos de red
                 
                 if not reachable:
                     raise sqlite3.OperationalError(f"La ruta de red {self.db_path} no responde.")
 
             # Prueba de conexión rápida
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = sqlite3.connect(self.db_path, timeout=15.0)
             conn.close()
             
             self._create_tables()
