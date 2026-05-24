@@ -341,17 +341,27 @@ def start_update_discovery_server():
                     if not _update_service_running:
                         continue
 
-                    server_ip = "127.0.0.1"
+                    server_ip = None
                     try:
                         probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        probe.connect(("8.8.8.8", 80))
+                        probe.connect(addr)
                         server_ip = probe.getsockname()[0]
                         probe.close()
                     except:
                         pass
 
+                    if not server_ip:
+                        try:
+                            server_ip = socket.gethostbyname(socket.gethostname())
+                        except:
+                            server_ip = addr[0]
+
+                    if server_ip == "127.0.0.1":
+                        server_ip = addr[0]
+
                     response = {"update_server": True, "server_ip": server_ip}
                     sock.sendto(json.dumps(response).encode('utf-8'), addr)
+                    print(f"[UPDATER] Responded discovery to {addr[0]} with server_ip={server_ip}")
             except Exception:
                 pass
 

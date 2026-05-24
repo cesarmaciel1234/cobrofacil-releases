@@ -182,6 +182,8 @@ class UpdateHandler(BaseHTTPRequestHandler):
         token = self.headers.get('X-Update-Token', '').strip()
         if token == expected:
             return True
+        client_ip = self.client_address[0] if hasattr(self, 'client_address') else 'desconocido'
+        print(f"[UPDATER SERVER] Acceso no autorizado desde {client_ip}; token recibido='{token}'")
         self._send_error(401, "Token de actualización inválido")
         return False
 

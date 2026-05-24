@@ -48,18 +48,27 @@ def leer_version_local() -> dict:
 # ── Descubrimiento del servidor ───────────────────────────────────────────────
 def descubrir_servidor() -> Optional[str]:
     """Busca el servidor maestro via UDP broadcast en la red local."""
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.settimeout(TIMEOUT_SEG)
-        sock.sendto(b"PUNPRO_UPDATE_DISCOVER", ("<broadcast>", DISCOVER_PORT))
-        data, addr = sock.recvfrom(1024)
-        resp = json.loads(data.decode())
-        if resp.get("update_server"):
-            return addr[0]
-    except:
-        pass
-    return None
+    def _recv_from_broadcast(address):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.settimeout(TIMEOUT_SEG)
+            sock.sendto(b"PUNPRO_UPDATE_DISCOVER", (address, DISCOVER_PORT))
+            data, addr = sock.recvfrom(1024)
+            resp = json.loads(data.decode())
+            if resp.get("update_server"):
+                server_ip = str(resp.get("server_ip", "") or "").strip()
+                if not server_ip or server_ip == "127.0.0.1":
+                    server_ip = addr[0]
+                return server_ip
+        except:
+            pass
+        return None
+
+    server_ip = _recv_from_broadcast("<broadcast>")
+    if not server_ip:
+        server_ip = _recv_from_broadcast("255.255.255.255")
+    return server_ip
 
 def get_update_token() -> str:
     try:
@@ -83,26 +92,38 @@ def _build_request(url: str):
 
 def fetch_json(ip: str, path: str) -> Optional[dict]:
     """Descarga y parsea un JSON del servidor."""
+    import urllib.error
     try:
         import urllib.request
         url = f"http://{ip}:{UPDATE_PORT}{path}"
         req = _build_request(url)
         with urllib.request.urlopen(req, timeout=TIMEOUT_SEG) as r:
             return json.loads(r.read().decode('utf-8'))
-    except:
-        return None
+    except urllib.error.HTTPError as e:
+        print(f"[UPDATER CLIENT] HTTPError {e.code} {e.reason} en {url}")
+    except urllib.error.URLError as e:
+        print(f"[UPDATER CLIENT] URLError {e.reason} en {url}")
+    except Exception as e:
+        print(f"[UPDATER CLIENT] Error descargando JSON {url}: {e}")
+    return None
 
 
 def fetch_bytes(ip: str, rel_path: str) -> Optional[bytes]:
     """Descarga el contenido binario de un archivo del servidor."""
+    import urllib.error
     try:
         import urllib.request
         url = f"http://{ip}:{UPDATE_PORT}/file/{rel_path}"
         req = _build_request(url)
         with urllib.request.urlopen(req, timeout=10) as r:
             return r.read()
-    except:
-        return None
+    except urllib.error.HTTPError as e:
+        print(f"[UPDATER CLIENT] HTTPError {e.code} {e.reason} en {url}")
+    except urllib.error.URLError as e:
+        print(f"[UPDATER CLIENT] URLError {e.reason} en {url}")
+    except Exception as e:
+        print(f"[UPDATER CLIENT] Error descargando bytes {url}: {e}")
+    return None
 
 def ping_servidor(ip: str) -> bool:
     try:

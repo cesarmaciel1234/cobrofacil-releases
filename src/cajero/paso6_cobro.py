@@ -633,8 +633,13 @@ class Paso6Cobro(QDialog):
         self.txt_rec.selectAll()
 
     def finalizar(self, imprimir=True):
+        if getattr(self, '_procesando_pago', False):
+            return
+        
         vals = self._validar_pago()
         if not vals: return
+        
+        self._procesando_pago = True
         p1, p2 = vals
         
         try:
@@ -682,6 +687,7 @@ class Paso6Cobro(QDialog):
 
                 self.accept()
         except Exception as e:
+            self._procesando_pago = False
             QMessageBox.critical(self, "Error", f"Fallo al cobrar: {e}")
 
     def imprimir_ticket(self, id_v, abrir_manual=False):
