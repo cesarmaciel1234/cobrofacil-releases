@@ -61,22 +61,45 @@ def descubrir_servidor() -> Optional[str]:
         pass
     return None
 
+def get_update_token() -> str:
+    try:
+        from src.config import config
+        token = config.get("update_auth_token", "")
+        if not token:
+            token = config.get("server_password", "")
+        return str(token or "").strip()
+    except Exception:
+        return ""
+
+
+def _build_request(url: str):
+    import urllib.request
+    req = urllib.request.Request(url, headers={'User-Agent': 'CajaFacil-Updater'})
+    token = get_update_token()
+    if token:
+        req.add_header('X-Update-Token', token)
+    return req
+
+
 def fetch_json(ip: str, path: str) -> Optional[dict]:
     """Descarga y parsea un JSON del servidor."""
     try:
         import urllib.request
         url = f"http://{ip}:{UPDATE_PORT}{path}"
-        with urllib.request.urlopen(url, timeout=TIMEOUT_SEG) as r:
+        req = _build_request(url)
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SEG) as r:
             return json.loads(r.read().decode('utf-8'))
     except:
         return None
+
 
 def fetch_bytes(ip: str, rel_path: str) -> Optional[bytes]:
     """Descarga el contenido binario de un archivo del servidor."""
     try:
         import urllib.request
         url = f"http://{ip}:{UPDATE_PORT}/file/{rel_path}"
-        with urllib.request.urlopen(url, timeout=10) as r:
+        req = _build_request(url)
+        with urllib.request.urlopen(req, timeout=10) as r:
             return r.read()
     except:
         return None

@@ -22,7 +22,14 @@ class Config:
         "balanza_plu_largo": 4, # 4 dígitos de PLU (Dígitos 3,4,5,6)
         "balanza_val_inicio": 8, # El valor empieza en el dígito 8 (Dígitos 8,9,10,11,12)
         "balanza_val_largo": 5,
-        "balanza_divisor": 1000
+        "balanza_divisor": 1000,
+        "db_path": "",
+        "db_name": "punpro.db",
+        "server_password": "1234",
+        "update_server_ip": "",
+        "update_auth_token": "1234",
+        "shared_folder_name": "tpv pro 2026",
+        "local_pin": "1234"
     }
 
     _instance = None

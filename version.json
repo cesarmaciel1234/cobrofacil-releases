@@ -1,407 +1,530 @@
 {
-  "app_version": "2027.9",
+  "app_version": "2029.9",
   "channel": "stable",
-  "build_date": "2026-05-23",
+  "build_date": "2026-05-23 23:43:51",
+  "server_host": "cesar",
   "modules": {
-    ".gitignore": {
-      "version": "2027.9",
-      "checksum": "809cc98514031db65de055916d92364b",
-      "channel": "stable"
-    },
-    ".install_complete": {
-      "version": "2027.9",
-      "checksum": "444bcb3a3fcf8389296c49467f27e1d6",
-      "channel": "stable"
-    },
     "crear_actualizacion_lan.py": {
       "version": "2027.9",
       "checksum": "90544593f8e97a2f1fe334197c11c785",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 1723
     },
     "crear_respaldo_total.py": {
       "version": "2027.9",
       "checksum": "bbf2e065e2ce41a7d978ebcc6ec76fed",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 7905
     },
     "create_ico.py": {
       "version": "2027.9",
       "checksum": "77b9a559f993b1b2b75c954a9893c702",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 627
     },
     "detect_ports.py": {
       "version": "2027.9",
       "checksum": "8c0baef0ae614bf2a42c2d1c2e96bea8",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 520
     },
     "generar_version.py": {
       "version": "2027.9",
       "checksum": "8800b83d886783210e783b065337d50c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 2440
     },
     "init_db.py": {
       "version": "2027.9",
       "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 2542
     },
     "main.py": {
       "version": "2027.9",
-      "checksum": "1af733094f65e896d045f1a06183bfca",
-      "channel": "stable"
+      "checksum": "facc2404d5e21a3005b48965ad937ef0",
+      "channel": "stable",
+      "size": 14170
     },
     "organize_docs.py": {
       "version": "2027.9",
       "checksum": "f83fbcec9d39e00f3b3c4842b7b9daef",
-      "channel": "stable"
-    },
-    "requirements.txt": {
-      "version": "2027.9",
-      "checksum": "6513ab93d70e7f18e1950800732f47b5",
-      "channel": "stable"
-    },
-    "requirements_core.txt": {
-      "version": "2027.9",
-      "checksum": "f4cdbd6bb1a15e66ca4191983514c072",
-      "channel": "stable"
-    },
-    "requirements_full.txt": {
-      "version": "2027.9",
-      "checksum": "61b9464ade1f03ad9adfc12a7f28579c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 590
     },
     "restaurar_antigravity.py": {
       "version": "2027.9",
       "checksum": "c3c418e0c3fb3c2a3ea4239f9cf1ccff",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 11447
     },
     "rutina_control.py": {
       "version": "2027.9",
       "checksum": "f08b0478d7b391b1fd3f0e083cddff0e",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 2765
     },
     "test_quit.py": {
       "version": "2027.9",
       "checksum": "dffe71bd43030647b925cd5549fcdce9",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 413
     },
     "test_run.py": {
       "version": "2027.9",
       "checksum": "86aa7c816955577c9bb902e446d55e6f",
-      "channel": "stable"
-    },
-    "version.json": {
-      "version": "2027.9",
-      "checksum": "8dd56e1dce8cfd65c7c718a144a632ec",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 220
     },
     "_hacer_respaldo.py": {
       "version": "2027.9",
       "checksum": "e7bef1bdb44c7f3004af025fa605f332",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 5810
     },
     "installer/installer_build.py": {
       "version": "2027.9",
       "checksum": "d3bc3b287f8d9501ede46b2066d05c3f",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 23738
     },
-    "installer/README.md": {
-      "version": "2027.9",
-      "checksum": "58e029168f630aaba190f94feef46250",
-      "channel": "stable"
+    "scratch/build_master.py": {
+      "version": "1.0.0",
+      "checksum": "2de34e95aba87b9c368c5967fb213e0c",
+      "channel": "stable",
+      "size": 14313
+    },
+    "scratch/check_compile.py": {
+      "version": "1.0.0",
+      "checksum": "9fa2a867ea0fbe2a302e9f246aea6ed8",
+      "channel": "stable",
+      "size": 1039
+    },
+    "scratch/check_dbs.py": {
+      "version": "1.0.0",
+      "checksum": "ad234f1802618996b27a4a55217ae5ce",
+      "channel": "stable",
+      "size": 832
+    },
+    "scratch/check_drawer.py": {
+      "version": "1.0.0",
+      "checksum": "43db3c0c10ee1ebb1df757b67b60f7b4",
+      "channel": "stable",
+      "size": 870
+    },
+    "scratch/check_drawer_diagnose.py": {
+      "version": "1.0.0",
+      "checksum": "7daa8eb6c16f114be0ac06079b539edf",
+      "channel": "stable",
+      "size": 4486
+    },
+    "scratch/check_printer.py": {
+      "version": "1.0.0",
+      "checksum": "4700cc4e59c38d2b063aaf0a23d1f1a0",
+      "channel": "stable",
+      "size": 1197
+    },
+    "scratch/crear_zip.py": {
+      "version": "1.0.0",
+      "checksum": "7a696b9ff85f37bc3170fa8962e11930",
+      "channel": "stable",
+      "size": 2148
+    },
+    "scratch/diagnose_printers.py": {
+      "version": "1.0.0",
+      "checksum": "92dca83ee172c81304b4c3388bc885ca",
+      "channel": "stable",
+      "size": 3079
+    },
+    "scratch/find_null_bytes.py": {
+      "version": "1.0.0",
+      "checksum": "92bfe6ad1e91c30bc5a47b9e75d4123a",
+      "channel": "stable",
+      "size": 794
+    },
+    "scratch/inspect_images.py": {
+      "version": "1.0.0",
+      "checksum": "c00b8cd17b56b014dda335fe4047ac78",
+      "channel": "stable",
+      "size": 406
+    },
+    "scratch/installer_build.py": {
+      "version": "1.0.0",
+      "checksum": "9a668c3467fb362f3d3dfd9f993fc611",
+      "channel": "stable",
+      "size": 11930
+    },
+    "scratch/renombrar_app.py": {
+      "version": "1.0.0",
+      "checksum": "58b4324524be4af4969de6ec8005ba75",
+      "channel": "stable",
+      "size": 2482
+    },
+    "scratch/test_print.py": {
+      "version": "1.0.0",
+      "checksum": "1e18a9300442ede2e5f0765309beb98a",
+      "channel": "stable",
+      "size": 5009
+    },
+    "scratch/zip_catorta.py": {
+      "version": "1.0.0",
+      "checksum": "0a666b3d0bb4949ee4297c8a5a4d4a18",
+      "channel": "stable",
+      "size": 2027
     },
     "src/config.py": {
       "version": "2027.9",
-      "checksum": "914e41152706ecc5af05f9915eddb18f",
-      "channel": "stable"
+      "checksum": "5eae509a27f5d28898e83415a040780a",
+      "channel": "stable",
+      "size": 2645
     },
     "src/database.py": {
       "version": "2027.9",
-      "checksum": "fd05eb892c2b88edbd719d7bbacd3a39",
-      "channel": "stable"
+      "checksum": "e02453912a1df0673978d687e34f546a",
+      "channel": "stable",
+      "size": 34170
     },
     "src/logger.py": {
       "version": "2027.9",
       "checksum": "d82cb2f9bfd4d4adcf63287ba7383da3",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 1241
     },
     "src/main_window.py": {
       "version": "2027.9",
-      "checksum": "2c6b0d534e4321590733b3327cb1a136",
-      "channel": "stable"
+      "checksum": "aa847d684877c83afa12611ad2f537e4",
+      "channel": "stable",
+      "size": 30302
+    },
+    "src/offline_sync.py": {
+      "version": "1.0.0",
+      "checksum": "8d9ad0782540aa82c0dd559cf0a01f03",
+      "channel": "stable",
+      "size": 5464
     },
     "src/paso1_licencia.py": {
       "version": "2027.9",
-      "checksum": "77368c04e3bb4e8b725b667e21b25422",
-      "channel": "stable"
+      "checksum": "b85431a07d163f8cfc2a60b2011d1178",
+      "channel": "stable",
+      "size": 6881
     },
     "src/paso2_perfil.py": {
       "version": "2027.9",
       "checksum": "f9f6d476aaea34666c813b47a96de14a",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 8814
     },
     "src/paso3_login.py": {
       "version": "2027.9",
-      "checksum": "7a3db7620f93b2c3d71cfeb33f0222ad",
-      "channel": "stable"
+      "checksum": "1786591a622a2ba53501a91a04384762",
+      "channel": "stable",
+      "size": 10814
     },
     "src/paso4_apertura.py": {
       "version": "2027.9",
       "checksum": "728ef806fd3f5c75b7d701b5b26e54ad",
-      "channel": "stable"
-    },
-    "src/styles.qss": {
-      "version": "2027.9",
-      "checksum": "32a1887214cde7fc21d757d0fea7fe38",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 6628
     },
     "src/__init__.py": {
       "version": "2027.9",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 0
     },
     "src/admin/admin0_dashboard.py": {
       "version": "2027.9",
-      "checksum": "0b0f3d43d6926a3beffb6e895022e9c2",
-      "channel": "stable"
+      "checksum": "2d58c41019505d4a85c59441abbc24d6",
+      "channel": "stable",
+      "size": 12017
     },
     "src/admin/admin10_mp.py": {
       "version": "2027.9",
       "checksum": "5b3ca8787651484832e73007db55fe13",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 39981
     },
     "src/admin/admin11_proveedores.py": {
       "version": "2027.9",
       "checksum": "dcde349aab188feb2f120fa643476d0c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 7586
     },
     "src/admin/admin12_ai_boss.py": {
       "version": "2027.9",
       "checksum": "8ec1219d1bce9e6de9ad0daa683cc0d9",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 7799
     },
     "src/admin/admin13_hardware.py": {
       "version": "2027.9",
       "checksum": "8c427d505c3a2fc689917710c890c4da",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 32233
     },
     "src/admin/admin14_ventas_digitales.py": {
       "version": "2027.9",
       "checksum": "2ee6f52a7f6acfac577920a98b839f6c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 27062
     },
     "src/admin/admin15_actualizaciones.py": {
       "version": "2027.9",
-      "checksum": "a24cff569087b9ae1d143111028246a2",
-      "channel": "stable"
+      "checksum": "eacefa76d0aa41eb96e16aaec08aa1db",
+      "channel": "stable",
+      "size": 25501
     },
     "src/admin/admin16_lan_connection.py": {
       "version": "2027.9",
-      "checksum": "65175f155d37857b581117bf16446575",
-      "channel": "stable"
+      "checksum": "1c69ce0b6b290309ab18dfc7a563e3d2",
+      "channel": "stable",
+      "size": 14661
     },
     "src/admin/admin1_inventario.py": {
       "version": "2027.9",
       "checksum": "f0d3c8626d88451775552e2e31e2b39a",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 42314
     },
     "src/admin/admin2_masivo.py": {
       "version": "2027.9",
       "checksum": "ab541b40561246eec504250dd3933ca5",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 2639
     },
     "src/admin/admin2_ofertas.py": {
       "version": "2027.9",
       "checksum": "3f478243c9aba439fb72071aee5d5646",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 58282
     },
     "src/admin/admin3_reportes.py": {
       "version": "2027.9",
       "checksum": "eedd116a935c2631fc9996149d520b69",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 46864
     },
     "src/admin/admin4_gastos.py": {
       "version": "2027.9",
       "checksum": "34e9cdda2bf5bc15d795e237d95898c9",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 7553
     },
     "src/admin/admin5_configuracion.py": {
       "version": "2027.9",
       "checksum": "1b99d7c034868a22c9270ddf15e4795a",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 81258
     },
     "src/admin/admin7_cierre.py": {
       "version": "2027.9",
       "checksum": "7b257ffdd21d449eaaa0a95029bad70d",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 80461
     },
     "src/admin/admin9_contabilidad.py": {
       "version": "2027.9",
       "checksum": "ac651f6f2c46f4a1d2c0fe2c0b83ef12",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 17859
     },
     "src/admin/admin_etiquetas.py": {
       "version": "2027.9",
       "checksum": "60a9b5787016f6c1b196b09bd6b6669d",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 743
     },
     "src/admin/admin_importexport.py": {
       "version": "2027.9",
       "checksum": "cfd47c00ef51c89a44cb753940d0c034",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 11215
     },
     "src/admin/mp_explosion.py": {
       "version": "2027.9",
       "checksum": "c0e8f2194f57ac3a44b49e22f797b7ab",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 6879
     },
     "src/admin/__init__.py": {
       "version": "2027.9",
       "checksum": "72fb7e1a307981d24d165410b5b94d61",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 77
     },
     "src/admin/etiquetas/admin_etiquetas.py": {
       "version": "2027.9",
       "checksum": "2c436af2d9f5cbc1b319ce8b52b66918",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 25934
     },
     "src/admin/etiquetas/__init__.py": {
       "version": "2027.9",
       "checksum": "6b4e4b486573893278a34254c442486c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 34
     },
     "src/cajero/carlis_list.py": {
       "version": "2027.9",
       "checksum": "e82c2f8bfbbef96f0052c0848c76d98b",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 5134
     },
     "src/cajero/paso5_terminal.py": {
       "version": "2027.9",
       "checksum": "0d5ba246dd4effe530bb6dbb3d2ab3d7",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 98705
     },
     "src/cajero/paso6_cobro.py": {
       "version": "2027.9",
       "checksum": "7d48cdfff987564084d11c5772cecab6",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 34931
     },
     "src/cajero/paso7_cierre.py": {
       "version": "2027.9",
       "checksum": "b025209dc325b23c6d5415d13ad1d7b9",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 21330
     },
     "src/cajero/paso8_historial.py": {
       "version": "2027.9",
       "checksum": "4e22ad072a7bc61644c0c72985f3ea3b",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 29764
     },
     "src/cajero/__init__.py": {
       "version": "2027.9",
       "checksum": "72fb7e1a307981d24d165410b5b94d61",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 77
     },
     "src/hardware/cash_drawer.py": {
       "version": "2027.9",
       "checksum": "4c98dcb5ba8d45f08c3a549bf00fac12",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 6789
     },
     "src/hardware/printer.py": {
       "version": "2027.9",
       "checksum": "30003b1eefa211a48730823a3a9d84c5",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 31896
     },
     "src/services/caja_service.py": {
       "version": "2027.9",
       "checksum": "803c62eb99e9c9262d9bfaeaf83328a6",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 1980
     },
     "src/services/facturacion_service.py": {
       "version": "2027.9",
       "checksum": "f0e2848b14eeb34d2159e989c936e9b4",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 18458
     },
     "src/services/etiquetas/renderer.py": {
       "version": "2027.9",
       "checksum": "6961e34bbefb7f7dcc3d45c6d683583b",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 57126
     },
     "src/services/etiquetas/__init__.py": {
       "version": "2027.9",
       "checksum": "01ec7a844da3c81515cc700b4ec850e5",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 25
     },
     "src/ui_components/alerts.py": {
       "version": "2027.9",
       "checksum": "e395003a9bee35305d10cf63ea250b47",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 2520
     },
     "src/ui_components/apertura_caja.py": {
       "version": "2027.9",
       "checksum": "f404e4d03f77935469952b26d9e3549e",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 4215
     },
     "src/ui_components/cobro_industrial.py": {
       "version": "2027.9",
       "checksum": "eb57f916924d08d4e776c72737e4e009",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 7876
     },
     "src/ui_components/modificadores.py": {
       "version": "2027.9",
       "checksum": "32e059abf43475b1d2432b8f94e105b4",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 8189
     },
     "src/ui_components/toast.py": {
       "version": "2027.9",
       "checksum": "76c9aa570258bbc3b67209bc14f91170",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 3515
     },
     "src/ui_components/__init__.py": {
       "version": "2027.9",
       "checksum": "ad0df287ab8911ea88ce62d1754de37b",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 72
     },
     "src/updater/github_updater.py": {
       "version": "2027.9",
       "checksum": "3afcebb086ebd0f08de6a6d43873590c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 9377
     },
     "src/updater/update_client.py": {
       "version": "2027.9",
-      "checksum": "8bbbcaf482a1fb962b10981e99e566ef",
-      "channel": "stable"
+      "checksum": "31fe0ea4a3085da3d196b056c4b148dc",
+      "channel": "stable",
+      "size": 10310
     },
     "src/updater/update_server.py": {
       "version": "2027.9",
-      "checksum": "b8ef3cf413580836283d6a3de146779a",
-      "channel": "stable"
+      "checksum": "38fd78681e37b575ed0b7a0c94802bd6",
+      "channel": "stable",
+      "size": 8883
     },
     "src/updater/__init__.py": {
       "version": "2027.9",
       "checksum": "0065b065a818d99789bb015a046b1efb",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 18
     },
     "src/utils/floating_widgets.py": {
       "version": "2027.9",
       "checksum": "1d71ce78aadac6574dc834e56e511ca1",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 3189
     },
     "src/utils/parser.py": {
       "version": "2027.9",
       "checksum": "a00af4e95ae1ad346c6edee66ddbe2f0",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 1646
     },
     "src/utils/particle_transition.py": {
       "version": "2027.9",
       "checksum": "477e7608db5a5b9c84e038010a4fdfe5",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 8308
     },
     "src/utils/paths.py": {
       "version": "2027.9",
       "checksum": "b5af19524686c006d0473f7047ef9b44",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 1329
     },
     "src/utils/__init__.py": {
       "version": "2027.9",
       "checksum": "09cd6059dcf2528bde1abca862e0da4c",
-      "channel": "stable"
+      "channel": "stable",
+      "size": 16
     }
   }
 }

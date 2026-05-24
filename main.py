@@ -117,18 +117,22 @@ def launch_app():
             "El sistema funcionará en modo simulación.")
 
     # --- FLUJO DE VENTANAS ---
-    # Verificar si estamos en modo "Espectador LAN"
+    # Verificar si estamos en modo "Espectador LAN" basado en la configuración real de la base de datos.
     from src.config import config
     from PyQt5.QtWidgets import QInputDialog, QLineEdit
     
-    db_path = config.get("db_path", "")
-    is_remote = bool(db_path and (db_path.startswith("\\\\") or db_path.startswith("//") or ":" in db_path and ".db" in db_path and not "Desktop" in db_path))
-    # Una forma más sencilla: Si hay un db_path configurado, asumimos que es remoto/custom
-    if db_path and db_path != "":
+    db_path = getattr(db_manager, 'db_path', "") or ""
+    is_remote = not getattr(db_manager, 'is_master', True)
+    if is_remote:
         local_pin = config.get("local_pin", "1234")
-        pin, ok_pin = QInputDialog.getText(None, "Modo Espectador LAN", f"Ingrese PIN de Acceso ({local_pin}):", QLineEdit.Password)
+        pin, ok_pin = QInputDialog.getText(
+            None,
+            "Modo Espectador LAN - PIN",
+            f"Estás ingresando en modo LAN remoto.\n\nPC maestra: {db_path}\n\nIngrese PIN de acceso:",
+            QLineEdit.Password
+        )
         if ok_pin and pin == local_pin:
-            config.current_user = {"username": "Espectador LAN", "role": "admin"}
+            config.current_user = {"username": "Espectador LAN", "role": "admin", "lan_mode": True}
             main_window.apply_roles()
             main_window.show()
             main_window.iniciar_reconstruccion_scifi()
@@ -210,19 +214,39 @@ def start_hardware_watchdog():
     thread.start()
     return thread
 
+_update_service_running = False
+
 def start_update_server():
     """
-    Intenta iniciar el servidor de actualizaciones LAN en segundo plano.
-    Solo se activa si el puerto 38001 está libre (= esta es la PC maestra).
-    Las PCs cliente fallan silenciosamente y no inician servidor.
+    Monitorea la configuración y mantiene el servidor de actualizaciones activo
+    solamente si esta PC es la maestra local.
     """
-    def _iniciar():
+    def manager_loop():
+        global _update_service_running
         try:
-            from src.updater.update_server import iniciar_servidor
-            iniciar_servidor()
+            from src.updater.update_server import iniciar_servidor, detener_servidor
+            from src.database import db_manager
         except Exception as e:
-            logging.debug(f"[UPDATER] No iniciado como servidor: {e}")
-    thread = threading.Thread(target=_iniciar, daemon=True)
+            logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
+            return
+
+        while True:
+            try:
+                is_master = getattr(db_manager, 'is_master', False)
+                db_path = getattr(db_manager, 'db_path', "") or ""
+                if is_master and db_path and os.path.exists(db_path):
+                    if not _update_service_running:
+                        if iniciar_servidor():
+                            _update_service_running = True
+                else:
+                    if _update_service_running:
+                        detener_servidor()
+                        _update_service_running = False
+            except Exception as e:
+                logging.debug(f"[UPDATER] Service manager error: {e}")
+            time.sleep(5)
+
+    thread = threading.Thread(target=manager_loop, daemon=True)
     thread.start()
     return thread
 
@@ -250,6 +274,12 @@ def start_udp_discovery_server():
             try:
                 data, addr = sock.recvfrom(1024)
                 if data == b"PUNPRO_DISCOVER":
+                    if not getattr(db_manager, 'is_master', False):
+                        continue
+
+                    if not os.path.exists(db_manager.db_path):
+                        continue
+
                     base_path = get_base_path().lower()
                     db_path = db_manager.db_path.lower()
                     is_local = base_path in db_path or not db_path or db_path == "punpro.db"
@@ -270,12 +300,61 @@ def start_udp_discovery_server():
                             "hostname": hostname,
                             "server_ip": server_ip,
                             "db_path": shared_db_path,
-                            "pass_hash": srv_pass_hash
+                            "pass_hash": srv_pass_hash,
+                            "mode": "master"
                         }
                         sock.sendto(json.dumps(response).encode('utf-8'), addr)
             except Exception:
                 pass
                 
+    thread = threading.Thread(target=server_loop, daemon=True)
+    thread.start()
+    return thread
+
+
+def start_update_discovery_server():
+    """Responde a las consultas de actualización LAN para clientes."""
+    def server_loop():
+        import socket
+        import json
+        import logging
+        try:
+            from src.database import db_manager
+        except ImportError:
+            return
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(('', 38002))
+        except Exception as e:
+            logging.error(f"UDP Update Discovery Bind Error: {e}")
+            return
+
+        while True:
+            try:
+                data, addr = sock.recvfrom(1024)
+                if data == b"PUNPRO_UPDATE_DISCOVER":
+                    if not getattr(db_manager, 'is_master', False):
+                        continue
+                    if not _update_service_running:
+                        continue
+
+                    server_ip = "127.0.0.1"
+                    try:
+                        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        probe.connect(("8.8.8.8", 80))
+                        server_ip = probe.getsockname()[0]
+                        probe.close()
+                    except:
+                        pass
+
+                    response = {"update_server": True, "server_ip": server_ip}
+                    sock.sendto(json.dumps(response).encode('utf-8'), addr)
+            except Exception:
+                pass
+
     thread = threading.Thread(target=server_loop, daemon=True)
     thread.start()
     return thread
@@ -291,6 +370,7 @@ if __name__ == "__main__":
     start_hardware_watchdog()
     start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
     start_udp_discovery_server()    # Servidor de descubrimiento automático en red
+    start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
     while True:
         exit_code = launch_app()

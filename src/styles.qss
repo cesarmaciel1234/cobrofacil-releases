@@ -1,106 +1,137 @@
 /* 
-   PUNPRO BUSINESS EDITION - ELITE DARK THEME (RESTORED)
-   Estilo industrial de alto contraste para máxima productividad.
+   PUNPRO BUSINESS EDITION - ELITE MODERN THEME 
+   Estilo industrial de alto contraste, moderno y con acabados premium.
 */
 
 * {
-    font-family: 'Segoe UI', 'Consolas', sans-serif;
+    font-family: 'Segoe UI', 'Inter', 'Roboto', sans-serif;
 }
 
 QMainWindow, QDialog {
-    background-color: #0F172A; /* Azul noche profundo */
-    color: #FFFFFF;
+    background-color: #0B1120; /* Darker modern background */
+    color: #F8FAFC;
 }
 
-/* Sidebar Elite (Dark) */
+/* Sidebar Elite (Premium Dark) */
 #SidebarFrame {
-    background-color: #0B0E14;
-    border-right: 1px solid #1E293B;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #090E17, stop:1 #0B1120);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #SidebarTitle {
     color: #FFFFFF;
-    font-size: 24px;
-    font-weight: bold;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 1px;
 }
 
 #SidebarButton {
     background-color: transparent;
     color: #94A3B8;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 14px;
+    font-weight: 600;
     text-align: left;
-    padding-left: 15px;
+    padding: 12px 18px;
+    margin: 4px 8px;
 }
 
 #SidebarButton:hover {
-    background-color: #1E293B;
-    color: #FFFFFF;
+    background-color: rgba(56, 189, 248, 0.1);
+    color: #E0F2FE;
 }
 
 #SidebarButton:checked {
-    background-color: #1E293B;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(56, 189, 248, 0.2), stop:1 transparent);
     color: #38BDF8;
     border-left: 4px solid #38BDF8;
+    font-weight: bold;
 }
 
-/* Pantalla Cajero (Modo Terminal Negro) */
+/* Pantalla Cajero (Modo Terminal Sci-Fi) */
 #TerminalPOS {
-    background-color: #000000;
+    background-color: #050505;
 }
 
 #TerminalPOS QLabel {
-    color: #FFFFFF;
+    color: #F1F5F9;
 }
 
-/* Tablas Estilo Industrial */
+/* Tablas Estilo Industrial Premium */
 QTableWidget {
-    background-color: #000000;
-    color: #FFFFFF;
-    gridline-color: #333333;
-    border: 1px solid #333333;
+    background-color: #0F172A;
+    color: #E2E8F0;
+    gridline-color: #1E293B;
+    border: 1px solid #1E293B;
+    border-radius: 8px;
+    selection-background-color: #0284C7;
+    selection-color: #FFFFFF;
 }
 
 QHeaderView::section {
-    background-color: #111111;
-    color: #AAAAAA;
+    background-color: #1E293B;
+    color: #94A3B8;
+    padding: 12px;
+    border: none;
+    border-bottom: 2px solid #334155;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+QTableWidget::item {
     padding: 8px;
-    border: 1px solid #333333;
+    border-bottom: 1px solid #1E293B;
 }
 
-QTableWidget::item:selected {
-    background-color: #008B8B;
-    color: #FFFFFF;
-}
-
-/* Inputs Oscuros */
+/* Inputs Premium Oscuros */
 QLineEdit {
-    background-color: #000000;
-    border: 1px solid #444;
-    color: #FFFFFF;
-    padding: 5px;
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #F8FAFC;
+    padding: 8px 12px;
+    font-size: 14px;
 }
 
-/* BOTON COBRAR (OVERRIDE) - Mantener el estilo de la imagen del usuario */
-/* La ventana de cobro se maneja internamente en su clase para no mezclarse */
+QLineEdit:focus {
+    border: 1px solid #38BDF8;
+    background-color: rgba(15, 23, 42, 0.8);
+}
 
 /* Estilos de Dashboard */
 #MainCard {
     background-color: #1E293B;
-    border: 1px solid #334155;
-    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
 }
 
-/* 
-   ESPECIFICO PARA PANTALLA DE COBRO (PROTECCION TEMA CLARO)
-   Esto asegura que la ventana de cobro NO se vuelva negra.
-*/
+/* Ventana Cobro (Protección Clara Moderna) */
 QDialog#VentanaCobroClara {
-    background-color: #F0F0F0;
-    color: #000000;
+    background-color: #F8FAFC;
+    color: #0F172A;
 }
 
 QDialog#VentanaCobroClara QLabel {
-    color: #000088;
+    color: #1E3A8A;
+    font-weight: bold;
 }
+
+/* Scrollbars Premium */
+QScrollBar:vertical {
+    border: none;
+    background: #0F172A;
+    width: 10px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical {
+    background: #334155;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #475569;
+}
+

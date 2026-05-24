@@ -14,36 +14,55 @@ class DatabaseManager:
             cls._instance._init_db()
         return cls._instance
 
+    def _normalize_db_path(self, path: str, base_app_path: str) -> str:
+        """Normaliza rutas de base de datos con soporte para UNC, unidades mapeadas y variables de entorno."""
+        path = str(path or "").strip()
+        if not path:
+            return ""
+
+        path = os.path.expandvars(path)
+        path = path.replace("/", os.sep)
+
+        if path.startswith("\\\\") or path.startswith("//"):
+            return os.path.normpath(path)
+
+        if os.path.isabs(path):
+            return os.path.normpath(path)
+
+        return os.path.normpath(os.path.join(base_app_path, path))
+
     def _init_db(self):
         # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
         import json
         import random
         import string
+        import re
         from src.utils.paths import get_base_path
         base_app_path = get_base_path()
         config_path = os.path.join(base_app_path, "config.json")
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
-                
-            custom_path = config_data.get("db_path", "")
+
+            custom_path = str(config_data.get("db_path", "") or "").strip()
             if custom_path:
-                self.db_path = custom_path
+                self.db_path = self._normalize_db_path(custom_path, base_app_path)
+                self.is_master = False
             else:
-                db_name = config_data.get("db_name", "")
-                import re
-                
+                self.is_master = True
+                db_name = str(config_data.get("db_name", "") or "").strip() or "punpro.db"
+
                 # Expresión regular para validar exactamente 5 caracteres alfanuméricos + .db
                 es_valido = bool(re.match(r"^[A-Z0-9]{5}\.db$", db_name))
-                
+
                 if not es_valido:
                     # Generar nuevo nombre seguro de 5 caracteres
                     nuevo_codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
                     nuevo_db_name = f"{nuevo_codigo}.db"
-                    
-                    viejo_path = os.path.join(base_app_path, db_name) if db_name else os.path.join(base_app_path, "punpro.db")
+
+                    viejo_path = os.path.join(base_app_path, db_name)
                     nuevo_path = os.path.join(base_app_path, nuevo_db_name)
-                    
+
                     # Intentar renombrar si el viejo existe
                     if os.path.exists(viejo_path):
                         try:
@@ -52,22 +71,46 @@ class DatabaseManager:
                             logger.info(f"Base de datos migrada: {viejo_path} -> {nuevo_path}")
                         except Exception as e:
                             logger.error(f"Error renombrando base de datos: {e}")
-                    
+
                     db_name = nuevo_db_name
                     config_data["db_name"] = db_name
                     with open(config_path, "w", encoding="utf-8") as fw:
                         json.dump(config_data, fw, indent=4)
-                        
+
                 self.db_path = os.path.join(base_app_path, db_name)
         except Exception as e:
             logger.error(f"Error inicializando config BD: {e}")
             self.db_path = os.path.join(base_app_path, "punpro.db")
+            self.is_master = True
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
         
         # Intentar conectar. Si falla (ej. red caída), mostrar alerta y volver a local.
         import sqlite3
+        import threading
+
         try:
+            if not self.is_master:
+                # Para evitar congelamiento de UI en rutas de red caídas (UNC o letras mapeadas),
+                # intentamos hacer un stat rápido en un hilo con timeout.
+                reachable = False
+                def check_access():
+                    nonlocal reachable
+                    try:
+                        # Sólo abre el archivo rápido a nivel OS
+                        with open(self.db_path, 'rb') as f:
+                            pass
+                        reachable = True
+                    except:
+                        pass
+                
+                t = threading.Thread(target=check_access)
+                t.start()
+                t.join(timeout=2.0)
+                
+                if not reachable:
+                    raise sqlite3.OperationalError(f"La ruta de red {self.db_path} no responde.")
+
             # Prueba de conexión rápida
             conn = sqlite3.connect(self.db_path, timeout=5.0)
             conn.close()
@@ -393,6 +436,17 @@ class DatabaseManager:
                 )
             """)
             
+            # 9. ESTADO SISTEMA (Heartbeat Offline-First)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS sistema_estado (
+                    id INTEGER PRIMARY KEY,
+                    ultimo_latido DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Insertar registro inicial si no existe
+            cursor.execute("INSERT OR IGNORE INTO sistema_estado (id) VALUES (1)")
+            
             conn.commit()
             conn.close()
         except Exception as e:
@@ -427,6 +481,32 @@ class DatabaseManager:
             conn.close()
         except Exception as e:
             logger.error(f"Error en _ensure_test_users: {e}")
+
+    def actualizar_latido(self):
+        """Actualiza el timestamp del latido del servidor principal."""
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE sistema_estado SET ultimo_latido = CURRENT_TIMESTAMP WHERE id = 1")
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Error actualizando latido: {e}")
+
+    def obtener_latido(self):
+        """Obtiene el último latido registrado en la base de datos (string DATETIME)."""
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            cursor = conn.cursor()
+            cursor.execute("SELECT ultimo_latido FROM sistema_estado WHERE id = 1")
+            row = cursor.fetchone()
+            conn.close()
+            if row:
+                return row[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error obteniendo latido: {e}")
+            return None
 
     def get_connection(self) -> sqlite3.Connection:
         """Returns a new connection to the database."""
@@ -525,6 +605,17 @@ class DatabaseManager:
             
             conn.commit()
             return id_venta
+        except sqlite3.OperationalError as e:
+            if conn: conn.rollback()
+            # Derivar al Buffer Offline si falla la conexión a la base de datos de red
+            logger.warning(f"Fallo de red detectado al guardar venta. Guardando offline: {e}")
+            try:
+                from src.offline_sync import offline_sync_manager
+                offline_sync_manager.guardar_venta_offline(venta_data, items)
+                return 9999999 # Retornar un ID falso para simular éxito en la UI
+            except Exception as ex:
+                logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
+                return None
         except sqlite3.Error as e:
             if conn: conn.rollback()
             logger.error(f"Error guardando venta completa: {e}")

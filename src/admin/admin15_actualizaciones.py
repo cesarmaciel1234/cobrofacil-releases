@@ -347,6 +347,10 @@ class Admin15Actualizaciones(QWidget):
         self.progress_bar.hide()
         gl.addWidget(self.progress_bar)
 
+        self.lbl_server_status = QLabel("Servidor de actualizaciones: pendiente")
+        self.lbl_server_status.setStyleSheet("color:#334155; font-size:12px; margin-top:4px;")
+        gl.addWidget(self.lbl_server_status)
+
         self.lbl_progreso = QLabel("")
         self.lbl_progreso.setStyleSheet("color:#475569; font-size:12px;")
         gl.addWidget(self.lbl_progreso)
@@ -419,6 +423,16 @@ class Admin15Actualizaciones(QWidget):
             chk = info.get("checksum", "")[:12] + "..."
             self.tabla.setItem(r, 3, QTableWidgetItem(chk))
             self.tabla.setItem(r, 4, QTableWidgetItem("✅ OK"))
+
+    def _get_mi_ip(self) -> str:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return "127.0.0.1"
 
     def _publicar(self):
         canal = self.cmb_canal_pub.currentText()
@@ -498,6 +512,7 @@ class Admin15Actualizaciones(QWidget):
         self.progress_bar.setValue(0)
         self.progress_bar.show()
         self.lbl_progreso.setText("Iniciando...")
+        self.lbl_server_status.setText("Servidor de actualizaciones: buscando...")
         
         self.worker = UpdateWorker(
             server_ip=server_ip,
@@ -512,6 +527,12 @@ class Admin15Actualizaciones(QWidget):
     def _on_progreso(self, pct: int, msg: str):
         self.progress_bar.setValue(pct)
         self.lbl_progreso.setText(msg)
+        if "Conectado al servidor" in msg or "Conectado al servidor" in msg:
+            self.lbl_server_status.setText(msg)
+        elif "Buscando servidor" in msg:
+            self.lbl_server_status.setText("Servidor de actualizaciones: buscando...")
+        elif "Descargando" in msg or "Actualizando" in msg:
+            self.lbl_server_status.setText("Descargando paquetes desde el servidor...")
 
     def _on_terminado(self, resultado, dry_run: bool):
         self.progress_bar.setValue(100)
@@ -557,13 +578,4 @@ class Admin15Actualizaciones(QWidget):
                 QMessageBox.information(self, "✅ Sin cambios",
                     "No hay actualizaciones pendientes.")
                 self.lbl_progreso.setText("✅ Ya estás en la última versión.")
-
-    def _get_mi_ip(self) -> str:
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
-        except:
-            return "127.0.0.1"
+            self.lbl_server_status.setText("Servidor de actualizaciones: verificado")

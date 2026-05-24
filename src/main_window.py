@@ -195,8 +195,66 @@ class MainWindow(QMainWindow):
         self._init_global_alarm()
         self._init_security_monitor()
         self._init_update_banner()
+        self._init_heartbeat()
         # Chequear actualizaciones 10 segundos despues de que arranque la UI
         QTimer.singleShot(10000, self._chequear_actualizaciones_bg)
+
+    def _init_heartbeat(self):
+        """ Inicializa el sistema de latido para tolerancia a fallos LAN. """
+        self.heartbeat_timer = QTimer(self)
+        self.heartbeat_timer.timeout.connect(self._check_heartbeat)
+        self.heartbeat_timer.start(5000) # Cada 5 segundos
+
+    def _check_heartbeat(self):
+        from src.database import db_manager
+        from src.config import config
+        import datetime
+        from PyQt5.QtWidgets import QMessageBox
+        import json
+        import os
+        from src.utils.paths import get_base_path
+
+        # Si es Máster (local), enviar latido
+        if db_manager.is_master:
+            db_manager.actualizar_latido()
+        else:
+            # Si es Espectador (LAN), comprobar latido
+            latido_str = db_manager.obtener_latido()
+            if latido_str:
+                try:
+                    latido_dt = datetime.datetime.strptime(latido_str, "%Y-%m-%d %H:%M:%S")
+                    ahora_utc = datetime.datetime.utcnow()
+                    diff = (ahora_utc - latido_dt).total_seconds()
+                    
+                    if diff > 15: # 15 segundos sin latido
+                        self.heartbeat_timer.stop()
+                        msg = ("El servidor principal no responde (Latido perdido).\n\n"
+                               "¿Desea convertir esta PC en el nuevo Máster?\n"
+                               "Las nuevas ventas se guardarán localmente hasta que vuelva a conectarse a la red.")
+                        
+                        resp = QMessageBox.question(self, "Desconexión de Red Detectada", msg,
+                                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                        
+                        if resp == QMessageBox.Yes:
+                            # Promover a Máster
+                            base_path = get_base_path()
+                            cfg_path = os.path.join(base_path, "config.json")
+                            try:
+                                with open(cfg_path, "r", encoding="utf-8") as f:
+                                    cfg_data = json.load(f)
+                                cfg_data["db_path"] = ""
+                                with open(cfg_path, "w", encoding="utf-8") as f:
+                                    json.dump(cfg_data, f, indent=4)
+                                
+                                QMessageBox.information(self, "Promovido", "La aplicación se reiniciará en Modo Máster Local.")
+                                import sys
+                                sys.exit(1) # O reiniciar suavemente, pero exit 1 reinicia si hay un wrapper, o lo cerramos
+                            except Exception as e:
+                                logger.error(f"Error asumiendo master: {e}")
+                        else:
+                            self.heartbeat_timer.start(5000)
+                except Exception as e:
+                    logger.error(f"Error procesando fecha de latido: {e}")
 
     def _init_security_monitor(self):
         """ Motor de Vigilancia Global: Monitorea el hardware 24/7 sin importar el módulo activo. """

@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QThread
 import os
 import json
 import socket
+import hashlib
 from src.config import config
 from src.database import db_manager
 
@@ -57,7 +58,24 @@ class Admin16LANConnection(QWidget):
         desc.setStyleSheet("color: #475569; font-size: 14px;")
         desc.setWordWrap(True)
         main_layout.addWidget(desc)
-        
+
+        local_mode = "MAESTRA" if db_manager.is_master else "CLIENTE"
+        local_mode_color = "#16a34a" if db_manager.is_master else "#0ea5e9"
+        self.lbl_local_mode = QLabel(f"Estado local: <b style='color: {local_mode_color};'>{local_mode}</b>")
+        self.lbl_local_mode.setTextFormat(Qt.RichText)
+        self.lbl_local_mode.setStyleSheet("font-size: 15px; margin-top: 10px;")
+        main_layout.addWidget(self.lbl_local_mode)
+
+        if not db_manager.is_master:
+            btn_promote = QPushButton("👑 Activar como PC Maestra")
+            btn_promote.setCursor(Qt.PointingHandCursor)
+            btn_promote.setStyleSheet("""
+                QPushButton { background-color: #f59e0b; color: white; padding: 12px; font-weight: bold; font-size: 14px; border-radius: 8px; border: none; }
+                QPushButton:hover { background-color: #d97706; }
+            """)
+            btn_promote.clicked.connect(self.promote_to_master)
+            main_layout.addWidget(btn_promote)
+
         # Panel Escaneo de Red
         scan_frame = QFrame()
         scan_frame.setStyleSheet("background: white; border: 2px solid #6366f1; border-radius: 10px; padding: 20px;")
@@ -156,9 +174,15 @@ class Admin16LANConnection(QWidget):
         host = pc_info.get("hostname", "PC_Desconocida")
         ip = pc_info.get("server_ip", "0.0.0.0")
         db_path = pc_info.get("db_path", "")
+        pass_hash = pc_info.get("pass_hash", "")
+        mode = pc_info.get("mode", "")
         
         if host in self.discovered_pcs: return
-        self.discovered_pcs[host] = db_path
+        self.discovered_pcs[host] = {
+            "db_path": db_path,
+            "pass_hash": pass_hash,
+            "mode": mode
+        }
         
         btn_pc = QPushButton()
         btn_pc.setCursor(Qt.PointingHandCursor)
@@ -191,8 +215,13 @@ class Admin16LANConnection(QWidget):
         lbl_ip.setAlignment(Qt.AlignCenter)
         lbl_ip.setStyleSheet("font-size: 11px; color: #64748b; background: transparent; border: none;")
         layout.addWidget(lbl_ip)
+
+        lbl_mode = QLabel(f"Modo: {mode.upper() if mode else 'DESCONOCIDO'}")
+        lbl_mode.setAlignment(Qt.AlignCenter)
+        lbl_mode.setStyleSheet("font-size: 11px; color: #0f766e; background: transparent; border: none;")
+        layout.addWidget(lbl_mode)
         
-        btn_pc.clicked.connect(lambda _, path=db_path, h=host: self.connect_to_pc(path, h))
+        btn_pc.clicked.connect(lambda _, info={"db_path": db_path, "host": host, "pass_hash": pass_hash, "mode": mode}: self.connect_to_pc(info))
         
         count = self.pc_grid.count()
         row = count // 4
@@ -205,15 +234,45 @@ class Admin16LANConnection(QWidget):
         else:
             self.lbl_scan_status.setText(f"¡Búsqueda finalizada! Se encontraron {len(self.discovered_pcs)} PCs. Haz clic en una para conectarte.")
 
-    def connect_to_pc(self, db_path, host):
+    def connect_to_pc(self, pc_info):
+        db_path = pc_info.get("db_path", "")
+        host = pc_info.get("host", "PC_Desconocida")
+        mode = pc_info.get("mode", "DESCONOCIDO")
+        remote_hash = pc_info.get("pass_hash", "")
+        local_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
+
+        if remote_hash and remote_hash != local_hash:
+            reply = QMessageBox.warning(self, "Contraseña de Servidor Diferente",
+                f"La PC principal {host} reporta una contraseña de servidor distinta a la configuración local.\n\n"
+                "Si continúas, podrías conectarte a una base de datos de red no autorizada.\n\n"
+                "¿Deseas continuar de todas formas?", QMessageBox.Yes | QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                return
+
+        if not db_path:
+            QMessageBox.warning(self, "Error", "No se recibió la ruta de base de datos de la PC seleccionada.")
+            return
+
+        normalized_path = os.path.normpath(os.path.expandvars(db_path.replace('/', os.sep)))
+        path_accessible = os.path.exists(normalized_path)
+
+        if not path_accessible:
+            reply = QMessageBox.warning(self, "Ruta de Base de Datos Inaccesible",
+                f"La ruta de base de datos reportada por {host} no es accesible desde esta PC:\n\n"
+                f"{normalized_path}\n\n"
+                "Verifica que la carpeta esté compartida correctamente y que tengas permisos de lectura/escritura.",
+                QMessageBox.Yes | QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                return
+
         reply = QMessageBox.question(self, "Conectar a PC", 
-            f"¿Deseas conectarte a {host} y usar su base de datos?\n\n"
-            f"Ruta que se aplicará: {db_path}\n\n"
+            f"¿Deseas conectarte a {host} ({mode.upper()}) y usar su base de datos?\n\n"
+            f"Ruta que se aplicará: {normalized_path}\n\n"
             f"Asegúrate de que la carpeta de TPV Pro esté compartida en red en {host} con permisos de lectura/escritura para 'Todos'.\n\n"
             "El sistema se reiniciará automáticamente.", QMessageBox.Yes | QMessageBox.No)
             
         if reply == QMessageBox.Yes:
-            self.txt_path.setText(db_path)
+            self.txt_path.setText(normalized_path)
             self.save_and_restart()
 
     def cargar_datos(self):
@@ -239,6 +298,24 @@ class Admin16LANConnection(QWidget):
             config.set("db_path", new_path)
             config.save()
             QApplication.exit(888)
+
+    def promote_to_master(self):
+        reply = QMessageBox.question(self, "Activar PC Maestra",
+            "Esta acción convertirá esta PC en la nueva MAESTRA de la red.\n\n"
+            "La aplicación dejará de usar la base de datos remota y creará/usar\n"
+            "la base de datos local en esta computadora.\n\n"
+            "Si quieres mantener datos de la base remota, asegúrate de\n"
+            "copiarla o restaurarla localmente primero.\n\n"
+            "¿Deseas continuar?", QMessageBox.Yes | QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            return
+
+        config.set("db_path", "")
+        config.save()
+        QMessageBox.information(self, "PC Maestra Activada",
+            "Esta PC se ha configurado como MAESTRA local.\n"
+            "Reinicia la aplicación para aplicar los cambios.")
+        QApplication.exit(888)
 
     def reset_to_local(self):
         reply = QMessageBox.question(self, "Confirmar Desconexión", 

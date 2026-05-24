@@ -52,17 +52,38 @@ class AdminCard(QFrame):
         layout.addWidget(self.lbl_info)
 
     def mousePressEvent(self, event):
+        if getattr(self, '_is_locked', False):
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Acceso Denegado", "Esta función está bloqueada en MODO ESPECTADOR (LAN).\nSolo la PC Máster puede realizar esta acción.")
+            return
         # Efecto visual rápido al click
         self.setStyleSheet(self.styleSheet() + " background-color: #F1F5F9;")
         self.clicked.emit()
 
     def enterEvent(self, event):
-        self.setStyleSheet(self.styleSheet().replace("border: 1px solid #cbd5e1;", "border: 2px solid #6366f1;"))
+        if not getattr(self, '_is_locked', False):
+            self.setStyleSheet(self.styleSheet().replace("border: 1px solid #cbd5e1;", "border: 2px solid #6366f1;"))
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        self.setStyleSheet(self.styleSheet().replace("border: 2px solid #6366f1;", "border: 1px solid #cbd5e1;"))
+        if not getattr(self, '_is_locked', False):
+            self.setStyleSheet(self.styleSheet().replace("border: 2px solid #6366f1;", "border: 1px solid #cbd5e1;"))
         super().leaveEvent(event)
+
+    def set_locked(self, locked: bool):
+        self._is_locked = locked
+        if locked:
+            self.lbl_icon.setStyleSheet("font-size: 70px; color: #94a3b8; background: none; border: none;")
+            self.lbl_title.setStyleSheet("font-size: 18px; font-weight: 800; color: #94a3b8; background: none; border: none; letter-spacing: 1px;")
+            self.lbl_info.setText("BLOQUEADO EN LAN")
+            self.lbl_info.setStyleSheet("font-size: 11px; font-weight: bold; color: #ef4444; background: none; border: none; letter-spacing: 2px;")
+            self.setStyleSheet("""
+                QFrame { 
+                    background-color: #f1f5f9; 
+                    border-radius: 20px; 
+                    border: 1px dashed #cbd5e1; 
+                }
+            """)
 
 
 class Admin0Dashboard(QWidget):
@@ -109,6 +130,7 @@ class Admin0Dashboard(QWidget):
         self.timer_ping = QTimer(self)
         self.timer_ping.timeout.connect(self.check_connection)
         self.timer_ping.start(3000)
+        self.check_connection()
 
         nav_layout.addStretch()
         
@@ -220,20 +242,31 @@ class Admin0Dashboard(QWidget):
 
     def check_connection(self):
         try:
-            from src.config import config
-            # Solo mostrar indicador si es Espectador LAN
-            if config.current_user and config.current_user.get("username") == "Espectador LAN":
+            # Solo mostrar indicador y bloquear si es Espectador LAN (no es Máster)
+            if not db_manager.is_master:
                 self.lbl_connection_status.show()
+                # Bloquear tarjetas restrictivas para el Espectador LAN
+                self.card_conf.set_locked(True)
+                self.card_z.set_locked(True)
+                self.card_upd.set_locked(True)
+                # Mantener accesible la conexión LAN para volver a administrar la red
+                self.card_lan.set_locked(False)
+                
                 # Intentar una consulta rápida (Ping a la BD remota)
                 try:
                     db_manager.execute_scalar("SELECT 1")
-                    self.lbl_connection_status.setText("🟢 ONLINE (LAN)")
+                    self.lbl_connection_status.setText("🟢 ONLINE (ESPECTADOR)")
                     self.lbl_connection_status.setStyleSheet("color: #059669; font-size: 13px; font-weight: bold; margin-left: 20px; border: 1px solid #10b981; padding: 4px 10px; border-radius: 10px; background: #f0fdf4;")
                 except Exception:
-                    self.lbl_connection_status.setText("🔴 OFFLINE (SEÑAL CAÍDA)")
+                    self.lbl_connection_status.setText("🔴 OFFLINE (BUFFER ACTIVO)")
                     self.lbl_connection_status.setStyleSheet("color: #ef4444; font-size: 13px; font-weight: bold; margin-left: 20px; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 10px; background: #fef2f2;")
             else:
                 self.lbl_connection_status.hide()
+                # Desbloquear tarjetas si somos Máster
+                self.card_conf.set_locked(False)
+                self.card_z.set_locked(False)
+                self.card_upd.set_locked(False)
+                self.card_lan.set_locked(False)
         except Exception:
             pass
 

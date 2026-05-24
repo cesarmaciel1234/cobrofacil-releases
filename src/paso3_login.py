@@ -74,6 +74,23 @@ class Paso3Login(QDialog):
         header.setAlignment(Qt.AlignCenter)
         main_lay.addWidget(header)
 
+        self.lbl_connection_mode = QLabel()
+        self.lbl_connection_mode.setAlignment(Qt.AlignCenter)
+        self.lbl_connection_mode.setWordWrap(True)
+        if db_manager.is_master:
+            self.lbl_connection_mode.setText("Modo: <b>LOCAL</b> — Base de datos local activa")
+            self.lbl_connection_mode.setStyleSheet(
+                "color: #166534; font-size: 12px; padding: 8px; border-radius: 10px; "
+                "background: rgba(134, 239, 172, 0.25);"
+            )
+        else:
+            self.lbl_connection_mode.setText("Modo: <b>LAN REMOTA</b> — Conexión a la PC maestra activa")
+            self.lbl_connection_mode.setStyleSheet(
+                "color: #9a3412; font-size: 12px; padding: 8px; border-radius: 10px; "
+                "background: rgba(254, 205, 150, 0.3);"
+            )
+        main_lay.addWidget(self.lbl_connection_mode)
+
         content = QVBoxLayout()
         content.setContentsMargins(50, 30, 50, 40)
         content.setSpacing(20)
