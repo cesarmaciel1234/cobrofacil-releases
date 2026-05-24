@@ -115,8 +115,11 @@ class DatabaseManager:
             conn = sqlite3.connect(self.db_path, timeout=15.0)
             conn.close()
             
-            self._create_tables()
-            self._migrate_db() # NUEVO: Asegurar columnas extras e inyectar WAL
+            # Solo el Master (dueño de la BD) debe crear tablas y migrar la estructura.
+            # Los clientes de red solo leen/escriben datos, así evitamos colapsar los bloqueos.
+            if self.is_master:
+                self._create_tables()
+                self._migrate_db()
         except sqlite3.OperationalError as e:
             import json
             import sys
