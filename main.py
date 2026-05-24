@@ -35,8 +35,15 @@ main_window = None
 
 def launch_app():
     global main_window
+    
+    # 1. Recargar configuración desde el disco (vital tras reinicio 888)
     from src.config import config
+    config._load_config()
     config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
+    
+    # 2. Recargar motor de base de datos para tomar la nueva ruta LAN
+    from src.database import db_manager
+    db_manager._init_db()
     
     app = QApplication.instance()
     if not app:

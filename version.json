@@ -45,7 +45,7 @@
     },
     "main.py": {
       "version": "2027.9",
-      "checksum": "2a3f29719fed73ca33ea8419ba412fd8",
+      "checksum": "1af733094f65e896d045f1a06183bfca",
       "channel": "stable"
     },
     "organize_docs.py": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "2027.9",
-      "checksum": "f2d54f9e7b9828f57a600c171b6f0d20",
+      "checksum": "8dd56e1dce8cfd65c7c718a144a632ec",
       "channel": "stable"
     },
     "_hacer_respaldo.py": {
