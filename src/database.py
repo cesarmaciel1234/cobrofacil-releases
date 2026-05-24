@@ -172,8 +172,9 @@ class DatabaseManager:
         conn = sqlite3.connect(self.db_path, timeout=30.0)
         cursor = conn.cursor()
         
-        # MODO PRESIÓN EXTREMA (Evitar 'Database is Locked' en 1000+ ventas simultáneas)
-        cursor.execute("PRAGMA journal_mode=WAL;")
+        # MODO RED / MULTICAJA SEGURO (Evitar 'Database is Locked' en LAN)
+        # NOTA: El modo WAL corrompe o bloquea la DB si se usa por red (SMB/CIFS).
+        cursor.execute("PRAGMA journal_mode=DELETE;")
         cursor.execute("PRAGMA synchronous=NORMAL;")
         cursor.execute("PRAGMA temp_store=MEMORY;")
 

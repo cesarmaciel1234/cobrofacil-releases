@@ -1,7 +1,7 @@
 {
-  "app_version": "2031",
+  "app_version": "3000.1",
   "channel": "stable",
-  "build_date": "2026-05-24 00:37:28",
+  "build_date": "2026-05-24 00:44:49",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
@@ -492,9 +492,9 @@
     },
     "src/updater/update_server.py": {
       "version": "2027.9",
-      "checksum": "a162412aacfb5e0043e49756932b13cc",
+      "checksum": "b9bf2c004be7cc7ebf63397eda550526",
       "channel": "stable",
-      "size": 9080
+      "size": 9052
     },
     "src/updater/__init__.py": {
       "version": "2027.9",
