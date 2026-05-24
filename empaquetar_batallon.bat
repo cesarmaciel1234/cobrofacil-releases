@@ -89,7 +89,7 @@ echo ===========================================================================
 echo NOTA DE COMPATIBILIDAD - WINDOWS 7 PORTABLE
 echo ===============================================================================
 echo Esta carpeta ha sido preconfigurada y aislada especificamente para ejecutar
-echo sin errores de Kernel32 en sistemas operativos heredados (Windows 7 de 32 o 64 bits).
+echo sin errores de Kernel32 en sistemas operativos heredados ^(Windows 7 de 32 o 64 bits^).
 echo/
 echo Para iniciar el sistema, haz doble clic en el archivo "INICIAR_SISTEMA.bat".
 ) > "%DIR_W7%\LEAME_WINDOWS_7.txt"
@@ -161,7 +161,7 @@ echo    cajero y las reglas de inmutabilidad para futuros programadores.
 echo/
 echo 📁 4_Instaladores_InnoSetup\
 echo    Scripts fuente listos para compilar en Inno Setup si el cliente exige
-echo    una instalacion clasica (Setup.exe) con permisos nativos de base de datos.
+echo    una instalacion clasica ^(Setup.exe^) con permisos nativos de base de datos.
 echo/
 echo ===============================================================================
 echo SOFTWARE PROPIEDAD DE PUNPRO SYSTEMS - LICENCIA DE DESPLIEGUE ELITE 2026
