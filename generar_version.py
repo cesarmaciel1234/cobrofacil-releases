@@ -29,7 +29,7 @@ def md5(filepath):
             h.update(chunk)
     return h.hexdigest()
 
-def recopilar_modulos():
+def recopilar_modulos(version_actual="2027.9"):
     modulos = {}
     for root, dirs, files in os.walk(BASE):
         # Filtrar carpetas excluidas
@@ -43,24 +43,36 @@ def recopilar_modulos():
             full = os.path.join(root, fname)
             rel = os.path.relpath(full, BASE).replace('\\', '/')
             modulos[rel] = {
-                "version": "2027.9",
+                "version": version_actual,
                 "checksum": md5(full),
                 "channel": "stable"
             }
     return modulos
 
 if __name__ == '__main__':
+
     print("Generando version.json actualizado...")
-    modulos = recopilar_modulos()
+    
+    # Leer version existente si existe
+    version_actual = "2027.9"
+    out = os.path.join(BASE, 'version.json')
+    if os.path.exists(out):
+        try:
+            with open(out, 'r', encoding='utf-8') as f:
+                old_manifest = json.load(f)
+                version_actual = old_manifest.get("app_version", "2027.9")
+        except:
+            pass
+
+    modulos = recopilar_modulos(version_actual)
 
     manifest = {
-        "app_version": "2027.9",
+        "app_version": version_actual,
         "channel": "stable",
         "build_date": datetime.now().strftime("%Y-%m-%d"),
         "modules": modulos
     }
 
-    out = os.path.join(BASE, 'version.json')
     with open(out, 'w', encoding='utf-8') as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
 

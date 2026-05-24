@@ -1,7 +1,7 @@
 {
-  "app_version": "2030",
+  "app_version": "2031",
   "channel": "stable",
-  "build_date": "2026-05-24 00:19:04",
+  "build_date": "2026-05-24 00:37:28",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
@@ -30,9 +30,9 @@
     },
     "generar_version.py": {
       "version": "2027.9",
-      "checksum": "8800b83d886783210e783b065337d50c",
+      "checksum": "dc7785d37c0704abe573d11412b32016",
       "channel": "stable",
-      "size": 2440
+      "size": 2826
     },
     "init_db.py": {
       "version": "2027.9",
@@ -203,7 +203,7 @@
       "size": 30302
     },
     "src/offline_sync.py": {
-      "version": "1.0.0",
+      "version": "2027.9",
       "checksum": "8d9ad0782540aa82c0dd559cf0a01f03",
       "channel": "stable",
       "size": 5464
@@ -384,9 +384,9 @@
     },
     "src/cajero/paso6_cobro.py": {
       "version": "2027.9",
-      "checksum": "7d48cdfff987564084d11c5772cecab6",
+      "checksum": "92c53a655f7acd0a8416ee79c6ff8c07",
       "channel": "stable",
-      "size": 34931
+      "size": 35100
     },
     "src/cajero/paso7_cierre.py": {
       "version": "2027.9",

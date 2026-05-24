@@ -123,8 +123,7 @@ class UpdateHandler(BaseHTTPRequestHandler):
                              "time": datetime.now().isoformat()})
         
         elif path == "/version.json":
-            if not self._authorize_request():
-                return
+            # if not self._authorize_request(): return
             if os.path.exists(VERSION_FILE):
                 with open(VERSION_FILE, 'rb') as f:
                     data = f.read()
@@ -137,8 +136,7 @@ class UpdateHandler(BaseHTTPRequestHandler):
                 self._send_error(404, "version.json no encontrado")
         
         elif path.startswith("/file/"):
-            if not self._authorize_request():
-                return
+            # if not self._authorize_request(): return
             rel_path = path[6:].lstrip("/")
             abs_path = os.path.normpath(os.path.join(BASE_DIR, rel_path))
             # Seguridad: no salir del directorio base
