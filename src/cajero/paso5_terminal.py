@@ -23,6 +23,15 @@ from src.config import config
 from src.hardware.printer import printer_manager
 from src.hardware.cash_drawer import drawer_manager
 
+try:
+    from src.ui_components.virtual_keyboard import VirtualKeyboard
+    HAS_KEYBOARD = True
+except Exception as e:
+    import logging
+    logging.getLogger(__name__).warning(f"Modulo de teclado virtual no disponible: {e}")
+    HAS_KEYBOARD = False
+
+
 def fmt_moneda_sin_centavos(val):
     try:
         return f"${float(val):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -1002,6 +1011,23 @@ class Paso5Terminal(QWidget):
         status_bar.setStyleSheet("background: #0F172A; border-top: 1px solid #334155;")
         sl = QHBoxLayout(status_bar); sl.setContentsMargins(15, 0, 5, 0)
         
+        if HAS_KEYBOARD:
+            self.btn_teclado = QPushButton("⌨️ TECLADO")
+            self.btn_teclado.setFixedHeight(22)
+            self.btn_teclado.setCursor(Qt.PointingHandCursor)
+            self.btn_teclado.setFocusPolicy(Qt.NoFocus)
+            self.btn_teclado.setStyleSheet("""
+                QPushButton {
+                    background: #1E293B; color: #F8FAFC; border-radius: 4px;
+                    font-size: 10px; font-weight: bold; border: 1px solid #334155;
+                    padding: 0px 8px;
+                }
+                QPushButton:hover { background: #334155; border-color: #475569; }
+            """)
+            self.btn_teclado.clicked.connect(self.toggle_keyboard)
+            sl.addWidget(self.btn_teclado)
+            sl.addSpacing(10)
+
         self.lbl_version = QLabel("🚀 PUNPRO ELITE v2026.0 | TERMINAL ACTIVA")
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version); sl.addStretch()
@@ -1087,6 +1113,38 @@ class Paso5Terminal(QWidget):
         if getattr(self, 'txt_scan', None) is not None:
             self.txt_scan.setFocus()
         super().mousePressEvent(event)
+
+    def toggle_keyboard(self):
+        if not HAS_KEYBOARD:
+            return
+        if not hasattr(self, 'teclado_virtual'):
+            self.teclado_virtual = VirtualKeyboard(self)
+            
+        if self.teclado_virtual.isVisible():
+            self.teclado_virtual.hide()
+        else:
+            # Posicionar el teclado flotante centrado abajo de la ventana de la terminal
+            kb_width = 680
+            kb_height = 260
+            
+            main_window = self.window()
+            if main_window:
+                win_geom = main_window.geometry()
+                x = win_geom.x() + (win_geom.width() - kb_width) // 2
+                y = win_geom.y() + win_geom.height() - kb_height - 60
+            else:
+                parent_geom = self.geometry()
+                x = parent_geom.x() + (parent_geom.width() - kb_width) // 2
+                y = parent_geom.y() + parent_geom.height() - kb_height - 60
+                
+            self.teclado_virtual.resize(kb_width, kb_height)
+            self.teclado_virtual.move(x, y)
+            self.teclado_virtual.show()
+
+    def hideEvent(self, event):
+        if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
+            self.teclado_virtual.hide()
+        super().hideEvent(event)
 
     def eventFilter(self, obj, event):
         from PyQt5.QtCore import QEvent
