@@ -1105,6 +1105,11 @@ class Paso5Terminal(QWidget):
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
+        
+        # Conectar detector de foco para teclado virtual automático (estilo celular)
+        if HAS_KEYBOARD:
+            from PyQt5.QtWidgets import QApplication
+            QApplication.instance().focusChanged.connect(self.on_focus_changed)
 
     def mousePressEvent(self, event):
         # Al hacer click en cualquier parte, el cursor vuelve al buscador y se oculta la lista
@@ -1145,6 +1150,41 @@ class Paso5Terminal(QWidget):
         if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
             self.teclado_virtual.hide()
         super().hideEvent(event)
+
+    def on_focus_changed(self, old_widget, new_widget):
+        if not HAS_KEYBOARD:
+            return
+        if not self.isVisible():
+            return
+            
+        from PyQt5.QtWidgets import QLineEdit
+        
+        # Si el foco entra a una caja de texto (QLineEdit)
+        if new_widget and isinstance(new_widget, QLineEdit):
+            if not hasattr(self, 'teclado_virtual'):
+                self.teclado_virtual = VirtualKeyboard(self)
+                
+            if not self.teclado_virtual.isVisible():
+                kb_width = 680
+                kb_height = 260
+                
+                main_window = self.window()
+                if main_window:
+                    win_geom = main_window.geometry()
+                    x = win_geom.x() + (win_geom.width() - kb_width) // 2
+                    y = win_geom.y() + win_geom.height() - kb_height - 60
+                else:
+                    parent_geom = self.geometry()
+                    x = parent_geom.x() + (parent_geom.width() - kb_width) // 2
+                    y = parent_geom.y() + parent_geom.height() - kb_height - 60
+                    
+                self.teclado_virtual.resize(kb_width, kb_height)
+                self.teclado_virtual.move(x, y)
+                self.teclado_virtual.show()
+        else:
+            # Si el foco cambia a cualquier otra cosa, ocultamos
+            if hasattr(self, 'teclado_virtual') and self.teclado_virtual.isVisible():
+                self.teclado_virtual.hide()
 
     def eventFilter(self, obj, event):
         from PyQt5.QtCore import QEvent
