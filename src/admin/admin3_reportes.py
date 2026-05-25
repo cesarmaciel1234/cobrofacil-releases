@@ -329,11 +329,10 @@ class Admin3Reportes(QWidget):
             rl.setContentsMargins(20, 10, 20, 10); lbl_m = QLabel(m.upper()); lbl_m.setObjectName("rowLabel"); rl.addWidget(lbl_m); rl.addStretch()
             lbl_v = QLabel(f"${total_m:,.2f}"); lbl_v.setObjectName("rowValue"); rl.addWidget(lbl_v); self.pay_table_layout.addWidget(row)
         res_dept = db_manager.execute_query(
-            "SELECT COALESCE(p1.departamento, p2.departamento, 'ALMACEN') as depto, SUM(dv.subtotal) as total "
+            "SELECT COALESCE(p.departamento, 'ALMACEN') as depto, SUM(dv.subtotal) as total "
             "FROM detalles_ventas dv "
             "JOIN ventas v ON dv.id_venta = v.id "
-            "LEFT JOIN productos p1 ON dv.id_producto = p1.id "
-            "LEFT JOIN productos p2 ON dv.id_producto = p2.codigo "
+            "LEFT JOIN (SELECT id, codigo, departamento FROM productos GROUP BY codigo) p ON (dv.id_producto = CAST(p.id AS TEXT) OR dv.id_producto = p.codigo) "
             "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO') "
             "GROUP BY depto ORDER BY total DESC", (start_str, end_str)
         )
@@ -610,7 +609,7 @@ class Admin3Reportes(QWidget):
                 COALESCE(p.unidad, 'UN') as unidad
             FROM detalles_ventas dv
             JOIN ventas v ON dv.id_venta = v.id
-            LEFT JOIN productos p ON (dv.id_producto = p.id OR dv.id_producto = p.codigo)
+            LEFT JOIN (SELECT id, codigo, departamento, categoria, unidad FROM productos GROUP BY codigo) p ON (dv.id_producto = CAST(p.id AS TEXT) OR dv.id_producto = p.codigo)
             WHERE 1=1
         """
         params = []
