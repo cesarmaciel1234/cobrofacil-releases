@@ -12,6 +12,14 @@ from src.database import db_manager
 from src.config import config
 from src.hardware.cash_drawer import drawer_manager
 
+try:
+    from src.ui_components.virtual_keyboard import VirtualKeyboard
+    HAS_KEYBOARD = True
+except Exception as e:
+    import logging
+    logging.warning(f"Módulo de teclado virtual no disponible en Paso6Cobro: {e}")
+    HAS_KEYBOARD = False
+
 def ensure_icons():
     """Autogenera los iconos recortándolos y haciéndolos transparentes si no existen."""
     try:
@@ -386,17 +394,22 @@ class Paso6Cobro(QDialog):
         right_lay.addWidget(self.btn_descuento)
         right_lay.addWidget(self.btn_recargo)
         
-        right_lay.addStretch()
-        
-        lbl_info_tit = QLabel("TOTAL DE ARTÍCULOS")
-        lbl_info_tit.setStyleSheet("color: #64748B; font-weight: 900; font-size: 13px; border: none;")
-        lbl_info_tit.setAlignment(Qt.AlignCenter)
-        right_lay.addWidget(lbl_info_tit)
-        
-        lbl_info_val = QLabel(f"{sum(i['cant'] for i in self.items_carrito):g}")
-        lbl_info_val.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 900; border: none;")
-        lbl_info_val.setAlignment(Qt.AlignCenter)
-        right_lay.addWidget(lbl_info_val)
+        if HAS_KEYBOARD:
+            self.teclado_virtual = VirtualKeyboard(self, embedded=True)
+            self.teclado_virtual.set_layout_mode("123")
+            right_lay.addWidget(self.teclado_virtual)
+        else:
+            right_lay.addStretch()
+            
+            lbl_info_tit = QLabel("TOTAL DE ARTÍCULOS")
+            lbl_info_tit.setStyleSheet("color: #64748B; font-weight: 900; font-size: 13px; border: none;")
+            lbl_info_tit.setAlignment(Qt.AlignCenter)
+            right_lay.addWidget(lbl_info_tit)
+            
+            lbl_info_val = QLabel(f"{sum(i['cant'] for i in self.items_carrito):g}")
+            lbl_info_val.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 900; border: none;")
+            lbl_info_val.setAlignment(Qt.AlignCenter)
+            right_lay.addWidget(lbl_info_val)
 
         main_lay.addWidget(right_panel, 3)
 

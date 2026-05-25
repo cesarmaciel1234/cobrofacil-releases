@@ -10,17 +10,19 @@ class VirtualKeyboard(QWidget):
     Estética de colores claros estilo Android (Gboard Light Theme).
     Posicionamiento centralizado: QWERTY centrado (680x310px), Numérico en esquina inferior derecha (240x360px).
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, embedded=False):
         super().__init__(parent)
+        self.embedded = embedded
         
-        # Atributos de ventana
-        self.setWindowFlags(
-            Qt.Tool | 
-            Qt.FramelessWindowHint | 
-            Qt.WindowStaysOnTopHint | 
-            Qt.WindowDoesNotAcceptFocus
-        )
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        # Atributos de ventana (solo si no es embebido)
+        if not self.embedded:
+            self.setWindowFlags(
+                Qt.Tool | 
+                Qt.FramelessWindowHint | 
+                Qt.WindowStaysOnTopHint | 
+                Qt.WindowDoesNotAcceptFocus
+            )
+            self.setAttribute(Qt.WA_TranslucentBackground, True)
         
         # Estado del teclado
         self.shift_active = False
@@ -56,11 +58,15 @@ class VirtualKeyboard(QWidget):
         if mode in ("abc", "123") and self.layout_mode != mode:
             self.layout_mode = mode
             if hasattr(self, 'keys_layout'):
-                self.reposition_keyboard()
+                if not self.embedded:
+                    self.reposition_keyboard()
                 self.build_keys()
 
     def reposition_keyboard(self):
         """Calcula el tamaño y la posición ideal del teclado respecto a la ventana activa."""
+        if self.embedded:
+            return
+            
         if hasattr(self, 'drag_bar'):
             if self.layout_mode == "123":
                 self.drag_bar.hide()
@@ -86,7 +92,8 @@ class VirtualKeyboard(QWidget):
             self.move(x, y)
 
     def showEvent(self, event):
-        self.reposition_keyboard()
+        if not self.embedded:
+            self.reposition_keyboard()
         super().showEvent(event)
 
     def init_ui(self):
@@ -105,40 +112,41 @@ class VirtualKeyboard(QWidget):
         self.main_layout.setContentsMargins(8, 8, 8, 8)
         self.main_layout.setSpacing(6)
         
-        # 1. Barra de Arrastre (Titlebar simulado)
-        self.drag_bar = QWidget()
-        self.drag_bar.setFixedHeight(30)
-        self.drag_bar.setStyleSheet("background-color: #E2E8F0; border-radius: 6px;")
-        
-        drag_layout = QHBoxLayout(self.drag_bar)
-        drag_layout.setContentsMargins(10, 0, 10, 0)
-        
-        self.title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS")
-        self.title_lbl.setStyleSheet("color: #475569; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
-        drag_layout.addWidget(self.title_lbl)
-        drag_layout.addStretch()
-        
-        close_btn = QPushButton("✕")
-        close_btn.setFixedSize(22, 22)
-        close_btn.setFocusPolicy(Qt.NoFocus)
-        close_btn.setStyleSheet("""
-            QPushButton {
-                background: transparent;
-                border: none;
-                color: #64748B;
-                font-weight: bold;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                color: #EF4444;
-                background-color: rgba(239, 68, 68, 0.1);
-                border-radius: 4px;
-            }
-        """)
-        close_btn.clicked.connect(self.hide)
-        drag_layout.addWidget(close_btn)
-        
-        self.main_layout.addWidget(self.drag_bar)
+        # 1. Barra de Arrastre (Titlebar simulado) (solo si no es embebido)
+        if not self.embedded:
+            self.drag_bar = QWidget()
+            self.drag_bar.setFixedHeight(30)
+            self.drag_bar.setStyleSheet("background-color: #E2E8F0; border-radius: 6px;")
+            
+            drag_layout = QHBoxLayout(self.drag_bar)
+            drag_layout.setContentsMargins(10, 0, 10, 0)
+            
+            self.title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS")
+            self.title_lbl.setStyleSheet("color: #475569; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
+            drag_layout.addWidget(self.title_lbl)
+            drag_layout.addStretch()
+            
+            close_btn = QPushButton("✕")
+            close_btn.setFixedSize(22, 22)
+            close_btn.setFocusPolicy(Qt.NoFocus)
+            close_btn.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    border: none;
+                    color: #64748B;
+                    font-weight: bold;
+                    font-size: 13px;
+                }
+                QPushButton:hover {
+                    color: #EF4444;
+                    background-color: rgba(239, 68, 68, 0.1);
+                    border-radius: 4px;
+                }
+            """)
+            close_btn.clicked.connect(self.hide)
+            drag_layout.addWidget(close_btn)
+            
+            self.main_layout.addWidget(self.drag_bar)
         
         # Contenedor para el layout de teclas dinámico
         self.keys_container = QWidget()
@@ -304,13 +312,19 @@ class VirtualKeyboard(QWidget):
         event_release = QKeyEvent(QEvent.KeyRelease, key_code, modifiers, text)
         QApplication.sendEvent(target, event_release)
 
-    # Implementar arrastre de la ventana frameless
+    # Implementar arrastre de la ventana frameless (solo si no es embebido)
     def mousePressEvent(self, event):
+        if self.embedded:
+            super().mousePressEvent(event)
+            return
         if event.button() == Qt.LeftButton:
             self._drag_position = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
 
     def mouseMoveEvent(self, event):
+        if self.embedded:
+            super().mouseMoveEvent(event)
+            return
         if event.buttons() == Qt.LeftButton:
             self.move(event.globalPos() - self._drag_position)
             event.accept()

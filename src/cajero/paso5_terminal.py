@@ -1170,6 +1170,19 @@ class Paso5Terminal(QWidget):
                     return
                 parent = parent.parent()
                 
+            # 1.b Protección Paso 6 Cobro: el diálogo de cobro tiene el teclado incrustado directamente.
+            is_paso6 = False
+            parent = new_widget.parent()
+            while parent:
+                if parent.__class__.__name__ == 'Paso6Cobro':
+                    is_paso6 = True
+                    break
+                parent = parent.parent()
+            if is_paso6:
+                if hasattr(self, 'teclado_virtual'):
+                    self.teclado_virtual.hide()
+                return
+
             active_win = new_widget.window()
             if not active_win:
                 active_win = self.window()
@@ -1191,23 +1204,8 @@ class Paso5Terminal(QWidget):
                     Qt.WindowDoesNotAcceptFocus
                 )
                 
-            # Detectar si es un campo numérico (únicamente en Paso6Cobro por solicitud del usuario)
-            is_num = False
-            
-            # Verificar si pertenece al diálogo Paso6Cobro
-            parent = new_widget.parent()
-            while parent:
-                if parent.__class__.__name__ == 'Paso6Cobro':
-                    is_num = True
-                    break
-                parent = parent.parent()
-                
-            # Cambiar layout al modo correspondiente (123 para números, abc para texto)
-            if is_num:
-                self.teclado_virtual.set_layout_mode("123")
-            else:
-                self.teclado_virtual.set_layout_mode("abc")
-                
+            # En el buscador principal usamos layout alfabético por defecto (abc)
+            self.teclado_virtual.set_layout_mode("abc")
             self.teclado_virtual.reposition_keyboard()
             self.teclado_virtual.show()
         else:
