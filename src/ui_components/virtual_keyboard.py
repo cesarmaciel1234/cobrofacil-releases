@@ -7,7 +7,7 @@ class VirtualKeyboard(QWidget):
     """
     Teclado Virtual Industrial para entornos táctiles.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
-    Soporta cambio de layout (QWERTY / Símbolos y Números) y auto-ocultado al presionar ENTER.
+    Estética de colores claros estilo Android (Gboard Light Theme).
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,13 +51,13 @@ class VirtualKeyboard(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        # Contenedor principal con estilo premium oscuro
+        # Contenedor principal con estilo premium claro
         self.main_frame = QFrame(self)
         self.main_frame.setObjectName("MainFrame")
         self.main_frame.setStyleSheet("""
             QFrame#MainFrame {
-                background-color: #0F172A;
-                border: 2px solid #334155;
+                background-color: #F1F5F9;
+                border: 2px solid #CBD5E1;
                 border-radius: 12px;
             }
         """)
@@ -69,13 +69,13 @@ class VirtualKeyboard(QWidget):
         # 1. Barra de Arrastre (Titlebar simulado)
         drag_bar = QWidget()
         drag_bar.setFixedHeight(30)
-        drag_bar.setStyleSheet("background-color: #1E293B; border-radius: 6px;")
+        drag_bar.setStyleSheet("background-color: #E2E8F0; border-radius: 6px;")
         
         drag_layout = QHBoxLayout(drag_bar)
         drag_layout.setContentsMargins(10, 0, 10, 0)
         
         self.title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS")
-        self.title_lbl.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
+        self.title_lbl.setStyleSheet("color: #475569; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
         drag_layout.addWidget(self.title_lbl)
         drag_layout.addStretch()
         
@@ -131,22 +131,23 @@ class VirtualKeyboard(QWidget):
         self.clear_layout(self.keys_layout)
         self.letter_buttons.clear()
         
-        # Estilo de botones de teclas
+        # Estilo de botones de teclas (Estilo Gboard Claro)
         key_style = """
             QPushButton {
-                background-color: #1E293B;
-                color: #F8FAFC;
+                background-color: #FFFFFF;
+                color: #0F172A;
                 font-size: 14px;
                 font-weight: bold;
                 font-family: 'Segoe UI', sans-serif;
-                border: 1px solid #334155;
+                border: 1px solid #E2E8F0;
+                border-bottom: 2px solid #CBD5E1;
                 border-radius: 6px;
                 min-width: 42px;
                 min-height: 42px;
             }
             QPushButton:hover {
-                background-color: #334155;
-                border-color: #475569;
+                background-color: #F8FAFC;
+                border-color: #CBD5E1;
             }
         """
         
@@ -179,22 +180,22 @@ class VirtualKeyboard(QWidget):
                 btn.setFocusPolicy(Qt.NoFocus)
                 btn.setCursor(Qt.PointingHandCursor)
                 
-                # Sizing y colores especiales para teclas de control
+                # Sizing y colores especiales para teclas de control (Gboard grey layout keys)
                 if key == "⌫":
                     btn.setMinimumWidth(60)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #FCA5A5; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #EF4444; border-color: #CBD5E1; }")
                 elif key == "⚡ SHIFT":
                     btn.setMinimumWidth(80)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #FDE047; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #D97706; border-color: #CBD5E1; }")
                 elif key in ("?123", "ABC"):
                     btn.setMinimumWidth(100)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #38BDF8; border-color: #0284C7; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
                 elif key == "ESPACIO":
                     btn.setMinimumWidth(320)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #1E293B; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #FFFFFF; }")
                 elif key == "ENTER":
                     btn.setMinimumWidth(150)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #10B981; color: white; border-color: #059669; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #1A73E8; color: white; border-color: #1557B0; border-bottom: 2px solid #0D3E8C; }")
                     
                 # Guardar referencia de botones de letras para cambiar mayús/minús (sólo modo abc)
                 if len(key) == 1 and key.isalpha() and self.layout_mode == "abc":
