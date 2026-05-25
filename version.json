@@ -1,7 +1,7 @@
 {
   "app_version": "3000.1",
   "channel": "stable",
-  "build_date": "2026-05-25 16:13:35",
+  "build_date": "2026-05-25 16:22:49",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
@@ -3150,9 +3150,9 @@
     },
     "src/ui_components/virtual_keyboard.py": {
       "version": "1.0.0",
-      "checksum": "1fa2d8870fdcdc8c7b018306bbebe89d",
+      "checksum": "1770c68775c5ef083a58cd5d02805910",
       "channel": "stable",
-      "size": 14504
+      "size": 14748
     },
     "src/ui_components/__init__.py": {
       "version": "2027.9",

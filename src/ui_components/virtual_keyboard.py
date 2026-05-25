@@ -23,6 +23,8 @@ class VirtualKeyboard(QWidget):
                 Qt.WindowDoesNotAcceptFocus
             )
             self.setAttribute(Qt.WA_TranslucentBackground, True)
+        else:
+            self.setFixedSize(240, 330)
         
         # Estado del teclado
         self.shift_active = False
@@ -60,6 +62,11 @@ class VirtualKeyboard(QWidget):
             if hasattr(self, 'keys_layout'):
                 if not self.embedded:
                     self.reposition_keyboard()
+                else:
+                    if mode == "123":
+                        self.setFixedSize(240, 330)
+                    else:
+                        self.setFixedSize(680, 310)
                 self.build_keys()
 
     def reposition_keyboard(self):
