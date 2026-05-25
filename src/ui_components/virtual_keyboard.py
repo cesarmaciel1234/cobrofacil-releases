@@ -61,11 +61,17 @@ class VirtualKeyboard(QWidget):
 
     def reposition_keyboard(self):
         """Calcula el tamaño y la posición ideal del teclado respecto a la ventana activa."""
+        if hasattr(self, 'drag_bar'):
+            if self.layout_mode == "123":
+                self.drag_bar.hide()
+            else:
+                self.drag_bar.show()
+                
         active_win = QApplication.activeWindow() or self.parent()
         if active_win:
             win_geom = active_win.geometry()
             kb_width = 240 if self.layout_mode == "123" else 680
-            kb_height = 360 if self.layout_mode == "123" else 310
+            kb_height = 330 if self.layout_mode == "123" else 310
             
             if self.layout_mode == "123":
                 # Alinear abajo a la derecha con margen de 20px
@@ -100,11 +106,11 @@ class VirtualKeyboard(QWidget):
         self.main_layout.setSpacing(6)
         
         # 1. Barra de Arrastre (Titlebar simulado)
-        drag_bar = QWidget()
-        drag_bar.setFixedHeight(30)
-        drag_bar.setStyleSheet("background-color: #E2E8F0; border-radius: 6px;")
+        self.drag_bar = QWidget()
+        self.drag_bar.setFixedHeight(30)
+        self.drag_bar.setStyleSheet("background-color: #E2E8F0; border-radius: 6px;")
         
-        drag_layout = QHBoxLayout(drag_bar)
+        drag_layout = QHBoxLayout(self.drag_bar)
         drag_layout.setContentsMargins(10, 0, 10, 0)
         
         self.title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS")
@@ -132,7 +138,7 @@ class VirtualKeyboard(QWidget):
         close_btn.clicked.connect(self.hide)
         drag_layout.addWidget(close_btn)
         
-        self.main_layout.addWidget(drag_bar)
+        self.main_layout.addWidget(self.drag_bar)
         
         # Contenedor para el layout de teclas dinámico
         self.keys_container = QWidget()
