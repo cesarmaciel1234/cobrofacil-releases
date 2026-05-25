@@ -1,7 +1,7 @@
 {
   "app_version": "3000.1",
   "channel": "stable",
-  "build_date": "2026-05-25 16:22:49",
+  "build_date": "2026-05-25 16:31:30",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
@@ -3054,9 +3054,9 @@
     },
     "src/cajero/paso6_cobro.py": {
       "version": "2027.9",
-      "checksum": "e5fcd18991008888fb9c8103195bf804",
+      "checksum": "7a77e874f3de9f122608a51d67937dad",
       "channel": "stable",
-      "size": 35613
+      "size": 39305
     },
     "src/cajero/paso7_cierre.py": {
       "version": "2027.9",

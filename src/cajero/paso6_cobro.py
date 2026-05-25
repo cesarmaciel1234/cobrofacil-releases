@@ -4,10 +4,10 @@ from PIL import Image, ImageChops
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QFrame, QGridLayout,
-    QWidget, QGraphicsDropShadowEffect
+    QWidget, QGraphicsDropShadowEffect, QApplication
 )
 from PyQt5.QtCore import Qt, QTimer, QEvent
-from PyQt5.QtGui import QFont, QIcon, QPixmap, QColor
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
 from src.database import db_manager
 from src.config import config
 from src.hardware.cash_drawer import drawer_manager
@@ -394,22 +394,8 @@ class Paso6Cobro(QDialog):
         right_lay.addWidget(self.btn_descuento)
         right_lay.addWidget(self.btn_recargo)
         
-        if HAS_KEYBOARD:
-            self.teclado_virtual = VirtualKeyboard(self, embedded=True)
-            self.teclado_virtual.set_layout_mode("123")
-            right_lay.addWidget(self.teclado_virtual)
-        else:
-            right_lay.addStretch()
-            
-            lbl_info_tit = QLabel("TOTAL DE ARTÍCULOS")
-            lbl_info_tit.setStyleSheet("color: #64748B; font-weight: 900; font-size: 13px; border: none;")
-            lbl_info_tit.setAlignment(Qt.AlignCenter)
-            right_lay.addWidget(lbl_info_tit)
-            
-            lbl_info_val = QLabel(f"{sum(i['cant'] for i in self.items_carrito):g}")
-            lbl_info_val.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 900; border: none;")
-            lbl_info_val.setAlignment(Qt.AlignCenter)
-            right_lay.addWidget(lbl_info_val)
+        # Teclado numérico físico propio (incrustado directamente)
+        self.build_teclado_propio(right_lay)
 
         main_lay.addWidget(right_panel, 3)
 
@@ -771,3 +757,106 @@ class Paso6Cobro(QDialog):
                 self.intentar_finalizar()
         else:
             super().keyPressEvent(event)
+
+    def build_teclado_propio(self, right_lay):
+        kb_frame = QFrame()
+        kb_frame.setObjectName("KeyboardFrame")
+        kb_frame.setStyleSheet("""
+            QFrame#KeyboardFrame {
+                background-color: #F1F5F9;
+                border: 2px solid #CBD5E1;
+                border-radius: 12px;
+            }
+        """)
+        kb_frame.setFixedSize(240, 330)
+        
+        kb_layout = QVBoxLayout(kb_frame)
+        kb_layout.setContentsMargins(8, 8, 8, 8)
+        kb_layout.setSpacing(5)
+        
+        rows = [
+            ["1", "2", "3"],
+            ["4", "5", "6"],
+            ["7", "8", "9"],
+            ["⌫", "0", "."],
+            ["+", "-", "*"],
+            ["ABC", "ENTER"]
+        ]
+        
+        # Mapeo de teclas de caracteres comunes
+        self.teclado_key_map = {
+            '0': Qt.Key_0, '1': Qt.Key_1, '2': Qt.Key_2, '3': Qt.Key_3, '4': Qt.Key_4,
+            '5': Qt.Key_5, '6': Qt.Key_6, '7': Qt.Key_7, '8': Qt.Key_8, '9': Qt.Key_9,
+            '-': Qt.Key_Minus, '+': Qt.Key_Plus, '*': Qt.Key_Asterisk, '.': Qt.Key_Period
+        }
+        
+        btn_style = """
+            QPushButton {
+                background-color: #FFFFFF;
+                color: #0F172A;
+                font-size: 15px;
+                font-weight: bold;
+                font-family: 'Segoe UI', sans-serif;
+                border: 1px solid #E2E8F0;
+                border-bottom: 2px solid #CBD5E1;
+                border-radius: 6px;
+                min-width: 48px;
+                min-height: 48px;
+            }
+            QPushButton:hover {
+                background-color: #F8FAFC;
+                border-color: #CBD5E1;
+            }
+        """
+        
+        for row in rows:
+            row_lay = QHBoxLayout()
+            row_lay.setSpacing(5)
+            row_lay.setContentsMargins(0, 0, 0, 0)
+            
+            for key in row:
+                btn = QPushButton(key)
+                btn.setStyleSheet(btn_style)
+                btn.setFocusPolicy(Qt.NoFocus)
+                btn.setCursor(Qt.PointingHandCursor)
+                
+                # Estilos específicos para teclas especiales
+                if key == "⌫":
+                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #EF4444; border-color: #CBD5E1; }")
+                elif key == "ABC":
+                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
+                elif key in ("+", "-", "*"):
+                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }")
+                elif key == "ENTER":
+                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #1A73E8; color: white; border-color: #1557B0; border-bottom: 2px solid #0D3E8C; }")
+                
+                btn.clicked.connect(lambda checked, k=key: self.on_teclado_key_clicked(k))
+                row_lay.addWidget(btn)
+                
+            kb_layout.addLayout(row_lay)
+            
+        right_lay.addWidget(kb_frame)
+
+    def on_teclado_key_clicked(self, key):
+        focused = self.focusWidget()
+        if not focused or not isinstance(focused, QLineEdit):
+            focused = self.txt_pago
+            
+        if key == "⌫":
+            event_press = QKeyEvent(QEvent.KeyPress, Qt.Key_Backspace, Qt.NoModifier, "")
+            QApplication.sendEvent(focused, event_press)
+            event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Backspace, Qt.NoModifier, "")
+            QApplication.sendEvent(focused, event_release)
+        elif key == "ENTER":
+            event_press = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier, "\n")
+            QApplication.sendEvent(focused, event_press)
+            event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Return, Qt.NoModifier, "\n")
+            QApplication.sendEvent(focused, event_release)
+        elif key == "ABC":
+            pass
+        else:
+            key_code = self.teclado_key_map.get(key, Qt.Key_unknown)
+            event_press = QKeyEvent(QEvent.KeyPress, key_code, Qt.NoModifier, key)
+            QApplication.sendEvent(focused, event_press)
+            event_release = QKeyEvent(QEvent.KeyRelease, key_code, Qt.NoModifier, key)
+            QApplication.sendEvent(focused, event_release)
