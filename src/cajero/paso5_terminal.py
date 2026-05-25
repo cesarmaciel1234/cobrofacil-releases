@@ -1154,7 +1154,11 @@ class Paso5Terminal(QWidget):
     def on_focus_changed(self, old_widget, new_widget):
         if not HAS_KEYBOARD:
             return
+            
+        # Si la terminal de venta principal no está visible, ocultar y retornar
         if not self.isVisible():
+            if hasattr(self, 'teclado_virtual'):
+                self.teclado_virtual.hide()
             return
             
         from PyQt5.QtWidgets import QLineEdit, QApplication
@@ -1162,10 +1166,26 @@ class Paso5Terminal(QWidget):
         
         # Si el foco entra a una caja de texto (QLineEdit)
         if new_widget and isinstance(new_widget, QLineEdit):
-            active_win = QApplication.activeWindow()
+            # 1. Protección Panel Admin: no desplegar teclado virtual en formularios de administración
+            parent = new_widget.parent()
+            while parent:
+                class_name = parent.__class__.__name__.lower()
+                if 'admin' in class_name:
+                    if hasattr(self, 'teclado_virtual'):
+                        self.teclado_virtual.hide()
+                    return
+                parent = parent.parent()
+                
+            active_win = new_widget.window()
             if not active_win:
                 active_win = self.window()
                 
+            # 2. Protección Cambio de Ventana: ocultar antes si la ventana de destino cambió
+            # Esto previene congelamientos y asegura que la nueva ventana inicie con un teclado limpio
+            if hasattr(self, 'teclado_virtual') and self.teclado_virtual.isVisible():
+                if self.teclado_virtual.parent() != active_win:
+                    self.teclado_virtual.hide()
+                    
             if not hasattr(self, 'teclado_virtual'):
                 self.teclado_virtual = VirtualKeyboard(active_win)
             elif self.teclado_virtual.parent() != active_win:
