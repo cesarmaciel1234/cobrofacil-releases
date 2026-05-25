@@ -1122,28 +1122,22 @@ class Paso5Terminal(QWidget):
     def toggle_keyboard(self):
         if not HAS_KEYBOARD:
             return
+        active_win = self.window() or self
         if not hasattr(self, 'teclado_virtual'):
-            self.teclado_virtual = VirtualKeyboard(self)
+            self.teclado_virtual = VirtualKeyboard(active_win)
+        elif self.teclado_virtual.parent() != active_win:
+            self.teclado_virtual.setParent(active_win)
+            self.teclado_virtual.setWindowFlags(
+                Qt.Tool | 
+                Qt.FramelessWindowHint | 
+                Qt.WindowStaysOnTopHint | 
+                Qt.WindowDoesNotAcceptFocus
+            )
             
         if self.teclado_virtual.isVisible():
             self.teclado_virtual.hide()
         else:
-            # Posicionar el teclado flotante centrado abajo de la ventana de la terminal
-            kb_width = 680
-            kb_height = 310
-            
-            main_window = self.window()
-            if main_window:
-                win_geom = main_window.geometry()
-                x = win_geom.x() + (win_geom.width() - kb_width) // 2
-                y = win_geom.y() + win_geom.height() - kb_height - 60
-            else:
-                parent_geom = self.geometry()
-                x = parent_geom.x() + (parent_geom.width() - kb_width) // 2
-                y = parent_geom.y() + parent_geom.height() - kb_height - 60
-                
-            self.teclado_virtual.resize(kb_width, kb_height)
-            self.teclado_virtual.move(x, y)
+            self.teclado_virtual.reposition_keyboard()
             self.teclado_virtual.show()
 
     def hideEvent(self, event):
@@ -1214,17 +1208,8 @@ class Paso5Terminal(QWidget):
             else:
                 self.teclado_virtual.set_layout_mode("abc")
                 
-            if not self.teclado_virtual.isVisible():
-                kb_width = 680
-                kb_height = 310
-                
-                win_geom = active_win.geometry()
-                x = win_geom.x() + (win_geom.width() - kb_width) // 2
-                y = win_geom.y() + win_geom.height() - kb_height - 60
-                
-                self.teclado_virtual.resize(kb_width, kb_height)
-                self.teclado_virtual.move(x, y)
-                self.teclado_virtual.show()
+            self.teclado_virtual.reposition_keyboard()
+            self.teclado_virtual.show()
         else:
             # Si el foco cambia a cualquier otra cosa, ocultamos
             if hasattr(self, 'teclado_virtual') and self.teclado_virtual.isVisible():

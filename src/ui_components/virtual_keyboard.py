@@ -8,7 +8,7 @@ class VirtualKeyboard(QWidget):
     Teclado Virtual Industrial para entornos táctiles de escritorio.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
     Estética de colores claros estilo Android (Gboard Light Theme).
-    Resisize dinámico: QWERTY completo para texto (680px ancho) y Pad Numérico 3x6 para números (300px ancho).
+    Posicionamiento centralizado: QWERTY centrado (680x310px), Numérico en esquina inferior derecha (240x360px).
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -56,20 +56,32 @@ class VirtualKeyboard(QWidget):
         if mode in ("abc", "123") and self.layout_mode != mode:
             self.layout_mode = mode
             if hasattr(self, 'keys_layout'):
-                # Resize dinámico de la ventana
-                kb_width = 300 if mode == "123" else 680
-                kb_height = 360 if mode == "123" else 310
-                
-                # Intentar centrar respecto a la ventana activa
-                active_win = QApplication.activeWindow() or self.parent()
-                if active_win:
-                    win_geom = active_win.geometry()
-                    x = win_geom.x() + (win_geom.width() - kb_width) // 2
-                    y = win_geom.y() + win_geom.height() - kb_height - 60
-                    self.resize(kb_width, kb_height)
-                    self.move(x, y)
-                
+                self.reposition_keyboard()
                 self.build_keys()
+
+    def reposition_keyboard(self):
+        """Calcula el tamaño y la posición ideal del teclado respecto a la ventana activa."""
+        active_win = QApplication.activeWindow() or self.parent()
+        if active_win:
+            win_geom = active_win.geometry()
+            kb_width = 240 if self.layout_mode == "123" else 680
+            kb_height = 360 if self.layout_mode == "123" else 310
+            
+            if self.layout_mode == "123":
+                # Alinear abajo a la derecha con margen de 20px
+                x = win_geom.x() + win_geom.width() - kb_width - 20
+                y = win_geom.y() + win_geom.height() - kb_height - 15
+            else:
+                # Centrado horizontalmente abajo con margen de 15px
+                x = win_geom.x() + (win_geom.width() - kb_width) // 2
+                y = win_geom.y() + win_geom.height() - kb_height - 15
+                
+            self.resize(kb_width, kb_height)
+            self.move(x, y)
+
+    def showEvent(self, event):
+        self.reposition_keyboard()
+        super().showEvent(event)
 
     def init_ui(self):
         # Contenedor principal con estilo premium claro
