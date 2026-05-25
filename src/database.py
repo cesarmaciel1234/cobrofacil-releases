@@ -45,7 +45,20 @@ class DatabaseManager:
                 config_data = json.load(f)
 
             custom_path = str(config_data.get("db_path", "") or "").strip()
-            if custom_path:
+            
+            # Detección de bucle infinito (Loopback)
+            is_loopback = False
+            if custom_path.startswith("\\\\") or custom_path.startswith("//"):
+                import socket
+                parts = custom_path.replace("\\", "/").split("/")
+                if len(parts) > 2:
+                    target_host = parts[2].lower()
+                    local_host = socket.gethostname().lower()
+                    if target_host in (local_host, "localhost", "127.0.0.1"):
+                        is_loopback = True
+                        logger.info(f"Loopback detectado: {custom_path}. Forzando modo local.")
+
+            if custom_path and not is_loopback:
                 self.db_path = self._normalize_db_path(custom_path, base_app_path)
                 self.is_master = False
             else:
