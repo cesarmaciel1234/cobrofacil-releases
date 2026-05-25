@@ -29,12 +29,29 @@ class TouchFeedbackManager(QObject):
             parent_app.setStyleSheet(current_style + glow_css)
 
     def eventFilter(self, obj, event):
+        # Capturar clics de ratón
         if event.type() == QEvent.MouseButtonPress:
             if isinstance(obj, QPushButton):
                 self.trigger_button_feedback(obj)
         elif event.type() == QEvent.MouseButtonRelease:
             if isinstance(obj, QPushButton):
                 self.release_button_feedback(obj)
+                
+        # Capturar pulsaciones de teclado (Enter/Espacio en botón con foco)
+        elif event.type() == QEvent.KeyPress:
+            if isinstance(obj, QPushButton) and event.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Space):
+                self.trigger_button_feedback(obj)
+        elif event.type() == QEvent.KeyRelease:
+            if isinstance(obj, QPushButton) and event.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Space):
+                self.release_button_feedback(obj)
+                
+        # Capturar atajos de teclado globales (ej. F1, F4 ligados a botones)
+        elif event.type() == QEvent.Shortcut:
+            if isinstance(obj, QPushButton):
+                self.trigger_button_feedback(obj)
+                # Liberación automática para atajos (no hay evento de soltar atajo confiable)
+                QTimer.singleShot(150, lambda: self.release_button_feedback(obj))
+                
         return False # Nunca consumir el evento, dejar que el botón original funcione
 
     def trigger_button_feedback(self, btn):
