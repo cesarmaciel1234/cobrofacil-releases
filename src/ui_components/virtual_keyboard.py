@@ -7,6 +7,7 @@ class VirtualKeyboard(QWidget):
     """
     Teclado Virtual Industrial para entornos táctiles.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
+    Soporta cambio de layout (QWERTY / Símbolos y Números) y auto-ocultado al presionar ENTER.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -22,10 +23,11 @@ class VirtualKeyboard(QWidget):
         
         # Estado del teclado
         self.shift_active = False
+        self.layout_mode = "abc"  # "abc" o "123"
         self.letter_buttons = {}  # Guarda referencia para cambiar a mayúsculas/minúsculas
         self._drag_position = QPoint()
         
-        # Mapeo de caracteres comunes a Qt.Key
+        # Mapeo completo de caracteres a Qt.Key
         self.key_map = {
             'a': Qt.Key_A, 'b': Qt.Key_B, 'c': Qt.Key_C, 'd': Qt.Key_D, 'e': Qt.Key_E,
             'f': Qt.Key_F, 'g': Qt.Key_G, 'h': Qt.Key_H, 'i': Qt.Key_I, 'j': Qt.Key_J,
@@ -36,16 +38,23 @@ class VirtualKeyboard(QWidget):
             'ñ': Qt.Key_Ntilde,
             '0': Qt.Key_0, '1': Qt.Key_1, '2': Qt.Key_2, '3': Qt.Key_3, '4': Qt.Key_4,
             '5': Qt.Key_5, '6': Qt.Key_6, '7': Qt.Key_7, '8': Qt.Key_8, '9': Qt.Key_9,
-            '-': Qt.Key_Minus, ',': Qt.Key_Comma, '.': Qt.Key_Period
+            '-': Qt.Key_Minus, '=': Qt.Key_Equal, '+': Qt.Key_Plus, '*': Qt.Key_Asterisk,
+            '/': Qt.Key_Slash, '%': Qt.Key_Percent, '$': Qt.Key_Dollar, '@': Qt.Key_At,
+            '&': Qt.Key_Ampersand, '?': Qt.Key_Question, '!': Qt.Key_Exclam,
+            '(': Qt.Key_ParenLeft, ')': Qt.Key_ParenRight, '[': Qt.Key_BracketLeft, ']': Qt.Key_BracketRight,
+            '{': Qt.Key_BraceLeft, '}': Qt.Key_BraceRight, '<': Qt.Key_Less, '>': Qt.Key_Greater,
+            '#': Qt.Key_NumberSign, '_': Qt.Key_Underscore, '\\': Qt.Key_Backslash, '|': Qt.Key_Bar,
+            ';': Qt.Key_Semicolon, ':': Qt.Key_Colon, '"': Qt.Key_QuoteDbl, ',': Qt.Key_Comma,
+            '.': Qt.Key_Period
         }
         
         self.init_ui()
 
     def init_ui(self):
         # Contenedor principal con estilo premium oscuro
-        main_frame = QFrame(self)
-        main_frame.setObjectName("MainFrame")
-        main_frame.setStyleSheet("""
+        self.main_frame = QFrame(self)
+        self.main_frame.setObjectName("MainFrame")
+        self.main_frame.setStyleSheet("""
             QFrame#MainFrame {
                 background-color: #0F172A;
                 border: 2px solid #334155;
@@ -53,9 +62,9 @@ class VirtualKeyboard(QWidget):
             }
         """)
         
-        main_layout = QVBoxLayout(main_frame)
-        main_layout.setContentsMargins(8, 8, 8, 8)
-        main_layout.setSpacing(6)
+        self.main_layout = QVBoxLayout(self.main_frame)
+        self.main_layout.setContentsMargins(8, 8, 8, 8)
+        self.main_layout.setSpacing(6)
         
         # 1. Barra de Arrastre (Titlebar simulado)
         drag_bar = QWidget()
@@ -65,9 +74,9 @@ class VirtualKeyboard(QWidget):
         drag_layout = QHBoxLayout(drag_bar)
         drag_layout.setContentsMargins(10, 0, 10, 0)
         
-        title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS (Arrastre para mover)")
-        title_lbl.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
-        drag_layout.addWidget(title_lbl)
+        self.title_lbl = QLabel("⌨️ TECLADO VIRTUAL POS")
+        self.title_lbl.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; font-family: 'Segoe UI', sans-serif;")
+        drag_layout.addWidget(self.title_lbl)
         drag_layout.addStretch()
         
         close_btn = QPushButton("✕")
@@ -90,7 +99,37 @@ class VirtualKeyboard(QWidget):
         close_btn.clicked.connect(self.hide)
         drag_layout.addWidget(close_btn)
         
-        main_layout.addWidget(drag_bar)
+        self.main_layout.addWidget(drag_bar)
+        
+        # Contenedor para el layout de teclas dinámico
+        self.keys_container = QWidget()
+        self.keys_layout = QVBoxLayout(self.keys_container)
+        self.keys_layout.setContentsMargins(0, 0, 0, 0)
+        self.keys_layout.setSpacing(5)
+        self.main_layout.addWidget(self.keys_container)
+        
+        # Construir las teclas iniciales
+        self.build_keys()
+        
+        # Layout principal de la ventana
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.main_frame)
+        
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
+
+    def build_keys(self):
+        # Limpiar el layout existente
+        self.clear_layout(self.keys_layout)
+        self.letter_buttons.clear()
         
         # Estilo de botones de teclas
         key_style = """
@@ -111,15 +150,24 @@ class VirtualKeyboard(QWidget):
             }
         """
         
-        # Filas de teclas
-        rows = [
-            ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "⌫"],
-            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-            ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
-            ["⚡ SHIFT", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "⌨ OCULTAR"],
-            ["ESPACIO", "ENTER"]
-        ]
-        
+        # Definir filas según el layout activo
+        if self.layout_mode == "abc":
+            rows = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "⌫"],
+                ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+                ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
+                ["⚡ SHIFT", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "?123"],
+                ["ESPACIO", "ENTER"]
+            ]
+        else:
+            rows = [
+                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫"],
+                ["+", "-", "*", "/", "=", "%", "$", "@", "&"],
+                ["?", "!", "(", ")", "[", "]", "{", "}"],
+                ["<", ">", "#", "_", "\\", "|", ";", ":", "\"", "ABC"],
+                ["ESPACIO", "ENTER"]
+            ]
+            
         for i, row in enumerate(rows):
             row_layout = QHBoxLayout()
             row_layout.setSpacing(5)
@@ -131,16 +179,16 @@ class VirtualKeyboard(QWidget):
                 btn.setFocusPolicy(Qt.NoFocus)
                 btn.setCursor(Qt.PointingHandCursor)
                 
-                # Sizing especial para teclas de control
+                # Sizing y colores especiales para teclas de control
                 if key == "⌫":
                     btn.setMinimumWidth(60)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #FCA5A5; }")
                 elif key == "⚡ SHIFT":
                     btn.setMinimumWidth(80)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #FDE047; }")
-                elif key == "⌨ OCULTAR":
+                elif key in ("?123", "ABC"):
                     btn.setMinimumWidth(100)
-                    btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #94A3B8; }")
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #374151; color: #38BDF8; border-color: #0284C7; }")
                 elif key == "ESPACIO":
                     btn.setMinimumWidth(320)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #1E293B; }")
@@ -148,20 +196,17 @@ class VirtualKeyboard(QWidget):
                     btn.setMinimumWidth(150)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #10B981; color: white; border-color: #059669; }")
                     
-                # Guardar referencia de botones de letras para cambiar mayús/minús
-                if len(key) == 1 and key.isalpha():
+                # Guardar referencia de botones de letras para cambiar mayús/minús (sólo modo abc)
+                if len(key) == 1 and key.isalpha() and self.layout_mode == "abc":
                     self.letter_buttons[key] = btn
+                    if not self.shift_active:
+                        btn.setText(key.lower())
                     
                 btn.clicked.connect(lambda checked, k=key: self.on_key_press(k))
                 row_layout.addWidget(btn)
                 
-            main_layout.addLayout(row_layout)
+            self.keys_layout.addLayout(row_layout)
             
-        # Layout principal de la ventana
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(main_frame)
-        
     def on_key_press(self, key_text):
         focused = QApplication.focusWidget()
         if not focused:
@@ -174,8 +219,14 @@ class VirtualKeyboard(QWidget):
                 btn.setText(orig_char.upper() if self.shift_active else orig_char.lower())
             return
             
-        elif key_text == "⌨ OCULTAR":
-            self.hide()
+        elif key_text == "?123":
+            self.layout_mode = "123"
+            self.build_keys()
+            return
+            
+        elif key_text == "ABC":
+            self.layout_mode = "abc"
+            self.build_keys()
             return
             
         # Determinar el caracter y key code correspondientes
@@ -186,14 +237,18 @@ class VirtualKeyboard(QWidget):
         elif key_text == "ESPACIO":
             self.send_key_event(focused, Qt.Key_Space, " ", modifiers)
         elif key_text == "ENTER":
+            # Envía el Enter
             self.send_key_event(focused, Qt.Key_Return, "\n", modifiers)
+            # Se oculta automático como en celulares
+            self.hide()
+            return
         else:
             # Letra o caracter normal
             char_to_send = key_text
-            if not self.shift_active:
+            if self.layout_mode == "abc" and not self.shift_active and len(char_to_send) == 1:
                 char_to_send = char_to_send.lower()
                 
-            key_code = self.key_map.get(char_to_send.lower(), Qt.Key_unknown)
+            key_code = self.key_map.get(char_to_send.lower() if len(char_to_send) == 1 else char_to_send, Qt.Key_unknown)
             self.send_key_event(focused, key_code, char_to_send, modifiers)
 
     def send_key_event(self, target, key_code, text, modifiers):
