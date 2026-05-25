@@ -1130,7 +1130,7 @@ class Paso5Terminal(QWidget):
         else:
             # Posicionar el teclado flotante centrado abajo de la ventana de la terminal
             kb_width = 680
-            kb_height = 360
+            kb_height = 310
             
             main_window = self.window()
             if main_window:
@@ -1216,7 +1216,7 @@ class Paso5Terminal(QWidget):
                 
             if not self.teclado_virtual.isVisible():
                 kb_width = 680
-                kb_height = 360
+                kb_height = 310
                 
                 win_geom = active_win.geometry()
                 x = win_geom.x() + (win_geom.width() - kb_width) // 2
