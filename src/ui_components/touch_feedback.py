@@ -92,8 +92,12 @@ class TouchFeedbackManager(QObject):
                 QTimer.singleShot(int(150 - elapsed_ms), lambda: self.revert_button_feedback(btn))
 
     def revert_button_feedback(self, btn):
-        if btn in self._active_buttons:
-            # Asegurarse de que realmente fue soltado antes de revertir
-            if self._active_buttons[btn]['released']:
-                state = self._active_buttons.pop(btn)
-                btn.setStyleSheet(state['original_style'])
+        try:
+            if btn in self._active_buttons:
+                # Asegurarse de que realmente fue soltado antes de revertir
+                if self._active_buttons[btn]['released']:
+                    state = self._active_buttons.pop(btn)
+                    btn.setStyleSheet(state['original_style'])
+        except RuntimeError:
+            # Ocurre si el botón de C++ fue destruido (por ejemplo al cambiar dinámicamente de layout)
+            pass

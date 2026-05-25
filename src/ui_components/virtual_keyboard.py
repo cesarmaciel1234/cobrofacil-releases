@@ -5,10 +5,10 @@ from PyQt5.QtGui import QKeyEvent
 
 class VirtualKeyboard(QWidget):
     """
-    Teclado Virtual Industrial para entornos táctiles.
+    Teclado Virtual Industrial para entornos táctiles de escritorio.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
-    Estética de colores claros estilo Android (Gboard Light Theme).
-    Soporta teclas de flecha de navegación (←, →, ↓, ↑).
+    Estética de colores claros estilo Android (Gboard Light Theme) con tamaño optimizado para escritorio (48x48px).
+    Soporta teclas de flecha de navegación (←, →, ↓, ↑) más espaciadas.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -140,19 +140,19 @@ class VirtualKeyboard(QWidget):
         self.clear_layout(self.keys_layout)
         self.letter_buttons.clear()
         
-        # Estilo de botones de teclas (Estilo Gboard Claro)
+        # Estilo de botones de teclas (Estilo Gboard Claro - Tamaño Escritorio 48x48px)
         key_style = """
             QPushButton {
                 background-color: #FFFFFF;
                 color: #0F172A;
-                font-size: 14px;
+                font-size: 15px;
                 font-weight: bold;
                 font-family: 'Segoe UI', sans-serif;
                 border: 1px solid #E2E8F0;
                 border-bottom: 2px solid #CBD5E1;
                 border-radius: 6px;
-                min-width: 42px;
-                min-height: 42px;
+                min-width: 48px;
+                min-height: 48px;
             }
             QPushButton:hover {
                 background-color: #F8FAFC;
@@ -188,6 +188,7 @@ class VirtualKeyboard(QWidget):
             # Centrar la fila de flechas agregando stretch a los lados
             is_arrows = (row == ["←", "→", "↓", "↑"])
             if is_arrows:
+                row_layout.setSpacing(15)  # Separar las teclas de dirección más entre sí (15px)
                 row_layout.addStretch()
                 
             for key in row:
@@ -196,24 +197,24 @@ class VirtualKeyboard(QWidget):
                 btn.setFocusPolicy(Qt.NoFocus)
                 btn.setCursor(Qt.PointingHandCursor)
                 
-                # Sizing y colores especiales para teclas de control (Gboard grey layout keys)
+                # Sizing y colores especiales para teclas de control (Tamaño de escritorio adaptado)
                 if key == "⌫":
-                    btn.setMinimumWidth(60)
+                    btn.setMinimumWidth(70)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #EF4444; border-color: #CBD5E1; }")
                 elif key == "⚡ SHIFT":
-                    btn.setMinimumWidth(80)
+                    btn.setMinimumWidth(95)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #D97706; border-color: #CBD5E1; }")
                 elif key in ("?123", "ABC"):
-                    btn.setMinimumWidth(100)
+                    btn.setMinimumWidth(115)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
                 elif key in ("←", "→", "↓", "↑"):
-                    btn.setMinimumWidth(50)
+                    btn.setMinimumWidth(56)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }")
                 elif key == "ESPACIO":
-                    btn.setMinimumWidth(320)
+                    btn.setMinimumWidth(350)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #FFFFFF; }")
                 elif key == "ENTER":
-                    btn.setMinimumWidth(150)
+                    btn.setMinimumWidth(170)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #1A73E8; color: white; border-color: #1557B0; border-bottom: 2px solid #0D3E8C; }")
                     
                 # Guardar referencia de botones de letras para cambiar mayús/minús (sólo modo abc)
