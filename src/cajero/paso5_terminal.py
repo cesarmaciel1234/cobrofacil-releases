@@ -1157,27 +1157,59 @@ class Paso5Terminal(QWidget):
         if not self.isVisible():
             return
             
-        from PyQt5.QtWidgets import QLineEdit
+        from PyQt5.QtWidgets import QLineEdit, QApplication
+        from PyQt5.QtCore import Qt
         
         # Si el foco entra a una caja de texto (QLineEdit)
         if new_widget and isinstance(new_widget, QLineEdit):
+            active_win = QApplication.activeWindow()
+            if not active_win:
+                active_win = self.window()
+                
             if not hasattr(self, 'teclado_virtual'):
-                self.teclado_virtual = VirtualKeyboard(self)
+                self.teclado_virtual = VirtualKeyboard(active_win)
+            elif self.teclado_virtual.parent() != active_win:
+                self.teclado_virtual.setParent(active_win)
+                self.teclado_virtual.setWindowFlags(
+                    Qt.Tool | 
+                    Qt.FramelessWindowHint | 
+                    Qt.WindowStaysOnTopHint | 
+                    Qt.WindowDoesNotAcceptFocus
+                )
+                
+            # Detectar si es un campo numérico (como en paso6_cobro, DialogoEditarCantidad, etc.)
+            is_num = False
+            
+            # Verificar ancestros (como el diálogo Paso6Cobro o cuadros de diálogo de montos)
+            parent = new_widget.parent()
+            while parent:
+                if parent.__class__.__name__ in ('Paso6Cobro', 'DialogoEditarCantidad', 'DialogoRetiroEfectivo', 'DialogoIngresoEfectivo', 'DialogoAperturaCaja'):
+                    is_num = True
+                    break
+                parent = parent.parent()
+                
+            # Verificar nombre de objeto o placeholder
+            name = new_widget.objectName().lower()
+            placeholder = new_widget.placeholderText()
+            if any(k in name for k in ['cant', 'pago', 'otro', 'desc', 'rec', 'monto', 'precio', 'num', 'total', 'cantidad']):
+                is_num = True
+            elif placeholder and any(c.isdigit() or c in ['.', ','] for c in placeholder):
+                is_num = True
+                
+            # Cambiar layout al modo correspondiente (123 para números, abc para texto)
+            if is_num:
+                self.teclado_virtual.set_layout_mode("123")
+            else:
+                self.teclado_virtual.set_layout_mode("abc")
                 
             if not self.teclado_virtual.isVisible():
                 kb_width = 680
                 kb_height = 260
                 
-                main_window = self.window()
-                if main_window:
-                    win_geom = main_window.geometry()
-                    x = win_geom.x() + (win_geom.width() - kb_width) // 2
-                    y = win_geom.y() + win_geom.height() - kb_height - 60
-                else:
-                    parent_geom = self.geometry()
-                    x = parent_geom.x() + (parent_geom.width() - kb_width) // 2
-                    y = parent_geom.y() + parent_geom.height() - kb_height - 60
-                    
+                win_geom = active_win.geometry()
+                x = win_geom.x() + (win_geom.width() - kb_width) // 2
+                y = win_geom.y() + win_geom.height() - kb_height - 60
+                
                 self.teclado_virtual.resize(kb_width, kb_height)
                 self.teclado_virtual.move(x, y)
                 self.teclado_virtual.show()

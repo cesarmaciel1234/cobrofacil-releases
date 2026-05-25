@@ -50,6 +50,13 @@ class VirtualKeyboard(QWidget):
         
         self.init_ui()
 
+    def set_layout_mode(self, mode):
+        """Establece el layout ('abc' o '123') y reconstruye las teclas."""
+        if mode in ("abc", "123") and self.layout_mode != mode:
+            self.layout_mode = mode
+            if hasattr(self, 'keys_layout'):
+                self.build_keys()
+
     def init_ui(self):
         # Contenedor principal con estilo premium claro
         self.main_frame = QFrame(self)
