@@ -1197,24 +1197,16 @@ class Paso5Terminal(QWidget):
                     Qt.WindowDoesNotAcceptFocus
                 )
                 
-            # Detectar si es un campo numérico (como en paso6_cobro, DialogoEditarCantidad, etc.)
+            # Detectar si es un campo numérico (únicamente en Paso6Cobro por solicitud del usuario)
             is_num = False
             
-            # Verificar ancestros (como el diálogo Paso6Cobro o cuadros de diálogo de montos)
+            # Verificar si pertenece al diálogo Paso6Cobro
             parent = new_widget.parent()
             while parent:
-                if parent.__class__.__name__ in ('Paso6Cobro', 'DialogoEditarCantidad', 'DialogoRetiroEfectivo', 'DialogoIngresoEfectivo', 'DialogoAperturaCaja'):
+                if parent.__class__.__name__ == 'Paso6Cobro':
                     is_num = True
                     break
                 parent = parent.parent()
-                
-            # Verificar nombre de objeto o placeholder
-            name = new_widget.objectName().lower()
-            placeholder = new_widget.placeholderText()
-            if any(k in name for k in ['cant', 'pago', 'otro', 'desc', 'rec', 'monto', 'precio', 'num', 'total', 'cantidad']):
-                is_num = True
-            elif placeholder and any(c.isdigit() or c in ['.', ','] for c in placeholder):
-                is_num = True
                 
             # Cambiar layout al modo correspondiente (123 para números, abc para texto)
             if is_num:
