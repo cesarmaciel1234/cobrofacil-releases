@@ -1006,9 +1006,56 @@ class Paso5Terminal(QWidget):
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version); sl.addStretch()
         
-        lbl_hints = QLabel("⌨️  [F1] BUSCAR  |  [F3] HISTORIAL  |  [F4] PAGAR  |  [F5] RETIRO  |  [F6] INGRESO  |  [F8] BLOQ  |  [F12] CIERRE")
-        lbl_hints.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; border: none;")
-        sl.addWidget(lbl_hints)
+        hints_layout = QHBoxLayout()
+        hints_layout.setSpacing(2)
+        hints_layout.setContentsMargins(0,0,0,0)
+        
+        icon_lbl = QLabel("⌨️")
+        icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
+        hints_layout.addWidget(icon_lbl)
+        
+        btn_style = """
+            QPushButton {
+                color: #94A3B8; font-weight: 800; font-size: 11px; border: none; background: transparent; padding: 2px 4px; border-radius: 3px;
+            }
+            QPushButton:hover {
+                color: #FFFFFF; background: rgba(255, 255, 255, 0.1);
+            }
+        """
+        
+        hints = [
+            ("[F1] BUSCAR", self._do_busqueda),
+            ("|", None),
+            ("[F3] HISTORIAL", self.abrir_historial_dia),
+            ("|", None),
+            ("[F4] PAGAR", self.finalizar_venta),
+            ("|", None),
+            ("[F5] RETIRO", self.abrir_retiro_efectivo),
+            ("|", None),
+            ("[F6] INGRESO", self.abrir_ingreso_efectivo),
+            ("|", None),
+            ("[F8] BLOQ", self.bloquear_terminal),
+            ("|", None),
+            ("[F12] CIERRE", self.abrir_cierre_caja)
+        ]
+        
+        for text, func in hints:
+            if text == "|":
+                sep = QLabel(" | ")
+                sep.setStyleSheet("color: #475569; font-weight: 800; font-size: 11px; border: none; background: transparent;")
+                hints_layout.addWidget(sep)
+            else:
+                btn = QPushButton(text)
+                btn.setStyleSheet(btn_style)
+                btn.setCursor(Qt.PointingHandCursor)
+                btn.setFocusPolicy(Qt.NoFocus)
+                btn.clicked.connect(func)
+                hints_layout.addWidget(btn)
+                
+        # Widget contenedor para el layout
+        hints_widget = QWidget()
+        hints_widget.setLayout(hints_layout)
+        sl.addWidget(hints_widget)
 
         sl.addSpacing(10)
         # Botón Candado
