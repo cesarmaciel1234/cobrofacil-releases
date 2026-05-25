@@ -8,6 +8,7 @@ class VirtualKeyboard(QWidget):
     Teclado Virtual Industrial para entornos táctiles.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
     Estética de colores claros estilo Android (Gboard Light Theme).
+    Soporta teclas de flecha de navegación (←, →, ↓, ↑).
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -45,7 +46,8 @@ class VirtualKeyboard(QWidget):
             '{': Qt.Key_BraceLeft, '}': Qt.Key_BraceRight, '<': Qt.Key_Less, '>': Qt.Key_Greater,
             '#': Qt.Key_NumberSign, '_': Qt.Key_Underscore, '\\': Qt.Key_Backslash, '|': Qt.Key_Bar,
             ';': Qt.Key_Semicolon, ':': Qt.Key_Colon, '"': Qt.Key_QuoteDbl, ',': Qt.Key_Comma,
-            '.': Qt.Key_Period
+            '.': Qt.Key_Period,
+            '←': Qt.Key_Left, '→': Qt.Key_Right, '↓': Qt.Key_Down, '↑': Qt.Key_Up
         }
         
         self.init_ui()
@@ -158,13 +160,14 @@ class VirtualKeyboard(QWidget):
             }
         """
         
-        # Definir filas según el layout activo
+        # Definir filas según el layout activo (agregando la fila de flechas)
         if self.layout_mode == "abc":
             rows = [
                 ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "⌫"],
                 ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
                 ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],
                 ["⚡ SHIFT", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "?123"],
+                ["←", "→", "↓", "↑"],
                 ["ESPACIO", "ENTER"]
             ]
         else:
@@ -173,6 +176,7 @@ class VirtualKeyboard(QWidget):
                 ["+", "-", "*", "/", "=", "%", "$", "@", "&"],
                 ["?", "!", "(", ")", "[", "]", "{", "}"],
                 ["<", ">", "#", "_", "\\", "|", ";", ":", "\"", "ABC"],
+                ["←", "→", "↓", "↑"],
                 ["ESPACIO", "ENTER"]
             ]
             
@@ -181,6 +185,11 @@ class VirtualKeyboard(QWidget):
             row_layout.setSpacing(5)
             row_layout.setContentsMargins(0, 0, 0, 0)
             
+            # Centrar la fila de flechas agregando stretch a los lados
+            is_arrows = (row == ["←", "→", "↓", "↑"])
+            if is_arrows:
+                row_layout.addStretch()
+                
             for key in row:
                 btn = QPushButton(key)
                 btn.setStyleSheet(key_style)
@@ -197,6 +206,9 @@ class VirtualKeyboard(QWidget):
                 elif key in ("?123", "ABC"):
                     btn.setMinimumWidth(100)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
+                elif key in ("←", "→", "↓", "↑"):
+                    btn.setMinimumWidth(50)
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }")
                 elif key == "ESPACIO":
                     btn.setMinimumWidth(320)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #FFFFFF; }")
@@ -212,6 +224,9 @@ class VirtualKeyboard(QWidget):
                     
                 btn.clicked.connect(lambda checked, k=key: self.on_key_press(k))
                 row_layout.addWidget(btn)
+                
+            if is_arrows:
+                row_layout.addStretch()
                 
             self.keys_layout.addLayout(row_layout)
             
@@ -250,6 +265,14 @@ class VirtualKeyboard(QWidget):
             # Se oculta automático como en celulares
             self.hide()
             return
+        elif key_text == "←":
+            self.send_key_event(focused, Qt.Key_Left, "", modifiers)
+        elif key_text == "→":
+            self.send_key_event(focused, Qt.Key_Right, "", modifiers)
+        elif key_text == "↓":
+            self.send_key_event(focused, Qt.Key_Down, "", modifiers)
+        elif key_text == "↑":
+            self.send_key_event(focused, Qt.Key_Up, "", modifiers)
         else:
             # Letra o caracter normal
             char_to_send = key_text
