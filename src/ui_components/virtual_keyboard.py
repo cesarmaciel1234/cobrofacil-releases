@@ -7,7 +7,8 @@ class VirtualKeyboard(QWidget):
     """
     Teclado Virtual Industrial para entornos táctiles de escritorio.
     Diseñado para flotar sobre la aplicación y enviar pulsaciones sin robar el foco.
-    Estética de colores claros estilo Android (Gboard Light Theme) con tamaño optimizado para escritorio (48x48px).
+    Estética de colores claros estilo Android (Gboard Light Theme).
+    Resisize dinámico: QWERTY completo para texto (680px ancho) y Pad Numérico 3x6 para números (300px ancho).
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,10 +52,23 @@ class VirtualKeyboard(QWidget):
         self.init_ui()
 
     def set_layout_mode(self, mode):
-        """Establece el layout ('abc' o '123') y reconstruye las teclas."""
+        """Establece el layout ('abc' o '123') y reconstruye las teclas con resize dinámico."""
         if mode in ("abc", "123") and self.layout_mode != mode:
             self.layout_mode = mode
             if hasattr(self, 'keys_layout'):
+                # Resize dinámico de la ventana
+                kb_width = 300 if mode == "123" else 680
+                kb_height = 360 if mode == "123" else 310
+                
+                # Intentar centrar respecto a la ventana activa
+                active_win = QApplication.activeWindow() or self.parent()
+                if active_win:
+                    win_geom = active_win.geometry()
+                    x = win_geom.x() + (win_geom.width() - kb_width) // 2
+                    y = win_geom.y() + win_geom.height() - kb_height - 60
+                    self.resize(kb_width, kb_height)
+                    self.move(x, y)
+                
                 self.build_keys()
 
     def init_ui(self):
@@ -158,7 +172,7 @@ class VirtualKeyboard(QWidget):
             }
         """
         
-        # Definir filas según el layout activo (removiendo las flechas)
+        # Definir filas según el layout activo
         if self.layout_mode == "abc":
             rows = [
                 ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "⌫"],
@@ -168,12 +182,14 @@ class VirtualKeyboard(QWidget):
                 ["ESPACIO", "ENTER"]
             ]
         else:
+            # Layout numérico 3x6 estilo celular/calculadora
             rows = [
-                ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "⌫"],
-                ["+", "-", "*", "/", "=", "%", "$", "@", "&"],
-                ["?", "!", "(", ")", "[", "]", "{", "}"],
-                ["<", ">", "#", "_", "\\", "|", ";", ":", "\"", "ABC"],
-                ["ESPACIO", "ENTER"]
+                ["1", "2", "3"],
+                ["4", "5", "6"],
+                ["7", "8", "9"],
+                ["⌫", "0", "."],
+                ["+", "-", "*"],
+                ["ABC", "ENTER"]
             ]
             
         for i, row in enumerate(rows):
@@ -189,19 +205,23 @@ class VirtualKeyboard(QWidget):
                 
                 # Sizing y colores especiales para teclas de control (Tamaño de escritorio adaptado)
                 if key == "⌫":
-                    btn.setMinimumWidth(70)
+                    btn.setMinimumWidth(70 if self.layout_mode == "abc" else 48)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #EF4444; border-color: #CBD5E1; }")
                 elif key == "⚡ SHIFT":
                     btn.setMinimumWidth(95)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #D97706; border-color: #CBD5E1; }")
-                elif key in ("?123", "ABC"):
+                elif key == "?123":
                     btn.setMinimumWidth(115)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
+                elif key == "ABC":
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
+                elif key in ("+", "-", "*"):
+                    btn.setStyleSheet(key_style + "QPushButton { background-color: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }")
                 elif key == "ESPACIO":
                     btn.setMinimumWidth(350)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #FFFFFF; }")
                 elif key == "ENTER":
-                    btn.setMinimumWidth(170)
+                    btn.setMinimumWidth(170 if self.layout_mode == "abc" else 48)
                     btn.setStyleSheet(key_style + "QPushButton { background-color: #1A73E8; color: white; border-color: #1557B0; border-bottom: 2px solid #0D3E8C; }")
                     
                 # Guardar referencia de botones de letras para cambiar mayús/minús (sólo modo abc)
@@ -228,13 +248,11 @@ class VirtualKeyboard(QWidget):
             return
             
         elif key_text == "?123":
-            self.layout_mode = "123"
-            self.build_keys()
+            self.set_layout_mode("123")
             return
             
         elif key_text == "ABC":
-            self.layout_mode = "abc"
-            self.build_keys()
+            self.set_layout_mode("abc")
             return
             
         # Determinar el caracter y key code correspondientes
