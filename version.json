@@ -1,7 +1,7 @@
 {
   "app_version": "3000.1",
   "channel": "stable",
-  "build_date": "2026-05-24 00:56:37",
+  "build_date": "2026-05-25 11:53:13",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
@@ -42,9 +42,9 @@
     },
     "main.py": {
       "version": "2027.9",
-      "checksum": "e6d5f8036580d85061bc1415a6a9c88d",
+      "checksum": "27469e10462bc402c9bf1654dfa58846",
       "channel": "stable",
-      "size": 14577
+      "size": 14751
     },
     "organize_docs.py": {
       "version": "2027.9",
@@ -64,6 +64,12 @@
       "channel": "stable",
       "size": 2765
     },
+    "test_lan_db.py": {
+      "version": "1.0.0",
+      "checksum": "e6065dae8e2d09808cd8c32116d4df6d",
+      "channel": "stable",
+      "size": 4124
+    },
     "test_quit.py": {
       "version": "2027.9",
       "checksum": "dffe71bd43030647b925cd5549fcdce9",
@@ -81,6 +87,2670 @@
       "checksum": "e7bef1bdb44c7f3004af025fa605f332",
       "channel": "stable",
       "size": 5810
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/base.py": {
+      "version": "1.0.0",
+      "checksum": "e07b8bb979b12463f4ca79911246a782",
+      "channel": "stable",
+      "size": 3569
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/codabar.py": {
+      "version": "1.0.0",
+      "checksum": "291625ed0383b257b0564d1446dff675",
+      "channel": "stable",
+      "size": 2266
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/codex.py": {
+      "version": "1.0.0",
+      "checksum": "92e8dd4dc47ec49e2412e9808426396f",
+      "channel": "stable",
+      "size": 9504
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/ean.py": {
+      "version": "1.0.0",
+      "checksum": "2aeaa17d1e76770ad27a2e7329b8a235",
+      "channel": "stable",
+      "size": 7258
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/errors.py": {
+      "version": "1.0.0",
+      "checksum": "d2bad3aedd969853916a7fdfe9e344bb",
+      "channel": "stable",
+      "size": 698
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/isxn.py": {
+      "version": "1.0.0",
+      "checksum": "03ff09f9852cfcce3de43923bd07d48d",
+      "channel": "stable",
+      "size": 3687
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/itf.py": {
+      "version": "1.0.0",
+      "checksum": "35a5405cd3b78056312bfbf0f4fb7b34",
+      "channel": "stable",
+      "size": 2275
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/pybarcode.py": {
+      "version": "1.0.0",
+      "checksum": "63ae94920dbff55f7984377bc58d783d",
+      "channel": "stable",
+      "size": 3438
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/upc.py": {
+      "version": "1.0.0",
+      "checksum": "021cd1b8968324b047391467149421ba",
+      "channel": "stable",
+      "size": 3179
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/version.py": {
+      "version": "1.0.0",
+      "checksum": "db38a75861af60bf16fbc5aa0b3b0881",
+      "channel": "stable",
+      "size": 706
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/writer.py": {
+      "version": "1.0.0",
+      "checksum": "9a39ec351fffaeb696ed9cce61099131",
+      "channel": "stable",
+      "size": 17740
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e5eb09be3c4e5b3f1c57143092ee93ce",
+      "channel": "stable",
+      "size": 4272
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/codabar.py": {
+      "version": "1.0.0",
+      "checksum": "9ae6b1e0b8dc41e63bb08b485caa4d8f",
+      "channel": "stable",
+      "size": 515
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/code128.py": {
+      "version": "1.0.0",
+      "checksum": "8ed5dc5122e7631f556814fcaed1c95d",
+      "channel": "stable",
+      "size": 3444
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/code39.py": {
+      "version": "1.0.0",
+      "checksum": "1c3c9c908132bfba75b84bf868d63df8",
+      "channel": "stable",
+      "size": 1353
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/ean.py": {
+      "version": "1.0.0",
+      "checksum": "0e2669b077bfe041d743e5fc3db11bd6",
+      "channel": "stable",
+      "size": 861
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/itf.py": {
+      "version": "1.0.0",
+      "checksum": "3aaf4f0f0b1c578ff766f6e893bae682",
+      "channel": "stable",
+      "size": 275
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/upc.py": {
+      "version": "1.0.0",
+      "checksum": "9694479e105e7afa40682f2b117db221",
+      "channel": "stable",
+      "size": 494
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/barcode/charsets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/animation.py": {
+      "version": "1.0.0",
+      "checksum": "9645fc7064380585ab662c19aed47184",
+      "channel": "stable",
+      "size": 73744
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/artist.py": {
+      "version": "1.0.0",
+      "checksum": "1e422f04d55ba295347afb2c03890354",
+      "channel": "stable",
+      "size": 63374
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/axis.py": {
+      "version": "1.0.0",
+      "checksum": "c9811d2669c187c39fccb7705e00151b",
+      "channel": "stable",
+      "size": 104714
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backend_bases.py": {
+      "version": "1.0.0",
+      "checksum": "6c77d03029142eb8b413d5f87bdd07e8",
+      "channel": "stable",
+      "size": 131953
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backend_managers.py": {
+      "version": "1.0.0",
+      "checksum": "7961223900fa6749734bdda9a3bb9266",
+      "channel": "stable",
+      "size": 11795
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backend_tools.py": {
+      "version": "1.0.0",
+      "checksum": "9b3bd711ddd96a9837e1c67ac0b2ea7f",
+      "channel": "stable",
+      "size": 33491
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/bezier.py": {
+      "version": "1.0.0",
+      "checksum": "9b0124f80b777f58cd766db0f9620969",
+      "channel": "stable",
+      "size": 19049
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/category.py": {
+      "version": "1.0.0",
+      "checksum": "9afaaba238f10af08b4f3c2104c680cb",
+      "channel": "stable",
+      "size": 7377
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/cbook.py": {
+      "version": "1.0.0",
+      "checksum": "8fa4906cf9991d4e7a16a66455463fa0",
+      "channel": "stable",
+      "size": 80020
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/cm.py": {
+      "version": "1.0.0",
+      "checksum": "51cfb0c4b6e345a22eea1666cdb88c74",
+      "channel": "stable",
+      "size": 10350
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/collections.py": {
+      "version": "1.0.0",
+      "checksum": "f077b40569877e8890e54fb4d68d6515",
+      "channel": "stable",
+      "size": 96311
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/colorbar.py": {
+      "version": "1.0.0",
+      "checksum": "fa56b8b2d273c565977a6a20e6846590",
+      "channel": "stable",
+      "size": 60687
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/colorizer.py": {
+      "version": "1.0.0",
+      "checksum": "6caa4186a52c2c10c229edac5b3bbdbc",
+      "channel": "stable",
+      "size": 25180
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/colors.py": {
+      "version": "1.0.0",
+      "checksum": "88f13c4f58113e12d0f0f2c287cfed39",
+      "channel": "stable",
+      "size": 137303
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/container.py": {
+      "version": "1.0.0",
+      "checksum": "6c72142d4e60663fd994773708ff37a1",
+      "channel": "stable",
+      "size": 4565
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/contour.py": {
+      "version": "1.0.0",
+      "checksum": "22ada5bc45e4062ea7ea4805e5ba2514",
+      "channel": "stable",
+      "size": 68479
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/dates.py": {
+      "version": "1.0.0",
+      "checksum": "fa5843087c7014e0fb600211264a43d6",
+      "channel": "stable",
+      "size": 66306
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/dviread.py": {
+      "version": "1.0.0",
+      "checksum": "6e779d21801a1c1d74984e14848af6b7",
+      "channel": "stable",
+      "size": 42590
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/figure.py": {
+      "version": "1.0.0",
+      "checksum": "69d2bbc6a368202807a9b8e35886f532",
+      "channel": "stable",
+      "size": 142126
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/font_manager.py": {
+      "version": "1.0.0",
+      "checksum": "b55aaa42b7ba192068f5297348b432c9",
+      "channel": "stable",
+      "size": 57651
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/gridspec.py": {
+      "version": "1.0.0",
+      "checksum": "b83a8280bd10ac6f968b9e92c1ea2a54",
+      "channel": "stable",
+      "size": 29786
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/hatch.py": {
+      "version": "1.0.0",
+      "checksum": "9de3eb4188f6bda44032648f8b8c3363",
+      "channel": "stable",
+      "size": 7453
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/image.py": {
+      "version": "1.0.0",
+      "checksum": "e004408721bd7a998333769a94be8e34",
+      "channel": "stable",
+      "size": 69765
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/inset.py": {
+      "version": "1.0.0",
+      "checksum": "b348d4fcddffacf15e7426042974ca31",
+      "channel": "stable",
+      "size": 10154
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/layout_engine.py": {
+      "version": "1.0.0",
+      "checksum": "7afee1126a72b86f757fb09ecb3debd8",
+      "channel": "stable",
+      "size": 11433
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/legend.py": {
+      "version": "1.0.0",
+      "checksum": "1d777d1a0c4c45de8306d9975b30a77a",
+      "channel": "stable",
+      "size": 55343
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/legend_handler.py": {
+      "version": "1.0.0",
+      "checksum": "7f95bae6b0d276039d148f5cde34e29a",
+      "channel": "stable",
+      "size": 29872
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/lines.py": {
+      "version": "1.0.0",
+      "checksum": "e32e2304e54e618b06d592ba3578d822",
+      "channel": "stable",
+      "size": 57920
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/markers.py": {
+      "version": "1.0.0",
+      "checksum": "356bd4872835539063b2ea93207350d9",
+      "channel": "stable",
+      "size": 33708
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/mathtext.py": {
+      "version": "1.0.0",
+      "checksum": "8735713e478304d126eef159b5b3da2d",
+      "channel": "stable",
+      "size": 5104
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/mlab.py": {
+      "version": "1.0.0",
+      "checksum": "dcf77844336514e4a9555daacb33c16b",
+      "channel": "stable",
+      "size": 30210
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/offsetbox.py": {
+      "version": "1.0.0",
+      "checksum": "c169dd6c89c14677f3f8b2572a47e7ad",
+      "channel": "stable",
+      "size": 54490
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/patches.py": {
+      "version": "1.0.0",
+      "checksum": "861ff09af57e6193fb916fee1c969fcd",
+      "channel": "stable",
+      "size": 165064
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/path.py": {
+      "version": "1.0.0",
+      "checksum": "a5e353b22f47abe13ad93e1d9984d72a",
+      "channel": "stable",
+      "size": 43269
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/patheffects.py": {
+      "version": "1.0.0",
+      "checksum": "f8b443ee3de8fd8e6b516ba5a9b21770",
+      "channel": "stable",
+      "size": 18387
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/pylab.py": {
+      "version": "1.0.0",
+      "checksum": "ac533bb6ef2ce6c06878cc64d656da56",
+      "channel": "stable",
+      "size": 2369
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/pyplot.py": {
+      "version": "1.0.0",
+      "checksum": "07b9643578d07a42d7f767d14dac8660",
+      "channel": "stable",
+      "size": 149717
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/quiver.py": {
+      "version": "1.0.0",
+      "checksum": "2937d6a7e14a64aa345d0280a7313b87",
+      "channel": "stable",
+      "size": 48676
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/rcsetup.py": {
+      "version": "1.0.0",
+      "checksum": "818032812550611ec4ee73e5137a08fd",
+      "channel": "stable",
+      "size": 52790
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sankey.py": {
+      "version": "1.0.0",
+      "checksum": "4d47a752cbb627c210ad24389f933abe",
+      "channel": "stable",
+      "size": 36151
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/scale.py": {
+      "version": "1.0.0",
+      "checksum": "19ab433a9b933a8beb62e41177445568",
+      "channel": "stable",
+      "size": 26924
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/spines.py": {
+      "version": "1.0.0",
+      "checksum": "948418605949490ce8cd1be01369a60a",
+      "channel": "stable",
+      "size": 21923
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/stackplot.py": {
+      "version": "1.0.0",
+      "checksum": "80a2d3daafa95d79b428b4a80f766ca3",
+      "channel": "stable",
+      "size": 4997
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/streamplot.py": {
+      "version": "1.0.0",
+      "checksum": "9b709c9065d167d687c441b87b360af9",
+      "channel": "stable",
+      "size": 24011
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/table.py": {
+      "version": "1.0.0",
+      "checksum": "e1e0c7e1ebcf2aca18b79751fd022161",
+      "channel": "stable",
+      "size": 27744
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/texmanager.py": {
+      "version": "1.0.0",
+      "checksum": "8d316876d97c0c571ec41b9ae8be7b69",
+      "channel": "stable",
+      "size": 15338
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/text.py": {
+      "version": "1.0.0",
+      "checksum": "4d718971ece296b4828952349a3e823a",
+      "channel": "stable",
+      "size": 70856
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/textpath.py": {
+      "version": "1.0.0",
+      "checksum": "9593a739b0619c9f5360a6f2808204f3",
+      "channel": "stable",
+      "size": 13254
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/ticker.py": {
+      "version": "1.0.0",
+      "checksum": "5bbf56176105b1e10caabe5e1e94a993",
+      "channel": "stable",
+      "size": 107381
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/transforms.py": {
+      "version": "1.0.0",
+      "checksum": "1d54313272dd282d8ab84109ea1d8943",
+      "channel": "stable",
+      "size": 99763
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/typing.py": {
+      "version": "1.0.0",
+      "checksum": "d44fd8b85f74dd9d0ed7a6db7c198f27",
+      "channel": "stable",
+      "size": 2439
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/units.py": {
+      "version": "1.0.0",
+      "checksum": "6e516d85658e71cf38cfd48e0816ad6f",
+      "channel": "stable",
+      "size": 6429
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/widgets.py": {
+      "version": "1.0.0",
+      "checksum": "0f66f718be606918dea9e8456c6ec37c",
+      "channel": "stable",
+      "size": 152774
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_afm.py": {
+      "version": "1.0.0",
+      "checksum": "86827f4c12bedc21045615da204bf687",
+      "channel": "stable",
+      "size": 16692
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_animation_data.py": {
+      "version": "1.0.0",
+      "checksum": "7dc06d1887d4a2f2c3169bb7154edbfb",
+      "channel": "stable",
+      "size": 7986
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_blocking_input.py": {
+      "version": "1.0.0",
+      "checksum": "6f3d025f40cece989d2b33d6f0a59da8",
+      "channel": "stable",
+      "size": 1224
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_cm.py": {
+      "version": "1.0.0",
+      "checksum": "8d0b3aa96f6dfa6cdb95f52fb231a1f8",
+      "channel": "stable",
+      "size": 68014
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_cm_bivar.py": {
+      "version": "1.0.0",
+      "checksum": "6f98eb963a21bdaa54832d5bc9e8c714",
+      "channel": "stable",
+      "size": 97461
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_cm_listed.py": {
+      "version": "1.0.0",
+      "checksum": "60854d42474035bde0052b9b508262b1",
+      "channel": "stable",
+      "size": 135004
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_cm_multivar.py": {
+      "version": "1.0.0",
+      "checksum": "3412fefac07bd863f427896b538cea27",
+      "channel": "stable",
+      "size": 6630
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_color_data.py": {
+      "version": "1.0.0",
+      "checksum": "6764929e6730c452b657f2b27b5e9554",
+      "channel": "stable",
+      "size": 34780
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_constrained_layout.py": {
+      "version": "1.0.0",
+      "checksum": "b8e6be3702c76e20cecc86a5642aecdc",
+      "channel": "stable",
+      "size": 31485
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_docstring.py": {
+      "version": "1.0.0",
+      "checksum": "5a8e00b4fd60a39233ec5a2505f2a867",
+      "channel": "stable",
+      "size": 4435
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_enums.py": {
+      "version": "1.0.0",
+      "checksum": "da56826f3216481f520d518c6993024b",
+      "channel": "stable",
+      "size": 6175
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_fontconfig_pattern.py": {
+      "version": "1.0.0",
+      "checksum": "6da4645c5ba68425bb8670fcf695720f",
+      "channel": "stable",
+      "size": 4365
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_internal_utils.py": {
+      "version": "1.0.0",
+      "checksum": "950a9ccda36505fde9782f2a31d57c9d",
+      "channel": "stable",
+      "size": 2140
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_layoutgrid.py": {
+      "version": "1.0.0",
+      "checksum": "5f1583b56803d2af7bb1e25e9ec2506a",
+      "channel": "stable",
+      "size": 21676
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_mathtext.py": {
+      "version": "1.0.0",
+      "checksum": "cbb0145d9c1f34d7fb54cd21a5c795ef",
+      "channel": "stable",
+      "size": 107336
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_mathtext_data.py": {
+      "version": "1.0.0",
+      "checksum": "f1579db547a0405f85954d4ec37774a0",
+      "channel": "stable",
+      "size": 65067
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_pylab_helpers.py": {
+      "version": "1.0.0",
+      "checksum": "5ba79962e544b7012ece8205244202d4",
+      "channel": "stable",
+      "size": 4307
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_text_helpers.py": {
+      "version": "1.0.0",
+      "checksum": "d90cdc67380f9de1723d015c537a8f25",
+      "channel": "stable",
+      "size": 2538
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_tight_bbox.py": {
+      "version": "1.0.0",
+      "checksum": "035bf8e538b86d99e27eb755f896dc53",
+      "channel": "stable",
+      "size": 2787
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_tight_layout.py": {
+      "version": "1.0.0",
+      "checksum": "53a5123b08150f7f624c2e1f10548eec",
+      "channel": "stable",
+      "size": 12675
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_type1font.py": {
+      "version": "1.0.0",
+      "checksum": "4ef2206a9ee40c847285a52078cbe7e5",
+      "channel": "stable",
+      "size": 28409
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_version.py": {
+      "version": "1.0.0",
+      "checksum": "a70319eba7babf94bf5b74aa579fd0d8",
+      "channel": "stable",
+      "size": 19
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "4ef7c6b113c821945323d3103b03c9d6",
+      "channel": "stable",
+      "size": 55823
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/axes/_axes.py": {
+      "version": "1.0.0",
+      "checksum": "b2fe2d1d2bb1d458b6756fbdce558ba5",
+      "channel": "stable",
+      "size": 353841
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/axes/_base.py": {
+      "version": "1.0.0",
+      "checksum": "a9dab58bdcf5050d94bcbe6de02cad33",
+      "channel": "stable",
+      "size": 186445
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/axes/_secondary_axes.py": {
+      "version": "1.0.0",
+      "checksum": "9d4be70d984b3e672b7604f43258db8e",
+      "channel": "stable",
+      "size": 11887
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/axes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "88a8aa2f4c118802e95504639682b05c",
+      "channel": "stable",
+      "size": 351
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_agg.py": {
+      "version": "1.0.0",
+      "checksum": "ce670a6c48df885a91df1e0bb0b17d37",
+      "channel": "stable",
+      "size": 19888
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_cairo.py": {
+      "version": "1.0.0",
+      "checksum": "1eea43f9d88b6b7e611f62a3843848fc",
+      "channel": "stable",
+      "size": 18618
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk3.py": {
+      "version": "1.0.0",
+      "checksum": "128761c5fc08b34cce39f832b9b6cee3",
+      "channel": "stable",
+      "size": 22320
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk3agg.py": {
+      "version": "1.0.0",
+      "checksum": "da4238e599cbec2f680197c016495167",
+      "channel": "stable",
+      "size": 2463
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk3cairo.py": {
+      "version": "1.0.0",
+      "checksum": "05537f3dbcea7088fd65eaad1f7615f8",
+      "channel": "stable",
+      "size": 1392
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk4.py": {
+      "version": "1.0.0",
+      "checksum": "3e3e2bd3c449dc2d116944888d5e5416",
+      "channel": "stable",
+      "size": 23594
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk4agg.py": {
+      "version": "1.0.0",
+      "checksum": "a571c270eac39d4579e15f2efb998882",
+      "channel": "stable",
+      "size": 1262
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_gtk4cairo.py": {
+      "version": "1.0.0",
+      "checksum": "73b761e41e344363bdbb437c2683c787",
+      "channel": "stable",
+      "size": 1125
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_macosx.py": {
+      "version": "1.0.0",
+      "checksum": "ed7a7c98cf682dce59bda1ed424d5c2c",
+      "channel": "stable",
+      "size": 7397
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_mixed.py": {
+      "version": "1.0.0",
+      "checksum": "07a218a5dedc2ebcb6d8170970b1ad05",
+      "channel": "stable",
+      "size": 4696
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_nbagg.py": {
+      "version": "1.0.0",
+      "checksum": "45aba459691b5b7e2a5691c938b4099b",
+      "channel": "stable",
+      "size": 8000
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_pdf.py": {
+      "version": "1.0.0",
+      "checksum": "1fe80ba231b02411f8552c80189b478b",
+      "channel": "stable",
+      "size": 105320
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_pgf.py": {
+      "version": "1.0.0",
+      "checksum": "1ee8c0ee52acd751cd07c9a32147519b",
+      "channel": "stable",
+      "size": 39627
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_ps.py": {
+      "version": "1.0.0",
+      "checksum": "f7c0b751bc4b236d0897b2a1b33a9dfa",
+      "channel": "stable",
+      "size": 52099
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qt.py": {
+      "version": "1.0.0",
+      "checksum": "815f56b2cf1b8bfa6ba072dae66dd7a5",
+      "channel": "stable",
+      "size": 42312
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qt5.py": {
+      "version": "1.0.0",
+      "checksum": "2d98c554404bd617a8cee06261d54391",
+      "channel": "stable",
+      "size": 787
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qt5agg.py": {
+      "version": "1.0.0",
+      "checksum": "0b5e4ea96a1d0fc85efd7b5860ffddb7",
+      "channel": "stable",
+      "size": 352
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qt5cairo.py": {
+      "version": "1.0.0",
+      "checksum": "9fd9cf6c2cb5485d5c3fa7be736c48eb",
+      "channel": "stable",
+      "size": 292
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qtagg.py": {
+      "version": "1.0.0",
+      "checksum": "40ca8808d65c7d29f44ca56db54cdd53",
+      "channel": "stable",
+      "size": 3413
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_qtcairo.py": {
+      "version": "1.0.0",
+      "checksum": "16cdc33395b1a3774d06cbd159571500",
+      "channel": "stable",
+      "size": 1770
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_svg.py": {
+      "version": "1.0.0",
+      "checksum": "248af9c5fcc3a995574e729ea9ce9967",
+      "channel": "stable",
+      "size": 51058
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_template.py": {
+      "version": "1.0.0",
+      "checksum": "308f4c4ca04a624059723c0f9c74d120",
+      "channel": "stable",
+      "size": 8012
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_tkagg.py": {
+      "version": "1.0.0",
+      "checksum": "65a1352e8b7dc3037998c20fa52353f0",
+      "channel": "stable",
+      "size": 592
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_tkcairo.py": {
+      "version": "1.0.0",
+      "checksum": "b94a5607baa809cec5420e0c2daf3633",
+      "channel": "stable",
+      "size": 845
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_webagg.py": {
+      "version": "1.0.0",
+      "checksum": "957230a6449df19b8d84740a24fdceeb",
+      "channel": "stable",
+      "size": 11014
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_webagg_core.py": {
+      "version": "1.0.0",
+      "checksum": "d63ad0864b1cd2d6b944080dbaac4120",
+      "channel": "stable",
+      "size": 18748
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_wx.py": {
+      "version": "1.0.0",
+      "checksum": "a9b15b34fc17229fe8d93ec4a0fd75d6",
+      "channel": "stable",
+      "size": 51310
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_wxagg.py": {
+      "version": "1.0.0",
+      "checksum": "65d120c22158eb4905fd08bde45b31e9",
+      "channel": "stable",
+      "size": 1468
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/backend_wxcairo.py": {
+      "version": "1.0.0",
+      "checksum": "cb0ac9d2bac1a92c77a33d4d10720e21",
+      "channel": "stable",
+      "size": 848
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/qt_compat.py": {
+      "version": "1.0.0",
+      "checksum": "5bcda13fc212858d180b5514b8578ebb",
+      "channel": "stable",
+      "size": 5346
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/registry.py": {
+      "version": "1.0.0",
+      "checksum": "f92c2a5ddfd8775f2101ca3e79f2afc1",
+      "channel": "stable",
+      "size": 15480
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/_backend_gtk.py": {
+      "version": "1.0.0",
+      "checksum": "3df53e0f680b4129c53d85587d05260d",
+      "channel": "stable",
+      "size": 11274
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/_backend_pdf_ps.py": {
+      "version": "1.0.0",
+      "checksum": "1a1dc4b8c5b43418868f5b15e7cb3330",
+      "channel": "stable",
+      "size": 5968
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/_backend_tk.py": {
+      "version": "1.0.0",
+      "checksum": "f702b855ba9fcd0ef03343c8df9ef51c",
+      "channel": "stable",
+      "size": 44581
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "66bbdbd7f1111e0f21ab673887d23b9a",
+      "channel": "stable",
+      "size": 206
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/qt_editor/figureoptions.py": {
+      "version": "1.0.0",
+      "checksum": "352a354842e6d82a89a4ae0f4a55ae82",
+      "channel": "stable",
+      "size": 9851
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/qt_editor/_formlayout.py": {
+      "version": "1.0.0",
+      "checksum": "546a61024dbb36fd90c03d0a7c3da9b6",
+      "channel": "stable",
+      "size": 20953
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/backends/qt_editor/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/projections/geo.py": {
+      "version": "1.0.0",
+      "checksum": "cbed23f80710855beacd296d8760e758",
+      "channel": "stable",
+      "size": 17605
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/projections/polar.py": {
+      "version": "1.0.0",
+      "checksum": "2e1c3d8d1fbc633b9cd9a4413ace61fb",
+      "channel": "stable",
+      "size": 57241
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/projections/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "7bbbcddf7ae9f240df1d4caef12e0bd2",
+      "channel": "stable",
+      "size": 4438
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sphinxext/figmpl_directive.py": {
+      "version": "1.0.0",
+      "checksum": "dfed8a7497cbfbf7e59576e5ea8897ec",
+      "channel": "stable",
+      "size": 9308
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sphinxext/mathmpl.py": {
+      "version": "1.0.0",
+      "checksum": "540d927722ca0745424beb82ce039969",
+      "channel": "stable",
+      "size": 7871
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sphinxext/plot_directive.py": {
+      "version": "1.0.0",
+      "checksum": "c8263f2c43439ab650dcec04aa4e80da",
+      "channel": "stable",
+      "size": 32542
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sphinxext/roles.py": {
+      "version": "1.0.0",
+      "checksum": "ec158c791cce49e5bf3ddd061c44787f",
+      "channel": "stable",
+      "size": 4882
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/sphinxext/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/style/core.py": {
+      "version": "1.0.0",
+      "checksum": "7254a2f984e99622fe94a06bb9040af2",
+      "channel": "stable",
+      "size": 8362
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/style/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "17b3817749ce8cca4d7c493c6ba9e8b1",
+      "channel": "stable",
+      "size": 140
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/compare.py": {
+      "version": "1.0.0",
+      "checksum": "c9567c90f672d7ddd7c9707161bfd0fe",
+      "channel": "stable",
+      "size": 19780
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/conftest.py": {
+      "version": "1.0.0",
+      "checksum": "e3230b5a33a723f39ef68dde3b203dc4",
+      "channel": "stable",
+      "size": 6683
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/decorators.py": {
+      "version": "1.0.0",
+      "checksum": "8ff295df2db5eeb63f9f94967da91a67",
+      "channel": "stable",
+      "size": 18022
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/exceptions.py": {
+      "version": "1.0.0",
+      "checksum": "325cb4147f18a55a435591c1d73007aa",
+      "channel": "stable",
+      "size": 138
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/widgets.py": {
+      "version": "1.0.0",
+      "checksum": "2f10b5c5d1c45b6356ea837fe24826b3",
+      "channel": "stable",
+      "size": 3480
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/_markers.py": {
+      "version": "1.0.0",
+      "checksum": "86be8a5b3a83d4b6f9c60cf1285e2a4f",
+      "channel": "stable",
+      "size": 1419
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "5db48ecd38cc5280db7806c68ea385b6",
+      "channel": "stable",
+      "size": 6979
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/Duration.py": {
+      "version": "1.0.0",
+      "checksum": "1620def7daea4d62d0d66dd0a3a75618",
+      "channel": "stable",
+      "size": 3966
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/Epoch.py": {
+      "version": "1.0.0",
+      "checksum": "79683f4fd6c228a4d6784f6e989c9cca",
+      "channel": "stable",
+      "size": 6100
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/EpochConverter.py": {
+      "version": "1.0.0",
+      "checksum": "f7f4e2993f0c15803c4d2b46e8c9b0cb",
+      "channel": "stable",
+      "size": 2944
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/StrConverter.py": {
+      "version": "1.0.0",
+      "checksum": "7692fde864fd88899e50b6f3497dcd62",
+      "channel": "stable",
+      "size": 2865
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/UnitDbl.py": {
+      "version": "1.0.0",
+      "checksum": "8cfc3878d1ab7f9b3723b4bf0612ed23",
+      "channel": "stable",
+      "size": 5882
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/UnitDblConverter.py": {
+      "version": "1.0.0",
+      "checksum": "2576aeae66b60f5d87266ab0ea1bd494",
+      "channel": "stable",
+      "size": 2828
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/UnitDblFormatter.py": {
+      "version": "1.0.0",
+      "checksum": "b8c1054ddddce651c5e99582650615f1",
+      "channel": "stable",
+      "size": 657
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/testing/jpl_units/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "b47657c0b45027604bc04eae91cb2d2d",
+      "channel": "stable",
+      "size": 2684
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/conftest.py": {
+      "version": "1.0.0",
+      "checksum": "b448d04b01026f6b4ce0a8625f23b90c",
+      "channel": "stable",
+      "size": 138
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_afm.py": {
+      "version": "1.0.0",
+      "checksum": "f5ad0caace031c3d386345ffd838b318",
+      "channel": "stable",
+      "size": 3701
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_agg.py": {
+      "version": "1.0.0",
+      "checksum": "cadbff8488a70ab6b854f73382d74e21",
+      "channel": "stable",
+      "size": 10884
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_agg_filter.py": {
+      "version": "1.0.0",
+      "checksum": "f13ac60cc2ef06297755c32bec06e0c0",
+      "channel": "stable",
+      "size": 1067
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_animation.py": {
+      "version": "1.0.0",
+      "checksum": "c9b7c3f748fca529c6f1025af42b7c76",
+      "channel": "stable",
+      "size": 18357
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_api.py": {
+      "version": "1.0.0",
+      "checksum": "5412568903647ff14818463aaa3624ea",
+      "channel": "stable",
+      "size": 5914
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_arrow_patches.py": {
+      "version": "1.0.0",
+      "checksum": "01ee55afb92cd47fbdea9d0fd598a7ac",
+      "channel": "stable",
+      "size": 6577
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_artist.py": {
+      "version": "1.0.0",
+      "checksum": "0fa34f8a4bcaf5979c33ae08640b9adb",
+      "channel": "stable",
+      "size": 18599
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_axes.py": {
+      "version": "1.0.0",
+      "checksum": "0d494ff62c1c0beceebd89b63df49e32",
+      "channel": "stable",
+      "size": 329924
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_axis.py": {
+      "version": "1.0.0",
+      "checksum": "f1afab48d2d889fbe3f5c1e5f644ec5f",
+      "channel": "stable",
+      "size": 1446
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backends_interactive.py": {
+      "version": "1.0.0",
+      "checksum": "ebf4dc30f3d06d203a1f82f6c409d99e",
+      "channel": "stable",
+      "size": 28878
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_bases.py": {
+      "version": "1.0.0",
+      "checksum": "8b60125226adc452161d6703485b5b00",
+      "channel": "stable",
+      "size": 22775
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_cairo.py": {
+      "version": "1.0.0",
+      "checksum": "ca675356d566c6a0bffc305ea346c09c",
+      "channel": "stable",
+      "size": 1821
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_gtk3.py": {
+      "version": "1.0.0",
+      "checksum": "414238f202a04bb7f310fa55544e62e9",
+      "channel": "stable",
+      "size": 2849
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_inline.py": {
+      "version": "1.0.0",
+      "checksum": "4cf5d4140a7a00626362a9e04bb5462a",
+      "channel": "stable",
+      "size": 1608
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_macosx.py": {
+      "version": "1.0.0",
+      "checksum": "c3f76a6189e768c9181e97a7613af93a",
+      "channel": "stable",
+      "size": 3654
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_nbagg.py": {
+      "version": "1.0.0",
+      "checksum": "2989463af6664d3fece8b60e1dd2db35",
+      "channel": "stable",
+      "size": 1459
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_pdf.py": {
+      "version": "1.0.0",
+      "checksum": "b5354c4ac21675ad8552eb797b76b7c1",
+      "channel": "stable",
+      "size": 14602
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_pgf.py": {
+      "version": "1.0.0",
+      "checksum": "a0e650be6fb28ecf892eb1de60727a67",
+      "channel": "stable",
+      "size": 13028
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_ps.py": {
+      "version": "1.0.0",
+      "checksum": "5c20b9abbc9c928c012fb2f6386f6412",
+      "channel": "stable",
+      "size": 12600
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_qt.py": {
+      "version": "1.0.0",
+      "checksum": "f94fbbb5daf09511bf2a44a28e2ee014",
+      "channel": "stable",
+      "size": 12928
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_registry.py": {
+      "version": "1.0.0",
+      "checksum": "d8c0805622b4156df793895300198240",
+      "channel": "stable",
+      "size": 5950
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_svg.py": {
+      "version": "1.0.0",
+      "checksum": "3186b7a30444d47cd34de5810956007a",
+      "channel": "stable",
+      "size": 23044
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_template.py": {
+      "version": "1.0.0",
+      "checksum": "ddf5be646473a9d9a944591b89845f31",
+      "channel": "stable",
+      "size": 2184
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_tk.py": {
+      "version": "1.0.0",
+      "checksum": "751259ea0facdf38b9b7fb7d19c63986",
+      "channel": "stable",
+      "size": 8850
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_tools.py": {
+      "version": "1.0.0",
+      "checksum": "79f27eaca5969e6ba1c00c7f52cb2795",
+      "channel": "stable",
+      "size": 501
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_backend_webagg.py": {
+      "version": "1.0.0",
+      "checksum": "bcbf78153bd4e37e72ff510c1115cee4",
+      "channel": "stable",
+      "size": 938
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_basic.py": {
+      "version": "1.0.0",
+      "checksum": "6c203bbeece362ca2436290e7b934d53",
+      "channel": "stable",
+      "size": 1141
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_bbox_tight.py": {
+      "version": "1.0.0",
+      "checksum": "c5b915eddd124ed86e3ec987a60c6068",
+      "channel": "stable",
+      "size": 6351
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_bezier.py": {
+      "version": "1.0.0",
+      "checksum": "4c47f5482d112cc83bca40afb60eb634",
+      "channel": "stable",
+      "size": 692
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_category.py": {
+      "version": "1.0.0",
+      "checksum": "b3db82d0e181076f14518d1cef46a242",
+      "channel": "stable",
+      "size": 12043
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_cbook.py": {
+      "version": "1.0.0",
+      "checksum": "79a0593a7c91fc62b91a40b08ca05bc1",
+      "channel": "stable",
+      "size": 33656
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_collections.py": {
+      "version": "1.0.0",
+      "checksum": "42be5d20c01352df15d57a2cd4a98f6a",
+      "channel": "stable",
+      "size": 48896
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_colorbar.py": {
+      "version": "1.0.0",
+      "checksum": "cf79c69e3ff91da8e3c1d34360407164",
+      "channel": "stable",
+      "size": 46711
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_colors.py": {
+      "version": "1.0.0",
+      "checksum": "bd25da026245ab2fceb2538b347626f7",
+      "channel": "stable",
+      "size": 61213
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_compare_images.py": {
+      "version": "1.0.0",
+      "checksum": "ee8f457f96b4c521651fa6b90dfb46ac",
+      "channel": "stable",
+      "size": 3260
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_constrainedlayout.py": {
+      "version": "1.0.0",
+      "checksum": "29131fa4c082f534071a427170342496",
+      "channel": "stable",
+      "size": 24270
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_container.py": {
+      "version": "1.0.0",
+      "checksum": "6172e8b71016f0fe0c0a08cef3bb017a",
+      "channel": "stable",
+      "size": 694
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_contour.py": {
+      "version": "1.0.0",
+      "checksum": "4fe0a75f5885c398686f50f6bc82b1f2",
+      "channel": "stable",
+      "size": 30289
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_cycles.py": {
+      "version": "1.0.0",
+      "checksum": "b4ee9af4223b552a729bc465ce5d0c23",
+      "channel": "stable",
+      "size": 5996
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_dates.py": {
+      "version": "1.0.0",
+      "checksum": "a5249533ab0e084dceaec92d96acc03e",
+      "channel": "stable",
+      "size": 56533
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_datetime.py": {
+      "version": "1.0.0",
+      "checksum": "1d695fb963c6c54e01c00e4749d29c6e",
+      "channel": "stable",
+      "size": 33131
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_determinism.py": {
+      "version": "1.0.0",
+      "checksum": "a052c9fadf933a058ce94c28421db83d",
+      "channel": "stable",
+      "size": 7958
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_doc.py": {
+      "version": "1.0.0",
+      "checksum": "2fa132fe36eac5b0a8444c817196ec01",
+      "channel": "stable",
+      "size": 1024
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_dviread.py": {
+      "version": "1.0.0",
+      "checksum": "e7d568cc87682a831b0865238c8472e3",
+      "channel": "stable",
+      "size": 2764
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_figure.py": {
+      "version": "1.0.0",
+      "checksum": "9a9c4e8666452865a0d19496e549029b",
+      "channel": "stable",
+      "size": 60837
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_fontconfig_pattern.py": {
+      "version": "1.0.0",
+      "checksum": "85a83ff1c9362bc06b7f318cd1f2521f",
+      "channel": "stable",
+      "size": 2168
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_font_manager.py": {
+      "version": "1.0.0",
+      "checksum": "4557620b33fd4651136c0559a50cec86",
+      "channel": "stable",
+      "size": 14136
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_ft2font.py": {
+      "version": "1.0.0",
+      "checksum": "98ab7625d8652e5605cf43a0742a091e",
+      "channel": "stable",
+      "size": 40838
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_getattr.py": {
+      "version": "1.0.0",
+      "checksum": "aa87b1efa86d4d8b60581afbb01d6ad2",
+      "channel": "stable",
+      "size": 1090
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_gridspec.py": {
+      "version": "1.0.0",
+      "checksum": "9fb632c2608db7a5a95d2f9cb596bc59",
+      "channel": "stable",
+      "size": 1580
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_image.py": {
+      "version": "1.0.0",
+      "checksum": "ff66f327933d5fde5d0a98ccb9e88e8e",
+      "channel": "stable",
+      "size": 59598
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_legend.py": {
+      "version": "1.0.0",
+      "checksum": "bda87e06e102e639a0520e8eeee55d1a",
+      "channel": "stable",
+      "size": 55122
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_lines.py": {
+      "version": "1.0.0",
+      "checksum": "326ae98092e056a397f94658a06dd081",
+      "channel": "stable",
+      "size": 15035
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_marker.py": {
+      "version": "1.0.0",
+      "checksum": "1f84ef36625a41756bc31ab4db5e194e",
+      "channel": "stable",
+      "size": 11410
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_mathtext.py": {
+      "version": "1.0.0",
+      "checksum": "26de6bdb395814223b4c57353c9b8c48",
+      "channel": "stable",
+      "size": 24549
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_matplotlib.py": {
+      "version": "1.0.0",
+      "checksum": "7933bf1d7807dbcf21564d7675ce915f",
+      "channel": "stable",
+      "size": 3368
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_mlab.py": {
+      "version": "1.0.0",
+      "checksum": "294d0752d703f5d91d3ab0b3bdd9d096",
+      "channel": "stable",
+      "size": 42269
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_multivariate_colormaps.py": {
+      "version": "1.0.0",
+      "checksum": "09dce441b0c3dd9f891b4ab5d8168d05",
+      "channel": "stable",
+      "size": 20785
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_offsetbox.py": {
+      "version": "1.0.0",
+      "checksum": "a1637a76294af5210b2645a6784bc2b7",
+      "channel": "stable",
+      "size": 16656
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_patches.py": {
+      "version": "1.0.0",
+      "checksum": "a0d8f8f4627bc2bc0a4624131e878452",
+      "channel": "stable",
+      "size": 33592
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_path.py": {
+      "version": "1.0.0",
+      "checksum": "48273eb8e4e0489f6084cb8dda6b1cfb",
+      "channel": "stable",
+      "size": 23254
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_patheffects.py": {
+      "version": "1.0.0",
+      "checksum": "a2369a3bf1fc5bd3d06762f3659d2ce4",
+      "channel": "stable",
+      "size": 8109
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_pickle.py": {
+      "version": "1.0.0",
+      "checksum": "04287b0cedecfab98e36f93a09fc4b5a",
+      "channel": "stable",
+      "size": 10014
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_png.py": {
+      "version": "1.0.0",
+      "checksum": "7c9f0aa11e4e477d259b059a3b4b46da",
+      "channel": "stable",
+      "size": 1407
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_polar.py": {
+      "version": "1.0.0",
+      "checksum": "7b579ffdb23fc91a36c274267296b36e",
+      "channel": "stable",
+      "size": 18306
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_preprocess_data.py": {
+      "version": "1.0.0",
+      "checksum": "045c783a039f9d277624bcd34e2558c6",
+      "channel": "stable",
+      "size": 11363
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_pyplot.py": {
+      "version": "1.0.0",
+      "checksum": "13ce24e9128b89c87a92e6eb4c8e10e6",
+      "channel": "stable",
+      "size": 13929
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_quiver.py": {
+      "version": "1.0.0",
+      "checksum": "f08a8ca83ef7df00a8f53587efb8a58a",
+      "channel": "stable",
+      "size": 11953
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_rcparams.py": {
+      "version": "1.0.0",
+      "checksum": "92ce0714401d860ce5e0f0c0387a660e",
+      "channel": "stable",
+      "size": 27252
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_sankey.py": {
+      "version": "1.0.0",
+      "checksum": "875eed882b8dad64d79dc49b01962424",
+      "channel": "stable",
+      "size": 3900
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_scale.py": {
+      "version": "1.0.0",
+      "checksum": "aa1337ed9be775be3c6f8987692fb55b",
+      "channel": "stable",
+      "size": 8429
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_simplification.py": {
+      "version": "1.0.0",
+      "checksum": "c30798e776319eb19142a435969fb31b",
+      "channel": "stable",
+      "size": 21570
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_skew.py": {
+      "version": "1.0.0",
+      "checksum": "5229866e641b430dacfa89a0182017a7",
+      "channel": "stable",
+      "size": 6349
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_sphinxext.py": {
+      "version": "1.0.0",
+      "checksum": "00113a3a4f95942be2be398187dc3b74",
+      "channel": "stable",
+      "size": 9937
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_spines.py": {
+      "version": "1.0.0",
+      "checksum": "dc998eefe5063cd135bb740cc09391c9",
+      "channel": "stable",
+      "size": 5274
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_streamplot.py": {
+      "version": "1.0.0",
+      "checksum": "fe53661797c46a9da1666cfe3040c33f",
+      "channel": "stable",
+      "size": 5731
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_style.py": {
+      "version": "1.0.0",
+      "checksum": "8dfc83f8bd5b58a9be7af6c837839d55",
+      "channel": "stable",
+      "size": 6509
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_subplots.py": {
+      "version": "1.0.0",
+      "checksum": "cef8e2c263397b259277c7201230f721",
+      "channel": "stable",
+      "size": 11082
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_table.py": {
+      "version": "1.0.0",
+      "checksum": "f320160d5ff8959afeb0160ae6634ebc",
+      "channel": "stable",
+      "size": 8659
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_testing.py": {
+      "version": "1.0.0",
+      "checksum": "6ca12d10aaf482279f4371d1fd3598c4",
+      "channel": "stable",
+      "size": 1057
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_texmanager.py": {
+      "version": "1.0.0",
+      "checksum": "411740a34151e4d196ada8941edf9aad",
+      "channel": "stable",
+      "size": 2647
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_text.py": {
+      "version": "1.0.0",
+      "checksum": "95410cbd9e1d16fc9504e2b787a84281",
+      "channel": "stable",
+      "size": 38473
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_textpath.py": {
+      "version": "1.0.0",
+      "checksum": "37f9aa69d931029ad4cdd72f769690e8",
+      "channel": "stable",
+      "size": 271
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_ticker.py": {
+      "version": "1.0.0",
+      "checksum": "dcef099cab963044b9f0045c5969fcec",
+      "channel": "stable",
+      "size": 74759
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_tightlayout.py": {
+      "version": "1.0.0",
+      "checksum": "2de2f30e54408c029bd5f7fb847365c3",
+      "channel": "stable",
+      "size": 13978
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_transforms.py": {
+      "version": "1.0.0",
+      "checksum": "4bbd32b251f3699f9ac30cedf5faa32b",
+      "channel": "stable",
+      "size": 48671
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_triangulation.py": {
+      "version": "1.0.0",
+      "checksum": "e2cfd734a904605b83302d033dc8aa18",
+      "channel": "stable",
+      "size": 55289
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_type1font.py": {
+      "version": "1.0.0",
+      "checksum": "08259b8392c08a737d12c7ce9f5a0994",
+      "channel": "stable",
+      "size": 6369
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_units.py": {
+      "version": "1.0.0",
+      "checksum": "3b0bf206b628f39e701cdf4c30a2d704",
+      "channel": "stable",
+      "size": 11675
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_usetex.py": {
+      "version": "1.0.0",
+      "checksum": "655734f1d04b272ad4641efdadfd46ea",
+      "channel": "stable",
+      "size": 6405
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/test_widgets.py": {
+      "version": "1.0.0",
+      "checksum": "9564785e15963bf88c1657bada457e67",
+      "channel": "stable",
+      "size": 66435
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tests/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6a144190764d74d04b8003d5a73f36a5",
+      "channel": "stable",
+      "size": 366
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_triangulation.py": {
+      "version": "1.0.0",
+      "checksum": "b3e66c1ff7701647231e5755f754723a",
+      "channel": "stable",
+      "size": 9784
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_tricontour.py": {
+      "version": "1.0.0",
+      "checksum": "de3527f59617c614db657394b33f3477",
+      "channel": "stable",
+      "size": 10220
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_trifinder.py": {
+      "version": "1.0.0",
+      "checksum": "cf4b0f1ba33a13640f480be21f809c70",
+      "channel": "stable",
+      "size": 3522
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_triinterpolate.py": {
+      "version": "1.0.0",
+      "checksum": "8c4b8fe5fd565957b8bfb15cc1991a32",
+      "channel": "stable",
+      "size": 62445
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_tripcolor.py": {
+      "version": "1.0.0",
+      "checksum": "950e80ac5683c79a743129aea784a10d",
+      "channel": "stable",
+      "size": 6705
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_triplot.py": {
+      "version": "1.0.0",
+      "checksum": "1799e18aba55deec625421685fb4bb08",
+      "channel": "stable",
+      "size": 3102
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_trirefine.py": {
+      "version": "1.0.0",
+      "checksum": "c9feef2d80a820bb7b87d7a02a2a602e",
+      "channel": "stable",
+      "size": 13178
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/_tritools.py": {
+      "version": "1.0.0",
+      "checksum": "39d1ae53c40258f7bd17a1879f0bf2d2",
+      "channel": "stable",
+      "size": 10575
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/tri/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "ed0ea5ee986eee4c878de67bfcec8e16",
+      "channel": "stable",
+      "size": 820
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_api/deprecation.py": {
+      "version": "1.0.0",
+      "checksum": "7abc4427880f13e071c33c7f21f575f1",
+      "channel": "stable",
+      "size": 20091
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/matplotlib/_api/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d5e3a079ef819a2bcb63be77b034f087",
+      "channel": "stable",
+      "size": 14509
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/rl_config.py": {
+      "version": "1.0.0",
+      "checksum": "f58617c790927959c355ffb2198adabd",
+      "channel": "stable",
+      "size": 5145
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/rl_settings.py": {
+      "version": "1.0.0",
+      "checksum": "64fd3b1e365b1a47a8493e425ad18396",
+      "channel": "stable",
+      "size": 15455
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "1f75d3b33f6c4af83bcbde09604c6c8b",
+      "channel": "stable",
+      "size": 1481
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/renderbase.py": {
+      "version": "1.0.0",
+      "checksum": "9bdade11ff0795a59b7070d64e699146",
+      "channel": "stable",
+      "size": 13206
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/renderPDF.py": {
+      "version": "1.0.0",
+      "checksum": "a13006cfc3f87577e665c770dc3750a5",
+      "channel": "stable",
+      "size": 15285
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/renderPM.py": {
+      "version": "1.0.0",
+      "checksum": "73936445727898e19aa9b1c03a2a9edc",
+      "channel": "stable",
+      "size": 31647
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/renderPS.py": {
+      "version": "1.0.0",
+      "checksum": "54bf0ce745518fe680e8d4efc1d836e1",
+      "channel": "stable",
+      "size": 37937
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/renderSVG.py": {
+      "version": "1.0.0",
+      "checksum": "0f8cf65207a044b6f3e8bde59a275cd6",
+      "channel": "stable",
+      "size": 38094
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/shapes.py": {
+      "version": "1.0.0",
+      "checksum": "e20b68434b13506c447b140221dcc740",
+      "channel": "stable",
+      "size": 59205
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/svgpath.py": {
+      "version": "1.0.0",
+      "checksum": "2ec9d9e83c060de2e591e5f71e49e308",
+      "channel": "stable",
+      "size": 16116
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/testdrawings.py": {
+      "version": "1.0.0",
+      "checksum": "398186bfdb0d6d379457a9de210f42d9",
+      "channel": "stable",
+      "size": 9433
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/testshapes.py": {
+      "version": "1.0.0",
+      "checksum": "2d1c47bc1e1ad742694ca393704a93e6",
+      "channel": "stable",
+      "size": 17237
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/transform.py": {
+      "version": "1.0.0",
+      "checksum": "e71ec6bcc99c1b9bcae8bbbafbf11451",
+      "channel": "stable",
+      "size": 2634
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/utils.py": {
+      "version": "1.0.0",
+      "checksum": "3c3c89c40a0580298729526760541b60",
+      "channel": "stable",
+      "size": 13872
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgetbase.py": {
+      "version": "1.0.0",
+      "checksum": "c3bc6cccab26d22ca37c1aa176e31884",
+      "channel": "stable",
+      "size": 25552
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "230f7d88c7e4023becf5706a9aca2235",
+      "channel": "stable",
+      "size": 274
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/code128.py": {
+      "version": "1.0.0",
+      "checksum": "67f4df1982b00f321e9c9bbecb485c8c",
+      "channel": "stable",
+      "size": 18451
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/code39.py": {
+      "version": "1.0.0",
+      "checksum": "c8fe3e88f1d1af5f7c2b691fe15d0050",
+      "channel": "stable",
+      "size": 9799
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/code93.py": {
+      "version": "1.0.0",
+      "checksum": "7fd5931e36ea90290d163434a0188b8b",
+      "channel": "stable",
+      "size": 9077
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/common.py": {
+      "version": "1.0.0",
+      "checksum": "7166ddd71c82a9bb8b3340768831b88f",
+      "channel": "stable",
+      "size": 24425
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/dmtx.py": {
+      "version": "1.0.0",
+      "checksum": "84c36b290952534f7cbbfb7bfb2ca469",
+      "channel": "stable",
+      "size": 7872
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/eanbc.py": {
+      "version": "1.0.0",
+      "checksum": "00205d81787807812be4ece274768253",
+      "channel": "stable",
+      "size": 18922
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/ecc200datamatrix.py": {
+      "version": "1.0.0",
+      "checksum": "496c24918ee0ace2dd2a51aab42897a6",
+      "channel": "stable",
+      "size": 17884
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/fourstate.py": {
+      "version": "1.0.0",
+      "checksum": "375a119dc71e8010a5f47f7fa7484713",
+      "channel": "stable",
+      "size": 3746
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/lto.py": {
+      "version": "1.0.0",
+      "checksum": "eb431805f6f14b2859717e7d302efb68",
+      "channel": "stable",
+      "size": 7377
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/qr.py": {
+      "version": "1.0.0",
+      "checksum": "1151f8a96845d63e113c5689e9848081",
+      "channel": "stable",
+      "size": 6266
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/qrencoder.py": {
+      "version": "1.0.0",
+      "checksum": "00d958a8daf762314d04e4be442621fe",
+      "channel": "stable",
+      "size": 34117
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/test.py": {
+      "version": "1.0.0",
+      "checksum": "ea3627558b41eadc8d45bf862ad456f4",
+      "channel": "stable",
+      "size": 11973
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/usps.py": {
+      "version": "1.0.0",
+      "checksum": "9decc3ba3ae247f95718796b63db854b",
+      "channel": "stable",
+      "size": 8076
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/usps4s.py": {
+      "version": "1.0.0",
+      "checksum": "eff16b7a94991e037857dcdacbcb2778",
+      "channel": "stable",
+      "size": 15681
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/widgets.py": {
+      "version": "1.0.0",
+      "checksum": "3b080243d98c0793e63099e6d94f7f9c",
+      "channel": "stable",
+      "size": 17499
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/barcode/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f28a92387405bd49c19b109079b6f93a",
+      "channel": "stable",
+      "size": 5886
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/areas.py": {
+      "version": "1.0.0",
+      "checksum": "c91c1e077db6da55aeccf5a1d5be3d41",
+      "channel": "stable",
+      "size": 4405
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/axes.py": {
+      "version": "1.0.0",
+      "checksum": "7c9e1a30bdaaac71099870dfa92de1df",
+      "channel": "stable",
+      "size": 92513
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/barcharts.py": {
+      "version": "1.0.0",
+      "checksum": "135778b1517ecb83a7b73bdc0c361ecf",
+      "channel": "stable",
+      "size": 72361
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/dotbox.py": {
+      "version": "1.0.0",
+      "checksum": "7b86b483ca39533be9356c9fd659e9b2",
+      "channel": "stable",
+      "size": 6628
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/doughnut.py": {
+      "version": "1.0.0",
+      "checksum": "b3cb301df48b5c3cfa5ef7cb77109353",
+      "channel": "stable",
+      "size": 19530
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/legends.py": {
+      "version": "1.0.0",
+      "checksum": "bbbc5e6a42bca7dd74fe14a7162b0b90",
+      "channel": "stable",
+      "size": 25687
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/linecharts.py": {
+      "version": "1.0.0",
+      "checksum": "934c23395fde63f22f66a6c1a74761b8",
+      "channel": "stable",
+      "size": 28675
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/lineplots.py": {
+      "version": "1.0.0",
+      "checksum": "c8937bbc62ac757772c7dcbd4cba5dcf",
+      "channel": "stable",
+      "size": 51189
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/markers.py": {
+      "version": "1.0.0",
+      "checksum": "9ed246e2f7bcfa068381d04aa6df819c",
+      "channel": "stable",
+      "size": 1739
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/piecharts.py": {
+      "version": "1.0.0",
+      "checksum": "ba37c33d361eeebbd88638493bc7fc4a",
+      "channel": "stable",
+      "size": 67461
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/slidebox.py": {
+      "version": "1.0.0",
+      "checksum": "5a26df0260c0ae1202e8c49da6421129",
+      "channel": "stable",
+      "size": 8548
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/spider.py": {
+      "version": "1.0.0",
+      "checksum": "4fec4349849c8d385f904023beb439f9",
+      "channel": "stable",
+      "size": 16132
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/textlabels.py": {
+      "version": "1.0.0",
+      "checksum": "d20b048f2964a0b9c286a0ba8a5fcbbc",
+      "channel": "stable",
+      "size": 23839
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/utils.py": {
+      "version": "1.0.0",
+      "checksum": "513c915321c73f1fdacafd81aba438f9",
+      "channel": "stable",
+      "size": 14564
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/utils3d.py": {
+      "version": "1.0.0",
+      "checksum": "0515291ae93282a8dd22a9f49636844f",
+      "channel": "stable",
+      "size": 7194
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/charts/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "682be9ede5c3cd5dca4c0e4402766f99",
+      "channel": "stable",
+      "size": 234
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/bubble.py": {
+      "version": "1.0.0",
+      "checksum": "4d54bd56dcdd1ef35b9b516653ca0983",
+      "channel": "stable",
+      "size": 3584
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/clustered_bar.py": {
+      "version": "1.0.0",
+      "checksum": "aa0ca59c8384e101e9ea5247c0572c08",
+      "channel": "stable",
+      "size": 4241
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/clustered_column.py": {
+      "version": "1.0.0",
+      "checksum": "caf5d80fafb0bfa964c2c8afbed5b2b3",
+      "channel": "stable",
+      "size": 4188
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/excelcolors.py": {
+      "version": "1.0.0",
+      "checksum": "d96ed3d786228561a1e92b51cfe4cf68",
+      "channel": "stable",
+      "size": 1947
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/exploded_pie.py": {
+      "version": "1.0.0",
+      "checksum": "5426f95b370f68c89599c49359607a31",
+      "channel": "stable",
+      "size": 3126
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/filled_radar.py": {
+      "version": "1.0.0",
+      "checksum": "e03f05234dc1a4dee23124ae0c11105b",
+      "channel": "stable",
+      "size": 2691
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/linechart_with_markers.py": {
+      "version": "1.0.0",
+      "checksum": "75a0bbde39139682fefe4070d84518ee",
+      "channel": "stable",
+      "size": 5007
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/line_chart.py": {
+      "version": "1.0.0",
+      "checksum": "20ab2c0a79c5b04521ed1c1e2921ab43",
+      "channel": "stable",
+      "size": 4267
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/radar.py": {
+      "version": "1.0.0",
+      "checksum": "3250928bedef531fefb5c2ac193bbd1b",
+      "channel": "stable",
+      "size": 3244
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/runall.py": {
+      "version": "1.0.0",
+      "checksum": "d545cf2d2e2fa6dc475a2216ab953591",
+      "channel": "stable",
+      "size": 1957
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/scatter.py": {
+      "version": "1.0.0",
+      "checksum": "c0ce9d396107b44d60dae630e278774a",
+      "channel": "stable",
+      "size": 3566
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/scatter_lines.py": {
+      "version": "1.0.0",
+      "checksum": "c7b32053447668a283aea62ca339af67",
+      "channel": "stable",
+      "size": 4164
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/scatter_lines_markers.py": {
+      "version": "1.0.0",
+      "checksum": "aaed86ccc316d9cf9bb8b2a855317fcd",
+      "channel": "stable",
+      "size": 3766
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/simple_pie.py": {
+      "version": "1.0.0",
+      "checksum": "81eecfe6e2c95b5c320d0e61f0ff4829",
+      "channel": "stable",
+      "size": 2933
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/stacked_bar.py": {
+      "version": "1.0.0",
+      "checksum": "a941b64567fff6725e9d08b64fb21cf8",
+      "channel": "stable",
+      "size": 4284
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/stacked_column.py": {
+      "version": "1.0.0",
+      "checksum": "f76b4793f4c0d585894cc65b96a2e43b",
+      "channel": "stable",
+      "size": 4230
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/samples/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "c0642d72143b342aa5eda7c90d3ad8f8",
+      "channel": "stable",
+      "size": 69
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/adjustableArrow.py": {
+      "version": "1.0.0",
+      "checksum": "b885ae72b00f8a9550cf250bf1e95045",
+      "channel": "stable",
+      "size": 3920
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/eventcal.py": {
+      "version": "1.0.0",
+      "checksum": "74d42426b392166ddf9ab5af228deec7",
+      "channel": "stable",
+      "size": 13073
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/flags.py": {
+      "version": "1.0.0",
+      "checksum": "214319744a4572dacdfacfcd490fcd0b",
+      "channel": "stable",
+      "size": 30233
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/grids.py": {
+      "version": "1.0.0",
+      "checksum": "0e3d7611e41857032ab7ce985af61812",
+      "channel": "stable",
+      "size": 18797
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/markers.py": {
+      "version": "1.0.0",
+      "checksum": "fa578c43581369737774f43266c00689",
+      "channel": "stable",
+      "size": 8424
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/signsandsymbols.py": {
+      "version": "1.0.0",
+      "checksum": "306b8963403627e44ad3db3f518c5232",
+      "channel": "stable",
+      "size": 31655
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/table.py": {
+      "version": "1.0.0",
+      "checksum": "19b8f1d5fa58dfe006ef41d15fbd8d7b",
+      "channel": "stable",
+      "size": 6932
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/graphics/widgets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "429d1474d833e9eb4d6fce70fc9dd718",
+      "channel": "stable",
+      "size": 242
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/abag.py": {
+      "version": "1.0.0",
+      "checksum": "e50ea571155961ff8e14cd5ae3942fec",
+      "channel": "stable",
+      "size": 1122
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/arciv.py": {
+      "version": "1.0.0",
+      "checksum": "067376433d63d6aabc3d4be6ff90683d",
+      "channel": "stable",
+      "size": 7272
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/attrmap.py": {
+      "version": "1.0.0",
+      "checksum": "9b7f6f2c73c18b8811860edc9682a562",
+      "channel": "stable",
+      "size": 6419
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/boxstuff.py": {
+      "version": "1.0.0",
+      "checksum": "3e460f3c73d96361ab7c825e83d21293",
+      "channel": "stable",
+      "size": 2927
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/codecharts.py": {
+      "version": "1.0.0",
+      "checksum": "9e9343eae6a11e1c5f98e647446cacd0",
+      "channel": "stable",
+      "size": 13051
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/colors.py": {
+      "version": "1.0.0",
+      "checksum": "7a64bddb192a3ae0a4c98ae6aeb22466",
+      "channel": "stable",
+      "size": 41176
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/corp.py": {
+      "version": "1.0.0",
+      "checksum": "d38829c6f64dd06385230dceccf4e685",
+      "channel": "stable",
+      "size": 27141
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/enums.py": {
+      "version": "1.0.0",
+      "checksum": "891ceb360da3c13816823d2753cc8d1f",
+      "channel": "stable",
+      "size": 296
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/extformat.py": {
+      "version": "1.0.0",
+      "checksum": "6856cbbef70dec5f6528f445fbae7585",
+      "channel": "stable",
+      "size": 2226
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/fontfinder.py": {
+      "version": "1.0.0",
+      "checksum": "0708d912713e66ea1d60c7e68475669d",
+      "channel": "stable",
+      "size": 13391
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/fonts.py": {
+      "version": "1.0.0",
+      "checksum": "0aaedfaa36f0ffdd90eb607e256b57eb",
+      "channel": "stable",
+      "size": 3503
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/formatters.py": {
+      "version": "1.0.0",
+      "checksum": "7148544e89139df2a229c83e2c343608",
+      "channel": "stable",
+      "size": 3804
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/geomutils.py": {
+      "version": "1.0.0",
+      "checksum": "eaceaa7087c14af148ae1341756880b5",
+      "channel": "stable",
+      "size": 1163
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/logger.py": {
+      "version": "1.0.0",
+      "checksum": "0699febb8011e6c04912e453f9aba6ca",
+      "channel": "stable",
+      "size": 1747
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/normalDate.py": {
+      "version": "1.0.0",
+      "checksum": "719c27d288c4533480bc8d60201c94cb",
+      "channel": "stable",
+      "size": 22017
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/pagesizes.py": {
+      "version": "1.0.0",
+      "checksum": "5be2234db09cf7641887e90e7efc5d98",
+      "channel": "stable",
+      "size": 2001
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/pdfencrypt.py": {
+      "version": "1.0.0",
+      "checksum": "715e60816e551169034ad2aee73e53dc",
+      "channel": "stable",
+      "size": 30767
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/PyFontify.py": {
+      "version": "1.0.0",
+      "checksum": "b7f2c617e58311dbecdc47833e94dd26",
+      "channel": "stable",
+      "size": 4972
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/pygments2xpre.py": {
+      "version": "1.0.0",
+      "checksum": "f5b424f96736afe708619b1b69d7ed41",
+      "channel": "stable",
+      "size": 2509
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/randomtext.py": {
+      "version": "1.0.0",
+      "checksum": "ba5cc81d24dbe836fc05a6ebdd0751bf",
+      "channel": "stable",
+      "size": 19572
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/rltempfile.py": {
+      "version": "1.0.0",
+      "checksum": "69bdb1fa6a6cf1279201d2584a1e79fb",
+      "channel": "stable",
+      "size": 1121
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/rl_accel.py": {
+      "version": "1.0.0",
+      "checksum": "61400314bba819363b12a8b36e61c76e",
+      "channel": "stable",
+      "size": 13564
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/rl_safe_eval.py": {
+      "version": "1.0.0",
+      "checksum": "7a1e9b0f13b361bd42a2f818f5335b39",
+      "channel": "stable",
+      "size": 40110
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/rparsexml.py": {
+      "version": "1.0.0",
+      "checksum": "b9de885bdeabdbc55a459cc0baa9abb5",
+      "channel": "stable",
+      "size": 18368
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/sequencer.py": {
+      "version": "1.0.0",
+      "checksum": "c47f97bf04a899cfb0f328a6179462c4",
+      "channel": "stable",
+      "size": 9647
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/styles.py": {
+      "version": "1.0.0",
+      "checksum": "8add9398d95f722f8db492a5525ddcd7",
+      "channel": "stable",
+      "size": 17349
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/testutils.py": {
+      "version": "1.0.0",
+      "checksum": "16aa838fe38130d6b73739555a75b6be",
+      "channel": "stable",
+      "size": 13556
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/textsplit.py": {
+      "version": "1.0.0",
+      "checksum": "f7e8b294442935b0dec97cb64834e9d2",
+      "channel": "stable",
+      "size": 9723
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/units.py": {
+      "version": "1.0.0",
+      "checksum": "0643135a95a7a0edaaa11f443c13d44d",
+      "channel": "stable",
+      "size": 917
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/utils.py": {
+      "version": "1.0.0",
+      "checksum": "e02c8666e4ec311f0f6646cef680c6bb",
+      "channel": "stable",
+      "size": 45218
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/validators.py": {
+      "version": "1.0.0",
+      "checksum": "00879f6ad1397c7c2dcf3f8467dcf2e4",
+      "channel": "stable",
+      "size": 11333
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/yaml.py": {
+      "version": "1.0.0",
+      "checksum": "2ddbfb00c5c035b851103dd0115d8cee",
+      "channel": "stable",
+      "size": 5717
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/lib/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "83768dc58813d5495cf9ada503ed6bb4",
+      "channel": "stable",
+      "size": 256
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/acroform.py": {
+      "version": "1.0.0",
+      "checksum": "c433e52f0d6b565dde56b76e9e24c580",
+      "channel": "stable",
+      "size": 49786
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/cidfonts.py": {
+      "version": "1.0.0",
+      "checksum": "4794001298d066fa5070f2c2acce62f5",
+      "channel": "stable",
+      "size": 18789
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/pdfdoc.py": {
+      "version": "1.0.0",
+      "checksum": "d3a7978a01dd0807a17c3887d68e6f19",
+      "channel": "stable",
+      "size": 91182
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/pdfform.py": {
+      "version": "1.0.0",
+      "checksum": "0ac9fba94431797b8ffa841a5f6e5194",
+      "channel": "stable",
+      "size": 15704
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/pdfmetrics.py": {
+      "version": "1.0.0",
+      "checksum": "9a6a947926878e622eec05f57a6a535f",
+      "channel": "stable",
+      "size": 29956
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/pdfpattern.py": {
+      "version": "1.0.0",
+      "checksum": "b1c306b3bbf0f77cf1956df263cb5fc7",
+      "channel": "stable",
+      "size": 3763
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/pdfutils.py": {
+      "version": "1.0.0",
+      "checksum": "e57f9fad2d05acf203c42e6eaa63cb83",
+      "channel": "stable",
+      "size": 10135
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/rl_codecs.py": {
+      "version": "1.0.0",
+      "checksum": "d7a2c5fdfc97e16d89a50f880de5b228",
+      "channel": "stable",
+      "size": 56426
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/ttfonts.py": {
+      "version": "1.0.0",
+      "checksum": "474732afca9bab04a5dbd9654556732b",
+      "channel": "stable",
+      "size": 62605
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_can_cmap_data.py": {
+      "version": "1.0.0",
+      "checksum": "b1268f8a109eb879d53e4c207b6ad3f0",
+      "channel": "stable",
+      "size": 1794
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_cidfontdata.py": {
+      "version": "1.0.0",
+      "checksum": "6edc4dab830ff88607309e44ca0ce8ec",
+      "channel": "stable",
+      "size": 32044
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata.py": {
+      "version": "1.0.0",
+      "checksum": "d844837174e4e2183d2b8caf90ab4ede",
+      "channel": "stable",
+      "size": 10141
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_macexpert.py": {
+      "version": "1.0.0",
+      "checksum": "afba418fc06752f9af21fec1733fa463",
+      "channel": "stable",
+      "size": 3058
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_macroman.py": {
+      "version": "1.0.0",
+      "checksum": "59f4ce5da7f16e798dc7e227b1aa29ce",
+      "channel": "stable",
+      "size": 2934
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_pdfdoc.py": {
+      "version": "1.0.0",
+      "checksum": "ec59f8d4c8a03e5c4fb970bb00914eeb",
+      "channel": "stable",
+      "size": 2308
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_standard.py": {
+      "version": "1.0.0",
+      "checksum": "c7c40d2e5e470ff96cbdc9661ee0a0a2",
+      "channel": "stable",
+      "size": 1829
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_symbol.py": {
+      "version": "1.0.0",
+      "checksum": "a7b7cd7dad9829151a4647c6b078c167",
+      "channel": "stable",
+      "size": 3187
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_winansi.py": {
+      "version": "1.0.0",
+      "checksum": "650708a6c885af4b39fb634fac9d76c4",
+      "channel": "stable",
+      "size": 3003
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_enc_zapfdingbats.py": {
+      "version": "1.0.0",
+      "checksum": "6078ebf573d5d5a91685e04a4b265532",
+      "channel": "stable",
+      "size": 2222
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_courier.py": {
+      "version": "1.0.0",
+      "checksum": "c99c76a321cae09b12ab60572d916ab2",
+      "channel": "stable",
+      "size": 3664
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_courierbold.py": {
+      "version": "1.0.0",
+      "checksum": "c99c76a321cae09b12ab60572d916ab2",
+      "channel": "stable",
+      "size": 3664
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_courierboldoblique.py": {
+      "version": "1.0.0",
+      "checksum": "c99c76a321cae09b12ab60572d916ab2",
+      "channel": "stable",
+      "size": 3664
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_courieroblique.py": {
+      "version": "1.0.0",
+      "checksum": "c99c76a321cae09b12ab60572d916ab2",
+      "channel": "stable",
+      "size": 3664
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_helvetica.py": {
+      "version": "1.0.0",
+      "checksum": "5d21dc80797ec049d9aeac81e20c8667",
+      "channel": "stable",
+      "size": 3671
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_helveticabold.py": {
+      "version": "1.0.0",
+      "checksum": "1cb02ff8f7370db03eca3991d0e2c533",
+      "channel": "stable",
+      "size": 3670
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_helveticaboldoblique.py": {
+      "version": "1.0.0",
+      "checksum": "1cb02ff8f7370db03eca3991d0e2c533",
+      "channel": "stable",
+      "size": 3670
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_helveticaoblique.py": {
+      "version": "1.0.0",
+      "checksum": "5d21dc80797ec049d9aeac81e20c8667",
+      "channel": "stable",
+      "size": 3671
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_symbol.py": {
+      "version": "1.0.0",
+      "checksum": "ad94c18ac947b1a916183d66dbb8a18d",
+      "channel": "stable",
+      "size": 3367
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_timesbold.py": {
+      "version": "1.0.0",
+      "checksum": "a76bac779d27153be5ed48ce9f9e32e9",
+      "channel": "stable",
+      "size": 3672
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_timesbolditalic.py": {
+      "version": "1.0.0",
+      "checksum": "d7ed1ad402c6ec3f87c0f4e1bc2e0cd0",
+      "channel": "stable",
+      "size": 3668
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_timesitalic.py": {
+      "version": "1.0.0",
+      "checksum": "f5eb166c3170f702983435bd4b78f7fa",
+      "channel": "stable",
+      "size": 3665
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_timesroman.py": {
+      "version": "1.0.0",
+      "checksum": "6515e473860b77fb03a791e9cc98ed69",
+      "channel": "stable",
+      "size": 3667
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_fontdata_widths_zapfdingbats.py": {
+      "version": "1.0.0",
+      "checksum": "ff1113e2a7097428caf83436721baef2",
+      "channel": "stable",
+      "size": 2732
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/_glyphlist.py": {
+      "version": "1.0.0",
+      "checksum": "1ad49b59af4ed18248c635ef0d41448c",
+      "channel": "stable",
+      "size": 108467
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfbase/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "1a46940bdbbebdd0f6da0d5599667cc0",
+      "channel": "stable",
+      "size": 275
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/canvas.py": {
+      "version": "1.0.0",
+      "checksum": "a689dcf677e6b5ecf2715b359c44216d",
+      "channel": "stable",
+      "size": 83283
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/pathobject.py": {
+      "version": "1.0.0",
+      "checksum": "fbbdbe8fbef6b2889c4a374ddf25a10c",
+      "channel": "stable",
+      "size": 5737
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/pdfgeom.py": {
+      "version": "1.0.0",
+      "checksum": "1cea1c258070122773b68c4b346f4bdd",
+      "channel": "stable",
+      "size": 2980
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/pdfimages.py": {
+      "version": "1.0.0",
+      "checksum": "c6ebe3eb51e07c44f1fdc0bb0bba59ab",
+      "channel": "stable",
+      "size": 8422
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/textobject.py": {
+      "version": "1.0.0",
+      "checksum": "a5d8a729234af254250dc43a7cc7dcbe",
+      "channel": "stable",
+      "size": 32403
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/pdfgen/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "3fbacf4aad2ae2b06df7c74f2bd9c296",
+      "channel": "stable",
+      "size": 270
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/doctemplate.py": {
+      "version": "1.0.0",
+      "checksum": "f1ed592d5032214c63652b27902694ce",
+      "channel": "stable",
+      "size": 54975
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/figures.py": {
+      "version": "1.0.0",
+      "checksum": "d9e3f4f79292b3de55328892d3c2bfd8",
+      "channel": "stable",
+      "size": 18313
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/flowables.py": {
+      "version": "1.0.0",
+      "checksum": "fea58fee0796ec3857fc2a22edf581d7",
+      "channel": "stable",
+      "size": 98789
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/frames.py": {
+      "version": "1.0.0",
+      "checksum": "1dd0f8d56ae37352fdb6c308c46e8959",
+      "channel": "stable",
+      "size": 10144
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/multicol.py": {
+      "version": "1.0.0",
+      "checksum": "e7ff403da1b3ec0948b3ac09b0346566",
+      "channel": "stable",
+      "size": 2753
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/para.py": {
+      "version": "1.0.0",
+      "checksum": "f712da560d10cfa0f5252e9ad69c4a00",
+      "channel": "stable",
+      "size": 93001
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/paragraph.py": {
+      "version": "1.0.0",
+      "checksum": "6ca7398ecd2b245cc853e5eb23f7513a",
+      "channel": "stable",
+      "size": 122871
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/paraparser.py": {
+      "version": "1.0.0",
+      "checksum": "ce6c522d77ea98b763bdab1729da135c",
+      "channel": "stable",
+      "size": 213985
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/tableofcontents.py": {
+      "version": "1.0.0",
+      "checksum": "c927e9210d8677ead145fa8a1160ded3",
+      "channel": "stable",
+      "size": 21482
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/tables.py": {
+      "version": "1.0.0",
+      "checksum": "7846c88ccbd18f986f6a281e9f90b662",
+      "channel": "stable",
+      "size": 120579
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/xpreformatted.py": {
+      "version": "1.0.0",
+      "checksum": "0f41ff80b4647b886cc248c3e8f81003",
+      "channel": "stable",
+      "size": 12947
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/reportlab/platypus/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f07130ebb1c0585c9fea86a83f1efd07",
+      "channel": "stable",
+      "size": 502
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/adapters.py": {
+      "version": "1.0.0",
+      "checksum": "e48ed2d9026aa2aaa95b44b96b243b14",
+      "channel": "stable",
+      "size": 28064
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/api.py": {
+      "version": "1.0.0",
+      "checksum": "94f13759c7b3a3d93ee82af85297fbf5",
+      "channel": "stable",
+      "size": 7152
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/auth.py": {
+      "version": "1.0.0",
+      "checksum": "816832714f01f1dfde70a50c3acff67e",
+      "channel": "stable",
+      "size": 12233
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/certs.py": {
+      "version": "1.0.0",
+      "checksum": "a047e45ad1d8262784a724e788b68804",
+      "channel": "stable",
+      "size": 430
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/compat.py": {
+      "version": "1.0.0",
+      "checksum": "fac4b4349276810e238e98bbc238e5b6",
+      "channel": "stable",
+      "size": 2465
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/cookies.py": {
+      "version": "1.0.0",
+      "checksum": "48433101f43297d743a3403b1484f997",
+      "channel": "stable",
+      "size": 21549
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/exceptions.py": {
+      "version": "1.0.0",
+      "checksum": "f1ca7a2a5e297e69bc7f3cbffc93b476",
+      "channel": "stable",
+      "size": 4564
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/help.py": {
+      "version": "1.0.0",
+      "checksum": "fa10510bfdee5ae8b31a63b5274af75e",
+      "channel": "stable",
+      "size": 4210
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/hooks.py": {
+      "version": "1.0.0",
+      "checksum": "5d267079d910c67f91e6f25be2ef4300",
+      "channel": "stable",
+      "size": 1138
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/models.py": {
+      "version": "1.0.0",
+      "checksum": "b9e9e4106b4122a7d7c142c8ded79782",
+      "channel": "stable",
+      "size": 41698
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/packages.py": {
+      "version": "1.0.0",
+      "checksum": "93627108fee7284c7f390b0f02fd3c68",
+      "channel": "stable",
+      "size": 904
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/sessions.py": {
+      "version": "1.0.0",
+      "checksum": "91c54ba58cc26c0fb2e55fd810653604",
+      "channel": "stable",
+      "size": 34266
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/status_codes.py": {
+      "version": "1.0.0",
+      "checksum": "1ec3b78cfc0d6ad5d499699b9a551bc6",
+      "channel": "stable",
+      "size": 4351
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/structures.py": {
+      "version": "1.0.0",
+      "checksum": "e6ee30308da0f88041a5f61c298599e5",
+      "channel": "stable",
+      "size": 4134
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/utils.py": {
+      "version": "1.0.0",
+      "checksum": "7eaa4eb5c5a90214ca2d430020461dc8",
+      "channel": "stable",
+      "size": 36322
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/_internal_utils.py": {
+      "version": "1.0.0",
+      "checksum": "c759f175207b27cc41b8e978cfbde7d9",
+      "channel": "stable",
+      "size": 1542
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/_types.py": {
+      "version": "1.0.0",
+      "checksum": "569c5a58726c6b0715ed4ffe7dd2819c",
+      "channel": "stable",
+      "size": 5882
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "3b8d90f0a4f13fbbc048b999108c2b25",
+      "channel": "stable",
+      "size": 5922
+    },
+    "CATORTA_USB_PUNPRO/1_Sistemas_Portables_Descomprimidos/TPV_Portable_Win7/bin/_internal/requests/__version__.py": {
+      "version": "1.0.0",
+      "checksum": "fd195c183f278e739f17039bc5c03152",
+      "channel": "stable",
+      "size": 435
     },
     "installer/installer_build.py": {
       "version": "2027.9",
@@ -186,9 +2856,9 @@
     },
     "src/database.py": {
       "version": "2027.9",
-      "checksum": "815555b513d6604e9df6f9446cb72d5a",
+      "checksum": "41b6311e3469718b6efee1b38775ebef",
       "channel": "stable",
-      "size": 34240
+      "size": 35149
     },
     "src/logger.py": {
       "version": "2027.9",
@@ -306,9 +2976,9 @@
     },
     "src/admin/admin3_reportes.py": {
       "version": "2027.9",
-      "checksum": "eedd116a935c2631fc9996149d520b69",
+      "checksum": "c0aa2679215a4edc09d9374762dd6e36",
       "channel": "stable",
-      "size": 46864
+      "size": 46964
     },
     "src/admin/admin4_gastos.py": {
       "version": "2027.9",
@@ -472,6 +3142,12 @@
       "channel": "stable",
       "size": 3515
     },
+    "src/ui_components/touch_feedback.py": {
+      "version": "1.0.0",
+      "checksum": "11362ff74c7ef354a5216247b52383c2",
+      "channel": "stable",
+      "size": 3275
+    },
     "src/ui_components/__init__.py": {
       "version": "2027.9",
       "checksum": "ad0df287ab8911ea88ce62d1754de37b",
@@ -480,9 +3156,9 @@
     },
     "src/updater/github_updater.py": {
       "version": "2027.9",
-      "checksum": "3afcebb086ebd0f08de6a6d43873590c",
+      "checksum": "b33102a8ec0f2a542d2b3b4b248540ed",
       "channel": "stable",
-      "size": 9377
+      "size": 13885
     },
     "src/updater/update_client.py": {
       "version": "2027.9",

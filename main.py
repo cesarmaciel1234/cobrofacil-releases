@@ -373,6 +373,10 @@ if __name__ == "__main__":
     # 1. Inicializar QApplication de primero para tener un contexto Qt válido para QObjects
     app = QApplication(sys.argv)
     
+    # --- FEEDBACK TACTIL (MODULO INDEPENDIENTE) ---
+    from src.ui_components.touch_feedback import TouchFeedbackManager
+    touch_manager = TouchFeedbackManager(app)
+    
     # 2. Inicializar el Hardware de forma segura
     from src.hardware.cash_drawer import reset_drawer_manager
     reset_drawer_manager()

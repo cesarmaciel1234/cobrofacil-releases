@@ -1,0 +1,7 @@
+===============================================================================
+NOTA DE COMPATIBILIDAD - WINDOWS 7 PORTABLE
+===============================================================================
+Esta carpeta ha sido preconfigurada y aislada especificamente para ejecutar
+sin errores de Kernel32 en sistemas operativos heredados (Windows 7 de 32 o 64 bits).
+
+Para iniciar el sistema, haz doble clic en el archivo "INICIAR_SISTEMA.bat".

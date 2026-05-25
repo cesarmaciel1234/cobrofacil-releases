@@ -1,0 +1,28 @@
+===============================================================================
+🌟 PUNPRO TPV 2026 - INDICE DE LA CATORTA USB MAESTRA
+===============================================================================
+
+Has copiado esta carpeta a tu pendrive. Tienes en tus manos el batallon
+de despliegue informatico definitivo para operar en cualquier mostrador.
+
+ESTRUCTURA DE CONTENIDOS:
+
+📁 1_Sistemas_Portables_Descomprimidos\
+   Entra aqui si necesitas abrir la caja de inmediato en una PC ajena.
+   Elige la carpeta segun el Windows, doble clic a "INICIAR_SISTEMA.bat" y factura.
+
+📁 2_Archivos_Comprimidos_ZIP\
+   Contiene los bloques sellados. Usalos si un antivirus rebelde te bloquea
+   copiar archivos sueltos, o si necesitas enviar el sistema por WhatsApp/Correo.
+
+📁 3_Manuales_y_Documentacion\
+   Toda la literatura tecnica. Contiene los atajos de teclado para capacitar al
+   cajero y las reglas de inmutabilidad para futuros programadores.
+
+📁 4_Instaladores_InnoSetup\
+   Scripts fuente listos para compilar en Inno Setup si el cliente exige
+   una instalacion clasica (Setup.exe) con permisos nativos de base de datos.
+
+===============================================================================
+SOFTWARE PROPIEDAD DE PUNPRO SYSTEMS - LICENCIA DE DESPLIEGUE ELITE 2026
+===============================================================================

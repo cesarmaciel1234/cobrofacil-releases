@@ -50,9 +50,11 @@ pyinstaller --noconfirm --onedir --windowed --name "CajaFacil_Pro" ^
  --hidden-import "barcode" ^
  --hidden-import "barcode.writer" ^
  --hidden-import "PIL" ^
+ --hidden-import "reportlab" ^
  --collect-all "matplotlib" ^
  --collect-all "requests" ^
  --collect-all "barcode" ^
+ --collect-all "reportlab" ^
  main.py
 
 :: 4. Estructuracion del Batallon Dividido por Sistema Operativo
