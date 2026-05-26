@@ -350,13 +350,24 @@ class PosPrinter:
         
         # Items
         data.extend(ALIGN_LEFT)
-        data.extend(b"Cant  Descripcion      Subtotal\n")
+        data.extend(b"Detalle / Cant x Unit.      Total\n")
         for it in items:
             clean_name = it['nombre'].replace("🏷️ ", "*OFER* ").replace("🔥 [OFERTA] ", "*OFER* ")
-            desc = clean_name[:15].ljust(15)
-            cant = f"{it['cant']:g}".rjust(4)
-            subt = f"${it['subtotal']:.2f}".rjust(10)
-            data.extend(f"{cant}  {desc} {subt}\n".encode('cp850', errors='replace'))
+            data.extend(f"{clean_name}\n".encode('cp850', errors='replace'))
+            
+            cant_str = f"{it['cant']:g}"
+            unit_price = it.get('precio', 0.0)
+            if not unit_price and it['cant'] > 0:
+                unit_price = it['subtotal'] / it['cant']
+                
+            calc_str = f"  {cant_str} x ${unit_price:.2f}"
+            subt_str = f"${it['subtotal']:.2f}"
+            
+            espacios = 32 - len(calc_str) - len(subt_str)
+            if espacios < 1:
+                espacios = 1
+            linea_detalle = calc_str + (" " * espacios) + subt_str + "\n"
+            data.extend(linea_detalle.encode('cp850'))
             
         data.extend(b"--------------------------------\n")
         
@@ -580,13 +591,24 @@ class PosPrinter:
 
         # ── Items ──────────────────────────────────────────────────────────
         data.extend(ALIGN_LEFT)
-        data.extend(b"Cant  Descripcion      Subtotal\n")
+        data.extend(b"Detalle / Cant x Unit.      Total\n")
         for it in items:
             clean_name = it['nombre'].replace("🏷️ ", "*OFER* ").replace("🔥 [OFERTA] ", "*OFER* ")
-            desc = clean_name[:15].ljust(15)
-            cant = f"{it['cant']:g}".rjust(4)
-            subt = f"${it['subtotal']:.2f}".rjust(10)
-            data.extend(f"{cant}  {desc} {subt}\n".encode('cp850', errors='replace'))
+            data.extend(f"{clean_name}\n".encode('cp850', errors='replace'))
+            
+            cant_str = f"{it['cant']:g}"
+            unit_price = it.get('precio', 0.0)
+            if not unit_price and it['cant'] > 0:
+                unit_price = it['subtotal'] / it['cant']
+                
+            calc_str = f"  {cant_str} x ${unit_price:.2f}"
+            subt_str = f"${it['subtotal']:.2f}"
+            
+            espacios = 32 - len(calc_str) - len(subt_str)
+            if espacios < 1:
+                espacios = 1
+            linea_detalle = calc_str + (" " * espacios) + subt_str + "\n"
+            data.extend(linea_detalle.encode('cp850'))
 
         data.extend(b"--------------------------------\n")
 

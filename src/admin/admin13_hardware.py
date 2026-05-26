@@ -7,7 +7,7 @@ import datetime
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout, 
                              QMessageBox, QComboBox, QPlainTextEdit, QGroupBox, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer, pyqtSlot
 from PyQt5.QtGui import QColor, QIcon
 
 try:
@@ -374,14 +374,11 @@ class Admin13Hardware(QWidget):
         except Exception as e:
             self.txt_cmd_output.appendPlainText(f"[ERROR DEL SISTEMA] {str(e)}")
             
-        # Scroll down automatically
-        vbar = self.txt_cmd_output.verticalScrollBar()
-        vbar.setValue(vbar.maximum())
-
     def launch_industrial_tool(self, tool):
         import os
         import subprocess
         import shutil
+        import threading
         from src.utils.paths import get_base_path
         
         base_dir = get_base_path()
@@ -405,7 +402,21 @@ class Admin13Hardware(QWidget):
                 if os.path.exists(exe_path):
                     subprocess.Popen([exe_path], cwd=rpt_dest)
                 else:
-                    QMessageBox.warning(self, "No encontrado", f"No se encontró RPT Tool en:\\n{exe_path}\\nPor favor coloque los archivos en esa carpeta.")
+                    reply = QMessageBox.question(
+                        self, "Herramienta no encontrada",
+                        "RPT Tool no está instalada en esta PC.\n\n¿Deseas descargarla automáticamente por Internet?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply == QMessageBox.Yes:
+                        self.lbl_status.setText("📥 Descargando RPT Printer Tool...")
+                        self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
+                        url = "https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/RPT-Printer-Tool.zip"
+                        t = threading.Thread(
+                            target=self.download_tool_thread,
+                            args=(url, rpt_dest, "RPT-Printer-Tool.zip", exe_path),
+                            daemon=True
+                        )
+                        t.start()
                     
             elif tool == "3nstar":
                 star_dest = os.path.join(util_dir, "3nStar-Drivers")
@@ -417,16 +428,130 @@ class Admin13Hardware(QWidget):
                     
                 exe_setup = os.path.join(star_dest, "Setup.exe")
                 if os.path.exists(exe_setup):
-                    # Lanzar el instalador automáticamente
                     subprocess.Popen([exe_setup], cwd=star_dest)
-                elif os.path.exists(star_dest):
-                    # Fallback por si el exe se llama distinto, abre la carpeta
+                elif os.path.exists(star_dest) and len(os.listdir(star_dest)) > 0:
                     os.startfile(star_dest)
                 else:
-                    QMessageBox.warning(self, "No encontrado", f"No se encontraron los drivers en:\\n{star_dest}")
+                    reply = QMessageBox.question(
+                        self, "Drivers no encontrados",
+                        "Los Drivers de 3nStar no están instalados en esta PC.\n\n¿Deseas descargarlos automáticamente por Internet?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply == QMessageBox.Yes:
+                        self.lbl_status.setText("📥 Descargando Drivers 3nStar...")
+                        self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
+                        url = "https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/3nStar-Drivers.zip"
+                        t = threading.Thread(
+                            target=self.download_tool_thread,
+                            args=(url, star_dest, "3nStar-Drivers.zip", exe_setup),
+                            daemon=True
+                        )
+                        t.start()
                     
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Fallo al abrir la herramienta: {e}")
+
+    def download_tool_thread(self, url, dest_dir, zip_name, exe_path):
+        import urllib.request
+        import zipfile
+        import ssl
+        
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        
+        try:
+            os.makedirs(dest_dir, exist_ok=True)
+            zip_dest = os.path.join(dest_dir, zip_name)
+            
+            # Descargar
+            with urllib.request.urlopen(url, context=ctx) as response, open(zip_dest, 'wb') as out_file:
+                out_file.write(response.read())
+            
+            # Extraer
+            with zipfile.ZipFile(zip_dest, 'r') as zip_ref:
+                zip_ref.extractall(dest_dir)
+                
+            # Limpiar zip
+            try: os.remove(zip_dest)
+            except: pass
+            
+            # Normalizar estructura si está doblemente anidada
+            # Ej: si dest_dir contiene una sola carpeta y no hay archivos sueltos en la raíz
+            try:
+                import shutil
+                items = os.listdir(dest_dir)
+                if len(items) == 1:
+                    subpath = os.path.join(dest_dir, items[0])
+                    if os.path.isdir(subpath):
+                        for subitem in os.listdir(subpath):
+                            src_item = os.path.join(subpath, subitem)
+                            dst_item = os.path.join(dest_dir, subitem)
+                            if os.path.exists(dst_item):
+                                if os.path.isdir(dst_item): shutil.rmtree(dst_item)
+                                else: os.remove(dst_item)
+                            shutil.move(src_item, dst_item)
+                        os.rmdir(subpath)
+            except Exception as ex_norm:
+                print(f"Error normalizando carpeta extraida: {ex_norm}")
+            
+            # Notificar éxito (recursivo por si se extrajo con subcarpetas intermedias)
+            final_exe = exe_path
+            if not os.path.exists(exe_path):
+                for root, dirs, files in os.walk(dest_dir):
+                    for file in files:
+                        if file.lower() == os.path.basename(exe_path).lower():
+                            final_exe = os.path.join(root, file)
+                            break
+                    if final_exe != exe_path: break
+            
+            if os.path.exists(final_exe):
+                from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                QMetaObject.invokeMethod(self, "_lanzar_despues_descarga", Qt.QueuedConnection, Q_ARG(str, final_exe), Q_ARG(str, os.path.dirname(final_exe)))
+            else:
+                if len(os.listdir(dest_dir)) > 0:
+                    from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                    QMetaObject.invokeMethod(self, "_abrir_carpeta_despues_descarga", Qt.QueuedConnection, Q_ARG(str, dest_dir))
+                else:
+                    from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                    QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, "No se encontró el archivo ejecutable."))
+        except Exception as e:
+            from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+            QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, str(e)))
+
+    @pyqtSlot(str, str)
+    def _lanzar_despues_descarga(self, exe_path, cwd):
+        self.lbl_status.setText("✅ Herramienta descargada y ejecutada.")
+        self.lbl_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        try:
+            import subprocess
+            subprocess.Popen([exe_path], cwd=cwd)
+        except Exception as e:
+            QMessageBox.critical(self, "Error al lanzar", f"No se pudo ejecutar la herramienta:\n{e}")
+        QMessageBox.information(self, "Descarga Completada", f"La herramienta se ha descargado y ejecutado desde:\n{exe_path}")
+
+    @pyqtSlot(str)
+    def _abrir_carpeta_despues_descarga(self, folder_path):
+        self.lbl_status.setText("✅ Herramienta descargada. Carpeta abierta.")
+        self.lbl_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        try:
+            import os
+            os.startfile(folder_path)
+        except Exception as e:
+            QMessageBox.critical(self, "Error al abrir carpeta", f"No se pudo abrir la carpeta:\n{e}")
+        QMessageBox.information(self, "Descarga Completada", f"Se han descargado los archivos en la carpeta:\n{folder_path}")
+
+    @pyqtSlot(str)
+    def _mostrar_error_hilo(self, err_msg):
+        self.lbl_status.setText(f"❌ Error al descargar.")
+        self.lbl_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+        QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        QMessageBox.critical(self, "Error de Descarga", f"No se pudo descargar la herramienta:\n{err_msg}")
 
     def showEvent(self, event):
         """ Re-conectamos señales y activamos el monitor visual al entrar al panel. """
@@ -589,7 +714,7 @@ class Admin13Hardware(QWidget):
             data = bytearray()
             data.extend(b"\x1B\x40") # Reset
             data.extend(b"\x1B\x61\x01") # Center
-            data.extend(f"PUNPRO ELITE 2026\n".encode())
+            data.extend(f"CAJAFACIL PRO 2026\n".encode())
             data.extend(f"TEST HARDWARE OK\n".encode())
             data.extend(b"--------------------------------\n")
             data.extend(f"Impresora: {printer_name}\n".encode())

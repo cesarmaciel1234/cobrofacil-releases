@@ -14,7 +14,7 @@ class Config:
         "phone": "555-0199",
         "footer_message": "Gracias por su compra!",
         "tax_percentage": 0.0,
-        "theme": "midnight",
+        "theme": "light",
         "balanza_habilitada": True,
         "balanza_prefijo": "20",
         "balanza_modo": "Peso Neto (Kg)",

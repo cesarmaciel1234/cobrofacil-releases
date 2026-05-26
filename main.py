@@ -50,31 +50,16 @@ def launch_app():
         app = QApplication(sys.argv)
     
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
-    splash_pix = QPixmap(400, 300)
-    splash_pix.fill(Qt.transparent)
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setStyleSheet("background-color: #1E3A8A; color: white; border-radius: 20px; border: 2px solid #3B82F6;")
-    
-    # Label de Título en el Splash
-    lbl_splash = QLabel("PUNPRO ELITE 2026", splash)
-    lbl_splash.setAlignment(Qt.AlignCenter)
-    lbl_splash.setGeometry(0, 80, 400, 50)
-    lbl_splash.setStyleSheet("font-size: 24px; font-weight: bold; color: white; background: transparent; border: none;")
-    
-    lbl_status = QLabel("Iniciando motor industrial...", splash)
-    lbl_status.setAlignment(Qt.AlignCenter)
-    lbl_status.setGeometry(0, 220, 400, 30)
-    lbl_status.setStyleSheet("font-size: 12px; color: #93C5FD; background: transparent; border: none;")
-    
+    from src.pantallaentrada import CajaFacilSplash
+    splash = CajaFacilSplash()
     splash.show()
     app.processEvents()
 
-    def update_status(text):
-        lbl_status.setText(text)
-        app.processEvents()
+    def update_status(text, progress_val=None):
+        splash.update_status(text, progress_val)
 
     # --- PASO 1: CARGAR RUTAS E ICONOS ---
-    update_status("Cargando identidad visual...")
+    update_status("Cargando identidad visual...", 20)
     from PyQt5.QtGui import QIcon
     from src.utils.paths import get_resource_path
     icon_path = get_resource_path(os.path.join("src", "icon.png"))
@@ -82,27 +67,27 @@ def launch_app():
         app.setWindowIcon(QIcon(icon_path))
 
     # --- PASO 2: CARGAR HARDWARE ---
-    update_status("Conectando periféricos industriales...")
+    update_status("Conectando periféricos industriales...", 40)
     from src.hardware.printer import printer_manager
     ok, msg = printer_manager.verificar_estado()
 
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
-    update_status("Verificando licencia de seguridad...")
-    from src.paso1_licencia import Paso1Licencia, check_license_active
+    update_status("Verificando licencia de seguridad...", 60)
+    from src.licencia_pantalla import LicenciaPantalla, check_license_active
     if not check_license_active():
         splash.finish(None)
-        lic = Paso1Licencia()
+        lic = LicenciaPantalla()
         if not lic.exec_(): sys.exit()
         splash.show()
 
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
-    update_status("Cargando perfiles de acceso...")
-    from src.paso2_perfil import Paso2Perfil
-    from src.paso3_login import Paso3Login
-    from src.paso4_apertura import Paso4AperturaCaja
+    update_status("Cargando perfiles de acceso...", 80)
+    from src.perfil_pantalla import PerfilPantalla
+    from src.login_pantalla import LoginPantalla
+    from src.apertura_pantalla import AperturaCajaPantalla
     from src.services.caja_service import verificar_y_realizar_autocierre
     
-    update_status("Finalizando inicialización...")
+    update_status("Inicializando sistema...", 100)
     from src.main_window import MainWindow
     
     # Pre-creación de la ventana principal para ocultar la pausa en la pantalla de carga (Splash)
@@ -143,7 +128,7 @@ def launch_app():
             QMessageBox.critical(None, "Error", "PIN incorrecto o cancelado.")
             return 0
 
-    perfil_dlg = Paso2Perfil()
+    perfil_dlg = PerfilPantalla()
     role_selected = None
     
     def capture_role(role):
@@ -156,7 +141,7 @@ def launch_app():
         perfil_dlg.hide()
         app.processEvents()
         
-        login_dlg = Paso3Login(role_selected)
+        login_dlg = LoginPantalla(role_selected)
         if login_dlg.exec_():
             login_dlg.hide()
             app.processEvents()
@@ -167,8 +152,8 @@ def launch_app():
                     QMessageBox.information(None, "🛡️ SISTEMA DE SEGURIDAD", 
                         f"Se detectaron ventas abiertas de días anteriores.\n\n"
                         f"El sistema realizó un CIERRE AUTOMÁTICO de ${monto_c:.2f}.")
-
-                apertura = Paso4AperturaCaja()
+ 
+                apertura = AperturaCajaPantalla()
                 if apertura.exec_():
                     apertura.hide()
                     app.processEvents()

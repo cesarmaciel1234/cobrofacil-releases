@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, QDate, QTime, QTimer
 from PyQt5.QtGui import QColor, QBrush, QPainter
 from datetime import datetime
 from src.database import db_manager
+from src.config import config
 
 def fmt_moneda(val):
     """ Formatea a moneda regional: $1.234,56 """
@@ -67,72 +68,185 @@ class DialogoHistorialDia(QDialog):
             glow.setOffset(0, 0)
             container.setGraphicsEffect(glow)
 
-    def setup_ui(self):
-        self.setStyleSheet("""
-            #HistoryDialog { 
-                background-color: white; 
-                border-radius: 20px;
-                border: 2px solid #1E3A8A;
-            }
-            QWidget { font-family: 'Segoe UI', Arial; }
-            QLabel { font-size: 13px; color: #1e293b; }
-            
-            QTableWidget { 
-                background-color: white; 
-                gridline-color: #f1f5f9; 
-                border: 1px solid #e2e8f0; 
-                border-radius: 12px;
-                selection-background-color: #EFF6FF; 
-                selection-color: #1E3A8A;
-                font-size: 13px;
-                outline: none;
-            }
-            QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; }
-            QTableWidget::item:selected {
-                background-color: #EFF6FF;
-                color: #1E3A8A;
-                font-weight: 900;
-            }
-            QHeaderView::section { 
-                background-color: #F8FAFC; 
-                color: #64748b; 
-                padding: 8px; 
-                border: none;
-                font-weight: 900;
-                font-size: 11px;
-                text-transform: uppercase;
-            }
-            
-            QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
-                border: 2px solid #E2E8F0; border-radius: 10px; padding: 5px 10px; background: #F8FAFC; font-size: 13px; font-weight: 600; color: #1E293B;
-            }
-            QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
-            QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
-            
-            QPushButton { 
-                padding: 8px 15px; 
-                font-size: 13px; 
-                background: white;
-                border: 2px solid #E2E8F0;
-                border-radius: 8px;
-                color: #475569;
-                font-weight: 900;
-            }
-            QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
-            
-            #btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
-            #btnCancelVenta:hover { background: #FEE2E2; }
-            #btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
-            #btnImprimir:hover { background: #DBEAFE; }
-            
-            #frameDetalle { 
-                background-color: #F8FAFC; 
-                border: 1px solid #E2E8F0; 
-                border-radius: 16px;
-            }
-            #lblTicketPreview { font-size: 22px; font-weight: 900; color: #1E3A8A; margin-bottom: 5px; }
-        """)
+    def apply_theme(self):
+        theme = config.get("theme", "light")
+        if theme == "dark":
+            self.setStyleSheet("""
+                #HistoryDialog { 
+                    background-color: #0F172A; 
+                    border-radius: 20px;
+                    border: 2px solid #334155;
+                }
+                QWidget { font-family: 'Segoe UI', Arial; }
+                QLabel { font-size: 13px; color: #F8FAFC; background: transparent; }
+                
+                QTableWidget { 
+                    background-color: #1E293B; 
+                    gridline-color: #334155; 
+                    border: 1px solid #334155; 
+                    border-radius: 12px;
+                    selection-background-color: #334155; 
+                    selection-color: #38BDF8;
+                    font-size: 13px;
+                    outline: none;
+                    color: #F8FAFC;
+                }
+                QTableWidget::item { padding: 5px; border-bottom: 1px solid #1E293B; }
+                QTableWidget::item:selected {
+                    background-color: #3B82F6;
+                    color: #FFFFFF;
+                    font-weight: 900;
+                }
+                QHeaderView::section { 
+                    background-color: #0F172A; 
+                    color: #94A3B8; 
+                    padding: 8px; 
+                    border: none;
+                    font-weight: 900;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                }
+                
+                QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
+                    border: 2px solid #334155; border-radius: 10px; padding: 5px 10px; background: #1E293B; font-size: 13px; font-weight: 600; color: #F8FAFC;
+                }
+                QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: #0F172A; }
+                QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
+                
+                QPushButton { 
+                    padding: 8px 15px; 
+                    font-size: 13px; 
+                    background: #334155;
+                    border: 2px solid #475569;
+                    border-radius: 8px;
+                    color: #CBD5E1;
+                    font-weight: 900;
+                }
+                QPushButton:hover { background: #475569; border-color: #64748B; }
+                
+                #btnCancelVenta { background: #7F1D1D; color: #FCA5A5; border: none; }
+                #btnCancelVenta:hover { background: #991B1B; }
+                #btnImprimir { background: #1E3A8A; color: #93C5FD; border: none; }
+                #btnImprimir:hover { background: #1E40AF; }
+                
+                #frameDetalle { 
+                    background-color: #1E293B; 
+                    border: 1px solid #334155; 
+                    border-radius: 16px;
+                }
+                #lblTicketPreview { font-size: 22px; font-weight: 900; color: #38BDF8; margin-bottom: 5px; }
+            """)
+            if hasattr(self, 'lbl_titulo'):
+                self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #38BDF8; letter-spacing: 2px; background: transparent;")
+            if hasattr(self, 'footer'):
+                self.footer.setStyleSheet("background: #0F172A; border-top: 1px solid #334155; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
+            if hasattr(self, 'btn_close'):
+                self.btn_close.setStyleSheet("""
+                    QPushButton { 
+                        background-color: #1E293B; 
+                        color: #94A3B8; 
+                        border-radius: 12px; 
+                        font-weight: 900; 
+                        font-size: 13px;
+                        padding: 15px;
+                        border: 2px solid #334155;
+                    }
+                    QPushButton:hover { background-color: #334155; border-color: #475569; color: #F8FAFC; }
+                """)
+            if hasattr(self, 'lbl_det_metodo'):
+                self.lbl_det_metodo.setStyleSheet("color: #38BDF8; font-weight: bold; background: transparent;")
+            if hasattr(self, 'total_card'):
+                self.total_card.setStyleSheet("background-color: #1E293B; border: 2px dashed #334155; border-radius: 12px;")
+                self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #38BDF8; border: none; background: transparent;")
+        else:
+            self.setStyleSheet("""
+                #HistoryDialog { 
+                    background-color: white; 
+                    border-radius: 20px;
+                    border: 2px solid #1E3A8A;
+                }
+                QWidget { font-family: 'Segoe UI', Arial; }
+                QLabel { font-size: 13px; color: #1e293b; background: transparent; }
+                
+                QTableWidget { 
+                    background-color: white; 
+                    gridline-color: #f1f5f9; 
+                    border: 1px solid #e2e8f0; 
+                    border-radius: 12px;
+                    selection-background-color: #EFF6FF; 
+                    selection-color: #1E3A8A;
+                    font-size: 13px;
+                    outline: none;
+                }
+                QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; }
+                QTableWidget::item:selected {
+                    background-color: #EFF6FF;
+                    color: #1E3A8A;
+                    font-weight: 900;
+                }
+                QHeaderView::section { 
+                    background-color: #F8FAFC; 
+                    color: #64748b; 
+                    padding: 8px; 
+                    border: none;
+                    font-weight: 900;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                }
+                
+                QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
+                    border: 2px solid #E2E8F0; border-radius: 10px; padding: 5px 10px; background: #F8FAFC; font-size: 13px; font-weight: 600; color: #1E293B;
+                }
+                QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
+                QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
+                
+                QPushButton { 
+                    padding: 8px 15px; 
+                    font-size: 13px; 
+                    background: white;
+                    border: 2px solid #E2E8F0;
+                    border-radius: 8px;
+                    color: #475569;
+                    font-weight: 900;
+                }
+                QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
+                
+                #btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
+                #btnCancelVenta:hover { background: #FEE2E2; }
+                #btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
+                #btnImprimir:hover { background: #DBEAFE; }
+                
+                #frameDetalle { 
+                    background-color: #F8FAFC; 
+                    border: 1px solid #E2E8F0; 
+                    border-radius: 16px;
+                }
+                #lblTicketPreview { font-size: 22px; font-weight: 900; color: #1E3A8A; margin-bottom: 5px; }
+            """)
+            if hasattr(self, 'lbl_titulo'):
+                self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px; background: transparent;")
+            if hasattr(self, 'footer'):
+                self.footer.setStyleSheet("background: white; border-top: 1px solid #E2E8F0; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
+            if hasattr(self, 'btn_close'):
+                self.btn_close.setStyleSheet("""
+                    QPushButton { 
+                        background-color: #F8FAFC; 
+                        color: #64748B; 
+                        border-radius: 12px; 
+                        font-weight: 900; 
+                        font-size: 13px;
+                        padding: 15px;
+                        border: 2px solid #E2E8F0;
+                    }
+                    QPushButton:hover { background-color: #F1F5F9; border-color: #CBD5E1; color: #1E293B; }
+                """)
+            if hasattr(self, 'lbl_det_metodo'):
+                self.lbl_det_metodo.setStyleSheet("color: #1C2E85; font-weight: bold; background: transparent;")
+            if hasattr(self, 'total_card'):
+                self.total_card.setStyleSheet("background-color: #F8FAFC; border: 2px dashed #93C5FD; border-radius: 12px;")
+                self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #2563EB; border: none; background: transparent;")
 
+    def setup_ui(self):
         main_container = QWidget(self)
         main_container.setObjectName("HistoryDialog")
         outer_layout = QVBoxLayout(self)
@@ -153,9 +267,9 @@ class DialogoHistorialDia(QDialog):
         lbl_icon.setStyleSheet("font-size: 24px; background: transparent; border: none;")
         h_layout.addWidget(lbl_icon)
         
-        lbl_titulo = QLabel("HISTORIAL DE VENTAS")
-        lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px;")
-        h_layout.addWidget(lbl_titulo)
+        self.lbl_titulo = QLabel("HISTORIAL DE VENTAS")
+        self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px;")
+        h_layout.addWidget(self.lbl_titulo)
         
         h_layout.addStretch()
         main_vbox.addWidget(header)
@@ -234,7 +348,6 @@ class DialogoHistorialDia(QDialog):
         self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #2563EB; border: none; background: transparent;")
         self.lbl_total_filtrado.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(self.lbl_total_filtrado)
-        filter_grid.addWidget(self.total_card, 4, 0, 1, 3)
         
         # --- CONEXIONES (Al final para evitar crashes por widgets no creados) ---
         self.txt_search.textChanged.connect(self.cargar_ventas)
@@ -262,22 +375,18 @@ class DialogoHistorialDia(QDialog):
         det_layout.setSpacing(10)
         
         info_grid = QGridLayout()
-        info_grid.addWidget(QLabel("<b>Folio:</b>"), 0, 0)
+        
+        # Guardar folio de forma oculta sin añadir al layout para mantener compatibilidad lógica
         self.lbl_det_folio = QLabel("-")
-        info_grid.addWidget(self.lbl_det_folio, 0, 1)
         
-        info_grid.addWidget(QLabel("<b>Cajero:</b>"), 1, 0)
+        info_grid.addWidget(QLabel("<b>Cajero:</b>"), 0, 0)
         self.lbl_det_cajero = QLabel("-")
-        info_grid.addWidget(self.lbl_det_cajero, 1, 1)
+        info_grid.addWidget(self.lbl_det_cajero, 0, 1)
         
-        info_grid.addWidget(QLabel("<b>Cliente:</b>"), 2, 0)
-        self.lbl_det_cliente = QLabel("Público en general")
-        info_grid.addWidget(self.lbl_det_cliente, 2, 1)
-        
-        info_grid.addWidget(QLabel("<b>Pago:</b>"), 3, 0)
+        info_grid.addWidget(QLabel("<b>Pago:</b>"), 1, 0)
         self.lbl_det_metodo = QLabel("-")
         self.lbl_det_metodo.setStyleSheet("color: #1C2E85; font-weight: bold;")
-        info_grid.addWidget(self.lbl_det_metodo, 3, 1)
+        info_grid.addWidget(self.lbl_det_metodo, 1, 1)
         
         det_layout.addLayout(info_grid)
         
@@ -293,7 +402,7 @@ class DialogoHistorialDia(QDialog):
         self.tabla_detalle.setColumnWidth(0, 50)
         self.tabla_detalle.setColumnWidth(2, 100)
         self.tabla_detalle.verticalHeader().setVisible(False)
-        self.tabla_detalle.setFixedHeight(220)
+        self.tabla_detalle.setFixedHeight(280)
         det_layout.addWidget(self.tabla_detalle)
         
         # --- SELLO CANCELADO (Overlay) ---
@@ -358,30 +467,24 @@ class DialogoHistorialDia(QDialog):
         main_vbox.addLayout(content_hbox)
 
         # 3. FINAL BOTTOM BAR
-        footer = QFrame()
-        footer.setFixedHeight(80)
-        footer.setStyleSheet("background: white; border-top: 1px solid #E2E8F0; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
-        f_layout = QHBoxLayout(footer)
+        self.footer = QFrame()
+        self.footer.setFixedHeight(80)
+        f_layout = QHBoxLayout(self.footer)
         f_layout.setContentsMargins(30, 0, 30, 0)
         
-        btn_close = QPushButton("✕ CERRAR VENTANA (ESC)")
-        btn_close.setFixedWidth(250)
-        btn_close.setStyleSheet("""
-            QPushButton { 
-                background-color: #F8FAFC; 
-                color: #64748B; 
-                border-radius: 12px; 
-                font-weight: 900; 
-                font-size: 13px;
-                padding: 15px;
-                border: 2px solid #E2E8F0;
-            }
-            QPushButton:hover { background-color: #F1F5F9; border-color: #CBD5E1; color: #1E293B; }
-        """)
-        btn_close.clicked.connect(self.accept)
-        f_layout.addWidget(btn_close)
+        self.btn_close = QPushButton("✕ CERRAR VENTANA (ESC)")
+        self.btn_close.setFixedWidth(250)
+        self.btn_close.clicked.connect(self.accept)
+        f_layout.addWidget(self.btn_close)
         f_layout.addStretch()
-        main_vbox.addWidget(footer)
+        
+        # Mover Total en pantalla aquí al lado de cerrar ventana
+        self.total_card.setFixedSize(280, 48)
+        f_layout.addWidget(self.total_card)
+        
+        main_vbox.addWidget(self.footer)
+        
+        self.apply_theme()
 
     def cargar_ventas(self):
         # 1. Obtener datos base con optimización N+1 (GROUP_CONCAT y JOIN) y control de accesos

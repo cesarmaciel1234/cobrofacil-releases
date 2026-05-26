@@ -1,0 +1,902 @@
+PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=PUNPRO TPV 2026 - CATORTA USB MAESTRA
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+Generado: 2026-05-26 15:41
+
+ESTRUCTURA:
+
+  1_Sistemas_Portables
+    Sistema listo para ejecutar en cualquier PC.
+
+  2_ZIPs_Respaldo
+    Respaldo comprimido completo del proyecto.
+
+  3_Manuales_Documentacion
+    Toda la documentacion, manuales y planificacion.
+
+  4_Instaladores_InnoSetup
+    Scripts Inno Setup (.iss) y PyInstaller (.spec).
+
+=
+PUNPRO SYSTEMS - LICENCIA DE DESPLIEGUE ELITE 2026

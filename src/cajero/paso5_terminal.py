@@ -24,7 +24,7 @@ from src.hardware.printer import printer_manager
 from src.hardware.cash_drawer import drawer_manager
 
 try:
-    from src.ui_components.virtual_keyboard import VirtualKeyboard
+    from src.ui_components.virtual_keyboard_paso5 import VirtualKeyboardPaso5 as VirtualKeyboard
     HAS_KEYBOARD = True
 except Exception as e:
     import logging
@@ -612,6 +612,7 @@ class Paso5Terminal(QWidget):
         super().__init__()
         self.txt_scan = None
         self.setup_ui()
+        self.apply_theme()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.actualizar_reloj)
         self.timer.start(1000)
@@ -974,9 +975,9 @@ class Paso5Terminal(QWidget):
         dash_layout.addSpacing(10)
         
         # Sidebar Resumen (Persistencia de última venta)
-        side_box = QFrame()
-        side_box.setFixedWidth(240)
-        side_box.setStyleSheet("""
+        self.side_box = QFrame()
+        self.side_box.setFixedWidth(240)
+        self.side_box.setStyleSheet("""
             QFrame {
                 background: #f8fafc; 
                 border: 1px solid #e2e8f0; 
@@ -984,7 +985,7 @@ class Paso5Terminal(QWidget):
             }
             QLabel { border: none; background: transparent; }
         """)
-        sl = QVBoxLayout(side_box)
+        sl = QVBoxLayout(self.side_box)
         sl.setContentsMargins(15, 10, 15, 10)
         sl.setSpacing(5)
         
@@ -1000,7 +1001,7 @@ class Paso5Terminal(QWidget):
         # Resaltar Cambio
         self.lbl_side_cambio.setStyleSheet("font-size: 16px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
         
-        dash_layout.addWidget(side_box)
+        dash_layout.addWidget(self.side_box)
         
         self.en_venta = False
         self.main_layout.addWidget(self.dashboard_frame)
@@ -1028,7 +1029,23 @@ class Paso5Terminal(QWidget):
             sl.addWidget(self.btn_teclado)
             sl.addSpacing(10)
 
-        self.lbl_version = QLabel("🚀 PUNPRO ELITE v2026.0 | TERMINAL ACTIVA")
+        self.btn_theme = QPushButton()
+        self.btn_theme.setFixedHeight(22)
+        self.btn_theme.setCursor(Qt.PointingHandCursor)
+        self.btn_theme.setFocusPolicy(Qt.NoFocus)
+        self.btn_theme.setStyleSheet("""
+            QPushButton {
+                background: #1E293B; color: #F8FAFC; border-radius: 4px;
+                font-size: 10px; font-weight: bold; border: 1px solid #334155;
+                padding: 0px 8px;
+            }
+            QPushButton:hover { background: #334155; border-color: #475569; }
+        """)
+        self.btn_theme.clicked.connect(self.toggle_theme)
+        sl.addWidget(self.btn_theme)
+        sl.addSpacing(10)
+
+        self.lbl_version = QLabel("🚀 CAJAFACIL PRO v2026.0 | TERMINAL ACTIVA")
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version); sl.addStretch()
         
@@ -1119,6 +1136,173 @@ class Paso5Terminal(QWidget):
             self.txt_scan.setFocus()
         super().mousePressEvent(event)
 
+    def toggle_theme(self):
+        current = config.get("theme", "light")
+        new_theme = "dark" if current == "light" else "light"
+        config.set("theme", new_theme)
+        self.apply_theme()
+        if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
+            if hasattr(self.teclado_virtual, 'apply_theme'):
+                self.teclado_virtual.apply_theme()
+
+    def apply_theme(self):
+        theme = config.get("theme", "light")
+        if hasattr(self, 'btn_theme'):
+            self.btn_theme.setText("☀️ TEMAS" if theme == "dark" else "🌙 TEMAS")
+        
+        if theme == "dark":
+            self.setStyleSheet("background-color: #0F172A; color: #F8FAFC; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;")
+            if hasattr(self, 'central_frame'):
+                self.central_frame.setStyleSheet("background-color: #1E293B; border-radius: 8px; border: 1px solid #334155;")
+            if hasattr(self, 'tabla'):
+                self.tabla.setStyleSheet("""
+                    QTableWidget { 
+                        background-color: #1E293B;
+                        alternate-background-color: #0F172A;
+                        color: #F8FAFC; 
+                        gridline-color: transparent;
+                        border: none; 
+                        border-top-left-radius: 12px;
+                        border-top-right-radius: 12px;
+                        font-size: 19px; 
+                        font-weight: 800; 
+                        selection-background-color: #334155;
+                        selection-color: #38BDF8; 
+                        outline: none;
+                    }
+                    QTableWidget::item {
+                        padding: 8px 15px; 
+                        border-bottom: 1px solid #334155;
+                    }
+                    QTableWidget::item:hover {
+                        background-color: #334155;
+                    }
+                    QTableWidget::item:selected {
+                        background-color: #3B82F6; 
+                        color: #FFFFFF;
+                        font-weight: 900;
+                    }
+                    QHeaderView::section { 
+                        background-color: #0F172A; 
+                        color: #94A3B8; 
+                        border: none; 
+                        border-bottom: 3px solid #334155;
+                        padding: 16px 15px; 
+                        font-weight: 900; 
+                        font-size: 13px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                """)
+            if hasattr(self, 'dashboard_frame'):
+                self.dashboard_frame.setStyleSheet("background-color: #1E293B; border-radius: 8px; border: 1px solid #334155;")
+            if hasattr(self, 'txt_scan') and self.txt_scan is not None:
+                self.txt_scan.setStyleSheet("""
+                    QLineEdit {
+                        background: #0F172A;
+                        border: 2px solid #334155;
+                        border-radius: 8px;
+                        padding: 10px 15px;
+                        font-size: 26px;
+                        font-weight: bold;
+                        color: #38BDF8;
+                    }
+                    QLineEdit:focus {
+                        border: 2px solid #3B82F6;
+                    }
+                """)
+            if hasattr(self, 'list_results') and self.list_results is not None:
+                self.list_results.setStyleSheet("background: #0F172A; border: 2px solid #38BDF8; color: #F8FAFC; font-size: 22px; font-weight: bold;")
+            if hasattr(self, 'lbl_ahorro_val'):
+                self.lbl_ahorro_val.setStyleSheet("font-size: 42px; color: #F43F5E; font-weight: 900; border: none; background: transparent;")
+            if hasattr(self, 'lbl_total_val'):
+                self.lbl_total_val.setStyleSheet("font-size: 75px; color: #34D399; font-weight: 900; border: none; background: transparent;")
+            if hasattr(self, 'side_box'):
+                self.side_box.setStyleSheet("""
+                    QFrame {
+                        background-color: #0F172A;
+                        border: 1px solid #334155;
+                        border-radius: 12px;
+                    }
+                    QLabel { border: none; background: transparent; }
+                """)
+        else:
+            self.setStyleSheet("background-color: #F8FAFC; color: #333333; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;")
+            if hasattr(self, 'central_frame'):
+                self.central_frame.setStyleSheet("background-color: white; border-radius: 8px; border: 1px solid #CBD5E1;")
+            if hasattr(self, 'tabla'):
+                self.tabla.setStyleSheet("""
+                    QTableWidget { 
+                        background-color: white;
+                        alternate-background-color: #F8FAFC;
+                        color: #1E293B; 
+                        gridline-color: transparent;
+                        border: none; 
+                        border-top-left-radius: 12px;
+                        border-top-right-radius: 12px;
+                        font-size: 19px; 
+                        font-weight: 800; 
+                        selection-background-color: #EFF6FF;
+                        selection-color: #1E3A8A; 
+                        outline: none;
+                    }
+                    QTableWidget::item {
+                        padding: 8px 15px; 
+                        border-bottom: 1px solid #E2E8F0;
+                    }
+                    QTableWidget::item:hover {
+                        background-color: #F1F5F9;
+                    }
+                    QTableWidget::item:selected {
+                        background-color: #1E3A8A; 
+                        color: #FFFFFF;
+                        font-weight: 900;
+                    }
+                    QHeaderView::section { 
+                        background-color: #F8FAFC; 
+                        color: #475569; 
+                        border: none; 
+                        border-bottom: 3px solid #E2E8F0;
+                        padding: 16px 15px; 
+                        font-weight: 900; 
+                        font-size: 13px;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                """)
+            if hasattr(self, 'dashboard_frame'):
+                self.dashboard_frame.setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border: 1px solid #CBD5E1;")
+            if hasattr(self, 'txt_scan') and self.txt_scan is not None:
+                self.txt_scan.setStyleSheet("""
+                    QLineEdit {
+                        background: #F1F5F9;
+                        border: 2px solid #CBD5E1;
+                        border-radius: 8px;
+                        padding: 10px 15px;
+                        font-size: 26px;
+                        font-weight: bold;
+                        color: #1E293B;
+                    }
+                    QLineEdit:focus {
+                        border: 2px solid #3b82f6;
+                    }
+                """)
+            if hasattr(self, 'list_results') and self.list_results is not None:
+                self.list_results.setStyleSheet("background: white; border: 2px solid #437EE8; color: #333333; font-size: 22px; font-weight: bold;")
+            if hasattr(self, 'lbl_ahorro_val'):
+                self.lbl_ahorro_val.setStyleSheet("font-size: 42px; color: #FF4500; font-weight: 900; border: none; background: transparent;")
+            if hasattr(self, 'lbl_total_val'):
+                self.lbl_total_val.setStyleSheet("font-size: 75px; color: #059669; font-weight: 900; border: none; background: transparent;")
+            if hasattr(self, 'side_box'):
+                self.side_box.setStyleSheet("""
+                    QFrame {
+                        background: #f8fafc; 
+                        border: 1px solid #e2e8f0; 
+                        border-radius: 12px;
+                    }
+                    QLabel { border: none; background: transparent; }
+                """)
+
     def toggle_keyboard(self):
         if not HAS_KEYBOARD:
             return
@@ -1149,9 +1333,16 @@ class Paso5Terminal(QWidget):
         if not HAS_KEYBOARD:
             return
             
+        # Sanitizar referencia de teclado virtual si el objeto C++ subyacente fue eliminado
+        if hasattr(self, 'teclado_virtual') and self.teclado_virtual is not None:
+            try:
+                self.teclado_virtual.parent()
+            except RuntimeError:
+                self.teclado_virtual = None
+                
         # Si la terminal de venta principal no está visible, ocultar y retornar
         if not self.isVisible():
-            if hasattr(self, 'teclado_virtual'):
+            if getattr(self, 'teclado_virtual', None) is not None:
                 self.teclado_virtual.hide()
             return
             
@@ -1165,7 +1356,7 @@ class Paso5Terminal(QWidget):
             while parent:
                 class_name = parent.__class__.__name__.lower()
                 if 'admin' in class_name:
-                    if hasattr(self, 'teclado_virtual'):
+                    if getattr(self, 'teclado_virtual', None) is not None:
                         self.teclado_virtual.hide()
                     return
                 parent = parent.parent()
@@ -1179,7 +1370,7 @@ class Paso5Terminal(QWidget):
                     break
                 parent = parent.parent()
             if is_paso6:
-                if hasattr(self, 'teclado_virtual'):
+                if getattr(self, 'teclado_virtual', None) is not None:
                     self.teclado_virtual.hide()
                 return
 
@@ -1189,11 +1380,11 @@ class Paso5Terminal(QWidget):
                 
             # 2. Protección Cambio de Ventana: ocultar antes si la ventana de destino cambió
             # Esto previene congelamientos y asegura que la nueva ventana inicie con un teclado limpio
-            if hasattr(self, 'teclado_virtual') and self.teclado_virtual.isVisible():
+            if getattr(self, 'teclado_virtual', None) is not None and self.teclado_virtual.isVisible():
                 if self.teclado_virtual.parent() != active_win:
                     self.teclado_virtual.hide()
                     
-            if not hasattr(self, 'teclado_virtual'):
+            if getattr(self, 'teclado_virtual', None) is None:
                 self.teclado_virtual = VirtualKeyboard(active_win)
             elif self.teclado_virtual.parent() != active_win:
                 self.teclado_virtual.setParent(active_win)
@@ -1210,7 +1401,7 @@ class Paso5Terminal(QWidget):
             self.teclado_virtual.show()
         else:
             # Si el foco cambia a cualquier otra cosa, ocultamos
-            if hasattr(self, 'teclado_virtual') and self.teclado_virtual.isVisible():
+            if getattr(self, 'teclado_virtual', None) is not None and self.teclado_virtual.isVisible():
                 self.teclado_virtual.hide()
 
     def eventFilter(self, obj, event):
@@ -1391,7 +1582,7 @@ class Paso5Terminal(QWidget):
         """Refresca el label de la barra de estado con el cajero activo."""
         nombre_str = CajeroActivo.nombre.upper()
         if CajeroActivo.numero == 2:
-            self.lbl_version.setText(f"🟢 {nombre_str}  |  PUNPRO ELITE v2026.0")
+            self.lbl_version.setText(f"🟢 {nombre_str}  |  CAJAFACIL PRO v2026.0")
             self.lbl_version.setStyleSheet("color: #10b981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {
@@ -1401,7 +1592,7 @@ class Paso5Terminal(QWidget):
                 QPushButton:hover { background: #EF4444; border-color: #EF4444; }
             """)
         else:
-            self.lbl_version.setText(f"🔵 {nombre_str}  |  PUNPRO ELITE v2026.0")
+            self.lbl_version.setText(f"🔵 {nombre_str}  |  CAJAFACIL PRO v2026.0")
             self.lbl_version.setStyleSheet("color: #60a5fa; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {

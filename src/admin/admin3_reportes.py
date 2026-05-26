@@ -52,15 +52,15 @@ class ModernCard(QFrame):
         self.setStyleSheet("""
             #card {
                 background-color: #ffffff;
-                border: 1px solid #cbd5e1;
-                border-radius: 16px;
+                border: none;
+                border-radius: 20px;
             }
         """)
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(24)
         shadow.setXOffset(0)
-        shadow.setYOffset(8)
-        shadow.setColor(QColor(0, 0, 0, 30))
+        shadow.setYOffset(6)
+        shadow.setColor(QColor(0, 0, 0, 15))
         self.setGraphicsEffect(shadow)
 
 class BarChartWidget(QWidget):
@@ -68,12 +68,12 @@ class BarChartWidget(QWidget):
         super().__init__(parent)
         self.data = data or {}
         self.colors = {
-            "Efectivo": QColor("#0284c7"),
-            "Vales": QColor("#38bdf8"),
-            "Tarjeta": QColor("#ef4444"),
-            "Crédito": QColor("#d97706"),
-            "Transferencia": QColor("#059669"),
-            "Cheque": QColor("#6366f1")
+            "Efectivo": QColor("#3B82F6"),       # Elegant Blue
+            "Vales": QColor("#60A5FA"),          # Light Blue
+            "Tarjeta": QColor("#EF4444"),        # Red
+            "Crédito": QColor("#F59E0B"),        # Amber
+            "Transferencia": QColor("#10B981"),  # Emerald
+            "Cheque": QColor("#8B5CF6")          # Purple
         }
         self.setMinimumHeight(350)
 
@@ -93,21 +93,21 @@ class BarChartWidget(QWidget):
         magnitude = 10**(len(str(int(max_total))) - 1)
         max_total = ((int(max_total) // magnitude) + 1) * magnitude
         
-        # Grid lines
-        painter.setPen(QPen(QColor("#cbd5e1"), 1))
+        # Grid lines (very subtle)
+        painter.setPen(QPen(QColor("#EEF2F8"), 1))
         painter.setFont(QFont("Segoe UI", 9))
         for i in range(6):
             y = h - padding_b - (i * chart_h / 5)
             painter.drawLine(padding_l, int(y), w - padding_r, int(y))
             val = (max_total / 5) * i
-            painter.setPen(QColor("#475569"))
+            painter.setPen(QColor("#94A3B8"))
             painter.drawText(QRect(0, int(y - 10), padding_l - 10, 20), Qt.AlignRight | Qt.AlignVCenter, f"${val:,.0f}")
-            painter.setPen(QPen(QColor("#cbd5e1"), 1))
+            painter.setPen(QPen(QColor("#EEF2F8"), 1))
 
         # Bars
         days = list(self.data.keys())
         if not days: return
-        bar_w = min(50, (chart_w / len(days)) * 0.6)
+        bar_w = min(40, (chart_w / len(days)) * 0.6)
         spacing = chart_w / len(days)
         
         for i, day in enumerate(days):
@@ -118,17 +118,18 @@ class BarChartWidget(QWidget):
                 bar_h = (value / max_total) * chart_h
                 painter.setBrush(self.colors.get(method, QColor("#94a3b8")))
                 painter.setPen(Qt.NoPen)
-                painter.drawRect(int(x), int(current_y - bar_h), int(bar_w), int(bar_h))
+                painter.drawRoundedRect(int(x), int(current_y - bar_h), int(bar_w), int(bar_h), 3, 3)
                 current_y -= bar_h
             # X Label
-            painter.setPen(QColor("#475569"))
+            painter.setPen(QColor("#64748B"))
+            painter.setFont(QFont("Segoe UI", 9, QFont.Bold))
             painter.drawText(QRect(int(x - 20), int(h - padding_b + 10), int(bar_w + 40), 30), Qt.AlignCenter, day)
 
 class DonutChartWidget(QWidget):
     def __init__(self, data=None, parent=None):
         super().__init__(parent)
         self.data = data or {}
-        self.colors = ["#0284c7", "#6366f1", "#a855f7", "#db2777", "#059669", "#d97706", "#dc2626"]
+        self.colors = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#EF4444", "#06B6D4"]
         self.setMinimumHeight(350)
 
     def paintEvent(self, event):
@@ -138,7 +139,7 @@ class DonutChartWidget(QWidget):
         rect = QRect(int((self.width() - size) / 2), int((self.height() - size) / 2), size, size)
         total = sum(self.data.values())
         if total <= 0:
-            painter.setBrush(QColor("#e2e8f0"))
+            painter.setBrush(QColor("#EEF2F8"))
             painter.drawEllipse(rect); return
         start_angle = 90 * 16
         for i, (cat, val) in enumerate(self.data.items()):
@@ -149,7 +150,7 @@ class DonutChartWidget(QWidget):
             painter.drawPie(rect, start_angle, -span_angle)
             start_angle -= span_angle
         # Center hole
-        inner_size = int(size * 0.7)
+        inner_size = int(size * 0.72)
         inner_rect = QRect(int((self.width() - inner_size) / 2), int((self.height() - inner_size) / 2), inner_size, inner_size)
         painter.setBrush(QColor("#ffffff"))
         painter.drawEllipse(inner_rect)
@@ -168,94 +169,133 @@ class Admin3Reportes(QWidget):
         if db_path and db_path != "":
             self.sync_timer = QTimer(self)
             self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
-            self.sync_timer.start(10000) # Cada 10 segundos para reportes (pesados)
+            self.sync_timer.start(10000) # Cada 10 segundos
 
     def sincronizacion_silenciosa(self):
         if not self.isVisible(): return
         
-        # Si está en la pestaña de auditoría y tiene algo escrito en el buscador, no actualizar para no borrarlo
         if self.stack_views.currentIndex() == 1:
             if self.txt_audit_prod.hasFocus(): return
             self._buscar_auditoria()
         else:
-            # Si está en resumen de ventas, recargar la vista actual de forma segura
             periodo = getattr(self, "current_period", "Semana Actual")
             self.cargar_datos(periodo)
 
     def setup_ui(self):
+        self.setObjectName("Admin3Reportes")
         self.setStyleSheet("""
-            QWidget { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+            QWidget#Admin3Reportes {
+                background-color: #F4F6FB;
+                font-family: 'Segoe UI', sans-serif;
+            }
             QScrollArea { border: none; background: transparent; }
-            #header { background: white; border-bottom: 1px solid #cbd5e1; border-top: 4px solid #3b82f6; }
-            #tabBtn { 
-                background: white; border: 1px solid #cbd5e1; border-radius: 8px; 
-                padding: 10px 20px; font-weight: bold; color: #64748b; font-size: 13px;
+            QWidget#ScrollContainer { background: transparent; }
+            QScrollBar:vertical {
+                background: transparent; width: 5px;
             }
-            #tabBtnActive { 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1e3a8a, stop:1 #3b82f6);
-                border: none; border-radius: 8px; 
-                padding: 10px 20px; font-weight: 800; color: white; font-size: 13px;
+            QScrollBar::handle:vertical {
+                background: rgba(99,102,241,0.25); border-radius: 3px;
             }
-            #filterBtn { 
-                background: transparent; border: 1px solid #cbd5e1; color: #64748b; 
-                font-weight: 600; font-size: 12px; padding: 6px 12px; border-radius: 6px;
-            }
-            #filterBtn:hover { background: #eff6ff; color: #1e3a8a; border-color: #3b82f6; }
-            #sectionTitle { font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: 1px; }
-            #chartTitle { font-size: 20px; color: #3b82f6; font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
-            #rowLabel { font-size: 14px; color: #475569; font-weight: bold; }
-            #rowValue { font-size: 16px; font-weight: 800; color: #0f172a; }
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical { height: 0; }
         """)
         
-        main_layout = QVBoxLayout(self); main_layout.setContentsMargins(0, 0, 0, 0); main_layout.setSpacing(0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        header = QFrame(); header.setObjectName("header"); header.setFixedHeight(80)
-        h_layout = QHBoxLayout(header); h_layout.setContentsMargins(30, 0, 30, 0)
+        # ── NAVBAR ────────────────────────────────────────────────────────────
+        header = QFrame()
+        header.setObjectName("header")
+        header.setFixedHeight(64)
+        header.setStyleSheet("""
+            QFrame#header {
+                background: #FFFFFF;
+                border-bottom: 1px solid #EEF2F8;
+            }
+        """)
+        h_layout = QHBoxLayout(header)
+        h_layout.setContentsMargins(32, 0, 32, 0)
         
-        btn_back = QPushButton("🔙 VOLVER")
+        btn_back = QPushButton("← VOLVER")
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: white; color: #1e3a8a; font-weight: 800; border-radius: 10px; 
-                padding: 10px 25px; border: 1px solid #3b82f6; font-size: 11px; letter-spacing: 1px;
+                background: #F1F5F9;
+                color: #475569;
+                font-weight: 700;
+                border-radius: 12px;
+                padding: 8px 18px;
+                font-size: 11px;
+                border: none;
             }
-            QPushButton:hover { background: #eff6ff; color: #1d4ed8; }
+            QPushButton:hover {
+                background: #E2E8F0;
+                color: #0F172A;
+            }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         h_layout.addWidget(btn_back)
+        h_layout.addSpacing(25)
         
-        h_layout.addSpacing(20)
-        lbl_title = QLabel("📊 REPORTES E INTELIGENCIA <span style='color:#3b82f6;'>2026</span>")
-        lbl_title.setStyleSheet("font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: 2px;")
-        h_layout.addWidget(lbl_title); h_layout.addStretch()
-        main_layout.addWidget(header)
-
-        tabs_container = QFrame(); tabs_container.setStyleSheet("background: white; border-bottom: 1px solid #e2e8f0;")
-        tabs_layout = QHBoxLayout(tabs_container); tabs_layout.setContentsMargins(30, 15, 30, 15); tabs_layout.setSpacing(15)
-        self.btn_ventas = QPushButton("📈 REPORTE DE VENTAS"); self.btn_ventas.setObjectName("tabBtnActive")
-        self.btn_clientes = QPushButton("🔍 AUDITORÍA DE VENTAS"); self.btn_clientes.setObjectName("tabBtn")
+        self.btn_ventas = QPushButton("📈 REPORTE DE VENTAS")
+        self.btn_clientes = QPushButton("🔍 AUDITORÍA DE VENTAS")
         self.btn_ventas.setCursor(Qt.PointingHandCursor)
         self.btn_clientes.setCursor(Qt.PointingHandCursor)
         self.btn_ventas.clicked.connect(self._show_ventas_tab)
         self.btn_clientes.clicked.connect(self._show_auditoria_tab)
-        tabs_layout.addWidget(self.btn_ventas); tabs_layout.addWidget(self.btn_clientes); tabs_layout.addStretch()
-        main_layout.addWidget(tabs_container)
-
-        scroll = QScrollArea(); scroll.setWidgetResizable(True)
-        content_widget = QWidget(); self.content_layout = QVBoxLayout(content_widget)
-        self.content_layout.setContentsMargins(40, 40, 40, 40); self.content_layout.setSpacing(40)
+        
+        h_layout.addWidget(self.btn_ventas)
+        h_layout.addWidget(self.btn_clientes)
+        h_layout.addStretch()
+        main_layout.addWidget(header)
+  
+        # ── CONTENIDO: VENTAS (SCROLL) ────────────────────────────────────────
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        content_widget = QWidget()
+        content_widget.setObjectName("ScrollContainer")
+        self.content_layout = QVBoxLayout(content_widget)
+        self.content_layout.setContentsMargins(32, 24, 32, 32)
+        self.content_layout.setSpacing(24)
 
         top_section = QVBoxLayout()
-        self.lbl_main_title = QLabel("Resumen de Ventas"); self.lbl_main_title.setObjectName("sectionTitle")
-        top_section.addWidget(self.lbl_main_title)
-        filters_layout = QHBoxLayout(); filters_layout.setSpacing(10)
+        top_section.setSpacing(10)
+        
+        title_section = QVBoxLayout()
+        title_section.setSpacing(4)
+        lbl_main = QLabel("Reportes & Analíticas")
+        lbl_main.setStyleSheet("""
+            font-size: 22px; font-weight: 900; color: #0F172A;
+            background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
+        """)
+        title_section.addWidget(lbl_main)
+        
+        self.lbl_main_title = QLabel("SEMANA ACTUAL")
+        self.lbl_main_title.setStyleSheet("""
+            font-size: 11px; font-weight: 700; color: #6366F1;
+            letter-spacing: 0.5px; background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
+        """)
+        title_section.addWidget(self.lbl_main_title)
+        top_section.addLayout(title_section)
+        
+        filters_layout = QHBoxLayout()
+        filters_layout.setSpacing(8)
+        filters_layout.setContentsMargins(0, 8, 0, 8)
+        
+        self.period_buttons = {}
         for f_text in ["Semana Actual", "Mes Actual", "Mes Anterior", "Año actual", "Periodo..."]:
-            f_btn = QPushButton(f_text); f_btn.setObjectName("filterBtn"); f_btn.setCursor(Qt.PointingHandCursor)
+            f_btn = QPushButton(f_text)
+            f_btn.setCursor(Qt.PointingHandCursor)
             f_btn.clicked.connect(lambda checked, t=f_text: self.cargar_datos(t))
             filters_layout.addWidget(f_btn)
-        filters_layout.addStretch(); top_section.addLayout(filters_layout)
+            self.period_buttons[f_text] = f_btn
+            
+        filters_layout.addStretch()
+        top_section.addLayout(filters_layout)
         
-        # --- NUEVO: RESUMEN GENERAL KPI (BIG PICTURE) ---
         self.kpi_layout = QHBoxLayout()
         self.kpi_layout.setSpacing(15)
         top_section.addSpacing(15)
@@ -263,71 +303,228 @@ class Admin3Reportes(QWidget):
         
         self.content_layout.addLayout(top_section)
 
-        charts_grid = QGridLayout(); charts_grid.setSpacing(40)
-        self.card_payments = ModernCard(); pay_layout = QVBoxLayout(self.card_payments)
-        pay_layout.setContentsMargins(30, 30, 30, 30)
-        pay_title = QLabel("VENTAS POR PAGO"); pay_title.setObjectName("chartTitle"); pay_title.setAlignment(Qt.AlignCenter)
-        pay_layout.addWidget(pay_title); self.bar_chart = BarChartWidget(); pay_layout.addWidget(self.bar_chart)
-        self.pay_table_layout = QVBoxLayout(); self.pay_table_layout.setSpacing(10); pay_layout.addLayout(self.pay_table_layout)
+        # Gráficos e Información Detallada
+        charts_grid = QGridLayout()
+        charts_grid.setSpacing(30)
+        charts_grid.setContentsMargins(0, 10, 0, 0)
+        
+        self.card_payments = ModernCard()
+        pay_layout = QVBoxLayout(self.card_payments)
+        pay_layout.setContentsMargins(25, 25, 25, 25)
+        pay_layout.setSpacing(15)
+        
+        pay_title = QLabel("VENTAS POR PAGO")
+        pay_title.setAlignment(Qt.AlignCenter)
+        pay_title.setStyleSheet("""
+            font-size: 13px; 
+            color: #0F172A; 
+            font-weight: 800; 
+            letter-spacing: 0.5px;
+            background: transparent;
+            border: none;
+            font-family: 'Segoe UI', sans-serif;
+        """)
+        pay_layout.addWidget(pay_title)
+        
+        self.bar_chart = BarChartWidget()
+        pay_layout.addWidget(self.bar_chart)
+        
+        self.pay_table_layout = QVBoxLayout()
+        self.pay_table_layout.setSpacing(10)
+        pay_layout.addLayout(self.pay_table_layout)
+        
         charts_grid.addWidget(self.card_payments, 0, 0)
         
-        self.card_depts = ModernCard(); dept_layout = QVBoxLayout(self.card_depts)
-        dept_layout.setContentsMargins(30, 30, 30, 30)
-        dept_title = QLabel("GANANCIA POR DEPTO"); dept_title.setObjectName("chartTitle"); dept_title.setAlignment(Qt.AlignCenter)
-        dept_layout.addWidget(dept_title); donut_h_layout = QHBoxLayout()
-        self.donut_chart = DonutChartWidget(); donut_h_layout.addWidget(self.donut_chart, 3)
-        self.dept_legend_layout = QVBoxLayout(); self.dept_legend_layout.setSpacing(8); self.dept_legend_layout.setAlignment(Qt.AlignTop)
-        donut_h_layout.addLayout(self.dept_legend_layout, 2); dept_layout.addLayout(donut_h_layout)
-        self.dept_table_layout = QVBoxLayout(); self.dept_table_layout.setSpacing(10); dept_layout.addLayout(self.dept_table_layout)
+        self.card_depts = ModernCard()
+        dept_layout = QVBoxLayout(self.card_depts)
+        dept_layout.setContentsMargins(25, 25, 25, 25)
+        dept_layout.setSpacing(15)
+        
+        dept_title = QLabel("GANANCIA POR DEPTO")
+        dept_title.setAlignment(Qt.AlignCenter)
+        dept_title.setStyleSheet("""
+            font-size: 13px; 
+            color: #0F172A; 
+            font-weight: 800; 
+            letter-spacing: 0.5px;
+            background: transparent;
+            border: none;
+            font-family: 'Segoe UI', sans-serif;
+        """)
+        dept_layout.addWidget(dept_title)
+        
+        donut_h_layout = QHBoxLayout()
+        donut_h_layout.setSpacing(20)
+        self.donut_chart = DonutChartWidget()
+        donut_h_layout.addWidget(self.donut_chart, 3)
+        
+        self.dept_legend_layout = QVBoxLayout()
+        self.dept_legend_layout.setSpacing(8)
+        self.dept_legend_layout.setAlignment(Qt.AlignTop)
+        donut_h_layout.addLayout(self.dept_legend_layout, 2)
+        dept_layout.addLayout(donut_h_layout)
+        
+        self.dept_table_layout = QVBoxLayout()
+        self.dept_table_layout.setSpacing(10)
+        dept_layout.addLayout(self.dept_table_layout)
+        
         charts_grid.addWidget(self.card_depts, 0, 1)
         self.content_layout.addLayout(charts_grid)
         
         scroll.setWidget(content_widget)
         
+        # ── SWITCH VIEWS ──────────────────────────────────────────────────────
         self.stack_views = QStackedWidget()
         self.stack_views.addWidget(scroll)
         
         self.audit_view = QWidget()
+        self.audit_view.setStyleSheet("background-color: #F4F6FB;")
         self.setup_audit_ui()
         self.stack_views.addWidget(self.audit_view)
         
         main_layout.addWidget(self.stack_views)
+        self._update_tab_buttons()
+
+    def _update_tab_buttons(self):
+        active_style = """
+            QPushButton {
+                background: #EEF2FF;
+                color: #6366F1;
+                font-weight: 800;
+                border-radius: 12px;
+                padding: 8px 18px;
+                font-size: 12px;
+                border: none;
+            }
+        """
+        inactive_style = """
+            QPushButton {
+                background: transparent;
+                color: #64748B;
+                font-weight: 700;
+                border-radius: 12px;
+                padding: 8px 18px;
+                font-size: 12px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #F8FAFC;
+                color: #334155;
+            }
+        """
+        if self.stack_views.currentIndex() == 0:
+            self.btn_ventas.setStyleSheet(active_style)
+            self.btn_clientes.setStyleSheet(inactive_style)
+        else:
+            self.btn_ventas.setStyleSheet(inactive_style)
+            self.btn_clientes.setStyleSheet(active_style)
 
     def cargar_datos(self, periodo="Semana Actual"):
-        self.current_period = periodo # Guardar estado para auto-sync
+        self.current_period = periodo
         self.lbl_main_title.setText(f"{periodo.upper()}")
+        
+        # Highlight active period button
+        for name, btn in self.period_buttons.items():
+            if name == periodo:
+                btn.setStyleSheet("""
+                    QPushButton {
+                        background: #6366F1;
+                        color: white;
+                        font-weight: 700;
+                        font-size: 11px;
+                        padding: 6px 14px;
+                        border-radius: 12px;
+                        border: none;
+                    }
+                """)
+            else:
+                btn.setStyleSheet("""
+                    QPushButton {
+                        background: white;
+                        color: #64748B;
+                        font-weight: 600;
+                        font-size: 11px;
+                        padding: 6px 14px;
+                        border-radius: 12px;
+                        border: none;
+                    }
+                    QPushButton:hover {
+                        background: #E2E8F0;
+                        color: #0F172A;
+                    }
+                """)
+                
         today = datetime.date.today()
         if periodo == "Semana Actual":
-            start_date = today - datetime.timedelta(days=today.weekday()); end_date = start_date + datetime.timedelta(days=6)
+            start_date = today - datetime.timedelta(days=today.weekday())
+            end_date = start_date + datetime.timedelta(days=6)
         elif periodo == "Mes Actual":
-            start_date = today.replace(day=1); next_month = today.replace(day=28) + datetime.timedelta(days=4); end_date = next_month - datetime.timedelta(days=next_month.day)
+            start_date = today.replace(day=1)
+            next_month = today.replace(day=28) + datetime.timedelta(days=4)
+            end_date = next_month - datetime.timedelta(days=next_month.day)
         elif periodo == "Mes Anterior":
-            last_month = today.replace(day=1) - datetime.timedelta(days=1); start_date = last_month.replace(day=1); end_date = last_month
+            last_month = today.replace(day=1) - datetime.timedelta(days=1)
+            start_date = last_month.replace(day=1)
+            end_date = last_month
         elif periodo == "Año actual":
-            start_date = today.replace(month=1, day=1); end_date = today.replace(month=12, day=31)
-        else: start_date = today - datetime.timedelta(days=30); end_date = today
+            start_date = today.replace(month=1, day=1)
+            end_date = today.replace(month=12, day=31)
+        else:
+            start_date = today - datetime.timedelta(days=30)
+            end_date = today
+            
         start_str, end_str = start_date.strftime("%Y-%m-%d 00:00:00"), end_date.strftime("%Y-%m-%d 23:59:59")
         dias_nombres = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"]
         metodos = ["Efectivo", "Vales", "Tarjeta", "Crédito", "Transferencia", "Cheque"]
         data_bar = {}
-        # TODO: Adaptar el rango del gráfico según el período seleccionado (actualmente hardcodeado a 7 días)
+        
         for i in range(7):
             current_day_date = start_date + datetime.timedelta(days=i)
             day_name = dias_nombres[current_day_date.weekday()]
-            day_str = current_day_date.strftime("%Y-%m-%d"); day_data = {}
+            day_str = current_day_date.strftime("%Y-%m-%d")
+            day_data = {}
             for m in metodos:
                 val = db_manager.execute_scalar("SELECT SUM(total) FROM ventas WHERE metodo_pago = ? AND (fecha LIKE ?) AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')", (m, f"{day_str}%")) or 0
                 day_data[m] = val
             data_bar[day_name] = day_data
-        self.bar_chart.data = data_bar; self.bar_chart.update()
+            
+        self.bar_chart.data = data_bar
+        self.bar_chart.update()
+        
         while self.pay_table_layout.count():
-            item = self.pay_table_layout.takeAt(0); 
+            item = self.pay_table_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
+            
         for m in ["Efectivo", "Tarjeta", "Transferencia"]:
             total_m = db_manager.execute_scalar("SELECT SUM(total) FROM ventas WHERE metodo_pago = ? AND (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')", (m, start_str, end_str)) or 0
-            row = QFrame(); row.setStyleSheet("background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"); rl = QHBoxLayout(row)
-            rl.setContentsMargins(20, 10, 20, 10); lbl_m = QLabel(m.upper()); lbl_m.setObjectName("rowLabel"); rl.addWidget(lbl_m); rl.addStretch()
-            lbl_v = QLabel(f"${total_m:,.2f}"); lbl_v.setObjectName("rowValue"); rl.addWidget(lbl_v); self.pay_table_layout.addWidget(row)
+            row = QFrame()
+            row.setStyleSheet("""
+                background: #F8FAFC; 
+                border-radius: 12px; 
+                border: none;
+            """)
+            rl = QHBoxLayout(row)
+            rl.setContentsMargins(16, 12, 16, 12)
+            
+            dot_color = "#3B82F6"
+            if m.lower() == "tarjeta": dot_color = "#EF4444"
+            elif m.lower() == "transferencia": dot_color = "#10B981"
+            
+            dot = QFrame()
+            dot.setFixedSize(8, 8)
+            dot.setStyleSheet(f"background: {dot_color}; border-radius: 4px; border: none;")
+            rl.addWidget(dot)
+            
+            lbl_m = QLabel(m.upper())
+            lbl_m.setStyleSheet("font-size: 11px; color: #475569; font-weight: 700; background: none; border: none;")
+            rl.addWidget(lbl_m)
+            
+            rl.addStretch()
+            lbl_v = QLabel(f"${total_m:,.2f}")
+            lbl_v.setStyleSheet("font-size: 13px; font-weight: 800; color: #0F172A; background: none; border: none;")
+            rl.addWidget(lbl_v)
+            self.pay_table_layout.addWidget(row)
+            
         res_dept = db_manager.execute_query(
             "SELECT COALESCE(p.departamento, 'ALMACEN') as depto, SUM(dv.subtotal) as total "
             "FROM detalles_ventas dv "
@@ -336,6 +533,7 @@ class Admin3Reportes(QWidget):
             "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO') "
             "GROUP BY depto ORDER BY total DESC", (start_str, end_str)
         )
+        
         data_donut = {}
         if res_dept:
             for r in res_dept[:6]:
@@ -343,7 +541,10 @@ class Admin3Reportes(QWidget):
                 data_donut[name_with_icon] = r['total']
         else:
             data_donut = {"🥫 ALMACEN": 1}
-        self.donut_chart.data = data_donut; self.donut_chart.update()
+            
+        self.donut_chart.data = data_donut
+        self.donut_chart.update()
+        
         while self.dept_legend_layout.count():
             item = self.dept_legend_layout.takeAt(0)
             if item.widget():
@@ -352,121 +553,190 @@ class Admin3Reportes(QWidget):
                 while item.layout().count():
                     subitem = item.layout().takeAt(0)
                     if subitem.widget(): subitem.widget().deleteLater()
+                    
         while self.dept_table_layout.count():
             item = self.dept_table_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
+            
         if res_dept:
             for i, r in enumerate(res_dept[:6]):
-                row = QFrame(); row.setStyleSheet("background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"); rl = QHBoxLayout(row)
-                rl.setContentsMargins(15, 8, 15, 8)
+                row = QFrame()
+                row.setStyleSheet("""
+                    background: #F8FAFC; 
+                    border-radius: 12px; 
+                    border: none;
+                """)
+                rl = QHBoxLayout(row)
+                rl.setContentsMargins(16, 10, 16, 10)
                 depto_name = r['depto'].upper()
                 icon = get_depto_icon(depto_name)
-                lbl_c = QLabel(f"{icon} {depto_name}"); lbl_c.setObjectName("rowLabel"); rl.addWidget(lbl_c); rl.addStretch()
-                lbl_v = QLabel(f"${r['total']:,.2f}"); lbl_v.setObjectName("rowValue"); rl.addWidget(lbl_v); self.dept_table_layout.addWidget(row)
+                
+                color = self.donut_chart.colors[i % len(self.donut_chart.colors)]
+                dot = QFrame()
+                dot.setFixedSize(8, 8)
+                dot.setStyleSheet(f"background: {color}; border-radius: 4px; border: none;")
+                rl.addWidget(dot)
+                
+                lbl_c = QLabel(f"{icon} {depto_name}")
+                lbl_c.setStyleSheet("font-size: 11px; color: #475569; font-weight: 700; background: none; border: none;")
+                rl.addWidget(lbl_c)
+                
+                rl.addStretch()
+                lbl_v = QLabel(f"${r['total']:,.2f}")
+                lbl_v.setStyleSheet("font-size: 13px; font-weight: 800; color: #0F172A; background: none; border: none;")
+                rl.addWidget(lbl_v)
+                self.dept_table_layout.addWidget(row)
+                
             for i, r in enumerate(res_dept[:6]):
-                row = QHBoxLayout(); dot = QFrame(); dot.setFixedSize(10, 10)
-                color = self.donut_chart.colors[i % len(self.donut_chart.colors)]; dot.setStyleSheet(f"background: {color}; border-radius: 5px;")
+                row = QHBoxLayout()
+                row.setSpacing(6)
+                dot = QFrame()
+                dot.setFixedSize(8, 8)
+                color = self.donut_chart.colors[i % len(self.donut_chart.colors)]
+                dot.setStyleSheet(f"background: {color}; border-radius: 4px; border: none;")
                 row.addWidget(dot)
                 depto_name = r['depto'].upper()
                 icon = get_depto_icon(depto_name)
-                lbl_text = QLabel(f"{icon} {depto_name} (${r['total']:,.2f})"); lbl_text.setStyleSheet("font-size: 11px; color: #475569; font-weight: bold;")
-                row.addWidget(lbl_text); self.dept_legend_layout.addLayout(row)
+                lbl_text = QLabel(f"{icon} {depto_name} (${r['total']:,.2f})")
+                lbl_text.setStyleSheet("font-size: 11px; color: #475569; font-weight: 700; background: none; border: none;")
+                row.addWidget(lbl_text)
+                self.dept_legend_layout.addLayout(row)
 
-        # --- ACTUALIZAR TARJETAS KPI GENERALES (BIG PICTURE) ---
+        # ── KPI GENERALES (LIGHT PASTEL) ──────────────────────────────────────
         while self.kpi_layout.count():
             item = self.kpi_layout.takeAt(0)
             if item.widget(): item.widget().deleteLater()
             
-        # 1. Consultar Totales Globales
         res_tot = db_manager.execute_query("SELECT SUM(total) as neto, SUM(total + descuento - recargo) as bruto, COUNT(id) as cant FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')", (start_str, end_str))
         v_neta = float((res_tot[0]['neto'] if res_tot else 0) or 0)
         v_bruta = float((res_tot[0]['bruto'] if res_tot else 0) or 0)
-        # Quitada la línea: v_bruta = max(v_bruta, v_neta)
         t_cant = int((res_tot[0]['cant'] if res_tot else 0) or 0)
         t_promedio = (v_neta / t_cant) if t_cant > 0 else 0.0
         
-        # 2. Consultar Producto Estrella (Más vendido en monto/unidades del periodo)
         res_estrella = db_manager.execute_query("SELECT nombre_producto, SUM(subtotal) as tot FROM detalles_ventas dv JOIN ventas v ON dv.id_venta=v.id WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO') GROUP BY id_producto ORDER BY tot DESC LIMIT 1", (start_str, end_str))
         p_estrella = res_estrella[0]['nombre_producto'] if res_estrella else "Ninguno"
         
-        def build_kpi_card(titulo, valor, color_borde):
+        _PALETTE = {
+            "blue":    ("#EFF6FF", "#3B82F6"),
+            "green":   ("#ECFDF5", "#10B981"),
+            "amber":   ("#FFFBEB", "#F59E0B"),
+            "violet":  ("#F5F3FF", "#8B5CF6"),
+            "pink":    ("#FDF2F8", "#EC4899"),
+        }
+        
+        def build_kpi_card(titulo, valor, palette_key):
+            bg1, accent = _PALETTE.get(palette_key, _PALETTE["blue"])
             f = QFrame()
-            f.setStyleSheet(f"background: white; border: 1px solid #E2E8F0; border-top: 4px solid {color_borde}; border-radius: 10px;")
+            f.setObjectName("kpi_card")
+            f.setStyleSheet(f"""
+                #kpi_card {{
+                    background: {bg1};
+                    border-radius: 20px;
+                    border: none;
+                }}
+            """)
+            
+            h_color = accent.lstrip('#')
+            r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
+            
+            sh = QGraphicsDropShadowEffect(f)
+            sh.setBlurRadius(16)
+            sh.setColor(QColor(r, g, b, 25))
+            sh.setOffset(0, 4)
+            f.setGraphicsEffect(sh)
+            
             l = QVBoxLayout(f)
-            l.setContentsMargins(15, 12, 15, 12)
-            l.setSpacing(4)
+            l.setContentsMargins(18, 14, 18, 14)
+            l.setSpacing(6)
+            
+            h_title = QHBoxLayout()
+            h_title.setSpacing(8)
+            dot = QFrame()
+            dot.setFixedSize(8, 8)
+            dot.setStyleSheet(f"background: {accent}; border-radius: 4px; border: none;")
+            h_title.addWidget(dot)
+            
             lbl_t = QLabel(titulo.upper())
-            lbl_t.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none;")
+            lbl_t.setStyleSheet("font-size: 11px; font-weight: 800; color: #475569; border: none; font-family: 'Segoe UI'; letter-spacing: 0.5px; background: none;")
+            h_title.addWidget(lbl_t)
+            h_title.addStretch()
+            l.addLayout(h_title)
+            
             lbl_v = QLabel(str(valor))
-            lbl_v.setStyleSheet("font-size: 18px; font-weight: 900; color: #0F172A; border: none;")
-            l.addWidget(lbl_t); l.addWidget(lbl_v)
+            lbl_v.setStyleSheet("font-size: 20px; font-weight: 900; color: #0F172A; border: none; font-family: 'Segoe UI'; background: none;")
+            l.addWidget(lbl_v)
             return f
             
-        self.kpi_layout.addWidget(build_kpi_card("Venta Bruta", f"${v_bruta:,.2f}", "#3B82F6"))
-        self.kpi_layout.addWidget(build_kpi_card("Venta Neta", f"${v_neta:,.2f}", "#10B981"))
-        self.kpi_layout.addWidget(build_kpi_card("Transacciones", f"{t_cant}", "#F59E0B"))
-        self.kpi_layout.addWidget(build_kpi_card("Ticket Promedio", f"${t_promedio:,.2f}", "#8B5CF6"))
-        self.kpi_layout.addWidget(build_kpi_card("Producto Estrella", p_estrella.upper(), "#EC4899"))
+        self.kpi_layout.addWidget(build_kpi_card("Venta Bruta", f"${v_bruta:,.2f}", "blue"))
+        self.kpi_layout.addWidget(build_kpi_card("Venta Neta", f"${v_neta:,.2f}", "green"))
+        self.kpi_layout.addWidget(build_kpi_card("Transacciones", f"{t_cant}", "amber"))
+        self.kpi_layout.addWidget(build_kpi_card("Ticket Promedio", f"${t_promedio:,.2f}", "violet"))
+        self.kpi_layout.addWidget(build_kpi_card("Producto Estrella", p_estrella.upper(), "pink"))
 
     def _show_ventas_tab(self):
-        self.btn_ventas.setObjectName("tabBtnActive")
-        self.btn_clientes.setObjectName("tabBtn")
-        self.btn_ventas.setStyle(self.btn_ventas.style())
-        self.btn_clientes.setStyle(self.btn_clientes.style())
         self.stack_views.setCurrentIndex(0)
+        self._update_tab_buttons()
 
     def _show_auditoria_tab(self):
-        self.btn_ventas.setObjectName("tabBtn")
-        self.btn_clientes.setObjectName("tabBtnActive")
-        self.btn_ventas.setStyle(self.btn_ventas.style())
-        self.btn_clientes.setStyle(self.btn_clientes.style())
         self.stack_views.setCurrentIndex(1)
+        self._update_tab_buttons()
         self._buscar_auditoria()
 
     def setup_audit_ui(self):
         lay = QVBoxLayout(self.audit_view)
-        lay.setContentsMargins(40, 40, 40, 40)
-        lay.setSpacing(25)
-        
-        header_box = QFrame()
-        hl = QVBoxLayout(header_box)
-        hl.setContentsMargins(0, 0, 0, 0)
-        lbl_t = QLabel("🔍 AUDITORÍA & HISTORIAL DETALLADO DE VENTAS")
-        lbl_t.setStyleSheet("font-size: 22px; font-weight: 900; color: #0F172A; letter-spacing: 1px;")
-        lbl_sub = QLabel("Análisis exhaustivo de transacciones, categorías y comportamiento comercial.")
-        lbl_sub.setStyleSheet("font-size: 13px; color: #64748B; font-weight: 500;")
-        hl.addWidget(lbl_t)
-        hl.addWidget(lbl_sub)
-        lay.addWidget(header_box)
+        lay.setContentsMargins(24, 24, 24, 24)
+        lay.setSpacing(20)
         
         filter_card = ModernCard()
         fl = QHBoxLayout(filter_card)
-        fl.setContentsMargins(25, 20, 25, 20)
+        fl.setContentsMargins(25, 18, 25, 18)
         fl.setSpacing(15)
         
         self.txt_audit_prod = QLineEdit()
         self.txt_audit_prod.setPlaceholderText("🔎 Buscar producto o código...")
-        self.txt_audit_prod.setStyleSheet("background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px; font-size: 13px; color: #1E293B;")
         
         self.cmb_audit_mes = QComboBox()
         self.cmb_audit_mes.addItems(["Todos los Meses", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"])
-        self.cmb_audit_mes.setStyleSheet("background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px; font-size: 13px; color: #1E293B;")
         
         self.cmb_audit_anio = QComboBox()
         self.cmb_audit_anio.addItem("Todos los Años")
         for y in range(2025, 2031):
             self.cmb_audit_anio.addItem(str(y))
-        self.cmb_audit_anio.setStyleSheet("background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px; font-size: 13px; color: #1E293B;")
+            
+        input_style = """
+            QLineEdit, QComboBox {
+                background: #F8FAFC;
+                border: 1px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #1E293B;
+                font-family: 'Segoe UI';
+            }
+            QLineEdit:focus, QComboBox:focus {
+                border-color: #6366F1;
+                background: #FFFFFF;
+            }
+        """
+        self.txt_audit_prod.setStyleSheet(input_style)
+        self.cmb_audit_mes.setStyleSheet(input_style)
+        self.cmb_audit_anio.setStyleSheet(input_style)
         
         self.btn_audit_buscar = QPushButton("🔎 FILTRAR")
         self.btn_audit_buscar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_buscar.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1e3a8a, stop:1 #3b82f6); 
-                color: white; font-weight: bold; border-radius: 8px; 
-                padding: 10px 20px; font-size: 13px; border: none;
+                background: #6366F1;
+                color: white;
+                font-weight: 700;
+                border-radius: 10px;
+                padding: 10px 20px;
+                font-size: 13px;
+                border: none;
             }
-            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1e3a8a, stop:1 #2563eb); }
+            QPushButton:hover {
+                background: #4F46E5;
+            }
         """)
         self.btn_audit_buscar.clicked.connect(self._buscar_auditoria)
         
@@ -474,10 +744,18 @@ class Admin3Reportes(QWidget):
         self.btn_audit_limpiar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_limpiar.setStyleSheet("""
             QPushButton {
-                background: white; color: #64748B; font-weight: bold; border-radius: 8px; 
-                border: 1px solid #CBD5E1; padding: 10px 15px; font-size: 13px;
+                background: #F1F5F9;
+                color: #64748B;
+                font-weight: 700;
+                border-radius: 10px;
+                padding: 10px 16px;
+                font-size: 13px;
+                border: none;
             }
-            QPushButton:hover { background: #F1F5F9; color: #0F172A; }
+            QPushButton:hover {
+                background: #E2E8F0;
+                color: #0F172A;
+            }
         """)
         self.btn_audit_limpiar.clicked.connect(self._limpiar_filtros_audit)
         
@@ -485,18 +763,32 @@ class Admin3Reportes(QWidget):
         self.btn_audit_exportar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_exportar.setStyleSheet("""
             QPushButton {
-                background: #0284C7; color: white; font-weight: bold; border-radius: 8px; 
-                padding: 10px 20px; font-size: 13px;
+                background: #10B981;
+                color: white;
+                font-weight: 700;
+                border-radius: 10px;
+                padding: 10px 20px;
+                font-size: 13px;
+                border: none;
             }
-            QPushButton:hover { background: #0369A1; }
+            QPushButton:hover {
+                background: #059669;
+            }
         """)
         self.btn_audit_exportar.clicked.connect(self._exportar_auditoria)
         
-        fl.addWidget(QLabel("Producto:"), 0)
+        lbl_prod = QLabel("Producto:")
+        lbl_prod.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        lbl_mes = QLabel("Mes:")
+        lbl_mes.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        lbl_anio = QLabel("Año:")
+        lbl_anio.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        
+        fl.addWidget(lbl_prod, 0)
         fl.addWidget(self.txt_audit_prod, 3)
-        fl.addWidget(QLabel("Mes:"), 0)
+        fl.addWidget(lbl_mes, 0)
         fl.addWidget(self.cmb_audit_mes, 2)
-        fl.addWidget(QLabel("Año:"), 0)
+        fl.addWidget(lbl_anio, 0)
         fl.addWidget(self.cmb_audit_anio, 2)
         fl.addWidget(self.btn_audit_buscar, 0)
         fl.addWidget(self.btn_audit_limpiar, 0)
@@ -515,15 +807,27 @@ class Admin3Reportes(QWidget):
         ])
         self.table_audit.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table_audit.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table_audit.verticalHeader().setVisible(False)
         self.table_audit.setStyleSheet("""
             QTableWidget {
-                background-color: white; border: 1px solid #CBD5E1; border-radius: 12px;
-                gridline-color: #E2E8F0; font-size: 13px;
+                background-color: white;
+                border: none;
+                gridline-color: #F1F5F9;
+                font-size: 12px;
+                border-radius: 16px;
             }
-            QTableWidget::item { padding: 12px; }
+            QTableWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #F1F5F9;
+            }
             QHeaderView::section {
-                background-color: #0F172A; color: white; font-weight: bold;
-                border: none; padding: 12px; font-size: 13px;
+                background-color: #F8FAFC;
+                color: #475569;
+                font-weight: 800;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                padding: 10px;
+                font-size: 12px;
             }
         """)
         self.table_audit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -536,17 +840,30 @@ class Admin3Reportes(QWidget):
         lay.addWidget(self.table_audit)
         
         self.audit_footer = QFrame()
-        self.audit_footer.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 15px;")
+        self.audit_footer.setStyleSheet("""
+            QFrame {
+                background: white;
+                border-radius: 16px;
+                border: none;
+            }
+        """)
+        sh = QGraphicsDropShadowEffect(self.audit_footer)
+        sh.setBlurRadius(20)
+        sh.setColor(QColor(0, 0, 0, 12))
+        sh.setOffset(0, 4)
+        self.audit_footer.setGraphicsEffect(sh)
+        
         foot_main_lay = QVBoxLayout(self.audit_footer)
+        foot_main_lay.setContentsMargins(20, 15, 20, 15)
         foot_main_lay.setSpacing(10)
         
         row1 = QHBoxLayout()
         self.lbl_foot_regs = QLabel("Total Transacciones: 0")
-        self.lbl_foot_regs.setStyleSheet("font-weight: bold; color: #1E293B; font-size: 13px;")
+        self.lbl_foot_regs.setStyleSheet("font-weight: 700; color: #1E293B; font-size: 12px; background: none; border: none;")
         self.lbl_foot_unidades = QLabel("Unidades Vendidas: 0.00 ud")
-        self.lbl_foot_unidades.setStyleSheet("font-weight: bold; color: #475569; font-size: 13px;")
+        self.lbl_foot_unidades.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; background: none; border: none;")
         self.lbl_foot_kilos = QLabel("Peso Carne/Aves (Kilos): 0.000 kg")
-        self.lbl_foot_kilos.setStyleSheet("font-weight: bold; color: #D97706; font-size: 13px;")
+        self.lbl_foot_kilos.setStyleSheet("font-weight: 700; color: #D97706; font-size: 12px; background: none; border: none;")
         
         row1.addWidget(self.lbl_foot_regs)
         row1.addStretch()
@@ -555,21 +872,15 @@ class Admin3Reportes(QWidget):
         row1.addWidget(self.lbl_foot_kilos)
         foot_main_lay.addLayout(row1)
         
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
-        line.setStyleSheet("background-color: #E2E8F0; max-height: 1px;")
-        foot_main_lay.addWidget(line)
-        
         row2 = QHBoxLayout()
         self.lbl_foot_carnes = QLabel("🥩 Carnes: $0.00")
-        self.lbl_foot_carnes.setStyleSheet("font-weight: bold; color: #DC2626; font-size: 13px;")
+        self.lbl_foot_carnes.setStyleSheet("font-weight: 700; color: #EF4444; font-size: 12px; background: none; border: none;")
         self.lbl_foot_aves = QLabel("🍗 Aves: $0.00")
-        self.lbl_foot_aves.setStyleSheet("font-weight: bold; color: #EA580C; font-size: 13px;")
+        self.lbl_foot_aves.setStyleSheet("font-weight: 700; color: #F97316; font-size: 12px; background: none; border: none;")
         self.lbl_foot_almacen = QLabel("🥫 Almacén: $0.00")
-        self.lbl_foot_almacen.setStyleSheet("font-weight: bold; color: #2563EB; font-size: 13px;")
+        self.lbl_foot_almacen.setStyleSheet("font-weight: 700; color: #3B82F6; font-size: 12px; background: none; border: none;")
         self.lbl_foot_monto = QLabel("Facturado Total: $0.00")
-        self.lbl_foot_monto.setStyleSheet("font-weight: 900; color: #10B981; font-size: 16px;")
+        self.lbl_foot_monto.setStyleSheet("font-weight: 900; color: #10B981; font-size: 15px; background: none; border: none;")
         
         row2.addWidget(self.lbl_foot_carnes)
         row2.addStretch()
@@ -646,7 +957,6 @@ class Admin3Reportes(QWidget):
             cajero = r['usuario'] or ''
             prod_name = r['nombre_producto'] or ''
             depto = (r['depto'] or 'ALMACEN').strip().upper()
-            cat = r['categoria'] or 'GENERAL'
             cant = r['cantidad'] if r['cantidad'] is not None else 0.0
             precio = r['precio_unitario'] if r['precio_unitario'] is not None else 0.0
             subt = r['subtotal'] if r['subtotal'] is not None else 0.0
@@ -667,8 +977,6 @@ class Admin3Reportes(QWidget):
                 monto_carnes += subt
             elif "AVE" in depto or "POLLO" in depto or "GRANJA" in depto:
                 monto_aves += subt
-            elif "ALMACEN" in depto or "ALMACÉN" in depto or "GROCERY" in depto or "GENERAL" in depto:
-                monto_almacen += subt
             else:
                 monto_almacen += subt
             
@@ -694,6 +1002,7 @@ class Admin3Reportes(QWidget):
             for col, item in enumerate([item_id, item_fec, item_caj, item_dep, item_prod, item_cant, item_uni, item_prec, item_subt, item_pago, item_est]):
                 item.setBackground(bg)
                 item.setForeground(QColor("#1E293B"))
+                item.setFont(QFont("Segoe UI", 9))
                 self.table_audit.setItem(i, col, item)
                 
         self.lbl_foot_regs.setText(f"Total Transacciones: {len(rows)}")
@@ -710,7 +1019,6 @@ class Admin3Reportes(QWidget):
         idx_mes = self.cmb_audit_mes.currentIndex()
         anio_sel = self.cmb_audit_anio.currentText()
         
-        import datetime
         now = datetime.datetime.now()
         
         if idx_mes > 0:
@@ -768,51 +1076,84 @@ class Admin3Reportes(QWidget):
         
         if diff > 0:
             comp_text = f"▲ +{diff:,.1f}%"
-            comp_color = "#10B981"
+            palette_key = "green"
         elif diff < 0:
             comp_text = f"▼ {diff:,.1f}%"
-            comp_color = "#EF4444"
+            palette_key = "red"
         else:
             comp_text = "● 0.0%"
-            comp_color = "#64748B"
+            palette_key = "slate"
             
-        def build_kpi_card(titulo, valor, color_borde, extra_text=None, extra_color=None):
+        _PALETTE = {
+            "blue":    ("#EFF6FF", "#3B82F6"),
+            "green":   ("#ECFDF5", "#10B981"),
+            "amber":   ("#FFFBEB", "#F59E0B"),
+            "red":     ("#FEF2F2", "#EF4444"),
+            "slate":   ("#F8FAFC", "#64748B"),
+        }
+        
+        def build_kpi_card(titulo, valor, p_key, extra_text=None):
+            bg, accent = _PALETTE.get(p_key, _PALETTE["slate"])
             f = QFrame()
-            f.setStyleSheet(f"background: white; border: 1px solid #E2E8F0; border-top: 4px solid {color_borde}; border-radius: 12px;")
+            f.setObjectName("audit_kpi")
+            f.setStyleSheet(f"""
+                #audit_kpi {{
+                    background: {bg};
+                    border-radius: 18px;
+                    border: none;
+                }}
+            """)
+            
+            h_color = accent.lstrip('#')
+            r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
+            
+            sh = QGraphicsDropShadowEffect(f)
+            sh.setBlurRadius(16)
+            sh.setColor(QColor(r, g, b, 20))
+            sh.setOffset(0, 4)
+            f.setGraphicsEffect(sh)
+            
             l = QVBoxLayout(f)
-            l.setContentsMargins(20, 15, 20, 15)
-            l.setSpacing(6)
+            l.setContentsMargins(18, 14, 18, 14)
+            l.setSpacing(4)
+            
+            h_title = QHBoxLayout()
+            h_title.setSpacing(6)
+            dot = QFrame()
+            dot.setFixedSize(6, 6)
+            dot.setStyleSheet(f"background: {accent}; border-radius: 3px; border: none;")
+            h_title.addWidget(dot)
             
             lbl_t = QLabel(titulo.upper())
-            lbl_t.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none;")
+            lbl_t.setStyleSheet("font-size: 10px; font-weight: 800; color: #475569; border: none; background: none;")
+            h_title.addWidget(lbl_t)
+            h_title.addStretch()
+            l.addLayout(h_title)
             
             lbl_v = QLabel(str(valor))
-            lbl_v.setStyleSheet("font-size: 20px; font-weight: 900; color: #0F172A; border: none;")
-            
-            l.addWidget(lbl_t)
+            lbl_v.setStyleSheet("font-size: 18px; font-weight: 900; color: #0F172A; border: none; background: none;")
             l.addWidget(lbl_v)
             
             if extra_text:
                 lbl_e = QLabel(extra_text)
-                lbl_e.setStyleSheet(f"font-size: 12px; font-weight: bold; color: {extra_color or '#64748B'}; border: none;")
+                lbl_e.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none; background: none;")
                 l.addWidget(lbl_e)
                 
             return f
             
-        self.audit_kpi_layout.addWidget(build_kpi_card("Facturado Filtrado", f"${tot_monto:,.2f}", "#10B981"))
+        self.audit_kpi_layout.addWidget(build_kpi_card("Facturado Filtrado", f"${tot_monto:,.2f}", "green"))
         
         idx_mes = self.cmb_audit_mes.currentIndex()
         mes_nombre = self.cmb_audit_mes.currentText() if idx_mes > 0 else "Este Mes"
         self.audit_kpi_layout.addWidget(build_kpi_card(
             "Comparativa vs Mes Anterior", 
             comp_text, 
-            comp_color, 
-            extra_text=f"Mes evaluado: {mes_nombre}", 
-            extra_color="#475569"
+            palette_key, 
+            extra_text=f"Eval: {mes_nombre}"
         ))
         
-        self.audit_kpi_layout.addWidget(build_kpi_card("Artículos (Unidades)", f"{tot_unidades:,.2f} ud", "#3B82F6"))
-        self.audit_kpi_layout.addWidget(build_kpi_card("Volumen Físico (Peso)", f"{tot_kilos:,.3f} kg", "#D97706"))
+        self.audit_kpi_layout.addWidget(build_kpi_card("Artículos (Unidades)", f"{tot_unidades:,.2f} ud", "blue"))
+        self.audit_kpi_layout.addWidget(build_kpi_card("Volumen Físico (Peso)", f"{tot_kilos:,.3f} kg", "amber"))
 
     def _exportar_auditoria(self):
         from datetime import datetime

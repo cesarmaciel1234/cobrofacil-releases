@@ -2,7 +2,8 @@ import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QPushButton, QAbstractItemView, QMessageBox, QFileDialog, QSplitter, QComboBox
+    QPushButton, QAbstractItemView, QMessageBox, QFileDialog, QSplitter, QComboBox,
+    QGraphicsDropShadowEffect
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QBrush
@@ -19,91 +20,14 @@ except ImportError:
 
 STYLE = """
 QWidget {
-    background-color: #F8FAFC;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-color: #F4F6FB;
+    font-family: 'Segoe UI', sans-serif;
     font-size: 13px;
-    color: #1e293b;
+    color: #1E293B;
 }
 QFrame#header {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #3B82F6);
-    border-bottom: 2px solid #0f172a;
-    border-radius: 10px;
-}
-QLabel#titulo {
-    color: white;
-    background: transparent;
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 1px;
-}
-QPushButton {
-    background-color: white;
-    color: #1e3a8a;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-weight: bold;
-    font-size: 11px;
-}
-QPushButton:hover {
-    background-color: #3b82f6;
-    color: white;
-    border-color: #3b82f6;
-}
-QPushButton#action_z {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #3B82F6);
-    color: white;
-    border: none;
-    font-size: 13px;
-    padding: 15px;
-    border-radius: 10px;
-}
-QPushButton#action_z:hover {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1D4ED8, stop:1 #60A5FA);
-}
-QPushButton#danger {
-    background-color: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-}
-QPushButton#danger:hover {
-    background-color: #ef4444;
-    color: white;
-}
-QLineEdit, QComboBox {
-    background-color: white;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 8px 12px;
-}
-QLineEdit:focus, QComboBox:focus {
-    border: 2px solid #3b82f6;
-}
-QTableWidget {
-    background-color: white;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
-    gridline-color: #f1f5f9;
-    selection-background-color: #FDE047;
-    selection-color: #0f172a;
-    border-radius: 8px;
-}
-QHeaderView::section {
-    background-color: white;
-    color: #64748b;
-    font-weight: 800;
-    padding: 12px;
-    border: none;
-    border-bottom: 2px solid #e2e8f0;
-    font-size: 10px;
-    text-transform: uppercase;
-}
-QFrame#card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 15px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #EEF2F8;
 }
 """
 
@@ -149,106 +73,168 @@ class Admin7Cierre(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Header Elite Blue
+        # Header White Elite
         hdr = QFrame()
         hdr.setObjectName("header")
-        hdr.setFixedHeight(85)
+        hdr.setFixedHeight(64)
         hl = QHBoxLayout(hdr)
-        hl.setContentsMargins(25, 0, 25, 0)
+        hl.setContentsMargins(32, 0, 32, 0)
         
-        btn_back = QPushButton("🔙 VOLVER AL PANEL")
+        btn_back = QPushButton("← VOLVER AL PANEL")
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: rgba(255, 255, 255, 0.2); color: white; font-weight: 800; border-radius: 10px; 
-                padding: 10px 25px; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 11px; letter-spacing: 1px;
+                background: #F1F5F9;
+                color: #475569;
+                font-weight: 700;
+                border-radius: 12px;
+                padding: 8px 18px;
+                font-size: 11px;
+                border: none;
             }
-            QPushButton:hover { background: white; color: #1E3A8A; }
+            QPushButton:hover {
+                background: #E2E8F0;
+                color: #0F172A;
+            }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
-        hl.addSpacing(20)
+        hl.addSpacing(25)
         
-        tit = QLabel("🛡️ AUDITORÍA DE SEGURIDAD & CIERRE Z <span style='color: rgba(255,255,255,0.7);'>2026</span>")
-        tit.setObjectName("titulo")
-        tit.setStyleSheet("background: transparent;")
-        hl.addWidget(tit)
+        # Pestañas en la cabecera
+        self.btn_tab_sala = QPushButton("SALA DE CONTROL CENTRAL DE CAJAS (RED EN VIVO)")
+        self.btn_tab_cierres = QPushButton("HISTORIAL DE CIERRES Z DE TERMINALES")
+        self.btn_tab_alertas = QPushButton("REGISTRO DE ALERTAS Y EVENTOS DE AUDITORÍA")
+        
+        for btn in [self.btn_tab_sala, self.btn_tab_cierres, self.btn_tab_alertas]:
+            btn.setCursor(Qt.PointingHandCursor)
+            hl.addWidget(btn)
+            
+        self.btn_tab_sala.clicked.connect(lambda: self._set_active_tab(0))
+        self.btn_tab_cierres.clicked.connect(lambda: self._set_active_tab(1))
+        self.btn_tab_alertas.clicked.connect(lambda: self._set_active_tab(2))
+        
         hl.addStretch()
         root.addWidget(hdr)
 
         # Panel de Métricas / Dashboard de Seguridad
         panel_met = QFrame()
-        panel_met.setFixedHeight(120)
-        panel_met.setStyleSheet("background-color: #f1f5f9; border-bottom: 1px solid #cbd5e1;")
+        panel_met.setFixedHeight(100)
+        panel_met.setStyleSheet("background-color: transparent; border: none;")
         layout_met = QHBoxLayout(panel_met)
-        layout_met.setContentsMargins(25, 15, 25, 15)
-        layout_met.setSpacing(20)
+        layout_met.setContentsMargins(32, 16, 32, 10)
+        layout_met.setSpacing(16)
+
+        def style_kpi_card(card, title_lbl, val_lbl, palette_key):
+            _PALETTE = {
+                "red":    ("#FEF2F2", "#EF4444"),
+                "amber":  ("#FFFBEB", "#F59E0B"),
+                "violet": ("#F5F3FF", "#8B5CF6"),
+                "green":  ("#ECFDF5", "#10B981"),
+            }
+            bg, accent = _PALETTE[palette_key]
+            card.setStyleSheet(f"""
+                QFrame {{
+                    background: {bg};
+                    border-radius: 18px;
+                    border: none;
+                }}
+            """)
+            h_color = accent.lstrip('#')
+            r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
+            sh = QGraphicsDropShadowEffect(card)
+            sh.setBlurRadius(16)
+            sh.setColor(QColor(r, g, b, 25))
+            sh.setOffset(0, 4)
+            card.setGraphicsEffect(sh)
+            
+            title_lbl.setStyleSheet("font-size: 10px; font-weight: 800; color: #475569; border: none; background: transparent; letter-spacing: 0.5px;")
+            val_lbl.setStyleSheet(f"font-size: 20px; font-weight: 900; color: #0F172A; border: none; background: transparent;")
 
         # Card 1: Brechas de Seguridad
         self.card_brechas = QFrame()
-        self.card_brechas.setObjectName("card")
         lay_b = QVBoxLayout(self.card_brechas)
+        lay_b.setContentsMargins(16, 12, 16, 12)
+        lay_b.setSpacing(4)
         self.lbl_brechas_val = QLabel("0")
-        self.lbl_brechas_val.setStyleSheet("font-size: 24px; font-weight: 900; color: #ef4444; border: none; background: transparent;")
         lbl_b_title = QLabel("⚠️ BRECHAS DE SEGURIDAD")
-        lbl_b_title.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748b; border: none; background: transparent; letter-spacing: 1px;")
         lay_b.addWidget(self.lbl_brechas_val)
         lay_b.addWidget(lbl_b_title)
+        style_kpi_card(self.card_brechas, lbl_b_title, self.lbl_brechas_val, "red")
         layout_met.addWidget(self.card_brechas)
 
         # Card 2: Intervenciones F11
         self.card_interv = QFrame()
-        self.card_interv.setObjectName("card")
         lay_i = QVBoxLayout(self.card_interv)
+        lay_i.setContentsMargins(16, 12, 16, 12)
+        lay_i.setSpacing(4)
         self.lbl_interv_val = QLabel("0")
-        self.lbl_interv_val.setStyleSheet("font-size: 24px; font-weight: 900; color: #f59e0b; border: none; background: transparent;")
         lbl_i_title = QLabel("🔑 INTERVENCIONES SUPERVISOR")
-        lbl_i_title.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748b; border: none; background: transparent; letter-spacing: 1px;")
         lay_i.addWidget(self.lbl_interv_val)
         lay_i.addWidget(lbl_i_title)
+        style_kpi_card(self.card_interv, lbl_i_title, self.lbl_interv_val, "amber")
         layout_met.addWidget(self.card_interv)
 
         # Card 3: Cancelaciones
         self.card_cancels = QFrame()
-        self.card_cancels.setObjectName("card")
         lay_c = QVBoxLayout(self.card_cancels)
+        lay_c.setContentsMargins(16, 12, 16, 12)
+        lay_c.setSpacing(4)
         self.lbl_cancels_val = QLabel("0")
-        self.lbl_cancels_val.setStyleSheet("font-size: 24px; font-weight: 900; color: #8b5cf6; border: none; background: transparent;")
-        lbl_c_title = QLabel("❌ TICKET CANCELADOS")
-        lbl_c_title.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748b; border: none; background: transparent; letter-spacing: 1px;")
+        lbl_c_title = QLabel("❌ TICKETS CANCELADOS")
         lay_c.addWidget(self.lbl_cancels_val)
         lay_c.addWidget(lbl_c_title)
+        style_kpi_card(self.card_cancels, lbl_c_title, self.lbl_cancels_val, "violet")
         layout_met.addWidget(self.card_cancels)
 
         # Card 4: Último Cierre Z
         self.card_last_z = QFrame()
-        self.card_last_z.setObjectName("card")
         lay_z = QVBoxLayout(self.card_last_z)
+        lay_z.setContentsMargins(16, 12, 16, 12)
+        lay_z.setSpacing(4)
         self.lbl_last_z_val = QLabel("S/D")
-        self.lbl_last_z_val.setStyleSheet("font-size: 15px; font-weight: 900; color: #10b981; border: none; background: transparent;")
         lbl_z_title = QLabel("🏁 ÚLTIMO CIERRE FISCAL")
-        lbl_z_title.setStyleSheet("font-size: 10px; font-weight: 800; color: #64748b; border: none; background: transparent; letter-spacing: 1px;")
         lay_z.addWidget(self.lbl_last_z_val)
         lay_z.addWidget(lbl_z_title)
+        style_kpi_card(self.card_last_z, lbl_z_title, self.lbl_last_z_val, "green")
         layout_met.addWidget(self.card_last_z)
 
         root.addWidget(panel_met)
 
         # --- PANEL DE CIERRES Z HISTÓRICOS (Para Tab 2 al lado de Vigilancia) ---
         panel_cierres = QFrame()
-        panel_cierres.setStyleSheet("QFrame { background-color: white; border: 1px solid #cbd5e1; border-radius: 12px; }")
+        panel_cierres.setStyleSheet("QFrame { background-color: white; border: none; border-radius: 20px; }")
+        sh_cierres = QGraphicsDropShadowEffect(panel_cierres)
+        sh_cierres.setBlurRadius(20)
+        sh_cierres.setColor(QColor(0, 0, 0, 12))
+        sh_cierres.setOffset(0, 4)
+        panel_cierres.setGraphicsEffect(sh_cierres)
+        
         left_lay = QVBoxLayout(panel_cierres)
-        left_lay.setContentsMargins(20, 20, 20, 20)
+        left_lay.setContentsMargins(24, 24, 24, 24)
         left_lay.setSpacing(15)
 
         lbl_l_tit = QLabel("🏁 CIERRES Z Y ARQUEOS FISCALES HISTÓRICOS")
-        lbl_l_tit.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 14px;")
+        lbl_l_tit.setStyleSheet("font-weight: 900; color: #0F172A; font-size: 14px; border: none; background: transparent;")
         left_lay.addWidget(lbl_l_tit)
 
         # Botón de Acción Principal F12
         self.btn_ejecutar_z = QPushButton("🚀 INICIAR PROCESO DE CIERRE Z / AUDITORÍA (F12)")
-        self.btn_ejecutar_z.setObjectName("action_z")
         self.btn_ejecutar_z.setCursor(Qt.PointingHandCursor)
+        self.btn_ejecutar_z.setStyleSheet("""
+            QPushButton {
+                background: #6366F1;
+                color: white;
+                border: none;
+                font-weight: 800;
+                font-size: 13px;
+                padding: 12px;
+                border-radius: 12px;
+            }
+            QPushButton:hover {
+                background: #4F46E5;
+            }
+        """)
         self.btn_ejecutar_z.clicked.connect(self._ejecutar_cierre_z_dialogo)
         left_lay.addWidget(self.btn_ejecutar_z)
 
@@ -269,6 +255,29 @@ class Admin7Cierre(QWidget):
         self.tabla_cierres.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tabla_cierres.verticalHeader().setVisible(False)
         
+        self.tabla_cierres.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                border: none;
+                gridline-color: #F1F5F9;
+                font-size: 12px;
+                border-radius: 16px;
+            }
+            QTableWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QHeaderView::section {
+                background-color: #F8FAFC;
+                color: #475569;
+                font-weight: 800;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                padding: 10px;
+                font-size: 11px;
+            }
+        """)
+        
         hh_c = self.tabla_cierres.horizontalHeader()
         hh_c.setSectionResizeMode(0, QHeaderView.Interactive)
         self.tabla_cierres.setColumnWidth(0, 95)
@@ -288,38 +297,60 @@ class Admin7Cierre(QWidget):
 
         # Botón de Reimpresión
         self.btn_reimprimir_z = QPushButton("🖨️ RE-IMPRIMIR REPORTE Z SELECCIONADO")
+        self.btn_reimprimir_z.setCursor(Qt.PointingHandCursor)
+        self.btn_reimprimir_z.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9;
+                color: #475569;
+                border: none;
+                font-weight: 800;
+                font-size: 12px;
+                padding: 10px;
+                border-radius: 10px;
+            }
+            QPushButton:hover {
+                background: #E2E8F0;
+                color: #0F172A;
+            }
+        """)
         self.btn_reimprimir_z.clicked.connect(self._reimprimir_ticket_z_seleccionado)
         left_lay.addWidget(self.btn_reimprimir_z)
 
         # Import QScrollArea and QTabWidget for the decentralized view
         from PyQt5.QtWidgets import QScrollArea, QTabWidget
 
-        # --- NUEVA PESTAÑA: SALA DE CONTROL CENTRALIZADA EN RED (SALA DE VIGILANCIA CENTRAL) ---
+        # --- NUEVA PESTAÑA: SALA DE CONTROL CENTRALIZADA EN RED ---
         self.widget_sala_control = QWidget()
         layout_central = QVBoxLayout(self.widget_sala_control)
         layout_central.setContentsMargins(10, 10, 10, 10)
         layout_central.setSpacing(10)
 
-        # Splitter principal vertical: Monitoreo en Red arriba, Vigilancia abajo
+        # Splitter principal vertical
         self.splitter_sala_control = QSplitter(Qt.Vertical)
-        self.splitter_sala_control.setStyleSheet("QSplitter::handle{background:#cbd5e1;}")
+        self.splitter_sala_control.setStyleSheet("QSplitter::handle{background:#EEF2F8;}")
 
         # Panel superior (horizontal)
         panel_superior = QWidget()
-        panel_superior.setMinimumHeight(380) # Evita colapsos de QSplitter
+        panel_superior.setMinimumHeight(380)
         layout_sup = QHBoxLayout(panel_superior)
         layout_sup.setContentsMargins(0, 0, 0, 0)
         layout_sup.setSpacing(10)
 
-        # Splitter horizontal superior: Caja lista a la izquierda, Controles a la derecha
+        # Splitter horizontal superior
         self.splitter_sup = QSplitter(Qt.Horizontal)
-        self.splitter_sup.setStyleSheet("QSplitter::handle{background:#cbd5e1;}")
+        self.splitter_sup.setStyleSheet("QSplitter::handle{background:#EEF2F8;}")
 
         # Panel Izquierdo: Lista de Cajas en Red
         panel_izq_cajas = QFrame()
-        panel_izq_cajas.setStyleSheet("QFrame { background-color: white; border: 1px solid #cbd5e1; border-radius: 12px; }")
+        panel_izq_cajas.setStyleSheet("QFrame { background-color: white; border: none; border-radius: 20px; }")
+        sh_izq = QGraphicsDropShadowEffect(panel_izq_cajas)
+        sh_izq.setBlurRadius(20)
+        sh_izq.setColor(QColor(0, 0, 0, 12))
+        sh_izq.setOffset(0, 4)
+        panel_izq_cajas.setGraphicsEffect(sh_izq)
+        
         layout_izq = QVBoxLayout(panel_izq_cajas)
-        layout_izq.setContentsMargins(12, 12, 12, 12)
+        layout_izq.setContentsMargins(20, 20, 20, 20)
         layout_izq.setSpacing(10)
 
         # Determinar si estamos conectados a una IP remota
@@ -330,20 +361,20 @@ class Admin7Cierre(QWidget):
             if len(partes) >= 3:
                 ip_conectada = partes[2]
 
-        titulo_central = f"📟 CENTRAL DE CAJAS EN RED LOCAL (HOST: {ip_conectada})" if ip_conectada else f"📟 CENTRAL DE CAJAS EN RED LOCAL [{db_path_str}]"
+        titulo_central = f"📟 CENTRAL DE CAJAS EN RED LOCAL (HOST: {ip_conectada})" if ip_conectada else f"📟 CENTRAL DE CAJAS EN RED LOCAL"
 
         lbl_izq_tit = QLabel(titulo_central)
-        lbl_izq_tit.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 13px; border: none; background: transparent;")
+        lbl_izq_tit.setStyleSheet("font-weight: 900; color: #0F172A; font-size: 13px; border: none; background: transparent;")
         layout_izq.addWidget(lbl_izq_tit)
 
         # Línea de barrido en tiempo real y status
         self.lbl_scan_status = QLabel("🛰️ BARRIDO DE TERMINALES: ONLINE")
-        self.lbl_scan_status.setStyleSheet("font-size: 9px; font-weight: 800; color: #10b981; border: none; background: transparent; letter-spacing: 0.5px;")
+        self.lbl_scan_status.setStyleSheet("font-size: 9px; font-weight: 800; color: #10B981; border: none; background: transparent; letter-spacing: 0.5px;")
         layout_izq.addWidget(self.lbl_scan_status)
 
         from PyQt5.QtWidgets import QProgressBar
         self.scan_bar = QProgressBar()
-        self.scan_bar.setRange(0, 0) # Animación de pulso radar
+        self.scan_bar.setRange(0, 0)
         self.scan_bar.setTextVisible(False)
         self.scan_bar.setFixedHeight(5)
         self.scan_bar.setStyleSheet("""
@@ -379,7 +410,13 @@ class Admin7Cierre(QWidget):
 
         # Panel Derecho: Tarjeta en Vivo
         self.panel_der_control = QFrame()
-        self.panel_der_control.setStyleSheet("QFrame { background-color: white; border: 1px solid #cbd5e1; border-radius: 12px; }")
+        self.panel_der_control.setStyleSheet("QFrame { background-color: white; border: none; border-radius: 20px; }")
+        sh_der = QGraphicsDropShadowEffect(self.panel_der_control)
+        sh_der.setBlurRadius(20)
+        sh_der.setColor(QColor(0, 0, 0, 12))
+        sh_der.setOffset(0, 4)
+        self.panel_der_control.setGraphicsEffect(sh_der)
+        
         layout_der = QVBoxLayout(self.panel_der_control)
         layout_der.setContentsMargins(0, 0, 0, 0)
         layout_der.setSpacing(0)
@@ -387,16 +424,16 @@ class Admin7Cierre(QWidget):
         # Encabezado Control de Cierre en Vivo
         hdr_vivo = QFrame()
         hdr_vivo.setFixedHeight(45)
-        hdr_vivo.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #2563EB); border-top-left-radius: 11px; border-top-right-radius: 11px;")
+        hdr_vivo.setStyleSheet("background: #FFFFFF; border-bottom: 1px solid #EEF2F8; border-top-left-radius: 20px; border-top-right-radius: 20px;")
         lay_hdr_v = QHBoxLayout(hdr_vivo)
-        lay_hdr_v.setContentsMargins(15, 0, 15, 0)
+        lay_hdr_v.setContentsMargins(20, 0, 20, 0)
         
-        self.lbl_hdr_vivo_titulo = QLabel("💎 PUNPRO ELITE - CONTROL DE CIERRE")
-        self.lbl_hdr_vivo_titulo.setStyleSheet("color: white; font-weight: 900; font-size: 13px; background: transparent;")
+        self.lbl_hdr_vivo_titulo = QLabel("💎 CAJAFACIL PRO - CONTROL DE CIERRE")
+        self.lbl_hdr_vivo_titulo.setStyleSheet("color: #0F172A; font-weight: 800; font-size: 13px; background: transparent;")
         lay_hdr_v.addWidget(self.lbl_hdr_vivo_titulo)
         
-        self.lbl_hdr_vivo_usuario = QLabel("👤 ADMIN")
-        self.lbl_hdr_vivo_usuario.setStyleSheet("color: #FDE047; font-weight: 800; font-size: 11px; background: transparent;")
+        self.lbl_hdr_vivo_usuario = QLabel("👤 ROL: ADMIN")
+        self.lbl_hdr_vivo_usuario.setStyleSheet("color: #6366F1; font-weight: 800; font-size: 11px; background: transparent;")
         lay_hdr_v.addWidget(self.lbl_hdr_vivo_usuario, 0, Qt.AlignRight)
         
         layout_der.addWidget(hdr_vivo)
@@ -404,18 +441,18 @@ class Admin7Cierre(QWidget):
         # Fase de Monitoreo
         self.fase_bar = QFrame()
         self.fase_bar.setFixedHeight(30)
-        self.fase_bar.setStyleSheet("background-color: #eff6ff; border-bottom: 1px solid #bfdbfe;")
+        self.fase_bar.setStyleSheet("background-color: #EEF2FF; border-bottom: 1px solid #E0E7FF;")
         lay_fase = QHBoxLayout(self.fase_bar)
         lay_fase.setContentsMargins(15, 0, 15, 0)
         lbl_fase = QLabel("🔒 FASE 2: VERIFICACIÓN Y CONCILIACIÓN DE CAJA")
-        lbl_fase.setStyleSheet("color: #1d4ed8; font-weight: 800; font-size: 11px; background: transparent;")
+        lbl_fase.setStyleSheet("color: #6366F1; font-weight: 800; font-size: 11px; background: transparent;")
         lay_fase.addWidget(lbl_fase, 0, Qt.AlignCenter)
         layout_der.addWidget(self.fase_bar)
 
         # Cuerpo del Panel Remoto
         cuerpo_remoto = QWidget()
         cuerpo_lay = QHBoxLayout(cuerpo_remoto)
-        cuerpo_lay.setContentsMargins(15, 15, 15, 15)
+        cuerpo_lay.setContentsMargins(20, 20, 20, 20)
         cuerpo_lay.setSpacing(15)
 
         # Columna Izquierda del Cuerpo: 4 Cards de Métricas
@@ -424,129 +461,153 @@ class Admin7Cierre(QWidget):
         col_izq_lay.setContentsMargins(0, 0, 0, 0)
         col_izq_lay.setSpacing(10)
 
-        STYLE_CARD_MINI = """
-            QFrame {
-                background: white;
-                border: 1px solid #cbd5e1;
-                border-radius: 12px;
-                padding: 8px;
-            }
-            QLabel { border: none; background: transparent; }
-        """
-
         # Card 1: Ventas Efectivo
         self.card_v_efec = QFrame()
-        self.card_v_efec.setStyleSheet(STYLE_CARD_MINI)
         lay_ve = QHBoxLayout(self.card_v_efec)
+        lay_ve.setContentsMargins(12, 8, 12, 8)
         lbl_ve_ico = QLabel("💰")
-        lbl_ve_ico.setStyleSheet("font-size: 20px;")
+        lbl_ve_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_ve.addWidget(lbl_ve_ico)
         
         info_ve = QVBoxLayout()
+        info_ve.setSpacing(2)
         lbl_ve_t = QLabel("VENTAS EFECTIVO")
-        lbl_ve_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #64748b;")
         self.lbl_ve_val = QLabel("$ 0.00")
-        self.lbl_ve_val.setStyleSheet("font-size: 16px; font-weight: 900; color: #059669;")
         info_ve.addWidget(lbl_ve_t)
         info_ve.addWidget(self.lbl_ve_val)
         lay_ve.addLayout(info_ve)
-        col_izq_lay.addWidget(self.card_v_efec)
-
+        
         # Card 2: Ventas Digital
         self.card_v_dig = QFrame()
-        self.card_v_dig.setStyleSheet(STYLE_CARD_MINI)
         lay_vd = QHBoxLayout(self.card_v_dig)
+        lay_vd.setContentsMargins(12, 8, 12, 8)
         lbl_vd_ico = QLabel("💳")
-        lbl_vd_ico.setStyleSheet("font-size: 20px;")
+        lbl_vd_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_vd.addWidget(lbl_vd_ico)
         
         info_vd = QVBoxLayout()
+        info_vd.setSpacing(2)
         lbl_vd_t = QLabel("VENTAS DIGITAL")
-        lbl_vd_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #64748b;")
         self.lbl_vd_val = QLabel("$ 0.00")
-        self.lbl_vd_val.setStyleSheet("font-size: 16px; font-weight: 900; color: #2563eb;")
         info_vd.addWidget(lbl_vd_t)
         info_vd.addWidget(self.lbl_vd_val)
         lay_vd.addLayout(info_vd)
-        col_izq_lay.addWidget(self.card_v_dig)
-
+        
         # Card 3: Fondo Apertura
         self.card_v_fnd = QFrame()
-        self.card_v_fnd.setStyleSheet(STYLE_CARD_MINI)
         lay_vf = QHBoxLayout(self.card_v_fnd)
+        lay_vf.setContentsMargins(12, 8, 12, 8)
         lbl_vf_ico = QLabel("🏁")
-        lbl_vf_ico.setStyleSheet("font-size: 20px;")
+        lbl_vf_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_vf.addWidget(lbl_vf_ico)
         
         info_vf = QVBoxLayout()
+        info_vf.setSpacing(2)
         lbl_vf_t = QLabel("FONDO APERTURA")
-        lbl_vf_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #64748b;")
         self.lbl_vf_val = QLabel("$ 0.00")
-        self.lbl_vf_val.setStyleSheet("font-size: 16px; font-weight: 900; color: #7c3aed;")
         info_vf.addWidget(lbl_vf_t)
         info_vf.addWidget(self.lbl_vf_val)
         lay_vf.addLayout(info_vf)
-        col_izq_lay.addWidget(self.card_v_fnd)
-
+        
         # Card 4: Alertas Seguridad
         self.card_v_alt = QFrame()
-        self.card_v_alt.setStyleSheet(STYLE_CARD_MINI)
         lay_va = QHBoxLayout(self.card_v_alt)
+        lay_va.setContentsMargins(12, 8, 12, 8)
         lbl_va_ico = QLabel("🚨")
-        lbl_va_ico.setStyleSheet("font-size: 20px;")
+        lbl_va_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_va.addWidget(lbl_va_ico)
         
         info_va = QVBoxLayout()
+        info_va.setSpacing(2)
         lbl_va_t = QLabel("ALERTAS SEGURIDAD")
-        lbl_va_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #64748b;")
         self.lbl_va_val = QLabel("0")
-        self.lbl_va_val.setStyleSheet("font-size: 16px; font-weight: 900; color: #dc2626;")
         info_va.addWidget(lbl_va_t)
         info_va.addWidget(self.lbl_va_val)
         lay_va.addLayout(info_va)
-        col_izq_lay.addWidget(self.card_v_alt)
+        
+        # Style mini cards
+        def style_mini_card(card, val_lbl, title_lbl, p_key):
+            _PAL_MINI = {
+                "green":  ("#ECFDF5", "#10B981"),
+                "blue":   ("#EFF6FF", "#3B82F6"),
+                "purple": ("#F5F3FF", "#8B5CF6"),
+                "red":    ("#FEF2F2", "#EF4444"),
+            }
+            bg, accent = _PAL_MINI[p_key]
+            card.setStyleSheet(f"""
+                QFrame {{
+                    background-color: {bg};
+                    border-radius: 14px;
+                    border: none;
+                }}
+            """)
+            h_color = accent.lstrip('#')
+            r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
+            sh = QGraphicsDropShadowEffect(card)
+            sh.setBlurRadius(12)
+            sh.setColor(QColor(r, g, b, 20))
+            sh.setOffset(0, 3)
+            card.setGraphicsEffect(sh)
+            
+            title_lbl.setStyleSheet("font-size: 9px; font-weight: 800; color: #475569; background: transparent; border: none; letter-spacing: 0.5px;")
+            val_lbl.setStyleSheet(f"font-size: 16px; font-weight: 900; color: #0F172A; background: transparent; border: none;")
 
-        cuerpo_lay.addWidget(col_izq_cards, 42) # 42% ancho del cuerpo
+        style_mini_card(self.card_v_efec, self.lbl_ve_val, lbl_ve_t, "green")
+        style_mini_card(self.card_v_dig, self.lbl_vd_val, lbl_vd_t, "blue")
+        style_mini_card(self.card_v_fnd, self.lbl_vf_val, lbl_vf_t, "purple")
+        style_mini_card(self.card_v_alt, self.lbl_va_val, lbl_va_t, "red")
+
+        col_izq_lay.addWidget(self.card_v_efec)
+        col_izq_lay.addWidget(self.card_v_dig)
+        col_izq_lay.addWidget(self.card_v_fnd)
+        col_izq_lay.addWidget(self.card_v_alt)
+        cuerpo_lay.addWidget(col_izq_cards, 42)
 
         # Columna Derecha del Cuerpo: Cálculos Principales
         col_der_calc = QFrame()
-        col_der_calc.setStyleSheet("background-color: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px;")
+        col_der_calc.setStyleSheet("background-color: #F8FAFC; border: none; border-radius: 16px; padding: 12px;")
+        sh_calc = QGraphicsDropShadowEffect(col_der_calc)
+        sh_calc.setBlurRadius(12)
+        sh_calc.setColor(QColor(0, 0, 0, 10))
+        sh_calc.setOffset(0, 3)
+        col_der_calc.setGraphicsEffect(sh_calc)
+        
         col_der_lay = QVBoxLayout(col_der_calc)
         col_der_lay.setContentsMargins(10, 10, 10, 10)
         col_der_lay.setSpacing(10)
 
         # 1. Efectivo Esperado Card
         f_esp = QFrame()
-        f_esp.setStyleSheet("background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px;")
+        f_esp.setStyleSheet("background-color: #EFF6FF; border: none; border-radius: 12px;")
         lay_esp = QVBoxLayout(f_esp)
-        lay_esp.setContentsMargins(10, 5, 10, 5)
+        lay_esp.setContentsMargins(10, 8, 10, 8)
         lbl_esp_t = QLabel("EFECTIVO ESPERADO")
         lbl_esp_t.setAlignment(Qt.AlignCenter)
-        lbl_esp_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #2563eb; border: none; background: transparent; letter-spacing: 0.5px;")
+        lbl_esp_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #3B82F6; border: none; background: transparent; letter-spacing: 0.5px;")
         self.lbl_live_esperado = QLabel("$ 0.00")
         self.lbl_live_esperado.setAlignment(Qt.AlignCenter)
-        self.lbl_live_esperado.setStyleSheet("font-size: 28px; font-weight: 900; color: #1e3a8a; border: none; background: transparent;")
+        self.lbl_live_esperado.setStyleSheet("font-size: 24px; font-weight: 900; color: #1E3A8A; border: none; background: transparent;")
         lay_esp.addWidget(lbl_esp_t)
         lay_esp.addWidget(self.lbl_live_esperado)
         col_der_lay.addWidget(f_esp)
 
         # 2. Input del Físico Contado
         f_input = QFrame()
-        f_input.setStyleSheet("background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;")
+        f_input.setStyleSheet("background-color: #FFFBEB; border: none; border-radius: 12px;")
         lay_input = QVBoxLayout(f_input)
-        lay_input.setContentsMargins(10, 5, 10, 5)
+        lay_input.setContentsMargins(10, 8, 10, 8)
         lbl_inp_t = QLabel("INGRESA EL FÍSICO CONTADO ($)")
         lbl_inp_t.setAlignment(Qt.AlignCenter)
-        lbl_inp_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #b45309; border: none; background: transparent; letter-spacing: 0.5px;")
+        lbl_inp_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #D97706; border: none; background: transparent; letter-spacing: 0.5px;")
         
         self.txt_live_fisico = QLineEdit()
         self.txt_live_fisico.setAlignment(Qt.AlignCenter)
         self.txt_live_fisico.setStyleSheet("""
             QLineEdit {
-                background: white; border: 2px solid #f59e0b; border-radius: 8px;
-                color: #b45309; font-size: 28px; font-weight: 900; padding: 3px;
+                background: white; border: 2px solid #F59E0B; border-radius: 8px;
+                color: #B45309; font-size: 24px; font-weight: 900; padding: 3px;
             }
-            QLineEdit:focus { border-color: #d97706; }
+            QLineEdit:focus { border-color: #D97706; }
         """)
         self.txt_live_fisico.setText("0.00")
         self.txt_live_fisico.textChanged.connect(self._calcular_live_diferencia)
@@ -557,39 +618,39 @@ class Admin7Cierre(QWidget):
 
         # 3. Diferencia
         self.frame_live_dif = QFrame()
-        self.frame_live_dif.setStyleSheet("background-color: #f0fdf4; border: 2px solid #10b981; border-radius: 8px;")
+        self.frame_live_dif.setStyleSheet("background-color: #ECFDF5; border: none; border-radius: 12px;")
         lay_ld = QHBoxLayout(self.frame_live_dif)
-        lay_ld.setContentsMargins(10, 5, 10, 5)
+        lay_ld.setContentsMargins(15, 10, 15, 10)
         
         lbl_ld_t = QLabel("DIFERENCIA:")
-        lbl_ld_t.setStyleSheet("font-weight: 900; font-size: 11px; color: #065f46; border: none; background: transparent;")
+        lbl_ld_t.setStyleSheet("font-weight: 800; font-size: 11px; color: #065F46; border: none; background: transparent;")
         lay_ld.addWidget(lbl_ld_t)
         
         self.lbl_live_dif_val = QLabel("+ $ 0.00")
         self.lbl_live_dif_val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.lbl_live_dif_val.setStyleSheet("font-size: 18px; font-weight: 900; color: #047857; border: none; background: transparent;")
+        self.lbl_live_dif_val.setStyleSheet("font-size: 18px; font-weight: 900; color: #10B981; border: none; background: transparent;")
         lay_ld.addWidget(self.lbl_live_dif_val)
         col_der_lay.addWidget(self.frame_live_dif)
 
-        cuerpo_lay.addWidget(col_der_calc, 58) # 58% ancho del cuerpo
+        cuerpo_lay.addWidget(col_der_calc, 58)
         layout_der.addWidget(cuerpo_remoto)
 
         # Fila de Botones
         btn_bar_vivo = QFrame()
         btn_bar_vivo.setFixedHeight(60)
-        btn_bar_vivo.setStyleSheet("background-color: #f8fafc; border-top: 1px solid #cbd5e1; border-bottom-left-radius: 11px; border-bottom-right-radius: 11px;")
+        btn_bar_vivo.setStyleSheet("background-color: #FFFFFF; border-top: 1px solid #EEF2F8; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
         lay_btn_bar = QHBoxLayout(btn_bar_vivo)
-        lay_btn_bar.setContentsMargins(15, 8, 15, 8)
+        lay_btn_bar.setContentsMargins(20, 8, 20, 8)
         lay_btn_bar.setSpacing(10)
 
         self.btn_live_corte = QPushButton("📊 CORTE DIARIO")
         self.btn_live_corte.setCursor(Qt.PointingHandCursor)
         self.btn_live_corte.setStyleSheet("""
             QPushButton {
-                background: white; color: #2563eb; border: 2px solid #2563eb; border-radius: 6px;
-                font-weight: 900; font-size: 10px; padding: 8px 12px;
+                background: #F1F5F9; color: #475569; border: none; border-radius: 10px;
+                font-weight: 800; font-size: 11px; padding: 8px 16px;
             }
-            QPushButton:hover { background: #eff6ff; }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
         self.btn_live_corte.clicked.connect(self._ejecutar_live_corte_diario)
         lay_btn_bar.addWidget(self.btn_live_corte)
@@ -598,10 +659,10 @@ class Admin7Cierre(QWidget):
         self.btn_live_confirmar.setCursor(Qt.PointingHandCursor)
         self.btn_live_confirmar.setStyleSheet("""
             QPushButton {
-                background: #ef4444; color: white; border: none; border-radius: 6px;
-                font-weight: 900; font-size: 10px; padding: 8px 12px;
+                background: #EF4444; color: white; border: none; border-radius: 10px;
+                font-weight: 800; font-size: 11px; padding: 8px 16px;
             }
-            QPushButton:hover { background: #dc2626; }
+            QPushButton:hover { background: #DC2626; }
         """)
         self.btn_live_confirmar.clicked.connect(self._ejecutar_live_confirmar_cierre)
         lay_btn_bar.addWidget(self.btn_live_confirmar)
@@ -610,10 +671,10 @@ class Admin7Cierre(QWidget):
         self.btn_live_cierre_total.setCursor(Qt.PointingHandCursor)
         self.btn_live_cierre_total.setStyleSheet("""
             QPushButton {
-                background: #3b82f6; color: white; border: none; border-radius: 6px;
-                font-weight: 900; font-size: 10px; padding: 8px 12px;
+                background: #6366F1; color: white; border: none; border-radius: 10px;
+                font-weight: 800; font-size: 11px; padding: 8px 16px;
             }
-            QPushButton:hover { background: #2563eb; }
+            QPushButton:hover { background: #4F46E5; }
         """)
         self.btn_live_cierre_total.clicked.connect(self._ejecutar_live_cierre_total_centralizado)
         lay_btn_bar.addWidget(self.btn_live_cierre_total)
@@ -622,10 +683,10 @@ class Admin7Cierre(QWidget):
         self.btn_live_reporte.setCursor(Qt.PointingHandCursor)
         self.btn_live_reporte.setStyleSheet("""
             QPushButton {
-                background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px;
-                font-weight: 900; font-size: 10px; padding: 8px 12px;
+                background: #F1F5F9; color: #475569; border: none; border-radius: 10px;
+                font-weight: 800; font-size: 11px; padding: 8px 16px;
             }
-            QPushButton:hover { background: #e2e8f0; }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
         self.btn_live_reporte.clicked.connect(self._ejecutar_live_reporte_admin)
         lay_btn_bar.addWidget(self.btn_live_reporte)
@@ -640,15 +701,21 @@ class Admin7Cierre(QWidget):
 
         # --- PANEL INFERIOR: VIGILANCIA EN TIEMPO REAL ---
         panel_inferior = QFrame()
-        panel_inferior.setMinimumHeight(260) # Evita colapsos de QSplitter
-        panel_inferior.setStyleSheet("QFrame { background-color: white; border: 1px solid #cbd5e1; border-radius: 12px; }")
+        panel_inferior.setMinimumHeight(260)
+        panel_inferior.setStyleSheet("QFrame { background-color: white; border: none; border-radius: 20px; }")
+        sh_inf = QGraphicsDropShadowEffect(panel_inferior)
+        sh_inf.setBlurRadius(20)
+        sh_inf.setColor(QColor(0, 0, 0, 12))
+        sh_inf.setOffset(0, 4)
+        panel_inferior.setGraphicsEffect(sh_inf)
+        
         layout_inf = QVBoxLayout(panel_inferior)
-        layout_inf.setContentsMargins(15, 12, 15, 12)
-        layout_inf.setSpacing(10)
+        layout_inf.setContentsMargins(20, 20, 20, 20)
+        layout_inf.setSpacing(12)
         
         hdr_vigilancia = QHBoxLayout()
         lbl_v_title = QLabel("👁️ VIGILANCIA CENTRALIZADA & EVENTOS DE AUDITORÍA EN TIEMPO REAL")
-        lbl_v_title.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 13px; border: none; background: transparent;")
+        lbl_v_title.setStyleSheet("font-weight: 900; color: #0F172A; font-size: 13px; border: none; background: transparent;")
         hdr_vigilancia.addWidget(lbl_v_title)
         hdr_vigilancia.addStretch()
         layout_inf.addLayout(hdr_vigilancia)
@@ -659,6 +726,20 @@ class Admin7Cierre(QWidget):
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("🔍 Buscar por usuario, ID, tipo o descripción...")
         self.txt_buscar.setMinimumWidth(220)
+        self.txt_buscar.setStyleSheet("""
+            QLineEdit {
+                background: #F8FAFC;
+                border: 1px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #1E293B;
+            }
+            QLineEdit:focus {
+                border-color: #6366F1;
+                background: #FFFFFF;
+            }
+        """)
         self.txt_buscar.textChanged.connect(self.filtrar_auditoria)
         filt_bar.addWidget(self.txt_buscar)
         
@@ -671,10 +752,39 @@ class Admin7Cierre(QWidget):
             "Cancelaciones de Tickets",
             "Ingresos y Retiros de Efectivo"
         ])
+        self.cmb_tipo_evento.setStyleSheet("""
+            QComboBox {
+                background: #F8FAFC;
+                border: 1px solid #E2E8F0;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #1E293B;
+            }
+            QComboBox:focus {
+                border-color: #6366F1;
+                background: #FFFFFF;
+            }
+        """)
         self.cmb_tipo_evento.currentIndexChanged.connect(self.filtrar_auditoria)
         filt_bar.addWidget(self.cmb_tipo_evento)
         
         btn_exportar = QPushButton("📥 EXPORTAR BITÁCORA")
+        btn_exportar.setCursor(Qt.PointingHandCursor)
+        btn_exportar.setStyleSheet("""
+            QPushButton {
+                background: #10B981;
+                color: white;
+                font-weight: 700;
+                border-radius: 10px;
+                padding: 8px 20px;
+                font-size: 13px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #059669;
+            }
+        """)
         btn_exportar.clicked.connect(self._exportar_auditoria_excel)
         filt_bar.addWidget(btn_exportar)
         
@@ -686,7 +796,29 @@ class Admin7Cierre(QWidget):
         self.tabla_eventos.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tabla_eventos.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabla_eventos.verticalHeader().setVisible(False)
-        self.tabla_eventos.setStyleSheet("QTableWidget::item{padding:6px;}")
+        
+        self.tabla_eventos.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                border: none;
+                gridline-color: #F1F5F9;
+                font-size: 12px;
+                border-radius: 16px;
+            }
+            QTableWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QHeaderView::section {
+                background-color: #F8FAFC;
+                color: #475569;
+                font-weight: 800;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                padding: 10px;
+                font-size: 11px;
+            }
+        """)
         
         hh_e = self.tabla_eventos.horizontalHeader()
         hh_e.setSectionResizeMode(0, QHeaderView.Interactive)
@@ -704,32 +836,15 @@ class Admin7Cierre(QWidget):
         self.tabla_eventos.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
         layout_inf.addWidget(self.tabla_eventos)
         
-        # En Tab 1: agregar panel_superior a pantalla completa (sin splitter vertical ni colapsos)
+        # En Tab 1: agregar panel_superior a pantalla completa
         layout_central.addWidget(panel_superior)
 
         # --- ENSAMBLADO EN PESTAÑAS (QTabWidget) ---
         self.tab_widget = QTabWidget()
         self.tab_widget.setStyleSheet("""
             QTabWidget::pane {
-                border: 1px solid #cbd5e1;
-                background: white;
-                border-radius: 12px;
-            }
-            QTabBar::tab {
-                background: #f1f5f9;
-                color: #64748b;
-                border: 1px solid #cbd5e1;
-                border-bottom: none;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                padding: 10px 20px;
-                font-weight: bold;
-                font-size: 11px;
-            }
-            QTabBar::tab:selected, QTabBar::tab:hover {
-                background: white;
-                color: #1e3a8a;
-                border-bottom: 2px solid #3b82f6;
+                border: none;
+                background: transparent;
             }
         """)
 
@@ -738,24 +853,52 @@ class Admin7Cierre(QWidget):
         tab2_lay = QVBoxLayout(tab2_widget)
         tab2_lay.setContentsMargins(15, 15, 15, 15)
         tab2_lay.addWidget(panel_cierres)
- 
+  
         # --- TAB 3: REGISTRO DE AUDITORÍA Y ALERTAS A PANTALLA COMPLETA ---
         tab3_widget = QWidget()
         tab3_lay = QVBoxLayout(tab3_widget)
         tab3_lay.setContentsMargins(15, 15, 15, 15)
         tab3_lay.addWidget(panel_inferior)
- 
-        self.tab_widget.addTab(self.widget_sala_control, "🛰️ SALA DE CONTROL CENTRAL DE CAJAS (RED EN VIVO)")
-        self.tab_widget.addTab(tab2_widget, "🏁 HISTORIAL DE CIERRES Z DE TERMINALES")
-        self.tab_widget.addTab(tab3_widget, "👁️ REGISTRO DE ALERTAS Y EVENTOS DE AUDITORÍA")
+  
+        self.tab_widget.addTab(self.widget_sala_control, "SALA DE CONTROL CENTRAL DE CAJAS (RED EN VIVO)")
+        self.tab_widget.addTab(tab2_widget, "HISTORIAL DE CIERRES Z DE TERMINALES")
+        self.tab_widget.addTab(tab3_widget, "REGISTRO DE ALERTAS Y EVENTOS DE AUDITORÍA")
         
+        self.tab_widget.tabBar().hide()
         root.addWidget(self.tab_widget)
         self.tab_widget.currentChanged.connect(self.cargar_datos)
+        self.tab_widget.currentChanged.connect(self._update_tab_button_styles)
+        self._update_tab_button_styles()
 
         # Inicializar Timer de Barrido en Tiempo Real cada 30 segundos
         self.timer_barrido = QTimer(self)
         self.timer_barrido.timeout.connect(self._hacer_barrido_red)
         self.timer_barrido.start(30000)
+
+    def _set_active_tab(self, index):
+        self.tab_widget.setCurrentIndex(index)
+        self._update_tab_button_styles()
+
+    def _update_tab_button_styles(self):
+        style_active = """
+            QPushButton {
+                background: white; color: #1E3A8A; font-weight: 800; border-radius: 10px; 
+                padding: 10px 20px; border: 1px solid white; font-size: 11px;
+            }
+        """
+        style_inactive = """
+            QPushButton {
+                background: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.9); font-weight: 800; border-radius: 10px; 
+                padding: 10px 20px; border: 1px solid rgba(255, 255, 255, 0.2); font-size: 11px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.25); color: white; border-color: rgba(255, 255, 255, 0.4);
+            }
+        """
+        idx = self.tab_widget.currentIndex()
+        self.btn_tab_sala.setStyleSheet(style_active if idx == 0 else style_inactive)
+        self.btn_tab_cierres.setStyleSheet(style_active if idx == 1 else style_inactive)
+        self.btn_tab_alertas.setStyleSheet(style_active if idx == 2 else style_inactive)
 
     def cargar_datos(self):
         # 1. Cargar estadísticas de métricas en caliente
@@ -1419,7 +1562,7 @@ class Admin7Cierre(QWidget):
         c_id = data["caja_id"]
         cajero_actual = data["user"]
 
-        self.lbl_hdr_vivo_titulo.setText(f"💎 PUNPRO ELITE - CONTROL DE CIERRE: CAJA 0{c_id} ({cajero_actual.upper()})")
+        self.lbl_hdr_vivo_titulo.setText(f"💎 CAJAFACIL PRO - CONTROL DE CIERRE: CAJA 0{c_id} ({cajero_actual.upper()})")
         self.lbl_hdr_vivo_usuario.setText(f"👤 ROL: {data['rol'].upper()}")
         
         if data['online']:

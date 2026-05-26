@@ -58,7 +58,7 @@ class ConfigButton(QFrame):
 class DialogoCajeros(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("👥 Gestión de Personal - PunPro Elite")
+        self.setWindowTitle("👥 Gestión de Personal - CajaFacil Pro")
         self.setFixedSize(700, 600)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
         self.setup_ui()
@@ -554,7 +554,7 @@ class DialogoDosTiketeras(QDialog):
             data = bytearray()
             data.extend(b"\x1B\x40") # Reset
             data.extend(b"\x1B\x61\x01") # Centro
-            data.extend(f"PUNPRO ELITE 2026\n".encode())
+            data.extend(f"CAJAFACIL PRO 2026\n".encode())
             data.extend(f"TEST IMPRESION OK\n".encode())
             data.extend(b"--------------------------------\n")
             data.extend(f"Impresora: {printer_name}\n".encode())

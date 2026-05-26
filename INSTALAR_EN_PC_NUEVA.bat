@@ -102,6 +102,41 @@ with open(cfg, 'w', encoding='utf-8') as f:
 " 2>nul
 echo  [OK] Configuracion limpiada
 
+:: ── PASO 5.5: Descargar e Instalar Herramientas de Hardware ──
+echo.
+echo  Descargando herramientas de hardware (RPT Tool y Drivers 3nStar)...
+if not exist "%DESTINO%\utilidades_hardware" mkdir "%DESTINO%\utilidades_hardware"
+
+echo  Descargando RPT Printer Tool...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/RPT-Printer-Tool.zip' -OutFile '%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip'"
+if exist "%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip" (
+    echo  Extrayendo RPT Printer Tool...
+    powershell -Command "Expand-Archive -Path '%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip' -DestinationPath '%DESTINO%\utilidades_hardware\RPT-Printer-Tool' -Force"
+    del /f /q "%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip"
+    if exist "%DESTINO%\utilidades_hardware\RPT-Printer-Tool\RPT-Printer-Tool" (
+        xcopy "%DESTINO%\utilidades_hardware\RPT-Printer-Tool\RPT-Printer-Tool\*" "%DESTINO%\utilidades_hardware\RPT-Printer-Tool\" /E /Y /Q > nul
+        rmdir /s /q "%DESTINO%\utilidades_hardware\RPT-Printer-Tool\RPT-Printer-Tool"
+    )
+    echo  [OK] RPT Printer Tool instalado
+) else (
+    echo  [!] Advertencia: No se pudo descargar RPT Printer Tool. Se descargara al usar la app.
+)
+
+echo  Descargando Drivers 3nStar...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/3nStar-Drivers.zip' -OutFile '%DESTINO%\utilidades_hardware\3nStar-Drivers.zip'"
+if exist "%DESTINO%\utilidades_hardware\3nStar-Drivers.zip" (
+    echo  Extrayendo Drivers 3nStar...
+    powershell -Command "Expand-Archive -Path '%DESTINO%\utilidades_hardware\3nStar-Drivers.zip' -DestinationPath '%DESTINO%\utilidades_hardware\3nStar-Drivers' -Force"
+    del /f /q "%DESTINO%\utilidades_hardware\3nStar-Drivers.zip"
+    if exist "%DESTINO%\utilidades_hardware\3nStar-Drivers\3nStar-Drivers" (
+        xcopy "%DESTINO%\utilidades_hardware\3nStar-Drivers\3nStar-Drivers\*" "%DESTINO%\utilidades_hardware\3nStar-Drivers\" /E /Y /Q > nul
+        rmdir /s /q "%DESTINO%\utilidades_hardware\3nStar-Drivers\3nStar-Drivers"
+    )
+    echo  [OK] Drivers 3nStar instalados
+) else (
+    echo  [!] Advertencia: No se pudo descargar Drivers 3nStar. Se descargaran al usar la app.
+)
+
 :: ── PASO 6: Crear acceso directo en escritorio ────────────────
 echo.
 echo  Creando acceso directo en escritorio...

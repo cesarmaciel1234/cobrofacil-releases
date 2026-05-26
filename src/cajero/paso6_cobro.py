@@ -118,7 +118,6 @@ class Paso6Cobro(QDialog):
         layout.setSpacing(0)
         
         self.main_frame = QFrame()
-        self.main_frame.setStyleSheet("QFrame#MainFrame { background-color: white; border-radius: 20px; border: 1px solid #CBD5E1; }")
         self.main_frame.setObjectName("MainFrame")
         layout.addWidget(self.main_frame)
         
@@ -133,11 +132,10 @@ class Paso6Cobro(QDialog):
         left_lay.setContentsMargins(0, 0, 0, 0)
         left_lay.setSpacing(0)
 
-        # HEADER AZUL "COBRAR"
-        header = QLabel("  COBRAR")
-        header.setFixedHeight(45)
-        header.setStyleSheet("background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1E3A8A, stop:1 #3B82F6); color: white; font-size: 18px; font-weight: 900; border-top-left-radius: 19px; padding-left: 20px; letter-spacing: 2px;")
-        left_lay.addWidget(header)
+        # HEADER AZUL "COBRAR" (Estilo transparente premium)
+        self.header = QLabel("  COBRAR")
+        self.header.setFixedHeight(64)
+        left_lay.addWidget(self.header)
 
         # CONTENIDO IZQUIERDO
         content_lay = QVBoxLayout()
@@ -164,46 +162,55 @@ class Paso6Cobro(QDialog):
         assets_dir = os.path.join(base_dir, "assets")
 
         btn_lay.addStretch()
+        theme = config.get("theme", "light")
         for icon, text, key in metodos:
             container = QFrame()
             container.setFixedSize(120, 105)
-            container.setStyleSheet("""
-                QFrame {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                        stop:0 rgba(255, 255, 255, 0.75), 
-                        stop:0.46 rgba(255, 255, 255, 0.6), 
-                        stop:0.47 rgba(255, 255, 255, 0.25), 
-                        stop:1 rgba(255, 255, 255, 0.45)
-                    );
-                    border: 1px solid rgba(255, 255, 255, 0.65); 
-                    border-radius: 22px;
-                }
-                QFrame[active="true"] {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                        stop:0 rgba(243, 248, 255, 0.95), 
-                        stop:0.46 rgba(224, 237, 255, 0.85), 
-                        stop:0.47 rgba(191, 219, 254, 0.55), 
-                        stop:1 rgba(219, 234, 254, 0.75)
-                    );
-                    border: 2.5px solid #3B82F6;
-                }
-                QFrame:hover {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                        stop:0 rgba(255, 255, 255, 0.85), 
-                        stop:0.46 rgba(255, 255, 255, 0.7), 
-                        stop:0.47 rgba(255, 255, 255, 0.35), 
-                        stop:1 rgba(255, 255, 255, 0.55)
-                    );
-                    border-color: rgba(59, 130, 246, 0.6);
-                }
-            """)
+            if theme == "dark":
+                container.setStyleSheet("""
+                    QFrame {
+                        background: #1E293B;
+                        border: 1.5px solid #334155;
+                        border-radius: 24px;
+                    }
+                    QFrame[active="true"] {
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                            stop:0 rgba(59, 130, 246, 0.15), 
+                            stop:1 rgba(59, 130, 246, 0.05)
+                        );
+                        border: 2.5px solid #3B82F6;
+                    }
+                    QFrame:hover {
+                        background: #334155;
+                        border-color: rgba(59, 130, 246, 0.60);
+                    }
+                """)
+            else:
+                container.setStyleSheet("""
+                    QFrame {
+                        background: #FFFFFF;
+                        border: 1.5px solid #EEF2F8;
+                        border-radius: 24px;
+                    }
+                    QFrame[active="true"] {
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                            stop:0 rgba(59, 130, 246, 0.08), 
+                            stop:1 rgba(59, 130, 246, 0.03)
+                        );
+                        border: 2.5px solid #3B82F6;
+                    }
+                    QFrame:hover {
+                        background: #F8FAFC;
+                        border-color: rgba(59, 130, 246, 0.40);
+                    }
+                """)
             container.setProperty("active", False)
             
-            # Sombra inicial para efecto de flotación (iOS Style)
+            # Sombra inicial suave
             shadow = QGraphicsDropShadowEffect(container)
-            shadow.setBlurRadius(12)
-            shadow.setColor(QColor(0, 0, 0, 25))
-            shadow.setOffset(0, 4)
+            shadow.setBlurRadius(16)
+            shadow.setColor(QColor(59, 130, 246, 20))
+            shadow.setOffset(0, 5)
             container.setGraphicsEffect(shadow)
             
             c_lay = QVBoxLayout(container)
@@ -263,7 +270,23 @@ class Paso6Cobro(QDialog):
         
         self.txt_pago = QLineEdit("")
         self.txt_pago.setPlaceholderText("0.00")
-        self.txt_pago.setStyleSheet("background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 12px; padding: 8px 15px; font-size: 32px; font-weight: 900; color: #1E3A8A;")
+        self.txt_pago.setStyleSheet("""
+            QLineEdit {
+                background: #F8FAFC;
+                border: 1.5px solid #E2E8F0;
+                border-radius: 16px;
+                padding: 10px 16px;
+                font-size: 28px;
+                font-weight: 900;
+                color: #1E3A8A;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QLineEdit:focus {
+                border: 2px solid #3B82F6;
+                background: rgba(59, 130, 246, 0.04);
+                color: #0F172A;
+            }
+        """)
         self.txt_pago.textChanged.connect(self.calcular_vuelto)
         self.txt_pago.returnPressed.connect(self.intentar_finalizar)
         self.txt_pago.installEventFilter(self)
@@ -292,18 +315,52 @@ class Paso6Cobro(QDialog):
         self.lbl_desc = QLabel("DESCUENTO (%):")
         self.lbl_desc.setStyleSheet("font-weight: 900; color: #10B981; font-size: 16px;")
         self.lbl_desc.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.txt_desc = QLineEdit("0.00")
+        self.txt_desc = QLineEdit("")
+        self.txt_desc.setPlaceholderText("0.00")
         self.txt_desc.setFixedWidth(120)
-        self.txt_desc.setStyleSheet("background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 10px; padding: 6px 12px; font-size: 20px; font-weight: 900; color: #10B981; text-align: center;")
+        self.txt_desc.setStyleSheet("""
+            QLineEdit {
+                background: #F8FAFC;
+                border: 1.5px solid #E2E8F0;
+                border-radius: 12px;
+                padding: 6px 12px;
+                font-size: 18px;
+                font-weight: 900;
+                color: #10B981;
+                text-align: center;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QLineEdit:focus {
+                border: 2px solid #10B981;
+                background: rgba(16, 185, 129, 0.04);
+            }
+        """)
         self.txt_desc.textChanged.connect(self.on_descuento_changed)
         self.txt_desc.installEventFilter(self)
         
         self.lbl_rec = QLabel("RECARGO (%):")
         self.lbl_rec.setStyleSheet("font-weight: 900; color: #F59E0B; font-size: 16px;")
         self.lbl_rec.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.txt_rec = QLineEdit("0.00")
+        self.txt_rec = QLineEdit("")
+        self.txt_rec.setPlaceholderText("0.00")
         self.txt_rec.setFixedWidth(120)
-        self.txt_rec.setStyleSheet("background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 10px; padding: 6px 12px; font-size: 20px; font-weight: 900; color: #F59E0B; text-align: center;")
+        self.txt_rec.setStyleSheet("""
+            QLineEdit {
+                background: #F8FAFC;
+                border: 1.5px solid #E2E8F0;
+                border-radius: 12px;
+                padding: 6px 12px;
+                font-size: 18px;
+                font-weight: 900;
+                color: #F59E0B;
+                text-align: center;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QLineEdit:focus {
+                border: 2px solid #F59E0B;
+                background: rgba(245, 158, 11, 0.04);
+            }
+        """)
         self.txt_rec.textChanged.connect(self.on_recargo_changed)
         self.txt_rec.installEventFilter(self)
         
@@ -341,52 +398,94 @@ class Paso6Cobro(QDialog):
 
         # Barra de Estado Mercado Pago
         self.lbl_mp_status = QLabel("")
-        self.lbl_mp_status.setAlignment(Qt.AlignCenter)
-        self.lbl_mp_status.setStyleSheet("font-weight: bold; font-size: 13px; color: #0284c7; background: #e0f2fe; padding: 10px; border: 1px dashed #0284c7;")
+        self.lbl_mp_status.setStyleSheet("font-weight: 800; font-size: 12px; color: #0284c7; background: #e0f2fe; padding: 8px 16px; border: none; border-radius: 10px; font-family: 'Segoe UI';")
         self.lbl_mp_status.hide()
         content_lay.addWidget(self.lbl_mp_status)
-
+        
         self.timer_mp = QTimer(self)
         self.timer_mp.timeout.connect(self.verificar_pago_mp_automatico)
         
         content_lay.addStretch()
         left_lay.addLayout(content_lay)
         main_lay.addWidget(left_panel, 7)
-
+        
         # --- SECCIÓN DERECHA: ACCIONES (25%) ---
+        theme = config.get("theme", "light")
         right_panel = QFrame()
-        right_panel.setStyleSheet("QFrame { background-color: #F8FAFC; border-left: 1px solid #E2E8F0; border-top-right-radius: 19px; border-bottom-right-radius: 19px; }")
+        self.right_panel = right_panel
         right_lay = QVBoxLayout(right_panel)
         right_lay.setContentsMargins(15, 30, 15, 30)
         right_lay.setSpacing(12)
-
+        
         def create_action_btn(text, callback, is_primary=False):
             btn = QPushButton(text)
+            btn.setFixedHeight(48)
             if is_primary:
                 btn.setStyleSheet("""
                     QPushButton {
-                        background-color: #3B82F6; color: white; padding: 15px; 
-                        border: none; border-radius: 12px; font-size: 13px; font-weight: 900;
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3B82F6, stop:1 #2563EB);
+                        color: white; 
+                        border: none; 
+                        border-radius: 24px; 
+                        font-size: 12px; 
+                        font-weight: 900;
+                        font-family: 'Segoe UI', sans-serif;
+                        letter-spacing: 0.5px;
                     }
-                    QPushButton:hover { background-color: #2563EB; }
-                    QPushButton:pressed { background-color: #1D4ED8; }
+                    QPushButton:hover { 
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563EB, stop:1 #1D4ED8);
+                    }
                 """)
+                sh = QGraphicsDropShadowEffect(btn)
+                sh.setBlurRadius(12)
+                sh.setColor(QColor(59, 130, 246, 60))
+                sh.setOffset(0, 4)
+                btn.setGraphicsEffect(sh)
             else:
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: white; color: #1E293B; padding: 15px; 
-                        border: 2px solid #E2E8F0; border-radius: 12px; font-size: 13px; font-weight: 900;
-                    }
-                    QPushButton:hover { background-color: #F1F5F9; border-color: #CBD5E1; }
-                    QPushButton:pressed { background-color: #E2E8F0; }
-                """)
+                if theme == "dark":
+                    btn.setStyleSheet("""
+                        QPushButton {
+                            background-color: #334155; 
+                            color: #F8FAFC; 
+                            border: 1.5px solid #475569; 
+                            border-radius: 24px; 
+                            font-size: 12px; 
+                            font-weight: 800;
+                            font-family: 'Segoe UI', sans-serif;
+                        }
+                        QPushButton:hover { 
+                            background-color: #475569; 
+                            border-color: #64748B; 
+                        }
+                        QPushButton:pressed { 
+                            background-color: #1E293B; 
+                        }
+                    """)
+                else:
+                    btn.setStyleSheet("""
+                        QPushButton {
+                            background-color: #FFFFFF; 
+                            color: #1E293B; 
+                            border: 1.5px solid #E2E8F0; 
+                            border-radius: 24px; 
+                            font-size: 12px; 
+                            font-weight: 800;
+                            font-family: 'Segoe UI', sans-serif;
+                        }
+                        QPushButton:hover { 
+                            background-color: #F1F5F9; 
+                            border-color: #CBD5E1; 
+                        }
+                        QPushButton:pressed { 
+                            background-color: #E2E8F0; 
+                        }
+                    """)
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(callback)
             return btn
 
         right_lay.addWidget(create_action_btn("🖨️ F1 - Cobrar e Imprimir", lambda: self.finalizar(True), is_primary=True))
         right_lay.addWidget(create_action_btn("🤝 F2 - Cobrar sin imprimir", lambda: self.finalizar(False)))
-        right_lay.addWidget(create_action_btn("⌨️ ESC - Cancelar", self.reject))
         right_lay.addSpacing(20)
         
         self.btn_descuento = create_action_btn("🏷️ F3 - Descuento", self.abrir_descuento)
@@ -398,12 +497,171 @@ class Paso6Cobro(QDialog):
         self.build_teclado_propio(right_lay)
 
         main_lay.addWidget(right_panel, 3)
+        self.apply_theme()
 
         # Aplicar método inicial después de crear todos los widgets
         self.set_metodo("Efectivo")
+        self.recargar_total_final()
 
         # Foco inicial en la casilla de pago para comenzar a escribir directamente
         self.txt_pago.setFocus()
+
+    def apply_theme(self):
+        theme = config.get("theme", "light")
+        if theme == "dark":
+            self.main_frame.setStyleSheet("QFrame#MainFrame { background-color: #0F172A; border-radius: 28px; border: none; }")
+            self.header.setStyleSheet("background-color: transparent; color: #F8FAFC; font-size: 16px; font-weight: 900; border: none; padding-left: 24px; letter-spacing: 3px;")
+            self.lbl_total.setStyleSheet("color: #38BDF8; font-size: 85px; font-weight: 900; font-family: 'Segoe UI Black'; border: none;")
+            
+            self.lbl_input1.setStyleSheet("font-weight: 900; color: #F8FAFC; font-size: 18px;")
+            self.lbl_input2.setStyleSheet("font-weight: 900; color: #F8FAFC; font-size: 18px;")
+            
+            pago_style = """
+                QLineEdit {
+                    background: #1E293B;
+                    border: 1.5px solid #334155;
+                    border-radius: 16px;
+                    padding: 10px 16px;
+                    font-size: 28px;
+                    font-weight: 900;
+                    color: #38BDF8;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #3B82F6;
+                    background: #0F172A;
+                    color: #F8FAFC;
+                }
+            """
+            self.txt_pago.setStyleSheet(pago_style)
+            self.txt_otro.setStyleSheet(pago_style)
+            
+            self.txt_desc.setStyleSheet("""
+                QLineEdit {
+                    background: #1E293B;
+                    border: 1.5px solid #334155;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                    font-size: 18px;
+                    font-weight: 900;
+                    color: #10B981;
+                    text-align: center;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #10B981;
+                    background: #0F172A;
+                }
+            """)
+            self.txt_rec.setStyleSheet("""
+                QLineEdit {
+                    background: #1E293B;
+                    border: 1.5px solid #334155;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                    font-size: 18px;
+                    font-weight: 900;
+                    color: #F59E0B;
+                    text-align: center;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #F59E0B;
+                    background: #0F172A;
+                }
+            """)
+            
+            self.lbl_neto.setStyleSheet("font-weight: 900; color: #38BDF8; font-size: 26px; letter-spacing: 1px; margin-top: 5px;")
+            self.lbl_vuelto_tit.setStyleSheet("font-weight: 900; color: #94A3B8; font-size: 20px;")
+            
+            if hasattr(self, 'right_panel'):
+                self.right_panel.setStyleSheet("QFrame { background-color: #1E293B; border: none; border-top-right-radius: 28px; border-bottom-right-radius: 28px; }")
+            
+            if hasattr(self, 'kb_frame'):
+                self.kb_frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #1E293B;
+                        border-radius: 20px;
+                        border: 1px solid #334155;
+                    }
+                """)
+        else:
+            self.main_frame.setStyleSheet("QFrame#MainFrame { background-color: #FFFFFF; border-radius: 28px; border: none; }")
+            self.header.setStyleSheet("background-color: transparent; color: #1E3A8A; font-size: 16px; font-weight: 900; border: none; padding-left: 24px; letter-spacing: 3px;")
+            self.lbl_total.setStyleSheet("color: #1E3A8A; font-size: 85px; font-weight: 900; font-family: 'Segoe UI Black'; border: none;")
+            
+            self.lbl_input1.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 18px;")
+            self.lbl_input2.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 18px;")
+            
+            pago_style = """
+                QLineEdit {
+                    background: #F8FAFC;
+                    border: 1.5px solid #E2E8F0;
+                    border-radius: 16px;
+                    padding: 10px 16px;
+                    font-size: 28px;
+                    font-weight: 900;
+                    color: #1E3A8A;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #3B82F6;
+                    background: rgba(59, 130, 246, 0.04);
+                    color: #0F172A;
+                }
+            """
+            self.txt_pago.setStyleSheet(pago_style)
+            self.txt_otro.setStyleSheet(pago_style)
+            
+            self.txt_desc.setStyleSheet("""
+                QLineEdit {
+                    background: #F8FAFC;
+                    border: 1.5px solid #E2E8F0;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                    font-size: 18px;
+                    font-weight: 900;
+                    color: #10B981;
+                    text-align: center;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #10B981;
+                    background: rgba(16, 185, 129, 0.04);
+                }
+            """)
+            self.txt_rec.setStyleSheet("""
+                QLineEdit {
+                    background: #F8FAFC;
+                    border: 1.5px solid #E2E8F0;
+                    border-radius: 12px;
+                    padding: 6px 12px;
+                    font-size: 18px;
+                    font-weight: 900;
+                    color: #F59E0B;
+                    text-align: center;
+                    font-family: 'Segoe UI', sans-serif;
+                }
+                QLineEdit:focus {
+                    border: 2px solid #F59E0B;
+                    background: rgba(245, 158, 11, 0.04);
+                }
+            """)
+            
+            self.lbl_neto.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 26px; letter-spacing: 1px; margin-top: 5px;")
+            self.lbl_vuelto_tit.setStyleSheet("font-weight: 900; color: #64748B; font-size: 20px;")
+            
+            if hasattr(self, 'right_panel'):
+                self.right_panel.setStyleSheet("QFrame { background-color: #F8FAFC; border: none; border-top-right-radius: 28px; border-bottom-right-radius: 28px; }")
+            
+            if hasattr(self, 'kb_frame'):
+                self.kb_frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #F1F5F9;
+                        border-radius: 20px;
+                        border: 1px solid #E2E8F0;
+                    }
+                """)
 
     def set_metodo(self, key):
         self.current_metodo = key
@@ -426,13 +684,13 @@ class Paso6Cobro(QDialog):
             shadow = frame.graphicsEffect()
             if isinstance(shadow, QGraphicsDropShadowEffect):
                 if is_active:
-                    shadow.setBlurRadius(25)
-                    shadow.setColor(QColor(59, 130, 246, 85)) # Brillo azul iOS flotante
-                    shadow.setOffset(0, 8) # Sombra más lejana para elevar el widget
+                    shadow.setBlurRadius(28)
+                    shadow.setColor(QColor(59, 130, 246, 60)) # Brillo azul iOS flotante
+                    shadow.setOffset(0, 10) # Sombra más lejana para elevar el widget
                 else:
-                    shadow.setBlurRadius(12)
-                    shadow.setColor(QColor(0, 0, 0, 25)) # Sombra suave base
-                    shadow.setOffset(0, 4)
+                    shadow.setBlurRadius(16)
+                    shadow.setColor(QColor(59, 130, 246, 20)) # Sombra suave base
+                    shadow.setOffset(0, 5)
             
             # Zoom dinámico de los iconos:
             # Encontrar el QLabel de la imagen dentro del frame
@@ -446,10 +704,12 @@ class Paso6Cobro(QDialog):
                     lbl_icon.setPixmap(pixmap.scaled(w_icon, h_icon, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             
             if lbl_text:
+                theme = config.get("theme", "light")
                 if is_active:
-                    lbl_text.setStyleSheet("font-size: 13px; font-weight: 900; color: #1E3A8A; background: transparent; border: none;")
+                    color = "#38BDF8" if theme == "dark" else "#1E3A8A"
                 else:
-                    lbl_text.setStyleSheet("font-size: 13px; font-weight: 900; color: #475569; background: transparent; border: none;")
+                    color = "#94A3B8" if theme == "dark" else "#475569"
+                lbl_text.setStyleSheet(f"font-size: 13px; font-weight: 900; color: {color}; background: transparent; border: none;")
         
         if key == "Mixto":
             self.lbl_input1.setText("EFECTIVO ($):")
@@ -465,7 +725,11 @@ class Paso6Cobro(QDialog):
             
             if key == "Transferencia":
                 self.lbl_mp_status.setText(f"📡 ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${self.total_final:.2f})")
-                self.lbl_mp_status.setStyleSheet("font-weight: bold; font-size: 13px; color: #0284c7; background: #e0f2fe; padding: 10px; border-radius: 8px; border: 1px dashed #0284c7;")
+                theme = config.get("theme", "light")
+                if theme == "dark":
+                    self.lbl_mp_status.setStyleSheet("font-weight: bold; font-size: 13px; color: #38BDF8; background: #1E293B; padding: 10px; border-radius: 8px; border: 1px dashed #38BDF8;")
+                else:
+                    self.lbl_mp_status.setStyleSheet("font-weight: bold; font-size: 13px; color: #0284c7; background: #e0f2fe; padding: 10px; border-radius: 8px; border: 1px dashed #0284c7;")
                 self.lbl_mp_status.show()
                 self.timer_mp.start(1000)
             else:
@@ -524,7 +788,11 @@ class Paso6Cobro(QDialog):
                         
                         self.txt_pago.setText(f"{monto_pago:.2f}")
                         self.lbl_mp_status.setText(f"✅ ¡PAGO DE {pago['nombre'].upper()} DETECTADO Y APROBADO!")
-                        self.lbl_mp_status.setStyleSheet("font-weight: 900; font-size: 13px; color: #15803d; background: #dcfce7; padding: 10px; border-radius: 8px; border: 1px solid #16a34a;")
+                        theme = config.get("theme", "light")
+                        if theme == "dark":
+                            self.lbl_mp_status.setStyleSheet("font-weight: 900; font-size: 13px; color: #4ADE80; background: #14532D; padding: 10px; border-radius: 8px; border: 1px solid #22C55E;")
+                        else:
+                            self.lbl_mp_status.setStyleSheet("font-weight: 900; font-size: 13px; color: #15803d; background: #dcfce7; padding: 10px; border-radius: 8px; border: 1px solid #16a34a;")
                         
                         # Esperar 1.5 segundos para la animación y finalizar con ticket
                         QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
@@ -584,18 +852,18 @@ class Paso6Cobro(QDialog):
         # Actualizar visualización del botón de Descuento (Premium UX!)
         if self.descuento_porcentaje > 0:
             self.btn_descuento.setText(f"🏷️ DESC: {self.descuento_porcentaje:g}% (F3)")
-            self.btn_descuento.setStyleSheet("background: #047857; color: white; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 12px; border: 2px solid #34D399;")
+            self.btn_descuento.setStyleSheet("background: #047857; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
         else:
             self.btn_descuento.setText("🏷️ DESCUENTO (F3)")
-            self.btn_descuento.setStyleSheet("background: #10B981; color: white; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_descuento.setStyleSheet("background: #10B981; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
             
         # Actualizar visualización del botón de Recargo (Premium UX!)
         if self.recargo_porcentaje > 0:
             self.btn_recargo.setText(f"📈 REC: {self.recargo_porcentaje:g}% (F4)")
-            self.btn_recargo.setStyleSheet("background: #B45309; color: white; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 12px; border: 2px solid #FBBF24;")
+            self.btn_recargo.setStyleSheet("background: #B45309; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
         else:
             self.btn_recargo.setText("📈 RECARGO (F4)")
-            self.btn_recargo.setStyleSheet("background: #F59E0B; color: white; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_recargo.setStyleSheet("background: #F59E0B; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
             
         # Si el método es electrónico, actualizar el autocompletado del pago de inmediato
         if self.current_metodo in ["Tarjeta", "Transferencia"]:
@@ -759,18 +1027,28 @@ class Paso6Cobro(QDialog):
             super().keyPressEvent(event)
 
     def build_teclado_propio(self, right_lay):
-        kb_frame = QFrame()
-        kb_frame.setObjectName("KeyboardFrame")
-        kb_frame.setStyleSheet("""
-            QFrame#KeyboardFrame {
-                background-color: #F1F5F9;
-                border: 2px solid #CBD5E1;
-                border-radius: 12px;
-            }
-        """)
-        kb_frame.setFixedSize(240, 330)
+        theme = config.get("theme", "light")
+        self.kb_frame = QFrame()
+        self.kb_frame.setObjectName("KeyboardFrame")
+        if theme == "dark":
+            self.kb_frame.setStyleSheet("""
+                QFrame#KeyboardFrame {
+                    background-color: #1E293B;
+                    border: 1px solid #334155;
+                    border-radius: 24px;
+                }
+            """)
+        else:
+            self.kb_frame.setStyleSheet("""
+                QFrame#KeyboardFrame {
+                    background-color: #F1F5F9;
+                    border: none;
+                    border-radius: 24px;
+                }
+            """)
+        self.kb_frame.setFixedSize(240, 330)
         
-        kb_layout = QVBoxLayout(kb_frame)
+        kb_layout = QVBoxLayout(self.kb_frame)
         kb_layout.setContentsMargins(8, 8, 8, 8)
         kb_layout.setSpacing(5)
         
@@ -778,36 +1056,59 @@ class Paso6Cobro(QDialog):
             ["1", "2", "3"],
             ["4", "5", "6"],
             ["7", "8", "9"],
-            ["⌫", "0", "."],
-            ["+", "-", "*"],
-            ["ABC", "ENTER"]
+            [",", "0", "⌫"],
+            ["ESC", "ENTER"]
         ]
         
         # Mapeo de teclas de caracteres comunes
         self.teclado_key_map = {
             '0': Qt.Key_0, '1': Qt.Key_1, '2': Qt.Key_2, '3': Qt.Key_3, '4': Qt.Key_4,
             '5': Qt.Key_5, '6': Qt.Key_6, '7': Qt.Key_7, '8': Qt.Key_8, '9': Qt.Key_9,
-            '-': Qt.Key_Minus, '+': Qt.Key_Plus, '*': Qt.Key_Asterisk, '.': Qt.Key_Period
+            ',': Qt.Key_Comma
         }
         
-        btn_style = """
-            QPushButton {
-                background-color: #FFFFFF;
-                color: #0F172A;
-                font-size: 15px;
-                font-weight: bold;
-                font-family: 'Segoe UI', sans-serif;
-                border: 1px solid #E2E8F0;
-                border-bottom: 2px solid #CBD5E1;
-                border-radius: 6px;
-                min-width: 48px;
-                min-height: 48px;
-            }
-            QPushButton:hover {
-                background-color: #F8FAFC;
-                border-color: #CBD5E1;
-            }
-        """
+        if theme == "dark":
+            btn_style = """
+                QPushButton {
+                    background-color: #334155;
+                    color: #F8FAFC;
+                    font-size: 16px;
+                    font-weight: 800;
+                    font-family: 'Segoe UI', sans-serif;
+                    border: none;
+                    border-radius: 14px;
+                    min-width: 48px;
+                    min-height: 48px;
+                }
+                QPushButton:hover {
+                    background-color: #475569;
+                }
+            """
+            bg_backspace = "#7F1D1D"
+            color_backspace = "#FCA5A5"
+            bg_esc = "#334155"
+            color_esc = "#94A3B8"
+        else:
+            btn_style = """
+                QPushButton {
+                    background-color: #FFFFFF;
+                    color: #1E293B;
+                    font-size: 16px;
+                    font-weight: 800;
+                    font-family: 'Segoe UI', sans-serif;
+                    border: none;
+                    border-radius: 14px;
+                    min-width: 48px;
+                    min-height: 48px;
+                }
+                QPushButton:hover {
+                    background-color: #E2E8F0;
+                }
+            """
+            bg_backspace = "#FEE2E2"
+            color_backspace = "#EF4444"
+            bg_esc = "#F3F4F6"
+            color_esc = "#475569"
         
         for row in rows:
             row_lay = QHBoxLayout()
@@ -822,21 +1123,19 @@ class Paso6Cobro(QDialog):
                 
                 # Estilos específicos para teclas especiales
                 if key == "⌫":
-                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #EF4444; border-color: #CBD5E1; }")
-                elif key == "ABC":
-                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #1E40AF; border-color: #CBD5E1; }")
-                elif key in ("+", "-", "*"):
-                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }")
+                    btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_backspace}; color: {color_backspace}; }}")
+                elif key == "ESC":
+                    btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_esc}; color: {color_esc}; }}")
                 elif key == "ENTER":
-                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #1A73E8; color: white; border-color: #1557B0; border-bottom: 2px solid #0D3E8C; }")
+                    btn.setStyleSheet(btn_style + "QPushButton { background-color: #3B82F6; color: white; }")
                 
                 btn.clicked.connect(lambda checked, k=key: self.on_teclado_key_clicked(k))
                 row_lay.addWidget(btn)
                 
             kb_layout.addLayout(row_lay)
             
-        right_lay.addWidget(kb_frame)
-
+        right_lay.addWidget(self.kb_frame)
+ 
     def on_teclado_key_clicked(self, key):
         focused = self.focusWidget()
         if not focused or not isinstance(focused, QLineEdit):
@@ -852,8 +1151,8 @@ class Paso6Cobro(QDialog):
             QApplication.sendEvent(focused, event_press)
             event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Return, Qt.NoModifier, "\n")
             QApplication.sendEvent(focused, event_release)
-        elif key == "ABC":
-            pass
+        elif key == "ESC":
+            self.reject()
         else:
             key_code = self.teclado_key_map.get(key, Qt.Key_unknown)
             event_press = QKeyEvent(QEvent.KeyPress, key_code, Qt.NoModifier, key)

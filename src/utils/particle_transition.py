@@ -2,51 +2,66 @@ import random
 import math
 from PyQt5.QtWidgets import QWidget, QGraphicsOpacityEffect
 from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF
-from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QFont
+from PyQt5.QtGui import QPainter, QColor, QBrush, QPen, QFont, QLinearGradient
 
 class Particle:
-    def __init__(self, target_x, target_y, start_x, start_y, end_x, end_y, color, size):
+    def __init__(self, target_x, target_y, cx, cy, color, size):
         self.target_x = target_x
         self.target_y = target_y
-        self.start_x = start_x
-        self.start_y = start_y
-        self.end_x = end_x
-        self.end_y = end_y
+        self.cx = cx
+        self.cy = cy
         self.color = color
         self.size = size
         
-        # Posición actual e historial para efecto estela de luz (Motion Blur)
-        self.x = start_x
-        self.y = start_y
-        self.prev_x = start_x
-        self.prev_y = start_y
+        # Parámetros espirales para fase de entrada
+        self.angle_offset = random.uniform(0, 2 * math.pi)
+        self.spiral_speed = random.choice([-1.2, 1.2])
+        self.max_radius = math.hypot(target_x - cx, target_y - cy)
+        
+        # Posición actual
+        self.x = cx
+        self.y = cy
+        self.prev_x = cx
+        self.prev_y = cy
 
     def update(self, progress):
-        # Guardar posición anterior antes de mover para la estela de luz
         self.prev_x = self.x
         self.prev_y = self.y
         
-        # Fase 1: Entrada desde los bordes hacia el centro (0% a 50%)
-        # Fase 2: Retroceso hacia los bordes (50% a 100%)
         if progress < 0.5:
-            p_phase = progress * 2.0
-            ease = 1.0 - math.pow(1.0 - p_phase, 3)
-            self.x = self.start_x + (self.target_x - self.start_x) * ease
-            self.y = self.start_y + (self.target_y - self.start_y) * ease
+            # Fase 1: Entrada desde vórtice espiral (0% -> 50%)
+            t = progress * 2.0  # 0.0 -> 1.0
+            ease = 1.0 - math.pow(1.0 - t, 3) # Cubic ease out
+            
+            # Espiral expandiéndose del centro al destino
+            current_angle = self.angle_offset + t * 3.5 * math.pi * self.spiral_speed
+            current_radius = self.max_radius * ease
+            
+            spiral_x = self.cx + current_radius * math.cos(current_angle)
+            spiral_y = self.cy + current_radius * math.sin(current_angle)
+            
+            # Mezclamos para aterrizar exactamente en el target
+            self.x = spiral_x * (1.0 - ease) + self.target_x * ease
+            self.y = spiral_y * (1.0 - ease) + self.target_y * ease
         else:
-            p_phase = (progress - 0.5) * 2.0
-            ease = math.pow(p_phase, 3)
-            self.x = self.target_x + (self.end_x - self.target_x) * ease
-            self.y = self.target_y + (self.end_y - self.target_y) * ease
+            # Fase 2: Disolución / Dispersión (50% -> 100%)
+            t = (progress - 0.5) * 2.0  # 0.0 -> 1.0
+            ease = math.pow(t, 2) # Aceleración cuadrática
+            
+            # Se dispersan hacia afuera desde el centro de la pantalla
+            angle = math.atan2(self.target_y - self.cy, self.target_x - self.cx) + self.angle_offset * 0.2
+            dist = 300.0 * ease
+            
+            self.x = self.target_x + dist * math.cos(angle)
+            self.y = self.target_y + dist * math.sin(angle)
 
 class ParticleReconstructionOverlay(QWidget):
     """
-    Efecto 'Estelas de Luz Simétricas' (De Esquinas a Centro y Viceversa).
-    - Swarm de 1200 Partículas con Estela de Luz (Motion Blur): Los puntos viajan simétricamente
-      desde las 4 esquinas de la pantalla hacia sus objetivos en la interfaz y luego regresan.
-    - Dibujo con Estela: En lugar de puntos estáticos, se dibuja un trazo dinámico
-      proporcional a la velocidad del movimiento.
-    - Mensaje Central: Texto "BIENVENIDOS...." limpio en cristal oscuro.
+    Efecto 'Vórtice Cósmico y Constelación Holográfica' (Light Mode Premium).
+    - Swarm de 1500 Partículas con Estela de Luz en un fondo Glass claro.
+    - Dibujo con Estela (Motion Blur) y enlaces de red neural entre nodos.
+    - Elementos HUD Scifi: Scanline láser de barrido, telemetría y anillo de datos.
+    - Mensaje Central: "INICIALIZANDO TERMINAL..." elegante en Slate.
     """
     def __init__(self, parent):
         super().__init__(parent)
@@ -57,9 +72,8 @@ class ParticleReconstructionOverlay(QWidget):
         self.w = parent.width()
         self.h = parent.height()
         
-        self.bg_alpha = 245
+        self.bg_alpha = 240
         
-        # Generar nube de partículas de datos (1200 puntos)
         self.particles = []
         self.setup_particles()
         
@@ -69,7 +83,7 @@ class ParticleReconstructionOverlay(QWidget):
         self.timer.start(16)
         
         self.ticks_elapsed = 0
-        self.max_ticks = 90 # ~1.5 segundos
+        self.max_ticks = 85 # ~1.4 segundos para una transición ágil
         
         self.opacity_effect = QGraphicsOpacityEffect(self)
         self.setGraphicsEffect(self.opacity_effect)
@@ -78,43 +92,24 @@ class ParticleReconstructionOverlay(QWidget):
     def setup_particles(self):
         # Estructura del terminal
         struct_zones = [
-            {"x1": 30, "x2": self.w - 30, "y1": 15, "y2": 70, "color": QColor(6, 182, 212)}, # Cyan
+            {"x1": 30, "x2": self.w - 30, "y1": 15, "y2": 70, "color": QColor(99, 102, 241)},     # Indigo
             {"x1": 30, "x2": int(self.w * 0.7), "y1": 95, "y2": self.h - 110, "color": QColor(16, 185, 129)}, # Esmeralda
-            {"x1": int(self.w * 0.72), "x2": self.w - 30, "y1": 95, "y2": self.h - 110, "color": QColor(6, 182, 212)}, # Cyan
-            {"x1": 30, "x2": self.w - 30, "y1": self.h - 85, "color": QColor(16, 185, 129)} # Esmeralda
+            {"x1": int(self.w * 0.72), "x2": self.w - 30, "y1": 95, "y2": self.h - 110, "color": QColor(14, 165, 233)}, # Sky
+            {"x1": 30, "x2": self.w - 30, "y1": self.h - 85, "color": QColor(139, 92, 246)}      # Púrpura
         ]
         
-        # Esquinas físicas de la pantalla
-        corners = [
-            (0, 0),             # Top-Left
-            (self.w, 0),         # Top-Right
-            (0, self.h),         # Bottom-Left
-            (self.w, self.h)      # Bottom-Right
-        ]
+        cx = self.w / 2
+        cy = self.h / 2
         
-        for _ in range(1200):
+        for _ in range(1500):
             zone = random.choice(struct_zones)
-            
             target_x = random.uniform(zone["x1"], zone.get("x2", zone["x1"] + 100))
             target_y = random.uniform(zone["y1"], zone.get("y2", zone["y1"] + 50))
-            
-            # Asignar una esquina de origen simétrica
-            corner_x, corner_y = random.choice(corners)
-            
-            # Pequeño desplazamiento aleatorio para evitar que salgan exactamente de un solo píxel
-            offset_x = random.uniform(-40, 40)
-            offset_y = random.uniform(-40, 40)
-            
-            start_x = corner_x + offset_x
-            start_y = corner_y + offset_y
-            
-            end_x = corner_x + offset_x
-            end_y = corner_y + offset_y
             
             size = random.uniform(1.8, 3.2)
             color = zone["color"]
             
-            self.particles.append(Particle(target_x, target_y, start_x, start_y, end_x, end_y, color, size))
+            self.particles.append(Particle(target_x, target_y, cx, cy, color, size))
 
     def tick(self):
         self.ticks_elapsed += 1
@@ -124,13 +119,13 @@ class ParticleReconstructionOverlay(QWidget):
         for p in self.particles:
             p.update(progress)
             
-        # 2. Reducir opacidad del fondo
-        if progress > 0.4:
-            self.bg_alpha = max(0, self.bg_alpha - 15)
+        # 2. Reducir opacidad del fondo de cristal
+        if progress > 0.45:
+            self.bg_alpha = max(0, self.bg_alpha - 20)
             
-        # 3. Desvanecimiento al final
+        # 3. Desvanecimiento final suave
         if self.ticks_elapsed >= self.max_ticks:
-            self.fade_alpha -= 0.12
+            self.fade_alpha -= 0.15
             if self.fade_alpha <= 0:
                 self.timer.stop()
                 self.close()
@@ -143,57 +138,121 @@ class ParticleReconstructionOverlay(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # A. Fondo cristal oscuro
+        # A. Fondo cristalino claro
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(QColor(10, 12, 20, self.bg_alpha)))
+        bg_col = QColor(244, 246, 251, self.bg_alpha)
+        painter.setBrush(QBrush(bg_col))
         painter.drawRect(self.rect())
         
         progress = min(1.0, self.ticks_elapsed / float(self.max_ticks))
-        cam_alpha = min(self.bg_alpha, 200)
+        cam_alpha = min(self.bg_alpha, 210)
         cx = self.w / 2
         cy = self.h / 2
 
-        # B. DIBUJAR NUBE DE PARTÍCULAS (Con Estelas de Luz / Motion Blur)
+        # B. Barrido Láser Holográfico
+        if self.bg_alpha > 10:
+            laser_y = (self.h * progress * 2.0) % self.h
+            laser_grad = QLinearGradient(0, laser_y - 3, 0, laser_y + 3)
+            laser_grad.setColorAt(0.0, QColor(99, 102, 241, 0))
+            laser_grad.setColorAt(0.5, QColor(99, 102, 241, int(cam_alpha * 0.4)))
+            laser_grad.setColorAt(1.0, QColor(99, 102, 241, 0))
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(laser_grad))
+            painter.drawRect(0, int(laser_y - 6), self.w, 12)
+
+        # C. Anillo HUD y brackets centrales
+        if self.bg_alpha > 20:
+            hud_angle = progress * 720.0
+            painter.save()
+            painter.translate(cx, cy)
+            painter.rotate(hud_angle)
+            
+            # Anillo punteado
+            pen_hud = QPen(QColor(99, 102, 241, int(cam_alpha * 0.2)), 1.5, Qt.DashLine)
+            painter.setPen(pen_hud)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawEllipse(QPointF(0, 0), 140, 140)
+            
+            # Brackets de mira scifi
+            pen_bracket = QPen(QColor(99, 102, 241, int(cam_alpha * 0.4)), 2)
+            painter.setPen(pen_bracket)
+            painter.drawArc(QRectF(-155, -155, 310, 310), 0 * 16, 30 * 16)
+            painter.drawArc(QRectF(-155, -155, 310, 310), 120 * 16, 30 * 16)
+            painter.drawArc(QRectF(-155, -155, 310, 310), 240 * 16, 30 * 16)
+            
+            painter.restore()
+
+        # D. Constelación de Red de Nodos (Conexiones dinámicas)
         p_alpha = int(min(self.bg_alpha, 255) * (1.0 - abs(progress - 0.5) * 1.5))
-        p_alpha = max(15, min(255, p_alpha))
+        p_alpha = max(10, min(255, p_alpha))
         
+        if self.bg_alpha > 15 and progress < 0.8:
+            painter.setBrush(Qt.NoBrush)
+            for i in range(min(len(self.particles), 150)):
+                p1 = self.particles[i]
+                for j in range(i + 1, min(len(self.particles), 280)):
+                    p2 = self.particles[j]
+                    dx = p1.x - p2.x
+                    dy = p1.y - p2.y
+                    dist = math.hypot(dx, dy)
+                    if dist < 45:
+                        alpha = int((1.0 - (dist / 45.0)) * 35 * (cam_alpha / 210.0))
+                        painter.setPen(QPen(QColor(p1.color.red(), p1.color.green(), p1.color.blue(), alpha), 0.8))
+                        painter.drawLine(QPointF(p1.x, p1.y), QPointF(p2.x, p2.y))
+
+        # E. Dibujar Partículas con Estelas
         for p in self.particles:
-            # Si hay movimiento, dibujar estela de luz (línea de velocidad)
             dist_mov = math.hypot(p.x - p.prev_x, p.y - p.prev_y)
             if dist_mov > 0.8:
-                # Estilo estela con borde redondeado
                 pen_trail = QPen(QColor(p.color.red(), p.color.green(), p.color.blue(), p_alpha), p.size)
                 pen_trail.setCapStyle(Qt.RoundCap)
                 painter.setPen(pen_trail)
                 painter.setBrush(Qt.NoBrush)
                 painter.drawLine(QPointF(p.prev_x, p.prev_y), QPointF(p.x, p.y))
             else:
-                # Dibujar punto estático simple si está cerca del destino
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QBrush(QColor(p.color.red(), p.color.green(), p.color.blue(), p_alpha)))
                 painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
 
-        # C. TEXTO DE BIENVENIDA MINIMALISTA
+        # F. Textos HUD de Telemetría
         if self.bg_alpha > 30:
-            # Texto principal "BIENVENIDOS...."
+            font_mono = QFont("Consolas", 8)
+            font_mono.setBold(True)
+            painter.setFont(font_mono)
+            painter.setPen(QColor(71, 85, 105, int(cam_alpha * 0.6)))
+            
+            # Telemetría izquierda
+            painter.drawText(36, 45, "STATUS: SYSTEM_ASSEMBLY_OK")
+            painter.drawText(36, 60, f"LATENCY: {random.randint(6, 12)}ms")
+            painter.drawText(36, 75, f"TELEMETRY_NODES: {len(self.particles)}")
+            
+            # Telemetría derecha
+            painter.drawText(self.w - 200, 45, f"ENVIRONMENT: TPV_PRO_v2026")
+            painter.drawText(self.w - 200, 60, "SECURITY: DECRYPT_LOCAL_PASS")
+            painter.drawText(self.w - 200, 75, f"RECONSTRUCTION: {int(progress * 100)}%")
+
+        # G. Mensaje central scifi
+        if self.bg_alpha > 35:
+            # Título principal
             font_title = QFont("Segoe UI", 16)
             font_title.setBold(True)
-            font_title.setLetterSpacing(QFont.AbsoluteSpacing, 6)
+            font_title.setLetterSpacing(QFont.AbsoluteSpacing, 8)
             painter.setFont(font_title)
-            painter.setPen(QColor(255, 255, 255, cam_alpha))
+            painter.setPen(QColor(15, 23, 42, cam_alpha)) # Slate-900
             
             rect_title = QRectF(0, cy - 30, self.w, 40)
-            painter.drawText(rect_title, Qt.AlignCenter, "BIENVENIDOS....")
+            painter.drawText(rect_title, Qt.AlignCenter, "INICIALIZANDO TERMINAL")
             
-            # Subtexto sutil
+            # Subtítulo dinámico con cursor parpadeante
+            cursor = "_" if (self.ticks_elapsed // 8) % 2 == 0 else ""
             font_sub = QFont("Consolas", 9)
             font_sub.setBold(True)
             font_sub.setLetterSpacing(QFont.AbsoluteSpacing, 2)
             painter.setFont(font_sub)
-            painter.setPen(QColor(16, 185, 129, int(cam_alpha * 0.85)))
+            painter.setPen(QColor(99, 102, 241, int(cam_alpha * 0.90))) # Indigo
             
             rect_sub = QRectF(0, cy + 15, self.w, 25)
-            painter.drawText(rect_sub, Qt.AlignCenter, "SERVERONLINE")
+            painter.drawText(rect_sub, Qt.AlignCenter, f"[ CARGANDO INTERFAZ EN RED LOCAL ]{cursor}")
 
     def resizeEvent(self, event):
         self.setGeometry(0, 0, self.parent().width(), self.parent().height())

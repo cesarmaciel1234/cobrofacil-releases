@@ -88,9 +88,31 @@ class MPPollingThread(QThread):
                                     if mi_id and str(p.get("collector_id")) != str(mi_id):
                                         continue
                                         
+                                    # Verificar si el pago es reciente (máximo 180 segundos) para no alertar de pagos antiguos
+                                    is_recent = True
+                                    date_approved_str = p.get("date_approved")
+                                    if date_approved_str:
+                                        try:
+                                            from datetime import datetime, timezone
+                                            import dateutil.parser
+                                            dt_approved = dateutil.parser.isoparse(date_approved_str)
+                                            ts_approved = dt_approved.timestamp()
+                                            if abs(time.time() - ts_approved) > 180:
+                                                is_recent = False
+                                        except:
+                                            try:
+                                                clean_date = date_approved_str.split(".")[0].replace("T", " ")
+                                                dt_approved = datetime.strptime(clean_date, "%Y-%m-%d %H:%M:%S")
+                                                ts_approved = dt_approved.timestamp()
+                                                if abs(time.time() - ts_approved) > 180:
+                                                    is_recent = False
+                                            except:
+                                                pass
+                                                
                                     # ¡Nuevo pago aprobado detectado!
                                     self.processed_ids.add(p_id)
-                                    self.new_payment.emit(p)
+                                    if is_recent:
+                                        self.new_payment.emit(p)
                                     
                 elif response.status_code == 401:
                     self.error_signal.emit("Token Inválido. Deteniendo escáner.")

@@ -173,7 +173,7 @@ class ScifiReconstructionOverlay(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PunPro Elite 2026 - Industrial POS")
+        self.setWindowTitle("CajaFacil Pro 2026 - Industrial POS")
         self.resize(1240, 820)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -511,8 +511,8 @@ class MainWindow(QMainWindow):
             self.switch_tab(6)
 
     def jump_to_admin_secure(self):
-        from src.paso3_login import Paso3Login
-        if Paso3Login(role="admin").exec_():
+        from src.login_pantalla import LoginPantalla
+        if LoginPantalla(role="admin").exec_():
             self._supervisor_mode = True
             self.btn_flotante.show()
             self.switch_tab(0)
@@ -521,8 +521,8 @@ class MainWindow(QMainWindow):
     def handle_f11_global(self):
         if self.stacked_widget.currentIndex() == 1: 
             # Iniciar salto administrativo seguro
-            from src.paso3_login import Paso3Login
-            dlg = Paso3Login(role="admin")
+            from src.login_pantalla import LoginPantalla
+            dlg = LoginPantalla(role="admin")
             if dlg.exec_():
                 # Registro de Auditoría: Intervención de Supervisor
                 from src.cajero.paso5_terminal import CajeroActivo
