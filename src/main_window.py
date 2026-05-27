@@ -187,19 +187,7 @@ class MainWindow(QMainWindow):
         self.btn_flotante.hide()
         self._supervisor_mode = False
 
-        # Console y Thread de Instalación
-        from src.ui.console_widget import ConsoleWidget
-        from src.hardware.background_installer import BackgroundInstallerThread
 
-        self.console = ConsoleWidget(self)
-        self.main_layout.addWidget(self.console)
-
-        self.installer_thread = BackgroundInstallerThread(self)
-        # Conexiones de señales
-        self.installer_thread.progress_update.connect(self.console.update_progress)
-        self.installer_thread.progress.connect(self.console.append_message)
-        self.installer_thread.error.connect(self.console.append_message)
-        self.installer_thread.finished.connect(lambda: self.console.append_message("✅ Instalación completada"))
 
         # Importar gestión de cajón y otras utilidades
         from src.hardware.cash_drawer import drawer_manager
@@ -214,8 +202,7 @@ class MainWindow(QMainWindow):
         self._init_update_banner()
 
 
-        # Iniciar la instalación en segundo plano
-        self.installer_thread.start()
+
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(10000, self._chequear_actualizaciones_bg)

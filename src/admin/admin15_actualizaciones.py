@@ -335,6 +335,11 @@ class Admin15Actualizaciones(QWidget):
         btn_aplicar.clicked.connect(self._aplicar_actualizacion)
         row.addWidget(btn_aplicar)
 
+        btn_launcher = QPushButton("🌐 Actualización Web (Launcher)")
+        btn_launcher.setStyleSheet("background:#10b981; color:white; font-weight:bold; padding:9px 22px; border-radius:6px; font-size:14px;")
+        btn_launcher.clicked.connect(self._lanzar_updater_web)
+        row.addWidget(btn_launcher)
+
         gl.addLayout(row)
 
         self.progress_bar = QProgressBar()
@@ -579,3 +584,31 @@ class Admin15Actualizaciones(QWidget):
                     "No hay actualizaciones pendientes.")
                 self.lbl_progreso.setText("✅ Ya estás en la última versión.")
             self.lbl_server_status.setText("Servidor de actualizaciones: verificado")
+
+    def _lanzar_updater_web(self):
+        # Buscar el launcher
+        launcher_paths = [
+            os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "Setup_CajaFacil_Web.exe"),
+            os.path.join(BASE_DIR, "launcher_installer", "dist", "Setup_CajaFacil_Web.exe")
+        ]
+        
+        launcher_encontrado = None
+        for path in launcher_paths:
+            if os.path.exists(path):
+                launcher_encontrado = path
+                break
+                
+        if not launcher_encontrado:
+            QMessageBox.critical(self, "Error", "No se encontró el Launcher (Setup_CajaFacil_Web.exe) para realizar la actualización web.")
+            return
+            
+        respuesta = QMessageBox.question(
+            self, "Actualización Web",
+            "El sistema se cerrará para iniciar el Actualizador Automático (Launcher).\n¿Continuar?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if respuesta == QMessageBox.Yes:
+            import subprocess
+            subprocess.Popen([launcher_encontrado, "--update"], shell=True)
+            QApplication.exit(0)
+

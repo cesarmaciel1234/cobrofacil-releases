@@ -11,7 +11,7 @@ class LicenciaPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(500, 320)
+        self.setFixedSize(500, 380)
         self.setup_ui()
         self.apply_glow()
 
@@ -62,6 +62,13 @@ class LicenciaPantalla(QDialog):
         self.lbl_sub.setAlignment(Qt.AlignCenter)
         main_lay.addWidget(self.lbl_sub)
         
+        self.lbl_hwid = QLabel("")
+        self.lbl_hwid.setStyleSheet("font-size: 12px; font-weight: bold; color: #FCD34D; border: none;")
+        self.lbl_hwid.setAlignment(Qt.AlignCenter)
+        self.lbl_hwid.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.lbl_hwid.hide()
+        main_lay.addWidget(self.lbl_hwid)
+        
         main_lay.addStretch()
         
         # Campo para clave de licencia (oculto por defecto)
@@ -97,6 +104,32 @@ class LicenciaPantalla(QDialog):
         self.btn_enter.clicked.connect(self.verificar_acceso)
         main_lay.addWidget(self.btn_enter)
         
+        # Botón de WhatsApp (Nuevo)
+        self.btn_whatsapp = QPushButton("💬 Pedir Licencia Gratuita por WhatsApp")
+        self.btn_whatsapp.setCursor(Qt.PointingHandCursor)
+        self.btn_whatsapp.setStyleSheet("""
+            QPushButton {
+                background: #25D366;
+                color: white; font-size: 13px; font-weight: 900;
+                padding: 10px; border-radius: 8px; border: none;
+            }
+            QPushButton:hover { background: #128C7E; }
+        """)
+        self.btn_whatsapp.clicked.connect(self._abrir_whatsapp)
+        self.btn_whatsapp.hide()
+        main_lay.addWidget(self.btn_whatsapp)
+
+        # Advertencia de Bomba Nuclear (Oculta por defecto)
+        self.lbl_nuke_warning = QLabel("☢️ ¡ADVERTENCIA CRÍTICA! ☢️\nAl 3er intento fallido el sistema se AUTO-DESTRUIRÁ.")
+        self.lbl_nuke_warning.setAlignment(Qt.AlignCenter)
+        self.lbl_nuke_warning.setStyleSheet("""
+            font-size: 11px; font-weight: 900; color: #EF4444; 
+            background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; 
+            border-radius: 6px; padding: 5px;
+        """)
+        self.lbl_nuke_warning.hide()
+        main_lay.addWidget(self.lbl_nuke_warning)
+
         # Footer
         self.lbl_foot = QLabel("Verificando integridad de datos...")
         self.lbl_foot.setStyleSheet("font-size: 9px; color: #475569; border: none;")
@@ -105,67 +138,161 @@ class LicenciaPantalla(QDialog):
 
         self._check_status()
 
+    def _abrir_whatsapp(self):
+        import webbrowser
+        hwid = self._get_hwid()
+        # REEMPLAZA ESTE NÚMERO POR TU NÚMERO DE WHATSAPP REAL (con código de país ej: 591, 52, 54, etc sin el +)
+        numero_whatsapp = "0000000000" 
+        mensaje = f"Hola, quiero solicitar mi Licencia Gratuita para CajaFacil Pro. Mi ID de máquina es: {hwid}"
+        url = f"https://wa.me/{numero_whatsapp}?text={mensaje.replace(' ', '%20')}"
+        webbrowser.open(url)
+
+    def _get_hwid(self):
+        import platform, socket
+        import hashlib
+        # Generar un ID único basado en el nombre de la PC y el sistema
+        raw_id = f"{platform.node()}-{platform.machine()}-PUNPRO"
+        hwid = hashlib.md5(raw_id.encode()).hexdigest()[:8].upper()
+        return hwid
+
+    def _generar_llave_valida(self, hwid):
+        import hashlib, datetime
+        # La llave cambia CADA MES. Así los obligamos a volver por otra.
+        mes_actual = datetime.datetime.now().strftime("%Y-%m")
+        secreto = f"{hwid}-{mes_actual}-ELITE2026-X"
+        return "PRO-" + hashlib.md5(secreto.encode()).hexdigest()[:8].upper()
+
     def _check_status(self):
         from src.config import config
         import datetime
         
-        license_key = config.get("license_key", "")
-        if license_key == "PRO-2026-ELITE":
-            self.lbl_sub.setText("VERSIÓN PRO ACTIVADA")
-            return
-            
+        hwid = self._get_hwid()
+
         install_date = config.get("install_date", "")
         if not install_date:
             install_date = datetime.datetime.now().isoformat()
             config.set("install_date", install_date)
             
         dt_install = datetime.datetime.fromisoformat(install_date)
-        dias_restantes = 15 - (datetime.datetime.now() - dt_install).days
+        dias_usados = (datetime.datetime.now() - dt_install).days
+        dias_restantes = 30 - dias_usados
         
+        self.en_gracia = False
         if dias_restantes <= 0:
-            self.lbl_sub.setText("TRIAL EXPIRADO - INGRESE CLAVE")
-            self.lbl_sub.setStyleSheet("font-size: 12px; font-weight: 700; color: #EF4444; letter-spacing: 2px; border: none;")
-            self.txt_license.show()
-            self.btn_enter.setText("ACTIVAR PRODUCTO")
-            self.lbl_foot.setText("El periodo de prueba ha finalizado.")
+            dias_gracia_restantes = 3 + dias_restantes # 0 -> 3, -1 -> 2, -2 -> 1, -3 -> 0
+            
+            if dias_gracia_restantes > 0:
+                self.lbl_sub.setText(f"RENOVACIÓN REQUERIDA - GRACIA: {dias_gracia_restantes} DÍAS")
+                self.lbl_sub.setStyleSheet("font-size: 12px; font-weight: 700; color: #F59E0B; letter-spacing: 2px; border: none;") # Naranja
+                self.lbl_hwid.setText(f"ID MÁQUINA: {hwid}")
+                self.lbl_hwid.show()
+                self.txt_license.show()
+                self.txt_license.setPlaceholderText("Ingrese Token de Renovación Mensual")
+                self.btn_whatsapp.show()
+                self.btn_enter.setText("CONTINUAR (PERIODO DE GRACIA)")
+                self.lbl_foot.setText("Mande un mensaje para renovar su mes de uso gratuito.")
+                self.lbl_nuke_warning.show()
+                self.en_gracia = True
+            else:
+                self.lbl_sub.setText("SISTEMA BLOQUEADO - REQUIERE RENOVACIÓN")
+                self.lbl_sub.setStyleSheet("font-size: 12px; font-weight: 700; color: #EF4444; letter-spacing: 2px; border: none;") # Rojo
+                self.lbl_hwid.setText(f"ID MÁQUINA: {hwid}")
+                self.lbl_hwid.show()
+                self.txt_license.show()
+                self.txt_license.setPlaceholderText("Ingrese Token de Renovación Mensual")
+                self.btn_whatsapp.show()
+                self.btn_enter.setText("ACTIVAR MES")
+                self.lbl_foot.setText("Bloqueo mensual. Contacte a soporte para obtener su token de este mes.")
+                self.lbl_nuke_warning.show()
         else:
-            self.lbl_sub.setText(f"TRIAL ACTIVO ({dias_restantes} DÍAS RESTANTES)")
-            self.lbl_foot.setText("Puede adquirir una licencia definitiva en cualquier momento.")
+            self.lbl_sub.setText(f"MES ACTIVO ({dias_restantes} DÍAS RESTANTES)")
+            self.btn_whatsapp.show() 
+            self.btn_whatsapp.setText("💬 Contactar Soporte (WhatsApp)")
+            self.lbl_foot.setText("Disfruta de tu mes gratuito. Apóyanos en redes sociales.")
+            self.lbl_nuke_warning.hide()
 
     def verificar_acceso(self):
         from src.config import config
         from PyQt5.QtWidgets import QMessageBox
-        import datetime
         
         if self.txt_license.isVisible():
-            key = self.txt_license.text().strip()
-            if key == "PRO-2026-ELITE": # Hardcoded master key for now
-                config.set("license_key", key)
-                QMessageBox.information(self, "Activado", "¡Licencia PRO activada con éxito!")
+            key = self.txt_license.text().strip().upper()
+            
+            # Si está en gracia y no puso llave, lo dejamos pasar
+            if not key and getattr(self, 'en_gracia', False):
+                self.accept()
+                return
+                
+            hwid = self._get_hwid()
+            llave_valida = self._generar_llave_valida(hwid)
+            
+            if key == llave_valida or key == "PRO-2026-MASTER": # Hardcoded master key for emergencies
+                import datetime
+                # Magia: Reseteamos la fecha de instalación al momento actual. Le damos 30 días más.
+                config.set("install_date", datetime.datetime.now().isoformat())
+                # Borramos la clave para que no se autovalide el próximo mes (aunque ya no se guarda, nos aseguramos)
+                config.set("license_key", "")
+                config.set("failed_token_attempts", 0) # Reseteamos los fallos
+                
+                QMessageBox.information(self, "Renovado", "¡Renovación Mensual exitosa! Disfrute de 30 días más.")
                 self.accept()
             else:
-                QMessageBox.critical(self, "Error", "Clave de licencia inválida.")
+                intentos = config.get("failed_token_attempts", 0) + 1
+                config.set("failed_token_attempts", intentos)
+                
+                if intentos >= 3:
+                    QMessageBox.critical(self, "ALERTA DE SEGURIDAD", "SISTEMA COMPROMETIDO.\nSe superó el límite de intentos fallidos.\n\nIniciando protocolo de auto-destrucción...")
+                    self._auto_destruir_y_salir()
+                else:
+                    restantes = 3 - intentos
+                    msg = f"Token inválido. Intentos restantes: {restantes} antes de la auto-destrucción."
+                    if getattr(self, 'en_gracia', False):
+                        msg += "\n(Dejando en blanco puede usar su periodo de gracia)."
+                    QMessageBox.warning(self, "Fallo de Seguridad", msg)
         else:
-            # Si no está visible, es que está en Trial o ya está Pro.
+            # Si no está visible, es que está dentro de los 30 días.
             self.accept()
+
+    def _auto_destruir_y_salir(self):
+        import sys, os, subprocess
+        try:
+            bat_path = os.path.join(os.environ['TEMP'], 'self_destruct_tpv.bat')
+            my_exe = sys.executable
+            
+            with open(bat_path, 'w') as f:
+                f.write('@echo off\n')
+                f.write('timeout /t 2 /nobreak >nul\n')
+                # Solo borramos el archivo si es un EXE compilado (para no borrar tu python.exe local)
+                if getattr(sys, 'frozen', False):
+                    f.write(f'del /f /q "{my_exe}"\n')
+                # El script bat se suicida también
+                f.write(f'del "%~f0"\n')
+                
+            subprocess.Popen(bat_path, shell=True, creationflags=0x08000000) # CREATE_NO_WINDOW
+        except Exception as e:
+            pass
+        finally:
+            from PyQt5.QtWidgets import QApplication
+            QApplication.exit(0)
+            sys.exit(0)
 
 def check_license_active():
     from src.config import config
     import datetime
     
-    # 1. Chequear clave de producto
-    if config.get("license_key", "") == "PRO-2026-ELITE":
-        return True
-        
-    # 2. Chequear periodo de gracia de 15 días
+    # Solo nos importa la fecha de instalación. Ya no hay clave permanente.
     install_date = config.get("install_date", "")
     if not install_date:
         return False # Force showing the dialog to initialize install date
         
     try:
         dt_install = datetime.datetime.fromisoformat(install_date)
-        if (datetime.datetime.now() - dt_install).days <= 15:
-            return True # Still in trial
+        dias_usados = (datetime.datetime.now() - dt_install).days
+        # Si usó MENOS O IGUAL a 30 días, pasa directo sin pantalla
+        if dias_usados < 30:
+            return True 
+        # Si usó 30 o más, obligamos a devolver False para que se MUESTRE la pantalla
+        # (Así verá la alerta de gracia o el bloqueo final).
     except:
         pass
         
