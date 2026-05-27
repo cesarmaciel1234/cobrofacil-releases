@@ -42,7 +42,7 @@ if exist "Batallon_TPV_Win8_Win11.zip" del /f /q "Batallon_TPV_Win8_Win11.zip"
 echo/
 echo [3/5] Ensamblando binarios nativos y dependencias graficas...
 echo Esto tomara unos momentos. PyInstaller esta analizando el arbol de importacion...
-pyinstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
+pyinstaller --noconfirm --onedir  --windowed --name "CobroFacil_POS" ^
  --add-data "src/styles.qss;src/" ^
  --hidden-import "matplotlib" ^
  --hidden-import "matplotlib.backends.backend_qt5agg" ^
@@ -51,6 +51,12 @@ pyinstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
  --hidden-import "barcode.writer" ^
  --hidden-import "PIL" ^
  --hidden-import "reportlab" ^
+ --hidden-import "reportlab.graphics.barcode.code39" ^
+ --hidden-import "reportlab.graphics.barcode.code93" ^
+ --hidden-import "reportlab.graphics.barcode.code128" ^
+ --hidden-import "reportlab.graphics.barcode.usps" ^
+ --hidden-import "reportlab.graphics.barcode.usps4s" ^
+ --hidden-import "reportlab.graphics.barcode.ecc200datamatrix" ^
  --collect-all "matplotlib" ^
  --collect-all "requests" ^
  --collect-all "barcode" ^

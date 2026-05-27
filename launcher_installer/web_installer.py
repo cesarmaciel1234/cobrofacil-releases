@@ -78,7 +78,7 @@ class InstallWorker(QThread):
                     try:
                         zip_ref.extract(file, self.install_dir)
                     except Exception as e:
-                        print(f"Error extrayendo {file}: {e}")
+                        with open("web_installer_error.log", "a") as f: f.write(f"Error extrayendo {file}: {e}\n")
                     extracted += 1
                     percent = 65 + int((extracted / total_files) * 30)
                     if extracted % 20 == 0:  
@@ -171,7 +171,7 @@ class InstallerWindow(QWidget):
 
         # === CONFIGURACION DEL INSTALADOR ===
         # URL Opcional de descarga (Si está vacía, exigirá el ZIP local).
-        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cobrofacil-pro-updates.firebasestorage.app/o/C%3A%5CUsers%5Ccesar%5COneDrive%5CDesktop%5Ctpv%20pro%202026%5CCATORTA_USB_PUNPRO%5C2_Archivos_Comprimidos_ZIP%5CBatallon_TPV_Win8_Win11.zip%2FBatallon_TPV_Win8_Win11.zip?alt=media&token=2ae36f53-994b-4154-aed7-310b9c8ac02e"
+        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/C%3A%5CUsers%5Ccesar%5COneDrive%5CDesktop%5Ctpv%20pro%202026%5CCATORTA_USB_PUNPRO%5C2_Archivos_Comprimidos_ZIP%5CBatallon_TPV_Win8_Win11.zip%2FBatallon_TPV_Win8_Win11.zip?alt=media&token=2ae36f53-994b-4154-aed7-310b9c8ac02e"
         self.zip_filename = "Batallon_TPV_Win8_Win11.zip"
         
         # Carpeta de instalación en el usuario para evitar pedir permisos de admin (UAC) 

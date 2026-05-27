@@ -1,14 +1,14 @@
 {
   "app_version": "3100.00",
   "channel": "stable",
-  "build_date": "2026-05-26 21:45:09",
+  "build_date": "2026-05-27 08:43:02",
   "server_host": "cesar",
   "modules": {
     "crear_actualizacion_lan.py": {
       "version": "3100.00",
-      "checksum": "90544593f8e97a2f1fe334197c11c785",
+      "checksum": "2a0811ec5fe25acf54ac1c81b45b96b5",
       "channel": "stable",
-      "size": 1723
+      "size": 1773
     },
     "crear_respaldo_total.py": {
       "version": "3100.00",
@@ -28,6 +28,12 @@
       "channel": "stable",
       "size": 520
     },
+    "Generador_Licencias.py": {
+      "version": "1.0.0",
+      "checksum": "a948a441aca8906fc61f9360109f6fbf",
+      "channel": "stable",
+      "size": 1136
+    },
     "generar_version.py": {
       "version": "3100.00",
       "checksum": "dc7785d37c0704abe573d11412b32016",
@@ -42,15 +48,27 @@
     },
     "main.py": {
       "version": "3100.00",
-      "checksum": "76a09ebaecece743458db6132aae87b6",
+      "checksum": "da01359f62566f457008b10b2ca554e3",
       "channel": "stable",
-      "size": 14449
+      "size": 14837
     },
     "organize_docs.py": {
       "version": "3100.00",
       "checksum": "f83fbcec9d39e00f3b3c4842b7b9daef",
       "channel": "stable",
       "size": 590
+    },
+    "rename_project.py": {
+      "version": "1.0.0",
+      "checksum": "9ce7a82cb39d5506eb2caef30e8edefd",
+      "channel": "stable",
+      "size": 1267
+    },
+    "rename_project_2.py": {
+      "version": "1.0.0",
+      "checksum": "672b506963ece448ca5e09e1f3d4cc44",
+      "channel": "stable",
+      "size": 1193
     },
     "restaurar_antigravity.py": {
       "version": "3100.00",
@@ -60,9 +78,9 @@
     },
     "rutina_control.py": {
       "version": "3100.00",
-      "checksum": "f08b0478d7b391b1fd3f0e083cddff0e",
+      "checksum": "2c12c2ba7dcf208eafdcc8898268d22a",
       "channel": "stable",
-      "size": 2765
+      "size": 2768
     },
     "scratch_read.py": {
       "version": "3100.00",
@@ -81,6 +99,12 @@
       "checksum": "3f0be33bb60f3dc0ff43b7aa0677c190",
       "channel": "stable",
       "size": 422
+    },
+    "test_error.py": {
+      "version": "1.0.0",
+      "checksum": "01f9e4ba73018ec66b7a43b38af6a948",
+      "channel": "stable",
+      "size": 194
     },
     "test_lan_db.py": {
       "version": "3100.00",
@@ -5436,21 +5460,33 @@
     },
     "installer/installer_build.py": {
       "version": "3100.00",
-      "checksum": "d3bc3b287f8d9501ede46b2066d05c3f",
+      "checksum": "5512b6fa53011dcc8458c4329217378c",
       "channel": "stable",
-      "size": 23738
+      "size": 23764
+    },
+    "launcher_installer/crear_instalador_blindado.py": {
+      "version": "1.0.0",
+      "checksum": "9223a7f13627edc6b8e2e6a42527b77f",
+      "channel": "stable",
+      "size": 2126
+    },
+    "launcher_installer/web_installer.py": {
+      "version": "1.0.0",
+      "checksum": "27759754b57ba9b9e4f0177787314ba9",
+      "channel": "stable",
+      "size": 11239
     },
     "scratch/apply_updates.py": {
       "version": "1.0.0",
-      "checksum": "49ce5e84e8e652823d0f8d38a8e31ae8",
+      "checksum": "7d1ee7818a0ffbe7b232dd47cb8f5c18",
       "channel": "stable",
-      "size": 1834
+      "size": 1892
     },
     "scratch/build_master.py": {
       "version": "1.0.0",
-      "checksum": "2de34e95aba87b9c368c5967fb213e0c",
+      "checksum": "9ec434f0af5f9274d2e451175937f6be",
       "channel": "stable",
-      "size": 14313
+      "size": 14326
     },
     "scratch/check_compile.py": {
       "version": "1.0.0",
@@ -5484,9 +5520,9 @@
     },
     "scratch/crear_zip.py": {
       "version": "1.0.0",
-      "checksum": "7a696b9ff85f37bc3170fa8962e11930",
+      "checksum": "5431a458f14eb136e378849d36cc19b8",
       "channel": "stable",
-      "size": 2148
+      "size": 2211
     },
     "scratch/diagnose_printers.py": {
       "version": "1.0.0",
@@ -5514,15 +5550,15 @@
     },
     "scratch/installer_build.py": {
       "version": "1.0.0",
-      "checksum": "291f66a7cb03d00a03ff16fb493dd907",
+      "checksum": "f81f5bee35ec972316e99d60393690b1",
       "channel": "stable",
-      "size": 13414
+      "size": 13738
     },
     "scratch/renombrar_app.py": {
       "version": "1.0.0",
-      "checksum": "58b4324524be4af4969de6ec8005ba75",
+      "checksum": "3a0f29fd66eb1edc44980e90fad6d339",
       "channel": "stable",
-      "size": 2482
+      "size": 2582
     },
     "scratch/run_stress_master.py": {
       "version": "1.0.0",
@@ -5550,9 +5586,9 @@
     },
     "scratch/test_print.py": {
       "version": "1.0.0",
-      "checksum": "1e18a9300442ede2e5f0765309beb98a",
+      "checksum": "d1d24fc3d4375e0866208a04e22d7cb9",
       "channel": "stable",
-      "size": 5009
+      "size": 5012
     },
     "scratch/view_git_diff.py": {
       "version": "1.0.0",
@@ -5562,9 +5598,9 @@
     },
     "scratch/zip_catorta.py": {
       "version": "1.0.0",
-      "checksum": "0a666b3d0bb4949ee4297c8a5a4d4a18",
+      "checksum": "87dc5f21c81f1be83ed4806274b3287a",
       "channel": "stable",
-      "size": 2027
+      "size": 2028
     },
     "src/apertura_pantalla.py": {
       "version": "3100.00",
@@ -5586,9 +5622,9 @@
     },
     "src/licencia_pantalla.py": {
       "version": "3100.00",
-      "checksum": "33ec0cbdfd5839238f78affa061220f5",
+      "checksum": "748760bafc5ef495a814ad3bb465b4d4",
       "channel": "stable",
-      "size": 6885
+      "size": 13835
     },
     "src/logger.py": {
       "version": "3100.00",
@@ -5604,9 +5640,9 @@
     },
     "src/main_window.py": {
       "version": "3100.00",
-      "checksum": "f5077defdd7ed583f5198896cacd01ef",
+      "checksum": "7e3dc4cfc958739d3314adcf2d143eea",
       "channel": "stable",
-      "size": 31361
+      "size": 31232
     },
     "src/offline_sync.py": {
       "version": "3100.00",
@@ -5616,9 +5652,9 @@
     },
     "src/pantallaentrada.py": {
       "version": "3100.00",
-      "checksum": "bcb9eaceaf43bf0b26e22ad243b49574",
+      "checksum": "a9e7c16f734e71aa2f16e57f4f7d20d1",
       "channel": "stable",
-      "size": 23647
+      "size": 24204
     },
     "src/perfil_pantalla.py": {
       "version": "3100.00",
@@ -5634,9 +5670,9 @@
     },
     "src/admin/admin0_dashboard.py": {
       "version": "3100.00",
-      "checksum": "887271e0bacf33c442aa3f5b53a63019",
+      "checksum": "e132a94c8705c720d76a5a98fa58e3fb",
       "channel": "stable",
-      "size": 19554
+      "size": 20017
     },
     "src/admin/admin10_mp.py": {
       "version": "3100.00",
@@ -5658,9 +5694,9 @@
     },
     "src/admin/admin13_hardware.py": {
       "version": "3100.00",
-      "checksum": "3afb917762d48ef894013567a59edc0c",
+      "checksum": "7cb5ad4c308e9618409d392a0da79b20",
       "channel": "stable",
-      "size": 39137
+      "size": 39938
     },
     "src/admin/admin14_ventas_digitales.py": {
       "version": "3100.00",
@@ -5670,9 +5706,9 @@
     },
     "src/admin/admin15_actualizaciones.py": {
       "version": "3100.00",
-      "checksum": "eacefa76d0aa41eb96e16aaec08aa1db",
+      "checksum": "fc2e3f0231eb145a8860ad4316f01e43",
       "channel": "stable",
-      "size": 25501
+      "size": 27559
     },
     "src/admin/admin16_lan_connection.py": {
       "version": "3100.00",
@@ -5712,9 +5748,9 @@
     },
     "src/admin/admin5_configuracion.py": {
       "version": "3100.00",
-      "checksum": "eb75cef0d1a15156eea7d82d890bf2b4",
+      "checksum": "de890cfec9691fd29ca5fbe6c2ecc0ec",
       "channel": "stable",
-      "size": 81761
+      "size": 83574
     },
     "src/admin/admin7_cierre.py": {
       "version": "3100.00",
@@ -5916,15 +5952,15 @@
     },
     "src/updater/github_updater.py": {
       "version": "3100.00",
-      "checksum": "b33102a8ec0f2a542d2b3b4b248540ed",
+      "checksum": "2e408136282d64ad53bc0443e1d75474",
       "channel": "stable",
-      "size": 13885
+      "size": 14253
     },
     "src/updater/update_client.py": {
       "version": "3100.00",
-      "checksum": "a4df1a832da0352f8cdf87173d4b5e27",
+      "checksum": "d5a97d8abace7dab2cc66d5a30630a75",
       "channel": "stable",
-      "size": 11367
+      "size": 11669
     },
     "src/updater/update_server.py": {
       "version": "3100.00",
