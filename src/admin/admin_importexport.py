@@ -104,26 +104,66 @@ def exportar_excel(filepath: str) -> tuple[bool, str]:
 # ─────────────────────────────────────────────────────────
 def importar_excel(filepath: str) -> tuple[bool, str]:
     """
-    Importa productos desde un Excel con lectura flexible de columnas por su nombre de encabezado,
-    sin importar el orden o posición de la tabla. Optimizado para 17,000+ productos en lote/WAL.
+    Importa productos desde un Excel de forma 'universal' e 'inteligente'.
+    Detecta las columnas automáticamente analizando sus nombres y utilizando
+    palabras clave (ej: 'p. venta', 'precio', 'venta' -> Precio Venta),
+    sin importar su posición.
+    Optimizado para 17,000+ productos en lote/WAL.
     """
     try:
         wb = openpyxl.load_workbook(filepath, data_only=True)
         ws = wb.active
 
-        # Detectar fila de encabezado buscando cualquiera de las columnas principales en las primeras 5 filas
-        header_row = 1
-        for row in ws.iter_rows(min_row=1, max_row=5):
+        # 1. Definir aliases (palabras clave) para cada campo lógico
+        alias_map = {
+            'codigo': ['código', 'codigo', 'cod', 'id', 'referencia', 'sku', 'barra'],
+            'nombre': ['producto', 'nombre', 'descripcion', 'descripción', 'articulo', 'artículo', 'detalle'],
+            'costo': ['costo', 'compra', 'p. costo', 'p.costo', 'precio costo', 'precio de compra', 'p costo'],
+            'precio': ['venta', 'p. venta', 'p.venta', 'precio', 'precio de venta', 'precio publico', 'p venta'],
+            'mayoreo': ['mayoreo', 'p. mayoreo', 'mayorista', 'precio por mayor', 'p.mayoreo'],
+            'cant_oferta': ['cant. oferta', 'cant oferta', 'cantidad oferta', 'oferta_cant'],
+            'precio_oferta': ['p. oferta', 'precio oferta', 'precio_oferta', 'oferta'],
+            'stock': ['existencia', 'stock', 'cantidad', 'inventario', 'disponible', 'cant'],
+            'minimo': ['minimo', 'mínimo', 'inv. minimo', 'inv. mínimo'],
+            'maximo': ['maximo', 'máximo', 'inv. maximo', 'inv. máximo'],
+            'depto': ['departamento', 'depto', 'categoria', 'rubro', 'familia', 'línea', 'linea'],
+            'tipo': ['tipo de venta', 'tipo', 'unidad', 'medida', 'formato']
+        }
+
+        # 2. Buscar la fila de encabezado (buscando en las primeras 20 filas)
+        header_row = -1
+        col_indices = {} # mapea campo_logico -> indice_columna (0-based)
+
+        for row in ws.iter_rows(min_row=1, max_row=20):
             row_vals = [str(c.value or '').strip().lower() for c in row]
-            if any(h in row_vals for h in ('código', 'codigo', 'cod', 'producto', 'nombre', 'p. venta', 'precio')):
+            
+            # Intento de mapeo para esta fila
+            temp_map = {}
+            for col_idx, cell_val in enumerate(row_vals):
+                if not cell_val: continue
+                # Limpiar saltos de linea y espacios multiples
+                cell_val = ' '.join(cell_val.split())
+                
+                # Buscar a qué campo lógico pertenece esta columna
+                for campo, keywords in alias_map.items():
+                    if campo not in temp_map: # Solo tomar el primero que coincida por campo
+                        # Si alguna keyword está dentro del nombre de la columna o viceversa
+                        if any(kw == cell_val or kw in cell_val or cell_val.startswith(kw) for kw in keywords):
+                            temp_map[campo] = col_idx
+                            break
+            
+            # Consideramos que es la fila de encabezado si encontramos al menos 'nombre' o 'codigo' y 'precio'
+            if ('nombre' in temp_map or 'codigo' in temp_map) and ('precio' in temp_map or 'costo' in temp_map or 'stock' in temp_map):
                 header_row = row[0].row
+                col_indices = temp_map
                 break
 
-        # Leer encabezados para mapear columnas de forma totalmente agnóstica de la posición
-        headers = {}
-        for cell in ws[header_row]:
-            if cell.value is not None:
-                headers[str(cell.value).strip().lower()] = cell.column - 1  # índice 0-based
+        if header_row == -1 or not col_indices:
+            return False, "No se pudo detectar automáticamente la estructura del Excel. Asegúrate de que las columnas tengan nombres descriptivos como 'Código', 'Descripción', 'P. Venta'."
+
+        # Si encontramos el encabezado, validar que tengamos al menos la columna nombre o código para poder importar
+        if 'nombre' not in col_indices and 'codigo' not in col_indices:
+            return False, "Falta la columna principal de 'Producto/Descripción' o 'Código'."
 
         insertados = 0; actualizados = 0; errores = 0
 
@@ -140,13 +180,15 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             if r['codigo']:
                 existentes_cod[str(r['codigo'])] = r['id']
 
+        # Extraer filas de valores, omitiendo el encabezado y las anteriores
         for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
-            if not any(row): continue  # fila vacía
+            if not any(row): continue  # fila vacía o nula
 
-            def get(key_variants, default=''):
-                for k in key_variants:
-                    if k in headers:
-                        v = row[headers[k]]
+            def get_val(campo_logico, default=''):
+                if campo_logico in col_indices:
+                    idx = col_indices[campo_logico]
+                    if idx < len(row):
+                        v = row[idx]
                         return v if v is not None else default
                 return default
 
@@ -159,25 +201,26 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                 try: return float(s)
                 except: return 0.0
 
-            codigo_val  = str(get(['código','codigo','cod'], '')).strip()
+            codigo_val  = str(get_val('codigo', '')).strip()
             if codigo_val.endswith('.0'):
                 codigo_val = codigo_val[:-2]
 
-            nombre      = str(get(['producto','nombre','descripcion','descripción'], '')).strip()
-            if not nombre: continue  # saltar filas sin nombre
+            nombre = str(get_val('nombre', '')).strip()
+            # Si no hay nombre pero hay código, lo intentamos usar
+            if not nombre and not codigo_val: continue
 
-            costo       = parse_float(get(['p. costo','costo','p.costo'], 0))
-            precio      = parse_float(get(['p. venta','precio','p.venta'], 0))
-            mayoreo     = parse_float(get(['p. mayoreo','mayoreo','p.mayoreo'], 0))
-            cant_of     = parse_float(get(['cant. oferta','cant oferta','cantidad oferta','oferta_cant'], 0))
-            precio_of   = parse_float(get(['p. oferta','precio oferta','precio_oferta'], 0))
-            stock       = parse_float(get(['existencia','stock','cantidad'], 0))
-            minimo      = parse_float(get(['inv. mínimo','inv. minimo','mínimo','minimo'], 0))
-            maximo      = parse_float(get(['inv. máximo','inv. maximo','máximo','maximo'], 0))
+            costo       = parse_float(get_val('costo', 0))
+            precio      = parse_float(get_val('precio', 0))
+            mayoreo     = parse_float(get_val('mayoreo', 0))
+            cant_of     = parse_float(get_val('cant_oferta', 0))
+            precio_of   = parse_float(get_val('precio_oferta', 0))
+            stock       = parse_float(get_val('stock', 0))
+            minimo      = parse_float(get_val('minimo', 0))
+            maximo      = parse_float(get_val('maximo', 0))
 
-            depto  = str(get(['departamento','depto'], '')).strip() or None
-            tipo   = str(get(['tipo de venta','tipo'], 'UNIDAD')).strip().upper()
-            unidad = 'KG' if 'GRANEL' in tipo else 'UN'
+            depto  = str(get_val('depto', '')).strip() or None
+            tipo   = str(get_val('tipo', 'UNIDAD')).strip().upper()
+            unidad = 'KG' if 'GRANEL' in tipo or 'KG' in tipo else 'UN'
             es_pes = 1 if unidad == 'KG' else 0
             cat    = depto.upper() if depto else 'GENERAL'
 
@@ -190,12 +233,17 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
 
             try:
                 if existe_id:
+                    # Actualizar solo si hay nombre, de lo contrario mantener el nombre anterior no es posible fácilmente aquí
+                    # Si 'nombre' está vacío pero la columna sí existe (el usuario la vació), podríamos ignorar, pero mejor actualizar
+                    # Para seguridad, si nombre viene vacío pero detectó columna, y existe, podemos dejar el de la BD (omitimos por brevedad)
                     cursor.execute(
-                        "UPDATE productos SET nombre=?,precio=?,costo=?,stock=?,precio_mayoreo=?,stock_minimo=?,stock_maximo=?,"
+                        "UPDATE productos SET nombre=COALESCE(NULLIF(?, ''), nombre),precio=?,costo=?,stock=?,precio_mayoreo=?,stock_minimo=?,stock_maximo=?,"
                         "unidad=?,es_pesable=?,departamento=?,categoria=?,cant_oferta=?,precio_oferta=? WHERE id=?",
                         (nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of, existe_id))
                     actualizados += 1
                 else:
+                    if not nombre: 
+                        nombre = "Producto " + codigo_val
                     params = (codigo_val if not codigo_val.isdigit() else None,
                               nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of)
                     if codigo_val and codigo_val.isdigit():
@@ -221,7 +269,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
         conn.commit()
         conn.close()
 
-        msg = (f"Importación masiva completada en modo Ultra-Rápido:\n"
+        msg = (f"Importación masiva completada exitosamente:\n"
                f"  ✔ Insertados:   {insertados}\n"
                f"  ✔ Actualizados: {actualizados}\n"
                f"  ✖ Errores:      {errores}")

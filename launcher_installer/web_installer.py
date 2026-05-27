@@ -196,13 +196,11 @@ class InstallerWindow(QWidget):
                     os.startfile(target_exe)
                 self.close()
             else:
-                respuesta = QMessageBox.question(
+                QMessageBox.information(
                     self, "Instalación Completada", 
-                    "El sistema fue desplegado con éxito a velocidad máxima.\n\n¿Deseas iniciar Cobro Fácil POS ahora?\n\n(El instalador se auto-destruirá por seguridad).",
-                    QMessageBox.Yes | QMessageBox.No
+                    "El sistema fue desplegado con éxito a velocidad máxima.\n\nIniciando Cobro Fácil POS...\n\n(El instalador se auto-destruirá por seguridad)."
                 )
-                exe_to_launch = target_exe if (respuesta == QMessageBox.Yes and target_exe) else ""
-                self.auto_destruct_and_launch(exe_to_launch)
+                self.auto_destruct_and_launch(target_exe)
         else:
             QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\n{msg}")
             self.close()
