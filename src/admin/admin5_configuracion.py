@@ -219,17 +219,20 @@ class DialogoCajeros(QDialog):
         if not pin: pin = "1234"
         
         import hashlib
+        # Hash the PIN
+        h_pin = hashlib.sha256(pin.encode()).hexdigest()
+        
         exists = db_manager.execute_scalar("SELECT id FROM usuarios WHERE username = ?", (usr,))
         if exists:
             if pwd:
                 h = hashlib.sha256(pwd.encode()).hexdigest()
-                db_manager.execute_non_query("UPDATE usuarios SET password_hash = ?, rol = ?, pin = ? WHERE username = ?", (h, rol, pin, usr))
+                db_manager.execute_non_query("UPDATE usuarios SET password_hash = ?, rol = ?, pin = ? WHERE username = ?", (h, rol, h_pin, usr))
             else:
-                db_manager.execute_non_query("UPDATE usuarios SET rol = ?, pin = ? WHERE username = ?", (rol, pin, usr))
+                db_manager.execute_non_query("UPDATE usuarios SET rol = ?, pin = ? WHERE username = ?", (rol, h_pin, usr))
         else:
             if not pwd: pwd = usr # Default password is the username
             h = hashlib.sha256(pwd.encode()).hexdigest()
-            db_manager.execute_non_query("INSERT INTO usuarios (username, password_hash, rol, pin) VALUES (?, ?, ?, ?)", (usr, h, rol, pin))
+            db_manager.execute_non_query("INSERT INTO usuarios (username, password_hash, rol, pin) VALUES (?, ?, ?, ?)", (usr, h, rol, h_pin))
         
         self.txt_user.clear(); self.txt_pass.clear(); self.txt_pin.clear(); self.cargar_usuarios()
 
@@ -1778,9 +1781,14 @@ class DialogoPINLocal(QDialog):
         nuevo = self.txt_nuevo_pin.text().strip()
         confirmar = self.txt_confirmar_pin.text().strip()
         
-        pin_correcto = config.get("local_pin", "1234")
+        import hashlib
         
-        if actual != pin_correcto:
+        # El PIN guardado ahora es un hash, pero por compatibilidad hacia atrás
+        # si es '1234' (texto plano por defecto de versiones viejas) o su hash
+        pin_guardado = config.get("local_pin", hashlib.sha256("1234".encode()).hexdigest())
+        actual_hash = hashlib.sha256(actual.encode()).hexdigest()
+        
+        if actual_hash != pin_guardado and actual != pin_guardado:
             QMessageBox.critical(self, "PIN Incorrecto", "El PIN actual ingresado no coincide con el guardado en el sistema.")
             return
             
@@ -1792,7 +1800,8 @@ class DialogoPINLocal(QDialog):
             QMessageBox.critical(self, "PINs No Coinciden", "El nuevo PIN y su confirmación no coinciden.")
             return
             
-        # Guardar el PIN en la configuración
-        config.set("local_pin", nuevo)
+        # Guardar el PIN como HASH en la configuración
+        nuevo_hash = hashlib.sha256(nuevo.encode()).hexdigest()
+        config.set("local_pin", nuevo_hash)
         QMessageBox.information(self, "PIN Actualizado", "El PIN de seguridad local se ha guardado exitosamente.")
         self.accept()

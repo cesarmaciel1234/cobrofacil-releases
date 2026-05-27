@@ -186,8 +186,25 @@ class MainWindow(QMainWindow):
         self.btn_flotante.clicked_return.connect(self.return_to_terminal_refresh)
         self.btn_flotante.hide()
         self._supervisor_mode = False
-    
+
+        # Console y Thread de Instalación
+        from src.ui.console_widget import ConsoleWidget
+        from src.hardware.background_installer import BackgroundInstallerThread
+
+        self.console = ConsoleWidget(self)
+        self.main_layout.addWidget(self.console)
+
+        self.installer_thread = BackgroundInstallerThread(self)
+        # Conexiones de señales
+        self.installer_thread.progress_update.connect(self.console.update_progress)
+        self.installer_thread.progress.connect(self.console.append_message)
+        self.installer_thread.error.connect(self.console.append_message)
+        self.installer_thread.finished.connect(lambda: self.console.append_message("✅ Instalación completada"))
+
+        # Importar gestión de cajón y otras utilidades
         from src.hardware.cash_drawer import drawer_manager
+
+        # Restablecer cajón y cargar pantallas y atajos
         drawer_manager.reset_all()
         self._init_screens()
         self._init_shortcuts()
@@ -195,11 +212,14 @@ class MainWindow(QMainWindow):
         self._init_global_alarm()
         self._init_security_monitor()
         self._init_update_banner()
-        self._init_heartbeat()
-        # Chequear actualizaciones 10 segundos despues de que arranque la UI
+
+
+        # Iniciar la instalación en segundo plano
+        self.installer_thread.start()
+
+        # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(10000, self._chequear_actualizaciones_bg)
 
-    def _init_heartbeat(self):
         """ Inicializa el sistema de latido para tolerancia a fallos LAN. """
         self.heartbeat_timer = QTimer(self)
         self.heartbeat_timer.timeout.connect(self._check_heartbeat)
@@ -603,8 +623,13 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         if hasattr(self, 'marco_alerta'):
             self.marco_alerta.setGeometry(0, 0, self.width(), self.height())
-        if hasattr(self, 'overlay_transition') and self.overlay_transition and not self.overlay_transition.isHidden():
-            self.overlay_transition.setGeometry(0, 0, self.width(), self.height())
+        # Safely adjust overlay if it still exists
+        try:
+            if hasattr(self, 'overlay_transition') and self.overlay_transition and not self.overlay_transition.isHidden():
+                self.overlay_transition.setGeometry(0, 0, self.width(), self.height())
+        except RuntimeError:
+            # The overlay widget was already deleted; ignore
+            pass
         if self.btn_flotante.isVisible():
             self.btn_flotante.move(self.width() - 100, 80)
         self._posicionar_banner()

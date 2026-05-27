@@ -1794,32 +1794,23 @@ class Paso5Terminal(QWidget):
                 self.txt_scan.setFocus()
 
     def procesar_scan(self):
-        txt = self.txt_scan.text().strip()
-        if not txt: self.finalizar_venta(); return
+        from src.utils.barcode_parser import BarcodeParser
+        txt_raw = self.txt_scan.text()
         
-        # Lógica de Multiplicador (Ej: 5*12345)
-        cantidad_multiplicador = 1.0
-        if '*' in txt:
-            partes = txt.split('*', 1)
-            try:
-                cantidad_multiplicador = float(partes[0].replace(',', '.'))
-                txt = partes[1].strip()
-                if not txt: return
-            except ValueError:
-                pass
+        txt, cantidad_multiplicador = BarcodeParser.parse_scan_text(txt_raw)
+        
+        if not txt: 
+            self.finalizar_venta()
+            return
 
         # Lógica PRO: Artículo Común intencional usando el prefijo '+'
-        if txt.startswith('+'):
-            try:
-                precio_manual = float(txt[1:].replace(',', '.'))
-                p = {"id": "000", "nombre": "ARTICULO COMUN", "precio": precio_manual}
-                self.agregar_a_tabla(p, cantidad_multiplicador)
-                self.txt_scan.clear()
-                self.list_results.hide()
-                self.txt_scan.setFocus()
-                return
-            except ValueError:
-                pass # Si escriben "+abc", que siga el flujo y no lo encuentre.
+        p_manual, success = BarcodeParser.try_parse_manual_item(txt_raw.strip())
+        if success:
+            self.agregar_a_tabla(p_manual, cantidad_multiplicador)
+            self.txt_scan.clear()
+            self.list_results.hide()
+            self.txt_scan.setFocus()
+            return
         
         # Si hay lista de búsqueda abierta
         if not self.list_results.isHidden():
@@ -1846,75 +1837,39 @@ class Paso5Terminal(QWidget):
 
         # 2. Lógica PRO: Códigos de Balanza (Configuración Dinámica)
         if len(txt) == 13 and txt.isdigit() and config.get("balanza_habilitada", True):
+            # Try to get PLU to see if it exists
             prefijo_balanza = str(config.get("balanza_prefijo", "20"))
-            
-            # Soporte para Prefijo 20 (Peso/Importe) y Prefijo 21 (Unidades)
-            is_balanza = txt.startswith(prefijo_balanza) or txt.startswith("21")
-            
-            if is_balanza:
-                try:
-                    # Extraer PLU
-                    p_start = max(0, int(config.get("balanza_plu_inicio", 3)) - 1)
-                    p_len   = int(config.get("balanza_plu_largo", 5))
-                    plu     = txt[p_start : p_start + p_len]
+            if txt.startswith(prefijo_balanza) or txt.startswith("21"):
+                p_start = max(0, int(config.get("balanza_plu_inicio", 3)) - 1)
+                p_len   = int(config.get("balanza_plu_largo", 5))
+                plu     = txt[p_start : p_start + p_len]
+                plu_limpio = plu.lstrip('0') or '0'
+                
+                res = db_manager.execute_query(
+                    "SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ? OR id = ?", 
+                    (plu, plu_limpio)
+                )
+                if res:
+                    p = res[0]
+                    precio_unitario = float(p['precio'])
                     
-                    # Extraer Valor
-                    v_start = max(0, int(config.get("balanza_val_inicio", 8)) - 1)
-                    v_len   = int(config.get("balanza_val_largo", 5))
-                    v_raw   = txt[v_start : v_start + v_len]
+                    _, cantidad_balanza = BarcodeParser.parse_balanza_code(txt, precio_unitario)
                     
-                    
-                    modo = config.get("balanza_modo", "Importe Total ($)")
-                    
-                    # Buscar el producto por el PLU extraído
-                    # Búsqueda flexible: con ceros y sin ceros a la izquierda (ej: '00010' y '10')
-                    plu_limpio = plu.lstrip('0')
-                    if not plu_limpio: plu_limpio = '0'
-                    
-                    res = db_manager.execute_query(
-                        "SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ? OR id = ?", 
-                        (plu, plu_limpio)
-                    )
-                    if res:
-                        p = res[0]
-                        precio_unitario = float(p['precio'])
-                        
-                        # --- CÁLCULO DE VALOR SEGÚN PREFIJO ---
-                        divisor = int(config.get("balanza_divisor", 1000))
-                        
-                        if txt.startswith("21"):
-                            # MODO UNIDADES: El valor es la cantidad de piezas (ej: 00001 = 1 unidad)
-                            cantidad = float(int(v_raw))
-                        else:
-                            # MODO BALANZA (PESO O IMPORTE)
-                            valor_numerico = float(v_raw) / divisor
-                            if "Importe" in modo:
-                                if precio_unitario > 0:
-                                    cantidad = valor_numerico / precio_unitario
-                                else:
-                                    cantidad = 1.0 # Fallback
-                            else:
-                                # Modo Peso
-                                cantidad = valor_numerico
-                        
-                        # Cargar a la tabla
-                        self.agregar_a_tabla(p, cantidad)
-                        
+                    if cantidad_balanza is not None:
+                        self.agregar_a_tabla(p, cantidad_balanza)
                         self.txt_scan.clear()
                         self.list_results.hide()
                         self.txt_scan.setFocus()
                         return
-                    else:
-                        # Si el PLU no existe, avisar específicamente
-                        from PyQt5.QtWidgets import QMessageBox
-                        QMessageBox.warning(self, "Balanza: Producto no encontrado", 
-                            f"El código de balanza es correcto, pero el producto con PLU '{plu}' no existe en el sistema.\n\n"
-                            "Por favor, asegúrate de crear el producto con ese código en el inventario.")
-                        self.txt_scan.selectAll()
-                        self.txt_scan.setFocus()
-                        return
-                except (ValueError, IndexError):
-                    pass # Error en parseo, sigue el flujo normal
+                else:
+                    # Si el PLU no existe, avisar específicamente
+                    from PyQt5.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Balanza: Producto no encontrado", 
+                        f"El código de balanza es correcto, pero el producto con PLU '{plu}' no existe en el sistema.\n\n"
+                        "Por favor, asegúrate de crear el producto con ese código en el inventario.")
+                    self.txt_scan.selectAll()
+                    self.txt_scan.setFocus()
+                    return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
         res = db_manager.execute_query("SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))

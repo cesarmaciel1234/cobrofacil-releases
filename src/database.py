@@ -535,6 +535,35 @@ class DatabaseManager:
             logger.error(f"Error connecting to database: {e}")
             raise
 
+    def upsert_product(self, product_id: Optional[int], data: dict) -> bool:
+        """Insert a new product or update an existing one.
+
+        Args:
+            product_id: Primary key of the product to update, or None to insert.
+            data: Mapping of column names to values.
+
+        Returns:
+            True if the operation succeeded, False otherwise.
+        """
+        if not data:
+            logger.warning("upsert_product called with empty data dict")
+            return False
+        try:
+            if product_id:
+                # Build SET clause
+                set_clause = ", ".join([f"{k} = ?" for k in data.keys()])
+                sql = f"UPDATE productos SET {set_clause} WHERE id = ?"
+                params = tuple(data.values()) + (product_id,)
+                return self.execute_non_query(sql, params)
+            else:
+                cols = ", ".join(data.keys())
+                placeholders = ", ".join(["?"] * len(data))
+                sql = f"INSERT INTO productos ({cols}) VALUES ({placeholders})"
+                return self.execute_non_query(sql, tuple(data.values()))
+        except Exception as e:
+            logger.error(f"upsert_product error: {e}")
+            return False
+
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
@@ -586,6 +615,38 @@ class DatabaseManager:
                 conn.close()
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
+        
+        # Intercept for LAN API (Nivel 2)
+        if not self.is_master:
+            from src.config import config
+            api_url = config.get("api_url", "")
+            if api_url:
+                try:
+                    import requests
+                    payload = {
+                        "venta_data": venta_data,
+                        "items": items
+                    }
+                    response = requests.post(f"{api_url}/api/guardar_venta", json=payload, timeout=5.0)
+                    if response.status_code == 200:
+                        res_data = response.json()
+                        if res_data.get("status") == "success":
+                            logger.info(f"Venta guardada remotamente vía API LAN (ID: {res_data.get('id_venta')})")
+                            return res_data.get("id_venta")
+                    logger.warning(f"Error del Servidor API LAN: HTTP {response.status_code}")
+                except Exception as e:
+                    logger.error(f"Fallo de conexión a la API LAN: {e}")
+                
+                # If API fails, fall back to offline sync (it acts like network drop)
+                logger.warning("Fallo en API LAN detectado. Guardando offline.")
+                try:
+                    from src.offline_sync import offline_sync_manager
+                    offline_sync_manager.guardar_venta_offline(venta_data, items)
+                    return 9999999
+                except Exception as ex:
+                    logger.error(f"Fallo crítico offline tras error API: {ex}")
+                    return None
+
         conn = None
         try:
             conn = self.get_connection()

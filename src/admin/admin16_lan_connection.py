@@ -176,12 +176,14 @@ class Admin16LANConnection(QWidget):
         db_path = pc_info.get("db_path", "")
         pass_hash = pc_info.get("pass_hash", "")
         mode = pc_info.get("mode", "")
+        api_url = pc_info.get("api_url", "")
         
         if host in self.discovered_pcs: return
         self.discovered_pcs[host] = {
             "db_path": db_path,
             "pass_hash": pass_hash,
-            "mode": mode
+            "mode": mode,
+            "api_url": api_url
         }
         
         btn_pc = QPushButton()
@@ -221,7 +223,7 @@ class Admin16LANConnection(QWidget):
         lbl_mode.setStyleSheet("font-size: 11px; color: #0f766e; background: transparent; border: none;")
         layout.addWidget(lbl_mode)
         
-        btn_pc.clicked.connect(lambda _, info={"db_path": db_path, "host": host, "pass_hash": pass_hash, "mode": mode}: self.connect_to_pc(info))
+        btn_pc.clicked.connect(lambda _, info={"db_path": db_path, "host": host, "pass_hash": pass_hash, "mode": mode, "api_url": api_url}: self.connect_to_pc(info))
         
         count = self.pc_grid.count()
         row = count // 4
@@ -238,6 +240,7 @@ class Admin16LANConnection(QWidget):
         db_path = pc_info.get("db_path", "")
         host = pc_info.get("host", "PC_Desconocida")
         mode = pc_info.get("mode", "DESCONOCIDO")
+        api_url = pc_info.get("api_url", "")
         remote_hash = pc_info.get("pass_hash", "")
         local_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
 
@@ -273,6 +276,8 @@ class Admin16LANConnection(QWidget):
             
         if reply == QMessageBox.Yes:
             self.txt_path.setText(normalized_path)
+            if api_url:
+                config.set("api_url", api_url)
             self.save_and_restart()
 
     def cargar_datos(self):
@@ -311,6 +316,7 @@ class Admin16LANConnection(QWidget):
             return
 
         config.set("db_path", "")
+        config.set("api_url", "")
         config.save()
         QMessageBox.information(self, "PC Maestra Activada",
             "Esta PC se ha configurado como MAESTRA local.\n"
@@ -323,5 +329,6 @@ class Admin16LANConnection(QWidget):
             QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             config.set("db_path", "") # Vacío significa local por defecto
+            config.set("api_url", "")
             config.save()
             QApplication.exit(888)

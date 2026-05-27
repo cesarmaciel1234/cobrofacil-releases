@@ -918,6 +918,9 @@ class Paso6Cobro(QDialog):
             monto_desc = self.total_original * (self.descuento_porcentaje / 100.0)
             monto_rec = self.total_original * (self.recargo_porcentaje / 100.0)
             
+            descuentaso_oferta = getattr(self, 'descuentaso_oferta', 0.0)
+            descuento_total = monto_desc + descuentaso_oferta
+            
             self.resultado_venta = {
                 'total': self.total_final,
                 'pago_con': p1 + p2,
@@ -928,7 +931,7 @@ class Paso6Cobro(QDialog):
                 'usuario_secundario': CajeroActivo.nombre if CajeroActivo.numero == 2 else '',
                 'metodo_pago': self.current_metodo,
                 'estado': 'COMPLETADA',
-                'descuento': monto_desc,
+                'descuento': descuento_total,
                 'recargo': monto_rec
             }
             
@@ -965,11 +968,14 @@ class Paso6Cobro(QDialog):
             monto_desc = self.total_original * (self.descuento_porcentaje / 100.0)
             monto_rec = self.total_original * (self.recargo_porcentaje / 100.0)
             
+            descuentaso_oferta = getattr(self, 'descuentaso_oferta', 0.0)
+            descuento_total = monto_desc + descuentaso_oferta
+            
             # El ticket imprimirá y abrirá si abrir_manual es True
             printer_manager.imprimir_ticket_venta(
                 id_v, self.items_carrito, self.total_final, 
                 self.resultado_venta['pago_con'], self.resultado_venta['cambio'],
-                abrir_cajon=abrir_manual, discount_amount=monto_desc, surcharge_amount=monto_rec,
+                abrir_cajon=abrir_manual, discount_amount=descuento_total, surcharge_amount=monto_rec,
                 cajero=CajeroActivo.nombre, metodo_pago=self.resultado_venta.get('metodo_pago', 'Efectivo')
             )
         except: pass

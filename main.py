@@ -45,6 +45,10 @@ def launch_app():
     from src.database import db_manager
     db_manager._init_db()
     
+    # Iniciar Servidor LAN si esta PC es la Maestra
+    from src.services.lan_server import init_lan_server
+    init_lan_server()
+    
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
@@ -109,23 +113,28 @@ def launch_app():
     db_path = getattr(db_manager, 'db_path', "") or ""
     is_remote = not getattr(db_manager, 'is_master', True)
     if is_remote:
-        local_pin = config.get("local_pin", "1234")
+        import hashlib
+        local_pin_saved = config.get("local_pin", hashlib.sha256("1234".encode()).hexdigest())
         pin, ok_pin = QInputDialog.getText(
             None,
             "Modo Espectador LAN - PIN",
             f"Estás ingresando en modo LAN remoto.\n\nPC maestra: {db_path}\n\nIngrese PIN de acceso:",
             QLineEdit.Password
         )
-        if ok_pin and pin == local_pin:
-            config.current_user = {"username": "Espectador LAN", "role": "admin", "lan_mode": True}
-            main_window.apply_roles()
-            main_window.show()
-            main_window.iniciar_reconstruccion_scifi()
-            result = app.exec_()
-            main_window.close()
-            return result
+        if ok_pin:
+            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+            if pin_hash == local_pin_saved or pin == local_pin_saved:
+                config.current_user = {"username": "Espectador LAN", "role": "admin", "lan_mode": True}
+                main_window.apply_roles()
+                main_window.show()
+                main_window.iniciar_reconstruccion_scifi()
+                result = app.exec_()
+                main_window.close()
+                return result
+            else:
+                QMessageBox.critical(None, "Error", "PIN incorrecto.")
+                return 0
         else:
-            QMessageBox.critical(None, "Error", "PIN incorrecto o cancelado.")
             return 0
 
     perfil_dlg = PerfilPantalla()
