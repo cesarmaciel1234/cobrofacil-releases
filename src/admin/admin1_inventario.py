@@ -256,9 +256,50 @@ class DialogoProducto(QDialog):
         inp.setStyleSheet(f"background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; font-weight: {weight}; color: {color};")
         return inp
 
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self.focusNextChild()
+        else:
+            super().keyPressEvent(event)
+
     def _ok(self):
-        if not self.txt_nombre.text().strip():
-            QMessageBox.warning(self, "Requerido", "El nombre es obligatorio."); return
+        nom = self.txt_nombre.text().strip()
+        cod = self.txt_codigo.text().strip()
+        
+        if not nom:
+            QMessageBox.warning(self, "Requerido", "El nombre es obligatorio.")
+            return
+
+        # Advertencia de Código Duplicado
+        if cod:
+            try:
+                res = db_manager.execute_query("SELECT id FROM productos WHERE codigo=?", (cod,))
+                if res and len(res) > 0:
+                    if self._id is None or res[0]['id'] != self._id:
+                        ans = QMessageBox.question(
+                            self, "Código Duplicado",
+                            f"⚠️ Atención: El código de barras '{cod}' ya está asignado a otro producto.\n\n¿Deseas guardarlo de todos modos?",
+                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                        )
+                        if ans == QMessageBox.No:
+                            return
+            except: pass
+
+        # Advertencia de Nombre Duplicado
+        try:
+            # Búsqueda que ignora mayúsculas/minúsculas
+            res_nom = db_manager.execute_query("SELECT id FROM productos WHERE LOWER(nombre) = LOWER(?)", (nom,))
+            if res_nom and len(res_nom) > 0:
+                if self._id is None or res_nom[0]['id'] != self._id:
+                    ans = QMessageBox.question(
+                        self, "Nombre Duplicado",
+                        f"⚠️ Atención: Ya existe un producto con el nombre '{nom}'.\n\n¿Deseas registrar este duplicado de todos modos?",
+                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                    )
+                    if ans == QMessageBox.No:
+                        return
+        except: pass
+
         self.accept()
 
     def _actualizar_info_iva(self):

@@ -171,7 +171,7 @@ class InstallerWindow(QWidget):
 
         # === CONFIGURACION DEL INSTALADOR ===
         # URL Opcional de descarga (Si está vacía, exigirá el ZIP local).
-        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/C%3A%5CUsers%5Ccesar%5COneDrive%5CDesktop%5Ctpv%20pro%202026%5CCATORTA_USB_PUNPRO%5C2_Archivos_Comprimidos_ZIP%5CBatallon_TPV_Win8_Win11.zip%2FBatallon_TPV_Win8_Win11.zip?alt=media&token=2ae36f53-994b-4154-aed7-310b9c8ac02e"
+        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/Batallon_TPV_Win8_Win11.zip?alt=media"
         self.zip_filename = "Batallon_TPV_Win8_Win11.zip"
         
         # Carpeta de instalación en el usuario para evitar pedir permisos de admin (UAC) 

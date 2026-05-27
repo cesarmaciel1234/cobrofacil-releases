@@ -180,6 +180,8 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             if r['codigo']:
                 existentes_cod[str(r['codigo'])] = r['id']
 
+        import re
+
         # Extraer filas de valores, omitiendo el encabezado y las anteriores
         for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
             if not any(row): continue  # fila vacía o nula
@@ -195,7 +197,10 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             def parse_float(val):
                 if val is None or val == '': return 0.0
                 if isinstance(val, (int, float)): return float(val)
-                s = str(val).replace('$', '').strip()
+                s = str(val).strip()
+                # Extraer solo números, comas, puntos y signo negativo
+                s = re.sub(r'[^\d.,-]', '', s)
+                if not s: return 0.0
                 if ',' in s and '.' not in s: s = s.replace(',', '.')
                 elif ',' in s and '.' in s: s = s.replace('.', '').replace(',', '.')
                 try: return float(s)
@@ -206,7 +211,16 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                 codigo_val = codigo_val[:-2]
 
             nombre = str(get_val('nombre', '')).strip()
-            # Si no hay nombre pero hay código, lo intentamos usar
+            
+            # Lógica de Descripción e ID (código) variado
+            # Si no hay nombre pero hay código, el código funciona como nombre
+            if not nombre and codigo_val:
+                nombre = "Producto " + codigo_val
+            # Si no hay código pero hay nombre, intentamos generar un código o dejamos que la base de datos lo asigne
+            elif not codigo_val and nombre:
+                # Opcional: Podríamos intentar extraer algún número del nombre, pero mejor dejamos que SQLite auto-asigne el ID
+                pass
+            
             if not nombre and not codigo_val: continue
 
             costo       = parse_float(get_val('costo', 0))
