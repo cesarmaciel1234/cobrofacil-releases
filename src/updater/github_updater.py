@@ -14,7 +14,7 @@ import sys
 import threading
 from PyQt5.QtWidgets import QMessageBox
 
-API_URL = "https://api.github.com/repos/cesarmaciel1234/cobrofacil-releases/releases/latest"
+FIREBASE_VERSION_URL = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/version.json?alt=media"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 
@@ -23,10 +23,10 @@ def get_local_version():
         try:
             with open(VERSION_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return data.get("app_version", "v2027.9")
+                return data.get("app_version", "v2026.0")
         except:
             pass
-    return "v2027.9"
+    return "v2026.0"
 
 def set_local_version(version_tag):
     try:
@@ -43,22 +43,16 @@ def buscar_actualizacion_background(parent_widget=None):
         ctx.verify_mode = ssl.CERT_NONE
         
         try:
-            req = urllib.request.Request(API_URL, headers={'User-Agent': 'CobroFacil-Updater'})
+            req = urllib.request.Request(FIREBASE_VERSION_URL, headers={'User-Agent': 'CobroFacil-Updater'})
             with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
                 data = json.loads(r.read().decode('utf-8'))
                 
-            latest_tag = data.get("tag_name", "")
+            latest_tag = data.get("app_version", "")
+            zip_url = data.get("zip_url", "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacil_POS_Update.zip?alt=media")
             local_tag = get_local_version()
             
             # Simple string comparison (e.g. v2026.2.1 > v2026.2.0)
             if latest_tag and latest_tag > local_tag:
-                # Encontrar el asset zip
-                zip_url = None
-                for asset in data.get("assets", []):
-                    if asset["name"].endswith(".zip"):
-                        zip_url = asset["browser_download_url"]
-                        break
-                
                 if zip_url and parent_widget:
                     from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
                     QMetaObject.invokeMethod(parent_widget, "mostrar_alerta_actualizacion", 
@@ -257,24 +251,20 @@ def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
     ctx.verify_mode = ssl.CERT_NONE
     
     try:
-        req = urllib.request.Request(API_URL, headers={'User-Agent': 'CobroFacil-Updater'})
+        req = urllib.request.Request(FIREBASE_VERSION_URL, headers={'User-Agent': 'CobroFacil-Updater'})
         with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
             data = json.loads(r.read().decode('utf-8'))
             
-        latest_tag = data.get("tag_name", "")
+        latest_tag = data.get("app_version", "")
         res.version_nueva = latest_tag
         res.version_local = get_local_version()
         
         # Simple string comparison (e.g. v2026.3 > v2026.2)
         if latest_tag and latest_tag > res.version_local:
-            zip_url = None
-            for asset in data.get("assets", []):
-                if asset["name"].endswith(".zip"):
-                    zip_url = asset["browser_download_url"]
-                    break
+            zip_url = data.get("zip_url", "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacil_POS_Update.zip?alt=media")
             
             if not zip_url:
-                res.errores.append("Hay una nueva versión pero no se encontró un archivo .zip instalador adjunto en GitHub Releases.")
+                res.errores.append("Hay una nueva versión pero no se encontró un archivo .zip instalador.")
                 return res
                 
             res.actualizados = ["CobroFacil_POS_Update.zip"]
