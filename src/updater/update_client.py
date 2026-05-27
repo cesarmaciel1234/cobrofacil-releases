@@ -83,7 +83,7 @@ def get_update_token() -> str:
 
 def _build_request(url: str):
     import urllib.request
-    req = urllib.request.Request(url, headers={'User-Agent': 'CajaFacil-Updater'})
+    req = urllib.request.Request(url, headers={'User-Agent': 'CobroFacil-Updater'})
     token = get_update_token()
     if token:
         req.add_header('X-Update-Token', token)

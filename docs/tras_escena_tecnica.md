@@ -1,4 +1,4 @@
-# 🎬 TRAS ESCENA TÉCNICO: ARQUITECTURA CajaFacil Pro
+# 🎬 TRAS ESCENA TÉCNICO: ARQUITECTURA Cobro Fácil POS
 
 Este documento describe la ingeniería "bajo el capó" que hace posible la estabilidad y seguridad del sistema.
 

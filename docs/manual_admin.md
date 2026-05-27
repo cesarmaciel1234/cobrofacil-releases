@@ -76,4 +76,4 @@ Si el marco de la pantalla parpadea en **Rojo**:
 2.  **Exceso de Efectivo**: Se ha superado el umbral de seguridad (ej. $70,000). Instruya al cajero a realizar un **Retiro de Resguardo (F5)** inmediatamente.
 
 ---
-*Manual de Supervisión Administrativa - CajaFacil Pro*
+*Manual de Supervisión Administrativa - Cobro Fácil POS*

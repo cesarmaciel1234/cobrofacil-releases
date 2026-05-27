@@ -17,7 +17,7 @@ except ImportError:
 
 def ejecutar_rutina():
     print("="*50)
-    print("🚀 RUTINA DE CONTROL - CajaFacil Pro")
+    print("🚀 RUTINA DE CONTROL - Cobro Fácil POS")
     print("="*50)
     
     # 1. Verificar Base de Datos

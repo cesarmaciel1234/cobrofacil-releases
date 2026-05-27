@@ -22,7 +22,7 @@ with open(os.path.join(BASE, 'version.json'), 'r', encoding='utf-8') as f:
     manifest = json.load(f)
 version = manifest.get("app_version", "2026.3.3")
 
-zip_filename = f"CajaFacil_Pro_v{version}.zip"
+zip_filename = f"CobroFacil_POS_v{version}.zip"
 zip_path = os.path.join(BASE, zip_filename)
 
 if os.path.exists(zip_path):

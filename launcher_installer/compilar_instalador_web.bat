@@ -21,7 +21,7 @@ if exist "dist" rmdir /s /q "dist"
 
 echo Construyendo un Setup.exe ultra ligero (Un solo archivo)...
 pyinstaller --noconfirm --onefile --windowed ^
-  --name "Setup_CajaFacil_Web" ^
+  --name "Setup_CobroFacil_Web" ^
   --hidden-import "win32com" ^
   --hidden-import "win32com.client" ^
   --icon=NONE ^
@@ -32,6 +32,6 @@ echo ==========================================================
 echo ✅ COMPILACION TERMINADA
 echo ==========================================================
 echo El instalador ha sido generado en la carpeta:
-echo launcher_installer\dist\Setup_CajaFacil_Web.exe
+echo launcher_installer\dist\Setup_CobroFacil_Web.exe
 echo.
 :: pause

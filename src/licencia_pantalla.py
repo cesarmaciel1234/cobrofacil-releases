@@ -143,7 +143,7 @@ class LicenciaPantalla(QDialog):
         hwid = self._get_hwid()
         # REEMPLAZA ESTE NÚMERO POR TU NÚMERO DE WHATSAPP REAL (con código de país ej: 591, 52, 54, etc sin el +)
         numero_whatsapp = "0000000000" 
-        mensaje = f"Hola, quiero solicitar mi Licencia Gratuita para CajaFacil Pro. Mi ID de máquina es: {hwid}"
+        mensaje = f"Hola, quiero solicitar mi Licencia Gratuita para Cobro Fácil POS. Mi ID de máquina es: {hwid}"
         url = f"https://wa.me/{numero_whatsapp}?text={mensaje.replace(' ', '%20')}"
         webbrowser.open(url)
 

@@ -22,13 +22,13 @@ installer/
 ## Cómo funciona
 
 ```
-Vos compilás → CajaFacil_Pro_Setup.exe (10 MB)
+Vos compilás → CobroFacil_POS_Setup.exe (10 MB)
                         ↓
 Cliente ejecuta el .exe
                         ↓
-Descarga CajaFacil_Pro.zip de GitHub (cajafacil-releases)
+Descarga CobroFacil_POS.zip de GitHub (cobrofacil-releases)
                         ↓
-Instala en C:\CajaFacil Pro
+Instala en C:\Cobro Fácil POS
 Instala Python 3.11 si no tiene
 Instala dependencias (PyQt5, etc.)
 Crea acceso directo en escritorio
@@ -49,10 +49,10 @@ Doble clic en installer\build.bat
 
 O desde consola:
 ```bat
-.venv\Scripts\pyinstaller.exe --onefile --windowed --name CajaFacil_Pro_Setup --distpath .\dist_installer --workpath .\build_installer --specpath .\build_installer installer\installer_build.py
+.venv\Scripts\pyinstaller.exe --onefile --windowed --name CobroFacil_POS_Setup --distpath .\dist_installer --workpath .\build_installer --specpath .\build_installer installer\installer_build.py
 ```
 
-Resultado: `CajaFacil_Pro_Setup.zip` en la raíz del proyecto.
+Resultado: `CobroFacil_POS_Setup.zip` en la raíz del proyecto.
 
 ---
 
@@ -74,11 +74,11 @@ Solo subís el nuevo ZIP al release de GitHub.
 ```
 1. Hacés cambios en el código
 2. git add . && git commit -m "descripcion" && git push
-3. python scratch\crear_zip.py  →  CajaFacil_Pro_v2026.x.x.zip
-4. Subir ese ZIP a cajafacil-releases como nuevo release
-   (renombrarlo a CajaFacil_Pro.zip al subir)
+3. python scratch\crear_zip.py  →  CobroFacil_POS_v2026.x.x.zip
+4. Subir ese ZIP a cobrofacil-releases como nuevo release
+   (renombrarlo a CobroFacil_POS.zip al subir)
 5. Los clientes existentes se actualizan solos al cerrar caja
-6. Clientes nuevos usan CajaFacil_Pro_Setup.exe (no cambia)
+6. Clientes nuevos usan CobroFacil_POS_Setup.exe (no cambia)
 ```
 
 ---
@@ -87,5 +87,5 @@ Solo subís el nuevo ZIP al release de GitHub.
 
 | Repo | Visibilidad | Contenido |
 |------|------------|-----------|
-| `cajafacil-pro` | 🔒 Privado | Código fuente |
-| `cajafacil-releases` | 🌐 Público | ZIP de distribución |
+| `cobrofacil-pro` | 🔒 Privado | Código fuente |
+| `cobrofacil-releases` | 🌐 Público | ZIP de distribución |

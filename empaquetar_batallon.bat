@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-title CajaFacil Pro - Generador de Batallon de Despliegue Universal (Win7 a Win11)
+title Cobro Fácil POS - Generador de Batallon de Despliegue Universal (Win7 a Win11)
 color 1F
 
 echo ===============================================================================
@@ -33,8 +33,8 @@ pip install pyinstaller >nul 2>&1
 :: 2. Limpieza estricta de compilaciones obsoletas
 echo [2/5] Purgando carpetas de construccion antiguas...
 if exist "build" rmdir /s /q "build"
-if exist "dist\CajaFacil_Pro_Portable_Win7" rmdir /s /q "dist\CajaFacil_Pro_Portable_Win7"
-if exist "dist\CajaFacil_Pro_Portable_Win8_Win11" rmdir /s /q "dist\CajaFacil_Pro_Portable_Win8_Win11"
+if exist "dist\CobroFacil_POS_Portable_Win7" rmdir /s /q "dist\CobroFacil_POS_Portable_Win7"
+if exist "dist\CobroFacil_POS_Portable_Win8_Win11" rmdir /s /q "dist\CobroFacil_POS_Portable_Win8_Win11"
 if exist "Batallon_TPV_Win7.zip" del /f /q "Batallon_TPV_Win7.zip"
 if exist "Batallon_TPV_Win8_Win11.zip" del /f /q "Batallon_TPV_Win8_Win11.zip"
 
@@ -42,7 +42,7 @@ if exist "Batallon_TPV_Win8_Win11.zip" del /f /q "Batallon_TPV_Win8_Win11.zip"
 echo/
 echo [3/5] Ensamblando binarios nativos y dependencias graficas...
 echo Esto tomara unos momentos. PyInstaller esta analizando el arbol de importacion...
-pyinstaller --noconfirm --onedir --windowed --name "CajaFacil_Pro" ^
+pyinstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
  --add-data "src/styles.qss;src/" ^
  --hidden-import "matplotlib" ^
  --hidden-import "matplotlib.backends.backend_qt5agg" ^
@@ -62,17 +62,17 @@ echo/
 echo [4/5] Estructurando carpetas gemelas para el Pendrive (Win7 vs Win8-11)...
 
 :: ── DEFINICION DE RUTAS DE DESTINO ──
-set "DIR_W7=dist\CajaFacil_Pro_Portable_Win7"
-set "DIR_W8_11=dist\CajaFacil_Pro_Portable_Win8_Win11"
+set "DIR_W7=dist\CobroFacil_POS_Portable_Win7"
+set "DIR_W8_11=dist\CobroFacil_POS_Portable_Win8_Win11"
 
 mkdir "%DIR_W7%\bin" 2>nul
 mkdir "%DIR_W8_11%\bin" 2>nul
 
 :: Clonar el binario base a ambas distribuciones
 echo   - Distribuyendo motor binario a carpetas de SO...
-xcopy /E /I /Y "dist\CajaFacil_Pro\*" "%DIR_W7%\bin\" >nul
-xcopy /E /I /Y "dist\CajaFacil_Pro\*" "%DIR_W8_11%\bin\" >nul
-rmdir /s /q "dist\CajaFacil_Pro"
+xcopy /E /I /Y "dist\CobroFacil_POS\*" "%DIR_W7%\bin\" >nul
+xcopy /E /I /Y "dist\CobroFacil_POS\*" "%DIR_W8_11%\bin\" >nul
+rmdir /s /q "dist\CobroFacil_POS"
 
 :: Inyectar base de datos y configuracion por defecto en las raices portables
 echo   - Inyectando plantillas de datos base en ambas versiones...
@@ -81,8 +81,8 @@ for %%D in ("%DIR_W7%" "%DIR_W8_11%") do (
     if exist "config.json" copy /y "config.json" "%%~D\config.json" >nul
     
     echo @echo off> "%%~D\INICIAR_SISTEMA.bat"
-    echo title Iniciando CajaFacil Pro Portable>> "%%~D\INICIAR_SISTEMA.bat"
-    echo start "" "bin\CajaFacil_Pro.exe">> "%%~D\INICIAR_SISTEMA.bat"
+    echo title Iniciando Cobro Fácil POS Portable>> "%%~D\INICIAR_SISTEMA.bat"
+    echo start "" "bin\CobroFacil_POS.exe">> "%%~D\INICIAR_SISTEMA.bat"
 )
 
 :: Inyectar un archivo leame distintivo en la version de Windows 7 para orientar al operador

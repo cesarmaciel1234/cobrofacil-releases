@@ -1,10 +1,10 @@
 @echo off
 :: ============================================================
-::  INSTALAR EN PC NUEVA - CajaFacil Pro
+::  INSTALAR EN PC NUEVA - Cobro Fácil POS
 ::  Ejecutar como ADMINISTRADOR
 ::  Extrae el ZIP, instala Python si falta, crea acceso directo
 :: ============================================================
-title CajaFacil Pro - Instalador
+title Cobro Fácil POS - Instalador
 color 0A
 echo.
 echo  ============================================
@@ -13,7 +13,7 @@ echo  ============================================
 echo.
 
 set "ORIGEN=%~dp0"
-set "DESTINO=C:\CajaFacil Pro"
+set "DESTINO=C:\Cobro Fácil POS"
 
 echo  Destino: %DESTINO%
 echo.
@@ -32,7 +32,7 @@ xcopy "%ORIGEN%src"         "%DESTINO%\src"  /E /Y /Q > nul
 copy /Y "%ORIGEN%main.py"           "%DESTINO%\main.py"          > nul
 copy /Y "%ORIGEN%version.json"      "%DESTINO%\version.json"     > nul
 copy /Y "%ORIGEN%requirements.txt"  "%DESTINO%\requirements.txt" > nul
-copy /Y "%ORIGEN%CajaFacil_Pro.bat" "%DESTINO%\CajaFacil_Pro.bat" > nul
+copy /Y "%ORIGEN%CobroFacil_POS.bat" "%DESTINO%\CobroFacil_POS.bat" > nul
 copy /Y "%ORIGEN%ACTUALIZAR.bat"    "%DESTINO%\ACTUALIZAR.bat"   > nul
 
 :: Copiar config.json solo si NO existe (no pisar configuracion del cliente)
@@ -108,7 +108,7 @@ echo  Descargando herramientas de hardware (RPT Tool y Drivers 3nStar)...
 if not exist "%DESTINO%\utilidades_hardware" mkdir "%DESTINO%\utilidades_hardware"
 
 echo  Descargando RPT Printer Tool...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/RPT-Printer-Tool.zip' -OutFile '%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip'"
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/RPT-Printer-Tool.zip' -OutFile '%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip'"
 if exist "%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip" (
     echo  Extrayendo RPT Printer Tool...
     powershell -Command "Expand-Archive -Path '%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip' -DestinationPath '%DESTINO%\utilidades_hardware\RPT-Printer-Tool' -Force"
@@ -123,7 +123,7 @@ if exist "%DESTINO%\utilidades_hardware\RPT-Printer-Tool.zip" (
 )
 
 echo  Descargando Drivers 3nStar...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/3nStar-Drivers.zip' -OutFile '%DESTINO%\utilidades_hardware\3nStar-Drivers.zip'"
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/3nStar-Drivers.zip' -OutFile '%DESTINO%\utilidades_hardware\3nStar-Drivers.zip'"
 if exist "%DESTINO%\utilidades_hardware\3nStar-Drivers.zip" (
     echo  Extrayendo Drivers 3nStar...
     powershell -Command "Expand-Archive -Path '%DESTINO%\utilidades_hardware\3nStar-Drivers.zip' -DestinationPath '%DESTINO%\utilidades_hardware\3nStar-Drivers' -Force"
@@ -140,7 +140,7 @@ if exist "%DESTINO%\utilidades_hardware\3nStar-Drivers.zip" (
 :: ── PASO 6: Crear acceso directo en escritorio ────────────────
 echo.
 echo  Creando acceso directo en escritorio...
-powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\CajaFacil Pro.lnk'); $s.TargetPath = '%DESTINO%\CajaFacil_Pro.bat'; $s.WorkingDirectory = '%DESTINO%'; $s.Description = 'CajaFacil Pro - Sistema de Ventas'; $s.Save()" > nul
+powershell -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\Cobro Fácil POS.lnk'); $s.TargetPath = '%DESTINO%\CobroFacil_POS.bat'; $s.WorkingDirectory = '%DESTINO%'; $s.Description = 'Cobro Fácil POS - Sistema de Ventas'; $s.Save()" > nul
 echo  [OK] Acceso directo creado en escritorio
 
 :: ── LISTO ──────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ echo.
 echo  ============================================
 echo    INSTALACION COMPLETADA!
 echo.
-echo    Doble clic en "CajaFacil Pro" del escritorio
+echo    Doble clic en "Cobro Fácil POS" del escritorio
 echo    para iniciar el sistema.
 echo  ============================================
 echo.

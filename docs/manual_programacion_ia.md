@@ -1,4 +1,4 @@
-# 📘 MANUAL DE PROGRAMACIÓN CON IA: CajaFacil Pro
+# 📘 MANUAL DE PROGRAMACIÓN CON IA: Cobro Fácil POS
 
 Este documento guía al desarrollador o administrador sobre cómo interactuar con el asistente de IA (Antigravity) para mantener, escalar y auditar el código del sistema.
 

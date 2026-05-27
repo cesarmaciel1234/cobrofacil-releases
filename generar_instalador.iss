@@ -1,10 +1,10 @@
 [Setup]
 ; Nombre y detalles de tu aplicación
-AppName=CajaFacil Pro
+AppName=Cobro Fácil POS
 AppVersion=1.0
 AppPublisher=PunPro
-DefaultDirName={pf}\CajaFacil Pro
-DefaultGroupName=CajaFacil Pro
+DefaultDirName={pf}\Cobro Fácil POS
+DefaultGroupName=Cobro Fácil POS
 OutputDir=.\Instalador_Final
 OutputBaseFilename=Instalar_PunPro_Elite
 Compression=lzma
@@ -18,16 +18,16 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Capturar todo el contenido binario del batallón moderno
-Source: "dist\CajaFacil_Pro_Portable_Win8_Win11\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\CobroFacil_POS_Portable_Win8_Win11\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Inyectar plantillas base operativas
-Source: "dist\CajaFacil_Pro_Portable_Win8_Win11\punpro.db"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "dist\CajaFacil_Pro_Portable_Win8_Win11\config.json"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "dist\CobroFacil_POS_Portable_Win8_Win11\punpro.db"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "dist\CobroFacil_POS_Portable_Win8_Win11\config.json"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 ; Crear acceso directo en el Menú de Inicio apuntando al binario interno
-Name: "{group}\CajaFacil Pro"; Filename: "{app}\bin\CajaFacil_Pro.exe"
+Name: "{group}\Cobro Fácil POS"; Filename: "{app}\bin\CobroFacil_POS.exe"
 ; Crear acceso directo en el Escritorio
-Name: "{commondesktop}\CajaFacil Pro"; Filename: "{app}\bin\CajaFacil_Pro.exe"; Tasks: desktopicon
+Name: "{commondesktop}\Cobro Fácil POS"; Filename: "{app}\bin\CobroFacil_POS.exe"; Tasks: desktopicon
 
 [Dirs]
 ; Permisos de lectura/escritura absolutos para evitar bloqueos de base de datos
@@ -35,4 +35,4 @@ Name: "{app}"; Permissions: everyone-modify
 
 [Run]
 ; Casilla para iniciar el programa al terminar la instalación
-Filename: "{app}\bin\CajaFacil_Pro.exe"; Description: "{cm:LaunchProgram,CajaFacil Pro}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\bin\CobroFacil_POS.exe"; Description: "{cm:LaunchProgram,Cobro Fácil POS}"; Flags: nowait postinstall skipifsilent

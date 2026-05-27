@@ -4,9 +4,9 @@ from PyQt5.QtWidgets import QSplashScreen, QVBoxLayout, QLabel, QFrame, QGraphic
 from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF
 from PyQt5.QtGui import QPixmap, QColor, QPainter, QPainterPath, QLinearGradient, QRadialGradient, QPen, QBrush
 
-class CajaFacilSplash(QSplashScreen):
+class CobroFacilSplash(QSplashScreen):
     """
-    Pantalla de Carga Inicial (Splash Screen) MAJESTUOSA para CajaFacil Pro.
+    Pantalla de Carga Inicial (Splash Screen) MAJESTUOSA para Cobro Fácil POS.
     Presenta:
       - Un Trofeo Holográfico Vectorial en el centro con una estrella brillante emergiendo.
       - Nebulosa radial pulsante de fondo.

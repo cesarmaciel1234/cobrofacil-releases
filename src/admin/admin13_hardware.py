@@ -410,7 +410,7 @@ class Admin13Hardware(QWidget):
                     if reply == QMessageBox.Yes:
                         self.lbl_status.setText("📥 Descargando RPT Printer Tool...")
                         self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
-                        url = "https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/RPT-Printer-Tool.zip"
+                        url = "https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/RPT-Printer-Tool.zip"
                         t = threading.Thread(
                             target=self.download_tool_thread,
                             args=(url, rpt_dest, "RPT-Printer-Tool.zip", exe_path),
@@ -440,7 +440,7 @@ class Admin13Hardware(QWidget):
                     if reply == QMessageBox.Yes:
                         self.lbl_status.setText("📥 Descargando Drivers 3nStar...")
                         self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
-                        url = "https://github.com/cesarmaciel1234/cajafacil-releases/releases/download/tools/3nStar-Drivers.zip"
+                        url = "https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/3nStar-Drivers.zip"
                         t = threading.Thread(
                             target=self.download_tool_thread,
                             args=(url, star_dest, "3nStar-Drivers.zip", exe_setup),

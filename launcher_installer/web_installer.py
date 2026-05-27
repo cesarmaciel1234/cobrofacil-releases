@@ -24,7 +24,7 @@ class InstallWorker(QThread):
                 self.progress_update.emit(5, "Modo Actualización: Cerrando sistema activo para liberar archivos...")
                 # Kill process to allow overwriting
                 import subprocess
-                subprocess.run("taskkill /f /im CajaFacil_Pro.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run("taskkill /f /im CobroFacil_POS.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 time.sleep(2)
                 
             # 1. Buscar si el ZIP está localmente junto al instalador
@@ -102,15 +102,15 @@ class InstallWorker(QThread):
             
             # Buscar el ejecutable principal en la carpeta de instalación
             for root, dirs, files in os.walk(self.install_dir):
-                if 'CajaFacil_Pro.exe' in files:
-                    target_exe = os.path.join(root, 'CajaFacil_Pro.exe')
+                if 'CobroFacil_POS.exe' in files:
+                    target_exe = os.path.join(root, 'CobroFacil_POS.exe')
                     break
             
             if not target_exe:
                 return ""
 
             desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
-            path = os.path.join(desktop, 'CajaFacil Pro 2026.lnk')
+            path = os.path.join(desktop, 'Cobro Fácil POS 2026.lnk')
             
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(path)
@@ -127,7 +127,7 @@ class InstallWorker(QThread):
 class InstallerWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Instalador Elite - CajaFacil Pro")
+        self.setWindowTitle("Instalador Elite - Cobro Fácil POS")
         self.setFixedSize(500, 250)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("background-color: #12121A; color: #FFFFFF; border-radius: 15px;")
@@ -137,7 +137,7 @@ class InstallerWindow(QWidget):
 
         self.is_update_mode = "--update" in sys.argv
 
-        title_text = "Actualizador Automático - CajaFacil Pro" if self.is_update_mode else "CajaFacil Pro 2026 - Instalador Modular"
+        title_text = "Actualizador Automático - Cobro Fácil POS" if self.is_update_mode else "Cobro Fácil POS 2026 - Instalador Modular"
         title = QLabel(title_text)
         title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
@@ -171,12 +171,12 @@ class InstallerWindow(QWidget):
 
         # === CONFIGURACION DEL INSTALADOR ===
         # URL Opcional de descarga (Si está vacía, exigirá el ZIP local).
-        self.download_url = "" 
+        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cobrofacil-pro-updates.firebasestorage.app/o/C%3A%5CUsers%5Ccesar%5COneDrive%5CDesktop%5Ctpv%20pro%202026%5CCATORTA_USB_PUNPRO%5C2_Archivos_Comprimidos_ZIP%5CBatallon_TPV_Win8_Win11.zip%2FBatallon_TPV_Win8_Win11.zip?alt=media&token=2ae36f53-994b-4154-aed7-310b9c8ac02e"
         self.zip_filename = "Batallon_TPV_Win8_Win11.zip"
         
         # Carpeta de instalación en el usuario para evitar pedir permisos de admin (UAC) 
         # y que sea una instalación silenciosa/transparente
-        self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CajaFacil_Pro_Install')
+        self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
 
     def start_install(self):
         self.worker = InstallWorker(self.download_url, self.zip_filename, self.install_dir, self.is_update_mode)
@@ -191,14 +191,14 @@ class InstallerWindow(QWidget):
     def on_finished(self, success, msg, target_exe):
         if success:
             if self.is_update_mode:
-                QMessageBox.information(self, "Actualización Completada", "Sistema actualizado exitosamente.\n\nCajaFacil Pro se iniciará ahora.")
+                QMessageBox.information(self, "Actualización Completada", "Sistema actualizado exitosamente.\n\nCobro Fácil POS se iniciará ahora.")
                 if target_exe and os.path.exists(target_exe):
                     os.startfile(target_exe)
                 self.close()
             else:
                 respuesta = QMessageBox.question(
                     self, "Instalación Completada", 
-                    "El sistema fue desplegado con éxito a velocidad máxima.\n\n¿Deseas iniciar CajaFacil Pro ahora?\n\n(El instalador se auto-destruirá por seguridad).",
+                    "El sistema fue desplegado con éxito a velocidad máxima.\n\n¿Deseas iniciar Cobro Fácil POS ahora?\n\n(El instalador se auto-destruirá por seguridad).",
                     QMessageBox.Yes | QMessageBox.No
                 )
                 exe_to_launch = target_exe if (respuesta == QMessageBox.Yes and target_exe) else ""

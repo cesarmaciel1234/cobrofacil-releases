@@ -54,8 +54,8 @@ def launch_app():
         app = QApplication(sys.argv)
     
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
-    from src.pantallaentrada import CajaFacilSplash
-    splash = CajaFacilSplash()
+    from src.pantallaentrada import CobroFacilSplash
+    splash = CobroFacilSplash()
     splash.show()
     app.processEvents()
 

@@ -14,7 +14,7 @@ import sys
 import threading
 from PyQt5.QtWidgets import QMessageBox
 
-API_URL = "https://api.github.com/repos/cesarmaciel1234/cajafacil-releases/releases/latest"
+API_URL = "https://api.github.com/repos/cesarmaciel1234/cobrofacil-releases/releases/latest"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 
@@ -43,7 +43,7 @@ def buscar_actualizacion_background(parent_widget=None):
         ctx.verify_mode = ssl.CERT_NONE
         
         try:
-            req = urllib.request.Request(API_URL, headers={'User-Agent': 'CajaFacil-Updater'})
+            req = urllib.request.Request(API_URL, headers={'User-Agent': 'CobroFacil-Updater'})
             with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
                 data = json.loads(r.read().decode('utf-8'))
                 
@@ -73,8 +73,8 @@ def buscar_actualizacion_background(parent_widget=None):
 
 def aplicar_actualizacion(tag, zip_url, app_instance):
     """ Descarga el ZIP, lo extrae y ejecuta el instalador """
-    temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update.zip")
-    temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update_Extract")
+    temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CobroFacil_Update.zip")
+    temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CobroFacil_Update_Extract")
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -138,14 +138,14 @@ def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
     progreso(10, "Verificando actualizaciones en GitHub...")
     
     # URL base para el raw del repositorio
-    RAW_BASE_URL = "https://raw.githubusercontent.com/cesarmaciel1234/cajafacil-pro/main"
+    RAW_BASE_URL = "https://raw.githubusercontent.com/cesarmaciel1234/cobrofacil-pro/main"
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     
     try:
-        req = urllib.request.Request(f"{RAW_BASE_URL}/version.json", headers={'User-Agent': 'CajaFacil-Updater'})
+        req = urllib.request.Request(f"{RAW_BASE_URL}/version.json", headers={'User-Agent': 'CobroFacil-Updater'})
         with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
             manifest_remoto = json.loads(r.read().decode('utf-8'))
     except Exception as e:
@@ -204,7 +204,7 @@ def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
                 pass
                 
         try:
-            req_file = urllib.request.Request(f"{RAW_BASE_URL}/{rel_path.replace(os.sep, '/')}", headers={'User-Agent': 'CajaFacil-Updater'})
+            req_file = urllib.request.Request(f"{RAW_BASE_URL}/{rel_path.replace(os.sep, '/')}", headers={'User-Agent': 'CobroFacil-Updater'})
             with urllib.request.urlopen(req_file, timeout=10, context=ctx) as r:
                 contenido = r.read()
         except Exception as e:
@@ -257,7 +257,7 @@ def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
     ctx.verify_mode = ssl.CERT_NONE
     
     try:
-        req = urllib.request.Request(API_URL, headers={'User-Agent': 'CajaFacil-Updater'})
+        req = urllib.request.Request(API_URL, headers={'User-Agent': 'CobroFacil-Updater'})
         with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
             data = json.loads(r.read().decode('utf-8'))
             
@@ -277,7 +277,7 @@ def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
                 res.errores.append("Hay una nueva versión pero no se encontró un archivo .zip instalador adjunto en GitHub Releases.")
                 return res
                 
-            res.actualizados = ["CajaFacil_Pro_Update.zip"]
+            res.actualizados = ["CobroFacil_POS_Update.zip"]
             
             if dry_run:
                 progreso(100, "Nueva versión lista para descargar.")
@@ -286,8 +286,8 @@ def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
             progreso(30, "Descargando nuevo sistema (esto puede tardar unos minutos)...")
             
             # Realizar la descarga y extracción
-            temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update.zip")
-            temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CajaFacil_Update_Extract")
+            temp_zip = os.path.join(os.environ.get('TEMP', 'C:\\'), "CobroFacil_Update.zip")
+            temp_dir = os.path.join(os.environ.get('TEMP', 'C:\\'), "CobroFacil_Update_Extract")
             
             # Limpiar extract dir previo si existe
             import shutil

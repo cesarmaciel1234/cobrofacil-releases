@@ -37,7 +37,7 @@
     "update_server_ip": "",
     "update_auth_token": "1234",
     "local_pin": "1234",
-    "shared_folder_name": "cajafacil pro",
+    "shared_folder_name": "cobrofacil pro",
     "fiscal_printer_mode": false,
     "fiscal_printer_model": "",
     "factura_electronica_mode": false,
@@ -45,6 +45,6 @@
     "cert_crt_path": "certificados/certificado.crt",
     "arca_sandbox_mode": true,
     "arca_punto_venta": 1,
-    "github_update_repo": "cesarmaciel1234/cajafacil-pro",
+    "github_update_repo": "cesarmaciel1234/cobrofacil-pro",
     "github_update_enabled": true
 }

@@ -4,7 +4,7 @@
 ::  Descargar el paquete .zip, extraer y ejecutar este archivo
 ::  Actualiza sin pisar la base de datos ni la configuracion
 :: ============================================================
-title Actualizador CajaFacil Pro
+title Actualizador Cobro Fácil POS
 color 0A
 echo.
 echo  ========================================
@@ -13,7 +13,7 @@ echo  ========================================
 echo.
 
 set "ORIGEN=%~dp0"
-set "DESTINO=C:\CajaFacil Pro"
+set "DESTINO=C:\Cobro Fácil POS"
 
 :: Verificar que la app no este abierta
 tasklist /fi "imagename eq pythonw.exe" 2>nul | find /i "pythonw.exe" >nul

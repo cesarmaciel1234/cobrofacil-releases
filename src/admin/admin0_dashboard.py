@@ -389,7 +389,7 @@ class Admin0Dashboard(QWidget):
         page_lay.addStretch()
 
         # Footer
-        ft = QLabel("CajaFacil Pro  ·  TPV 2026  ·  Industrial POS")
+        ft = QLabel("Cobro Fácil POS  ·  TPV 2026  ·  Industrial POS")
         ft.setAlignment(Qt.AlignCenter)
         ft.setStyleSheet("color: #CBD5E1; font-size: 9px; letter-spacing: 2px; background: transparent; border: none;")
         page_lay.addWidget(ft)

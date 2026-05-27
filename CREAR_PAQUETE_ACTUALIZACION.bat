@@ -4,7 +4,7 @@
 ::  Ejecutar en TU PC cuando quieras lanzar una nueva version
 ::  Genera un .zip listo para compartir con los clientes
 :: ============================================================
-title Crear Paquete CajaFacil Pro
+title Crear Paquete Cobro Fácil POS
 color 0B
 echo.
 echo  ========================================
@@ -40,7 +40,7 @@ for /d /r . %%d in (__pycache__) do (
 )
 
 :: Nombre del paquete
-set PAQUETE=CajaFacil_Pro_v%VERSION%.zip
+set PAQUETE=CobroFacil_POS_v%VERSION%.zip
 
 :: Crear ZIP con PowerShell (sin programas externos)
 echo.

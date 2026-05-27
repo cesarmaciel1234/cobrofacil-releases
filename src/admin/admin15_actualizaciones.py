@@ -588,8 +588,8 @@ class Admin15Actualizaciones(QWidget):
     def _lanzar_updater_web(self):
         # Buscar el launcher
         launcher_paths = [
-            os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "Setup_CajaFacil_Web.exe"),
-            os.path.join(BASE_DIR, "launcher_installer", "dist", "Setup_CajaFacil_Web.exe")
+            os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "Setup_CobroFacil_Web.exe"),
+            os.path.join(BASE_DIR, "launcher_installer", "dist", "Setup_CobroFacil_Web.exe")
         ]
         
         launcher_encontrado = None
@@ -599,7 +599,7 @@ class Admin15Actualizaciones(QWidget):
                 break
                 
         if not launcher_encontrado:
-            QMessageBox.critical(self, "Error", "No se encontró el Launcher (Setup_CajaFacil_Web.exe) para realizar la actualización web.")
+            QMessageBox.critical(self, "Error", "No se encontró el Launcher (Setup_CobroFacil_Web.exe) para realizar la actualización web.")
             return
             
         respuesta = QMessageBox.question(

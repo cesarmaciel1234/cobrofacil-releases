@@ -58,7 +58,7 @@ class ConfigButton(QFrame):
 class DialogoCajeros(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("👥 Gestión de Personal - CajaFacil Pro")
+        self.setWindowTitle("👥 Gestión de Personal - Cobro Fácil POS")
         self.setFixedSize(700, 600)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
         self.setup_ui()
@@ -1610,7 +1610,7 @@ class DialogoActualizaciones(QDialog):
                 QMessageBox.warning(self, "Sin conexión", f"No se pudo conectar a GitHub:\n{res.errores[0]}")
                 return
             if not res.hay_cambios:
-                QMessageBox.information(self, "Al día", f"CajaFacil Pro está actualizado.\nVersión: {res.version_local}")
+                QMessageBox.information(self, "Al día", f"Cobro Fácil POS está actualizado.\nVersión: {res.version_local}")
                 return
             reply = QMessageBox.question(self, "Actualización Disponible",
                 f"¡Nueva versión disponible!\nActual: {res.version_local}\nNueva: {res.version_nueva}\nArchivos a descargar: {len(res.actualizados)}\n\n¿Descargar e instalar ahora?",

@@ -1,4 +1,4 @@
 @echo off
-title CajaFacil Pro
+title Cobro Fácil POS
 cd /d "%~dp0"
 start "" ".venv\Scripts\pythonw.exe" main.py

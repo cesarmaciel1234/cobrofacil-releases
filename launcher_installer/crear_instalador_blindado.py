@@ -31,7 +31,7 @@ def blindar_instalador():
         "--noconfirm",
         "--onefile",
         "--windowed",
-        "--name", "Instalar_CajaFacil_Pro_Blindado",
+        "--name", "Instalar_CobroFacil_POS_Blindado",
         "--hidden-import", "win32com",
         "--hidden-import", "win32com.client",
         "--icon=NONE",
@@ -45,7 +45,7 @@ def blindar_instalador():
     
     print("\nCOMPILACION BLINDADA TERMINADA.")
     print("El archivo resultante contiene toda la aplicacion oculta y encriptada.")
-    print(f"Ruta: {os.path.join(DIST_DIR, 'Instalar_CajaFacil_Pro_Blindado.exe')}")
+    print(f"Ruta: {os.path.join(DIST_DIR, 'Instalar_CobroFacil_POS_Blindado.exe')}")
 
 if __name__ == "__main__":
     blindar_instalador()

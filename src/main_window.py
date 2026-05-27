@@ -173,7 +173,7 @@ class ScifiReconstructionOverlay(QWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CajaFacil Pro 2026 - Industrial POS")
+        self.setWindowTitle("Cobro Fácil POS 2026 - Industrial POS")
         self.resize(1240, 820)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)

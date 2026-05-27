@@ -1,4 +1,4 @@
-# 📊 MATRIZ OPERATIVA EMPRESARIAL: CajaFacil Pro
+# 📊 MATRIZ OPERATIVA EMPRESARIAL: Cobro Fácil POS
 
 Esta tabla detalla la arquitectura funcional del sistema, dividida por perfiles de responsabilidad y módulos técnicos.
 
@@ -31,4 +31,4 @@ Esta tabla detalla la arquitectura funcional del sistema, dividida por perfiles 
 *   **Sincronización**: Al usar la "Burbuja Bombero", el administrador actualiza los precios en el Admin y estos se aplican al terminal instantáneamente al volver.
 
 ---
-*CajaFacil Pro - Manual Técnico-Empresarial de Referencia*
+*Cobro Fácil POS - Manual Técnico-Empresarial de Referencia*

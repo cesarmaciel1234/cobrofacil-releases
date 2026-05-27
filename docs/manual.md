@@ -1,6 +1,6 @@
 # 📘 MANUAL DE OPERACIÓN ELITE 2026: MODO CAJERO
 
-Bienvenido al ecosistema **CajaFacil Pro**. Este manual detalla el flujo de trabajo industrial optimizado para cajeros, desde el encendido hasta el cierre de jornada.
+Bienvenido al ecosistema **Cobro Fácil POS**. Este manual detalla el flujo de trabajo industrial optimizado para cajeros, desde el encendido hasta el cierre de jornada.
 
 ---
 

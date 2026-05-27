@@ -1,16 +1,16 @@
 """
-CajaFacil Pro - Instalador Universal (Windows 8 a Windows 11)
+Cobro Fácil POS - Instalador Universal (Windows 8 a Windows 11)
 Compila con:
-  pyinstaller --onefile --windowed --name CajaFacil_Pro_Setup installer\\installer_build.py
+  pyinstaller --onefile --windowed --name CobroFacil_POS_Setup installer\\installer_build.py
 """
 import os, sys, json, zipfile, shutil, tempfile, threading, subprocess
 import ssl, ctypes, urllib.request, tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 
-APP_NAME     = "CajaFacil Pro"
+APP_NAME     = "Cobro Fácil POS"
 VERSION      = "2026.2.0"
-DESTINO      = r"C:\CajaFacil Pro"
-DOWNLOAD_URL = "https://github.com/cesarmaciel1234/cajafacil-releases/releases/latest/download/CajaFacil_Pro.zip"
+DESTINO      = r"C:\Cobro Fácil POS"
+DOWNLOAD_URL = "https://github.com/cesarmaciel1234/cobrofacil-releases/releases/latest/download/CobroFacil_POS.zip"
 PYTHON_URL   = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
 
 # Sin ventana de consola en subprocesos (Windows)
@@ -82,7 +82,7 @@ def run_cmd(args, on_log=None, timeout=300):
     return proc.returncode
 
 def download(url, path, on_progress=None):
-    req = urllib.request.Request(url, headers={"User-Agent": "CajaFacilPro-Installer"})
+    req = urllib.request.Request(url, headers={"User-Agent": "CobroFacilPro-Installer"})
     with urllib.request.urlopen(req, context=ssl_ctx(), timeout=90) as r:
         total = int(r.headers.get("Content-Length", 0))
         done = 0
@@ -119,7 +119,7 @@ def make_shortcut(lnk, target, workdir, icon_path=None):
           f'$s=$ws.CreateShortcut("{lnk}");'
           f'$s.TargetPath="{target}";'
           f'$s.WorkingDirectory="{workdir}";'
-          f'$s.Description="CajaFacil Pro";')
+          f'$s.Description="Cobro Fácil POS";')
     if icon_path and os.path.exists(icon_path):
         ps += f'$s.IconLocation="{icon_path}";'
     ps += f'$s.Save()'
@@ -304,7 +304,7 @@ class Installer(tk.Tk):
     def _run(self):
         tmp = None
         try:
-            tmp = tempfile.mkdtemp(prefix="cajafacil_")
+            tmp = tempfile.mkdtemp(prefix="cobrofacil_")
             zip_path = os.path.join(tmp, "app.zip")
 
             # 1. Descargar app
@@ -342,7 +342,7 @@ class Installer(tk.Tk):
             self.status("Copiando archivos del sistema...", 50)
             os.makedirs(DESTINO, exist_ok=True)
             items = ["src", "main.py", "version.json", "requirements_core.txt",
-                     "requirements_full.txt", "CajaFacil_Pro.bat", "ACTUALIZAR.bat"]
+                     "requirements_full.txt", "CobroFacil_POS.bat", "ACTUALIZAR.bat"]
             for item in items:
                 s = os.path.join(src, item)
                 d = os.path.join(DESTINO, item)
@@ -424,10 +424,10 @@ class Installer(tk.Tk):
             self.log("► Creando acceso directo en el escritorio...")
             self.status("Creando acceso directo...", 94)
             desk = get_desktop()
-            lnk_path = os.path.join(desk, "CajaFacil Pro.lnk")
+            lnk_path = os.path.join(desk, "Cobro Fácil POS.lnk")
             self.log(f"  Escritorio: {desk}")
             make_shortcut(lnk_path,
-                          os.path.join(DESTINO, "CajaFacil_Pro.bat"), DESTINO,
+                          os.path.join(DESTINO, "CobroFacil_POS.bat"), DESTINO,
                           os.path.join(DESTINO, "logo.ico"))
             if os.path.exists(lnk_path):
                 self.log("✓ Acceso directo creado")
@@ -461,7 +461,7 @@ class Installer(tk.Tk):
         self.btn_x.config(state="normal", text="Cerrar", command=self.destroy)
         messagebox.showinfo("✅ ¡Instalación completa!",
                              f"CajaFácil Pro está listo en:\n{DESTINO}\n\n"
-                             "• Doble clic en 'CajaFacil Pro' del escritorio\n"
+                             "• Doble clic en 'Cobro Fácil POS' del escritorio\n"
                              "• Los módulos adicionales se instalan solos al usar la app")
 
     def _err(self, e):
@@ -472,7 +472,7 @@ class Installer(tk.Tk):
         messagebox.showerror("Error", f"Ocurrió un error:\n\n{e}")
 
     def _open(self):
-        bat = os.path.join(DESTINO, "CajaFacil_Pro.bat")
+        bat = os.path.join(DESTINO, "CobroFacil_POS.bat")
         if os.path.exists(bat):
             # NO usar NO_WINDOW aqui — el .bat necesita correr normalmente
             subprocess.Popen(["cmd", "/c", bat], cwd=DESTINO)

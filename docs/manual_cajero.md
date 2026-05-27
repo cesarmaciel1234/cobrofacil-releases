@@ -1,6 +1,6 @@
 # 📘 MANUAL OPERATIVO DEL CAJERO: ELITE 2026
 
-Bienvenido al sistema CajaFacil Pro. Esta guía le permitirá operar el terminal con la máxima eficiencia y seguridad.
+Bienvenido al sistema Cobro Fácil POS. Esta guía le permitirá operar el terminal con la máxima eficiencia y seguridad.
 
 ---
 
@@ -42,4 +42,4 @@ Al terminar su turno:
 3.  El sistema se cerrará y volverá a la pantalla de Login automáticamente.
 
 ---
-*CajaFacil Pro - Guía Rápida de Operación*
+*Cobro Fácil POS - Guía Rápida de Operación*

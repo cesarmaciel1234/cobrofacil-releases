@@ -55,10 +55,10 @@ Debes indicarle a la AFIP que ese certificado digital está autorizado para emit
 ## 💻 Paso 4: Configurar los Archivos en el TPV
 Una vez que tengas tus dos archivos (`clave.key` y `certificado.crt`):
 
-1. Crea una carpeta llamada `certificados` dentro del directorio del sistema `cajafacil pro/`.
+1. Crea una carpeta llamada `certificados` dentro del directorio del sistema `cobrofacil pro/`.
 2. Guarda allí los archivos:
-   * `c:\Users\cesar\OneDrive\Desktop\cajafacil pro\certificados\clave.key`
-   * `c:\Users\cesar\OneDrive\Desktop\cajafacil pro\certificados\certificado.crt`
+   * `c:\Users\cesar\OneDrive\Desktop\cobrofacil pro\certificados\clave.key`
+   * `c:\Users\cesar\OneDrive\Desktop\cobrofacil pro\certificados\certificado.crt`
 3. En el archivo `config.json` del TPV, agrega o actualiza estas directivas para activar la conexión:
    ```json
    {

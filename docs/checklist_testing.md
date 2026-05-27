@@ -1,4 +1,4 @@
-# ✅ CHECKLIST DE PRUEBAS: CajaFacil Pro
+# ✅ CHECKLIST DE PRUEBAS: Cobro Fácil POS
 
 Utilice esta guía para validar que todos los sistemas de seguridad y eficiencia están operando al 100% antes de la puesta en marcha oficial.
 
