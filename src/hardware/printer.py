@@ -280,10 +280,14 @@ class PosPrinter:
             
         return neto_total, iva_total, iva_por_tasa
 
-    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo'):
+    def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False):
         """ Formatea e imprime un ticket de venta. Soporta dos cajeros y dos tiketeras. """
+        
+        afip_global_enabled = config.get("facturacion_afip_global", False)
+        should_use_afip = afip_global_enabled and (force_fiscal or self._should_route_fiscal(metodo_pago))
+        
         # 1. ROUTING FISCAL HARDWARE: Si el modo fiscal real está activo Y el método de pago está habilitado
-        if self._is_fiscal_mode() and self._should_route_fiscal(metodo_pago):
+        if self._is_fiscal_mode() and should_use_afip:
             return self.imprimir_ticket_fiscal(
                 num_venta=num_venta,
                 items=items,
@@ -299,7 +303,7 @@ class PosPrinter:
 
         # 2. ROUTING FACTURA ELECTRÓNICA ARCA: Si está activo Y el método de pago está habilitado
         factura_electronica_data = None
-        if config.get("factura_electronica_mode", False) and self._should_route_fiscal(metodo_pago):
+        if config.get("factura_electronica_mode", False) and should_use_afip:
             try:
                 from src.services.facturacion_service import FacturacionService
                 venta_data = {
@@ -418,7 +422,9 @@ class PosPrinter:
             # Enlace abreviado del QR oficial de ARCA para cumplimiento legal
             data.extend(f"QR ARCA: {factura_electronica_data['qr_url'][:35]}...\n".encode('cp850'))
         else:
-            data.extend(b"\n*** GRACIAS POR SU COMPRA ***\n")
+            data.extend(b"\n")
+            data.extend(b"  NO VALIDO COMO FACTURA  \n")
+            data.extend(b"*** GRACIAS POR SU COMPRA ***\n")
             
         data.extend(b"\n\n\n\n\n")
         

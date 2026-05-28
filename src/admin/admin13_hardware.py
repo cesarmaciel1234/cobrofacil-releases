@@ -230,6 +230,38 @@ class Admin13Hardware(QWidget):
         vk_lay.addWidget(self.btn_toggle_vk)
         top_grid.addWidget(card_vk, 1, 0, 1, 2)
 
+        # CARD 6: FACTURACIÓN AFIP
+        card_afip = QFrame()
+        card_afip.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
+        afip_lay = QVBoxLayout(card_afip)
+        afip_lay.setContentsMargins(20, 20, 20, 20)
+        afip_lay.addWidget(QLabel("🏛️ FACTURACIÓN AFIP", styleSheet="font-weight: 900; font-size: 13px; color: #ea580c; border: none;"))
+        afip_desc = QLabel("Activa el envío de facturas a AFIP. Si está apagado, TODO sale como ticket interno NO FISCAL.")
+        afip_desc.setWordWrap(True)
+        afip_desc.setStyleSheet("color: #64748b; font-size: 11px; border: none; background: transparent;")
+        afip_lay.addWidget(afip_desc)
+        
+        self.btn_toggle_afip = QPushButton()
+        self.btn_toggle_afip.setCursor(Qt.PointingHandCursor)
+        self.btn_toggle_afip.setCheckable(True)
+        self.btn_toggle_afip.setChecked(config.get("facturacion_afip_global", False))
+        
+        def update_afip_btn_style(checked):
+            if checked:
+                self.btn_toggle_afip.setText("✅ AFIP GLOBAL: ENCENDIDO")
+                self.btn_toggle_afip.setStyleSheet("background: #f97316; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+            else:
+                self.btn_toggle_afip.setText("❌ AFIP GLOBAL: APAGADO")
+                self.btn_toggle_afip.setStyleSheet("background: #64748b; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+            config.set("facturacion_afip_global", checked)
+            
+        self.btn_toggle_afip.toggled.connect(update_afip_btn_style)
+        update_afip_btn_style(self.btn_toggle_afip.isChecked())
+        
+        afip_lay.addStretch()
+        afip_lay.addWidget(self.btn_toggle_afip)
+        top_grid.addWidget(card_afip, 1, 2, 1, 2)
+
         layout.addLayout(top_grid)
         
         # --- DOBLE CONSOLA MATRIX ---

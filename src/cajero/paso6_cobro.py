@@ -493,6 +493,10 @@ class Paso6Cobro(QDialog):
         right_lay.addWidget(self.btn_descuento)
         right_lay.addWidget(self.btn_recargo)
         
+        right_lay.addSpacing(10)
+        btn_f10 = create_action_btn("🏛️ F10 - Efectivo (AFIP)", lambda: self.finalizar_fiscal_efectivo())
+        right_lay.addWidget(btn_f10)
+        
         # Teclado numérico físico propio (incrustado directamente)
         self.build_teclado_propio(right_lay)
 
@@ -899,7 +903,11 @@ class Paso6Cobro(QDialog):
         self.txt_rec.setFocus()
         self.txt_rec.selectAll()
 
-    def finalizar(self, imprimir=True):
+    def finalizar_fiscal_efectivo(self):
+        self.set_metodo("Efectivo")
+        self.finalizar(True, force_fiscal=True)
+
+    def finalizar(self, imprimir=True, force_fiscal=False):
         if getattr(self, '_procesando_pago', False):
             return
         
@@ -950,7 +958,7 @@ class Paso6Cobro(QDialog):
 
                 if imprimir:
                     # Imprimir ticket (internamente puede abrir el cajón si se le pide)
-                    self.imprimir_ticket(id_v, abrir_manual=debe_abrir)
+                    self.imprimir_ticket(id_v, abrir_manual=debe_abrir, force_fiscal=force_fiscal)
                 elif debe_abrir:
                     # No imprimimos, pero abrimos el cajón para el efectivo
                     drawer_manager.abrir(autorizada=True)
@@ -960,7 +968,7 @@ class Paso6Cobro(QDialog):
             self._procesando_pago = False
             QMessageBox.critical(self, "Error", f"Fallo al cobrar: {e}")
 
-    def imprimir_ticket(self, id_v, abrir_manual=False):
+    def imprimir_ticket(self, id_v, abrir_manual=False, force_fiscal=False):
         try:
             from src.hardware.printer import printer_manager
             from src.cajero.paso5_terminal import CajeroActivo
@@ -976,7 +984,8 @@ class Paso6Cobro(QDialog):
                 id_v, self.items_carrito, self.total_final, 
                 self.resultado_venta['pago_con'], self.resultado_venta['cambio'],
                 abrir_cajon=abrir_manual, discount_amount=descuento_total, surcharge_amount=monto_rec,
-                cajero=CajeroActivo.nombre, metodo_pago=self.resultado_venta.get('metodo_pago', 'Efectivo')
+                cajero=CajeroActivo.nombre, metodo_pago=self.resultado_venta.get('metodo_pago', 'Efectivo'),
+                force_fiscal=force_fiscal
             )
         except: pass
 
@@ -1018,6 +1027,7 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key_F2: self.finalizar(False)
         elif k == Qt.Key_F3: self.abrir_descuento()
         elif k == Qt.Key_F4: self.abrir_recargo()
+        elif k == Qt.Key_F10: self.finalizar_fiscal_efectivo()
         elif k == Qt.Key_Escape: self.reject()
         elif k in (Qt.Key_Return, Qt.Key_Enter):
             # Lógica de Enter Inteligente: 3 Pasos
