@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QPushButton, QStackedWidget, QLabel, QFrame, QShortcut,
-    QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QApplication
+    QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QApplication, QMessageBox
 )
 from PyQt5.QtGui import QKeySequence, QFont, QColor
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
@@ -16,7 +16,7 @@ from src.admin.admin5_configuracion import Admin5Configuracion
 from src.admin.admin9_contabilidad import Admin9Contabilidad
 from src.admin.admin10_mp import Admin10MP
 from src.admin.etiquetas.admin_etiquetas import AdminEtiquetas
-from src.admin.admin12_ai_boss import Admin12AIBoss
+from chatbot.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
 from src.admin.admin13_hardware import Admin13Hardware
 from src.admin.admin11_proveedores import Admin11Proveedores
 from src.admin.admin14_ventas_digitales import Admin14VentasDigitales
@@ -479,6 +479,7 @@ class MainWindow(QMainWindow):
 
     def _init_screens(self):
         from src.admin.admin16_lan_connection import Admin16LANConnection
+        from src.admin.admin_clientes import AdminClientes
         self.pantalla_dashboard = Admin0Dashboard()
         self.pantalla_ventas = Paso5Terminal()
         self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
@@ -497,11 +498,12 @@ class MainWindow(QMainWindow):
             Admin9Contabilidad(),        # 9
             Admin10MP(),                # 10
             Admin11Proveedores(),        # 11
-            Admin12AIBoss(),             # 12
+            ChatBotWidget(),             # 12 - Manual del Cajero
             Admin13Hardware(),          # 13
             Admin14VentasDigitales(),   # 14
             Admin15Actualizaciones(),   # 15
-            Admin16LANConnection()      # 16
+            Admin16LANConnection(),     # 16
+            AdminClientes()             # 17
         ]
         for s in self.screens:
             self.stacked_widget.addWidget(s)
@@ -527,9 +529,9 @@ class MainWindow(QMainWindow):
             self.switch_tab(4)
 
     def _handle_f12_logic(self):
-        # Si estamos en el terminal de ventas, F12 SIEMPRE es para el cajero
+        # Si estamos en el terminal de ventas, F12 abre la ventana de cobro/pagar
         if self.stacked_widget.currentIndex() == 1:
-            self.pantalla_ventas.abrir_cierre_caja()
+            self.pantalla_ventas.finalizar_venta()
         # Si estamos en el Dashboard de Admin, F12 va a Auditoría/Cierre Z
         elif config.current_user.get('role') == 'admin':
             self.switch_tab(6)

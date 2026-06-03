@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "nombre": "Manual Cajero - CobroFacil POS",
+  "entradas": [
+    {
+      "id": "bienvenida",
+      "preguntas": ["hola", "ayuda", "qué puedo preguntar", "menu", "inicio", "empezar", "buenas", "buenos dias", "buenas tardes"],
+      "respuesta": "👋 ¡Hola! Soy el asistente del Manual de CobroFacil POS.\n\nPuede preguntarme sobre:\n• 🚀 Cómo iniciar / login\n• 🏁 Apertura de turno\n• 🛒 Escanear productos\n• ⚖️ Usar la balanza\n• 💳 Cobrar / métodos de pago\n• 🏷️ Descuentos y recargos\n• 🚨 Problemas con el cajón\n• 👮 Llamar al supervisor (F11)\n• 📋 Ver historial (F3)\n• 🏁 Cierre de jornada (F4)\n• ⌨️ Atajos de teclado\n• 🖨️ Problemas de impresora\n• 💸 Retiro de resguardo (F5)\n\nEscriba su consulta con sus propias palabras."
+    },
+    {
+      "id": "login",
+      "preguntas": ["como inicio", "como entro", "login", "iniciar sesion", "como arranco", "encender", "abrir programa", "arranque", "entrar al sistema", "pin", "usuario", "perfil"],
+      "respuesta": "🚀 ARRANQUE Y LOGIN:\n1. Haga clic en el ícono 'CobroFacil POS' en el escritorio.\n2. Seleccione su perfil:\n   • CAJERO 1 (azul) → Estación principal\n   • AUXILIAR 2 (verde) → Estación de apoyo\n3. Ingrese su PIN de 4 dígitos.\n\nEl sistema abrirá en Modo Kiosko (pantalla completa) y vinculará automáticamente su impresora y cajón de dinero."
+    },
+    {
+      "id": "apertura",
+      "preguntas": ["apertura", "fondo de caja", "inicio de turno", "abrir turno", "fondo inicial", "monto inicial", "empezar turno", "capital inicial", "fondo"],
+      "respuesta": "🏁 APERTURA DE TURNO:\n1. Ingrese el Monto de Apertura (fondo para dar cambio).\n2. Presione ENTER para confirmar.\n3. El cajón se abrirá brevemente para que valide el efectivo.\n4. ¡Terminal lista! El cursor quedará en la barra de escaneo automáticamente."
+    },
+    {
+      "id": "escaneo",
+      "preguntas": ["escanear", "escaneo", "codigo de barras", "pasar producto", "como vendo", "agregar producto", "lector", "laser", "producto sin codigo", "articulo comun", "artículo"],
+      "respuesta": "🛒 ESCANEO DE PRODUCTOS (Terminal F1):\n\n• Escaneo directo → Pase el producto por el láser (se agrega al instante).\n• Multiplicador → Escriba CANTIDAD * CÓDIGO  (Ej: 6*7790001234)\n• Artículo sin código → Escriba +PRECIO  (Ej: +500) y presione ENTER.\n• Modificar cantidad → Flechas ↑↓ para seleccionar, ←→ para sumar/restar.\n• Edición precisa → Seleccione el artículo y presione ENTER."
+    },
+    {
+      "id": "balanza",
+      "preguntas": ["balanza", "peso", "kilos", "pesaje", "carne", "balanza automatica", "systel", "kretz", "pollo", "aves", "gramos"],
+      "respuesta": "⚖️ BALANZA AUTOMÁTICA:\n\nEscanee el código generado por la balanza (Systel/Kretz).\nEl sistema extrae el peso del código automáticamente y calcula el precio.\n\n✅ No necesita ingresar el peso manualmente.\n✅ Soporta 3 decimales de precisión (Ej: 0.375 kg).\n✅ Las ventas de balanza se contabilizan por separado en los reportes (KG vs unidades)."
+    },
+    {
+      "id": "cobro",
+      "preguntas": ["cobrar", "cobro", "F12", "finalizar venta", "como cobro", "pagar", "total", "ir a cobrar", "cerrar venta", "procesar pago"],
+      "respuesta": "💳 COBRO Y FINALIZACIÓN (F12):\n\n1. Presione F12 (o ENTER con el buscador vacío).\n2. Seleccione el medio de pago con las flechas:\n   → Efectivo  → Tarjeta  → Mixto\n3. ENTER → selecciona el método.\n4. Ingrese el monto recibido → ENTER (el sistema calcula el vuelto).\n5. Finalizar:\n   • F1 → Cobra e imprime ticket (el cajón se abre).\n   • F2 → Cobra SIN imprimir ticket (ahorro de papel).\n   • ENTER → igual que F2 (sin ticket)."
+    },
+    {
+      "id": "pago_mixto",
+      "preguntas": ["pago mixto", "mitad efectivo", "tarjeta y efectivo", "mezclar pagos", "dos metodos", "pago combinado", "parte efectivo parte tarjeta"],
+      "respuesta": "💰 PAGO MIXTO:\n\nSi el cliente paga con más de un método:\n→ Ingrese el primer monto (Ej: $1000 en efectivo).\n→ Si es menor al total, el sistema activa PAGO MIXTO automáticamente.\n→ Le pedirá el saldo faltante en un segundo casillero.\n\n✅ No necesita seleccionarlo manualmente."
+    },
+    {
+      "id": "descuento_recargo",
+      "preguntas": ["descuento", "recargo", "aplicar descuento", "hacer descuento", "porcentaje", "rebaja", "promocion", "promo"],
+      "respuesta": "🏷️ DESCUENTOS Y RECARGOS (desde la pantalla de cobro):\n\n• Presione F3 → Aplicar Descuento al total.\n• Presione F4 → Aplicar Recargo al total.\n\n⚠️ Presione la tecla ANTES de confirmar el cobro final."
+    },
+    {
+      "id": "cajon",
+      "preguntas": ["cajon", "cajón", "se abrio", "no cierra", "cajon abierto", "alarma roja", "marco rojo", "parpadea rojo", "alerta roja", "sensor cajon"],
+      "respuesta": "🚨 CAJÓN DE DINERO:\n\n🔴 Si el marco de la pantalla parpadea en ROJO:\n→ El cajón quedó abierto sin autorización.\n→ SOLUCIÓN: Cierre el cajón físicamente.\n→ El sistema se desbloqueará automáticamente.\n\n⚠️ Toda apertura no autorizada queda grabada en el reporte del administrador.\n\n💸 Si aparece alerta de EXCESO DE EFECTIVO:\n→ Realice un Retiro de Resguardo (F5) inmediatamente."
+    },
+    {
+      "id": "supervisor",
+      "preguntas": ["supervisor", "F11", "llamar supervisor", "cambiar precio", "problema", "intervencion", "pin admin", "burbuja", "asistencia"],
+      "respuesta": "👮 ASISTENCIA DE SUPERVISOR (F11):\n\n1. Presione F11 y llame al supervisor.\n2. El supervisor ingresa su PIN de administrador.\n3. El cajón se abre automáticamente (intervención registrada).\n4. Aparece la 'Burbuja Bombero' (parpadeante): su venta queda segura.\n5. El supervisor realiza los ajustes necesarios (precios, inventario, etc.).\n6. Al tocar la burbuja → vuelve al terminal con los datos actualizados."
+    },
+    {
+      "id": "historial",
+      "preguntas": ["historial", "ver ventas", "ventas del dia", "ultimas ventas", "ticket anterior", "reimprimir", "buscar venta"],
+      "respuesta": "📋 HISTORIAL DE VENTAS (F3):\n\nPresione F3 desde el terminal para ver el historial de ventas del día actual.\n\n✅ Puede consultar tickets anteriores.\n✅ Puede reimprimir cualquier ticket del día."
+    },
+    {
+      "id": "cancelar",
+      "preguntas": ["cancelar venta", "anular", "borrar carrito", "vaciar", "cancelar ticket", "quitar producto", "eliminar producto"],
+      "respuesta": "❌ CANCELAR / LIMPIAR CARRITO:\n\n• Quitar un producto → Selecciónelo con ↑↓ y presione SUPR, o reduzca la cantidad a 0 con la flecha ←.\n• Cancelar toda la venta → Consulte con su supervisor (queda registrado en auditoría con su nombre)."
+    },
+    {
+      "id": "cierre",
+      "preguntas": ["cerrar turno", "cierre", "F4", "terminar turno", "arqueo", "rendir", "fin de jornada", "cierre ciego", "contar caja"],
+      "respuesta": "🏁 CIERRE CIEGO DE JORNADA (F4):\n\n1. Presione F4 al terminar su turno.\n2. Realice el Arqueo Ciego:\n   → Cuente el efectivo físico en el cajón.\n   → Ingrese el total contado (sin que el sistema le diga cuánto debería haber).\n3. El sistema compara su conteo con las ventas registradas:\n   • Diferencias en rojo → Faltante (el borde parpadeará).\n   • Diferencias en verde → Sobrante.\n4. Al confirmar:\n   → Se imprime el ticket de arqueo.\n   → El sistema vuelve automáticamente a la pantalla de Login."
+    },
+    {
+      "id": "impresora",
+      "preguntas": ["impresora", "no imprime", "ticket", "papel", "error de impresion", "impresion", "sin papel", "atasco"],
+      "respuesta": "🖨️ PROBLEMAS DE IMPRESORA:\n\n1. Verifique que haya papel cargado en la impresora.\n2. Asegúrese de que el papel esté bien insertado (lado térmico hacia afuera).\n3. Llame al supervisor (F11) para que revise la conexión del cable.\n4. Mientras tanto, puede vender sin imprimir ticket usando F2 o ENTER al cobrar."
+    },
+    {
+      "id": "retiro",
+      "preguntas": ["retiro", "mucho dinero", "resguardo", "exceso", "retirar efectivo", "F5", "sacar plata", "sacar dinero"],
+      "respuesta": "💸 RETIRO DE RESGUARDO (F5):\n\nCuando el efectivo en el cajón supera el umbral de seguridad, el sistema le avisará.\n\n1. Presione F5.\n2. Cuente el monto a retirar e ingréselo en el sistema.\n3. Retire el dinero y guárdelo en un lugar seguro.\n\n✅ El retiro queda registrado automáticamente en la auditoría."
+    },
+    {
+      "id": "atajos",
+      "preguntas": ["atajos", "teclas", "comandos", "shortcuts", "que hace cada tecla", "funciones", "teclado", "F1 F2 F3"],
+      "respuesta": "⌨️ ATAJOS DE TECLADO PRINCIPALES:\n\n┌─────────────────────────────────────────┐\n│  F1   → Finalizar venta CON ticket      │\n│  F2   → Finalizar venta SIN ticket      │\n│  F3   → Ver historial del día           │\n│  F4   → Cierre de jornada (arqueo)      │\n│  F5   → Retiro de resguardo             │\n│  F11  → Llamar supervisor               │\n│  F12  → Ir a pantalla de cobro          │\n│  ENTER vacío → Ir a cobro (= F12)       │\n│  ↑↓   → Navegar productos del carrito  │\n│  ←→   → Sumar/restar cantidad           │\n│  SUPR → Eliminar producto seleccionado  │\n└─────────────────────────────────────────┘"
+    },
+    {
+      "id": "no_encontrado",
+      "preguntas": [],
+      "respuesta": "🤔 No encontré información sobre eso en el manual.\n\nIntente con otras palabras clave, por ejemplo:\n→ 'cómo escaneo', 'cómo cobro', 'cajón abierto', 'cerrar turno', 'supervisor', 'balanza', 'atajos'\n\nO consulte con su supervisor directamente."
+    }
+  ]
+}

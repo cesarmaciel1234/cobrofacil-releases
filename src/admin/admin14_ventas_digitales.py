@@ -78,54 +78,93 @@ def normalizar_fecha(s: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+def load_bank_dataframe(path: str):
+    import pandas as pd
+    try:
+        if path.lower().endswith(('.xls', '.xlsx')):
+            try:
+                df = pd.read_excel(path, header=None)
+            except Exception as e1:
+                import logging
+                logging.getLogger(__name__).error(f"Fallo read_excel para {path}: {e1}")
+                try:
+                    df = pd.read_html(path, decimal=',', thousands='.')[0]
+                except Exception as e2:
+                    logging.getLogger(__name__).error(f"Fallo read_html para {path}: {e2}")
+                    df = pd.read_csv(path, header=None, encoding="utf-8-sig", on_bad_lines="skip")
+        else:
+            df = pd.read_csv(path, header=None, encoding="utf-8-sig", on_bad_lines="skip", sep=None, engine='python')
+            
+        header_idx = 0
+        max_keywords = 0
+        keywords = {"fecha", "date", "importe", "monto", "amount", "descripcion", "concepto", "detalle", "estado", "referencia", "operacion"}
+        
+        for i, row in df.head(30).iterrows():
+            row_str = " ".join([str(x).lower() for x in row.values])
+            matches = sum(1 for k in keywords if k in row_str)
+            if matches > max_keywords and matches >= 2:
+                max_keywords = matches
+                header_idx = i
+                
+        if max_keywords >= 2:
+            df.columns = [str(c).strip().lower() for c in df.iloc[header_idx].values]
+            df = df.iloc[header_idx+1:].reset_index(drop=True)
+        else:
+            df.columns = [str(c).strip().lower() for c in df.iloc[0].values]
+            df = df.iloc[1:].reset_index(drop=True)
+            
+        return df
+    except Exception as e:
+        print(f"Error load_bank_dataframe {path}: {e}")
+        return pd.DataFrame()
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Parser Mercado Pago CSV oficial
 # Columnas típicas del CSV de MP:
 #   Fecha de cobro, Descripción, ID de pago, Tipo, Monto bruto, Cargo, Monto neto, Estado
 # ─────────────────────────────────────────────────────────────────────────────
 def parsear_csv_mercado_pago(path: str) -> list:
+    import pandas as pd
     filas = []
-    with open(path, encoding="utf-8-sig", errors="replace") as f:
-        reader = csv.DictReader(f)
-        fieldnames = [c.strip().lower() for c in (reader.fieldnames or [])]
+    df = load_bank_dataframe(path)
+    if df.empty:
+        return []
+    
+    def col(names):
+        for fn in df.columns:
+            for n in names:
+                if n in fn:
+                    return fn
+        return None
         
-        # Intentar detectar columnas clave por nombre parcial
-        def col(names):
-            for fn in fieldnames:
-                for n in names:
-                    if n in fn:
-                        return fn
-            return None
-        
-        col_fecha  = col(["fecha", "date"])
-        col_id     = col(["id", "referencia", "operacion"])
-        col_bruto  = col(["bruto", "amount", "monto"])
-        col_neto   = col(["neto", "net"])
-        col_cargo  = col(["cargo", "fee", "comision"])
-        col_estado = col(["estado", "status"])
-        col_desc   = col(["descripcion", "description", "detalle"])
+    col_fecha  = col(["fecha", "date"])
+    col_id     = col(["id", "referencia", "operacion"])
+    col_bruto  = col(["bruto", "amount", "monto"])
+    col_neto   = col(["neto", "net"])
+    col_cargo  = col(["cargo", "fee", "comision"])
+    col_estado = col(["estado", "status"])
+    col_desc   = col(["descripcion", "description", "detalle"])
 
-        f.seek(0); next(reader)  # reset
-        for row in reader:
-            rowl = {k.strip().lower(): v for k, v in row.items()}
-            fecha  = normalizar_fecha(rowl.get(col_fecha, "") or "")
-            id_p   = str(rowl.get(col_id, "")).strip()
-            bruto  = limpiar_monto(rowl.get(col_bruto, "0"))
-            neto   = limpiar_monto(rowl.get(col_neto,  "0"))
-            cargo  = limpiar_monto(rowl.get(col_cargo, "0"))
-            estado = (rowl.get(col_estado, "approved") or "approved").upper()
-            desc   = rowl.get(col_desc, "").strip()
-            
-            if bruto == 0 and neto == 0:
-                continue
-            if not id_p:
-                id_p = f"MP-{fecha}-{bruto}"
-            
-            filas.append({
-                "fecha": fecha, "id": id_p, "bruto": bruto,
-                "neto": neto if neto else bruto - cargo,
-                "cargo": cargo, "estado": estado,
-                "fuente": "Mercado Pago (CSV oficial)", "desc": desc
-            })
+    for _, row in df.iterrows():
+        fecha  = normalizar_fecha(str(row.get(col_fecha, "")) if pd.notna(row.get(col_fecha)) else "")
+        id_p   = str(row.get(col_id, "")).strip() if pd.notna(row.get(col_id)) else ""
+        bruto  = limpiar_monto(str(row.get(col_bruto, "0")) if pd.notna(row.get(col_bruto)) else "0")
+        neto   = limpiar_monto(str(row.get(col_neto, "0")) if pd.notna(row.get(col_neto)) else "0")
+        cargo  = limpiar_monto(str(row.get(col_cargo, "0")) if pd.notna(row.get(col_cargo)) else "0")
+        estado = str(row.get(col_estado, "approved") if pd.notna(row.get(col_estado)) else "approved").upper()
+        desc   = str(row.get(col_desc, "")).strip() if pd.notna(row.get(col_desc)) else ""
+        
+        if bruto == 0 and neto == 0:
+            continue
+        if not id_p:
+            id_p = f"MP-{fecha}-{bruto}"
+        
+        filas.append({
+            "fecha": fecha, "id": id_p, "bruto": bruto,
+            "neto": neto if neto else bruto - cargo,
+            "cargo": cargo, "estado": estado,
+            "fuente": "Mercado Pago (CSV/Excel oficial)", "desc": desc
+        })
     return filas
 
 
@@ -135,42 +174,41 @@ def parsear_csv_mercado_pago(path: str) -> list:
 #   Fecha, Número de operación, Descripción, Importe, Saldo
 # ─────────────────────────────────────────────────────────────────────────────
 def parsear_csv_banco_provincia(path: str) -> list:
+    import pandas as pd
     filas = []
-    with open(path, encoding="utf-8-sig", errors="replace") as f:
-        reader = csv.DictReader(f)
-        fieldnames = [c.strip().lower() for c in (reader.fieldnames or [])]
+    df = load_bank_dataframe(path)
+    if df.empty:
+        return []
         
-        def col(names):
-            for fn in fieldnames:
-                for n in names:
-                    if n in fn:
-                        return fn
-            return None
+    def col(names):
+        for fn in df.columns:
+            for n in names:
+                if n in fn:
+                    return fn
+        return None
         
-        col_fecha  = col(["fecha", "date"])
-        col_id     = col(["numero", "id", "referencia", "operacion", "n°", "nro"])
-        col_importe= col(["importe", "credito", "monto", "amount", "cobro", "haber"])
-        col_desc   = col(["descripcion", "concepto", "detalle", "movimiento"])
+    col_fecha  = col(["fecha", "date"])
+    col_id     = col(["numero", "id", "referencia", "operacion", "n°", "nro"])
+    col_importe= col(["importe", "credito", "monto", "amount", "cobro", "haber"])
+    col_desc   = col(["descripcion", "concepto", "detalle", "movimiento"])
+    
+    for _, row in df.iterrows():
+        fecha   = normalizar_fecha(str(row.get(col_fecha, "")) if pd.notna(row.get(col_fecha)) else "")
+        id_p    = str(row.get(col_id, "")).strip() if pd.notna(row.get(col_id)) else ""
+        importe = limpiar_monto(str(row.get(col_importe, "0")) if pd.notna(row.get(col_importe)) else "0")
+        desc    = str(row.get(col_desc, "")).strip() if pd.notna(row.get(col_desc)) else ""
         
-        f.seek(0); next(reader)
-        for row in reader:
-            rowl = {k.strip().lower(): v for k, v in row.items()}
-            fecha   = normalizar_fecha(rowl.get(col_fecha, "") or "")
-            id_p    = str(rowl.get(col_id, "")).strip()
-            importe = limpiar_monto(rowl.get(col_importe, "0"))
-            desc    = rowl.get(col_desc, "").strip()
-            
-            if importe <= 0:
-                continue  # Solo créditos (cobros entrantes)
-            if not id_p:
-                id_p = f"BP-{fecha}-{importe}"
-            
-            filas.append({
-                "fecha": fecha, "id": id_p, "bruto": importe,
-                "neto": importe,  # Banco no descuenta en el extracto
-                "cargo": 0.0, "estado": "APPROVED",
-                "fuente": "Banco Provincia / Cuenta DNI", "desc": desc
-            })
+        if importe <= 0:
+            continue
+        if not id_p:
+            id_p = f"BP-{fecha}-{importe}"
+        
+        filas.append({
+            "fecha": fecha, "id": id_p, "bruto": importe,
+            "neto": importe,
+            "cargo": 0.0, "estado": "APPROVED",
+            "fuente": "Banco Provincia / Cuenta DNI", "desc": desc
+        })
     return filas
 
 
@@ -294,8 +332,8 @@ class Admin14VentasDigitales(QWidget):
             b.clicked.connect(slot)
             return b
 
-        tbl.addWidget(tbtn("📥 Importar CSV Mercado Pago", "#0d9488", self.importar_mp))
-        tbl.addWidget(tbtn("🏛 Importar CSV Banco Provincia", "#0369a1", self.importar_bp))
+        tbl.addWidget(tbtn("📥 Importar Excel/CSV Mercado Pago", "#0d9488", self.importar_mp))
+        tbl.addWidget(tbtn("🏛 Importar Excel/CSV Banco Provincia", "#0369a1", self.importar_bp))
         tbl.addWidget(tbtn("🔄 Recargar Datos", "#64748b", self.recargar_datos))
         tbl.addWidget(tbtn("💾 Exportar Consolidado CSV", "#7c3aed", self.exportar_consolidado))
         tbl.addWidget(tbtn("📂 Abrir Carpeta Reportes", "#b45309", self.abrir_carpeta))
@@ -347,11 +385,17 @@ class Admin14VentasDigitales(QWidget):
             "background:white; font-size:13px;")
         self.txt_buscar.textChanged.connect(self.aplicar_filtros)
 
-        self.cmb_mes = QComboBox()
-        self.cmb_mes.setStyleSheet(
-            "padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;"
-            "background:white; font-size:13px; min-width:150px;")
-        self.cmb_mes.currentIndexChanged.connect(self.aplicar_filtros)
+        self.dt_desde = QDateEdit()
+        self.dt_desde.setCalendarPopup(True)
+        self.dt_desde.setDate(QDate.currentDate().addDays(-30))
+        self.dt_desde.setStyleSheet("padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px; background:white; font-size:13px;")
+        self.dt_desde.dateChanged.connect(self.aplicar_filtros)
+
+        self.dt_hasta = QDateEdit()
+        self.dt_hasta.setCalendarPopup(True)
+        self.dt_hasta.setDate(QDate.currentDate())
+        self.dt_hasta.setStyleSheet("padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px; background:white; font-size:13px;")
+        self.dt_hasta.dateChanged.connect(self.aplicar_filtros)
 
         self.cmb_fuente = QComboBox()
         self.cmb_fuente.addItems(["Todas las fuentes", "Mercado Pago (CSV oficial)",
@@ -362,7 +406,8 @@ class Admin14VentasDigitales(QWidget):
         self.cmb_fuente.currentIndexChanged.connect(self.aplicar_filtros)
 
         fl.addWidget(self.txt_buscar, stretch=1)
-        fl.addWidget(QLabel("Mes:")); fl.addWidget(self.cmb_mes)
+        fl.addWidget(QLabel("Desde:")); fl.addWidget(self.dt_desde)
+        fl.addWidget(QLabel("Hasta:")); fl.addWidget(self.dt_hasta)
         fl.addWidget(QLabel("Fuente:")); fl.addWidget(self.cmb_fuente)
         body.addLayout(fl)
 
@@ -395,8 +440,8 @@ class Admin14VentasDigitales(QWidget):
     # ── Importación MP ────────────────────────────────────────────────────────
     def importar_mp(self):
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Seleccionar CSV de Mercado Pago", "",
-            "Archivos CSV (*.csv);;Todos los archivos (*)")
+            self, "Seleccionar Archivos de Mercado Pago", "",
+            "Archivos soportados (*.csv *.xlsx *.xls);;Todos los archivos (*)")
         if not paths:
             return
         total = 0
@@ -414,8 +459,8 @@ class Admin14VentasDigitales(QWidget):
     # ── Importación Banco Provincia ───────────────────────────────────────────
     def importar_bp(self):
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Seleccionar CSV de Banco Provincia / Cuenta DNI", "",
-            "Archivos CSV (*.csv);;Todos los archivos (*)")
+            self, "Seleccionar Archivos de Banco Provincia / Cuenta DNI", "",
+            "Archivos soportados (*.csv *.xlsx *.xls);;Todos los archivos (*)")
         if not paths:
             return
         total = 0
@@ -448,7 +493,7 @@ class Admin14VentasDigitales(QWidget):
 
         # 2. CSVs oficiales MP
         for fn in sorted(os.listdir(DIR_ORIGINALES_MP)):
-            if not fn.lower().endswith(".csv"):
+            if not fn.lower().endswith((".csv", ".xls", ".xlsx")):
                 continue
             try:
                 rows = parsear_csv_mercado_pago(os.path.join(DIR_ORIGINALES_MP, fn))
@@ -458,7 +503,7 @@ class Admin14VentasDigitales(QWidget):
 
         # 3. CSVs Banco Provincia
         for fn in sorted(os.listdir(DIR_ORIGINALES_BP)):
-            if not fn.lower().endswith(".csv"):
+            if not fn.lower().endswith((".csv", ".xls", ".xlsx")):
                 continue
             try:
                 rows = parsear_csv_banco_provincia(os.path.join(DIR_ORIGINALES_BP, fn))
@@ -476,17 +521,7 @@ class Admin14VentasDigitales(QWidget):
                 unicos.append(m)
         self.todos_los_movs = sorted(unicos, key=lambda x: x["fecha"], reverse=True)
 
-        # Actualizar combo de meses
-        meses = sorted({m["fecha"][:7] for m in self.todos_los_movs if len(m["fecha"]) >= 7}, reverse=True)
-        self.cmb_mes.blockSignals(True)
-        self.cmb_mes.clear()
-        self.cmb_mes.addItem("Todos los meses")
-        for mes in meses:
-            self.cmb_mes.addItem(mes)
-        if meses:
-            self.cmb_mes.setCurrentIndex(1)  # Mes más reciente por defecto
-        self.cmb_mes.blockSignals(False)
-
+        # Actualizar filtros y UI
         self.aplicar_filtros()
 
         n = len(self.todos_los_movs)
@@ -498,12 +533,15 @@ class Admin14VentasDigitales(QWidget):
     # ── Filtros ───────────────────────────────────────────────────────────────
     def aplicar_filtros(self):
         texto   = self.txt_buscar.text().lower().strip()
-        mes_sel = self.cmb_mes.currentText()
         fuente_sel = self.cmb_fuente.currentText()
+        
+        fd = self.dt_desde.date().toString("yyyy-MM-dd")
+        fh = self.dt_hasta.date().toString("yyyy-MM-dd") + " 23:59:59"
 
         filtrados = []
         for m in self.todos_los_movs:
-            if mes_sel != "Todos los meses" and not m["fecha"].startswith(mes_sel):
+            # check date
+            if not (fd <= m["fecha"] <= fh):
                 continue
             if fuente_sel != "Todas las fuentes" and m["fuente"] != fuente_sel:
                 continue
@@ -569,19 +607,16 @@ class Admin14VentasDigitales(QWidget):
 
     # ── Exportar consolidado ──────────────────────────────────────────────────
     def exportar_consolidado(self):
-        mes_sel = self.cmb_mes.currentText()
-        if mes_sel == "Todos los meses":
-            mes_str = datetime.now().strftime("%Y-%m")
-        else:
-            mes_str = mes_sel
-
-        filtrados = [m for m in self.todos_los_movs if m["fecha"].startswith(mes_str)]
+        fd = self.dt_desde.date().toString("yyyy-MM-dd")
+        fh = self.dt_hasta.date().toString("yyyy-MM-dd")
+        
+        filtrados = [m for m in self.todos_los_movs if fd <= m["fecha"] <= fh + " 23:59:59"]
         if not filtrados:
             QMessageBox.warning(self, "Sin datos",
                 "No hay movimientos para el período seleccionado.")
             return
 
-        path = generar_csv_consolidado(mes_str, filtrados)
+        path = generar_csv_consolidado(f"{fd}_al_{fh}", filtrados)
         QMessageBox.information(self, "✅ Exportado",
             f"Archivo consolidado generado con {len(filtrados)} movimientos:\n\n{path}")
 

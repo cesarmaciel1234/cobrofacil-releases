@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* El "body" es de 700x400 y atrapa el ratón en la zona invisible */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.01) !important; /* Invisible pero táctil */
+            color: #FFFFFF;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            border-radius: 15px;
+        }
+
+        /* La caja visible de cristal es un poco más pequeña que la ventana total */
+        .ui-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            
+            width: 620px; /* Quedan 40px de margen invisible por lado para rastrear */
+            height: 320px; /* Quedan 40px de margen invisible arriba/abajo */
+            
+            background: rgba(10, 10, 12, 0.4); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            
+            border-radius: 15px;
+            -webkit-app-region: drag; 
+            pointer-events: none; 
+            
+            /* Marco estático tenue (Arriba, Derecha, Izquierda). El piso no tiene marco */
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: none;
+        }
+
+        /* MAGIA DEL BORDE DINÁMICO */
+        .ui-container::after {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; right: -1px; bottom: 0px; /* Bottom 0 para no salir por abajo */
+            border-radius: 16px;
+            
+            /* El truco del piso: Padding inferior = 0 significa que la luz se corta en el suelo */
+            padding: 2px 2px 0px 2px; 
+            
+            background: radial-gradient(
+                circle var(--glow-radius, 150px) at var(--mouse-x, -1000px) var(--mouse-y, -1000px),
+                rgba(0, 229, 255, 1),
+                transparent 100%
+            );
+            
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .ui-container > * {
+            pointer-events: auto; 
+        }
+
+        h1 {
+            font-size: 36px; /* Más amplio para 700x400 */
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            
+            background: linear-gradient(180deg, #E6FFFF 0%, #00E5FF 55%, #007799 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0px 8px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0px 2px 2px rgba(0, 229, 255, 0.3));
+        }
+
+        #status {
+            color: #D0D0D5;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            margin-bottom: 35px;
+            height: 20px;
+            font-weight: 400;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .progress-bg {
+            width: 80%; 
+            background-color: rgba(0, 0, 0, 0.5); 
+            height: 6px; 
+            border-radius: 10px;
+            overflow: hidden;
+            -webkit-app-region: no-drag; 
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .progress-fill {
+            width: 0%;
+            background: linear-gradient(90deg, #00E5FF, #2979FF);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.8), 0 0 20px rgba(0, 229, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+
+    <div class="ui-container" id="glass-box">
+        <h1>Cobro Fácil POS 2026</h1>
+        <div id="status">Iniciando protocolo...</div>
+        <div class="progress-bg">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        const glassBox = document.getElementById('glass-box');
+        
+        let width, height;
+        let particles = [];
+        
+        // Físicas del ratón y la luz
+        let mouse = { x: null, y: null, radius: 150 };
+        let lastMouseX = 0, lastMouseY = 0;
+        let targetGlowRadius = 150;
+        let currentGlowRadius = 150;
+
+        // RASTREADOR DEL RATÓN (Atrapa toda la ventana 700x400)
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.clientX;
+            mouse.y = event.clientY;
+            
+            // Convertir coordenadas a la caja de cristal interna
+            let rect = glassBox.getBoundingClientRect();
+            let localX = mouse.x - rect.left;
+            let localY = mouse.y - rect.top;
+            
+            glassBox.style.setProperty('--mouse-x', `${localX}px`);
+            glassBox.style.setProperty('--mouse-y', `${localY}px`);
+
+            // ACELERÓMETRO DE LUZ: Mide la velocidad del ratón
+            let dx = event.clientX - lastMouseX;
+            let dy = event.clientY - lastMouseY;
+            let speed = Math.sqrt(dx * dx + dy * dy);
+            
+            // Si mueves rápido, el radio crece masivamente (hasta 900px) completando el marco
+            targetGlowRadius = 150 + speed * 12; 
+            if(targetGlowRadius > 900) targetGlowRadius = 900;
+
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+        });
+
+        window.addEventListener('mouseleave', function() {
+            mouse.x = null;
+            mouse.y = null;
+            glassBox.style.setProperty('--mouse-x', `-1000px`);
+            glassBox.style.setProperty('--mouse-y', `-1000px`);
+        });
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            
+            const spacing = 18; // Adaptado para el lienzo grande
+            
+            for (let x = -20; x < width + 20; x += spacing) {
+                for (let y = -20; y < height + 20; y += spacing) {
+                    const offsetX = (Math.random() - 0.5) * spacing * 1.5;
+                    const offsetY = (Math.random() - 0.5) * spacing * 1.5;
+                    
+                    particles.push({
+                        homeX: x + offsetX,
+                        homeY: y + offsetY,
+                        x: x + offsetX, 
+                        y: y + offsetY, 
+                        vx: 0, 
+                        vy: 0, 
+                        angleX: Math.random() * Math.PI * 2,
+                        angleY: Math.random() * Math.PI * 2,
+                        speedX: 0.01 + Math.random() * 0.02,
+                        speedY: 0.01 + Math.random() * 0.02,
+                        ampX: 2 + Math.random() * 12,
+                        ampY: 2 + Math.random() * 12,
+                        radius: 0.3 + Math.random() * 1.5 
+                    });
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // ANIMACIÓN FLUIDA DEL MARCO ILUMINADO
+            currentGlowRadius += (targetGlowRadius - currentGlowRadius) * 0.15;
+            targetGlowRadius -= targetGlowRadius * 0.05; // Decae si te detienes
+            if(targetGlowRadius < 150) targetGlowRadius = 150;
+            glassBox.style.setProperty('--glow-radius', `${currentGlowRadius}px`);
+
+            // RENDERIZADO DE PARTÍCULAS Y FÍSICAS DE AGUA
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                
+                p.angleX += p.speedX;
+                p.angleY += p.speedY;
+                const targetX = p.homeX + Math.sin(p.angleX) * p.ampX;
+                const targetY = p.homeY + Math.cos(p.angleY) * p.ampY;
+                
+                if (mouse.x != null) {
+                    let dx = p.x - mouse.x;
+                    let dy = p.y - mouse.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        let forceDirectionX = dx / distance;
+                        let forceDirectionY = dy / distance;
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        
+                        p.vx += forceDirectionX * force * 0.6; 
+                        p.vy += forceDirectionY * force * 0.6;
+                    }
+                }
+
+                p.vx += (targetX - p.x) * 0.015;
+                p.vy += (targetY - p.y) * 0.015;
+                p.vx *= 0.92;
+                p.vy *= 0.92;
+                p.x += p.vx;
+                p.y += p.vy;
+
+                const currentRadius = p.radius + Math.sin(p.angleX) * 0.3;
+                if (currentRadius > 0) {
+                    const alpha = 0.1 + (Math.sin(p.angleX * 2) + 1) * 0.4;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, currentRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+
+        window.actualizar_interfaz = function(porcentaje, texto) {
+            document.getElementById('progress-bar').style.width = porcentaje + '%';
+            document.getElementById('status').innerText = texto;
+        };
+    </script>
+</body>
+</html>

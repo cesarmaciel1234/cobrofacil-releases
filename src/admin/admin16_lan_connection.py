@@ -1,38 +1,61 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-    QPushButton, QFrame, QMessageBox, QApplication, QScrollArea, QGridLayout, QSizePolicy
+    QPushButton, QFrame, QMessageBox, QApplication, QGridLayout
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QThread
-import os
-import json
+from PyQt5.QtCore import Qt, pyqtSignal, QThread
 import socket
-import hashlib
+import json
+import concurrent.futures
 from src.config import config
 from src.database import db_manager
+from src.logger import logger
 
-class DiscoveryWorker(QThread):
-    discovered = pyqtSignal(dict)
-    finished = pyqtSignal()
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+class PortScannerWorker(QThread):
+    discovered = pyqtSignal(str) # Emite la IP descubierta
+    finished_scan = pyqtSignal()
     
     def run(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.settimeout(2.0)
+        local_ip = get_local_ip()
+        if local_ip == "127.0.0.1":
+            self.finished_scan.emit()
+            return
+            
+        parts = local_ip.split(".")
+        base_ip = f"{parts[0]}.{parts[1]}.{parts[2]}."
         
-        try:
-            sock.sendto(b"PUNPRO_DISCOVER", ('<broadcast>', 37020))
-            while True:
-                try:
-                    data, addr = sock.recvfrom(1024)
-                    response = json.loads(data.decode('utf-8'))
-                    self.discovered.emit(response)
-                except socket.timeout:
-                    break
-        except Exception:
-            pass
-        finally:
-            sock.close()
-            self.finished.emit()
+        ips_to_scan = [f"{base_ip}{i}" for i in range(1, 255)]
+        
+        def check_port(ip):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(0.3) # Timeout súper corto para escaneo rápido
+            try:
+                result = sock.connect_ex((ip, 3306))
+                if result == 0:
+                    return ip
+            except Exception:
+                pass
+            finally:
+                sock.close()
+            return None
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+            futures = [executor.submit(check_port, ip) for ip in ips_to_scan]
+            for future in concurrent.futures.as_completed(futures):
+                found_ip = future.result()
+                if found_ip:
+                    self.discovered.emit(found_ip)
+                    
+        self.finished_scan.emit()
 
 class Admin16LANConnection(QWidget):
     request_dashboard = pyqtSignal()
@@ -40,295 +63,270 @@ class Admin16LANConnection(QWidget):
     def __init__(self):
         super().__init__()
         self.setup_ui()
-        self.discovered_pcs = {}
+        self.discovered_ips = set()
         
     def setup_ui(self):
         self.setStyleSheet("background-color: #f8fafc;")
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(30, 20, 30, 20)
+        main_layout.setSpacing(15)
         
-        # Header
-        header = QLabel("📡 CONEXIÓN REMOTA LAN (PC ESPECTADOR)")
-        header.setStyleSheet("font-size: 24px; font-weight: bold; color: #1e293b;")
-        main_layout.addWidget(header)
+        # --- TOP BAR (BOTON VOLVER + HEADER) ---
+        top_bar = QHBoxLayout()
+        btn_back = QPushButton("← VOLVER")
+        btn_back.setCursor(Qt.PointingHandCursor)
+        btn_back.setStyleSheet("padding: 8px 15px; font-weight: bold; color: #475569; border: 1px solid #cbd5e1; border-radius: 5px; background: white;")
+        btn_back.clicked.connect(lambda: self.request_dashboard.emit())
+        top_bar.addWidget(btn_back)
         
-        desc = QLabel("Configura esta computadora para que actúe como un espectador (Admin Remoto). "
-                      "Haz clic en 'Buscar PCs en Red' para encontrar automáticamente la PC principal.")
-        desc.setStyleSheet("color: #475569; font-size: 14px;")
-        desc.setWordWrap(True)
-        main_layout.addWidget(desc)
-
-        local_mode = "MAESTRA" if db_manager.is_master else "CLIENTE"
-        local_mode_color = "#16a34a" if db_manager.is_master else "#0ea5e9"
-        self.lbl_local_mode = QLabel(f"Estado local: <b style='color: {local_mode_color};'>{local_mode}</b>")
-        self.lbl_local_mode.setTextFormat(Qt.RichText)
-        self.lbl_local_mode.setStyleSheet("font-size: 15px; margin-top: 10px;")
-        main_layout.addWidget(self.lbl_local_mode)
-
-        if not db_manager.is_master:
-            btn_promote = QPushButton("👑 Activar como PC Maestra")
-            btn_promote.setCursor(Qt.PointingHandCursor)
-            btn_promote.setStyleSheet("""
-                QPushButton { background-color: #f59e0b; color: white; padding: 12px; font-weight: bold; font-size: 14px; border-radius: 8px; border: none; }
-                QPushButton:hover { background-color: #d97706; }
-            """)
-            btn_promote.clicked.connect(self.promote_to_master)
-            main_layout.addWidget(btn_promote)
-
-        # Panel Escaneo de Red
+        header = QLabel("🔌 SERVIDOR MULTICAJA (MARIADB)")
+        header.setStyleSheet("font-size: 20px; font-weight: bold; color: #1e293b;")
+        top_bar.addSpacing(15)
+        top_bar.addWidget(header)
+        top_bar.addStretch()
+        main_layout.addLayout(top_bar)
+        
+        # Para evitar que se ensanche demasiado, limitamos el ancho máximo
+        content_layout = QVBoxLayout()
+        content_layout.setAlignment(Qt.AlignTop)
+        
+        # --- SECCION 1: ESTADO ACTUAL ---
+        status_frame = QFrame()
+        status_frame.setMaximumWidth(700)
+        status_frame.setStyleSheet("border-radius: 10px; padding: 15px;")
+        status_lay = QVBoxLayout(status_frame)
+        
+        if getattr(db_manager, "is_master", True):
+            status_frame.setStyleSheet(status_frame.styleSheet() + "background-color: #ecfdf5; border: 1px solid #10b981;")
+            title = QLabel("👑 ESTA PC ES EL CEREBRO (MAESTRA)")
+            title.setStyleSheet("font-size: 16px; font-weight: bold; color: #059669; border: none;")
+            
+            desc = QLabel("Todas las ventas se guardan aquí.\nDatos para conectar Cajas (Esclavas):")
+            desc.setStyleSheet("font-size: 13px; color: #047857; border: none;")
+            
+            ip_lbl = QLabel(f"IP: {get_local_ip()}")
+            ip_lbl.setStyleSheet("font-size: 22px; font-weight: bold; color: #1e293b; background: white; padding: 5px; border-radius: 5px; border: 1px solid #a7f3d0;")
+            ip_lbl.setAlignment(Qt.AlignCenter)
+            
+            port_lbl = QLabel("PUERTO: 3306")
+            port_lbl.setStyleSheet("font-size: 14px; font-weight: bold; color: #047857; border: none;")
+            port_lbl.setAlignment(Qt.AlignCenter)
+            
+            status_lay.addWidget(title)
+            status_lay.addWidget(desc)
+            status_lay.addSpacing(10)
+            status_lay.addWidget(ip_lbl)
+            status_lay.addWidget(port_lbl)
+        else:
+            host_conectado = "Desconocido"
+            if hasattr(db_manager, "mariadb_engine") and db_manager.mariadb_engine:
+                host_conectado = db_manager.mariadb_engine.host
+                
+            status_frame.setStyleSheet(status_frame.styleSheet() + "background-color: #eff6ff; border: 1px solid #3b82f6;")
+            title = QLabel("🖥️ MODO CAJA (ESCLAVA)")
+            title.setStyleSheet("font-size: 16px; font-weight: bold; color: #1d4ed8; border: none;")
+            
+            desc = QLabel(f"Conectada al Cerebro en la IP:")
+            desc.setStyleSheet("font-size: 13px; color: #1e40af; border: none;")
+            
+            ip_lbl = QLabel(f"{host_conectado}")
+            ip_lbl.setStyleSheet("font-size: 22px; font-weight: bold; color: #1e293b; background: white; padding: 5px; border-radius: 5px; border: 1px solid #bfdbfe;")
+            ip_lbl.setAlignment(Qt.AlignCenter)
+            
+            status_lay.addWidget(title)
+            status_lay.addWidget(desc)
+            status_lay.addSpacing(10)
+            status_lay.addWidget(ip_lbl)
+            
+        content_layout.addWidget(status_frame)
+        
+        # --- SECCION 2: RADAR DE RED ---
         scan_frame = QFrame()
-        scan_frame.setStyleSheet("background: white; border: 2px solid #6366f1; border-radius: 10px; padding: 20px;")
+        scan_frame.setMaximumWidth(700)
+        scan_frame.setStyleSheet("background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px;")
         scan_lay = QVBoxLayout(scan_frame)
         
-        btn_scan = QPushButton("🔍 BUSCAR PCs PRINCIPALES EN RED")
-        btn_scan.setCursor(Qt.PointingHandCursor)
-        btn_scan.setStyleSheet("""
-            QPushButton { background-color: #6366f1; color: white; padding: 15px; font-weight: bold; font-size: 14px; border-radius: 8px; border: none; }
+        lbl_scan_title = QLabel("📡 Radar de Servidores")
+        lbl_scan_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #334155; border: none;")
+        scan_lay.addWidget(lbl_scan_title)
+        
+        self.btn_scan = QPushButton("🔍 BUSCAR EN RED")
+        self.btn_scan.setCursor(Qt.PointingHandCursor)
+        self.btn_scan.setStyleSheet("""
+            QPushButton { background-color: #6366f1; color: white; padding: 10px; font-weight: bold; font-size: 12px; border-radius: 6px; border: none; }
             QPushButton:hover { background-color: #4f46e5; }
         """)
-        btn_scan.clicked.connect(self.start_discovery)
-        scan_lay.addWidget(btn_scan)
+        self.btn_scan.clicked.connect(self.start_discovery)
+        scan_lay.addWidget(self.btn_scan)
         
         self.lbl_scan_status = QLabel("")
-        self.lbl_scan_status.setStyleSheet("color: #64748b; font-size: 13px;")
+        self.lbl_scan_status.setStyleSheet("color: #64748b; font-size: 12px; border: none;")
         self.lbl_scan_status.setAlignment(Qt.AlignCenter)
         self.lbl_scan_status.hide()
         scan_lay.addWidget(self.lbl_scan_status)
         
         self.pc_grid = QGridLayout()
-        self.pc_grid.setSpacing(15)
+        self.pc_grid.setSpacing(10)
         scan_lay.addLayout(self.pc_grid)
         
-        main_layout.addWidget(scan_frame)
+        content_layout.addWidget(scan_frame)
         
-        # Panel Configuración Manual
-        conf_frame = QFrame()
-        conf_frame.setStyleSheet("background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 20px;")
-        clay = QVBoxLayout(conf_frame)
+        # --- SECCION 3: CONEXIÓN MANUAL ---
+        manual_frame = QFrame()
+        manual_frame.setMaximumWidth(700)
+        manual_frame.setStyleSheet("background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px;")
+        manual_lay = QVBoxLayout(manual_frame)
         
-        lbl_current = QLabel(f"Ruta actual de la base de datos:<br><b>{db_manager.db_path}</b>")
-        lbl_current.setTextFormat(Qt.RichText)
-        lbl_current.setStyleSheet("font-size: 13px; color: #0f172a; border: none;")
-        clay.addWidget(lbl_current)
+        lbl_manual = QLabel("Conexión Manual por IP:")
+        lbl_manual.setStyleSheet("font-size: 13px; font-weight: bold; color: #1e293b; border: none;")
+        manual_lay.addWidget(lbl_manual)
         
-        lbl_new = QLabel("Conexión Manual (Si la búsqueda automática falla):")
-        lbl_new.setStyleSheet("font-size: 14px; font-weight: bold; color: #1e293b; border: none; margin-top: 15px;")
-        clay.addWidget(lbl_new)
-        
-        self.txt_path = QLineEdit()
-        current_config_path = config.get("db_path", "")
-        self.txt_path.setText(current_config_path)
-        self.txt_path.setPlaceholderText("\\\\192.168.X.X\\...\\A8X2M.db")
-        self.txt_path.setStyleSheet("padding: 10px; font-size: 14px; border: 1px solid #94a3b8; border-radius: 5px;")
-        clay.addWidget(self.txt_path)
+        self.txt_ip = QLineEdit()
+        self.txt_ip.setPlaceholderText("192.168.0.15")
+        self.txt_ip.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #94a3b8; border-radius: 4px;")
+        manual_lay.addWidget(self.txt_ip)
         
         btn_lay = QHBoxLayout()
-        self.btn_save = QPushButton("💾 GUARDAR MANUAL Y REINICIAR")
-        self.btn_save.setCursor(Qt.PointingHandCursor)
-        self.btn_save.setStyleSheet("""
-            QPushButton { background-color: #10b981; color: white; padding: 15px; font-weight: bold; font-size: 14px; border-radius: 8px; border: none; }
+        self.btn_connect = QPushButton("🔗 CONECTAR COMO ESCLAVA")
+        self.btn_connect.setCursor(Qt.PointingHandCursor)
+        self.btn_connect.setStyleSheet("""
+            QPushButton { background-color: #10b981; color: white; padding: 10px; font-weight: bold; font-size: 12px; border-radius: 6px; border: none; }
             QPushButton:hover { background-color: #059669; }
         """)
-        self.btn_save.clicked.connect(self.save_and_restart)
-        btn_lay.addWidget(self.btn_save)
+        self.btn_connect.clicked.connect(self.connect_manual)
+        btn_lay.addWidget(self.btn_connect)
         
-        self.btn_reset = QPushButton("🏠 VOLVER A DB LOCAL (DESCONECTAR)")
-        self.btn_reset.setCursor(Qt.PointingHandCursor)
-        self.btn_reset.setStyleSheet("""
-            QPushButton { background-color: #ef4444; color: white; padding: 15px; font-weight: bold; font-size: 14px; border-radius: 8px; border: none; }
-            QPushButton:hover { background-color: #dc2626; }
-        """)
-        self.btn_reset.clicked.connect(self.reset_to_local)
-        btn_lay.addWidget(self.btn_reset)
+        if not getattr(db_manager, "is_master", True):
+            self.btn_reset = QPushButton("👑 VOLVER A MAESTRA")
+            self.btn_reset.setCursor(Qt.PointingHandCursor)
+            self.btn_reset.setStyleSheet("""
+                QPushButton { background-color: #ef4444; color: white; padding: 10px; font-weight: bold; font-size: 12px; border-radius: 6px; border: none; }
+                QPushButton:hover { background-color: #dc2626; }
+            """)
+            self.btn_reset.clicked.connect(self.reset_to_master)
+            btn_lay.addWidget(self.btn_reset)
+            
+        manual_lay.addLayout(btn_lay)
+        content_layout.addWidget(manual_frame)
         
-        clay.addLayout(btn_lay)
-        main_layout.addWidget(conf_frame)
-        
+        main_layout.addLayout(content_layout)
         main_layout.addStretch()
-        
-        btn_back = QPushButton("← VOLVER AL DASHBOARD")
-        btn_back.setCursor(Qt.PointingHandCursor)
-        btn_back.setStyleSheet("padding: 10px; font-weight: bold; color: #64748b; border: 1px solid #cbd5e1; border-radius: 5px; background: white;")
-        btn_back.clicked.connect(lambda: self.request_dashboard.emit())
-        main_layout.addWidget(btn_back, alignment=Qt.AlignLeft)
 
     def start_discovery(self):
-        self.lbl_scan_status.setText("Buscando computadoras en la red... (2 segundos)")
+        self.lbl_scan_status.setText("Escaneando red local en busca de servidores MariaDB... (Tardará un par de segundos)")
         self.lbl_scan_status.show()
+        self.btn_scan.setEnabled(False)
         
-        # Limpiar grilla
         for i in reversed(range(self.pc_grid.count())): 
             widget = self.pc_grid.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
                 
-        self.discovered_pcs.clear()
+        self.discovered_ips.clear()
         
-        self.worker = DiscoveryWorker()
+        self.worker = PortScannerWorker()
         self.worker.discovered.connect(self.add_pc_icon)
-        self.worker.finished.connect(self.discovery_finished)
+        self.worker.finished_scan.connect(self.discovery_finished)
         self.worker.start()
 
-    def add_pc_icon(self, pc_info):
-        host = pc_info.get("hostname", "PC_Desconocida")
-        ip = pc_info.get("server_ip", "0.0.0.0")
-        db_path = pc_info.get("db_path", "")
-        pass_hash = pc_info.get("pass_hash", "")
-        mode = pc_info.get("mode", "")
-        api_url = pc_info.get("api_url", "")
-        
-        if host in self.discovered_pcs: return
-        self.discovered_pcs[host] = {
-            "db_path": db_path,
-            "pass_hash": pass_hash,
-            "mode": mode,
-            "api_url": api_url
-        }
+    def add_pc_icon(self, ip):
+        if ip in self.discovered_ips: return
+        self.discovered_ips.add(ip)
         
         btn_pc = QPushButton()
         btn_pc.setCursor(Qt.PointingHandCursor)
-        btn_pc.setFixedSize(160, 120)
+        btn_pc.setFixedSize(180, 130)
         btn_pc.setStyleSheet("""
-            QPushButton { 
-                background-color: #f1f5f9; 
-                border: 2px solid #cbd5e1; 
+            QPushButton {
+                background-color: #f8fafc;
+                border: 2px solid #e2e8f0;
                 border-radius: 12px;
-                text-align: center;
+                padding: 10px;
+                text-align: left;
+                color: #1e293b;
             }
             QPushButton:hover {
-                background-color: #e0e7ff;
-                border: 2px solid #6366f1;
+                background-color: #f1f5f9;
+                border-color: #cbd5e1;
             }
         """)
         
         layout = QVBoxLayout(btn_pc)
-        lbl_icon = QLabel("🖥️")
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        lbl_icon = QLabel("🗄️")
         lbl_icon.setAlignment(Qt.AlignCenter)
-        lbl_icon.setStyleSheet("font-size: 40px; background: transparent; border: none;")
+        lbl_icon.setStyleSheet("font-size: 36px; background: transparent; border: none;")
         layout.addWidget(lbl_icon)
         
-        lbl_host = QLabel(host)
-        lbl_host.setAlignment(Qt.AlignCenter)
-        lbl_host.setStyleSheet("font-size: 14px; font-weight: bold; color: #1e293b; background: transparent; border: none;")
-        layout.addWidget(lbl_host)
-        
-        lbl_ip = QLabel(ip)
+        lbl_ip = QLabel(f"IP: {ip}")
         lbl_ip.setAlignment(Qt.AlignCenter)
-        lbl_ip.setStyleSheet("font-size: 11px; color: #64748b; background: transparent; border: none;")
+        lbl_ip.setStyleSheet("font-size: 14px; font-weight: bold; color: #1e293b; background: transparent; border: none;")
         layout.addWidget(lbl_ip)
-
-        lbl_mode = QLabel(f"Modo: {mode.upper() if mode else 'DESCONOCIDO'}")
-        lbl_mode.setAlignment(Qt.AlignCenter)
-        lbl_mode.setStyleSheet("font-size: 11px; color: #0f766e; background: transparent; border: none;")
-        layout.addWidget(lbl_mode)
         
-        btn_pc.clicked.connect(lambda _, info={"db_path": db_path, "host": host, "pass_hash": pass_hash, "mode": mode, "api_url": api_url}: self.connect_to_pc(info))
+        lbl_port = QLabel("Puerto 3306")
+        lbl_port.setAlignment(Qt.AlignCenter)
+        lbl_port.setStyleSheet("font-size: 11px; color: #64748b; background: transparent; border: none;")
+        layout.addWidget(lbl_port)
+        
+        btn_pc.clicked.connect(lambda _, target_ip=ip: self.apply_slave_connection(target_ip))
         
         count = self.pc_grid.count()
-        row = count // 4
-        col = count % 4
+        row = count // 3
+        col = count % 3
         self.pc_grid.addWidget(btn_pc, row, col)
 
     def discovery_finished(self):
-        if not self.discovered_pcs:
-            self.lbl_scan_status.setText("No se encontraron PCs corriendo TPV Pro Principal en la red.")
+        self.btn_scan.setEnabled(True)
+        if not self.discovered_ips:
+            self.lbl_scan_status.setText("No se encontraron servidores MariaDB activos en la red.")
         else:
-            self.lbl_scan_status.setText(f"¡Búsqueda finalizada! Se encontraron {len(self.discovered_pcs)} PCs. Haz clic en una para conectarte.")
+            self.lbl_scan_status.setText(f"¡Búsqueda finalizada! Se encontraron {len(self.discovered_ips)} posibles Servidores. Haz clic en uno.")
 
-    def connect_to_pc(self, pc_info):
-        db_path = pc_info.get("db_path", "")
-        host = pc_info.get("host", "PC_Desconocida")
-        mode = pc_info.get("mode", "DESCONOCIDO")
-        api_url = pc_info.get("api_url", "")
-        remote_hash = pc_info.get("pass_hash", "")
-        local_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
-
-        if remote_hash and remote_hash != local_hash:
-            reply = QMessageBox.warning(self, "Contraseña de Servidor Diferente",
-                f"La PC principal {host} reporta una contraseña de servidor distinta a la configuración local.\n\n"
-                "Si continúas, podrías conectarte a una base de datos de red no autorizada.\n\n"
-                "¿Deseas continuar de todas formas?", QMessageBox.Yes | QMessageBox.No)
-            if reply != QMessageBox.Yes:
-                return
-
-        if not db_path:
-            QMessageBox.warning(self, "Error", "No se recibió la ruta de base de datos de la PC seleccionada.")
+    def connect_manual(self):
+        target_ip = self.txt_ip.text().strip()
+        if not target_ip:
+            QMessageBox.warning(self, "Error", "Ingresa una IP válida.")
             return
+        self.apply_slave_connection(target_ip)
 
-        normalized_path = os.path.normpath(os.path.expandvars(db_path.replace('/', os.sep)))
-        path_accessible = os.path.exists(normalized_path)
-
-        if not path_accessible:
-            reply = QMessageBox.warning(self, "Ruta de Base de Datos Inaccesible",
-                f"La ruta de base de datos reportada por {host} no es accesible desde esta PC:\n\n"
-                f"{normalized_path}\n\n"
-                "Verifica que la carpeta esté compartida correctamente y que tengas permisos de lectura/escritura.",
-                QMessageBox.Yes | QMessageBox.No)
-            if reply != QMessageBox.Yes:
-                return
-
-        reply = QMessageBox.question(self, "Conectar a PC", 
-            f"¿Deseas conectarte a {host} ({mode.upper()}) y usar su base de datos?\n\n"
-            f"Ruta que se aplicará: {normalized_path}\n\n"
-            f"Asegúrate de que la carpeta de TPV Pro esté compartida en red en {host} con permisos de lectura/escritura para 'Todos'.\n\n"
-            "El sistema se reiniciará automáticamente.", QMessageBox.Yes | QMessageBox.No)
+    def apply_slave_connection(self, ip):
+        # Obtener TODAS las IPs locales de esta máquina para evitar conectarse a sí misma
+        local_ips = ["127.0.0.1", "localhost"]
+        try:
+            import socket
+            hostname = socket.gethostname()
+            _, _, ips = socket.gethostbyname_ex(hostname)
+            local_ips.extend(ips)
+            local_ips.append(get_local_ip())
+        except Exception:
+            pass
+            
+        if ip in local_ips:
+            QMessageBox.warning(self, "Error", "No se puede conectar a su propio ip.")
+            return
+            
+        reply = QMessageBox.question(self, "Conectar a Servidor", 
+            f"¿Deseas conectar esta PC como ESCLAVA de la IP {ip}?\n\n"
+            f"Recuerda que si se corta la conexión de red, esta PC no podrá cobrar hasta que se restablezca.\n\n"
+            "El sistema se reiniciará rápidamente para aplicar los cambios.", QMessageBox.Yes | QMessageBox.No)
             
         if reply == QMessageBox.Yes:
-            self.txt_path.setText(normalized_path)
-            if api_url:
-                config.set("api_url", api_url)
-            self.save_and_restart()
-
-    def cargar_datos(self):
-        current_config_path = config.get("db_path", "")
-        self.txt_path.setText(current_config_path)
-
-    def save_and_restart(self):
-        new_path = self.txt_path.text().strip()
-        if not new_path:
-            QMessageBox.warning(self, "Error", "La ruta no puede estar vacía.")
-            return
-            
-        if not new_path.endswith(".db"):
-            QMessageBox.warning(self, "Error", "La ruta debe apuntar al archivo de base de datos (.db). Ejemplo: A8X2M.db")
-            return
-            
-        reply = QMessageBox.question(self, "Confirmar Cambio", 
-            "Al guardar esta configuración, el programa se reiniciará y se conectará "
-            "a la nueva base de datos.\n\n"
-            "¿Desea continuar?", QMessageBox.Yes | QMessageBox.No)
-            
-        if reply == QMessageBox.Yes:
-            config.set("db_path", new_path)
+            config.set("db_engine", "mariadb")
+            config.set("db_host", ip)
             config.save()
+            # Forzamos un reinicio rápido de la app
             QApplication.exit(888)
 
-    def promote_to_master(self):
+    def reset_to_master(self):
         reply = QMessageBox.question(self, "Activar PC Maestra",
-            "Esta acción convertirá esta PC en la nueva MAESTRA de la red.\n\n"
-            "La aplicación dejará de usar la base de datos remota y creará/usar\n"
-            "la base de datos local en esta computadora.\n\n"
-            "Si quieres mantener datos de la base remota, asegúrate de\n"
-            "copiarla o restaurarla localmente primero.\n\n"
+            "Esta acción convertirá esta PC en MAESTRA.\n\n"
+            "Se cortará la conexión con la maestra anterior y se iniciará el servidor MariaDB local.\n\n"
             "¿Deseas continuar?", QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             return
 
-        config.set("db_path", "")
-        config.set("api_url", "")
+        config.set("db_engine", "mariadb")
+        config.set("db_host", "") # Vacío significa local (Maestra)
         config.save()
-        QMessageBox.information(self, "PC Maestra Activada",
-            "Esta PC se ha configurado como MAESTRA local.\n"
-            "Reinicia la aplicación para aplicar los cambios.")
         QApplication.exit(888)
-
-    def reset_to_local(self):
-        reply = QMessageBox.question(self, "Confirmar Desconexión", 
-            "¿Volver a usar la base de datos interna local de esta computadora? El sistema se reiniciará.", 
-            QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            config.set("db_path", "") # Vacío significa local por defecto
-            config.set("api_url", "")
-            config.save()
-            QApplication.exit(888)

@@ -1,0 +1,77 @@
+# ─── Entornos virtuales ───────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Compilados y distribución ────────────────────────────────────────────
+dist/
+build/
+*.exe
+*.spec
+
+# ─── Archivos pesados / binarios ──────────────────────────────────────────
+*.zip
+*.mp4
+*.avi
+*.mkv
+*.iso
+*.bin
+*.pkg
+*.pdb
+mariadb_server/data/ib_logfile*
+
+# ─── Base de datos local ──────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+AQVGI.db
+
+# ─── Python cache ─────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ─── Logs ─────────────────────────────────────────────────────────────────
+logs/
+*.log
+crash.log
+
+# ─── Backups y temporales ─────────────────────────────────────────────────
+backups/
+temp_restore/
+scratch/
+*.bak
+*.tmp
+
+# ─── Reportes y archivos generados ───────────────────────────────────────
+reportes/ventas_digitales/originales/
+*.xls
+*.xlsx
+ofertas_pdf/
+
+# ─── Certificados y datos sensibles ──────────────────────────────────────
+certificados/
+
+# ─── IDE y sistema ────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+desktop.ini
+.DS_Store
+Thumbs.db
+
+# ─── Instalador grande ────────────────────────────────────────────────────
+CATORTA_USB_PUNPRO/
+CATORTA_USB_PUNPRO.zip
+PROYECTO_COMPLETO_RESPALDO.zip
+get-pip.py
+CobroFacil_POS_vv*.zip
+tutorial_e2e.mp4
+
+# ─── Tests E2E artefactos ─────────────────────────────────────────────────
+tests_e2e/bot_control.db
+tests_e2e/current_step.txt
+tests_e2e/learned_history.json

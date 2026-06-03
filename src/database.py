@@ -44,8 +44,85 @@ class DatabaseManager:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
 
-            custom_path = str(config_data.get("db_path", "") or "").strip()
+            self.db_engine_type = str(config_data.get("db_engine", "sqlite")).strip().lower()
             
+            # --- INTEGRACION MARIADB ---
+            if self.db_engine_type == "mariadb":
+                from src.db_engines.mariadb_engine import MariaDBEngine
+                from src.services.mariadb_controller import mariadb_controller
+                
+                # Detectar IP y puerto para MariaDB
+                # Si custom_path tiene algo como \\192.168.1.5, extraeremos la IP. Si esta vacío, es Maestro local.
+                custom_ip = str(config_data.get("db_host", "")).strip()
+                if not custom_ip:
+                    # Parsear la IP desde custom_path (vieja confiable SQLite compartida)
+                    custom_path = str(config_data.get("db_path", "") or "").strip()
+                    if custom_path.startswith("\\\\") or custom_path.startswith("//"):
+                        import socket
+                        parts = custom_path.replace("\\", "/").split("/")
+                        if len(parts) > 2:
+                            custom_ip = parts[2]
+                
+                # Fallback final a localhost
+                host = custom_ip if custom_ip else "127.0.0.1"
+                
+                import socket
+                is_loopback = False
+                if host in ("localhost", "127.0.0.1", socket.gethostname().lower()):
+                    is_loopback = True
+                
+                if is_loopback or not custom_ip:
+                    # MODO MAESTRO MARIADB
+                    self.is_master = True
+                    host = "127.0.0.1"
+                    logger.info("MariaDB configurado en modo MAESTRO. Arrancando Auto-Servidor...")
+                    mariadb_controller.start_server()
+                else:
+                    # MODO ESCLAVO MARIADB
+                    self.is_master = False
+                    logger.info(f"MariaDB configurado en modo ESCLAVO apuntando a {host}.")
+                    
+                self.mariadb_engine = MariaDBEngine(host=host)
+                
+                # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
+                if not self.is_master:
+                    try:
+                        conn = self.mariadb_engine.get_connection()
+                        conn._conn.ping() # Prueba real de conexión
+                        logger.info("Conexión exitosa a la PC Maestra.")
+                    except Exception as e:
+                        logger.error(f"Fallo de conexión a la Maestra: {e}")
+                        from PyQt5.QtWidgets import QMessageBox, QApplication
+                        from src.config import config
+                        app = QApplication.instance()
+                        if not app:
+                            import sys
+                            app = QApplication(sys.argv)
+                        
+                        config.set("db_host", "")
+                        config.save()
+                        
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.Critical)
+                        msg.setWindowTitle("⚠️ ERROR DE CONEXIÓN")
+                        msg.setText(f"No se pudo conectar a la base de datos en: {host}.\n\n¡Por favor revise los datos de red ingresados!\n\nPor seguridad, la configuración de red ha sido limpiada y el sistema se cerrará para que pueda iniciar en modo local.")
+                        
+                        btn_aceptar = msg.addButton("Aceptar", QMessageBox.AcceptRole)
+                        msg.exec_()
+                        
+                        logger.info("Conexión fallida. Limpiando JSON y cerrando sistema.")
+                        app.exit(888)
+                        import sys
+                        sys.exit(888)
+
+                self.db_path = "mariadb://" + host
+                self._create_tables()
+                self._ensure_test_users()
+                return  # Salir de _init_db porque SQLite ya no importa
+
+            # --- FIN INTEGRACION MARIADB ---
+
+            custom_path = str(config_data.get("db_path", "") or "").strip()
             # Detección de bucle infinito (Loopback)
             is_loopback = False
             if custom_path.startswith("\\\\") or custom_path.startswith("//"):
@@ -121,6 +198,7 @@ class DatabaseManager:
             logger.error(f"Error inicializando config BD: {e}")
             self.db_path = os.path.join(base_app_path, "punpro.db")
             self.is_master = True
+            self.db_engine_type = "sqlite"
             
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
         
@@ -211,14 +289,16 @@ class DatabaseManager:
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
-        conn = sqlite3.connect(self.db_path, timeout=30.0)
+        conn = self.get_connection()
         cursor = conn.cursor()
         
         # MODO RED / MULTICAJA SEGURO (Evitar 'Database is Locked' en LAN)
-        # NOTA: El modo WAL corrompe o bloquea la DB si se usa por red (SMB/CIFS).
-        cursor.execute("PRAGMA journal_mode=DELETE;")
-        cursor.execute("PRAGMA synchronous=NORMAL;")
-        cursor.execute("PRAGMA temp_store=MEMORY;")
+        if getattr(self, "db_engine_type", "sqlite") == "sqlite":
+            try:
+                cursor.execute("PRAGMA journal_mode=DELETE;")
+                cursor.execute("PRAGMA synchronous=NORMAL;")
+                cursor.execute("PRAGMA temp_store=MEMORY;")
+            except: pass
 
         # Estandarizar estados de ventas existentes
         try:
@@ -232,8 +312,13 @@ class DatabaseManager:
         
         def add_column_if_not_exists(table, col_name, col_type):
             try:
-                cursor.execute(f"PRAGMA table_info({table})")
-                columns = [col[1] for col in cursor.fetchall()]
+                if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
+                    cursor.execute(f"SHOW COLUMNS FROM {table}")
+                    columns = [col[0] for col in cursor.fetchall()]
+                else:
+                    cursor.execute(f"PRAGMA table_info({table})")
+                    columns = [col[1] for col in cursor.fetchall()]
+                
                 if col_name not in columns:
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
             except Exception as e:
@@ -359,6 +444,34 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error creando índices: {e}")
             
+        # Crear tablas para módulo de clientes
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS clientes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL,
+                    telefono TEXT,
+                    limite_credito REAL DEFAULT 0,
+                    deuda_actual REAL DEFAULT 0,
+                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cuenta_corriente (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cliente_id INTEGER NOT NULL,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    tipo TEXT NOT NULL,
+                    monto REAL NOT NULL,
+                    saldo_resultante REAL NOT NULL,
+                    descripcion TEXT,
+                    venta_id INTEGER,
+                    FOREIGN KEY(cliente_id) REFERENCES clientes(id)
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tablas de clientes: {e}")
+            
         try:
             conn.commit()
         except Exception as e:
@@ -369,7 +482,7 @@ class DatabaseManager:
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=30.0)
+            conn = self.get_connection()
             cursor = conn.cursor()
             
             # 1. USUARIOS
@@ -418,7 +531,9 @@ class DatabaseManager:
                     usuario TEXT,
                     estado TEXT DEFAULT 'COMPLETADA',
                     metodo_pago TEXT DEFAULT 'Efectivo',
-                    caja_id INTEGER DEFAULT 1
+                    caja_id INTEGER DEFAULT 1,
+                    descuento REAL DEFAULT 0,
+                    recargo REAL DEFAULT 0
                 )
             """)
             
@@ -444,7 +559,8 @@ class DatabaseManager:
                     categoria TEXT,
                     descripcion TEXT,
                     monto REAL,
-                    usuario TEXT
+                    usuario TEXT,
+                    status TEXT DEFAULT 'APROBADO'
                 )
             """)
             
@@ -487,8 +603,32 @@ class DatabaseManager:
                 )
             """)
             
-            # Insertar registro inicial si no existe
-            cursor.execute("INSERT OR IGNORE INTO sistema_estado (id) VALUES (1)")
+            # 10. CLIENTES (Para fiado y cuenta corriente)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS clientes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL,
+                    telefono TEXT,
+                    limite_credito REAL DEFAULT 0,
+                    deuda_actual REAL DEFAULT 0,
+                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 11. CUENTA CORRIENTE (Historial de deudas y abonos)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cuenta_corriente (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cliente_id INTEGER NOT NULL,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    tipo TEXT NOT NULL,
+                    monto REAL NOT NULL,
+                    saldo_resultante REAL NOT NULL,
+                    descripcion TEXT,
+                    venta_id INTEGER,
+                    FOREIGN KEY(cliente_id) REFERENCES clientes(id)
+                )
+            """)
             
             conn.commit()
             conn.close()
@@ -498,7 +638,7 @@ class DatabaseManager:
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=30.0)
+            conn = self.get_connection()
             cursor = conn.cursor()
             
             # Asegurar tabla usuarios por si acaso
@@ -517,42 +657,57 @@ class DatabaseManager:
             h_admin = hashlib.sha256("admin".encode()).hexdigest()
             h_cajero = hashlib.sha256("cajero".encode()).hexdigest()
             
-            cursor.execute("INSERT OR IGNORE INTO usuarios (username, password_hash, rol) VALUES ('admin', ?, 'admin')", (h_admin,))
-            cursor.execute("INSERT OR IGNORE INTO usuarios (username, password_hash, rol) VALUES ('cajero', ?, 'cajero')", (h_cajero,))
+            # Compatible query for SQLite and MariaDB
+            insert_query = "INSERT IGNORE INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)"
+            if getattr(self, "db_engine_type", "sqlite") == "sqlite":
+                insert_query = "INSERT OR IGNORE INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)"
+            
+            cursor.execute(insert_query, ('admin', h_admin, 'admin'))
+            cursor.execute(insert_query, ('cajero', h_cajero, 'cajero'))
             
             conn.commit()
-            conn.close()
+            if getattr(self, "db_engine_type", "sqlite") == "sqlite":
+                conn.close()
         except Exception as e:
             logger.error(f"Error en _ensure_test_users: {e}")
 
     def actualizar_latido(self):
         """Actualiza el timestamp del latido del servidor principal."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self.get_connection()
             cursor = conn.cursor()
             cursor.execute("UPDATE sistema_estado SET ultimo_latido = CURRENT_TIMESTAMP WHERE id = 1")
             conn.commit()
-            conn.close()
+            if getattr(self, "db_engine_type", "sqlite") == "sqlite":
+                conn.close()
         except Exception as e:
             logger.error(f"Error actualizando latido: {e}")
 
     def obtener_latido(self):
         """Obtiene el último latido registrado en la base de datos (string DATETIME)."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self.get_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT ultimo_latido FROM sistema_estado WHERE id = 1")
             row = cursor.fetchone()
-            conn.close()
+            if getattr(self, "db_engine_type", "sqlite") == "sqlite":
+                conn.close()
+            
             if row:
-                return row[0]
+                if isinstance(row, dict):
+                    return list(row.values())[0]
+                else:
+                    return row[0]
             return None
         except Exception as e:
             logger.error(f"Error obteniendo latido: {e}")
             return None
 
-    def get_connection(self) -> sqlite3.Connection:
-        """Returns a new connection to the database."""
+    def get_connection(self):
+        """Returns a new connection to the database (SQLite o MariaDB)."""
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            return self.mariadb_engine.get_connection()
+            
         try:
             conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row  # Allow access by column name
@@ -650,7 +805,14 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(query, params)
             row = cursor.fetchone()
-            return row[0] if row else None
+            if row:
+                if isinstance(row, dict):
+                    # Manejar caso MariaDB donde fetchone() devuelve un diccionario
+                    vals = list(row.values())
+                    return vals[0] if len(vals) > 0 else None
+                else:
+                    return row[0]
+            return None
         except sqlite3.Error as e:
             logger.error(f"Scalar query error: {e}")
             return None
@@ -864,7 +1026,7 @@ class DatabaseManager:
         from datetime import datetime
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.execute_non_query(
-            "INSERT OR REPLACE INTO terminales_activos (caja_id, hostname, last_seen) VALUES (?, ?, ?)",
+            "REPLACE INTO terminales_activos (caja_id, hostname, last_seen) VALUES (?, ?, ?)",
             (caja_id, hostname, now_str)
         )
 

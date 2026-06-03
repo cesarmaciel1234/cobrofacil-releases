@@ -86,8 +86,12 @@ class Admin11Proveedores(QWidget):
         # Asegurar columna 'status' en tabla 'gastos' si no existe
         def add_col_safe(table, col, type):
             try:
-                res = db_manager.execute_query(f"PRAGMA table_info({table})")
-                cols = [c[1] for c in res] if res else []
+                if getattr(db_manager, 'db_engine_type', 'sqlite') == 'mariadb':
+                    res = db_manager.execute_query(f"SHOW COLUMNS FROM {table}")
+                    cols = [c[0] for c in res] if res else []
+                else:
+                    res = db_manager.execute_query(f"PRAGMA table_info({table})")
+                    cols = [c[1] for c in res] if res else []
                 if col not in cols:
                     db_manager.execute_non_query(f"ALTER TABLE {table} ADD COLUMN {col} {type}")
             except: pass

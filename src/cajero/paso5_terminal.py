@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
     QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt, QTimer, QDate, QTime
+from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
 from datetime import datetime
 import logging
@@ -40,12 +40,15 @@ def fmt_moneda_sin_centavos(val):
 
 def parse_float_safe(val_str):
     try:
-        clean = val_str.replace("$", "").replace(".", "").replace(",", ".")
-        return float(clean)
+        val_str = str(val_str).replace("$", "").strip()
+        # Si tiene formato europeo/argentino con coma decimal: 1.234,56
+        if "," in val_str:
+            # Quitamos los puntos de miles y cambiamos la coma por punto
+            val_str = val_str.replace(".", "").replace(",", ".")
+        # Si no tiene coma, asumimos que el punto ya es el decimal (formato inglés: 1234.56)
+        return float(val_str)
     except Exception:
         return 0.0
-
-
 class DialogoAtencion(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -387,46 +390,112 @@ class DialogoRetiroEfectivo(QDialog):
 
 
 class DialogoIngresoEfectivo(QDialog):
-    """Diálogo premium para ingresar dinero a la caja (F6) con un diseño visual limpio e industrial."""
+    """Diálogo premium 3D para ingresar dinero a la caja (F6)."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.monto_ingresado = 0.0
+        self.motivo = ""
+        self.tipo_ingreso = "CAMBIO"
+        self.cliente_id = None
+        self.cliente_nombre = ""
+        self.deuda_actual = 0.0
+        
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setFixedSize(400, 320)
+        self.setFixedSize(500, 600)
         self.setStyleSheet("background: white; border-radius: 16px; border: 3px solid #10B981;")
         self._build()
 
     def _build(self):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(30, 22, 30, 22)
-        lay.setSpacing(12)
+        lay.setSpacing(15)
 
-        lbl = QLabel("💵  INGRESO DE EFECTIVO")
+        lbl = QLabel("💵  INGRESO DE DINERO")
         lbl.setAlignment(Qt.AlignCenter)
         lbl.setStyleSheet("font-size: 20px; font-weight: 900; color: #10B981; border: none;")
         lay.addWidget(lbl)
 
-        lbl_sub = QLabel("Registro manual de ingreso a caja")
+        lbl_sub = QLabel("Seleccione el concepto del ingreso físico")
         lbl_sub.setAlignment(Qt.AlignCenter)
         lbl_sub.setStyleSheet("font-size: 13px; color: #64748b; font-weight: bold; border: none;")
         lay.addWidget(lbl_sub)
-
-        lbl2 = QLabel("Monto a ingresar ($):")
-        lbl2.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border: none;")
-        lay.addWidget(lbl2)
-
+        
+        # Grid de opciones 3D
+        grid = QGridLayout()
+        grid.setSpacing(10)
+        
+        self.btn_cambio = self._crear_btn_opcion("🪙", "CAMBIO", "Fondo Fijo", "#3B82F6")
+        self.btn_fiado = self._crear_btn_opcion("👥", "FIADO", "Pago de Deuda", "#10B981")
+        self.btn_otros = self._crear_btn_opcion("📦", "OTROS", "Varios", "#6366F1")
+        
+        self.btn_cambio.clicked.connect(lambda: self._set_modo("CAMBIO"))
+        self.btn_fiado.clicked.connect(lambda: self._set_modo("FIADO"))
+        self.btn_otros.clicked.connect(lambda: self._set_modo("OTROS"))
+        
+        grid.addWidget(self.btn_cambio, 0, 0)
+        grid.addWidget(self.btn_fiado, 0, 1)
+        grid.addWidget(self.btn_otros, 0, 2)
+        lay.addLayout(grid)
+        
+        # Stack para paneles dinámicos
+        from PyQt5.QtWidgets import QStackedWidget, QComboBox
+        self.stack = QStackedWidget()
+        self.stack.setStyleSheet("background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;")
+        
+        # Panel Normal (Cambio/Otros)
+        panel_normal = QWidget()
+        pn_lay = QVBoxLayout(panel_normal)
+        pn_lay.setContentsMargins(20, 20, 20, 20)
+        self.lbl_titulo_monto = QLabel("Monto a ingresar ($):")
+        self.lbl_titulo_monto.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border: none;")
+        pn_lay.addWidget(self.lbl_titulo_monto)
+        
         self.txt_monto = QLineEdit()
         self.txt_monto.setAlignment(Qt.AlignCenter)
         self.txt_monto.setStyleSheet("""
             QLineEdit {
                 font-size: 36px; font-weight: 900; color: #059669;
                 border: 2px solid #cbd5e1; border-radius: 10px;
-                padding: 8px; background: #f8fafc;
+                padding: 8px; background: white;
             }
             QLineEdit:focus { border-color: #10B981; }
         """)
         self.txt_monto.returnPressed.connect(self._procesar)
-        lay.addWidget(self.txt_monto)
+        pn_lay.addWidget(self.txt_monto)
+        
+        self.txt_desc = QLineEdit()
+        self.txt_desc.setPlaceholderText("Descripción (Opcional)...")
+        self.txt_desc.setStyleSheet("font-size: 14px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white;")
+        pn_lay.addWidget(self.txt_desc)
+        self.stack.addWidget(panel_normal)
+        
+        # Panel Fiado
+        panel_fiado = QWidget()
+        pf_lay = QVBoxLayout(panel_fiado)
+        pf_lay.setContentsMargins(20, 10, 20, 10)
+        
+        pf_lay.addWidget(QLabel("Seleccionar Cliente:"))
+        self.cmb_clientes = QComboBox()
+        self.cmb_clientes.setStyleSheet("""
+            QComboBox { font-size: 16px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; }
+        """)
+        self.cmb_clientes.currentIndexChanged.connect(self._on_cliente_changed)
+        pf_lay.addWidget(self.cmb_clientes)
+        
+        self.lbl_deuda = QLabel("Deuda: $0.00")
+        self.lbl_deuda.setAlignment(Qt.AlignCenter)
+        self.lbl_deuda.setStyleSheet("font-size: 16px; color: #DC2626; font-weight: bold;")
+        pf_lay.addWidget(self.lbl_deuda)
+        
+        pf_lay.addWidget(QLabel("Monto a Abonar ($):"))
+        self.txt_monto_fiado = QLineEdit()
+        self.txt_monto_fiado.setAlignment(Qt.AlignCenter)
+        self.txt_monto_fiado.setStyleSheet(self.txt_monto.styleSheet())
+        self.txt_monto_fiado.returnPressed.connect(self._procesar)
+        pf_lay.addWidget(self.txt_monto_fiado)
+        self.stack.addWidget(panel_fiado)
+        
+        lay.addWidget(self.stack)
 
         self.lbl_err = QLabel("")
         self.lbl_err.setAlignment(Qt.AlignCenter)
@@ -438,25 +507,122 @@ class DialogoIngresoEfectivo(QDialog):
         btn_cancel.setStyleSheet("background: #F1F5F9; color: #475569; font-weight: bold; padding: 12px; border-radius: 8px;")
         btn_cancel.clicked.connect(self.reject)
         
-        btn_ok = QPushButton("🚀 INGRESAR")
+        btn_ok = QPushButton("🚀 CONFIRMAR")
         btn_ok.setStyleSheet("background: #10B981; color: white; font-weight: 900; font-size: 15px; padding: 12px; border-radius: 8px;")
         btn_ok.clicked.connect(self._procesar)
 
-        h_btns.addWidget(btn_cancel); h_btns.addWidget(btn_ok)
+        h_btns.addWidget(btn_cancel)
+        h_btns.addWidget(btn_ok)
         lay.addLayout(h_btns)
 
+        self._set_modo("CAMBIO")
+        from PyQt5.QtCore import QTimer
         QTimer.singleShot(100, self.txt_monto.setFocus)
+
+    def _crear_btn_opcion(self, icono, titulo, subtitulo, color):
+        btn = QPushButton()
+        btn.setFixedHeight(80)
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                background: white; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center;
+            }}
+            QPushButton:hover {{ border-color: {color}; background: #f8fafc; }}
+            QPushButton:checked {{ border-color: {color}; background: {color}; color: white; }}
+        """)
+        btn.setCheckable(True)
+        btn.setAutoExclusive(True)
+        
+        lay = QVBoxLayout(btn)
+        lay.setAlignment(Qt.AlignCenter)
+        lbl_i = QLabel(icono)
+        lbl_i.setStyleSheet("font-size: 24px; border: none; background: transparent;")
+        lbl_i.setAlignment(Qt.AlignCenter)
+        
+        lbl_t = QLabel(titulo)
+        lbl_t.setStyleSheet("font-weight: 900; font-size: 12px; border: none; background: transparent;")
+        lbl_t.setAlignment(Qt.AlignCenter)
+        
+        lay.addWidget(lbl_i)
+        lay.addWidget(lbl_t)
+        return btn
+
+    def _cargar_clientes_con_deuda(self):
+        self.cmb_clientes.clear()
+        res = db_manager.execute_query("SELECT id, nombre, deuda_actual FROM clientes WHERE deuda_actual > 0 ORDER BY nombre ASC")
+        if res:
+            for r in res:
+                self.cmb_clientes.addItem(f"{r['nombre']}", userData=r)
+            self.cmb_clientes.setCurrentIndex(0)
+            self._on_cliente_changed(0)
+        else:
+            self.cmb_clientes.addItem("No hay deudores", userData=None)
+            self.lbl_deuda.setText("Nadie tiene deuda activa")
+
+    def _on_cliente_changed(self, idx):
+        if idx >= 0:
+            data = self.cmb_clientes.itemData(idx)
+            if data:
+                self.deuda_actual = float(data['deuda_actual'])
+                self.lbl_deuda.setText(f"Deuda Actual: ${self.deuda_actual:,.2f}")
+                self.txt_monto_fiado.setText(f"{self.deuda_actual:.2f}")
+
+    def _set_modo(self, modo):
+        self.tipo_ingreso = modo
+        self.btn_cambio.setChecked(modo == "CAMBIO")
+        self.btn_fiado.setChecked(modo == "FIADO")
+        self.btn_otros.setChecked(modo == "OTROS")
+        
+        if modo == "FIADO":
+            self.stack.setCurrentIndex(1)
+            self._cargar_clientes_con_deuda()
+            self.txt_monto_fiado.setFocus()
+            self.txt_monto_fiado.selectAll()
+        else:
+            self.stack.setCurrentIndex(0)
+            self.txt_monto.setFocus()
+            self.txt_monto.selectAll()
+            if modo == "CAMBIO":
+                self.txt_desc.setText("Fondo fijo / Cambio")
+                self.txt_desc.hide()
+            else:
+                self.txt_desc.setText("")
+                self.txt_desc.show()
 
     def _procesar(self):
         try:
-            val = float(self.txt_monto.text().strip())
-            if val <= 0:
-                self.lbl_err.setText("⚠️ Ingresa un monto mayor a 0")
-                return
-            self.monto_ingresado = val
+            if self.tipo_ingreso == "FIADO":
+                data = self.cmb_clientes.itemData(self.cmb_clientes.currentIndex())
+                if not data:
+                    self.lbl_err.setText("⚠️ Ningún cliente seleccionado")
+                    return
+                val = float(self.txt_monto_fiado.text().strip())
+                if val <= 0:
+                    self.lbl_err.setText("⚠️ Ingresa un abono mayor a 0")
+                    return
+                if val > self.deuda_actual + 0.01:
+                    self.lbl_err.setText("⚠️ El abono no puede superar la deuda")
+                    return
+                self.monto_ingresado = val
+                self.cliente_id = data['id']
+                self.cliente_nombre = data['nombre']
+                self.motivo = f"Abono Fiado: {self.cliente_nombre}"
+            else:
+                val = float(self.txt_monto.text().strip())
+                if val <= 0:
+                    self.lbl_err.setText("⚠️ Ingresa un monto mayor a 0")
+                    return
+                self.monto_ingresado = val
+                desc = self.txt_desc.text().strip()
+                if self.tipo_ingreso == "CAMBIO":
+                    self.motivo = "Ingreso de Cambio / Fondo Fijo"
+                else:
+                    self.motivo = desc if desc else "Otros Ingresos Manuales"
+                    
             self.accept()
         except ValueError:
             self.lbl_err.setText("⚠️ Monto inválido")
+
 
 
 class DialogoCandado(QDialog):
@@ -604,6 +770,9 @@ class DialogoCandado(QDialog):
 
 
 
+
+
+
 class Paso5Terminal(QWidget):
     """
     PASO 5: TERMINAL INDUSTRIAL EXACTA (100% Foto + Búsqueda Rápida)
@@ -613,6 +782,7 @@ class Paso5Terminal(QWidget):
         self.txt_scan = None
         self.setup_ui()
         self.apply_theme()
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.actualizar_reloj)
         self.timer.start(1000)
@@ -629,6 +799,12 @@ class Paso5Terminal(QWidget):
         
         # Monitor de Seguridad: Delegado al Motor Global en MainWindow
         pass
+
+        # El chatbot animado ahora se inicializa en segundo plano desde main.py
+        # para que esté listo de forma instantánea al presionar el botón
+        self.chatbot_process = None
+
+
 
     def refresh_terminal_title(self):
         title = config.get('business_name', 'Punto de Venta [20.09.02]')
@@ -878,10 +1054,10 @@ class Paso5Terminal(QWidget):
         
         # Distribuir anchos de columna profesionales y bloqueados (Garantía Cero Truncamientos)
         self.tabla.setColumnWidth(0, 100) # ID / Barcode (100px)
-        self.tabla.setColumnWidth(2, 200) # PRECIO (200px)
-        self.tabla.setColumnWidth(3, 200) # CANT (200px)
-        self.tabla.setColumnWidth(4, 300) # DES. TOTAL (300px)
-        self.tabla.setColumnWidth(5, 300) # SUBTOTAL (300px)
+        self.tabla.setColumnWidth(2, 280) # PRECIO (280px)
+        self.tabla.setColumnWidth(3, 120) # CANT (120px)
+        self.tabla.setColumnWidth(4, 250) # DES. TOTAL (250px)
+        self.tabla.setColumnWidth(5, 350) # SUBTOTAL (350px)
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.verticalHeader().setDefaultSectionSize(55) # Mayor respiro para los items (Evita que estén muy unidos)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1071,15 +1247,19 @@ class Paso5Terminal(QWidget):
             ("|", None),
             ("[F3] HISTORIAL", self.abrir_historial_dia),
             ("|", None),
-            ("[F4] PAGAR", self.finalizar_venta),
+            ("[F12] PAGAR", self.finalizar_venta),
             ("|", None),
             ("[F5] RETIRO", self.abrir_retiro_efectivo),
             ("|", None),
             ("[F6] INGRESO", self.abrir_ingreso_efectivo),
             ("|", None),
+            ("[F7] BÁSCULA", self._leer_bascula),
+            ("|", None),
+            ("[F10] ASISTENTE", self.toggle_chatbot),
+            ("|", None),
             ("[F8] BLOQ", self.bloquear_terminal),
             ("|", None),
-            ("[F12] CIERRE", self.abrir_cierre_caja)
+            ("[F4] CIERRE TURNO", self.abrir_cierre_caja)
         ]
         
         for text, func in hints:
@@ -1116,13 +1296,100 @@ class Paso5Terminal(QWidget):
         self.btn_candado.clicked.connect(self.bloquear_terminal)
         self.btn_candado.setFocusPolicy(Qt.NoFocus)
         sl.addWidget(self.btn_candado)
-        sl.addSpacing(5)
+        
+        # Botón Manual Chatbot (Adorno)
+        self.btn_chatbot = QPushButton("🤖")
+        self.btn_chatbot.setFixedSize(30, 25)
+        self.btn_chatbot.setToolTip("Asistente Virtual")
+        self.btn_chatbot.setCursor(Qt.PointingHandCursor)
+        self.btn_chatbot.setStyleSheet("""
+            QPushButton {
+                background: #10B981; color: white; border-radius: 5px;
+                font-size: 14px; font-weight: bold; border: 1px solid #059669;
+            }
+            QPushButton:hover { background: #059669; }
+        """)
+        self.btn_chatbot.clicked.connect(self.toggle_chatbot)
+        self.btn_chatbot.setFocusPolicy(Qt.NoFocus)
+        sl.addWidget(self.btn_chatbot)
         
         self.main_layout.addWidget(status_bar)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
         
+    def keyPressEvent(self, event):
+        k = event.key()
+        if k == Qt.Key_F1: self._do_busqueda()
+        elif k == Qt.Key_F3: self.abrir_historial_dia()
+        elif k == Qt.Key_F12: self.finalizar_venta()
+        elif k == Qt.Key_F5: self.abrir_retiro_efectivo()
+        elif k == Qt.Key_F6: self.abrir_ingreso_efectivo()
+        elif k == Qt.Key_F7: self._leer_bascula()
+        elif k == Qt.Key_F8: self.bloquear_terminal()
+        elif k == Qt.Key_F4: self.abrir_cierre_caja()
+        elif k == Qt.Key_Escape:
+            if getattr(self, 'list_results', None) is not None and not self.list_results.isHidden():
+                self.list_results.hide()
+            self.txt_scan.setFocus()
+
+    def toggle_chatbot(self):
+        import socket
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(b"TOGGLE", ("127.0.0.1", 45680))
+            sock.close()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Error toggleando chatbot por UDP: {e}")
+        self.txt_scan.setFocus()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        import socket
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.sendto(b"HIDE", ("127.0.0.1", 45680))
+            sock.close()
+        except Exception:
+            pass
+            
+    def _leer_bascula(self):
+        try:
+            import serial
+            import re
+            # Intentar abrir el puerto COM1 (o el configurado)
+            puerto = config.get("puerto_bascula", "COM1")
+            ser = serial.Serial(puerto, 9600, timeout=1)
+            # Solicitar peso (depende de la bascula, normalmente enviando una letra como 'P' o Enter)
+            ser.write(b'P\r\n')
+            time.sleep(0.2)
+            respuesta = ser.readline().decode('ascii', errors='ignore').strip()
+            ser.close()
+            
+            if respuesta:
+                # Extraer solo numeros
+                peso_match = re.search(r'([0-9]+\.[0-9]+)', respuesta)
+                if peso_match:
+                    peso = peso_match.group(1)
+                    # Insertar peso en la caja de multiplicador
+                    self.txt_scan.setText(f"{peso}*")
+                    QMessageBox.information(self, "Báscula", f"Peso leído: {peso} kg")
+                else:
+                    QMessageBox.warning(self, "Báscula", f"Lectura no reconocida: {respuesta}")
+            else:
+                # Simulador si no hay respuesta real
+                peso_simulado = "1.250"
+                self.txt_scan.setText(f"{peso_simulado}*")
+                QMessageBox.information(self, "Báscula (Simulador)", f"Báscula no encontrada en {puerto}.\nSe simuló un peso de {peso_simulado} kg para pruebas.")
+        except ImportError:
+            QMessageBox.critical(self, "Error", "Falta instalar pyserial (pip install pyserial).")
+        except Exception as e:
+            # Simulador de falla segura
+            peso_simulado = "0.750"
+            self.txt_scan.setText(f"{peso_simulado}*")
+            QMessageBox.information(self, "Báscula (Simulador)", f"No se detectó báscula física en el puerto configurado.\nSe simuló un peso de {peso_simulado} kg para pruebas.\n\nDetalle técnico: {e}")
+
         # Conectar detector de foco para teclado virtual automático (estilo celular)
         if HAS_KEYBOARD:
             from PyQt5.QtWidgets import QApplication
@@ -1426,13 +1693,13 @@ class Paso5Terminal(QWidget):
             # Los capturamos aquí para garantizar que siempre funcionen.
             if event.type() == QEvent.KeyPress:
                 key = event.key()
-                if key == Qt.Key_F12:
+                if key == Qt.Key_F4:
                     self.abrir_cierre_caja()
                     return True  # Consumir el evento, no propagarlo
                 elif key == Qt.Key_F3:
                     self.abrir_historial_dia()
                     return True
-                elif key == Qt.Key_F4:
+                elif key == Qt.Key_F12:
                     self.finalizar_venta()
                     return True
                 elif key == Qt.Key_F1:
@@ -1640,6 +1907,9 @@ class Paso5Terminal(QWidget):
             from PyQt5.QtWidgets import QApplication
             if QApplication.activeModalWidget() is not None:
                 return
+            # Si el chatbot flotante está visible y activo, no robar el foco
+            if getattr(self, 'chatbot_widget', None) is not None and self.chatbot_widget.isVisible() and self.chatbot_widget.isActiveWindow():
+                return
             # Si el escáner no tiene el foco, restaurarlo de inmediato
             if not self.txt_scan.hasFocus():
                 self.txt_scan.setFocus()
@@ -1712,7 +1982,7 @@ class Paso5Terminal(QWidget):
                 
             # 2. Consultar si el supervisor ha enviado una SOLICITUD_CIERRE creada DURANTE este turno
             res = db_manager.execute_query(
-                "SELECT id, observaciones FROM movimientos_caja WHERE tipo = 'SOLICITUD_CIERRE' AND caja_id = ? AND observaciones NOT LIKE '%PROCESADO%' AND fecha >= ? ORDER BY id DESC LIMIT 1",
+                "SELECT id, observaciones FROM movimientos_caja WHERE tipo = 'SOLICITUD_CIERRE' AND caja_id = ? AND observaciones NOT LIKE '%%PROCESADO%%' AND fecha >= ? ORDER BY id DESC LIMIT 1",
                 (c_id, ult_apertura)
             )
             if res:
@@ -2142,6 +2412,16 @@ class Paso5Terminal(QWidget):
                 usuario = CajeroActivo.nombre
                 from src.config import config
                 c_id = config.get("caja_id", 1)
+                
+                # Novedad: Si es un abono a Fiado, procesar la deuda en DB
+                if getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None):
+                    nuevo_saldo = dlg.deuda_actual - monto
+                    db_manager.execute_non_query("UPDATE clientes SET deuda_actual = ? WHERE id = ?", (nuevo_saldo, dlg.cliente_id))
+                    db_manager.execute_non_query(
+                        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) VALUES (?, ?, ?, ?, ?)",
+                        (dlg.cliente_id, 'ABONO', monto, nuevo_saldo, 'Abono Fiado en Caja')
+                    )
+
                 query = "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id) VALUES ('INGRESO', ?, ?, ?, ?)"
                 if db_manager.execute_non_query(query, (monto, usuario, motivo, c_id)):
                     self.flash_feedback(success=True)
@@ -2171,8 +2451,8 @@ class Paso5Terminal(QWidget):
             self.abrir_historial_dia()
             return
 
-        # F4: Cobrar
-        if k == Qt.Key_F4:
+        # F12: Cobrar
+        if k == Qt.Key_F12:
             self.finalizar_venta()
             return
 
@@ -2191,8 +2471,8 @@ class Paso5Terminal(QWidget):
             self.bloquear_terminal()
             return
 
-        # F12: Cierre de Caja
-        if k == Qt.Key_F12:
+        # F4: Cierre de Caja
+        if k == Qt.Key_F4:
             self.abrir_cierre_caja()
             return
 

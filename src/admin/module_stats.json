@@ -1,12 +1,14 @@
 {
-    "reportes": 5,
-    "inventario": 23,
-    "cierre_z": 3,
-    "hardware": 2,
-    "configuracion": 8,
-    "lan_espectador": 2,
-    "panel_fiscal": 3,
-    "mercadopago": 3,
-    "actualizaciones": 1,
-    "ofertas": 2
+    "reportes": 85,
+    "inventario": 49,
+    "cierre_z": 15,
+    "hardware": 5,
+    "configuracion": 17,
+    "lan_espectador": 13,
+    "panel_fiscal": 17,
+    "mercadopago": 7,
+    "actualizaciones": 6,
+    "ofertas": 10,
+    "clientes": 5,
+    "etiquetas": 1
 }

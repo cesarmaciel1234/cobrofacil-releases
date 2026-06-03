@@ -1,0 +1,572 @@
+2026-06-02 16:15:11 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35668
+2026-06-02 16:15:11 0 [Note] InnoDB: The first data file './ibdata1' did not exist. A new tablespace will be created!
+2026-06-02 16:15:11 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-02 16:15:11 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-02 16:15:11 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-02 16:15:11 0 [Note] InnoDB: Initializing buffer pool, total size = 20.000MiB, chunk size = 1.000MiB
+2026-06-02 16:15:11 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-02 16:15:11 0 [Note] InnoDB: Setting file './ibdata1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-02 16:15:11 0 [Note] InnoDB: File './ibdata1' size is now 12.000MiB.
+2026-06-02 16:15:11 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-02 16:15:11 0 [Note] InnoDB: Doublewrite buffer not found: creating new
+2026-06-02 16:15:11 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-02 16:15:11 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-02 16:15:11 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-02 16:15:11 0 [Note] InnoDB: log sequence number 0; transaction id 3
+2026-06-02 16:15:11 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:15:11 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:15:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 31104
+2026-06-02 16:15:17 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-02 16:15:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-02 16:15:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-02 16:15:17 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-02 16:15:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-02 16:15:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-02 16:15:17 0 [Note] InnoDB: End of log at LSN=46846
+2026-06-02 16:15:17 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-02 16:15:17 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-02 16:15:17 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-02 16:15:17 0 [Note] InnoDB: log sequence number 46846; transaction id 14
+2026-06-02 16:15:17 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:15:17 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-02 16:15:17 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:15:17 0 [Note] InnoDB: Buffer pool(s) load completed at 260602 16:15:17
+2026-06-02 16:15:17 0 [Note] Server socket created on IP: '::'.
+2026-06-02 16:15:17 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-02 16:15:17 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-02 16:18:16 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35916
+2026-06-02 16:18:16 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:18:16 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:18:16 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:18:16 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:18:16 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:18:16 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:18:16 0 [ERROR] Aborting
+2026-06-02 16:18:19 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 20400
+2026-06-02 16:18:19 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:18:19 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:18:19 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:18:19 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:18:19 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:18:19 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:18:19 0 [ERROR] Aborting
+2026-06-02 16:20:39 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 9332
+2026-06-02 16:20:39 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:20:39 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:20:39 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:20:39 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:20:39 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:20:39 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:20:39 0 [ERROR] Aborting
+2026-06-02 16:20:42 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 27452
+2026-06-02 16:20:42 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:20:42 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:20:42 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:20:42 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:20:42 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:20:42 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:20:42 0 [ERROR] Aborting
+2026-06-02 16:24:27 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 36616
+2026-06-02 16:24:27 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:24:27 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:24:27 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:24:27 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:24:27 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:24:27 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:24:27 0 [ERROR] Aborting
+2026-06-02 16:24:30 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 18512
+2026-06-02 16:24:30 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:24:30 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:24:30 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:24:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:24:30 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:24:30 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:24:30 0 [ERROR] Aborting
+2026-06-02 16:24:33 350 [Warning] Aborted connection 350 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 16:35:52 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 1980
+2026-06-02 16:35:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:35:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:35:52 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:35:52 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:35:52 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:35:52 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:35:52 0 [ERROR] Aborting
+2026-06-02 16:35:55 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 12424
+2026-06-02 16:35:55 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:35:55 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:35:55 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:35:55 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:35:55 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:35:55 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:35:55 0 [ERROR] Aborting
+2026-06-02 16:35:58 988 [Warning] Aborted connection 988 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 16:41:27 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 13436
+2026-06-02 16:41:27 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:41:27 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:41:27 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:41:27 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:41:27 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:41:27 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:41:27 0 [ERROR] Aborting
+2026-06-02 16:41:30 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 10420
+2026-06-02 16:41:30 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:41:30 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:41:30 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:41:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:41:30 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:41:30 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:41:30 0 [ERROR] Aborting
+2026-06-02 16:41:33 1435 [Warning] Aborted connection 1435 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 16:44:51 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 22192
+2026-06-02 16:44:51 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:44:51 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:44:51 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:44:51 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:44:51 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:44:51 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:44:51 0 [ERROR] Aborting
+2026-06-02 16:44:54 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 30940
+2026-06-02 16:44:54 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:44:54 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:44:54 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:44:54 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:44:54 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:44:54 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:44:54 0 [ERROR] Aborting
+2026-06-02 16:44:57 1773 [Warning] Aborted connection 1773 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 16:55:46 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 27936
+2026-06-02 16:55:46 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:55:46 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:55:46 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:55:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:55:46 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:55:46 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:55:46 0 [ERROR] Aborting
+2026-06-02 16:55:49 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 32904
+2026-06-02 16:55:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:55:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 16:55:49 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 16:55:49 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 16:55:49 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 16:55:49 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 16:55:49 0 [ERROR] Aborting
+2026-06-02 16:55:52 1974 [Warning] Aborted connection 1974 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 17:02:47 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 4804
+2026-06-02 17:02:47 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:02:47 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:02:47 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:02:47 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:02:47 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:02:47 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:02:47 0 [ERROR] Aborting
+2026-06-02 17:02:50 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 21556
+2026-06-02 17:02:50 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:02:50 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:02:50 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:02:50 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:02:50 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:02:50 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:02:50 0 [ERROR] Aborting
+2026-06-02 17:02:53 2607 [Warning] Aborted connection 2607 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 17:08:09 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 2776
+2026-06-02 17:08:09 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:09 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:09 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:08:09 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:08:09 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:08:09 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:08:09 0 [ERROR] Aborting
+2026-06-02 17:08:12 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 34404
+2026-06-02 17:08:12 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:12 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:12 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:08:12 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:08:12 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:08:12 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:08:12 0 [ERROR] Aborting
+2026-06-02 17:08:15 3094 [Warning] Aborted connection 3094 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 17:08:35 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 32292
+2026-06-02 17:08:35 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:35 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:35 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:08:35 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:08:35 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:08:35 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:08:35 0 [ERROR] Aborting
+2026-06-02 17:08:38 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 2160
+2026-06-02 17:08:38 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:38 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 17:08:38 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 17:08:38 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 17:08:38 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 17:08:38 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 17:08:38 0 [ERROR] Aborting
+2026-06-02 17:08:41 3134 [Warning] Aborted connection 3134 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 18:03:08 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 14188
+2026-06-02 18:03:08 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:03:08 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:03:08 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:03:08 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:03:08 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:03:08 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:03:08 0 [ERROR] Aborting
+2026-06-02 18:03:11 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 22988
+2026-06-02 18:03:12 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:03:12 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:03:12 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:03:12 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:03:12 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:03:12 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:03:12 0 [ERROR] Aborting
+2026-06-02 18:03:14 3529 [Warning] Aborted connection 3529 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 18:08:52 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 13004
+2026-06-02 18:08:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:08:52 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:08:52 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:08:52 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:08:52 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:08:52 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:08:52 0 [ERROR] Aborting
+2026-06-02 18:08:55 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 3452
+2026-06-02 18:08:55 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:08:55 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:08:55 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:08:55 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:08:55 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:08:55 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:08:55 0 [ERROR] Aborting
+2026-06-02 18:08:58 4067 [Warning] Aborted connection 4067 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 18:11:53 4268 [Warning] Host name 'cesar.home' could not be resolved: Host desconocido. 
+2026-06-02 18:11:53 4268 [Warning] Aborted connection 4268 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.4' (This connection closed normally without authentication)
+2026-06-02 18:13:10 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 36396
+2026-06-02 18:13:10 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:13:10 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:13:10 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:13:10 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:13:10 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:13:10 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:13:10 0 [ERROR] Aborting
+2026-06-02 18:13:13 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 37692
+2026-06-02 18:13:13 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:13:13 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:13:13 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:13:13 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:13:13 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:13:13 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:13:13 0 [ERROR] Aborting
+2026-06-02 18:13:16 4361 [Warning] Aborted connection 4361 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 18:14:46 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 15828
+2026-06-02 18:14:46 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:14:46 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:14:46 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:14:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:14:46 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:14:46 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:14:46 0 [ERROR] Aborting
+2026-06-02 18:14:49 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 36996
+2026-06-02 18:14:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:14:49 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 18:14:49 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 18:14:49 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 18:14:49 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 18:14:49 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 18:14:49 0 [ERROR] Aborting
+2026-06-02 18:14:52 4453 [Warning] Aborted connection 4453 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 19:04:28 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35580
+2026-06-02 19:04:28 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:04:28 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:04:28 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:04:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:04:28 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:04:29 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:04:29 0 [ERROR] Aborting
+2026-06-02 19:04:31 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 24012
+2026-06-02 19:04:32 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:04:32 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:04:32 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:04:32 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:04:32 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:04:32 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:04:32 0 [ERROR] Aborting
+2026-06-02 19:04:34 7483 [Warning] Aborted connection 7483 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 19:09:14 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 18620
+2026-06-02 19:09:14 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:09:14 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:09:14 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:09:14 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:09:14 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:09:14 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:09:14 0 [ERROR] Aborting
+2026-06-02 19:09:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 30672
+2026-06-02 19:09:17 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:09:17 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:09:17 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:09:17 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:09:17 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:09:17 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:09:17 0 [ERROR] Aborting
+2026-06-02 19:09:20 7918 [Warning] Aborted connection 7918 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 19:17:25 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 20016
+2026-06-02 19:17:25 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:17:25 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:17:25 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:17:25 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:17:25 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:17:25 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:17:25 0 [ERROR] Aborting
+2026-06-02 19:17:28 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 29772
+2026-06-02 19:17:28 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:17:28 0 [ERROR] InnoDB: The data file './ibdata1' must be writable
+2026-06-02 19:17:28 0 [ERROR] Plugin 'InnoDB' registration as a STORAGE ENGINE failed.
+2026-06-02 19:17:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:17:28 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:17:28 0 [ERROR] Unknown/unsupported storage engine: InnoDB
+2026-06-02 19:17:28 0 [ERROR] Aborting
+2026-06-02 19:17:31 8685 [Warning] Aborted connection 8685 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-02 19:31:55 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 6676
+2026-06-02 19:31:55 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-02 19:31:55 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-02 19:31:55 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-02 19:31:55 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-02 19:31:55 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-02 19:31:55 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-02 19:31:55 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46830
+2026-06-02 19:31:55 0 [Note] InnoDB: End of log at LSN=276103
+2026-06-02 19:31:55 0 [Note] InnoDB: To recover: 58 pages
+2026-06-02 19:31:56 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-02 19:31:56 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-02 19:31:56 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-02 19:31:56 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-02 19:31:56 0 [Note] InnoDB: log sequence number 276103; transaction id 2634
+2026-06-02 19:31:56 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-02 19:31:56 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-02 19:31:56 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-02 19:31:56 0 [Note] InnoDB: Buffer pool(s) load completed at 260602 19:31:56
+2026-06-02 19:31:56 0 [Note] Server socket created on IP: '::'.
+2026-06-02 19:31:56 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-02 19:31:56 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-02 19:31:58 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  1:26:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 20016
+2026-06-03  1:26:17 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  1:26:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  1:26:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  1:26:17 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  1:26:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  1:26:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  1:26:17 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  1:26:17 0 [Note] InnoDB: End of log at LSN=292253
+2026-06-03  1:26:17 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  1:26:17 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  1:26:17 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  1:26:17 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  1:26:18 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  1:26:18 0 [Note] InnoDB: log sequence number 292253; transaction id 2860
+2026-06-03  1:26:18 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  1:26:18 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  1:26:18 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  1:26:18 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  1:26:18
+2026-06-03  1:26:18 0 [Note] Server socket created on IP: '::'.
+2026-06-03  1:26:18 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  1:26:18 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  1:26:21 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  1:36:52 980 [Warning] Host name 'cesar.home' could not be resolved: Host desconocido. 
+2026-06-03  1:36:52 980 [Warning] Aborted connection 980 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.4' (This connection closed normally without authentication)
+2026-06-03  1:56:40 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 36572
+2026-06-03  1:56:40 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  1:56:40 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  1:56:40 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  1:56:40 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  1:56:40 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  1:56:40 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  1:56:40 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  1:56:40 0 [Note] InnoDB: End of log at LSN=318694
+2026-06-03  1:56:40 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  1:56:40 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  1:56:40 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  1:56:40 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  1:56:40 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  1:56:40 0 [Note] InnoDB: log sequence number 318694; transaction id 3203
+2026-06-03  1:56:40 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  1:56:40 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  1:56:40 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  1:56:40 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  1:56:40
+2026-06-03  1:56:40 0 [Note] Server socket created on IP: '::'.
+2026-06-03  1:56:40 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  1:56:40 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  1:56:42 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:00:49 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 36920
+2026-06-03  2:00:49 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:00:49 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:00:49 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:00:49 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:00:49 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:00:49 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:00:49 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:00:49 0 [Note] InnoDB: End of log at LSN=324459
+2026-06-03  2:00:49 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:00:49 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:00:49 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:00:49 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:00:49 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:00:49 0 [Note] InnoDB: log sequence number 324459; transaction id 3291
+2026-06-03  2:00:49 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:00:49 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:00:49 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:00:49 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:00:49
+2026-06-03  2:00:49 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:00:49 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:00:49 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:00:52 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:03:04 231 [Warning] Aborted connection 231 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:04:02 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 12468
+2026-06-03  2:04:02 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:04:02 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:04:02 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:04:02 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:04:02 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:04:02 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:04:02 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:04:02 0 [Note] InnoDB: End of log at LSN=328091
+2026-06-03  2:04:02 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:04:02 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:04:02 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:04:02 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:04:02 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:04:02 0 [Note] InnoDB: log sequence number 328091; transaction id 3348
+2026-06-03  2:04:02 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:04:02 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:04:02 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:04:02 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:04:02
+2026-06-03  2:04:02 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:04:02 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:04:02 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:04:05 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:06:53 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 15920
+2026-06-03  2:06:53 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:06:53 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:06:53 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:06:53 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:06:53 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:06:53 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:06:53 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:06:53 0 [Note] InnoDB: End of log at LSN=330304
+2026-06-03  2:06:53 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:06:53 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:06:53 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:06:53 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:06:53 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:06:53 0 [Note] InnoDB: log sequence number 330304; transaction id 3388
+2026-06-03  2:06:53 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:06:53 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:06:53 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:06:53 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:06:53
+2026-06-03  2:06:53 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:06:53 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:06:53 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:06:56 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:10:56 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 23044
+2026-06-03  2:10:56 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:10:56 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:10:56 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:10:56 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:10:56 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:10:56 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:10:56 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:10:56 0 [Note] InnoDB: End of log at LSN=336425
+2026-06-03  2:10:56 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:10:56 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:10:56 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:10:56 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:10:56 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:10:56 0 [Note] InnoDB: log sequence number 336425; transaction id 3480
+2026-06-03  2:10:56 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:10:56 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:10:56 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:10:56 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:10:56
+2026-06-03  2:10:56 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:10:56 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:10:56 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:10:59 9 [Warning] Aborted connection 9 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:15:30 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 3592
+2026-06-03  2:15:30 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:15:30 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:15:30 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:15:30 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:15:30 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:15:30 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:15:30 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:15:30 0 [Note] InnoDB: End of log at LSN=341479
+2026-06-03  2:15:30 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:15:30 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:15:30 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:15:30 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:15:30 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:15:30 0 [Note] InnoDB: log sequence number 341479; transaction id 3555
+2026-06-03  2:15:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:15:30 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:15:30 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:15:30 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:15:30
+2026-06-03  2:15:30 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:15:30 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:15:30 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:15:33 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03  2:23:46 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35000
+2026-06-03  2:23:46 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03  2:23:46 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03  2:23:46 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03  2:23:46 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03  2:23:46 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03  2:23:46 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03  2:23:46 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03  2:23:46 0 [Note] InnoDB: End of log at LSN=351874
+2026-06-03  2:23:46 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03  2:23:46 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03  2:23:46 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03  2:23:46 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03  2:23:46 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03  2:23:46 0 [Note] InnoDB: log sequence number 351874; transaction id 3707
+2026-06-03  2:23:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03  2:23:46 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03  2:23:46 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03  2:23:46 0 [Note] InnoDB: Buffer pool(s) load completed at 260603  2:23:46
+2026-06-03  2:23:46 0 [Note] Server socket created on IP: '::'.
+2026-06-03  2:23:46 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03  2:23:46 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03  2:23:49 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03 16:08:01 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 15308
+2026-06-03 16:08:01 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-03 16:08:01 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-03 16:08:01 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-03 16:08:01 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-03 16:08:01 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-03 16:08:01 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-03 16:08:01 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-03 16:08:01 0 [Note] InnoDB: End of log at LSN=463462
+2026-06-03 16:08:01 0 [Note] InnoDB: To recover: 58 pages
+2026-06-03 16:08:01 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-03 16:08:01 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-03 16:08:01 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-03 16:08:01 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-03 16:08:01 0 [Note] InnoDB: log sequence number 463462; transaction id 5284
+2026-06-03 16:08:01 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-03 16:08:01 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-03 16:08:01 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-03 16:08:01 0 [Note] InnoDB: Buffer pool(s) load completed at 260603 16:08:01
+2026-06-03 16:08:01 0 [Note] Server socket created on IP: '::'.
+2026-06-03 16:08:01 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-03 16:08:01 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-03 16:08:04 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-03 16:13:53 464 [Warning] Host name 'cesar.fibertel.com.ar' could not be resolved: Host desconocido. 
+2026-06-03 16:13:53 464 [Warning] Aborted connection 464 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-03 16:14:33 589 [Warning] Aborted connection 589 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
