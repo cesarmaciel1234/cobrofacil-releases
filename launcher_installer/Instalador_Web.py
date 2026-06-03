@@ -189,7 +189,7 @@ class InstallerWindow(QWidget):
         layout.addWidget(self.browser)
 
         self.is_update_mode = "--update" in sys.argv
-        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacilPOS_v3.zip?alt=media&token=63c1c234-a0ea-4dd6-89b7-449517237974"
+        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacilPOS_v3.zip?alt=media&token=86d6ae06-db24-4ac3-873b-1c3d22280615"
         self.zip_filename = "CobroFacilPOS_v3.zip"
         self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
 
