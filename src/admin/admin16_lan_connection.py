@@ -7,7 +7,7 @@ import socket
 import json
 import concurrent.futures
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.logger import logger
 
 def get_local_ip():

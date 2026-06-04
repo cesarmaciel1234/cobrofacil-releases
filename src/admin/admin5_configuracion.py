@@ -9,7 +9,7 @@ from PyQt5.QtGui import QCursor, QFont, QColor
 import os, shutil, datetime
 from src.config import config
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
 
@@ -1267,7 +1267,7 @@ class DialogoImpuestos(QDialog):
         main_lay.addLayout(h_btns)
 
     def _cargar_departamentos(self):
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         rows = db_manager.execute_query("SELECT id, nombre, iva FROM departamentos ORDER BY id ASC")
         self.table.setRowCount(0)
         if rows:
@@ -1314,7 +1314,7 @@ class DialogoImpuestos(QDialog):
         )
         if confirm == QMessageBox.Yes:
             if id_val != "NUEVO":
-                from src.database import db_manager
+                from src.base_de_datos.database import db_manager
                 db_manager.execute_non_query("DELETE FROM departamentos WHERE id = ?", (int(id_val),))
             self.table.removeRow(curr_row)
 
@@ -1330,7 +1330,7 @@ class DialogoImpuestos(QDialog):
                 return
 
             # 2. Guardar departamentos en la base de datos
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
             
             for row in range(self.table.rowCount()):
                 id_item = self.table.item(row, 0)

@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
 from src.cajero.paso7_cierre import Paso7CierreCaja

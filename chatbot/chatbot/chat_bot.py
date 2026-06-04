@@ -3,22 +3,24 @@ import sys
 import json
 import unicodedata
 import re
+import math
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, 
-                               QLineEdit, QPushButton, QLabel, QScrollArea, QFrame, QSizePolicy)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QColor, QPalette, QCursor
-# from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
+                             QLabel, QMainWindow, QShortcut, QFrame, QScrollArea, 
+                             QLineEdit, QPushButton, QProgressBar, QSizePolicy, 
+                             QGraphicsDropShadowEffect, QGraphicsOpacityEffect)
+from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QRect, QPoint, pyqtProperty, pyqtSignal, QSize, QEasingCurve
+from PyQt5.QtGui import QKeySequence, QFont, QPainter, QColor, QPen, QBrush, QPainterPath
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 _DIR       = os.path.dirname(os.path.abspath(__file__))
 MANUAL_JSON = os.path.join(_DIR, "manual_cajero.json")
 
-# ─── Pasos del Tutor (sin login / perfil / apertura) ────────────────────────
+# ─── Pasos del Tutor ────────────────────────────────────────────────────────
 PASOS_TUTOR = [
     {"msg": "👋 ¡Hola! Soy tu asistente de CobroFacil POS. Estoy aquí para ayudarte.", "espera": 3},
     {"msg": "🛒 TERMINAL DE VENTAS: Simplemente pasa el código de barras del producto con el lector láser.", "espera": 4},
@@ -28,12 +30,6 @@ PASOS_TUTOR = [
     {"msg": "💳 COBRAR: presiona F12 (o ENTER con el buscador vacío) para ir a la pantalla de cobro.", "espera": 4},
     {"msg": "💰 Selecciona el método de pago con las flechas ←→: Efectivo, Tarjeta o Mixto. Luego ENTER.", "espera": 4},
     {"msg": "🖨️ FINALIZAR: F1 = cobra e imprime ticket · F2 = cobra sin ticket · ENTER = igual que F2.", "espera": 4},
-    {"msg": "🏷️ DESCUENTOS/RECARGOS: F3 = descuento · F4 = recargo (desde la pantalla de cobro).", "espera": 4},
-    {"msg": "🚨 CAJÓN ABIERTO: si el borde parpadea en rojo, cierra el cajón físicamente. Se desbloqueará solo.", "espera": 4},
-    {"msg": "👮 SUPERVISOR (F11): si necesitás ayuda, presioná F11 y llamá al supervisor.", "espera": 4},
-    {"msg": "📋 HISTORIAL (F3): presioná F3 desde el terminal para ver las ventas del día.", "espera": 4},
-    {"msg": "🏁 CIERRE DE TURNO (F4): contá el efectivo, ingresá el total y el sistema cerrará tu sesión.", "espera": 4},
-    {"msg": "⌨️ RESUMEN DE TECLAS:\nF1=ticket · F2=sin ticket · F3=historial · F4=cierre · F5=retiro · F11=supervisor · F12=cobrar", "espera": 5},
     {"msg": "✅ ¡Tutorial completo! Ahora podés consultarme cualquier duda escribiendo en el chat. 💬", "espera": 3},
 ]
 
@@ -47,6 +43,9 @@ class ChatManual:
     def __init__(self):
         self.entradas = []
         try:
+            if not os.path.exists(MANUAL_JSON):
+                with open(MANUAL_JSON, "w", encoding="utf-8") as f:
+                    json.dump({"entradas": [{"id":"demo", "preguntas":["cobrar", "f12"], "respuesta":"Presiona F12 para cobrar."}]}, f)
             with open(MANUAL_JSON, "r", encoding="utf-8") as f:
                 self.entradas = json.load(f).get("entradas", [])
         except Exception as e:
@@ -54,476 +53,673 @@ class ChatManual:
 
     def consultar(self, texto: str) -> str:
         q = _normalizar(texto.strip())
-        if not q:
-            return ""
+        if not q: return ""
         mejor_score, mejor_resp = 0, None
         for entrada in self.entradas:
-            if not entrada.get("preguntas"):
-                continue
+            if not entrada.get("preguntas"): continue
             score = sum(len(kw) for kw in entrada["preguntas"] if _normalizar(kw) in q)
             if score > mejor_score:
                 mejor_score, mejor_resp = score, entrada["respuesta"]
-        if mejor_resp:
-            return mejor_resp
+        if mejor_resp: return mejor_resp
         for entrada in self.entradas:
-            if entrada.get("id") == "no_encontrado":
-                return entrada["respuesta"]
+            if entrada.get("id") == "no_encontrado": return entrada["respuesta"]
         return "🤔 No encontré información. Consultá con tu supervisor."
 
-# ─── HTML del Bot (clonado de bot_burbuja, sin UDP/E2E) ─────────────────────
-HTML_CHAT = r"""
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<style>
-    html, body {
-        height: 100%; margin: 0; padding: 0;
-        overflow: hidden;
-        background: #0f172a;
-        font-family: 'Segoe UI', -apple-system, sans-serif;
-        user-select: none;
-    }
-    .app-container {
-        position: relative; width: 100%; height: 100%;
-        display: flex; align-items: flex-end; justify-content: flex-end;
-        padding-right: 20px; padding-bottom: 20px; box-sizing: border-box;
-    }
 
-    /* ── Robot ── */
-    .robot-head {
-        position: relative; width: 90px; height: 90px;
-        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M 16,50 A 20,20 0 0,1 50,30 A 20,20 0 0,1 84,50 C 92,68 80,88 50,88 C 20,88 8,68 16,50 Z" fill="%23161616" stroke="%23888888" stroke-width="6" stroke-linejoin="round"/></svg>') no-repeat center/contain;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-        filter: drop-shadow(0 8px 16px rgba(15,23,42,0.45));
-        transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275), filter 0.3s ease;
-        animation: floatBot 4s ease-in-out infinite;
-        z-index: 10;
-    }
-    .robot-head:hover {
-        filter: drop-shadow(0 12px 24px rgba(15,23,42,0.5)) drop-shadow(0 0 8px rgba(56,189,248,0.45));
-        transform: scale(1.08) translateY(-4px);
-    }
-    .robot-head:active { transform: scale(0.92,1.08) translateY(2px); }
-    @keyframes floatBot {
-        0%,100% { transform: translateY(0px) rotate(0deg); }
-        50%      { transform: translateY(-8px) rotate(1.5deg); }
-    }
+# ─── COMPONENTES NATIVOS PYQT5 ──────────────────────────────────────────────
 
-    /* Antena */
-    .antenna { position:absolute; top:-14px; display:flex; flex-direction:column; align-items:center; pointer-events:none; }
-    .antenna-shaft { width:4px; height:12px; background:#38BDF8; border:2px solid #0F172A; border-bottom:none; }
-    .antenna-ball {
-        width:10px; height:10px; background:#38BDF8; border:2px solid #0F172A;
-        border-radius:50%; box-shadow:0 0 10px #38BDF8;
-        animation: pulseLed 1.5s infinite alternate ease-in-out;
-    }
-    @keyframes pulseLed {
-        from { background:#38BDF8; box-shadow:0 0 6px #38BDF8; }
-        to   { background:#F43F5E; box-shadow:0 0 14px #F43F5E; }
-    }
-
-    /* Órbita */
-    .orbit-ring {
-        position:absolute; top:-8px; left:-8px; width:102px; height:102px;
-        border:2px dashed rgba(56,189,248,0.4); border-radius:50%;
-        animation: rotateOrbit 15s linear infinite; pointer-events:none;
-        transition: border-color 0.3s ease;
-    }
-    .robot-head:hover .orbit-ring { border-color:rgba(56,189,248,0.8); animation-duration:8s; }
-    @keyframes rotateOrbit { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-
-    /* Rubor */
-    .blush { position:absolute; width:10px; height:6px; background:#F43F5E; border-radius:50%; filter:blur(1px); opacity:0.15; bottom:26px; transition:opacity 0.3s ease; }
-    .blush-left { left:14px; } .blush-right { right:14px; }
-    .robot-head:hover .blush { opacity:0.7; }
-
-    /* Ojos */
-    .eyes-container { display:flex; gap:12px; margin-top:32px; z-index:2; }
-    .eye { position:relative; width:18px; height:18px; background:#000; border:3px solid #888; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-    .eye-pupil { position:absolute; width:6px; height:10px; background:#38BDF8; border-radius:2px; box-shadow:0 0 8px #38BDF8; transition:opacity 0.18s ease,transform 0.18s ease; }
-    .eye.blinking { animation: normalBlink 0.15s ease-in-out; }
-    @keyframes normalBlink { 0%,100%{transform:scaleY(1);} 50%{transform:scaleY(0.05);} }
-    .eye-wink-shape { position:absolute; top:2px; left:-1px; width:18px; height:10px; border-top:4px solid #38BDF8; border-radius:50% 50% 0 0; box-shadow:0 -2px 6px rgba(56,189,248,0.6); opacity:0; transform:scaleY(0); transform-origin:bottom; transition:opacity 0.18s ease,transform 0.18s ease; }
-    .eye.wink-active .eye-pupil { opacity:0; transform:scaleY(0.1); }
-    .eye.wink-active .eye-wink-shape { opacity:1; transform:scaleY(1); }
-    .talking .eye-left .eye-pupil  { animation:pupilTalkLeft 1.2s infinite; }
-    .talking .eye-left .eye-wink-shape { animation:winkTalkLeft 1.2s infinite; }
-    .talking .eye-right .eye-pupil { animation:pupilTalkRight 1.5s infinite; }
-    .talking .eye-right .eye-wink-shape { animation:winkTalkRight 1.5s infinite; }
-    @keyframes pupilTalkLeft  { 0%,40%,100%{opacity:1;transform:scale(1);} 45%,95%{opacity:0;transform:scaleY(0.1);} }
-    @keyframes winkTalkLeft   { 0%,40%,100%{opacity:0;transform:scaleY(0);} 45%,95%{opacity:1;transform:scaleY(1);} }
-    @keyframes pupilTalkRight { 0%,50%,100%{opacity:1;transform:scale(1);} 55%,95%{opacity:0;transform:scaleY(0.1);} }
-    @keyframes winkTalkRight  { 0%,50%,100%{opacity:0;transform:scaleY(0);} 55%,95%{opacity:1;transform:scaleY(1);} }
-
-    /* Boca */
-    .mouth { width:24px; height:12px; border:3.5px solid #888; border-radius:0 0 8px 8px; border-top:none; background:#161616; position:relative; margin-top:10px; box-shadow:0 2px 4px rgba(0,0,0,0.5); transition:all 0.25s cubic-bezier(0.175,0.885,0.32,1.275); z-index:2; }
-    .mouth::before,.mouth::after { content:""; position:absolute; width:4px; height:6px; background:#fff; border:1.5px solid #161616; top:-1px; }
-    .mouth::before { left:5px; } .mouth::after { right:5px; }
-    .mouth.happy-mouth { width:28px; height:14px; border-radius:0 0 10px 10px; }
-    .talking .mouth { animation:mouthTalk 0.16s infinite alternate ease-in-out; }
-    @keyframes mouthTalk { 0%{width:20px;height:10px;border-radius:0 0 8px 8px;} 100%{width:26px;height:14px;border-radius:0 0 10px 10px;} }
-
-    /* Puntos de pensamiento */
-    .thought-dots { position:absolute; right:110px; bottom:105px; display:flex; flex-direction:row-reverse; align-items:flex-end; gap:6px; pointer-events:none; opacity:0; transition:opacity 0.25s ease; z-index:4; }
-    .thought-dots.active { opacity:1; }
-    .tdot { background:rgba(255,255,255,0.82); backdrop-filter:blur(10px); border:2.5px solid #0F172A; border-radius:50%; box-shadow:2px 2px 0px rgba(15,23,42,0.15); transform:scale(0); transition:transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275); }
-    .thought-dots.active .tdot-2 { transform:scale(1); transition-delay:0.0s; }
-    .thought-dots.active .tdot-1 { transform:scale(1); transition-delay:0.06s; }
-    .tdot-1{width:14px;height:14px;} .tdot-2{width:8px;height:8px;}
-
-    /* Globo principal */
-    .thought-bubble {
-        position:absolute; right:125px;
-        background:rgba(255,255,255,0.92);
-        backdrop-filter:blur(12px);
-        border:3px solid #0F172A; border-radius:20px;
-        width:370px; padding:14px; box-sizing:border-box;
-        box-shadow:5px 5px 0px rgba(15,23,42,0.2);
-        opacity:0; transform:scale(0.7) translate(30px,10px);
-        pointer-events:none;
-        transition:opacity 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
-                    transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
-        z-index:5;
-        max-height:calc(100vh - 160px);
-        overflow-y:auto;
-    }
-    .thought-bubble::-webkit-scrollbar{width:6px;}
-    .thought-bubble::-webkit-scrollbar-track{background:transparent;}
-    .thought-bubble::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.2);border-radius:3px;}
-    .thought-bubble.active { opacity:1; transform:scale(1) translate(0,0); pointer-events:auto; transition-delay:0.08s; }
-    .toast-bubble { bottom:120px; height:auto; min-height:80px; max-height:calc(100vh - 140px); }
-    .bubble-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; color:#0F172A; font-size:20px; font-weight:bold; }
-    .btn-close { background:transparent; border:none; color:#64748B; font-weight:bold; font-size:22px; cursor:pointer; transition:color 0.2s; }
-    .btn-close:hover { color:#EF4444; }
-    .toast-category { font-size:11px; font-weight:900; color:#64748B; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; border-bottom:1.5px dashed #E2E8F0; padding-bottom:6px; }
-    .toast-content { color:#0F172A; font-size:15px; font-weight:600; line-height:1.5; white-space:pre-line; }
-
-    /* Chat messages */
-    .msg-list { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; max-height:280px; overflow-y:auto; }
-    .msg-list::-webkit-scrollbar{width:5px;} .msg-list::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.2);border-radius:3px;}
-    .msg-bot { align-self:flex-start; background:#EFF6FF; border:1.5px solid #BFDBFE; border-radius:12px; border-top-left-radius:2px; padding:10px 12px; font-size:14px; font-weight:600; color:#1E3A5F; line-height:1.4; max-width:92%; white-space:pre-line; }
-    .msg-user { align-self:flex-end; background:#4F46E5; border-radius:12px; border-top-right-radius:2px; padding:10px 12px; font-size:14px; font-weight:700; color:#fff; max-width:80%; }
-
-    /* Input chat */
-    .chat-input-row { display:flex; gap:6px; margin-top:6px; }
-    .input-field { flex:1; background:#F1F5F9; border:2px solid #0F172A; border-radius:8px; padding:8px 12px; box-sizing:border-box; color:#0F172A; font-size:14px; font-weight:600; outline:none; transition:border-color 0.2s; }
-    .input-field:focus { background:#fff; border-color:#4F46E5; }
-    .btn-send { background:#4F46E5; color:#fff; font-weight:900; font-size:16px; border:2px solid #0F172A; border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:2px 2px 0px #0F172A; transition:transform 0.1s,box-shadow 0.1s,background 0.2s; }
-    .btn-send:hover { background:#6366F1; }
-    .btn-send:active { transform:translate(1px,1px); box-shadow:1px 1px 0px #0F172A; }
-
-    /* Sugerencias */
-    .sugerencias { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
-    .sug-btn { background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:20px; padding:4px 10px; font-size:12px; font-weight:700; color:#334155; cursor:pointer; transition:background 0.15s; }
-    .sug-btn:hover { background:#E2E8F0; }
-
-    /* Tutor progress */
-    .tutor-bar { display:none; align-items:center; gap:8px; margin-bottom:8px; }
-    .tutor-bar.active { display:flex; }
-    .tutor-progress { flex:1; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; }
-    .tutor-fill { height:100%; background:#4F46E5; border-radius:3px; transition:width 0.4s ease; }
-    .tutor-label { font-size:11px; font-weight:700; color:#64748B; white-space:nowrap; }
-    .btn-tutor-skip { background:transparent; border:1.5px solid #CBD5E1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; color:#94A3B8; cursor:pointer; }
-    .btn-tutor-skip:hover { color:#EF4444; border-color:#EF4444; }
+class RobotAvatar(QWidget):
+    """Widget de Robot dibujado con QPainter y animado con QPropertyAnimation"""
+    clicked = pyqtSignal()
     
-    /* Keycap */
-    .keycap { background:#F8FAFC; border:1.5px solid #0F172A; border-radius:4px; box-shadow:1px 1px 0 #0F172A; padding:1px 5px; font-family:monospace; font-size:13px; font-weight:900; color:#0F172A; display:inline-block; vertical-align:middle; }
-</style>
-</head>
-<body>
-<div class="app-container">
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(80, 80)
+        self.setCursor(Qt.PointingHandCursor)
+        
+        self.blinking = False
+        self.talking = False
+        
+        # Animación de parpadeo aleatorio
+        self.blink_timer = QTimer(self)
+        self.blink_timer.timeout.connect(self._do_blink)
+        self.blink_timer.start(3500)
+        
+        # Animación de habla
+        self.talk_timer = QTimer(self)
+        self.talk_timer.timeout.connect(self._talk_frame)
+        self.mouth_open = False
+        
+        # Animación de flotar (Hover)
+        self._anim_offset = 0.0
+        self.hover_timer = QTimer(self)
+        self.hover_timer.timeout.connect(self._update_hover)
+        self.hover_timer.start(30)
+        
+        # Drop shadow
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 100))
+        shadow.setOffset(0, 5)
+        self.setGraphicsEffect(shadow)
 
-  <!-- Puntos pensamiento -->
-  <div id="dots" class="thought-dots">
-    <div class="tdot tdot-1"></div>
-    <div class="tdot tdot-2"></div>
-  </div>
+    def _do_blink(self):
+        self.blinking = True
+        self.update()
+        QTimer.singleShot(150, self._end_blink)
+        self.blink_timer.setInterval(3000 + (self.width() % 2000)) # Aleatorio simple
+        
+    def _end_blink(self):
+        self.blinking = False
+        self.update()
 
-  <!-- Globo principal (chat + tutor) -->
-  <div id="toastBubble" class="thought-bubble toast-bubble">
+    def set_talking(self, talking: bool):
+        self.talking = talking
+        if talking:
+            self.talk_timer.start(160)
+        else:
+            self.talk_timer.stop()
+            self.mouth_open = False
+            self.update()
+            
+    def _talk_frame(self):
+        self.mouth_open = not self.mouth_open
+        self.update()
+        
+    def _update_hover(self):
+        self._anim_offset += 0.05
+        self.update()
 
-    <!-- Header -->
-    <div class="bubble-header">
-      <span>📖 Manual del Cajero</span>
-      <button class="btn-close" onclick="cerrar()">✕</button>
-    </div>
+    def paintEvent(self, event):
+        from PyQt5.QtGui import QLinearGradient, QPainterPath
+        
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Calcular offset de flotación (seno)
+        y_offset = math.sin(self._anim_offset) * 4
+        painter.translate(0, y_offset)
+        
+        # 1. ANTENA REACTIVA
+        painter.setPen(QPen(QColor("#475569"), 3, Qt.SolidLine, Qt.RoundCap))
+        painter.drawLine(40, 5, 40, 15)
+        
+        if self.talking:
+            # Rojo parpadeante si está respondiendo
+            ant_color = QColor("#EF4444") if self.mouth_open else QColor("#991B1B")
+            glow_color = QColor(239, 68, 68, 80) if self.mouth_open else QColor(0,0,0,0)
+        else:
+            # Cyan estático si espera
+            ant_color = QColor("#06B6D4")
+            glow_color = QColor(6, 182, 212, 80)
+            
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(glow_color))
+        painter.drawEllipse(35, 0, 10, 10)
+        painter.setBrush(QBrush(ant_color))
+        painter.drawEllipse(37, 2, 6, 6)
 
-    <!-- Barra tutor -->
-    <div id="tutorBar" class="tutor-bar">
-      <span class="tutor-label" id="tutorLabel">Paso 1/15</span>
-      <div class="tutor-progress"><div class="tutor-fill" id="tutorFill" style="width:0%"></div></div>
-      <button class="btn-tutor-skip" onclick="skipTutor()">Saltar</button>
-    </div>
+        # 2. CUERPO DEL ROBOT (Volumen 3D Silencioso)
+        body_grad = QLinearGradient(10, 15, 70, 65)
+        body_grad.setColorAt(0.0, QColor("#334155")) # Luz
+        body_grad.setColorAt(1.0, QColor("#0F172A")) # Sombra profunda
+        
+        path = QPainterPath()
+        path.addRoundedRect(10, 15, 60, 50, 25, 25) # Forma de cápsula
+        
+        painter.setBrush(QBrush(body_grad))
+        painter.setPen(QPen(QColor("#1E293B"), 2))
+        painter.drawPath(path)
+        
+        # 3. VISOR (Efecto de Cristal)
+        visor_path = QPainterPath()
+        visor_path.addRoundedRect(16, 30, 48, 22, 10, 10)
+        
+        visor_grad = QLinearGradient(16, 30, 16, 52)
+        visor_grad.setColorAt(0.0, QColor("#000000"))
+        visor_grad.setColorAt(0.5, QColor("#09090b"))
+        visor_grad.setColorAt(1.0, QColor("#18181b"))
+        
+        painter.setBrush(QBrush(visor_grad))
+        painter.setPen(QPen(QColor("#000000"), 1))
+        painter.drawPath(visor_path)
+        
+        # Brillo reflejado en el borde superior del cristal
+        painter.setBrush(QBrush(QColor(255, 255, 255, 20)))
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(18, 32, 44, 6, 3, 3)
+        
+        # 4. OJOS NEON CON REFLEXIÓN
+        painter.setPen(Qt.NoPen)
+        if self.blinking:
+            # Línea plana al parpadear
+            painter.setBrush(QBrush(QColor("#06B6D4")))
+            painter.drawRoundedRect(24, 40, 12, 2, 1, 1)
+            painter.drawRoundedRect(44, 40, 12, 2, 1, 1)
+        else:
+            # Ojo luminoso
+            painter.setBrush(QBrush(QColor("#22D3EE")))
+            
+            # Dinamismo sutil al hablar
+            eye_h = 10 if not self.talking else (8 if self.mouth_open else 10)
+            eye_y = 36 if not self.talking else (37 if self.mouth_open else 36)
+            
+            painter.drawRoundedRect(24, int(eye_y), 12, int(eye_h), 5, 5)
+            painter.drawRoundedRect(44, int(eye_y), 12, int(eye_h), 5, 5)
+            
+            # Reflexión interna blanca
+            painter.setBrush(QBrush(QColor("#FFFFFF")))
+            painter.drawEllipse(27, int(eye_y) + 2, 3, 3)
+            painter.drawEllipse(47, int(eye_y) + 2, 3, 3)
+            
+        # 5. BOCA AMIGABLE (Sonrisa LED)
+        if self.talking and self.mouth_open:
+            # Boca hablando (óvalo iluminado cyan)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor("#06B6D4")))
+            painter.drawEllipse(35, 44, 10, 6)
+        else:
+            # Sonrisa LED
+            painter.setPen(QPen(QColor("#06B6D4"), 2, Qt.SolidLine, Qt.RoundCap))
+            painter.setBrush(Qt.NoBrush)
+            # Arco: x=32, y=40, w=16, h=10. start=0, span=-180 (forma de U)
+            painter.drawArc(32, 40, 16, 10, 0 * 16, -180 * 16)
+        
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPos()
+            self._is_dragging = False
 
-    <!-- Mensajes -->
-    <div class="msg-list" id="msgList"></div>
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton and hasattr(self, '_drag_pos'):
+            diff = event.globalPos() - self._drag_pos
+            if diff.manhattanLength() > 3:
+                self._is_dragging = True
+            self._drag_pos = event.globalPos()
+            parent = self.parentWidget()
+            if parent:
+                parent.move(parent.pos() + diff)
+                if hasattr(parent, 'guardar_offset_relativo'):
+                    parent.guardar_offset_relativo()
 
-    <!-- Sugerencias -->
-    <div class="sugerencias" id="sugerencias">
-      <button class="sug-btn" onclick="preguntar('atajos de teclado')">⌨️ Atajos</button>
-      <button class="sug-btn" onclick="preguntar('como cobro')">💳 Cobrar</button>
-      <button class="sug-btn" onclick="preguntar('balanza')">⚖️ Balanza</button>
-      <button class="sug-btn" onclick="preguntar('cerrar turno')">🏁 Cierre</button>
-      <button class="sug-btn" onclick="preguntar('cajon abierto')">🚨 Cajón</button>
-      <button class="sug-btn" onclick="iniciarTutor()">🎓 Tutorial</button>
-    </div>
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if not getattr(self, '_is_dragging', False):
+                self.clicked.emit()
+            self._is_dragging = False
 
-    <!-- Input -->
-    <div class="chat-input-row">
-      <input type="text" id="chatInput" class="input-field" placeholder="Escribí tu consulta..."
-             onkeypress="if(event.key==='Enter') enviar()">
-      <button class="btn-send" onclick="enviar()">➤</button>
-    </div>
-  </div>
 
-  <!-- Cabeza del Robot -->
-  <div id="robot" class="robot-head" onclick="toggleBubble()">
-    <div class="antenna">
-      <div class="antenna-shaft"></div>
-      <div class="antenna-ball"></div>
-    </div>
-    <div class="orbit-ring"></div>
-    <div class="visor">
-      <div class="blush blush-left"></div>
-      <div class="blush blush-right"></div>
-      <div class="eyes-container">
-        <div id="eyeLeft"  class="eye eye-left"><div class="eye-pupil"></div><div class="eye-wink-shape"></div></div>
-        <div id="eyeRight" class="eye eye-right"><div class="eye-pupil"></div><div class="eye-wink-shape"></div></div>
-      </div>
-      <div id="mouth" class="mouth"></div>
-    </div>
-  </div>
+class FlowLayout(QHBoxLayout):
+    """Layout simple horizontal que envuelve (wrap) si no entra"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setSpacing(6)
 
-</div>
 
-<script>
-const robot   = document.getElementById("robot");
-const mouth   = document.getElementById("mouth");
-const eyeL    = document.getElementById("eyeLeft");
-const eyeR    = document.getElementById("eyeRight");
-const bubble  = document.getElementById("toastBubble");
-const msgList = document.getElementById("msgList");
-const dots    = document.getElementById("dots");
-const tutorBar  = document.getElementById("tutorBar");
-const tutorFill = document.getElementById("tutorFill");
-const tutorLabel= document.getElementById("tutorLabel");
-
-let bubbleOpen   = false;
-let tutorRunning = false;
-let tutorIdx     = 0;
-
-// ── Animaciones del robot ────────────────────────────────────────────────────
-function blink() {
-  if (!robot.classList.contains("talking")) {
-    eyeL.classList.add("blinking"); eyeR.classList.add("blinking");
-    setTimeout(()=>{ eyeL.classList.remove("blinking"); eyeR.classList.remove("blinking"); }, 150);
-  }
-  setTimeout(blink, 3000 + Math.random()*4000);
-}
-function wink() {
-  if (!robot.classList.contains("talking")) {
-    const left = Math.random()>0.5;
-    const eye  = left ? eyeL : eyeR;
-    eye.classList.add("wink-active"); mouth.classList.add("happy-mouth");
-    setTimeout(()=>{ eye.classList.remove("wink-active"); mouth.classList.remove("happy-mouth"); }, 1200);
-  }
-  setTimeout(wink, 7000 + Math.random()*6000);
-}
-setTimeout(blink, 2000); setTimeout(wink, 5000);
-robot.addEventListener("mouseenter",()=>{ eyeL.classList.add("wink-active"); eyeR.classList.add("wink-active"); mouth.classList.add("happy-mouth"); });
-robot.addEventListener("mouseleave",()=>{ if(!robot.classList.contains("talking")){ eyeL.classList.remove("wink-active"); eyeR.classList.remove("wink-active"); mouth.classList.remove("happy-mouth"); } });
-
-// ── Hablar (animación) ───────────────────────────────────────────────────────
-function hablar(on) {
-  if(on) robot.classList.add("talking");
-  else   robot.classList.remove("talking");
-}
-
-// ── Burbuja ──────────────────────────────────────────────────────────────────
-function toggleBubble() {
-  bubbleOpen = !bubbleOpen;
-  if(bubbleOpen) { bubble.classList.add("active"); dots.classList.remove("active"); }
-  else           { bubble.classList.remove("active"); }
-}
-function cerrar() { bubbleOpen=false; bubble.classList.remove("active"); }
-
-// ── Agregar mensaje ───────────────────────────────────────────────────────────
-function addMsg(txt, esBot) {
-  const d = document.createElement("div");
-  d.className = esBot ? "msg-bot" : "msg-user";
-  d.textContent = txt;
-  msgList.appendChild(d);
-  msgList.scrollTop = msgList.scrollHeight;
-}
-
-// ── Consulta desde Python ────────────────────────────────────────────────────
-function recibirRespuesta(respuesta) {
-  hablar(false);
-  dots.classList.remove("active");
-  addMsg(respuesta, true);
-}
-
-// ── Enviar pregunta ───────────────────────────────────────────────────────────
-function enviar() {
-  const inp = document.getElementById("chatInput");
-  const txt = inp.value.trim();
-  if(!txt) return;
-  inp.value = "";
-  preguntar(txt);
-}
-function preguntar(txt) {
-  if(!bubbleOpen) { bubbleOpen=true; bubble.classList.add("active"); }
-  addMsg(txt, false);
-  hablar(true);
-  dots.classList.add("active");
-  // Llamar a Python para resolver la consulta
-  console.log("query://" + encodeURIComponent(txt));
-}
-
-// ── Tutor ─────────────────────────────────────────────────────────────────────
-function iniciarTutor() {
-  tutorRunning = true; tutorIdx = 0;
-  tutorBar.classList.add("active");
-  if(!bubbleOpen){ bubbleOpen=true; bubble.classList.add("active"); }
-  nextTutorStep();
-}
-function nextTutorStep() {
-  // Señal a Python para el siguiente paso
-  console.log("tutor://next?idx=" + tutorIdx);
-}
-function recibirPasoTutor(msg, idx, total) {
-  addMsg(msg, true);
-  tutorFill.style.width = ((idx/total)*100) + "%";
-  tutorLabel.textContent = "Paso " + idx + "/" + total;
-  hablar(true);
-  setTimeout(()=>hablar(false), 1500);
-}
-function tutorFin() {
-  tutorRunning = false;
-  tutorBar.classList.remove("active");
-  addMsg("✅ ¡Tutorial completado! Ahora podés consultarme lo que necesites.", true);
-}
-function skipTutor() {
-  tutorRunning = false;
-  tutorBar.classList.remove("active");
-  addMsg("⏭️ Tutorial omitido. ¡Estoy disponible para tus consultas!", true);
-  console.log("tutor://skip");
-}
-
-// Inicio
-setTimeout(()=>{
-  addMsg("👋 ¡Hola! Soy tu asistente de CobroFacil POS. Hacé clic en 🎓 Tutorial para empezar, o escribí tu consulta directamente.", true);
-}, 300);
-</script>
-</body>
-</html>
-"""
-
-# ─── Widget Principal ────────────────────────────────────────────────────────
-class ChatManualWidget(QWidget):
-    """
-    Manual del Cajero con interfaz del bot_burbuja + tutor integrado.
-    Sin UDP, sin pyautogui, sin motor E2E.
-    """
-    request_dashboard = pyqtSignal()
+class ChatBubble(QFrame):
+    """Contenedor principal del chat, estilo limpio QSS"""
+    close_requested = pyqtSignal()
+    query_requested = pyqtSignal(str)
+    tutor_start_requested = pyqtSignal()
+    tutor_skip_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.motor     = ChatManual()
-        self._tutor_idx = 0
-        self._tutor_activo = False
-        self._tutor_timer  = QTimer(self)
-        self._tutor_timer.setSingleShot(True)
-        self._tutor_timer.timeout.connect(self._tutor_avanzar)
-        self._setup_ui()
+        self.setFixedSize(360, 500)
+        self.setStyleSheet("""
+            QFrame#MainBubble {
+                background-color: #f8fafc;
+                border: 1px solid #cbd5e1;
+                border-radius: 16px;
+            }
+            QLabel#Title {
+                color: #0f172a;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            QPushButton#BtnClose {
+                color: #64748b;
+                font-size: 18px;
+                font-weight: bold;
+                border: none;
+                background: transparent;
+            }
+            QPushButton#BtnClose:hover { color: #ef4444; }
+            
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QWidget#ScrollContent {
+                background: transparent;
+            }
+            
+            QLineEdit#ChatInput {
+                background: #ffffff;
+                border: 2px solid #0f172a;
+                border-radius: 8px;
+                padding: 8px;
+                color: #0f172a;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            QLineEdit#ChatInput:focus { border-color: #4f46e5; }
+            
+            QPushButton#BtnSend {
+                background-color: #4f46e5;
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                border: 2px solid #0f172a;
+                border-radius: 8px;
+                padding: 6px 12px;
+            }
+            QPushButton#BtnSend:hover { background-color: #6366f1; }
+            
+            QPushButton.SugBtn {
+                background-color: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 12px;
+                padding: 4px 10px;
+                font-size: 11px;
+                font-weight: bold;
+                color: #334155;
+            }
+            QPushButton.SugBtn:hover { background-color: #f1f5f9; border-color: #94a3b8; }
+            
+            /* Mensajes */
+            QLabel.MsgBot {
+                background-color: #eff6ff;
+                border: 1px solid #bfdbfe;
+                border-radius: 10px;
+                border-top-left-radius: 2px;
+                padding: 8px 12px;
+                font-size: 13px;
+                font-weight: 600;
+                color: #1e3a5f;
+            }
+            QLabel.MsgUser {
+                background-color: #0f172a;
+                border-radius: 10px;
+                border-top-right-radius: 2px;
+                padding: 8px 12px;
+                font-size: 13px;
+                font-weight: 600;
+                color: white;
+            }
+            
+            /* Tutor */
+            QFrame#TutorBar {
+                background-color: #f1f5f9;
+                border-radius: 6px;
+            }
+            QProgressBar {
+                border: none;
+                background-color: #e2e8f0;
+                border-radius: 3px;
+                height: 6px;
+                text-align: center;
+                color: transparent;
+            }
+            QProgressBar::chunk {
+                background-color: #4f46e5;
+                border-radius: 3px;
+            }
+            QLabel#TutorLbl { font-size: 11px; font-weight: bold; color: #64748b; }
+            QPushButton#BtnSkip {
+                background: transparent; border: 1px solid #cbd5e1;
+                border-radius: 4px; color: #64748b; font-size: 10px; font-weight: bold; padding: 2px 6px;
+            }
+            QPushButton#BtnSkip:hover { color: #ef4444; border-color: #ef4444; }
+        """)
+        self.setObjectName("MainBubble")
+        
+        # Sombra
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        shadow.setOffset(0, 10)
+        self.setGraphicsEffect(shadow)
 
-    def _setup_ui(self):
-        self.setStyleSheet("background: #0f172a;")
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(0)
+        main_lay = QVBoxLayout(self)
+        main_lay.setContentsMargins(16, 16, 16, 16)
+        main_lay.setSpacing(10)
 
         # Header
-        header = QFrame()
-        header.setFixedHeight(56)
-        header.setStyleSheet("background:#1e293b; border-bottom:1px solid #334155;")
-        h = QHBoxLayout(header)
-        h.setContentsMargins(16, 0, 16, 0)
-        btn_back = QPushButton("🔙 Volver")
-        btn_back.setFixedHeight(34)
-        btn_back.setStyleSheet("QPushButton{background:#334155;color:#94a3b8;font-weight:700;border-radius:7px;padding:0 14px;border:none;} QPushButton:hover{background:#475569;color:white;}")
-        btn_back.clicked.connect(self.request_dashboard.emit)
-        h.addWidget(btn_back)
-        lbl = QLabel("📖  Manual del Cajero — CobroFacil POS")
-        lbl.setStyleSheet("color:#e2e8f0;font-size:14px;font-weight:700;margin-left:12px;")
-        h.addWidget(lbl)
-        h.addStretch()
-        lay.addWidget(header)
+        header_lay = QHBoxLayout()
+        header_lay.setContentsMargins(0,0,0,0)
+        lbl_title = QLabel("📖 Manual del Cajero")
+        lbl_title.setObjectName("Title")
+        btn_close = QPushButton("✕")
+        btn_close.setObjectName("BtnClose")
+        btn_close.setCursor(Qt.PointingHandCursor)
+        btn_close.clicked.connect(self.close_requested.emit)
+        header_lay.addWidget(lbl_title)
+        header_lay.addStretch()
+        header_lay.addWidget(btn_close)
+        main_lay.addLayout(header_lay)
 
-        # WebView temporalmente desactivado
-        self.web = QLabel("Módulo de Ayuda IA desactivado en esta versión para optimizar recursos.")
-        self.web.setStyleSheet("color: white; font-size: 16px;")
-        self.web.setAlignment(Qt.AlignCenter)
-        lay.addWidget(self.web, 1)
+        # Tutor Bar
+        self.tutor_frame = QFrame()
+        self.tutor_frame.setObjectName("TutorBar")
+        tutor_lay = QHBoxLayout(self.tutor_frame)
+        tutor_lay.setContentsMargins(6,6,6,6)
+        
+        self.lbl_tutor = QLabel("Paso 1")
+        self.lbl_tutor.setObjectName("TutorLbl")
+        self.prog_tutor = QProgressBar()
+        self.prog_tutor.setValue(0)
+        self.prog_tutor.setTextVisible(False)
+        self.prog_tutor.setFixedHeight(6)
+        
+        btn_skip = QPushButton("Omitir")
+        btn_skip.setObjectName("BtnSkip")
+        btn_skip.setCursor(Qt.PointingHandCursor)
+        btn_skip.clicked.connect(self.tutor_skip_requested.emit)
+        
+        tutor_lay.addWidget(self.lbl_tutor)
+        tutor_lay.addWidget(self.prog_tutor, 1)
+        tutor_lay.addWidget(btn_skip)
+        
+        self.tutor_frame.hide() # Oculto por defecto
+        main_lay.addWidget(self.tutor_frame)
 
-    def _make_page(self):
-        page = QWebEnginePage(self.web)
-        page.javaScriptConsoleMessage = self._on_js_message
-        return page
+        # Scroll Area (Mensajes)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        self.scroll_content = QWidget()
+        self.scroll_content.setObjectName("ScrollContent")
+        self.msg_layout = QVBoxLayout(self.scroll_content)
+        self.msg_layout.setContentsMargins(0, 0, 5, 0)
+        self.msg_layout.setSpacing(10)
+        self.msg_layout.addStretch() # Empuja los mensajes arriba
+        
+        self.scroll.setWidget(self.scroll_content)
+        main_lay.addWidget(self.scroll, 1)
 
-    def _on_js_message(self, level, message, line, source):
-        """Captura los console.log del HTML para comunicarse con Python."""
-        if message.startswith("query://"):
-            from urllib.parse import unquote
-            texto = unquote(message[len("query://"):])
-            respuesta = self.motor.consultar(texto)
-            self._js(f'recibirRespuesta({json.dumps(respuesta)})')
+        # Sugerencias
+        sug_lay = FlowLayout()
+        sugerencias = [
+            ("⌨️ Atajos", "atajos de teclado"),
+            ("💳 Cobrar", "como cobro"),
+            ("⚖️ Balanza", "balanza"),
+            ("🏁 Cierre", "cerrar turno")
+        ]
+        for text, query in sugerencias:
+            btn = QPushButton(text)
+            btn.setProperty("class", "SugBtn")
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.clicked.connect(lambda checked, q=query: self._send_query(q))
+            sug_lay.addWidget(btn)
+            
+        btn_tut = QPushButton("🎓 Tutorial")
+        btn_tut.setProperty("class", "SugBtn")
+        btn_tut.setCursor(Qt.PointingHandCursor)
+        btn_tut.clicked.connect(self.tutor_start_requested.emit)
+        sug_lay.addWidget(btn_tut)
+        sug_lay.addStretch()
+        
+        sug_wrapper = QWidget()
+        sug_wrapper.setLayout(sug_lay)
+        main_lay.addWidget(sug_wrapper)
 
-        elif message.startswith("tutor://next"):
-            self._tutor_ejecutar_paso()
+        # Input Row
+        inp_lay = QHBoxLayout()
+        inp_lay.setContentsMargins(0,0,0,0)
+        self.input_field = QLineEdit()
+        self.input_field.setObjectName("ChatInput")
+        self.input_field.setPlaceholderText("Escribí tu consulta...")
+        self.input_field.returnPressed.connect(self._on_send)
+        
+        btn_send = QPushButton("➤")
+        btn_send.setObjectName("BtnSend")
+        btn_send.setCursor(Qt.PointingHandCursor)
+        btn_send.clicked.connect(self._on_send)
+        
+        inp_lay.addWidget(self.input_field, 1)
+        inp_lay.addWidget(btn_send)
+        main_lay.addLayout(inp_lay)
 
-        elif message.startswith("tutor://skip"):
-            self._tutor_activo = False
-            self._tutor_timer.stop()
+    def add_message(self, text: str, is_bot: bool = True):
+        lbl = QLabel(text)
+        lbl.setWordWrap(True)
+        lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        
+        if is_bot:
+            lbl.setProperty("class", "MsgBot")
+            lbl.setText(f"🤖 {text}")
+            align = Qt.AlignLeft
+        else:
+            lbl.setProperty("class", "MsgUser")
+            align = Qt.AlignRight
+            
+        # Re-aplicar estilo por si acaso
+        lbl.setStyleSheet(self.styleSheet())
+        
+        # Añadir al layout antes del stretch final
+        count = self.msg_layout.count()
+        self.msg_layout.insertWidget(count - 1, lbl, 0, align)
+        
+        # Scroll al final
+        QTimer.singleShot(50, self._scroll_to_bottom)
+        
+    def _scroll_to_bottom(self):
+        vsb = self.scroll.verticalScrollBar()
+        vsb.setValue(vsb.maximum())
 
-    def _js(self, code: str):
-        try:
-            self.web.page().runJavaScript(code)
-        except AttributeError:
-            pass
+    def _on_send(self):
+        txt = self.input_field.text().strip()
+        if txt:
+            self.input_field.clear()
+            self._send_query(txt)
+            
+    def _send_query(self, query: str):
+        self.add_message(query, is_bot=False)
+        self.query_requested.emit(query)
 
-    # ── Tutor ────────────────────────────────────────────────────────────────
+    def set_tutor_mode(self, active: bool, idx: int=0, total: int=1):
+        if active:
+            self.tutor_frame.show()
+            self.lbl_tutor.setText(f"Paso {idx}/{total}")
+            pct = int((idx / total) * 100)
+            self.prog_tutor.setValue(pct)
+        else:
+            self.tutor_frame.hide()
+
+    def set_focus_input(self):
+        self.input_field.setFocus()
+
+    # ── Lógica para Arrastrar la Burbuja ──
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPos()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton and hasattr(self, '_drag_pos'):
+            diff = event.globalPos() - self._drag_pos
+            self._drag_pos = event.globalPos()
+            parent = self.parentWidget()
+            if parent:
+                parent.move(parent.pos() + diff)
+                if hasattr(parent, 'guardar_offset_relativo'):
+                    parent.guardar_offset_relativo()
+        super().mouseMoveEvent(event)
+
+
+# ─── WIDGET PRINCIPAL (OVERLAY TRANSPARENTE) ────────────────────────────────
+
+class ChatManualWidget(QWidget):
+    """Contenedor invisible que maneja al Robot y la Burbuja y sigue a la ventana padre."""
+    def __init__(self, parent_window=None):
+        super().__init__(parent_window)
+        self.parent_window = parent_window
+        self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # Tamaño suficientemente grande para alojar la burbuja y el robot
+        self.resize(380, 600)
+        
+        # Offset relativo para permitir arrastre
+        self._offset_x = None
+        self._offset_y = None
+        
+        self.motor = ChatManual()
+        self._tutor_idx = 0
+        self._tutor_activo = False
+        self._tutor_timer = QTimer(self)
+        self._tutor_timer.setSingleShot(True)
+        self._tutor_timer.timeout.connect(self._tutor_avanzar)
+        
+        self._setup_ui()
+        
+        if self.parent_window:
+            self.parent_window.installEventFilter(self)
+            
+        # Atajo Esc para cerrar el chat si tiene el foco
+        self.shortcut_esc = QShortcut(QKeySequence("Esc"), self)
+        self.shortcut_esc.activated.connect(self.cerrar_chat)
+
+    def _setup_ui(self):
+        # Usamos posiciones absolutas en este contenedor para posicionar libremente Robot y Bubble
+        self.bubble = ChatBubble(self)
+        self.bubble.move(10, 10)
+        self.bubble.hide()
+        
+        # Conectar señales de la burbuja
+        self.bubble.close_requested.connect(self.cerrar_chat)
+        self.bubble.query_requested.connect(self._handle_query)
+        self.bubble.tutor_start_requested.connect(self.iniciar_tutor)
+        self.bubble.tutor_skip_requested.connect(self.omitir_tutor)
+        
+        self.robot = RobotAvatar(self)
+        self.robot.move(self.width() - 90, self.height() - 90)
+        self.robot.clicked.connect(self.toggle_chat)
+        
+        # Efecto de Opacidad para apertura/cierre
+        self.opacity_effect = QGraphicsOpacityEffect(self.bubble)
+        self.bubble.setGraphicsEffect(self.opacity_effect)
+        self.anim_opacity = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.anim_opacity.setDuration(200)
+        
+        # Efecto de escalar
+        self.anim_pos = QPropertyAnimation(self.bubble, b"pos")
+        self.anim_pos.setDuration(250)
+        self.anim_pos.setEasingCurve(QEasingCurve.OutBack)
+        
+        # Mensaje de bienvenida inicial
+        QTimer.singleShot(300, lambda: self.bubble.add_message("👋 ¡Hola! Soy tu asistente de CobroFacil POS. Hacé clic en 🎓 Tutorial para empezar.", True))
+
+    def _handle_query(self, text: str):
+        self.robot.set_talking(True)
+        
+        # Simular pequeño delay de pensamiento
+        def _responder():
+            respuesta = self.motor.consultar(text)
+            self.bubble.add_message(respuesta, True)
+            self.robot.set_talking(False)
+            
+        QTimer.singleShot(600, _responder)
+
+    def toggle_chat(self):
+        if self.bubble.isVisible():
+            self.cerrar_chat()
+        else:
+            self.abrir_y_desplegar()
+
+    def abrir_y_desplegar(self):
+        if not self.isVisible():
+            self.show()
+            self.raise_()
+            
+        if not self.bubble.isVisible():
+            self.bubble.show()
+            self.anim_opacity.setStartValue(0.0)
+            self.anim_opacity.setEndValue(1.0)
+            self.anim_pos.setStartValue(QPoint(10, 100))
+            self.anim_pos.setEndValue(QPoint(10, 10))
+            self.anim_opacity.start()
+            self.anim_pos.start()
+            
+        self.activateWindow()
+        self.bubble.set_focus_input()
+
+    def cerrar_chat(self):
+        if self.bubble.isVisible():
+            self.anim_opacity.setStartValue(1.0)
+            self.anim_opacity.setEndValue(0.0)
+            self.anim_pos.setStartValue(QPoint(10, 10))
+            self.anim_pos.setEndValue(QPoint(10, 50))
+            self.anim_opacity.start()
+            self.anim_pos.start()
+            # Ocultar luego de terminar animación
+            QTimer.singleShot(250, self.bubble.hide)
+
+    def guardar_offset_relativo(self):
+        if self.parent_window:
+            self._offset_x = self.x() - self.parent_window.x()
+            self._offset_y = self.y() - self.parent_window.y()
+
+    def actualizar_posicion(self):
+        if self.parent_window:
+            if self._offset_x is None:
+                # Por defecto abajo a la derecha, por encima de la barra inferior
+                x_pos = self.parent_window.x() + self.parent_window.width() - self.width() - 20
+                y_pos = self.parent_window.y() + self.parent_window.height() - self.height() - 80
+            else:
+                # Mantener la posición arrastrada relativa al padre
+                x_pos = self.parent_window.x() + self._offset_x
+                y_pos = self.parent_window.y() + self._offset_y
+            self.move(max(0, x_pos), max(0, y_pos))
+
+    def eventFilter(self, obj, event):
+        if obj == self.parent_window and event.type() in (event.Move, event.Resize):
+            if self.isVisible():
+                self.actualizar_posicion()
+        return super().eventFilter(obj, event)
+
+    # ── Lógica Tutor ──
+    def iniciar_tutor(self):
+        self._tutor_idx = 0
+        self._tutor_activo = True
+        self.abrir_y_desplegar()
+        self._tutor_ejecutar_paso()
+
     def _tutor_ejecutar_paso(self):
+        if not self._tutor_activo: return
         if self._tutor_idx >= len(PASOS_TUTOR):
-            self._js("tutorFin()")
+            self.bubble.add_message("✅ ¡Tutorial completado! Estoy listo para tus consultas.", True)
+            self.bubble.set_tutor_mode(False)
             self._tutor_activo = False
             return
-
+            
         paso  = PASOS_TUTOR[self._tutor_idx]
         total = len(PASOS_TUTOR)
         idx   = self._tutor_idx + 1
-        msg   = paso["msg"]
-        espera= paso.get("espera", 3)
-
-        self._js(f'recibirPasoTutor({json.dumps(msg)}, {idx}, {total})')
-
+        
+        self.robot.set_talking(True)
+        self.bubble.add_message(paso["msg"], True)
+        self.bubble.set_tutor_mode(True, idx, total)
+        
+        QTimer.singleShot(1000, lambda: self.robot.set_talking(False))
+        
         self._tutor_idx += 1
-        if self._tutor_idx < total:
-            self._tutor_timer.start(espera * 1000)
+        if self._tutor_idx <= total:
+            self._tutor_timer.start(paso.get("espera", 3) * 1000)
         else:
-            QTimer.singleShot(espera * 1000, lambda: self._js("tutorFin()"))
+            self._tutor_timer.start(1000)
 
     def _tutor_avanzar(self):
         self._tutor_ejecutar_paso()
+        
+    def omitir_tutor(self):
+        self._tutor_activo = False
+        self._tutor_timer.stop()
+        self.bubble.set_tutor_mode(False)
+        self.bubble.add_message("⏭️ Tutorial omitido.", True)
 
 
-# ─── Test standalone ──────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = ChatManualWidget()
-    win.setWindowTitle("Manual del Cajero - CobroFacil POS")
-    win.resize(900, 700)
-    win.show()
-    sys.exit(app.exec_())
+

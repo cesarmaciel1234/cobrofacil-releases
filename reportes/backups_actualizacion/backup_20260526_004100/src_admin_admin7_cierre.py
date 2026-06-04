@@ -9,7 +9,7 @@ from PyQt5.QtGui import QColor, QFont, QBrush, QPixmap
 from datetime import datetime
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
     from src.config import config
     from src.cajero.paso7_cierre import Paso7CierreCaja
 except ImportError:

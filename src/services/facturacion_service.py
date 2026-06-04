@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 from src.config import config
 from src.logger import logger
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 
 class FacturacionService:
     """

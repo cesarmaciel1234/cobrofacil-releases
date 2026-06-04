@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QScrollArea)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QColor
-from src.database import DatabaseManager
+from src.base_de_datos.database import DatabaseManager
 
 class MetricCard(QFrame):
     def __init__(self, titulo, icon, color="#3B82F6", parent=None):

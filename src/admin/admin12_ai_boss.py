@@ -4,7 +4,7 @@ import datetime
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QScrollArea, QLineEdit, QProgressBar, QGridLayout
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
     from src.config import config
 except ImportError:
     from database import db_manager

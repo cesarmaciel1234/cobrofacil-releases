@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtGui import QColor
 import hashlib
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 
 
 class ClickableComboBox(QComboBox):

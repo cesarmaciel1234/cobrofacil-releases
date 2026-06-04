@@ -43,7 +43,7 @@ def launch_app():
         app = QApplication(sys.argv)
     
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
-    from src.pantallaentrada import CobroFacilSplash
+    from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
     splash = CobroFacilSplash()
     splash.show()
     app.processEvents()
@@ -54,7 +54,7 @@ def launch_app():
     config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
     
     # 2. Recargar motor de base de datos para tomar la nueva ruta LAN
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
     db_manager._init_db()
     
     # Iniciar Servidor LAN si esta PC es la Maestra
@@ -80,7 +80,7 @@ def launch_app():
 
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
     update_status("Verificando licencia de seguridad...", 60)
-    from src.licencia_pantalla import LicenciaPantalla, check_license_active
+    from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
     if not check_license_active():
         splash.finish(None)
         lic = LicenciaPantalla()
@@ -89,9 +89,9 @@ def launch_app():
 
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
-    from src.perfil_pantalla import PerfilPantalla
-    from src.login_pantalla import LoginPantalla
-    from src.apertura_pantalla import AperturaCajaPantalla
+    from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
+    from src.inicio_y_perfiles.login_pantalla import LoginPantalla
+    from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
     from src.services.caja_service import verificar_y_realizar_autocierre
     
     update_status("Inicializando sistema...", 100)
@@ -249,7 +249,7 @@ def start_update_server():
         global _update_service_running
         try:
             from src.updater.update_server import iniciar_servidor, detener_servidor
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
         except Exception as e:
             logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
             return
@@ -281,7 +281,7 @@ def start_udp_discovery_server():
         import json
         import logging
         try:
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
             from src.utils.paths import get_base_path
         except ImportError:
             return
@@ -343,7 +343,7 @@ def start_update_discovery_server():
         import json
         import logging
         try:
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
         except ImportError:
             return
 

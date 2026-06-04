@@ -25,7 +25,7 @@ from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.utils.floating_widgets import BotonFlotanteRegreso
 from src.logger import logger
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.admin.admin7_cierre import Admin7Cierre
 
 class ScifiReconstructionOverlay(QWidget):
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
         self.heartbeat_timer.start(5000) # Cada 5 segundos
 
     def _check_heartbeat(self):
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         from src.config import config
         import datetime
         from PyQt5.QtWidgets import QMessageBox

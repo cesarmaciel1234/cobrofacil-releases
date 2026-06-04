@@ -25,7 +25,7 @@ from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.utils.floating_widgets import BotonFlotanteRegreso
 from src.logger import logger
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.admin.admin7_cierre import Admin7Cierre
 
 class ScifiReconstructionOverlay(QWidget):
@@ -201,6 +201,11 @@ class MainWindow(QMainWindow):
         self._init_security_monitor()
         self._init_update_banner()
 
+        # Chatbot Overlay Nativo (Inicia Oculto)
+        self.chatbot_overlay = ChatBotWidget(self)
+        self.chatbot_overlay.hide()
+        self._chatbot_active = False
+
 
 
 
@@ -213,7 +218,7 @@ class MainWindow(QMainWindow):
         self.heartbeat_timer.start(5000) # Cada 5 segundos
 
     def _check_heartbeat(self):
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         from src.config import config
         import datetime
         from PyQt5.QtWidgets import QMessageBox
@@ -483,6 +488,7 @@ class MainWindow(QMainWindow):
         self.pantalla_dashboard = Admin0Dashboard()
         self.pantalla_ventas = Paso5Terminal()
         self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
+        self.pantalla_ventas.request_chatbot_toggle.connect(self._toggle_chatbot_overlay)
         self.pantalla_inventario = Admin1Inventario()
         
         self.screens = [
@@ -498,7 +504,7 @@ class MainWindow(QMainWindow):
             Admin9Contabilidad(),        # 9
             Admin10MP(),                # 10
             Admin11Proveedores(),        # 11
-            ChatBotWidget(),             # 12 - Manual del Cajero
+            QWidget(),                   # 12 - (Antes Manual Cajero, ahora flotante)
             Admin13Hardware(),          # 13
             Admin14VentasDigitales(),   # 14
             Admin15Actualizaciones(),   # 15
@@ -537,7 +543,7 @@ class MainWindow(QMainWindow):
             self.switch_tab(6)
 
     def jump_to_admin_secure(self):
-        from src.login_pantalla import LoginPantalla
+        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
         if LoginPantalla(role="admin").exec_():
             self._supervisor_mode = True
             self.btn_flotante.show()
@@ -547,7 +553,7 @@ class MainWindow(QMainWindow):
     def handle_f11_global(self):
         if self.stacked_widget.currentIndex() == 1: 
             # Iniciar salto administrativo seguro
-            from src.login_pantalla import LoginPantalla
+            from src.inicio_y_perfiles.login_pantalla import LoginPantalla
             dlg = LoginPantalla(role="admin")
             if dlg.exec_():
                 # Registro de Auditoría: Intervención de Supervisor
@@ -585,6 +591,10 @@ class MainWindow(QMainWindow):
             self._supervisor_mode = False
             self.btn_flotante.hide()
             self.showFullScreen()
+            # Mostrar chatbot solo en Terminal de Ventas SI fue activado por el usuario
+            if hasattr(self, 'chatbot_overlay') and getattr(self, '_chatbot_active', False):
+                self.chatbot_overlay.show()
+                self.chatbot_overlay.raise_()
             # Refrescar datos y título del terminal al activarlo
             if hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
                 self.pantalla_ventas.refresh_terminal_data()
@@ -595,6 +605,12 @@ class MainWindow(QMainWindow):
                 self.btn_flotante.raise_()
             else:
                 self.btn_flotante.hide()
+                
+            # Ocultar chatbot en las demás pantallas
+            if hasattr(self, 'chatbot_overlay'):
+                self.chatbot_overlay.hide()
+                self.chatbot_overlay.cerrar_chat() # Cerrar burbuja si quedó abierta
+                
             self.showMaximized()
         
         self.stacked_widget.setCurrentIndex(index)
@@ -668,6 +684,17 @@ class MainWindow(QMainWindow):
             if hasattr(self.pantalla_ventas, 'lbl_terminal_title'):
                 title = config.get('business_name', 'Punto de Venta [20.09.02]')
                 self.pantalla_ventas.lbl_terminal_title.setText(title)
+
+    def _toggle_chatbot_overlay(self):
+        if hasattr(self, 'chatbot_overlay'):
+            self._chatbot_active = not getattr(self, '_chatbot_active', False)
+            if self._chatbot_active:
+                self.chatbot_overlay.actualizar_posicion()
+                self.chatbot_overlay.abrir_y_desplegar()
+            else:
+                self.chatbot_overlay.cerrar_chat()
+                # Ocultar widget completo después de la animación de cierre (250ms)
+                QTimer.singleShot(300, self.chatbot_overlay.hide)
 
     def _toggle_blink_alerta(self):
         self._blink_state = not self._blink_state

@@ -1,140 +1,140 @@
 {
   "app_version": "3100.00",
   "channel": "stable",
-  "build_date": "2026-06-03 16:08:09",
+  "build_date": "2026-06-03 18:44:10",
   "server_host": "cesar",
   "modules": {
-    ".gitignore": {
+    "main.py": {
       "version": "1.0.0",
-      "checksum": "790f638946bd8e39f752b167ebf81ab8",
+      "checksum": "821f4c8fbabdcb8c44feda3e7a686a57",
       "channel": "stable",
-      "size": 2801
+      "size": 16435
     },
-    "Actualizador.py": {
-      "version": "1.0.0",
-      "checksum": "302c372dacebdecf5b5b4a50e789a08c",
-      "channel": "stable",
-      "size": 4809
-    },
-    "ConfiguraFirewall.py": {
-      "version": "1.0.0",
-      "checksum": "1a45f79e0cdb8c777510d044f4320888",
-      "channel": "stable",
-      "size": 2640
-    },
-    "crear_actualizacion_lan.py": {
-      "version": "1.0.0",
-      "checksum": "e7e11e6a94105ccee1c679f52d30c5ea",
-      "channel": "stable",
-      "size": 2075
-    },
-    "DrHouse_Diagnostico.py": {
-      "version": "1.0.0",
-      "checksum": "eca8674d87ff0b4b696e9b038d57e60e",
-      "channel": "stable",
-      "size": 6177
-    },
-    "empaquetar_para_firebase.py": {
+    "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
       "checksum": "c09c19f22d776e554b0c69a0130e4577",
       "channel": "stable",
       "size": 2096
     },
-    "error_test.txt": {
+    "01_Compiladores_y_Ejecutables/generar_version.py": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "e4389003b5bc6029bbace30e90e877c7",
       "channel": "stable",
-      "size": 0
+      "size": 2856
     },
-    "Generador_Licencias.py": {
+    "01_Compiladores_y_Ejecutables/run_pyinstaller.py": {
+      "version": "1.0.0",
+      "checksum": "a2014ff11b75d611c4ac74e33a45d223",
+      "channel": "stable",
+      "size": 301
+    },
+    "01_Compiladores_y_Ejecutables/launcher_installer/crear_instalador_blindado.py": {
+      "version": "1.0.0",
+      "checksum": "1b6c7bc1d20b7f9e1ef0ced297f31a9b",
+      "channel": "stable",
+      "size": 2943
+    },
+    "01_Compiladores_y_Ejecutables/launcher_installer/Instalador_Web.py": {
+      "version": "1.0.0",
+      "checksum": "1c2b98b3f82d7b0a435f5470e686b495",
+      "channel": "stable",
+      "size": 11553
+    },
+    "02_Soporte_y_Mantenimiento/ConfiguraFirewall.py": {
+      "version": "1.0.0",
+      "checksum": "1a45f79e0cdb8c777510d044f4320888",
+      "channel": "stable",
+      "size": 2640
+    },
+    "02_Soporte_y_Mantenimiento/DrHouse_Diagnostico.py": {
+      "version": "1.0.0",
+      "checksum": "eca8674d87ff0b4b696e9b038d57e60e",
+      "channel": "stable",
+      "size": 6177
+    },
+    "02_Soporte_y_Mantenimiento/Generador_Licencias.py": {
       "version": "1.0.0",
       "checksum": "a948a441aca8906fc61f9360109f6fbf",
       "channel": "stable",
       "size": 1136
     },
-    "importar_eleventa.py": {
-      "version": "1.0.0",
-      "checksum": "c2828786e3a579409fc49d6993ab5586",
-      "channel": "stable",
-      "size": 9649
-    },
-    "init_db.py": {
-      "version": "1.0.0",
-      "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
-      "channel": "stable",
-      "size": 2542
-    },
-    "main.py": {
-      "version": "1.0.0",
-      "checksum": "9b35ed766369c0d1938943986bcf27c7",
-      "channel": "stable",
-      "size": 15868
-    },
-    "organize_docs.py": {
+    "02_Soporte_y_Mantenimiento/organize_docs.py": {
       "version": "1.0.0",
       "checksum": "f83fbcec9d39e00f3b3c4842b7b9daef",
       "channel": "stable",
       "size": 590
     },
-    "patch_admin14.py": {
+    "02_Soporte_y_Mantenimiento/patch_admin14.py": {
       "version": "1.0.0",
       "checksum": "3f877f110df5f1491a902060fb54abe7",
       "channel": "stable",
       "size": 6134
     },
-    "README.md": {
-      "version": "1.0.0",
-      "checksum": "94c9ac4b4b9c21084080b1c1bfb5b928",
-      "channel": "stable",
-      "size": 232
-    },
-    "rename_project.py": {
+    "02_Soporte_y_Mantenimiento/rename_project.py": {
       "version": "1.0.0",
       "checksum": "9ce7a82cb39d5506eb2caef30e8edefd",
       "channel": "stable",
       "size": 1267
     },
-    "requirements.txt": {
+    "02_Soporte_y_Mantenimiento/rutina_control.py": {
       "version": "1.0.0",
-      "checksum": "b3d26cc7670693839b10ba61d3427356",
+      "checksum": "d9eabc22f477e6250ba97bb5495e28ae",
       "channel": "stable",
-      "size": 148
+      "size": 2782
     },
-    "RespaldoAutomatico.py": {
-      "version": "1.0.0",
-      "checksum": "897c03e471dc865e44fcb783fce43dbb",
-      "channel": "stable",
-      "size": 2272
-    },
-    "rutina_control.py": {
-      "version": "1.0.0",
-      "checksum": "2c12c2ba7dcf208eafdcc8898268d22a",
-      "channel": "stable",
-      "size": 2768
-    },
-    "setup_mariadb.py": {
-      "version": "1.0.0",
-      "checksum": "1a6e57ac5009377a3c863e1d8ecc827a",
-      "channel": "stable",
-      "size": 1541
-    },
-    "test_estres_mariadb.py": {
+    "02_Soporte_y_Mantenimiento/test_estres_mariadb.py": {
       "version": "1.0.0",
       "checksum": "50418cddbf8e6ed2b6054c7fb51a99ba",
       "channel": "stable",
       "size": 3456
     },
-    "version.json": {
+    "03_Actualizaciones_y_Red/Actualizador.py": {
       "version": "1.0.0",
-      "checksum": "80bfa48cad430511afe761d7c20f3cf2",
+      "checksum": "302c372dacebdecf5b5b4a50e789a08c",
       "channel": "stable",
-      "size": 41750
+      "size": 4809
     },
-    "CobroFacil_POS_v3010_TEMP/.gitignore": {
+    "03_Actualizaciones_y_Red/crear_actualizacion_lan.py": {
       "version": "1.0.0",
-      "checksum": "a3d9cee6dc05ea49a5c1183b75c88466",
+      "checksum": "e7e11e6a94105ccee1c679f52d30c5ea",
       "channel": "stable",
-      "size": 2763
+      "size": 2075
+    },
+    "03_Actualizaciones_y_Red/detect_ports.py": {
+      "version": "1.0.0",
+      "checksum": "8c0baef0ae614bf2a42c2d1c2e96bea8",
+      "channel": "stable",
+      "size": 520
+    },
+    "04_Respaldos_y_Migraciones/importar_eleventa.py": {
+      "version": "1.0.0",
+      "checksum": "01fd7be5be5ac04d2e6463ab2b879e85",
+      "channel": "stable",
+      "size": 9909
+    },
+    "04_Respaldos_y_Migraciones/init_db.py": {
+      "version": "1.0.0",
+      "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
+      "channel": "stable",
+      "size": 2542
+    },
+    "04_Respaldos_y_Migraciones/RespaldoAutomatico.py": {
+      "version": "1.0.0",
+      "checksum": "897c03e471dc865e44fcb783fce43dbb",
+      "channel": "stable",
+      "size": 2272
+    },
+    "04_Respaldos_y_Migraciones/setup_mariadb.py": {
+      "version": "1.0.0",
+      "checksum": "1a6e57ac5009377a3c863e1d8ecc827a",
+      "channel": "stable",
+      "size": 1541
+    },
+    "chatbot/chatbot/chat_bot.py": {
+      "version": "1.0.0",
+      "checksum": "439a550ed866ca728163cebaeb00f3a0",
+      "channel": "stable",
+      "size": 27731
     },
     "CobroFacil_POS_v3010_TEMP/Actualizador.py": {
       "version": "1.0.0",
@@ -172,12 +172,6 @@
       "channel": "stable",
       "size": 2096
     },
-    "CobroFacil_POS_v3010_TEMP/error_test.txt": {
-      "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
-      "channel": "stable",
-      "size": 0
-    },
     "CobroFacil_POS_v3010_TEMP/Generador_Licencias.py": {
       "version": "1.0.0",
       "checksum": "a948a441aca8906fc61f9360109f6fbf",
@@ -198,9 +192,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/importar_eleventa.py": {
       "version": "1.0.0",
-      "checksum": "c2828786e3a579409fc49d6993ab5586",
+      "checksum": "01fd7be5be5ac04d2e6463ab2b879e85",
       "channel": "stable",
-      "size": 9649
+      "size": 9909
     },
     "CobroFacil_POS_v3010_TEMP/init_db.py": {
       "version": "1.0.0",
@@ -210,9 +204,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/main.py": {
       "version": "1.0.0",
-      "checksum": "0bcdd3ff2f2b3da6c0b45ed34deb7f86",
+      "checksum": "71491f24e4f0e6123046f24557231040",
       "channel": "stable",
-      "size": 15299
+      "size": 15854
     },
     "CobroFacil_POS_v3010_TEMP/organize_docs.py": {
       "version": "1.0.0",
@@ -220,23 +214,11 @@
       "channel": "stable",
       "size": 590
     },
-    "CobroFacil_POS_v3010_TEMP/README.md": {
-      "version": "1.0.0",
-      "checksum": "94c9ac4b4b9c21084080b1c1bfb5b928",
-      "channel": "stable",
-      "size": 232
-    },
     "CobroFacil_POS_v3010_TEMP/rename_project.py": {
       "version": "1.0.0",
       "checksum": "9ce7a82cb39d5506eb2caef30e8edefd",
       "channel": "stable",
       "size": 1267
-    },
-    "CobroFacil_POS_v3010_TEMP/requirements.txt": {
-      "version": "1.0.0",
-      "checksum": "b3d26cc7670693839b10ba61d3427356",
-      "channel": "stable",
-      "size": 148
     },
     "CobroFacil_POS_v3010_TEMP/RespaldoAutomatico.py": {
       "version": "1.0.0",
@@ -252,9 +234,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/rutina_control.py": {
       "version": "1.0.0",
-      "checksum": "2c12c2ba7dcf208eafdcc8898268d22a",
+      "checksum": "d9eabc22f477e6250ba97bb5495e28ae",
       "channel": "stable",
-      "size": 2768
+      "size": 2782
     },
     "CobroFacil_POS_v3010_TEMP/setup_mariadb.py": {
       "version": "1.0.0",
@@ -268,479 +250,11 @@
       "channel": "stable",
       "size": 3456
     },
-    "CobroFacil_POS_v3010_TEMP/version.json": {
-      "version": "1.0.0",
-      "checksum": "fab247dd12d6a21f8248234ecac85bd4",
-      "channel": "stable",
-      "size": 22529
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mariadbd.pdb": {
-      "version": "1.0.0",
-      "checksum": "b1429e7aec674bbea31f7ebb78b37483",
-      "channel": "stable",
-      "size": 962560
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/myrocks_hotbackup": {
-      "version": "1.0.0",
-      "checksum": "37718893ca071fb0e04d0c872262e06e",
-      "channel": "stable",
-      "size": 25747
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mysqldumpslow.pl": {
-      "version": "1.0.0",
-      "checksum": "09fc720c307fc5c7b1c681ed2fc7d612",
-      "channel": "stable",
-      "size": 8478
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mysqld_multi.pl": {
-      "version": "1.0.0",
-      "checksum": "db762c9e05d2692fce3c933d5eea4a37",
-      "channel": "stable",
-      "size": 28693
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mysqlhotcopy.pl": {
-      "version": "1.0.0",
-      "checksum": "33ad7591b115e05ee07c862a4f571b26",
-      "channel": "stable",
-      "size": 36524
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mysql_config.pl": {
-      "version": "1.0.0",
-      "checksum": "964ff76691c64bfe17e28d8b49206a44",
-      "channel": "stable",
-      "size": 8879
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/mysql_convert_table_format.pl": {
-      "version": "1.0.0",
-      "checksum": "ffffa02c7e14a94ccbceebc7e3f44d7d",
-      "channel": "stable",
-      "size": 4388
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/server.dll": {
-      "version": "1.0.0",
-      "checksum": "6a36395efef1aa72fddb5dea91f61bae",
-      "channel": "stable",
-      "size": 19524608
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/server.lib": {
-      "version": "1.0.0",
-      "checksum": "a80326c6019cdd10226a55c66fdf5153",
-      "channel": "stable",
-      "size": 8180272
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/bin/server.pdb": {
-      "version": "1.0.0",
-      "checksum": "3cc3160d16182d7150c6be5d9a6b8e37",
-      "channel": "stable",
-      "size": 71471104
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/errmsg-utf8.txt": {
-      "version": "1.0.0",
-      "checksum": "76c43ed9a5b9e8908a44283ffd9fd250",
-      "channel": "stable",
-      "size": 830663
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/fill_help_tables.sql": {
-      "version": "1.0.0",
-      "checksum": "037f61c8504e40c88eabb004673b0c71",
-      "channel": "stable",
-      "size": 2134791
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/JavaWrappers.jar": {
-      "version": "1.0.0",
-      "checksum": "1df9d3fa92eb62a5f765c54b9b634538",
-      "channel": "stable",
-      "size": 19192
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/JdbcInterface.jar": {
-      "version": "1.0.0",
-      "checksum": "135684963c8c1e3116d1c12dc88eb271",
-      "channel": "stable",
-      "size": 7612
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/maria_add_gis_sp.sql": {
-      "version": "1.0.0",
-      "checksum": "3eabc26ab987af4f12e30a43886e316b",
-      "channel": "stable",
-      "size": 1742
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/maria_add_gis_sp_bootstrap.sql": {
-      "version": "1.0.0",
-      "checksum": "32a25380489a1c5d9a27949f5ca5640c",
-      "channel": "stable",
-      "size": 1720
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/Mongo2.jar": {
-      "version": "1.0.0",
-      "checksum": "6e5b0c082cce62e7f7f2ee0669d343de",
-      "channel": "stable",
-      "size": 624130
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/Mongo3.jar": {
-      "version": "1.0.0",
-      "checksum": "ace23305ce9d5da489e4e38febc817d4",
-      "channel": "stable",
-      "size": 1706057
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_performance_tables.sql": {
-      "version": "1.0.0",
-      "checksum": "e401799014baa05ebabb4e714c0d5513",
-      "channel": "stable",
-      "size": 1958
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_system_tables.sql": {
-      "version": "1.0.0",
-      "checksum": "d53fe4b3ad5636dd20c11a19ab7589bc",
-      "channel": "stable",
-      "size": 30575
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_system_tables_data.sql": {
-      "version": "1.0.0",
-      "checksum": "4104e00fc092eed05dbf9187985c2257",
-      "channel": "stable",
-      "size": 3327
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_sys_schema.sql": {
-      "version": "1.0.0",
-      "checksum": "c54cc732ae06f1ea910adc796b905f28",
-      "channel": "stable",
-      "size": 632969
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_test_data_timezone.sql": {
-      "version": "1.0.0",
-      "checksum": "847a9cba22edded9f85c218215f48e59",
-      "channel": "stable",
-      "size": 10413
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/mysql_test_db.sql": {
-      "version": "1.0.0",
-      "checksum": "96a7f55549a0a6458700acde33ee62a6",
-      "channel": "stable",
-      "size": 1775
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/bulgarian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "126e786552d906ac7734d39d3628cf9d",
-      "channel": "stable",
-      "size": 78615
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/armscii8.xml": {
-      "version": "1.0.0",
-      "checksum": "36064b7874737358733db31fcdda1dbd",
-      "channel": "stable",
-      "size": 5526
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/ascii.xml": {
-      "version": "1.0.0",
-      "checksum": "031312d08ada0131e0145d3f3b4311cf",
-      "channel": "stable",
-      "size": 5512
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp1250.xml": {
-      "version": "1.0.0",
-      "checksum": "345a7f8ca5803e90b77e5ea5943540c9",
-      "channel": "stable",
-      "size": 8241
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp1251.xml": {
-      "version": "1.0.0",
-      "checksum": "f84489a2a9086983eca7aae8ae8f28cc",
-      "channel": "stable",
-      "size": 8365
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp1256.xml": {
-      "version": "1.0.0",
-      "checksum": "972dc1843a47e7b02492a709c10a24ba",
-      "channel": "stable",
-      "size": 5569
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp1257.xml": {
-      "version": "1.0.0",
-      "checksum": "7667bdb2f3c1476c39046d8b45396eab",
-      "channel": "stable",
-      "size": 8902
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp850.xml": {
-      "version": "1.0.0",
-      "checksum": "501d01d3c099b3ad12ee93ecd400b372",
-      "channel": "stable",
-      "size": 5506
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp852.xml": {
-      "version": "1.0.0",
-      "checksum": "66b9c86be2c54761feb7be0b3d9668e2",
-      "channel": "stable",
-      "size": 5528
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/cp866.xml": {
-      "version": "1.0.0",
-      "checksum": "bdc8682eacce90d6b043598ce5a6bcf3",
-      "channel": "stable",
-      "size": 5613
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/dec8.xml": {
-      "version": "1.0.0",
-      "checksum": "2a619cb24fce5582d67f69da63998a91",
-      "channel": "stable",
-      "size": 6529
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/geostd8.xml": {
-      "version": "1.0.0",
-      "checksum": "359547da927837d2a160bca0edc6ee3a",
-      "channel": "stable",
-      "size": 5516
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/greek.xml": {
-      "version": "1.0.0",
-      "checksum": "e6dcdf025884415212c2d1b9ec06623b",
-      "channel": "stable",
-      "size": 5728
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/hebrew.xml": {
-      "version": "1.0.0",
-      "checksum": "116ddf51df84800a53979588042d161f",
-      "channel": "stable",
-      "size": 5517
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/hp8.xml": {
-      "version": "1.0.0",
-      "checksum": "c43cdbc422f15be520020dd2c65aa1c5",
-      "channel": "stable",
-      "size": 5502
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/Index.xml": {
-      "version": "1.0.0",
-      "checksum": "82a1585a4a41021507c7c40fcfb33815",
-      "channel": "stable",
-      "size": 23509
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/keybcs2.xml": {
-      "version": "1.0.0",
-      "checksum": "f8449c858071eef6d598addc8d54aecb",
-      "channel": "stable",
-      "size": 5529
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/koi8r.xml": {
-      "version": "1.0.0",
-      "checksum": "f250df9ae627fe13d8761abcd40304dd",
-      "channel": "stable",
-      "size": 5510
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/koi8u.xml": {
-      "version": "1.0.0",
-      "checksum": "1eede7f8204d3f7e5d7dabb76a4bacd4",
-      "channel": "stable",
-      "size": 6532
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/latin1.xml": {
-      "version": "1.0.0",
-      "checksum": "a0adeb0084c3a91bc9a24ed135c1ec53",
-      "channel": "stable",
-      "size": 9816
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/latin2.xml": {
-      "version": "1.0.0",
-      "checksum": "96b6767e38a679884a70a2308431ce1a",
-      "channel": "stable",
-      "size": 7238
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/latin5.xml": {
-      "version": "1.0.0",
-      "checksum": "be2e0405301a45c859d4d24e5dc04c94",
-      "channel": "stable",
-      "size": 5515
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/latin7.xml": {
-      "version": "1.0.0",
-      "checksum": "365e801c37b5659dad1c282b31a7f455",
-      "channel": "stable",
-      "size": 7438
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/macce.xml": {
-      "version": "1.0.0",
-      "checksum": "6453a21c6c36990880eb86880de3b469",
-      "channel": "stable",
-      "size": 8047
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/macroman.xml": {
-      "version": "1.0.0",
-      "checksum": "8a9ba742bba24a0c91f6c5aa324ffea9",
-      "channel": "stable",
-      "size": 8058
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/README": {
-      "version": "1.0.0",
-      "checksum": "c17e32bb326c2ea2c39d064219605b15",
-      "channel": "stable",
-      "size": 1749
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/charsets/swe7.xml": {
-      "version": "1.0.0",
-      "checksum": "8a2dd4890b587f48107b58ddce9f9ba4",
-      "channel": "stable",
-      "size": 6530
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/chinese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "5edf2f82dfec17b36745e511b79ee8b0",
-      "channel": "stable",
-      "size": 66754
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/czech/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "386eff01a2955ce81538f3394e466dca",
-      "channel": "stable",
-      "size": 79371
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/danish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "9cedcdafd464050a39eaf7dcca062976",
-      "channel": "stable",
-      "size": 79339
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/dutch/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "afcf85cdabf7bb1ef82c2efa29a5c358",
-      "channel": "stable",
-      "size": 80315
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/english/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "481ab040f3c3903436915b72c977e6e6",
-      "channel": "stable",
-      "size": 78327
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/estonian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "2a2d0203fd22db57d3e7d160e95d96e3",
-      "channel": "stable",
-      "size": 78859
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/french/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "c89da6bea57d328bf15eb283d3bddffd",
-      "channel": "stable",
-      "size": 79992
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/georgian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "7f62f87010333faccad5df687c028a42",
-      "channel": "stable",
-      "size": 144097
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/german/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "e91a950cab9d934e9085a4fd023e905f",
-      "channel": "stable",
-      "size": 85969
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/greek/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "724faae1b041705d2359fbc43cceefe5",
-      "channel": "stable",
-      "size": 85138
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/hindi/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "646d6a96c127afef10fa39c105d6ffe4",
-      "channel": "stable",
-      "size": 89817
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/hungarian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "cb30c9260ee993af7a43e988df0cdf8e",
-      "channel": "stable",
-      "size": 79212
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/italian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "d34af75da3760d6ab527b37ce2303a70",
-      "channel": "stable",
-      "size": 80339
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/japanese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "324da8da670f516bb1301fad3905360b",
-      "channel": "stable",
-      "size": 85477
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/korean/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "5a14ce93470f51e2c260a46946797d5e",
-      "channel": "stable",
-      "size": 81386
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/norwegian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "c397e97cacc426f13ed3cd4bc6061376",
-      "channel": "stable",
-      "size": 78611
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/norwegian-ny/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "264cc1a1b8430d7761c4c0cce84d4d26",
-      "channel": "stable",
-      "size": 78640
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/polish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "7e628efc6ff705542036fd5636ee70cb",
-      "channel": "stable",
-      "size": 79244
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/portuguese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "9f5e1e8fe381ddf67eebe2913fe58466",
-      "channel": "stable",
-      "size": 81300
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/romanian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "0022f49df68dac542783698e38e1f919",
-      "channel": "stable",
-      "size": 80035
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/russian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "230b74f666c40faf5727b77d13fae421",
-      "channel": "stable",
-      "size": 93711
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/serbian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "8b0e4b003bc5d3206b62c80aa0b228d6",
-      "channel": "stable",
-      "size": 80737
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/slovak/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "54c07ef77ca7b7ce8fb51e1e95cda715",
-      "channel": "stable",
-      "size": 79068
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/spanish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "66272ec238806896cd1ff90cc53048bb",
-      "channel": "stable",
-      "size": 93412
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/swedish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "88b7bd5b92b934ae53ccfba850e1077a",
-      "channel": "stable",
-      "size": 79338
-    },
-    "CobroFacil_POS_v3010_TEMP/mariadb_server/share/ukrainian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "740c7a236909eac5b42ef4a33f22d2fd",
-      "channel": "stable",
-      "size": 88988
-    },
     "CobroFacil_POS_v3010_TEMP/src/apertura_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "7f754f2762eea388053d9e4e5d87ac36",
+      "checksum": "3609b37f3ba06f5b9bfd54efdd5a9cdf",
       "channel": "stable",
-      "size": 6614
+      "size": 6798
     },
     "CobroFacil_POS_v3010_TEMP/src/config.py": {
       "version": "1.0.0",
@@ -750,9 +264,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/database.py": {
       "version": "1.0.0",
-      "checksum": "4c5778af9e04dc6602a0d4ff8b48dcf8",
+      "checksum": "5785a08399a158f6d8c4efc37570154b",
       "channel": "stable",
-      "size": 46416
+      "size": 47464
     },
     "CobroFacil_POS_v3010_TEMP/src/licencia_pantalla.py": {
       "version": "1.0.0",
@@ -768,21 +282,21 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "cffa9fe67672734925dc796086417710",
+      "checksum": "962db05ce4285778aca5dc0c5cc59e2c",
       "channel": "stable",
-      "size": 12423
+      "size": 12734
     },
     "CobroFacil_POS_v3010_TEMP/src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "f344a38a831594b181854f7b4bf72842",
+      "checksum": "e0f4e6d2e7be7c24f4335b77e9fa5db1",
       "channel": "stable",
-      "size": 32443
+      "size": 32507
     },
     "CobroFacil_POS_v3010_TEMP/src/offline_sync.py": {
       "version": "1.0.0",
-      "checksum": "3e72c1fc8ce4d3b36473968af379463e",
+      "checksum": "cfeb0096b99714b07ab592e286b9a2d3",
       "channel": "stable",
-      "size": 6064
+      "size": 6220
     },
     "CobroFacil_POS_v3010_TEMP/src/pantallaentrada.py": {
       "version": "1.0.0",
@@ -796,12 +310,6 @@
       "channel": "stable",
       "size": 12065
     },
-    "CobroFacil_POS_v3010_TEMP/src/styles.qss": {
-      "version": "1.0.0",
-      "checksum": "6604ece0e9f5d2704b1d8a17e90d8f88",
-      "channel": "stable",
-      "size": 2808
-    },
     "CobroFacil_POS_v3010_TEMP/src/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
@@ -810,27 +318,27 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "5fddc18f717b5f96f167c984a2e2faff",
+      "checksum": "bf8046f97fed1daf31c24c1a11c711c9",
       "channel": "stable",
-      "size": 20495
+      "size": 20509
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin10_mp.py": {
       "version": "1.0.0",
-      "checksum": "47434f1ee5be3854a19a4071090873d3",
+      "checksum": "68fe19dea4da68e22c034735277b16ef",
       "channel": "stable",
-      "size": 41604
+      "size": 42588
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin11_proveedores.py": {
       "version": "1.0.0",
-      "checksum": "dcde349aab188feb2f120fa643476d0c",
+      "checksum": "6419df928adbb8d913d655649f358c27",
       "channel": "stable",
-      "size": 7586
+      "size": 7772
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin12_ai_boss.py": {
       "version": "1.0.0",
-      "checksum": "8ec1219d1bce9e6de9ad0daa683cc0d9",
+      "checksum": "18d981ebc32b462091e6c6c8a8746a11",
       "channel": "stable",
-      "size": 7799
+      "size": 7993
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin13_hardware.py": {
       "version": "1.0.0",
@@ -852,33 +360,33 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin16_lan_connection.py": {
       "version": "1.0.0",
-      "checksum": "7538572fb723f18e874f23c93c1a3429",
+      "checksum": "574c21987f35bc14d1c14393d020cda2",
       "channel": "stable",
-      "size": 13942
+      "size": 14276
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "38381d3ab02cc27d2644183fbc341f50",
+      "checksum": "c22e90652b0280db924ff48bbe05de94",
       "channel": "stable",
-      "size": 60951
+      "size": 62313
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin2_masivo.py": {
       "version": "1.0.0",
-      "checksum": "ab541b40561246eec504250dd3933ca5",
+      "checksum": "8256eb1811137b2d4f9104b565ed7a64",
       "channel": "stable",
-      "size": 2639
+      "size": 2695
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
-      "checksum": "f19edca9d1ffd4e321ebf7361f39df59",
+      "checksum": "29a4a06acdf857148f02252a3a21a8d4",
       "channel": "stable",
-      "size": 58280
+      "size": 59575
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin3_reportes.py": {
       "version": "1.0.0",
-      "checksum": "4cb9a60f7bfc5de2cc6b481d0f62493b",
+      "checksum": "26138c0dd0e0e54d8f0c40885455076d",
       "channel": "stable",
-      "size": 111042
+      "size": 113423
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin4_gastos.py": {
       "version": "1.0.0",
@@ -888,15 +396,15 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin5_configuracion.py": {
       "version": "1.0.0",
-      "checksum": "3aab205fa7f1f4d039cc3b6a1fc21a75",
+      "checksum": "59895f9334a4cad8504f5175203abc68",
       "channel": "stable",
-      "size": 92769
+      "size": 92825
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "24ecec4937ed8e80410a7aaa93464d68",
+      "checksum": "337f813060248a0ae3ac805bba16a964",
       "channel": "stable",
-      "size": 90533
+      "size": 92593
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin9_contabilidad.py": {
       "version": "1.0.0",
@@ -906,9 +414,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin_clientes.py": {
       "version": "1.0.0",
-      "checksum": "bb9ed6894334dfb672c9fb2ace261e27",
+      "checksum": "2468ceaa812b02ec0174de20102ed805",
       "channel": "stable",
-      "size": 20134
+      "size": 20580
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin_etiquetas.py": {
       "version": "1.0.0",
@@ -918,15 +426,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "8e9c954e19e50aae0e5e651d82faae5b",
+      "checksum": "78d2f802d28ae4aa919a33a578a33c0f",
       "channel": "stable",
-      "size": 14960
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/echarts.min.js": {
-      "version": "1.0.0",
-      "checksum": "334d8b37c4eed7279d054cf21637bc24",
-      "channel": "stable",
-      "size": 1029203
+      "size": 15267
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -942,9 +444,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/etiquetas/admin_etiquetas.py": {
       "version": "1.0.0",
-      "checksum": "2c436af2d9f5cbc1b319ce8b52b66918",
+      "checksum": "ca3df643f7c99dc2a974acf667a90b01",
       "channel": "stable",
-      "size": 25934
+      "size": 26524
     },
     "CobroFacil_POS_v3010_TEMP/src/admin/etiquetas/__init__.py": {
       "version": "1.0.0",
@@ -966,27 +468,27 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "00e9a50742a51cd78ad89bfad4afeafb",
+      "checksum": "e21da2a2c921b3ce111018de901d3fab",
       "channel": "stable",
-      "size": 128089
+      "size": 130922
     },
     "CobroFacil_POS_v3010_TEMP/src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "3fcfeddf05133e55478bf292d825ce3e",
+      "checksum": "1199fe85bfbcde41c8a9db1f7d989cd8",
       "channel": "stable",
-      "size": 57978
+      "size": 59310
     },
     "CobroFacil_POS_v3010_TEMP/src/cajero/paso7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "258d8b522851b9874a9b09be308d51ff",
+      "checksum": "00c1d09bcb3a679aa85d3898a1eaa879",
       "channel": "stable",
-      "size": 20939
+      "size": 21376
     },
     "CobroFacil_POS_v3010_TEMP/src/cajero/paso8_historial.py": {
       "version": "1.0.0",
-      "checksum": "d4a845a460d10fb8485d0eed02cb70d2",
+      "checksum": "ec953427d80966cea3dfcff68c1da8c2",
       "channel": "stable",
-      "size": 39198
+      "size": 40072
     },
     "CobroFacil_POS_v3010_TEMP/src/cajero/__init__.py": {
       "version": "1.0.0",
@@ -1014,27 +516,27 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/hardware/printer.py": {
       "version": "1.0.0",
-      "checksum": "20acff7c00d74c608f2878e4e16c7607",
+      "checksum": "ec23c6b40c484cdc4ee1e441433d9d5a",
       "channel": "stable",
-      "size": 33855
+      "size": 34586
     },
     "CobroFacil_POS_v3010_TEMP/src/services/caja_service.py": {
       "version": "1.0.0",
-      "checksum": "803c62eb99e9c9262d9bfaeaf83328a6",
+      "checksum": "384f401bd454302cc7b899ece47f208f",
       "channel": "stable",
-      "size": 1980
+      "size": 2038
     },
     "CobroFacil_POS_v3010_TEMP/src/services/facturacion_service.py": {
       "version": "1.0.0",
-      "checksum": "f0e2848b14eeb34d2159e989c936e9b4",
+      "checksum": "bb4006bbee430076d589a8c278658986",
       "channel": "stable",
-      "size": 18458
+      "size": 18926
     },
     "CobroFacil_POS_v3010_TEMP/src/services/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "a8b7f56cc21ffd694bf9293b866c6d8a",
+      "checksum": "41c6ef62fb387145750e4f7b1a647fca",
       "channel": "stable",
-      "size": 4134
+      "size": 4148
     },
     "CobroFacil_POS_v3010_TEMP/src/services/mariadb_controller.py": {
       "version": "1.0.0",
@@ -1080,9 +582,9 @@
     },
     "CobroFacil_POS_v3010_TEMP/src/ui_components/apertura_caja.py": {
       "version": "1.0.0",
-      "checksum": "f404e4d03f77935469952b26d9e3549e",
+      "checksum": "c922dcf7ccba7061b098b7a533cca909",
       "channel": "stable",
-      "size": 4215
+      "size": 4328
     },
     "CobroFacil_POS_v3010_TEMP/src/ui_components/cobro_industrial.py": {
       "version": "1.0.0",
@@ -1198,473 +700,191 @@
       "channel": "stable",
       "size": 16
     },
-    "mariadb_server/bin/mariadbd.pdb": {
+    "scratch/apply_updates.py": {
       "version": "1.0.0",
-      "checksum": "b1429e7aec674bbea31f7ebb78b37483",
+      "checksum": "7d1ee7818a0ffbe7b232dd47cb8f5c18",
       "channel": "stable",
-      "size": 962560
+      "size": 1892
     },
-    "mariadb_server/bin/myrocks_hotbackup": {
+    "scratch/build_master.py": {
       "version": "1.0.0",
-      "checksum": "37718893ca071fb0e04d0c872262e06e",
+      "checksum": "9ec434f0af5f9274d2e451175937f6be",
       "channel": "stable",
-      "size": 25747
+      "size": 14326
     },
-    "mariadb_server/bin/mysqldumpslow.pl": {
+    "scratch/check_compile.py": {
       "version": "1.0.0",
-      "checksum": "09fc720c307fc5c7b1c681ed2fc7d612",
+      "checksum": "9fa2a867ea0fbe2a302e9f246aea6ed8",
       "channel": "stable",
-      "size": 8478
+      "size": 1039
     },
-    "mariadb_server/bin/mysqld_multi.pl": {
+    "scratch/check_dbs.py": {
       "version": "1.0.0",
-      "checksum": "db762c9e05d2692fce3c933d5eea4a37",
+      "checksum": "ad234f1802618996b27a4a55217ae5ce",
       "channel": "stable",
-      "size": 28693
+      "size": 832
     },
-    "mariadb_server/bin/mysqlhotcopy.pl": {
+    "scratch/check_drawer.py": {
       "version": "1.0.0",
-      "checksum": "33ad7591b115e05ee07c862a4f571b26",
+      "checksum": "43db3c0c10ee1ebb1df757b67b60f7b4",
       "channel": "stable",
-      "size": 36524
+      "size": 870
     },
-    "mariadb_server/bin/mysql_config.pl": {
+    "scratch/check_drawer_diagnose.py": {
       "version": "1.0.0",
-      "checksum": "964ff76691c64bfe17e28d8b49206a44",
+      "checksum": "7daa8eb6c16f114be0ac06079b539edf",
       "channel": "stable",
-      "size": 8879
+      "size": 4486
     },
-    "mariadb_server/bin/mysql_convert_table_format.pl": {
+    "scratch/check_printer.py": {
       "version": "1.0.0",
-      "checksum": "ffffa02c7e14a94ccbceebc7e3f44d7d",
+      "checksum": "4700cc4e59c38d2b063aaf0a23d1f1a0",
       "channel": "stable",
-      "size": 4388
+      "size": 1197
     },
-    "mariadb_server/bin/server.dll": {
+    "scratch/crear_zip.py": {
       "version": "1.0.0",
-      "checksum": "6a36395efef1aa72fddb5dea91f61bae",
+      "checksum": "5431a458f14eb136e378849d36cc19b8",
       "channel": "stable",
-      "size": 19524608
+      "size": 2211
     },
-    "mariadb_server/bin/server.lib": {
+    "scratch/diagnose_printers.py": {
       "version": "1.0.0",
-      "checksum": "a80326c6019cdd10226a55c66fdf5153",
+      "checksum": "92dca83ee172c81304b4c3388bc885ca",
       "channel": "stable",
-      "size": 8180272
+      "size": 3079
     },
-    "mariadb_server/bin/server.pdb": {
+    "scratch/extract_styles.py": {
       "version": "1.0.0",
-      "checksum": "3cc3160d16182d7150c6be5d9a6b8e37",
+      "checksum": "ae529ae755dec0236432151336748e03",
       "channel": "stable",
-      "size": 71471104
+      "size": 204
     },
-    "mariadb_server/share/errmsg-utf8.txt": {
+    "scratch/find_null_bytes.py": {
       "version": "1.0.0",
-      "checksum": "76c43ed9a5b9e8908a44283ffd9fd250",
+      "checksum": "92bfe6ad1e91c30bc5a47b9e75d4123a",
       "channel": "stable",
-      "size": 830663
+      "size": 794
     },
-    "mariadb_server/share/fill_help_tables.sql": {
+    "scratch/insert_clients.py": {
       "version": "1.0.0",
-      "checksum": "037f61c8504e40c88eabb004673b0c71",
+      "checksum": "91b4a3e2ceac1d4951480c878e8434b4",
       "channel": "stable",
-      "size": 2134791
+      "size": 732
     },
-    "mariadb_server/share/JavaWrappers.jar": {
+    "scratch/inspect_images.py": {
       "version": "1.0.0",
-      "checksum": "1df9d3fa92eb62a5f765c54b9b634538",
+      "checksum": "c00b8cd17b56b014dda335fe4047ac78",
       "channel": "stable",
-      "size": 19192
+      "size": 406
     },
-    "mariadb_server/share/JdbcInterface.jar": {
+    "scratch/installer_build.py": {
       "version": "1.0.0",
-      "checksum": "135684963c8c1e3116d1c12dc88eb271",
+      "checksum": "f81f5bee35ec972316e99d60393690b1",
       "channel": "stable",
-      "size": 7612
+      "size": 13738
     },
-    "mariadb_server/share/maria_add_gis_sp.sql": {
+    "scratch/preview_svg.py": {
       "version": "1.0.0",
-      "checksum": "3eabc26ab987af4f12e30a43886e316b",
+      "checksum": "3fcff0024c4840d276fb1c9cf4efbb3b",
       "channel": "stable",
-      "size": 1742
+      "size": 1547
     },
-    "mariadb_server/share/maria_add_gis_sp_bootstrap.sql": {
+    "scratch/print_html.py": {
       "version": "1.0.0",
-      "checksum": "32a25380489a1c5d9a27949f5ca5640c",
+      "checksum": "ebb1fd7f49c45c4e85a4dcb059148899",
       "channel": "stable",
-      "size": 1720
+      "size": 348
     },
-    "mariadb_server/share/Mongo2.jar": {
+    "scratch/read_transcript.py": {
       "version": "1.0.0",
-      "checksum": "6e5b0c082cce62e7f7f2ee0669d343de",
+      "checksum": "a3173edaa26fb4fe57805a7a70a7d55b",
       "channel": "stable",
-      "size": 624130
+      "size": 746
     },
-    "mariadb_server/share/Mongo3.jar": {
+    "scratch/read_transcript_all.py": {
       "version": "1.0.0",
-      "checksum": "ace23305ce9d5da489e4e38febc817d4",
+      "checksum": "9ecbe974c20e28fa137139e641aa0976",
       "channel": "stable",
-      "size": 1706057
+      "size": 1000
     },
-    "mariadb_server/share/mysql_performance_tables.sql": {
+    "scratch/renombrar_app.py": {
       "version": "1.0.0",
-      "checksum": "e401799014baa05ebabb4e714c0d5513",
+      "checksum": "3a0f29fd66eb1edc44980e90fad6d339",
       "channel": "stable",
-      "size": 1958
+      "size": 2582
     },
-    "mariadb_server/share/mysql_system_tables.sql": {
+    "scratch/run_stress_master.py": {
       "version": "1.0.0",
-      "checksum": "d53fe4b3ad5636dd20c11a19ab7589bc",
+      "checksum": "35c4637a8928a61f26a7500c92520c38",
       "channel": "stable",
-      "size": 30575
+      "size": 3586
     },
-    "mariadb_server/share/mysql_system_tables_data.sql": {
+    "scratch/search_instructions.py": {
       "version": "1.0.0",
-      "checksum": "4104e00fc092eed05dbf9187985c2257",
+      "checksum": "5bc9adbc7d6db120756bf7d4abe6eeb9",
       "channel": "stable",
-      "size": 3327
+      "size": 597
     },
-    "mariadb_server/share/mysql_sys_schema.sql": {
+    "scratch/search_logs.py": {
       "version": "1.0.0",
-      "checksum": "c54cc732ae06f1ea910adc796b905f28",
+      "checksum": "22e1c0c02afc752c8f57d98a0b68158c",
       "channel": "stable",
-      "size": 632969
+      "size": 681
     },
-    "mariadb_server/share/mysql_test_data_timezone.sql": {
+    "scratch/search_walkthrough.py": {
       "version": "1.0.0",
-      "checksum": "847a9cba22edded9f85c218215f48e59",
+      "checksum": "b7b70c868c3e8846494a8e0ac9bf96fd",
       "channel": "stable",
-      "size": 10413
+      "size": 463
     },
-    "mariadb_server/share/mysql_test_db.sql": {
+    "scratch/test_alert.py": {
       "version": "1.0.0",
-      "checksum": "96a7f55549a0a6458700acde33ee62a6",
+      "checksum": "86557ed0184ff7222ccd26b0a5d7d1b2",
       "channel": "stable",
-      "size": 1775
+      "size": 1986
     },
-    "mariadb_server/share/bulgarian/errmsg.sys": {
+    "scratch/test_click_bot.py": {
       "version": "1.0.0",
-      "checksum": "126e786552d906ac7734d39d3628cf9d",
+      "checksum": "5c0c33a9204aecdd3919d8c6f30a8abe",
       "channel": "stable",
-      "size": 78615
+      "size": 408
     },
-    "mariadb_server/share/charsets/armscii8.xml": {
+    "scratch/test_head_svg.py": {
       "version": "1.0.0",
-      "checksum": "36064b7874737358733db31fcdda1dbd",
+      "checksum": "e84ec1bd408620400fe47cee6f523067",
       "channel": "stable",
-      "size": 5526
+      "size": 2645
     },
-    "mariadb_server/share/charsets/ascii.xml": {
+    "scratch/test_nuevas_funciones.py": {
       "version": "1.0.0",
-      "checksum": "031312d08ada0131e0145d3f3b4311cf",
+      "checksum": "0593bf8dc79e2138f42a2a231e31597d",
       "channel": "stable",
-      "size": 5512
+      "size": 3100
     },
-    "mariadb_server/share/charsets/cp1250.xml": {
+    "scratch/test_print.py": {
       "version": "1.0.0",
-      "checksum": "345a7f8ca5803e90b77e5ea5943540c9",
+      "checksum": "d1d24fc3d4375e0866208a04e22d7cb9",
       "channel": "stable",
-      "size": 8241
+      "size": 5012
     },
-    "mariadb_server/share/charsets/cp1251.xml": {
+    "scratch/update_imports.py": {
       "version": "1.0.0",
-      "checksum": "f84489a2a9086983eca7aae8ae8f28cc",
+      "checksum": "996687c35f5be173ac5ce8ed27cfd244",
       "channel": "stable",
-      "size": 8365
+      "size": 3025
     },
-    "mariadb_server/share/charsets/cp1256.xml": {
+    "scratch/view_git_diff.py": {
       "version": "1.0.0",
-      "checksum": "972dc1843a47e7b02492a709c10a24ba",
+      "checksum": "b3e7b2ed77d8a04ab10fc499765668b7",
       "channel": "stable",
-      "size": 5569
+      "size": 307
     },
-    "mariadb_server/share/charsets/cp1257.xml": {
+    "scratch/zip_catorta.py": {
       "version": "1.0.0",
-      "checksum": "7667bdb2f3c1476c39046d8b45396eab",
+      "checksum": "87dc5f21c81f1be83ed4806274b3287a",
       "channel": "stable",
-      "size": 8902
-    },
-    "mariadb_server/share/charsets/cp850.xml": {
-      "version": "1.0.0",
-      "checksum": "501d01d3c099b3ad12ee93ecd400b372",
-      "channel": "stable",
-      "size": 5506
-    },
-    "mariadb_server/share/charsets/cp852.xml": {
-      "version": "1.0.0",
-      "checksum": "66b9c86be2c54761feb7be0b3d9668e2",
-      "channel": "stable",
-      "size": 5528
-    },
-    "mariadb_server/share/charsets/cp866.xml": {
-      "version": "1.0.0",
-      "checksum": "bdc8682eacce90d6b043598ce5a6bcf3",
-      "channel": "stable",
-      "size": 5613
-    },
-    "mariadb_server/share/charsets/dec8.xml": {
-      "version": "1.0.0",
-      "checksum": "2a619cb24fce5582d67f69da63998a91",
-      "channel": "stable",
-      "size": 6529
-    },
-    "mariadb_server/share/charsets/geostd8.xml": {
-      "version": "1.0.0",
-      "checksum": "359547da927837d2a160bca0edc6ee3a",
-      "channel": "stable",
-      "size": 5516
-    },
-    "mariadb_server/share/charsets/greek.xml": {
-      "version": "1.0.0",
-      "checksum": "e6dcdf025884415212c2d1b9ec06623b",
-      "channel": "stable",
-      "size": 5728
-    },
-    "mariadb_server/share/charsets/hebrew.xml": {
-      "version": "1.0.0",
-      "checksum": "116ddf51df84800a53979588042d161f",
-      "channel": "stable",
-      "size": 5517
-    },
-    "mariadb_server/share/charsets/hp8.xml": {
-      "version": "1.0.0",
-      "checksum": "c43cdbc422f15be520020dd2c65aa1c5",
-      "channel": "stable",
-      "size": 5502
-    },
-    "mariadb_server/share/charsets/Index.xml": {
-      "version": "1.0.0",
-      "checksum": "82a1585a4a41021507c7c40fcfb33815",
-      "channel": "stable",
-      "size": 23509
-    },
-    "mariadb_server/share/charsets/keybcs2.xml": {
-      "version": "1.0.0",
-      "checksum": "f8449c858071eef6d598addc8d54aecb",
-      "channel": "stable",
-      "size": 5529
-    },
-    "mariadb_server/share/charsets/koi8r.xml": {
-      "version": "1.0.0",
-      "checksum": "f250df9ae627fe13d8761abcd40304dd",
-      "channel": "stable",
-      "size": 5510
-    },
-    "mariadb_server/share/charsets/koi8u.xml": {
-      "version": "1.0.0",
-      "checksum": "1eede7f8204d3f7e5d7dabb76a4bacd4",
-      "channel": "stable",
-      "size": 6532
-    },
-    "mariadb_server/share/charsets/latin1.xml": {
-      "version": "1.0.0",
-      "checksum": "a0adeb0084c3a91bc9a24ed135c1ec53",
-      "channel": "stable",
-      "size": 9816
-    },
-    "mariadb_server/share/charsets/latin2.xml": {
-      "version": "1.0.0",
-      "checksum": "96b6767e38a679884a70a2308431ce1a",
-      "channel": "stable",
-      "size": 7238
-    },
-    "mariadb_server/share/charsets/latin5.xml": {
-      "version": "1.0.0",
-      "checksum": "be2e0405301a45c859d4d24e5dc04c94",
-      "channel": "stable",
-      "size": 5515
-    },
-    "mariadb_server/share/charsets/latin7.xml": {
-      "version": "1.0.0",
-      "checksum": "365e801c37b5659dad1c282b31a7f455",
-      "channel": "stable",
-      "size": 7438
-    },
-    "mariadb_server/share/charsets/macce.xml": {
-      "version": "1.0.0",
-      "checksum": "6453a21c6c36990880eb86880de3b469",
-      "channel": "stable",
-      "size": 8047
-    },
-    "mariadb_server/share/charsets/macroman.xml": {
-      "version": "1.0.0",
-      "checksum": "8a9ba742bba24a0c91f6c5aa324ffea9",
-      "channel": "stable",
-      "size": 8058
-    },
-    "mariadb_server/share/charsets/README": {
-      "version": "1.0.0",
-      "checksum": "c17e32bb326c2ea2c39d064219605b15",
-      "channel": "stable",
-      "size": 1749
-    },
-    "mariadb_server/share/charsets/swe7.xml": {
-      "version": "1.0.0",
-      "checksum": "8a2dd4890b587f48107b58ddce9f9ba4",
-      "channel": "stable",
-      "size": 6530
-    },
-    "mariadb_server/share/chinese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "5edf2f82dfec17b36745e511b79ee8b0",
-      "channel": "stable",
-      "size": 66754
-    },
-    "mariadb_server/share/czech/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "386eff01a2955ce81538f3394e466dca",
-      "channel": "stable",
-      "size": 79371
-    },
-    "mariadb_server/share/danish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "9cedcdafd464050a39eaf7dcca062976",
-      "channel": "stable",
-      "size": 79339
-    },
-    "mariadb_server/share/dutch/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "afcf85cdabf7bb1ef82c2efa29a5c358",
-      "channel": "stable",
-      "size": 80315
-    },
-    "mariadb_server/share/english/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "481ab040f3c3903436915b72c977e6e6",
-      "channel": "stable",
-      "size": 78327
-    },
-    "mariadb_server/share/estonian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "2a2d0203fd22db57d3e7d160e95d96e3",
-      "channel": "stable",
-      "size": 78859
-    },
-    "mariadb_server/share/french/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "c89da6bea57d328bf15eb283d3bddffd",
-      "channel": "stable",
-      "size": 79992
-    },
-    "mariadb_server/share/georgian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "7f62f87010333faccad5df687c028a42",
-      "channel": "stable",
-      "size": 144097
-    },
-    "mariadb_server/share/german/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "e91a950cab9d934e9085a4fd023e905f",
-      "channel": "stable",
-      "size": 85969
-    },
-    "mariadb_server/share/greek/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "724faae1b041705d2359fbc43cceefe5",
-      "channel": "stable",
-      "size": 85138
-    },
-    "mariadb_server/share/hindi/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "646d6a96c127afef10fa39c105d6ffe4",
-      "channel": "stable",
-      "size": 89817
-    },
-    "mariadb_server/share/hungarian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "cb30c9260ee993af7a43e988df0cdf8e",
-      "channel": "stable",
-      "size": 79212
-    },
-    "mariadb_server/share/italian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "d34af75da3760d6ab527b37ce2303a70",
-      "channel": "stable",
-      "size": 80339
-    },
-    "mariadb_server/share/japanese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "324da8da670f516bb1301fad3905360b",
-      "channel": "stable",
-      "size": 85477
-    },
-    "mariadb_server/share/korean/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "5a14ce93470f51e2c260a46946797d5e",
-      "channel": "stable",
-      "size": 81386
-    },
-    "mariadb_server/share/norwegian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "c397e97cacc426f13ed3cd4bc6061376",
-      "channel": "stable",
-      "size": 78611
-    },
-    "mariadb_server/share/norwegian-ny/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "264cc1a1b8430d7761c4c0cce84d4d26",
-      "channel": "stable",
-      "size": 78640
-    },
-    "mariadb_server/share/polish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "7e628efc6ff705542036fd5636ee70cb",
-      "channel": "stable",
-      "size": 79244
-    },
-    "mariadb_server/share/portuguese/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "9f5e1e8fe381ddf67eebe2913fe58466",
-      "channel": "stable",
-      "size": 81300
-    },
-    "mariadb_server/share/romanian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "0022f49df68dac542783698e38e1f919",
-      "channel": "stable",
-      "size": 80035
-    },
-    "mariadb_server/share/russian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "230b74f666c40faf5727b77d13fae421",
-      "channel": "stable",
-      "size": 93711
-    },
-    "mariadb_server/share/serbian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "8b0e4b003bc5d3206b62c80aa0b228d6",
-      "channel": "stable",
-      "size": 80737
-    },
-    "mariadb_server/share/slovak/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "54c07ef77ca7b7ce8fb51e1e95cda715",
-      "channel": "stable",
-      "size": 79068
-    },
-    "mariadb_server/share/spanish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "66272ec238806896cd1ff90cc53048bb",
-      "channel": "stable",
-      "size": 93412
-    },
-    "mariadb_server/share/swedish/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "88b7bd5b92b934ae53ccfba850e1077a",
-      "channel": "stable",
-      "size": 79338
-    },
-    "mariadb_server/share/ukrainian/errmsg.sys": {
-      "version": "1.0.0",
-      "checksum": "740c7a236909eac5b42ef4a33f22d2fd",
-      "channel": "stable",
-      "size": 88988
-    },
-    "src/apertura_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "7f754f2762eea388053d9e4e5d87ac36",
-      "channel": "stable",
-      "size": 6614
+      "size": 2028
     },
     "src/config.py": {
       "version": "1.0.0",
@@ -1672,59 +892,17 @@
       "channel": "stable",
       "size": 2642
     },
-    "src/database.py": {
-      "version": "1.0.0",
-      "checksum": "3b055fc0568fd523b1bf0a573a4302ed",
-      "channel": "stable",
-      "size": 47511
-    },
-    "src/licencia_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "748760bafc5ef495a814ad3bb465b4d4",
-      "channel": "stable",
-      "size": 13835
-    },
     "src/logger.py": {
       "version": "1.0.0",
       "checksum": "d82cb2f9bfd4d4adcf63287ba7383da3",
       "channel": "stable",
       "size": 1241
     },
-    "src/login_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "cffa9fe67672734925dc796086417710",
-      "channel": "stable",
-      "size": 12423
-    },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "47a9a3714098b7e66606494ba38d6e58",
+      "checksum": "c1129542391a98d75a0d62bcd13217f5",
       "channel": "stable",
-      "size": 32454
-    },
-    "src/offline_sync.py": {
-      "version": "1.0.0",
-      "checksum": "3e72c1fc8ce4d3b36473968af379463e",
-      "channel": "stable",
-      "size": 6064
-    },
-    "src/pantallaentrada.py": {
-      "version": "1.0.0",
-      "checksum": "a9e7c16f734e71aa2f16e57f4f7d20d1",
-      "channel": "stable",
-      "size": 24204
-    },
-    "src/perfil_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "8f65637bf73b6e80ea2062cd8ba2f5cb",
-      "channel": "stable",
-      "size": 12065
-    },
-    "src/styles.qss": {
-      "version": "1.0.0",
-      "checksum": "6604ece0e9f5d2704b1d8a17e90d8f88",
-      "channel": "stable",
-      "size": 2808
+      "size": 32518
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -1734,27 +912,27 @@
     },
     "src/admin/admin0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "5fddc18f717b5f96f167c984a2e2faff",
+      "checksum": "bf8046f97fed1daf31c24c1a11c711c9",
       "channel": "stable",
-      "size": 20495
+      "size": 20509
     },
     "src/admin/admin10_mp.py": {
       "version": "1.0.0",
-      "checksum": "47434f1ee5be3854a19a4071090873d3",
+      "checksum": "68fe19dea4da68e22c034735277b16ef",
       "channel": "stable",
-      "size": 41604
+      "size": 42588
     },
     "src/admin/admin11_proveedores.py": {
       "version": "1.0.0",
-      "checksum": "b7111ac48b838e7f6b8763347ecca1fa",
+      "checksum": "fe795a697158e5423d1efff49b1893b4",
       "channel": "stable",
-      "size": 7840
+      "size": 8030
     },
     "src/admin/admin12_ai_boss.py": {
       "version": "1.0.0",
-      "checksum": "8ec1219d1bce9e6de9ad0daa683cc0d9",
+      "checksum": "18d981ebc32b462091e6c6c8a8746a11",
       "channel": "stable",
-      "size": 7799
+      "size": 7993
     },
     "src/admin/admin13_hardware.py": {
       "version": "1.0.0",
@@ -1776,33 +954,33 @@
     },
     "src/admin/admin16_lan_connection.py": {
       "version": "1.0.0",
-      "checksum": "c4cf08c134f11ce20f379d2ea01e8361",
+      "checksum": "ba248316eb0baaa250d3bb1230966749",
       "channel": "stable",
-      "size": 14221
+      "size": 14567
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "38381d3ab02cc27d2644183fbc341f50",
+      "checksum": "c22e90652b0280db924ff48bbe05de94",
       "channel": "stable",
-      "size": 60951
+      "size": 62313
     },
     "src/admin/admin2_masivo.py": {
       "version": "1.0.0",
-      "checksum": "ab541b40561246eec504250dd3933ca5",
+      "checksum": "8256eb1811137b2d4f9104b565ed7a64",
       "channel": "stable",
-      "size": 2639
+      "size": 2695
     },
     "src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
-      "checksum": "f19edca9d1ffd4e321ebf7361f39df59",
+      "checksum": "29a4a06acdf857148f02252a3a21a8d4",
       "channel": "stable",
-      "size": 58280
+      "size": 59575
     },
     "src/admin/admin3_reportes.py": {
       "version": "1.0.0",
-      "checksum": "4cb9a60f7bfc5de2cc6b481d0f62493b",
+      "checksum": "26138c0dd0e0e54d8f0c40885455076d",
       "channel": "stable",
-      "size": 111042
+      "size": 113423
     },
     "src/admin/admin4_gastos.py": {
       "version": "1.0.0",
@@ -1812,15 +990,15 @@
     },
     "src/admin/admin5_configuracion.py": {
       "version": "1.0.0",
-      "checksum": "3aab205fa7f1f4d039cc3b6a1fc21a75",
+      "checksum": "59895f9334a4cad8504f5175203abc68",
       "channel": "stable",
-      "size": 92769
+      "size": 92825
     },
     "src/admin/admin7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "24ecec4937ed8e80410a7aaa93464d68",
+      "checksum": "337f813060248a0ae3ac805bba16a964",
       "channel": "stable",
-      "size": 90533
+      "size": 92593
     },
     "src/admin/admin9_contabilidad.py": {
       "version": "1.0.0",
@@ -1830,9 +1008,9 @@
     },
     "src/admin/admin_clientes.py": {
       "version": "1.0.0",
-      "checksum": "bb9ed6894334dfb672c9fb2ace261e27",
+      "checksum": "2468ceaa812b02ec0174de20102ed805",
       "channel": "stable",
-      "size": 20134
+      "size": 20580
     },
     "src/admin/admin_etiquetas.py": {
       "version": "1.0.0",
@@ -1842,15 +1020,9 @@
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "8e9c954e19e50aae0e5e651d82faae5b",
+      "checksum": "78d2f802d28ae4aa919a33a578a33c0f",
       "channel": "stable",
-      "size": 14960
-    },
-    "src/admin/echarts.min.js": {
-      "version": "1.0.0",
-      "checksum": "334d8b37c4eed7279d054cf21637bc24",
-      "channel": "stable",
-      "size": 1029203
+      "size": 15267
     },
     "src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -1866,15 +1038,33 @@
     },
     "src/admin/etiquetas/admin_etiquetas.py": {
       "version": "1.0.0",
-      "checksum": "2c436af2d9f5cbc1b319ce8b52b66918",
+      "checksum": "ca3df643f7c99dc2a974acf667a90b01",
       "channel": "stable",
-      "size": 25934
+      "size": 26524
     },
     "src/admin/etiquetas/__init__.py": {
       "version": "1.0.0",
       "checksum": "6b4e4b486573893278a34254c442486c",
       "channel": "stable",
       "size": 34
+    },
+    "src/base_de_datos/database.py": {
+      "version": "1.0.0",
+      "checksum": "1a926990b2e00ca232bb96822e7503db",
+      "channel": "stable",
+      "size": 48586
+    },
+    "src/base_de_datos/offline_sync.py": {
+      "version": "1.0.0",
+      "checksum": "cfeb0096b99714b07ab592e286b9a2d3",
+      "channel": "stable",
+      "size": 6220
+    },
+    "src/base_de_datos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
     },
     "src/cajero/carlis_list.py": {
       "version": "1.0.0",
@@ -1896,27 +1086,27 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "8a7f70bf3398b3674f3bf4d74316e26d",
+      "checksum": "ec1d7e55d3bd5f1ebe17813406f7e1c0",
       "channel": "stable",
-      "size": 125688
+      "size": 128475
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "3fcfeddf05133e55478bf292d825ce3e",
+      "checksum": "1199fe85bfbcde41c8a9db1f7d989cd8",
       "channel": "stable",
-      "size": 57978
+      "size": 59310
     },
     "src/cajero/paso7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "258d8b522851b9874a9b09be308d51ff",
+      "checksum": "00c1d09bcb3a679aa85d3898a1eaa879",
       "channel": "stable",
-      "size": 20939
+      "size": 21376
     },
     "src/cajero/paso8_historial.py": {
       "version": "1.0.0",
-      "checksum": "d4a845a460d10fb8485d0eed02cb70d2",
+      "checksum": "ec953427d80966cea3dfcff68c1da8c2",
       "channel": "stable",
-      "size": 39198
+      "size": 40072
     },
     "src/cajero/__init__.py": {
       "version": "1.0.0",
@@ -1944,27 +1134,63 @@
     },
     "src/hardware/printer.py": {
       "version": "1.0.0",
-      "checksum": "20acff7c00d74c608f2878e4e16c7607",
+      "checksum": "ec23c6b40c484cdc4ee1e441433d9d5a",
       "channel": "stable",
-      "size": 33855
+      "size": 34586
+    },
+    "src/inicio_y_perfiles/apertura_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "3609b37f3ba06f5b9bfd54efdd5a9cdf",
+      "channel": "stable",
+      "size": 6798
+    },
+    "src/inicio_y_perfiles/licencia_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "748760bafc5ef495a814ad3bb465b4d4",
+      "channel": "stable",
+      "size": 13835
+    },
+    "src/inicio_y_perfiles/login_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "962db05ce4285778aca5dc0c5cc59e2c",
+      "channel": "stable",
+      "size": 12734
+    },
+    "src/inicio_y_perfiles/pantallaentrada.py": {
+      "version": "1.0.0",
+      "checksum": "a9e7c16f734e71aa2f16e57f4f7d20d1",
+      "channel": "stable",
+      "size": 24204
+    },
+    "src/inicio_y_perfiles/perfil_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "8f65637bf73b6e80ea2062cd8ba2f5cb",
+      "channel": "stable",
+      "size": 12065
+    },
+    "src/inicio_y_perfiles/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
     },
     "src/services/caja_service.py": {
       "version": "1.0.0",
-      "checksum": "79646e8f62ad9442abb1554eeedc0e34",
+      "checksum": "02f0c815904824024e1cc58aa7a39d4b",
       "channel": "stable",
-      "size": 2139
+      "size": 2202
     },
     "src/services/facturacion_service.py": {
       "version": "1.0.0",
-      "checksum": "f0e2848b14eeb34d2159e989c936e9b4",
+      "checksum": "bb4006bbee430076d589a8c278658986",
       "channel": "stable",
-      "size": 18458
+      "size": 18926
     },
     "src/services/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "d3b635504ad1085e8e88fa67fbc587c2",
+      "checksum": "7e5bb9c5b09724ca99b4215d9e1bfc08",
       "channel": "stable",
-      "size": 4198
+      "size": 4212
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
@@ -2010,9 +1236,9 @@
     },
     "src/ui_components/apertura_caja.py": {
       "version": "1.0.0",
-      "checksum": "f404e4d03f77935469952b26d9e3549e",
+      "checksum": "c922dcf7ccba7061b098b7a533cca909",
       "channel": "stable",
-      "size": 4215
+      "size": 4328
     },
     "src/ui_components/cobro_industrial.py": {
       "version": "1.0.0",
@@ -2128,6 +1354,5 @@
       "channel": "stable",
       "size": 16
     }
-  },
-  "download_url": "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacil_POS_v3010.0.zip?alt=media&token=28b880d8-5cc1-4813-8ec5-f83c05c96e31"
+  }
 }

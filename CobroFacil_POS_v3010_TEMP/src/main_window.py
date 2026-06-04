@@ -25,7 +25,7 @@ from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.utils.floating_widgets import BotonFlotanteRegreso
 from src.logger import logger
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.admin.admin7_cierre import Admin7Cierre
 
 class ScifiReconstructionOverlay(QWidget):
@@ -213,7 +213,7 @@ class MainWindow(QMainWindow):
         self.heartbeat_timer.start(5000) # Cada 5 segundos
 
     def _check_heartbeat(self):
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         from src.config import config
         import datetime
         from PyQt5.QtWidgets import QMessageBox
@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
             self.switch_tab(6)
 
     def jump_to_admin_secure(self):
-        from src.login_pantalla import LoginPantalla
+        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
         if LoginPantalla(role="admin").exec_():
             self._supervisor_mode = True
             self.btn_flotante.show()
@@ -547,7 +547,7 @@ class MainWindow(QMainWindow):
     def handle_f11_global(self):
         if self.stacked_widget.currentIndex() == 1: 
             # Iniciar salto administrativo seguro
-            from src.login_pantalla import LoginPantalla
+            from src.inicio_y_perfiles.login_pantalla import LoginPantalla
             dlg = LoginPantalla(role="admin")
             if dlg.exec_():
                 # Registro de Auditoría: Intervención de Supervisor

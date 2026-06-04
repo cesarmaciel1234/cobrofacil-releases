@@ -614,7 +614,7 @@ class DatabaseManager:
             # Derivar al Buffer Offline si falla la conexión a la base de datos de red
             logger.warning(f"Fallo de red detectado al guardar venta. Guardando offline: {e}")
             try:
-                from src.offline_sync import offline_sync_manager
+                from src.base_de_datos.offline_sync import offline_sync_manager
                 offline_sync_manager.guardar_venta_offline(venta_data, items)
                 return 9999999 # Retornar un ID falso para simular éxito en la UI
             except Exception as ex:

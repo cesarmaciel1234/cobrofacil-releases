@@ -9,7 +9,7 @@ import json
 import os
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
 

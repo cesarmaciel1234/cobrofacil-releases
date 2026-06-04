@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor, QFont
 from src.config import config
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 
 try:
     import requests

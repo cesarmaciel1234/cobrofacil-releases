@@ -7,7 +7,7 @@ import logging
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
     from src.hardware.printer import printer_manager
     from src.hardware.cash_drawer import drawer_manager
     from src.config import config

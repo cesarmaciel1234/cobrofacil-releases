@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.config import config
 from src.hardware.cash_drawer import drawer_manager
 

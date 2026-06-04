@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
 from PyQt5.QtCore import Qt
 from datetime import datetime
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.config import config
 
 class PantallaAperturaCaja(QDialog):

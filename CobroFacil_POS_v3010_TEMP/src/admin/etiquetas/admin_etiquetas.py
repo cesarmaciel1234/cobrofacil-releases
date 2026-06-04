@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
 

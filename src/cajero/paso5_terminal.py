@@ -14,7 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
 from src.cajero.paso7_cierre import Paso7CierreCaja
@@ -774,6 +774,8 @@ class DialogoCandado(QDialog):
 
 
 class Paso5Terminal(QWidget):
+    request_admin_jump = pyqtSignal()
+    request_chatbot_toggle = pyqtSignal()
     """
     PASO 5: TERMINAL INDUSTRIAL EXACTA (100% Foto + Búsqueda Rápida)
     """
@@ -1221,7 +1223,9 @@ class Paso5Terminal(QWidget):
         sl.addWidget(self.btn_theme)
         sl.addSpacing(10)
 
-        self.lbl_version = QLabel("🚀 CAJAFACIL PRO v2026.0 | TERMINAL ACTIVA")
+        from src.updater.github_updater import get_local_version
+        v_local = get_local_version()
+        self.lbl_version = QLabel(f"🚀 COBRO FACIL {v_local} | TERMINAL ACTIVA")
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version); sl.addStretch()
         
@@ -1254,8 +1258,6 @@ class Paso5Terminal(QWidget):
             ("[F6] INGRESO", self.abrir_ingreso_efectivo),
             ("|", None),
             ("[F7] BÁSCULA", self._leer_bascula),
-            ("|", None),
-            ("[F10] ASISTENTE", self.toggle_chatbot),
             ("|", None),
             ("[F8] BLOQ", self.bloquear_terminal),
             ("|", None),
@@ -1334,14 +1336,7 @@ class Paso5Terminal(QWidget):
             self.txt_scan.setFocus()
 
     def toggle_chatbot(self):
-        import socket
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.sendto(b"TOGGLE", ("127.0.0.1", 45680))
-            sock.close()
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Error toggleando chatbot por UDP: {e}")
+        self.request_chatbot_toggle.emit()
         self.txt_scan.setFocus()
 
     def hideEvent(self, event):
@@ -1853,7 +1848,8 @@ class Paso5Terminal(QWidget):
         """Refresca el label de la barra de estado con el cajero activo."""
         nombre_str = CajeroActivo.nombre.upper()
         if CajeroActivo.numero == 2:
-            self.lbl_version.setText(f"🟢 {nombre_str}  |  CAJAFACIL PRO v2026.0")
+            from src.updater.github_updater import get_local_version
+            self.lbl_version.setText(f"🟢 {nombre_str}  |  COBRO FACIL {get_local_version()}")
             self.lbl_version.setStyleSheet("color: #10b981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {
@@ -1863,7 +1859,8 @@ class Paso5Terminal(QWidget):
                 QPushButton:hover { background: #EF4444; border-color: #EF4444; }
             """)
         else:
-            self.lbl_version.setText(f"🔵 {nombre_str}  |  CAJAFACIL PRO v2026.0")
+            from src.updater.github_updater import get_local_version
+            self.lbl_version.setText(f"🔵 {nombre_str}  |  COBRO FACIL {get_local_version()}")
             self.lbl_version.setStyleSheet("color: #60a5fa; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {

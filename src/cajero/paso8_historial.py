@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QDate, QTime, QTimer
 from PyQt5.QtGui import QColor, QBrush, QPainter
 from datetime import datetime
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.config import config
 
 def fmt_moneda(val):

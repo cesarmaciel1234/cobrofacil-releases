@@ -1,4 +1,4 @@
-from src.database import db_manager
+from src.base_de_datos.database import db_manager
 from src.logger import logger
 from datetime import datetime
 

@@ -243,7 +243,7 @@ class PosPrinter:
         Calcula el NETO e IVA total acumulado, desglosado por las tasas de IVA
         definidas en los departamentos de cada producto de la base de datos.
         """
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         
         neto_total = 0.0
         iva_total = 0.0

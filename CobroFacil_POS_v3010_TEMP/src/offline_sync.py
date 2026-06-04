@@ -44,7 +44,7 @@ class OfflineSync:
 
     def _sync_loop(self):
         """Intenta sincronizar cada 15 segundos si hay red."""
-        from src.database import db_manager
+        from src.base_de_datos.database import db_manager
         import sqlite3
         from src.config import config
         import requests

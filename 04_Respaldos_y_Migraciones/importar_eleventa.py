@@ -4,9 +4,8 @@ import sqlite3
 import tempfile
 import sys
 
-# Ajusta el path para poder importar src
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from src.database import DatabaseManager
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.base_de_datos.database import DatabaseManager
 
 DB_PATH = r"C:\Program Files (x86)\AbarrotesPDV\db\PDVDATA.FDB"
 if len(sys.argv) > 1:

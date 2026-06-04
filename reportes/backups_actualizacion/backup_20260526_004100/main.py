@@ -42,7 +42,7 @@ def launch_app():
     config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
     
     # 2. Recargar motor de base de datos para tomar la nueva ruta LAN
-    from src.database import db_manager
+    from src.base_de_datos.database import db_manager
     db_manager._init_db()
     
     app = QApplication.instance()
@@ -225,7 +225,7 @@ def start_update_server():
         global _update_service_running
         try:
             from src.updater.update_server import iniciar_servidor, detener_servidor
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
         except Exception as e:
             logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
             return
@@ -257,7 +257,7 @@ def start_udp_discovery_server():
         import json
         import logging
         try:
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
             from src.utils.paths import get_base_path
         except ImportError:
             return
@@ -319,7 +319,7 @@ def start_update_discovery_server():
         import json
         import logging
         try:
-            from src.database import db_manager
+            from src.base_de_datos.database import db_manager
         except ImportError:
             return
 
