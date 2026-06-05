@@ -2075,7 +2075,12 @@ class Admin3Reportes(QWidget):
         for i, r in enumerate(batch):
             row_idx = current_rows + i
             id_v = str(r['id_venta'])
-            fecha = r['fecha'] or ''
+            import datetime
+            fecha_val = r['fecha']
+            if isinstance(fecha_val, datetime.datetime):
+                fecha = fecha_val.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                fecha = str(fecha_val) if fecha_val else ""
             cajero = r['usuario'] or ''
             prod_name = r['nombre_producto'] or ''
             depto = (r['depto'] or 'ALMACEN').strip().upper()

@@ -2,7 +2,7 @@ import os
 import zipfile
 import json
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 EXCLUIR = {
     '.venv', '__pycache__', '.git', 'build', 'dist',
@@ -34,7 +34,7 @@ count = 0
 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
     for root, dirs, files in os.walk(BASE):
         # Filtrar carpetas excluidas
-        dirs[:] = [d for d in dirs if d not in EXCLUIR and not d.startswith('.')]
+        dirs[:] = [d for d in dirs if d not in EXCLUIR and not d.startswith('.') and not d.startswith('CobroFacil_POS_v') and not d.endswith('_TEMP') and d != 'Catalogos']
         for fname in files:
             ext = os.path.splitext(fname)[1].lower()
             if "mariadb_server" in root:

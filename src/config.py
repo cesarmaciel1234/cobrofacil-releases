@@ -48,12 +48,29 @@ class Config:
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
+                
+                # --- AUTO-LIMPIEZA DE RED SI SE COPIÓ A OTRA PC ---
+                import socket
+                current_host = socket.gethostname()
+                saved_host = self.data.get("machine_hostname", "")
+                if saved_host and saved_host != current_host:
+                    logger.warning(f"¡Cambio de PC detectado! (De {saved_host} a {current_host}). Limpiando red.")
+                    self.data["db_host"] = "" # Romper conexión remota antigua
+                    self.data["machine_hostname"] = current_host
+                    self.save()
+                elif not saved_host:
+                    self.data["machine_hostname"] = current_host
+                    self.save()
+                # --------------------------------------------------
+                
                 logger.info("Configuration loaded from file.")
             except Exception as e:
                 logger.error(f"Error loading config.json: {e}")
                 self.data = self.DEFAULT_CONFIG.copy()
         else:
             self.data = self.DEFAULT_CONFIG.copy()
+            import socket
+            self.data["machine_hostname"] = socket.gethostname()
             self.save()
             logger.info("New configuration file created with defaults.")
 

@@ -87,6 +87,15 @@ class DatabaseManager:
                 # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
                 if not self.is_master:
                     try:
+                        # Prueba rápida de socket para no congelar la UI 10 segundos
+                        import socket
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(1.5) # Timeout muy corto
+                        result = sock.connect_ex((host, 3306))
+                        sock.close()
+                        if result != 0:
+                            raise Exception(f"El servidor MariaDB en {host} no está accesible en la red.")
+                            
                         conn = self.mariadb_engine.get_connection()
                         conn._conn.ping() # Prueba real de conexión
                         logger.info("Conexión exitosa a la PC Maestra.")
@@ -285,7 +294,32 @@ class DatabaseManager:
             self._migrate_db()
             
         self._ensure_test_users()
-        self._ensure_test_users()
+
+    def reload_config(self):
+        """Re-initializes the database connection and configuration dynamically without restarting."""
+        logger.info("Recargando configuracion de base de datos dinámicamente...")
+        # Check current engine and master state
+        was_master = getattr(self, "is_master", True)
+        
+        # Stop MariaDB if transitioning or reloading, _init_db will start it again if needed
+        # It's safer to let _init_db handle the MariaDB auto-server logic, but we can explicitly stop it if we are now slave
+        import json
+        from src.utils.paths import get_base_path
+        config_path = os.path.join(get_base_path(), "config.json")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config_data = json.load(f)
+            new_custom_ip = str(config_data.get("db_host", "")).strip()
+            if new_custom_ip and new_custom_ip not in ("localhost", "127.0.0.1"):
+                # We are becoming a slave, stop the local MariaDB server if it was running
+                from src.services.mariadb_controller import mariadb_controller
+                if was_master:
+                    mariadb_controller.stop_server()
+        except Exception as e:
+            logger.error(f"Error en reload_config antes de init: {e}")
+
+        # Re-run initialization
+        self._init_db()
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
@@ -706,7 +740,11 @@ class DatabaseManager:
     def get_connection(self):
         """Returns a new connection to the database (SQLite o MariaDB)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            return self.mariadb_engine.get_connection()
+            try:
+                return self.mariadb_engine.get_connection()
+            except Exception as e:
+                logger.error(f"Error connecting to MariaDB database: {e}")
+                raise
             
         try:
             conn = sqlite3.connect(self.db_path, timeout=30.0)
@@ -754,7 +792,7 @@ class DatabaseManager:
             cursor.execute(query, params)
             result = cursor.fetchall()
             return result
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
             return None
         finally:
@@ -770,10 +808,13 @@ class DatabaseManager:
             cursor.execute(query, params)
             conn.commit()
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
             if conn:
-                conn.rollback()
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return False
         finally:
             if conn:
@@ -788,10 +829,13 @@ class DatabaseManager:
             cursor.executemany(query, params_list)
             conn.commit()
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Execute_many error: {e} | Query: {query}")
             if conn:
-                conn.rollback()
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
             return False
         finally:
             if conn:
@@ -813,8 +857,8 @@ class DatabaseManager:
                 else:
                     return row[0]
             return None
-        except sqlite3.Error as e:
-            logger.error(f"Scalar query error: {e}")
+        except Exception as e:
+            logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
             return None
         finally:
             if conn:

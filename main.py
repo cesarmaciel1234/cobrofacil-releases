@@ -258,7 +258,8 @@ def start_update_server():
             try:
                 is_master = getattr(db_manager, 'is_master', False)
                 db_path = getattr(db_manager, 'db_path', "") or ""
-                if is_master and db_path and os.path.exists(db_path):
+                db_valido = db_path.startswith("mariadb://") or db_path.startswith("mysql://") or os.path.exists(db_path)
+                if is_master and db_path and db_valido:
                     if not _update_service_running:
                         if iniciar_servidor():
                             _update_service_running = True
@@ -394,6 +395,19 @@ def start_update_discovery_server():
     return thread
 
 if __name__ == "__main__":
+    import sys
+    if "--install-firewall" in sys.argv:
+        import subprocess
+        comandos = [
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP" dir=in action=allow protocol=TCP localport=8000,38001,3306',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out" dir=out action=allow protocol=TCP localport=8000,38001,3306',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP" dir=in action=allow protocol=UDP localport=8000,38001',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_Out" dir=out action=allow protocol=UDP localport=8000,38001'
+        ]
+        for cmd in comandos:
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        sys.exit(0)
+
     # psutil auto-kill disabled for debugging
 
     from src.logger import setup_logger

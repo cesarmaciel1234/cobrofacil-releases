@@ -2,11 +2,11 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog
+    QFileDialog, QTextEdit
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from PyQt5.QtGui import QCursor, QFont, QColor
-import os, shutil, datetime
+import os, shutil, datetime, glob
 from src.config import config
 try:
     from src.base_de_datos.database import db_manager
@@ -1352,8 +1352,9 @@ class DialogoImpuestos(QDialog):
                 
                 if id_val == "NUEVO":
                     # Insertar nuevo
+                    insert_keyword = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
                     db_manager.execute_non_query(
-                        "INSERT OR IGNORE INTO departamentos (nombre, iva) VALUES (?, ?)",
+                        f"{insert_keyword} departamentos (nombre, iva) VALUES (?, ?)",
                         (name_val, iva_val)
                     )
                 else:
@@ -1552,26 +1553,73 @@ class Admin5Configuracion(QWidget):
         else:
             QMessageBox.information(self, "Módulo en Desarrollo", f"La función '{opcion.replace(chr(10), ' ')}' estará disponible en la próxima actualización del sistema.")
 
+class MigrationWorker(QThread):
+    progreso = pyqtSignal(str)
+    terminado = pyqtSignal(int, str, str) # exit_code, stdout, stderr
+
+    def __init__(self, script_path, db_path, isql_path=""):
+        super().__init__()
+        self.script_path = script_path
+        self.db_path = db_path
+        self.isql_path = isql_path
+
+    def run(self):
+        import subprocess, sys
+        try:
+            # Ejecutar con stdout en tiempo real y codificación latin1 para no fallar con caracteres de Windows
+            args = [sys.executable, self.script_path, self.db_path]
+            if self.isql_path:
+                args.append(self.isql_path)
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding='latin1',
+                errors='replace',
+                bufsize=1
+            )
+            
+            # Leer salida en tiempo real
+            stdout_lines = []
+            while True:
+                line = proc.stdout.readline()
+                if not line and proc.poll() is not None:
+                    break
+                if line:
+                    stdout_lines.append(line)
+                    self.progreso.emit(line.strip())
+            
+            # Leer stderr restante
+            stderr = proc.stderr.read()
+            proc.wait()
+            
+            stdout = "".join(stdout_lines)
+            self.terminado.emit(proc.returncode, stdout, stderr)
+        except Exception as e:
+            self.terminado.emit(-1, "", str(e))
+
 class DialogoMigracionEleventa(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Migración desde AbarrotesPDV / Eleventa")
-        self.setFixedSize(500, 300)
+        self.setFixedSize(550, 450)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setContentsMargins(30, 25, 30, 25)
         
         lbl_title = QLabel("📦 Importar Datos de Eleventa")
         lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E3A8A;")
         layout.addWidget(lbl_title)
         
-        lbl_info = QLabel("Este proceso se conectará a tu base de datos anterior y copiará de manera segura:\n\n✔️ Catálogo de Productos\n✔️ Clientes y Deudas (Fiados)\n✔️ Historial completo de Ventas\n\nSelecciona el archivo PDVDATA.FDB de Eleventa:")
+        lbl_info = QLabel("Este proceso se conectará a tu base de datos anterior y copiará de manera segura:\n✔️ Catálogo de Productos  |  ✔️ Clientes y Deudas  |  ✔️ Historial de Ventas")
         lbl_info.setWordWrap(True)
-        lbl_info.setStyleSheet("font-size: 14px; color: #475569;")
+        lbl_info.setStyleSheet("font-size: 13px; color: #475569;")
         layout.addWidget(lbl_info)
         
         path_lay = QHBoxLayout()
-        self.txt_path = QLineEdit(r"C:\Program Files (x86)\AbarrotesPDV\db\PDVDATA.FDB")
+        self.txt_path = QLineEdit("")
+        self.txt_path.setPlaceholderText("Selecciona el archivo PDVDATA.FDB desde tu pendrive o la carpeta actual")
         self.txt_path.setStyleSheet("background: #F1F5F9; border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
         
         btn_browse = QPushButton("📁 Buscar Archivo")
@@ -1583,7 +1631,30 @@ class DialogoMigracionEleventa(QDialog):
         path_lay.addWidget(btn_browse)
         layout.addLayout(path_lay)
         
-        layout.addStretch()
+        isql_lay = QHBoxLayout()
+        self.txt_isql_path = QLineEdit("")
+        self.txt_isql_path.setPlaceholderText("Opcional: selecciona isql.exe si no está en PATH o ruta estándar")
+        self.txt_isql_path.setStyleSheet("background: #F1F5F9; border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
+        
+        btn_isql = QPushButton("📁 Buscar isql.exe")
+        btn_isql.setStyleSheet("background: #E2E8F0; color: #334155; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_isql.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_isql.clicked.connect(self._seleccionar_isql)
+        
+        isql_lay.addWidget(self.txt_isql_path)
+        isql_lay.addWidget(btn_isql)
+        layout.addLayout(isql_lay)
+        
+        self.txt_log = QTextEdit()
+        self.txt_log.setReadOnly(True)
+        self.txt_log.setStyleSheet(
+            "background: #0F172A; color: #34D399; font-family: 'Consolas', monospace; "
+            "font-size: 11px; border-radius: 6px; padding: 8px; border: 1px solid #1E293B;"
+        )
+        self.txt_log.hide()
+        layout.addWidget(self.txt_log)
+        
+        layout.addSpacing(10)
         
         self.btn_run = QPushButton("🚀 Iniciar Migración Total Ahora")
         self.btn_run.setCursor(QCursor(Qt.PointingHandCursor))
@@ -1595,11 +1666,64 @@ class DialogoMigracionEleventa(QDialog):
         self.lbl_status.setStyleSheet("color: #059669; font-weight: bold; font-size: 12px;")
         self.lbl_status.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_status)
+        
+        self.worker = None
 
     def _seleccionar_archivo(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Seleccionar Base de Datos", "C:\\", "Firebird Database (*.FDB);;All Files (*)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Seleccionar Base de Datos", os.path.expanduser("~"), "Firebird Database (*.FDB);;All Files (*)")
         if file_path:
             self.txt_path.setText(os.path.normpath(file_path))
+
+    def _seleccionar_isql(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Seleccionar isql.exe", os.path.expanduser("~"), "Executables (*.exe);;All Files (*)")
+        if file_path:
+            self.txt_isql_path.setText(os.path.normpath(file_path))
+
+    def _auto_detect_isql_path(self, db_path):
+        firebird_root = os.environ.get("FIREBIRD", "")
+        candidates = []
+        if firebird_root:
+            candidates.extend([
+                os.path.join(firebird_root, "bin", "isql.exe"),
+                os.path.join(firebird_root, "isql.exe"),
+            ])
+        candidates.extend([
+            r"C:\Program Files (x86)\AbarrotesPDV\isql.exe",
+            r"C:\Program Files\AbarrotesPDV\isql.exe",
+            r"C:\AbarrotesPDV\isql.exe",
+            r"C:\Program Files\Firebird\bin\isql.exe",
+            r"C:\Program Files (x86)\Firebird\bin\isql.exe",
+            r"C:\Program Files\Firebird\Firebird_3_0\bin\isql.exe",
+            r"C:\Program Files\Firebird\Firebird_4_0\bin\isql.exe",
+            r"C:\Program Files\Firebird\Firebird_5_0\bin\isql.exe",
+            r"C:\Program Files (x86)\Firebird\Firebird_3_0\bin\isql.exe",
+            r"C:\Program Files (x86)\Firebird\Firebird_4_0\bin\isql.exe",
+            r"C:\Program Files (x86)\Firebird\Firebird_5_0\bin\isql.exe",
+        ])
+        if db_path:
+            db_dir = os.path.dirname(db_path)
+            candidates.extend([
+                os.path.join(db_dir, "isql.exe"),
+                os.path.join(db_dir, "..", "isql.exe"),
+                os.path.join(db_dir, "bin", "isql.exe"),
+            ])
+
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                return os.path.normpath(candidate)
+
+        for name in ("isql.exe", "isql"):
+            path = shutil.which(name)
+            if path and os.path.exists(path):
+                return os.path.normpath(path)
+
+        for base in [r"C:\Program Files\Firebird", r"C:\Program Files (x86)\Firebird", r"C:\AbarrotesPDV"]:
+            if os.path.isdir(base):
+                for path in glob.glob(os.path.join(base, "**", "isql.exe"), recursive=True):
+                    if os.path.exists(path):
+                        return os.path.normpath(path)
+
+        return None
 
     def ejecutar_migracion(self):
         db_path = self.txt_path.text().strip()
@@ -1607,19 +1731,71 @@ class DialogoMigracionEleventa(QDialog):
             QMessageBox.critical(self, "Error", "El archivo de base de datos no existe en la ruta especificada.")
             return
 
-        self.lbl_status.setText("⏳ Migrando y calculando historial... Por favor espera...")
+        script_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "04_Respaldos_y_Migraciones",
+            "importar_eleventa.py"
+        )
+        
+        if not os.path.exists(script_path):
+            QMessageBox.critical(self, "Error", f"No se encontró el script de migración en:\n{script_path}")
+            return
+
+        isql_path = self.txt_isql_path.text().strip()
+        auto_detected = False
+        if isql_path:
+            if not os.path.exists(isql_path):
+                QMessageBox.critical(self, "Error", "El ejecutable isql.exe no existe en la ruta especificada.")
+                return
+        else:
+            auto_path = self._auto_detect_isql_path(db_path)
+            if auto_path:
+                isql_path = auto_path
+                auto_detected = True
+                self.txt_isql_path.setText(isql_path)
+            else:
+                candidate_list = [
+                    r"C:\Program Files (x86)\AbarrotesPDV\isql.exe",
+                    r"C:\Program Files\AbarrotesPDV\isql.exe",
+                    r"C:\AbarrotesPDV\isql.exe",
+                    r"C:\Program Files\Firebird\Firebird_3_0\bin\isql.exe",
+                    r"C:\Program Files\Firebird\Firebird_4_0\bin\isql.exe",
+                    r"C:\Program Files (x86)\Firebird\Firebird_3_0\bin\isql.exe",
+                    r"C:\Program Files (x86)\Firebird\Firebird_4_0\bin\isql.exe",
+                ]
+                QMessageBox.critical(
+                    self, "Error",
+                    "No se encontró isql.exe automáticamente. Selecciona el ejecutable o instala Firebird.\n\n" +
+                    "Rutas probadas:\n" + "\n".join(candidate_list)
+                )
+                return
+
+        self.txt_log.clear()
+        self.txt_log.show()
+        if auto_detected:
+            self.txt_log.append(f"isql.exe auto-detectado en: {isql_path}")
+        self.lbl_status.setText("⏳ Migrando base de datos en segundo plano... Por favor espera...")
         self.btn_run.setEnabled(False)
-        self.repaint() 
-        import subprocess, sys
-        script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "importar_eleventa.py")
-        try:
-            res = subprocess.run([sys.executable, script_path, db_path], capture_output=True, text=True)
-            self.lbl_status.setText("✅ ¡Migración Completada con Éxito!")
-            QMessageBox.information(self, "Resultado de Migración", res.stdout[-1500:]) # Mostrar últimos 1500 chars
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
-            self.lbl_status.setText("❌ Ocurrió un error.")
+
+        self.worker = MigrationWorker(script_path, db_path, isql_path)
+        self.worker.progreso.connect(self._on_progreso)
+        self.worker.terminado.connect(self._on_terminado)
+        self.worker.start()
+
+    def _on_progreso(self, line):
+        self.txt_log.append(line)
+        self.txt_log.ensureCursorVisible()
+
+    def _on_terminado(self, exit_code, stdout, stderr):
         self.btn_run.setEnabled(True)
+        if exit_code == 0:
+            self.lbl_status.setText("✅ ¡Migración Completada con Éxito!")
+            QMessageBox.information(self, "Resultado de Migración", "La migración desde Eleventa se completó correctamente.")
+        else:
+            self.lbl_status.setText("❌ Ocurrió un error durante la migración.")
+            error_msg = stderr if stderr else "Código de salida no exitoso."
+            self.txt_log.append(f"\n[ERROR] {error_msg}")
+            QMessageBox.critical(self, "Error de Migración", f"Error de proceso (código {exit_code}):\n{error_msg}")
 
 class DialogoActualizaciones(QDialog):
     def __init__(self, parent=None):

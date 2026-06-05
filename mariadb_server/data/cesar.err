@@ -810,3 +810,1048 @@ Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribut
 2026-06-04 10:18:21 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
 Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
 2026-06-04 10:18:24 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:25:41 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 38504
+2026-06-04 10:25:41 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:25:41 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:25:41 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:25:41 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:25:41 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:25:41 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:25:41 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:25:41 0 [Note] InnoDB: End of log at LSN=563323
+2026-06-04 10:25:41 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 10:25:41 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:25:41 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:25:41 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:25:41 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:25:41 0 [Note] InnoDB: log sequence number 563323; transaction id 6690
+2026-06-04 10:25:41 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:25:41 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:25:41 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:25:41 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:25:41 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:25:41 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:25:41
+2026-06-04 10:25:42 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:25:44 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:41:14 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 37456
+2026-06-04 10:41:14 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:41:14 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:41:14 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:41:14 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:41:14 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:41:14 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:41:14 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:41:14 0 [Note] InnoDB: End of log at LSN=591355
+2026-06-04 10:41:14 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 10:41:14 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:41:14 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:41:14 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:41:14 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:41:14 0 [Note] InnoDB: log sequence number 591355; transaction id 7019
+2026-06-04 10:41:14 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:41:14 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:41:14 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:41:14 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:41:14
+2026-06-04 10:41:14 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:41:14 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:41:14 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:41:17 11 [Warning] Aborted connection 11 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:42:58 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 38484
+2026-06-04 10:42:58 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:42:58 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:42:58 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:42:58 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:42:58 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:42:58 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:42:58 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:42:58 0 [Note] InnoDB: End of log at LSN=594987
+2026-06-04 10:42:58 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 10:42:58 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:42:58 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:42:58 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:42:58 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:42:59 0 [Note] InnoDB: log sequence number 594987; transaction id 7077
+2026-06-04 10:42:59 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:42:59 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:42:59 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:42:59 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:42:59
+2026-06-04 10:42:59 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:42:59 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:42:59 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:43:01 11 [Warning] Aborted connection 11 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:47:41 751 [Warning] Aborted connection 751 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:53:05 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 26972
+2026-06-04 10:53:05 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:53:05 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:53:05 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:53:05 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:53:05 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:53:05 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:53:06 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:53:06 0 [Note] InnoDB: End of log at LSN=616010
+2026-06-04 10:53:06 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 10:53:06 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:53:06 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:53:06 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:53:06 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:53:06 0 [Note] InnoDB: log sequence number 616010; transaction id 7377
+2026-06-04 10:53:06 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:53:06 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:53:06 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:53:06 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:53:06
+2026-06-04 10:53:06 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:53:06 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:53:06 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:53:09 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:53:54 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 31792
+2026-06-04 10:53:54 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:53:54 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:53:54 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:53:54 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:53:54 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:53:54 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:53:54 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:53:54 0 [Note] InnoDB: End of log at LSN=617506
+2026-06-04 10:53:54 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 10:53:54 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:53:54 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:53:54 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:53:54 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:53:55 0 [Note] InnoDB: log sequence number 617506; transaction id 7403
+2026-06-04 10:53:55 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:53:55 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:53:55 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:53:55 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:53:55
+2026-06-04 10:53:55 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:53:55 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:53:55 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:53:57 13 [Warning] Aborted connection 13 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 10:57:44 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 4636
+2026-06-04 10:57:44 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 10:57:44 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 10:57:44 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 10:57:44 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 10:57:44 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 10:57:44 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 10:57:44 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 10:57:44 0 [Note] InnoDB: End of log at LSN=627812
+2026-06-04 10:57:44 0 [Note] InnoDB: To recover: 57 pages
+2026-06-04 10:57:44 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 10:57:44 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 10:57:44 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 10:57:44 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 10:57:44 0 [Note] InnoDB: log sequence number 627812; transaction id 7555
+2026-06-04 10:57:44 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 10:57:44 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 10:57:44 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 10:57:44 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 10:57:44
+2026-06-04 10:57:45 0 [Note] Server socket created on IP: '::'.
+2026-06-04 10:57:45 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 10:57:45 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 10:57:48 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:02:46 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 33364
+2026-06-04 11:02:46 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:02:46 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:02:46 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:02:46 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:02:46 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:02:46 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:02:46 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:02:46 0 [Note] InnoDB: End of log at LSN=635087
+2026-06-04 11:02:46 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 11:02:46 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:02:46 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:02:46 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:02:46 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:02:46 0 [Note] InnoDB: log sequence number 635087; transaction id 7658
+2026-06-04 11:02:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:02:46 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:02:46 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:02:46 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:02:46
+2026-06-04 11:02:46 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:02:46 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:02:47 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:02:49 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:02:55 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 26216
+2026-06-04 11:02:55 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:02:55 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:02:55 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:02:55 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:02:55 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:02:55 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:02:55 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:02:55 0 [Note] InnoDB: End of log at LSN=635171
+2026-06-04 11:02:55 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 11:02:55 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:02:55 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:02:55 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:02:55 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:02:55 0 [Note] InnoDB: log sequence number 635171; transaction id 7658
+2026-06-04 11:02:55 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:02:55 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:02:55 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:02:55 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:02:55
+2026-06-04 11:02:55 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:02:55 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:02:56 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:02:58 7 [Warning] Aborted connection 7 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:08:32 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 7564
+2026-06-04 11:08:32 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:08:32 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:08:32 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:08:32 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:08:32 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:08:32 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:08:32 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:08:32 0 [Note] InnoDB: End of log at LSN=650876
+2026-06-04 11:08:32 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 11:08:32 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:08:32 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:08:32 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:08:32 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:08:32 0 [Note] InnoDB: log sequence number 650876; transaction id 7877
+2026-06-04 11:08:32 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:08:32 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:08:32 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:08:32 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:08:32
+2026-06-04 11:08:32 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:08:32 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:08:32 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:08:35 11 [Warning] Aborted connection 11 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:12:47 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 24424
+2026-06-04 11:12:47 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:12:47 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:12:47 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:12:47 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:12:47 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:12:47 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:12:47 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:12:47 0 [Note] InnoDB: End of log at LSN=659491
+2026-06-04 11:12:47 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 11:12:47 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:12:47 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:12:47 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:12:47 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:12:47 0 [Note] InnoDB: log sequence number 659491; transaction id 8000
+2026-06-04 11:12:47 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:12:47 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:12:47 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:12:47 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:12:47
+2026-06-04 11:12:47 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:12:47 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:12:47 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:12:50 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:20:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 31232
+2026-06-04 11:20:17 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:20:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:20:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:20:17 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:20:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:20:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:20:17 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:20:17 0 [Note] InnoDB: End of log at LSN=669167
+2026-06-04 11:20:17 0 [Note] InnoDB: To recover: 58 pages
+2026-06-04 11:20:17 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:20:17 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:20:17 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:20:17 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:20:17 0 [Note] InnoDB: log sequence number 669167; transaction id 8139
+2026-06-04 11:20:17 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:20:17 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:20:17 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:20:17 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:20:17
+2026-06-04 11:20:17 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:20:17 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:20:17 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:20:20 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:30:28 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 2092
+2026-06-04 11:30:28 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:30:28 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:30:28 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:30:28 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:30:28 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:30:28 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:30:28 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:30:28 0 [Note] InnoDB: End of log at LSN=3313457
+2026-06-04 11:30:28 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:30:28 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:30:28 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:30:28 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:30:28 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:30:28 0 [Note] InnoDB: log sequence number 3313457; transaction id 8310
+2026-06-04 11:30:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:30:28 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:30:28 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:30:28 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:30:28
+2026-06-04 11:30:28 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:30:28 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:30:28 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:30:31 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:38:22 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 11816
+2026-06-04 11:38:22 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:38:22 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:38:22 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:38:22 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:38:22 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:38:22 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:38:22 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:38:22 0 [Note] InnoDB: End of log at LSN=3324906
+2026-06-04 11:38:22 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:38:22 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:38:22 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:38:22 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:38:22 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:38:22 0 [Note] InnoDB: log sequence number 3324906; transaction id 8476
+2026-06-04 11:38:22 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:38:22 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:38:22 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:38:22 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:38:22
+2026-06-04 11:38:22 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:38:22 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:38:22 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:38:25 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:41:58 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 39560
+2026-06-04 11:41:59 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:41:59 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:41:59 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:41:59 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:41:59 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:41:59 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:41:59 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:41:59 0 [Note] InnoDB: End of log at LSN=3330324
+2026-06-04 11:41:59 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:41:59 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:41:59 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:41:59 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:41:59 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:41:59 0 [Note] InnoDB: log sequence number 3330324; transaction id 8557
+2026-06-04 11:41:59 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:41:59 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:41:59 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:41:59 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:41:59
+2026-06-04 11:41:59 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:41:59 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:41:59 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:42:01 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:46:21 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 30204
+2026-06-04 11:46:21 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:46:21 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:46:21 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:46:21 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:46:22 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:46:22 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:46:22 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:46:22 0 [Note] InnoDB: End of log at LSN=3336080
+2026-06-04 11:46:22 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:46:22 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:46:22 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:46:22 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:46:22 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:46:22 0 [Note] InnoDB: log sequence number 3336080; transaction id 8643
+2026-06-04 11:46:22 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:46:22 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:46:22 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:46:22 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:46:22
+2026-06-04 11:46:22 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:46:22 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:46:22 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:46:25 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:51:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 27040
+2026-06-04 11:51:17 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:51:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:51:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:51:17 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:51:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:51:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:51:17 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:51:17 0 [Note] InnoDB: End of log at LSN=3338994
+2026-06-04 11:51:17 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:51:17 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:51:17 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:51:17 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:51:17 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:51:17 0 [Note] InnoDB: log sequence number 3338994; transaction id 8689
+2026-06-04 11:51:17 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:51:17 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:51:17 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:51:17 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:51:17
+2026-06-04 11:51:17 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:51:17 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:51:17 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:51:20 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 11:57:42 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 38232
+2026-06-04 11:57:42 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 11:57:42 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 11:57:42 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 11:57:42 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 11:57:42 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 11:57:42 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 11:57:42 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 11:57:42 0 [Note] InnoDB: End of log at LSN=3348329
+2026-06-04 11:57:42 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 11:57:42 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 11:57:42 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 11:57:42 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 11:57:42 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 11:57:42 0 [Note] InnoDB: log sequence number 3348329; transaction id 8825
+2026-06-04 11:57:42 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 11:57:42 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 11:57:42 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 11:57:42 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 11:57:42
+2026-06-04 11:57:42 0 [Note] Server socket created on IP: '::'.
+2026-06-04 11:57:42 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 11:57:42 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 11:57:45 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 12:01:20 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 22416
+2026-06-04 12:01:20 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 12:01:20 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 12:01:20 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 12:01:20 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 12:01:20 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 12:01:20 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 12:01:20 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 12:01:20 0 [Note] InnoDB: End of log at LSN=3353386
+2026-06-04 12:01:20 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 12:01:20 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 12:01:20 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 12:01:20 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 12:01:20 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 12:01:20 0 [Note] InnoDB: log sequence number 3353386; transaction id 8901
+2026-06-04 12:01:20 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 12:01:20 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 12:01:20 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 12:01:20 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 12:01:20
+2026-06-04 12:01:20 0 [Note] Server socket created on IP: '::'.
+2026-06-04 12:01:20 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 12:01:21 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 12:01:23 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:06:21 4363 [Warning] Aborted connection 4363 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:07:26 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 18980
+2026-06-04 15:07:26 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:07:26 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:07:26 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:07:26 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:07:26 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:07:26 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:07:26 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:07:26 0 [Note] InnoDB: End of log at LSN=3456095
+2026-06-04 15:07:26 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:07:26 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:07:26 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:07:26 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:07:26 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:07:26 0 [Note] InnoDB: log sequence number 3456095; transaction id 10352
+2026-06-04 15:07:26 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:07:26 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:07:26 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:07:26 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:07:26
+2026-06-04 15:07:26 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:07:26 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:07:27 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:07:29 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:15:44 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 10680
+2026-06-04 15:15:44 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:15:44 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:15:44 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:15:44 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:15:44 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:15:44 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:15:44 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:15:44 0 [Note] InnoDB: End of log at LSN=3467553
+2026-06-04 15:15:44 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:15:44 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:15:44 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:15:44 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:15:44 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:15:44 0 [Note] InnoDB: log sequence number 3467553; transaction id 10520
+2026-06-04 15:15:44 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:15:44 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:15:44 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:15:44 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:15:44
+2026-06-04 15:15:44 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:15:44 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:15:44 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:15:47 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:20:54 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 31056
+2026-06-04 15:20:54 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:20:54 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:20:54 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:20:54 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:20:54 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:20:54 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:20:54 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:20:54 0 [Note] InnoDB: End of log at LSN=3474035
+2026-06-04 15:20:54 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:20:54 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:20:54 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:20:54 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:20:54 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:20:54 0 [Note] InnoDB: log sequence number 3474035; transaction id 10617
+2026-06-04 15:20:54 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:20:54 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:20:54 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:20:54 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:20:54
+2026-06-04 15:20:54 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:20:54 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:20:54 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:20:57 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:24:02 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 13408
+2026-06-04 15:24:02 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:24:02 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:24:02 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:24:02 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:24:02 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:24:02 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:24:02 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:24:02 0 [Note] InnoDB: End of log at LSN=3478377
+2026-06-04 15:24:02 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:24:02 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:24:02 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:24:02 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:24:02 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:24:02 0 [Note] InnoDB: log sequence number 3478377; transaction id 10683
+2026-06-04 15:24:02 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:24:02 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:24:02 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:24:02 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:24:02
+2026-06-04 15:24:02 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:24:02 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:24:02 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:24:05 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:25:28 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 18820
+2026-06-04 15:25:28 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:25:28 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:25:28 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:25:28 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:25:28 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:25:28 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:25:28 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:25:29 0 [Note] InnoDB: End of log at LSN=3480580
+2026-06-04 15:25:29 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:25:29 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:25:29 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:25:29 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:25:29 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:25:29 0 [Note] InnoDB: log sequence number 3480580; transaction id 10720
+2026-06-04 15:25:29 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:25:29 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:25:29 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:25:29 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:25:29
+2026-06-04 15:25:29 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:25:29 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:25:29 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:25:31 9 [Warning] Aborted connection 9 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:25:59 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 42764
+2026-06-04 15:25:59 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:25:59 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:25:59 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:25:59 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:25:59 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:25:59 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:25:59 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:25:59 0 [Note] InnoDB: End of log at LSN=3480664
+2026-06-04 15:25:59 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:25:59 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:25:59 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:25:59 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:25:59 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:25:59 0 [Note] InnoDB: log sequence number 3480664; transaction id 10720
+2026-06-04 15:25:59 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:25:59 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:25:59 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:25:59 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:25:59
+2026-06-04 15:25:59 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:25:59 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:25:59 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:26:02 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:28:10 135 [Warning] Aborted connection 135 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-04 15:28:45 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 9224
+2026-06-04 15:28:45 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-04 15:28:45 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-04 15:28:45 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-04 15:28:45 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-04 15:28:45 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-04 15:28:45 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-04 15:28:45 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-04 15:28:45 0 [Note] InnoDB: End of log at LSN=3483936
+2026-06-04 15:28:45 0 [Note] InnoDB: To recover: 188 pages
+2026-06-04 15:28:45 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-04 15:28:45 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-04 15:28:46 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-04 15:28:46 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-04 15:28:46 0 [Note] InnoDB: log sequence number 3483936; transaction id 10772
+2026-06-04 15:28:46 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-04 15:28:46 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-04 15:28:46 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-04 15:28:46 0 [Note] InnoDB: Buffer pool(s) load completed at 260604 15:28:46
+2026-06-04 15:28:46 0 [Note] Server socket created on IP: '::'.
+2026-06-04 15:28:46 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-04 15:28:46 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-04 15:28:48 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:24:07 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 22464
+2026-06-05  0:24:07 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:24:07 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:24:07 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:24:07 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:24:07 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:24:07 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:24:07 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:24:07 0 [Note] InnoDB: End of log at LSN=3505336
+2026-06-05  0:24:07 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:24:07 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:24:07 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:24:07 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:24:07 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:24:07 0 [Note] InnoDB: log sequence number 3505336; transaction id 11079
+2026-06-05  0:24:07 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:24:07 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:24:07 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:24:07 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:24:07
+2026-06-05  0:24:07 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:24:07 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:24:07 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:24:10 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:27:58 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 29240
+2026-06-05  0:27:58 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:27:58 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:27:58 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:27:58 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:27:58 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:27:58 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:27:58 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:27:58 0 [Note] InnoDB: End of log at LSN=3510660
+2026-06-05  0:27:58 0 [Note] InnoDB: To recover: 187 pages
+2026-06-05  0:27:58 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:27:58 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:27:58 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:27:58 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:27:58 0 [Note] InnoDB: log sequence number 3510660; transaction id 11160
+2026-06-05  0:27:58 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:27:58 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:27:58 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:27:58 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:27:58
+2026-06-05  0:27:58 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:27:58 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:27:58 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:28:01 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:29:27 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 24676
+2026-06-05  0:29:27 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:29:27 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:29:27 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:29:27 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:29:27 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:29:27 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:29:27 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:29:27 0 [Note] InnoDB: End of log at LSN=3512605
+2026-06-05  0:29:27 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:29:27 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:29:27 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:29:27 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:29:27 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:29:27 0 [Note] InnoDB: log sequence number 3512605; transaction id 11194
+2026-06-05  0:29:27 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:29:27 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:29:27 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:29:27 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:29:27
+2026-06-05  0:29:27 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:29:27 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:29:27 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:29:31 11 [Warning] Aborted connection 11 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:29:50 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 32780
+2026-06-05  0:29:50 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:29:50 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:29:50 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:29:50 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:29:50 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:29:50 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:29:50 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:29:50 0 [Note] InnoDB: End of log at LSN=3513492
+2026-06-05  0:29:50 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:29:50 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:29:50 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:29:50 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:29:50 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:29:50 0 [Note] InnoDB: log sequence number 3513492; transaction id 11209
+2026-06-05  0:29:50 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:29:50 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:29:50 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:29:50 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:29:50
+2026-06-05  0:29:50 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:29:50 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:29:50 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:29:53 13 [Warning] Aborted connection 13 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:31:18 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35356
+2026-06-05  0:31:18 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:31:18 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:31:18 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:31:18 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:31:18 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:31:18 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:31:18 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:31:18 0 [Note] InnoDB: End of log at LSN=3515700
+2026-06-05  0:31:18 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:31:18 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:31:18 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:31:18 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:31:18 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:31:18 0 [Note] InnoDB: log sequence number 3515700; transaction id 11247
+2026-06-05  0:31:18 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:31:18 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:31:18 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:31:18 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:31:18
+2026-06-05  0:31:18 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:31:18 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:31:18 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:31:22 13 [Warning] Aborted connection 13 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:32:17 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 33308
+2026-06-05  0:32:17 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:32:17 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:32:17 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:32:17 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:32:17 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:32:17 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:32:18 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:32:18 0 [Note] InnoDB: End of log at LSN=3517197
+2026-06-05  0:32:18 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:32:18 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:32:18 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:32:18 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:32:18 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:32:18 0 [Note] InnoDB: log sequence number 3517197; transaction id 11275
+2026-06-05  0:32:18 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:32:18 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:32:18 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:32:18 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:32:18
+2026-06-05  0:32:18 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:32:18 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:32:18 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:39:54 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 20348
+2026-06-05  0:39:54 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:39:54 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:39:54 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:39:54 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:39:54 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:39:54 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:39:54 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:39:54 0 [Note] InnoDB: End of log at LSN=3517281
+2026-06-05  0:39:54 0 [Note] InnoDB: To recover: 188 pages
+2026-06-05  0:39:54 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:39:54 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:39:54 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:39:54 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:39:54 0 [Note] InnoDB: log sequence number 3517281; transaction id 11275
+2026-06-05  0:39:54 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:39:54 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:39:54 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:39:54 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:39:54
+2026-06-05  0:39:54 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:39:54 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:39:54 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:39:57 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  0:47:52 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 38896
+2026-06-05  0:47:52 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  0:47:52 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  0:47:52 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  0:47:52 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  0:47:52 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  0:47:52 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  0:47:52 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  0:47:52 0 [Note] InnoDB: End of log at LSN=3562010
+2026-06-05  0:47:52 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  0:47:52 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  0:47:52 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  0:47:52 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  0:47:52 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  0:47:52 0 [Note] InnoDB: log sequence number 3562010; transaction id 11603
+2026-06-05  0:47:52 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  0:47:52 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  0:47:52 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  0:47:52 0 [Note] Server socket created on IP: '::'.
+2026-06-05  0:47:52 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  0:47:52 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  0:47:52
+2026-06-05  0:47:53 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  0:47:54 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  1:05:30 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 39432
+2026-06-05  1:05:30 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  1:05:30 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  1:05:30 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  1:05:30 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  1:05:30 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  1:05:30 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  1:05:30 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  1:05:30 0 [Note] InnoDB: End of log at LSN=3592219
+2026-06-05  1:05:30 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  1:05:30 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  1:05:30 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  1:05:30 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  1:05:30 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  1:05:30 0 [Note] InnoDB: log sequence number 3592219; transaction id 12216
+2026-06-05  1:05:30 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  1:05:30 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  1:05:30 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  1:05:30 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  1:05:30
+2026-06-05  1:05:30 0 [Note] Server socket created on IP: '::'.
+2026-06-05  1:05:30 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  1:05:30 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  1:05:33 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  1:07:39 133 [Warning] Aborted connection 133 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  1:08:10 170 [Warning] Aborted connection 170 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  1:09:01 229 [Warning] Aborted connection 229 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  8:37:59 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 35624
+2026-06-05  8:37:59 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  8:37:59 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  8:37:59 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  8:37:59 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  8:37:59 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  8:37:59 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  8:37:59 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  8:37:59 0 [Note] InnoDB: End of log at LSN=3607430
+2026-06-05  8:37:59 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  8:37:59 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  8:37:59 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  8:37:59 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  8:37:59 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  8:37:59 0 [Note] InnoDB: log sequence number 3607430; transaction id 12435
+2026-06-05  8:37:59 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  8:37:59 0 [Note] InnoDB: Loading buffer pool(s) from c:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  8:37:59 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  8:37:59 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  8:37:59
+2026-06-05  8:37:59 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  8:37:59 0 [Warning] 'user' entry 'root@cesar' ignored in --skip-name-resolve mode.
+2026-06-05  8:37:59 0 [Warning] 'proxies_priv' entry '@% root@cesar' ignored in --skip-name-resolve mode.
+2026-06-05  8:38:00 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  8:39:10 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 25028
+2026-06-05  8:39:10 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  8:39:10 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  8:39:10 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  8:39:10 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  8:39:10 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  8:39:10 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  8:39:10 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  8:39:10 0 [Note] InnoDB: End of log at LSN=3607514
+2026-06-05  8:39:10 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  8:39:10 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  8:39:10 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  8:39:10 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  8:39:10 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  8:39:10 0 [Note] InnoDB: log sequence number 3607514; transaction id 12435
+2026-06-05  8:39:10 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  8:39:10 0 [Note] InnoDB: Loading buffer pool(s) from c:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  8:39:10 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  8:39:10 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  8:39:10
+2026-06-05  8:39:10 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  8:39:10 0 [Warning] 'user' entry 'root@cesar' ignored in --skip-name-resolve mode.
+2026-06-05  8:39:10 0 [Warning] 'proxies_priv' entry '@% root@cesar' ignored in --skip-name-resolve mode.
+2026-06-05  8:39:10 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  8:40:28 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 29024
+2026-06-05  8:40:28 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  8:40:28 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  8:40:28 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  8:40:28 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  8:40:28 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  8:40:28 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  8:40:28 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  8:40:28 0 [Note] InnoDB: End of log at LSN=3607598
+2026-06-05  8:40:28 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  8:40:28 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  8:40:28 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  8:40:28 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  8:40:28 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  8:40:28 0 [Note] InnoDB: log sequence number 3607598; transaction id 12435
+2026-06-05  8:40:28 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  8:40:28 0 [Note] InnoDB: Loading buffer pool(s) from c:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  8:40:28 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  8:40:28 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  8:40:28
+2026-06-05  8:40:28 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  8:40:28 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  8:42:26 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 40016
+2026-06-05  8:42:26 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  8:42:26 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  8:42:26 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  8:42:26 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  8:42:26 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  8:42:26 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  8:42:26 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  8:42:26 0 [Note] InnoDB: End of log at LSN=3607682
+2026-06-05  8:42:26 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  8:42:26 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  8:42:26 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  8:42:26 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  8:42:26 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  8:42:26 0 [Note] InnoDB: log sequence number 3607682; transaction id 12435
+2026-06-05  8:42:26 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  8:42:26 0 [Note] InnoDB: Loading buffer pool(s) from c:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  8:42:26 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  8:42:26 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  8:42:26
+2026-06-05  8:42:26 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  8:42:26 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  9:07:08 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 23712
+2026-06-05  9:07:08 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05  9:07:08 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05  9:07:08 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05  9:07:08 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05  9:07:08 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05  9:07:08 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05  9:07:08 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05  9:07:08 0 [Note] InnoDB: End of log at LSN=3607766
+2026-06-05  9:07:08 0 [Note] InnoDB: To recover: 190 pages
+2026-06-05  9:07:08 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05  9:07:08 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05  9:07:08 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05  9:07:08 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05  9:07:08 0 [Note] InnoDB: log sequence number 3607766; transaction id 12435
+2026-06-05  9:07:08 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05  9:07:08 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05  9:07:08 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05  9:07:08 0 [Note] InnoDB: Buffer pool(s) load completed at 260605  9:07:08
+2026-06-05  9:07:08 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05  9:07:08 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05  9:07:13 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:13:31 8 [Warning] Aborted connection 8 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:14:30 85 [Warning] Aborted connection 85 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:15:15 127 [Warning] Aborted connection 127 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:16:58 130 [Warning] Aborted connection 130 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:17:50 133 [Warning] Aborted connection 133 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:18:50 136 [Warning] Aborted connection 136 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:19:54 223 [Warning] Aborted connection 223 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:22:14 443 [Warning] Aborted connection 443 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:22:33 446 [Warning] Aborted connection 446 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:30:29 912 [Warning] Aborted connection 912 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:31:04 915 [Warning] Aborted connection 915 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:31:51 985 [Warning] Aborted connection 985 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:34:38 1165 [Warning] Aborted connection 1165 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05  9:43:07 1449 [Warning] Aborted connection 1449 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:07:18 2825 [Warning] Aborted connection 2825 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:11:11 2828 [Warning] Aborted connection 2828 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:15:54 3449 [Warning] Aborted connection 3449 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:20:25 3452 [Warning] Aborted connection 3452 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:36:11 5006 [Warning] Aborted connection 5006 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:49:23 5937 [Warning] Aborted connection 5937 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 10:53:18 21535 [Warning] Aborted connection 21535 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:10:58 202152 [Warning] Aborted connection 202152 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:11:01 202422 [Warning] Aborted connection 202422 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:12:34 202522 [Warning] Aborted connection 202522 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:31:30 204303 [Warning] Aborted connection 204303 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:39:41 0 [Note] Starting MariaDB 10.11.7-MariaDB source revision 87e13722a95af5d9378d990caf48cb6874439347 as process 5320
+2026-06-05 11:39:41 0 [Note] InnoDB: Compressed tables use zlib 1.3
+2026-06-05 11:39:41 0 [Note] InnoDB: Number of transaction pools: 1
+2026-06-05 11:39:41 0 [Note] InnoDB: Using crc32 + pclmulqdq instructions
+2026-06-05 11:39:41 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+2026-06-05 11:39:41 0 [Note] InnoDB: Completed initialization of buffer pool
+2026-06-05 11:39:41 0 [Note] InnoDB: File system buffers for log disabled (block size=4096 bytes)
+2026-06-05 11:39:42 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=46846
+2026-06-05 11:39:42 0 [Note] InnoDB: Multi-batch recovery needed at LSN 38594165
+2026-06-05 11:39:42 0 [Note] InnoDB: End of log at LSN=42139462
+2026-06-05 11:39:42 0 [Note] InnoDB: To recover: LSN 38608389/42139462; 694 pages
+2026-06-05 11:39:43 0 [Note] InnoDB: To recover: 166 pages
+2026-06-05 11:39:43 0 [Note] InnoDB: 128 rollback segments are active.
+2026-06-05 11:39:43 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+2026-06-05 11:39:43 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+2026-06-05 11:39:43 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+2026-06-05 11:39:43 0 [Note] InnoDB: log sequence number 42139462; transaction id 201217
+2026-06-05 11:39:43 0 [Note] InnoDB: Loading buffer pool(s) from C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\data\ib_buffer_pool
+2026-06-05 11:39:43 0 [Note] Plugin 'FEEDBACK' is disabled.
+2026-06-05 11:39:43 0 [Note] mysqld.exe: SSPI: using principal name 'localhost', mech 'Negotiate'
+2026-06-05 11:39:43 0 [Note] InnoDB: Buffer pool(s) load completed at 260605 11:39:43
+2026-06-05 11:39:43 0 [Note] Server socket created on IP: '0.0.0.0'.
+2026-06-05 11:39:43 0 [Note] C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\mariadb_server\bin\mysqld.exe: ready for connections.
+Version: '10.11.7-MariaDB'  socket: ''  port: 3306  mariadb.org binary distribution
+2026-06-05 11:39:45 5 [Warning] Aborted connection 5 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:39:55 7 [Warning] Aborted connection 7 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 11:40:41 10 [Warning] Aborted connection 10 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 14:02:40 215 [Warning] Aborted connection 215 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 14:18:31 218 [Warning] Aborted connection 218 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 14:58:01 961 [Warning] Aborted connection 961 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 14:58:02 962 [Warning] Aborted connection 962 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 14:58:02 963 [Warning] Aborted connection 963 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 14:58:03 964 [Warning] Aborted connection 964 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 14:58:03 965 [Warning] Aborted connection 965 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:12:28 966 [Warning] Aborted connection 966 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:16:54 8041 [Warning] Host name 'cesar.fibertel.com.ar' could not be resolved: Host desconocido. 
+2026-06-05 15:16:54 8041 [Warning] Aborted connection 8041 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 15:16:57 8208 [Warning] Aborted connection 8208 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 15:17:00 8358 [Warning] Aborted connection 8358 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 15:18:13 12037 [Warning] Aborted connection 12037 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:22 12494 [Warning] Aborted connection 12494 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:33 13015 [Warning] Aborted connection 13015 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:33 13024 [Warning] Aborted connection 13024 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:33 13034 [Warning] Aborted connection 13034 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:33 13042 [Warning] Aborted connection 13042 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:34 13049 [Warning] Aborted connection 13049 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:35 13133 [Warning] Aborted connection 13133 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:36 13170 [Warning] Aborted connection 13170 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:36 13187 [Warning] Aborted connection 13187 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13200 [Warning] Aborted connection 13200 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13212 [Warning] Aborted connection 13212 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13220 [Warning] Aborted connection 13220 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13227 [Warning] Aborted connection 13227 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13233 [Warning] Aborted connection 13233 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:37 13241 [Warning] Aborted connection 13241 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:38 13253 [Warning] Aborted connection 13253 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:39 13320 [Warning] Aborted connection 13320 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:39 13331 [Warning] Aborted connection 13331 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:39 13344 [Warning] Aborted connection 13344 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:40 13351 [Warning] Aborted connection 13351 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:40 13388 [Warning] Aborted connection 13388 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:42 13454 [Warning] Aborted connection 13454 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:42 13463 [Warning] Aborted connection 13463 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:18:42 13477 [Warning] Aborted connection 13477 to db: 'unconnected' user: 'unauthenticated' host: 'DESKTOP-7Q2Q4VD' (This connection closed normally without authentication)
+2026-06-05 15:20:45 19477 [Warning] Aborted connection 19477 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 15:23:48 28393 [Warning] Aborted connection 28393 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 15:25:01 32364 [Warning] Aborted connection 32364 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 15:49:00 104578 [Warning] Aborted connection 104578 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 15:51:28 104579 [Warning] Aborted connection 104579 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:03:30 104580 [Warning] Aborted connection 104580 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:03:48 104583 [Warning] Aborted connection 104583 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:04:53 104639 [Warning] Aborted connection 104639 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:05:23 104640 [Warning] Aborted connection 104640 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:05:25 104641 [Warning] Aborted connection 104641 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:05:27 104642 [Warning] Aborted connection 104642 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:09:55 104645 [Warning] Aborted connection 104645 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:23:05 105361 [Warning] Aborted connection 105361 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:35:19 105364 [Warning] Aborted connection 105364 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:37:53 105525 [Warning] Aborted connection 105525 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:40:30 105675 [Warning] Aborted connection 105675 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:40:33 105677 [Warning] Aborted connection 105677 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:48:32 106126 [Warning] Aborted connection 106126 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)
+2026-06-05 16:49:47 106196 [Warning] Aborted connection 106196 to db: 'punpro_db' user: 'root' host: 'localhost' (Got an error reading communication packets)
+2026-06-05 16:49:48 106197 [Warning] Aborted connection 106197 to db: 'unconnected' user: 'unauthenticated' host: '192.168.0.20' (This connection closed normally without authentication)

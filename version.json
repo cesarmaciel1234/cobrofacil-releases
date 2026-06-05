@@ -1,14 +1,26 @@
 {
-  "app_version": "3100.00",
+  "app_version": "31000.0",
   "channel": "stable",
-  "build_date": "2026-06-03 18:44:10",
+  "build_date": "2026-06-05 16:35:16",
   "server_host": "cesar",
   "modules": {
+    "clean_tables.py": {
+      "version": "1.0.0",
+      "checksum": "b8d6ddb329ed5022a5e729576ff50034",
+      "channel": "stable",
+      "size": 555
+    },
+    "inspect_sqlite.py": {
+      "version": "1.0.0",
+      "checksum": "d51df3b590096c2d666f93d30cd5909a",
+      "channel": "stable",
+      "size": 850
+    },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "821f4c8fbabdcb8c44feda3e7a686a57",
+      "checksum": "9ef13891ff6dd9aa41b57291b7c3959a",
       "channel": "stable",
-      "size": 16435
+      "size": 17357
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -96,9 +108,9 @@
     },
     "03_Actualizaciones_y_Red/crear_actualizacion_lan.py": {
       "version": "1.0.0",
-      "checksum": "e7e11e6a94105ccee1c679f52d30c5ea",
+      "checksum": "bbdf152385f9ed65477e805531b6ba1a",
       "channel": "stable",
-      "size": 2075
+      "size": 2202
     },
     "03_Actualizaciones_y_Red/detect_ports.py": {
       "version": "1.0.0",
@@ -108,15 +120,21 @@
     },
     "04_Respaldos_y_Migraciones/importar_eleventa.py": {
       "version": "1.0.0",
-      "checksum": "01fd7be5be5ac04d2e6463ab2b879e85",
+      "checksum": "12c46726daae3dccde690e31ddc014d3",
       "channel": "stable",
-      "size": 9909
+      "size": 16887
     },
     "04_Respaldos_y_Migraciones/init_db.py": {
       "version": "1.0.0",
       "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
       "channel": "stable",
       "size": 2542
+    },
+    "04_Respaldos_y_Migraciones/migrar_sqlite_a_mariadb.py": {
+      "version": "1.0.0",
+      "checksum": "6ac93f62ed5ffcc0aa848b7b68d8e6a4",
+      "channel": "stable",
+      "size": 8832
     },
     "04_Respaldos_y_Migraciones/RespaldoAutomatico.py": {
       "version": "1.0.0",
@@ -132,573 +150,45 @@
     },
     "chatbot/chatbot/chat_bot.py": {
       "version": "1.0.0",
-      "checksum": "439a550ed866ca728163cebaeb00f3a0",
+      "checksum": "25d45625a4043012af412bb71eaaf279",
       "channel": "stable",
-      "size": 27731
+      "size": 28342
     },
-    "CobroFacil_POS_v3010_TEMP/Actualizador.py": {
+    "IPython/extensions/autoreload.py": {
       "version": "1.0.0",
-      "checksum": "302c372dacebdecf5b5b4a50e789a08c",
+      "checksum": "5cdf787c765599f4e2f899910b3abe89",
       "channel": "stable",
-      "size": 4809
+      "size": 31724
     },
-    "CobroFacil_POS_v3010_TEMP/ConfiguraFirewall.py": {
+    "IPython/extensions/storemagic.py": {
       "version": "1.0.0",
-      "checksum": "1a45f79e0cdb8c777510d044f4320888",
+      "checksum": "a327c075d0c6b382877a65d7e92b6a9b",
       "channel": "stable",
-      "size": 2640
+      "size": 8168
     },
-    "CobroFacil_POS_v3010_TEMP/crear_actualizacion_lan.py": {
+    "IPython/extensions/__init__.py": {
       "version": "1.0.0",
-      "checksum": "5ad230dd0970088ccee59616465c1be5",
+      "checksum": "23d2cb54131f0dfc5f9c5155fc142226",
       "channel": "stable",
-      "size": 2077
+      "size": 78
     },
-    "CobroFacil_POS_v3010_TEMP/detect_ports.py": {
+    "IPython/extensions/deduperreload/deduperreload.py": {
       "version": "1.0.0",
-      "checksum": "8c0baef0ae614bf2a42c2d1c2e96bea8",
+      "checksum": "73869d0851a90548100c9b8b7361562b",
       "channel": "stable",
-      "size": 520
+      "size": 25277
     },
-    "CobroFacil_POS_v3010_TEMP/DrHouse_Diagnostico.py": {
+    "IPython/extensions/deduperreload/deduperreload_patching.py": {
       "version": "1.0.0",
-      "checksum": "eca8674d87ff0b4b696e9b038d57e60e",
+      "checksum": "753169ac1144bf77cb586f116a037259",
       "channel": "stable",
-      "size": 6177
+      "size": 5098
     },
-    "CobroFacil_POS_v3010_TEMP/empaquetar_para_firebase.py": {
-      "version": "1.0.0",
-      "checksum": "c09c19f22d776e554b0c69a0130e4577",
-      "channel": "stable",
-      "size": 2096
-    },
-    "CobroFacil_POS_v3010_TEMP/Generador_Licencias.py": {
-      "version": "1.0.0",
-      "checksum": "a948a441aca8906fc61f9360109f6fbf",
-      "channel": "stable",
-      "size": 1136
-    },
-    "CobroFacil_POS_v3010_TEMP/generar_version.py": {
-      "version": "1.0.0",
-      "checksum": "14322d0992ea25cdc6b8611a50e095fd",
-      "channel": "stable",
-      "size": 2858
-    },
-    "CobroFacil_POS_v3010_TEMP/get-pip.py": {
-      "version": "1.0.0",
-      "checksum": "5d102c8b46de356ff8ae24878e0762d0",
-      "channel": "stable",
-      "size": 2226394
-    },
-    "CobroFacil_POS_v3010_TEMP/importar_eleventa.py": {
-      "version": "1.0.0",
-      "checksum": "01fd7be5be5ac04d2e6463ab2b879e85",
-      "channel": "stable",
-      "size": 9909
-    },
-    "CobroFacil_POS_v3010_TEMP/init_db.py": {
-      "version": "1.0.0",
-      "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
-      "channel": "stable",
-      "size": 2542
-    },
-    "CobroFacil_POS_v3010_TEMP/main.py": {
-      "version": "1.0.0",
-      "checksum": "71491f24e4f0e6123046f24557231040",
-      "channel": "stable",
-      "size": 15854
-    },
-    "CobroFacil_POS_v3010_TEMP/organize_docs.py": {
-      "version": "1.0.0",
-      "checksum": "f83fbcec9d39e00f3b3c4842b7b9daef",
-      "channel": "stable",
-      "size": 590
-    },
-    "CobroFacil_POS_v3010_TEMP/rename_project.py": {
-      "version": "1.0.0",
-      "checksum": "9ce7a82cb39d5506eb2caef30e8edefd",
-      "channel": "stable",
-      "size": 1267
-    },
-    "CobroFacil_POS_v3010_TEMP/RespaldoAutomatico.py": {
-      "version": "1.0.0",
-      "checksum": "897c03e471dc865e44fcb783fce43dbb",
-      "channel": "stable",
-      "size": 2272
-    },
-    "CobroFacil_POS_v3010_TEMP/run_pyinstaller.py": {
-      "version": "1.0.0",
-      "checksum": "a2014ff11b75d611c4ac74e33a45d223",
-      "channel": "stable",
-      "size": 301
-    },
-    "CobroFacil_POS_v3010_TEMP/rutina_control.py": {
-      "version": "1.0.0",
-      "checksum": "d9eabc22f477e6250ba97bb5495e28ae",
-      "channel": "stable",
-      "size": 2782
-    },
-    "CobroFacil_POS_v3010_TEMP/setup_mariadb.py": {
-      "version": "1.0.0",
-      "checksum": "1a6e57ac5009377a3c863e1d8ecc827a",
-      "channel": "stable",
-      "size": 1541
-    },
-    "CobroFacil_POS_v3010_TEMP/test_estres_mariadb.py": {
-      "version": "1.0.0",
-      "checksum": "50418cddbf8e6ed2b6054c7fb51a99ba",
-      "channel": "stable",
-      "size": 3456
-    },
-    "CobroFacil_POS_v3010_TEMP/src/apertura_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "3609b37f3ba06f5b9bfd54efdd5a9cdf",
-      "channel": "stable",
-      "size": 6798
-    },
-    "CobroFacil_POS_v3010_TEMP/src/config.py": {
-      "version": "1.0.0",
-      "checksum": "28d224f45a746cd1fb376f6d242dce81",
-      "channel": "stable",
-      "size": 2642
-    },
-    "CobroFacil_POS_v3010_TEMP/src/database.py": {
-      "version": "1.0.0",
-      "checksum": "5785a08399a158f6d8c4efc37570154b",
-      "channel": "stable",
-      "size": 47464
-    },
-    "CobroFacil_POS_v3010_TEMP/src/licencia_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "748760bafc5ef495a814ad3bb465b4d4",
-      "channel": "stable",
-      "size": 13835
-    },
-    "CobroFacil_POS_v3010_TEMP/src/logger.py": {
-      "version": "1.0.0",
-      "checksum": "d82cb2f9bfd4d4adcf63287ba7383da3",
-      "channel": "stable",
-      "size": 1241
-    },
-    "CobroFacil_POS_v3010_TEMP/src/login_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "962db05ce4285778aca5dc0c5cc59e2c",
-      "channel": "stable",
-      "size": 12734
-    },
-    "CobroFacil_POS_v3010_TEMP/src/main_window.py": {
-      "version": "1.0.0",
-      "checksum": "e0f4e6d2e7be7c24f4335b77e9fa5db1",
-      "channel": "stable",
-      "size": 32507
-    },
-    "CobroFacil_POS_v3010_TEMP/src/offline_sync.py": {
-      "version": "1.0.0",
-      "checksum": "cfeb0096b99714b07ab592e286b9a2d3",
-      "channel": "stable",
-      "size": 6220
-    },
-    "CobroFacil_POS_v3010_TEMP/src/pantallaentrada.py": {
-      "version": "1.0.0",
-      "checksum": "a9e7c16f734e71aa2f16e57f4f7d20d1",
-      "channel": "stable",
-      "size": 24204
-    },
-    "CobroFacil_POS_v3010_TEMP/src/perfil_pantalla.py": {
-      "version": "1.0.0",
-      "checksum": "8f65637bf73b6e80ea2062cd8ba2f5cb",
-      "channel": "stable",
-      "size": 12065
-    },
-    "CobroFacil_POS_v3010_TEMP/src/__init__.py": {
+    "IPython/extensions/deduperreload/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin0_dashboard.py": {
-      "version": "1.0.0",
-      "checksum": "bf8046f97fed1daf31c24c1a11c711c9",
-      "channel": "stable",
-      "size": 20509
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin10_mp.py": {
-      "version": "1.0.0",
-      "checksum": "68fe19dea4da68e22c034735277b16ef",
-      "channel": "stable",
-      "size": 42588
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin11_proveedores.py": {
-      "version": "1.0.0",
-      "checksum": "6419df928adbb8d913d655649f358c27",
-      "channel": "stable",
-      "size": 7772
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin12_ai_boss.py": {
-      "version": "1.0.0",
-      "checksum": "18d981ebc32b462091e6c6c8a8746a11",
-      "channel": "stable",
-      "size": 7993
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin13_hardware.py": {
-      "version": "1.0.0",
-      "checksum": "681e6a168907af08efa7ed0d2004d297",
-      "channel": "stable",
-      "size": 43608
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin14_ventas_digitales.py": {
-      "version": "1.0.0",
-      "checksum": "29ff4e0806bd6382ed4b5115994aff64",
-      "channel": "stable",
-      "size": 27448
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin15_actualizaciones.py": {
-      "version": "1.0.0",
-      "checksum": "9fb31723832c33e512570f84a4b9f87e",
-      "channel": "stable",
-      "size": 28092
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin16_lan_connection.py": {
-      "version": "1.0.0",
-      "checksum": "574c21987f35bc14d1c14393d020cda2",
-      "channel": "stable",
-      "size": 14276
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin1_inventario.py": {
-      "version": "1.0.0",
-      "checksum": "c22e90652b0280db924ff48bbe05de94",
-      "channel": "stable",
-      "size": 62313
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin2_masivo.py": {
-      "version": "1.0.0",
-      "checksum": "8256eb1811137b2d4f9104b565ed7a64",
-      "channel": "stable",
-      "size": 2695
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin2_ofertas.py": {
-      "version": "1.0.0",
-      "checksum": "29a4a06acdf857148f02252a3a21a8d4",
-      "channel": "stable",
-      "size": 59575
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin3_reportes.py": {
-      "version": "1.0.0",
-      "checksum": "26138c0dd0e0e54d8f0c40885455076d",
-      "channel": "stable",
-      "size": 113423
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin4_gastos.py": {
-      "version": "1.0.0",
-      "checksum": "34e9cdda2bf5bc15d795e237d95898c9",
-      "channel": "stable",
-      "size": 7553
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin5_configuracion.py": {
-      "version": "1.0.0",
-      "checksum": "59895f9334a4cad8504f5175203abc68",
-      "channel": "stable",
-      "size": 92825
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin7_cierre.py": {
-      "version": "1.0.0",
-      "checksum": "337f813060248a0ae3ac805bba16a964",
-      "channel": "stable",
-      "size": 92593
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin9_contabilidad.py": {
-      "version": "1.0.0",
-      "checksum": "ac651f6f2c46f4a1d2c0fe2c0b83ef12",
-      "channel": "stable",
-      "size": 17859
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin_clientes.py": {
-      "version": "1.0.0",
-      "checksum": "2468ceaa812b02ec0174de20102ed805",
-      "channel": "stable",
-      "size": 20580
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin_etiquetas.py": {
-      "version": "1.0.0",
-      "checksum": "127d86df4fd0d677726b3b864bf72b37",
-      "channel": "stable",
-      "size": 744
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/admin_importexport.py": {
-      "version": "1.0.0",
-      "checksum": "78d2f802d28ae4aa919a33a578a33c0f",
-      "channel": "stable",
-      "size": 15267
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/mp_explosion.py": {
-      "version": "1.0.0",
-      "checksum": "fe6e7c8790f18ee7519489f9cc1a63de",
-      "channel": "stable",
-      "size": 2195
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "72fb7e1a307981d24d165410b5b94d61",
-      "channel": "stable",
-      "size": 77
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/etiquetas/admin_etiquetas.py": {
-      "version": "1.0.0",
-      "checksum": "ca3df643f7c99dc2a974acf667a90b01",
-      "channel": "stable",
-      "size": 26524
-    },
-    "CobroFacil_POS_v3010_TEMP/src/admin/etiquetas/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "6b4e4b486573893278a34254c442486c",
-      "channel": "stable",
-      "size": 34
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/carlis_list.py": {
-      "version": "1.0.0",
-      "checksum": "e82c2f8bfbbef96f0052c0848c76d98b",
-      "channel": "stable",
-      "size": 5134
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/chat_bot.py": {
-      "version": "1.0.0",
-      "checksum": "83ec64819a58df372669d96902ace208",
-      "channel": "stable",
-      "size": 28255
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/paso5_terminal.py": {
-      "version": "1.0.0",
-      "checksum": "e21da2a2c921b3ce111018de901d3fab",
-      "channel": "stable",
-      "size": 130922
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/paso6_cobro.py": {
-      "version": "1.0.0",
-      "checksum": "1199fe85bfbcde41c8a9db1f7d989cd8",
-      "channel": "stable",
-      "size": 59310
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/paso7_cierre.py": {
-      "version": "1.0.0",
-      "checksum": "00c1d09bcb3a679aa85d3898a1eaa879",
-      "channel": "stable",
-      "size": 21376
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/paso8_historial.py": {
-      "version": "1.0.0",
-      "checksum": "ec953427d80966cea3dfcff68c1da8c2",
-      "channel": "stable",
-      "size": 40072
-    },
-    "CobroFacil_POS_v3010_TEMP/src/cajero/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "72fb7e1a307981d24d165410b5b94d61",
-      "channel": "stable",
-      "size": 77
-    },
-    "CobroFacil_POS_v3010_TEMP/src/db_engines/mariadb_engine.py": {
-      "version": "1.0.0",
-      "checksum": "4ed20e3e6506f7d5c3e6d540d5a8f458",
-      "channel": "stable",
-      "size": 3126
-    },
-    "CobroFacil_POS_v3010_TEMP/src/hardware/background_installer.py": {
-      "version": "1.0.0",
-      "checksum": "b2d0694c5732626d25a155e78c386494",
-      "channel": "stable",
-      "size": 3686
-    },
-    "CobroFacil_POS_v3010_TEMP/src/hardware/cash_drawer.py": {
-      "version": "1.0.0",
-      "checksum": "4c98dcb5ba8d45f08c3a549bf00fac12",
-      "channel": "stable",
-      "size": 6789
-    },
-    "CobroFacil_POS_v3010_TEMP/src/hardware/printer.py": {
-      "version": "1.0.0",
-      "checksum": "ec23c6b40c484cdc4ee1e441433d9d5a",
-      "channel": "stable",
-      "size": 34586
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/caja_service.py": {
-      "version": "1.0.0",
-      "checksum": "384f401bd454302cc7b899ece47f208f",
-      "channel": "stable",
-      "size": 2038
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/facturacion_service.py": {
-      "version": "1.0.0",
-      "checksum": "bb4006bbee430076d589a8c278658986",
-      "channel": "stable",
-      "size": 18926
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/lan_server.py": {
-      "version": "1.0.0",
-      "checksum": "41c6ef62fb387145750e4f7b1a647fca",
-      "channel": "stable",
-      "size": 4148
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/mariadb_controller.py": {
-      "version": "1.0.0",
-      "checksum": "00a4dae83f3a563d1b23c1d0ff333cc4",
-      "channel": "stable",
-      "size": 6621
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/etiquetas/renderer.py": {
-      "version": "1.0.0",
-      "checksum": "e170ada9025a8870a1ac0c9fe8b855ca",
-      "channel": "stable",
-      "size": 67988
-    },
-    "CobroFacil_POS_v3010_TEMP/src/services/etiquetas/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "01ec7a844da3c81515cc700b4ec850e5",
-      "channel": "stable",
-      "size": 25
-    },
-    "CobroFacil_POS_v3010_TEMP/src/tools/tpv_doctor.py": {
-      "version": "1.0.0",
-      "checksum": "4107efce9146a3f422f2d9ba891ec7d8",
-      "channel": "stable",
-      "size": 9083
-    },
-    "CobroFacil_POS_v3010_TEMP/src/tools/tpv_respaldos.py": {
-      "version": "1.0.0",
-      "checksum": "6fb311a83a396adcab050a75bf6a20e4",
-      "channel": "stable",
-      "size": 8623
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui/console_widget.py": {
-      "version": "1.0.0",
-      "checksum": "2407975cdedf8570dc6cb6bcaa0b3ba6",
-      "channel": "stable",
-      "size": 2202
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/alerts.py": {
-      "version": "1.0.0",
-      "checksum": "e395003a9bee35305d10cf63ea250b47",
-      "channel": "stable",
-      "size": 2520
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/apertura_caja.py": {
-      "version": "1.0.0",
-      "checksum": "c922dcf7ccba7061b098b7a533cca909",
-      "channel": "stable",
-      "size": 4328
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/cobro_industrial.py": {
-      "version": "1.0.0",
-      "checksum": "eb57f916924d08d4e776c72737e4e009",
-      "channel": "stable",
-      "size": 7876
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/modificadores.py": {
-      "version": "1.0.0",
-      "checksum": "32e059abf43475b1d2432b8f94e105b4",
-      "channel": "stable",
-      "size": 8189
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/toast.py": {
-      "version": "1.0.0",
-      "checksum": "76c9aa570258bbc3b67209bc14f91170",
-      "channel": "stable",
-      "size": 3515
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/touch_feedback.py": {
-      "version": "1.0.0",
-      "checksum": "e187eaf31edf142781a5ba3c48b5bc1a",
-      "channel": "stable",
-      "size": 4432
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/virtual_keyboard.py": {
-      "version": "1.0.0",
-      "checksum": "1770c68775c5ef083a58cd5d02805910",
-      "channel": "stable",
-      "size": 14748
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/virtual_keyboard_paso5.py": {
-      "version": "1.0.0",
-      "checksum": "4f75a38510e3f19ca202b04add316381",
-      "channel": "stable",
-      "size": 16096
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/virtual_keyboard_paso6.py": {
-      "version": "1.0.0",
-      "checksum": "6d035b65afd4a30fd55c2460c945b9d2",
-      "channel": "stable",
-      "size": 4760
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/welcome_transition.py": {
-      "version": "1.0.0",
-      "checksum": "7c734710c836bac2dec23f9749287161",
-      "channel": "stable",
-      "size": 13522
-    },
-    "CobroFacil_POS_v3010_TEMP/src/ui_components/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "ad0df287ab8911ea88ce62d1754de37b",
-      "channel": "stable",
-      "size": 72
-    },
-    "CobroFacil_POS_v3010_TEMP/src/updater/github_updater.py": {
-      "version": "1.0.0",
-      "checksum": "2669f02e39b8b24fca05707c3e16ebc8",
-      "channel": "stable",
-      "size": 15647
-    },
-    "CobroFacil_POS_v3010_TEMP/src/updater/update_client.py": {
-      "version": "1.0.0",
-      "checksum": "d5a97d8abace7dab2cc66d5a30630a75",
-      "channel": "stable",
-      "size": 11669
-    },
-    "CobroFacil_POS_v3010_TEMP/src/updater/update_server.py": {
-      "version": "1.0.0",
-      "checksum": "b9bf2c004be7cc7ebf63397eda550526",
-      "channel": "stable",
-      "size": 9052
-    },
-    "CobroFacil_POS_v3010_TEMP/src/updater/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "0065b065a818d99789bb015a046b1efb",
-      "channel": "stable",
-      "size": 18
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/barcode_parser.py": {
-      "version": "1.0.0",
-      "checksum": "3db684be642af08ba8165f0313bd1168",
-      "channel": "stable",
-      "size": 3597
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/bot_state.py": {
-      "version": "1.0.0",
-      "checksum": "803d517721730bca811ee8c4a0e186b3",
-      "channel": "stable",
-      "size": 1909
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/floating_widgets.py": {
-      "version": "1.0.0",
-      "checksum": "1d71ce78aadac6574dc834e56e511ca1",
-      "channel": "stable",
-      "size": 3189
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/parser.py": {
-      "version": "1.0.0",
-      "checksum": "a00af4e95ae1ad346c6edee66ddbe2f0",
-      "channel": "stable",
-      "size": 1646
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/paths.py": {
-      "version": "1.0.0",
-      "checksum": "b5af19524686c006d0473f7047ef9b44",
-      "channel": "stable",
-      "size": 1329
-    },
-    "CobroFacil_POS_v3010_TEMP/src/utils/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "09cd6059dcf2528bde1abca862e0da4c",
-      "channel": "stable",
-      "size": 16
     },
     "scratch/apply_updates.py": {
       "version": "1.0.0",
@@ -748,11 +238,29 @@
       "channel": "stable",
       "size": 2211
     },
+    "scratch/diagnose_eleventa.py": {
+      "version": "1.0.0",
+      "checksum": "298883347d5776a87c8de14f9e0c78de",
+      "channel": "stable",
+      "size": 1706
+    },
     "scratch/diagnose_printers.py": {
       "version": "1.0.0",
       "checksum": "92dca83ee172c81304b4c3388bc885ca",
       "channel": "stable",
       "size": 3079
+    },
+    "scratch/diagnose_tables.py": {
+      "version": "1.0.0",
+      "checksum": "dea44694f5dcd25b831274770ff078b2",
+      "channel": "stable",
+      "size": 1165
+    },
+    "scratch/ejecutar_actualizacion_cliente.py": {
+      "version": "1.0.0",
+      "checksum": "8f04ab91e2c4b3879ba89a5dc3949d4f",
+      "channel": "stable",
+      "size": 2525
     },
     "scratch/extract_styles.py": {
       "version": "1.0.0",
@@ -820,6 +328,12 @@
       "channel": "stable",
       "size": 3586
     },
+    "scratch/search_and_diagnose.py": {
+      "version": "1.0.0",
+      "checksum": "61538c48e094ab633ff5e27708108fc2",
+      "channel": "stable",
+      "size": 1870
+    },
     "scratch/search_instructions.py": {
       "version": "1.0.0",
       "checksum": "5bc9adbc7d6db120756bf7d4abe6eeb9",
@@ -868,6 +382,18 @@
       "channel": "stable",
       "size": 5012
     },
+    "scratch/test_tooltip.py": {
+      "version": "1.0.0",
+      "checksum": "80d570c93973bb6a1070efe17e9b9fe3",
+      "channel": "stable",
+      "size": 1094
+    },
+    "scratch/test_updater.py": {
+      "version": "1.0.0",
+      "checksum": "35738ff676989018d9a6aeacbecf374a",
+      "channel": "stable",
+      "size": 2959
+    },
     "scratch/update_imports.py": {
       "version": "1.0.0",
       "checksum": "996687c35f5be173ac5ce8ed27cfd244",
@@ -900,9 +426,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "c1129542391a98d75a0d62bcd13217f5",
+      "checksum": "a55fe84a81dd3170e6cce955c0073a94",
       "channel": "stable",
-      "size": 32518
+      "size": 33905
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -954,15 +480,15 @@
     },
     "src/admin/admin16_lan_connection.py": {
       "version": "1.0.0",
-      "checksum": "ba248316eb0baaa250d3bb1230966749",
+      "checksum": "5a5500e3a6f361a46fddecc1c1839a4c",
       "channel": "stable",
-      "size": 14567
+      "size": 15028
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "c22e90652b0280db924ff48bbe05de94",
+      "checksum": "38ee37c4168c934317630f19f2d34a41",
       "channel": "stable",
-      "size": 62313
+      "size": 62464
     },
     "src/admin/admin2_masivo.py": {
       "version": "1.0.0",
@@ -978,9 +504,9 @@
     },
     "src/admin/admin3_reportes.py": {
       "version": "1.0.0",
-      "checksum": "26138c0dd0e0e54d8f0c40885455076d",
+      "checksum": "ffd7c1d06c05f8ccbef41e8c5ac93e13",
       "channel": "stable",
-      "size": 113423
+      "size": 113653
     },
     "src/admin/admin4_gastos.py": {
       "version": "1.0.0",
@@ -990,9 +516,9 @@
     },
     "src/admin/admin5_configuracion.py": {
       "version": "1.0.0",
-      "checksum": "59895f9334a4cad8504f5175203abc68",
+      "checksum": "53187c6e931182b4803453dd2c1f8bd4",
       "channel": "stable",
-      "size": 92825
+      "size": 100504
     },
     "src/admin/admin7_cierre.py": {
       "version": "1.0.0",
@@ -1020,9 +546,9 @@
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "78d2f802d28ae4aa919a33a578a33c0f",
+      "checksum": "5c150b6ff768475828e0d090013c5eb6",
       "channel": "stable",
-      "size": 15267
+      "size": 15419
     },
     "src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -1050,9 +576,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "1a926990b2e00ca232bb96822e7503db",
+      "checksum": "fb9d339b2c4e3d57b9ae8d8b6399bded",
       "channel": "stable",
-      "size": 48586
+      "size": 50853
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -1086,9 +612,9 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "ec1d7e55d3bd5f1ebe17813406f7e1c0",
+      "checksum": "30ac055074b7c539a1a22d91ffdcbd03",
       "channel": "stable",
-      "size": 128475
+      "size": 134653
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
@@ -1194,9 +720,9 @@
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
-      "checksum": "7ea5b686847233987aa1dabcfa240d36",
+      "checksum": "d9f1fff05474e2674b6e9686e4ced194",
       "channel": "stable",
-      "size": 6836
+      "size": 8880
     },
     "src/services/etiquetas/renderer.py": {
       "version": "1.0.0",
@@ -1308,9 +834,9 @@
     },
     "src/updater/update_server.py": {
       "version": "1.0.0",
-      "checksum": "b9bf2c004be7cc7ebf63397eda550526",
+      "checksum": "4241d762553167d9283cff78863e0724",
       "channel": "stable",
-      "size": 9052
+      "size": 9093
     },
     "src/updater/__init__.py": {
       "version": "1.0.0",
@@ -1329,6 +855,12 @@
       "checksum": "db38fedea0c8c9c97852a1b258a9ccc7",
       "channel": "stable",
       "size": 817
+    },
+    "src/utils/db.py": {
+      "version": "1.0.0",
+      "checksum": "698b39ef73b78835b19777a1bb9c62a7",
+      "channel": "stable",
+      "size": 270
     },
     "src/utils/floating_widgets.py": {
       "version": "1.0.0",

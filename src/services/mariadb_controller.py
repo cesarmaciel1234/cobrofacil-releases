@@ -59,11 +59,54 @@ class MariaDBController:
                 
         return True
 
+    def _ensure_firewall(self):
+        """Checks if firewall rules exist, if not, prompts UAC to install them."""
+        try:
+            import subprocess
+            import ctypes
+            import sys
+            # Check if rule exists
+            result = subprocess.run(
+                'netsh advfirewall firewall show rule name="TPV_CajaFacil_TCP"',
+                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            if result.returncode != 0:
+                logger.info("Reglas de Firewall no encontradas. Solicitando permisos de Administrador para auto-configurar...")
+                # Request UAC elevation to run sys.executable with --install-firewall
+                # sys.executable is the compiled .exe or python.exe in dev
+                ctypes.windll.shell32.ShellExecuteW(
+                    None, "runas", sys.executable, "--install-firewall", None, 0
+                )
+                logger.info("Peticion UAC enviada. Las reglas deberian aplicarse en segundo plano.")
+        except Exception as e:
+            logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
+
     def start_server(self):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
+        self._ensure_firewall()
+        
         if self._process is not None and self._process.poll() is None:
             logger.info("MariaDB ya está corriendo en este proceso.")
             return True
+
+        # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
+        try:
+            import pymysql
+            # Intentar conexión rápida
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="",
+                connect_timeout=2
+            )
+            conn.close()
+            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306. No es necesario reiniciar.")
+            self._initialized = True
+            return True
+        except Exception:
+            # Si no conecta, seguimos con el proceso normal de arranque
+            pass
 
         if not self._init_database_if_needed():
             return False
@@ -80,7 +123,13 @@ class MariaDBController:
             creationflags = 0x08000000  # CREATE_NO_WINDOW
             
             self._process = subprocess.Popen(
-                [mysqld_exe, f"--datadir={data_dir}", "--port=3306"],
+                [
+                    mysqld_exe,
+                    f"--datadir={data_dir}",
+                    "--port=3306",
+                    "--bind-address=0.0.0.0",
+                    "--skip-networking=OFF"
+                ],
                 cwd=os.path.dirname(mysqld_exe),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

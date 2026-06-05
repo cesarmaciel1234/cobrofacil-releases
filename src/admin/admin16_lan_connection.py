@@ -315,8 +315,11 @@ class Admin16LANConnection(QWidget):
             config.set("db_engine", "mariadb")
             config.set("db_host", ip)
             config.save()
-            # Forzamos un reinicio rápido de la app
-            QApplication.exit(888)
+            # Recargar configuración dinámicamente
+            from src.base_de_datos.database import db_manager
+            db_manager.reload_config()
+            QMessageBox.information(self, "Conectado", f"Se ha conectado exitosamente como ESCLAVA a {ip}.")
+            self.request_dashboard.emit()
 
     def reset_to_master(self):
         reply = QMessageBox.question(self, "Activar PC Maestra",
@@ -329,4 +332,8 @@ class Admin16LANConnection(QWidget):
         config.set("db_engine", "mariadb")
         config.set("db_host", "") # Vacío significa local (Maestra)
         config.save()
-        QApplication.exit(888)
+        # Recargar configuración dinámicamente
+        from src.base_de_datos.database import db_manager
+        db_manager.reload_config()
+        QMessageBox.information(self, "Restablecido", "La PC ha vuelto a ser MAESTRA.")
+        self.request_dashboard.emit()

@@ -84,14 +84,14 @@ def generar_manifest(canal: str = "stable") -> dict:
         "server_host": socket.gethostname(),
         "modules": modules
     }
-    with open(VERSION_FILE, 'w') as f:
+    with open(VERSION_FILE, 'w', encoding='utf-8') as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
     return manifest
 
 def _leer_version_app() -> str:
     if os.path.exists(VERSION_FILE):
         try:
-            with open(VERSION_FILE) as f:
+            with open(VERSION_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f).get("app_version", "2026.1.0")
         except:
             pass

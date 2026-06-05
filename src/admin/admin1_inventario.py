@@ -889,9 +889,10 @@ class CatalogoProductos(QWidget):
                         self.finished.emit(True, "Tu inventario ya está actualizado. No se encontraron productos nuevos en la nube.")
                         return
 
-                    # Inserción masiva usando executemany con INSERT OR IGNORE
-                    query = """
-                        INSERT OR IGNORE INTO productos (
+                    # Inserción masiva usando executemany con sintaxis compatible
+                    insert_keyword = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
+                    query = f"""
+                        {insert_keyword} productos (
                             codigo, nombre, precio, costo, precio_mayoreo,
                             departamento, stock, stock_minimo, stock_maximo, es_pesable
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

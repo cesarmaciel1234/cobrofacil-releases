@@ -1185,21 +1185,21 @@ class Paso5Terminal(QWidget):
         self.main_layout.addWidget(self.dashboard_frame)
         
         # --- BARRA DE ESTADO / COMANDOS (EL PISO) ---
-        status_bar = QFrame()
-        status_bar.setFixedHeight(35)
-        status_bar.setStyleSheet("background: #0F172A; border-top: 1px solid #334155;")
-        sl = QHBoxLayout(status_bar); sl.setContentsMargins(15, 0, 5, 0)
+        self.status_bar = QFrame()
+        self.status_bar.setFixedHeight(55) # Taller status bar for touch screens
+        self.status_bar.setStyleSheet("background: #0F172A; border-top: 1px solid #334155;")
+        sl = QHBoxLayout(self.status_bar); sl.setContentsMargins(15, 0, 5, 0)
         
         if HAS_KEYBOARD:
             self.btn_teclado = QPushButton("⌨️ TECLADO")
-            self.btn_teclado.setFixedHeight(22)
+            self.btn_teclado.setFixedHeight(40)
             self.btn_teclado.setCursor(Qt.PointingHandCursor)
             self.btn_teclado.setFocusPolicy(Qt.NoFocus)
             self.btn_teclado.setStyleSheet("""
                 QPushButton {
-                    background: #1E293B; color: #F8FAFC; border-radius: 4px;
-                    font-size: 10px; font-weight: bold; border: 1px solid #334155;
-                    padding: 0px 8px;
+                    background: #1E293B; color: #F8FAFC; border-radius: 5px;
+                    font-size: 12px; font-weight: bold; border: 1px solid #334155;
+                    padding: 0px 12px;
                 }
                 QPushButton:hover { background: #334155; border-color: #475569; }
             """)
@@ -1208,14 +1208,14 @@ class Paso5Terminal(QWidget):
             sl.addSpacing(10)
 
         self.btn_theme = QPushButton()
-        self.btn_theme.setFixedHeight(22)
+        self.btn_theme.setFixedHeight(40)
         self.btn_theme.setCursor(Qt.PointingHandCursor)
         self.btn_theme.setFocusPolicy(Qt.NoFocus)
         self.btn_theme.setStyleSheet("""
             QPushButton {
-                background: #1E293B; color: #F8FAFC; border-radius: 4px;
-                font-size: 10px; font-weight: bold; border: 1px solid #334155;
-                padding: 0px 8px;
+                background: #1E293B; color: #F8FAFC; border-radius: 5px;
+                font-size: 12px; font-weight: bold; border: 1px solid #334155;
+                padding: 0px 12px;
             }
             QPushButton:hover { background: #334155; border-color: #475569; }
         """)
@@ -1225,67 +1225,92 @@ class Paso5Terminal(QWidget):
 
         from src.updater.github_updater import get_local_version
         v_local = get_local_version()
-        self.lbl_version = QLabel(f"🚀 COBRO FACIL {v_local} | TERMINAL ACTIVA")
+        self.lbl_version = QLabel(f"🚀 COBRO FACIL {v_local}")
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
-        sl.addWidget(self.lbl_version); sl.addStretch()
+        sl.addWidget(self.lbl_version)
+        sl.addSpacing(10)
+        sl.addStretch()
+        
+        # Scroll Area para los atajos del teclado (Previene descuadre en pantallas chicas)
+        from PyQt5.QtWidgets import QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+        """)
+        scroll_area.setFixedHeight(44)
         
         hints_layout = QHBoxLayout()
-        hints_layout.setSpacing(2)
+        hints_layout.setSpacing(10) # More spacing between keyboard shortcut buttons
         hints_layout.setContentsMargins(0,0,0,0)
         
-        icon_lbl = QLabel("⌨️")
-        icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
-        hints_layout.addWidget(icon_lbl)
+        hints_layout.addStretch() # Push buttons to the right side (from right to left)
+        
+        self.icon_lbl = QLabel("⌨️")
+        self.icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
+        hints_layout.addWidget(self.icon_lbl)
         
         btn_style = """
             QPushButton {
-                color: #94A3B8; font-weight: 800; font-size: 11px; border: none; background: transparent; padding: 2px 4px; border-radius: 3px;
+                background: #1E293B; 
+                color: #F8FAFC; 
+                border: 1px solid #334155; 
+                border-radius: 5px;
+                font-size: 13px; 
+                font-weight: bold;
+                padding: 0px;
             }
-            QPushButton:hover {
-                color: #FFFFFF; background: rgba(255, 255, 255, 0.1);
+            QPushButton:hover { 
+                background: #334155; 
+                border-color: #475569; 
+                color: #FFFFFF;
+            }
+            QPushButton:pressed {
+                background: #0F172A;
             }
         """
         
         hints = [
-            ("[F1] BUSCAR", self._do_busqueda),
-            ("|", None),
-            ("[F3] HISTORIAL", self.abrir_historial_dia),
-            ("|", None),
-            ("[F12] PAGAR", self.finalizar_venta),
-            ("|", None),
-            ("[F5] RETIRO", self.abrir_retiro_efectivo),
-            ("|", None),
-            ("[F6] INGRESO", self.abrir_ingreso_efectivo),
-            ("|", None),
-            ("[F7] BÁSCULA", self._leer_bascula),
-            ("|", None),
-            ("[F8] BLOQ", self.bloquear_terminal),
-            ("|", None),
-            ("[F4] CIERRE TURNO", self.abrir_cierre_caja)
+            ("F1", self._do_busqueda, "Buscar Producto (F1)"),
+            ("F3", self.abrir_historial_dia, "Ver Historial del Día (F3)"),
+            ("F12", self.finalizar_venta, "Cobrar / Pagar Venta (F12)"),
+            ("F5", self.abrir_retiro_efectivo, "Retiro de Efectivo (F5)"),
+            ("F6", self.abrir_ingreso_efectivo, "Ingreso de Efectivo (F6)"),
+            ("F7", self._leer_bascula, "Leer Báscula (F7)"),
+            ("F8", self.bloquear_terminal, "Bloquear Terminal (F8)"),
+            ("F4", self.abrir_cierre_caja, "Cierre de Turno / Caja (F4)"),
+            ("F11", self.llamar_supervisor, "Llamar Supervisor (F11)")
         ]
         
-        for text, func in hints:
-            if text == "|":
-                sep = QLabel(" | ")
-                sep.setStyleSheet("color: #475569; font-weight: 800; font-size: 11px; border: none; background: transparent;")
-                hints_layout.addWidget(sep)
-            else:
-                btn = QPushButton(text)
-                btn.setStyleSheet(btn_style)
-                btn.setCursor(Qt.PointingHandCursor)
-                btn.setFocusPolicy(Qt.NoFocus)
-                btn.clicked.connect(func)
-                hints_layout.addWidget(btn)
+        self.shortcut_buttons = []
+        for text, func, tooltip in hints:
+            btn = QPushButton(text)
+            btn.setStyleSheet(btn_style)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setFocusPolicy(Qt.NoFocus)
+            btn.setFixedSize(45, 40) # 45px width by 40px height
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(func)
+            hints_layout.addWidget(btn)
+            self.shortcut_buttons.append(btn)
                 
-        # Widget contenedor para el layout
+        # Widget contenedor para el layout de atajos
         hints_widget = QWidget()
         hints_widget.setLayout(hints_layout)
-        sl.addWidget(hints_widget)
-
+        hints_widget.setStyleSheet("background: transparent; border: none;")
+        scroll_area.setWidget(hints_widget)
+        
+        sl.addWidget(scroll_area, 2) # Give it a stretch factor of 2 to occupy a large harmonious portion (approx. half the screen)
         sl.addSpacing(10)
+        
         # Botón Candado
         self.btn_candado = QPushButton("🔒")
-        self.btn_candado.setFixedSize(30, 25)
+        self.btn_candado.setFixedSize(40, 40) # Square size 40x40
         self.btn_candado.setToolTip("Bloquear terminal (F8)")
         self.btn_candado.setCursor(Qt.PointingHandCursor)
         self.btn_candado.setStyleSheet("""
@@ -1301,7 +1326,7 @@ class Paso5Terminal(QWidget):
         
         # Botón Manual Chatbot (Adorno)
         self.btn_chatbot = QPushButton("🤖")
-        self.btn_chatbot.setFixedSize(30, 25)
+        self.btn_chatbot.setFixedSize(40, 40) # Square size 40x40
         self.btn_chatbot.setToolTip("Asistente Virtual")
         self.btn_chatbot.setCursor(Qt.PointingHandCursor)
         self.btn_chatbot.setStyleSheet("""
@@ -1315,7 +1340,7 @@ class Paso5Terminal(QWidget):
         self.btn_chatbot.setFocusPolicy(Qt.NoFocus)
         sl.addWidget(self.btn_chatbot)
         
-        self.main_layout.addWidget(status_bar)
+        self.main_layout.addWidget(self.status_bar)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
@@ -1330,6 +1355,7 @@ class Paso5Terminal(QWidget):
         elif k == Qt.Key_F7: self._leer_bascula()
         elif k == Qt.Key_F8: self.bloquear_terminal()
         elif k == Qt.Key_F4: self.abrir_cierre_caja()
+        elif k == Qt.Key_F11: self.llamar_supervisor()
         elif k == Qt.Key_Escape:
             if getattr(self, 'list_results', None) is not None and not self.list_results.isHidden():
                 self.list_results.hide()
@@ -1338,6 +1364,19 @@ class Paso5Terminal(QWidget):
     def toggle_chatbot(self):
         self.request_chatbot_toggle.emit()
         self.txt_scan.setFocus()
+
+    def llamar_supervisor(self):
+        main_win = self.window()
+        if main_win and hasattr(main_win, 'handle_f11_global'):
+            main_win.handle_f11_global()
+
+    def paintEvent(self, event):
+        from PyQt5.QtWidgets import QStyle, QStyleOption
+        from PyQt5.QtGui import QPainter
+        opt = QStyleOption()
+        opt.initFrom(self)
+        p = QPainter(self)
+        self.style().drawPrimitive(QStyle.PE_Widget, opt, p, self)
 
     def hideEvent(self, event):
         super().hideEvent(event)
@@ -1412,8 +1451,29 @@ class Paso5Terminal(QWidget):
         if hasattr(self, 'btn_theme'):
             self.btn_theme.setText("☀️ TEMAS" if theme == "dark" else "🌙 TEMAS")
         
+        # Style QToolTip globally to be always dark with white text (highest readability, bypasses native OS theme quirks)
+        from PyQt5.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet("""
+                QToolTip {
+                    background-color: #1E293B;
+                    color: #FFFFFF;
+                    border: 1px solid #334155;
+                    font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;
+                    padding: 5px;
+                    border-radius: 4px;
+                }
+            """)
+
         if theme == "dark":
-            self.setStyleSheet("background-color: #0F172A; color: #F8FAFC; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;")
+            self.setStyleSheet("""
+                Paso5Terminal {
+                    background-color: #0F172A; 
+                    color: #F8FAFC; 
+                    font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;
+                }
+            """)
             if hasattr(self, 'central_frame'):
                 self.central_frame.setStyleSheet("background-color: #1E293B; border-radius: 8px; border: 1px solid #334155;")
             if hasattr(self, 'tabla'):
@@ -1488,8 +1548,52 @@ class Paso5Terminal(QWidget):
                     }
                     QLabel { border: none; background: transparent; }
                 """)
+            if hasattr(self, 'status_bar'):
+                self.status_bar.setStyleSheet("background: #0F172A; border-top: 1px solid #334155;")
+            btn_control_dark = """
+                QPushButton {
+                    background: #1E293B; color: #F8FAFC; border-radius: 5px;
+                    font-size: 12px; font-weight: bold; border: 1px solid #334155;
+                    padding: 0px 12px;
+                }
+                QPushButton:hover { background: #334155; border-color: #475569; }
+            """
+            if hasattr(self, 'btn_teclado'):
+                self.btn_teclado.setStyleSheet(btn_control_dark)
+            if hasattr(self, 'btn_theme'):
+                self.btn_theme.setStyleSheet(btn_control_dark)
+            if hasattr(self, 'icon_lbl'):
+                self.icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
+            btn_style_dark = """
+                QPushButton {
+                    background: #1E293B; 
+                    color: #F8FAFC; 
+                    border: 1px solid #334155; 
+                    border-radius: 5px;
+                    font-size: 13px; 
+                    font-weight: bold;
+                    padding: 0px;
+                }
+                QPushButton:hover { 
+                    background: #334155; 
+                    border-color: #475569; 
+                    color: #FFFFFF;
+                }
+                QPushButton:pressed {
+                    background: #0F172A;
+                }
+            """
+            if hasattr(self, 'shortcut_buttons'):
+                for btn in self.shortcut_buttons:
+                    btn.setStyleSheet(btn_style_dark)
         else:
-            self.setStyleSheet("background-color: #F8FAFC; color: #333333; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;")
+            self.setStyleSheet("""
+                Paso5Terminal {
+                    background-color: #F8FAFC; 
+                    color: #333333; 
+                    font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif;
+                }
+            """)
             if hasattr(self, 'central_frame'):
                 self.central_frame.setStyleSheet("background-color: white; border-radius: 8px; border: 1px solid #CBD5E1;")
             if hasattr(self, 'tabla'):
@@ -1564,6 +1668,44 @@ class Paso5Terminal(QWidget):
                     }
                     QLabel { border: none; background: transparent; }
                 """)
+            if hasattr(self, 'status_bar'):
+                self.status_bar.setStyleSheet("background: #E2E8F0; border-top: 1px solid #CBD5E1;")
+            btn_control_light = """
+                QPushButton {
+                    background: #FFFFFF; color: #0F172A; border-radius: 5px;
+                    font-size: 12px; font-weight: bold; border: 1px solid #CBD5E1;
+                    padding: 0px 12px;
+                }
+                QPushButton:hover { background: #F1F5F9; border-color: #94A3B8; }
+            """
+            if hasattr(self, 'btn_teclado'):
+                self.btn_teclado.setStyleSheet(btn_control_light)
+            if hasattr(self, 'btn_theme'):
+                self.btn_theme.setStyleSheet(btn_control_light)
+            if hasattr(self, 'icon_lbl'):
+                self.icon_lbl.setStyleSheet("color: #475569; font-size: 11px; border: none; background: transparent;")
+            btn_style_light = """
+                QPushButton {
+                    background: #FFFFFF; 
+                    color: #0F172A; 
+                    border: 1px solid #CBD5E1; 
+                    border-radius: 5px;
+                    font-size: 13px; 
+                    font-weight: bold;
+                    padding: 0px;
+                }
+                QPushButton:hover { 
+                    background: #F1F5F9; 
+                    border-color: #94A3B8; 
+                    color: #0F172A;
+                }
+                QPushButton:pressed {
+                    background: #CBD5E1;
+                }
+            """
+            if hasattr(self, 'shortcut_buttons'):
+                for btn in self.shortcut_buttons:
+                    btn.setStyleSheet(btn_style_light)
 
     def toggle_keyboard(self):
         if not HAS_KEYBOARD:
@@ -1849,7 +1991,7 @@ class Paso5Terminal(QWidget):
         nombre_str = CajeroActivo.nombre.upper()
         if CajeroActivo.numero == 2:
             from src.updater.github_updater import get_local_version
-            self.lbl_version.setText(f"🟢 {nombre_str}  |  COBRO FACIL {get_local_version()}")
+            self.lbl_version.setText(f"🟢 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setStyleSheet("color: #10b981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {
@@ -1860,7 +2002,7 @@ class Paso5Terminal(QWidget):
             """)
         else:
             from src.updater.github_updater import get_local_version
-            self.lbl_version.setText(f"🔵 {nombre_str}  |  COBRO FACIL {get_local_version()}")
+            self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setStyleSheet("color: #60a5fa; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
             self.btn_candado.setStyleSheet("""
                 QPushButton {

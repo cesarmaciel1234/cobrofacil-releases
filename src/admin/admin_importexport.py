@@ -261,8 +261,9 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                     params = (codigo_val if not codigo_val.isdigit() else None,
                               nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of)
                     if codigo_val and codigo_val.isdigit():
+                        insert_keyword = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
                         cursor.execute(
-                            "INSERT OR IGNORE INTO productos "
+                            f"{insert_keyword} productos "
                             "(id,codigo,nombre,precio,costo,stock,precio_mayoreo,stock_minimo,stock_maximo,unidad,es_pesable,departamento,categoria,cant_oferta,precio_oferta) "
                             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                             (int(codigo_val), None, nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of))
