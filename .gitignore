@@ -20,6 +20,15 @@ build/
 *.pkg
 *.pdb
 mariadb_server/data/ib_logfile*
+mariadb_server/data/ibdata1
+mariadb_server/data/aria_log*
+mariadb_server/data/*.pid
+mariadb_server/data/*.err
+mariadb_server/data/ib_buffer_pool
+mariadb_server/data/punpro_db/*.ibd
+mariadb_server/data/mysql/*.MAD
+mariadb_server/data/mysql/*.MAI
+mariadb_server/data/mysql/*.ibd
 
 # ─── Base de datos local ──────────────────────────────────────────────────
 *.db
