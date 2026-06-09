@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
@@ -31,8 +32,8 @@ class AdminEtiquetas(QWidget):
         # Sleek light industrial theme matching the global TPV application
         self.setStyleSheet("""
             QWidget { 
-                background-color: #f8fafc; 
-                color: #1e293b; 
+                 
+                 
                 font-family: 'Segoe UI', 'Outfit', sans-serif; 
                 font-size: 13px; 
             }
@@ -46,17 +47,17 @@ class AdminEtiquetas(QWidget):
             }
             QTableWidget { 
                 background-color: white; 
-                color: #1e293b; 
-                gridline-color: #e2e8f0; 
+                 
+                gridline- 
                 border: 1px solid #cbd5e1;
                 border-radius: 12px;
                 font-size: 14px; 
-                selection-background-color: #f1f5f9; 
-                selection-color: #0f172a;
+                selection- 
+                selection-
             }
             QHeaderView::section { 
-                background-color: #f8fafc; 
-                color: #475569; 
+                 
+                 
                 border: 1px solid #cbd5e1;
                 padding: 10px; 
                 font-weight: bold;
@@ -67,7 +68,7 @@ class AdminEtiquetas(QWidget):
                 background: white; 
                 border: 1px solid #cbd5e1; 
                 border-radius: 8px; 
-                color: #1e293b; 
+                 
                 padding: 12px; 
                 font-size: 14px;
             }
@@ -76,7 +77,7 @@ class AdminEtiquetas(QWidget):
             }
             QPushButton {
                 background-color: white; 
-                color: #1e3a8a; 
+                 
                 padding: 12px 24px; 
                 font-weight: 900; 
                 border-radius: 8px; 
@@ -84,18 +85,18 @@ class AdminEtiquetas(QWidget):
                 letter-spacing: 0.5px;
             }
             QPushButton:hover { 
-                background-color: #f1f5f9; 
-                color: #3b82f6;
+                 
+                
             }
             QPushButton#btnBack { 
                 background-color: white; 
                 border: 1px solid #ef4444; 
-                color: #ef4444; 
+                 
                 font-weight: 800;
             }
             QPushButton#btnBack:hover {
-                background-color: #fef2f2;
-                color: #ef4444;
+                
+                
             }
             QPushButton#btnPrint { 
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #6366f1);
@@ -138,13 +139,13 @@ class AdminEtiquetas(QWidget):
         header_layout.addWidget(btn_back)
         
         header_title = QLabel("🏭 PLANTA DE IMPRESIÓN & ETIQUETADO ELITE")
-        header_title.setStyleSheet("font-size: 24px; font-weight: 900; color: #0f172a; letter-spacing: 1px;")
+        header_title.setStyleSheet("font-size: 24px; font-weight: 900;  letter-spacing: 1px;")
         header_layout.addWidget(header_title)
         header_layout.addStretch()
         
         # Indicador de estado del motor en línea
         lbl_status = QLabel("🟢 MOTOR EN LÍNEA")
-        lbl_status.setStyleSheet("background-color: #ecfdf5; color: #10b981; font-weight: 900; border-radius: 8px; padding: 8px 16px; border: 1px solid #a7f3d0;")
+        lbl_status.setStyleSheet("  font-weight: 900; border-radius: 8px; padding: 8px 16px; border: 1px solid #a7f3d0;")
         header_layout.addWidget(lbl_status)
         
         main_layout.addLayout(header_layout)
@@ -158,19 +159,19 @@ class AdminEtiquetas(QWidget):
         # Card 1: Materia Prima
         self.lbl_stat_materia = QLabel("📦 MATERIA PRIMA (INVENTARIO)<br><b>Cargando catálogo...</b>")
         self.lbl_stat_materia.setTextFormat(Qt.RichText)
-        self.lbl_stat_materia.setStyleSheet("font-size: 14px; color: #475569; line-height: 1.4;")
+        self.lbl_stat_materia.setStyleSheet("font-size: 14px;  line-height: 1.4;")
         deck_lay.addWidget(self.lbl_stat_materia, 0, 0)
         
         # Card 2: Lote Activo
-        self.lbl_stat_lote = QLabel("⚡ HILO DE SELECCIÓN DE IMPRESIÓN<br><span style='color:#3b82f6; font-size:18px; font-weight:900;'>0 Productos</span>")
+        self.lbl_stat_lote = QLabel("⚡ HILO DE SELECCIÓN DE IMPRESIÓN<br><span style=' font-size:18px; font-weight:900;'>0 Productos</span>")
         self.lbl_stat_lote.setTextFormat(Qt.RichText)
-        self.lbl_stat_lote.setStyleSheet("font-size: 14px; color: #475569; line-height: 1.4;")
+        self.lbl_stat_lote.setStyleSheet("font-size: 14px;  line-height: 1.4;")
         deck_lay.addWidget(self.lbl_stat_lote, 0, 1)
 
         # Card 3: Configuración de Marca Comercial
-        self.lbl_stat_marca = QLabel("🏢 MARCA REGISTRADA COMERCIAL<br><span style='color:#a855f7; font-size:16px; font-weight:900;'>MACIEL - CARNICERÍA</span>")
+        self.lbl_stat_marca = QLabel("🏢 MARCA REGISTRADA COMERCIAL<br><span style=' font-size:16px; font-weight:900;'>MACIEL - CARNICERÍA</span>")
         self.lbl_stat_marca.setTextFormat(Qt.RichText)
-        self.lbl_stat_marca.setStyleSheet("font-size: 14px; color: #475569; line-height: 1.4;")
+        self.lbl_stat_marca.setStyleSheet("font-size: 14px;  line-height: 1.4;")
         deck_lay.addWidget(self.lbl_stat_marca, 0, 2)
         
         main_layout.addWidget(self.top_deck)
@@ -178,18 +179,18 @@ class AdminEtiquetas(QWidget):
         # --- CONTROL DE PARÁMETROS DE MARCA EN CALIENTE ---
         brand_layout = QHBoxLayout()
         
-        lbl_r = QLabel("RUBRO COMERCIAL:"); lbl_r.setStyleSheet("font-weight: 900; font-size: 11px; color: #64748b; letter-spacing: 1px;")
+        lbl_r = QLabel("RUBRO COMERCIAL:"); lbl_r.setStyleSheet("font-weight: 900; font-size: 11px;  letter-spacing: 1px;")
         self.txt_rubro = QLineEdit()
         self.txt_rubro.setPlaceholderText("RUBRO (Ej: CARNICERÍA)")
         self.txt_rubro.setText("CARNICERÍA")
-        self.txt_rubro.setStyleSheet("font-weight: bold; color: #a855f7; font-size: 14px; border: 1px solid #cbd5e1;")
+        self.txt_rubro.setStyleSheet("font-weight: bold;  font-size: 14px; border: 1px solid #cbd5e1;")
         self.txt_rubro.textChanged.connect(self.actualizar_marca_de_impresion)
         
-        lbl_n = QLabel("NEGOCIO:"); lbl_n.setStyleSheet("font-weight: 900; font-size: 11px; color: #64748b; letter-spacing: 1px;")
+        lbl_n = QLabel("NEGOCIO:"); lbl_n.setStyleSheet("font-weight: 900; font-size: 11px;  letter-spacing: 1px;")
         self.txt_negocio = QLineEdit()
         self.txt_negocio.setPlaceholderText("NEGOCIO (Ej: MACIEL)")
         self.txt_negocio.setText("MACIEL")
-        self.txt_negocio.setStyleSheet("font-weight: bold; color: #3b82f6; font-size: 14px; border: 1px solid #cbd5e1;")
+        self.txt_negocio.setStyleSheet("font-weight: bold;  font-size: 14px; border: 1px solid #cbd5e1;")
         self.txt_negocio.textChanged.connect(self.actualizar_marca_de_impresion)
         
         brand_layout.addWidget(lbl_r); brand_layout.addWidget(self.txt_rubro)
@@ -201,7 +202,7 @@ class AdminEtiquetas(QWidget):
         search_layout = QHBoxLayout()
         self.txt_search = QLineEdit()
         self.txt_search.setPlaceholderText("🔍 ESCANEA CÓDIGO O ESCRIBE NOMBRE DE PRODUCTO PARA FILTRAR EN TIEMPO REAL...")
-        self.txt_search.setStyleSheet("font-size: 15px; padding: 14px; font-weight: bold; border-color: #cbd5e1;")
+        self.txt_search.setStyleSheet("font-size: 15px; padding: 14px; font-weight: bold; border-")
         self.txt_search.textChanged.connect(self.cargar_productos)
         search_layout.addWidget(self.txt_search)
         main_layout.addLayout(search_layout)
@@ -364,10 +365,10 @@ class AdminEtiquetas(QWidget):
             count = res[0]['cant'] if res else 0
             self.lbl_stat_materia.setText(
                 f"📦 MATERIA PRIMA (INVENTARIO)<br>"
-                f"<span style='color:#10b981; font-size:18px; font-weight:900;'>{count} Productos</span>"
+                f"<span style=' font-size:18px; font-weight:900;'>{count} Productos</span>"
             )
         except Exception:
-            self.lbl_stat_materia.setText("📦 MATERIA PRIMA (INVENTARIO)<br><span style='color:#ef4444;'>Error de Base de Datos</span>")
+            self.lbl_stat_materia.setText("📦 MATERIA PRIMA (INVENTARIO)<br><span style=''>Error de Base de Datos</span>")
 
     def actualizar_contador_seleccionados(self, item=None):
         if item is not None and item.column() == 0:
@@ -382,7 +383,7 @@ class AdminEtiquetas(QWidget):
         seleccionados = len(self.productos_seleccionados)
         self.lbl_stat_lote.setText(
             f"⚡ HILO DE SELECCIÓN DE IMPRESIÓN<br>"
-            f"<span style='color:#3b82f6; font-size:18px; font-weight:900;'>{seleccionados} Selección</span>"
+            f"<span style=' font-size:18px; font-weight:900;'>{seleccionados} Selección</span>"
         )
 
     def actualizar_marca_de_impresion(self):
@@ -390,7 +391,7 @@ class AdminEtiquetas(QWidget):
         negocio = self.txt_negocio.text().strip().upper() or "MACIEL"
         self.lbl_stat_marca.setText(
             f"🏢 MARCA REGISTRADA COMERCIAL<br>"
-            f"<span style='color:#a855f7; font-size:16px; font-weight:900;'>{negocio} - {rubro}</span>"
+            f"<span style=' font-size:16px; font-weight:900;'>{negocio} - {rubro}</span>"
         )
 
     def seleccionar_todo(self):
@@ -469,10 +470,10 @@ class AdminEtiquetas(QWidget):
         dlg.setWindowTitle("Configuración de Etiquetas de Góndola")
         dlg.setFixedSize(480, 420)
         dlg.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
-            QPushButton:hover { background: #2563eb; }
-            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; color: #1e293b; background: white; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QPushButton:hover {  }
+            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
             QRadioButton, QCheckBox { spacing: 8px; font-weight: bold; }
         """)
         lay = QVBoxLayout(dlg)
@@ -480,7 +481,7 @@ class AdminEtiquetas(QWidget):
         lay.setSpacing(12)
         
         lbl_tit = QLabel("🖨️ CONFIGURAR FORMATO DE ETIQUETAS")
-        lbl_tit.setStyleSheet("color: #1e3a8a; font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
         
         # Formulario de estilos

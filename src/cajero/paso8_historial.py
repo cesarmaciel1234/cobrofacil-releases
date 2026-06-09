@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit
+    QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit, QCheckBox
 )
 from PyQt5.QtCore import Qt, QDate, QTime, QTimer
 from PyQt5.QtGui import QColor, QBrush, QPainter
@@ -337,6 +337,11 @@ class DialogoHistorialDia(QDialog):
         btn_refresh.clicked.connect(self.cargar_ventas)
         filter_grid.addWidget(btn_refresh, 0, 3)
         
+        self.chk_ver_todo = QCheckBox("Cargar histórico completo (Scroll Infinito)")
+        self.chk_ver_todo.setChecked(True)
+        self.chk_ver_todo.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 14px;")
+        filter_grid.addWidget(self.chk_ver_todo, 1, 0, 1, 4)
+        
         # Auditoría / Vigilancia
         filter_grid.addWidget(QLabel("Método:"), 2, 0)
         self.cb_metodo = QComboBox()
@@ -366,6 +371,15 @@ class DialogoHistorialDia(QDialog):
         self.time_desde.timeChanged.connect(self.cargar_ventas)
         self.time_hasta.timeChanged.connect(self.cargar_ventas)
         self.tabla_tickets.itemSelectionChanged.connect(self.mostrar_detalle)
+        self.chk_ver_todo.stateChanged.connect(lambda state: [
+            self.date_filt.setEnabled(not state),
+            self.time_desde.setEnabled(not state),
+            self.time_hasta.setEnabled(not state),
+            self.cargar_ventas()
+        ])
+        self.date_filt.setEnabled(False)
+        self.time_desde.setEnabled(False)
+        self.time_hasta.setEnabled(False)
         
         left_vbox.addLayout(filter_grid)
         content_hbox.addLayout(left_vbox, 45)
@@ -496,6 +510,14 @@ class DialogoHistorialDia(QDialog):
         self.btn_desglose.clicked.connect(self.mostrar_desglose_total)
         f_layout.addWidget(self.btn_desglose)
         
+        self.btn_exportar = QPushButton("📥 Exportar a Excel")
+        self.btn_exportar.setStyleSheet("""
+            QPushButton { background-color: #3B82F6; color: white; border: none; font-weight: bold; border-radius: 8px; padding: 10px 20px; }
+            QPushButton:hover { background-color: #2563EB; }
+        """)
+        self.btn_exportar.clicked.connect(self.exportar_a_excel)
+        f_layout.addWidget(self.btn_exportar)
+        
         f_layout.addStretch()
         
         # Mover Total en pantalla aquí al lado de cerrar ventana
@@ -521,7 +543,7 @@ class DialogoHistorialDia(QDialog):
                 FROM ventas v
                 LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id
                 GROUP BY v.id
-                ORDER BY v.id DESC LIMIT 500
+                ORDER BY v.id DESC
             """
             raw_res = db_manager.execute_query(query)
         else:
@@ -533,7 +555,7 @@ class DialogoHistorialDia(QDialog):
                 LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id
                 WHERE LOWER(v.usuario) = LOWER(?) AND v.caja_id = ?
                 GROUP BY v.id
-                ORDER BY v.id DESC LIMIT 500
+                ORDER BY v.id DESC
             """
             raw_res = db_manager.execute_query(query, (user, caja_id))
 
@@ -556,15 +578,17 @@ class DialogoHistorialDia(QDialog):
         is_default_time = (t_desde.toString("HH:mm") == "00:00" and t_hasta.toString("HH:mm") == "23:59")
         is_today = (q_date == QDate.currentDate())
         
+        ver_todo = self.chk_ver_todo.isChecked()
+        
         filtered_res = []
         total_exitoso = 0
         
         for r in raw_res:
             f_str = str(r['fecha'])
-            match_date = (f_iso in f_str or f_l1 in f_str or f_l2 in f_str)
+            match_date = True if ver_todo else (f_iso in f_str or f_l1 in f_str or f_l2 in f_str)
             
             match_time = True
-            if not is_default_time:
+            if not is_default_time and not ver_todo:
                 try:
                     dt = None
                     for fmt in ("%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d"):
@@ -832,6 +856,65 @@ class DialogoHistorialDia(QDialog):
         layout.addWidget(btn_cerrar)
         
         dlg.exec_()
+
+    def exportar_a_excel(self):
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, Alignment, PatternFill
+            from openpyxl.utils import get_column_letter
+        except ImportError:
+            QMessageBox.critical(self, "Error", "La librería openpyxl no está instalada.")
+            return
+
+        row_count = self.tabla_tickets.rowCount()
+        if row_count == 0:
+            QMessageBox.warning(self, "Aviso", "No hay datos para exportar.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(self, "Guardar Historial", "Historial_Tickets.xlsx", "Excel Files (*.xlsx)")
+        if not path: return
+
+        try:
+            self.btn_exportar.setText("⏳ EXPORTANDO...")
+            self.btn_exportar.setEnabled(False)
+            
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Historial"
+
+            headers = ["Folio", "Artículos", "Fecha/Hora", "Total"]
+            for col_num, header_title in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_num, value=header_title)
+                cell.font = Font(bold=True, color="FFFFFF")
+                cell.fill = PatternFill("solid", fgColor="1E3A8A")
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            for row in range(row_count):
+                for col in range(4):
+                    item = self.tabla_tickets.item(row, col)
+                    val = item.text() if item else ""
+                    
+                    if col == 3:  # Total
+                        val = val.replace("$", "").replace(".", "").replace(",", ".")
+                        try: val = float(val)
+                        except: pass
+                    
+                    cell = ws.cell(row=row+2, column=col+1, value=val)
+                    cell.alignment = Alignment(vertical="center")
+                    if col == 3 and isinstance(val, float):
+                        cell.number_format = '"$"#,##0.00'
+
+            for col_num in range(1, 5):
+                ws.column_dimensions[get_column_letter(col_num)].width = 20
+
+            wb.save(path)
+            QMessageBox.information(self, "Éxito", f"Historial exportado a:\\n{path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Ocurrió un error al exportar:\\n{e}")
+        finally:
+            self.btn_exportar.setText("📥 Exportar a Excel")
+            self.btn_exportar.setEnabled(True)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape: self.accept()

@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import os
 import sys
 import time
@@ -31,7 +32,7 @@ class HardwareCard(QFrame):
             }
             QFrame:hover {
                 border: 2px solid #6366f1;
-                background: #f1f5f9;
+                
             }
         """)
         
@@ -47,12 +48,12 @@ class HardwareCard(QFrame):
         layout.addWidget(lbl_icon)
         
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: 900; font-size: 15px; color: #0f172a; border: none; background: transparent;")
+        lbl_title.setStyleSheet("font-weight: 900; font-size: 15px;  border: none; background: transparent;")
         layout.addWidget(lbl_title)
         
         lbl_desc = QLabel(description)
         lbl_desc.setWordWrap(True)
-        lbl_desc.setStyleSheet("color: #64748b; font-size: 11px; border: none; background: transparent; line-height: 14px;")
+        lbl_desc.setStyleSheet(" font-size: 11px; border: none; background: transparent; line-height: 14px;")
         layout.addWidget(lbl_desc)
         
         layout.addStretch()
@@ -78,7 +79,7 @@ class Admin13Hardware(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background-color: #f8fafc; font-family: 'Segoe UI';")
+        self.setStyleSheet(" font-family: 'Segoe UI';")
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
@@ -89,10 +90,10 @@ class Admin13Hardware(QWidget):
         header.setFixedHeight(75)
         hl = QHBoxLayout(header)
         btn_back = QPushButton("🔙 VOLVER")
-        btn_back.setStyleSheet("background: #f1f5f9; color: #6366f1; font-weight: 800; border-radius: 10px; padding: 10px 20px; border: 1px solid #e2e8f0;")
+        btn_back.setStyleSheet("  font-weight: 800; border-radius: 10px; padding: 10px 20px; border: 1px solid #e2e8f0;")
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
-        hl.addWidget(QLabel("🔌 GESTIÓN DE HARDWARE Y PERIFÉRICOS", styleSheet="font-size: 18px; font-weight: 900; color: #0f172a;"))
+        hl.addWidget(QLabel("🔌 GESTIÓN DE HARDWARE Y PERIFÉRICOS", styleSheet="font-size: 18px; font-weight: 900; "))
         hl.addStretch()
         self.main_layout.addWidget(header)
         
@@ -114,14 +115,14 @@ class Admin13Hardware(QWidget):
         card_p1.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         cp1_lay = QVBoxLayout(card_p1)
         cp1_lay.setContentsMargins(20, 20, 20, 20)
-        cp1_lay.addWidget(QLabel("🖨️ TICKETERA PRINCIPAL", styleSheet="font-weight: 900; font-size: 13px; color: #6366f1; border: none;"))
+        cp1_lay.addWidget(QLabel("🖨️ TICKETERA PRINCIPAL", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         self.cmb_p1 = QComboBox()
         self.cmb_p1.setStyleSheet("padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: bold;")
         self.load_printers_to_cmb(self.cmb_p1, "ticket_printer")
         cp1_lay.addWidget(self.cmb_p1)
         btn_test1 = QPushButton("📄 ENVIAR TEST P1")
         btn_test1.setCursor(Qt.PointingHandCursor)
-        btn_test1.setStyleSheet("background: #6366f1; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+        btn_test1.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
         btn_test1.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p1.currentText()))
         cp1_lay.addStretch(); cp1_lay.addWidget(btn_test1)
         top_grid.addWidget(card_p1, 0, 0)
@@ -131,14 +132,14 @@ class Admin13Hardware(QWidget):
         card_p2.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         cp2_lay = QVBoxLayout(card_p2)
         cp2_lay.setContentsMargins(20, 20, 20, 20)
-        cp2_lay.addWidget(QLabel("🖨️ TICKETERA AUXILIAR", styleSheet="font-weight: 900; font-size: 13px; color: #10b981; border: none;"))
+        cp2_lay.addWidget(QLabel("🖨️ TICKETERA AUXILIAR", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         self.cmb_p2 = QComboBox()
         self.cmb_p2.setStyleSheet("padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: bold;")
         self.load_printers_to_cmb(self.cmb_p2, "ticket_printer_2")
         cp2_lay.addWidget(self.cmb_p2)
         btn_test2 = QPushButton("📄 ENVIAR TEST P2")
         btn_test2.setCursor(Qt.PointingHandCursor)
-        btn_test2.setStyleSheet("background: #10b981; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+        btn_test2.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
         btn_test2.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p2.currentText()))
         cp2_lay.addStretch(); cp2_lay.addWidget(btn_test2)
         top_grid.addWidget(card_p2, 0, 1)
@@ -148,7 +149,7 @@ class Admin13Hardware(QWidget):
         card_com.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         com_lay = QVBoxLayout(card_com)
         com_lay.setContentsMargins(20, 20, 20, 20)
-        com_lay.addWidget(QLabel("🔌 CONEXIÓN DE CAJÓN", styleSheet="font-weight: 900; font-size: 13px; color: #f59e0b; border: none;"))
+        com_lay.addWidget(QLabel("🔌 CONEXIÓN DE CAJÓN", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         self.cmb_serial_port = QComboBox()
         self.cmb_serial_port.setStyleSheet("padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: bold;")
         self.load_com_ports_to_cmb(self.cmb_serial_port)
@@ -161,7 +162,7 @@ class Admin13Hardware(QWidget):
         com_lay.addWidget(self.cmb_pin)
         btn_refresh = QPushButton("🔄 REFRESCAR PUERTOS")
         btn_refresh.setCursor(Qt.PointingHandCursor)
-        btn_refresh.setStyleSheet("background: #f1f5f9; color: #475569; font-weight: bold; border-radius: 5px; padding: 10px;")
+        btn_refresh.setStyleSheet("  font-weight: bold; border-radius: 5px; padding: 10px;")
         btn_refresh.clicked.connect(self.refresh_all_printers)
         com_lay.addStretch(); com_lay.addWidget(btn_refresh)
         top_grid.addWidget(card_com, 0, 2)
@@ -171,20 +172,20 @@ class Admin13Hardware(QWidget):
         card_sec.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         sec_lay = QVBoxLayout(card_sec)
         sec_lay.setContentsMargins(20, 20, 20, 20)
-        sec_lay.addWidget(QLabel("🛡️ PANEL DE SEGURIDAD", styleSheet="font-weight: 900; font-size: 13px; color: #ef4444; border: none;"))
+        sec_lay.addWidget(QLabel("🛡️ PANEL DE SEGURIDAD", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         self.lbl_sensor_live = QLabel("📡 SENSOR: [...]")
         self.lbl_sensor_live.setAlignment(Qt.AlignCenter)
-        self.lbl_sensor_live.setStyleSheet("font-size: 11px; font-weight: bold; padding: 5px; background: #f8fafc; border-radius: 5px; border: 1px solid #cbd5e1;")
+        self.lbl_sensor_live.setStyleSheet("font-size: 11px; font-weight: bold; padding: 5px;  border-radius: 5px; border: 1px solid #cbd5e1;")
         sec_lay.addWidget(self.lbl_sensor_live)
         
         h_btns = QHBoxLayout()
         self.btn_open_p1 = QPushButton("📥 ABRIR CAJÓN")
         self.btn_open_p1.setCursor(Qt.PointingHandCursor)
-        self.btn_open_p1.setStyleSheet("background: #1e293b; color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
+        self.btn_open_p1.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
         self.btn_open_p1.clicked.connect(lambda: self.test_drawer_via_printer(1))
         self.btn_test_alarm = QPushButton("🚨 ALARMA")
         self.btn_test_alarm.setCursor(Qt.PointingHandCursor)
-        self.btn_test_alarm.setStyleSheet("background: #ef4444; color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
+        self.btn_test_alarm.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
         self.btn_test_alarm.clicked.connect(self.test_alarm)
         h_btns.addWidget(self.btn_open_p1); h_btns.addWidget(self.btn_test_alarm)
         sec_lay.addLayout(h_btns)
@@ -193,7 +194,7 @@ class Admin13Hardware(QWidget):
         self.btn_invert.setCursor(Qt.PointingHandCursor)
         self.btn_invert.setCheckable(True)
         self.btn_invert.setChecked(config.get("drawer_sensor_inverted", False))
-        self.btn_invert.setStyleSheet("background: #f1f5f9; color: #475569; padding: 5px; border-radius: 5px; font-size: 10px; font-weight: bold;")
+        self.btn_invert.setStyleSheet("  padding: 5px; border-radius: 5px; font-size: 10px; font-weight: bold;")
         self.btn_invert.clicked.connect(self.toggle_polarity)
         sec_lay.addStretch(); sec_lay.addWidget(self.btn_invert)
         top_grid.addWidget(card_sec, 0, 3)
@@ -203,10 +204,10 @@ class Admin13Hardware(QWidget):
         card_vk.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         vk_lay = QVBoxLayout(card_vk)
         vk_lay.setContentsMargins(20, 20, 20, 20)
-        vk_lay.addWidget(QLabel("⌨️ TECLADO AUTOMÁTICO", styleSheet="font-weight: 900; font-size: 13px; color: #8b5cf6; border: none;"))
+        vk_lay.addWidget(QLabel("⌨️ TECLADO AUTOMÁTICO", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         vk_desc = QLabel("Activa o desactiva la aparición automática del teclado táctil al seleccionar cuadros de texto.")
         vk_desc.setWordWrap(True)
-        vk_desc.setStyleSheet("color: #64748b; font-size: 11px; border: none; background: transparent;")
+        vk_desc.setStyleSheet(" font-size: 11px; border: none; background: transparent;")
         vk_lay.addWidget(vk_desc)
         
         self.btn_toggle_vk = QPushButton()
@@ -217,10 +218,10 @@ class Admin13Hardware(QWidget):
         def update_vk_btn_style(checked):
             if checked:
                 self.btn_toggle_vk.setText("✅ AUTOMÁTICO: ENCENDIDO")
-                self.btn_toggle_vk.setStyleSheet("background: #10b981; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_vk.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             else:
                 self.btn_toggle_vk.setText("❌ AUTOMÁTICO: APAGADO")
-                self.btn_toggle_vk.setStyleSheet("background: #64748b; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_vk.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             config.set("auto_virtual_keyboard", checked)
             
         self.btn_toggle_vk.toggled.connect(update_vk_btn_style)
@@ -235,10 +236,10 @@ class Admin13Hardware(QWidget):
         card_afip.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         afip_lay = QVBoxLayout(card_afip)
         afip_lay.setContentsMargins(20, 20, 20, 20)
-        afip_lay.addWidget(QLabel("🏛️ FACTURACIÓN AFIP", styleSheet="font-weight: 900; font-size: 13px; color: #ea580c; border: none;"))
+        afip_lay.addWidget(QLabel("🏛️ FACTURACIÓN AFIP", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
         afip_desc = QLabel("Activa el envío de facturas a AFIP. Si está apagado, TODO sale como ticket interno NO FISCAL.")
         afip_desc.setWordWrap(True)
-        afip_desc.setStyleSheet("color: #64748b; font-size: 11px; border: none; background: transparent;")
+        afip_desc.setStyleSheet(" font-size: 11px; border: none; background: transparent;")
         afip_lay.addWidget(afip_desc)
         
         self.btn_toggle_afip = QPushButton()
@@ -249,10 +250,10 @@ class Admin13Hardware(QWidget):
         def update_afip_btn_style(checked):
             if checked:
                 self.btn_toggle_afip.setText("✅ AFIP GLOBAL: ENCENDIDO")
-                self.btn_toggle_afip.setStyleSheet("background: #f97316; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_afip.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             else:
                 self.btn_toggle_afip.setText("❌ AFIP GLOBAL: APAGADO")
-                self.btn_toggle_afip.setStyleSheet("background: #64748b; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_afip.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             config.set("facturacion_afip_global", checked)
             
         self.btn_toggle_afip.toggled.connect(update_afip_btn_style)
@@ -265,7 +266,7 @@ class Admin13Hardware(QWidget):
         layout.addLayout(top_grid)
         
         # --- DOBLE CONSOLA MATRIX ---
-        layout.addWidget(QLabel("💻 TERMINALES DE DIAGNÓSTICO", styleSheet="font-weight: 900; font-size: 16px; color: #0f172a; margin-top: 15px;"))
+        layout.addWidget(QLabel("💻 TERMINALES DE DIAGNÓSTICO", styleSheet="font-weight: 900; font-size: 16px;  margin-top: 15px;"))
         
         console_lay = QHBoxLayout()
         console_lay.setSpacing(20)
@@ -275,7 +276,7 @@ class Admin13Hardware(QWidget):
         cons_mon_lay = QVBoxLayout(cons_mon_frame)
         cons_mon_lay.setContentsMargins(0, 0, 0, 0)
         lbl_c1 = QLabel("📡 [MONITOR DE SISTEMA] Escaneo y Eventos")
-        lbl_c1.setStyleSheet("color: #64748b; font-weight: bold; font-size: 12px;")
+        lbl_c1.setStyleSheet(" font-weight: bold; font-size: 12px;")
         cons_mon_lay.addWidget(lbl_c1)
         
         self.txt_hardware_log = QPlainTextEdit()
@@ -284,7 +285,7 @@ class Admin13Hardware(QWidget):
         self.txt_hardware_log.setMaximumHeight(200)
         self.txt_hardware_log.setStyleSheet("""
             QPlainTextEdit {
-                background: #000000; color: #00ff00; font-family: 'Consolas', 'Courier New', monospace; 
+                  font-family: 'Consolas', 'Courier New', monospace; 
                 font-size: 12px; font-weight: bold; border: 2px solid #003300; border-radius: 8px; padding: 12px;
             }
         """)
@@ -297,7 +298,7 @@ class Admin13Hardware(QWidget):
         cons_cmd_lay.setContentsMargins(0, 0, 0, 0)
         cons_cmd_lay.setSpacing(0)
         lbl_c2 = QLabel("⚙️ [TERMINAL ROOT] Consola Interactiva OS (CMD)")
-        lbl_c2.setStyleSheet("color: #64748b; font-weight: bold; font-size: 12px; margin-bottom: 6px;")
+        lbl_c2.setStyleSheet(" font-weight: bold; font-size: 12px; margin-bottom: 6px;")
         cons_cmd_lay.addWidget(lbl_c2)
         
         self.txt_cmd_output = QPlainTextEdit()
@@ -306,7 +307,7 @@ class Admin13Hardware(QWidget):
         self.txt_cmd_output.setMaximumHeight(160)
         self.txt_cmd_output.setStyleSheet("""
             QPlainTextEdit {
-                background: #000000; color: #38bdf8; font-family: 'Consolas', 'Courier New', monospace; 
+                  font-family: 'Consolas', 'Courier New', monospace; 
                 font-size: 12px; font-weight: bold; border: 2px solid #0284c7; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 12px;
             }
         """)
@@ -316,7 +317,7 @@ class Admin13Hardware(QWidget):
         self.txt_cmd_input.setPlaceholderText("C:\\> Escribe un comando aquí y presiona ENTER...")
         self.txt_cmd_input.setStyleSheet("""
             QLineEdit {
-                background: #0f172a; color: white; font-family: 'Consolas', 'Courier New', monospace;
+                 color: white; font-family: 'Consolas', 'Courier New', monospace;
                 font-size: 13px; font-weight: bold; border: 2px solid #0284c7; border-top: none;
                 border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; padding: 12px;
             }
@@ -333,7 +334,7 @@ class Admin13Hardware(QWidget):
         self.ui_refresh_timer.timeout.connect(self.update_live_status)
         
         # --- SECCIÓN HERRAMIENTAS INDUSTRIALES ---
-        layout.addWidget(QLabel("🛠️ HERRAMIENTAS INDUSTRIALES Y SISTEMA", styleSheet="font-weight: 900; font-size: 16px; color: #0f172a; margin-top: 10px;"))
+        layout.addWidget(QLabel("🛠️ HERRAMIENTAS INDUSTRIALES Y SISTEMA", styleSheet="font-weight: 900; font-size: 16px;  margin-top: 10px;"))
         
         tools_grid = QGridLayout()
         tools_grid.setSpacing(20)
@@ -385,22 +386,22 @@ class Admin13Hardware(QWidget):
         test_box.setStyleSheet("background: white; border: 1px solid #e2e8f0; border-radius: 20px;")
         tl = QVBoxLayout(test_box)
         tl.setContentsMargins(30, 30, 30, 30)
-        tl.addWidget(QLabel("🔍 PRUEBA DE LECTOR DE BARRAS", styleSheet="font-weight: 900; font-size: 16px; color: #10b981;"))
-        tl.addWidget(QLabel("Escanee cualquier producto aquí para verificar la conexión:", styleSheet="color: #64748b;"))
+        tl.addWidget(QLabel("🔍 PRUEBA DE LECTOR DE BARRAS", styleSheet="font-weight: 900; font-size: 16px; "))
+        tl.addWidget(QLabel("Escanee cualquier producto aquí para verificar la conexión:", styleSheet=""))
         
         self.txt_test = QLineEdit()
         self.txt_test.setPlaceholderText("Escanee un código aquí...")
-        self.txt_test.setStyleSheet("font-size: 20px; padding: 15px; border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc;")
+        self.txt_test.setStyleSheet("font-size: 20px; padding: 15px; border: 2px dashed #cbd5e1; border-radius: 10px; ")
         self.txt_test.returnPressed.connect(self.on_test_scan)
         tl.addWidget(self.txt_test)
         
         self.lbl_status = QLabel("Estatus: Esperando dispositivo...")
-        self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;")
+        self.lbl_status.setStyleSheet(" font-weight: bold;")
         tl.addWidget(self.lbl_status)
         layout.addWidget(test_box)
         
         # --- DRIVER GRID ---
-        layout.addWidget(QLabel("📦 DRIVERS OFICIALES Y UTILIDADES", styleSheet="font-weight: 900; font-size: 16px; color: #0f172a;"))
+        layout.addWidget(QLabel("📦 DRIVERS OFICIALES Y UTILIDADES", styleSheet="font-weight: 900; font-size: 16px; "))
         grid = QGridLayout()
         grid.setSpacing(20)
         
@@ -473,7 +474,7 @@ class Admin13Hardware(QWidget):
                     )
                     if reply == QMessageBox.Yes:
                         self.lbl_status.setText("📥 Descargando RPT Printer Tool...")
-                        self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
+                        self.lbl_status.setStyleSheet(" font-weight: bold;")
                         url = "https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/RPT-Printer-Tool.zip"
                         t = threading.Thread(
                             target=self.download_tool_thread,
@@ -503,7 +504,7 @@ class Admin13Hardware(QWidget):
                     )
                     if reply == QMessageBox.Yes:
                         self.lbl_status.setText("📥 Descargando Drivers 3nStar...")
-                        self.lbl_status.setStyleSheet("color: #3b82f6; font-weight: bold;")
+                        self.lbl_status.setStyleSheet(" font-weight: bold;")
                         url = "https://github.com/cesarmaciel1234/cobrofacil-releases/releases/download/tools/3nStar-Drivers.zip"
                         t = threading.Thread(
                             target=self.download_tool_thread,
@@ -586,9 +587,9 @@ class Admin13Hardware(QWidget):
     @pyqtSlot(str, str)
     def _lanzar_despues_descarga(self, exe_path, cwd):
         self.lbl_status.setText("✅ Herramienta descargada y ejecutada.")
-        self.lbl_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        self.lbl_status.setStyleSheet(" font-weight: bold;")
         QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
-        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet(" font-weight: bold;"))
         try:
             import subprocess
             subprocess.Popen([exe_path], cwd=cwd)
@@ -599,9 +600,9 @@ class Admin13Hardware(QWidget):
     @pyqtSlot(str)
     def _abrir_carpeta_despues_descarga(self, folder_path):
         self.lbl_status.setText("✅ Herramienta descargada. Carpeta abierta.")
-        self.lbl_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        self.lbl_status.setStyleSheet(" font-weight: bold;")
         QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
-        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet(" font-weight: bold;"))
         try:
             import os
             os.startfile(folder_path)
@@ -612,9 +613,9 @@ class Admin13Hardware(QWidget):
     @pyqtSlot(str)
     def _mostrar_error_hilo(self, err_msg):
         self.lbl_status.setText(f"❌ Error al descargar.")
-        self.lbl_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+        self.lbl_status.setStyleSheet(" font-weight: bold;")
         QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
-        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet(" font-weight: bold;"))
         QMessageBox.critical(self, "Error de Descarga", f"No se pudo descargar la herramienta:\n{err_msg}")
 
     def showEvent(self, event):
@@ -858,6 +859,6 @@ class Admin13Hardware(QWidget):
         code = self.txt_test.text()
         self.txt_test.clear()
         self.lbl_status.setText(f"✅ ¡LECTOR DETECTADO! Código: {code}")
-        self.lbl_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        self.lbl_status.setStyleSheet(" font-weight: bold;")
         QTimer.singleShot(4000, lambda: self.lbl_status.setText("Estatus: Esperando dispositivo..."))
-        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet("color: #94a3b8; font-weight: bold;"))
+        QTimer.singleShot(4000, lambda: self.lbl_status.setStyleSheet(" font-weight: bold;"))

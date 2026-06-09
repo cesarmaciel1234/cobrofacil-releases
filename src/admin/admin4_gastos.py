@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import os
 import sys
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -24,7 +25,7 @@ class Admin4Gastos(QWidget):
         self.is_loaded = False
         self.erp_externo = None
         
-        self.setStyleSheet("background-color: #f8fafc; font-family: 'Segoe UI';")
+        self.setStyleSheet(" font-family: 'Segoe UI';")
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
@@ -33,7 +34,7 @@ class Admin4Gastos(QWidget):
         self.loading_screen = QFrame()
         ll = QVBoxLayout(self.loading_screen)
         self.lbl_loading = QLabel("💤 Control de Gastos Dormido\nIniciando módulos...")
-        self.lbl_loading.setStyleSheet("color: #6366f1; font-size: 22px; font-weight: bold;")
+        self.lbl_loading.setStyleSheet(" font-size: 22px; font-weight: bold;")
         self.lbl_loading.setAlignment(Qt.AlignCenter)
         ll.addWidget(self.lbl_loading)
         
@@ -113,7 +114,7 @@ class Admin4Gastos(QWidget):
             import traceback
             error_msg = traceback.format_exc()
             self.lbl_loading.setText(f"❌ Error al cargar módulo:\n{str(e)}")
-            self.lbl_loading.setStyleSheet("color: #ef4444; font-size: 16px;")
+            self.lbl_loading.setStyleSheet(" font-size: 16px;")
             try:
                 with open("error_gastos.txt", "w") as f:
                     f.write(error_msg)
@@ -122,7 +123,7 @@ class Admin4Gastos(QWidget):
     def build_final_ui(self):
         # --- HEADER ---
         header = QFrame()
-        header.setStyleSheet("background-color: #0f172a; border-bottom: 2px solid #ef4444;")
+        header.setStyleSheet(" border-bottom: 2px solid #ef4444;")
         header.setFixedHeight(80)
         hl = QHBoxLayout(header)
         hl.setContentsMargins(25, 0, 25, 0)
@@ -131,17 +132,17 @@ class Admin4Gastos(QWidget):
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: #1e293b; color: #ef4444; font-weight: 800; border-radius: 10px; 
+                  font-weight: 800; border-radius: 10px; 
                 padding: 10px 25px; border: 1px solid #ef4444; font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: #ef4444; color: white; }
+            QPushButton:hover {  color: white; }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
         
         hl.addSpacing(20)
-        lbl_title = QLabel("💸 CONTROL DE GASTOS <span style='color: #ef4444;'>2026</span>")
-        lbl_title.setStyleSheet("font-size: 20px; font-weight: 900; color: #f8fafc; letter-spacing: 1px;")
+        lbl_title = QLabel("💸 CONTROL DE GASTOS <span style=''>2026</span>")
+        lbl_title.setStyleSheet("font-size: 20px; font-weight: 900;  letter-spacing: 1px;")
         hl.addWidget(lbl_title)
         hl.addStretch()
         self.main_layout.addWidget(header)
@@ -149,10 +150,10 @@ class Admin4Gastos(QWidget):
         # --- TABS ---
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet("""
-            QTabWidget::pane { border: none; background: #0b0f19; }
-            QTabBar::tab { background: #1e293b; color: #94a3b8; padding: 12px 20px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px; margin-right: 2px; }
-            QTabBar::tab:selected { background: #ef4444; color: white; }
-            QTabBar::tab:hover:!selected { background: #334155; }
+            QTabWidget::pane { border: none;  }
+            QTabBar::tab {   padding: 12px 20px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px; margin-right: 2px; }
+            QTabBar::tab:selected {  color: white; }
+            QTabBar::tab:hover:!selected {  }
         """)
         
         if self.erp_externo:
@@ -160,7 +161,7 @@ class Admin4Gastos(QWidget):
                 import styles as ext_styles
                 extra_style = ext_styles.STYLE_SHEET
             except:
-                extra_style = "QFrame#Card { background: #1e293b; border-radius: 12px; }"
+                extra_style = "QFrame#Card {  border-radius: 12px; }"
 
             def add_ext_tab(ext_widget, name):
                 if ext_widget:

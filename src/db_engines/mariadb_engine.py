@@ -8,10 +8,17 @@ class MariaDBCursorWrapper:
         self._cursor = cursor
 
     def _translate_query(self, query):
+        # Tipos de datos
         query = query.replace("AUTOINCREMENT", "AUTO_INCREMENT")
+        # Placeholders
         query = query.replace("?", "%s")
-        # Reemplazar SQLite DATETIME por DATETIME
-        query = query.replace("DATETIME DEFAULT CURRENT_TIMESTAMP", "DATETIME DEFAULT CURRENT_TIMESTAMP")
+        # Sintaxis SQLite-only → equivalentes MariaDB/MySQL
+        query = query.replace("INSERT OR IGNORE INTO", "INSERT IGNORE INTO")
+        query = query.replace("INSERT OR REPLACE INTO", "REPLACE INTO")
+        # CAST tipos
+        import re
+        query = re.sub(r'CAST\s*\((.+?)\s+AS\s+TEXT\)',
+                       r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
         return query
 
     def execute(self, query, params=None):
@@ -65,7 +72,7 @@ class MariaDBConnectionWrapper:
 class MariaDBEngine:
     """Adaptador de base de datos para MariaDB que emula la API de SQLite3"""
     
-    def __init__(self, host="127.0.0.1", port=3306, user="root", password="", database="punpro_db"):
+    def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
         self.port = port
         self.user = user
@@ -86,6 +93,21 @@ class MariaDBEngine:
             )
             return MariaDBConnectionWrapper(conn)
         except Exception as e:
+            # Fallback a contraseña vacía por compatibilidad hacia atrás
+            if self.password != "":
+                try:
+                    conn = pymysql.connect(
+                        host=self.host,
+                        port=self.port,
+                        user=self.user,
+                        password="",
+                        database=self.database,
+                        autocommit=False,
+                        connect_timeout=5
+                    )
+                    return MariaDBConnectionWrapper(conn)
+                except Exception:
+                    pass
             logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
             raise
             

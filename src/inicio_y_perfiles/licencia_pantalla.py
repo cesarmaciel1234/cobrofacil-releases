@@ -11,7 +11,7 @@ class LicenciaPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(500, 380)
+        self.setFixedSize(500, 500)
         self.setup_ui()
         self.apply_glow()
 

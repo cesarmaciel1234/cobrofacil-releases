@@ -23,10 +23,10 @@ from PyQt5.QtGui import (
 )
 
 # =========================
-# CONFIGURACIÓN EXTREMA
+# CONFIGURACIÓN EXTREMA (OPTIMIZADA PARA RENDIMIENTO FLUIDO)
 # =========================
-PARTICLE_COUNT = 44000
-ANIMATION_TIME = 240
+PARTICLE_COUNT = 5000 # Reducido de 44000 a 5000 para garantizar 60 FPS estables (fluidez de videojuego)
+ANIMATION_TIME = 120 # Más rápido, snappier
 
 # =========================
 # SISTEMA DE PARTÍCULAS
@@ -137,7 +137,7 @@ class WelcomeOverlay(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
-        self.timer.start(16)
+        # La animación iniciará cuando se llame a showEvent()
 
     def eventFilter(self, obj, event):
         if obj == self.parent() and event.type() == QEvent.Resize:
@@ -153,6 +153,12 @@ class WelcomeOverlay(QWidget):
                 self.particle_system.cx = self.cx
                 self.particle_system.cy = self.cy
         return super().eventFilter(obj, event)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Iniciar la animación sincronizada solo cuando la pantalla ya es visible
+        if not self.timer.isActive():
+            self.timer.start(16)
 
     def tick(self):
         self.tick_count += 1
@@ -221,8 +227,8 @@ class WelcomeOverlay(QWidget):
             
             color_val = 200 if alpha_step < 200 else 255
             pen = QPen(QColor(color_val, color_val, color_val, alpha_step))
-            pen.setWidth(1)
-            if alpha_step == 255: pen.setWidth(2) 
+            pen.setWidth(2) # OPTIMIZACION: Tamaño mayor para llenar más espacio con menos partículas
+            if alpha_step == 255: pen.setWidth(3) 
             
             painter.setPen(pen)
             qpoints = [QPointF(p[0], p[1]) for p in target_points]

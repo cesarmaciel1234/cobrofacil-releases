@@ -1,15 +1,16 @@
-import os, sys
+import os, sys, threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
-    QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect
+    QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
 from datetime import datetime
+import time
 import logging
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,11 @@ from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
 from src.hardware.printer import printer_manager
 from src.hardware.cash_drawer import drawer_manager
+try:
+    import winsound
+    AUDIO_ENABLED = True
+except ImportError:
+    AUDIO_ENABLED = False
 
 try:
     from src.ui_components.virtual_keyboard_paso5 import VirtualKeyboardPaso5 as VirtualKeyboard
@@ -799,6 +805,18 @@ class Paso5Terminal(QWidget):
         self.autofocus_timer.timeout.connect(self.asegurar_foco_escaner)
         self.autofocus_timer.start(150)
         
+        # Timer de stock crítico (cada 5 minutos)
+        if config.get("stock_alerta_activa", True):
+            self.stock_timer = QTimer(self)
+            self.stock_timer.timeout.connect(self.verificar_stock_minimo)
+            self.stock_timer.start(300000) # 300,000 ms = 5 mins
+            QTimer.singleShot(2000, self.verificar_stock_minimo)
+            
+        # Timer de autocierre (cada 60 segundos)
+        if config.get("cierre_auto_activo", False):
+            self.autoclose_timer = QTimer(self)
+            self.autoclose_timer.timeout.connect(self.verificar_autocierre)
+            self.autoclose_timer.start(60000) # 60,000 ms = 1 min
         # Monitor de Seguridad: Delegado al Motor Global en MainWindow
         pass
 
@@ -866,6 +884,37 @@ class Paso5Terminal(QWidget):
                 self.lbl_caja_num.setText(f"Caja №:        [{caja_id:02d}]{hostname}  (Desconectado)")
             except Exception:
                 self.lbl_caja_num.setText("Caja №:        Desconectado")
+
+    def verificar_stock_minimo(self):
+        try:
+            # Productos donde stock es igual o menor al stock minimo, y minimo es mayor a 0
+            query = "SELECT COUNT(*) FROM productos WHERE stock <= stock_minimo AND stock_minimo > 0"
+            bajos = db_manager.execute_scalar(query) or 0
+            
+            if bajos > 0:
+                self.lbl_stock_alert.setText(f"🔔 ALERTA DE INVENTARIO: Hay {bajos} productos con stock crítico/debajo del mínimo.")
+                if self.stock_alert_bar.isHidden():
+                    self.stock_alert_bar.show()
+            else:
+                if not self.stock_alert_bar.isHidden():
+                    self.stock_alert_bar.hide()
+        except Exception as e:
+            logger.debug(f"Stock checker error: {e}")
+
+    def verificar_autocierre(self):
+        try:
+            hora_target = config.get("cierre_auto_hora", "00:00")
+            hora_actual = datetime.now().strftime("%H:%M")
+            
+            # Solo intentamos ejecutar si coincide el minuto exacto
+            if hora_actual == hora_target:
+                from src.services.caja_service import verificar_y_realizar_autocierre
+                hizo_cierre, monto = verificar_y_realizar_autocierre()
+                if hizo_cierre:
+                    logger.info(f"Cierre automático ejecutado exitosamente a las {hora_actual}.")
+                    self._agregar_al_ticket("> [SISTEMA] CIERRE AUTOMÁTICO EFECTUADO.", 0, 0, color="#10B981")
+        except Exception as e:
+            logger.error(f"Autoclose error: {e}")
 
     def refresh_terminal_data(self):
         """ 
@@ -996,6 +1045,19 @@ class Paso5Terminal(QWidget):
         self.lbl_terminal_title.setStyleSheet("font-size: 26px; font-weight: bold;")
         header_layout.addWidget(self.lbl_terminal_title)
         self.main_layout.addWidget(self.header_frame)
+        
+        # --- BARRA DE ALERTA STOCK MÍNIMO ---
+        self.stock_alert_bar = QFrame()
+        self.stock_alert_bar.setFixedHeight(36)
+        self.stock_alert_bar.setStyleSheet("background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 6px;")
+        self.stock_alert_bar.hide()
+        sa_lay = QHBoxLayout(self.stock_alert_bar)
+        sa_lay.setContentsMargins(15, 0, 15, 0)
+        self.lbl_stock_alert = QLabel("🔔 Alerta de Stock: Hay productos por debajo del mínimo")
+        self.lbl_stock_alert.setStyleSheet("color: #D97706; font-weight: bold; font-size: 14px; border: none;")
+        sa_lay.addWidget(self.lbl_stock_alert)
+        self.main_layout.addWidget(self.stock_alert_bar)
+
         
         # Inicializar barra de estado con datos reales
         self.refresh_status_bar()
@@ -1441,10 +1503,17 @@ class Paso5Terminal(QWidget):
         current = config.get("theme", "light")
         new_theme = "dark" if current == "light" else "light"
         config.set("theme", new_theme)
-        self.apply_theme()
-        if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
-            if hasattr(self.teclado_virtual, 'apply_theme'):
-                self.teclado_virtual.apply_theme()
+        
+        # OPTIMIZACION: Pausar el renderizado mientras se inyectan multiples hojas de estilo
+        self.setUpdatesEnabled(False)
+        try:
+            self.apply_theme()
+            if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
+                if hasattr(self.teclado_virtual, 'apply_theme'):
+                    self.teclado_virtual.apply_theme()
+        finally:
+            self.setUpdatesEnabled(True)
+            self.repaint()
 
     def apply_theme(self):
         theme = config.get("theme", "light")
@@ -2300,6 +2369,8 @@ class Paso5Terminal(QWidget):
             self.txt_scan.setFocus()
 
     def agregar_a_tabla(self, p, cantidad=1.0):
+        # OPTIMIZACION: Congelar el renderizado de la tabla hasta que terminen todos los calculos
+        self.setUpdatesEnabled(False)
         self.en_venta = True
         p_id = str(p['id'])
         precio_base = float(p['precio'])
@@ -2343,6 +2414,8 @@ class Paso5Terminal(QWidget):
                     # Foco visual sutil centrado en el duplicado
                     self.tabla.selectRow(i)
                     self.actualizar_totales()
+                    self.setUpdatesEnabled(True)
+                    self.repaint()
                     return
 
         # 2. Si no existe, calculamos para la inserción de la fila nueva
@@ -2382,6 +2455,17 @@ class Paso5Terminal(QWidget):
         self._reaplicar_estilo_fila(row)
         self.tabla.selectRow(row)
         self.actualizar_totales()
+        
+        # Sonido BEEP de Escáner ultra rápido
+        if AUDIO_ENABLED:
+            def fast_beep():
+                try: import winsound; winsound.Beep(2500, 50)
+                except: pass
+            threading.Thread(target=fast_beep, daemon=True).start()
+            
+        # OPTIMIZACION: Liberar la pantalla para que dibuje el resultado final en 1 solo cuadro
+        self.setUpdatesEnabled(True)
+        self.repaint()
 
     def actualizar_totales(self):
         # Refrescar en cascada los estilos para que el destaque azul y el subtotal verde agua se muevan dinámicamente

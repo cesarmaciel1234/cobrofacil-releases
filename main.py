@@ -4,23 +4,21 @@ import os
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-
 import traceback
 import threading
 import time
 import logging
-import sys
-# DESACTIVAR ACELERACIÓN POR HARDWARE PARA EVITAR DEADLOCKS DEL CHATBOT
+
+# Desactivar aceleración por hardware para evitar deadlocks del chatbot Chromium
 sys.argv.append('--disable-gpu')
 sys.argv.append('--disable-software-rasterizer')
 
 from PyQt5.QtCore import Qt, QTimer, QCoreApplication
-# ES VITAL CONFIGURAR ESTO ANTES DE IMPORTAR QApplication Y QtWebEngineWidgets
+# Vital: configurar antes de importar QApplication y QtWebEngineWidgets
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 
-from PyQt5.QtWidgets import QApplication, QMessageBox, QSplashScreen, QProgressBar, QVBoxLayout, QWidget, QLabel
-from PyQt5.QtGui import QPixmap, QFont
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtGui import QIcon
 
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:
@@ -42,6 +40,9 @@ def launch_app():
     if not app:
         app = QApplication(sys.argv)
     
+    # FORZAR ESTILO FUSION (VITAL PARA QUE LOS SCROLLBARS ACEPTEN CSS EN WINDOWS)
+    app.setStyle('Fusion')
+    
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
     from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
     splash = CobroFacilSplash()
@@ -58,8 +59,9 @@ def launch_app():
     db_manager._init_db()
     
     # Iniciar Servidor LAN si esta PC es la Maestra
-    from src.services.lan_server import init_lan_server
-    init_lan_server()
+    # NOTA: init_lan_server() ya se llama una vez en el bloque __main__.
+    # No se llama de nuevo aquí para evitar el error OSError: [WinError 10048]
+    # (doble bind del mismo puerto UDP 38001).
     app.processEvents()
 
     def update_status(text, progress_val=None):
@@ -67,7 +69,6 @@ def launch_app():
 
     # --- PASO 1: CARGAR RUTAS E ICONOS ---
     update_status("Cargando identidad visual...", 20)
-    from PyQt5.QtGui import QIcon
     from src.utils.paths import get_resource_path
     icon_path = get_resource_path(os.path.join("src", "icon.png"))
     if os.path.exists(icon_path):
@@ -100,58 +101,52 @@ def launch_app():
     # Pre-creación de la ventana principal para ocultar la pausa en la pantalla de carga (Splash)
     main_window = MainWindow()
     
+    # Precarga extrema de animaciones pesadas
+    try:
+        from src.ui_components.welcome_transition import WelcomeOverlay
+        main_window._welcome_overlay = WelcomeOverlay(main_window)
+        main_window._welcome_overlay.hide()
+    except Exception as e:
+        print("Error precargando WelcomeOverlay:", e)
+    
     # Cerramos Splash y empezamos el flujo
     splash.finish(None)
 
-    # Auto-iniciar el bot burbuja asistente
-    try:
-        import subprocess
-        bot_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "cajero", "chat_bot_animado.py")
-        if os.path.exists(bot_script):
-            # Usar pythonw.exe para evitar el crash silencioso de QWebEngineView (Chromium) en Windows
-            pythonw_exe = sys.executable.replace("python.exe", "pythonw.exe")
-            if not os.path.exists(pythonw_exe):
-                pythonw_exe = sys.executable # Fallback
-            subprocess.Popen([pythonw_exe, bot_script])
-    except Exception as e:
-        print(f"Error auto-iniciando bot asistente: {e}")
+    # Auto-iniciar el bot burbuja asistente (retrasado 5s para que Qt esté estable)
+    def _launch_bot():
+        try:
+            import subprocess
+            bot_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "cajero", "chat_bot_animado.py")
+            if os.path.exists(bot_script):
+                # Usar pythonw.exe para evitar el crash silencioso de QWebEngineView (Chromium) en Windows
+                pythonw_exe = sys.executable.replace("python.exe", "pythonw.exe")
+                if not os.path.exists(pythonw_exe):
+                    pythonw_exe = sys.executable  # Fallback
+                subprocess.Popen([pythonw_exe, bot_script])
+        except Exception as e:
+            print(f"Error auto-iniciando bot asistente: {e}")
+
+    QTimer.singleShot(5000, _launch_bot)  # 5s de margen para que Qt/Chromium esté listo
 
     if not ok:
         QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
             "El sistema funcionará en modo simulación.")
 
-    # --- FLUJO DE VENTANAS ---
-    # Verificar si estamos en modo "Espectador LAN" basado en la configuración real de la base de datos.
-    from src.config import config
-    from PyQt5.QtWidgets import QInputDialog, QLineEdit
-    
-    db_path = getattr(db_manager, 'db_path', "") or ""
-    is_remote = not getattr(db_manager, 'is_master', True)
-    if is_remote:
-        import hashlib
-        local_pin_saved = config.get("local_pin", hashlib.sha256("1234".encode()).hexdigest())
-        pin, ok_pin = QInputDialog.getText(
-            None,
-            "Modo Espectador LAN - PIN",
-            f"Estás ingresando en modo LAN remoto.\n\nPC maestra: {db_path}\n\nIngrese PIN de acceso:",
-            QLineEdit.Password
-        )
-        if ok_pin:
-            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
-            if pin_hash == local_pin_saved or pin == local_pin_saved:
-                config.current_user = {"username": "Espectador LAN", "role": "admin", "lan_mode": True}
-                main_window.apply_roles()
-                main_window.show()
-                main_window.iniciar_reconstruccion_scifi()
-                result = app.exec_()
-                main_window.close()
-                return result
-            else:
-                QMessageBox.critical(None, "Error", "PIN incorrecto.")
-                return 0
-        else:
-            return 0
+    # --- HILO EN SEGUNDO PLANO PARA REPORTES SEMANALES ---
+    def check_and_send_weekly_report():
+        try:
+            from src.services.email_service import enviar_reporte_semanal_si_es_necesario
+            # Esperar unos segundos para no entorpecer el arranque
+            time.sleep(15)
+            enviar_reporte_semanal_si_es_necesario()
+        except Exception as e:
+            print(f"Error en hilo de reporte semanal: {e}")
+            
+    threading.Thread(target=check_and_send_weekly_report, daemon=True).start()
+
+    # --- FLUJO DE VENTANAS NORMAL ---
+
 
     step = 1
     role_selected = None
@@ -179,7 +174,7 @@ def launch_app():
                 app.processEvents()
                 if role_selected == "cajero":
                     step = 3
-                else:
+                else:  # admin o jefe van directo sin apertura de caja
                     step = 4
             else:
                 login_dlg.hide()
@@ -204,39 +199,17 @@ def launch_app():
         elif step == 4:
             main_window.apply_roles()
             main_window.show()
-            main_window.iniciar_reconstruccion_scifi()
             
-            # --- JOYA DE PRESENTACIÓN (Transición de Partículas) ---
-            from src.ui_components.welcome_transition import WelcomeOverlay
-            main_window._welcome_overlay = WelcomeOverlay(main_window)
-            main_window._welcome_overlay.show()
-            # -------------------------------------------------------
+            # --- ANIMACIÓN PRECARGADA (Arranca al instante) ---
+            if hasattr(main_window, '_welcome_overlay') and main_window._welcome_overlay is not None:
+                main_window._welcome_overlay.show()
+                main_window._welcome_overlay.raise_()
             
             result = app.exec_()
             main_window.close()
             main_window = None
             return result
 
-def start_hardware_watchdog():
-    """ Hilo de vigilancia que asegura que el hardware responda. """
-    def watchdog_loop():
-        logging.info("[WATCHDOG] Iniciando vigilancia de hardware...")
-        print("\n[WATCHDOG] Iniciando vigilancia de hardware...")
-        while True:
-            try:
-                from src.hardware.cash_drawer import drawer_manager
-                if drawer_manager is not None:
-                    status = drawer_manager.check_status()
-            except Exception as e:
-                logging.error(f"[WATCHDOG ERROR] {e}")
-                print(f"[WATCHDOG ERROR] {e}")
-
-            
-            time.sleep(5) # Vigilancia cada 5 segundos
-            
-    thread = threading.Thread(target=watchdog_loop, daemon=True)
-    thread.start()
-    return thread
 
 _update_service_running = False
 
@@ -272,67 +245,6 @@ def start_update_server():
             time.sleep(5)
 
     thread = threading.Thread(target=manager_loop, daemon=True)
-    thread.start()
-    return thread
-
-def start_udp_discovery_server():
-    """ Inicia el servicio de descubrimiento UDP en segundo plano para enlazar terminales automáticamente. """
-    def server_loop():
-        import socket
-        import json
-        import logging
-        try:
-            from src.base_de_datos.database import db_manager
-            from src.utils.paths import get_base_path
-        except ImportError:
-            return
-            
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            sock.bind(('', 37020))
-        except Exception as e:
-            logging.error(f"UDP Discovery Bind Error: {e}")
-            return
-            
-        while True:
-            try:
-                data, addr = sock.recvfrom(1024)
-                if data == b"PUNPRO_DISCOVER":
-                    if not getattr(db_manager, 'is_master', False):
-                        continue
-
-                    if not os.path.exists(db_manager.db_path):
-                        continue
-
-                    base_path = get_base_path().lower()
-                    db_path = db_manager.db_path.lower()
-                    is_local = base_path in db_path or not db_path or db_path == "punpro.db"
-                    
-                    if is_local:
-                        from src.config import config
-                        import hashlib
-                        hostname = socket.gethostname()
-                        shared_folder = config.get("shared_folder_name", "tpv pro 2026")
-                        current_db_name = config.get("db_name", "punpro.db")
-                        shared_db_path = f"\\\\{hostname}\\{shared_folder}\\{current_db_name}"
-                        server_ip = socket.gethostbyname(hostname)
-                        
-                        srv_pass = config.get("server_password", "admin")
-                        srv_pass_hash = hashlib.sha256(srv_pass.encode()).hexdigest()
-                        
-                        response = {
-                            "hostname": hostname,
-                            "server_ip": server_ip,
-                            "db_path": shared_db_path,
-                            "pass_hash": srv_pass_hash,
-                            "mode": "master"
-                        }
-                        sock.sendto(json.dumps(response).encode('utf-8'), addr)
-            except Exception:
-                pass
-                
-    thread = threading.Thread(target=server_loop, daemon=True)
     thread.start()
     return thread
 
@@ -398,20 +310,41 @@ if __name__ == "__main__":
     import sys
     if "--install-firewall" in sys.argv:
         import subprocess
+        import os
+        
+        exe_path = os.path.abspath(sys.executable)
+        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        mariadb_path = os.path.join(base_dir, "mariadb_server", "bin", "mysqld.exe")
+        if not os.path.exists(mariadb_path):
+            mariadb_path = os.path.join(os.path.dirname(exe_path), "mariadb_server", "bin", "mysqld.exe")
+
         comandos = [
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP" dir=in action=allow protocol=TCP localport=8000,38001,3306',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out" dir=out action=allow protocol=TCP localport=8000,38001,3306',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP" dir=in action=allow protocol=UDP localport=8000,38001',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_Out" dir=out action=allow protocol=UDP localport=8000,38001'
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_v3" dir=in action=allow protocol=TCP localport=8000,38001,3306',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out_v3" dir=out action=allow protocol=TCP localport=8000,38001,3306',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_v3" dir=in action=allow protocol=UDP localport=8000,38001,37020,38002',
+            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_Out_v3" dir=out action=allow protocol=UDP localport=8000,38001,37020,38002',
+            # CALCULO EXTREMO: Reglas específicas para el programa para sobreescribir bloqueos silenciosos de Windows
+            f'netsh advfirewall firewall add rule name="TPV_App_Override" dir=in action=allow program="{exe_path}" enable=yes profile=any',
+            f'netsh advfirewall firewall add rule name="TPV_App_Override_Out" dir=out action=allow program="{exe_path}" enable=yes profile=any'
         ]
+        
+        if os.path.exists(mariadb_path):
+            comandos.append(f'netsh advfirewall firewall add rule name="TPV_MariaDB_Override" dir=in action=allow program="{mariadb_path}" enable=yes profile=any')
+            comandos.append(f'netsh advfirewall firewall add rule name="TPV_MariaDB_Override_Out" dir=out action=allow program="{mariadb_path}" enable=yes profile=any')
+
         for cmd in comandos:
             subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         sys.exit(0)
 
-    # psutil auto-kill disabled for debugging
-
     from src.logger import setup_logger
     setup_logger()
+    
+    # Asegurar reglas de firewall de forma automática en el arranque
+    try:
+        from src.services.mariadb_controller import mariadb_controller
+        mariadb_controller._ensure_firewall()
+    except Exception as e:
+        pass
     
     # 1. Inicializar
     app = QApplication(sys.argv)
@@ -423,14 +356,21 @@ if __name__ == "__main__":
     # 2. Inicializar el Hardware de forma segura
     from src.hardware.cash_drawer import reset_drawer_manager
     reset_drawer_manager()
-    
-    start_hardware_watchdog()
+
     start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
-    start_udp_discovery_server()    # Servidor de descubrimiento automático en red
+    from src.services.lan_server import init_lan_server
+    init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
     while True:
         exit_code = launch_app()
         if exit_code not in (99, 888):
             break
+            
+    try:
+        from src.services.mariadb_controller import mariadb_controller
+        mariadb_controller.stop_server()
+    except Exception as e:
+        print(f"Error al detener MariaDB: {e}")
+        
     sys.exit(exit_code)

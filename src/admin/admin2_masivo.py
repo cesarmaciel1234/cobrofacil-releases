@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
@@ -17,16 +18,16 @@ class Admin2Masivo(QDialog):
         self.setWindowTitle("Cambio de Precios Masivo"); self.setFixedSize(1100, 750)
         self.setup_ui(); self.cargar_datos()
     def setup_ui(self):
-        self.setStyleSheet("background-color: #D4D0C8; font-family: 'Segoe UI';")
+        self.setStyleSheet(" font-family: 'Segoe UI';")
         self.main_layout = QVBoxLayout(self); self.main_layout.setContentsMargins(0, 0, 0, 0); self.main_layout.setSpacing(0)
-        header = QFrame(); header.setFixedHeight(35); header.setStyleSheet("background-color: #0055AA;")
+        header = QFrame(); header.setFixedHeight(35); header.setStyleSheet("")
         h_layout = QHBoxLayout(header); h_layout.addWidget(QLabel("💹 CAMBIO MASIVO"))
         self.main_layout.addWidget(header)
         search_f = QFrame(); s_layout = QGridLayout(search_f)
         self.txt_f1 = QLineEdit(); s_layout.addWidget(QLabel("Código:"), 0, 0); s_layout.addWidget(self.txt_f1, 0, 1)
         self.main_layout.addWidget(search_f)
         self.tabla = QTableWidget(); self.tabla.setColumnCount(11); self.tabla.setHorizontalHeaderLabels(["✅", "Código", "Nombre", "Unidad", "Categoría", "Costo", "Precio", "Anterior", "Fecha", "Stock", "Margen"])
-        self.tabla.setStyleSheet("QHeaderView::section { background: #A6A6FF; }")
+        self.tabla.setStyleSheet("QHeaderView::section {  }")
         self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
         self.main_layout.addWidget(self.tabla)
         footer = QFrame(); footer.setFixedHeight(100); f_layout = QHBoxLayout(footer)

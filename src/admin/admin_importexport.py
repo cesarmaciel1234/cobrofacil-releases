@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 """
 Módulo de Importación / Exportación de Productos
 Formato Excel Flexible: Soportando precios, ofertas y lectura robusta de columnas sin importar su posición.
@@ -285,9 +286,9 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
         conn.close()
 
         msg = (f"Importación masiva completada exitosamente:\n"
-               f"  ✔ Insertados:   {insertados}\n"
-               f"  ✔ Actualizados: {actualizados}\n"
-               f"  ✖ Errores:      {errores}")
+               f"  [+] Insertados:   {insertados}\n"
+               f"  [~] Actualizados: {actualizados}\n"
+               f"  [-] Errores:      {errores}")
         return True, msg
 
     except Exception as e:

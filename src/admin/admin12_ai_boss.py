@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import sys
 import random
 import datetime
@@ -23,17 +24,17 @@ class Admin12AIBoss(QWidget):
         self.load_insights()
 
     def setup_ui(self):
-        self.setStyleSheet("background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI';")
+        self.setStyleSheet("  font-family: 'Segoe UI';")
         layout = QVBoxLayout(self); layout.setContentsMargins(20, 20, 20, 20)
 
         # Header Profesional
         header = QHBoxLayout()
         btn_back = QPushButton("🔙 VOLVER")
-        btn_back.setStyleSheet("background: #1e293b; color: #6366f1; font-weight: 800; border-radius: 8px; padding: 10px;")
+        btn_back.setStyleSheet("  font-weight: 800; border-radius: 8px; padding: 10px;")
         btn_back.clicked.connect(self.request_dashboard.emit)
         header.addWidget(btn_back)
         
-        lbl_title = QLabel("🧠 MENTOR ESTRATÉGICO <span style='color: #6366f1;'>AI BOSS 2026</span>")
+        lbl_title = QLabel("🧠 MENTOR ESTRATÉGICO <span style=''>AI BOSS 2026</span>")
         lbl_title.setStyleSheet("font-size: 24px; font-weight: 900; margin-left: 15px;")
         header.addWidget(lbl_title)
         header.addStretch()
@@ -46,7 +47,7 @@ class Admin12AIBoss(QWidget):
         # Consola de Estrategia (Chat Simplificado)
         self.console = QScrollArea()
         self.console.setWidgetResizable(True)
-        self.console.setStyleSheet("background: #1e293b; border-radius: 12px; border: 1px solid #334155;")
+        self.console.setStyleSheet(" border-radius: 12px; border: 1px solid #334155;")
         self.console_widget = QWidget()
         self.console_l = QVBoxLayout(self.console_widget)
         self.console_l.addStretch()
@@ -57,11 +58,11 @@ class Admin12AIBoss(QWidget):
         input_bar = QHBoxLayout()
         self.txt_cmd = QLineEdit()
         self.txt_cmd.setPlaceholderText("Consultar estrategia, proyecciones o dudas financieras...")
-        self.txt_cmd.setStyleSheet("background: #0f172a; border: 2px solid #334155; border-radius: 8px; padding: 15px; color: white;")
+        self.txt_cmd.setStyleSheet(" border: 2px solid #334155; border-radius: 8px; padding: 15px; color: white;")
         self.txt_cmd.returnPressed.connect(self.process_query)
         btn_send = QPushButton("⚡")
         btn_send.setFixedSize(50, 50)
-        btn_send.setStyleSheet("background: #6366f1; color: white; border-radius: 25px; font-size: 20px; font-weight: bold;")
+        btn_send.setStyleSheet(" color: white; border-radius: 25px; font-size: 20px; font-weight: bold;")
         btn_send.clicked.connect(self.process_query)
         input_bar.addWidget(self.txt_cmd); input_bar.addWidget(btn_send)
         layout.addLayout(input_bar)
@@ -88,9 +89,9 @@ class Admin12AIBoss(QWidget):
             ("FALTANTES ACUM.", "$ 0.00", "#f87171")
         ]
         for i, (t, v, c) in enumerate(metrics):
-            card = QFrame(); card.setStyleSheet(f"background: #1e293b; border-radius: 10px; border-top: 4px solid {c}; padding: 10px;")
+            card = QFrame(); card.setStyleSheet(f" border-radius: 10px; border-top: 4px solid {c}; padding: 10px;")
             l = QVBoxLayout(card)
-            l.addWidget(QLabel(t, styleSheet="color: #94a3b8; font-size: 10px; font-weight: 800;"))
+            l.addWidget(QLabel(t, styleSheet=" font-size: 10px; font-weight: 800;"))
             val = QLabel(v); val.setStyleSheet(f"color: {c}; font-size: 24px; font-weight: 900;")
             val.setAlignment(Qt.AlignCenter)
             l.addWidget(val)
@@ -129,15 +130,15 @@ class AIBubble(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("""
             QPushButton {
-                background-color: #6366f1;
+                
                 color: white;
                 font-size: 30px;
                 border-radius: 30px;
                 border: 2px solid #a855f7;
             }
             QPushButton:hover {
-                background-color: #4f46e5;
-                border-color: #8b5cf6;
+                
+                border-
             }
         """)
         

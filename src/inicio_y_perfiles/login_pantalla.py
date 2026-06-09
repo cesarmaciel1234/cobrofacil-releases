@@ -47,6 +47,11 @@ class LoginPantalla(QDialog):
             accent_r, accent_g, accent_b = 16, 185, 129
             role_icon = "🛡️"
             role_label = "ADMINISTRADOR"
+        elif self.role == "jefe":
+            accent = "#F59E0B"
+            accent_r, accent_g, accent_b = 245, 158, 11
+            role_icon = "👑"
+            role_label = "JEFE / DUEÑO"
         else:
             accent = "#3B82F6"
             accent_r, accent_g, accent_b = 59, 130, 246
@@ -162,9 +167,11 @@ class LoginPantalla(QDialog):
             res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'cajero'")
         elif self.role == "admin":
             res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'admin'")
+        elif self.role == "jefe":
+            res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'jefe'")
         else:
             res_users = db_manager.execute_query(
-                "SELECT username FROM usuarios WHERE rol = ? OR rol = 'admin'", (self.role,))
+                "SELECT username FROM usuarios WHERE rol = ?", (self.role,))
 
         if res_users:
             self.txt_user.addItems([row['username'] for row in res_users])
@@ -201,13 +208,32 @@ class LoginPantalla(QDialog):
         self.txt_user.setStyleSheet(field_style)
         if self.role == "admin":
             self.txt_user.setCurrentText("admin")
+        elif self.role == "jefe":
+            index = self.txt_user.findText("jefe")
+            if index >= 0:
+                self.txt_user.setCurrentIndex(index)
+            else:
+                self.txt_user.setCurrentIndex(0 if self.txt_user.count() > 0 else -1)
         else:
-            self.txt_user.setCurrentIndex(-1)
+            # Intenta seleccionar 'cajero' si existe, de lo contrario primer index
+            index = self.txt_user.findText("cajero")
+            if index >= 0:
+                self.txt_user.setCurrentIndex(index)
+            else:
+                self.txt_user.setCurrentIndex(0 if self.txt_user.count() > 0 else -1)
         content.addWidget(self.txt_user)
 
         # ── Campo contraseña ───────────────────────────────────────────────────
         self.txt_pass = QLineEdit()
-        self.txt_pass.setPlaceholderText("Contraseña Operativa")
+        if self.role == "admin":
+            self.txt_pass.setText("admin")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa (Por defecto: admin)")
+        elif self.role == "jefe":
+            self.txt_pass.setText("jefe")
+            self.txt_pass.setPlaceholderText("Contraseña Gerencial (Por defecto: jefe)")
+        else:
+            self.txt_pass.setText("cajero")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa (Por defecto: cajero)")
         self.txt_pass.setEchoMode(QLineEdit.Password)
         self.txt_pass.setStyleSheet(field_style)
         self.txt_pass.returnPressed.connect(self.verificar)
@@ -272,26 +298,48 @@ class LoginPantalla(QDialog):
 
         res = db_manager.execute_query(
             "SELECT id, username, password_hash, rol FROM usuarios WHERE username = ?", (user,))
-        if res:
-            db_user = res[0]
-            if hashlib.sha256(pwd.encode()).hexdigest() == db_user['password_hash']:
-                if self.role == "cajero" and db_user['rol'].lower() == "admin":
-                    QMessageBox.critical(self, "Acceso Denegado",
-                        "El usuario Administrador no está permitido en este acceso.")
-                    return
-                if (db_user['rol'].lower() != self.role.lower()
-                        and self.role != "any"
-                        and db_user['rol'].lower() != "admin"):
-                    QMessageBox.critical(self, "Acceso Denegado",
-                        f"No tienes permisos de {self.role.upper()}.")
-                    return
-                config.current_user = {
-                    "id": db_user['id'],
-                    "username": db_user['username'],
-                    "role": db_user['rol']
-                }
-                self.accept()
-                return
-        QMessageBox.critical(self, "Error", "Credenciales inválidas.")
-        self.txt_pass.clear()
+        if not res:
+            QMessageBox.critical(self, "Error", "Credenciales inválidas.")
+            self.txt_pass.clear(); self.txt_pass.setFocus()
+            return
+
+        db_user  = res[0]
+        user_rol = db_user['rol'].lower()
+
+        # Verificar contraseña
+        if hashlib.sha256(pwd.encode()).hexdigest() != db_user['password_hash']:
+            QMessageBox.critical(self, "Error", "Credenciales inválidas.")
+            self.txt_pass.clear(); self.txt_pass.setFocus()
+            return
+
+        # ── Tabla de roles permitidos por perfil de acceso ────────────────────
+        # cajero → solo cajeros
+        # admin  → solo admins
+        # jefe   → solo jefes (el admin tiene su propio perfil separado)
+        ACCESO = {
+            "cajero": {"cajero"},
+            "admin":  {"admin"},
+            "jefe":   {"jefe"},
+        }
+        permitidos = ACCESO.get(self.role, {self.role})
+
+        if user_rol not in permitidos:
+            QMessageBox.critical(
+                self, "Acceso Denegado",
+                f"El usuario '{db_user['username']}' (rol: {user_rol.upper()})\n"
+                f"no tiene permiso para acceder como {self.role.upper()}."
+            )
+            return
+
+        # ── Sesión iniciada ───────────────────────────────────────────────────
+        config.current_user = {
+            "id":       db_user['id'],
+            "username": db_user['username'],
+            "role":     db_user['rol'],
+        }
+        self.accept()
+
+    def showEvent(self, event):
+        super().showEvent(event)
         self.txt_pass.setFocus()
+        self.txt_pass.selectAll()

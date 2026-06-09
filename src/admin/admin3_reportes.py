@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 
 import json
 from PyQt5.QtWidgets import (
@@ -53,7 +54,7 @@ class ModernCard(QFrame):
         self.setObjectName("card")
         self.setStyleSheet("""
             #card {
-                background-color: #ffffff;
+                
                 border: none;
                 border-radius: 20px;
             }
@@ -517,7 +518,7 @@ class AIAssistantWidget(ModernCard):
         super().__init__(parent)
         self.setStyleSheet("""
             #card {
-                background-color: #ffffff;
+                
                 border: 2px solid #8B5CF6;
                 border-radius: 20px;
             }
@@ -532,10 +533,10 @@ class AIAssistantWidget(ModernCard):
         lbl_icon = QLabel("🤖")
         lbl_icon.setStyleSheet("font-size: 24px;")
         lbl_title = QLabel("Antigravity AI - Análisis Estratégico")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; color: #8B5CF6;")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; ")
         
         self.lbl_status = QLabel("Pensando...")
-        self.lbl_status.setStyleSheet("font-size: 12px; color: #94A3B8; font-style: italic;")
+        self.lbl_status.setStyleSheet("font-size: 12px;  font-style: italic;")
         self.lbl_status.hide()
         
         h_lay.addWidget(lbl_icon)
@@ -547,7 +548,7 @@ class AIAssistantWidget(ModernCard):
         # Content
         self.lbl_content = QLabel("Recopilando datos para generar insights...")
         self.lbl_content.setWordWrap(True)
-        self.lbl_content.setStyleSheet("font-size: 14px; color: #334155; line-height: 1.5;")
+        self.lbl_content.setStyleSheet("font-size: 14px;  line-height: 1.5;")
         lay.addWidget(self.lbl_content)
         
         # Timer for animation
@@ -686,7 +687,7 @@ class Admin3Reportes(QWidget):
         
         lbl_tit = QLabel(titulo)
         lbl_tit.setObjectName("lbl_tit_tabla")
-        lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900; color: #0F172A; background: transparent; border: none; letter-spacing: -0.5px;")
+        lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900;  background: transparent; border: none; letter-spacing: -0.5px;")
         lay.addWidget(lbl_tit)
         
         tabla = QTableWidget()
@@ -712,17 +713,17 @@ class Admin3Reportes(QWidget):
                 border-bottom: 1px solid #F1F5F9;
                 font-size: 14px;
                 font-weight: 500;
-                color: #475569;
+                
             }
             QTableWidget::item:selected {
-                background-color: #F8FAFC;
-                color: #0F172A;
+                
+                
             }
         """)
         lay.addWidget(tabla)
         
         lbl_total = QLabel("")
-        lbl_total.setStyleSheet("font-size: 14px; font-weight: 800; color: #0F172A; text-align: right;")
+        lbl_total.setStyleSheet("font-size: 14px; font-weight: 800;  text-align: right;")
         lbl_total.setAlignment(Qt.AlignRight)
         lay.addWidget(lbl_total)
         
@@ -731,7 +732,7 @@ class Admin3Reportes(QWidget):
     def setup_ui(self):
         self.setObjectName("Admin3Reportes")
         self.setStyleSheet("""
-            QWidget#Admin3Reportes { background-color: #F1F5F9; font-family: 'Segoe UI', sans-serif; }
+            QWidget#Admin3Reportes {  font-family: 'Segoe UI', sans-serif; }
             QScrollArea { border: none; background: transparent; }
             QWidget#ScrollContainer { background: transparent; }
             QScrollBar:vertical { background: transparent; width: 5px; }
@@ -746,32 +747,29 @@ class Admin3Reportes(QWidget):
         header = QFrame()
         header.setObjectName("header")
         header.setFixedHeight(64)
-        header.setStyleSheet("QFrame#header { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
+        header.setStyleSheet("QFrame#header {  border-bottom: 1px solid #E2E8F0; }")
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(32, 0, 32, 0)
         
         btn_back = QPushButton("← VOLVER")
         btn_back.setCursor(Qt.PointingHandCursor)
-        btn_back.setStyleSheet("QPushButton { background: #F1F5F9; color: #475569; font-weight: 700; border-radius: 12px; padding: 8px 18px; font-size: 11px; border: none; } QPushButton:hover { background: #E2E8F0; color: #0F172A; }")
+        btn_back.setStyleSheet("QPushButton {   font-weight: 700; border-radius: 12px; padding: 8px 18px; font-size: 11px; border: none; } QPushButton:hover {   }")
         btn_back.clicked.connect(self.request_dashboard.emit)
         h_layout.addWidget(btn_back)
         h_layout.addSpacing(25)
         
         self.btn_ventas = QPushButton("📉 REPORTE FINANCIERO")
         self.btn_clientes = QPushButton("🔍 AUDITORÍA DE VENTAS")
-        self.btn_hora = QPushButton("⏰ X HORA")
-        self.btn_bajo = QPushButton("⚠️ REORDEN")
-        for btn in [self.btn_ventas, self.btn_clientes, self.btn_hora, self.btn_bajo]:
+        self.btn_historial = QPushButton("🕰️ HISTORIAL")
+        for btn in [self.btn_ventas, self.btn_clientes, self.btn_historial]:
             btn.setCursor(Qt.PointingHandCursor)
             
         self.btn_ventas.clicked.connect(self._show_ventas_tab)
         self.btn_clientes.clicked.connect(self._show_auditoria_tab)
-        self.btn_hora.clicked.connect(lambda: DialogoVentasPorHora(self).exec_())
-        self.btn_bajo.clicked.connect(lambda: DialogoInventarioBajo(self).exec_())
+        self.btn_historial.clicked.connect(self._show_historial_tab)
         h_layout.addWidget(self.btn_ventas)
         h_layout.addWidget(self.btn_clientes)
-        h_layout.addWidget(self.btn_hora)
-        h_layout.addWidget(self.btn_bajo)
+        h_layout.addWidget(self.btn_historial)
         h_layout.addStretch()
         main_layout.addWidget(header)
         
@@ -786,7 +784,7 @@ class Admin3Reportes(QWidget):
         # TITLE AND FILTERS
         lbl_main = QLabel("Resumen de Ventas de Mayo")
         lbl_main.setObjectName("lbl_main_title_financial")
-        lbl_main.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E293B; margin-bottom: 5px;")
+        lbl_main.setStyleSheet("font-size: 24px; font-weight: bold;  margin-bottom: 5px;")
         self.content_layout.addWidget(lbl_main)
         
         filters_layout = QHBoxLayout()
@@ -795,7 +793,7 @@ class Admin3Reportes(QWidget):
         for f_text in ["Semana Actual", "Mes Actual", "Mes Anterior", "Año actual", "Periodo..."]:
             f_btn = QPushButton(f_text)
             f_btn.setCursor(Qt.PointingHandCursor)
-            f_btn.setStyleSheet("QPushButton { color: #0284C7; font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover { color: #0369A1; }")
+            f_btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover {  }")
             f_btn.clicked.connect(lambda checked, t=f_text: self.cargar_datos(t))
             self.period_buttons[f_text] = f_btn
             filters_layout.addWidget(f_btn)
@@ -803,7 +801,7 @@ class Admin3Reportes(QWidget):
         
         from PyQt5.QtWidgets import QCheckBox
         self.chk_comparativa = QCheckBox("Comparar con periodo anterior")
-        self.chk_comparativa.setStyleSheet("color: #475569; font-weight: bold; font-size: 13px;")
+        self.chk_comparativa.setStyleSheet(" font-weight: bold; font-size: 13px;")
         self.chk_comparativa.stateChanged.connect(lambda: self.cargar_datos(getattr(self, "current_period", "Mes Actual")))
         filters_layout.addWidget(self.chk_comparativa)
         
@@ -825,9 +823,9 @@ class Admin3Reportes(QWidget):
         legend_layout = QHBoxLayout()
         legend_layout.addStretch()
         lbl_v = QLabel("■ Ventas")
-        lbl_v.setStyleSheet("color: #3B82F6; font-weight: bold; font-size: 12px;")
+        lbl_v.setStyleSheet(" font-weight: bold; font-size: 12px;")
         lbl_g = QLabel("■ Ganancia")
-        lbl_g.setStyleSheet("color: #10B981; font-weight: bold; font-size: 12px;")
+        lbl_g.setStyleSheet(" font-weight: bold; font-size: 12px;")
         legend_layout.addWidget(lbl_v)
         legend_layout.addWidget(lbl_g)
         chart_layout.addLayout(legend_layout)
@@ -897,8 +895,8 @@ class Admin3Reportes(QWidget):
     def _update_tab_buttons(self):
         active_style = """
             QPushButton {
-                background: #EEF2FF;
-                color: #6366F1;
+                
+                
                 font-weight: 800;
                 border-radius: 12px;
                 padding: 8px 18px;
@@ -909,7 +907,7 @@ class Admin3Reportes(QWidget):
         inactive_style = """
             QPushButton {
                 background: transparent;
-                color: #64748B;
+                
                 font-weight: 700;
                 border-radius: 12px;
                 padding: 8px 18px;
@@ -917,8 +915,8 @@ class Admin3Reportes(QWidget):
                 border: none;
             }
             QPushButton:hover {
-                background: #F8FAFC;
-                color: #334155;
+                
+                
             }
         """
         inactive_style += " margin-right: 5px; "
@@ -927,8 +925,8 @@ class Admin3Reportes(QWidget):
         # Estilos fijos para los nuevos botones
         btn_action_style = """
             QPushButton {
-                background: #F1F5F9;
-                color: #475569;
+                
+                
                 font-weight: 700;
                 border-radius: 12px;
                 padding: 8px 18px;
@@ -937,19 +935,25 @@ class Admin3Reportes(QWidget):
                 margin-right: 5px;
             }
             QPushButton:hover {
-                background: #E2E8F0;
-                color: #0F172A;
+                
+                
             }
         """
-        self.btn_hora.setStyleSheet(btn_action_style)
-        self.btn_bajo.setStyleSheet(btn_action_style)
+        # Estilos fijos para los botones de acción si los hubiere
+
 
         if self.stack_views.currentIndex() == 0:
             self.btn_ventas.setStyleSheet(active_style)
             self.btn_clientes.setStyleSheet(inactive_style)
-        else:
+            self.btn_historial.setStyleSheet(inactive_style)
+        elif self.stack_views.currentIndex() == 1:
             self.btn_ventas.setStyleSheet(inactive_style)
             self.btn_clientes.setStyleSheet(active_style)
+            self.btn_historial.setStyleSheet(inactive_style)
+        else:
+            self.btn_ventas.setStyleSheet(inactive_style)
+            self.btn_clientes.setStyleSheet(inactive_style)
+            self.btn_historial.setStyleSheet(active_style)
 
     def cargar_datos(self, periodo="Mes Actual"):
         self.current_period = periodo
@@ -990,9 +994,9 @@ class Admin3Reportes(QWidget):
             self.current_end_str = end_str
             for text, btn in self.period_buttons.items():
                 if text == periodo:
-                    btn.setStyleSheet("QPushButton { color: #1E293B; font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; }")
+                    btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; }")
                 else:
-                    btn.setStyleSheet("QPushButton { color: #0284C7; font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover { color: #0369A1; }")
+                    btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover {  }")
             
             lbl_title = self.findChild(QLabel, "lbl_main_title_financial")
             if lbl_title:
@@ -1055,7 +1059,7 @@ class Admin3Reportes(QWidget):
                 l.setContentsMargins(20,20,20,20)
                 l.setSpacing(8)
                 t = QLabel(title.upper())
-                t.setStyleSheet("color: #64748B; font-size: 12px; font-weight: 800; letter-spacing: 1px; border: none;")
+                t.setStyleSheet(" font-size: 12px; font-weight: 800; letter-spacing: 1px; border: none;")
                 v = QLabel(value)
                 v.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 900; border: none;")
                 
@@ -1265,9 +1269,9 @@ class Admin3Reportes(QWidget):
 
             table_style = """
                 QTableWidget { background-color: white; border: none; }
-                QTableWidget::item { padding: 10px; border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #334155; }
-                QTableWidget::item:hover { background-color: #F8FAFC; color: #0F172A; }
-                QHeaderView::section { background-color: #F8FAFC; color: #64748B; font-weight: bold; border: none; padding: 10px; text-transform: uppercase; font-size: 11px; }
+                QTableWidget::item { padding: 10px; border-bottom: 1px solid #F1F5F9; font-size: 13px;  }
+                QTableWidget::item:hover {   }
+                QHeaderView::section {   font-weight: bold; border: none; padding: 10px; text-transform: uppercase; font-size: 11px; }
             """
 
             # 4. Ventas por semana (Día a Día)
@@ -1681,12 +1685,11 @@ class Admin3Reportes(QWidget):
             import traceback
             print("Error cargando datos de reporte financiero:", traceback.format_exc())
             QMessageBox.critical(self, "Error", f"Ocurrió un error al cargar los datos: {e}")
-    def setup_audit_ui(self):
-        layout = QVBoxLayout(self.audit_view)
-        layout.setContentsMargins(0, 0, 0, 0)
-        from src.cajero.paso8_historial import DialogoHistorialDia
-        self.historial_widget = DialogoHistorialDia(self, is_embedded=True)
-        layout.addWidget(self.historial_widget)
+
+        # Historial view
+        self.historial_view = QWidget()
+        self.setup_historial_ui()
+        self.stack_views.addWidget(self.historial_view)
 
     def _show_ventas_tab(self):
         self.stack_views.setCurrentIndex(0)
@@ -1695,6 +1698,12 @@ class Admin3Reportes(QWidget):
     def _show_auditoria_tab(self):
         self.stack_views.setCurrentIndex(1)
         self._update_tab_buttons()
+        self._buscar_auditoria()
+
+    def _show_historial_tab(self):
+        self.stack_views.setCurrentIndex(2)
+        self._update_tab_buttons()
+        self._cargar_historial_tickets()
         self._buscar_auditoria()
 
     def setup_audit_ui(self):
@@ -1720,17 +1729,17 @@ class Admin3Reportes(QWidget):
             
         input_style = """
             QLineEdit, QComboBox {
-                background: #F8FAFC;
+                
                 border: 1px solid #E2E8F0;
                 border-radius: 10px;
                 padding: 8px 12px;
                 font-size: 13px;
-                color: #1E293B;
+                
                 font-family: 'Segoe UI';
             }
             QLineEdit:focus, QComboBox:focus {
-                border-color: #6366F1;
-                background: #FFFFFF;
+                border-
+                
             }
         """
         self.txt_audit_prod.setStyleSheet(input_style)
@@ -1741,7 +1750,7 @@ class Admin3Reportes(QWidget):
         self.btn_audit_buscar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_buscar.setStyleSheet("""
             QPushButton {
-                background: #6366F1;
+                
                 color: white;
                 font-weight: 700;
                 border-radius: 10px;
@@ -1750,7 +1759,7 @@ class Admin3Reportes(QWidget):
                 border: none;
             }
             QPushButton:hover {
-                background: #4F46E5;
+                
             }
         """)
         self.btn_audit_buscar.clicked.connect(self._buscar_auditoria)
@@ -1759,8 +1768,8 @@ class Admin3Reportes(QWidget):
         self.btn_audit_limpiar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_limpiar.setStyleSheet("""
             QPushButton {
-                background: #F1F5F9;
-                color: #64748B;
+                
+                
                 font-weight: 700;
                 border-radius: 10px;
                 padding: 10px 16px;
@@ -1768,8 +1777,8 @@ class Admin3Reportes(QWidget):
                 border: none;
             }
             QPushButton:hover {
-                background: #E2E8F0;
-                color: #0F172A;
+                
+                
             }
         """)
         self.btn_audit_limpiar.clicked.connect(self._limpiar_filtros_audit)
@@ -1778,7 +1787,7 @@ class Admin3Reportes(QWidget):
         self.btn_audit_exportar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_exportar.setStyleSheet("""
             QPushButton {
-                background: #10B981;
+                
                 color: white;
                 font-weight: 700;
                 border-radius: 10px;
@@ -1787,17 +1796,17 @@ class Admin3Reportes(QWidget):
                 border: none;
             }
             QPushButton:hover {
-                background: #059669;
+                
             }
         """)
         self.btn_audit_exportar.clicked.connect(self._exportar_auditoria)
         
         lbl_prod = QLabel("Producto:")
-        lbl_prod.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        lbl_prod.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
         lbl_mes = QLabel("Mes:")
-        lbl_mes.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        lbl_mes.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
         lbl_anio = QLabel("Año:")
-        lbl_anio.setStyleSheet("font-weight: 700; color: #475569; font-size: 12px; border: none; background: transparent;")
+        lbl_anio.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
         
         fl.addWidget(lbl_prod, 0)
         fl.addWidget(self.txt_audit_prod, 3)
@@ -1827,17 +1836,21 @@ class Admin3Reportes(QWidget):
             QTableWidget {
                 background-color: white;
                 border: none;
-                gridline-color: #F1F5F9;
                 font-size: 12px;
                 border-radius: 16px;
+                gridline-color: #F1F5F9;
             }
             QTableWidget::item {
                 padding: 10px;
                 border-bottom: 1px solid #F1F5F9;
             }
+            QTableWidget::item:selected {
+                background-color: #EEF2FF;
+                color: #4F46E5;
+            }
             QHeaderView::section {
                 background-color: #F8FAFC;
-                color: #475569;
+                color: #4F46E5;
                 font-weight: 800;
                 border: none;
                 border-bottom: 2px solid #E2E8F0;
@@ -1863,13 +1876,13 @@ class Admin3Reportes(QWidget):
             }
             QScrollBar:horizontal {
                 border: none;
-                background: #F1F5F9;
+                
                 height: 8px;
                 margin: 0px;
                 border-radius: 4px;
             }
             QScrollBar::handle:horizontal {
-                background: #CBD5E1;
+                
                 min-width: 20px;
                 border-radius: 4px;
             }
@@ -1904,7 +1917,7 @@ class Admin3Reportes(QWidget):
             c_lay.setSpacing(6)
             
             lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-weight: 800; color: #64748B; font-size: 11px; text-transform: uppercase; border: none; background: transparent;")
+            lbl_title.setStyleSheet("font-weight: 800;  font-size: 11px; text-transform: uppercase; border: none; background: transparent;")
             c_lay.addWidget(lbl_title)
             
             for w in widgets:
@@ -1913,22 +1926,22 @@ class Admin3Reportes(QWidget):
             return card
 
         self.lbl_foot_regs = QLabel("Total Transacciones: 0")
-        self.lbl_foot_regs.setStyleSheet("font-weight: 700; color: #1E293B; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_regs.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         
         self.lbl_foot_unidades = QLabel("Unidades Vendidas: 0.00 ud")
-        self.lbl_foot_unidades.setStyleSheet("font-weight: 700; color: #475569; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_unidades.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         self.lbl_foot_kilos = QLabel("Peso Carne/Aves (Kilos): 0.000 kg")
-        self.lbl_foot_kilos.setStyleSheet("font-weight: 700; color: #D97706; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_kilos.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         
         self.lbl_foot_carnes = QLabel("🥩 Carnes: $0.00")
-        self.lbl_foot_carnes.setStyleSheet("font-weight: 700; color: #EF4444; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_carnes.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         self.lbl_foot_aves = QLabel("🍗 Aves: $0.00")
-        self.lbl_foot_aves.setStyleSheet("font-weight: 700; color: #F97316; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_aves.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         self.lbl_foot_almacen = QLabel("🥫 Almacén: $0.00")
-        self.lbl_foot_almacen.setStyleSheet("font-weight: 700; color: #3B82F6; font-size: 13px; background: none; border: none;")
+        self.lbl_foot_almacen.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         
         self.lbl_foot_monto = QLabel("Facturado Total: $0.00")
-        self.lbl_foot_monto.setStyleSheet("font-weight: 900; color: #10B981; font-size: 15px; background: none; border: none;")
+        self.lbl_foot_monto.setStyleSheet("font-weight: 900;  font-size: 15px; background: none; border: none;")
 
         foot_main_lay.addWidget(make_card("Transacciones", [self.lbl_foot_regs]))
         foot_main_lay.addWidget(make_card("Volumen", [self.lbl_foot_unidades, self.lbl_foot_kilos]))
@@ -2235,18 +2248,18 @@ class Admin3Reportes(QWidget):
             h_title.addWidget(dot)
             
             lbl_t = QLabel(titulo.upper())
-            lbl_t.setStyleSheet("font-size: 10px; font-weight: 800; color: #475569; border: none; background: none;")
+            lbl_t.setStyleSheet("font-size: 10px; font-weight: 800;  border: none; background: none;")
             h_title.addWidget(lbl_t)
             h_title.addStretch()
             l.addLayout(h_title)
             
             lbl_v = QLabel(str(valor))
-            lbl_v.setStyleSheet("font-size: 18px; font-weight: 900; color: #0F172A; border: none; background: none;")
+            lbl_v.setStyleSheet("font-size: 18px; font-weight: 900;  border: none; background: none;")
             l.addWidget(lbl_v)
             
             if extra_text:
                 lbl_e = QLabel(extra_text)
-                lbl_e.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none; background: none;")
+                lbl_e.setStyleSheet("font-size: 11px; font-weight: bold;  border: none; background: none;")
                 l.addWidget(lbl_e)
                 
             return f
@@ -2370,3 +2383,192 @@ class Admin3Reportes(QWidget):
                 
         self._worker_exp_audit.finished.connect(on_finished)
         self._worker_exp_audit.start()
+
+    def setup_historial_ui(self):
+        self.historial_view.setObjectName("HistorialGlobal")
+        self.historial_view.setStyleSheet("QWidget#HistorialGlobal {  }")
+        
+        lay = QVBoxLayout(self.historial_view)
+        lay.setContentsMargins(24, 24, 24, 24)
+        lay.setSpacing(20)
+        
+        filter_card = QFrame()
+        filter_card.setStyleSheet("background: transparent; border: none;")
+        fl = QHBoxLayout(filter_card)
+        fl.setContentsMargins(0, 0, 0, 0)
+        fl.setSpacing(15)
+        
+        self.txt_hist_buscar = QLineEdit()
+        self.txt_hist_buscar.setPlaceholderText("🔎 Buscar producto, cajero o ID...")
+        self.txt_hist_buscar.setStyleSheet("""
+            QLineEdit {
+                 border: 1px solid #2B3139; border-radius: 4px;
+                padding: 10px 15px; font-size: 13px;  font-family: 'Segoe UI';
+            }
+            QLineEdit:focus { border-  }
+        """)
+        
+        self.btn_hist_buscar = QPushButton("ACTUALIZAR DATOS")
+        self.btn_hist_buscar.setCursor(Qt.PointingHandCursor)
+        self.btn_hist_buscar.setStyleSheet("""
+            QPushButton {
+                  font-weight: 900; border-radius: 4px;
+                padding: 10px 25px; font-size: 13px; border: none; font-family: 'Segoe UI';
+            }
+            QPushButton:hover {  }
+        """)
+        self.btn_hist_buscar.clicked.connect(self._cargar_historial_tickets)
+        
+        fl.addWidget(self.txt_hist_buscar)
+        fl.addWidget(self.btn_hist_buscar)
+        lay.addWidget(filter_card)
+        
+        self.tabla_historial_crudo = QTableWidget()
+        self.tabla_historial_crudo.setColumnCount(11)
+        self.tabla_historial_crudo.setHorizontalHeaderLabels([
+            "ORDER ID", "FECHA / HORA", "OPERADOR", "MERCADO", "ACTIVO (PROD)",
+            "VOLUMEN", "UNID", "PRECIO", "TOTAL", "MÉTODO", "ESTADO"
+        ])
+        self.tabla_historial_crudo.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tabla_historial_crudo.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tabla_historial_crudo.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tabla_historial_crudo.verticalHeader().setVisible(False)
+        self.tabla_historial_crudo.setAlternatingRowColors(False)
+        self.tabla_historial_crudo.setStyleSheet("""
+            QTableWidget {
+                background-color: white;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                font-size: 13px;
+                font-family: 'Segoe UI';
+                gridline-color: #F1F5F9;
+            }
+            QTableWidget::item {
+                padding: 12px 8px;
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QTableWidget::item:selected {
+                background-color: #EEF2FF;
+                color: #4F46E5;
+            }
+            QHeaderView::section {
+                background-color: #F8FAFC;
+                color: #4F46E5;
+                font-weight: 800;
+                padding: 12px 8px;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                font-size: 11px;
+            }
+            QScrollBar:vertical { background: #F1F5F9; width: 8px; border-radius: 4px; }
+            QScrollBar::handle:vertical { background: #CBD5E1; border-radius: 4px; }
+        """)
+        
+        hh = self.tabla_historial_crudo.horizontalHeader()
+        hh.setSectionResizeMode(QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(4, QHeaderView.Stretch)
+        
+        lay.addWidget(self.tabla_historial_crudo)
+
+    def _cargar_historial_tickets(self):
+        query = """
+            SELECT v.id, v.fecha, v.usuario, p.departamento, dv.nombre_producto,
+                   dv.cantidad, p.unidad AS unidad_medida, dv.precio_unitario, dv.subtotal,
+                   v.metodo_pago, v.estado
+            FROM ventas v
+            JOIN detalles_ventas dv ON dv.id_venta = v.id
+            LEFT JOIN productos p ON dv.id_producto = p.codigo
+            ORDER BY v.id DESC LIMIT 3000
+        """
+        rows = db_manager.execute_query(query) or []
+        
+        filtro = self.txt_hist_buscar.text().strip().lower()
+        if filtro:
+            rows = [r for r in rows if filtro in str(r.get('id','')) or 
+                                      filtro in str(r.get('nombre_producto','')).lower() or
+                                      filtro in str(r.get('usuario','')).lower() or
+                                      filtro in str(r.get('departamento','')).lower()]
+        
+        self.tabla_historial_crudo.setRowCount(0)
+        from PyQt5.QtGui import QColor, QFont
+        
+        font_mono = QFont("Consolas", 10, QFont.Bold)
+        col_green = QColor("#039855") # Verde oscuro legible
+        col_red = QColor("#D92D20")   # Rojo oscuro legible
+        col_text = QColor("#1E293B")  # Gris pizarra oscuro
+        col_gray = QColor("#64748B")  # Gris pizarra medio
+        col_prod = QColor("#4F46E5")  # Indigo oscuro
+        
+        for i, r in enumerate(rows):
+            self.tabla_historial_crudo.insertRow(i)
+            
+            estado_val = str(r.get('estado', '')).upper()
+            subtotal_val = float(r.get('subtotal', 0))
+            is_negative = estado_val in ['CANCELADA', 'ANULADA', 'REEMBOLSADA'] or subtotal_val < 0
+            
+            trade_color = col_red if is_negative else col_green
+            sign = "-" if is_negative else "+"
+            
+            it_id = QTableWidgetItem(str(r.get('id', '')))
+            it_id.setTextAlignment(Qt.AlignCenter)
+            it_id.setForeground(col_gray)
+            
+            it_fecha = QTableWidgetItem(str(r.get('fecha', '')))
+            it_fecha.setTextAlignment(Qt.AlignCenter)
+            it_fecha.setForeground(col_gray)
+            
+            it_cajero = QTableWidgetItem(str(r.get('usuario', '')).upper())
+            it_cajero.setForeground(col_text)
+            
+            it_depto = QTableWidgetItem(str(r.get('departamento', '')).upper())
+            it_depto.setForeground(col_text)
+            
+            it_prod = QTableWidgetItem(str(r.get('nombre_producto', '')).upper())
+            it_prod.setForeground(col_prod) # Destacar el activo
+            it_prod.setFont(QFont("Segoe UI", 9, QFont.Bold))
+            
+            it_cant = QTableWidgetItem(f"{r.get('cantidad', 0):.2f}")
+            it_cant.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            it_cant.setFont(font_mono)
+            it_cant.setForeground(col_text)
+            
+            it_um = QTableWidgetItem(str(r.get('unidad_medida', 'UN')))
+            it_um.setTextAlignment(Qt.AlignCenter)
+            it_um.setForeground(col_gray)
+            
+            it_punit = QTableWidgetItem(f"{r.get('precio_unitario', 0):.2f}")
+            it_punit.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            it_punit.setFont(font_mono)
+            it_punit.setForeground(col_gray)
+            
+            it_subt = QTableWidgetItem(f"{sign} {abs(subtotal_val):.2f}")
+            it_subt.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            it_subt.setFont(font_mono)
+            it_subt.setForeground(trade_color)
+            
+            it_pago = QTableWidgetItem(str(r.get('metodo_pago', '')).upper())
+            it_pago.setForeground(col_gray)
+            it_pago.setTextAlignment(Qt.AlignCenter)
+            
+            it_estado = QTableWidgetItem(estado_val)
+            it_estado.setTextAlignment(Qt.AlignCenter)
+            it_estado.setFont(QFont("Segoe UI", 9, QFont.Bold))
+            it_estado.setForeground(trade_color)
+            
+            # Aplicar fondo alternado para máxima estética y legibilidad
+            bg = QColor("#ffffff") if i % 2 == 0 else QColor("#F8FAFC")
+            for it in [it_id, it_fecha, it_cajero, it_depto, it_prod, it_cant, it_um, it_punit, it_subt, it_pago, it_estado]:
+                it.setBackground(bg)
+                it.setFont(QFont("Segoe UI", 9))
+            
+            self.tabla_historial_crudo.setItem(i, 0, it_id)
+            self.tabla_historial_crudo.setItem(i, 1, it_fecha)
+            self.tabla_historial_crudo.setItem(i, 2, it_cajero)
+            self.tabla_historial_crudo.setItem(i, 3, it_depto)
+            self.tabla_historial_crudo.setItem(i, 4, it_prod)
+            self.tabla_historial_crudo.setItem(i, 5, it_cant)
+            self.tabla_historial_crudo.setItem(i, 6, it_um)
+            self.tabla_historial_crudo.setItem(i, 7, it_punit)
+            self.tabla_historial_crudo.setItem(i, 8, it_subt)
+            self.tabla_historial_crudo.setItem(i, 9, it_pago)
+            self.tabla_historial_crudo.setItem(i, 10, it_estado)

@@ -67,17 +67,28 @@ class MariaDBController:
             import sys
             # Check if rule exists
             result = subprocess.run(
-                'netsh advfirewall firewall show rule name="TPV_CajaFacil_TCP"',
+                'netsh advfirewall firewall show rule name="TPV_CajaFacil_TCP_v3"',
                 shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
             if result.returncode != 0:
                 logger.info("Reglas de Firewall no encontradas. Solicitando permisos de Administrador para auto-configurar...")
-                # Request UAC elevation to run sys.executable with --install-firewall
-                # sys.executable is the compiled .exe or python.exe in dev
-                ctypes.windll.shell32.ShellExecuteW(
-                    None, "runas", sys.executable, "--install-firewall", None, 0
+                
+                import os
+                exe_path = os.path.abspath(sys.executable)
+                script_path = os.path.abspath(sys.argv[0])
+                
+                # Si estamos en python (.py), pasar el script como parámetro; si es exe compilado, sólo el flag
+                if not exe_path.endswith(".exe"):
+                    params = f'"{script_path}" --install-firewall'
+                else:
+                    params = "--install-firewall"
+                
+                logger.info(f"Lanzando ShellExecuteW para elevacion. Exe: {exe_path}, Params: {params}")
+                # nShowCmd = 1 (SW_SHOWNORMAL) es VITAL para que Windows no bloquee el diálogo de consentimiento UAC
+                ret = ctypes.windll.shell32.ShellExecuteW(
+                    None, "runas", exe_path, params, None, 1
                 )
-                logger.info("Peticion UAC enviada. Las reglas deberian aplicarse en segundo plano.")
+                logger.info(f"Resultado de ShellExecuteW UAC: {ret}")
         except Exception as e:
             logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
 
@@ -92,7 +103,24 @@ class MariaDBController:
         # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
         try:
             import pymysql
-            # Intentar conexión rápida
+            # Intentar conexión rápida con la contraseña '1234'
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="1234",
+                connect_timeout=2
+            )
+            conn.close()
+            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (con contraseña).")
+            self._initialized = True
+            return True
+        except Exception:
+            pass
+
+        try:
+            import pymysql
+            # Intentar conexión rápida sin contraseña
             conn = pymysql.connect(
                 host="127.0.0.1",
                 port=3306,
@@ -101,11 +129,10 @@ class MariaDBController:
                 connect_timeout=2
             )
             conn.close()
-            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306. No es necesario reiniciar.")
+            logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (sin contraseña).")
             self._initialized = True
             return True
         except Exception:
-            # Si no conecta, seguimos con el proceso normal de arranque
             pass
 
         if not self._init_database_if_needed():
@@ -128,7 +155,8 @@ class MariaDBController:
                     f"--datadir={data_dir}",
                     "--port=3306",
                     "--bind-address=0.0.0.0",
-                    "--skip-networking=OFF"
+                    "--skip-networking=OFF",
+                    "--skip-name-resolve"
                 ],
                 cwd=os.path.dirname(mysqld_exe),
                 stdout=subprocess.DEVNULL,
@@ -136,14 +164,29 @@ class MariaDBController:
                 creationflags=creationflags
             )
             
-            # Dar unos segundos para que levante el puerto
-            time.sleep(3)
-            
             # Verificar si el proceso murió inmediatamente
             if self._process.poll() is not None:
                 logger.error("El proceso mysqld.exe se cerro inesperadamente tras iniciar.")
                 return False
                 
+            # Esperar a que el puerto 3306 este listo usando un polling inteligente
+            import time
+            import socket
+            
+            max_retries = 30
+            for i in range(max_retries):
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.settimeout(0.5)
+                    result = s.connect_ex(("127.0.0.1", 3306))
+                    s.close()
+                    if result == 0:
+                        logger.info(f"MariaDB listo despues de {i*0.5} segundos.")
+                        break
+                except:
+                    pass
+                time.sleep(0.5)
+            
             self._initialized = True
             
             # Aqui creamos la base de datos 'punpro_db' si no existe, a través de mysql.exe
@@ -160,15 +203,18 @@ class MariaDBController:
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
         mysql_exe = os.path.join(os.path.dirname(mysqld_exe), "mysql.exe")
         
+        sql_commands = (
+            "CREATE DATABASE IF NOT EXISTS punpro_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+            "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '1234';"
+            "ALTER USER 'root'@'%' IDENTIFIED BY '1234';"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
+            "FLUSH PRIVILEGES;"
+        )
+        
+        creationflags = 0x08000000
+        
+        # Intentar primero sin contraseña (primera inicialización)
         try:
-            # Ejecutamos un comando SQL para crear la DB y darle permisos totales a root
-            sql_commands = (
-                "CREATE DATABASE IF NOT EXISTS punpro_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-                "GRANT ALL PRIVILEGES ON punpro_db.* TO 'root'@'%' IDENTIFIED BY '';"
-                "FLUSH PRIVILEGES;"
-            )
-            
-            creationflags = 0x08000000
             process = subprocess.Popen(
                 [mysql_exe, "-u", "root", "-e", sql_commands],
                 cwd=os.path.dirname(mysql_exe),
@@ -177,7 +223,23 @@ class MariaDBController:
                 creationflags=creationflags
             )
             process.communicate(timeout=5)
-            logger.info("Base de datos punpro_db garantizada en MariaDB local.")
+            if process.returncode == 0:
+                logger.info("Base de datos punpro_db garantizada en MariaDB local (inicializada con contraseña '1234').")
+                return
+        except Exception:
+            pass
+            
+        # Intentar con la contraseña por defecto '1234'
+        try:
+            process = subprocess.Popen(
+                [mysql_exe, "-u", "root", "-p1234", "-e", sql_commands],
+                cwd=os.path.dirname(mysql_exe),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=creationflags
+            )
+            process.communicate(timeout=5)
+            logger.info("Base de datos punpro_db garantizada en MariaDB local (con contraseña '1234' confirmada).")
         except Exception as e:
             logger.error(f"Error creando la base de datos punpro_db local: {e}")
 

@@ -64,14 +64,19 @@ class DatabaseManager:
                             custom_ip = parts[2]
                 
                 # Fallback final a localhost
-                host = custom_ip if custom_ip else "127.0.0.1"
+                host = custom_ip if custom_ip else ""
+                
+                # Desactivado auto-descubrimiento en arranque para respetar inicio como maestra por defecto.
+                
+                if not host:
+                    host = "127.0.0.1"
                 
                 import socket
                 is_loopback = False
                 if host in ("localhost", "127.0.0.1", socket.gethostname().lower()):
                     is_loopback = True
                 
-                if is_loopback or not custom_ip:
+                if is_loopback or not custom_ip and host == "127.0.0.1":
                     # MODO MAESTRO MARIADB
                     self.is_master = True
                     host = "127.0.0.1"
@@ -86,21 +91,23 @@ class DatabaseManager:
                 
                 # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
                 if not self.is_master:
-                    try:
-                        # Prueba rápida de socket para no congelar la UI 10 segundos
-                        import socket
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.settimeout(1.5) # Timeout muy corto
-                        result = sock.connect_ex((host, 3306))
-                        sock.close()
-                        if result != 0:
-                            raise Exception(f"El servidor MariaDB en {host} no está accesible en la red.")
+                    # Bucle de reintento
+                    while True:
+                        try:
+                            import socket
+                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            sock.settimeout(1.5)
+                            result = sock.connect_ex((host, 3306))
+                            sock.close()
+                            if result == 0:
+                                conn = self.mariadb_engine.get_connection()
+                                conn._conn.ping()
+                                logger.info("Conexión recuperada a la PC Maestra.")
+                                break
+                        except:
+                            pass
                             
-                        conn = self.mariadb_engine.get_connection()
-                        conn._conn.ping() # Prueba real de conexión
-                        logger.info("Conexión exitosa a la PC Maestra.")
-                    except Exception as e:
-                        logger.error(f"Fallo de conexión a la Maestra: {e}")
+                        logger.error(f"Fallo de conexión a la Maestra en {host}")
                         from PyQt5.QtWidgets import QMessageBox, QApplication
                         from src.config import config
                         app = QApplication.instance()
@@ -108,21 +115,29 @@ class DatabaseManager:
                             import sys
                             app = QApplication(sys.argv)
                         
-                        config.set("db_host", "")
-                        config.save()
-                        
                         msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Critical)
-                        msg.setWindowTitle("⚠️ ERROR DE CONEXIÓN")
-                        msg.setText(f"No se pudo conectar a la base de datos en: {host}.\n\n¡Por favor revise los datos de red ingresados!\n\nPor seguridad, la configuración de red ha sido limpiada y el sistema se cerrará para que pueda iniciar en modo local.")
+                        msg.setIcon(QMessageBox.Warning)
+                        msg.setWindowTitle("⚠️ RED NO ENCONTRADA")
+                        msg.setText(f"No se pudo conectar a la base de datos maestra en: {host}.\n\n¿Deseas volver a intentarlo o forzar el inicio en modo local (aislado)?\n(Nota: Si fuerzas el modo local, trabajarás desconectado y tus ventas se guardarán temporalmente).")
                         
-                        btn_aceptar = msg.addButton("Aceptar", QMessageBox.AcceptRole)
+                        btn_reintentar = msg.addButton("Reintentar Conexión", QMessageBox.AcceptRole)
+                        btn_local = msg.addButton("Forzar Modo Local", QMessageBox.DestructiveRole)
                         msg.exec_()
                         
-                        logger.info("Conexión fallida. Limpiando JSON y cerrando sistema.")
-                        app.exit(888)
-                        import sys
-                        sys.exit(888)
+                        clicked = msg.clickedButton()
+                        
+                        if clicked == btn_reintentar:
+                            continue
+                        else:
+                            logger.info("Usuario forzó modo local. Se mantendrá la config JSON pero se iniciará en SQLite.")
+                            self.is_master = True
+                            self.db_path = "sqlite:///" + os.path.join(self.base_dir, "punpro.db")
+                            self.mariadb_engine = None
+                            self.sqlite_engine = SQLiteEngine(self.db_path.replace("sqlite:///", ""))
+                            self._create_tables()
+                            self._ensure_test_users()
+                            # No levantamos error, simplemente sale y continua en modo local temporalmente
+                            return
 
                 self.db_path = "mariadb://" + host
                 self._create_tables()
@@ -459,7 +474,7 @@ class DatabaseManager:
                 }
                 for _k, _v in _sync_map.items():
                     cursor.execute(
-                        "INSERT OR REPLACE INTO configuracion (clave, valor) VALUES (?, ?)",
+                        "REPLACE INTO configuracion (clave, valor) VALUES (?, ?)",
                         (_k, str(_v))
                     )
             except Exception as _e:
@@ -783,13 +798,33 @@ class DatabaseManager:
             logger.error(f"upsert_product error: {e}")
             return False
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Helper: normaliza SQL para el motor activo
+    # SQLite  usa ?      como placeholder y CAST(x AS TEXT)
+    # MariaDB usa %s     como placeholder y CAST(x AS CHAR)
+    # ─────────────────────────────────────────────────────────────────────────
+    def _normalize_query(self, query: str) -> str:
+        """Convierte SQL escrito en dialecto SQLite a dialecto MariaDB si corresponde."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return query
+        import re
+        # 1. Placeholders: ? → %s  (solo los ? sueltos, no dentro de strings)
+        query = re.sub(r'(?<![\w\'"\\])\?(?![\w\'"\\])', '%s', query)
+        # 2. CAST(expr AS TEXT) → CAST(expr AS CHAR)
+        query = re.sub(r'CAST\s*\((.+?)\s+AS\s+TEXT\)', r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
+        # 3. INSERT OR IGNORE → INSERT IGNORE
+        query = re.sub(r'INSERT\s+OR\s+IGNORE', 'INSERT IGNORE', query, flags=re.IGNORECASE)
+        # 4. INSERT OR REPLACE → REPLACE
+        query = re.sub(r'INSERT\s+OR\s+REPLACE', 'REPLACE', query, flags=re.IGNORECASE)
+        return query
+
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(query, params)
+            cursor.execute(self._normalize_query(query), params)
             result = cursor.fetchall()
             return result
         except Exception as e:
@@ -805,7 +840,7 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(query, params)
+            cursor.execute(self._normalize_query(query), params)
             conn.commit()
             return True
         except Exception as e:
@@ -826,7 +861,7 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.executemany(query, params_list)
+            cursor.executemany(self._normalize_query(query), params_list)
             conn.commit()
             return True
         except Exception as e:
@@ -847,11 +882,10 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(query, params)
+            cursor.execute(self._normalize_query(query), params)
             row = cursor.fetchone()
             if row:
                 if isinstance(row, dict):
-                    # Manejar caso MariaDB donde fetchone() devuelve un diccionario
                     vals = list(row.values())
                     return vals[0] if len(vals) > 0 else None
                 else:
@@ -933,7 +967,7 @@ class DatabaseManager:
             
             conn.commit()
             return id_venta
-        except sqlite3.OperationalError as e:
+        except Exception as e:
             if conn: conn.rollback()
             # Derivar al Buffer Offline si falla la conexión a la base de datos de red
             logger.warning(f"Fallo de red detectado al guardar venta. Guardando offline: {e}")
@@ -944,10 +978,47 @@ class DatabaseManager:
             except Exception as ex:
                 logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
                 return None
-        except sqlite3.Error as e:
+        finally:
+            if conn: conn.close()
+
+    def sync_venta_to_master(self, venta_data, items):
+        """Intenta guardar una venta offline en la base de datos principal sin fallback."""
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            from datetime import datetime
+            fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            c_id = venta_data.get('caja_id', 1)
+            
+            cursor.execute("""
+                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                                   usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
+                venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
+                venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
+                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0)
+            ))
+            id_venta = cursor.lastrowid
+            
+            for it in items:
+                cursor.execute("""
+                    INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                
+                if it.get('id') and str(it['id']).strip() not in ('000', ''):
+                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
+            
+            conn.commit()
+            return True
+        except Exception as e:
             if conn: conn.rollback()
-            logger.error(f"Error guardando venta completa: {e}")
-            return None
+            logger.warning(f"Fallo en sync_venta_to_master: {e}")
+            return False
         finally:
             if conn: conn.close()
 
@@ -1016,8 +1087,7 @@ class DatabaseManager:
         from datetime import datetime
         conn = None
         try:
-            conn = sqlite3.connect(self.db_path, timeout=30.0)
-            conn.row_factory = sqlite3.Row
+            conn = self.get_connection()
             cursor = conn.cursor()
             
             # 1. Obtener la venta y verificar su estado
@@ -1057,7 +1127,7 @@ class DatabaseManager:
             
             conn.commit()
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             if conn: conn.rollback()
             logger.error(f"Error transaccional al cancelar venta {id_venta}: {e}")
             return False

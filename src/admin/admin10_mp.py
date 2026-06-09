@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import os
 import json
 import subprocess
@@ -141,20 +142,20 @@ class Admin10MP(QWidget):
         self.verificar_token_guardado()
         
     def setup_ui(self):
-        self.setStyleSheet("background-color: #F8FAFC; font-family: 'Segoe UI';")
+        self.setStyleSheet(" font-family: 'Segoe UI';")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # --- HEADER ---
         header = QFrame()
-        header.setStyleSheet("background-color: #00B1EA; color: white;")
+        header.setStyleSheet(" color: white;")
         header.setFixedHeight(70)
         hl = QHBoxLayout(header)
         hl.setContentsMargins(20, 0, 20, 0)
         
         btn_volver = QPushButton("🔙 Volver")
-        btn_volver.setStyleSheet("background: white; color: #00B1EA; font-weight: bold; border-radius: 5px; padding: 8px 15px;")
+        btn_volver.setStyleSheet("background: white;  font-weight: bold; border-radius: 5px; padding: 8px 15px;")
         btn_volver.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_volver)
         
@@ -166,7 +167,7 @@ class Admin10MP(QWidget):
         
         # Estado
         self.lbl_estado = QLabel("🔴 DETENIDO")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px; background: #E2E8F0; color: #DC2626; padding: 5px 15px; border-radius: 10px;")
+        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
         hl.addWidget(self.lbl_estado)
         layout.addWidget(header)
         
@@ -180,26 +181,26 @@ class Admin10MP(QWidget):
         ftl = QHBoxLayout(frame_token)
         
         lbl_tok = QLabel("Access Token de Producción:")
-        lbl_tok.setStyleSheet("font-weight: bold; color: #334155;")
+        lbl_tok.setStyleSheet("font-weight: bold; ")
         self.txt_token = QLineEdit()
         self.txt_token.setPlaceholderText("APP_USR-...")
-        self.txt_token.setStyleSheet("padding: 5px; border: 1px solid #94A3B8; border-radius: 4px; background: #F1F5F9;")
+        self.txt_token.setStyleSheet("padding: 5px; border: 1px solid #94A3B8; border-radius: 4px; ")
         self.txt_token.setEchoMode(QLineEdit.PasswordEchoOnEdit)
         
         btn_guardar = QPushButton("Guardar e Iniciar")
-        btn_guardar.setStyleSheet("background: #10B981; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_guardar.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_guardar.clicked.connect(self.iniciar_monitor)
         
         btn_sync = QPushButton("🔄 Sincronizar Histórico")
-        btn_sync.setStyleSheet("background: #0284c7; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_sync.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_sync.clicked.connect(self.sincronizar_historico)
         
         btn_import_csv = QPushButton("📥 Importar CSV Oficial MP")
-        btn_import_csv.setStyleSheet("background: #0d9488; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_import_csv.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_import_csv.clicked.connect(self.importar_csv_mercado_pago)
         
         btn_probar = QPushButton("Simular")
-        btn_probar.setStyleSheet("background: #8B5CF6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_probar.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_probar.clicked.connect(self.simular_pago)
         
         ftl.addWidget(lbl_tok)
@@ -237,7 +238,7 @@ class Admin10MP(QWidget):
             cl.setSpacing(5)
             
             lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-size: 11px; font-weight: 900; color: #64748B; letter-spacing: 1px;")
+            lbl_title.setStyleSheet("font-size: 11px; font-weight: 900;  letter-spacing: 1px;")
             
             lbl_value = QLabel(value)
             lbl_value.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {color_hex}; font-family: 'Segoe UI Black';")
@@ -318,7 +319,7 @@ class Admin10MP(QWidget):
         self.chk_cargas.setStyleSheet("""
             QCheckBox {
                 font-size: 13px;
-                color: #475569;
+                
                 font-weight: bold;
             }
         """)
@@ -329,7 +330,7 @@ class Admin10MP(QWidget):
         self.chk_omitidos.setStyleSheet("""
             QCheckBox {
                 font-size: 13px;
-                color: #475569;
+                
                 font-weight: bold;
             }
         """)
@@ -347,7 +348,7 @@ class Admin10MP(QWidget):
         self.tabla = QTableWidget(0, 5)
         self.tabla.setHorizontalHeaderLabels(["Fecha", "ID de Pago", "Cliente", "Monto", "Estado"])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabla.setStyleSheet("background: white; alternate-background-color: #F8FAFC; font-size: 14px;")
+        self.tabla.setStyleSheet("background: white; alternate- font-size: 14px;")
         self.tabla.setAlternatingRowColors(True)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -380,7 +381,7 @@ class Admin10MP(QWidget):
         self.poller.start()
         
         self.lbl_estado.setText("🟢 ESCUCHANDO")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px; background: #D1FAE5; color: #059669; padding: 5px 15px; border-radius: 10px;")
+        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
         
         # Sincronizar historial cada vez que se inicia
         self.sincronizar_historico()
@@ -820,7 +821,7 @@ class Admin10MP(QWidget):
         
     def mostrar_error(self, msg):
         self.lbl_estado.setText("🔴 ERROR DE TOKEN")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px; background: #FEE2E2; color: #DC2626; padding: 5px 15px; border-radius: 10px;")
+        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
         QMessageBox.critical(self, "Mercado Pago", msg)
         
     def simular_pago(self):

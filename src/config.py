@@ -19,7 +19,7 @@ class Config:
         "balanza_prefijo": "20",
         "balanza_modo": "Peso Neto (Kg)",
         "balanza_plu_inicio": 3,
-        "balanza_plu_largo": 4, # 4 dígitos de PLU (Dígitos 3,4,5,6)
+        "balanza_plu_largo": 5, # 5 dígitos de PLU (Dígitos 3,4,5,6,7) - Estándar Eleventa
         "balanza_val_inicio": 8, # El valor empieza en el dígito 8 (Dígitos 8,9,10,11,12)
         "balanza_val_largo": 5,
         "balanza_divisor": 1000,
@@ -29,7 +29,17 @@ class Config:
         "update_server_ip": "",
         "update_auth_token": "1234",
         "shared_folder_name": "tpv pro 2026",
-        "local_pin": "1234"
+        "local_pin": "1234",
+        "machine_hostname": "",
+        "install_date": "",
+        "auto_virtual_keyboard": True,
+        "facturacion_afip_global": False,
+        "db_engine": "mariadb",
+        "db_host": "",
+        "cierre_auto_hora": "00:00",
+        "cierre_auto_activo": True,
+        "stock_alerta_activa": True,
+        "jefe_db_path": ""
     }
 
     _instance = None

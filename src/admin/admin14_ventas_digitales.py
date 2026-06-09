@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 """
 admin14_ventas_digitales.py
 Centro de Ventas Digitales — Panel Fiscal Unificado
@@ -81,6 +82,7 @@ def normalizar_fecha(s: str) -> str:
 def load_bank_dataframe(path: str):
     import pandas as pd
     try:
+        header_idx = 0
         if path.lower().endswith(('.xls', '.xlsx')):
             try:
                 df = pd.read_excel(path, header=None)
@@ -93,25 +95,46 @@ def load_bank_dataframe(path: str):
                     logging.getLogger(__name__).error(f"Fallo read_html para {path}: {e2}")
                     df = pd.read_csv(path, header=None, encoding="utf-8-sig", on_bad_lines="skip")
         else:
-            df = pd.read_csv(path, header=None, encoding="utf-8-sig", on_bad_lines="skip", sep=None, engine='python')
+            # Buscar header index escaneando el archivo en texto crudo
+            keywords = {"fecha", "date", "importe", "monto", "amount", "descripcion", "concepto", "detalle", "estado", "referencia", "operacion"}
+            max_keywords = 0
+            with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
+                for i, line in enumerate(f):
+                    if i > 30: break
+                    row_str = line.lower()
+                    matches = sum(1 for k in keywords if k in row_str)
+                    if matches > max_keywords and matches >= 2:
+                        max_keywords = matches
+                        header_idx = i
             
-        header_idx = 0
-        max_keywords = 0
-        keywords = {"fecha", "date", "importe", "monto", "amount", "descripcion", "concepto", "detalle", "estado", "referencia", "operacion"}
-        
-        for i, row in df.head(30).iterrows():
-            row_str = " ".join([str(x).lower() for x in row.values])
-            matches = sum(1 for k in keywords if k in row_str)
-            if matches > max_keywords and matches >= 2:
-                max_keywords = matches
-                header_idx = i
-                
-        if max_keywords >= 2:
+            # Ahora leemos el CSV saltando las lineas previas al encabezado
+            # Usamos separador dinámico (; o ,) leyendo la linea del header
+            sep = ';'
+            with open(path, 'r', encoding='utf-8-sig', errors='replace') as f:
+                for i, line in enumerate(f):
+                    if i == header_idx:
+                        if ';' in line: sep = ';'
+                        elif ',' in line: sep = ','
+                        elif '\t' in line: sep = '\t'
+                        break
+            
+            df = pd.read_csv(path, header=None, skiprows=header_idx, encoding="utf-8-sig", on_bad_lines="skip", sep=sep, engine='python')
+            header_idx = 0 # Relativo al nuevo df
+
+        # Para Excel (o si fallback), ubicamos el header en las primeras filas
+        if path.lower().endswith(('.xls', '.xlsx')):
+            max_keywords = 0
+            keywords = {"fecha", "date", "importe", "monto", "amount", "descripcion", "concepto", "detalle", "estado", "referencia", "operacion"}
+            for i, row in df.head(30).iterrows():
+                row_str = " ".join([str(x).lower() for x in row.values])
+                matches = sum(1 for k in keywords if k in row_str)
+                if matches > max_keywords and matches >= 2:
+                    max_keywords = matches
+                    header_idx = i
+
+        if len(df) > header_idx:
             df.columns = [str(c).strip().lower() for c in df.iloc[header_idx].values]
             df = df.iloc[header_idx+1:].reset_index(drop=True)
-        else:
-            df.columns = [str(c).strip().lower() for c in df.iloc[0].values]
-            df = df.iloc[1:].reset_index(drop=True)
             
         return df
     except Exception as e:
@@ -146,16 +169,28 @@ def parsear_csv_mercado_pago(path: str) -> list:
     col_desc   = col(["descripcion", "description", "detalle"])
 
     for _, row in df.iterrows():
-        fecha  = normalizar_fecha(str(row.get(col_fecha, "")) if pd.notna(row.get(col_fecha)) else "")
-        id_p   = str(row.get(col_id, "")).strip() if pd.notna(row.get(col_id)) else ""
-        bruto  = limpiar_monto(str(row.get(col_bruto, "0")) if pd.notna(row.get(col_bruto)) else "0")
-        neto   = limpiar_monto(str(row.get(col_neto, "0")) if pd.notna(row.get(col_neto)) else "0")
-        cargo  = limpiar_monto(str(row.get(col_cargo, "0")) if pd.notna(row.get(col_cargo)) else "0")
-        estado = str(row.get(col_estado, "approved") if pd.notna(row.get(col_estado)) else "approved").upper()
-        desc   = str(row.get(col_desc, "")).strip() if pd.notna(row.get(col_desc)) else ""
+        fecha  = normalizar_fecha(str(row.get(col_fecha, "")) if col_fecha and pd.notna(row.get(col_fecha)) else "")
+        id_p   = str(row.get(col_id, "")).strip() if col_id and pd.notna(row.get(col_id)) else ""
+        bruto  = limpiar_monto(str(row.get(col_bruto, "0")) if col_bruto and pd.notna(row.get(col_bruto)) else "0")
+        neto   = limpiar_monto(str(row.get(col_neto, "0")) if col_neto and pd.notna(row.get(col_neto)) else "0")
+        cargo  = limpiar_monto(str(row.get(col_cargo, "0")) if col_cargo and pd.notna(row.get(col_cargo)) else "0")
+        estado = str(row.get(col_estado, "approved") if col_estado and pd.notna(row.get(col_estado)) else "approved").upper()
+        
+        # En extracts de MP (account_statement), la desc es el TIPO DE TRANSACCION
+        desc = ""
+        if col_desc and pd.notna(row.get(col_desc)):
+            desc = str(row.get(col_desc, "")).strip()
+        else:
+            col_type = col(["transaction_type", "tipo", "type"])
+            if col_type and pd.notna(row.get(col_type)):
+                desc = str(row.get(col_type, "")).strip()
         
         if bruto == 0 and neto == 0:
             continue
+        # Sólo guardamos ventas, no transferencias enviadas/retiros
+        if bruto < 0:
+            continue
+            
         if not id_p:
             id_p = f"MP-{fecha}-{bruto}"
         
@@ -282,14 +317,14 @@ class Admin14VentasDigitales(QWidget):
 
     # ── UI ───────────────────────────────────────────────────────────────────
     def setup_ui(self):
-        self.setStyleSheet("background:#F1F5F9; font-family:'Segoe UI';")
+        self.setStyleSheet(" font-family:'Segoe UI';")
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         # Header
         hdr = QFrame()
-        hdr.setStyleSheet("background:#1e3a5f; color:white;")
+        hdr.setStyleSheet(" color:white;")
         hdr.setFixedHeight(68)
         hhl = QHBoxLayout(hdr)
         hhl.setContentsMargins(18, 0, 18, 0)
@@ -319,7 +354,7 @@ class Admin14VentasDigitales(QWidget):
 
         # Toolbar de importación
         tb = QFrame()
-        tb.setStyleSheet("background:#1e3a5f; border-bottom:3px solid #00B1EA;")
+        tb.setStyleSheet(" border-bottom:3px solid #00B1EA;")
         tbl = QHBoxLayout(tb)
         tbl.setContentsMargins(18, 8, 18, 8)
         tbl.setSpacing(10)
@@ -358,7 +393,7 @@ class Admin14VentasDigitales(QWidget):
             sh.setColor(QColor(0, 0, 0, 25)); c.setGraphicsEffect(sh)
             cl = QVBoxLayout(c); cl.setSpacing(4)
             lt = QLabel(title)
-            lt.setStyleSheet("font-size:10px; font-weight:900; color:#64748B; letter-spacing:1px;")
+            lt.setStyleSheet("font-size:10px; font-weight:900;  letter-spacing:1px;")
             lv = QLabel(val)
             lv.setStyleSheet(f"font-size:22px; font-weight:900; color:{color};")
             cl.addWidget(lt); cl.addWidget(lv)
@@ -418,9 +453,9 @@ class Admin14VentasDigitales(QWidget):
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
         self.tabla.setStyleSheet(
-            "QTableWidget{background:white; alternate-background-color:#F8FAFC; font-size:13px;"
+            "QTableWidget{background:white; alternate- font-size:13px;"
             "border:1px solid #e2e8f0; border-radius:8px;}"
-            "QHeaderView::section{background:#1e3a5f; color:white; font-weight:bold;"
+            "QHeaderView::section{ color:white; font-weight:bold;"
             "padding:8px 5px; border:none;}")
         self.tabla.setAlternatingRowColors(True)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -431,7 +466,7 @@ class Admin14VentasDigitales(QWidget):
         # Barra de estado
         self.lbl_status = QLabel("ℹ️ Importá tus CSVs para comenzar el análisis fiscal.")
         self.lbl_status.setStyleSheet(
-            "background:#dbeafe; color:#1e40af; padding:8px 16px;"
+            "  padding:8px 16px;"
             "border-radius:6px; font-size:12px;")
         body.addWidget(self.lbl_status)
 

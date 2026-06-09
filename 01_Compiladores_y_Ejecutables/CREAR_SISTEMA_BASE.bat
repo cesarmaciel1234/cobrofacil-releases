@@ -12,6 +12,7 @@ if exist "dist\CobroFacil_POS" rd /s /q "dist\CobroFacil_POS"
 echo.
 echo Ensamblando el ejecutable principal...
 .\.venv\Scripts\pyinstaller.exe --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
+  --hidden-import "pymysql" ^
   --hidden-import "reportlab.graphics.barcode.code93" ^
   --hidden-import "reportlab.graphics.barcode.code128" ^
   --hidden-import "reportlab.graphics.barcode.code39" ^
@@ -36,4 +37,3 @@ echo ========================================================
 echo   COMPILACION FINALIZADA.
 echo   El sistema base esta en la carpeta "dist\CobroFacil_POS"
 echo ========================================================
-pause

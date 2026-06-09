@@ -1,12 +1,14 @@
+from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
+    QGraphicsDropShadowEffect
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
-from PyQt5.QtGui import QColor, QFont
+from PyQt5.QtGui import QColor, QFont, QBrush
 
 try:
     from src.base_de_datos.database import db_manager
@@ -15,83 +17,109 @@ except ImportError:
 
 STYLE = """
 QWidget {
-    background-color: #F8FAFC;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', 'Inter', sans-serif;
     font-size: 13px;
-    color: #1e293b;
+    color: #0F172A;
 }
 QFrame#header {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #3B82F6);
-    border-bottom: 2px solid #0f172a;
-    border-radius: 10px;
+    border-radius: 12px;
 }
 QLabel#titulo {
     color: white;
     background: transparent;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 900;
     letter-spacing: 1px;
 }
 QPushButton {
     background-color: white;
-    color: #1e3a8a;
-    border: 1px solid #cbd5e1;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
     border-radius: 8px;
     padding: 10px 20px;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 12px;
 }
 QPushButton:hover {
-    background-color: #3b82f6;
+    background-color: #F8FAFC;
+    border: 1px solid #94A3B8;
+    color: #0F172A;
+}
+QPushButton#blue {
+    background-color: #2563EB;
     color: white;
-    border-color: #3b82f6;
+    border: none;
+}
+QPushButton#blue:hover {
+    background-color: #1D4ED8;
 }
 QPushButton#danger {
-    background-color: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
+    background-color: white;
+    color: #DC2626;
+    border: 1px solid #FECACA;
 }
 QPushButton#danger:hover {
-    background-color: #ef4444;
-    color: white;
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    border: 1px solid #FCA5A5;
 }
 QPushButton#gray {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    background-color: white;
+    color: #475569;
+    border: 1px solid #E2E8F0;
 }
 QPushButton#gray:hover {
-    background-color: #e2e8f0;
-    color: #0f172a;
+    background-color: #F1F5F9;
 }
 QLineEdit, QComboBox {
     background-color: white;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 8px 12px;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
 }
-QLineEdit:focus {
-    border: 2px solid #3b82f6;
+QLineEdit:focus, QComboBox:focus {
+    border: 2px solid #3B82F6;
+    background-color: #F8FAFC;
 }
 QTreeWidget, QTableWidget {
     background-color: white;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
-    gridline-color: #f1f5f9;
-    selection-background-color: #FDE047;
-    selection-color: #0f172a;
-    border-radius: 8px;
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
+    gridline-color: #F1F5F9;
+    selection-background-color: #E0F2FE;
+    selection-color: #0369A1;
+    border-radius: 12px;
 }
 QHeaderView::section {
-    background-color: white;
-    color: #64748b;
+    background-color: #F8FAFC;
+    color: #475569;
     font-weight: 800;
-    padding: 12px;
+    padding: 15px 12px;
     border: none;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #E2E8F0;
     font-size: 11px;
     text-transform: uppercase;
+}
+QScrollBar:vertical {
+    border: none;
+    background: #F1F5F9;
+    width: 10px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical {
+    background: #CBD5E1;
+    min-height: 20px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #94A3B8;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
 }
 """
 
@@ -115,24 +143,30 @@ class DialogoProducto(QDialog):
 
         # --- HEADER ---
         lbl_tit = QLabel("💎 Ficha de Producto 2026")
-        lbl_tit.setStyleSheet("font-size: 24px; font-weight: bold; color: #1E3A8A;")
+        lbl_tit.setStyleSheet("font-size: 24px; font-weight: bold; ")
         main_lay.addWidget(lbl_tit)
 
         # --- SECCIÓN: CÓDIGO DE BARRAS (ALTA VISIBILIDAD) ---
         barcode_frame = QFrame()
-        barcode_frame.setStyleSheet("background: #F1F5F9; border-radius: 12px; border: 1px solid #CBD5E1;")
+        barcode_frame.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #E2E8F0;")
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        barcode_frame.setGraphicsEffect(shadow)
+        
         bar_lay = QVBoxLayout(barcode_frame)
         bar_lay.setContentsMargins(20, 15, 20, 15)
         
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
-        lbl_bc.setStyleSheet("font-weight: bold; color: #475569; font-size: 11px; border: none;")
+        lbl_bc.setStyleSheet("font-weight: bold; font-size: 11px; border: none; color: #64748B;")
         self.txt_codigo = QLineEdit(datos.get('codigo', '') if datos else '')
         self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
         self.txt_codigo.setStyleSheet("""
             QLineEdit { 
-                background: white; border: 2px solid #1E3A8A; border-radius: 8px; 
-                padding: 12px; font-size: 22px; font-weight: 900; color: #000000; 
-                font-family: 'Consolas', monospace;
+                background: #F8FAFC; border: 2px solid #3B82F6; border-radius: 8px; 
+                padding: 12px; font-size: 22px; font-weight: 900;  
+                font-family: 'Consolas', monospace; color: #1E3A8A;
             }
         """)
         bar_lay.addWidget(lbl_bc)
@@ -147,6 +181,33 @@ class DialogoProducto(QDialog):
         self.txt_nombre = QLineEdit(datos.get('nombre', '') if datos else '')
         self.txt_nombre.setPlaceholderText("Nombre descriptivo...")
         self.add_field(grid, "Nombre del Producto *:", self.txt_nombre, 0, 0)
+
+        self.cmb_cat = QComboBox()
+        self.cmb_cat.setEditable(True)
+        try:
+            cats = db_manager.execute_query("SELECT nombre FROM categorias ORDER BY nombre") or []
+            existentes_cat = set(["GENERAL"])
+            self.cmb_cat.addItem("GENERAL")
+            for c in cats:
+                if c['nombre'].upper() != "GENERAL":
+                    self.cmb_cat.addItem(c['nombre'])
+                    existentes_cat.add(c['nombre'])
+            cats_prod = db_manager.execute_query("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != '' ORDER BY categoria") or []
+            for cp in cats_prod:
+                if cp['categoria'] not in existentes_cat:
+                    self.cmb_cat.addItem(cp['categoria'])
+                    existentes_cat.add(cp['categoria'])
+        except: pass
+        
+        idx_cat = self.cmb_cat.findText(datos.get('categoria', 'GENERAL') if datos else 'GENERAL')
+        if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
+
+        v_cat = QVBoxLayout()
+        lbl_cat = QLabel("Departamento (Mercadería):")
+        lbl_cat.setStyleSheet("font-weight: bold;  font-size: 12px;")
+        v_cat.addWidget(lbl_cat)
+        v_cat.addWidget(self.cmb_cat)
+        grid.addLayout(v_cat, 1, 0)
 
         self.cmb_depto = QComboBox()
         self.cmb_depto.addItem("")
@@ -165,15 +226,15 @@ class DialogoProducto(QDialog):
         except: pass
 
         v_depto = QVBoxLayout()
-        lbl_depto = QLabel("Departamento / Pasillo:")
-        lbl_depto.setStyleSheet("font-weight: bold; color: #475569; font-size: 12px;")
+        lbl_depto = QLabel("Impuesto (Departamento Fiscal):")
+        lbl_depto.setStyleSheet("font-weight: bold;  font-size: 12px;")
         v_depto.addWidget(lbl_depto)
         v_depto.addWidget(self.cmb_depto)
         
         self.lbl_iva_info = QLabel("ℹ️ IVA Aplicado: 21.0% (tasa general)")
-        self.lbl_iva_info.setStyleSheet("color: #059669; font-size: 11px; font-weight: bold; margin-top: 2px;")
+        self.lbl_iva_info.setStyleSheet(" font-size: 11px; font-weight: bold; margin-top: 2px;")
         v_depto.addWidget(self.lbl_iva_info)
-        grid.addLayout(v_depto, 1, 0)
+        grid.addLayout(v_depto, 2, 0)
         
         self.cmb_depto.currentIndexChanged.connect(self._actualizar_info_iva)
 
@@ -188,16 +249,23 @@ class DialogoProducto(QDialog):
         self.cmb_uni.addItems(['UN','KG','LT','MT','CJ'])
         idx = self.cmb_uni.findText(datos.get('unidad', 'UN') if datos else 'UN')
         if idx >= 0: self.cmb_uni.setCurrentIndex(idx)
-        self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 2, 0)
+        self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 3, 0)
 
         self.chk_pes = QCheckBox("Es pesable / fraccionable (Balanza)")
         self.chk_pes.setChecked(bool(datos.get('es_pesable', 0)) if datos else False)
-        self.chk_pes.setStyleSheet("font-weight: bold; color: #1E3A8A; margin-top: 10px;")
-        grid.addWidget(self.chk_pes, 3, 0)
+        self.chk_pes.setStyleSheet("font-weight: bold;  margin-top: 10px;")
+        grid.addWidget(self.chk_pes, 4, 0)
 
         # Columna 2: Precios y Stock
         price_card = QFrame()
-        price_card.setStyleSheet("background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px;")
+        price_card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px;")
+        
+        shadow2 = QGraphicsDropShadowEffect()
+        shadow2.setBlurRadius(20)
+        shadow2.setColor(QColor(0, 0, 0, 15))
+        shadow2.setOffset(0, 4)
+        price_card.setGraphicsEffect(shadow2)
+        
         p_lay = QFormLayout(price_card)
         p_lay.setSpacing(12)
 
@@ -231,14 +299,14 @@ class DialogoProducto(QDialog):
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("background: #F1F5F9; color: #475569; padding: 15px; border-radius: 10px; font-weight: bold;")
+        btn_cancel.setStyleSheet("  padding: 15px; border-radius: 10px; font-weight: bold;")
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton("💾 Guardar Producto")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.setStyleSheet("""
-            QPushButton { background: #1E3A8A; color: white; font-weight: bold; padding: 15px; border-radius: 10px; }
-            QPushButton:hover { background: #1E40AF; }
+            QPushButton {  color: white; font-weight: bold; padding: 15px; border-radius: 10px; }
+            QPushButton:hover {  }
         """)
         btn_save.clicked.connect(self._ok)
 
@@ -250,7 +318,7 @@ class DialogoProducto(QDialog):
     def add_field(self, grid, label, widget, row, col):
         v = QVBoxLayout()
         lbl = QLabel(label)
-        lbl.setStyleSheet("font-weight: bold; color: #475569; font-size: 12px;")
+        lbl.setStyleSheet("font-weight: bold;  font-size: 12px;")
         v.addWidget(lbl)
         v.addWidget(widget)
         grid.addLayout(v, row, col)
@@ -342,7 +410,7 @@ class DialogoProducto(QDialog):
             'stock_minimo':parse_f(self.txt_min.text()),
             'stock_maximo':parse_f(self.txt_max.text()),
             'departamento':self.cmb_depto.currentText().strip() or None,
-            'categoria':'GENERAL',
+            'categoria':self.cmb_cat.currentText().strip() or 'GENERAL',
             'unidad':self.cmb_uni.currentText(),
             'es_pesable':1 if self.chk_pes.isChecked() else 0,
         }
@@ -380,40 +448,60 @@ class PanelDepartamentos(QWidget):
 
         # Árbol izquierdo
         left = QWidget(); ll = QVBoxLayout(left); ll.setContentsMargins(15,15,15,15); ll.setSpacing(10)
-        lbl = QLabel("LISTADO DE DEPARTAMENTOS")
-        lbl.setStyleSheet("font-weight: 900; color: #1e3a8a; font-size: 13px;")
-        self.txt_buscar = QLineEdit(); self.txt_buscar.setPlaceholderText("🔍 Buscar departamento...")
+        lbl = QLabel("DEPARTAMENTOS (CATEGORÍAS DE IMPUESTOS)")
+        lbl.setStyleSheet("font-weight: 900;  font-size: 13px;")
+        self.txt_buscar = QLineEdit(); self.txt_buscar.setPlaceholderText("🔍 Buscar depto o categoría...")
         self.txt_buscar.textChanged.connect(lambda t: self._cargar(t))
         self.tree = QTreeWidget()
         self.tree.setColumnCount(2)
-        self.tree.setHeaderLabels(["Departamento", "IVA (%)"])
+        self.tree.setHeaderLabels(["Depto / Categoría", "IVA (%)"])
         self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
         self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.tree.itemClicked.connect(self._seleccionar)
         ll.addWidget(lbl); ll.addWidget(self.txt_buscar); ll.addWidget(self.tree)
         sp.addWidget(left)
 
-        # Formulario derecho
-        right = QWidget(); rl = QVBoxLayout(right); rl.setContentsMargins(20,20,20,20); rl.setSpacing(12)
-        self.lbl_titulo_form = QLabel("NUEVO DEPARTAMENTO")
-        self.lbl_titulo_form.setStyleSheet("font-weight: 900; color: #3b82f6; font-size: 15px;")
-        lbl_n = QLabel("Nombre del Departamento:")
-        lbl_n.setStyleSheet("font-weight: bold; color: #475569;")
+        # Formulario derecho flotante
+        right = QWidget()
+        rl_main = QVBoxLayout(right)
+        rl_main.setContentsMargins(20, 20, 20, 20)
+        
+        form_card = QFrame()
+        form_card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px;")
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        form_card.setGraphicsEffect(shadow)
+        
+        rl = QVBoxLayout(form_card)
+        rl.setContentsMargins(20, 20, 20, 20)
+        rl.setSpacing(15)
+        
+        self.lbl_titulo_form = QLabel("NUEVO DEPARTAMENTO E IMPUESTOS")
+        self.lbl_titulo_form.setStyleSheet("font-weight: 900; font-size: 15px; border: none;")
+        
+        lbl_n = QLabel("Nombre de la categoría/departamento:")
+        lbl_n.setStyleSheet("font-weight: bold; border: none;")
         self.txt_nombre_dep = QLineEdit()
-        self.txt_nombre_dep.setStyleSheet("border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background: white; color: #0f172a; font-size: 14px; font-weight: bold;")
+        self.txt_nombre_dep.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; background: #F8FAFC; font-size: 14px; font-weight: bold;")
         
         lbl_iva = QLabel("Tasa de IVA (%):")
-        lbl_iva.setStyleSheet("font-weight: bold; color: #475569;")
+        lbl_iva.setStyleSheet("font-weight: bold; border: none;")
         self.txt_iva_dep = QLineEdit("21.0")
-        self.txt_iva_dep.setStyleSheet("border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background: white; color: #0f172a; font-size: 14px; font-weight: bold;")
+        self.txt_iva_dep.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; background: #F8FAFC; font-size: 14px; font-weight: bold;")
         
         bx2 = QHBoxLayout()
-        self.btn_guardar_dep  = QPushButton("✔ Guardar Departamento")
-        self.btn_guardar_dep.setStyleSheet("background-color: #10b981; color: white; font-size: 12px;")
-        self.btn_cancelar_dep = QPushButton("✖ Cancelar"); self.btn_cancelar_dep.setObjectName("gray")
+        self.btn_guardar_dep = QPushButton("✔ Guardar Configuración")
+        self.btn_guardar_dep.setObjectName("blue")
+        self.btn_cancelar_dep = QPushButton("✖ Cancelar")
+        self.btn_cancelar_dep.setObjectName("gray")
         self.btn_guardar_dep.clicked.connect(self._guardar)
         self.btn_cancelar_dep.clicked.connect(self._iniciar_nuevo)
-        bx2.addWidget(self.btn_guardar_dep); bx2.addWidget(self.btn_cancelar_dep)
+        
+        bx2.addWidget(self.btn_guardar_dep)
+        bx2.addWidget(self.btn_cancelar_dep)
         
         rl.addWidget(self.lbl_titulo_form)
         rl.addWidget(lbl_n)
@@ -422,11 +510,19 @@ class PanelDepartamentos(QWidget):
         rl.addWidget(self.txt_iva_dep)
         rl.addLayout(bx2)
         rl.addStretch()
+        
+        rl_main.addWidget(form_card)
         sp.addWidget(right)
         sp.setSizes([350, 650])
         root.addWidget(sp)
 
     def _cargar(self, filtro=''):
+        try:
+            insert_kw = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
+            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS departamentos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL, iva REAL DEFAULT 21.0)")
+            db_manager.execute_non_query(f"{insert_kw} departamentos (nombre) SELECT DISTINCT departamento FROM productos WHERE departamento IS NOT NULL AND departamento != ''")
+        except: pass
+
         self.tree.clear()
         sd = QTreeWidgetItem(self.tree, ["- Sin Departamento -", "—"])
         sd.setData(0, Qt.UserRole, -1)
@@ -438,7 +534,7 @@ class PanelDepartamentos(QWidget):
 
     def _iniciar_nuevo(self):
         self._modo_edicion = None
-        self.lbl_titulo_form.setText("NUEVO DEPARTAMENTO")
+        self.lbl_titulo_form.setText("NUEVO DEPARTAMENTO E IMPUESTOS")
         self.txt_nombre_dep.clear()
         self.txt_iva_dep.setText("21.0")
         self.txt_nombre_dep.setFocus()
@@ -447,7 +543,7 @@ class PanelDepartamentos(QWidget):
         id_dep = item.data(0, Qt.UserRole)
         if id_dep and id_dep != -1:
             self._modo_edicion = id_dep
-            self.lbl_titulo_form.setText("EDITAR DEPARTAMENTO")
+            self.lbl_titulo_form.setText("EDITAR DEPARTAMENTO E IMPUESTOS")
             self.txt_nombre_dep.setText(item.text(0))
             try:
                 res = db_manager.execute_query("SELECT iva FROM departamentos WHERE id = ?", (id_dep,))
@@ -500,6 +596,141 @@ class PanelDepartamentos(QWidget):
             self._cargar(); self.departamentos_cambiados.emit()
 
 
+# ── Panel Categorias (Departamentos de Mercadería) ──
+class PanelCategorias(QWidget):
+    categorias_cambiadas = pyqtSignal()
+    volver = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._modo_edicion = None
+        self._setup_ui()
+        self._cargar()
+
+    def _setup_ui(self):
+        root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
+        tb = QFrame(); tb.setFixedHeight(50)
+        tb.setStyleSheet("QFrame{background: white; border-bottom: 1px solid #cbd5e1;}")
+        tl = QHBoxLayout(tb); tl.setContentsMargins(15,5,15,5); tl.setSpacing(10)
+        btn_volver = QPushButton("⬅ Volver al Catálogo"); btn_volver.setObjectName("gray")
+        btn_volver.clicked.connect(self.volver.emit)
+        tl.addWidget(btn_volver); tl.addStretch()
+        root.addWidget(tb)
+
+        content = QWidget(); cl = QVBoxLayout(content); cl.setContentsMargins(20,20,20,20); cl.setSpacing(20)
+        lbl = QLabel("DEPARTAMENTOS DE MERCADERÍA")
+        lbl.setStyleSheet("font-size:18px; font-weight:800; ")
+        cl.addWidget(lbl)
+
+        grid = QGridLayout()
+        # Formulario
+        form_frame = QFrame()
+        form_frame.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #E2E8F0;")
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        form_frame.setGraphicsEffect(shadow)
+        
+        form_lay = QVBoxLayout(form_frame)
+        form_lay.setContentsMargins(20, 20, 20, 20)
+        form_lay.setSpacing(15)
+        
+        self.lbl_titulo_form = QLabel("NUEVO DEPARTAMENTO")
+        self.lbl_titulo_form.setStyleSheet("font-weight: 800; font-size: 14px; border: none;")
+        form_lay.addWidget(self.lbl_titulo_form)
+        
+        lbl_n = QLabel("Nombre del departamento:")
+        lbl_n.setStyleSheet("border: none; font-weight: bold;")
+        self.txt_nombre_cat = QLineEdit()
+        self.txt_nombre_cat.setPlaceholderText("Ej. Lácteos, Bebidas, Almacén...")
+        self.txt_nombre_cat.setStyleSheet("padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; background: #F8FAFC;")
+        form_lay.addWidget(lbl_n)
+        form_lay.addWidget(self.txt_nombre_cat)
+
+        h_btn = QHBoxLayout()
+        btn_cancelar = QPushButton("Cancelar"); btn_cancelar.setObjectName("gray")
+        btn_cancelar.clicked.connect(self._iniciar_nuevo)
+        btn_guardar = QPushButton("Guardar Departamento"); btn_guardar.setObjectName("blue")
+        btn_guardar.clicked.connect(self._guardar)
+        h_btn.addWidget(btn_cancelar); h_btn.addWidget(btn_guardar)
+        form_lay.addLayout(h_btn); form_lay.addStretch()
+        grid.addWidget(form_frame, 0, 0)
+
+        # Lista
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels(["Nombre del Departamento", "ID"])
+        self.tree.setColumnWidth(0, 300)
+        self.tree.setStyleSheet("QTreeWidget { background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; }")
+        grid.addWidget(self.tree, 0, 1)
+
+        h_actions = QHBoxLayout()
+        btn_editar = QPushButton("Editar Seleccionado"); btn_editar.setObjectName("gray")
+        btn_editar.clicked.connect(self._cargar_para_edicion)
+        btn_elim = QPushButton("Eliminar Seleccionado"); btn_elim.setObjectName("danger")
+        btn_elim.clicked.connect(self._eliminar)
+        h_actions.addWidget(btn_editar); h_actions.addWidget(btn_elim); h_actions.addStretch()
+        cl.addLayout(grid)
+        cl.addLayout(h_actions)
+        root.addWidget(content)
+
+    def _cargar(self):
+        try:
+            insert_kw = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
+            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS categorias (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL)")
+            db_manager.execute_non_query(f"{insert_kw} categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
+        except: pass
+
+        self.tree.clear()
+        sd = QTreeWidgetItem(self.tree, ["- Sin Departamento -", "—"])
+        sd.setForeground(0, QBrush(QColor("#64748b")))
+        rows = db_manager.execute_query("SELECT id, nombre FROM categorias ORDER BY nombre") or []
+        for r in rows:
+            it = QTreeWidgetItem(self.tree, [r['nombre'], str(r['id'])])
+            it.setData(0, Qt.UserRole, r['id'])
+
+    def _iniciar_nuevo(self):
+        self._modo_edicion = None
+        self.txt_nombre_cat.clear()
+        self.lbl_titulo_form.setText("NUEVO DEPARTAMENTO")
+
+    def _cargar_para_edicion(self):
+        item = self.tree.currentItem()
+        if not item: return
+        id_cat = item.data(0, Qt.UserRole)
+        if not id_cat or id_cat == -1: return
+        self._modo_edicion = id_cat
+        self.txt_nombre_cat.setText(item.text(0))
+        self.lbl_titulo_form.setText("EDITAR DEPARTAMENTO")
+
+    def _guardar(self):
+        nombre = self.txt_nombre_cat.text().strip()
+        if not nombre: QMessageBox.warning(self,"Requerido","Ingresá un nombre."); return
+        if self._modo_edicion:
+            ok = db_manager.execute_non_query("UPDATE categorias SET nombre=? WHERE id=?",(nombre,self._modo_edicion))
+        else:
+            existe = db_manager.execute_query("SELECT id FROM categorias WHERE nombre = ?", (nombre,))
+            if existe:
+                QMessageBox.warning(self, "Duplicado", f"El departamento '{nombre}' ya existe.")
+                return
+            ok = db_manager.execute_non_query("INSERT INTO categorias (nombre) VALUES (?)", (nombre,))
+        if ok:
+            self._cargar(); self.categorias_cambiadas.emit(); self._iniciar_nuevo()
+        else:
+            QMessageBox.warning(self,"Error","No se pudo guardar.")
+
+    def _eliminar(self):
+        item = self.tree.currentItem()
+        if not item: return
+        id_cat = item.data(0, Qt.UserRole)
+        if not id_cat or id_cat == -1: return
+        nombre_cat = item.text(0)
+        if QMessageBox.question(self,"Confirmar",f"¿Eliminar '{nombre_cat}'?", QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
+            db_manager.execute_non_query("UPDATE productos SET categoria = 'GENERAL' WHERE categoria = ?", (nombre_cat,))
+            db_manager.execute_non_query("DELETE FROM categorias WHERE id=?",(id_cat,))
+            self._cargar(); self.categorias_cambiadas.emit()
+
 # ── Catálogo de Productos ────────────────────────────────
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
@@ -529,11 +760,11 @@ class CatalogoProductos(QWidget):
 
         # ── Barra de filtros ─────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame{background:#ffffff;border-bottom:1px solid #cbd5e1;}")
+        fb.setStyleSheet("QFrame{border-bottom:1px solid #cbd5e1;}")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
-        ico_search.setStyleSheet("color: #475569; font-size: 16px; background: transparent;")
+        ico_search.setStyleSheet(" font-size: 16px; background: transparent;")
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("Buscar por nombre, código o ID...")
         self.txt_buscar.setMinimumWidth(350)
@@ -546,7 +777,7 @@ class CatalogoProductos(QWidget):
         self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(300))
 
         lbl_dep = QLabel("FILTRAR POR DEPARTAMENTO:")
-        lbl_dep.setStyleSheet("color:#1e3a8a;font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
+        lbl_dep.setStyleSheet("font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
         self.cmb_depto = QComboBox()
         self.cmb_depto.setMinimumWidth(200)
         self.cmb_depto.currentIndexChanged.connect(self.cargar_datos)
@@ -569,10 +800,10 @@ class CatalogoProductos(QWidget):
         self.tabla.setShowGrid(True)
         self.tabla.setGridStyle(Qt.SolidLine)
         self.tabla.setStyleSheet(
-            "QTableWidget{background:white;gridline-color:#f1f5f9;"
-            "selection-background-color:#FDE047;selection-color:#0f172a;}"
+            "QTableWidget{background:white;gridline-"
+            "selection-selection-}"
             "QTableWidget::item{padding:8px; border-bottom: 1px solid #f1f5f9;}"
-            "QHeaderView::section{background:white;color:#64748b;"
+            "QHeaderView::section{background:white;"
             "font-weight:900;padding:8px;border:none;border-bottom:2px solid #e2e8f0;font-size:10px;}"
         )
         col_widths = [28, 90, -1, 120, 70, 80, 80, 80, 80, 80, 80, 90]
@@ -590,13 +821,13 @@ class CatalogoProductos(QWidget):
 
         # ── Footer ───────────────────────────────────────
         ft = QFrame(); ft.setFixedHeight(34)
-        ft.setStyleSheet("QFrame{background:#f1f5f9;border-top:1px solid #cbd5e1;}")
+        ft.setStyleSheet("QFrame{border-top:1px solid #cbd5e1;}")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
         self.lbl_sel     = QLabel("")
         for lbl in [self.lbl_total, self.lbl_stock0, self.lbl_sel]:
-            lbl.setStyleSheet("color:#475569;font-size:11px; background: transparent;")
+            lbl.setStyleSheet("font-size:11px; background: transparent;")
         fl2.addWidget(self.lbl_total)
         fl2.addSpacing(20); fl2.addWidget(self.lbl_stock0)
         fl2.addStretch();   fl2.addWidget(self.lbl_sel)
@@ -608,18 +839,17 @@ class CatalogoProductos(QWidget):
     def _cargar_deptos(self):
         self.cmb_depto.blockSignals(True)
         self.cmb_depto.clear()
-        self.cmb_depto.addItem("— Todos los departamentos —", None)
-        rows = db_manager.execute_query(
-            "SELECT DISTINCT departamento FROM productos "
-            "WHERE departamento IS NOT NULL ORDER BY departamento"
-        ) or []
-        for i, r in enumerate(rows):
-            dep = r['departamento']
-            if dep:
-                self.cmb_depto.addItem(dep, dep)
-                if dep not in self._depto_color_map:
-                    self._depto_color_map[dep] = self.DEPTO_COLORS[
-                        len(self._depto_color_map) % len(self.DEPTO_COLORS)]
+        self.cmb_depto.addItem("— Todas las categorías —", None)
+        try:
+            cats = db_manager.execute_query(
+                "SELECT DISTINCT categoria FROM productos "
+                "WHERE categoria IS NOT NULL ORDER BY categoria"
+            ) or []
+            for r in cats:
+                cat = r['categoria']
+                if cat and cat.upper() != "GENERAL":
+                    self.cmb_depto.addItem(cat, cat)
+        except: pass
         self.cmb_depto.blockSignals(False)
 
     def cargar_datos(self):
@@ -649,7 +879,7 @@ class CatalogoProductos(QWidget):
 
         n = len(self.all_rows)
         self.lbl_total.setText(f"📦 {n} PRODUCTOS EN INVENTARIO")
-        self.lbl_total.setStyleSheet("color: #1e3a8a; font-weight: 800; background: transparent;")
+        self.lbl_total.setStyleSheet(" font-weight: 800; background: transparent;")
         self.lbl_stock0.setText(
             f"⚠️ Stock Crítico: {sin_stock}" if sin_stock else "✅ Stock Saludable"
         )
@@ -1032,7 +1262,7 @@ class Admin1Inventario(QWidget):
                 background: rgba(255, 255, 255, 0.2); color: white; font-weight: 800; border-radius: 10px; 
                 padding: 10px 25px; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: white; color: #1E3A8A; }
+            QPushButton:hover { background: white;  }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
@@ -1063,22 +1293,25 @@ class Admin1Inventario(QWidget):
         self.btn_precarga.clicked.connect(lambda: self.catalogo._descargar_precarga())
         self.btn_unificar = QPushButton("🧹 UNIFICAR DUPLICADOS")
         self.btn_unificar.setStyleSheet("""
-            QPushButton { background-color: #F59E0B; color: white; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; }
-            QPushButton:hover { background-color: #D97706; }
+            QPushButton {  color: white; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; }
+            QPushButton:hover {  }
         """)
         self.btn_unificar.clicked.connect(lambda: self.catalogo._unificar_duplicados())
         
-        self.btn_deptos   = QPushButton("📁 DEPARTAMENTOS")
+        self.btn_categorias = QPushButton("📁 DEPARTAMENTOS")
+        self.btn_categorias.clicked.connect(self._mostrar_categorias)
+        
+        self.btn_deptos   = QPushButton("⚖️ DEP. IMPUESTOS")
         self.btn_deptos.clicked.connect(self._mostrar_departamentos)
         
         self.btn_catalogo = QPushButton("📰 CATÁLOGO PDF")
         self.btn_catalogo.setStyleSheet("""
-            QPushButton { background-color: #10b981; color: white; border-radius: 8px; font-weight: bold; padding: 10px 20px; font-size: 11px; }
-            QPushButton:hover { background-color: #059669; }
+            QPushButton {  color: white; border-radius: 8px; font-weight: bold; padding: 10px 20px; font-size: 11px; }
+            QPushButton:hover {  }
         """)
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
         
-        for b in [self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, self.btn_exportar, self.btn_precarga, self.btn_unificar, self.btn_deptos, self.btn_catalogo]:
+        for b in [self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, self.btn_exportar, self.btn_precarga, self.btn_unificar, self.btn_categorias, self.btn_deptos, self.btn_catalogo]:
             tl.addWidget(b)
         tl.addStretch()
         root.addWidget(self.toolbar)
@@ -1092,8 +1325,14 @@ class Admin1Inventario(QWidget):
         self.panel_deptos.departamentos_cambiados.connect(self.catalogo._cargar_deptos)
         self.panel_deptos.departamentos_cambiados.connect(self.catalogo.cargar_datos)
 
-        self.stack.addWidget(self.catalogo)      # 0 → catálogo
-        self.stack.addWidget(self.panel_deptos)  # 1 → departamentos
+        self.panel_categorias = PanelCategorias()
+        self.panel_categorias.volver.connect(self._volver_catalogo)
+        self.panel_categorias.categorias_cambiadas.connect(self.catalogo._cargar_deptos)
+        self.panel_categorias.categorias_cambiadas.connect(self.catalogo.cargar_datos)
+
+        self.stack.addWidget(self.catalogo)         # 0
+        self.stack.addWidget(self.panel_deptos)     # 1
+        self.stack.addWidget(self.panel_categorias) # 2
 
         self.stack.setCurrentIndex(0)
         root.addWidget(self.stack)
@@ -1130,6 +1369,10 @@ class Admin1Inventario(QWidget):
         self.toolbar.setVisible(False) # Elimina los botones duplicados de la vista principal
         self.stack.setCurrentIndex(1)
 
+    def _mostrar_categorias(self, *args, **kwargs):
+        self.toolbar.setVisible(False)
+        self.stack.setCurrentIndex(2)
+
     def _volver_catalogo(self):
         self.toolbar.setVisible(True)  # Restaura la botonera al regresar
         self.stack.setCurrentIndex(0)
@@ -1161,10 +1404,10 @@ class Admin1Inventario(QWidget):
         dlg.setWindowTitle("Exportar Catálogo / Lista de Precios")
         dlg.setFixedSize(500, 420)
         dlg.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #10b981; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
-            QPushButton:hover { background: #059669; }
-            QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; color: #1e293b; background: white; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QPushButton:hover {  }
+            QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
             QRadioButton { spacing: 8px; font-weight: bold; }
         """)
         lay = QVBoxLayout(dlg)
@@ -1172,7 +1415,7 @@ class Admin1Inventario(QWidget):
         lay.setSpacing(12)
         
         lbl_tit = QLabel("📰 CREAR CATÁLOGO DE PRECIOS (PDF)")
-        lbl_tit.setStyleSheet("color: #1e3a8a; font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
         
         from PyQt5.QtWidgets import QFormLayout, QRadioButton, QSpinBox

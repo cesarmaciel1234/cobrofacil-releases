@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 # ==============================================================================
 # CAJAFACIL PRO 2026 - REDIRECCIONAMIENTO DE SEGURIDAD
 # ==============================================================================

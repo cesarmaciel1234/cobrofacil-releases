@@ -42,6 +42,21 @@ def verificar_y_realizar_autocierre():
                 (hoy_inicio,)
             )
             
+            try:
+                from src.services.email_service import enviar_reporte_cierre_z
+                datos_cierre = {
+                    'caja_id': 'AUTO',
+                    'usuario': 'SISTEMA',
+                    'tipo_cierre': 'CIERRE AUTOMÁTICO NOCTURNO',
+                    'efectivo_esperado': float(total_pend),
+                    'efectivo_fisico': 0,
+                    'diferencia': -float(total_pend),
+                    'total_ventas': float(total_pend)
+                }
+                enviar_reporte_cierre_z(datos_cierre)
+            except Exception as e_mail:
+                logger.error(f"Error enviando correo de auto-cierre: {e_mail}")
+            
             return True, total_pend
     except Exception as e:
         logger.error(f"Error en auto-cierre: {e}")

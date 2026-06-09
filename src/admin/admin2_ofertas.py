@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
@@ -15,10 +16,10 @@ except ImportError:
 
 STYLE = """
 QWidget {
-    background-color: #F8FAFC;
+    
     font-family: 'Inter', 'Segoe UI', sans-serif;
     font-size: 13px;
-    color: #1e293b;
+    
 }
 QFrame#header {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #ea580c);
@@ -34,7 +35,7 @@ QLabel#titulo {
 }
 QPushButton {
     background-color: white;
-    color: #1e3a8a;
+    
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     padding: 10px 20px;
@@ -42,13 +43,13 @@ QPushButton {
     font-size: 12px;
 }
 QPushButton:hover {
-    background-color: #ea580c;
+    
     color: white;
-    border-color: #ea580c;
+    border-
 }
 QLineEdit, QComboBox, QDoubleSpinBox {
     background-color: white;
-    color: #1e293b;
+    
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     padding: 8px 12px;
@@ -94,7 +95,7 @@ class Admin2Ofertas(QWidget):
                 background: rgba(255, 255, 255, 0.2); color: white; font-weight: 800; border-radius: 10px; 
                 padding: 10px 25px; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: white; color: #EA580C; }
+            QPushButton:hover { background: white;  }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
@@ -108,11 +109,11 @@ class Admin2Ofertas(QWidget):
 
         # ── FILTRO SUPERIOR ──────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame{background:#ffffff;border-bottom:1px solid #cbd5e1;}")
+        fb.setStyleSheet("QFrame{border-bottom:1px solid #cbd5e1;}")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
-        ico_search.setStyleSheet("color: #475569; font-size: 16px; background: transparent;")
+        ico_search.setStyleSheet(" font-size: 16px; background: transparent;")
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("Buscar por nombre, código o ID...")
         self.txt_buscar.setMinimumWidth(350)
@@ -123,7 +124,7 @@ class Admin2Ofertas(QWidget):
         self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(300))
 
         lbl_dep = QLabel("DEPARTAMENTO:")
-        lbl_dep.setStyleSheet("color:#1e3a8a;font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
+        lbl_dep.setStyleSheet("font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
         self.cmb_depto = QComboBox()
         self.cmb_depto.setMinimumWidth(180)
         self.cmb_depto.currentIndexChanged.connect(self.cargar_datos)
@@ -136,7 +137,7 @@ class Admin2Ofertas(QWidget):
         # Filtro de promociones
         fl.addSpacing(15)
         self.chk_ver_promos = QCheckBox("🔥 Ver Solo Promos")
-        self.chk_ver_promos.setStyleSheet("color:#ea580c; font-weight:800; font-size:11px; background: transparent;")
+        self.chk_ver_promos.setStyleSheet(" font-weight:800; font-size:11px; background: transparent;")
         self.chk_ver_promos.stateChanged.connect(self.cargar_datos)
         fl.addWidget(self.chk_ver_promos)
         
@@ -149,8 +150,8 @@ class Admin2Ofertas(QWidget):
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #0284c7);
                 color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background: #ea580c; color: white; }
-            QPushButton:disabled { background: #cbd5e1; color: #94a3b8; }
+            QPushButton:hover {  color: white; }
+            QPushButton:disabled {   }
         """)
         self.btn_imprimir_masivo.setEnabled(False)
         self.btn_imprimir_masivo.clicked.connect(self._imprimir_cartelera_masiva)
@@ -165,7 +166,7 @@ class Admin2Ofertas(QWidget):
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
                 color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background: #ea580c; color: white; }
+            QPushButton:hover {  color: white; }
         """)
         self.btn_crear_folleto.clicked.connect(self._crear_folleto_pdf)
         fl.addWidget(self.btn_crear_folleto)
@@ -179,8 +180,8 @@ class Admin2Ofertas(QWidget):
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
                 color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background: #c2410c; color: white; }
-            QPushButton:disabled { background: #cbd5e1; color: #94a3b8; }
+            QPushButton:hover {  color: white; }
+            QPushButton:disabled {   }
         """)
         self.btn_asistente_promo.setEnabled(False)
         self.btn_asistente_promo.clicked.connect(self._configurar_ofertas_secuencial)
@@ -196,7 +197,7 @@ class Admin2Ofertas(QWidget):
         lay_body.setSpacing(0)
 
         splitter = QSplitter(Qt.Horizontal)
-        splitter.setStyleSheet("QSplitter::handle { background: #cbd5e1; width: 1px; }")
+        splitter.setStyleSheet("QSplitter::handle {  width: 1px; }")
 
         # Tabla de productos (Izquierda)
         self.tabla = QTableWidget()
@@ -210,10 +211,10 @@ class Admin2Ofertas(QWidget):
         self.tabla.setShowGrid(True)
         self.tabla.setGridStyle(Qt.SolidLine)
         self.tabla.setStyleSheet(
-            "QTableWidget{background:white;gridline-color:#f1f5f9;"
-            "selection-background-color:#FDE047;selection-color:#0f172a;}"
+            "QTableWidget{background:white;gridline-"
+            "selection-selection-}"
             "QTableWidget::item{padding:8px; border-bottom: 1px solid #f1f5f9;}"
-            "QHeaderView::section{background:white;color:#64748b;"
+            "QHeaderView::section{background:white;"
             "font-weight:900;padding:8px;border:none;border-bottom:2px solid #e2e8f0;font-size:10px;}"
         )
         col_widths = [35, 45, 95, -1, 110, 80, 80, 80, 80, 80, 80]
@@ -250,25 +251,25 @@ class Admin2Ofertas(QWidget):
         
         # Encabezado
         lbl_head = QLabel("⚙️ CONTROL INDUSTRIAL DE PRODUCTO")
-        lbl_head.setStyleSheet("color: #1E3A8A; font-size: 13px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_head.setStyleSheet(" font-size: 13px; font-weight: 900; letter-spacing: 0.5px;")
         lay_ctrl.addWidget(lbl_head)
         
         self.lbl_prod_nombre = QLabel("Seleccione un producto...")
-        self.lbl_prod_nombre.setStyleSheet("font-size: 16px; font-weight: 800; color: #0f172a;")
+        self.lbl_prod_nombre.setStyleSheet("font-size: 16px; font-weight: 800; ")
         self.lbl_prod_nombre.setWordWrap(True)
         lay_ctrl.addWidget(self.lbl_prod_nombre)
         
         self.lbl_prod_detalles = QLabel("ID: —  |  PLU: —")
-        self.lbl_prod_detalles.setStyleSheet("font-size: 11px; color: #64748b; font-family: 'Consolas', monospace; font-weight: bold;")
+        self.lbl_prod_detalles.setStyleSheet("font-size: 11px;  font-family: 'Consolas', monospace; font-weight: bold;")
         lay_ctrl.addWidget(self.lbl_prod_detalles)
         
         sep = QFrame(); sep.setFrameShape(QFrame.HLine); sep.setFrameShadow(QFrame.Sunken)
-        sep.setStyleSheet("color: #e2e8f0; background: #e2e8f0; max-height: 1px;")
+        sep.setStyleSheet("  max-height: 1px;")
         lay_ctrl.addWidget(sep)
         
         # Sección A: Ajustes rápidos
         lbl_sec_a = QLabel("📊 PRECIOS Y EXISTENCIA")
-        lbl_sec_a.setStyleSheet("color: #0284c7; font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
+        lbl_sec_a.setStyleSheet(" font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
         lay_ctrl.addWidget(lbl_sec_a)
         
         form_a = QFormLayout()
@@ -287,7 +288,7 @@ class Admin2Ofertas(QWidget):
         self.txt_quick_stock = QDoubleSpinBox()
         self.txt_quick_stock.setRange(-9999, 999999)
         self.txt_quick_stock.setDecimals(2)
-        self.txt_quick_stock.setStyleSheet("font-size: 13px; padding: 6px; font-weight: bold; color: #1e3a8a;")
+        self.txt_quick_stock.setStyleSheet("font-size: 13px; padding: 6px; font-weight: bold; ")
         
         form_a.addRow(QLabel("Precio Venta ($):"), self.txt_quick_precio)
         form_a.addRow(QLabel("Costo Compra ($):"), self.txt_quick_costo)
@@ -296,10 +297,10 @@ class Admin2Ofertas(QWidget):
         
         # Botones de ajuste de stock
         lay_btns_stock = QHBoxLayout()
-        btn_m10 = QPushButton("-10"); btn_m10.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; background-color: #f1f5f9;")
-        btn_m1 = QPushButton("-1"); btn_m1.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; background-color: #f1f5f9;")
-        btn_p1 = QPushButton("+1"); btn_p1.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; background-color: #f1f5f9;")
-        btn_p10 = QPushButton("+10"); btn_p10.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; background-color: #f1f5f9;")
+        btn_m10 = QPushButton("-10"); btn_m10.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; ")
+        btn_m1 = QPushButton("-1"); btn_m1.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; ")
+        btn_p1 = QPushButton("+1"); btn_p1.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; ")
+        btn_p10 = QPushButton("+10"); btn_p10.setStyleSheet("padding: 5px; font-size: 10px; font-weight: bold; ")
         
         btn_m10.clicked.connect(lambda: self._quick_stock_adjust(-10))
         btn_m1.clicked.connect(lambda: self._quick_stock_adjust(-1))
@@ -313,21 +314,21 @@ class Admin2Ofertas(QWidget):
         self.btn_guardar_quick = QPushButton("💾 GUARDAR AJUSTES")
         self.btn_guardar_quick.setStyleSheet("""
             QPushButton {
-                background-color: #1E3A8A; color: white; font-weight: 800; font-size: 11px;
+                 color: white; font-weight: 800; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background-color: #1e40af; }
+            QPushButton:hover {  }
         """)
         self.btn_guardar_quick.clicked.connect(self._guardar_cambios_rapidos)
         lay_ctrl.addWidget(self.btn_guardar_quick)
         
         sep2 = QFrame(); sep2.setFrameShape(QFrame.HLine); sep2.setFrameShadow(QFrame.Sunken)
-        sep2.setStyleSheet("color: #e2e8f0; background: #e2e8f0; max-height: 1px;")
+        sep2.setStyleSheet("  max-height: 1px;")
         lay_ctrl.addWidget(sep2)
         
         # Sección B: Promociones
         lbl_sec_b = QLabel("🏷️ CONTROL DE PROMOCIONES")
-        lbl_sec_b.setStyleSheet("color: #ea580c; font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
+        lbl_sec_b.setStyleSheet(" font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
         lay_ctrl.addWidget(lbl_sec_b)
         
         form_b = QFormLayout()
@@ -341,22 +342,17 @@ class Admin2Ofertas(QWidget):
         self.sp_quick_precio_oferta = QDoubleSpinBox()
         self.sp_quick_precio_oferta.setRange(0, 9999999)
         self.sp_quick_precio_oferta.setDecimals(2)
-        self.sp_quick_precio_oferta.setStyleSheet("font-size: 13px; padding: 6px; color: #ea580c; font-weight: bold;")
+        self.sp_quick_precio_oferta.setStyleSheet("font-size: 13px; padding: 6px;  font-weight: bold;")
         
-        self.cb_quick_tipo_unidad = QComboBox()
-        self.cb_quick_tipo_unidad.addItems(["Unidades", "Kilos"])
-        self.cb_quick_tipo_unidad.setStyleSheet("font-size: 13px; padding: 6px; font-weight: bold;")
-        
-        form_b.addRow(QLabel("Cant. Mínima:"), self.sp_quick_cant_oferta)
+        form_b.addRow(QLabel("Oferta desde:"), self.sp_quick_cant_oferta)
         form_b.addRow(QLabel("Precio Oferta ($):"), self.sp_quick_precio_oferta)
-        form_b.addRow(QLabel("Tipo de Medida:"), self.cb_quick_tipo_unidad)
         lay_ctrl.addLayout(form_b)
         
         # Caja de simulación de rentabilidad industrial
         self.group_simulador = QFrame()
         self.group_simulador.setStyleSheet("""
             QFrame {
-                background-color: #f8fafc;
+                
                 border: 1px solid #cbd5e1;
                 border-radius: 8px;
                 padding: 10px;
@@ -367,23 +363,23 @@ class Admin2Ofertas(QWidget):
         lay_sim.setSpacing(6)
         
         lbl_sim_tit = QLabel("📊 SIMULADOR DE MARGEN INDUSTRIAL")
-        lbl_sim_tit.setStyleSheet("color: #475569; font-weight: 900; font-size: 11px; letter-spacing: 0.5px; border: none;")
+        lbl_sim_tit.setStyleSheet(" font-weight: 900; font-size: 11px; letter-spacing: 0.5px; border: none;")
         lay_sim.addWidget(lbl_sim_tit)
         
         self.lbl_margen_reg = QLabel("Margen Regular: —")
-        self.lbl_margen_reg.setStyleSheet("font-size: 12px; color: #334155; font-weight: bold; border: none;")
+        self.lbl_margen_reg.setStyleSheet("font-size: 12px;  font-weight: bold; border: none;")
         lay_sim.addWidget(self.lbl_margen_reg)
         
         self.lbl_margen_promo = QLabel("Margen Promo: —")
-        self.lbl_margen_promo.setStyleSheet("font-size: 12px; color: #334155; font-weight: bold; border: none;")
+        self.lbl_margen_promo.setStyleSheet("font-size: 12px;  font-weight: bold; border: none;")
         lay_sim.addWidget(self.lbl_margen_promo)
         
         self.lbl_ahorro_total = QLabel("Ahorro de Cliente: —")
-        self.lbl_ahorro_total.setStyleSheet("font-size: 12px; color: #64748b; border: none;")
+        self.lbl_ahorro_total.setStyleSheet("font-size: 12px;  border: none;")
         lay_sim.addWidget(self.lbl_ahorro_total)
         
         self.lbl_semaforo = QLabel("Seleccione un producto...")
-        self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800; color: #94a3b8; border: none;")
+        self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800;  border: none;")
         self.lbl_semaforo.setAlignment(Qt.AlignCenter)
         lay_sim.addWidget(self.lbl_semaforo)
         
@@ -393,20 +389,20 @@ class Admin2Ofertas(QWidget):
         self.btn_activar_promo = QPushButton("🚀 ACTIVAR PROMO")
         self.btn_activar_promo.setStyleSheet("""
             QPushButton {
-                background-color: #10b981; color: white; font-weight: 800; font-size: 11px;
+                 color: white; font-weight: 800; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background-color: #059669; }
+            QPushButton:hover {  }
         """)
         self.btn_activar_promo.clicked.connect(self._guardar_oferta_rapida)
         
         self.btn_quitar_promo = QPushButton("❌ QUITAR PROMO")
         self.btn_quitar_promo.setStyleSheet("""
             QPushButton {
-                background-color: #fef2f2; color: #ef4444; font-weight: bold; font-size: 11px;
+                  font-weight: bold; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: 1px solid #fecaca;
             }
-            QPushButton:hover { background-color: #ef4444; color: white; }
+            QPushButton:hover {  color: white; }
         """)
         self.btn_quitar_promo.clicked.connect(self._quitar_oferta_rapida)
         
@@ -420,7 +416,7 @@ class Admin2Ofertas(QWidget):
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
                 color: white; font-weight: 900; font-size: 11px; padding: 11px; border-radius: 6px; border: none;
             }
-            QPushButton:hover { background: #c2410c; }
+            QPushButton:hover {  }
         """)
         self.btn_imprimir_quick_cartel.clicked.connect(self._imprimir_cartel_a4_rapido)
         lay_ctrl.addWidget(self.btn_imprimir_quick_cartel)
@@ -436,13 +432,13 @@ class Admin2Ofertas(QWidget):
 
         # ── Footer ───────────────────────────────────────
         ft = QFrame(); ft.setFixedHeight(34)
-        ft.setStyleSheet("QFrame{background:#f1f5f9;border-top:1px solid #cbd5e1;}")
+        ft.setStyleSheet("QFrame{border-top:1px solid #cbd5e1;}")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
         self.lbl_sel     = QLabel("")
         for lbl in [self.lbl_total, self.lbl_stock0, self.lbl_sel]:
-            lbl.setStyleSheet("color:#475569;font-size:11px; background: transparent;")
+            lbl.setStyleSheet("font-size:11px; background: transparent;")
         fl2.addWidget(self.lbl_total)
         fl2.addSpacing(20); fl2.addWidget(self.lbl_stock0)
         fl2.addStretch();   fl2.addWidget(self.lbl_sel)
@@ -463,7 +459,7 @@ class Admin2Ofertas(QWidget):
             self.lbl_margen_promo.setText("Margen Promo: —")
             self.lbl_ahorro_total.setText("Ahorro de Cliente: —")
             self.lbl_semaforo.setText("Seleccione un producto...")
-            self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800; color: #94a3b8; border: none; background-color: transparent; padding: 0;")
+            self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800;  border: none; background-color: transparent; padding: 0;")
             return
             
         costo = self.txt_quick_costo.value()
@@ -489,18 +485,18 @@ class Admin2Ofertas(QWidget):
             # Semáforo de Viabilidad Financiera
             if promo_precio <= costo:
                 self.lbl_semaforo.setText("🚨 PÉRDIDA: ¡OFERTA POR DEBAJO DEL COSTO!")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white; background-color: #ef4444; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white;  border-radius: 4px; padding: 4px; border: none;")
             elif margen_promo < 10.0:
                 self.lbl_semaforo.setText("⚠️ MARGEN CRÍTICO: RENTABILIDAD BAJA")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: #78350f; background-color: #fef3c7; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900;   border-radius: 4px; padding: 4px; border: none;")
             else:
                 self.lbl_semaforo.setText("✅ PROMOCIÓN RENTABLE: RENTABILIDAD POSITIVA")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white; background-color: #10b981; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white;  border-radius: 4px; padding: 4px; border: none;")
         else:
             self.lbl_margen_promo.setText("Margen Promo: —")
             self.lbl_ahorro_total.setText("Ahorro de Cliente: —")
             self.lbl_semaforo.setText("✅ Margen Regular Comercial")
-            self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: #0284c7; background-color: #e0f2fe; border-radius: 4px; padding: 4px; border: none;")
+            self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900;   border-radius: 4px; padding: 4px; border: none;")
 
     def _cargar_deptos(self):
         self.cmb_depto.blockSignals(True)
@@ -545,7 +541,7 @@ class Admin2Ofertas(QWidget):
 
         n = len(self.all_rows)
         self.lbl_total.setText(f"📦 {n} PRODUCTOS EN LISTA")
-        self.lbl_total.setStyleSheet("color: #1e3a8a; font-weight: 800; background: transparent;")
+        self.lbl_total.setStyleSheet(" font-weight: 800; background: transparent;")
         self.lbl_stock0.setText(
             f"⚠️ Stock Crítico: {sin_stock}" if sin_stock else "✅ Stock Saludable"
         )
@@ -702,13 +698,8 @@ class Admin2Ofertas(QWidget):
         self.sp_quick_cant_oferta.blockSignals(False)
         self.sp_quick_precio_oferta.blockSignals(False)
         
-        try:
-            t_u = p['tipo_unidad_oferta'] or "Unidades"
-        except:
-            t_u = "Unidades"
-        idx = self.cb_quick_tipo_unidad.findText(t_u)
-        if idx >= 0:
-            self.cb_quick_tipo_unidad.setCurrentIndex(idx)
+        self.sp_quick_cant_oferta.blockSignals(False)
+        self.sp_quick_precio_oferta.blockSignals(False)
             
         self.panel_control.setEnabled(True)
         self.lbl_sel.setText("Seleccionado: 1")
@@ -746,10 +737,9 @@ class Admin2Ofertas(QWidget):
             QMessageBox.warning(self, "Error", "La cantidad y precio de oferta deben ser mayores a cero.")
             return
             
-        tipo_u = self.cb_quick_tipo_unidad.currentText()
         ok = db_manager.execute_non_query(
-            "UPDATE productos SET cant_oferta=?, precio_oferta=?, tipo_unidad_oferta=? WHERE id=?",
-            (cant, prec, tipo_u, self.producto_seleccionado_id)
+            "UPDATE productos SET cant_oferta=?, precio_oferta=? WHERE id=?",
+            (cant, prec, self.producto_seleccionado_id)
         )
         if ok:
             self.cargar_datos()
@@ -793,7 +783,13 @@ class Admin2Ofertas(QWidget):
         
         c_of = self.sp_quick_cant_oferta.value()
         p_of = self.sp_quick_precio_oferta.value()
-        t_u = self.cb_quick_tipo_unidad.currentText()
+        
+        # Obtener unidad desde la BD
+        rows = db_manager.execute_query("SELECT unidad FROM productos WHERE id=?", (id_p,))
+        if rows and rows[0]['unidad'] and 'KG' in str(rows[0]['unidad']).upper():
+            t_u = "Kilos"
+        else:
+            t_u = "Unidades"
         
         if c_of <= 0 or p_of <= 0:
             QMessageBox.warning(self, "Aviso", "⚠️ Para imprimir un cartel, el producto debe tener una promoción activa (Cantidad y Precio de Oferta mayores a cero).")
@@ -813,10 +809,10 @@ class Admin2Ofertas(QWidget):
         dlg.setWindowTitle("Opciones de Impresión de Cartel")
         dlg.setFixedSize(400, 260)
         dlg.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #ea580c; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
-            QPushButton:hover { background: #c2410c; }
-            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; background: white; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
+            QPushButton:hover {  }
+            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
         """)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(20, 20, 20, 20)
@@ -912,10 +908,10 @@ class Admin2Ofertas(QWidget):
         dlg.setWindowTitle("Impresión de Cartelera Masiva (Libro)")
         dlg.setFixedSize(450, 320)
         dlg.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #1e3a8a; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
-            QPushButton:hover { background: #ea580c; }
-            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; color: #0f172a; background: white; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
+            QPushButton:hover {  }
+            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
         """)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(20, 20, 20, 20)
@@ -1005,10 +1001,10 @@ class Admin2Ofertas(QWidget):
         dlg.setWindowTitle("Creación de Folleto de Ofertas (PDF)")
         dlg.setFixedSize(480, 360)
         dlg.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #10b981; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
-            QPushButton:hover { background: #059669; }
-            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; color: #1e293b; background: white; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QPushButton:hover {  }
+            QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
             QRadioButton { spacing: 8px; font-weight: bold; }
         """)
         lay = QVBoxLayout(dlg)
@@ -1016,7 +1012,7 @@ class Admin2Ofertas(QWidget):
         lay.setSpacing(12)
         
         lbl_tit = QLabel("📰 CREAR VOLANTE PUBLICITARIO (PDF)")
-        lbl_tit.setStyleSheet("color: #1e3a8a; font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
         
         # Formulario
@@ -1172,9 +1168,9 @@ class Admin2Ofertas(QWidget):
         dlg_marca.setWindowTitle("Configuración de Marca")
         dlg_marca.setFixedSize(380, 200)
         dlg_marca.setStyleSheet("""
-            QDialog { background: white; color: #0f172a; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background: #ea580c; color: white; font-weight: bold; padding: 8px; border-radius: 6px; }
-            QPushButton:hover { background: #c2410c; }
+            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton {  color: white; font-weight: bold; padding: 8px; border-radius: 6px; }
+            QPushButton:hover {  }
             QLineEdit { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
         """)
         lay_m = QVBoxLayout(dlg_marca)
@@ -1202,11 +1198,11 @@ class Admin2Ofertas(QWidget):
             dlg.setFixedSize(480, 360)
             
             dlg.setStyleSheet("""
-                QDialog { background-color: #f8fafc; color: #1e293b; font-family: 'Segoe UI', sans-serif; }
-                QLabel { color: #0f172a; }
-                QLineEdit, QComboBox { background-color: white; color: #1e293b; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+                QDialog {   font-family: 'Segoe UI', sans-serif; }
+                QLabel {  }
+                QLineEdit, QComboBox { background-color: white;  padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
                 QLineEdit:focus, QComboBox:focus { border: 2px solid #ea580c; }
-                QRadioButton { color: #1e293b; font-size: 13px; }
+                QRadioButton {  font-size: 13px; }
                 QPushButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316); color: white; font-weight: bold; padding: 12px 24px; border-radius: 8px; border: none; font-size: 13px; }
                 QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #c2410c, stop:1 #ea580c); }
             """)
@@ -1221,9 +1217,9 @@ class Admin2Ofertas(QWidget):
             hf_lay.setContentsMargins(10, 10, 10, 10)
             hf_lay.setSpacing(6)
             
-            lbl_prod = QLabel(f"<span style='color:#ea580c; font-size:11px; font-weight:bold;'>PROCESANDO</span><br><span style='font-size:16px; font-weight:900;'>{prod['nombre']}</span>")
+            lbl_prod = QLabel(f"<span style=' font-size:11px; font-weight:bold;'>PROCESANDO</span><br><span style='font-size:16px; font-weight:900;'>{prod['nombre']}</span>")
             lbl_prod.setWordWrap(True)
-            lbl_pr = QLabel(f"<span style='color:#64748b;'>Precio Regular:</span> <span style='color:#10b981; font-weight:bold;'>${prod['precio']:.2f}</span>")
+            lbl_pr = QLabel(f"<span style=''>Precio Regular:</span> <span style=' font-weight:bold;'>${prod['precio']:.2f}</span>")
             hf_lay.addWidget(lbl_prod)
             hf_lay.addWidget(lbl_pr)
             

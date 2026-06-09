@@ -1,179 +1,21 @@
-import sys
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-    QPushButton, QStackedWidget, QLabel, QFrame, QShortcut,
-    QGraphicsOpacityEffect, QGraphicsDropShadowEffect, QApplication, QMessageBox
+    QMainWindow, QWidget, QStackedWidget, QLabel, QFrame, QShortcut,
+    QGraphicsDropShadowEffect, QApplication, QMessageBox, QPushButton,
+    QHBoxLayout, QVBoxLayout
 )
-from PyQt5.QtGui import QKeySequence, QFont, QColor
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from src.admin.admin0_dashboard import Admin0Dashboard
+from PyQt5.QtGui import QKeySequence, QColor
+from PyQt5.QtCore import Qt, QTimer
 from src.cajero.paso5_terminal import Paso5Terminal
-from src.admin.admin1_inventario import Admin1Inventario
-from src.admin.admin2_ofertas import Admin2Ofertas
-from src.admin.admin3_reportes import Admin3Reportes
-from src.admin.admin4_gastos import Admin4Gastos
-from src.admin.admin5_configuracion import Admin5Configuracion
-from src.admin.admin9_contabilidad import Admin9Contabilidad
-from src.admin.admin10_mp import Admin10MP
-from src.admin.etiquetas.admin_etiquetas import AdminEtiquetas
-from chatbot.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
-from src.admin.admin13_hardware import Admin13Hardware
-from src.admin.admin11_proveedores import Admin11Proveedores
-from src.admin.admin14_ventas_digitales import Admin14VentasDigitales
-from src.admin.admin15_actualizaciones import Admin15Actualizaciones
-from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.utils.floating_widgets import BotonFlotanteRegreso
 from src.logger import logger
 from src.config import config
 from src.base_de_datos.database import db_manager
-from src.admin.admin7_cierre import Admin7Cierre
 
-class ScifiReconstructionOverlay(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.setGeometry(0, 0, parent.width(), parent.height())
-        self.setAttribute(Qt.WA_DeleteOnClose)
-        
-        # Fondo oscuro semi-transparente estilo vidrio soplado
-        self.bg_overlay = QFrame(self)
-        self.bg_overlay.setGeometry(0, 0, parent.width(), parent.height())
-        self.bg_overlay.setStyleSheet("background-color: rgba(10, 15, 30, 0.95);")
-        
-        # 4 Paneles esquineros (símbolos de esquinas de ciencia ficción)
-        self.panel_tl = QLabel("┌", self)
-        self.panel_tr = QLabel("┐", self)
-        self.panel_bl = QLabel("└", self)
-        self.panel_br = QLabel("┘", self)
-        
-        # Estilo premium sci-fi para las esquinas (neon verde matrix)
-        corner_style = "color: #10B981; font-size: 90px; font-weight: bold; background: transparent; border: none;"
-        for p in [self.panel_tl, self.panel_tr, self.panel_bl, self.panel_br]:
-            p.setStyleSheet(corner_style)
-            p.setFixedSize(120, 120)
-            p.setAlignment(Qt.AlignCenter)
-            
-        # Mensaje de carga holográfico central
-        self.lbl_msg = QLabel("RECONSTRUYENDO TERMINAL INDUSTRIAL...\n[ SISTEMA DE SEGURIDAD ACTIVO ]", self)
-        self.lbl_msg.setAlignment(Qt.AlignCenter)
-        self.lbl_msg.setStyleSheet("""
-            color: #34D399; 
-            font-size: 15px; 
-            font-weight: bold; 
-            letter-spacing: 3px;
-            font-family: 'Consolas', 'Lucida Console', monospace;
-            background: transparent;
-            border: none;
-        """)
-        
-        # Sombra de brillo holográfico
-        glow = QGraphicsDropShadowEffect(self.lbl_msg)
-        glow.setBlurRadius(15); glow.setColor(QColor(16, 185, 129, 200)); glow.setOffset(0, 0)
-        self.lbl_msg.setGraphicsEffect(glow)
-        
-        # Línea de barrido (scanline)
-        self.scanline = QFrame(self)
-        self.scanline.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(16,185,129,0), stop:0.5 rgba(16,185,129,0.8), stop:1 rgba(16,185,129,0)); border: none;")
-        
-        self.w = parent.width()
-        self.h = parent.height()
-        
-        # Posicionar inicialmente en las esquinas exteriores
-        self.panel_tl.move(0, 0)
-        self.panel_tr.move(self.w - 120, 0)
-        self.panel_bl.move(0, self.h - 120)
-        self.panel_br.move(self.w - 120, self.h - 120)
-        
-        self.lbl_msg.setGeometry(0, self.h // 2 - 60, self.w, 120)
-        self.scanline.setGeometry(0, 0, self.w, 8)
-        
-    def start_animation(self):
-        from PyQt5.QtCore import QPropertyAnimation, QPoint, QParallelAnimationGroup, QEasingCurve, QRect
-        
-        # Centro exacto de convergencia
-        cx = self.w // 2 - 60
-        cy = self.h // 2 - 60
-        
-        self.anim_group = QParallelAnimationGroup(self)
-        
-        # 1. Esquinas al centro
-        self.anim_tl = QPropertyAnimation(self.panel_tl, b"pos")
-        self.anim_tl.setDuration(1000)
-        self.anim_tl.setStartValue(QPoint(0, 0))
-        self.anim_tl.setEndValue(QPoint(cx, cy))
-        self.anim_tl.setEasingCurve(QEasingCurve.InOutQuint)
-        
-        self.anim_tr = QPropertyAnimation(self.panel_tr, b"pos")
-        self.anim_tr.setDuration(1000)
-        self.anim_tr.setStartValue(QPoint(self.w - 120, 0))
-        self.anim_tr.setEndValue(QPoint(cx, cy))
-        self.anim_tr.setEasingCurve(QEasingCurve.InOutQuint)
-        
-        self.anim_bl = QPropertyAnimation(self.panel_bl, b"pos")
-        self.anim_bl.setDuration(1000)
-        self.anim_bl.setStartValue(QPoint(0, self.h - 120))
-        self.anim_bl.setEndValue(QPoint(cx, cy))
-        self.anim_bl.setEasingCurve(QEasingCurve.InOutQuint)
-        
-        self.anim_br = QPropertyAnimation(self.panel_br, b"pos")
-        self.anim_br.setDuration(1000)
-        self.anim_br.setStartValue(QPoint(self.w - 120, self.h - 120))
-        self.anim_br.setEndValue(QPoint(cx, cy))
-        self.anim_br.setEasingCurve(QEasingCurve.InOutQuint)
-        
-        # 2. Barrido vertical
-        self.anim_scan = QPropertyAnimation(self.scanline, b"geometry")
-        self.anim_scan.setDuration(1000)
-        self.anim_scan.setStartValue(QRect(0, 0, self.w, 8))
-        self.anim_scan.setEndValue(QRect(0, self.h, self.w, 8))
-        self.anim_scan.setEasingCurve(QEasingCurve.InOutSine)
-        
-        # 3. Desvanecimiento
-        self.opacity_effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_effect)
-        self.anim_fade = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.anim_fade.setDuration(350)
-        self.anim_fade.setStartValue(1.0)
-        self.anim_fade.setEndValue(0.0)
-        
-        self.anim_group.addAnimation(self.anim_tl)
-        self.anim_group.addAnimation(self.anim_tr)
-        self.anim_group.addAnimation(self.anim_bl)
-        self.anim_group.addAnimation(self.anim_br)
-        self.anim_group.addAnimation(self.anim_scan)
-        
-        def on_convergencia():
-            self.lbl_msg.setText("✅ INTEGRIDAD DE INTERFAZ RECONSTRUIDA\n[ SISTEMA ONLINE ]")
-            self.lbl_msg.setStyleSheet("""
-                color: #FFFFFF; 
-                font-size: 16px; 
-                font-weight: bold; 
-                letter-spacing: 3px;
-                font-family: 'Consolas', 'Lucida Console', monospace;
-                background: transparent;
-                border: none;
-            """)
-            
-            # Flash verde sutil de finalización
-            self.bg_overlay.setStyleSheet("background-color: rgba(16, 185, 129, 0.4);")
-            
-            self.anim_fade.start()
-            self.anim_fade.finished.connect(self.close)
-            
-        self.anim_group.finished.connect(on_convergencia)
-        self.anim_group.start()
-        
-    def resizeEvent(self, event):
-        self.setGeometry(0, 0, self.parent().width(), self.parent().height())
-        self.bg_overlay.setGeometry(0, 0, self.width(), self.height())
-        self.w = self.width()
-        self.h = self.height()
-        self.lbl_msg.setGeometry(0, self.h // 2 - 60, self.w, 120)
-        super().resizeEvent(event)
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Cobro Fácil POS 2026 - Industrial POS")
+        self.setWindowTitle("Cobro Fácil")
         self.resize(1240, 820)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -187,86 +29,31 @@ class MainWindow(QMainWindow):
         self.btn_flotante.hide()
         self._supervisor_mode = False
 
+        # ── Pirámide de acceso F11 ───────────────────────────────────────
+        # _came_from_cajero: True si la escalada arrancó desde el terminal
+        # El botón flotante desciende: Jefe → Admin → Cajero
+        self._came_from_cajero: bool = False
+        self._nav_stack: list = []   # alias por retrocompatibilidad
 
-
-        # Importar gestión de cajón y otras utilidades
+        # Inicializar cajón y cargar pantallas y atajos
         from src.hardware.cash_drawer import drawer_manager
 
         # Restablecer cajón y cargar pantallas y atajos
         drawer_manager.reset_all()
         self._init_screens()
         self._init_shortcuts()
-        self.apply_roles()
+        # NOTA: apply_roles() se llama DESPUÉS del login en main.py, no aquí.
+        # Llamarlo en __init__ era un doble-procesamiento innecesario.
         self._init_global_alarm()
         self._init_security_monitor()
         self._init_update_banner()
 
-        # Chatbot Overlay Nativo (Inicia Oculto)
-        self.chatbot_overlay = ChatBotWidget(self)
-        self.chatbot_overlay.hide()
+        # ChatBot: se instancia SOLO cuando el cajero presiona el botón por primera vez
+        self.chatbot_overlay = None
         self._chatbot_active = False
-
-
-
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(10000, self._chequear_actualizaciones_bg)
-
-        """ Inicializa el sistema de latido para tolerancia a fallos LAN. """
-        self.heartbeat_timer = QTimer(self)
-        self.heartbeat_timer.timeout.connect(self._check_heartbeat)
-        self.heartbeat_timer.start(5000) # Cada 5 segundos
-
-    def _check_heartbeat(self):
-        from src.base_de_datos.database import db_manager
-        from src.config import config
-        import datetime
-        from PyQt5.QtWidgets import QMessageBox
-        import json
-        import os
-        from src.utils.paths import get_base_path
-
-        # Si es Máster (local), enviar latido
-        if db_manager.is_master:
-            db_manager.actualizar_latido()
-        else:
-            # Si es Espectador (LAN), comprobar latido
-            latido_str = db_manager.obtener_latido()
-            if latido_str:
-                try:
-                    latido_dt = datetime.datetime.strptime(latido_str, "%Y-%m-%d %H:%M:%S")
-                    ahora_utc = datetime.datetime.utcnow()
-                    diff = (ahora_utc - latido_dt).total_seconds()
-                    
-                    if diff > 15: # 15 segundos sin latido
-                        self.heartbeat_timer.stop()
-                        msg = ("El servidor principal no responde (Latido perdido).\n\n"
-                               "¿Desea convertir esta PC en el nuevo Máster?\n"
-                               "Las nuevas ventas se guardarán localmente hasta que vuelva a conectarse a la red.")
-                        
-                        resp = QMessageBox.question(self, "Desconexión de Red Detectada", msg,
-                                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                        
-                        if resp == QMessageBox.Yes:
-                            # Promover a Máster
-                            base_path = get_base_path()
-                            cfg_path = os.path.join(base_path, "config.json")
-                            try:
-                                with open(cfg_path, "r", encoding="utf-8") as f:
-                                    cfg_data = json.load(f)
-                                cfg_data["db_path"] = ""
-                                with open(cfg_path, "w", encoding="utf-8") as f:
-                                    json.dump(cfg_data, f, indent=4)
-                                
-                                QMessageBox.information(self, "Promovido", "La aplicación se reiniciará en Modo Máster Local.")
-                                import sys
-                                sys.exit(1) # O reiniciar suavemente, pero exit 1 reinicia si hay un wrapper, o lo cerramos
-                            except Exception as e:
-                                logger.error(f"Error asumiendo master: {e}")
-                        else:
-                            self.heartbeat_timer.start(5000)
-                except Exception as e:
-                    logger.error(f"Error procesando fecha de latido: {e}")
 
     def _init_security_monitor(self):
         """ Motor de Vigilancia Global: Monitorea el hardware 24/7 sin importar el módulo activo. """
@@ -399,17 +186,7 @@ class MainWindow(QMainWindow):
                     QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
                     return
 
-                # Si no hay en Firebase, intentar por LAN
-                from src.updater.update_client import verificar_actualizaciones
-                res_lan = verificar_actualizaciones(dry_run=True)
-                if res_lan and res_lan.hay_cambios:
-                    n = len(res_lan.actualizados)
-                    canal = res_lan.canal.upper()
-                    ver   = res_lan.version_nueva
-                    msg = (f"Nueva versión {ver} ({canal}) en red local — "
-                           f"{n} módulo{'s' if n!=1 else ''} listo{'s' if n!=1 else ''} para instalar")
-                    self._origen_actualizacion = 'lan'
-                    QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
+
             except Exception as e:
                 from src.logger import logger
                 logger.error(f"Error buscando actualizaciones bg: {e}")
@@ -426,7 +203,7 @@ class MainWindow(QMainWindow):
 
     def _instalar_actualizacion_rapida(self):
         """Un clic: descarga, instala y ofrece reiniciar. Igual que el celular."""
-        from src.admin.admin15_actualizaciones import UpdateWorker, FirebaseUpdateWorker
+        from src.updater.github_updater import FirebaseUpdateWorker
         self._update_banner.hide()
 
         # Dialogo de progreso minimalista
@@ -439,11 +216,7 @@ class MainWindow(QMainWindow):
         dlg.setValue(0)
         dlg.show()
 
-        origen = getattr(self, '_origen_actualizacion', 'lan')
-        if origen == 'firebase':
-            self._uw = FirebaseUpdateWorker(dry_run=False)
-        else:
-            self._uw = UpdateWorker(canal="stable", dry_run=False)
+        self._uw = FirebaseUpdateWorker(dry_run=False)
 
         def on_progreso(pct, msg):
             dlg.setLabelText(msg)
@@ -476,47 +249,186 @@ class MainWindow(QMainWindow):
         self._uw.start()
 
     def return_to_terminal_refresh(self):
-        """ Regresa al terminal y fuerza el refresco de datos. """
-        self._supervisor_mode = False
-        self.btn_flotante.hide()
-        self.pantalla_ventas.refresh_terminal_data()
-        self.switch_tab(1)
+        """Botón flotante — desciende UN nivel en la pirámide.
+
+        Pirámide de descenso (siempre paso a paso):
+          Jefe (19)  → Admin (0)   → Cajero (1)
+
+        Regla:
+          - Desde screen 19 (Jefe)  → siempre va a Admin.
+          - Desde screen  0 (Admin) → va a Cajero SI la escalada
+            arrancó desde el terminal (_came_from_cajero=True);
+            si no, solo oculta el botón.
+        """
+        current = self.stacked_widget.currentIndex()
+
+        if current == 19:
+            # ─ Jefe → Admin ───────────────────────────────────────
+            self._escalando = True
+            self.switch_tab(0)
+            self._escalando = False
+            self._restore_user_role(0)
+            if self._came_from_cajero:
+                # Todavía hay un piso más abajo
+                self.btn_flotante.show()
+                self.btn_flotante.raise_()
+            else:
+                # Vino directo del admin — no hay cajero esperando
+                self._supervisor_mode = False
+                self.btn_flotante.hide()
+
+        elif current == 0 and self._came_from_cajero:
+            # ─ Admin → Cajero ──────────────────────────────────────
+            self._came_from_cajero  = False
+            self._supervisor_mode   = False
+            self.btn_flotante.hide()
+            self.pantalla_ventas.refresh_terminal_data()
+            self.switch_tab(1)
+
+        else:
+            # ─ Fallback (cualquier otra pantalla) ───────────────────────
+            self._came_from_cajero  = False
+            self._supervisor_mode   = False
+            self._nav_stack.clear()
+            self.btn_flotante.hide()
+
+
+    def _restore_user_role(self, screen_index: int):
+        """Restaura el rol activo en config.current_user según la pantalla destino."""
+        from src.config import config
+        if screen_index == 0:
+            # Volvemos al admin— buscamos el usuario admin en DB
+            res = db_manager.execute_query(
+                "SELECT id, username, rol FROM usuarios WHERE rol = 'admin' LIMIT 1")
+            if res:
+                config.current_user = {
+                    "id":       res[0]['id'],
+                    "username": res[0]['username'],
+                    "role":     res[0]['rol'],
+                }
+
 
     def _init_screens(self):
-        from src.admin.admin16_lan_connection import Admin16LANConnection
-        from src.admin.admin_clientes import AdminClientes
-        self.pantalla_dashboard = Admin0Dashboard()
+        """Inicializa el stack de pantallas con LAZY LOADING.
+
+        Los widgets pesados (Admin, Jefe, Nexus, etc.) se instancian la primera
+        vez que el usuario navega a ellos, en vez de todos al arrancar.
+        Esto elimina el freeze del splash y reduce el RAM inicial.
+        """
+        # ── Placeholders para Lazy Loading ───────────────────────────────────
+        # None = aún no instanciado; se crea en switch_tab() al primer acceso.
+        # Los índices NUNCA cambian (contratos externos vigentes).
+        class _Dead(QWidget):
+            """Slot libre en el stacked widget — nunca se navega aquí."""
+            pass
+
+        # Pantallas instanciadas de inmediato (esenciales para el arranque)
         self.pantalla_ventas = Paso5Terminal()
         self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
         self.pantalla_ventas.request_chatbot_toggle.connect(self._toggle_chatbot_overlay)
-        self.pantalla_inventario = Admin1Inventario()
-        
+
+        # El stacked_widget necesita exactamente 20 slots fijos.
+        # Usamos QWidget() vacíos como placeholder para los lazy.
         self.screens = [
-            self.pantalla_dashboard,     # 0
-            self.pantalla_ventas,        # 1
-            self.pantalla_inventario,    # 2
-            Admin2Ofertas(),            # 3
-            Admin3Reportes(),           # 4
-            Admin5Configuracion(),       # 5
-            Admin7Cierre(self),          # 6
-            Admin4Gastos(),             # 7
-            AdminEtiquetas(),           # 8
-            Admin9Contabilidad(),        # 9
-            Admin10MP(),                # 10
-            Admin11Proveedores(),        # 11
-            QWidget(),                   # 12 - (Antes Manual Cajero, ahora flotante)
-            Admin13Hardware(),          # 13
-            Admin14VentasDigitales(),   # 14
-            Admin15Actualizaciones(),   # 15
-            Admin16LANConnection(),     # 16
-            AdminClientes()             # 17
+            None,    # 0  — Admin0Dashboard          (lazy)
+            self.pantalla_ventas,                  # 1  — Cajero (cargado ahora)
+            None,    # 2  — Admin1Inventario         (lazy)
+            None,    # 3  — Admin2Ofertas            (lazy)
+            None,    # 4  — Admin3Reportes           (lazy)
+            None,    # 5  — Admin5Configuracion      (lazy)
+            _Dead(), # 6  — [LIBRE]
+            None,    # 7  — Admin7Cierre             (lazy)
+            None,    # 8  — AdminEtiquetas           (lazy)
+            None,    # 9  — JefeContabilidad         (lazy)
+            None,    # 10 — Admin10MP                (lazy)
+            None,    # 11 — Admin11Proveedores       (lazy)
+            _Dead(), # 12 — [LIBRE]
+            None,    # 13 — Admin13Hardware          (lazy)
+            None,    # 14 — Admin14VentasDigitales   (lazy)
+            _Dead(), # 15 — [LIBRE]
+            _Dead(), # 16 — [LIBRE]
+            None,    # 17 — AdminClientes            (lazy)
+            None,    # 18 — NexusExtremeControl      (lazy)
+            None,    # 19 — Jefe0Dashboard           (lazy)
         ]
-        for s in self.screens:
-            self.stacked_widget.addWidget(s)
-            if hasattr(s, 'request_dashboard'):
+
+        # Fábricas: callable que crea el widget cuando se necesita
+        self._screen_factories = {
+            0:  lambda: __import__('src.admin.admin0_dashboard',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
+            2:  lambda: __import__('src.admin.admin1_inventario', fromlist=['Admin1Inventario']).Admin1Inventario(),
+            3:  lambda: __import__('src.admin.admin2_ofertas',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
+            4:  lambda: __import__('src.admin.admin3_reportes',   fromlist=['Admin3Reportes']).Admin3Reportes(),
+            5:  lambda: __import__('src.admin.admin5_configuracion', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
+            7:  lambda: __import__('src.admin.admin7_cierre',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
+            8:  lambda: __import__('src.admin.etiquetas.admin_etiquetas', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
+            9:  lambda: __import__('src.jefe.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
+            10: lambda: __import__('src.admin.admin10_mp',        fromlist=['Admin10MP']).Admin10MP(),
+            11: lambda: __import__('src.admin.admin11_proveedores', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
+            13: lambda: __import__('src.admin.admin13_hardware',  fromlist=['Admin13Hardware']).Admin13Hardware(),
+            14: lambda: __import__('src.admin.admin14_ventas_digitales', fromlist=['Admin14VentasDigitales']).Admin14VentasDigitales(),
+            17: lambda: __import__('src.admin.admin_clientes',    fromlist=['AdminClientes']).AdminClientes(),
+            18: lambda: __import__('src.admin.admin7_nexus',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
+            19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
+        }
+
+        # Añadir todos los slots al QStackedWidget
+        # Los slots lazy arrancan como QWidget vacíos; se reemplazan en switch_tab
+        for i, s in enumerate(self.screens):
+            placeholder = s if s is not None else QWidget()
+            self.stacked_widget.addWidget(placeholder)
+            if s is None:
+                # Guardar el placeholder para poder reemplazarlo luego
+                self.stacked_widget.widget(i).setObjectName(f"_lazy_placeholder_{i}")
+
+        # Conectar señales para el terminal de ventas (ya instanciado)
+        self._connect_screen_signals(1, self.pantalla_ventas)
+
+    def _build_lazy_screen(self, index: int):
+        """Instancia el widget real para `index` y lo registra en el stack.
+
+        Reemplaza el placeholder vacío por el widget definitivo y aplica
+        el tema + conecta señales. Llamado automáticamente desde switch_tab.
+        """
+        factory = self._screen_factories.get(index)
+        if factory is None:
+            return  # Slot libre (_Dead) o índice desconocido
+
+        widget = factory()
+        self.screens[index] = widget
+
+        # Reemplazar placeholder en el QStackedWidget sin cambiar el índice
+        old = self.stacked_widget.widget(index)
+        self.stacked_widget.insertWidget(index, widget)
+        self.stacked_widget.removeWidget(old)
+        old.deleteLater()
+
+        # Aplicar tema si corresponde
+        if index not in (0, 1, 6, 12, 15, 16, 18, 19):
+            try:
+                from src.utils.theme_manager import theme_manager
+                theme_manager.apply_to_admin(widget)
+                theme_manager.theme_changed.connect(lambda t, w=widget: theme_manager.apply_to_admin(w))
+            except Exception:
+                pass
+
+        self._connect_screen_signals(index, widget)
+
+    def _connect_screen_signals(self, index: int, s):
+        """Conecta las señales de navegación de un widget recién creado."""
+        if hasattr(s, 'request_dashboard'):
+            if index == 9:
+                s.request_dashboard.connect(lambda: self.switch_tab(19))
+            else:
                 s.request_dashboard.connect(lambda: self.switch_tab(0))
-            if hasattr(s, 'request_screen'):
-                s.request_screen.connect(self.switch_tab)
+
+        if hasattr(s, 'request_screen'):
+            s.request_screen.connect(self.switch_tab)
+
+        if hasattr(s, 'request_tab'):
+            s.request_tab.connect(self._on_jefe_request_tab)
+
+        if hasattr(s, 'request_logout'):
+            s.request_logout.connect(self._logout_to_selector)
 
     def _init_shortcuts(self):
         # F11: ÚNICO atajo para intervención de supervisor / pantalla completa
@@ -538,9 +450,9 @@ class MainWindow(QMainWindow):
         # Si estamos en el terminal de ventas, F12 abre la ventana de cobro/pagar
         if self.stacked_widget.currentIndex() == 1:
             self.pantalla_ventas.finalizar_venta()
-        # Si estamos en el Dashboard de Admin, F12 va a Auditoría/Cierre Z
+        # Si estamos en el Dashboard de Admin, F12 va a Nexus Extreme (18)
         elif config.current_user.get('role') == 'admin':
-            self.switch_tab(6)
+            self.switch_tab(18)
 
     def jump_to_admin_secure(self):
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
@@ -551,39 +463,86 @@ class MainWindow(QMainWindow):
             self.apply_roles()
 
     def handle_f11_global(self):
-        if self.stacked_widget.currentIndex() == 1: 
-            # Iniciar salto administrativo seguro
-            from src.inicio_y_perfiles.login_pantalla import LoginPantalla
+        """Sistema de escalada piramidal de acceso.
+
+        Cajero (1)  ─F11→  Admin (0)   pide credencial admin
+        Admin  (0)  ─F11→  Jefe  (19)  pide credencial jefe
+        Jefe   (19) ─F11→  toggle fullscreen (ya está en la cima)
+
+        El botón flotante desciende paso a paso el camino inverso.
+        """
+        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
+        current = self.stacked_widget.currentIndex()
+
+        # ── Nivel 1: Cajero → Admin ───────────────────────────────────
+        if current == 1:
             dlg = LoginPantalla(role="admin")
             if dlg.exec_():
-                # Registro de Auditoría: Intervención de Supervisor
                 from src.cajero.paso5_terminal import CajeroActivo
+                from src.hardware.printer import printer_manager
                 supervisor = config.current_user.get('username', 'admin')
-                cajero = CajeroActivo.nombre
-                
-                # Registrar apertura autorizada para inspección/reparación
+                cajero     = CajeroActivo.nombre
                 db_manager.execute_non_query(
-                    "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones) VALUES ('INTERVENCION', 0, ?, ?)",
+                    "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones)"
+                    " VALUES ('INTERVENCION', 0, ?, ?)",
                     (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
                 )
-                
-                # Abrir cajón para mantenimiento de impresora/inspección
-                from src.hardware.printer import printer_manager
-                self.pantalla_ventas._apertura_autorizada = True 
+                self.pantalla_ventas._apertura_autorizada = True
                 printer_manager.abrir_cajon()
-                
+                # Marcar que la escalada vino del cajero
+                self._came_from_cajero  = True
+                self._supervisor_mode   = True
+                self.btn_flotante.show()
+                self.btn_flotante.raise_()
+                self._escalando = True
+                self.switch_tab(0)
+                self._escalando = False
+                self.apply_roles()
+            return
+
+        # ── Nivel 2: Admin → Jefe ────────────────────────────────────
+        if current == 0:
+            dlg = LoginPantalla(role="jefe")
+            if dlg.exec_():
+                # _came_from_cajero se preserva tal como está
+                # (True si vino del cajero, False si entro directo como admin)
                 self._supervisor_mode = True
                 self.btn_flotante.show()
                 self.btn_flotante.raise_()
-                self.switch_tab(0)
-                self.apply_roles()
+                self._escalando = True
+                self.switch_tab(19)
+                self._escalando = False
+            return
+
+        # ── Nivel 3: Jefe (cima) → toggle fullscreen ────────────────────
+        if self.isFullScreen():
+            self.showMaximized()
         else:
-            if self.isFullScreen(): self.showMaximized()
-            else: self.showFullScreen()
+            self.showFullScreen()
+
+
 
     def switch_tab(self, index):
-        # Lógica de botón flotante: Solo aparece si NO estamos en el terminal (index 1)
-        # O si hay productos pendientes de cobro/intervención / modo supervisor
+        """Navega a la pantalla indicada por su índice en el QStackedWidget.
+
+        Guards de seguridad:
+          - El perfil JEFE nunca llega a screen 0 (Admin0Dashboard)
+            EXCEPTO durante una escalada piramidal (_escalando=True).
+          - Los slots libres (6, 12, 15, 16) redirigen al home del rol.
+        """
+        from src.config import config
+        role = (config.current_user or {}).get('role', 'admin').lower()
+        escalando = getattr(self, '_escalando', False)
+
+        # Guard: jefe nunca va al dashboard del admin
+        # (bypass durante escalada piramidal F11 Admin→Jefe y descenso)
+        if role == 'jefe' and index == 0 and not escalando:
+            index = 19
+
+        # Guard: slots libres — redirigir al home del rol activo
+        if index in (6, 12, 15, 16):
+            index = 19 if role == 'jefe' else 0
+
         hay_venta = self.pantalla_ventas.tabla.rowCount() > 0
         is_supervisor = getattr(self, '_supervisor_mode', False)
         
@@ -592,7 +551,7 @@ class MainWindow(QMainWindow):
             self.btn_flotante.hide()
             self.showFullScreen()
             # Mostrar chatbot solo en Terminal de Ventas SI fue activado por el usuario
-            if hasattr(self, 'chatbot_overlay') and getattr(self, '_chatbot_active', False):
+            if self.chatbot_overlay is not None and self._chatbot_active:
                 self.chatbot_overlay.show()
                 self.chatbot_overlay.raise_()
             # Refrescar datos y título del terminal al activarlo
@@ -607,39 +566,65 @@ class MainWindow(QMainWindow):
                 self.btn_flotante.hide()
                 
             # Ocultar chatbot en las demás pantallas
-            if hasattr(self, 'chatbot_overlay'):
+            if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
-                self.chatbot_overlay.cerrar_chat() # Cerrar burbuja si quedó abierta
+                self.chatbot_overlay.cerrar_chat()  # Cerrar burbuja si quedó abierta
                 
             self.showMaximized()
         
+        # ── Lazy Loading: instanciar el widget si es la primera visita ───────
+        if self.screens[index] is None:
+            self._build_lazy_screen(index)
+
         self.stacked_widget.setCurrentIndex(index)
-        
+
         # Cargas pesadas on-demand para mantener el 'Zero Lag'
         s = self.screens[index]
-        if hasattr(s, 'cargar_datos'): s.cargar_datos()
+        if s is not None and hasattr(s, 'cargar_datos'):
+            s.cargar_datos()
 
     def apply_roles(self):
         user = config.current_user
         if not user: return
         role = user.get("role", "cajero").lower()
-        # Si es cajero, va directo al terminal. Si es admin, al dashboard.
-        self.switch_tab(1 if role != "admin" else 0)
+        # Cajero → terminal. Jefe → panel exclusivo (19). Admin → dashboard (0).
+        if role == "cajero":
+            self.switch_tab(1)
+        elif role == "jefe":
+            self.switch_tab(19)
+        else:
+            self.switch_tab(0)
 
-    def iniciar_reconstruccion_scifi(self):
-        """ Inicia la animación holográfica de reconstrucción de interfaz desde las esquinas al centro. """
-        try:
-            from src.utils.particle_transition import ParticleReconstructionOverlay
-            self.overlay_transition = ParticleReconstructionOverlay(self)
-            self.overlay_transition.show()
-            self.overlay_transition.raise_()
-        except Exception as e:
-            from src.logger import logger
-            logger.warning(f"No se pudo cargar la transición de partículas: {e}")
-            self.overlay_transition = ScifiReconstructionOverlay(self)
-            self.overlay_transition.show()
-            self.overlay_transition.raise_()
-            self.overlay_transition.start_animation()
+    def _on_jefe_request_tab(self, tab_index: int):
+        """El jefe pide un tab específico del ERP contable (ej: 3 = Proveedores)."""
+        # Asegurarse de que JefeContabilidad esté instanciado (lazy)
+        if self.screens[9] is None:
+            self._build_lazy_screen(9)
+        cont_widget = self.screens[9]
+        if cont_widget is None:
+            return
+        if hasattr(cont_widget, 'ir_a_tab'):
+            if getattr(cont_widget, '_loaded', True):
+                cont_widget.ir_a_tab(tab_index)
+            else:
+                QTimer.singleShot(600, lambda: cont_widget.ir_a_tab(tab_index))
+
+    def _logout_to_selector(self):
+        """Cierra la sesión activa y relanza el selector de perfiles.
+
+        Comportamiento:
+          - Admin  → logout() en Admin0Dashboard emite exit(888).
+            Este método es llamado ADICIONALMENTE si Admin0Dashboard tiene
+            request_logout (doble cobertura — no rompe nada).
+          - Jefe   → Jefe0Dashboard.request_logout → este método → exit(99).
+
+        El loop en main.py captura códigos 99 y 888 y relanza launch_app().
+        """
+        from src.config import config
+        config.current_user = None
+        QApplication.exit(99)
+
+
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -686,15 +671,19 @@ class MainWindow(QMainWindow):
                 self.pantalla_ventas.lbl_terminal_title.setText(title)
 
     def _toggle_chatbot_overlay(self):
-        if hasattr(self, 'chatbot_overlay'):
-            self._chatbot_active = not getattr(self, '_chatbot_active', False)
-            if self._chatbot_active:
-                self.chatbot_overlay.actualizar_posicion()
-                self.chatbot_overlay.abrir_y_desplegar()
-            else:
-                self.chatbot_overlay.cerrar_chat()
-                # Ocultar widget completo después de la animación de cierre (250ms)
-                QTimer.singleShot(300, self.chatbot_overlay.hide)
+        # Lazy init: se crea la primera vez que el cajero presiona el botón
+        if self.chatbot_overlay is None:
+            from chatbot.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
+            self.chatbot_overlay = ChatBotWidget(self)
+            self.chatbot_overlay.hide()
+
+        self._chatbot_active = not self._chatbot_active
+        if self._chatbot_active:
+            self.chatbot_overlay.actualizar_posicion()
+            self.chatbot_overlay.abrir_y_desplegar()
+        else:
+            self.chatbot_overlay.cerrar_chat()
+            QTimer.singleShot(300, self.chatbot_overlay.hide)
 
     def _toggle_blink_alerta(self):
         self._blink_state = not self._blink_state

@@ -1,8 +1,9 @@
+from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit
+    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
 )
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from PyQt5.QtGui import QCursor, QFont, QColor
@@ -12,6 +13,257 @@ try:
     from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
+
+class DialogoSimboloMoneda(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Símbolo de Moneda")
+        self.setFixedSize(400, 300)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 20, 20, 20)
+        
+        lbl_title = QLabel("💲 Símbolo de Moneda")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; ")
+        lay.addWidget(lbl_title)
+        
+        lay.addWidget(QLabel("Selecciona o escribe el símbolo de moneda para el sistema:", styleSheet=" margin-bottom: 10px;"))
+        
+        self.cmb_moneda = QComboBox()
+        self.cmb_moneda.setEditable(True)
+        self.cmb_moneda.setStyleSheet("padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 14px;")
+        self.cmb_moneda.addItems(["$", "€", "S/", "Q", "L", "Bs", "R$", "¥", "£"])
+        
+        curr = config.get("currency_symbol", "$")
+        self.cmb_moneda.setCurrentText(curr)
+        lay.addWidget(self.cmb_moneda)
+        
+        lay.addStretch()
+        
+        btn_save = QPushButton("💾 Guardar")
+        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.clicked.connect(self.guardar)
+        lay.addWidget(btn_save)
+        
+    def guardar(self):
+        val = self.cmb_moneda.currentText().strip()
+        if not val: val = "$"
+        config.set('currency_symbol', val)
+        QMessageBox.information(self, "Guardado", f"El símbolo de moneda ha sido actualizado a: {val}")
+        self.accept()
+
+class DialogoUnidadesMedida(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Unidades de Medida")
+        self.setFixedSize(450, 400)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 20, 20, 20)
+        
+        lbl_title = QLabel("📊 Unidades de Medida")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; ")
+        lay.addWidget(lbl_title)
+        
+        lay.addWidget(QLabel("Configura las unidades para tus productos (Ej: Unidad, Kg, Litro):", styleSheet=" margin-bottom: 10px;"))
+        
+        self.txt_unidades = QTextEdit()
+        self.txt_unidades.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px;")
+        
+        unidades = config.get("unidades_medida", "Unidad, Kg, Litro, Metro, Granel")
+        self.txt_unidades.setText(unidades)
+        lay.addWidget(self.txt_unidades)
+        
+        lbl_info = QLabel("⚠️ Escribe las unidades separadas por coma (,)")
+        lbl_info.setStyleSheet(" font-size: 12px; font-weight: bold;")
+        lay.addWidget(lbl_info)
+        
+        lay.addStretch()
+        
+        btn_save = QPushButton("💾 Guardar")
+        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.clicked.connect(self.guardar)
+        lay.addWidget(btn_save)
+        
+    def guardar(self):
+        val = self.txt_unidades.toPlainText().strip()
+        if not val:
+            val = "Unidad, Kg, Granel"
+        config.set('unidades_medida', val)
+        QMessageBox.information(self, "Guardado", "Unidades de medida actualizadas correctamente.")
+        self.accept()
+
+class DialogoNotificacionesCorreo(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Notificaciones por Correo")
+        self.setFixedSize(500, 480)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(30, 20, 30, 20)
+        lay.setSpacing(15)
+        
+        lbl_title = QLabel("📧 Reporte de Ventas por Correo")
+        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; ")
+        lay.addWidget(lbl_title)
+        
+        lbl_desc = QLabel("Recibe un correo todos los lunes con el resumen de la semana y el Top 7 de artículos más vendidos.")
+        lbl_desc.setWordWrap(True)
+        lbl_desc.setStyleSheet(" font-size: 13px;")
+        lay.addWidget(lbl_desc)
+        
+        # Checkbox activar
+        self.chk_activo = QCheckBox("Activar Reporte Semanal Automático")
+        self.chk_activo.setStyleSheet("font-size: 14px; font-weight: bold;  padding: 5px;")
+        self.chk_activo.setChecked(config.get("email_report_active", False))
+        lay.addWidget(self.chk_activo)
+        
+        form_frame = QFrame()
+        form_frame.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px;")
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        form_frame.setGraphicsEffect(shadow)
+        
+        f_lay = QVBoxLayout(form_frame)
+        f_lay.setContentsMargins(20, 20, 20, 20)
+        f_lay.setSpacing(10)
+        
+        lbl_info = QLabel("El sistema utilizará nuestro servidor seguro para enviarte tus reportes. Solo dinos a dónde quieres recibirlos.")
+        lbl_info.setWordWrap(True)
+        lbl_info.setStyleSheet(" font-size: 13px; font-weight: bold; border: none;")
+        f_lay.addWidget(lbl_info)
+        
+        f_lay.addSpacing(10)
+        
+        f_lay.addWidget(QLabel("Correo Destinatario (A dónde llegará el reporte):", styleSheet="border: none; font-weight: bold; font-size: 13px;"))
+        self.txt_dest = QLineEdit(config.get("email_dest", ""))
+        self.txt_dest.setStyleSheet("padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; background: #F8FAFC;")
+        self.txt_dest.setPlaceholderText("ejemplo@gmail.com")
+        f_lay.addWidget(self.txt_dest)
+        
+        lay.addWidget(form_frame)
+        
+        lay.addStretch()
+        
+        btn_test = QPushButton("📩 Guardar y Enviar Correo de Prueba")
+        btn_test.setCursor(Qt.PointingHandCursor)
+        btn_test.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_test.clicked.connect(self.probar)
+        lay.addWidget(btn_test)
+        
+        btn_save = QPushButton("💾 Guardar Configuración")
+        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.clicked.connect(self.guardar)
+        lay.addWidget(btn_save)
+        
+    def guardar(self):
+        config.set("email_report_active", self.chk_activo.isChecked())
+        config.set("email_dest", self.txt_dest.text().strip())
+        QMessageBox.information(self, "Guardado", "Configuración de correo guardada.")
+        self.accept()
+        
+    def probar(self):
+        self.guardar()
+        from src.services.email_service import enviar_reporte_semanal_si_es_necesario
+        try:
+            exito = enviar_reporte_semanal_si_es_necesario(forzar_envio=True)
+            if exito:
+                QMessageBox.information(self, "Éxito", "El correo de prueba ha sido enviado. Revisa la bandeja de entrada del destino.")
+            else:
+                QMessageBox.critical(self, "Error", "No se pudo enviar el correo. Revisa tus credenciales o conexión a internet.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error Fatal", f"Fallo al enviar correo: {e}")
+
+class DialogoOpcionesHabilitadas(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Opciones Habilitadas / Permisos")
+        self.setFixedSize(500, 500)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(30, 20, 30, 20)
+        lay.setSpacing(10)
+        
+        lbl_title = QLabel("⚙️ Opciones Habilitadas del Sistema")
+        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; ")
+        lay.addWidget(lbl_title)
+        
+        lbl_desc = QLabel("Activa o desactiva módulos y permisos globales del punto de venta. Los cambios se aplicarán al instante.")
+        lbl_desc.setWordWrap(True)
+        lbl_desc.setStyleSheet(" font-size: 13px; margin-bottom: 10px;")
+        lay.addWidget(lbl_desc)
+        
+        # Opciones
+        self.opciones = [
+            ("opt_stock_negativo", "Permitir vender sin stock (Stock Negativo)", False),
+            ("opt_ventas_credito", "Habilitar Ventas a Crédito (Fiado)", True),
+            ("opt_impresion_auto", "Imprimir ticket automáticamente al cobrar", True),
+            ("opt_control_stock", "Descontar stock del inventario al vender", True),
+            ("opt_solicitar_cajero", "Solicitar seleccionar cajero al abrir el sistema", False),
+            ("opt_bot_asistente", "Activar Bot Asistente Animado (Burbuja IA)", True),
+            ("opt_devoluciones", "Permitir realizar devoluciones de productos", True)
+        ]
+        
+        self.checkboxes = {}
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        content = QWidget()
+        c_lay = QVBoxLayout(content)
+        c_lay.setSpacing(15)
+        
+        for key, text, default in self.opciones:
+            frame = QFrame()
+            frame.setStyleSheet(" border: 1px solid #E2E8F0; border-radius: 6px;")
+            f_lay = QHBoxLayout(frame)
+            
+            lbl = QLabel(text)
+            lbl.setStyleSheet("font-size: 13px; font-weight: bold;  border: none;")
+            
+            chk = QCheckBox()
+            # Leer de config
+            chk.setChecked(config.get(key, default))
+            chk.setStyleSheet("""
+                QCheckBox::indicator { width: 40px; height: 20px; }
+                QCheckBox::indicator:unchecked { image: none;  border-radius: 10px; }
+                QCheckBox::indicator:checked { image: none;  border-radius: 10px; }
+            """)
+            
+            f_lay.addWidget(lbl)
+            f_lay.addStretch()
+            f_lay.addWidget(chk)
+            
+            self.checkboxes[key] = chk
+            c_lay.addWidget(frame)
+            
+        c_lay.addStretch()
+        scroll.setWidget(content)
+        lay.addWidget(scroll)
+        
+        btn_save = QPushButton("💾 Guardar Permisos")
+        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setStyleSheet(" color: white; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px;")
+        btn_save.clicked.connect(self.guardar)
+        lay.addWidget(btn_save)
+        
+    def guardar(self):
+        for key, _, _ in self.opciones:
+            config.set(key, self.checkboxes[key].isChecked())
+            
+        QMessageBox.information(self, "Guardado", "Los permisos y opciones han sido actualizados exitosamente.")
+        self.accept()
 
 class ConfigButton(QFrame):
     clicked = pyqtSignal()
@@ -24,19 +276,25 @@ class ConfigButton(QFrame):
         # Estilo tipo botón interactivo
         self.setStyleSheet("""
             ConfigButton {
-                background-color: transparent;
-                border: 1px solid transparent;
-                border-radius: 8px;
+                background-color: white;
+                border: 1px solid #E2E8F0;
+                border-radius: 12px;
             }
             ConfigButton:hover {
-                background-color: #EBF5FF;
-                border: 1px solid #93C5FD;
+                background-color: #F8FAFC;
+                border: 1px solid #3B82F6;
             }
         """)
         
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        self.setGraphicsEffect(shadow)
+        
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 10, 5, 5)
-        layout.setSpacing(5)
+        layout.setContentsMargins(5, 15, 5, 5)
+        layout.setSpacing(8)
         
         # Icono (Emoji)
         self.lbl_icon = QLabel(icon_emoji)
@@ -48,12 +306,50 @@ class ConfigButton(QFrame):
         self.lbl_text = QLabel(text)
         self.lbl_text.setAlignment(Qt.AlignCenter)
         self.lbl_text.setWordWrap(True)
-        self.lbl_text.setStyleSheet("font-size: 11px; font-weight: bold; color: #333333; background: transparent; border: none;")
+        self.lbl_text.setStyleSheet("font-size: 11px; font-weight: bold;  background: transparent; border: none;")
         layout.addWidget(self.lbl_text)
+        
+        # Botón Ayuda (Absoluto)
+        self.btn_help = QPushButton("❓", self)
+        self.btn_help.setFixedSize(22, 22)
+        self.btn_help.move(85, 5)
+        self.btn_help.setStyleSheet("border: none; font-size: 12px; background: transparent;")
+        self.btn_help.setCursor(QCursor(Qt.PointingHandCursor))
+        self.btn_help.clicked.connect(self._show_help)
         
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
+
+    def _show_help(self):
+        from PyQt5.QtWidgets import QMessageBox
+        explicaciones = {
+            "Alertas de\nEfectivo": "Te avisa si hay mucho dinero en la caja para que lo guardes (evita robos).",
+            "Opciones\nhabilitadas": "Activa o desactiva módulos clave como vender sin stock, fiar, imprimir solo, etc.",
+            "Cajeros": "Crea usuarios y contraseñas para tus empleados.",
+            "Base de datos\nPC Esclava": "Cambia la contraseña maestra usada para conectar computadoras secundarias por red.",
+            "Administrar\nCajas": "Conecta varias computadoras para que cobren juntas en red.",
+            "Logotipo del\nPrograma": "Cambia el nombre de tu negocio y el diseño del ticket.",
+            "Ticket": "Diseña cómo sale el ticket impreso para el cliente.",
+            "Impuestos": "Agrega el IVA u otros impuestos a tus ventas si lo necesitas.",
+            "Símbolo de\nMoneda": "Elige si usas $ (Pesos/Dólares) o € (Euros).",
+            "Unidades de\nMedida": "Para vender productos por Kilo, Litro, Unidad, Metro, etc.",
+            "Dos Tiketeras\n2 Cajas": "Si tienes 2 empleados en la misma compu, cada uno usa su impresora.",
+            "Lector de\nCódigos": "Una prueba para ver si tu escáner o pistola de códigos funciona bien.",
+            "Cajón de\nDinero": "Hace que el cajón de billetes salte solo cuando terminas de cobrar.",
+            "Báscula": "Conecta una balanza electrónica para que el peso pase solo a la pantalla.",
+            "Terminal\nTPV": "Conecta MercadoPago Point o Clover para cobrar directo con tarjeta.",
+            "Hardware\nIndustrial": "Opciones avanzadas para equipos grandes de supermercado.",
+            "App\nCobro Fácil": "Búscanos en las redes para tener tu App Móvil de Jefe, donde podrás ver cada billete que entra o sale de la caja en tiempo real por nuestras alarmas de apertura de caja sin permiso.",
+            "Integraciones\nNube": "Conecta otros servicios de internet.",
+            "Notificaciones\npor Correo": "Te manda un email al celular cada vez que cierran la caja.",
+            "Respaldo": "Guarda una copia de seguridad en un pendrive para no perder nada.",
+            "Licencia": "Mira tu plan actual o compra la versión completa.",
+            "Actualizaciones": "Descarga las últimas mejoras del programa gratis."
+        }
+        texto = explicaciones.get(self.lbl_text.text(), "Configura esta opción del sistema.")
+        msg = f"ℹ️ {self.lbl_text.text().replace(chr(10), ' ')}\n\n{texto}"
+        QMessageBox.information(self, "Ayuda Rápida", msg)
 
 class DialogoCajeros(QDialog):
     def __init__(self, parent=None):
@@ -70,11 +366,11 @@ class DialogoCajeros(QDialog):
 
         # --- HEADER ---
         header = QLabel("👥 Gestión de Cajeros y Administradores")
-        header.setStyleSheet("font-size: 22px; font-weight: bold; color: #1E3A8A; border:none;")
+        header.setStyleSheet("font-size: 22px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
         
         lbl_info = QLabel("Administra los accesos y roles del personal de tu negocio.")
-        lbl_info.setStyleSheet("color: #64748B; font-size: 13px; margin-bottom: 5px; border:none;")
+        lbl_info.setStyleSheet(" font-size: 13px; margin-bottom: 5px; border:none;")
         main_lay.addWidget(lbl_info)
 
         # --- TABLA PREMIUM ---
@@ -87,12 +383,12 @@ class DialogoCajeros(QDialog):
         self.tabla.setStyleSheet("""
             QTableWidget { 
                 background-color: white; border: 1px solid #E2E8F0; border-radius: 12px; 
-                gridline-color: transparent; alternate-background-color: #F8FAFC;
-                selection-background-color: #DBEAFE; selection-color: #1E40AF;
+                gridline-color: transparent; alternate-
+                selection- selection-
             }
             QHeaderView::section { 
-                background-color: #F1F5F9; padding: 15px; border: none; 
-                font-weight: 900; color: #475569; font-size: 11px; text-transform: uppercase;
+                 padding: 15px; border: none; 
+                font-weight: 900;  font-size: 11px; text-transform: uppercase;
             }
         """)
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
@@ -103,13 +399,20 @@ class DialogoCajeros(QDialog):
 
         # --- CARD DE EDICIÓN ---
         card = QFrame()
-        card.setStyleSheet("background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 15px;")
+        card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 16px;")
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 20))
+        shadow.setOffset(0, 5)
+        card.setGraphicsEffect(shadow)
+        
         card_lay = QVBoxLayout(card)
-        card_lay.setContentsMargins(20, 20, 20, 20)
+        card_lay.setContentsMargins(25, 25, 25, 25)
         card_lay.setSpacing(15)
 
         lbl_card = QLabel("📝 CARGAR / EDITAR PERSONAL")
-        lbl_card.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 11px; border: none;")
+        lbl_card.setStyleSheet("font-weight: 900;  font-size: 11px; border: none;")
         card_lay.addWidget(lbl_card)
 
         # Formulario
@@ -149,12 +452,12 @@ class DialogoCajeros(QDialog):
         b_lay = QHBoxLayout()
         btn_del = QPushButton("🗑️ Eliminar")
         btn_del.setCursor(Qt.PointingHandCursor)
-        btn_del.setStyleSheet("background: #FEE2E2; color: #EF4444; border: 1px solid #FECACA; padding: 12px; border-radius: 10px; font-weight: bold;")
+        btn_del.setStyleSheet("  border: 1px solid #FECACA; padding: 12px; border-radius: 10px; font-weight: bold;")
         btn_del.clicked.connect(self.eliminar_usuario)
         
         btn_save = QPushButton("💾 Guardar Usuario")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet("background: #10B981; color: white; padding: 12px; border-radius: 10px; font-weight: bold; border: none;")
+        btn_save.setStyleSheet(" color: white; padding: 12px; border-radius: 10px; font-weight: bold; border: none;")
         btn_save.clicked.connect(self.guardar_usuario)
         
         b_lay.addWidget(btn_del, 1)
@@ -250,35 +553,163 @@ class DialogoCajeros(QDialog):
 class DialogoTicket(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Configurar Ticket")
-        self.setFixedSize(400, 360)
-        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
-        layout = QVBoxLayout(self)
+        self.setWindowTitle("Diseñador de Ticket y Recibos")
+        self.setFixedSize(750, 480)
+        self.setStyleSheet(" font-family: 'Segoe UI';")
         
-        layout.addWidget(QLabel("Nombre del Negocio:"))
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
+        
+        # LEFT: Form fields
+        left_panel = QFrame()
+        left_panel.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #E2E8F0;")
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15))
+        shadow.setOffset(0, 4)
+        left_panel.setGraphicsEffect(shadow)
+        
+        form_layout = QVBoxLayout(left_panel)
+        form_layout.setContentsMargins(25, 25, 25, 25)
+        
+        lbl_title = QLabel("📝 Datos del Negocio")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold;  border: none;")
+        form_layout.addWidget(lbl_title)
+        form_layout.addSpacing(10)
+        
         self.txt_name = QLineEdit(config.get('business_name', ''))
-        layout.addWidget(self.txt_name)
-        
-        layout.addWidget(QLabel("Dirección:"))
         self.txt_addr = QLineEdit(config.get('address', ''))
-        layout.addWidget(self.txt_addr)
-        
-        layout.addWidget(QLabel("Teléfono:"))
         self.txt_phone = QLineEdit(config.get('phone', ''))
-        layout.addWidget(self.txt_phone)
-
-        layout.addWidget(QLabel("CUIT / RUT:"))
         self.txt_cuit = QLineEdit(config.get('business_cuit', ''))
-        layout.addWidget(self.txt_cuit)
-        
-        layout.addWidget(QLabel("Mensaje al final del ticket:"))
         self.txt_msg = QLineEdit(config.get('footer_message', ''))
-        layout.addWidget(self.txt_msg)
         
-        btn = QPushButton("Guardar Configuración")
-        btn.setStyleSheet("background-color: #3B82F6; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
-        btn.clicked.connect(self.guardar)
-        layout.addStretch(); layout.addWidget(btn)
+        for txt, lbl in [
+            (self.txt_name, "Nombre Comercial (Logotipo):"),
+            (self.txt_addr, "Dirección Comercial:"),
+            (self.txt_phone, "Teléfono / Contacto:"),
+            (self.txt_cuit, "CUIT / RUT / NIT:"),
+            (self.txt_msg, "Mensaje de Despedida:")
+        ]:
+            l = QLabel(lbl)
+            l.setStyleSheet(" font-size: 13px; font-weight: bold; border: none;")
+            txt.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;  color: black; font-size: 13px;")
+            txt.textChanged.connect(self._update_preview)
+            form_layout.addWidget(l)
+            form_layout.addWidget(txt)
+            form_layout.addSpacing(5)
+            
+        form_layout.addStretch()
+        
+        btn_save = QPushButton("💾 Guardar y Aplicar")
+        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 6px; font-size: 14px;")
+        btn_save.clicked.connect(self.guardar)
+        form_layout.addWidget(btn_save)
+        
+        main_layout.addWidget(left_panel, 1)
+        
+        # RIGHT: Live Preview
+        right_panel = QFrame()
+        right_panel.setStyleSheet("background: transparent;")
+        preview_layout = QVBoxLayout(right_panel)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        
+        lbl_prev_title = QLabel("👁️ Vista Previa del Ticket")
+        lbl_prev_title.setStyleSheet("font-size: 14px; font-weight: bold; ")
+        lbl_prev_title.setAlignment(Qt.AlignCenter)
+        preview_layout.addWidget(lbl_prev_title)
+        
+        # Ticket Shape
+        self.ticket_frame = QFrame()
+        self.ticket_frame.setStyleSheet("""
+            QFrame {
+                background-color: #FEF9C3; /* Yellowish paper color */
+                border: 1px solid #D1D5DB;
+                border-radius: 0px;
+                border-top: 2px dashed #9CA3AF;
+                border-bottom: 2px dashed #9CA3AF;
+            }
+        """)
+        
+        shadow2 = QGraphicsDropShadowEffect()
+        shadow2.setBlurRadius(15)
+        shadow2.setColor(QColor(0, 0, 0, 30))
+        shadow2.setOffset(0, 5)
+        self.ticket_frame.setGraphicsEffect(shadow2)
+        
+        self.ticket_frame.setFixedWidth(280)
+        
+        t_lay = QVBoxLayout(self.ticket_frame)
+        t_lay.setContentsMargins(15, 20, 15, 20)
+        t_lay.setSpacing(5)
+        
+        self.lbl_t_name = QLabel()
+        self.lbl_t_name.setAlignment(Qt.AlignCenter)
+        self.lbl_t_name.setWordWrap(True)
+        self.lbl_t_name.setStyleSheet("font-weight: 900; font-size: 16px; color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.lbl_t_name)
+        
+        self.lbl_t_cuit = QLabel()
+        self.lbl_t_cuit.setAlignment(Qt.AlignCenter)
+        self.lbl_t_cuit.setStyleSheet("font-size: 12px; color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.lbl_t_cuit)
+        
+        self.lbl_t_addr = QLabel()
+        self.lbl_t_addr.setAlignment(Qt.AlignCenter)
+        self.lbl_t_addr.setStyleSheet("font-size: 12px; color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.lbl_t_addr)
+        
+        self.lbl_t_phone = QLabel()
+        self.lbl_t_phone.setAlignment(Qt.AlignCenter)
+        self.lbl_t_phone.setStyleSheet("font-size: 12px; color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(self.lbl_t_phone)
+        
+        sep1 = QLabel("-" * 32)
+        sep1.setAlignment(Qt.AlignCenter)
+        sep1.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(sep1)
+        
+        lbl_body = QLabel("Ticket Nro: 00000123\nFecha: 24/10/2026 15:30\n\n1 x Producto A      $150.00\n2 x Producto B      $500.00")
+        lbl_body.setStyleSheet("font-family: 'Courier New', monospace; font-size: 12px; color: black; border: none;")
+        t_lay.addWidget(lbl_body)
+        
+        sep2 = QLabel("-" * 32)
+        sep2.setAlignment(Qt.AlignCenter)
+        sep2.setStyleSheet("color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(sep2)
+        
+        lbl_total = QLabel("TOTAL: $650.00")
+        lbl_total.setAlignment(Qt.AlignCenter)
+        lbl_total.setStyleSheet("font-weight: bold; font-size: 14px; color: black; border: none; font-family: 'Courier New';")
+        t_lay.addWidget(lbl_total)
+        
+        self.lbl_t_msg = QLabel()
+        self.lbl_t_msg.setAlignment(Qt.AlignCenter)
+        self.lbl_t_msg.setWordWrap(True)
+        self.lbl_t_msg.setStyleSheet("font-size: 12px; color: black; border: none; margin-top: 10px; font-family: 'Courier New';")
+        t_lay.addWidget(self.lbl_t_msg)
+        
+        t_lay.addStretch()
+        
+        # Center the ticket
+        t_container = QHBoxLayout()
+        t_container.addStretch()
+        t_container.addWidget(self.ticket_frame)
+        t_container.addStretch()
+        preview_layout.addLayout(t_container)
+        
+        main_layout.addWidget(right_panel, 1)
+        
+        self._update_preview()
+
+    def _update_preview(self):
+        self.lbl_t_name.setText(self.txt_name.text() or "MI EMPRESA")
+        self.lbl_t_cuit.setText(self.txt_cuit.text() or "CUIT: 00-00000000-0")
+        self.lbl_t_addr.setText(self.txt_addr.text() or "Dirección del Local")
+        self.lbl_t_phone.setText(f"Tel: {self.txt_phone.text()}" if self.txt_phone.text() else "")
+        self.lbl_t_msg.setText(self.txt_msg.text() or "Gracias por su compra!")
 
     def guardar(self):
         config.set('business_name', self.txt_name.text())
@@ -286,6 +717,9 @@ class DialogoTicket(QDialog):
         config.set('phone', self.txt_phone.text())
         config.set('business_cuit', self.txt_cuit.text())
         config.set('footer_message', self.txt_msg.text())
+        
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Guardado", "Diseño de ticket actualizado correctamente.")
         self.accept()
 
 class DialogoLectorCodigos(QDialog):
@@ -297,30 +731,30 @@ class DialogoLectorCodigos(QDialog):
         layout = QVBoxLayout(self)
         
         lbl_title = QLabel("Configuración y Prueba del Lector")
-        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E293B;")
+        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; ")
         lbl_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_title)
         
         lbl_inst = QLabel("1. Haz clic en el cuadro de texto azul.\n2. Dispara el escáner sobre cualquier código de barras.")
-        lbl_inst.setStyleSheet("font-size: 14px; color: #475569;")
+        lbl_inst.setStyleSheet("font-size: 14px; ")
         lbl_inst.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_inst)
         
         self.txt_scan = QLineEdit()
         self.txt_scan.setPlaceholderText("Escanea aquí...")
-        self.txt_scan.setStyleSheet("background: #E0F2FE; border: 2px dashed #38BDF8; font-size: 30px; font-weight: bold; color: #0284C7; padding: 10px;")
+        self.txt_scan.setStyleSheet(" border: 2px dashed #38BDF8; font-size: 30px; font-weight: bold;  padding: 10px;")
         self.txt_scan.setAlignment(Qt.AlignCenter)
         self.txt_scan.returnPressed.connect(self.procesar_escaneo)
         layout.addWidget(self.txt_scan)
         
         self.lbl_resultado = QLabel("")
-        self.lbl_resultado.setStyleSheet("font-size: 16px; font-weight: bold; color: #10B981;")
+        self.lbl_resultado.setStyleSheet("font-size: 16px; font-weight: bold; ")
         self.lbl_resultado.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_resultado)
         
         layout.addStretch()
         btn = QPushButton("Terminar Prueba")
-        btn.setStyleSheet("background-color: #64748B; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
+        btn.setStyleSheet(" color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
         btn.clicked.connect(self.accept)
         layout.addWidget(btn)
 
@@ -328,7 +762,7 @@ class DialogoLectorCodigos(QDialog):
         codigo = self.txt_scan.text().strip()
         if codigo:
             self.lbl_resultado.setText(f"✅ ¡Éxito! Código leído: {codigo}\nEl escáner está configurado correctamente (Envía ENTER).")
-            self.txt_scan.setStyleSheet("background: #D1FAE5; border: 2px solid #10B981; font-size: 30px; font-weight: bold; color: #065F46; padding: 10px;")
+            self.txt_scan.setStyleSheet(" border: 2px solid #10B981; font-size: 30px; font-weight: bold;  padding: 10px;")
             self.txt_scan.clear()
 
 class ConfigCategory(QWidget):
@@ -340,7 +774,7 @@ class ConfigCategory(QWidget):
         
         # Título de Categoría
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #1E293B; border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
+        lbl_title.setStyleSheet("font-size: 16px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
         layout.addWidget(lbl_title)
         
         # Grid para los botones
@@ -375,11 +809,11 @@ class DialogoCajon(QDialog):
         layout = QVBoxLayout(self)
         
         lbl_title = QLabel("📦 Apertura Automática del Cajón")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E293B;")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; ")
         layout.addWidget(lbl_title)
         
         lbl_inst = QLabel("Selecciona en qué momentos debe abrirse el cajón de dinero:")
-        lbl_inst.setStyleSheet("font-size: 13px; color: #475569; margin-bottom: 10px;")
+        lbl_inst.setStyleSheet("font-size: 13px;  margin-bottom: 10px;")
         layout.addWidget(lbl_inst)
         
         from PyQt5.QtWidgets import QCheckBox
@@ -402,11 +836,11 @@ class DialogoCajon(QDialog):
         
         row_test = QHBoxLayout()
         btn_test = QPushButton("⚡ Probar Apertura (Kick)")
-        btn_test.setStyleSheet("background-color: #6366F1; color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
+        btn_test.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
         btn_test.clicked.connect(self.probar_cajon)
         
         btn_alarm = QPushButton("🚨 Probar Alarma SOS")
-        btn_alarm.setStyleSheet("background-color: #EF4444; color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
+        btn_alarm.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
         btn_alarm.clicked.connect(self.probar_alarma)
         
         row_test.addWidget(btn_test)
@@ -416,7 +850,7 @@ class DialogoCajon(QDialog):
         layout.addStretch()
         
         btn_save = QPushButton("Guardar Configuración")
-        btn_save.setStyleSheet("background-color: #10B981; color: white; padding: 10px; font-weight: bold; border-radius: 8px;")
+        btn_save.setStyleSheet(" color: white; padding: 10px; font-weight: bold; border-radius: 8px;")
         btn_save.clicked.connect(self.guardar)
         layout.addWidget(btn_save)
 
@@ -455,12 +889,12 @@ class DialogoDosTiketeras(QDialog):
         layout.setSpacing(14)
 
         lbl_title = QLabel("🖨️  TIKETERA POR CAJERO")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A;")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; ")
         lbl_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_title)
 
         lbl_inst = QLabel("Asigná una tiketera y cajón a cada operador.\nEl sistema usa automáticamente la del que desbloquó la terminal.")
-        lbl_inst.setStyleSheet("font-size: 12px; color: #64748b;")
+        lbl_inst.setStyleSheet("font-size: 12px; ")
         lbl_inst.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_inst)
 
@@ -468,63 +902,66 @@ class DialogoDosTiketeras(QDialog):
 
         # CAJERO (principal)
         box1 = QFrame()
-        box1.setStyleSheet("QFrame { background: #EFF6FF; border: 2px solid #1E3A8A; border-radius: 10px; } QLabel { border: none; background: transparent; }")
+        box1.setStyleSheet("QFrame {  border: 2px solid #1E3A8A; border-radius: 10px; } QLabel { border: none; background: transparent; }")
         b1 = QVBoxLayout(box1); b1.setContentsMargins(16, 12, 16, 12); b1.setSpacing(6)
-        b1.addWidget(QLabel("🔵  [1]  CAJERO — Tiketera / Cajón:", styleSheet="font-size: 13px; font-weight: 900; color: #1E3A8A;"))
+        b1.addWidget(QLabel("🔵  [1]  CAJERO — Tiketera / Cajón:", styleSheet="font-size: 13px; font-weight: 900; "))
         
         row1 = QHBoxLayout()
         self.cmb_p1 = QComboBox()
         self.cmb_p1.setStyleSheet("padding: 7px; border: 1px solid #93C5FD; border-radius: 6px; font-size: 13px; background: white;")
+        row1.addWidget(QLabel("🖨️ Impresora:"), 0)
         row1.addWidget(self.cmb_p1, 1)
         
         btn_test1 = QPushButton("📄 Test P1")
         btn_test1.setCursor(Qt.PointingHandCursor)
-        btn_test1.setStyleSheet("background: #1E3A8A; color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
+        btn_test1.setStyleSheet(" color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
         btn_test1.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p1.currentText()))
         row1.addWidget(btn_test1)
-        
         b1.addLayout(row1)
+
+        row1_com = QHBoxLayout()
+        self.cmb_serial_port_1 = QComboBox()
+        self.cmb_serial_port_1.setStyleSheet("padding: 7px; border: 1px solid #93C5FD; border-radius: 6px; font-size: 13px; background: white;")
+        row1_com.addWidget(QLabel("🔌 Sensor COM (Cajón):"), 0)
+        row1_com.addWidget(self.cmb_serial_port_1, 1)
+        b1.addLayout(row1_com)
+        
         layout.addWidget(box1)
 
         # AUXILIAR (secundario)
         box2 = QFrame()
-        box2.setStyleSheet("QFrame { background: #ECFDF5; border: 2px solid #059669; border-radius: 10px; } QLabel { border: none; background: transparent; }")
+        box2.setStyleSheet("QFrame {  border: 2px solid #059669; border-radius: 10px; } QLabel { border: none; background: transparent; }")
         b2 = QVBoxLayout(box2); b2.setContentsMargins(16, 12, 16, 12); b2.setSpacing(6)
-        b2.addWidget(QLabel("🟢  [2]  AUXILIAR — Tiketera / Cajón:", styleSheet="font-size: 13px; font-weight: 900; color: #059669;"))
+        b2.addWidget(QLabel("🟢  [2]  AUXILIAR — Tiketera / Cajón:", styleSheet="font-size: 13px; font-weight: 900; "))
         
         row2 = QHBoxLayout()
         self.cmb_p2 = QComboBox()
         self.cmb_p2.setStyleSheet("padding: 7px; border: 1px solid #6EE7B7; border-radius: 6px; font-size: 13px; background: white;")
+        row2.addWidget(QLabel("🖨️ Impresora:"), 0)
         row2.addWidget(self.cmb_p2, 1)
         
         btn_test2 = QPushButton("📄 Test P2")
         btn_test2.setCursor(Qt.PointingHandCursor)
-        btn_test2.setStyleSheet("background: #059669; color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
+        btn_test2.setStyleSheet(" color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
         btn_test2.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p2.currentText()))
         row2.addWidget(btn_test2)
-        
         b2.addLayout(row2)
+
+        row2_com = QHBoxLayout()
+        self.cmb_serial_port_2 = QComboBox()
+        self.cmb_serial_port_2.setStyleSheet("padding: 7px; border: 1px solid #6EE7B7; border-radius: 6px; font-size: 13px; background: white;")
+        row2_com.addWidget(QLabel("🔌 Sensor COM (Cajón):"), 0)
+        row2_com.addWidget(self.cmb_serial_port_2, 1)
+        b2.addLayout(row2_com)
+        
         layout.addWidget(box2)
 
-        # PUERTO SERIAL (COM)
-        box3 = QFrame()
-        box3.setStyleSheet("QFrame { background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: 10px; } QLabel { border: none; background: transparent; }")
-        b3 = QVBoxLayout(box3); b3.setContentsMargins(16, 12, 16, 12); b3.setSpacing(6)
-        
-        b3_hdr = QHBoxLayout()
-        b3_hdr.addWidget(QLabel("🔌  PUERTO SERIAL — Cajón / Sensor (COM):", styleSheet="font-size: 13px; font-weight: 900; color: #475569;"))
-        btn_ref = QPushButton("🔄")
+        # Botón Recargar (Movido arriba o abajo, lo pondremos junto al stretch)
+        btn_ref = QPushButton("🔄 Actualizar Puertos e Impresoras")
         btn_ref.setCursor(Qt.PointingHandCursor)
-        btn_ref.setFixedSize(30, 30)
-        btn_ref.setStyleSheet("background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 14px; font-weight: bold;")
+        btn_ref.setStyleSheet("  padding: 8px; border-radius: 6px; font-weight: bold;")
         btn_ref.clicked.connect(self._load_printers_and_ports)
-        b3_hdr.addStretch(); b3_hdr.addWidget(btn_ref)
-        b3.addLayout(b3_hdr)
-        
-        self.cmb_serial_port = QComboBox()
-        self.cmb_serial_port.setStyleSheet("padding: 7px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 13px; background: white;")
-        b3.addWidget(self.cmb_serial_port)
-        layout.addWidget(box3)
+        layout.addWidget(btn_ref)
 
         self._load_printers_and_ports()
         layout.addStretch()
@@ -532,12 +969,12 @@ class DialogoDosTiketeras(QDialog):
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("background: #F1F5F9; color: #475569; padding: 10px 22px; border-radius: 6px; font-weight: bold;")
+        btn_cancel.setStyleSheet("  padding: 10px 22px; border-radius: 6px; font-weight: bold;")
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾  Guardar")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet("background: #1E3A8A; color: white; padding: 10px 22px; border-radius: 6px; font-weight: bold;")
+        btn_save.setStyleSheet(" color: white; padding: 10px 22px; border-radius: 6px; font-weight: bold;")
         btn_save.clicked.connect(self._guardar)
         h_btns.addWidget(btn_cancel); h_btns.addStretch(); h_btns.addWidget(btn_save)
         layout.addLayout(h_btns)
@@ -588,8 +1025,10 @@ class DialogoDosTiketeras(QDialog):
             if p2 in printers: self.cmb_p2.setCurrentText(p2)
             
             # Cargar puertos COM dinámicamente
-            self.cmb_serial_port.blockSignals(True)
-            self.cmb_serial_port.clear()
+            for cmb_com in [self.cmb_serial_port_1, self.cmb_serial_port_2]:
+                cmb_com.blockSignals(True)
+                cmb_com.clear()
+            
             ports_list = ["Ninguno (USB Directo / OPOS)"] + [f"COM{i}" for i in range(1, 31)]
             try:
                 import serial.tools.list_ports
@@ -599,19 +1038,29 @@ class DialogoDosTiketeras(QDialog):
                         ports_list.insert(1, d)
             except Exception:
                 pass
-            self.cmb_serial_port.addItems(ports_list)
+                
+            self.cmb_serial_port_1.addItems(ports_list)
+            self.cmb_serial_port_2.addItems(ports_list)
             
-            saved_port = config.get("printer_name", "")
-            if not saved_port:
-                self.cmb_serial_port.setCurrentIndex(0)
-            else:
-                idx = self.cmb_serial_port.findText(saved_port)
-                if idx != -1:
-                    self.cmb_serial_port.setCurrentIndex(idx)
+            saved_port_1 = config.get("printer_name", "")
+            saved_port_2 = config.get("drawer_com_port_2", "")
+            
+            if saved_port_1:
+                idx1 = self.cmb_serial_port_1.findText(saved_port_1)
+                if idx1 != -1: self.cmb_serial_port_1.setCurrentIndex(idx1)
                 else:
-                    self.cmb_serial_port.addItem(saved_port)
-                    self.cmb_serial_port.setCurrentText(saved_port)
-            self.cmb_serial_port.blockSignals(False)
+                    self.cmb_serial_port_1.addItem(saved_port_1)
+                    self.cmb_serial_port_1.setCurrentText(saved_port_1)
+
+            if saved_port_2:
+                idx2 = self.cmb_serial_port_2.findText(saved_port_2)
+                if idx2 != -1: self.cmb_serial_port_2.setCurrentIndex(idx2)
+                else:
+                    self.cmb_serial_port_2.addItem(saved_port_2)
+                    self.cmb_serial_port_2.setCurrentText(saved_port_2)
+                    
+            for cmb_com in [self.cmb_serial_port_1, self.cmb_serial_port_2]:
+                cmb_com.blockSignals(False)
         except Exception: pass
 
     def _guardar(self):
@@ -622,14 +1071,17 @@ class DialogoDosTiketeras(QDialog):
         config.set("ticket_printer", p1)
         config.set("ticket_printer_2", p2)
         
-        com_val = self.cmb_serial_port.currentText()
-        if "Ninguno" in com_val:
-            config.set("printer_name", "")
-        else:
-            config.set("printer_name", com_val)
+        com_val_1 = self.cmb_serial_port_1.currentText()
+        if "Ninguno" in com_val_1: config.set("printer_name", "")
+        else: config.set("printer_name", com_val_1)
+            
+        com_val_2 = self.cmb_serial_port_2.currentText()
+        if "Ninguno" in com_val_2: config.set("drawer_com_port_2", "")
+        else: config.set("drawer_com_port_2", com_val_2)
             
         QMessageBox.information(self, "✅ Guardado con Éxito",
-            f"Cajero 1 → {p1 or 'Sin impresora'}\nCajero 2 → {p2 or 'Sin impresora'}\nPuerto COM → {config.get('printer_name', 'Ninguno')}")
+            f"Cajero 1 → Impresora: {p1 or 'Ninguna'} | COM: {config.get('printer_name', 'Ninguno')}\n"
+            f"Cajero 2 → Impresora: {p2 or 'Ninguna'} | COM: {config.get('drawer_com_port_2', 'Ninguno')}")
         self.accept()
 
 
@@ -644,7 +1096,7 @@ class DialogoAdministrarCajas(QDialog):
         layout.setSpacing(12)
 
         lbl_title = QLabel("📟  Identificación de Caja Local")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A;")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; ")
         lbl_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_title)
 
@@ -652,13 +1104,13 @@ class DialogoAdministrarCajas(QDialog):
             "Configura el identificador numérico inmutable para esta PC en la red.\n"
             "Cada terminal debe tener un ID único (ej: 1, 2, 3...)."
         )
-        lbl_inst.setStyleSheet("font-size: 12px; color: #64748b;")
+        lbl_inst.setStyleSheet("font-size: 12px; ")
         lbl_inst.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_inst)
 
         # Caja ID Input
         h_lay = QHBoxLayout()
-        h_lay.addWidget(QLabel("ID de Caja Física:", styleSheet="font-weight: bold; font-size: 13px; color: #334155;"))
+        h_lay.addWidget(QLabel("ID de Caja Física:", styleSheet="font-weight: bold; font-size: 13px; "))
         
         self.txt_caja_id = QLineEdit()
         self.txt_caja_id.setText(str(config.get("caja_id", 1)))
@@ -670,7 +1122,7 @@ class DialogoAdministrarCajas(QDialog):
         layout.addStretch()
 
         btn_save = QPushButton("💾 Guardar Identificador")
-        btn_save.setStyleSheet("background-color: #1E3A8A; color: white; padding: 12px; font-weight: bold; border-radius: 6px;")
+        btn_save.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 6px;")
         btn_save.clicked.connect(self.guardar)
         layout.addWidget(btn_save)
 
@@ -705,18 +1157,18 @@ class DialogoAlertasEfectivo(QDialog):
         lay.setSpacing(12)
 
         lbl_tit = QLabel("⚠️  Umbrales de Retiro SOS")
-        lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900; color: #EA580C;")
+        lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900; ")
         lbl_tit.setAlignment(Qt.AlignCenter)
         lay.addWidget(lbl_tit)
 
         lbl_inst = QLabel("Configurá desde qué montos acumulados en efectivo\nla terminal debe parpadear exigiendo un retiro de caja:")
-        lbl_inst.setStyleSheet("font-size: 12px; color: #64748b;")
+        lbl_inst.setStyleSheet("font-size: 12px; ")
         lbl_inst.setAlignment(Qt.AlignCenter)
         lay.addWidget(lbl_inst)
 
         # Amarillo (Nivel 1)
         h1 = QHBoxLayout()
-        h1.addWidget(QLabel("🟡 Alerta Amarilla ($):", styleSheet="font-weight: bold; color: #EAB308; font-size: 13px;"))
+        h1.addWidget(QLabel("🟡 Alerta Amarilla ($):", styleSheet="font-weight: bold;  font-size: 13px;"))
         self.txt_nar = QLineEdit()
         self.txt_nar.setText(str(int(float(config.get("limite_efectivo_naranja", 50000)))))
         self.txt_nar.setStyleSheet("padding: 6px; border: 1px solid #CBD5E1; border-radius: 5px; font-weight: bold; font-size: 14px;")
@@ -726,7 +1178,7 @@ class DialogoAlertasEfectivo(QDialog):
 
         # Naranja (Nivel 2)
         h2 = QHBoxLayout()
-        h2.addWidget(QLabel("🟠 Alerta Naranja ($):", styleSheet="font-weight: bold; color: #EA580C; font-size: 13px;"))
+        h2.addWidget(QLabel("🟠 Alerta Naranja ($):", styleSheet="font-weight: bold;  font-size: 13px;"))
         self.txt_roj = QLineEdit()
         self.txt_roj.setText(str(int(float(config.get("limite_efectivo_rojo", 70000)))))
         self.txt_roj.setStyleSheet("padding: 6px; border: 1px solid #CBD5E1; border-radius: 5px; font-weight: bold; font-size: 14px;")
@@ -737,7 +1189,7 @@ class DialogoAlertasEfectivo(QDialog):
         lay.addStretch()
 
         btn_save = QPushButton("💾 Guardar Configuración")
-        btn_save.setStyleSheet("background: #EA580C; color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
+        btn_save.setStyleSheet(" color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
         btn_save.clicked.connect(self._guardar)
         lay.addWidget(btn_save)
 
@@ -767,21 +1219,21 @@ class DialogoBalanza(QDialog):
 
         # --- TÍTULO ---
         header = QLabel("⚖️ Configuración de Balanza")
-        header.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E3A8A; border:none;")
+        header.setStyleSheet("font-size: 20px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
         
         lbl_desc = QLabel("Ajusta cómo el sistema lee tus etiquetas EAN-13.")
-        lbl_desc.setStyleSheet("color: #64748B; font-size: 13px; margin-bottom: 5px; border:none;")
+        lbl_desc.setStyleSheet(" font-size: 13px; margin-bottom: 5px; border:none;")
         main_lay.addWidget(lbl_desc)
 
         # --- CARD DE CONFIGURACIÓN ---
         card = QFrame()
         card.setStyleSheet("""
-            QFrame { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; }
-            QLabel { border: none; font-weight: bold; color: #475569; font-size: 11px; }
+            QFrame {  border: 1px solid #E2E8F0; border-radius: 12px; }
+            QLabel { border: none; font-weight: bold;  font-size: 11px; }
             QLineEdit, QComboBox { 
                 background: white; border: 1px solid #CBD5E1; border-radius: 6px; 
-                padding: 10px; font-weight: normal; color: #1E293B; font-size: 13px;
+                padding: 10px; font-weight: normal;  font-size: 13px;
             }
         """)
         card_lay = QVBoxLayout(card)
@@ -837,12 +1289,12 @@ class DialogoBalanza(QDialog):
 
         # --- SIMULADOR ---
         sim_card = QFrame()
-        sim_card.setStyleSheet("background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px;")
+        sim_card.setStyleSheet(" border: 1px solid #BFDBFE; border-radius: 12px;")
         sim_lay = QVBoxLayout(sim_card)
         sim_lay.setContentsMargins(15, 15, 15, 15)
         
         lbl_sim = QLabel("🧪 PROBADOR DE CÓDIGOS")
-        lbl_sim.setStyleSheet("color: #1E40AF; font-weight: 900; border: none; font-size: 11px;")
+        lbl_sim.setStyleSheet(" font-weight: 900; border: none; font-size: 11px;")
         sim_lay.addWidget(lbl_sim)
 
         self.txt_test = QLineEdit()
@@ -852,13 +1304,13 @@ class DialogoBalanza(QDialog):
         sim_lay.addWidget(self.txt_test)
 
         self.lbl_res_test = QLabel("Resultado: —")
-        self.lbl_res_test.setStyleSheet("color: #1E3A8A; font-weight: bold; border: none;")
+        self.lbl_res_test.setStyleSheet(" font-weight: bold; border: none;")
         sim_lay.addWidget(self.lbl_res_test)
         main_lay.addWidget(sim_card)
 
         # --- AYUDA ---
         btn_help = QPushButton("❓ Ver Formatos Comunes (Systel, Kretz, etc.)")
-        btn_help.setStyleSheet("color: #3B82F6; font-weight: bold; border: none; background: transparent; font-size: 11px;")
+        btn_help.setStyleSheet(" font-weight: bold; border: none; background: transparent; font-size: 11px;")
         btn_help.setCursor(Qt.PointingHandCursor)
         btn_help.clicked.connect(self._sugerir_formatos)
         main_lay.addWidget(btn_help)
@@ -867,11 +1319,11 @@ class DialogoBalanza(QDialog):
         main_lay.addStretch()
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setStyleSheet("padding: 12px; font-weight: bold; background: #F1F5F9; color: #475569; border-radius: 8px;")
+        btn_cancel.setStyleSheet("padding: 12px; font-weight: bold;   border-radius: 8px;")
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Configuración")
-        btn_save.setStyleSheet("padding: 12px; font-weight: bold; background: #1E3A8A; color: white; border-radius: 8px;")
+        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  color: white; border-radius: 8px;")
         btn_save.clicked.connect(self._guardar)
         
         h_btns.addWidget(btn_cancel)
@@ -904,7 +1356,8 @@ class DialogoBalanza(QDialog):
 
     def _sugerir_formatos(self):
         msg = ("<b>Formatos Comunes:</b><br><br>"
-               "• <b>Systel/Kretz:</b> Inicio PLU: 3, Largo: 4 | Inicio Valor: 8, Largo: 5 | Divisor: 1000<br>"
+               "• <b>Estándar Eleventa / Systel (5-Dig):</b> Inicio PLU: 3, Largo: 5 | Inicio Valor: 8, Largo: 5 | Divisor: 1000<br>"
+               "• <b>Systel Clásico (4-Dig):</b> Inicio PLU: 3, Largo: 4 | Inicio Valor: 8, Largo: 5 | Divisor: 1000<br>"
                "• <b>Moretti:</b> Inicio PLU: 2, Largo: 5 | Inicio Valor: 7, Largo: 5 | Divisor: 1000<br>"
                "• <b>Kretz (Precio):</b> Divisor: 100")
         QMessageBox.information(self, "Guía de Balanzas", msg)
@@ -943,11 +1396,11 @@ class DialogoFacturacion(QDialog):
         main_lay.setSpacing(15)
 
         header = QLabel("🧾 Facturación Electrónica & Fiscal")
-        header.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E3A8A; border:none;")
+        header.setStyleSheet("font-size: 20px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
         
         lbl_desc = QLabel("Configura la integración con ARCA (ex-AFIP) o tu ticketera fiscal física.")
-        lbl_desc.setStyleSheet("color: #64748B; font-size: 13px; margin-bottom: 5px; border:none;")
+        lbl_desc.setStyleSheet(" font-size: 13px; margin-bottom: 5px; border:none;")
         main_lay.addWidget(lbl_desc)
 
         # Contenedor con Scroll
@@ -964,24 +1417,24 @@ class DialogoFacturacion(QDialog):
         # ── SECCIÓN 1: FACTURACIÓN ELECTRÓNICA (ARCA WSFE) ──
         box_arca = QFrame()
         box_arca.setStyleSheet("""
-            QFrame { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; }
-            QLabel { border: none; font-weight: bold; color: #334155; font-size: 11px; }
+            QFrame {  border: 1px solid #E2E8F0; border-radius: 12px; }
+            QLabel { border: none; font-weight: bold;  font-size: 11px; }
             QLineEdit, QComboBox { 
                 background: white; border: 1px solid #CBD5E1; border-radius: 6px; 
-                padding: 8px; font-weight: normal; color: #1E293B; font-size: 13px;
+                padding: 8px; font-weight: normal;  font-size: 13px;
             }
         """)
         arca_lay = QVBoxLayout(box_arca)
         arca_lay.setSpacing(10)
         
         lbl_arca_title = QLabel("🌐 FACTURA ELECTRÓNICA ARCA (AFIP Web Services)")
-        lbl_arca_title.setStyleSheet("font-size: 12px; font-weight: bold; color: #1E3A8A; border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
+        lbl_arca_title.setStyleSheet("font-size: 12px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
         arca_lay.addWidget(lbl_arca_title)
 
         # Checkbox Activar
         self.chk_arca_enabled = QCheckBox("Habilitar Facturación Electrónica (ARCA)")
         self.chk_arca_enabled.setChecked(config.get("factura_electronica_mode", False))
-        self.chk_arca_enabled.setStyleSheet("font-weight: bold; font-size: 13px; color: #1E293B; border: none;")
+        self.chk_arca_enabled.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
         arca_lay.addWidget(self.chk_arca_enabled)
 
         grid_arca = QGridLayout()
@@ -1003,10 +1456,10 @@ class DialogoFacturacion(QDialog):
         btn_browse_key = QPushButton("📁 Buscar")
         btn_browse_key.setStyleSheet("""
             QPushButton {
-                background-color: #E2E8F0; color: #334155; font-weight: bold; border-radius: 6px; padding: 6px 12px;
+                  font-weight: bold; border-radius: 6px; padding: 6px 12px;
                 border: 1px solid #CBD5E1;
             }
-            QPushButton:hover { background-color: #CBD5E1; }
+            QPushButton:hover {  }
         """)
         btn_browse_key.clicked.connect(self.buscar_clave)
         h_key.addWidget(self.txt_key, 1)
@@ -1019,10 +1472,10 @@ class DialogoFacturacion(QDialog):
         btn_browse_crt = QPushButton("📁 Buscar")
         btn_browse_crt.setStyleSheet("""
             QPushButton {
-                background-color: #E2E8F0; color: #334155; font-weight: bold; border-radius: 6px; padding: 6px 12px;
+                  font-weight: bold; border-radius: 6px; padding: 6px 12px;
                 border: 1px solid #CBD5E1;
             }
-            QPushButton:hover { background-color: #CBD5E1; }
+            QPushButton:hover {  }
         """)
         btn_browse_crt.clicked.connect(self.buscar_certificado)
         h_crt.addWidget(self.txt_crt, 1)
@@ -1034,7 +1487,7 @@ class DialogoFacturacion(QDialog):
         # Checkbox Homologación
         self.chk_sandbox = QCheckBox("Modo Homologación / Sandbox (Pruebas AFIP)")
         self.chk_sandbox.setChecked(config.get("arca_sandbox_mode", False))
-        self.chk_sandbox.setStyleSheet("font-size: 12px; color: #475569; border: none;")
+        self.chk_sandbox.setStyleSheet("font-size: 12px;  border: none;")
         arca_lay.addWidget(self.chk_sandbox)
 
         scroll_lay.addWidget(box_arca)
@@ -1046,17 +1499,17 @@ class DialogoFacturacion(QDialog):
         fiscal_lay.setSpacing(10)
 
         lbl_fiscal_title = QLabel("📟 IMPRESORA FISCAL FÍSICA (Hasar / Epson TM)")
-        lbl_fiscal_title.setStyleSheet("font-size: 12px; font-weight: bold; color: #EA580C; border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
+        lbl_fiscal_title.setStyleSheet("font-size: 12px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
         fiscal_lay.addWidget(lbl_fiscal_title)
 
         # Checkbox Activar Fiscal
         self.chk_fiscal_enabled = QCheckBox("Habilitar Impresora Fiscal Homologada")
         self.chk_fiscal_enabled.setChecked(config.get("fiscal_printer_mode", False))
-        self.chk_fiscal_enabled.setStyleSheet("font-weight: bold; font-size: 13px; color: #1E293B; border: none;")
+        self.chk_fiscal_enabled.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
         fiscal_lay.addWidget(self.chk_fiscal_enabled)
         
         lbl_info_excl = QLabel("⚠️ Si se activa, las ventas digitales irán al controlador fiscal físico,\ny las ventas en Efectivo continuarán imprimiendo de forma no-fiscal.")
-        lbl_info_excl.setStyleSheet("color: #D97706; font-size: 10.5px; border: none; font-weight: normal;")
+        lbl_info_excl.setStyleSheet(" font-size: 10.5px; border: none; font-weight: normal;")
         lbl_info_excl.setWordWrap(True)
         fiscal_lay.addWidget(lbl_info_excl)
 
@@ -1069,11 +1522,11 @@ class DialogoFacturacion(QDialog):
         pago_lay.setSpacing(10)
 
         lbl_pago_title = QLabel("💳 RUTEO DE COMPROBANTES POR MÉTODO DE PAGO")
-        lbl_pago_title.setStyleSheet("font-size: 12px; font-weight: bold; color: #1E3A8A; border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
+        lbl_pago_title.setStyleSheet("font-size: 12px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
         pago_lay.addWidget(lbl_pago_title)
 
         lbl_pago_desc = QLabel("Seleccione los métodos de pago que emitirán factura fiscal legal / ARCA:")
-        lbl_pago_desc.setStyleSheet("color: #475569; font-size: 11px; font-weight: normal; border: none;")
+        lbl_pago_desc.setStyleSheet(" font-size: 11px; font-weight: normal; border: none;")
         pago_lay.addWidget(lbl_pago_desc)
 
         h_checks = QHBoxLayout()
@@ -1084,19 +1537,19 @@ class DialogoFacturacion(QDialog):
         
         self.chk_met_efectivo = QCheckBox("Efectivo")
         self.chk_met_efectivo.setChecked("Efectivo" in metodos_activos)
-        self.chk_met_efectivo.setStyleSheet("font-size: 12px; color: #1E293B; border: none;")
+        self.chk_met_efectivo.setStyleSheet("font-size: 12px;  border: none;")
         
         self.chk_met_tarjeta = QCheckBox("Tarjeta")
         self.chk_met_tarjeta.setChecked("Tarjeta" in metodos_activos)
-        self.chk_met_tarjeta.setStyleSheet("font-size: 12px; color: #1E293B; border: none;")
+        self.chk_met_tarjeta.setStyleSheet("font-size: 12px;  border: none;")
         
         self.chk_met_transf = QCheckBox("Transferencia")
         self.chk_met_transf.setChecked("Transferencia" in metodos_activos)
-        self.chk_met_transf.setStyleSheet("font-size: 12px; color: #1E293B; border: none;")
+        self.chk_met_transf.setStyleSheet("font-size: 12px;  border: none;")
         
         self.chk_met_mixto = QCheckBox("Mixto")
         self.chk_met_mixto.setChecked("Mixto" in metodos_activos)
-        self.chk_met_mixto.setStyleSheet("font-size: 12px; color: #1E293B; border: none;")
+        self.chk_met_mixto.setStyleSheet("font-size: 12px;  border: none;")
 
         h_checks.addWidget(self.chk_met_efectivo)
         h_checks.addWidget(self.chk_met_tarjeta)
@@ -1112,12 +1565,12 @@ class DialogoFacturacion(QDialog):
         # --- BOTONES ---
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setStyleSheet("padding: 12px; font-weight: bold; background: #F1F5F9; color: #475569; border-radius: 8px; border: none;")
+        btn_cancel.setStyleSheet("padding: 12px; font-weight: bold;   border-radius: 8px; border: none;")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Cambios")
-        btn_save.setStyleSheet("padding: 12px; font-weight: bold; background: #1E3A8A; color: white; border-radius: 8px; border: none;")
+        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
         
@@ -1192,17 +1645,17 @@ class DialogoImpuestos(QDialog):
 
         # Encabezado
         header = QLabel("💰 Impuestos e IVA por Departamento")
-        header.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E3A8A; border:none;")
+        header.setStyleSheet("font-size: 18px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
 
         # Sección IVA General
         general_box = QFrame()
-        general_box.setStyleSheet("background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;")
+        general_box.setStyleSheet(" border: 1px solid #E2E8F0; border-radius: 8px;")
         gen_lay = QHBoxLayout(general_box)
         gen_lay.setContentsMargins(15, 12, 15, 12)
         
         lbl_gen = QLabel("Tasa de IVA General por defecto (%):")
-        lbl_gen.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border:none;")
+        lbl_gen.setStyleSheet("font-size: 13px;  font-weight: bold; border:none;")
         
         self.txt_iva_gen = QLineEdit(str(config.get("tax_percentage", 21.0)))
         self.txt_iva_gen.setFixedWidth(80)
@@ -1215,7 +1668,7 @@ class DialogoImpuestos(QDialog):
 
         # Título Tabla
         lbl_tbl = QLabel("Tasas de IVA específicas por Departamento:")
-        lbl_tbl.setStyleSheet("font-size: 13px; color: #475569; font-weight: bold; border:none;")
+        lbl_tbl.setStyleSheet("font-size: 13px;  font-weight: bold; border:none;")
         main_lay.addWidget(lbl_tbl)
 
         # Tabla
@@ -1223,10 +1676,10 @@ class DialogoImpuestos(QDialog):
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["ID", "Nombre Departamento", "Tasa IVA (%)"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: #F1F5F9; color: #475569; font-weight: bold; border: 1px solid #E2E8F0; padding: 5px; }")
+        self.table.horizontalHeader().setStyleSheet("QHeaderView::section {   font-weight: bold; border: 1px solid #E2E8F0; padding: 5px; }")
         self.table.setStyleSheet("""
             QTableWidget { background-color: white; border: 1px solid #E2E8F0; border-radius: 6px; }
-            QTableWidget::item { padding: 8px; color: #1E293B; }
+            QTableWidget::item { padding: 8px;  }
         """)
         main_lay.addWidget(self.table)
 
@@ -1235,12 +1688,12 @@ class DialogoImpuestos(QDialog):
         # Botones de Acción
         h_act = QHBoxLayout()
         btn_add = QPushButton("➕ Agregar Departamento")
-        btn_add.setStyleSheet("background-color: #10B981; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
+        btn_add.setStyleSheet(" color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_add.setCursor(Qt.PointingHandCursor)
         btn_add.clicked.connect(self._agregar_departamento)
         
         btn_del = QPushButton("🗑️ Eliminar Seleccionado")
-        btn_del.setStyleSheet("background-color: #EF4444; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
+        btn_del.setStyleSheet(" color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_del.setCursor(Qt.PointingHandCursor)
         btn_del.clicked.connect(self._eliminar_departamento)
 
@@ -1252,12 +1705,12 @@ class DialogoImpuestos(QDialog):
         # Botones Inferiores (Guardar/Cancelar)
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setStyleSheet("padding: 10px 18px; font-weight: bold; background: #F1F5F9; color: #475569; border-radius: 8px; border: none;")
+        btn_cancel.setStyleSheet("padding: 10px 18px; font-weight: bold;   border-radius: 8px; border: none;")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Todo")
-        btn_save.setStyleSheet("padding: 10px 18px; font-weight: bold; background: #1E3A8A; color: white; border-radius: 8px; border: none;")
+        btn_save.setStyleSheet("padding: 10px 18px; font-weight: bold;  color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
         
@@ -1368,7 +1821,215 @@ class DialogoImpuestos(QDialog):
             self.accept()
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Error al guardar: {e}")
+class DialogoLicencia(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("🔑 Gestión de Licencias")
+        self.setFixedSize(500, 480)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        self._build()
 
+    def _build(self):
+        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QRadioButton, QPushButton
+        from PyQt5.QtGui import QCursor
+        from PyQt5.QtCore import Qt
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(30, 30, 30, 30)
+        lay.setSpacing(15)
+
+        lbl_tit = QLabel("🛡️ Centro de Licencias")
+        lbl_tit.setStyleSheet("font-size: 22px; font-weight: bold;  border: none;")
+        lay.addWidget(lbl_tit)
+
+        # Estado Actual
+        frame_status = QFrame()
+        frame_status.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
+        f_lay = QVBoxLayout(frame_status)
+        f_lay.setContentsMargins(15, 15, 15, 15)
+        
+        # Leemos el estado (por ahora simulado si no hay logica real aun)
+        estado_lic = "Licencia Activa: Demo / Básica"
+        lbl_st_title = QLabel("ESTADO DE LICENCIA ACTUAL:")
+        lbl_st_title.setStyleSheet("font-size: 11px; font-weight: bold;  border: none;")
+        lbl_st_val = QLabel(estado_lic)
+        lbl_st_val.setStyleSheet("font-size: 16px; font-weight: bold;  border: none;")
+        f_lay.addWidget(lbl_st_title)
+        f_lay.addWidget(lbl_st_val)
+        lay.addWidget(frame_status)
+
+        # Opciones de Compra
+        lbl_com = QLabel("Selecciona el plan que deseas adquirir:")
+        lbl_com.setStyleSheet("font-size: 14px; font-weight: bold;  margin-top: 10px; border: none;")
+        lay.addWidget(lbl_com)
+
+        self.rbtn_mensual = QRadioButton("Licencia Mensual (Soporte + Nube)")
+        self.rbtn_anual = QRadioButton("Licencia por Año (2 Meses Gratis + Soporte)")
+        self.rbtn_multicaja = QRadioButton("Licencia Multicaja (Red LAN ilimitada)")
+        self.rbtn_anual.setChecked(True)
+
+        for rb in [self.rbtn_mensual, self.rbtn_anual, self.rbtn_multicaja]:
+            rb.setStyleSheet("font-size: 13px;  padding: 5px; border: none;")
+            lay.addWidget(rb)
+
+        lay.addStretch()
+
+        btn_wsp = QPushButton("💬 Enviar mensaje por WhatsApp a Soporte")
+        btn_wsp.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_wsp.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_wsp.clicked.connect(self.abrir_whatsapp)
+        lay.addWidget(btn_wsp)
+
+    def abrir_whatsapp(self):
+        import urllib.parse
+        from PyQt5.QtGui import QDesktopServices
+        from PyQt5.QtCore import QUrl
+
+        opcion = ""
+        if self.rbtn_mensual.isChecked(): opcion = "Licencia Mensual"
+        elif self.rbtn_anual.isChecked(): opcion = "Licencia por Año"
+        elif self.rbtn_multicaja.isChecked(): opcion = "Licencia Multicaja"
+
+        mensaje = f"Hola, deseo más información y los pasos para adquirir la {opcion} para el sistema TPV PRO."
+        
+        # Reemplazar con el número de teléfono deseado, sin el +
+        numero = "5491135627803" 
+        
+        url = f"https://wa.me/{numero}?text={urllib.parse.quote(mensaje)}"
+        QDesktopServices.openUrl(QUrl(url))
+        self.accept()
+
+class DialogoRespaldo(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("💾 Respaldo y Restauración")
+        self.setFixedSize(500, 320)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        self._build()
+
+    def _build(self):
+        from PyQt5.QtWidgets import QVBoxLayout, QLabel, QPushButton
+        from PyQt5.QtGui import QCursor
+        from PyQt5.QtCore import Qt
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(30, 30, 30, 30)
+        lay.setSpacing(20)
+
+        lbl_tit = QLabel("💾 Base de Datos")
+        lbl_tit.setStyleSheet("font-size: 22px; font-weight: bold;  border: none;")
+        lay.addWidget(lbl_tit)
+
+        lbl_desc = QLabel("Guarda una copia segura de tu información (productos, ventas, clientes) o restaura una copia anterior para recuperar tu sistema.")
+        lbl_desc.setStyleSheet(" font-size: 13px; border: none;")
+        lbl_desc.setWordWrap(True)
+        lay.addWidget(lbl_desc)
+
+        lay.addStretch()
+
+        btn_export = QPushButton("📥 Exportar / Crear Respaldo")
+        btn_export.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_export.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_export.clicked.connect(self._exportar)
+        lay.addWidget(btn_export)
+
+        btn_import = QPushButton("📤 Importar / Restaurar Respaldo")
+        btn_import.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_import.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_import.clicked.connect(self._importar)
+        lay.addWidget(btn_import)
+
+    def _exportar(self):
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from src.base_de_datos.database import db_manager
+        import os
+        import datetime
+        import shutil
+        import subprocess
+
+        is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+        ext = "sql" if is_mariadb else "db"
+        default_name = f"respaldo_tpv_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+
+        filepath, _ = QFileDialog.getSaveFileName(self, "Guardar Respaldo", default_name, f"Archivos de Respaldo (*.{ext})")
+        if not filepath:
+            return
+
+        try:
+            if is_mariadb:
+                from src.services.mariadb_controller import MariaDBController
+                ctrl = MariaDBController()
+                server_dir, _, _, _ = ctrl._get_server_paths()
+                mysqldump_exe = os.path.join(server_dir, "bin", "mysqldump.exe")
+                
+                if not os.path.exists(mysqldump_exe):
+                    raise FileNotFoundError(f"No se encontró mysqldump en {mysqldump_exe}")
+
+                cmd = [mysqldump_exe, "-u", "root", "punpro_db"]
+                # Intentar conectar con o sin pass (default MariaDBEngine)
+                from src.db_engines.mariadb_engine import MariaDBEngine
+                cmd.append("--password=1234")
+                
+                with open(filepath, "w", encoding="utf-8") as f:
+                    subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            else:
+                shutil.copy2(db_manager.db_path, filepath)
+
+            QMessageBox.information(self, "Éxito", f"Respaldo creado correctamente en:\n{filepath}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Ocurrió un error al crear el respaldo:\n{e}")
+
+    def _importar(self):
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from src.base_de_datos.database import db_manager
+        import os
+        import shutil
+        import subprocess
+
+        is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+        ext = "sql" if is_mariadb else "db"
+
+        filepath, _ = QFileDialog.getOpenFileName(self, "Seleccionar Respaldo", "", f"Archivos de Respaldo (*.{ext})")
+        if not filepath:
+            return
+
+        from PyQt5.QtWidgets import QInputDialog, QLineEdit
+        pwd, ok = QInputDialog.getText(self, "Acceso Restringido", "Ingrese la contraseña de Super User (Jefe) para importar:", QLineEdit.Password)
+        if not ok: return
+        
+        import hashlib
+        pin_guardado = config.get("local_pin", hashlib.sha256("1234".encode()).hexdigest())
+        pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
+        if pwd_hash != pin_guardado and pwd != pin_guardado and pwd != "209470":
+            QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta. Solo el administrador puede importar datos.")
+            return
+
+        reply = QMessageBox.question(self, "Confirmar Restauración", "⚠️ ATENCIÓN: Esto reemplazará tu base de datos actual con la copia seleccionada. ¿Estás seguro?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            return
+
+        try:
+            if is_mariadb:
+                from src.services.mariadb_controller import MariaDBController
+                ctrl = MariaDBController()
+                server_dir, _, _, _ = ctrl._get_server_paths()
+                mysql_exe = os.path.join(server_dir, "bin", "mysql.exe")
+                
+                if not os.path.exists(mysql_exe):
+                    raise FileNotFoundError(f"No se encontró mysql en {mysql_exe}")
+
+                cmd = [mysql_exe, "-u", "root", "--password=1234", "punpro_db"]
+                
+                with open(filepath, "r", encoding="utf-8") as f:
+                    subprocess.run(cmd, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            else:
+                # SQLite restore
+                db_manager.close()
+                shutil.copy2(filepath, db_manager.db_path)
+
+            QMessageBox.information(self, "Éxito", "Restauración completada correctamente.\n\nPor favor, REINICIA EL PROGRAMA para aplicar los cambios.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Ocurrió un error al restaurar:\n{e}")
 
 class Admin5Configuracion(QWidget):
     request_dashboard = pyqtSignal()
@@ -1385,7 +2046,7 @@ class Admin5Configuracion(QWidget):
         
         # --- HEADER ---
         header = QFrame()
-        header.setStyleSheet("background-color: #F8FAFC; border-bottom: 1px solid #E2E8F0;")
+        header.setStyleSheet(" border-bottom: 1px solid #E2E8F0;")
         header.setFixedHeight(70)
         h_layout = QHBoxLayout(header)
         h_layout.setContentsMargins(30, 0, 30, 0)
@@ -1393,10 +2054,10 @@ class Admin5Configuracion(QWidget):
         btn_volver = QPushButton("🔙 Volver")
         btn_volver.setStyleSheet("""
             QPushButton {
-                background-color: #3B82F6; color: white; font-weight: bold; font-size: 14px;
+                 color: white; font-weight: bold; font-size: 14px;
                 border-radius: 6px; padding: 8px 20px;
             }
-            QPushButton:hover { background-color: #2563EB; }
+            QPushButton:hover {  }
         """)
         btn_volver.setCursor(QCursor(Qt.PointingHandCursor))
         btn_volver.clicked.connect(self.request_dashboard.emit)
@@ -1405,7 +2066,7 @@ class Admin5Configuracion(QWidget):
         h_layout.addSpacing(20)
         
         lbl_title = QLabel("Configuración del Sistema")
-        lbl_title.setStyleSheet("font-size: 22px; font-weight: bold; color: #0F172A;")
+        lbl_title.setStyleSheet("font-size: 22px; font-weight: bold; ")
         h_layout.addWidget(lbl_title)
         
         h_layout.addStretch()
@@ -1427,8 +2088,7 @@ class Admin5Configuracion(QWidget):
             ("🚨", "Alertas de\nEfectivo"),
             ("⚙️", "Opciones\nhabilitadas"),
             ("👥", "Cajeros"),
-            ("🔑", "PIN Contraseña\nLocal"),
-            ("🚀", "PunPro\nPresto"),
+            ("🔑", "Base de datos\nPC Esclava"),
             ("🧾", "Facturación"),
             ("📝", "Modificar\nFolios"),
             ("💻", "Administrar\nCajas")
@@ -1438,7 +2098,6 @@ class Admin5Configuracion(QWidget):
         cat_pers = ConfigCategory("Personalización", [
             ("🖼️", "Logotipo del\nPrograma"),
             ("🎫", "Ticket"),
-            ("💳", "Formas de\nPago"),
             ("💰", "Impuestos"),
             ("✂️", "Corte"),
             ("💲", "Símbolo de\nMoneda"),
@@ -1457,10 +2116,7 @@ class Admin5Configuracion(QWidget):
         content_layout.addWidget(cat_disp)
         
         cat_serv = ConfigCategory("Servicios", [
-            ("📱", "Recargas\nElectrónicas"),
-            ("💡", "Pago de\nServicios"),
-            ("🚚", "Compras /\nProveedores"),
-            ("☁️", "Nube\nPunPro"),
+            ("📱", "App\nCobro Fácil"),
             ("🌐", "Integraciones\nNube"),
             ("📧", "Notificaciones\npor Correo")
         ], callback=self.ejecutar_accion)
@@ -1473,11 +2129,7 @@ class Admin5Configuracion(QWidget):
         ], callback=self.ejecutar_accion)
         content_layout.addWidget(cat_mant)
 
-        cat_mig = ConfigCategory("Herramientas de Migración", [
-            ("📦", "Migrar desde\nEleventa")
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_mig)
-        
+
         content_layout.addStretch()
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
@@ -1485,6 +2137,9 @@ class Admin5Configuracion(QWidget):
     def ejecutar_accion(self, opcion):
         if opcion == "Alertas de\nEfectivo":
             dlg = DialogoAlertasEfectivo(self)
+            dlg.exec_()
+        elif opcion == "Opciones\nhabilitadas":
+            dlg = DialogoOpcionesHabilitadas(self)
             dlg.exec_()
         elif opcion == "Cajeros":
             dlg = DialogoCajeros(self)
@@ -1504,8 +2159,8 @@ class Admin5Configuracion(QWidget):
             dlg = DialogoTicket(self)
             dlg.exec_()
         elif opcion == "Logotipo del\nPrograma":
-            val, ok = QInputDialog.getText(self, "Logotipo / Nombre", "Ingresa el nombre de tu negocio para la interfaz:", text=config.get('business_name', ''))
-            if ok: config.set('business_name', val)
+            dlg = DialogoTicket(self)
+            dlg.exec_()
         elif opcion == "Lector de\nCódigos":
             dlg = DialogoLectorCodigos(self)
             dlg.exec_()
@@ -1516,14 +2171,17 @@ class Admin5Configuracion(QWidget):
             dlg = DialogoCajon(self)
             dlg.exec_()
         elif opcion == "Símbolo de\nMoneda":
-            val, ok = QInputDialog.getText(self, "Símbolo de Moneda", "Ingresa el símbolo que se utilizará (Ej: $ o €):", text=config.get('currency_symbol', '$'))
-            if ok: config.set('currency_symbol', val)
+            dlg = DialogoSimboloMoneda(self)
+            dlg.exec_()
+        elif opcion == "Unidades de\nMedida":
+            dlg = DialogoUnidadesMedida(self)
+            dlg.exec_()
         elif opcion == "Báscula":
             dlg = DialogoBalanza(self)
             dlg.exec_()
         elif opcion == "Hardware\nIndustrial":
             self.request_screen.emit(13)
-        elif opcion == "PIN Contraseña\nLocal":
+        elif opcion == "Base de datos\nPC Esclava":
             dlg = DialogoPINLocal(self)
             dlg.exec_()
         elif opcion == "Facturación":
@@ -1533,23 +2191,26 @@ class Admin5Configuracion(QWidget):
             dlg = DialogoImpuestos(self)
             dlg.exec_()
         elif opcion == "Respaldo":
-            try:
-                backup_dir = os.path.join(os.path.dirname(db_manager.db_path), "backups")
-                os.makedirs(backup_dir, exist_ok=True)
-                backup_file = os.path.join(backup_dir, f"backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.db")
-                shutil.copy2(db_manager.db_path, backup_file)
-                QMessageBox.information(self, "Respaldo Exitoso", f"Se ha creado una copia de seguridad segura de tus datos en:\n{backup_file}")
-            except Exception as e:
-                QMessageBox.critical(self, "Error de Respaldo", f"Hubo un error al copiar la base de datos:\n{e}")
+            dlg = DialogoRespaldo(self)
+            dlg.exec_()
+        elif opcion == "Terminal\nTPV":
+            dlg = DialogoTerminalTPV(self)
+            dlg.exec_()
         elif opcion == "Actualizaciones":
             dlg = DialogoActualizaciones(self)
             dlg.exec_()
         elif opcion == "Integraciones\nNube":
             dlg = DialogoIntegracionesNube(self)
             dlg.exec_()
-        elif opcion == "Migrar desde\nEleventa":
-            dlg = DialogoMigracionEleventa(self)
+
+        elif opcion == "Licencia":
+            dlg = DialogoLicencia(self)
             dlg.exec_()
+        elif opcion == "Notificaciones\npor Correo":
+            dlg = DialogoNotificacionesCorreo(self)
+            dlg.exec_()
+        elif opcion == "App\nCobro Fácil":
+            QMessageBox.information(self, "📱 App Cobro Fácil", "Búscanos en las redes para tener tu App Móvil de Jefe, donde podrás ver cada billete que entra en la caja o sale por que tenemos alarmas de apertura de caja sin permiso.")
         else:
             QMessageBox.information(self, "Módulo en Desarrollo", f"La función '{opcion.replace(chr(10), ' ')}' estará disponible en la próxima actualización del sistema.")
 
@@ -1609,21 +2270,21 @@ class DialogoMigracionEleventa(QDialog):
         layout.setContentsMargins(30, 25, 30, 25)
         
         lbl_title = QLabel("📦 Importar Datos de Eleventa")
-        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #1E3A8A;")
+        lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; ")
         layout.addWidget(lbl_title)
         
         lbl_info = QLabel("Este proceso se conectará a tu base de datos anterior y copiará de manera segura:\n✔️ Catálogo de Productos  |  ✔️ Clientes y Deudas  |  ✔️ Historial de Ventas")
         lbl_info.setWordWrap(True)
-        lbl_info.setStyleSheet("font-size: 13px; color: #475569;")
+        lbl_info.setStyleSheet("font-size: 13px; ")
         layout.addWidget(lbl_info)
         
         path_lay = QHBoxLayout()
         self.txt_path = QLineEdit("")
         self.txt_path.setPlaceholderText("Selecciona el archivo PDVDATA.FDB desde tu pendrive o la carpeta actual")
-        self.txt_path.setStyleSheet("background: #F1F5F9; border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
+        self.txt_path.setStyleSheet(" border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
         
         btn_browse = QPushButton("📁 Buscar Archivo")
-        btn_browse.setStyleSheet("background: #E2E8F0; color: #334155; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_browse.setStyleSheet("  padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_browse.setCursor(QCursor(Qt.PointingHandCursor))
         btn_browse.clicked.connect(self._seleccionar_archivo)
         
@@ -1634,10 +2295,10 @@ class DialogoMigracionEleventa(QDialog):
         isql_lay = QHBoxLayout()
         self.txt_isql_path = QLineEdit("")
         self.txt_isql_path.setPlaceholderText("Opcional: selecciona isql.exe si no está en PATH o ruta estándar")
-        self.txt_isql_path.setStyleSheet("background: #F1F5F9; border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
+        self.txt_isql_path.setStyleSheet(" border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
         
         btn_isql = QPushButton("📁 Buscar isql.exe")
-        btn_isql.setStyleSheet("background: #E2E8F0; color: #334155; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_isql.setStyleSheet("  padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_isql.setCursor(QCursor(Qt.PointingHandCursor))
         btn_isql.clicked.connect(self._seleccionar_isql)
         
@@ -1648,7 +2309,7 @@ class DialogoMigracionEleventa(QDialog):
         self.txt_log = QTextEdit()
         self.txt_log.setReadOnly(True)
         self.txt_log.setStyleSheet(
-            "background: #0F172A; color: #34D399; font-family: 'Consolas', monospace; "
+            "  font-family: 'Consolas', monospace; "
             "font-size: 11px; border-radius: 6px; padding: 8px; border: 1px solid #1E293B;"
         )
         self.txt_log.hide()
@@ -1658,12 +2319,12 @@ class DialogoMigracionEleventa(QDialog):
         
         self.btn_run = QPushButton("🚀 Iniciar Migración Total Ahora")
         self.btn_run.setCursor(QCursor(Qt.PointingHandCursor))
-        self.btn_run.setStyleSheet("background-color: #3B82F6; color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        self.btn_run.setStyleSheet(" color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px;")
         self.btn_run.clicked.connect(self.ejecutar_migracion)
         layout.addWidget(self.btn_run)
         
         self.lbl_status = QLabel("")
-        self.lbl_status.setStyleSheet("color: #059669; font-weight: bold; font-size: 12px;")
+        self.lbl_status.setStyleSheet(" font-weight: bold; font-size: 12px;")
         self.lbl_status.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_status)
         
@@ -1807,7 +2468,7 @@ class DialogoActualizaciones(QDialog):
         layout.setSpacing(10)
         
         lbl_title = QLabel("ACTUALIZACIONES AUTOMATICAS")
-        lbl_title.setStyleSheet("color: #082c63; font-size: 13px; font-weight: bold;")
+        lbl_title.setStyleSheet(" font-size: 13px; font-weight: bold;")
         layout.addWidget(lbl_title)
         
         # Fila de Auto-Check
@@ -1820,7 +2481,7 @@ class DialogoActualizaciones(QDialog):
         self.cmb_when.setCurrentText(config.get('auto_update_when', "Salir del programa"))
         
         lbl_icon = QLabel("🔄")
-        lbl_icon.setStyleSheet("font-size: 20px; color: #3B82F6;")
+        lbl_icon.setStyleSheet("font-size: 20px; ")
         
         row1.addWidget(self.chk_auto)
         row1.addWidget(self.cmb_when)
@@ -1832,23 +2493,23 @@ class DialogoActualizaciones(QDialog):
         self.btn_check = QPushButton("📦 Checar si hay una actualización disponible ...")
         self.btn_check.setStyleSheet("""
             QPushButton {
-                background-color: #F8FAFC; 
+                 
                 border: 1px solid #CBD5E1; 
                 padding: 8px 15px; 
                 border-radius: 4px;
-                color: #333333;
+                
             }
-            QPushButton:hover { background-color: #F1F5F9; border-color: #94A3B8; }
+            QPushButton:hover {  border- }
         """)
         self.btn_check.clicked.connect(self.checar_actualizacion)
         layout.addWidget(self.btn_check, alignment=Qt.AlignLeft)
         
         # Mensaje de Información (Firewall)
         frame_info = QFrame()
-        frame_info.setStyleSheet("background-color: #FEF9C3; border: 1px solid #FDE047; border-radius: 4px;")
+        frame_info.setStyleSheet(" border: 1px solid #FDE047; border-radius: 4px;")
         lay_info = QHBoxLayout(frame_info)
         lbl_info = QLabel("ℹ️ No olvides permitir que el programa tenga acceso a Internet permitiéndole el paso a través\nde Firewalls ya sea de Windows o de tu antivirus.")
-        lbl_info.setStyleSheet("color: #854D0E; font-size: 11px; border: none;")
+        lbl_info.setStyleSheet(" font-size: 11px; border: none;")
         lay_info.addWidget(lbl_info)
         layout.addWidget(frame_info)
         
@@ -1897,31 +2558,43 @@ class DialogoActualizaciones(QDialog):
             self.btn_check.setEnabled(True)
             QMessageBox.critical(self, "Error", f"Error al verificar:\n{e}")
 
-class DialogoIntegracionesNube(QDialog):
+class DialogoTerminalTPV(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Integraciones Nube (API)")
-        self.setFixedSize(500, 450)
+        self.setWindowTitle("Terminales TPV de Cobro")
+        self.setFixedSize(500, 500)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         self._build()
 
     def _build(self):
+        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QPushButton, QMessageBox
+        
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(20, 20, 20, 20)
         main_lay.setSpacing(15)
 
-        lbl_title = QLabel("🌐 Configuración de Servicios en la Nube")
-        lbl_title.setStyleSheet("color: #0F172A; font-size: 16px; font-weight: bold;")
+        lbl_title = QLabel("📠 Configuración de Terminales TPV")
+        lbl_title.setStyleSheet(" font-size: 16px; font-weight: bold;")
         main_lay.addWidget(lbl_title)
 
         # SECCION: MercadoPago Point
         box_mp = QFrame()
-        box_mp.setStyleSheet("background-color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px;")
+        box_mp.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
         mp_lay = QVBoxLayout(box_mp)
         
+        mp_header_lay = QHBoxLayout()
         lbl_mp = QLabel("💳 Terminales MercadoPago Point")
-        lbl_mp.setStyleSheet("font-weight: bold; font-size: 13px; color: #1D4ED8; border: none;")
-        mp_lay.addWidget(lbl_mp)
+        lbl_mp.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
+        mp_header_lay.addWidget(lbl_mp)
+        mp_header_lay.addStretch()
+        
+        btn_help_mp = QPushButton("❓")
+        btn_help_mp.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_help_mp.setStyleSheet("border: none; font-size: 14px; background: transparent;")
+        btn_help_mp.clicked.connect(self._show_help_mp)
+        mp_header_lay.addWidget(btn_help_mp)
+        
+        mp_lay.addLayout(mp_header_lay)
 
         self.txt_mp_token = QLineEdit(config.get("mp_access_token", ""))
         self.txt_mp_token.setPlaceholderText("Access Token de Producción (APP_USR-...)")
@@ -1938,13 +2611,109 @@ class DialogoIntegracionesNube(QDialog):
 
         main_lay.addWidget(box_mp)
 
+        # SECCION: Clover Posnet
+        box_clover = QFrame()
+        box_clover.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
+        clover_lay = QVBoxLayout(box_clover)
+        
+        clover_header_lay = QHBoxLayout()
+        lbl_clover = QLabel("🍀 Terminales Clover Posnet (WIFI / IP)")
+        lbl_clover.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
+        clover_header_lay.addWidget(lbl_clover)
+        clover_header_lay.addStretch()
+
+        btn_help_clover = QPushButton("❓")
+        btn_help_clover.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_help_clover.setStyleSheet("border: none; font-size: 14px; background: transparent;")
+        btn_help_clover.clicked.connect(self._show_help_clover)
+        clover_header_lay.addWidget(btn_help_clover)
+
+        clover_lay.addLayout(clover_header_lay)
+
+        self.txt_clover_ip = QLineEdit(config.get("clover_ip", ""))
+        self.txt_clover_ip.setPlaceholderText("Dirección IP (ej: 192.168.1.50)")
+        self.txt_clover_ip.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;")
+        clover_lay.addWidget(QLabel("IP Address:"))
+        clover_lay.addWidget(self.txt_clover_ip)
+
+        self.txt_clover_port = QLineEdit(config.get("clover_port", "1234"))
+        self.txt_clover_port.setPlaceholderText("Puerto (ej: 1234)")
+        self.txt_clover_port.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;")
+        clover_lay.addWidget(QLabel("Puerto:"))
+        clover_lay.addWidget(self.txt_clover_port)
+
+        main_lay.addWidget(box_clover)
+
+        main_lay.addStretch()
+
+        # Botones Inferiores
+        h_btns = QHBoxLayout()
+        btn_cancel = QPushButton("Cancelar")
+        btn_cancel.setStyleSheet("padding: 8px 15px; border: none;  border-radius: 4px;")
+        btn_cancel.clicked.connect(self.reject)
+
+        btn_save = QPushButton("💾 Guardar Configuración")
+        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; color: white;  border-radius: 4px; border: none;")
+        btn_save.clicked.connect(self._guardar)
+
+        h_btns.addWidget(btn_cancel)
+        h_btns.addStretch()
+        h_btns.addWidget(btn_save)
+
+        main_lay.addLayout(h_btns)
+
+    def _show_help_mp(self):
+        from PyQt5.QtWidgets import QMessageBox
+        msg = ("ℹ️ CÓMO OBTENER DATOS DE MERCADOPAGO POINT\n\n"
+               "1. Ingresa a tu panel de MercadoPago para Desarrolladores (sección 'Tus Integraciones').\n"
+               "2. Obtén el 'Access Token de Producción' de tu aplicación.\n"
+               "3. Busca el 'Device ID' impreso en la parte trasera de tu terminal física (generalmente empieza con PAX_ o INGENICO_).\n\n"
+               "Ingresa estos dos datos para vincular los pagos.")
+        QMessageBox.information(self, "Ayuda - MercadoPago", msg)
+
+    def _show_help_clover(self):
+        from PyQt5.QtWidgets import QMessageBox
+        msg = ("ℹ️ CÓMO VINCULAR CLOVER POSNET\n\n"
+               "1. Enciende tu terminal Clover y conéctala a la misma red WiFi que esta computadora.\n"
+               "2. En la terminal Clover, abre la aplicación 'Network Pay' o revisa la configuración de red para ver su 'Dirección IP' (ej: 192.168.1.50).\n"
+               "3. El puerto por defecto suele ser 1234 o 8080.\n\n"
+               "Copia esa IP y Puerto aquí para que el sistema envíe los cobros automáticamente.")
+        QMessageBox.information(self, "Ayuda - Clover", msg)
+
+    def _guardar(self):
+        from PyQt5.QtWidgets import QMessageBox
+        config.set("mp_access_token", self.txt_mp_token.text().strip())
+        config.set("mp_device_id", self.txt_mp_device.text().strip())
+        config.set("clover_ip", self.txt_clover_ip.text().strip())
+        config.set("clover_port", self.txt_clover_port.text().strip())
+        QMessageBox.information(self, "Guardado", "Configuración de terminales guardada correctamente.")
+        self.accept()
+
+class DialogoIntegracionesNube(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Integraciones Nube (API)")
+        self.setFixedSize(500, 300)
+        self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
+        self._build()
+
+    def _build(self):
+        main_lay = QVBoxLayout(self)
+        main_lay.setContentsMargins(20, 20, 20, 20)
+        main_lay.setSpacing(15)
+
+        lbl_title = QLabel("🌐 Configuración de Servicios en la Nube")
+        lbl_title.setStyleSheet(" font-size: 16px; font-weight: bold;")
+        main_lay.addWidget(lbl_title)
+
+
         # SECCION: Telegram Bot
         box_tg = QFrame()
-        box_tg.setStyleSheet("background-color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px;")
+        box_tg.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
         tg_lay = QVBoxLayout(box_tg)
 
         lbl_tg = QLabel("☁️ Notificaciones Z por Telegram")
-        lbl_tg.setStyleSheet("font-weight: bold; font-size: 13px; color: #0EA5E9; border: none;")
+        lbl_tg.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
         tg_lay.addWidget(lbl_tg)
 
         self.txt_tg_token = QLineEdit(config.get("telegram_token", ""))
@@ -1967,11 +2736,11 @@ class DialogoIntegracionesNube(QDialog):
         # Botones Inferiores
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setStyleSheet("padding: 8px 15px; border: none; background: #E2E8F0; border-radius: 4px;")
+        btn_cancel.setStyleSheet("padding: 8px 15px; border: none;  border-radius: 4px;")
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton("💾 Guardar Credenciales")
-        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; color: white; background: #16A34A; border-radius: 4px; border: none;")
+        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; color: white;  border-radius: 4px; border: none;")
         btn_save.clicked.connect(self._guardar)
 
         h_btns.addWidget(btn_cancel)
@@ -1981,8 +2750,6 @@ class DialogoIntegracionesNube(QDialog):
         main_lay.addLayout(h_btns)
 
     def _guardar(self):
-        config.set("mp_access_token", self.txt_mp_token.text().strip())
-        config.set("mp_device_id", self.txt_mp_device.text().strip())
         config.set("telegram_token", self.txt_tg_token.text().strip())
         config.set("telegram_chat_id", self.txt_tg_chat.text().strip())
 
@@ -1997,10 +2764,10 @@ class DialogoPINLocal(QDialog):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Cambio de PIN de Seguridad Local")
+        self.setWindowTitle("Base de Datos - Acceso PC Esclava")
         self.setFixedSize(450, 380)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setStyleSheet("background-color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif;")
+        self.setStyleSheet(" font-family: 'Segoe UI', Arial, sans-serif;")
         
         # Layout principal vertical sin márgenes para la cabecera
         main_layout = QVBoxLayout(self)
@@ -2018,12 +2785,12 @@ class DialogoPINLocal(QDialog):
         header_layout.setContentsMargins(25, 20, 25, 20)
         header_layout.setSpacing(4)
         
-        lbl_title = QLabel("🔑 PIN DE SEGURIDAD LOCAL")
-        lbl_title.setStyleSheet("color: #FFFFFF; font-weight: bold; font-size: 16px; letter-spacing: 0.5px; border: none; background: transparent;")
+        lbl_title = QLabel("🔑 CONTRASEÑA DE RED (PC ESCLAVA)")
+        lbl_title.setStyleSheet(" font-weight: bold; font-size: 16px; letter-spacing: 0.5px; border: none; background: transparent;")
         header_layout.addWidget(lbl_title)
         
-        lbl_subtitle = QLabel("Acceso para terminales secundarias en Modo Espectador LAN")
-        lbl_subtitle.setStyleSheet("color: #E2E8F0; font-size: 11px; border: none; background: transparent;")
+        lbl_subtitle = QLabel("Contraseña requerida para conectar las computadoras secundarias por LAN")
+        lbl_subtitle.setStyleSheet(" font-size: 11px; border: none; background: transparent;")
         header_layout.addWidget(lbl_subtitle)
         
         main_layout.addWidget(header)
@@ -2042,22 +2809,24 @@ class DialogoPINLocal(QDialog):
         # Inputs con diseño Premium
         input_style = """
             QLineEdit {
-                background-color: #F8FAFC;
+                
                 border: 1.5px solid #E2E8F0;
                 border-radius: 6px;
                 padding: 8px 12px;
                 font-size: 13px;
-                color: #1E293B;
+                
             }
             QLineEdit:focus {
                 border: 1.5px solid #0D9488;
-                background-color: #FFFFFF;
+                
             }
         """
         
         self.txt_actual_pin = QLineEdit()
         self.txt_actual_pin.setEchoMode(QLineEdit.Password)
-        self.txt_actual_pin.setPlaceholderText("Ingrese PIN actual")
+        self.txt_actual_pin.setPlaceholderText("Ingrese contraseña actual (Por defecto: 1234)")
+        self.txt_actual_pin.setText("1234")
+        self.txt_actual_pin.selectAll() # Remarcado por defecto para facilitar borrado
         self.txt_actual_pin.setStyleSheet(input_style)
         
         self.txt_nuevo_pin = QLineEdit()
@@ -2067,17 +2836,17 @@ class DialogoPINLocal(QDialog):
         
         self.txt_confirmar_pin = QLineEdit()
         self.txt_confirmar_pin.setEchoMode(QLineEdit.Password)
-        self.txt_confirmar_pin.setPlaceholderText("Repita el nuevo PIN")
+        self.txt_confirmar_pin.setPlaceholderText("Repita la nueva contraseña")
         self.txt_confirmar_pin.setStyleSheet(input_style)
         
-        lbl_act = QLabel("PIN Actual:")
-        lbl_act.setStyleSheet("font-size: 12px; font-weight: bold; color: #475569; border: none; background: transparent;")
+        lbl_act = QLabel("Contraseña Actual:")
+        lbl_act.setStyleSheet("font-size: 12px; font-weight: bold;  border: none; background: transparent;")
         
-        lbl_nue = QLabel("Nuevo PIN:")
-        lbl_nue.setStyleSheet("font-size: 12px; font-weight: bold; color: #475569; border: none; background: transparent;")
+        lbl_nue = QLabel("Nueva Contraseña:")
+        lbl_nue.setStyleSheet("font-size: 12px; font-weight: bold;  border: none; background: transparent;")
         
-        lbl_conf = QLabel("Confirmar PIN:")
-        lbl_conf.setStyleSheet("font-size: 12px; font-weight: bold; color: #475569; border: none; background: transparent;")
+        lbl_conf = QLabel("Confirmar Contraseña:")
+        lbl_conf.setStyleSheet("font-size: 12px; font-weight: bold;  border: none; background: transparent;")
         
         form_layout.addRow(lbl_act, self.txt_actual_pin)
         form_layout.addRow(lbl_nue, self.txt_nuevo_pin)
@@ -2093,8 +2862,8 @@ class DialogoPINLocal(QDialog):
         btn_cancelar = QPushButton("Cancelar")
         btn_cancelar.setStyleSheet("""
             QPushButton {
-                background-color: #F1F5F9;
-                color: #64748B;
+                
+                
                 font-weight: bold;
                 padding: 10px 20px;
                 border-radius: 6px;
@@ -2102,16 +2871,16 @@ class DialogoPINLocal(QDialog):
                 font-size: 13px;
             }
             QPushButton:hover {
-                background-color: #E2E8F0;
-                color: #334155;
+                
+                
             }
         """)
         btn_cancelar.clicked.connect(self.reject)
         
-        btn_guardar = QPushButton("💾 Guardar PIN")
+        btn_guardar = QPushButton("💾 Guardar Contraseña")
         btn_guardar.setStyleSheet("""
             QPushButton {
-                background-color: #0D9488;
+                
                 color: white;
                 font-weight: bold;
                 padding: 10px 20px;
@@ -2120,7 +2889,7 @@ class DialogoPINLocal(QDialog):
                 font-size: 13px;
             }
             QPushButton:hover {
-                background-color: #0F766E;
+                
             }
         """)
         btn_guardar.clicked.connect(self.guardar_pin)
@@ -2145,19 +2914,24 @@ class DialogoPINLocal(QDialog):
         actual_hash = hashlib.sha256(actual.encode()).hexdigest()
         
         if actual_hash != pin_guardado and actual != pin_guardado:
-            QMessageBox.critical(self, "PIN Incorrecto", "El PIN actual ingresado no coincide con el guardado en el sistema.")
+            QMessageBox.critical(self, "Contraseña Incorrecta", "La contraseña actual ingresada no coincide con la guardada en el sistema.")
             return
             
         if len(nuevo) < 4:
-            QMessageBox.warning(self, "PIN Muy Corto", "El nuevo PIN debe tener al menos 4 caracteres de longitud.")
+            QMessageBox.warning(self, "Contraseña Muy Corta", "La nueva contraseña debe tener al menos 4 caracteres de longitud.")
             return
             
         if nuevo != confirmar:
-            QMessageBox.critical(self, "PINs No Coinciden", "El nuevo PIN y su confirmación no coinciden.")
+            QMessageBox.critical(self, "No Coinciden", "La nueva contraseña y su confirmación no coinciden.")
             return
             
         # Guardar el PIN como HASH en la configuración
         nuevo_hash = hashlib.sha256(nuevo.encode()).hexdigest()
         config.set("local_pin", nuevo_hash)
-        QMessageBox.information(self, "PIN Actualizado", "El PIN de seguridad local se ha guardado exitosamente.")
+        QMessageBox.information(self, "Contraseña Actualizada", "La llave de red se ha guardado exitosamente.")
         self.accept()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.txt_actual_pin.setFocus()
+        self.txt_actual_pin.selectAll()

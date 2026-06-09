@@ -386,6 +386,22 @@ class Paso7CierreCaja(QDialog):
             # Pasamos modo='turno' para que el ticket lo refleje
             printer_manager.imprimir_ticket_z(self.user, fisico, dif, {**self.datos, "segunda_tiketera": True, "modo": "turno"})
             QMessageBox.information(self, "CIERRE EXITOSO", f"Cierre de Turno registrado correctamente.\nDiferencia: $ {dif:,.2f}")
+            
+            try:
+                from src.services.email_service import enviar_reporte_cierre_z
+                datos_cierre = {
+                    'caja_id': c_id,
+                    'usuario': self.user,
+                    'tipo_cierre': 'CIERRE DE TURNO',
+                    'efectivo_esperado': self.datos["esperado"],
+                    'efectivo_fisico': fisico,
+                    'diferencia': dif,
+                    'total_ventas': self.datos["t_total"]
+                }
+                enviar_reporte_cierre_z(datos_cierre)
+            except Exception as email_err:
+                print(f"Error enviando email: {email_err}")
+
             from PyQt5.QtWidgets import QApplication
             QApplication.exit(888)
         except Exception as e: QMessageBox.critical(self, "Error", str(e))

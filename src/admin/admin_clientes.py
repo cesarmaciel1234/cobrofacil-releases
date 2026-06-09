@@ -1,3 +1,4 @@
+from src.utils.theme_manager import theme_manager
 import sys
 from datetime import datetime
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
@@ -39,7 +40,7 @@ class MetricCard(QFrame):
         v_lay.setSpacing(2)
         v_lay.setAlignment(Qt.AlignVCenter)
         self.lbl_tit = QLabel(titulo.upper())
-        self.lbl_tit.setStyleSheet("color: #64748B; font-size: 11px; font-weight: 900; letter-spacing: 1px; border: none;")
+        self.lbl_tit.setStyleSheet(" font-size: 11px; font-weight: 900; letter-spacing: 1px; border: none;")
         v_lay.addWidget(self.lbl_tit)
         
         self.lbl_val = QLabel("0")
@@ -60,15 +61,15 @@ class DialogoNuevoCliente(QDialog):
         self.setWindowTitle("Nuevo Cliente")
         self.setFixedSize(350, 200)
         self.setStyleSheet("""
-            QDialog { background-color: #f8fafc; }
-            QLabel { font-weight: bold; color: #1e293b; }
+            QDialog {  }
+            QLabel { font-weight: bold;  }
             QLineEdit, QDoubleSpinBox { 
                 padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; 
             }
             QPushButton {
-                background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 8px; font-weight: bold;
+                 color: white; border: none; border-radius: 4px; padding: 8px; font-weight: bold;
             }
-            QPushButton:hover { background-color: #2563eb; }
+            QPushButton:hover {  }
         """)
         
         lay = QVBoxLayout(self)
@@ -123,11 +124,11 @@ class DialogoRecalculoFiado(QDialog):
         lay.setContentsMargins(25, 25, 25, 25)
         
         lbl_tit = QLabel(f"📈 SIMULADOR DE INFLACIÓN - {self.nombre.upper()}")
-        lbl_tit.setStyleSheet("font-size: 16px; font-weight: 900; color: #1E3A8A; border: none;")
+        lbl_tit.setStyleSheet("font-size: 16px; font-weight: 900;  border: none;")
         lay.addWidget(lbl_tit)
         
         lbl_sub = QLabel("Calcula la deuda si los productos fiados se cobraran a los precios de HOY.")
-        lbl_sub.setStyleSheet("color: #64748B; font-size: 12px; border: none;")
+        lbl_sub.setStyleSheet(" font-size: 12px; border: none;")
         lay.addWidget(lbl_sub)
         
         self.tabla = QTableWidget(0, 5)
@@ -142,11 +143,11 @@ class DialogoRecalculoFiado(QDialog):
         
         h_btns = QHBoxLayout()
         btn_cerrar = QPushButton("VOLVER")
-        btn_cerrar.setStyleSheet("background: #F1F5F9; color: #475569; padding: 10px 20px; border-radius: 8px; font-weight: 900;")
+        btn_cerrar.setStyleSheet("  padding: 10px 20px; border-radius: 8px; font-weight: 900;")
         btn_cerrar.clicked.connect(self.reject)
         
         btn_imprimir = QPushButton("🖨️ IMPRIMIR REPORTE")
-        btn_imprimir.setStyleSheet("background: #3B82F6; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 900;")
+        btn_imprimir.setStyleSheet(" color: white; padding: 10px 20px; border-radius: 8px; font-weight: 900;")
         btn_imprimir.clicked.connect(self._imprimir)
         
         h_btns.addWidget(btn_cerrar)
@@ -266,10 +267,10 @@ class AdminClientes(QWidget):
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: white; color: #1E3A8A; font-weight: 800; border-radius: 8px; 
+                background: white;  font-weight: 800; border-radius: 8px; 
                 padding: 10px 20px; border: 1px solid #CBD5E1; font-size: 12px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: #F1F5F9; color: #EA580C; }
+            QPushButton:hover {   }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         
@@ -277,13 +278,13 @@ class AdminClientes(QWidget):
         header_lay.addSpacing(15)
         
         lbl_titulo = QLabel("💎 CARTERA DE CLIENTES Y CRÉDITO")
-        lbl_titulo.setStyleSheet("font-size: 20px; font-weight: 900; color: #1E3A8A; letter-spacing: 1px;")
+        lbl_titulo.setStyleSheet("font-size: 20px; font-weight: 900;  letter-spacing: 1px;")
         
         self.btn_nuevo = QPushButton("+ NUEVO CLIENTE")
         self.btn_nuevo.setCursor(Qt.PointingHandCursor)
         self.btn_nuevo.setStyleSheet("""
-            QPushButton { background-color: #3B82F6; color: white; padding: 12px 24px; font-weight: 900; border-radius: 8px; font-size: 13px; }
-            QPushButton:hover { background-color: #2563EB; }
+            QPushButton {  color: white; padding: 12px 24px; font-weight: 900; border-radius: 8px; font-size: 13px; }
+            QPushButton:hover {  }
         """)
         self.btn_nuevo.clicked.connect(self.nuevo_cliente)
         
@@ -311,7 +312,7 @@ class AdminClientes(QWidget):
         
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("🔍 Buscar cliente por nombre...")
-        self.txt_buscar.setStyleSheet("padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #F8FAFC;")
+        self.txt_buscar.setStyleSheet("padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; ")
         self.txt_buscar.textChanged.connect(self.cargar_clientes)
         pt_lay.addWidget(self.txt_buscar)
         
@@ -327,7 +328,7 @@ class AdminClientes(QWidget):
         self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla.setStyleSheet("""
             QTableWidget { border: none; font-size: 13px; }
-            QHeaderView::section { background-color: #F8FAFC; font-weight: 900; color: #475569; border: none; padding: 12px; }
+            QHeaderView::section {  font-weight: 900;  border: none; padding: 12px; }
             QTableWidget::item { padding: 5px; }
         """)
         pt_lay.addWidget(self.tabla)
@@ -389,7 +390,7 @@ class AdminClientes(QWidget):
                 btn_sim = QPushButton("Ver Actualizado")
                 btn_sim.setCursor(Qt.PointingHandCursor)
                 if deuda > 0:
-                    btn_sim.setStyleSheet("background: #DBEAFE; color: #1E3A8A; font-weight: bold; border-radius: 6px; padding: 6px;")
+                    btn_sim.setStyleSheet("  font-weight: bold; border-radius: 6px; padding: 6px;")
                     btn_sim.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre']: DialogoRecalculoFiado(cid, cnom, self).exec_())
                 else:
                     btn_sim.setEnabled(False)
@@ -401,9 +402,9 @@ class AdminClientes(QWidget):
                 btn_abonar.setCursor(Qt.PointingHandCursor)
                 if deuda <= 0:
                     btn_abonar.setEnabled(False)
-                    btn_abonar.setStyleSheet("background-color: #E2E8F0; color: white; border-radius: 6px; padding: 6px;")
+                    btn_abonar.setStyleSheet(" color: white; border-radius: 6px; padding: 6px;")
                 else:
-                    btn_abonar.setStyleSheet("background-color: #10B981; color: white; border-radius: 6px; padding: 6px; font-weight: bold;")
+                    btn_abonar.setStyleSheet(" color: white; border-radius: 6px; padding: 6px; font-weight: bold;")
                     btn_abonar.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu))
                 self.tabla.setCellWidget(i, 6, btn_abonar)
                 

@@ -1,334 +1,362 @@
+"""
+perfil_pantalla.py — Selector de Perfil
+Paleta: Warm-Cold 2026 — fondo marfil cálido, acentos mezclados cálido+frío,
+letras siempre bien marcadas y legibles.
+"""
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QFrame, QGraphicsDropShadowEffect)
 from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QLinearGradient, QPainter, QBrush
+
+
+# ── Paleta global Warm-Cold ───────────────────────────────────────────────────
+WC = {
+    "bg":          "#FEF8EF",   # marfil cálido muy suave
+    "surface":     "#FFFFFF",
+    "text":        "#1C1917",   # marrón casi negro (cálido oscuro)
+    "text2":       "#57534E",   # marrón medio (cálido)
+    "text3":       "#A8A29E",   # stone claro
+    "border":      "#E7E0D8",   # borde beige
+    "shadow_warm": (217, 119,  6, 30),   # ámbar suave
+    "shadow_cold": ( 99, 102, 241, 20),  # índigo suave
+}
+
+# Tarjetas — (accent_hex, bg_pill_hex, tag_text, tag_color)
+CARD_STYLE = {
+    "cajero": ("#0284C7", "#E0F2FE", "VENTA DIRECTA",  "#0369A1"),  # azul frío
+    "admin":  ("#059669", "#DCFCE7", "FULL ACCESS",    "#047857"),  # verde templado
+    "jefe":   ("#D97706", "#FEF3C7", "ACCESO GERENCIAL","#B45309"), # ámbar cálido
+}
 
 
 class ProfileCard(QFrame):
-    """Tarjeta de perfil interactiva — Light Premium 2026."""
+    """Tarjeta de perfil — Warm-Cold Premium 2026."""
     clicked = pyqtSignal()
 
-    def __init__(self, accent_color_hex, parent=None):
+    def __init__(self, role_key: str, icon: str, title: str, desc: str, parent=None):
         super().__init__(parent)
-        self.accent_hex = accent_color_hex
+        accent, bg_pill, tag_text, tag_fg = CARD_STYLE[role_key]
+        self._accent  = accent
+        self._bg_pill = bg_pill
         self.is_active = False
-        self.r, self.g, self.b = self._hex_to_rgb(accent_color_hex)
+        r, g, b = self._hex(accent)
 
-        self.setFixedSize(220, 210)
+        self.setFixedSize(230, 215)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("background: transparent; border: none;")
 
-        # Contenedor interno que flota
+        # Marco interno
         self.inner = QFrame(self)
-        self.inner.setGeometry(0, 15, 220, 185)
-
+        self.inner.setGeometry(0, 14, 230, 190)
         self._shadow = QGraphicsDropShadowEffect(self)
         self._shadow.setBlurRadius(20)
-        self._shadow.setColor(QColor(self.r, self.g, self.b, 30))
+        self._shadow.setColor(QColor(r, g, b, 28))
         self._shadow.setOffset(0, 6)
         self.inner.setGraphicsEffect(self._shadow)
+        self._set_idle_style()
 
+        # Animación lift
         self.anim = QPropertyAnimation(self.inner, b"pos")
-        self.anim.setDuration(150)
+        self.anim.setDuration(160)
         self.anim.setEasingCurve(QEasingCurve.OutQuad)
 
-    def _hex_to_rgb(self, hex_str):
-        h = hex_str.lstrip('#')
+        # Layout interno
+        lay = QVBoxLayout(self.inner)
+        lay.setContentsMargins(18, 18, 18, 16)
+        lay.setSpacing(0)
+
+        # Tag pill
+        tag = QLabel(tag_text)
+        tag.setAlignment(Qt.AlignCenter)
+        tag.setFixedHeight(20)
+        tag.setStyleSheet(f"""
+            font-size: 8px; font-weight: 900; letter-spacing: 2px;
+            color: {tag_fg};
+            background: {bg_pill};
+            border: none; border-radius: 6px;
+            padding: 2px 10px;
+            font-family: 'Segoe UI', sans-serif;
+        """)
+        tag_wrap = QHBoxLayout()
+        tag_wrap.addStretch(); tag_wrap.addWidget(tag); tag_wrap.addStretch()
+        lay.addLayout(tag_wrap)
+        lay.addSpacing(10)
+
+        # Ícono
+        ico = QLabel(icon)
+        ico.setFixedSize(62, 62)
+        ico.setAlignment(Qt.AlignCenter)
+        ico.setStyleSheet(f"""
+            font-size: 30px;
+            background: {bg_pill};
+            border-radius: 18px; border: none;
+        """)
+        ico_wrap = QHBoxLayout()
+        ico_wrap.addStretch(); ico_wrap.addWidget(ico); ico_wrap.addStretch()
+        lay.addLayout(ico_wrap)
+        lay.addSpacing(12)
+
+        # Título
+        self.lbl_title = QLabel(title)
+        self.lbl_title.setAlignment(Qt.AlignCenter)
+        self.lbl_title.setStyleSheet(f"""
+            font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
+            color: {WC['text']};
+            font-family: 'Segoe UI', 'Outfit', sans-serif;
+            background: transparent; border: none;
+        """)
+        lay.addWidget(self.lbl_title)
+        lay.addSpacing(4)
+
+        # Descripción
+        self.lbl_desc = QLabel(desc)
+        self.lbl_desc.setAlignment(Qt.AlignCenter)
+        self.lbl_desc.setWordWrap(True)
+        self.lbl_desc.setStyleSheet(f"""
+            font-size: 10px; font-weight: 600; color: {WC['text2']};
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
+        """)
+        lay.addWidget(self.lbl_desc)
+
+    @staticmethod
+    def _hex(h):
+        h = h.lstrip('#')
         return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+    def _set_idle_style(self):
+        self.inner.setStyleSheet(f"""
+            QFrame {{
+                background: {WC['surface']};
+                border-radius: 22px;
+                border: 1.5px solid {WC['border']};
+            }}
+        """)
+        r, g, b = self._hex(self._accent)
+        self._shadow.setBlurRadius(18)
+        self._shadow.setColor(QColor(r, g, b, 28))
+        self._shadow.setOffset(0, 5)
+
+    def _set_hover_style(self):
+        r, g, b = self._hex(self._accent)
+        self.inner.setStyleSheet(f"""
+            QFrame {{
+                background: {WC['surface']};
+                border-radius: 22px;
+                border: 2px solid rgba({r},{g},{b},0.55);
+            }}
+        """)
+        self._shadow.setBlurRadius(28)
+        self._shadow.setColor(QColor(r, g, b, 70))
+        self._shadow.setOffset(0, 10)
+
+    def _set_active_style(self):
+        r, g, b = self._hex(self._accent)
+        self.inner.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba({r},{g},{b},0.07),
+                    stop:1 rgba({r},{g},{b},0.03));
+                border-radius: 22px;
+                border: 2px solid rgba({r},{g},{b},0.80);
+            }}
+        """)
+        self._shadow.setBlurRadius(32)
+        self._shadow.setColor(QColor(r, g, b, 80))
+        self._shadow.setOffset(0, 12)
 
     def set_active(self, active: bool):
         self.is_active = active
         self.anim.stop()
         if active:
             self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 5))
+            self.anim.setEndValue(QPoint(0, 4))
             self.anim.start()
-            self._shadow.setBlurRadius(28)
-            self._shadow.setColor(QColor(self.r, self.g, self.b, 70))
-            self._shadow.setOffset(0, 12)
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 rgba({self.r},{self.g},{self.b},0.08),
-                        stop:1 rgba({self.r},{self.g},{self.b},0.03));
-                    border: 2px solid rgba({self.r},{self.g},{self.b},0.75);
-                    border-radius: 24px;
-                }}
-            """)
+            self._set_active_style()
         else:
             self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 15))
+            self.anim.setEndValue(QPoint(0, 14))
             self.anim.start()
-            self._shadow.setBlurRadius(20)
-            self._shadow.setColor(QColor(self.r, self.g, self.b, 30))
-            self._shadow.setOffset(0, 6)
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: #FFFFFF;
-                    border: 1.5px solid rgba({self.r},{self.g},{self.b},0.18);
-                    border-radius: 24px;
-                }}
-            """)
+            self._set_idle_style()
 
     def enterEvent(self, event):
         super().enterEvent(event)
         if not self.is_active:
             self.anim.stop()
             self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 5))
+            self.anim.setEndValue(QPoint(0, 4))
             self.anim.start()
-            self._shadow.setBlurRadius(28)
-            self._shadow.setColor(QColor(self.r, self.g, self.b, 60))
-            self._shadow.setOffset(0, 12)
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 rgba({self.r},{self.g},{self.b},0.06),
-                        stop:1 rgba({self.r},{self.g},{self.b},0.02));
-                    border: 2px solid rgba({self.r},{self.g},{self.b},0.50);
-                    border-radius: 24px;
-                }}
-            """)
+            self._set_hover_style()
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
         if not self.is_active:
             self.anim.stop()
             self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 15))
+            self.anim.setEndValue(QPoint(0, 14))
             self.anim.start()
-            self._shadow.setBlurRadius(20)
-            self._shadow.setColor(QColor(self.r, self.g, self.b, 30))
-            self._shadow.setOffset(0, 6)
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: #FFFFFF;
-                    border: 1.5px solid rgba({self.r},{self.g},{self.b},0.18);
-                    border-radius: 24px;
-                }}
-            """)
+            self._set_idle_style()
 
     def mousePressEvent(self, event):
         self.clicked.emit()
 
 
 class PerfilPantalla(QDialog):
-    """PASO 2: SELECCIÓN DE PERFIL — Light Premium 2026."""
+    """PASO 2: SELECCIÓN DE PERFIL — Warm-Cold Premium 2026."""
     perfil_seleccionado = pyqtSignal(str)
+
+    # Orden visual: 0=cajero, 1=admin, 2=jefe
+    _ROLES  = ["cajero", "admin", "jefe"]
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(600, 480)
-        self.selected_index = 1
+        self.setFixedSize(840, 490)
+        self.selected_index = 0
         self._setup_ui()
         self.update_selection_ui()
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso2")
-        except:
+        except Exception:
             pass
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 20, 20, 20)
 
-        # Contenedor — blanco sin bordes duros
+        # ── Contenedor principal ──────────────────────────────────────────────
         self.container = QFrame()
         self.container.setObjectName("PerfilContainer")
-        self.container.setStyleSheet("""
-            QFrame#PerfilContainer {
-                background: #FFFFFF;
+        self.container.setStyleSheet(f"""
+            QFrame#PerfilContainer {{
+                background: {WC['bg']};
                 border-radius: 28px;
                 border: none;
-            }
+            }}
         """)
-
-        # Sombra exterior extra suave
-        outer_shadow = QGraphicsDropShadowEffect(self)
-        outer_shadow.setBlurRadius(45)
-        outer_shadow.setColor(QColor(99, 102, 241, 35))
-        outer_shadow.setOffset(0, 12)
-        self.container.setGraphicsEffect(outer_shadow)
+        outer_sh = QGraphicsDropShadowEffect(self)
+        outer_sh.setBlurRadius(50)
+        outer_sh.setColor(QColor(120, 80, 20, 45))   # sombra cálida
+        outer_sh.setOffset(0, 14)
+        self.container.setGraphicsEffect(outer_sh)
         root.addWidget(self.container)
 
         main_lay = QVBoxLayout(self.container)
         main_lay.setContentsMargins(0, 0, 0, 0)
         main_lay.setSpacing(0)
 
-        # ── Header (Integrado sin divisiones) ─────────────────────────────────
-        header_frame = QFrame()
-        header_frame.setStyleSheet("""
+        # ── Franja superior decorativa (gradiente cálido→frío) ────────────────
+        stripe = QFrame()
+        stripe.setFixedHeight(5)
+        stripe.setStyleSheet("""
             QFrame {
-                background: transparent;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0.00 #D97706,
+                    stop:0.35 #EA580C,
+                    stop:0.65 #6366F1,
+                    stop:1.00 #0284C7);
+                border-radius: 0px;
+                border-top-left-radius: 28px;
+                border-top-right-radius: 28px;
                 border: none;
             }
         """)
-        header_inner = QVBoxLayout(header_frame)
-        header_inner.setContentsMargins(0, 24, 0, 8)
+        main_lay.addWidget(stripe)
 
-        badge = QLabel("⬡  IDENTIFICACIÓN DE ENTORNO  ⬡")
-        badge.setStyleSheet("""
-            color: #6366F1;
-            font-size: 10px;
-            font-weight: 900;
-            letter-spacing: 4px;
-            font-family: 'Segoe UI', sans-serif;
-            background: transparent;
-            border: none;
-        """)
-        badge.setAlignment(Qt.AlignCenter)
-        header_inner.addWidget(badge)
-        main_lay.addWidget(header_frame)
-
-        # ── Content ───────────────────────────────────────────────────────────
+        # ── Contenido ─────────────────────────────────────────────────────────
         content = QVBoxLayout()
-        content.setContentsMargins(36, 12, 36, 28)
-        content.setSpacing(20)
+        content.setContentsMargins(40, 28, 40, 32)
+        content.setSpacing(0)
 
-        title = QLabel("Bienvenido")
-        title.setStyleSheet("""
-            font-size: 28px;
-            font-weight: 900;
-            color: #0F172A;
-            font-family: 'Segoe UI', 'Outfit', sans-serif;
-            letter-spacing: -0.5px;
-            background: transparent;
-            border: none;
-        """)
-        title.setAlignment(Qt.AlignCenter)
-
-        subtitle = QLabel("Selecciona tu rol operativo para continuar")
-        subtitle.setStyleSheet("""
-            font-size: 13px;
-            color: #64748B;
+        # Badge
+        badge = QLabel("⬡  IDENTIFICACIÓN DE ENTORNO  ⬡")
+        badge.setAlignment(Qt.AlignCenter)
+        badge.setStyleSheet("""
+            font-size: 9px; font-weight: 900; letter-spacing: 4px;
+            color: #D97706;
+            background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
-            background: transparent;
-            border: none;
         """)
-        subtitle.setAlignment(Qt.AlignCenter)
+        content.addWidget(badge)
+        content.addSpacing(10)
 
+        # Título
+        title = QLabel("Bienvenido")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet(f"""
+            font-size: 30px; font-weight: 900; letter-spacing: -1px;
+            color: {WC['text']};
+            font-family: 'Segoe UI', 'Outfit', sans-serif;
+            background: transparent; border: none;
+        """)
         content.addWidget(title)
-        content.addWidget(subtitle)
+        content.addSpacing(6)
 
-        # Cards
+        # Subtítulo
+        subtitle = QLabel("Selecciona tu rol operativo para continuar")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet(f"""
+            font-size: 12px; font-weight: 600; color: {WC['text2']};
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
+        """)
+        content.addWidget(subtitle)
+        content.addSpacing(28)
+
+        # ── Cards ─────────────────────────────────────────────────────────────
         cards_lay = QHBoxLayout()
         cards_lay.setSpacing(20)
 
-        self.btn_admin = self._create_card(
-            icon="👔", title="ADMINISTRADOR",
-            desc="Gestión · Inventarios · Reportes",
-            accent="#10B981", tag="FULL ACCESS"
-        )
-        self.btn_admin.clicked.connect(lambda: self._elegir("admin"))
-
-        self.btn_cajero = self._create_card(
-            icon="🛒", title="CAJERO / POS",
-            desc="Ventas rápidas · Cobro directo",
-            accent="#3B82F6", tag="VENTA DIRECTA"
-        )
+        self.btn_cajero = ProfileCard(
+            "cajero", "🛒", "CAJERO / POS",
+            "Ventas rápidas · Cobro directo")
         self.btn_cajero.clicked.connect(lambda: self._elegir("cajero"))
 
-        cards_lay.addWidget(self.btn_admin)
+        self.btn_admin = ProfileCard(
+            "admin", "👔", "ADMINISTRADOR",
+            "Gestión · Inventarios · Reportes")
+        self.btn_admin.clicked.connect(lambda: self._elegir("admin"))
+
+        self.btn_jefe = ProfileCard(
+            "jefe", "👑", "JEFE / DUEÑO",
+            "Control total · Reportes · Cierres")
+        self.btn_jefe.clicked.connect(lambda: self._elegir("jefe"))
+
+        cards_lay.addStretch()
         cards_lay.addWidget(self.btn_cajero)
+        cards_lay.addWidget(self.btn_admin)
+        cards_lay.addWidget(self.btn_jefe)
+        cards_lay.addStretch()
         content.addLayout(cards_lay)
+        content.addSpacing(22)
 
         # Hint teclado
-        hint = QLabel("← → para navegar  ·  Enter para confirmar")
-        hint.setStyleSheet("""
-            font-size: 10px;
-            color: #94A3B8;
-            font-family: 'Segoe UI', sans-serif;
-            background: transparent;
-            border: none;
-        """)
+        hint = QLabel("←  →  para navegar  ·  Enter para confirmar")
         hint.setAlignment(Qt.AlignCenter)
+        hint.setStyleSheet(f"""
+            font-size: 10px; font-weight: 600; color: {WC['text3']};
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
+        """)
         content.addWidget(hint)
-        
-
 
         main_lay.addLayout(content)
 
-
-
-    def _create_card(self, icon, title, desc, accent, tag):
-        r, g, b = tuple(int(accent.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-
-        btn = ProfileCard(accent)
-
-        # Usamos btn.inner como el contenedor del layout del botón
-        layout = QVBoxLayout(btn.inner)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(8)
-
-        # Tag pill sin bordes duros
-        tag_lbl = QLabel(tag)
-        tag_lbl.setStyleSheet(f"""
-            font-size: 8px; font-weight: 900; letter-spacing: 2px;
-            color: rgba({r},{g},{b},1.0);
-            background: rgba({r},{g},{b},0.10);
-            border: none;
-            border-radius: 6px; padding: 3px 8px;
-            font-family: 'Segoe UI', sans-serif;
-        """)
-        tag_lbl.setAlignment(Qt.AlignCenter)
-        tag_lbl.setFixedHeight(18)
-        tag_wrap = QHBoxLayout()
-        tag_wrap.addStretch()
-        tag_wrap.addWidget(tag_lbl)
-        tag_wrap.addStretch()
-
-        # Icono más grande dentro de círculo
-        icon_lbl = QLabel(icon)
-        icon_lbl.setFixedSize(60, 60)
-        icon_lbl.setAlignment(Qt.AlignCenter)
-        icon_lbl.setStyleSheet(f"""
-            font-size: 32px;
-            background: rgba({r},{g},{b},0.08);
-            border-radius: 30px;
-            border: none;
-        """)
-        icon_wrap = QHBoxLayout()
-        icon_wrap.addStretch()
-        icon_wrap.addWidget(icon_lbl)
-        icon_wrap.addStretch()
-
-        tit_lbl = QLabel(title)
-        tit_lbl.setStyleSheet(f"""
-            font-size: 13px; font-weight: 900; color: #1E293B;
-            letter-spacing: 1px; font-family: 'Segoe UI', sans-serif;
-            border: none; background: transparent;
-        """)
-        tit_lbl.setAlignment(Qt.AlignCenter)
-
-        desc_lbl = QLabel(desc)
-        desc_lbl.setStyleSheet("""
-            font-size: 10px; color: #64748B;
-            font-family: 'Segoe UI', sans-serif;
-            border: none; background: transparent;
-        """)
-        desc_lbl.setAlignment(Qt.AlignCenter)
-        desc_lbl.setWordWrap(True)
-
-        layout.addLayout(tag_wrap)
-        layout.addSpacing(2)
-        layout.addLayout(icon_wrap)
-        layout.addWidget(tit_lbl)
-        layout.addWidget(desc_lbl)
-        return btn
-
     def update_selection_ui(self):
-        self.btn_admin.set_active(self.selected_index == 0)
-        self.btn_cajero.set_active(self.selected_index == 1)
+        self.btn_cajero.set_active(self.selected_index == 0)
+        self.btn_admin.set_active(self.selected_index == 1)
+        self.btn_jefe.set_active(self.selected_index == 2)
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
-            self.selected_index = 1 if self.selected_index == 0 else 0
+            delta = 1 if event.key() == Qt.Key_Right else -1
+            self.selected_index = (self.selected_index + delta) % 3
             self.update_selection_ui()
             event.accept()
         elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self._elegir("admin" if self.selected_index == 0 else "cajero")
+            self._elegir(self._ROLES[self.selected_index])
             event.accept()
         else:
             super().keyPressEvent(event)
@@ -336,4 +364,3 @@ class PerfilPantalla(QDialog):
     def _elegir(self, rol):
         self.perfil_seleccionado.emit(rol)
         self.accept()
-
