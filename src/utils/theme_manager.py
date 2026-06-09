@@ -79,25 +79,62 @@ class ThemeManager(QObject):
         return palettes[self.current_theme].get(element, "#FF00FF")
 
     def apply_to_admin(self, widget):
-        bg = self.get_color("app_bg")
-        fg = self.get_color("text_title")
-        btn = self.get_color("btn_bg")
+        bg      = self.get_color("app_bg")
+        fg      = self.get_color("text_title")
+        fg2     = self.get_color("text_desc")
+        btn     = self.get_color("btn_bg")
         btn_txt = self.get_color("btn_text")
-        brd = self.get_color("btn_border")
-        
-        # Un stylesheet ultra-limpio 2026 que sobrescribe elementos genéricos
+        brd     = self.get_color("btn_border")
+        nav     = self.get_color("nav_bg")
+
+        # Inputs: blanco/negro en light — oscuro/claro en dark
+        inp_bg = "#FFFFFF" if self.current_theme == "light" else "#1E293B"
+        inp_fg = "#0F172A" if self.current_theme == "light" else "#F1F5F9"
+        tbl_bg = "#FFFFFF" if self.current_theme == "light" else "#0F172A"
+        tbl_fg = "#0F172A" if self.current_theme == "light" else "#F1F5F9"
+        hdr_bg = "#F1F5F9" if self.current_theme == "light" else "#1E293B"
+
         widget.setStyleSheet(f"""
-            QWidget {{ background-color: {bg}; color: {fg}; font-family: 'Segoe UI', sans-serif; }}
-            QFrame {{ background: transparent; border: none; }}
-            QFrame#card {{ background: {btn}; border: 1px solid {brd}; border-radius: 8px; }}
-            QLabel {{ background: transparent; color: {fg}; border: none; }}
-            QPushButton {{ background-color: {btn}; color: {btn_txt}; border: 1px solid {brd}; border-radius: 6px; padding: 8px; font-weight: bold; }}
-            QPushButton:hover {{ background-color: {brd}; }}
-            QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ background-color: white; color: black; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
-            QTableWidget, QTreeWidget {{ background-color: white; color: black; border: 1px solid {brd}; border-radius: 8px; gridline-color: {brd}; }}
-            QHeaderView::section {{ background-color: {btn}; color: {fg}; font-weight: bold; border: none; border-bottom: 2px solid {brd}; padding: 8px; }}
-            QScrollBar:vertical {{ background: transparent; width: 8px; }}
-            QScrollBar::handle:vertical {{ background: {brd}; border-radius: 4px; }}
+            QWidget                     {{ background-color: {bg}; color: {fg}; font-family: 'Segoe UI', sans-serif; font-size: 13px; }}
+            QFrame                      {{ background: transparent; border: none; color: {fg}; }}
+            QFrame#card                 {{ background: {btn}; border: 1px solid {brd}; border-radius: 8px; }}
+            QLabel                      {{ background: transparent; color: {fg}; border: none; }}
+            QPushButton                 {{ background-color: {btn}; color: {btn_txt}; border: 1px solid {brd}; border-radius: 6px; padding: 8px 14px; font-weight: bold; }}
+            QPushButton:hover           {{ background-color: {brd}; }}
+            QPushButton:pressed         {{ background-color: {fg2}; color: {btn}; }}
+            QPushButton:disabled        {{ color: {brd}; background-color: {bg}; }}
+            QLineEdit                   {{ background-color: {inp_bg}; color: {inp_fg}; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
+            QTextEdit                   {{ background-color: {inp_bg}; color: {inp_fg}; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
+            QPlainTextEdit              {{ background-color: {inp_bg}; color: {inp_fg}; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
+            QComboBox                   {{ background-color: {inp_bg}; color: {inp_fg}; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
+            QComboBox QAbstractItemView {{ background-color: {inp_bg}; color: {inp_fg}; selection-background-color: {brd}; }}
+            QSpinBox, QDoubleSpinBox    {{ background-color: {inp_bg}; color: {inp_fg}; border: 1px solid {brd}; border-radius: 6px; padding: 6px; }}
+            QTableWidget                {{ background-color: {tbl_bg}; color: {tbl_fg}; border: 1px solid {brd}; border-radius: 8px; gridline-color: {brd}; }}
+            QTableWidget QTableCornerButton::section {{ background: {hdr_bg}; }}
+            QTableWidget::item:selected {{ background-color: {brd}; color: {fg}; }}
+            QTreeWidget                 {{ background-color: {tbl_bg}; color: {tbl_fg}; border: 1px solid {brd}; border-radius: 8px; }}
+            QListWidget                 {{ background-color: {tbl_bg}; color: {tbl_fg}; border: 1px solid {brd}; border-radius: 8px; }}
+            QListWidget::item:selected  {{ background-color: {brd}; color: {fg}; }}
+            QHeaderView::section        {{ background-color: {hdr_bg}; color: {fg}; font-weight: bold; border: none; border-bottom: 2px solid {brd}; padding: 8px; }}
+            QTabWidget::pane            {{ background: {bg}; border: 1px solid {brd}; border-radius: 8px; }}
+            QTabBar::tab                {{ background: {btn}; color: {fg}; border: 1px solid {brd}; border-bottom: none; border-radius: 6px 6px 0 0; padding: 8px 18px; margin-right: 2px; }}
+            QTabBar::tab:selected       {{ background: {bg}; color: {fg}; font-weight: bold; }}
+            QTabBar::tab:hover          {{ background: {brd}; }}
+            QGroupBox                   {{ color: {fg}; border: 1px solid {brd}; border-radius: 8px; margin-top: 12px; padding-top: 8px; }}
+            QGroupBox::title            {{ color: {fg}; subcontrol-origin: margin; left: 12px; padding: 0 4px; font-weight: bold; }}
+            QCheckBox                   {{ color: {fg}; background: transparent; spacing: 6px; }}
+            QCheckBox::indicator        {{ width: 16px; height: 16px; border: 1px solid {brd}; border-radius: 3px; background: {inp_bg}; }}
+            QCheckBox::indicator:checked {{ background: #3B82F6; border-color: #3B82F6; }}
+            QRadioButton                {{ color: {fg}; background: transparent; spacing: 6px; }}
+            QScrollBar:vertical         {{ background: transparent; width: 8px; margin: 0; }}
+            QScrollBar::handle:vertical {{ background: {brd}; border-radius: 4px; min-height: 30px; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+            QScrollBar:horizontal       {{ background: transparent; height: 8px; margin: 0; }}
+            QScrollBar::handle:horizontal {{ background: {brd}; border-radius: 4px; min-width: 30px; }}
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}
+            QToolTip                    {{ background: {nav}; color: {fg}; border: 1px solid {brd}; border-radius: 4px; padding: 4px 8px; }}
+            QSplitter::handle           {{ background: {brd}; }}
+            QStatusBar                  {{ background: {btn}; color: {fg2}; }}
         """)
 
 # Instancia global
