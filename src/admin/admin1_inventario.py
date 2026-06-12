@@ -26,7 +26,7 @@ QFrame#header {
     border-radius: 12px;
 }
 QLabel#titulo {
-    color: white;
+    color: #1e293b;
     background: transparent;
     font-size: 22px;
     font-weight: 900;
@@ -48,7 +48,7 @@ QPushButton:hover {
 }
 QPushButton#blue {
     background-color: #2563EB;
-    color: white;
+    color: #1e293b;
     border: none;
 }
 QPushButton#blue:hover {
@@ -305,7 +305,7 @@ class DialogoProducto(QDialog):
         btn_save = QPushButton("💾 Guardar Producto")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.setStyleSheet("""
-            QPushButton {  color: white; font-weight: bold; padding: 15px; border-radius: 10px; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 15px; border-radius: 10px; }
             QPushButton:hover {  }
         """)
         btn_save.clicked.connect(self._ok)
@@ -1293,7 +1293,7 @@ class Admin1Inventario(QWidget):
         self.btn_precarga.clicked.connect(lambda: self.catalogo._descargar_precarga())
         self.btn_unificar = QPushButton("🧹 UNIFICAR DUPLICADOS")
         self.btn_unificar.setStyleSheet("""
-            QPushButton {  color: white; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; }
+            QPushButton {  background-color: #3b82f6; color: white; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; }
             QPushButton:hover {  }
         """)
         self.btn_unificar.clicked.connect(lambda: self.catalogo._unificar_duplicados())
@@ -1306,7 +1306,7 @@ class Admin1Inventario(QWidget):
         
         self.btn_catalogo = QPushButton("📰 CATÁLOGO PDF")
         self.btn_catalogo.setStyleSheet("""
-            QPushButton {  color: white; border-radius: 8px; font-weight: bold; padding: 10px 20px; font-size: 11px; }
+            QPushButton {  background-color: #3b82f6; color: white; border-radius: 8px; font-weight: bold; padding: 10px 20px; font-size: 11px; }
             QPushButton:hover {  }
         """)
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
@@ -1405,7 +1405,7 @@ class Admin1Inventario(QWidget):
         dlg.setFixedSize(500, 420)
         dlg.setStyleSheet("""
             QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
             QPushButton:hover {  }
             QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
             QRadioButton { spacing: 8px; font-weight: bold; }

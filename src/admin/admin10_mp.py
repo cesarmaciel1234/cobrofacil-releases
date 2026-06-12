@@ -149,7 +149,7 @@ class Admin10MP(QWidget):
         
         # --- HEADER ---
         header = QFrame()
-        header.setStyleSheet(" color: white;")
+        header.setStyleSheet(" background-color: #1e293b; color: white;")
         header.setFixedHeight(70)
         hl = QHBoxLayout(header)
         hl.setContentsMargins(20, 0, 20, 0)
@@ -188,19 +188,19 @@ class Admin10MP(QWidget):
         self.txt_token.setEchoMode(QLineEdit.PasswordEchoOnEdit)
         
         btn_guardar = QPushButton("Guardar e Iniciar")
-        btn_guardar.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_guardar.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_guardar.clicked.connect(self.iniciar_monitor)
         
         btn_sync = QPushButton("🔄 Sincronizar Histórico")
-        btn_sync.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_sync.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_sync.clicked.connect(self.sincronizar_historico)
         
         btn_import_csv = QPushButton("📥 Importar CSV Oficial MP")
-        btn_import_csv.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_import_csv.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_import_csv.clicked.connect(self.importar_csv_mercado_pago)
         
         btn_probar = QPushButton("Simular")
-        btn_probar.setStyleSheet(" color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
+        btn_probar.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
         btn_probar.clicked.connect(self.simular_pago)
         
         ftl.addWidget(lbl_tok)

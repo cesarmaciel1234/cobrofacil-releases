@@ -1,0 +1,16 @@
+def __init__(self, parent=None):
+        super().__init__(parent)
+        self._db = None
+        self._loaded = False
+        self.setObjectName("JefeContabilidad")
+        self.setStyleSheet(f"QWidget#JefeContabilidad {{ background: {PAL['bg']}; }}")
+        self._build_skeleton()
+
+    # ── Carga diferida al primer showEvent ────────────────────────────────────
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self._loaded:
+            self._loaded = True
+            QTimer.singleShot(60, self._load_db_and_build)
+
+    def _load_db_and_build

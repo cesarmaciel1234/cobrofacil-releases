@@ -67,7 +67,7 @@ class DialogoNuevoCliente(QDialog):
                 padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; 
             }
             QPushButton {
-                 color: white; border: none; border-radius: 4px; padding: 8px; font-weight: bold;
+                 color: #1e293b; border: none; border-radius: 4px; padding: 8px; font-weight: bold;
             }
             QPushButton:hover {  }
         """)
@@ -147,7 +147,7 @@ class DialogoRecalculoFiado(QDialog):
         btn_cerrar.clicked.connect(self.reject)
         
         btn_imprimir = QPushButton("🖨️ IMPRIMIR REPORTE")
-        btn_imprimir.setStyleSheet(" color: white; padding: 10px 20px; border-radius: 8px; font-weight: 900;")
+        btn_imprimir.setStyleSheet(" background-color: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 900;")
         btn_imprimir.clicked.connect(self._imprimir)
         
         h_btns.addWidget(btn_cerrar)
@@ -283,7 +283,7 @@ class AdminClientes(QWidget):
         self.btn_nuevo = QPushButton("+ NUEVO CLIENTE")
         self.btn_nuevo.setCursor(Qt.PointingHandCursor)
         self.btn_nuevo.setStyleSheet("""
-            QPushButton {  color: white; padding: 12px 24px; font-weight: 900; border-radius: 8px; font-size: 13px; }
+            QPushButton {  background-color: #3b82f6; color: white; padding: 12px 24px; font-weight: 900; border-radius: 8px; font-size: 13px; }
             QPushButton:hover {  }
         """)
         self.btn_nuevo.clicked.connect(self.nuevo_cliente)
@@ -402,9 +402,9 @@ class AdminClientes(QWidget):
                 btn_abonar.setCursor(Qt.PointingHandCursor)
                 if deuda <= 0:
                     btn_abonar.setEnabled(False)
-                    btn_abonar.setStyleSheet(" color: white; border-radius: 6px; padding: 6px;")
+                    btn_abonar.setStyleSheet(" background-color: #3b82f6; color: white; border-radius: 6px; padding: 6px;")
                 else:
-                    btn_abonar.setStyleSheet(" color: white; border-radius: 6px; padding: 6px; font-weight: bold;")
+                    btn_abonar.setStyleSheet(" background-color: #3b82f6; color: white; border-radius: 6px; padding: 6px; font-weight: bold;")
                     btn_abonar.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu))
                 self.tabla.setCellWidget(i, 6, btn_abonar)
                 

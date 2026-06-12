@@ -67,12 +67,13 @@
         "Mixto"
     ],
     "email_report_active": true,
-    "email_dest": "cesarjaviemaciel@gmail.com",
+    "email_dest": "cesarjaviermaciel@gmail.com.com",
     "opt_stock_negativo": true,
     "opt_ventas_credito": true,
     "opt_impresion_auto": true,
     "opt_control_stock": true,
     "opt_solicitar_cajero": true,
     "opt_bot_asistente": true,
-    "opt_devoluciones": true
+    "opt_devoluciones": true,
+    "last_weekly_report_sent": "2026-W24"
 }

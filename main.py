@@ -168,6 +168,12 @@ def launch_app():
                 app.processEvents()
                 return 0
         elif step == 2:
+            if role_selected == "carteleria":
+                from src.config import config
+                config.current_user = {"role": "carteleria"}
+                step = 4
+                continue
+                
             login_dlg = LoginPantalla(role_selected)
             if login_dlg.exec_():
                 login_dlg.hide()

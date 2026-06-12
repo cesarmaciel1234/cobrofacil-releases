@@ -122,7 +122,7 @@ class Admin13Hardware(QWidget):
         cp1_lay.addWidget(self.cmb_p1)
         btn_test1 = QPushButton("📄 ENVIAR TEST P1")
         btn_test1.setCursor(Qt.PointingHandCursor)
-        btn_test1.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+        btn_test1.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
         btn_test1.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p1.currentText()))
         cp1_lay.addStretch(); cp1_lay.addWidget(btn_test1)
         top_grid.addWidget(card_p1, 0, 0)
@@ -139,7 +139,7 @@ class Admin13Hardware(QWidget):
         cp2_lay.addWidget(self.cmb_p2)
         btn_test2 = QPushButton("📄 ENVIAR TEST P2")
         btn_test2.setCursor(Qt.PointingHandCursor)
-        btn_test2.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+        btn_test2.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
         btn_test2.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p2.currentText()))
         cp2_lay.addStretch(); cp2_lay.addWidget(btn_test2)
         top_grid.addWidget(card_p2, 0, 1)
@@ -181,11 +181,11 @@ class Admin13Hardware(QWidget):
         h_btns = QHBoxLayout()
         self.btn_open_p1 = QPushButton("📥 ABRIR CAJÓN")
         self.btn_open_p1.setCursor(Qt.PointingHandCursor)
-        self.btn_open_p1.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
+        self.btn_open_p1.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
         self.btn_open_p1.clicked.connect(lambda: self.test_drawer_via_printer(1))
         self.btn_test_alarm = QPushButton("🚨 ALARMA")
         self.btn_test_alarm.setCursor(Qt.PointingHandCursor)
-        self.btn_test_alarm.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
+        self.btn_test_alarm.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 6px;")
         self.btn_test_alarm.clicked.connect(self.test_alarm)
         h_btns.addWidget(self.btn_open_p1); h_btns.addWidget(self.btn_test_alarm)
         sec_lay.addLayout(h_btns)
@@ -218,10 +218,10 @@ class Admin13Hardware(QWidget):
         def update_vk_btn_style(checked):
             if checked:
                 self.btn_toggle_vk.setText("✅ AUTOMÁTICO: ENCENDIDO")
-                self.btn_toggle_vk.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_vk.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             else:
                 self.btn_toggle_vk.setText("❌ AUTOMÁTICO: APAGADO")
-                self.btn_toggle_vk.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_vk.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             config.set("auto_virtual_keyboard", checked)
             
         self.btn_toggle_vk.toggled.connect(update_vk_btn_style)
@@ -250,10 +250,10 @@ class Admin13Hardware(QWidget):
         def update_afip_btn_style(checked):
             if checked:
                 self.btn_toggle_afip.setText("✅ AFIP GLOBAL: ENCENDIDO")
-                self.btn_toggle_afip.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_afip.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             else:
                 self.btn_toggle_afip.setText("❌ AFIP GLOBAL: APAGADO")
-                self.btn_toggle_afip.setStyleSheet(" color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
+                self.btn_toggle_afip.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             config.set("facturacion_afip_global", checked)
             
         self.btn_toggle_afip.toggled.connect(update_afip_btn_style)
@@ -317,7 +317,7 @@ class Admin13Hardware(QWidget):
         self.txt_cmd_input.setPlaceholderText("C:\\> Escribe un comando aquí y presiona ENTER...")
         self.txt_cmd_input.setStyleSheet("""
             QLineEdit {
-                 color: white; font-family: 'Consolas', 'Courier New', monospace;
+                 color: #1e293b; font-family: 'Consolas', 'Courier New', monospace;
                 font-size: 13px; font-weight: bold; border: 2px solid #0284c7; border-top: none;
                 border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; padding: 12px;
             }

@@ -324,7 +324,7 @@ class Admin14VentasDigitales(QWidget):
 
         # Header
         hdr = QFrame()
-        hdr.setStyleSheet(" color:white;")
+        hdr.setStyleSheet(" color: #1e293b;")
         hdr.setFixedHeight(68)
         hhl = QHBoxLayout(hdr)
         hhl.setContentsMargins(18, 0, 18, 0)
@@ -455,7 +455,7 @@ class Admin14VentasDigitales(QWidget):
         self.tabla.setStyleSheet(
             "QTableWidget{background:white; alternate- font-size:13px;"
             "border:1px solid #e2e8f0; border-radius:8px;}"
-            "QHeaderView::section{ color:white; font-weight:bold;"
+            "QHeaderView::section{ background-color: #1e293b; color: white; font-weight:bold;"
             "padding:8px 5px; border:none;}")
         self.tabla.setAlternatingRowColors(True)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)

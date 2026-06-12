@@ -17,21 +17,11 @@ except ImportError:
     config = None
 
 # ── Paleta global Light Soft ──────────────────────────────────────────────────
-L = {
-    "bg":          "#F5F7FF",   # fondo lavanda muy suave
-    "surface":     "#FFFFFF",   # superficies blancas
-    "nav_bg":      "#FFFFFF",
-    "nav_border":  "#E8ECF8",
-    "text":        "#1E293B",   # pizarra oscuro
-    "text2":       "#64748B",   # slate medio
-    "text3":       "#94A3B8",   # slate claro
-    "border":      "#E8ECF8",
-    "shadow":      (99, 102, 241, 18),  # rgba indigo suave
-}
+from src.jefe.theme_pro import THEME_PRO as L
 
 # ── Módulos del Jefe ──────────────────────────────────────────────────────────
 JEFE_MODULES = [
-    ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 4,  None),
+    ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
     ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
     ("contabilidad", "Contabilidad\nERP",         "💹", "#F59E0B", "#FEF3C7", "#92400E", 9,  None),
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
@@ -63,15 +53,15 @@ class JefeCard(QFrame):
         self.inner.setStyleSheet(f"""
             QFrame {{
                 background: {L['surface']};
-                border-radius: 20px;
+                border-radius: 24px;
                 border: 1.5px solid {L['border']};
             }}
         """)
 
         # Sombra suave
         self._sh = QGraphicsDropShadowEffect(self)
-        self._sh.setBlurRadius(20)
-        self._sh.setColor(QColor(r, g, b, 35))
+        self._sh.setBlurRadius(30)
+        self._sh.setColor(QColor(r, g, b, 25))
         self._sh.setOffset(0, 6)
         self.inner.setGraphicsEffect(self._sh)
 
@@ -143,11 +133,11 @@ class JefeCard(QFrame):
             self.inner.setStyleSheet(f"""
                 QFrame {{
                     background: {L['surface']};
-                    border-radius: 20px;
+                    border-radius: 24px;
                     border: 2px solid rgba({r},{g},{b},0.55);
                 }}
             """)
-            self._sh.setBlurRadius(28)
+            self._sh.setBlurRadius(40)
             self._sh.setColor(QColor(r, g, b, 70))
             self._sh.setOffset(0, 10)
         super().enterEvent(event)
@@ -162,12 +152,12 @@ class JefeCard(QFrame):
             self.inner.setStyleSheet(f"""
                 QFrame {{
                     background: {L['surface']};
-                    border-radius: 20px;
+                    border-radius: 24px;
                     border: 1.5px solid {L['border']};
                 }}
             """)
-            self._sh.setBlurRadius(20)
-            self._sh.setColor(QColor(r, g, b, 35))
+            self._sh.setBlurRadius(30)
+            self._sh.setColor(QColor(r, g, b, 25))
             self._sh.setOffset(0, 6)
         super().leaveEvent(event)
 
@@ -216,7 +206,7 @@ class Jefe0Dashboard(QWidget):
         brand.setText(
             "<span style='font-size:16px; font-weight:900; color:#1E293B; letter-spacing:-0.5px;'>"
             "TPV PRO</span>"
-            "<span style='font-size:16px; font-weight:900; color:#6366F1;'> 2026</span>"
+            "<span style='font-size:16px; font-weight:900; color: #C084FC;'> 2026</span>"
             "<span style='font-size:11px; font-weight:500; color:#94A3B8; margin-left:12px;'>"
             "  ·  Panel del Jefe</span>"
         )
@@ -295,7 +285,7 @@ class Jefe0Dashboard(QWidget):
         self.lbl_greeting.setStyleSheet(
             "font-size: 26px; font-weight: 900; color: #FFFFFF;"
             " background: transparent; border: none;"
-            " font-family: 'Segoe UI', 'Outfit', sans-serif;")
+            " font-family: 'Inter', 'Segoe UI', sans-serif;")
         self.lbl_sub = QLabel("PANEL DE CONTROL GERENCIAL  ·  ACCESO EXCLUSIVO")
         self.lbl_sub.setStyleSheet(
             "font-size: 9px; font-weight: 800; letter-spacing: 2.5px;"
@@ -384,7 +374,7 @@ class Jefe0Dashboard(QWidget):
         self.setStyleSheet(f"""
             QWidget#JefeDashboard {{
                 background: {L['bg']};
-                font-family: 'Segoe UI', 'Outfit', sans-serif;
+                font-family: 'Inter', 'Segoe UI', sans-serif;
             }}
             QFrame#JefeNav {{
                 background: {L['nav_bg']};
@@ -393,13 +383,13 @@ class Jefe0Dashboard(QWidget):
             QFrame#JefeHero {{
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
-                    stop:0.00 #6366F1,
-                    stop:0.45 #8B5CF6,
-                    stop:0.80 #0EA5E9,
-                    stop:1.00 #10B981
+                    stop:0.00 #818CF8,
+                    stop:0.45 #C084FC,
+                    stop:0.80 #F472B6,
+                    stop:1.00 #FB923C
                 );
-                border-radius: 18px;
-                border: none;
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
             }}
             QLabel {{ background: transparent; border: none; color: {L['text']}; }}
             QScrollArea {{ border: none; background: transparent; }}

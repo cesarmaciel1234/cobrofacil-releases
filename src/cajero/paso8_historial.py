@@ -2,13 +2,12 @@ import sys
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
-    QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit, QCheckBox
+    QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit
 )
 from PyQt5.QtCore import Qt, QDate, QTime, QTimer
 from PyQt5.QtGui import QColor, QBrush, QPainter
 from datetime import datetime
 from src.base_de_datos.database import db_manager
-from src.config import config
 
 def fmt_moneda(val):
     """ Formatea a moneda regional: $1.234,56 """
@@ -47,26 +46,15 @@ class StampLabel(QLabel):
         super().paintEvent(event)
 
 class DialogoHistorialDia(QDialog):
-    def __init__(self, parent=None, is_embedded=False):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.is_embedded = is_embedded
-        if not is_embedded:
-            self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-            self.setAttribute(Qt.WA_TranslucentBackground)
-            self.setFixedSize(910, 760)
-        else:
-            self.setWindowFlags(Qt.Widget)
-            self.setAttribute(Qt.WA_TranslucentBackground, False)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(910, 760)
         
         self.ticket_seleccionado = None
         self.setup_ui()
-        
-        if not is_embedded:
-            self.apply_glow()
-            
-        if self.is_embedded and hasattr(self, 'btn_close'):
-            self.btn_close.hide()
-            
+        self.apply_glow()
         self.cargar_ventas()
 
     def apply_glow(self):
@@ -79,185 +67,72 @@ class DialogoHistorialDia(QDialog):
             glow.setOffset(0, 0)
             container.setGraphicsEffect(glow)
 
-    def apply_theme(self):
-        theme = config.get("theme", "light")
-        if theme == "dark":
-            self.setStyleSheet("""
-                #HistoryDialog { 
-                    background-color: #0F172A; 
-                    border-radius: 20px;
-                    border: 2px solid #334155;
-                }
-                QWidget { font-family: 'Segoe UI', Arial; }
-                QLabel { font-size: 13px; color: #F8FAFC; background: transparent; }
-                
-                QTableWidget { 
-                    background-color: #1E293B; 
-                    gridline-color: #334155; 
-                    border: 1px solid #334155; 
-                    border-radius: 12px;
-                    selection-background-color: #334155; 
-                    selection-color: #38BDF8;
-                    font-size: 13px;
-                    outline: none;
-                    color: #F8FAFC;
-                }
-                QTableWidget::item { padding: 5px; border-bottom: 1px solid #1E293B; }
-                QTableWidget::item:selected {
-                    background-color: #3B82F6;
-                    color: #FFFFFF;
-                    font-weight: 900;
-                }
-                QHeaderView::section { 
-                    background-color: #0F172A; 
-                    color: #94A3B8; 
-                    padding: 8px; 
-                    border: none;
-                    font-weight: 900;
-                    font-size: 11px;
-                    text-transform: uppercase;
-                }
-                
-                QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
-                    border: 2px solid #334155; border-radius: 10px; padding: 5px 10px; background: #1E293B; font-size: 13px; font-weight: 600; color: #F8FAFC;
-                }
-                QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: #0F172A; }
-                QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
-                
-                QPushButton { 
-                    padding: 8px 15px; 
-                    font-size: 13px; 
-                    background: #334155;
-                    border: 2px solid #475569;
-                    border-radius: 8px;
-                    color: #CBD5E1;
-                    font-weight: 900;
-                }
-                QPushButton:hover { background: #475569; border-color: #64748B; }
-                
-                #btnCancelVenta { background: #7F1D1D; color: #FCA5A5; border: none; }
-                #btnCancelVenta:hover { background: #991B1B; }
-                #btnImprimir { background: #1E3A8A; color: #93C5FD; border: none; }
-                #btnImprimir:hover { background: #1E40AF; }
-                
-                #frameDetalle { 
-                    background-color: #1E293B; 
-                    border: 1px solid #334155; 
-                    border-radius: 16px;
-                }
-                #lblTicketPreview { font-size: 22px; font-weight: 900; color: #38BDF8; margin-bottom: 5px; }
-            """)
-            if hasattr(self, 'lbl_titulo'):
-                self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #38BDF8; letter-spacing: 2px; background: transparent;")
-            if hasattr(self, 'footer'):
-                self.footer.setStyleSheet("background: #0F172A; border-top: 1px solid #334155; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
-            if hasattr(self, 'btn_close'):
-                self.btn_close.setStyleSheet("""
-                    QPushButton { 
-                        background-color: #1E293B; 
-                        color: #94A3B8; 
-                        border-radius: 12px; 
-                        font-weight: 900; 
-                        font-size: 13px;
-                        padding: 15px;
-                        border: 2px solid #334155;
-                    }
-                    QPushButton:hover { background-color: #334155; border-color: #475569; color: #F8FAFC; }
-                """)
-            if hasattr(self, 'lbl_det_metodo'):
-                self.lbl_det_metodo.setStyleSheet("color: #38BDF8; font-weight: bold; background: transparent;")
-            if hasattr(self, 'total_card'):
-                self.total_card.setStyleSheet("background-color: #1E293B; border: 2px dashed #334155; border-radius: 12px;")
-                self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #38BDF8; border: none; background: transparent;")
-        else:
-            self.setStyleSheet("""
-                #HistoryDialog { 
-                    background-color: white; 
-                    border-radius: 20px;
-                    border: 2px solid #1E3A8A;
-                }
-                QWidget { font-family: 'Segoe UI', Arial; }
-                QLabel { font-size: 13px; color: #1e293b; background: transparent; }
-                
-                QTableWidget { 
-                    background-color: white; 
-                    gridline-color: #f1f5f9; 
-                    border: 1px solid #e2e8f0; 
-                    border-radius: 12px;
-                    selection-background-color: #EFF6FF; 
-                    selection-color: #1E3A8A;
-                    font-size: 13px;
-                    outline: none;
-                }
-                QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; }
-                QTableWidget::item:selected {
-                    background-color: #EFF6FF;
-                    color: #1E3A8A;
-                    font-weight: 900;
-                }
-                QHeaderView::section { 
-                    background-color: #F8FAFC; 
-                    color: #64748b; 
-                    padding: 8px; 
-                    border: none;
-                    font-weight: 900;
-                    font-size: 11px;
-                    text-transform: uppercase;
-                }
-                
-                QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
-                    border: 2px solid #E2E8F0; border-radius: 10px; padding: 5px 10px; background: #F8FAFC; font-size: 13px; font-weight: 600; color: #1E293B;
-                }
-                QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
-                QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
-                
-                QPushButton { 
-                    padding: 8px 15px; 
-                    font-size: 13px; 
-                    background: white;
-                    border: 2px solid #E2E8F0;
-                    border-radius: 8px;
-                    color: #475569;
-                    font-weight: 900;
-                }
-                QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
-                
-                #btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
-                #btnCancelVenta:hover { background: #FEE2E2; }
-                #btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
-                #btnImprimir:hover { background: #DBEAFE; }
-                
-                #frameDetalle { 
-                    background-color: #F8FAFC; 
-                    border: 1px solid #E2E8F0; 
-                    border-radius: 16px;
-                }
-                #lblTicketPreview { font-size: 22px; font-weight: 900; color: #1E3A8A; margin-bottom: 5px; }
-            """)
-            if hasattr(self, 'lbl_titulo'):
-                self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px; background: transparent;")
-            if hasattr(self, 'footer'):
-                self.footer.setStyleSheet("background: white; border-top: 1px solid #E2E8F0; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
-            if hasattr(self, 'btn_close'):
-                self.btn_close.setStyleSheet("""
-                    QPushButton { 
-                        background-color: #F8FAFC; 
-                        color: #64748B; 
-                        border-radius: 12px; 
-                        font-weight: 900; 
-                        font-size: 13px;
-                        padding: 15px;
-                        border: 2px solid #E2E8F0;
-                    }
-                    QPushButton:hover { background-color: #F1F5F9; border-color: #CBD5E1; color: #1E293B; }
-                """)
-            if hasattr(self, 'lbl_det_metodo'):
-                self.lbl_det_metodo.setStyleSheet("color: #1C2E85; font-weight: bold; background: transparent;")
-            if hasattr(self, 'total_card'):
-                self.total_card.setStyleSheet("background-color: #F8FAFC; border: 2px dashed #93C5FD; border-radius: 12px;")
-                self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #2563EB; border: none; background: transparent;")
-
     def setup_ui(self):
+        self.setStyleSheet("""
+            #HistoryDialog { 
+                background-color: white; 
+                border-radius: 20px;
+                border: 2px solid #1E3A8A;
+            }
+            QWidget { font-family: 'Segoe UI', Arial; }
+            QLabel { font-size: 13px; color: #1e293b; }
+            
+            QTableWidget { 
+                background-color: white; 
+                gridline-color: #f1f5f9; 
+                border: 1px solid #e2e8f0; 
+                border-radius: 12px;
+                selection-background-color: #EFF6FF; 
+                selection-color: #1E3A8A;
+                font-size: 13px;
+                outline: none;
+            }
+            QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; }
+            QTableWidget::item:selected {
+                background-color: #EFF6FF;
+                color: #1E3A8A;
+                font-weight: 900;
+            }
+            QHeaderView::section { 
+                background-color: #F8FAFC; 
+                color: #64748b; 
+                padding: 8px; 
+                border: none;
+                font-weight: 900;
+                font-size: 11px;
+                text-transform: uppercase;
+            }
+            
+            QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
+                border: 2px solid #E2E8F0; border-radius: 10px; padding: 5px 10px; background: #F8FAFC; font-size: 13px; font-weight: 600; color: #1E293B;
+            }
+            QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
+            QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
+            
+            QPushButton { 
+                padding: 8px 15px; 
+                font-size: 13px; 
+                background: white;
+                border: 2px solid #E2E8F0;
+                border-radius: 8px;
+                color: #475569;
+                font-weight: 900;
+            }
+            QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
+            
+            #btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
+            #btnCancelVenta:hover { background: #FEE2E2; }
+            #btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
+            #btnImprimir:hover { background: #DBEAFE; }
+            
+            #frameDetalle { 
+                background-color: #F8FAFC; 
+                border: 1px solid #E2E8F0; 
+                border-radius: 16px;
+            }
+            #lblTicketPreview { font-size: 22px; font-weight: 900; color: #1E3A8A; margin-bottom: 5px; }
+        """)
+
         main_container = QWidget(self)
         main_container.setObjectName("HistoryDialog")
         outer_layout = QVBoxLayout(self)
@@ -278,9 +153,9 @@ class DialogoHistorialDia(QDialog):
         lbl_icon.setStyleSheet("font-size: 24px; background: transparent; border: none;")
         h_layout.addWidget(lbl_icon)
         
-        self.lbl_titulo = QLabel("HISTORIAL DE VENTAS")
-        self.lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px;")
-        h_layout.addWidget(self.lbl_titulo)
+        lbl_titulo = QLabel("HISTORIAL DE VENTAS")
+        lbl_titulo.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px;")
+        h_layout.addWidget(lbl_titulo)
         
         h_layout.addStretch()
         main_vbox.addWidget(header)
@@ -337,11 +212,6 @@ class DialogoHistorialDia(QDialog):
         btn_refresh.clicked.connect(self.cargar_ventas)
         filter_grid.addWidget(btn_refresh, 0, 3)
         
-        self.chk_ver_todo = QCheckBox("Cargar histórico completo (Scroll Infinito)")
-        self.chk_ver_todo.setChecked(True)
-        self.chk_ver_todo.setStyleSheet("font-weight: 900; color: #1E3A8A; font-size: 14px;")
-        filter_grid.addWidget(self.chk_ver_todo, 1, 0, 1, 4)
-        
         # Auditoría / Vigilancia
         filter_grid.addWidget(QLabel("Método:"), 2, 0)
         self.cb_metodo = QComboBox()
@@ -364,6 +234,7 @@ class DialogoHistorialDia(QDialog):
         self.lbl_total_filtrado.setStyleSheet("font-size: 16px; font-weight: 900; color: #2563EB; border: none; background: transparent;")
         self.lbl_total_filtrado.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(self.lbl_total_filtrado)
+        filter_grid.addWidget(self.total_card, 4, 0, 1, 3)
         
         # --- CONEXIONES (Al final para evitar crashes por widgets no creados) ---
         self.txt_search.textChanged.connect(self.cargar_ventas)
@@ -371,15 +242,6 @@ class DialogoHistorialDia(QDialog):
         self.time_desde.timeChanged.connect(self.cargar_ventas)
         self.time_hasta.timeChanged.connect(self.cargar_ventas)
         self.tabla_tickets.itemSelectionChanged.connect(self.mostrar_detalle)
-        self.chk_ver_todo.stateChanged.connect(lambda state: [
-            self.date_filt.setEnabled(not state),
-            self.time_desde.setEnabled(not state),
-            self.time_hasta.setEnabled(not state),
-            self.cargar_ventas()
-        ])
-        self.date_filt.setEnabled(False)
-        self.time_desde.setEnabled(False)
-        self.time_hasta.setEnabled(False)
         
         left_vbox.addLayout(filter_grid)
         content_hbox.addLayout(left_vbox, 45)
@@ -400,18 +262,22 @@ class DialogoHistorialDia(QDialog):
         det_layout.setSpacing(10)
         
         info_grid = QGridLayout()
-        
-        # Guardar folio de forma oculta sin añadir al layout para mantener compatibilidad lógica
+        info_grid.addWidget(QLabel("<b>Folio:</b>"), 0, 0)
         self.lbl_det_folio = QLabel("-")
+        info_grid.addWidget(self.lbl_det_folio, 0, 1)
         
-        info_grid.addWidget(QLabel("<b>Cajero:</b>"), 0, 0)
+        info_grid.addWidget(QLabel("<b>Cajero:</b>"), 1, 0)
         self.lbl_det_cajero = QLabel("-")
-        info_grid.addWidget(self.lbl_det_cajero, 0, 1)
+        info_grid.addWidget(self.lbl_det_cajero, 1, 1)
         
-        info_grid.addWidget(QLabel("<b>Pago:</b>"), 1, 0)
+        info_grid.addWidget(QLabel("<b>Cliente:</b>"), 2, 0)
+        self.lbl_det_cliente = QLabel("Público en general")
+        info_grid.addWidget(self.lbl_det_cliente, 2, 1)
+        
+        info_grid.addWidget(QLabel("<b>Pago:</b>"), 3, 0)
         self.lbl_det_metodo = QLabel("-")
         self.lbl_det_metodo.setStyleSheet("color: #1C2E85; font-weight: bold;")
-        info_grid.addWidget(self.lbl_det_metodo, 1, 1)
+        info_grid.addWidget(self.lbl_det_metodo, 3, 1)
         
         det_layout.addLayout(info_grid)
         
@@ -427,7 +293,7 @@ class DialogoHistorialDia(QDialog):
         self.tabla_detalle.setColumnWidth(0, 50)
         self.tabla_detalle.setColumnWidth(2, 100)
         self.tabla_detalle.verticalHeader().setVisible(False)
-        self.tabla_detalle.setFixedHeight(280)
+        self.tabla_detalle.setFixedHeight(220)
         det_layout.addWidget(self.tabla_detalle)
         
         # --- SELLO CANCELADO (Overlay) ---
@@ -492,41 +358,30 @@ class DialogoHistorialDia(QDialog):
         main_vbox.addLayout(content_hbox)
 
         # 3. FINAL BOTTOM BAR
-        self.footer = QFrame()
-        self.footer.setFixedHeight(80)
-        f_layout = QHBoxLayout(self.footer)
+        footer = QFrame()
+        footer.setFixedHeight(80)
+        footer.setStyleSheet("background: white; border-top: 1px solid #E2E8F0; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;")
+        f_layout = QHBoxLayout(footer)
         f_layout.setContentsMargins(30, 0, 30, 0)
         
-        self.btn_close = QPushButton("✕ CERRAR VENTANA (ESC)")
-        self.btn_close.setFixedWidth(250)
-        self.btn_close.clicked.connect(self.accept)
-        f_layout.addWidget(self.btn_close)
-        
-        self.btn_desglose = QPushButton("📦 Desglose de Artículos")
-        self.btn_desglose.setStyleSheet("""
-            QPushButton { background-color: #10B981; color: white; border: none; font-weight: bold; border-radius: 8px; padding: 10px 20px; }
-            QPushButton:hover { background-color: #059669; }
+        btn_close = QPushButton("✕ CERRAR VENTANA (ESC)")
+        btn_close.setFixedWidth(250)
+        btn_close.setStyleSheet("""
+            QPushButton { 
+                background-color: #F8FAFC; 
+                color: #64748B; 
+                border-radius: 12px; 
+                font-weight: 900; 
+                font-size: 13px;
+                padding: 15px;
+                border: 2px solid #E2E8F0;
+            }
+            QPushButton:hover { background-color: #F1F5F9; border-color: #CBD5E1; color: #1E293B; }
         """)
-        self.btn_desglose.clicked.connect(self.mostrar_desglose_total)
-        f_layout.addWidget(self.btn_desglose)
-        
-        self.btn_exportar = QPushButton("📥 Exportar a Excel")
-        self.btn_exportar.setStyleSheet("""
-            QPushButton { background-color: #3B82F6; color: white; border: none; font-weight: bold; border-radius: 8px; padding: 10px 20px; }
-            QPushButton:hover { background-color: #2563EB; }
-        """)
-        self.btn_exportar.clicked.connect(self.exportar_a_excel)
-        f_layout.addWidget(self.btn_exportar)
-        
+        btn_close.clicked.connect(self.accept)
+        f_layout.addWidget(btn_close)
         f_layout.addStretch()
-        
-        # Mover Total en pantalla aquí al lado de cerrar ventana
-        self.total_card.setFixedSize(280, 48)
-        f_layout.addWidget(self.total_card)
-        
-        main_vbox.addWidget(self.footer)
-        
-        self.apply_theme()
+        main_vbox.addWidget(footer)
 
     def cargar_ventas(self):
         # 1. Obtener datos base con optimización N+1 (GROUP_CONCAT y JOIN) y control de accesos
@@ -543,7 +398,7 @@ class DialogoHistorialDia(QDialog):
                 FROM ventas v
                 LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id
                 GROUP BY v.id
-                ORDER BY v.id DESC
+                ORDER BY v.id DESC LIMIT 500
             """
             raw_res = db_manager.execute_query(query)
         else:
@@ -555,7 +410,7 @@ class DialogoHistorialDia(QDialog):
                 LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id
                 WHERE LOWER(v.usuario) = LOWER(?) AND v.caja_id = ?
                 GROUP BY v.id
-                ORDER BY v.id DESC
+                ORDER BY v.id DESC LIMIT 500
             """
             raw_res = db_manager.execute_query(query, (user, caja_id))
 
@@ -578,17 +433,15 @@ class DialogoHistorialDia(QDialog):
         is_default_time = (t_desde.toString("HH:mm") == "00:00" and t_hasta.toString("HH:mm") == "23:59")
         is_today = (q_date == QDate.currentDate())
         
-        ver_todo = self.chk_ver_todo.isChecked()
-        
         filtered_res = []
         total_exitoso = 0
         
         for r in raw_res:
             f_str = str(r['fecha'])
-            match_date = True if ver_todo else (f_iso in f_str or f_l1 in f_str or f_l2 in f_str)
+            match_date = (f_iso in f_str or f_l1 in f_str or f_l2 in f_str)
             
             match_time = True
-            if not is_default_time and not ver_todo:
+            if not is_default_time:
                 try:
                     dt = None
                     for fmt in ("%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d"):
@@ -789,132 +642,6 @@ class DialogoHistorialDia(QDialog):
             QMessageBox.information(self, "Éxito", f"Copia del ticket #{self.ticket_seleccionado} enviada a impresora.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo reimprimir: {e}")
-
-    def mostrar_desglose_total(self):
-        # 1. Recolectar todos los IDs de la tabla actual (filtrados)
-        row_count = self.tabla_tickets.rowCount()
-        if row_count == 0:
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.information(self, "Desglose", "No hay ventas filtradas para desglosar.")
-            return
-            
-        ids_venta = []
-        for i in range(row_count):
-            item = self.tabla_tickets.item(i, 0)
-            if item: ids_venta.append(item.text())
-            
-        if not ids_venta: return
-        
-        # 2. Consultar BD agrupando por producto
-        placeholders = ",".join("?" for _ in ids_venta)
-        query = f"""
-            SELECT nombre_producto, SUM(cantidad) as total_cant, SUM(subtotal) as total_monto
-            FROM detalles_ventas 
-            WHERE id_venta IN ({placeholders})
-            GROUP BY nombre_producto
-            ORDER BY total_cant DESC
-        """
-        resultados = db_manager.execute_query(query, ids_venta)
-        
-        # 3. Mostrar en un QDialog popup
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView, QPushButton
-        from PyQt5.QtCore import Qt
-        
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Desglose Total de Artículos Vendidos")
-        dlg.setFixedSize(600, 500)
-        
-        layout = QVBoxLayout(dlg)
-        
-        tabla = QTableWidget()
-        tabla.setColumnCount(3)
-        tabla.setHorizontalHeaderLabels(["Producto", "Kilos / Unidades", "Monto Total"])
-        tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
-        tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        
-        if resultados:
-            tabla.setRowCount(len(resultados))
-            for i, r in enumerate(resultados):
-                tabla.setItem(i, 0, QTableWidgetItem(str(r['nombre_producto'])))
-                
-                cant_item = QTableWidgetItem(f"{r['total_cant']:g}")
-                cant_item.setTextAlignment(Qt.AlignCenter)
-                tabla.setItem(i, 1, cant_item)
-                
-                monto_item = QTableWidgetItem(fmt_moneda(r['total_monto']))
-                monto_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                tabla.setItem(i, 2, monto_item)
-                
-        layout.addWidget(tabla)
-        
-        btn_cerrar = QPushButton("Cerrar")
-        btn_cerrar.setFixedHeight(40)
-        btn_cerrar.clicked.connect(dlg.accept)
-        layout.addWidget(btn_cerrar)
-        
-        dlg.exec_()
-
-    def exportar_a_excel(self):
-        from PyQt5.QtWidgets import QFileDialog, QMessageBox
-        try:
-            import openpyxl
-            from openpyxl.styles import Font, Alignment, PatternFill
-            from openpyxl.utils import get_column_letter
-        except ImportError:
-            QMessageBox.critical(self, "Error", "La librería openpyxl no está instalada.")
-            return
-
-        row_count = self.tabla_tickets.rowCount()
-        if row_count == 0:
-            QMessageBox.warning(self, "Aviso", "No hay datos para exportar.")
-            return
-
-        path, _ = QFileDialog.getSaveFileName(self, "Guardar Historial", "Historial_Tickets.xlsx", "Excel Files (*.xlsx)")
-        if not path: return
-
-        try:
-            self.btn_exportar.setText("⏳ EXPORTANDO...")
-            self.btn_exportar.setEnabled(False)
-            
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "Historial"
-
-            headers = ["Folio", "Artículos", "Fecha/Hora", "Total"]
-            for col_num, header_title in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col_num, value=header_title)
-                cell.font = Font(bold=True, color="FFFFFF")
-                cell.fill = PatternFill("solid", fgColor="1E3A8A")
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-
-            for row in range(row_count):
-                for col in range(4):
-                    item = self.tabla_tickets.item(row, col)
-                    val = item.text() if item else ""
-                    
-                    if col == 3:  # Total
-                        val = val.replace("$", "").replace(".", "").replace(",", ".")
-                        try: val = float(val)
-                        except: pass
-                    
-                    cell = ws.cell(row=row+2, column=col+1, value=val)
-                    cell.alignment = Alignment(vertical="center")
-                    if col == 3 and isinstance(val, float):
-                        cell.number_format = '"$"#,##0.00'
-
-            for col_num in range(1, 5):
-                ws.column_dimensions[get_column_letter(col_num)].width = 20
-
-            wb.save(path)
-            QMessageBox.information(self, "Éxito", f"Historial exportado a:\\n{path}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Ocurrió un error al exportar:\\n{e}")
-        finally:
-            self.btn_exportar.setText("📥 Exportar a Excel")
-            self.btn_exportar.setEnabled(True)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape: self.accept()

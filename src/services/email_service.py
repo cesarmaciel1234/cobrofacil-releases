@@ -146,8 +146,8 @@ def enviar_reporte_semanal_si_es_necesario(forzar_envio=False):
     
     # CONFIGURACIÓN MAESTRA DEL CORREO DE ENVÍO
     # TODO: Cuando crees tu correo de Gmail para el sistema, colócalo aquí abajo
-    email_origen = "notificaciones.tpvpro@gmail.com"
-    pwd_origen = "TU_CONTRASENA_DE_APLICACION_AQUI"
+    email_origen = "cesarjaviermaciel@gmail.com"
+    pwd_origen = "mtcy kfyh ekwx lqjl"
     
     email_destino = config.get("email_dest", "")
 

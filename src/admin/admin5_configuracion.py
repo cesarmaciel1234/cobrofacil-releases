@@ -43,7 +43,7 @@ class DialogoSimboloMoneda(QDialog):
         
         btn_save = QPushButton("💾 Guardar")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_save.clicked.connect(self.guardar)
         lay.addWidget(btn_save)
         
@@ -85,7 +85,7 @@ class DialogoUnidadesMedida(QDialog):
         
         btn_save = QPushButton("💾 Guardar")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_save.clicked.connect(self.guardar)
         lay.addWidget(btn_save)
         
@@ -155,13 +155,13 @@ class DialogoNotificacionesCorreo(QDialog):
         
         btn_test = QPushButton("📩 Guardar y Enviar Correo de Prueba")
         btn_test.setCursor(Qt.PointingHandCursor)
-        btn_test.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_test.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_test.clicked.connect(self.probar)
         lay.addWidget(btn_test)
         
         btn_save = QPushButton("💾 Guardar Configuración")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_save.clicked.connect(self.guardar)
         lay.addWidget(btn_save)
         
@@ -254,7 +254,7 @@ class DialogoOpcionesHabilitadas(QDialog):
         
         btn_save = QPushButton("💾 Guardar Permisos")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 14px;")
         btn_save.clicked.connect(self.guardar)
         lay.addWidget(btn_save)
         
@@ -457,7 +457,7 @@ class DialogoCajeros(QDialog):
         
         btn_save = QPushButton("💾 Guardar Usuario")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 12px; border-radius: 10px; font-weight: bold; border: none;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; border-radius: 10px; font-weight: bold; border: none;")
         btn_save.clicked.connect(self.guardar_usuario)
         
         b_lay.addWidget(btn_del, 1)
@@ -604,7 +604,7 @@ class DialogoTicket(QDialog):
         
         btn_save = QPushButton("💾 Guardar y Aplicar")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 6px; font-size: 14px;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; font-weight: bold; border-radius: 6px; font-size: 14px;")
         btn_save.clicked.connect(self.guardar)
         form_layout.addWidget(btn_save)
         
@@ -754,7 +754,7 @@ class DialogoLectorCodigos(QDialog):
         
         layout.addStretch()
         btn = QPushButton("Terminar Prueba")
-        btn.setStyleSheet(" color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
+        btn.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
         btn.clicked.connect(self.accept)
         layout.addWidget(btn)
 
@@ -836,11 +836,11 @@ class DialogoCajon(QDialog):
         
         row_test = QHBoxLayout()
         btn_test = QPushButton("⚡ Probar Apertura (Kick)")
-        btn_test.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
+        btn_test.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
         btn_test.clicked.connect(self.probar_cajon)
         
         btn_alarm = QPushButton("🚨 Probar Alarma SOS")
-        btn_alarm.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
+        btn_alarm.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; font-weight: bold; border-radius: 8px;")
         btn_alarm.clicked.connect(self.probar_alarma)
         
         row_test.addWidget(btn_test)
@@ -850,7 +850,7 @@ class DialogoCajon(QDialog):
         layout.addStretch()
         
         btn_save = QPushButton("Guardar Configuración")
-        btn_save.setStyleSheet(" color: white; padding: 10px; font-weight: bold; border-radius: 8px;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px; font-weight: bold; border-radius: 8px;")
         btn_save.clicked.connect(self.guardar)
         layout.addWidget(btn_save)
 
@@ -914,7 +914,7 @@ class DialogoDosTiketeras(QDialog):
         
         btn_test1 = QPushButton("📄 Test P1")
         btn_test1.setCursor(Qt.PointingHandCursor)
-        btn_test1.setStyleSheet(" color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
+        btn_test1.setStyleSheet(" background-color: #3B82F6; color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
         btn_test1.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p1.currentText()))
         row1.addWidget(btn_test1)
         b1.addLayout(row1)
@@ -942,7 +942,7 @@ class DialogoDosTiketeras(QDialog):
         
         btn_test2 = QPushButton("📄 Test P2")
         btn_test2.setCursor(Qt.PointingHandCursor)
-        btn_test2.setStyleSheet(" color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
+        btn_test2.setStyleSheet(" background-color: #3B82F6; color: white; border-radius: 6px; font-weight: bold; padding: 7px 15px;")
         btn_test2.clicked.connect(lambda: self.print_test_ticket_generic(self.cmb_p2.currentText()))
         row2.addWidget(btn_test2)
         b2.addLayout(row2)
@@ -974,7 +974,7 @@ class DialogoDosTiketeras(QDialog):
         
         btn_save = QPushButton("💾  Guardar")
         btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" color: white; padding: 10px 22px; border-radius: 6px; font-weight: bold;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 10px 22px; border-radius: 6px; font-weight: bold;")
         btn_save.clicked.connect(self._guardar)
         h_btns.addWidget(btn_cancel); h_btns.addStretch(); h_btns.addWidget(btn_save)
         layout.addLayout(h_btns)
@@ -1122,7 +1122,7 @@ class DialogoAdministrarCajas(QDialog):
         layout.addStretch()
 
         btn_save = QPushButton("💾 Guardar Identificador")
-        btn_save.setStyleSheet(" color: white; padding: 12px; font-weight: bold; border-radius: 6px;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; font-weight: bold; border-radius: 6px;")
         btn_save.clicked.connect(self.guardar)
         layout.addWidget(btn_save)
 
@@ -1189,7 +1189,7 @@ class DialogoAlertasEfectivo(QDialog):
         lay.addStretch()
 
         btn_save = QPushButton("💾 Guardar Configuración")
-        btn_save.setStyleSheet(" color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
+        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
         btn_save.clicked.connect(self._guardar)
         lay.addWidget(btn_save)
 
@@ -1323,7 +1323,7 @@ class DialogoBalanza(QDialog):
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Configuración")
-        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  color: white; border-radius: 8px;")
+        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px;")
         btn_save.clicked.connect(self._guardar)
         
         h_btns.addWidget(btn_cancel)
@@ -1570,7 +1570,7 @@ class DialogoFacturacion(QDialog):
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Cambios")
-        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  color: white; border-radius: 8px; border: none;")
+        btn_save.setStyleSheet("padding: 12px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
         
@@ -1688,12 +1688,12 @@ class DialogoImpuestos(QDialog):
         # Botones de Acción
         h_act = QHBoxLayout()
         btn_add = QPushButton("➕ Agregar Departamento")
-        btn_add.setStyleSheet(" color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
+        btn_add.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_add.setCursor(Qt.PointingHandCursor)
         btn_add.clicked.connect(self._agregar_departamento)
         
         btn_del = QPushButton("🗑️ Eliminar Seleccionado")
-        btn_del.setStyleSheet(" color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
+        btn_del.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_del.setCursor(Qt.PointingHandCursor)
         btn_del.clicked.connect(self._eliminar_departamento)
 
@@ -1710,7 +1710,7 @@ class DialogoImpuestos(QDialog):
         btn_cancel.clicked.connect(self.reject)
         
         btn_save = QPushButton("💾 Guardar Todo")
-        btn_save.setStyleSheet("padding: 10px 18px; font-weight: bold;  color: white; border-radius: 8px; border: none;")
+        btn_save.setStyleSheet("padding: 10px 18px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
         
@@ -1875,7 +1875,7 @@ class DialogoLicencia(QDialog):
         lay.addStretch()
 
         btn_wsp = QPushButton("💬 Enviar mensaje por WhatsApp a Soporte")
-        btn_wsp.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_wsp.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
         btn_wsp.setCursor(QCursor(Qt.PointingHandCursor))
         btn_wsp.clicked.connect(self.abrir_whatsapp)
         lay.addWidget(btn_wsp)
@@ -1928,13 +1928,13 @@ class DialogoRespaldo(QDialog):
         lay.addStretch()
 
         btn_export = QPushButton("📥 Exportar / Crear Respaldo")
-        btn_export.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_export.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
         btn_export.setCursor(QCursor(Qt.PointingHandCursor))
         btn_export.clicked.connect(self._exportar)
         lay.addWidget(btn_export)
 
         btn_import = QPushButton("📤 Importar / Restaurar Respaldo")
-        btn_import.setStyleSheet(" color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
+        btn_import.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; font-size: 14px; padding: 12px; border-radius: 8px; border: none;")
         btn_import.setCursor(QCursor(Qt.PointingHandCursor))
         btn_import.clicked.connect(self._importar)
         lay.addWidget(btn_import)
@@ -2054,7 +2054,7 @@ class Admin5Configuracion(QWidget):
         btn_volver = QPushButton("🔙 Volver")
         btn_volver.setStyleSheet("""
             QPushButton {
-                 color: white; font-weight: bold; font-size: 14px;
+                 background-color: #3B82F6; color: white; font-weight: bold; font-size: 14px;
                 border-radius: 6px; padding: 8px 20px;
             }
             QPushButton:hover {  }
@@ -2319,7 +2319,7 @@ class DialogoMigracionEleventa(QDialog):
         
         self.btn_run = QPushButton("🚀 Iniciar Migración Total Ahora")
         self.btn_run.setCursor(QCursor(Qt.PointingHandCursor))
-        self.btn_run.setStyleSheet(" color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px;")
+        self.btn_run.setStyleSheet(" background-color: #3B82F6; color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px;")
         self.btn_run.clicked.connect(self.ejecutar_migracion)
         layout.addWidget(self.btn_run)
         
@@ -2653,7 +2653,7 @@ class DialogoTerminalTPV(QDialog):
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton("💾 Guardar Configuración")
-        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; color: white;  border-radius: 4px; border: none;")
+        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; background-color: #3B82F6; color: white;  border-radius: 4px; border: none;")
         btn_save.clicked.connect(self._guardar)
 
         h_btns.addWidget(btn_cancel)
@@ -2740,7 +2740,7 @@ class DialogoIntegracionesNube(QDialog):
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton("💾 Guardar Credenciales")
-        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; color: white;  border-radius: 4px; border: none;")
+        btn_save.setStyleSheet("padding: 8px 15px; font-weight: bold; background-color: #3B82F6; color: white;  border-radius: 4px; border: none;")
         btn_save.clicked.connect(self._guardar)
 
         h_btns.addWidget(btn_cancel)
@@ -2881,7 +2881,7 @@ class DialogoPINLocal(QDialog):
         btn_guardar.setStyleSheet("""
             QPushButton {
                 
-                color: white;
+                background-color: #3B82F6; color: white;
                 font-weight: bold;
                 padding: 10px 20px;
                 border-radius: 6px;

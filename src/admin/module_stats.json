@@ -1,18 +1,18 @@
 {
     "reportes": 126,
-    "inventario": 71,
+    "inventario": 73,
     "cierre_z": 53,
-    "hardware": 8,
-    "configuracion": 52,
+    "hardware": 9,
+    "configuracion": 54,
     "lan_espectador": 33,
     "panel_fiscal": 22,
-    "mercadopago": 13,
+    "mercadopago": 15,
     "actualizaciones": 12,
-    "ofertas": 14,
-    "clientes": 7,
+    "ofertas": 15,
+    "clientes": 8,
     "etiquetas": 3,
     "nexus_pro": 35,
-    "cierre": 8,
+    "cierre": 9,
     "contabilidad": 12,
-    "proveedores": 13
+    "proveedores": 15
 }

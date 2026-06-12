@@ -135,7 +135,7 @@ class Admin4Gastos(QWidget):
                   font-weight: 800; border-radius: 10px; 
                 padding: 10px 25px; border: 1px solid #ef4444; font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover {  color: white; }
+            QPushButton:hover {  background-color: #3b82f6; color: white; }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
@@ -152,7 +152,7 @@ class Admin4Gastos(QWidget):
         self.tabs.setStyleSheet("""
             QTabWidget::pane { border: none;  }
             QTabBar::tab {   padding: 12px 20px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px; margin-right: 2px; }
-            QTabBar::tab:selected {  color: white; }
+            QTabBar::tab:selected {  color: #1e293b; }
             QTabBar::tab:hover:!selected {  }
         """)
         

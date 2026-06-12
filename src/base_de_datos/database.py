@@ -679,6 +679,34 @@ class DatabaseManager:
                 )
             """)
             
+            # 12. ROMANEOS (Cabecera de ingresos de mercadería)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS romaneos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    proveedor TEXT,
+                    tropa TEXT,
+                    tipo_carne TEXT,
+                    precio_unitario REAL,
+                    total_kilos REAL,
+                    cantidad_cajas INTEGER,
+                    monto_total REAL,
+                    estado_pago TEXT,
+                    registrado_por TEXT
+                )
+            """)
+
+            # 13. ROMANEO ITEMS (Detalle exacto de cada media res o bulto)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS romaneo_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    romaneo_id INTEGER,
+                    nro_garrote TEXT,
+                    peso REAL,
+                    FOREIGN KEY(romaneo_id) REFERENCES romaneos(id)
+                )
+            """)
+            
             conn.commit()
             conn.close()
         except Exception as e:

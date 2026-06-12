@@ -350,6 +350,8 @@ class MainWindow(QMainWindow):
             None,    # 17 — AdminClientes            (lazy)
             None,    # 18 — NexusExtremeControl      (lazy)
             None,    # 19 — Jefe0Dashboard           (lazy)
+            None,    # 20 — JefeReportes             (lazy)
+            None,    # 21 — CarteleriaMain           (lazy)
         ]
 
         # Fábricas: callable que crea el widget cuando se necesita
@@ -369,6 +371,8 @@ class MainWindow(QMainWindow):
             17: lambda: __import__('src.admin.admin_clientes',    fromlist=['AdminClientes']).AdminClientes(),
             18: lambda: __import__('src.admin.admin7_nexus',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
+            20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
+            21: lambda: __import__('src.carteleria.carteleria_main', fromlist=['CarteleriaMain']).CarteleriaMain(),
         }
 
         # Añadir todos los slots al QStackedWidget
@@ -427,7 +431,19 @@ class MainWindow(QMainWindow):
         if hasattr(s, 'request_tab'):
             s.request_tab.connect(self._on_jefe_request_tab)
 
+        # Conectar señales comunes si existen
+        # Conectar señales comunes si existen
         if hasattr(s, 'request_logout'):
+            try:
+                s.request_logout.disconnect()
+            except:
+                pass
+            s.request_logout.connect(self._logout_to_selector)
+            try:
+                s.request_logout.disconnect()
+            except:
+                pass
+            s.request_logout.connect(self._logout_to_selector)
             s.request_logout.connect(self._logout_to_selector)
 
     def _init_shortcuts(self):
@@ -592,6 +608,10 @@ class MainWindow(QMainWindow):
             self.switch_tab(1)
         elif role == "jefe":
             self.switch_tab(19)
+        elif role == "carteleria":
+            if hasattr(self, 'nav_bar_v3'): self.nav_bar_v3.hide()
+            if hasattr(self, 'top_bar_v3'): self.top_bar_v3.hide()
+            self.switch_tab(21)
         else:
             self.switch_tab(0)
 

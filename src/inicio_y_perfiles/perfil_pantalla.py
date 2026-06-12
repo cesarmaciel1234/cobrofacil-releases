@@ -26,6 +26,7 @@ CARD_STYLE = {
     "cajero": ("#0284C7", "#E0F2FE", "VENTA DIRECTA",  "#0369A1"),  # azul frío
     "admin":  ("#059669", "#DCFCE7", "FULL ACCESS",    "#047857"),  # verde templado
     "jefe":   ("#D97706", "#FEF3C7", "ACCESO GERENCIAL","#B45309"), # ámbar cálido
+    "carteleria": ("#8B5CF6", "#EDE9FE", "MODO VISOR", "#6D28D9"), # púrpura vibrante
 }
 
 
@@ -206,13 +207,13 @@ class PerfilPantalla(QDialog):
     perfil_seleccionado = pyqtSignal(str)
 
     # Orden visual: 0=cajero, 1=admin, 2=jefe
-    _ROLES  = ["cajero", "admin", "jefe"]
+    _ROLES  = ["cajero", "admin", "jefe", "carteleria"]
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(840, 490)
+        self.setFixedSize(1100, 490)
         self.selected_index = 0
         self._setup_ui()
         self.update_selection_ui()
@@ -324,10 +325,16 @@ class PerfilPantalla(QDialog):
             "Control total · Reportes · Cierres")
         self.btn_jefe.clicked.connect(lambda: self._elegir("jefe"))
 
+        self.btn_carteleria = ProfileCard(
+            "carteleria", "📺", "CARTELERÍA",
+            "Pantalla Pública · Publicidad")
+        self.btn_carteleria.clicked.connect(lambda: self._elegir("carteleria"))
+
         cards_lay.addStretch()
         cards_lay.addWidget(self.btn_cajero)
         cards_lay.addWidget(self.btn_admin)
         cards_lay.addWidget(self.btn_jefe)
+        cards_lay.addWidget(self.btn_carteleria)
         cards_lay.addStretch()
         content.addLayout(cards_lay)
         content.addSpacing(22)
@@ -348,11 +355,12 @@ class PerfilPantalla(QDialog):
         self.btn_cajero.set_active(self.selected_index == 0)
         self.btn_admin.set_active(self.selected_index == 1)
         self.btn_jefe.set_active(self.selected_index == 2)
+        self.btn_carteleria.set_active(self.selected_index == 3)
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
             delta = 1 if event.key() == Qt.Key_Right else -1
-            self.selected_index = (self.selected_index + delta) % 3
+            self.selected_index = (self.selected_index + delta) % 4
             self.update_selection_ui()
             event.accept()
         elif event.key() in (Qt.Key_Return, Qt.Key_Enter):

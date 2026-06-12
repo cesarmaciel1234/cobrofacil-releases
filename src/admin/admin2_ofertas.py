@@ -27,7 +27,7 @@ QFrame#header {
     border-radius: 10px;
 }
 QLabel#titulo {
-    color: white;
+    color: #1e293b;
     background: transparent;
     font-size: 20px;
     font-weight: 900;
@@ -44,7 +44,7 @@ QPushButton {
 }
 QPushButton:hover {
     
-    color: white;
+    color: #1e293b;
     border-
 }
 QLineEdit, QComboBox, QDoubleSpinBox {
@@ -148,9 +148,9 @@ class Admin2Ofertas(QWidget):
         self.btn_imprimir_masivo.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #0284c7);
-                color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
+                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover {  color: white; }
+            QPushButton:hover {  background-color: #3b82f6; color: white; }
             QPushButton:disabled {   }
         """)
         self.btn_imprimir_masivo.setEnabled(False)
@@ -164,9 +164,9 @@ class Admin2Ofertas(QWidget):
         self.btn_crear_folleto.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
-                color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
+                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover {  color: white; }
+            QPushButton:hover {  background-color: #3b82f6; color: white; }
         """)
         self.btn_crear_folleto.clicked.connect(self._crear_folleto_pdf)
         fl.addWidget(self.btn_crear_folleto)
@@ -178,9 +178,9 @@ class Admin2Ofertas(QWidget):
         self.btn_asistente_promo.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
-                color: white; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
+                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
             }
-            QPushButton:hover {  color: white; }
+            QPushButton:hover {  background-color: #3b82f6; color: white; }
             QPushButton:disabled {   }
         """)
         self.btn_asistente_promo.setEnabled(False)
@@ -314,7 +314,7 @@ class Admin2Ofertas(QWidget):
         self.btn_guardar_quick = QPushButton("💾 GUARDAR AJUSTES")
         self.btn_guardar_quick.setStyleSheet("""
             QPushButton {
-                 color: white; font-weight: 800; font-size: 11px;
+                 color: #1e293b; font-weight: 800; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: none;
             }
             QPushButton:hover {  }
@@ -389,7 +389,7 @@ class Admin2Ofertas(QWidget):
         self.btn_activar_promo = QPushButton("🚀 ACTIVAR PROMO")
         self.btn_activar_promo.setStyleSheet("""
             QPushButton {
-                 color: white; font-weight: 800; font-size: 11px;
+                 color: #1e293b; font-weight: 800; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: none;
             }
             QPushButton:hover {  }
@@ -402,7 +402,7 @@ class Admin2Ofertas(QWidget):
                   font-weight: bold; font-size: 11px;
                 padding: 10px; border-radius: 6px; border: 1px solid #fecaca;
             }
-            QPushButton:hover {  color: white; }
+            QPushButton:hover {  background-color: #3b82f6; color: white; }
         """)
         self.btn_quitar_promo.clicked.connect(self._quitar_oferta_rapida)
         
@@ -414,7 +414,7 @@ class Admin2Ofertas(QWidget):
         self.btn_imprimir_quick_cartel.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
-                color: white; font-weight: 900; font-size: 11px; padding: 11px; border-radius: 6px; border: none;
+                color: #1e293b; font-weight: 900; font-size: 11px; padding: 11px; border-radius: 6px; border: none;
             }
             QPushButton:hover {  }
         """)
@@ -485,13 +485,13 @@ class Admin2Ofertas(QWidget):
             # Semáforo de Viabilidad Financiera
             if promo_precio <= costo:
                 self.lbl_semaforo.setText("🚨 PÉRDIDA: ¡OFERTA POR DEBAJO DEL COSTO!")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white;  border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #64748b; color: white;  border-radius: 4px; padding: 4px; border: none;")
             elif margen_promo < 10.0:
                 self.lbl_semaforo.setText("⚠️ MARGEN CRÍTICO: RENTABILIDAD BAJA")
                 self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900;   border-radius: 4px; padding: 4px; border: none;")
             else:
                 self.lbl_semaforo.setText("✅ PROMOCIÓN RENTABLE: RENTABILIDAD POSITIVA")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; color: white;  border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #64748b; color: white;  border-radius: 4px; padding: 4px; border: none;")
         else:
             self.lbl_margen_promo.setText("Margen Promo: —")
             self.lbl_ahorro_total.setText("Ahorro de Cliente: —")
@@ -810,7 +810,7 @@ class Admin2Ofertas(QWidget):
         dlg.setFixedSize(400, 260)
         dlg.setStyleSheet("""
             QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
             QPushButton:hover {  }
             QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
         """)
@@ -909,7 +909,7 @@ class Admin2Ofertas(QWidget):
         dlg.setFixedSize(450, 320)
         dlg.setStyleSheet("""
             QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; }
             QPushButton:hover {  }
             QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
         """)
@@ -1002,7 +1002,7 @@ class Admin2Ofertas(QWidget):
         dlg.setFixedSize(480, 360)
         dlg.setStyleSheet("""
             QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
             QPushButton:hover {  }
             QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
             QRadioButton { spacing: 8px; font-weight: bold; }
@@ -1169,7 +1169,7 @@ class Admin2Ofertas(QWidget):
         dlg_marca.setFixedSize(380, 200)
         dlg_marca.setStyleSheet("""
             QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  color: white; font-weight: bold; padding: 8px; border-radius: 6px; }
+            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 8px; border-radius: 6px; }
             QPushButton:hover {  }
             QLineEdit { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; }
         """)

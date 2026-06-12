@@ -58,11 +58,11 @@ class Admin12AIBoss(QWidget):
         input_bar = QHBoxLayout()
         self.txt_cmd = QLineEdit()
         self.txt_cmd.setPlaceholderText("Consultar estrategia, proyecciones o dudas financieras...")
-        self.txt_cmd.setStyleSheet(" border: 2px solid #334155; border-radius: 8px; padding: 15px; color: white;")
+        self.txt_cmd.setStyleSheet(" border: 2px solid #334155; border-radius: 8px; padding: 15px; color: #1e293b;")
         self.txt_cmd.returnPressed.connect(self.process_query)
         btn_send = QPushButton("⚡")
         btn_send.setFixedSize(50, 50)
-        btn_send.setStyleSheet(" color: white; border-radius: 25px; font-size: 20px; font-weight: bold;")
+        btn_send.setStyleSheet(" background-color: #3b82f6; color: white; border-radius: 25px; font-size: 20px; font-weight: bold;")
         btn_send.clicked.connect(self.process_query)
         input_bar.addWidget(self.txt_cmd); input_bar.addWidget(btn_send)
         layout.addLayout(input_bar)
@@ -131,7 +131,7 @@ class AIBubble(QPushButton):
         self.setStyleSheet("""
             QPushButton {
                 
-                color: white;
+                color: #1e293b;
                 font-size: 30px;
                 border-radius: 30px;
                 border: 2px solid #a855f7;

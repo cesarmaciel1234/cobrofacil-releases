@@ -1,0 +1,127 @@
+def _load_db_and_build(self):
+        try:
+            from src.jefe.contabilidad.database import Database
+            self._db = Database(DB_PATH)
+            self._build_full_ui()
+        except Exception as e:
+            logger.error(f"Error cargando DB de contabilidad: {e}")
+            self._lbl_loading.setText(
+                f"❌  Error al inicializar la base de datos contable:\n\n{e}\n\nRuta: {DB_PATH}")
+            self._lbl_loading.setStyleSheet(
+                f"font-size: 12px; color: {PAL['danger']}; padding: 30px; background: transparent;")
+            self._lbl_loading.setWordWrap(True)
+
+    # ── Skeleton mientras carga ───────────────────────────────────────────────
+    def _build_skeleton(self):
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        # NavBar superior
+        self._nav = self._build_navbar()
+        root.addWidget(self._nav)
+
+        # Área de contenido
+        self._content_area = QWidget()
+        self._content_lay = QVBoxLayout(self._content_area)
+        self._content_lay.setContentsMargins(0, 0, 0, 0)
+
+        self._lbl_loading = QLabel("⚙️  Iniciando Motor Contable Enterprise...")
+        self._lbl_loading.setAlignment(Qt.AlignCenter)
+        self._lbl_loading.setStyleSheet(
+            f"font-size: 16px; font-weight: 700; color: {PAL['primary']}; background: transparent;")
+        self._content_lay.addStretch()
+        self._content_lay.addWidget(self._lbl_loading)
+        self._content_lay.addStretch()
+
+        root.addWidget(self._content_area, 1)
+        self._root_layout = root
+
+    # ── NavBar ────────────────────────────────────────────────────────────────
+    def _build_navbar(self):
+        nav = QFrame()
+        nav.setObjectName("ContNav")
+        nav.setFixedHeight(58)
+        nav.setStyleSheet(f"""
+            QFrame#ContNav {{
+                background: {PAL['nav_bg']};
+                border-bottom: 1px solid {PAL['nav_border']};
+            }}
+        """)
+        lay = QHBoxLayout(nav)
+        lay.setContentsMargins(20, 0, 20, 0)
+        lay.setSpacing(16)
+
+        # Volver
+        btn_back = QPushButton("← Panel Jefe")
+        btn_back.setCursor(Qt.PointingHandCursor)
+        btn_back.setFixedHeight(34)
+        btn_back.setStyleSheet(f"""
+            QPushButton {{
+                background: {PAL['surface2']}; color: {PAL['text2']};
+                border: 1px solid {PAL['border']}; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 12px;
+            }}
+            QPushButton:hover {{ background: {PAL['border2']}; color: {PAL['text']}; }}
+        """)
+        btn_back.clicked.connect(self.request_dashboard.emit)
+        lay.addWidget(btn_back)
+
+        # Separador
+        sep = QFrame(); sep.setFixedWidth(1); sep.setFixedHeight(28)
+        sep.setStyleSheet(f"background: {PAL['border']};")
+        lay.addWidget(sep)
+
+        # Título
+        lbl = QLabel("💹  Contabilidad  ERP")
+        lbl.setStyleSheet(
+            f"font-size: 14px; font-weight: 900; color: {PAL['text']}; background: transparent; border: none;")
+        lay.addWidget(lbl)
+
+        lay.addStretch()
+
+        # Selector mes/año
+        self._month_sel = QComboBox()
+        self._month_sel.addItems(MESES)
+        self._month_sel.setCurrentIndex(datetime.date.today().month - 1)
+        self._month_sel.setFixedWidth(72)
+        self._month_sel.setStyleSheet(f"""
+            QComboBox {{
+                background: {PAL['surface']}; border: 1px solid {PAL['border']};
+                border-radius: 8px; padding: 5px 10px; font-size: 12px; color: {PAL['text']};
+            }}
+            QComboBox QAbstractItemView {{
+                background: {PAL['surface']}; color: {PAL['text']};
+                selection-background-color: {PAL['primary']}; selection-color: #fff;
+            }}
+        """)
+
+        self._year_sel = QComboBox()
+        self._year_sel.addItems([str(y) for y in range(2024, 2032)])
+        self._year_sel.setCurrentText(str(datetime.date.today().year))
+        self._year_sel.setFixedWidth(80)
+        self._year_sel.setStyleSheet(self._month_sel.styleSheet())
+
+        lay.addWidget(QLabel("Período:"))
+        lay.addWidget(self._month_sel)
+        lay.addWidget(self._year_sel)
+
+        # Backup
+        btn_bk = QPushButton("💾 Backup")
+        btn_bk.setFixedHeight(34)
+        btn_bk.setCursor(Qt.PointingHandCursor)
+        btn_bk.setStyleSheet(f"""
+            QPushButton {{
+                background: {PAL['success']}18; color: {PAL['success']};
+                border: 1px solid {PAL['success']}44; border-radius: 8px;
+                padding: 0 14px; font-weight: 700; font-size: 12px;
+            }}
+            QPushButton:hover {{ background: {PAL['success']}; color: #fff; }}
+        """)
+        btn_bk.clicked.connect(self._do_backup)
+        lay.addWidget(btn_bk)
+
+        return nav
+
+    # ── UI completa post-carga ────────────────────────────────────────────────
+    def _build_full_ui

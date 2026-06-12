@@ -286,7 +286,7 @@ class NexusExtremeControl(QWidget):
         if self.is_dark_mode:
             self.setStyleSheet(EXTREME_STYLE)
             self.btn_theme.setText("☀️ MODO DÍA")
-            self.btn_theme.setStyleSheet("QPushButton {  color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; } QPushButton:hover {  }")
+            self.btn_theme.setStyleSheet("QPushButton {  background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; } QPushButton:hover {  }")
         else:
             self.setStyleSheet("")
             self.btn_theme.setText("🌙 MODO NOCHE")
