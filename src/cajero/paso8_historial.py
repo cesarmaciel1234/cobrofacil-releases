@@ -68,70 +68,8 @@ class DialogoHistorialDia(QDialog):
             container.setGraphicsEffect(glow)
 
     def setup_ui(self):
-        self.setStyleSheet("""
-            #HistoryDialog { 
-                background-color: white; 
-                border-radius: 20px;
-                border: 2px solid #1E3A8A;
-            }
-            QWidget { font-family: 'Segoe UI', Arial; }
-            QLabel { font-size: 13px; color: #1e293b; }
-            
-            QTableWidget { 
-                background-color: white; 
-                gridline-color: #f1f5f9; 
-                border: 1px solid #e2e8f0; 
-                border-radius: 12px;
-                selection-background-color: #EFF6FF; 
-                selection-color: #1E3A8A;
-                font-size: 13px;
-                outline: none;
-            }
-            QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; }
-            QTableWidget::item:selected {
-                background-color: #EFF6FF;
-                color: #1E3A8A;
-                font-weight: 900;
-            }
-            QHeaderView::section { 
-                background-color: #F8FAFC; 
-                color: #64748b; 
-                padding: 8px; 
-                border: none;
-                font-weight: 900;
-                font-size: 11px;
-                text-transform: uppercase;
-            }
-            
-            QLineEdit, QComboBox, QDateEdit, QTimeEdit { 
-                border: 2px solid #E2E8F0; border-radius: 10px; padding: 5px 10px; background: #F8FAFC; font-size: 13px; font-weight: 600; color: #1E293B;
-            }
-            QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
-            QComboBox::drop-down, QDateEdit::drop-down, QTimeEdit::drop-down { border: none; }
-            
-            QPushButton { 
-                padding: 8px 15px; 
-                font-size: 13px; 
-                background: white;
-                border: 2px solid #E2E8F0;
-                border-radius: 8px;
-                color: #475569;
-                font-weight: 900;
-            }
-            QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
-            
-            #btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
-            #btnCancelVenta:hover { background: #FEE2E2; }
-            #btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
-            #btnImprimir:hover { background: #DBEAFE; }
-            
-            #frameDetalle { 
-                background-color: #F8FAFC; 
-                border: 1px solid #E2E8F0; 
-                border-radius: 16px;
-            }
-            #lblTicketPreview { font-size: 22px; font-weight: 900; color: #1E3A8A; margin-bottom: 5px; }
-        """)
+        # Limpiar el tema global del QDialog para que no herede el dark mode del cajero
+        self.setStyleSheet("QDialog { background: transparent; }")
 
         main_container = QWidget(self)
         main_container.setObjectName("HistoryDialog")
@@ -139,9 +77,76 @@ class DialogoHistorialDia(QDialog):
         outer_layout.setContentsMargins(30, 30, 30, 30)
         outer_layout.addWidget(main_container)
 
+        # Aplicar estilos AL CONTENEDOR (no al QDialog) para ganar en especificidad
+        # frente al dark theme global del cajero (styles.qss)
+        main_container.setStyleSheet("""
+            QWidget#HistoryDialog, QWidget#HistoryDialog QWidget {
+                background-color: white;
+                font-family: 'Segoe UI', Arial;
+                color: #1e293b;
+            }
+            QWidget#HistoryDialog {
+                border-radius: 20px;
+                border: 2px solid #1E3A8A;
+            }
+            QWidget#HistoryDialog QLabel { font-size: 13px; color: #1e293b; background: transparent; }
+
+            QWidget#HistoryDialog QTableWidget {
+                background-color: white;
+                gridline-color: #f1f5f9;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                selection-background-color: #EFF6FF;
+                selection-color: #1E3A8A;
+                font-size: 13px;
+                outline: none;
+            }
+            QWidget#HistoryDialog QTableWidget::item { padding: 5px; border-bottom: 1px solid #F8FAFC; color: #1e293b; background: white; }
+            QWidget#HistoryDialog QTableWidget::item:selected { background-color: #EFF6FF; color: #1E3A8A; font-weight: 900; }
+            QWidget#HistoryDialog QHeaderView::section {
+                background-color: #F8FAFC; color: #64748b; padding: 8px;
+                border: none; font-weight: 900; font-size: 11px;
+            }
+
+            QWidget#HistoryDialog QLineEdit,
+            QWidget#HistoryDialog QComboBox,
+            QWidget#HistoryDialog QDateEdit,
+            QWidget#HistoryDialog QTimeEdit {
+                border: 2px solid #E2E8F0; border-radius: 10px;
+                padding: 5px 10px; background: #F8FAFC;
+                font-size: 13px; font-weight: 600; color: #1E293B;
+            }
+            QWidget#HistoryDialog QLineEdit:focus,
+            QWidget#HistoryDialog QComboBox:focus,
+            QWidget#HistoryDialog QDateEdit:focus,
+            QWidget#HistoryDialog QTimeEdit:focus { border: 2px solid #3B82F6; background: white; }
+            QWidget#HistoryDialog QComboBox::drop-down,
+            QWidget#HistoryDialog QDateEdit::drop-down,
+            QWidget#HistoryDialog QTimeEdit::drop-down { border: none; }
+
+            QWidget#HistoryDialog QPushButton {
+                padding: 8px 15px; font-size: 13px; background: white;
+                border: 2px solid #E2E8F0; border-radius: 8px;
+                color: #475569; font-weight: 900;
+            }
+            QWidget#HistoryDialog QPushButton:hover { background: #F8FAFC; border-color: #94A3B8; }
+
+            QWidget#HistoryDialog QPushButton#btnCancelVenta { background: #FEF2F2; color: #DC2626; border: none; }
+            QWidget#HistoryDialog QPushButton#btnCancelVenta:hover { background: #FEE2E2; }
+            QWidget#HistoryDialog QPushButton#btnImprimir { background: #EFF6FF; color: #2563EB; border: none; }
+            QWidget#HistoryDialog QPushButton#btnImprimir:hover { background: #DBEAFE; }
+
+            QWidget#HistoryDialog QFrame#frameDetalle {
+                background-color: #F8FAFC;
+                border: 1px solid #E2E8F0;
+                border-radius: 16px;
+            }
+        """)
+
         main_vbox = QVBoxLayout(main_container)
         main_vbox.setContentsMargins(0, 0, 0, 0)
         main_vbox.setSpacing(0)
+
 
         # 1. PREMIUM HEADER
         header = QFrame()
