@@ -2579,35 +2579,84 @@ class DialogoTerminalTPV(QDialog):
 
         # SECCION: MercadoPago Point
         box_mp = QFrame()
-        box_mp.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
+        box_mp.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 8px; background: #FAFBFF;")
         mp_lay = QVBoxLayout(box_mp)
-        
+        mp_lay.setSpacing(10)
+        mp_lay.setContentsMargins(16, 16, 16, 16)
+
+        # Header
         mp_header_lay = QHBoxLayout()
-        lbl_mp = QLabel("💳 Terminales MercadoPago Point")
-        lbl_mp.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
+        lbl_mp = QLabel("💳  Mercado Pago Point + QR")
+        lbl_mp.setStyleSheet("font-weight: bold; font-size: 13px; border: none; color: #0F172A;")
         mp_header_lay.addWidget(lbl_mp)
         mp_header_lay.addStretch()
-        
-        btn_help_mp = QPushButton("❓")
+        btn_help_mp = QPushButton("❓ Cómo obtener el token")
         btn_help_mp.setCursor(QCursor(Qt.PointingHandCursor))
-        btn_help_mp.setStyleSheet("border: none; font-size: 14px; background: transparent;")
+        btn_help_mp.setStyleSheet(
+            "border: 1px solid #CBD5E1; font-size: 11px; background: #F1F5F9; "
+            "color: #475569; padding: 3px 10px; border-radius: 5px;"
+        )
         btn_help_mp.clicked.connect(self._show_help_mp)
         mp_header_lay.addWidget(btn_help_mp)
-        
         mp_lay.addLayout(mp_header_lay)
 
-        self.txt_mp_token = QLineEdit(config.get("mp_access_token", ""))
-        self.txt_mp_token.setPlaceholderText("Access Token de Producción (APP_USR-...)")
-        self.txt_mp_token.setEchoMode(QLineEdit.Password)
-        self.txt_mp_token.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;")
-        mp_lay.addWidget(QLabel("Access Token (PROD):"))
-        mp_lay.addWidget(self.txt_mp_token)
+        # Instruccion
+        lbl_instr = QLabel("1️⃣  Pegá tu Access Token  →  2️⃣  Presá Auto-configurar  →  ✅  Listo")
+        lbl_instr.setStyleSheet(
+            "font-size: 12px; font-weight: 600; color: #7C3AED; background: #EDE9FE; "
+            "border-radius: 6px; padding: 6px 12px; border: none;"
+        )
+        mp_lay.addWidget(lbl_instr)
 
+        # Access Token + boton auto-config en la misma fila
+        token_row = QHBoxLayout()
+        self.txt_mp_token = QLineEdit(config.get("mp_access_token", ""))
+        self.txt_mp_token.setPlaceholderText("Pegá acá tu Access Token de Producción  (APP_USR-...)")
+        self.txt_mp_token.setEchoMode(QLineEdit.Password)
+        self.txt_mp_token.setFixedHeight(38)
+        self.txt_mp_token.setStyleSheet(
+            "padding: 8px; border: 2px solid #8B5CF6; border-radius: 6px; font-size: 13px;"
+        )
+        token_row.addWidget(self.txt_mp_token)
+
+        btn_autoconfig = QPushButton("⚡ Auto-configurar")
+        btn_autoconfig.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_autoconfig.setFixedHeight(38)
+        btn_autoconfig.setStyleSheet(
+            "QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
+            "stop:0 #7C3AED, stop:1 #4F46E5); color: white; font-weight: 800; "
+            "font-size: 13px; padding: 0 18px; border-radius: 6px; border: none; }"
+            "QPushButton:hover { background: #6D28D9; }"
+        )
+        btn_autoconfig.clicked.connect(self._buscar_devices_mp)
+        token_row.addWidget(btn_autoconfig)
+        mp_lay.addLayout(token_row)
+
+        # Campos auto-llenados
+        lbl_auto = QLabel("Datos detectados automáticamente (se pueden editar)")
+        lbl_auto.setStyleSheet("font-size: 11px; color: #64748B; border: none;")
+        mp_lay.addWidget(lbl_auto)
+
+        campos_row = QHBoxLayout()
+        campos_row.setSpacing(10)
+
+        col1 = QVBoxLayout()
+        col1.addWidget(QLabel("SN / Device ID:"))
         self.txt_mp_device = QLineEdit(config.get("mp_device_id", ""))
-        self.txt_mp_device.setPlaceholderText("ID del Dispositivo (ej: PAX_A910_...)")
-        self.txt_mp_device.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;")
-        mp_lay.addWidget(QLabel("Device ID:"))
-        mp_lay.addWidget(self.txt_mp_device)
+        self.txt_mp_device.setPlaceholderText("Auto-detectado...")
+        self.txt_mp_device.setStyleSheet("padding: 7px; border: 1px solid #94A3B8; border-radius: 5px;")
+        col1.addWidget(self.txt_mp_device)
+
+        col2 = QVBoxLayout()
+        col2.addWidget(QLabel("External POS ID (Cajero QR):"))
+        self.txt_mp_pos_id = QLineEdit(config.get("mp_qr_pos_external_id", ""))
+        self.txt_mp_pos_id.setPlaceholderText("Auto-detectado...")
+        self.txt_mp_pos_id.setStyleSheet("padding: 7px; border: 1px solid #94A3B8; border-radius: 5px;")
+        col2.addWidget(self.txt_mp_pos_id)
+
+        campos_row.addLayout(col1)
+        campos_row.addLayout(col2)
+        mp_lay.addLayout(campos_row)
 
         main_lay.addWidget(box_mp)
 
@@ -2662,14 +2711,129 @@ class DialogoTerminalTPV(QDialog):
 
         main_lay.addLayout(h_btns)
 
+    def _buscar_devices_mp(self):
+        """Auto-configura Device ID y POS ID consultando la API de Mercado Pago."""
+        from PyQt5.QtWidgets import QMessageBox, QInputDialog
+        import requests
+
+        token = self.txt_mp_token.text().strip()
+        if not token:
+            QMessageBox.warning(self, "Token faltante",
+                "Pegá tu Access Token primero y luego presá Auto-configurar.")
+            return
+        if token.upper().startswith("TEST-"):
+            QMessageBox.warning(self, "⚠️ Token de prueba detectado",
+                "Estás usando un token TEST-...\n\n"
+                "Para producción necesitás el token APP_USR-... de tu cuenta real.\n"
+                "Obténelo en mercadopago.com/developers → Credenciales de Producción.")
+            return
+
+        headers = {"Authorization": f"Bearer {token}"}
+        device_id_final = ""
+        pos_id_final = ""
+        resumen = []
+
+        # ── 1. Obtener Device ID desde /devices ─────────────────────────────
+        try:
+            r_dev = requests.get(
+                "https://api.mercadopago.com/point/integration-api/devices",
+                headers=headers, timeout=8
+            )
+            if r_dev.status_code == 200:
+                devices = r_dev.json().get("devices", [])
+                if devices:
+                    if len(devices) == 1:
+                        device_id_final = devices[0].get("id", "")
+                        resumen.append(f"✅  Device ID: {device_id_final}")
+                    else:
+                        opciones = [
+                            f"{d.get('id','?')}  |  {d.get('device_model','')}  |  SN: {d.get('serial_number','')}"
+                            for d in devices
+                        ]
+                        elegido, ok = QInputDialog.getItem(
+                            self, "Seleccioná el terminal",
+                            "Hay varios dispositivos vinculados.\nElegí el de esta caja:",
+                            opciones, 0, False
+                        )
+                        if ok:
+                            device_id_final = elegido.split("|")[0].strip()
+                            resumen.append(f"✅  Device ID: {device_id_final}")
+                else:
+                    resumen.append("⚠️  Sin terminales Point vinculadas (no importa si usás solo QR)")
+            elif r_dev.status_code == 401:
+                QMessageBox.critical(self, "Token inválido",
+                    "El token no es válido o expiró.\nVerificá en mercadopago.com/developers.")
+                return
+            else:
+                resumen.append(f"⚠️  No se obtuvieron devices (HTTP {r_dev.status_code})")
+        except Exception as e:
+            resumen.append(f"⚠️  Error conectando a MP: {e}")
+
+        # ── 2. Obtener External POS ID desde /pos ────────────────────────────
+        try:
+            r_pos = requests.get(
+                "https://api.mercadopago.com/pos",
+                headers=headers, timeout=8
+            )
+            if r_pos.status_code == 200:
+                pos_list = r_pos.json().get("results", [])
+                if pos_list:
+                    if len(pos_list) == 1:
+                        pos_id_final = pos_list[0].get("external_id", "") or pos_list[0].get("name", "")
+                        resumen.append(f"✅  POS ID (QR): {pos_id_final}")
+                    else:
+                        opciones_pos = [
+                            f"{p.get('external_id','?')}  |  {p.get('name','')}"
+                            for p in pos_list
+                        ]
+                        elegido_pos, ok2 = QInputDialog.getItem(
+                            self, "Seleccioná el cajero QR",
+                            "Hay varios puntos de venta.\nElegí el de esta caja:",
+                            opciones_pos, 0, False
+                        )
+                        if ok2:
+                            pos_id_final = elegido_pos.split("|")[0].strip()
+                            resumen.append(f"✅  POS ID (QR): {pos_id_final}")
+                else:
+                    resumen.append(
+                        "⚠️  No hay Puntos de Venta QR creados.\n"
+                        "   Creá uno en mercadopago.com → Tu negocio → Puntos de venta."
+                    )
+            else:
+                resumen.append(f"⚠️  No se obtuvieron POS (HTTP {r_pos.status_code})")
+        except Exception as e:
+            resumen.append(f"⚠️  Error obteniendo POS: {e}")
+
+        # ── 3. Llenar campos y mostrar resumen ───────────────────────────────
+        if device_id_final:
+            self.txt_mp_device.setText(device_id_final)
+        if pos_id_final:
+            self.txt_mp_pos_id.setText(pos_id_final)
+
+        resultado = "\n".join(resumen)
+        if device_id_final or pos_id_final:
+            QMessageBox.information(self, "⚡ Auto-configuración completada",
+                f"Se detectaron los siguientes datos:\n\n{resultado}\n\n"
+                "Presá \"Guardar Configuración\" para aplicar.")
+        else:
+            QMessageBox.warning(self, "Sin datos automáticos",
+                f"{resultado}\n\n"
+                "Completá los campos manualmente.")
+
     def _show_help_mp(self):
         from PyQt5.QtWidgets import QMessageBox
-        msg = ("ℹ️ CÓMO OBTENER DATOS DE MERCADOPAGO POINT\n\n"
-               "1. Ingresa a tu panel de MercadoPago para Desarrolladores (sección 'Tus Integraciones').\n"
-               "2. Obtén el 'Access Token de Producción' de tu aplicación.\n"
-               "3. Busca el 'Device ID' impreso en la parte trasera de tu terminal física (generalmente empieza con PAX_ o INGENICO_).\n\n"
-               "Ingresa estos dos datos para vincular los pagos.")
-        QMessageBox.information(self, "Ayuda - MercadoPago", msg)
+        QMessageBox.information(self, "Cómo obtener el Access Token",
+            "💳  OBTENER EL ACCESS TOKEN DE MP\n\n"
+            "1. Ingresá a: mercadopago.com/developers\n"
+            "2. Presá \"Tus Integraciones\" → seleccioná tu app\n"
+            "   (o creá una nueva con permisos QR + Point)\n"
+            "3. En 'Credenciales de Producción' copiá el\n"
+            "   Access Token  (empieza con APP_USR-...)\n\n"
+            "⚠️  NUNCA uses el token TEST-... en producción.\n\n"
+            "Después de pegar el token presá\n"
+            "\"⚡ Auto-configurar\" y el sistema detecta\n"
+            "el resto automáticamente."
+        )
 
     def _show_help_clover(self):
         from PyQt5.QtWidgets import QMessageBox
