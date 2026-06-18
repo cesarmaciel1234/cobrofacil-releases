@@ -5,11 +5,15 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QKeySequence, QColor
 from PyQt5.QtCore import Qt, QTimer
-from src.cajero.paso5_terminal import Paso5Terminal
+# NOTA: Paso5Terminal se importa dentro de _init_screens (lazy) para no
+# bloquear la splash screen durante la carga del módulo main_window.
 from src.utils.floating_widgets import BotonFlotanteRegreso
 from src.logger import logger
 from src.config import config
 from src.base_de_datos.database import db_manager
+
+# Cache de temas QSS — se leen UNA sola vez del disco y se reutilizan
+_QSS_CACHE: dict = {}
 
 
 class MainWindow(QMainWindow):
@@ -342,6 +346,8 @@ class MainWindow(QMainWindow):
             pass
 
         # Pantallas instanciadas de inmediato (esenciales para el arranque)
+        # Import diferido aquí en vez del tope del archivo para no bloquear splash
+        from src.cajero.paso5_terminal import Paso5Terminal
         self.pantalla_ventas = Paso5Terminal()
         self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
         self.pantalla_ventas.request_chatbot_toggle.connect(self._toggle_chatbot_overlay)
@@ -659,27 +665,32 @@ class MainWindow(QMainWindow):
 
         self.stacked_widget.setCurrentIndex(index)
 
-        # Cargas pesadas on-demand para mantener el 'Zero Lag'
+        # ── INYECCIÓN GLOBAL DE TEMAS (con cache en RAM) ────────────────────
+        # El tema se lee del disco UNA sola vez y se cachea en _QSS_CACHE.
+        # Esto elimina el I/O de disco en cada transición de pantalla.
+        import os
+        from src.utils.paths import get_resource_path
+        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
+        if theme_file not in _QSS_CACHE:
+            qss_path = get_resource_path(os.path.join("src", theme_file))
+            if os.path.exists(qss_path):
+                try:
+                    with open(qss_path, "r", encoding="utf-8") as f:
+                        _QSS_CACHE[theme_file] = f.read()
+                except Exception as e:
+                    print(f"Error cargando tema {theme_file}: {e}")
+                    _QSS_CACHE[theme_file] = ""
+            else:
+                _QSS_CACHE[theme_file] = ""
+        if _QSS_CACHE.get(theme_file):
+            QApplication.instance().setStyleSheet(_QSS_CACHE[theme_file])
+
+        # ── Cargas de datos diferidas (no bloquean la transición visual) ─────
+        # cargar_datos() se ejecuta 80ms después de mostrar la pantalla para que
+        # el cambio de tab sea instantáneo y el usuario no vea un freeze.
         s = self.screens[index]
         if s is not None and hasattr(s, 'cargar_datos'):
-            s.cargar_datos()
-
-        # ── INYECCIÓN GLOBAL DE TEMAS ───────
-        import os
-        from PyQt5.QtWidgets import QApplication
-        from src.utils.paths import get_resource_path
-        
-        # El Cajero (index 1) usa el modo Oscuro (styles.qss)
-        # El resto (Admin, Jefe, Nexus) usan el modo Claro Cartelería (styles_light.qss)
-        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
-        qss_path = get_resource_path(os.path.join("src", theme_file))
-        
-        if os.path.exists(qss_path):
-            try:
-                with open(qss_path, "r", encoding="utf-8") as f:
-                    QApplication.instance().setStyleSheet(f.read())
-            except Exception as e:
-                print(f"Error cargando tema {theme_file}: {e}")
+            QTimer.singleShot(80, s.cargar_datos)
 
     def apply_roles(self):
         user = config.current_user
