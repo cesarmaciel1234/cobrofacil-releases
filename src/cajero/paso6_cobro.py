@@ -1376,7 +1376,48 @@ class Paso6Cobro(QDialog):
             return
 
         if resp.status_code not in [200, 201]:
-            QMessageBox.critical(self, "Error MP", f"No se pudo crear la orden QR:\n{resp.text}")
+            # Interpretar el error de MP para dar un mensaje claro al usuario
+            try:
+                err_data = resp.json()
+                err_code = err_data.get("code", "")
+                err_msg  = err_data.get("message", "")
+            except Exception:
+                err_code = ""
+                err_msg  = resp.text
+
+            if resp.status_code == 403 or "UNAUTHORIZED" in err_code:
+                msg_usuario = (
+                    "\u26a0\ufe0f  Tu token NO tiene permiso para crear \u00f3rdenes QR (Error 403).\n\n"
+                    "Caus as m\u00e1s comunes:\n"
+                    "  1\u25e6 El token es de PRUEBA (TEST-...) pero la cuenta es Productiva.\n"
+                    "  2\u25e6 El cajero QR no fue creado en el panel de Mercado Pago.\n"
+                    "  3\u25e6 El 'external_pos_id' no coincide con el POS registrado.\n\n"
+                    "\u2705  Soluci\u00f3n paso a paso:\n"
+                    "  1. Ing res\u00e1 a mercadopago.com/developers\n"
+                    "  2. Cre\u00e1 una aplicaci\u00f3n con permiso 'QR Code'\n"
+                    "  3. En 'Credenciales de Producci\u00f3n' copi\u00e1 el Access Token\n"
+                    "  4. En 'Puntos de venta' cre\u00e1 un cajero y cop i\u00e1 el 'external_id'\n"
+                    "  5. Peg\u00e1 ambos datos en Admin \u2192 Configuraci\u00f3n \u2192 Mercado Pago"
+                )
+            elif resp.status_code == 401:
+                msg_usuario = (
+                    "\u274c  Token inv\u00e1lido o expirado (Error 401).\n\n"
+                    "Actualiz\u00e1 el Access Token en Admin \u2192 Configuraci\u00f3n \u2192 Mercado Pago."
+                )
+            elif resp.status_code == 404:
+                msg_usuario = (
+                    "\u274c  El POS no fue encontrado (Error 404).\n\n"
+                    "El 'external_pos_id' configurado no existe en tu cuenta de MP.\n"
+                    "Verific\u00e1 el ID en mercadopago.com \u2192 Tu negocio \u2192 Puntos de venta."
+                )
+            else:
+                msg_usuario = (
+                    f"Error al crear la orden QR (HTTP {resp.status_code}).\n\n"
+                    f"C\u00f3digo: {err_code}\n"
+                    f"Detalle: {err_msg}"
+                )
+
+            QMessageBox.critical(self, "\u26a0\ufe0f  Error Mercado Pago QR", msg_usuario)
             return
 
         data = resp.json()
