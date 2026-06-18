@@ -785,9 +785,10 @@ class MainWindow(QMainWindow):
     def _toggle_chatbot_overlay(self):
         # Lazy init: se crea la primera vez que el cajero presiona el botón
         if self.chatbot_overlay is None:
-            from chatbot.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
+            from src.cajero.chat_bot import ChatManualWidget as ChatBotWidget
             self.chatbot_overlay = ChatBotWidget(self)
             self.chatbot_overlay.hide()
+            self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
 
         self._chatbot_active = not self._chatbot_active
         if self._chatbot_active:

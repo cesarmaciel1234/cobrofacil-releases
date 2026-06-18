@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer, QUrl, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 
@@ -78,7 +78,7 @@ HTML_CHAT = r"""
     html, body {
         height: 100%; margin: 0; padding: 0;
         overflow: hidden;
-        background: #0f172a;
+        background: transparent;
         font-family: 'Segoe UI', -apple-system, sans-serif;
         user-select: none;
     }
@@ -345,7 +345,7 @@ function toggleBubble() {
   if(bubbleOpen) { bubble.classList.add("active"); dots.classList.remove("active"); }
   else           { bubble.classList.remove("active"); }
 }
-function cerrar() { bubbleOpen=false; bubble.classList.remove("active"); }
+function cerrar() { bubbleOpen=false; bubble.classList.remove("active"); console.log("close://"); }
 
 // ── Agregar mensaje ───────────────────────────────────────────────────────────
 function addMsg(txt, esBot) {
@@ -425,13 +425,13 @@ class ChatManualWidget(QWidget):
     Manual del Cajero con interfaz del bot_burbuja + tutor integrado.
     """
     request_dashboard = pyqtSignal()
+    chat_closed = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent_window = parent
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.resize(450, 650)
-        self._is_dragging = False
-        self._drag_pos = None
+        self.resize(520, 520)
         self.motor     = ChatManual()
         self._tutor_idx = 0
         self._tutor_activo = False
@@ -441,38 +441,20 @@ class ChatManualWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        self.setStyleSheet("background: #0f172a;")
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("background: transparent;")
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
-        # Header (Draggable)
-        self.header = QFrame()
-        self.header.setFixedHeight(56)
-        self.header.setStyleSheet("background:#1e293b; border-bottom:1px solid #334155;")
-        self.header.mousePressEvent = self._header_mouse_press
-        self.header.mouseMoveEvent = self._header_mouse_move
-        self.header.mouseReleaseEvent = self._header_mouse_release
-        
-        h = QHBoxLayout(self.header)
-        h.setContentsMargins(16, 0, 16, 0)
-        btn_close = QPushButton("❌ Cerrar")
-        btn_close.setFixedHeight(34)
-        btn_close.setStyleSheet("QPushButton{background:#334155;color:#94a3b8;font-weight:700;border-radius:7px;padding:0 14px;border:none;} QPushButton:hover{background:#ef4444;color:white;}")
-        btn_close.clicked.connect(self.hide)
-        h.addWidget(btn_close)
-        
-        lbl = QLabel("📖  Manual del Cajero (Móvil)")
-        lbl.setStyleSheet("color:#e2e8f0;font-size:14px;font-weight:700;margin-left:12px;")
-        h.addWidget(lbl)
-        h.addStretch()
-        lay.addWidget(self.header)
-
-        # WebView con el bot
         self.web = QWebEngineView()
-        self.web.setPage(self._make_page())
+        self.web.setAttribute(Qt.WA_TranslucentBackground)
+        self.web.setStyleSheet("background: transparent;")
+        page = self._make_page()
+        page.setBackgroundColor(Qt.transparent)
+        self.web.setPage(page)
         self.web.setHtml(HTML_CHAT, QUrl("about:blank"))
-        lay.addWidget(self.web, 1)
+        lay.addWidget(self.web)
 
     def _make_page(self):
         page = QWebEnginePage(self.web)
@@ -494,20 +476,11 @@ class ChatManualWidget(QWidget):
             self._tutor_activo = False
             self._tutor_timer.stop()
 
+        elif message.startswith("close://"):
+            self.cerrar_chat()
+
     def _js(self, code: str):
         self.web.page().runJavaScript(code)
-
-    def _header_mouse_press(self, event):
-        if event.button() == Qt.LeftButton:
-            self._is_dragging = True
-            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
-
-    def _header_mouse_move(self, event):
-        if self._is_dragging and event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self._drag_pos)
-
-    def _header_mouse_release(self, event):
-        self._is_dragging = False
 
     # ── Tutor ────────────────────────────────────────────────────────────────
     def _tutor_ejecutar_paso(self):
@@ -532,6 +505,26 @@ class ChatManualWidget(QWidget):
 
     def _tutor_avanzar(self):
         self._tutor_ejecutar_paso()
+
+    def actualizar_posicion(self):
+        pw = self.parent_window or self.parent()
+        if not pw:
+            return
+        rect = pw.frameGeometry()
+        x = rect.x() + rect.width() - self.width() - 20
+        y = rect.y() + rect.height() - self.height() - 80
+        self.move(max(0, x), max(0, y))
+
+    def abrir_y_desplegar(self):
+        self.actualizar_posicion()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self._js("if(!bubbleOpen){ toggleBubble(); }")
+
+    def cerrar_chat(self):
+        self.hide()
+        self.chat_closed.emit()
 
 
 # ─── Test standalone ──────────────────────────────────────────────────────────

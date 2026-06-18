@@ -824,6 +824,14 @@ class Paso5Terminal(QWidget):
         # para que esté listo de forma instantánea al presionar el botón
         self.chatbot_process = None
 
+        self.tickets_espera = []
+        self.cliente_id = None
+        self.cliente_nombre = "Consumidor Final"
+        self.descuento_general = 0.0
+        self.timer_alerta_espera = QTimer(self)
+        self.timer_alerta_espera.timeout.connect(self._alerta_tickets_espera)
+        self.timer_alerta_espera.start(120000)
+
 
 
     def refresh_terminal_title(self):
@@ -1291,7 +1299,25 @@ class Paso5Terminal(QWidget):
         self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
         sl.addWidget(self.lbl_version)
         sl.addSpacing(10)
-        sl.addStretch()
+        sl.addStretch(1)
+
+        self.btn_espera = QPushButton("⏳ 0 Tickets en Espera")
+        self.btn_espera.setFixedHeight(40)
+        self.btn_espera.setCursor(Qt.PointingHandCursor)
+        self.btn_espera.setFocusPolicy(Qt.NoFocus)
+        self.btn_espera.setToolTip("Poner ticket en espera / Recuperar ticket (swap)")
+        self.btn_espera.setStyleSheet("""
+            QPushButton {
+                background: #FFFFFF; color: #000000; border-radius: 5px;
+                font-size: 13px; font-weight: 900; border: 1px solid #CBD5E1;
+                padding: 0px 15px;
+            }
+            QPushButton:hover { background: #F1F5F9; }
+        """)
+        self.btn_espera.clicked.connect(self._swap_ticket_espera)
+        sl.addWidget(self.btn_espera)
+
+        sl.addStretch(1)
         
         # Scroll Area para los atajos del teclado (Previene descuadre en pantallas chicas)
         from PyQt5.QtWidgets import QScrollArea
@@ -2903,6 +2929,151 @@ class Paso5Terminal(QWidget):
             self.flash_feedback(success=False)
             
         QTimer.singleShot(100, self.txt_scan.setFocus)
+
+    def _get_ticket_actual_dict(self):
+        import datetime
+        hora = datetime.datetime.now().strftime("%H:%M:%S")
+        filas = []
+        for i in range(self.tabla.rowCount()):
+            pid = self.tabla.item(i, 0).text()
+            nom = self.tabla.item(i, 1).text()
+            pre = self.tabla.item(i, 2).text()
+            can = self.tabla.item(i, 3).text()
+            des = self.tabla.item(i, 4).text()
+            tot = self.tabla.item(i, 5).text()
+            filas.append((pid, nom, pre, can, des, tot))
+
+        return {
+            "hora": hora,
+            "cliente_id": getattr(self, "cliente_id", None),
+            "cliente_nombre": getattr(self, "cliente_nombre", "Consumidor Final"),
+            "desc_general": getattr(self, "descuento_general", 0.0),
+            "total": self.lbl_total_val.text() if hasattr(self, "lbl_total_val") else "0",
+            "filas": filas,
+        }
+
+    def _restaurar_ticket_dict(self, t):
+        self.cliente_id = t.get("cliente_id")
+        self.cliente_nombre = t.get("cliente_nombre", "Consumidor Final")
+        self.descuento_general = float(t.get("desc_general", 0.0))
+
+        for f in t.get("filas", []):
+            row = self.tabla.rowCount()
+            self.tabla.insertRow(row)
+            for col, val in enumerate(f):
+                it = QTableWidgetItem(val)
+                it.setTextAlignment(Qt.AlignCenter)
+                font = it.font()
+                font.setBold(True)
+                it.setFont(font)
+                if col == 1:
+                    it.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                elif col in (2, 3, 4, 5):
+                    it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if col == 5:
+                    it.setForeground(QColor("#059669"))
+                    it.setFlags(it.flags() & ~Qt.ItemIsSelectable)
+                self.tabla.setItem(row, col, it)
+            self.last_active_row = row
+            self._reaplicar_estilo_fila(row)
+
+        if self.tabla.rowCount() > 0:
+            self.en_venta = True
+        self.actualizar_totales()
+
+    def _limpiar_para_nuevo_ticket(self):
+        self.tabla.setRowCount(0)
+        self.en_venta = False
+        self._volcar_carrito_a_carteleria(limpiar=True)
+        self.cliente_id = None
+        self.cliente_nombre = "Consumidor Final"
+        self.descuento_general = 0.0
+        self.actualizar_totales()
+
+    def _volcar_carrito_a_carteleria(self, limpiar=False):
+        from src.services.carteleria_service import CarteleriaService
+
+        if limpiar:
+            CarteleriaService.limpiar_carteleria()
+            return
+
+        carrito = []
+        total_ahorro = 0.0
+        ultimo_producto = ""
+
+        for i in range(self.tabla.rowCount()):
+            try:
+                nombre = self.tabla.item(i, 1).text().replace("🔥 [OFERTA] ", "").replace("🌟 ", "")
+                precio_str = self.tabla.item(i, 2).text().replace("$", "")
+                precio_str = precio_str.replace(".", "").replace(",", ".")
+                precio = float(precio_str)
+                carrito.append({"producto": nombre, "precio": precio})
+                ultimo_producto = nombre
+                try:
+                    desc_str = self.tabla.item(i, 4).text().replace("$", "")
+                    desc_str = desc_str.replace(".", "").replace(",", ".")
+                    total_ahorro += float(desc_str) if desc_str else 0.0
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+        CarteleriaService.notificar_escaneo(carrito, total_ahorro, ultimo_producto)
+
+    def _actualizar_boton_espera(self):
+        c = len(self.tickets_espera)
+        if c > 0:
+            self.btn_espera.setText(f"🔄 {c} Ticket en Espera")
+            self.btn_espera.setStyleSheet("""
+                QPushButton {
+                    background: #EAB308; color: #FFFFFF; border-radius: 5px;
+                    font-size: 13px; font-weight: 900; border: 1px solid #CA8A04;
+                    padding: 0px 15px;
+                }
+                QPushButton:hover { background: #CA8A04; }
+            """)
+        else:
+            self.btn_espera.setText("⏳ 0 Tickets en Espera")
+            self.btn_espera.setStyleSheet("""
+                QPushButton {
+                    background: #FFFFFF; color: #000000; border-radius: 5px;
+                    font-size: 13px; font-weight: 900; border: 1px solid #CBD5E1;
+                    padding: 0px 15px;
+                }
+                QPushButton:hover { background: #F1F5F9; }
+            """)
+
+    def _swap_ticket_espera(self, *args, **kwargs):
+        actual_lleno = self.tabla.rowCount() > 0
+        hay_espera = len(self.tickets_espera) > 0
+
+        if not actual_lleno and not hay_espera:
+            return
+
+        if actual_lleno and not hay_espera:
+            self.tickets_espera.append(self._get_ticket_actual_dict())
+            self._limpiar_para_nuevo_ticket()
+            self._actualizar_boton_espera()
+            self._volcar_carrito_a_carteleria(limpiar=True)
+        elif not actual_lleno and hay_espera:
+            t = self.tickets_espera.pop(0)
+            self._restaurar_ticket_dict(t)
+            self._actualizar_boton_espera()
+            self._volcar_carrito_a_carteleria()
+        elif actual_lleno and hay_espera:
+            ticket_a_guardar = self._get_ticket_actual_dict()
+            ticket_a_restaurar = self.tickets_espera.pop(0)
+            self._limpiar_para_nuevo_ticket()
+            self._restaurar_ticket_dict(ticket_a_restaurar)
+            self.tickets_espera.append(ticket_a_guardar)
+            self._actualizar_boton_espera()
+            self._volcar_carrito_a_carteleria()
+
+    def _alerta_tickets_espera(self):
+        if self.tickets_espera:
+            if AUDIO_ENABLED:
+                winsound.Beep(1000, 300)
+                winsound.Beep(1000, 300)
 
     def abrir_cierre_caja(self):
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---

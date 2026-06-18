@@ -1,7 +1,7 @@
 {
   "app_version": "31000.0",
   "channel": "stable",
-  "build_date": "2026-06-18 10:52:13",
+  "build_date": "2026-06-18 11:53:50",
   "server_host": "cesar",
   "modules": {
     "main.py": {
@@ -408,9 +408,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "5bc137a2b1e46fab411787f648125626",
+      "checksum": "f5c32fcfdea1831daf837c4108557b96",
       "channel": "stable",
-      "size": 38367
+      "size": 38464
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -594,9 +594,9 @@
     },
     "src/cajero/chat_bot.py": {
       "version": "1.0.0",
-      "checksum": "83ec64819a58df372669d96902ace208",
+      "checksum": "c3cc3c21d48a7d4b40a6f94e7c62f639",
       "channel": "stable",
-      "size": 28255
+      "size": 27608
     },
     "src/cajero/chat_bot_animado.py": {
       "version": "1.0.0",
