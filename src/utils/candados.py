@@ -27,6 +27,20 @@ class PerfilLocker:
     _held: str | None = None
 
     @classmethod
+    def check_is_locked(cls, role: str) -> bool:
+        """True si otro proceso ya tiene el candado de este rol."""
+        path = _lock_path(role)
+        if not os.path.exists(path):
+            return False
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                other = int(f.read().strip() or "0")
+        except Exception:
+            return False
+        pid = os.getpid()
+        return other != pid and _pid_alive(other)
+
+    @classmethod
     def lock_profile(cls, role: str) -> bool:
         os.makedirs(_LOCK_DIR, exist_ok=True)
         path = _lock_path(role)
