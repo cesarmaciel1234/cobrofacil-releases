@@ -39,7 +39,7 @@ def run_tests():
     # Fila 2: Nuevo
     ws.append(["INVTEST200", "Producto Nube 2", 800, 400, 10])
     
-    excel_path = "test_import.xlsx"
+    excel_path = os.path.join(os.path.dirname(__file__), "test_import.xlsx")
     wb.save(excel_path)
     
     print("\n[5] Simulando Carga Inicial / Nube (Excel)...")

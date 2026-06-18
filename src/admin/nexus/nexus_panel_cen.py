@@ -1,23 +1,94 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGridLayout, QScrollArea, QSizePolicy
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtCore import Qt, pyqtSignal
+import os
+import json
+import time
+
+class TarjetaTerminalFila(QFrame):
+    """Componente visual para cada terminal en la matriz dinámica"""
+    clicked = pyqtSignal(str)
+    
+    def __init__(self, nombre, ip, parent=None):
+        super().__init__(parent)
+        self.nombre = nombre
+        self.ip = ip
+        self.setCursor(Qt.PointingHandCursor)
+        self.init_ui()
+
+    def init_ui(self):
+        self.setFixedSize(140, 80)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(2)
+
+        self.lbl_nombre = QLabel(self.nombre.upper())
+        self.lbl_nombre.setStyleSheet("font-size: 11px; font-weight: bold; background: transparent; border: none;")
+        
+        self.lbl_ip = QLabel(self.ip)
+        self.lbl_ip.setStyleSheet("color: #888888; font-size: 9px; font-family: monospace; background: transparent; border: none;")
+
+        self.lbl_estado = QLabel("● ACTIVA")
+        self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; font-family: monospace; background: transparent; border: none;")
+
+        layout.addWidget(self.lbl_nombre)
+        layout.addWidget(self.lbl_ip)
+        layout.addStretch()
+        layout.addWidget(self.lbl_estado)
+        self.setLayout(layout)
+
+    def set_estado(self, estado, tiempo_restante=0, is_selected=False):
+        if is_selected:
+            self.setStyleSheet("background-color: #0EA5E9; border: 2px solid #38BDF8; border-radius: 8px;")
+            self.lbl_nombre.setStyleSheet("color: #FFFFFF; font-size: 11px; font-weight: bold; background: transparent; border: none;")
+            self.lbl_estado.setStyleSheet("color: #FFFFFF; font-size: 10px; font-weight: bold; background: transparent; border: none;")
+            self.lbl_estado.setText("● SELECCIONADA")
+        elif estado == "Activo":
+            self.setStyleSheet("background-color: #F8FAFC; border: 1px solid #2ECC71; border-radius: 6px;")
+            self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
+            self.lbl_estado.setText("● ACTIVA")
+            self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; background: transparent; border: none;")
+        elif estado == "Warning":
+            self.setStyleSheet("background-color: #FFFBEB; border: 1px solid #F1C40F; border-radius: 6px;")
+            self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
+            self.lbl_estado.setText(f"● ESPERANDO ({tiempo_restante}s)")
+            self.lbl_estado.setStyleSheet("color: #F59E0B; font-size: 10px; font-weight: bold; background: transparent; border: none;")
+        else:
+            self.setStyleSheet("background-color: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px;")
+            self.lbl_nombre.setStyleSheet("color: #991B1B; font-size: 11px; font-weight: bold; background: transparent; border: none;")
+            self.lbl_estado.setText("● CAÍDA")
+            self.lbl_estado.setStyleSheet("color: #EF4444; font-size: 10px; font-weight: bold; background: transparent; border: none;")
+
+    def mousePressEvent(self, event):
+        self.clicked.emit(self.nombre)
+        super().mousePressEvent(event)
 
 class NexusPanelCen(QFrame):
     request_z_close = pyqtSignal(float)
-    caja_selected = pyqtSignal(int)
+    caja_selected = pyqtSignal(str)
     
     def __init__(self):
         super().__init__()
+        self.MAX_PANTALLAS = 20
         self.setStyleSheet("background-color: transparent; border-radius: 8px;")
         
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(15)
 
-        self.selected_caja_id = 0 # 0 = Todas
+        self.selected_caja_id = "todas" # Ahora usa el origen
 
         # -- SECCIÓN 1: NODOS (TOPOLOGÍA DE CAJAS) --
-        # Area scrolleable para las cajas
+        
+        cabecera_nodos = QHBoxLayout()
+        titulo = QLabel("MATRIZ DE TRÁFICO // ORDENADO POR ACTIVIDAD")
+        titulo.setStyleSheet("font-size: 12px; font-weight: bold; color: #3B82F6; letter-spacing: 1px;")
+        self.lbl_info_matriz = QLabel("Monitoreando 0/20 terminales")
+        self.lbl_info_matriz.setStyleSheet("color: #10B981; font-family: monospace; font-size: 10px; font-weight: bold;")
+        cabecera_nodos.addWidget(titulo)
+        cabecera_nodos.addStretch()
+        cabecera_nodos.addWidget(self.lbl_info_matriz)
+        main_layout.addLayout(cabecera_nodos)
+
         self.scroll_nodos = QScrollArea()
         self.scroll_nodos.setWidgetResizable(True)
         self.scroll_nodos.setStyleSheet("""
@@ -34,50 +105,28 @@ class NexusPanelCen(QFrame):
         lay_nodos_box.setContentsMargins(5, 5, 5, 5)
         lay_nodos_box.setSpacing(8)
 
-        grid_nodos = QGridLayout()
-        grid_nodos.setSpacing(8)
-        self.nodos_ui = []
+        self.grid_nodos = QGridLayout()
+        self.grid_nodos.setSpacing(8)
         
-        btn_todas = QPushButton("🌐\nTODAS")
+        # Diccionario en memoria de Nexus para el control de actividad
+        self.active_boxes = {} # formato: {"origen": {"ip": "IP", "ultima_actividad": time.time()}}
+        
+        btn_todas = QPushButton("🌐 VER TODAS LAS CAJAS")
         btn_todas.setCursor(Qt.PointingHandCursor)
-        btn_todas.setMinimumHeight(65)
-        btn_todas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.nodos_ui.append(btn_todas) # index 0 es TODAS
-        grid_nodos.addWidget(btn_todas, 0, 0)
-        btn_todas.clicked.connect(lambda _, cid=0: self.seleccionar_caja(cid))
+        btn_todas.setStyleSheet("QPushButton { background-color: #FFFFFF; color: #0F172A; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1; padding: 10px; } QPushButton:hover { background-color: #F8FAFC; border: 1px solid #94A3B8; }")
+        lay_nodos_box.addWidget(btn_todas)
+        btn_todas.clicked.connect(lambda: self.seleccionar_caja("todas"))
         
-        # Generar 20 cajas
-        num_cajas = 20
-        for i in range(1, num_cajas + 1):
-            btn = QPushButton(f"🖥️\nCAJA {i} ❌")
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.setMinimumHeight(75)
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-            self.nodos_ui.append(btn)
-            btn.clicked.connect(lambda _, cid=i: self.seleccionar_caja(cid))
-            
-        # Acomodar en grid (4 columnas para hacerlos más cuadrados)
-        for idx, btn in enumerate(self.nodos_ui):
-            if idx == 0:
-                grid_nodos.addWidget(btn, 0, 0, 1, 4) # TODAS ocupa el ancho completo arriba
-            else:
-                row = ((idx - 1) // 4) + 1
-                col = (idx - 1) % 4
-                grid_nodos.addWidget(btn, row, col)
-            
-        self.aplicar_estilos_botones()
+        lay_nodos_box.addLayout(self.grid_nodos)
+        lay_nodos_box.addStretch()
         
-        lay_nodos_box.addLayout(grid_nodos)
         self.scroll_nodos.setWidget(frame_nodos)
         main_layout.addWidget(self.scroll_nodos, 1) # Ocupará el 50%
 
-        # Sistema de parpadeo de cajas activas
-        import time
-        self.active_boxes = {}
-        self.blink_state = False
+        # Sistema de actualización de matriz dinámica
         self.timer_blink = QTimer(self)
-        self.timer_blink.timeout.connect(self._update_blinking_lights)
-        self.timer_blink.start(500)
+        self.timer_blink.timeout.connect(self._actualizar_matriz_visual)
+        self.timer_blink.start(2000)
 
         # Contenedor para la mitad inferior
         self.frame_abajo = QFrame()
@@ -227,74 +276,83 @@ class NexusPanelCen(QFrame):
         except ValueError:
             self.request_z_close.emit(-1.0) # Error code
 
-    def seleccionar_caja(self, caja_id):
-        self.selected_caja_id = caja_id
-        self.aplicar_estilos_botones()
-        self.caja_selected.emit(caja_id)
+    def registrar_nodo_dinamico(self, origen, guardar=True):
+        if origen == "todas": return
+        if origen not in self.active_boxes:
+            self.active_boxes[origen] = {"ip": "Local/Detectada", "ultima_actividad": time.time()}
+            self._actualizar_matriz_visual()
+
+    def seleccionar_caja(self, origen):
+        self.selected_caja_id = origen
+        self._actualizar_matriz_visual()
+        self.caja_selected.emit(str(origen))
 
     def aplicar_estilos_botones(self):
-        for idx, btn in enumerate(self.nodos_ui):
-            if idx == self.selected_caja_id:
-                # Estilo Activo / Seleccionado
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #38BDF8;
-                        color: #0F172A; 
-                        border: 1px solid #38BDF8; 
-                        border-radius: 4px;
-                        font-family: Consolas, monospace;
-                        font-weight: 900; 
-                        font-size: 13px; 
-                        padding: 8px;
-                        letter-spacing: 2px;
-                    }
-                """)
-            else:
-                # Estilo Normal (Inactivo) - Fondo negro para resaltar PC en blanco
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #020617;
-                        color: #FFFFFF; 
-                        border: 1px solid #1E293B; 
-                        border-radius: 6px;
-                        font-family: Consolas, monospace;
-                        font-weight: bold; 
-                        font-size: 13px; 
-                        padding: 8px;
-                        letter-spacing: 2px;
-                    }
-                    QPushButton:hover {
-                        background-color: #0F172A;
-                        border: 1px solid #38BDF8;
-                    }
-                """)
+        pass # Reemplazado por Matriz Dinamica
 
-    def mark_active(self, caja_id):
-        import time
-        self.active_boxes[caja_id] = time.time()
-
+    def mark_active(self, origen):
+        if origen == "todas": return
+        if origen not in self.active_boxes:
+            self.active_boxes[origen] = {"ip": "Local/Detectada", "ultima_actividad": time.time()}
+        else:
+            self.active_boxes[origen]["ultima_actividad"] = time.time()
+            
     def _update_blinking_lights(self):
-        try:
-            import time
-            now = time.time()
-            self.blink_state = not self.blink_state
-            for cid, btn in enumerate(self.nodos_ui):
-                if cid == 0: continue
-                
-                # Si tuvo actividad en los últimos 4 segundos, parpadea en verde
-                if cid in self.active_boxes and now - self.active_boxes[cid] < 4:
-                    new_text = f"🖥️\nCAJA {cid} 🟢" if self.blink_state else f"🖥️\nCAJA {cid} ⚪"
-                else:
-                    # Si no está activa, mostrar solo cruz roja o blanco opaco (fijo sin parpadeo molestoso)
-                    new_text = f"🖥️\nCAJA {cid} ❌"
-                    
-                    
-                if btn.text() != new_text:
-                    btn.setText(new_text)
-        except Exception as e:
-            import traceback
-            with open("error_blink.log", "w") as f:
-                f.write(traceback.format_exc())
+        pass
+
+    def _actualizar_matriz_visual(self):
+        # 1. Limpiar el Grid visual
+        while self.grid_nodos.count():
+            item = self.grid_nodos.takeAt(0)
+            w = item.widget()
+            if w: w.deleteLater()
+
+        ahora = time.time()
+
+        # 2. ORDENAR ESTRICTAMENTE: jefe, admin, cajero, carteleria
+        orden_estricto = ["jefe", "admin", "cajero", "cartel"]
+        def obtener_indice(nombre):
+            nombre_lower = str(nombre).lower()
+            for idx, role in enumerate(orden_estricto):
+                if role in nombre_lower:
+                    return idx
+            return 999
+            
+        terminales_ordenadas = sorted(
+            self.active_boxes.items(),
+            key=lambda x: obtener_indice(x[0])
+        )
+
+        # 3. CORTE RESTRICTIVO (Regla de Máx 20)
+        if len(terminales_ordenadas) > self.MAX_PANTALLAS:
+            eliminadas = terminales_ordenadas[self.MAX_PANTALLAS:]
+            terminales_ordenadas = terminales_ordenadas[:self.MAX_PANTALLAS]
+            for nombre_eliminar, _ in eliminadas:
+                if nombre_eliminar in self.active_boxes:
+                    del self.active_boxes[nombre_eliminar]
+
+        self.lbl_info_matriz.setText(f"Monitoreando {len(terminales_ordenadas)}/20 terminales vivas")
+
+        # 4. PINTAR EN GRID (Matriz de 5 columnas)
+        COLUMNAS = 5
+        for posicion, (nombre, datos) in enumerate(terminales_ordenadas):
+            fila = posicion // COLUMNAS
+            columna = posicion % COLUMNAS
+            
+            tarjeta = TarjetaTerminalFila(nombre, datos["ip"])
+            tarjeta.clicked.connect(self.seleccionar_caja)
+            
+            segundos = int(ahora - datos["ultima_actividad"])
+            is_selected = (nombre == self.selected_caja_id)
+            
+            if segundos < 32:
+                tarjeta.set_estado("Activo", is_selected=is_selected)
+            elif segundos < 45:
+                tarjeta.set_estado("Warning", tiempo_restante=45 - segundos, is_selected=is_selected)
+            else:
+                tarjeta.set_estado("Inactivo", is_selected=is_selected)
+
+            self.grid_nodos.addWidget(tarjeta, fila, columna)
 
     def aplicar_tema(self, is_dark):
         if is_dark:

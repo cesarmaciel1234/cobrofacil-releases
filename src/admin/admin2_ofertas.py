@@ -63,7 +63,7 @@ QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus {
 class Admin2Ofertas(QWidget):
     request_dashboard = pyqtSignal()
 
-    HEADERS = ["🗹", "ID", "Código", "Producto", "Departamento", "Costo", "Precio Reg.", "Stock", "U. Oferta", "Cant. Promo", "Precio Promo"]
+    HEADERS = ["🗹", "ID / Cód.", "Producto", "Departamento", "Costo", "Precio Reg.", "Stock", "U. Oferta", "Cant. Promo", "Precio Promo"]
 
     def __init__(self):
         super().__init__()
@@ -101,7 +101,7 @@ class Admin2Ofertas(QWidget):
         hl.addWidget(btn_back)
         hl.addSpacing(20)
         
-        tit = QLabel("🏷️ GESTIÓN INDUSTRIAL DE OFERTAS Y PRECIOS <span style='color: rgba(255,255,255,0.7);'>2026</span>")
+        tit = QLabel("🏷️ MOTOR DE PROMOCIONES INTELIGENTE <span style='color: rgba(255,255,255,0.7);'>2026</span>")
         tit.setObjectName("titulo")
         tit.setStyleSheet("background: transparent;")
         hl.addWidget(tit); hl.addStretch()
@@ -210,14 +210,39 @@ class Admin2Ofertas(QWidget):
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setShowGrid(True)
         self.tabla.setGridStyle(Qt.SolidLine)
-        self.tabla.setStyleSheet(
-            "QTableWidget{background:white;gridline-"
-            "selection-selection-}"
-            "QTableWidget::item{padding:8px; border-bottom: 1px solid #f1f5f9;}"
-            "QHeaderView::section{background:white;"
-            "font-weight:900;padding:8px;border:none;border-bottom:2px solid #e2e8f0;font-size:10px;}"
-        )
-        col_widths = [35, 45, 95, -1, 110, 80, 80, 80, 80, 80, 80]
+        self.tabla.setStyleSheet("""
+            QTableWidget {
+                background: white;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                gridline-color: transparent;
+                outline: none;
+            }
+            QTableWidget::item {
+                padding: 4px; 
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QTableWidget::item:hover {
+                background-color: #F8FAFC;
+            }
+            QTableWidget::item:selected {
+                background-color: #EFF6FF;
+                color: #1D4ED8;
+                border-bottom: 2px solid #3B82F6;
+            }
+            QHeaderView::section {
+                background-color: #F8FAFC;
+                color: #64748B;
+                font-weight: 900;
+                padding: 12px 8px;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        """)
+        col_widths = [35, 120, -1, 110, 80, 80, 80, 80, 80, 80]
         hh = self.tabla.horizontalHeader()
         for i, w in enumerate(col_widths):
             if w == -1:
@@ -226,7 +251,7 @@ class Admin2Ofertas(QWidget):
                 hh.setSectionResizeMode(i, QHeaderView.Fixed)
                 self.tabla.setColumnWidth(i, w)
 
-        self.tabla.verticalHeader().setDefaultSectionSize(26)
+        self.tabla.verticalHeader().setDefaultSectionSize(40)
         self.tabla.itemSelectionChanged.connect(self._actualizar_sel)
         self.tabla.itemChanged.connect(self._on_item_changed)
         splitter.addWidget(self.tabla)
@@ -240,36 +265,36 @@ class Admin2Ofertas(QWidget):
         self.panel_control.setObjectName("ControlCenter")
         self.panel_control.setStyleSheet("""
             QFrame#ControlCenter {
-                background-color: white;
-                border-left: 1px solid #cbd5e1;
+                background-color: #0F172A;
+                border-left: 1px solid #1E293B;
             }
-            QLabel { background: transparent; }
+            QLabel { background: transparent; color: #F8FAFC; }
         """)
         lay_ctrl = QVBoxLayout(self.panel_control)
         lay_ctrl.setContentsMargins(20, 20, 20, 20)
         lay_ctrl.setSpacing(15)
         
         # Encabezado
-        lbl_head = QLabel("⚙️ CONTROL INDUSTRIAL DE PRODUCTO")
-        lbl_head.setStyleSheet(" font-size: 13px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_head = QLabel("⚙️ REGLAS DEL PRODUCTO")
+        lbl_head.setStyleSheet("color: #94A3B8; font-size: 13px; font-weight: 900; letter-spacing: 1px;")
         lay_ctrl.addWidget(lbl_head)
         
         self.lbl_prod_nombre = QLabel("Seleccione un producto...")
-        self.lbl_prod_nombre.setStyleSheet("font-size: 16px; font-weight: 800; ")
+        self.lbl_prod_nombre.setStyleSheet("color: #38BDF8; font-size: 18px; font-weight: 900;")
         self.lbl_prod_nombre.setWordWrap(True)
         lay_ctrl.addWidget(self.lbl_prod_nombre)
         
         self.lbl_prod_detalles = QLabel("ID: —  |  PLU: —")
-        self.lbl_prod_detalles.setStyleSheet("font-size: 11px;  font-family: 'Consolas', monospace; font-weight: bold;")
+        self.lbl_prod_detalles.setStyleSheet("color: #CBD5E1; font-size: 12px; font-family: 'Consolas', monospace; font-weight: bold;")
         lay_ctrl.addWidget(self.lbl_prod_detalles)
         
         sep = QFrame(); sep.setFrameShape(QFrame.HLine); sep.setFrameShadow(QFrame.Sunken)
-        sep.setStyleSheet("  max-height: 1px;")
+        sep.setStyleSheet("  max-height: 1px; background: #334155;")
         lay_ctrl.addWidget(sep)
         
         # Sección A: Ajustes rápidos
-        lbl_sec_a = QLabel("📊 PRECIOS Y EXISTENCIA")
-        lbl_sec_a.setStyleSheet(" font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
+        lbl_sec_a = QLabel("📦 CONTROL DE STOCK")
+        lbl_sec_a.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; letter-spacing: 1px;")
         lay_ctrl.addWidget(lbl_sec_a)
         
         form_a = QFormLayout()
@@ -327,8 +352,8 @@ class Admin2Ofertas(QWidget):
         lay_ctrl.addWidget(sep2)
         
         # Sección B: Promociones
-        lbl_sec_b = QLabel("🏷️ CONTROL DE PROMOCIONES")
-        lbl_sec_b.setStyleSheet(" font-weight: 800; font-size: 11px; letter-spacing: 0.5px;")
+        lbl_sec_b = QLabel("🏷️ REGLAS MATEMÁTICAS DE PROMOCIÓN")
+        lbl_sec_b.setStyleSheet("color: #94A3B8; font-weight: 800; font-size: 11px; letter-spacing: 1px;")
         lay_ctrl.addWidget(lbl_sec_b)
         
         form_b = QFormLayout()
@@ -343,19 +368,39 @@ class Admin2Ofertas(QWidget):
         self.sp_quick_precio_oferta.setRange(0, 9999999)
         self.sp_quick_precio_oferta.setDecimals(2)
         self.sp_quick_precio_oferta.setStyleSheet("font-size: 13px; padding: 6px;  font-weight: bold;")
+
+        self.sp_quick_oferta_relampago = QDoubleSpinBox()
+        self.sp_quick_oferta_relampago.setRange(0, 9999999)
+        self.sp_quick_oferta_relampago.setDecimals(2)
+        self.sp_quick_oferta_relampago.setStyleSheet("font-size: 13px; padding: 6px;")
+
+        self.sp_quick_oferta_promedio = QDoubleSpinBox()
+        self.sp_quick_oferta_promedio.setRange(0, 9999999)
+        self.sp_quick_oferta_promedio.setDecimals(2)
+        self.sp_quick_oferta_promedio.setStyleSheet("font-size: 13px; padding: 6px;")
+        self.sp_limite_relampago = QDoubleSpinBox()
+        self.sp_limite_relampago.setRange(0, 9999999)
+        self.sp_limite_relampago.setDecimals(0)
+        self.sp_limite_relampago.setStyleSheet("font-size: 13px; padding: 6px;")
+        self.lbl_ventas_relampago = QLabel("Vendidos: 0 / 0")
+        self.lbl_ventas_relampago.setStyleSheet("color: #D97706; font-weight: bold;")
         
-        form_b.addRow(QLabel("Oferta desde:"), self.sp_quick_cant_oferta)
-        form_b.addRow(QLabel("Precio Oferta ($):"), self.sp_quick_precio_oferta)
+        form_b.addRow(QLabel("Oferta desde (Cant):"), self.sp_quick_cant_oferta)
+        form_b.addRow(QLabel("Precio Of. Manual ($):"), self.sp_quick_precio_oferta)
+        form_b.addRow(QLabel("Of. Relámpago ($):"), self.sp_quick_oferta_relampago)
+        form_b.addRow(QLabel("Límite (uds):"), self.sp_limite_relampago)
+        form_b.addRow(QLabel(""), self.lbl_ventas_relampago)
+        form_b.addRow(QLabel("Of. Promedio ($):"), self.sp_quick_oferta_promedio)
         lay_ctrl.addLayout(form_b)
         
         # Caja de simulación de rentabilidad industrial
         self.group_simulador = QFrame()
         self.group_simulador.setStyleSheet("""
             QFrame {
-                
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
-                padding: 10px;
+                background-color: #1E293B;
+                border: 1px solid #334155;
+                border-radius: 12px;
+                padding: 15px;
                 margin-top: 5px;
             }
         """)
@@ -363,23 +408,23 @@ class Admin2Ofertas(QWidget):
         lay_sim.setSpacing(6)
         
         lbl_sim_tit = QLabel("📊 SIMULADOR DE MARGEN INDUSTRIAL")
-        lbl_sim_tit.setStyleSheet(" font-weight: 900; font-size: 11px; letter-spacing: 0.5px; border: none;")
+        lbl_sim_tit.setStyleSheet("color: #E2E8F0; font-weight: 900; font-size: 12px; letter-spacing: 1px; border: none;")
         lay_sim.addWidget(lbl_sim_tit)
         
         self.lbl_margen_reg = QLabel("Margen Regular: —")
-        self.lbl_margen_reg.setStyleSheet("font-size: 12px;  font-weight: bold; border: none;")
+        self.lbl_margen_reg.setStyleSheet("color: #94A3B8; font-size: 13px; font-weight: bold; border: none;")
         lay_sim.addWidget(self.lbl_margen_reg)
         
         self.lbl_margen_promo = QLabel("Margen Promo: —")
-        self.lbl_margen_promo.setStyleSheet("font-size: 12px;  font-weight: bold; border: none;")
+        self.lbl_margen_promo.setStyleSheet("color: #34D399; font-size: 18px; font-weight: 900; border: none;")
         lay_sim.addWidget(self.lbl_margen_promo)
         
         self.lbl_ahorro_total = QLabel("Ahorro de Cliente: —")
-        self.lbl_ahorro_total.setStyleSheet("font-size: 12px;  border: none;")
+        self.lbl_ahorro_total.setStyleSheet("color: #FBBF24; font-size: 16px; font-weight: bold; border: none;")
         lay_sim.addWidget(self.lbl_ahorro_total)
         
         self.lbl_semaforo = QLabel("Seleccione un producto...")
-        self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800;  border: none;")
+        self.lbl_semaforo.setStyleSheet("color: #E2E8F0; font-size: 11px; font-weight: 800; border: none;")
         self.lbl_semaforo.setAlignment(Qt.AlignCenter)
         lay_sim.addWidget(self.lbl_semaforo)
         
@@ -389,20 +434,21 @@ class Admin2Ofertas(QWidget):
         self.btn_activar_promo = QPushButton("🚀 ACTIVAR PROMO")
         self.btn_activar_promo.setStyleSheet("""
             QPushButton {
-                 color: #1e293b; font-weight: 800; font-size: 11px;
-                padding: 10px; border-radius: 6px; border: none;
+                background-color: #2563EB; color: white; font-weight: 900; font-size: 12px;
+                padding: 12px; border-radius: 8px; border: none; letter-spacing: 1px;
             }
-            QPushButton:hover {  }
+            QPushButton:hover { background-color: #1D4ED8; }
+            QPushButton:pressed { background-color: #1E40AF; }
         """)
         self.btn_activar_promo.clicked.connect(self._guardar_oferta_rapida)
         
         self.btn_quitar_promo = QPushButton("❌ QUITAR PROMO")
         self.btn_quitar_promo.setStyleSheet("""
             QPushButton {
-                  font-weight: bold; font-size: 11px;
-                padding: 10px; border-radius: 6px; border: 1px solid #fecaca;
+                color: #EF4444; background: transparent; font-weight: bold; font-size: 12px;
+                padding: 12px; border-radius: 8px; border: 2px solid #EF4444; letter-spacing: 1px;
             }
-            QPushButton:hover {  background-color: #3b82f6; color: white; }
+            QPushButton:hover { background-color: #EF4444; color: white; }
         """)
         self.btn_quitar_promo.clicked.connect(self._quitar_oferta_rapida)
         
@@ -451,6 +497,8 @@ class Admin2Ofertas(QWidget):
         self.txt_quick_costo.valueChanged.connect(self._recargar_simulador)
         self.sp_quick_cant_oferta.valueChanged.connect(self._recargar_simulador)
         self.sp_quick_precio_oferta.valueChanged.connect(self._recargar_simulador)
+        self.sp_quick_oferta_relampago.valueChanged.connect(self._recargar_simulador)
+        self.sp_quick_oferta_promedio.valueChanged.connect(self._recargar_simulador)
         self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
 
     def _recargar_simulador(self):
@@ -554,11 +602,12 @@ class Admin2Ofertas(QWidget):
             row = item.row()
             id_item = self.tabla.item(row, 1)
             if id_item:
-                id_p = id_item.text()
+                id_p = id_item.data(Qt.UserRole)
+                if not id_p: id_p = id_item.text() # Fallback
                 if item.checkState() == Qt.Checked:
-                    self.checked_product_ids.add(id_p)
+                    self.checked_product_ids.add(str(id_p))
                 else:
-                    self.checked_product_ids.discard(id_p)
+                    self.checked_product_ids.discard(str(id_p))
                 
                 # Actualizar habilitación de botón y leyenda de footer
                 num_sel = len(self.checked_product_ids)
@@ -587,8 +636,7 @@ class Admin2Ofertas(QWidget):
             p_of = float(r['precio_oferta'] or 0.0)
             nombre_display = r['nombre'] or ''
             if c_of > 0 and p_of > 0:
-                nombre_display = f"🔥 [PROMO: {c_of:g}x${p_of:.2f}] {nombre_display}"
-
+                pass # Eliminamos la inyección basura al Master Data
             # Casilla de verificación en columna 0
             it_check = QTableWidgetItem()
             it_check.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
@@ -598,9 +646,11 @@ class Admin2Ofertas(QWidget):
                 it_check.setCheckState(Qt.Unchecked)
             self.tabla.setItem(i, 0, it_check)
 
+            cod = r['codigo'] or ''
+            id_cod_text = f"[{r['id']}]  {cod}" if cod else f"[{r['id']}]"
+
             vals = [
-                (str(r['id']),       Qt.AlignRight),
-                (str(r['codigo'] or ''), Qt.AlignCenter),
+                (id_cod_text,        Qt.AlignCenter),
                 (nombre_display,     Qt.AlignLeft),
                 (dep,                Qt.AlignLeft),
                 (f"${r['costo']:.2f}", Qt.AlignRight),
@@ -614,14 +664,16 @@ class Admin2Ofertas(QWidget):
             for j_val, (v, align) in enumerate(vals):
                 j = j_val + 1
                 it = QTableWidgetItem(v)
+                if j == 1:
+                    it.setData(Qt.UserRole, str(r['id'])) # Guardar ID puro internamente
                 it.setTextAlignment(Qt.AlignVCenter | align)
                 it.setForeground(QColor("#1e293b"))
 
-                if j == 3 and c_of > 0 and p_of > 0:
+                if j == 2 and c_of > 0 and p_of > 0:
                     it.setForeground(QColor("#ea580c")) # Naranja destacado para promos
                     it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
-                if j == 7: # Stock
+                if j == 6: # Stock
                     if stock <= 0:
                         it.setForeground(QColor("#ef4444"))
                     elif stock < 5:
@@ -664,7 +716,8 @@ class Admin2Ofertas(QWidget):
             self._recargar_simulador()
             return
             
-        id_p = item_id.text()
+        id_p = item_id.data(Qt.UserRole)
+        if not id_p: id_p = item_id.text()
         rows = db_manager.execute_query("SELECT * FROM productos WHERE id=?", (id_p,)) or []
         if not rows:
             self.producto_seleccionado_id = None
@@ -685,6 +738,8 @@ class Admin2Ofertas(QWidget):
         self.txt_quick_costo.blockSignals(True)
         self.sp_quick_cant_oferta.blockSignals(True)
         self.sp_quick_precio_oferta.blockSignals(True)
+        self.sp_quick_oferta_relampago.blockSignals(True)
+        self.sp_quick_oferta_promedio.blockSignals(True)
         
         self.txt_quick_precio.setValue(float(p['precio'] if p['precio'] is not None else 0.0))
         self.txt_quick_costo.setValue(float(p['costo'] if p['costo'] is not None else 0.0))
@@ -692,14 +747,22 @@ class Admin2Ofertas(QWidget):
         
         self.sp_quick_cant_oferta.setValue(float(p['cant_oferta'] if p['cant_oferta'] is not None else 0.0))
         self.sp_quick_precio_oferta.setValue(float(p['precio_oferta'] if p['precio_oferta'] is not None else 0.0))
+        self.sp_quick_oferta_relampago.setValue(float(p.get('precio_oferta_relampago') if p.get('precio_oferta_relampago') is not None else 0.0))
+        self.sp_quick_oferta_promedio.setValue(float(p.get('precio_oferta_promedio') if p.get('precio_oferta_promedio') is not None else 0.0))
+        self.sp_limite_relampago.blockSignals(True)
+        self.sp_limite_relampago.setValue(float(p.get('limite_oferta_relampago') if p.get('limite_oferta_relampago') is not None else 0.0))
+        ventas = p.get('ventas_oferta_relampago') or 0
+        limite = p.get('limite_oferta_relampago') or 0
+        self.lbl_ventas_relampago.setText(f"Vendidos: {int(ventas)} / {int(limite) if limite > 0 else '∞'}")
+        self.sp_limite_relampago.blockSignals(False)
         
         self.txt_quick_precio.blockSignals(False)
         self.txt_quick_costo.blockSignals(False)
-        self.sp_quick_cant_oferta.blockSignals(False)
-        self.sp_quick_precio_oferta.blockSignals(False)
         
         self.sp_quick_cant_oferta.blockSignals(False)
         self.sp_quick_precio_oferta.blockSignals(False)
+        self.sp_quick_oferta_relampago.blockSignals(False)
+        self.sp_quick_oferta_promedio.blockSignals(False)
             
         self.panel_control.setEnabled(True)
         self.lbl_sel.setText("Seleccionado: 1")
@@ -732,34 +795,41 @@ class Admin2Ofertas(QWidget):
         if not self.producto_seleccionado_id: return
         cant = self.sp_quick_cant_oferta.value()
         prec = self.sp_quick_precio_oferta.value()
+        relampago = self.sp_quick_oferta_relampago.value()
+        limite_relampago = self.sp_limite_relampago.value()
+        promedio = self.sp_quick_oferta_promedio.value()
         
-        if cant <= 0 or prec <= 0:
-            QMessageBox.warning(self, "Error", "La cantidad y precio de oferta deben ser mayores a cero.")
+        if cant <= 0 and prec <= 0 and relampago <= 0 and promedio <= 0:
+            QMessageBox.warning(self, "Error", "Debe configurar al menos un precio de oferta mayor a cero.")
             return
             
         ok = db_manager.execute_non_query(
-            "UPDATE productos SET cant_oferta=?, precio_oferta=? WHERE id=?",
-            (cant, prec, self.producto_seleccionado_id)
+            "UPDATE productos SET cant_oferta=?, precio_oferta=?, precio_oferta_relampago=?, precio_oferta_promedio=?, limite_oferta_relampago=? WHERE id=?",
+            (cant, prec, relampago, promedio, limite_relampago, self.producto_seleccionado_id)
         )
         if ok:
             self.cargar_datos()
             self._re_select_product_by_id(self.producto_seleccionado_id)
-            QMessageBox.information(self, "Oferta Activada", "¡Promoción guardada y sincronizada!")
+            QMessageBox.information(self, "Oferta Activada", "¡Promociones guardadas y sincronizadas!")
         else:
-            QMessageBox.warning(self, "Error", "No se pudo activar la promoción.")
+            QMessageBox.warning(self, "Error", "No se pudieron activar las promociones.")
 
     def _quitar_oferta_rapida(self):
         if not self.producto_seleccionado_id: return
         ok = db_manager.execute_non_query(
-            "UPDATE productos SET cant_oferta=0, precio_oferta=0 WHERE id=?",
+            "UPDATE productos SET cant_oferta=0, precio_oferta=0, precio_oferta_relampago=0, precio_oferta_promedio=0, limite_oferta_relampago=0, ventas_oferta_relampago=0 WHERE id=?",
             (self.producto_seleccionado_id,)
         )
         if ok:
             self.sp_quick_cant_oferta.setValue(0.0)
             self.sp_quick_precio_oferta.setValue(0.0)
+            self.sp_quick_oferta_relampago.setValue(0.0)
+            self.sp_limite_relampago.setValue(0.0)
+            self.lbl_ventas_relampago.setText("Vendidos: 0 / ∞")
+            self.sp_quick_oferta_promedio.setValue(0.0)
             self.cargar_datos()
             self._re_select_product_by_id(self.producto_seleccionado_id)
-            QMessageBox.information(self, "Oferta Quitada", "Promoción removida con éxito.")
+            QMessageBox.information(self, "Oferta Quitada", "Promociones removidas con éxito.")
         else:
             QMessageBox.warning(self, "Error", "No se pudo quitar la promoción.")
 
@@ -767,10 +837,13 @@ class Admin2Ofertas(QWidget):
         self.tabla.blockSignals(True)
         for row in range(self.tabla.rowCount()):
             item = self.tabla.item(row, 1)
-            if item and item.text() == str(prod_id):
-                self.tabla.selectRow(row)
-                self.tabla.setCurrentItem(item)
-                break
+            if item:
+                id_p = item.data(Qt.UserRole)
+                if not id_p: id_p = item.text()
+                if str(id_p) == str(prod_id):
+                    self.tabla.selectRow(row)
+                    self.tabla.setCurrentItem(item)
+                    break
         self.tabla.blockSignals(False)
 
     def _imprimir_cartel_a4_rapido(self):

@@ -20,8 +20,46 @@ Descubrimos **tres fallos** que, combinados, bloqueaban la conexión:
 
 ### ✅ La Solución Implementada
 1. **Nuevo Radar UDP**: Cambiamos el escaneo TCP puerto por puerto por un sistema de **Broadcast UDP** (Puerto 37020). Es instantáneo y estándar en la industria.
-2. **Forzado de Firewall (_v3)**: Renombramos la regla del firewall internamente a `TPV_CajaFacil_TCP_v3` y `TPV_CajaFacil_UDP_v3`. Al cambiar el nombre, **obligamos** a Windows a solicitar nuevamente permisos al usuario al abrir la App, asegurando que los nuevos puertos UDP se abran correctamente en cualquier PC.
-3. **Corrección de la llamada UAC**: Reparamos el comando de elevación en `mariadb_controller.py` añadiéndole `os.path.abspath(sys.argv[0])` para que sepa exactamente a qué archivo darle permisos.
+2. **Forzado de Firewall (_v3)**: Renombramos las reglas del firewall internamente a `TPV_CajaFacil_TCP_v3`, `TPV_CajaFacil_TCP_Out_v3`, `TPV_CajaFacil_UDP_v3` y `TPV_CajaFacil_UDP_Out_v3`. Al cambiar el nombre, **obligamos** a Windows a solicitar nuevamente permisos al usuario al abrir la App, asegurando que los nuevos puertos UDP se abran correctamente en cualquier PC.
+3. **Corrección de la llamada UAC**: Reparamos el comando de elevación en `mariadb_controller.py` usando `sys.frozen` para distinguir exe compilado vs script Python, pasando `main.py` como argumento cuando corresponde.
+4. **Módulo de instalación**: Las reglas se crean en `src/tools/setup_firewall.py` (auto, vía UAC con `--install-firewall`) o manualmente con `02_Soporte_y_Mantenimiento/ConfiguraFirewall.py`.
+
+#### Puertos y reglas de firewall (_v3)
+
+| Puerto | Protocolo | Uso |
+|--------|-----------|-----|
+| **3306** | TCP | MariaDB (base de datos local / maestra en LAN) |
+| **8000** | TCP | API HTTP LAN (`/api/guardar_venta`, `/api/ping`, `/api/set_master`, etc.) |
+| **38001** | TCP | Servidor de actualizaciones LAN (`/version.json`, `/file/...`) |
+| **37020** | UDP | Radar multicaja — broadcast `PUNPRO_DISCOVER` |
+| **38002** | UDP | Discovery de actualizaciones — broadcast `PUNPRO_UPDATE_DISCOVER` |
+| **8000** | UDP | Reservado para tráfico UDP complementario de la API LAN |
+
+**Reglas Windows Firewall creadas:**
+
+| Regla | Dirección | Protocolo | Puertos |
+|-------|-----------|-----------|---------|
+| `TPV_CajaFacil_TCP_v3` | Entrada | TCP | 3306, 8000, 38001 |
+| `TPV_CajaFacil_TCP_Out_v3` | Salida | TCP | 3306, 8000, 38001 |
+| `TPV_CajaFacil_UDP_v3` | Entrada | UDP | 37020, 38002, 8000 |
+| `TPV_CajaFacil_UDP_Out_v3` | Salida | UDP | 37020, 38002, 8000 |
+
+**Verificar reglas instaladas (PowerShell como administrador):**
+
+```powershell
+netsh advfirewall firewall show rule name="TPV_CajaFacil_TCP_v3"
+netsh advfirewall firewall show rule name="TPV_CajaFacil_UDP_v3"
+```
+
+**Instalación manual de reglas:**
+
+```powershell
+python main.py --install-firewall
+```
+
+(Requiere ejecutar como administrador, o aceptar el diálogo UAC al abrir la app si las reglas `_v3` no existen.)
+
+**Nota:** Las reglas antiguas (`TPV_CajaFacil_TCP`, `TPV_CajaFacil_UDP`, etc.) **no incluyen el puerto UDP 37020**. Si una PC sigue sin detectar la maestra, comprobar que existan las reglas `_v3` y no solo las viejas.
 
 ---
 

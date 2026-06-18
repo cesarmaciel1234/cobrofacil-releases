@@ -148,7 +148,7 @@ class DialogoProducto(QDialog):
 
         # --- SECCIÓN: CÓDIGO DE BARRAS (ALTA VISIBILIDAD) ---
         barcode_frame = QFrame()
-        barcode_frame.setStyleSheet("background: white; border-radius: 12px; border: 1px solid #E2E8F0;")
+        barcode_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #CBD5E1;")
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
         shadow.setColor(QColor(0, 0, 0, 15))
@@ -164,9 +164,13 @@ class DialogoProducto(QDialog):
         self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
         self.txt_codigo.setStyleSheet("""
             QLineEdit { 
-                background: #F8FAFC; border: 2px solid #3B82F6; border-radius: 8px; 
-                padding: 12px; font-size: 22px; font-weight: 900;  
+                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px; 
+                padding: 15px; font-size: 24px; font-weight: 900;  
                 font-family: 'Consolas', monospace; color: #1E3A8A;
+            }
+            QLineEdit:focus {
+                background: white;
+                border: 2px solid #3B82F6;
             }
         """)
         bar_lay.addWidget(lbl_bc)
@@ -256,9 +260,9 @@ class DialogoProducto(QDialog):
         self.chk_pes.setStyleSheet("font-weight: bold;  margin-top: 10px;")
         grid.addWidget(self.chk_pes, 4, 0)
 
-        # Columna 2: Precios y Stock
+        # Tarjeta Finanzas (Derecha)
         price_card = QFrame()
-        price_card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 10px;")
+        price_card.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 16px; padding: 15px;")
         
         shadow2 = QGraphicsDropShadowEffect()
         shadow2.setBlurRadius(20)
@@ -299,14 +303,18 @@ class DialogoProducto(QDialog):
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("  padding: 15px; border-radius: 10px; font-weight: bold;")
+        btn_cancel.setStyleSheet("padding: 15px; border-radius: 10px; font-weight: bold; font-size: 14px; background: #F1F5F9; color: #475569;")
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton("💾 Guardar Producto")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.setStyleSheet("""
-            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 15px; border-radius: 10px; }
-            QPushButton:hover {  }
+            QPushButton {
+                background-color: #2563EB; color: white; border: none; 
+                border-radius: 10px; padding: 15px 30px; font-weight: bold; font-size: 14px;
+            }
+            QPushButton:hover { background-color: #1D4ED8; }
+            QPushButton:pressed { background-color: #1E40AF; }
         """)
         btn_save.clicked.connect(self._ok)
 
@@ -325,9 +333,23 @@ class DialogoProducto(QDialog):
 
     def create_price_input(self, val, bold=False):
         inp = QLineEdit(val)
-        weight = "bold" if bold else "normal"
-        color = "#1E3A8A" if bold else "#1E293B"
-        inp.setStyleSheet(f"background: white; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px; font-weight: {weight}; color: {color};")
+        weight = "900" if bold else "normal"
+        color = "#1E40AF" if bold else "#1E293B"
+        inp.setStyleSheet(f"""
+            QLineEdit {{
+                background: #F1F5F9; 
+                border: 2px solid transparent; 
+                border-radius: 8px; 
+                padding: 10px; 
+                font-size: 16px;
+                font-weight: {weight}; 
+                color: {color};
+            }}
+            QLineEdit:focus {{
+                background: white;
+                border: 2px solid #3B82F6;
+            }}
+        """)
         return inp
 
     def keyPressEvent(self, event):
@@ -736,7 +758,7 @@ class CatalogoProductos(QWidget):
     volver = pyqtSignal()
 
     HEADERS = ["", "Código", "Descripción del Producto", "Departamento", "IVA (%)",
-               "Costo", "P. Venta", "P. Mayoreo", "Existencia",
+               "Costo", "P. Venta", "Regla Promo", "Of. Relámpago", "Of. Promedio", "Existencia",
                "Inv. Mínimo", "Inv. Máximo", "Tipo de Venta"]
 
     DEPTO_COLORS = [
@@ -799,14 +821,40 @@ class CatalogoProductos(QWidget):
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setShowGrid(True)
         self.tabla.setGridStyle(Qt.SolidLine)
-        self.tabla.setStyleSheet(
-            "QTableWidget{background:white;gridline-"
-            "selection-selection-}"
-            "QTableWidget::item{padding:8px; border-bottom: 1px solid #f1f5f9;}"
-            "QHeaderView::section{background:white;"
-            "font-weight:900;padding:8px;border:none;border-bottom:2px solid #e2e8f0;font-size:10px;}"
-        )
-        col_widths = [28, 90, -1, 120, 70, 80, 80, 80, 80, 80, 80, 90]
+        self.tabla.setStyleSheet("""
+            QTableWidget {
+                background: white;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                gridline-color: transparent;
+                outline: none;
+            }
+            QTableWidget::item {
+                padding: 4px; 
+                border-bottom: 1px solid #F1F5F9;
+            }
+            QTableWidget::item:hover {
+                background-color: #F8FAFC;
+            }
+            QTableWidget::item:selected {
+                background-color: #EFF6FF;
+                color: #1D4ED8;
+                border-bottom: 2px solid #3B82F6;
+            }
+            QHeaderView::section {
+                background-color: #F8FAFC;
+                color: #64748B;
+                font-weight: 900;
+                padding: 12px 8px;
+                border: none;
+                border-bottom: 2px solid #E2E8F0;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        """)
+        # Agregamos el ancho de "Regla Promo" (110) para tener 14 columnas
+        col_widths = [28, 100, -1, 130, 70, 80, 80, 110, 95, 95, 80, 80, 80, 90]
         hh = self.tabla.horizontalHeader()
         for i, w in enumerate(col_widths):
             if w == -1:
@@ -815,7 +863,7 @@ class CatalogoProductos(QWidget):
                 hh.setSectionResizeMode(i, QHeaderView.Fixed)
                 self.tabla.setColumnWidth(i, w)
 
-        self.tabla.verticalHeader().setDefaultSectionSize(26)
+        self.tabla.verticalHeader().setDefaultSectionSize(40)
         self.tabla.doubleClicked.connect(self._modificar_seleccionado)
         root.addWidget(self.tabla)
 
@@ -934,7 +982,9 @@ class CatalogoProductos(QWidget):
                     (f"{depto_iva:.1f}%", Qt.AlignCenter),
                     (f"${r['costo']:.2f}", Qt.AlignRight),
                     (f"${r['precio']:.2f}", Qt.AlignRight),
-                    (f"${r['precio_mayoreo']:.2f}", Qt.AlignRight),
+                    (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if r.get('precio_oferta') else "-", Qt.AlignCenter),
+                    (f"${r['precio_oferta_relampago']:.2f}" if r.get('precio_oferta_relampago') else "-", Qt.AlignCenter),
+                    (f"${r['precio_oferta_promedio']:.2f}" if r.get('precio_oferta_promedio') else "-", Qt.AlignCenter),
                     (f"{stock:.2f}",     Qt.AlignRight),
                     (f"{r['stock_minimo'] or 0:.2f}", Qt.AlignCenter),
                     (f"{r['stock_maximo'] or 0:.2f}", Qt.AlignCenter),
@@ -947,7 +997,12 @@ class CatalogoProductos(QWidget):
                     it.setBackground(row_bg)
                     it.setForeground(QColor("#1e293b"))
 
-                    if j == 8:
+                    if j == 7 or j == 8:  # Resaltar si hay oferta
+                        if v != "-":
+                            it.setForeground(QColor("#ef4444"))
+                            it.setFont(QFont("Segoe UI", 9, QFont.Bold))
+
+                    if j == 9: # Stock
                         if stock <= 0:
                             it.setForeground(QColor("#ef4444"))
                             it.setBackground(QColor("#fef2f2"))
@@ -957,7 +1012,7 @@ class CatalogoProductos(QWidget):
                         else:
                             it.setForeground(QColor("#10b981"))
 
-                    if j == 11:
+                    if j == 12: # Tipo
                         it.setForeground(QColor("#1e3a8a"))
                         it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
@@ -1312,6 +1367,8 @@ class Admin1Inventario(QWidget):
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
         
         for b in [self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, self.btn_exportar, self.btn_precarga, self.btn_unificar, self.btn_categorias, self.btn_deptos, self.btn_catalogo]:
+            if b not in (self.btn_unificar, self.btn_catalogo):
+                b.setStyleSheet("QPushButton { color: #1E293B; background-color: white; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; } QPushButton:hover { background-color: #F8FAFC; border: 1px solid #94A3B8; }")
             tl.addWidget(b)
         tl.addStretch()
         root.addWidget(self.toolbar)

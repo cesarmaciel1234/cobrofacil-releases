@@ -99,7 +99,7 @@ class Paso6Cobro(QDialog):
         
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(989, 760)
+        self.setFixedSize(1100, 780)
         
         self.current_metodo = "Efectivo"
         self.setup_ui()
@@ -154,14 +154,15 @@ class Paso6Cobro(QDialog):
 
         # Métodos de Pago
         btn_lay = QHBoxLayout()
-        btn_lay.setSpacing(45)
+        btn_lay.setSpacing(25)
         self.btns = {}
         metodos = [
             ("💰", "Efectivo", "Efectivo"), 
             ("💳", "Crédito", "Tarjeta"), 
-            ("🔀", "Mixto", "Mixto"), 
             ("🏦", "Transf.", "Transferencia"),
-            ("👥", "Fiado", "Fiado")
+            ("📱", "QR", "QR"),
+            ("👥", "Fiado", "Fiado"),
+            ("🔀", "Mixto", "Mixto")
         ]
         
         # Cargar lista de clientes para fiado
@@ -527,8 +528,11 @@ class Paso6Cobro(QDialog):
         btn_f10.hide() # Lo mantenemos oculto (secreto)
         right_lay.addWidget(btn_f10)
         
-        btn_f11 = create_action_btn("💳 F11 - Terminal Bancaria", lambda: self.procesar_pago_terminal())
+        btn_f11 = create_action_btn("💳 F11 - Terminal Point (MP)", lambda: self.procesar_pago_mercadopago_point())
         right_lay.addWidget(btn_f11)
+        
+        btn_f12 = create_action_btn("📱 F12 - Verif. Transf./QR", lambda: self.verificar_transferencia_mp())
+        right_lay.addWidget(btn_f12)
         
         # Teclado numérico físico propio (incrustado directamente)
         self.build_teclado_propio(right_lay)
@@ -749,13 +753,31 @@ class Paso6Cobro(QDialog):
                 lbl_text.setStyleSheet(f"font-size: 13px; font-weight: 900; color: {color}; background: transparent; border: none;")
         
         if key == "Mixto":
-            self.lbl_input1.setText("EFECTIVO ($):")
-            self.lbl_input2.show(); self.txt_otro.show()
-            self.lbl_cliente.hide(); self.cmb_cliente.hide()
-            self.txt_pago.clear()
-            self.lbl_mp_status.hide()
-            self.timer_mp.stop()
-        elif key in ["Tarjeta", "Transferencia"]:
+            from src.cajero.widgets.pagos_mixtos import DialogoPagosMixtos
+            tasa = config.get("tasa_usd", 1200.0)
+            dlg = DialogoPagosMixtos(self.total_final, tasa, self)
+            if dlg.exec_():
+                self.valores_mixtos = dlg.get_valores()
+                self.current_metodo = "Mixto"
+                self.lbl_input1.setText("MÚLTIPLES PAGOS ($):")
+                self.lbl_input2.hide(); self.txt_otro.hide()
+                self.lbl_cliente.hide(); self.cmb_cliente.hide()
+                self.txt_pago.setText(f"{self.total_final:.2f}")
+                self.txt_pago.setReadOnly(True)
+                self.lbl_mp_status.hide()
+                self.timer_mp.stop()
+                
+                # Si hay monto de tarjeta, mandarlo al Point antes de finalizar
+                monto_tarjeta = self.valores_mixtos.get("tarjeta", 0.0)
+                if monto_tarjeta > 0:
+                    QTimer.singleShot(200, lambda: self.procesar_pago_mercadopago_point())
+                else:
+                    # Sin tarjeta, finalizar directo
+                    QTimer.singleShot(200, lambda: self.finalizar(True))
+            else:
+                self.set_metodo("Efectivo")
+            return
+        elif key in ["Tarjeta", "Transferencia", "QR"]:
             self.lbl_input1.setText("PAGA CON ($):")
             self.lbl_input2.hide(); self.txt_otro.hide()
             self.lbl_cliente.hide(); self.cmb_cliente.hide()
@@ -802,7 +824,12 @@ class Paso6Cobro(QDialog):
             p1_t = self.txt_pago.text().replace('$', '').replace(',', '').strip()
             p2_t = self.txt_otro.text().replace('$', '').replace(',', '').strip()
             p1 = float(p1_t) if p1_t else 0
-            p2 = float(p2_t) if p2_t and self.current_metodo == "Mixto" else 0
+            
+            if self.current_metodo == "Mixto" and hasattr(self, 'valores_mixtos'):
+                p1 = self.valores_mixtos.get("efectivo", 0) + (self.valores_mixtos.get("usd", 0) * config.get("tasa_usd", 1200.0))
+                p2 = self.valores_mixtos.get("tarjeta", 0) + self.valores_mixtos.get("mercadopago", 0)
+            else:
+                p2 = float(p2_t) if p2_t and self.current_metodo == "Mixto" else 0
             total_pagado = p1 + p2
             vuelto = total_pagado - self.total_final
             
@@ -873,8 +900,12 @@ class Paso6Cobro(QDialog):
                 return None
 
         try:
-            p1 = float(p1_t)
-            p2 = float(p2_t) if p2_t and self.current_metodo == "Mixto" else 0
+            if self.current_metodo == "Mixto" and hasattr(self, 'valores_mixtos'):
+                p1 = self.valores_mixtos.get("efectivo", 0) + (self.valores_mixtos.get("usd", 0) * config.get("tasa_usd", 1200.0))
+                p2 = self.valores_mixtos.get("tarjeta", 0) + self.valores_mixtos.get("mercadopago", 0)
+            else:
+                p1 = float(p1_t)
+                p2 = float(p2_t) if p2_t and self.current_metodo == "Mixto" else 0
             
             if (p1 + p2) < self.total_final:
                 # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
@@ -998,6 +1029,12 @@ class Paso6Cobro(QDialog):
             descuentaso_oferta = getattr(self, 'descuentaso_oferta', 0.0)
             descuento_total = monto_desc + descuentaso_oferta
             
+            estado_venta = 'COMPLETADA'
+            nombre_cliente_guardar = ''
+            if getattr(self, 'nombre_pendiente', None):
+                estado_venta = 'TRANSF_PENDIENTE'
+                nombre_cliente_guardar = self.nombre_pendiente
+
             self.resultado_venta = {
                 'total': self.total_final,
                 'pago_con': p1 + p2,
@@ -1007,7 +1044,8 @@ class Paso6Cobro(QDialog):
                 'usuario': config.current_user.get('username', 'cajero'),
                 'usuario_secundario': CajeroActivo.nombre if CajeroActivo.numero == 2 else '',
                 'metodo_pago': self.current_metodo,
-                'estado': 'COMPLETADA',
+                'estado': estado_venta,
+                'cliente_nombre': nombre_cliente_guardar,
                 'descuento': descuento_total,
                 'recargo': monto_rec
             }
@@ -1100,16 +1138,355 @@ class Paso6Cobro(QDialog):
                 # Si pierde el foco hacia algo que no sea un botón interno, no ocultar
                 pass
                 return False
+            
+            # Asegurarnos de que las teclas de función (F1-F12) se procesen siempre, aunque el cursor esté en el casillero
+            if k == Qt.Key_F11:
+                self.procesar_pago_mercadopago_point()
+                return True
+            elif k == Qt.Key_F12:
+                self.verificar_transferencia_mp()
+                return True
+            elif k == Qt.Key_F1:
+                self.finalizar(True)
+                return True
         
         return super().eventFilter(watched, event)
 
-    def procesar_pago_terminal(self):
-        from PyQt5.QtWidgets import QProgressDialog
-        from PyQt5.QtCore import QCoreApplication
-        import time
 
-        if self.current_metodo != "Tarjeta":
+
+    def procesar_pago_mercadopago_point(self):
+        import requests
+        from src.config import config
+        from PyQt5.QtWidgets import QProgressDialog, QMessageBox, QDialog, QVBoxLayout, QLabel, QPushButton
+        from PyQt5.QtCore import QTimer, Qt
+        
+        # Forzar recarga por si se editó el archivo externamente
+        config._load_config()
+        
+        token = config.get("mp_access_token", "")
+        device_id = config.get("mp_device_id", "")
+        
+        if not token or not device_id:
+            QMessageBox.warning(self, "Configuración Faltante", "Falta el Access Token o el Device ID de Mercado Pago Point en la configuración.")
+            return
+
+        if self.current_metodo not in ["Tarjeta", "Mixto", "QR"]:
             self.set_metodo("Tarjeta")
+            
+        if self.current_metodo == "Mixto":
+            if hasattr(self, 'widget_mixto'):
+                self.valores_mixtos = self.widget_mixto.get_valores()
+                monto = self.valores_mixtos.get("tarjeta", 0.0)
+            else:
+                monto = 0.0
+        else:
+            monto_str = self.txt_pago.text().replace("$", "").replace(" ", "").strip()
+            try:
+                from src.utils.parser import parse_float_regional
+                monto = parse_float_regional(monto_str)
+            except:
+                monto = self.total_final
+
+        if monto <= 0:
+            msg = "El monto de Tarjeta (Point) en pago Mixto es cero." if self.current_metodo == "Mixto" else "Ingrese un monto a cobrar válido."
+            QMessageBox.warning(self, "Monto inválido", msg)
+            return
+
+        # QR usa un flujo completamente distinto (orden QR en pantalla, no terminal)
+        if self.current_metodo == "QR":
+            self._procesar_cobro_qr_pantalla(token, monto)
+            return
+
+        url = f"https://api.mercadopago.com/point/integration-api/devices/{device_id}/payment-intents"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        
+        import uuid
+        intent_id = str(uuid.uuid4())
+        
+        # Mercado Pago requiere el monto en centavos para Argentina/Brasil
+        monto_centavos = int(round(monto * 100))
+        
+        # Si el método es QR, forzamos que la terminal muestre su QR
+        if self.current_metodo == "QR":
+            payload = {
+                "amount": monto_centavos,
+                "payment_mode": "qr",
+                "additional_info": {
+                    "external_reference": intent_id,
+                    "print_on_terminal": True
+                }
+            }
+            msg_progreso = "Enviando monto a la Terminal Point (modo QR)..."
+        else:
+            payload = {
+                "amount": monto_centavos,
+                "additional_info": {
+                    "external_reference": intent_id,
+                    "print_on_terminal": True
+                }
+            }
+            msg_progreso = "Enviando monto a la Terminal Point..."
+        
+        progreso = QProgressDialog(msg_progreso, "Cancelar", 0, 0, self)
+        progreso.setWindowTitle("Mercado Pago Point")
+        progreso.setWindowModality(Qt.WindowModal)
+        progreso.show()
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            progreso.close()
+            
+            if response.status_code in [200, 201]:
+                # Iniciar el Polling Dialog
+                data = response.json()
+                mp_intent_id = data.get("id")
+                
+                class MPPollingDialog(QDialog):
+                    def __init__(self, parent, token, device_id, intent_id, monto_original, modo="Tarjeta"):
+                        super().__init__(parent)
+                        self.token = token
+                        self.device_id = device_id
+                        self.intent_id = intent_id
+                        self.monto_original = monto_original
+                        self.aprobado = False
+                        
+                        self.setWindowTitle("Esperando Pago...")
+                        self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint) # Sin botón de cerrar
+                        self.setFixedSize(350, 150)
+                        
+                        layout = QVBoxLayout(self)
+                        if modo == "QR":
+                            msg_label = f"📱 Mostre el QR de la terminal al cliente.\nEsperando pago QR por:\n${monto_original:,.2f}"
+                        else:
+                            msg_label = f"💳 Por favor, pida al cliente que pase la tarjeta por:\n${monto_original:,.2f}"
+                        self.lbl_status = QLabel(msg_label)
+                        self.lbl_status.setAlignment(Qt.AlignCenter)
+                        self.lbl_status.setStyleSheet("font-size: 14px; font-weight: bold;")
+                        layout.addWidget(self.lbl_status)
+                        
+                        self.btn_cancel = QPushButton("Cancelar Cobro en la Terminal")
+                        self.btn_cancel.setStyleSheet("background-color: #EF4444; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
+                        self.btn_cancel.clicked.connect(self.cancelar_cobro)
+                        layout.addWidget(self.btn_cancel)
+                        
+                        self.timer = QTimer(self)
+                        self.timer.timeout.connect(self.check_status)
+                        self.timer.start(2500) # Cada 2.5 segundos
+                        
+                    def check_status(self):
+                        poll_url = f"https://api.mercadopago.com/point/integration-api/payment-intents/{self.intent_id}"
+                        head = {"Authorization": f"Bearer {self.token}"}
+                        try:
+                            res = requests.get(poll_url, headers=head, timeout=5)
+                            if res.status_code == 200:
+                                state = res.json().get("state")
+                                if state == "FINISHED":
+                                    self.timer.stop()
+                                    self.aprobado = True
+                                    self.accept()
+                                elif state in ["CANCELED", "ERROR"]:
+                                    self.timer.stop()
+                                    QMessageBox.warning(self, "Cobro Cancelado", f"El cobro fue cancelado o rechazado en la terminal (Estado: {state}).")
+                                    self.reject()
+                        except:
+                            pass # Ignorar errores de red temporales
+                            
+                    def cancelar_cobro(self):
+                        self.btn_cancel.setEnabled(False)
+                        self.btn_cancel.setText("Cancelando...")
+                        self.timer.stop()
+                        
+                        # Send DELETE to cancel intent on device
+                        cancel_url = f"https://api.mercadopago.com/point/integration-api/devices/{self.device_id}/payment-intents/{self.intent_id}"
+                        head = {"Authorization": f"Bearer {self.token}"}
+                        try:
+                            requests.delete(cancel_url, headers=head, timeout=5)
+                        except:
+                            pass
+                        
+                        self.reject()
+                        
+                # Mostrar el diálogo
+                dialog = MPPollingDialog(self, token, device_id, mp_intent_id, monto, modo=self.current_metodo)
+                if dialog.exec_() == QDialog.Accepted:
+                    # El pago fue exitoso y FINALIZADO
+                    self.txt_pago.setText(str(monto))
+                    self.finalizar(True)
+            else:
+                try:
+                    err_data = response.json()
+                    msg = err_data.get("message", "Error desconocido")
+                except:
+                    msg = response.text
+                QMessageBox.critical(self, "Error MP", f"No se pudo enviar el monto a la terminal:\n{msg}")
+        except Exception as e:
+            progreso.close()
+            QMessageBox.critical(self, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+
+    def _procesar_cobro_qr_pantalla(self, token, monto):
+        """Genera un QR dinámico en pantalla para que el cliente escanee con su celular."""
+        import requests
+        import uuid
+        import qrcode
+        import io
+        from src.config import config
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
+        from PyQt5.QtGui import QPixmap, QImage
+        from PyQt5.QtCore import QTimer, Qt
+
+        # Datos de la cuenta MP
+        user_id = 171085024
+        external_pos_id = config.get("mp_qr_pos_external_id", "default")
+        
+        headers_mp = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+
+        ref = str(uuid.uuid4())
+        payload = {
+            "external_reference": ref,
+            "title": "Venta en caja",
+            "description": "Cobro QR",
+            "total_amount": monto,
+            "items": [
+                {
+                    "sku_number": "001",
+                    "category": "others",
+                    "title": "Venta",
+                    "description": "Cobro en caja",
+                    "unit_price": monto,
+                    "quantity": 1,
+                    "unit_measure": "unit",
+                    "total_amount": monto
+                }
+            ],
+            "cash_out": {"amount": 0}
+        }
+
+        url = f"https://api.mercadopago.com/instore/orders/qr/seller/collectors/{user_id}/pos/{external_pos_id}/qrs"
+
+        try:
+            resp = requests.put(url, json=payload, headers=headers_mp, timeout=10)
+        except Exception as e:
+            QMessageBox.critical(self, "Error de Conexion", f"No se pudo crear la orden QR:\n{e}")
+            return
+
+        if resp.status_code not in [200, 201]:
+            QMessageBox.critical(self, "Error MP", f"No se pudo crear la orden QR:\n{resp.text}")
+            return
+
+        data = resp.json()
+        qr_data = data.get("qr_data", "")
+
+        if not qr_data:
+            QMessageBox.critical(self, "Error MP", "Mercado Pago no devolvio datos de QR.")
+            return
+
+        # Generar imagen QR en memoria
+        qr_img = qrcode.make(qr_data)
+        buf = io.BytesIO()
+        qr_img.save(buf, format="PNG")
+        buf.seek(0)
+        qimage = QImage()
+        qimage.loadFromData(buf.read())
+        pixmap = QPixmap.fromImage(qimage)
+
+        # Dialogo con QR grande
+        parent_ref = self
+
+        class QRDialog(QDialog):
+            def __init__(self, parent):
+                super().__init__(parent)
+                self.pagado = False
+                self.setWindowTitle("Cobro QR - Mercado Pago")
+                self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+                self.setFixedSize(420, 520)
+                self.setStyleSheet("background-color: #0F172A; border-radius: 16px;")
+
+                lay = QVBoxLayout(self)
+                lay.setSpacing(10)
+
+                lbl_titulo = QLabel("Que el cliente escanee con\nla app de Mercado Pago")
+                lbl_titulo.setAlignment(Qt.AlignCenter)
+                lbl_titulo.setStyleSheet("font-size: 15px; font-weight: bold; color: #38BDF8; padding: 8px; border: none;")
+                lay.addWidget(lbl_titulo)
+
+                lbl_qr = QLabel()
+                lbl_qr.setPixmap(pixmap.scaled(300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                lbl_qr.setAlignment(Qt.AlignCenter)
+                lbl_qr.setStyleSheet("background: white; border-radius: 12px; padding: 10px;")
+                lay.addWidget(lbl_qr)
+
+                lbl_monto = QLabel(f"${monto:,.2f}")
+                lbl_monto.setAlignment(Qt.AlignCenter)
+                lbl_monto.setStyleSheet("font-size: 32px; font-weight: 900; color: #10B981; border: none;")
+                lay.addWidget(lbl_monto)
+
+                self.lbl_estado = QLabel("Esperando pago...")
+                self.lbl_estado.setAlignment(Qt.AlignCenter)
+                self.lbl_estado.setStyleSheet("font-size: 12px; color: #94A3B8; border: none;")
+                lay.addWidget(self.lbl_estado)
+
+                btn_cancelar = QPushButton("Cancelar")
+                btn_cancelar.setStyleSheet("background-color: #EF4444; color: white; padding: 10px; font-weight: bold; border-radius: 8px; font-size: 13px; border: none;")
+                btn_cancelar.clicked.connect(self.cancelar)
+                lay.addWidget(btn_cancelar)
+
+                # Polling cada 3 segundos buscando el pago
+                self.timer = QTimer(self)
+                self.timer.timeout.connect(self.buscar_pago)
+                self.timer.start(3000)
+
+            def buscar_pago(self):
+                import datetime
+                try:
+                    now = datetime.datetime.utcnow()
+                    begin = (now - datetime.timedelta(minutes=5)).isoformat() + "Z"
+                    end = now.isoformat() + "Z"
+                    search_url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=10&status=approved&external_reference={ref}&range=date_created&begin_date={begin}&end_date={end}"
+                    head = {"Authorization": f"Bearer {token}"}
+                    r = requests.get(search_url, headers=head, timeout=5)
+                    if r.status_code == 200:
+                        results = r.json().get("results", [])
+                        if results:
+                            self.timer.stop()
+                            self.pagado = True
+                            self.lbl_estado.setText("PAGO APROBADO!")
+                            self.lbl_estado.setStyleSheet("font-size: 14px; color: #10B981; font-weight: bold; border: none;")
+                            QTimer.singleShot(1000, self.accept)
+                except:
+                    pass
+
+            def cancelar(self):
+                self.timer.stop()
+                # Borrar la orden QR
+                try:
+                    del_url = f"https://api.mercadopago.com/instore/orders/qr/seller/collectors/{user_id}/pos/{external_pos_id}/qrs"
+                    requests.delete(del_url, headers=headers_mp, timeout=5)
+                except:
+                    pass
+                self.reject()
+
+        dlg = QRDialog(self)
+        if dlg.exec_() == QDialog.Accepted and dlg.pagado:
+            self.txt_pago.setText(str(monto))
+            self.finalizar(True)
+
+    def verificar_transferencia_mp(self):
+        import requests
+        from src.config import config
+        from PyQt5.QtWidgets import QProgressDialog, QMessageBox
+        import datetime
+        from src.database.db_manager import db_manager
+
+        token = config.get("mp_access_token", "")
+        if not token:
+            QMessageBox.warning(self, "Configuración Faltante", "Falta el Access Token de Mercado Pago en la configuración.")
+            return
             
         monto_str = self.txt_pago.text().replace("$", "").replace(" ", "").strip()
         try:
@@ -1117,40 +1494,102 @@ class Paso6Cobro(QDialog):
             monto = parse_float_regional(monto_str)
         except:
             monto = self.total_final
-
+            
+        if self.current_metodo == "Mixto" and hasattr(self, 'widget_mixto'):
+            # En mixto, usamos el valor del campo Transferencia (cuyo key original era mercadopago)
+            monto = self.widget_mixto.get_valores().get("mercadopago", 0.0)
+            
         if monto <= 0:
-            QMessageBox.warning(self, "Monto inválido", "Ingrese un monto a cobrar válido.")
+            msg = "El monto a verificar es cero. Asegúrese de haber ingresado un monto válido en Transf./QR."
+            QMessageBox.warning(self, "Monto inválido", msg)
             return
 
-        progreso = QProgressDialog("Conectando con Terminal Bancaria (Ingenico)...", "Cancelar", 0, 100, self)
-        progreso.setWindowTitle("Procesando Pago 💳")
+        progreso = QProgressDialog("Buscando transferencias y QR recientes en Mercado Pago...", "Cancelar", 0, 0, self)
+        progreso.setWindowTitle("Verificando Pagos MP")
         progreso.setWindowModality(Qt.WindowModal)
-        progreso.setMinimumDuration(0)
-        progreso.setValue(0)
-        
-        # Simulando el handshake y procesamiento con el banco
-        for i in range(1, 101):
-            if progreso.wasCanceled():
-                QMessageBox.warning(self, "Pago Cancelado", "Se canceló la transacción con el banco.")
-                return
-            progreso.setValue(i)
-            if i == 30:
-                progreso.setLabelText("Deslizar o insertar tarjeta...")
-            elif i == 60:
-                progreso.setLabelText("Procesando con el banco emisor...")
-            elif i == 90:
-                progreso.setLabelText("Aprobando transacción...")
-                
-            time.sleep(0.04)
-            QCoreApplication.processEvents()
+        progreso.show()
 
-        progreso.setValue(100)
-        simbolo = config.get("currency_symbol", "$")
-        QMessageBox.information(self, "Pago Aprobado ✅", f"Transacción aprobada.\nMonto cobrado: {simbolo} {monto:,.2f}")
-        
-        # Simular que ingresaron el monto exacto por tarjeta y finalizar la venta imprimiendo ticket
-        self.txt_pago.setText(str(monto))
-        self.finalizar(True)
+        try:
+            # Buscar pagos de las últimas 2 horas
+            now = datetime.datetime.utcnow()
+            begin_date = (now - datetime.timedelta(hours=2)).isoformat() + "Z"
+            end_date = now.isoformat() + "Z"
+            
+            url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=50&status=approved&range=date_created&begin_date={begin_date}&end_date={end_date}"
+            headers = {"Authorization": f"Bearer {token}"}
+            
+            resp = requests.get(url, headers=headers, timeout=15)
+            progreso.close()
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("results", [])
+                
+                transferencia_encontrada = None
+                
+                for p in results:
+                    p_amount = p.get("transaction_amount")
+                    p_id = str(p.get("id"))
+                    
+                    # Verificamos si el monto coincide
+                    if p_amount == monto:
+                        # Verificamos que no haya sido usada antes
+                        existe = db_manager.execute_query("SELECT id FROM mp_transferencias_usadas WHERE payment_id = ?", (p_id,))
+                        if not existe:
+                            transferencia_encontrada = p
+                            break
+                            
+                if transferencia_encontrada:
+                    p_id = str(transferencia_encontrada.get("id"))
+                    payer = transferencia_encontrada.get("payer", {})
+                    payer_info = payer.get("first_name", "") + " " + payer.get("last_name", "")
+                    if not payer_info.strip():
+                        payer_info = payer.get("email", "Desconocido")
+                        
+                    reply = QMessageBox.question(
+                        self, "Pago Encontrado", 
+                        f"Se encontró un pago/transferencia reciente por ${monto:,.2f}.\n\n"
+                        f"Origen: {payer_info.strip()}\n"
+                        f"ID: {p_id}\n\n"
+                        f"¿Confirmar y asociar este pago a la venta actual?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    
+                    if reply == QMessageBox.Yes:
+                        # Guardar el ID para que no se re-utilice
+                        try:
+                            db_manager.execute_non_query("INSERT INTO mp_transferencias_usadas (payment_id) VALUES (?)", (p_id,))
+                        except:
+                            pass # Si ya estaba, fallará silenciosamente
+                            
+                        # Finalizar venta
+                        QMessageBox.information(self, "Cobro Aprobado", "Pago validado correctamente. Emitiendo ticket...")
+                        self.txt_pago.setText(str(monto))
+                        self.finalizar(True)
+                else:
+                    msg_box = QMessageBox(self)
+                    msg_box.setWindowTitle("No Encontrada")
+                    msg_box.setText(f"No se encontró ninguna transferencia o código QR reciente, nueva y no utilizada por el monto exacto de ${monto:,.2f}.")
+                    msg_box.setInformativeText("Si confías en este cliente y quieres dejar el cobro en espera de que llegue la transferencia, presiona 'Forzar Pendiente'.")
+                    msg_box.setIcon(QMessageBox.Warning)
+                    
+                    btn_ok = msg_box.addButton("Aceptar", QMessageBox.AcceptRole)
+                    btn_forzar = msg_box.addButton("Forzar Pendiente", QMessageBox.ActionRole)
+                    
+                    msg_box.exec_()
+                    
+                    if msg_box.clickedButton() == btn_forzar:
+                        from PyQt5.QtWidgets import QInputDialog
+                        nombre, ok = QInputDialog.getText(self, "Cobro Pendiente", "Ingrese el nombre del cliente para buscarlo luego:")
+                        if ok and nombre.strip():
+                            self.nombre_pendiente = nombre.strip()
+                            self.txt_pago.setText(str(monto))
+                            self.finalizar(True)
+            else:
+                QMessageBox.critical(self, "Error MP", f"No se pudieron buscar las transferencias:\n{resp.text}")
+        except Exception as e:
+            progreso.close()
+            QMessageBox.critical(self, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
 
     def keyPressEvent(self, event):
         k = event.key()
@@ -1168,7 +1607,8 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key_F3: self.abrir_descuento()
         elif k == Qt.Key_F4: self.abrir_recargo()
         elif k == Qt.Key_F10: self.finalizar_fiscal_efectivo()
-        elif k == Qt.Key_F11: self.procesar_pago_terminal()
+        elif k == Qt.Key_F11: self.procesar_pago_mercadopago_point()
+        elif k == Qt.Key_F12: self.verificar_transferencia_mp()
         elif k == Qt.Key_Escape: self.reject()
         elif k in (Qt.Key_Return, Qt.Key_Enter):
             # Lógica de Enter Inteligente: 3 Pasos

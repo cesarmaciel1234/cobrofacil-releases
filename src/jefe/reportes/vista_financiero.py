@@ -767,7 +767,9 @@ class VistaFinanciero(QWidget):
     def sincronizacion_silenciosa(self):
         if not self.isVisible(): return
         
-        if self.stack_views.currentIndex() == 1:
+        # Si estamos en la pestaña 1 (Gráficos), animamos también la actualización de gráficos
+        if hasattr(self, 'stack_views') and self.stack_views.currentIndex() == 1:
+            self._renderizar_graficos()
             if self.txt_audit_prod.hasFocus(): return
             self._buscar_auditoria()
         else:

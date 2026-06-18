@@ -1,9 +1,10 @@
 import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea,
-    QPushButton, QMessageBox, QFrame, QGraphicsDropShadowEffect, QGridLayout
+    QPushButton, QMessageBox, QFrame, QGraphicsDropShadowEffect, QGridLayout,
+    QSizePolicy, QSpacerItem, QInputDialog
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QFont, QColor
 from datetime import datetime
 
@@ -11,10 +12,12 @@ try:
     from src.base_de_datos.database import db_manager
     from src.config import config
     from src.utils.theme_manager import theme_manager
+    from src.hardware.printer import printer_manager
 except ImportError:
     from database import db_manager
     from config import config
     from utils.theme_manager import theme_manager
+    from hardware.printer import printer_manager
 
 def fmt_moneda(val):
     try:
@@ -32,7 +35,16 @@ class Admin7Cierre(QWidget):
         self._setup_ui()
         self._load_data()
         theme_manager.theme_changed.connect(self._apply_theme)
-        self._apply_theme()
+        # Retrasar levemente la aplicación del tema para que gane precedencia
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(50, self._apply_theme)
+
+    def _create_shadow(self):
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 15) if theme_manager.current_theme == "light" else QColor(0, 0, 0, 80))
+        shadow.setOffset(0, 8)
+        return shadow
 
     def _setup_ui(self):
         self.setObjectName("CierreRoot")
@@ -40,11 +52,12 @@ class Admin7Cierre(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # TOP BAR
+        # ─── TOP BAR ───
         self.top_bar = QFrame()
-        self.top_bar.setFixedHeight(45)
+        self.top_bar.setFixedHeight(60)
         top_lay = QHBoxLayout(self.top_bar)
-        top_lay.setContentsMargins(10, 0, 10, 0)
+        top_lay.setContentsMargins(20, 0, 20, 0)
+        top_lay.setSpacing(12)
 
         self.btn_back = QPushButton("← Volver")
         self.btn_back.setCursor(Qt.PointingHandCursor)
@@ -52,19 +65,31 @@ class Admin7Cierre(QWidget):
         top_lay.addWidget(self.btn_back)
 
         self.btn_corte_cajero = QPushButton("✂ Hacer corte de cajero")
+        self.btn_corte_cajero.setCursor(Qt.PointingHandCursor)
+        self.btn_corte_cajero.clicked.connect(self._hacer_corte_cajero)
+        
         self.btn_corte_dia = QPushButton("✂ Hacer corte del día")
+        self.btn_corte_dia.setCursor(Qt.PointingHandCursor)
+        self.btn_corte_dia.clicked.connect(self._hacer_corte_dia)
+        
         top_lay.addWidget(self.btn_corte_cajero)
         top_lay.addWidget(self.btn_corte_dia)
         
         top_lay.addStretch()
 
         self.btn_imprimir = QPushButton("🖨️ Imprimir")
+        self.btn_imprimir.setCursor(Qt.PointingHandCursor)
+        self.btn_imprimir.clicked.connect(self._imprimir_reporte)
+        
         self.btn_cerrar_turno = QPushButton("🔒 Cerrar turno...")
+        self.btn_cerrar_turno.setCursor(Qt.PointingHandCursor)
+        self.btn_cerrar_turno.clicked.connect(self._cerrar_turno)
+        
         top_lay.addWidget(self.btn_imprimir)
         top_lay.addWidget(self.btn_cerrar_turno)
         root.addWidget(self.top_bar)
 
-        # SCROLL AREA
+        # ─── SCROLL AREA ───
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
@@ -73,117 +98,97 @@ class Admin7Cierre(QWidget):
         container = QWidget()
         container.setObjectName("CierreContainer")
         self.main_lay = QVBoxLayout(container)
-        self.main_lay.setContentsMargins(30, 20, 30, 30)
+        self.main_lay.setContentsMargins(40, 30, 40, 40)
+        self.main_lay.setSpacing(25)
 
-        # HEADER INFO
-        self.lbl_header = QLabel(f"Corte de <b>{self.user}</b> iniciado el <u>{datetime.now().strftime('%d/%b/%Y')}</u>")
-        self.lbl_header.setStyleSheet("font-size: 18px;")
-        self.lbl_sub = QLabel(f"De {datetime.now().strftime('%d/%b/%Y %I:%M %p')} - (Turno Actual)")
-        self.lbl_sub.setStyleSheet("font-size: 12px;")
+        # ─── HEADER INFO ───
+        header_lay = QVBoxLayout()
+        header_lay.setSpacing(5)
         
-        self.main_lay.addWidget(self.lbl_header)
-        self.main_lay.addWidget(self.lbl_sub)
-        self.main_lay.addSpacing(20)
+        self.lbl_header = QLabel("Dashboard de Corte de Caja")
+        self.lbl_header.setStyleSheet("font-size: 28px; font-weight: 900; font-family: 'Segoe UI', sans-serif;")
+        
+        self.lbl_sub = QLabel(f"👤 Operador: <b>{self.user.capitalize()}</b>  |  📅 Fecha: <b>{datetime.now().strftime('%d %b %Y')}</b>  |  🕒 Turno actual")
+        self.lbl_sub.setStyleSheet("font-size: 14px; font-family: 'Segoe UI', sans-serif;")
+        
+        header_lay.addWidget(self.lbl_header)
+        header_lay.addWidget(self.lbl_sub)
+        self.main_lay.addLayout(header_lay)
 
-        # Separator Line
-        self.line1 = QFrame()
-        self.line1.setFrameShape(QFrame.HLine)
-        self.line1.setStyleSheet("border-top: 1px dashed #CBD5E1;")
-        self.main_lay.addWidget(self.line1)
-        self.main_lay.addSpacing(20)
+        # ─── HERO CARDS (3 BIG METRICS) ───
+        hero_lay = QHBoxLayout()
+        hero_lay.setSpacing(20)
 
-        # 2 COLUMNS
+        self.card_vt, self.lbl_val_vt = self._build_hero_card("💲 Ventas Totales", "$0.00", "#3B82F6", "#EFF6FF", "#1D4ED8")
+        self.card_dc, self.lbl_total_caja_val = self._build_hero_card("🧮 Dinero en Caja", "$0.00", "#10B981", "#ECFDF5", "#047857")
+        self.card_g, self.lbl_val_g = self._build_hero_card("📊 Ganancia Estimada", "$0.00", "#F59E0B", "#FFFBEB", "#B45309")
+
+        hero_lay.addWidget(self.card_vt)
+        hero_lay.addWidget(self.card_dc)
+        hero_lay.addWidget(self.card_g)
+        self.main_lay.addLayout(hero_lay)
+
+        # ─── DETAILED CARDS ───
         cols_lay = QHBoxLayout()
-        cols_lay.setSpacing(40)
-        
-        # LEFT COLUMN
-        self.left_col = QVBoxLayout()
-        
-        # Ventas Totales
-        h_ventas = QHBoxLayout()
-        self.lbl_tit_vt = QLabel("💲 Ventas Totales")
-        self.lbl_tit_vt.setStyleSheet("font-size: 16px;")
-        self.lbl_val_vt = QLabel("$0.00")
-        self.lbl_val_vt.setStyleSheet("font-size: 16px; font-weight: bold; color: #0EA5E9;")
-        self.lbl_val_vt.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        h_ventas.addWidget(self.lbl_tit_vt)
-        h_ventas.addWidget(self.lbl_val_vt)
-        self.left_col.addLayout(h_ventas)
-        self.left_col.addSpacing(15)
+        cols_lay.setSpacing(20)
 
-        # Dinero en Caja
-        self.lbl_tit_dc = QLabel("🧮 Dinero en Caja")
-        self.lbl_tit_dc.setStyleSheet("font-size: 16px;")
-        self.left_col.addWidget(self.lbl_tit_dc)
+        # LEFT COLUMN (Flujo de Efectivo)
+        self.card_flujo = QFrame()
+        self.card_flujo.setObjectName("DetailCard")
+        self.card_flujo.setGraphicsEffect(self._create_shadow())
+        flujo_lay = QVBoxLayout(self.card_flujo)
+        flujo_lay.setContentsMargins(25, 25, 25, 25)
+        flujo_lay.setSpacing(15)
+
+        lbl_tit_flujo = QLabel("💵 Movimientos de Efectivo")
+        lbl_tit_flujo.setStyleSheet("font-size: 18px; font-weight: bold;")
+        flujo_lay.addWidget(lbl_tit_flujo)
 
         self.grid_caja = QGridLayout()
-        self.grid_caja.setHorizontalSpacing(20)
-        self.grid_caja.setVerticalSpacing(8)
+        self.grid_caja.setHorizontalSpacing(30)
+        self.grid_caja.setVerticalSpacing(12)
         
-        # We will populate these dynamically or statically
         self.lbl_fondo_val = QLabel("$0.00")
         self.lbl_ventas_efec_val = QLabel("+ $0.00")
         self.lbl_abonos_val = QLabel("+ $0.00")
         self.lbl_entradas_val = QLabel("+ $0.00")
         self.lbl_salidas_val = QLabel("- $0.00")
         self.lbl_devol_efec_val = QLabel("- $0.00")
-        self.lbl_total_caja_val = QLabel("$0.00")
 
-        self._add_row(self.grid_caja, 0, "Fondo de caja", self.lbl_fondo_val, color="#64748B")
-        self._add_row(self.grid_caja, 1, "Ventas en Efectivo", self.lbl_ventas_efec_val, color="#10B981")
-        self._add_row(self.grid_caja, 2, "Abonos en efectivo", self.lbl_abonos_val, color="#10B981")
-        self._add_row(self.grid_caja, 3, "Entradas", self.lbl_entradas_val, color="#10B981")
-        self._add_row(self.grid_caja, 4, "Salidas", self.lbl_salidas_val, color="#EF4444")
-        self._add_row(self.grid_caja, 5, "Devoluciones en efectivo", self.lbl_devol_efec_val, color="#EF4444")
+        self._add_row(self.grid_caja, 0, "Fondo de caja", self.lbl_fondo_val, neutral=True)
+        self._add_row(self.grid_caja, 1, "Ventas en Efectivo", self.lbl_ventas_efec_val, positive=True)
+        self._add_row(self.grid_caja, 2, "Abonos en efectivo", self.lbl_abonos_val, positive=True)
+        self._add_row(self.grid_caja, 3, "Entradas", self.lbl_entradas_val, positive=True)
+        self._add_row(self.grid_caja, 4, "Salidas", self.lbl_salidas_val, positive=False)
+        self._add_row(self.grid_caja, 5, "Devoluciones en efectivo", self.lbl_devol_efec_val, positive=False)
         
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet("border-top: 1px solid #CBD5E1;")
-        self.grid_caja.addWidget(line, 6, 0, 1, 2)
+        flujo_lay.addLayout(self.grid_caja)
         
-        self.lbl_total_caja_val.setStyleSheet("font-weight: bold; font-size: 14px;")
-        self.lbl_total_caja_val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.grid_caja.addWidget(self.lbl_total_caja_val, 7, 1)
+        self.line1 = QFrame()
+        self.line1.setFrameShape(QFrame.HLine)
+        flujo_lay.addWidget(self.line1)
 
-        self.left_col.addLayout(self.grid_caja)
-        self.left_col.addSpacing(30)
-
-        # Entradas de efectivo
-        self.lbl_tit_ee = QLabel("⬇️ Entradas de efectivo")
-        self.lbl_tit_ee.setStyleSheet("font-size: 16px;")
-        self.left_col.addWidget(self.lbl_tit_ee)
-        self.lbl_no_entradas = QLabel("- No hubo Entradas en Efectivo -")
+        self.lbl_no_entradas = QLabel("ℹ️ No hubo otras entradas de efectivo")
         self.lbl_no_entradas.setAlignment(Qt.AlignCenter)
-        self.lbl_no_entradas.setStyleSheet("background: #E0F2FE; color: #0369A1; border-radius: 4px; padding: 5px;")
-        self.left_col.addWidget(self.lbl_no_entradas)
+        flujo_lay.addWidget(self.lbl_no_entradas)
+        flujo_lay.addStretch()
+        cols_lay.addWidget(self.card_flujo)
 
-        self.left_col.addStretch()
-        cols_lay.addLayout(self.left_col)
+        # RIGHT COLUMN (Desglose Ventas)
+        self.card_ventas = QFrame()
+        self.card_ventas.setObjectName("DetailCard")
+        self.card_ventas.setGraphicsEffect(self._create_shadow())
+        ventas_lay = QVBoxLayout(self.card_ventas)
+        ventas_lay.setContentsMargins(25, 25, 25, 25)
+        ventas_lay.setSpacing(15)
 
-
-        # RIGHT COLUMN
-        self.right_col = QVBoxLayout()
-
-        # Ganancia
-        h_ganancia = QHBoxLayout()
-        self.lbl_tit_g = QLabel("📊 Ganancia")
-        self.lbl_tit_g.setStyleSheet("font-size: 16px;")
-        self.lbl_val_g = QLabel("$0.00")
-        self.lbl_val_g.setStyleSheet("font-size: 16px; font-weight: bold; color: #0EA5E9;")
-        self.lbl_val_g.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        h_ganancia.addWidget(self.lbl_tit_g)
-        h_ganancia.addWidget(self.lbl_val_g)
-        self.right_col.addLayout(h_ganancia)
-        self.right_col.addSpacing(15)
-
-        # Ventas Desglose
-        self.lbl_tit_v = QLabel("🛒 Ventas")
-        self.lbl_tit_v.setStyleSheet("font-size: 16px;")
-        self.right_col.addWidget(self.lbl_tit_v)
+        lbl_tit_ventas = QLabel("🛒 Desglose de Ventas")
+        lbl_tit_ventas.setStyleSheet("font-size: 18px; font-weight: bold;")
+        ventas_lay.addWidget(lbl_tit_ventas)
 
         self.grid_ventas = QGridLayout()
-        self.grid_ventas.setHorizontalSpacing(20)
-        self.grid_ventas.setVerticalSpacing(8)
+        self.grid_ventas.setHorizontalSpacing(30)
+        self.grid_ventas.setVerticalSpacing(12)
 
         self.lbl_v_efec = QLabel("+ $0.00")
         self.lbl_v_tarj = QLabel("+ $0.00")
@@ -194,47 +199,76 @@ class Admin7Cierre(QWidget):
         self.lbl_v_devol = QLabel("- $0.00")
         self.lbl_total_v = QLabel("$0.00")
 
-        self._add_row(self.grid_ventas, 0, "En Efectivo", self.lbl_v_efec, color="#10B981")
-        self._add_row(self.grid_ventas, 1, "Con Tarjeta de Crédito", self.lbl_v_tarj, color="#10B981")
-        self._add_row(self.grid_ventas, 2, "A Crédito", self.lbl_v_cred, color="#10B981")
-        self._add_row(self.grid_ventas, 3, "Con Vales de Despensa", self.lbl_v_vales, color="#10B981")
-        self._add_row(self.grid_ventas, 4, "Con Transferencia", self.lbl_v_trans, color="#10B981")
-        self._add_row(self.grid_ventas, 5, "Con Cheque", self.lbl_v_cheq, color="#10B981")
-        self._add_row(self.grid_ventas, 6, "Devoluciones de Ventas", self.lbl_v_devol, color="#EF4444")
+        self._add_row(self.grid_ventas, 0, "En Efectivo", self.lbl_v_efec, positive=True)
+        self._add_row(self.grid_ventas, 1, "Con Tarjeta de Crédito", self.lbl_v_tarj, positive=True)
+        self._add_row(self.grid_ventas, 2, "A Crédito", self.lbl_v_cred, positive=True)
+        self._add_row(self.grid_ventas, 3, "Con Vales de Despensa", self.lbl_v_vales, positive=True)
+        self._add_row(self.grid_ventas, 4, "Con Transferencia", self.lbl_v_trans, positive=True)
+        self._add_row(self.grid_ventas, 5, "Con Cheque", self.lbl_v_cheq, positive=True)
+        self._add_row(self.grid_ventas, 6, "Devoluciones de Ventas", self.lbl_v_devol, positive=False)
 
-        line2 = QFrame()
-        line2.setFrameShape(QFrame.HLine)
-        line2.setStyleSheet("border-top: 1px solid #CBD5E1;")
-        self.grid_ventas.addWidget(line2, 7, 0, 1, 2)
+        ventas_lay.addLayout(self.grid_ventas)
 
-        self.lbl_total_v.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.line2 = QFrame()
+        self.line2.setFrameShape(QFrame.HLine)
+        ventas_lay.addWidget(self.line2)
+        
+        # Total Row
+        h_tot_v = QHBoxLayout()
+        lbl_tv_t = QLabel("Total Calculado:")
+        lbl_tv_t.setStyleSheet("font-weight: bold; font-size: 15px;")
+        self.lbl_total_v.setStyleSheet("font-weight: 900; font-size: 18px;")
         self.lbl_total_v.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.grid_ventas.addWidget(self.lbl_total_v, 8, 1)
+        h_tot_v.addWidget(lbl_tv_t)
+        h_tot_v.addWidget(self.lbl_total_v)
+        ventas_lay.addLayout(h_tot_v)
 
-        self.right_col.addLayout(self.grid_ventas)
-        self.right_col.addSpacing(30)
-
-        # Ingresos de contado
-        self.lbl_tit_ic = QLabel("💵 Ingresos de contado")
-        self.lbl_tit_ic.setStyleSheet("font-size: 16px;")
-        self.right_col.addWidget(self.lbl_tit_ic)
-        self.lbl_no_ingresos = QLabel("- No hubo ingresos de contado -")
-        self.lbl_no_ingresos.setAlignment(Qt.AlignCenter)
-        self.lbl_no_ingresos.setStyleSheet("background: #E0F2FE; color: #0369A1; border-radius: 4px; padding: 5px;")
-        self.right_col.addWidget(self.lbl_no_ingresos)
-
-        self.right_col.addStretch()
-        cols_lay.addLayout(self.right_col)
+        ventas_lay.addStretch()
+        cols_lay.addWidget(self.card_ventas)
 
         self.main_lay.addLayout(cols_lay)
+        self.main_lay.addStretch()
 
         scroll.setWidget(container)
         root.addWidget(scroll)
 
-    def _add_row(self, layout, row, text, val_lbl, color="#64748B"):
+    def _build_hero_card(self, title, initial_val, accent_color, light_bg, dark_text):
+        card = QFrame()
+        card.setObjectName("HeroCard")
+        card.setGraphicsEffect(self._create_shadow())
+        
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(25, 25, 25, 25)
+        lay.setSpacing(10)
+        
+        lbl_tit = QLabel(title)
+        lbl_tit.setStyleSheet("font-size: 15px; font-weight: 600; opacity: 0.8;")
+        
+        lbl_val = QLabel(initial_val)
+        lbl_val.setStyleSheet(f"font-size: 34px; font-weight: 900; color: {accent_color}; letter-spacing: -1px;")
+        
+        lay.addWidget(lbl_tit)
+        lay.addWidget(lbl_val)
+        lay.addStretch()
+        
+        card.setProperty("accent", accent_color)
+        
+        return card, lbl_val
+
+    def _add_row(self, layout, row, text, val_lbl, positive=True, neutral=False):
         lbl = QLabel(text)
+        lbl.setStyleSheet("font-size: 14px;")
+        
         val_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        val_lbl.setStyleSheet(f"color: {color};")
+        val_lbl.setStyleSheet("font-size: 14px; font-weight: 600;")
+        
+        if neutral:
+            val_lbl.setProperty("color_type", "neutral")
+        elif positive:
+            val_lbl.setProperty("color_type", "positive")
+        else:
+            val_lbl.setProperty("color_type", "negative")
+            
         layout.addWidget(lbl, row, 0)
         layout.addWidget(val_lbl, row, 1)
 
@@ -247,42 +281,77 @@ class Admin7Cierre(QWidget):
         btn_bg = theme_manager.get_color("btn_bg")
         btn_border = theme_manager.get_color("btn_border")
         btn_text = theme_manager.get_color("btn_text")
+        
+        is_dark = theme_manager.current_theme == "dark"
+        card_bg = "#111827" if is_dark else "#FFFFFF"
+        card_border = "#1F2937" if is_dark else "#E5E7EB"
+        
+        # Colores semánticos
+        color_pos = "#34D399" if is_dark else "#059669"
+        color_neg = "#F87171" if is_dark else "#DC2626"
+        color_neu = "#94A3B8" if is_dark else "#475569"
 
-        # Eliminado self.setStyleSheet para no sobreescribir el global de theme_manager.apply_to_admin
-        # Solo aplicaremos estilos específicos a los componentes.
-        self.lbl_header.setStyleSheet(f"font-size: 18px; color: {theme_manager.get_color('nav_brand')}; background: transparent;")
-        self.lbl_sub.setStyleSheet(f"font-size: 12px; color: {text_secondary}; background: transparent;")
-        self.line1.setStyleSheet(f"border-top: 1px dashed {nav_border}; background: transparent;")
+        self.lbl_header.setStyleSheet(f"font-size: 28px; font-weight: 900; color: {text_primary}; background: transparent;")
+        self.lbl_sub.setStyleSheet(f"font-size: 14px; color: {text_secondary}; background: transparent;")
+        
+        self.line1.setStyleSheet(f"border-top: 1px dashed {nav_border}; background: transparent; margin: 10px 0px;")
+        self.line2.setStyleSheet(f"border-top: 1px dashed {nav_border}; background: transparent; margin: 10px 0px;")
 
-        self.top_bar.setStyleSheet(f"""
-            QFrame {{ background: {nav_bg}; border-bottom: 1px solid {nav_border}; }}
-        """)
+        self.top_bar.setStyleSheet(f"QFrame {{ background: {nav_bg}; border-bottom: 1px solid {nav_border}; }}")
 
         btn_style = f"""
             QPushButton {{
                 background: {btn_bg}; color: {btn_text};
-                border: 1px solid {btn_border}; border-radius: 4px;
-                padding: 4px 12px; font-size: 11px;
+                border: 1px solid {btn_border}; border-radius: 8px;
+                padding: 8px 16px; font-size: 13px; font-weight: 600;
             }}
             QPushButton:hover {{ background: {theme_manager.get_color('btn_hover')}; }}
         """
         for btn in [self.btn_back, self.btn_corte_cajero, self.btn_corte_dia, self.btn_imprimir, self.btn_cerrar_turno]:
             btn.setStyleSheet(btn_style)
+            
+        # Hero Cards Style
+        hero_style = f"""
+            QFrame#HeroCard {{
+                background: {card_bg};
+                border: 1px solid {card_border};
+                border-radius: 16px;
+            }}
+        """
+        self.card_vt.setStyleSheet(hero_style)
+        self.card_dc.setStyleSheet(hero_style)
+        self.card_g.setStyleSheet(hero_style)
 
-        # Labels headers ya se configuran arriba
-        self.lbl_tit_vt.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-        self.lbl_tit_dc.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-        self.lbl_tit_ee.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-        self.lbl_tit_g.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-        self.lbl_tit_v.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-        self.lbl_tit_ic.setStyleSheet(f"font-size: 16px; color: {theme_manager.get_color('nav_brand')};")
-
-        # Specific colored backgrounds for empty states based on theme
-        empty_bg = "#E0F2FE" if theme_manager.current_theme == "light" else "#0C4A6E"
-        empty_text = "#0369A1" if theme_manager.current_theme == "light" else "#7DD3FC"
-        empty_style = f"background: {empty_bg}; color: {empty_text}; border-radius: 4px; padding: 5px;"
-        self.lbl_no_entradas.setStyleSheet(empty_style)
-        self.lbl_no_ingresos.setStyleSheet(empty_style)
+        # Detail Cards Style
+        detail_style = f"""
+            QFrame#DetailCard {{
+                background: {card_bg};
+                border: 1px solid {card_border};
+                border-radius: 16px;
+            }}
+        """
+        self.card_flujo.setStyleSheet(detail_style)
+        self.card_ventas.setStyleSheet(detail_style)
+        
+        # Info Badge
+        info_bg = "#1E3A8A" if is_dark else "#DBEAFE"
+        info_txt = "#BFDBFE" if is_dark else "#1D4ED8"
+        self.lbl_no_entradas.setStyleSheet(f"background: {info_bg}; color: {info_txt}; border-radius: 6px; padding: 10px; font-weight: 500;")
+        
+        # Re-aplicar colores semánticos a las etiquetas de la grilla
+        for lbl in self.findChildren(QLabel):
+            c_type = lbl.property("color_type")
+            if c_type == "positive":
+                lbl.setStyleSheet(f"font-size: 14px; font-weight: 600; color: {color_pos}; background: transparent;")
+            elif c_type == "negative":
+                lbl.setStyleSheet(f"font-size: 14px; font-weight: 600; color: {color_neg}; background: transparent;")
+            elif c_type == "neutral":
+                lbl.setStyleSheet(f"font-size: 14px; font-weight: 600; color: {color_neu}; background: transparent;")
+            elif lbl.objectName() == "":
+                # Si no es semántica ni tiene nombre (como "Fondo de caja"), le damos color normal
+                # excepto si es lbl_val_vt, etc. pero esos tienen estilos inline que no queremos borrar.
+                # Como es peligroso sobreescribir indiscriminadamente, solo tocamos las semánticas.
+                pass
 
     def _load_data(self):
         try:
@@ -326,6 +395,110 @@ class Admin7Cierre(QWidget):
             
             self.lbl_total_v.setText(fmt_moneda(v_totales))
             self.lbl_val_vt.setText(fmt_moneda(v_totales))
+            
+            # Placeholder for Ganancia until actual profit calculation logic is implemented
+            self.lbl_val_g.setText(fmt_moneda(v_totales * 0.3)) # Default demo margin
 
         except Exception as e:
             print(f"Error cargando datos de corte: {e}")
+
+    def _get_efectivo_esperado(self):
+        """Calcula el efectivo que debería haber en caja"""
+        try:
+            val_str = self.lbl_total_caja_val.text().replace("$", "").replace(".", "").replace(",", ".")
+            return float(val_str)
+        except:
+            return 0.0
+
+    def _get_ventas_totales_numerico(self):
+        try:
+            return float(self.lbl_total_v.text().replace("$", "").replace(".", "").replace(",", "."))
+        except:
+            return 0.0
+
+    def _get_fondo_caja(self):
+        try:
+            return float(self.lbl_fondo_val.text().replace("$", "").replace(".", "").replace(",", "."))
+        except:
+            return 0.0
+
+    def _hacer_corte_cajero(self):
+        self._realizar_corte(modo="turno")
+
+    def _hacer_corte_dia(self):
+        self._realizar_corte(modo="dia")
+
+    def _realizar_corte(self, modo="turno"):
+        esperado = self._get_efectivo_esperado()
+        
+        fisico, ok = QInputDialog.getDouble(
+            self, 
+            "Cuadre Físico", 
+            f"Efectivo esperado en caja: ${esperado:,.2f}\n\nIngresa el dinero en efectivo real (físico):",
+            value=esperado,
+            min=0.0,
+            max=9999999.0,
+            decimals=2
+        )
+        
+        if not ok:
+            return
+
+        dif = fisico - esperado
+        
+        fondo = self._get_fondo_caja()
+        v_efec = float(self.lbl_v_efec.text().replace("+ $", "").replace(".", "").replace(",", "."))
+        v_tarj = float(self.lbl_v_tarj.text().replace("+ $", "").replace(".", "").replace(",", "."))
+        t_total = v_efec + v_tarj
+        
+        datos_z = {
+            'fondo': fondo,
+            'turno_efectivo': v_efec,
+            'turno_tarjeta': v_tarj,
+            'turno_total': t_total,
+            'dia_tarjeta': v_tarj if modo == "dia" else 0.0,
+            'dia_total': t_total if modo == "dia" else 0.0,
+            'efectivo_esperado': esperado,
+            'modo': modo
+        }
+        
+        try:
+            printer_manager.imprimir_ticket_z(self.user.capitalize(), fisico, dif, datos_z)
+            QMessageBox.information(self, "Corte Exitoso", "El reporte de corte se ha enviado a la impresora.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo imprimir el ticket: {e}")
+
+    def _imprimir_reporte(self):
+        # Mismo ticket de corte de cajero pero sin pedir cuadre, asumiendo cuadre perfecto temporal
+        esperado = self._get_efectivo_esperado()
+        fondo = self._get_fondo_caja()
+        v_efec = float(self.lbl_v_efec.text().replace("+ $", "").replace(".", "").replace(",", "."))
+        v_tarj = float(self.lbl_v_tarj.text().replace("+ $", "").replace(".", "").replace(",", "."))
+        
+        datos_z = {
+            'fondo': fondo,
+            'turno_efectivo': v_efec,
+            'turno_tarjeta': v_tarj,
+            'turno_total': v_efec + v_tarj,
+            'efectivo_esperado': esperado,
+            'modo': "turno"
+        }
+        try:
+            printer_manager.imprimir_ticket_z(self.user.capitalize(), esperado, 0, datos_z)
+            QMessageBox.information(self, "Impresión Exitosa", "Reporte enviado a la impresora.")
+        except Exception as e:
+            QMessageBox.warning(self, "Error de Impresión", f"Fallo al imprimir: {e}")
+
+    def _cerrar_turno(self):
+        respuesta = QMessageBox.question(
+            self,
+            "Cerrar Turno",
+            "¿Estás seguro que deseas cerrar este turno y salir al login?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if respuesta == QMessageBox.Yes:
+            # Aquí podrías guardar el log del turno en la BD
+            QMessageBox.information(self, "Turno Cerrado", "El turno ha finalizado correctamente.")
+            from PyQt5.QtWidgets import QApplication
+            QApplication.exit(888)

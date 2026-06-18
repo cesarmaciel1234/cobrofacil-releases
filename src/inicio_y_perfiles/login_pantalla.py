@@ -226,14 +226,11 @@ class LoginPantalla(QDialog):
         # ── Campo contraseña ───────────────────────────────────────────────────
         self.txt_pass = QLineEdit()
         if self.role == "admin":
-            self.txt_pass.setText("admin")
-            self.txt_pass.setPlaceholderText("Contraseña Operativa (Por defecto: admin)")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa")
         elif self.role == "jefe":
-            self.txt_pass.setText("jefe")
-            self.txt_pass.setPlaceholderText("Contraseña Gerencial (Por defecto: jefe)")
+            self.txt_pass.setPlaceholderText("Contraseña Gerencial")
         else:
-            self.txt_pass.setText("cajero")
-            self.txt_pass.setPlaceholderText("Contraseña Operativa (Por defecto: cajero)")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa")
         self.txt_pass.setEchoMode(QLineEdit.Password)
         self.txt_pass.setStyleSheet(field_style)
         self.txt_pass.returnPressed.connect(self.verificar)

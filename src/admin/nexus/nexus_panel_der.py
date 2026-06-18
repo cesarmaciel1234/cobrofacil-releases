@@ -491,8 +491,21 @@ class NexusPanelDer(QFrame):
             tipo_evento = "🚨 SEGURIDAD"
             icon = "🚨"
 
-        # Col 0: PC (src="CAJA 1")
-        it_pc = QTableWidgetItem(src.replace("CAJA ", "PC-0"))
+        # Col 0: PC
+        pc_clean = src
+        import re
+        match = re.search(r'PC-(\d+)', src)
+        if match:
+            pc_clean = f"PC-{match.group(1)}"
+        else:
+            match_digit = re.search(r'\d+', src)
+            if match_digit:
+                c_num = int(match_digit.group())
+                pc_clean = f"PC-0{c_num}" if c_num < 10 else f"PC-{c_num}"
+            else:
+                pc_clean = "PC-01"
+
+        it_pc = QTableWidgetItem(pc_clean)
         it_pc.setTextAlignment(Qt.AlignCenter)
         it_pc.setFont(QFont("Segoe UI", 9, QFont.Bold))
         self.tabla_eventos.setItem(row, 0, it_pc)
@@ -537,6 +550,9 @@ class NexusPanelDer(QFrame):
             q += " AND tipo='CANCELACION'"
         elif idx_tipo == 5:
             q += " AND tipo IN ('INGRESO', 'RETIRO')"
+        else:
+            # Excluir tickets de ventas si vemos "Todos los Eventos" para limpiar el ruido
+            q += " AND observaciones NOT LIKE '[TICKET]%' AND tipo NOT LIKE '[TICKET]%' AND tipo != 'VENTA'"
             
         if self.caja_filter > 0:
             q += " AND caja_id=?"
@@ -562,7 +578,15 @@ class NexusPanelDer(QFrame):
         self._cargar_siguiente_pagina()
         
     def set_caja_filter(self, caja_id):
-        self.caja_filter = caja_id
+        if caja_id == "todas":
+            self.caja_filter = 0
+        else:
+            try:
+                import re
+                num_match = re.search(r'\d+', str(caja_id))
+                self.caja_filter = int(num_match.group()) if num_match else 0
+            except:
+                self.caja_filter = 0
         # Automáticamente refrescar la tabla y el historial de cierres si es necesario
         self.filtrar_auditoria()
         # Opcional: También filtrar Cierres Z por caja si se desea (por ahora solo auditoria)

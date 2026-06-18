@@ -5,7 +5,7 @@ Módulo Unificado
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
 from src.utils.theme_manager import theme_manager
-from src.vistas.proveedores import ModuloProveedoresUnificado
+from src.shared.proveedores_unificado import ModuloProveedoresUnificado
 
 class Admin11Proveedores(QWidget):
     request_dashboard = pyqtSignal()

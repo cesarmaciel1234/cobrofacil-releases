@@ -50,7 +50,7 @@ class BarcodeParser:
         Lógica PRO: Analiza códigos de barras generados por balanzas comerciales (Systel, Kretz, etc.)
         Retorna la cantidad final (peso o importe calculado) basándose en la configuración.
         """
-        if not (len(txt) == 13 and txt.isdigit() and config.get("balanza_habilitada", True)):
+        if not (len(txt) in [12, 13] and txt.isdigit() and config.get("balanza_habilitada", True)):
             return None, None
 
         prefijo_balanza = str(config.get("balanza_prefijo", "20"))
@@ -60,6 +60,11 @@ class BarcodeParser:
             return None, None
 
         try:
+            # Si el código tiene 12 dígitos, suele ser un UPC-A donde se omitió el 0 a la izquierda del PLU.
+            # Lo normalizamos a 13 para que la configuración de la balanza (índices) funcione perfecto.
+            if len(txt) == 12:
+                txt = txt[:2] + "0" + txt[2:]
+                
             # Extraer PLU
             p_start = max(0, int(config.get("balanza_plu_inicio", 3)) - 1)
             p_len   = int(config.get("balanza_plu_largo", 5))

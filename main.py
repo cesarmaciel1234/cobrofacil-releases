@@ -22,7 +22,9 @@ from PyQt5.QtGui import QIcon
 
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:
-        with open("crash.log", "w") as f:
+        from src.logger import logger
+        logger.error("Excepción global no capturada:", exc_info=(exc_type, exc_value, exc_traceback))
+        with open("crash.log", "w", encoding="utf-8") as f:
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=f)
     except: pass
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -30,8 +32,9 @@ sys.excepthook = global_excepthook
 
 # Nota: Los módulos pesados se cargan dentro de launch_app para acelerar el inicio.
 
-# Variable global para mantener viva la ventana principal
+# Variables globales para mantener viva la ventana principal y estado
 main_window = None
+app_exit_event = threading.Event()
 
 def launch_app():
     global main_window
@@ -160,6 +163,15 @@ def launch_app():
     while True:
         if step == 1:
             if perfil_dlg.exec_():
+                from src.utils.candados import PerfilLocker
+                if not PerfilLocker.lock_profile(role_selected):
+                    QMessageBox.warning(None, "Error", f"El perfil '{role_selected}' ya está en uso.")
+                    continue
+                
+                # Inicializar el Cerebro Conector UDP (NetworkEngine)
+                from src.network.network_engine import init_network_engine
+                init_network_engine(role_selected)
+                
                 perfil_dlg.hide()
                 app.processEvents()
                 step = 2
@@ -233,7 +245,7 @@ def start_update_server():
             logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
             return
 
-        while True:
+        while not app_exit_event.is_set():
             try:
                 is_master = getattr(db_manager, 'is_master', False)
                 db_path = getattr(db_manager, 'db_path', "") or ""
@@ -248,7 +260,7 @@ def start_update_server():
                         _update_service_running = False
             except Exception as e:
                 logging.debug(f"[UPDATER] Service manager error: {e}")
-            time.sleep(5)
+            app_exit_event.wait(5)
 
     thread = threading.Thread(target=manager_loop, daemon=True)
     thread.start()
@@ -271,11 +283,12 @@ def start_update_discovery_server():
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             sock.bind(('', 38002))
+            sock.settimeout(2.0)
         except Exception as e:
             logging.error(f"UDP Update Discovery Bind Error: {e}")
             return
 
-        while True:
+        while not app_exit_event.is_set():
             try:
                 data, addr = sock.recvfrom(1024)
                 if data == b"PUNPRO_UPDATE_DISCOVER":
@@ -305,6 +318,8 @@ def start_update_discovery_server():
                     response = {"update_server": True, "server_ip": server_ip}
                     sock.sendto(json.dumps(response).encode('utf-8'), addr)
                     print(f"[UPDATER] Responded discovery to {addr[0]} with server_ip={server_ip}")
+            except socket.timeout:
+                continue
             except Exception:
                 pass
 
@@ -315,31 +330,8 @@ def start_update_discovery_server():
 if __name__ == "__main__":
     import sys
     if "--install-firewall" in sys.argv:
-        import subprocess
-        import os
-        
-        exe_path = os.path.abspath(sys.executable)
-        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        mariadb_path = os.path.join(base_dir, "mariadb_server", "bin", "mysqld.exe")
-        if not os.path.exists(mariadb_path):
-            mariadb_path = os.path.join(os.path.dirname(exe_path), "mariadb_server", "bin", "mysqld.exe")
-
-        comandos = [
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_v3" dir=in action=allow protocol=TCP localport=8000,38001,3306',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out_v3" dir=out action=allow protocol=TCP localport=8000,38001,3306',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_v3" dir=in action=allow protocol=UDP localport=8000,38001,37020,38002',
-            'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_Out_v3" dir=out action=allow protocol=UDP localport=8000,38001,37020,38002',
-            # CALCULO EXTREMO: Reglas específicas para el programa para sobreescribir bloqueos silenciosos de Windows
-            f'netsh advfirewall firewall add rule name="TPV_App_Override" dir=in action=allow program="{exe_path}" enable=yes profile=any',
-            f'netsh advfirewall firewall add rule name="TPV_App_Override_Out" dir=out action=allow program="{exe_path}" enable=yes profile=any'
-        ]
-        
-        if os.path.exists(mariadb_path):
-            comandos.append(f'netsh advfirewall firewall add rule name="TPV_MariaDB_Override" dir=in action=allow program="{mariadb_path}" enable=yes profile=any')
-            comandos.append(f'netsh advfirewall firewall add rule name="TPV_MariaDB_Override_Out" dir=out action=allow program="{mariadb_path}" enable=yes profile=any')
-
-        for cmd in comandos:
-            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        from src.tools.setup_firewall import install_firewall
+        install_firewall()
         sys.exit(0)
 
     from src.logger import setup_logger
@@ -379,4 +371,11 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error al detener MariaDB: {e}")
         
+    try:
+        from src.services.lan_server import stop_lan_server
+        stop_lan_server()
+    except Exception as e:
+        print(f"Error al detener LAN Server: {e}")
+        
+    app_exit_event.set()
     sys.exit(exit_code)

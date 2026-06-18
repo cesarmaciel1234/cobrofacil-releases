@@ -84,3 +84,20 @@ tutorial_e2e.mp4
 tests_e2e/bot_control.db
 tests_e2e/current_step.txt
 tests_e2e/learned_history.json
+
+# ─── Legacy / artefactos locales ──────────────────────────────────────────
+scripts_historicos/
+reportes/backups_actualizacion/
+IPython/
+chatbot/
+locks/
+
+# ─── Runtime / estado en vivo ─────────────────────────────────────────────
+.cursor/
+last_ai_gen.json
+live_scan.json
+sugerencia_activa.json
+data/live_scan.json
+data/sugerencia_activa.json
+offline_queue.json
+ia_doc_content.txt

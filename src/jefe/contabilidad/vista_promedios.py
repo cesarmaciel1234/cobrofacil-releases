@@ -371,7 +371,7 @@ class VistaPromediosMixin:
                 except: pass
                 
                 if precio > 0 or precio_oferta > 0:
-                    db.execute_non_query("UPDATE productos SET precio = ?, precio_oferta = ?, cant_oferta = ? WHERE nombre = ?", (precio, precio_oferta, cant_oferta, corte))
+                    db.execute_non_query("UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ? WHERE nombre = ?", (precio, precio_oferta, cant_oferta, corte))
                     actualizados += 1
             
             QMessageBox.information(self, "Éxito", f"Se exportaron los precios de {actualizados} cortes al inventario general.")
@@ -387,13 +387,13 @@ class VistaPromediosMixin:
             self._prom_tabla.blockSignals(True)
             for r in range(self._prom_tabla.rowCount()):
                 corte = self._prom_tabla.item(r, 0).text().strip()
-                res = db.execute_query("SELECT precio, precio_oferta, cant_oferta FROM productos WHERE nombre = ?", (corte,))
+                res = db.execute_query("SELECT precio, precio_oferta_promedio, cant_oferta FROM productos WHERE nombre = ?", (corte,))
                 
                 if res and len(res) > 0:
                     row = res[0]
                     try:
                         precio = float(row['precio'] or 0)
-                        precio_oferta = float(row['precio_oferta'] or 0)
+                        precio_oferta = float(row['precio_oferta_promedio'] or 0)
                         cant_oferta = float(row['cant_oferta'] or 0)
                     except:
                         precio = float(row[0] or 0)

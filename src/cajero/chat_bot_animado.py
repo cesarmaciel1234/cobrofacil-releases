@@ -8,9 +8,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel
 from PyQt5.QtCore import Qt, QTimer, QUrl, pyqtSignal
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 MANUAL_JSON = os.path.join(_DIR, "manual_cajero.json")
@@ -450,7 +451,7 @@ class ChatAnimadoStandalone(QWidget):
         
         # UDP listener para F10
         self.udp_socket = QUdpSocket(self)
-        self.udp_socket.bind(45680)
+        self.udp_socket.bind(QHostAddress.AnyIPv4, 45680, QUdpSocket.ShareAddress | QUdpSocket.ReuseAddressHint)
         self.udp_socket.readyRead.connect(self._process_udp)
         
         lay = QVBoxLayout(self)
@@ -483,6 +484,15 @@ class ChatAnimadoStandalone(QWidget):
                 self.web.page().runJavaScript("toggleBubble();")
             elif msg == "HIDE":
                 self.move(self.pos_oculta[0], self.pos_oculta[1])
+            elif msg.startswith("TICKET_UPDATE|"):
+                partes = msg.split("|")
+                if len(partes) >= 2:
+                    total = partes[1]
+                    self.web.page().runJavaScript(f"recibirRespuesta('🛒 Ticket actualizado.\\nTotal actual: {total}');")
+                    if self.x() < 0:
+                        self.move(self.pos_visible[0], self.pos_visible[1])
+                        self.raise_()
+                        self.activateWindow()
 
     def _make_page(self):
         page = QWebEnginePage(self.web)

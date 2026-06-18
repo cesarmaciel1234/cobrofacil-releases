@@ -5,8 +5,8 @@ letras siempre bien marcadas y legibles.
 """
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QFrame, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
-from PyQt5.QtGui import QColor, QLinearGradient, QPainter, QBrush
+from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent
+from PyQt5.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
 
 
 # ── Paleta global Warm-Cold ───────────────────────────────────────────────────
@@ -217,6 +217,7 @@ class PerfilPantalla(QDialog):
         self.selected_index = 0
         self._setup_ui()
         self.update_selection_ui()
+        self._check_locked_profiles()
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso2")
@@ -357,18 +358,66 @@ class PerfilPantalla(QDialog):
         self.btn_jefe.set_active(self.selected_index == 2)
         self.btn_carteleria.set_active(self.selected_index == 3)
 
+    def _check_locked_profiles(self):
+        from src.utils.candados import PerfilLocker
+        
+        # Diccionario para mapear roles a sus botones respectivos
+        buttons_map = {
+            "cajero": self.btn_cajero,
+            "admin": self.btn_admin,
+            "jefe": self.btn_jefe,
+            "carteleria": self.btn_carteleria
+        }
+        
+        # Bloquear visual y funcionalmente los botones de roles ya en uso
+        self._roles_bloqueados = set()
+        for i, rol in enumerate(self._ROLES):
+            if PerfilLocker.check_is_locked(rol):
+                self._roles_bloqueados.add(i)
+                btn = buttons_map[rol]
+                # Modificar el estilo para indicar bloqueo
+                btn.inner.setStyleSheet(f"""
+                    QFrame {{
+                        background: #F8FAFC;
+                        border-radius: 22px;
+                        border: 1px dashed #CBD5E1;
+                    }}
+                """)
+                btn.lbl_title.setText(btn.lbl_title.text() + " (EN USO)")
+                btn.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: #94A3B8; background: transparent; border: none;")
+                btn.lbl_desc.setText("Esta instancia ya se encuentra en ejecución en esta terminal.")
+                btn.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 600; color: #94A3B8; background: transparent; border: none;")
+                btn.setCursor(Qt.ForbiddenCursor)
+        
+        # Si el seleccionado por defecto está bloqueado, avanzamos al siguiente libre
+        if self.selected_index in self._roles_bloqueados and len(self._roles_bloqueados) < 4:
+            self.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.NoModifier))
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
             delta = 1 if event.key() == Qt.Key_Right else -1
-            self.selected_index = (self.selected_index + delta) % 4
-            self.update_selection_ui()
+            # Buscar el siguiente rol no bloqueado
+            original_idx = self.selected_index
+            for _ in range(4):
+                self.selected_index = (self.selected_index + delta) % 4
+                if self.selected_index not in getattr(self, '_roles_bloqueados', set()):
+                    break
+            if original_idx != self.selected_index:
+                self.update_selection_ui()
             event.accept()
         elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self._elegir(self._ROLES[self.selected_index])
+            if self.selected_index not in getattr(self, '_roles_bloqueados', set()):
+                self._elegir(self._ROLES[self.selected_index])
             event.accept()
         else:
             super().keyPressEvent(event)
 
     def _elegir(self, rol):
+        if self._ROLES.index(rol) in getattr(self, '_roles_bloqueados', set()):
+            # Reproducir un sonido de alerta si intenta forzar el clic con el mouse
+            import winsound
+            winsound.Beep(800, 200)
+            return
+            
         self.perfil_seleccionado.emit(rol)
         self.accept()

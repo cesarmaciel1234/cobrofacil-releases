@@ -11,6 +11,7 @@ class ThemeManager(QObject):
         super().__init__()
         self.current_theme = "light"
         self._load_theme()
+        self.current_theme = "light" # FORZAR MODO CLARO SIEMPRE
 
     def _load_theme(self):
         if os.path.exists(THEME_FILE):
@@ -48,18 +49,18 @@ class ThemeManager(QObject):
     def get_color(self, element):
         palettes = {
             "light": {
-                "nav_bg": "#FFFFFF",
-                "nav_border": "#E2E8F0",
-                "nav_brand": "#0F172A",
-                "nav_text": "#64748B",
-                "app_bg": "#F4F6F8", # Gris-azulado muy sutil, estilo macOS
-                "text_title": "#0F172A", # Azul medianoche
-                "text_desc": "#64748B", # Gris pizarra
+                "nav_bg": "rgba(255, 255, 255, 0.85)",
+                "nav_border": "#E5E5EA",
+                "nav_brand": "#1D1D1F",
+                "nav_text": "#86868B",
+                "app_bg": "#F5F5F7",
+                "text_title": "#1D1D1F",
+                "text_desc": "#86868B",
                 "btn_bg": "#FFFFFF",
-                "btn_text": "#334155",
-                "btn_border": "#CBD5E1",
-                "btn_hover": "#F8FAFC",
-                "footer": "#94A3B8",
+                "btn_text": "#007AFF",
+                "btn_border": "#E5E5EA",
+                "btn_hover": "#F2F2F7",
+                "footer": "#86868B",
             },
             "dark": {
                 "nav_bg": "#020617",

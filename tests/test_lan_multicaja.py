@@ -64,7 +64,11 @@ def run_multicaja_test():
     print("="*50)
     
     # Pre-crear el producto
-    db_manager.execute_non_query("INSERT OR IGNORE INTO productos (id, codigo, nombre, precio, stock) VALUES (1, 'MC001', 'Producto Multicaja', 150.0, 10000.0)")
+    db_manager.execute_non_query(
+        "INSERT IGNORE INTO productos (id, codigo, nombre, precio, stock) VALUES (1, 'MC001', 'Producto Multicaja', 150.0, 10000.0)"
+        if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+        else "INSERT OR IGNORE INTO productos (id, codigo, nombre, precio, stock) VALUES (1, 'MC001', 'Producto Multicaja', 150.0, 10000.0)"
+    )
     
     # Empezar servidor LAN en un hilo (Si no está corriendo)
     from src.services.lan_server import init_lan_server

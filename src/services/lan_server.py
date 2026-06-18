@@ -11,6 +11,14 @@ from src.config import config
 API_PORT = 8000
 UDP_PORT = 37020
 
+lan_exit_event = threading.Event()
+_http_server_instance = None
+
+def stop_lan_server():
+    lan_exit_event.set()
+    if _http_server_instance:
+        threading.Thread(target=_http_server_instance.shutdown, daemon=True).start()
+
 class LANRequestHandler(BaseHTTPRequestHandler):
     def _send_response(self, status, data):
         self.send_response(status)
@@ -45,6 +53,12 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             
             try:
                 data = json.loads(post_data.decode('utf-8'))
+                
+                auth_token = data.get('token', '')
+                if auth_token != config.get("update_auth_token", "1234"):
+                    self._send_response(401, {"status": "error", "message": "Acceso denegado: Token inválido."})
+                    return
+                
                 master_ip = data.get('master_ip')
                 if not master_ip:
                     self._send_response(400, {"status": "error", "message": "Falta el parámetro master_ip."})
@@ -84,6 +98,21 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         if self.path == '/api/ping':
             mode = "MAESTRA" if getattr(db_manager, "is_master", True) else "ESCLAVA"
             self._send_response(200, {"status": "ok", "mode": mode, "hostname": socket.gethostname()})
+        elif self.path == '/api/live_scan':
+            from src.utils.paths import get_base_path
+            import os
+            import json
+            
+            path_ls = os.path.join(get_base_path(), "live_scan.json")
+            if os.path.exists(path_ls):
+                try:
+                    with open(path_ls, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._send_response(200, data)
+                except Exception as e:
+                    self._send_response(500, {"error": str(e)})
+            else:
+                self._send_response(200, {})
         else:
             self._send_response(404, {"status": "not_found"})
 
@@ -91,8 +120,10 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         pass
 
 def start_http_server():
+    global _http_server_instance
     try:
         server = HTTPServer(('0.0.0.0', API_PORT), LANRequestHandler)
+        _http_server_instance = server
         logger.info(f"Servidor API LAN iniciado en puerto {API_PORT}")
         server.serve_forever()
     except Exception as e:
@@ -105,11 +136,19 @@ def start_udp_discovery_server():
     
     try:
         sock.bind(('0.0.0.0', UDP_PORT))
+        sock.settimeout(2.0)
         logger.info(f"Servidor UDP Discovery LAN iniciado en puerto {UDP_PORT}")
         
-        while True:
+        while not lan_exit_event.is_set():
             try:
                 data, addr = sock.recvfrom(1024)
+            except socket.timeout:
+                continue
+            except Exception as e:
+                logger.error(f"Error procesando peticion UDP Discovery: {e}")
+                continue
+                
+            try:
                 if data == b"PUNPRO_DISCOVER":
                     db_engine = getattr(db_manager, 'db_engine_type', 'sqlite')
                     if db_engine == 'sqlite' and not os.path.exists(db_manager.db_path):
@@ -136,7 +175,7 @@ def start_udp_discovery_server():
                     }
                     sock.sendto(json.dumps(response).encode('utf-8'), addr)
             except Exception as e:
-                logger.error(f"Error procesando peticion UDP Discovery: {e}")
+                logger.error(f"Error parseando peticion UDP: {e}")
     except Exception as e:
         logger.error(f"Error en servidor UDP Discovery: {e}")
     finally:

@@ -39,7 +39,8 @@ class Config:
         "cierre_auto_hora": "00:00",
         "cierre_auto_activo": True,
         "stock_alerta_activa": True,
-        "jefe_db_path": ""
+        "jefe_db_path": "",
+        "tasa_usd": 1200.0
     }
 
     _instance = None

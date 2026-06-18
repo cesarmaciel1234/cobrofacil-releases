@@ -16,7 +16,7 @@
     "balanza_val_inicio": 8,
     "balanza_val_largo": 5,
     "balanza_divisor": 1000,
-    "db_path": "\\\\cesar\\tpv pro 2026\\AQVGI.db",
+    "db_path": "",
     "db_name": "AQVGI.db",
     "server_password": "1234",
     "update_server_ip": "",
@@ -33,12 +33,14 @@
     "cierre_auto_activo": true,
     "stock_alerta_activa": true,
     "jefe_db_path": "",
+    "tasa_usd": 1200.0,
     "pantalla_tactil": "auto",
     "business_cuit": "CUIT: 00-00000000-0",
     "business_iibb": "",
     "business_inicio_actividades": "",
     "printer_name": "",
     "mp_access_token": "APP_USR-6671602850970278-050321-d0e52d7a2c80da2fd182c544bfd0c73d-171085024",
+    "mp_device_id": "NEWLAND_N950__N950NCBA01604854",
     "ticket_printer": "Microsoft Print to PDF",
     "drawer_open_cash": true,
     "drawer_open_card": true,
@@ -59,6 +61,7 @@
     "github_error_token": "",
     "github_error_reporting": true,
     "api_key": "1234",
+    "gemini_api_key": "AQ.Ab8RN6LT_1RttTYG_qZkKZ29GLbmJJJZFXfXtnnnPj2FuCwttA",
     "auto_update_check": true,
     "auto_update_when": "Iniciar el programa",
     "fiscal_payment_methods": [
@@ -75,5 +78,8 @@
     "opt_solicitar_cajero": true,
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
-    "last_weekly_report_sent": "2026-W24"
+    "last_weekly_report_sent": "2026-W25",
+    "carteleria_master_ip": "",
+    "clover_ip": "",
+    "clover_port": "1234"
 }

@@ -107,6 +107,31 @@ class DatabaseManager:
                         except:
                             pass
                             
+                        # AUTO-DESCUBRIMIENTO: Si falla la conexión, buscar maestra en la red
+                        logger.info("Intentando auto-descubrir maestra en la red...")
+                        import socket, json
+                        try:
+                            sock_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            sock_scan.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                            sock_scan.settimeout(2.0)
+                            sock_scan.sendto(b"PUNPRO_DISCOVER", ('255.255.255.255', 37020))
+                            data, addr = sock_scan.recvfrom(1024)
+                            info = json.loads(data.decode('utf-8'))
+                            if info.get('mode') == 'MAESTRA':
+                                host = info.get('server_ip', addr[0])
+                                logger.info(f"Maestra auto-descubierta en {host}. Reintentando...")
+                                sock_scan.close()
+                                
+                                # Actualizar la IP en memoria y config
+                                from src.config import config
+                                config.set("db_host", host)
+                                config.save()
+                                self.mariadb_engine = MariaDBEngine(host=host)
+                                continue  # Vuelve a intentar la conexión con la nueva IP
+                            sock_scan.close()
+                        except Exception as e:
+                            logger.info(f"Auto-descubrimiento falló: {e}")
+
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
                         from PyQt5.QtWidgets import QMessageBox, QApplication
                         from src.config import config
@@ -336,6 +361,64 @@ class DatabaseManager:
         # Re-run initialization
         self._init_db()
 
+    def reconectar_local(self):
+        """Vuelve a modo MAESTRA usando la base de datos SQLite local. Sin reiniciar."""
+        try:
+            from src.utils.paths import get_base_path
+            import json
+
+            base_path = get_base_path()
+            cfg_path = os.path.join(base_path, "config.json")
+
+            # Leer db_name desde config
+            db_name = "punpro.db"
+            try:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg_data = json.load(f)
+                db_name = cfg_data.get("db_name", "punpro.db") or "punpro.db"
+            except Exception:
+                pass
+
+            local_path = os.path.join(base_path, db_name)
+
+            # Cerrar engine MariaDB si había
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                try:
+                    if hasattr(self, "mariadb_engine") and self.mariadb_engine:
+                        self.mariadb_engine = None
+                except Exception:
+                    pass
+
+            self.db_path = local_path
+            self.db_engine_type = "sqlite"
+            self.is_master = True
+
+            # Verificar/crear tablas en la BD local
+            self._create_tables()
+            self._migrate_db()
+
+            logger.info(f"[RED LAN] Reconectado a BD local: {local_path}")
+        except Exception as e:
+            logger.error(f"[RED LAN] Error en reconectar_local: {e}")
+            raise
+
+    def reconectar_mariadb(self, host: str):
+        """Conecta esta PC como ESCLAVA a un servidor MariaDB remoto. Sin reiniciar."""
+        try:
+            from src.db_engines.mariadb_engine import MariaDBEngine
+
+            # Cerrar BD SQLite si estaba abierta
+            self.db_path = "mariadb://" + host
+            self.db_engine_type = "mariadb"
+            self.is_master = False
+
+            self.mariadb_engine = MariaDBEngine(host=host)
+
+            logger.info(f"[RED LAN] Reconectado como ESCLAVA a MariaDB en {host}")
+        except Exception as e:
+            logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
+            raise
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -355,6 +438,12 @@ class DatabaseManager:
             cursor.execute("UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'")
             cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'")
         except Exception as e:
+            pass
+            
+        try:
+            cursor.execute("ALTER TABLE ventas ADD COLUMN cliente_nombre TEXT DEFAULT ''")
+        except Exception:
+            pass
             logger.warning(f"Error estandarizando estados de ventas: {e}")
 
 
@@ -388,6 +477,10 @@ class DatabaseManager:
         add_column_if_not_exists('productos', 'es_pesable', 'INTEGER DEFAULT 0')
         add_column_if_not_exists('productos', 'cant_oferta', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'precio_oferta', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'precio_oferta_relampago', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'precio_oferta_promedio', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'limite_oferta_relampago', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'ventas_oferta_relampago', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
         
         # Verificar columnas de ventas
@@ -542,6 +635,15 @@ class DatabaseManager:
                     password_hash TEXT,
                     rol TEXT,
                     pin TEXT DEFAULT '1234'
+                )
+            """)
+            
+            # Mercado Pago Transferencias
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS mp_transferencias_usadas (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    payment_id TEXT UNIQUE NOT NULL,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
@@ -836,6 +938,9 @@ class DatabaseManager:
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return query
         import re
+        # Escapar caracteres % literales para que el conector MariaDB no los confunda con formato
+        query = query.replace('%', '%%')
+        
         # 1. Placeholders: ? → %s  (solo los ? sueltos, no dentro de strings)
         query = re.sub(r'(?<![\w\'"\\])\?(?![\w\'"\\])', '%s', query)
         # 2. CAST(expr AS TEXT) → CAST(expr AS CHAR)
@@ -844,6 +949,14 @@ class DatabaseManager:
         query = re.sub(r'INSERT\s+OR\s+IGNORE', 'INSERT IGNORE', query, flags=re.IGNORECASE)
         # 4. INSERT OR REPLACE → REPLACE
         query = re.sub(r'INSERT\s+OR\s+REPLACE', 'REPLACE', query, flags=re.IGNORECASE)
+        # 5. RANDOM() → RAND()
+        query = re.sub(r'\bRANDOM\(\)', 'RAND()', query, flags=re.IGNORECASE)
+        # 6. date('now', '-X days') → DATE_SUB(CURDATE(), INTERVAL X DAY)
+        query = re.sub(r"date\(\s*['\"]now['\"]\s*,\s*['\"]-(\d+)\s+days?['\"]\s*\)", r"DATE_SUB(CURDATE(), INTERVAL \1 DAY)", query, flags=re.IGNORECASE)
+        # 7. date('now', '+X days') → DATE_ADD(CURDATE(), INTERVAL X DAY)
+        query = re.sub(r"date\(\s*['\"]now['\"]\s*,\s*['\"][+](\d+)\s+days?['\"]\s*\)", r"DATE_ADD(CURDATE(), INTERVAL \1 DAY)", query, flags=re.IGNORECASE)
+        # 8. date('now') → CURDATE()
+        query = re.sub(r"date\(\s*['\"]now['\"]\s*\)", "CURDATE()", query, flags=re.IGNORECASE)
         return query
 
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
@@ -972,13 +1085,14 @@ class DatabaseManager:
             from src.config import config
             c_id = config.get("caja_id", 1)
             cursor.execute("""
-                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
-                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0)
+                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
+                venta_data.get('cliente_nombre', '')
             ))
             
             id_venta = cursor.lastrowid
@@ -1164,13 +1278,8 @@ class DatabaseManager:
 
 
     def registrar_heartbeat(self, caja_id, hostname):
-        """ Registra el estado activo de este terminal. """
-        from datetime import datetime
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.execute_non_query(
-            "REPLACE INTO terminales_activos (caja_id, hostname, last_seen) VALUES (?, ?, ?)",
-            (caja_id, hostname, now_str)
-        )
+        """ Registra el estado activo de este terminal. (OPTIMIZADO: AHORA SE MANEJA EN MEMORIA UDP) """
+        pass
 
     def get_terminales_activos_count(self) -> int:
         """ Devuelve el número de terminales con actividad en los últimos 2 minutos. """

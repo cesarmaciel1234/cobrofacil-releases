@@ -1,86 +1,185 @@
 # 📖 Manual de Supervivencia: Estructura del Proyecto TPV
 
-Este pequeño manual está diseñado para que cualquier persona, sin importar su nivel de programación, pueda entender cómo está organizado el sistema de CobroFacil POS y para qué sirve cada carpeta y archivo.
+Este manual explica cómo está organizado **Cobro Fácil POS** (TPV Pro 2026) y para qué sirve cada carpeta y archivo importante.
 
 ---
 
-## 🗺️ Mapa Visual del Proyecto
-
-Así se ve tu proyecto desde arriba. Esta es la guía rápida para encontrar lo que buscas:
+## 🗺️ Mapa visual del proyecto
 
 ```text
 📁 tpv pro 2026/
 │
-├── 📁 01_Compiladores_y_Ejecutables/  <-- (Fábrica de .exe e Instalador Web)
-├── 📁 02_Soporte_y_Mantenimiento/     <-- (DrHouse, Creador de Licencias)
-├── 📁 03_Actualizaciones_y_Red/       <-- (El Actualizador de Firebase)
-├── 📁 04_Respaldos_y_Migraciones/     <-- (Importadores de BD Eleventa, Backups)
+├── 📁 01_Compiladores_y_Ejecutables/   ← Empaquetado .exe, instalador web, Firebase
+├── 📁 02_Soporte_y_Mantenimiento/      ← DrHouse, licencias, firewall, diagnóstico
+├── 📁 03_Actualizaciones_y_Red/        ← Utilidades de red (simulador LAN)
+├── 📁 04_Respaldos_y_Migraciones/      ← Backups, init DB, setup MariaDB
 │
-├── 📁 docs/
-│   └── 📄 MANUAL_ESTRUCTURA_PROYECTO.md <-- (Este manual de uso)
+├── 📁 docs/                            ← Manuales técnicos y de usuario
+├── 📁 tests/                           ← Pruebas de integración (consola)
+├── 📁 reportes/                        ← CSVs y reportes generados
+├── 📁 mariadb_server/                  ← MariaDB portable embebido
 │
-├── 📁 logs/                           <-- (Todos los reportes de error ocultos aquí)
+├── 📁 src/                             ← EL CORAZÓN DEL CÓDIGO
+│   ├── 📁 inicio_y_perfiles/           ← Splash, login, licencia, perfiles
+│   ├── 📁 cajero/                      ← Terminal de ventas (paso 5–8) + chatbot
+│   ├── 📁 admin/                       ← Panel administrativo (inventario, cierre, etc.)
+│   ├── 📁 jefe/                        ← Panel gerencial (contabilidad, reportes)
+│   ├── 📁 carteleria/                  ← Pantalla para monitor secundario
+│   ├── 📁 base_de_datos/               ← Conexión principal + cola offline
+│   ├── 📁 db_engines/                  ← Motor MariaDB
+│   ├── 📁 services/                    ← LAN, email, caja, facturación, MariaDB
+│   ├── 📁 hardware/                    ← Impresora, cajón, drivers
+│   ├── 📁 ui_components/               ← Teclados, alertas, componentes visuales
+│   ├── 📁 utils/                       ← Temas, paths, códigos de barras
+│   ├── 📁 updater/                     ← Actualizador GitHub/Firebase
+│   ├── 📁 tools/                       ← Utilidades internas (doctor, respaldos)
+│   ├── 📁 navigation/                  ← Índices y registro de pantallas
+│   ├── 📁 shared/                      ← UI compartida entre roles
+│   ├── 📁 config/                      ← JSONs auxiliares (cartelería, escaneo)
+│   ├── 📄 main_window.py               ← Ventana principal y navegación
+│   └── 📄 config.py                    ← Clase de configuración (lee config.json)
 │
-├── 📁 src/                            <-- (EL CORAZÓN DEL CÓDIGO)
-│   ├── 📁 admin/                      <-- (Pantallas del jefe)
-│   ├── 📁 base_de_datos/              <-- (Conexiones SQLite y MariaDB)
-│   ├── 📁 cajero/                     <-- (Pantallas de venta y chatbot)
-│   ├── 📁 hardware/                   <-- (Impresoras, balanzas)
-│   ├── 📁 inicio_y_perfiles/          <-- (Login, Licencia, Selección de Perfil)
-│   └── 📁 ui/                         <-- (Diseños visuales)
-│
-├── 📄 main.py                         <-- (Botón de encendido principal)
-├── 📄 punpro.db                       <-- (Tu Base de Datos local SQLite)
-├── 📄 config.json                     <-- (Tus configuraciones locales)
-├── 📄 version.json                    <-- (Versión actual para el actualizador)
-└── 📄 requirements.txt                <-- (Lista de paquetes Python necesarios)
+├── 📄 main.py                          ← Punto de entrada de la aplicación
+├── 📄 config.json                      ← Configuración local del negocio y hardware
+├── 📄 version.json                     ← Versión y checksums para el actualizador
+├── 📄 offline_queue.json               ← Ventas en buffer cuando no hay red
+├── 📄 requirements.txt                 ← Dependencias Python (PyQt5, etc.)
+└── 📄 .gitignore                       ← Archivos que Git debe ignorar
 ```
 
 ---
 
-## 1. 📂 Las 4 Carpetas Maestras (Herramientas Externas)
-Estas carpetas contienen programas que NO son el punto de venta en sí, sino herramientas que te ayudan a ti como creador a administrarlo.
+## 1. 📂 Las 4 carpetas maestras (herramientas externas)
 
-*   **`01_Compiladores_y_Ejecutables/`**
-    *   **¿Para qué sirve?**: Aquí está la "fábrica" de tu programa. Contiene los scripts que transforman tu código de texto en archivos `.exe` que tus clientes pueden instalar.
-    *   **¿Qué tiene adentro?**: `Compilar_Todo.bat` (para crear el programa completo), el creador del Instalador Web, y los scripts que arman los archivos ZIP para subir a Firebase.
-*   **`02_Soporte_y_Mantenimiento/`**
-    *   **¿Para qué sirve?**: Son tus herramientas de "Mecánico".
-    *   **¿Qué tiene adentro?**: El `DrHouse_Diagnostico.py` para arreglar problemas en computadoras de clientes, el `Generador_Licencias.py` para vender claves, y scripts para configurar el Firewall de Windows.
-*   **`03_Actualizaciones_y_Red/`**
-    *   **¿Para qué sirve?**: Todo lo que conecta a tus clientes con tus nuevos parches.
-    *   **¿Qué tiene adentro?**: El `Actualizador.py` (el motor que descarga los ZIPs de Firebase) y herramientas para detectar computadoras en red LAN.
-*   **`04_Respaldos_y_Migraciones/`**
-    *   **¿Para qué sirve?**: Los salvavidas de la información.
-    *   **¿Qué tiene adentro?**: `RespaldoAutomatico.py` (para hacer backups), y scripts para importar bases de datos antiguas de sistemas como Eleventa.
+Programas que **no son el TPV en sí**, sino herramientas para compilar, soportar y migrar.
+
+| Carpeta | Para qué sirve | Contenido principal |
+|---------|----------------|---------------------|
+| **`01_Compiladores_y_Ejecutables/`** | Crear el `.exe` y el instalador | `Compilar_Todo.bat`, PyInstaller, empaquetado Firebase, `generar_version.py` |
+| **`02_Soporte_y_Mantenimiento/`** | Soporte en campo | `DrHouse_Diagnostico.py`, `Generador_Licencias.py`, `ConfiguraFirewall.py`, test de estrés MariaDB |
+| **`03_Actualizaciones_y_Red/`** | Red y pruebas LAN | `simulador_pc2.py` (el updater principal vive en `src/updater/`) |
+| **`04_Respaldos_y_Migraciones/`** | Backups y migraciones | `RespaldoAutomatico.py`, `setup_mariadb.py`, `init_db.py` |
 
 ---
 
-## 2. 📂 El Corazón del Sistema (`src/`)
-Esta es la carpeta más importante. Contiene TODO el código de las pantallas, botones y funciones que ve el cajero.
+## 2. 📂 El corazón del sistema (`src/`)
 
-*   **`inicio_y_perfiles/`**: Todo lo que pasa ANTES de entrar al sistema. (Pantalla de bienvenida, licencia, selector de cajero/admin, y la ventana de login con contraseña).
-*   **`cajero/`**: La pantalla de cobro. Lectura de código de barras, sumar productos, dar vuelto, y el chatbot animado.
-*   **`admin/`**: Las pantallas del jefe. Ver estadísticas, agregar inventario, imprimir etiquetas de precios, configurar ofertas.
-*   **`base_de_datos/`**: El cerebro de memoria. Aquí están las reglas para leer, guardar o modificar información en las bases de datos SQLite y MariaDB.
-*   **`hardware/`**: Controladores de aparatos físicos (impresoras de tickets térmicos, gavetas de dinero, balanzas).
-*   **`ui/` y `ui_components/`**: Los diseños visuales, colores, bordes redondeados y botones del programa.
-*   **`utils/` y `tools/`**: Herramientas matemáticas y lógicas que el sistema usa por detrás para hacer cálculos.
+### Arranque y sesión
+*   **`inicio_y_perfiles/`** — Splash, licencia, selector de perfil (cajero / admin / jefe / cartelería) y login.
+
+### Roles de usuario
+*   **`cajero/`** — Terminal de ventas: escaneo, cobro (`paso5`–`paso8`), chatbot (`chat_bot.py`).
+*   **`admin/`** — Backoffice: inventario, ofertas, reportes, cierre Z, Mercado Pago, Nexus, hardware, etc.
+    *   **`admin/nexus/`** — Paneles del centro de control Nexus.
+    *   **`admin/etiquetas/`** — Impresión de etiquetas de góndola.
+    *   **`admin6_red_lan.py`** — Panel dedicado de red LAN / multicaja.
+    *   **`admin15_carteleria.py`** — Configuración de mensajes en pantalla secundaria.
+*   **`jefe/`** — Gerencia: dashboard, contabilidad (`jefe/contabilidad/`), reportes financieros.
+*   **`carteleria/`** — Pantalla fullscreen para monitor secundario (`main_board.py`).
+
+### Datos y servicios
+*   **`base_de_datos/`** — `database.py` (manager principal) y `offline_sync.py` (cola offline).
+*   **`db_engines/`** — Adaptador MariaDB.
+*   **`services/`** — Servidor LAN (`lan_server.py`), control MariaDB, email, caja, facturación.
+*   **`mariadb_server/`** (en raíz) — Binarios y datos del servidor MariaDB embebido.
+
+### UI, hardware y utilidades
+*   **`ui_components/`** — Teclados virtuales, alertas, toasts, cobro industrial.
+*   **`hardware/`** — Impresora térmica, cajón de dinero, instalador de drivers.
+*   **`utils/`** — Temas, rutas de archivos, parser de balanza/códigos de barras.
+*   **`tools/`** — TPV Doctor, simulador de caja, respaldos, firewall.
+*   **`updater/`** — Cliente/servidor de actualizaciones (GitHub / Firebase).
+*   **`navigation/`** — Índices y registro central de pantallas (`screen_indices.py`, `screen_registry.py`).
+*   **`shared/`** — Componentes reutilizados entre roles (p. ej. proveedores unificado).
+*   **`_deprecated/`** — Módulos archivados; no usar en código nuevo.
+*   **`vistas/`** — Shims de compatibilidad (redirigen a `shared/`).
+
+### Navegación interna (`src/navigation/`)
+
+Los índices del **QStackedWidget** están definidos en `src/navigation/screen_indices.py` como la clase `Screen`. Las fábricas lazy-load viven en `screen_registry.py`. `main_window.py` solo orquesta la navegación.
+
+| Constante `Screen` | Pantalla |
+|--------------------|----------|
+| `ADMIN_DASHBOARD` (0) | Dashboard Admin |
+| `CAJERO` (1) | Terminal Cajero |
+| `INVENTARIO`–`CONFIGURACION` (2–5) | Inventario, Ofertas, Reportes, Configuración |
+| `RED_LAN` (6) | Servidor LAN |
+| `CIERRE`, `ETIQUETAS` (7–8) | Cierre Z, Etiquetas |
+| `CONTABILIDAD` (9) | Contabilidad Jefe |
+| `MERCADO_PAGO`, `PROVEEDORES` (10–11) | Mercado Pago, Proveedores |
+| `HARDWARE`, `VENTAS_DIGITALES` (13–14) | Hardware, Ventas digitales |
+| `CLIENTES` (17) | Fiado / Clientes |
+| `NEXUS` (18) | Nexus Pro |
+| `JEFE_DASHBOARD`, `JEFE_REPORTES` (19–20) | Dashboard y reportes Jefe |
+| `CARTELERIA`, `CARTELERIA_CONFIG` (21–22) | Monitor secundario y su config |
+| `IA_BOSS` (23) | Mentor estratégico (AI Boss) |
+| `FREE` (12, 15, 16) | Slots reservados — no navegar |
 
 ---
 
-## 3. 📄 ¿Qué son todos esos archivos sueltos que sobraron?
+## 3. 📂 Pruebas (`tests/`)
 
-Si miras la carpeta principal, notarás que quedaron algunos archivos sueltos. Esto es normal y necesario, porque son el punto de anclaje de todo el proyecto:
+Scripts de integración que se ejecutan desde consola (no son pytest automático):
 
-*   **`main.py`**: Es el botón de encendido. Cuando haces doble clic aquí, este archivo llama a todas las carpetas dentro de `src/` y enciende el sistema.
-*   **`punpro.db` y `AQVGI.db`**: Son tus bases de datos SQLite actuales. Aquí se guardan los productos, ventas y usuarios en tu propia computadora.
-*   **`config.json`**: Un archivo de texto que guarda la configuración local de tu computadora (qué impresora usas, si el tema es oscuro/claro, etc).
-*   **`version.json`**: El "DNI" de tu programa. Tiene todos los códigos matemáticos y la versión (`3100.00`) para que el actualizador sepa qué archivos cambiar.
-*   **`requirements.txt`**: La lista de ingredientes. Le dice a Python qué herramientas extra necesita descargar de internet para que tu código funcione (como PyQt5 para los gráficos).
-*   **Archivos `.log` (`crash.log`, `stderr.log`)**: Son "cajas negras" de aviones. Si el programa se rompe, Python escribe aquí por qué se rompió para que puedas leerlo después.
-*   **`CobroFacilPOS_v3.zip`**: Es el bloque empaquetado final que subiste a Firebase.
-*   **`.gitignore`**: Un archivo oculto que le dice a GitHub "por favor, ignora los ZIPs pesados y las bases de datos locales, no las subas a internet".
+```bash
+.venv\Scripts\python.exe tests/test_estres.py
+.venv\Scripts\python.exe tests/test_inventario.py
+.venv\Scripts\python.exe tests/test_lan_multicaja.py
+.venv\Scripts\python.exe tests/test_offline_recovery.py
+.venv\Scripts\python.exe tests/tests_features.py
+.venv\Scripts\python.exe tests/test_nexus.py
+```
+
+Ver `tests/README.md` para detalle de cada prueba.
 
 ---
-*Escrito de forma sencilla y directa, para que nunca te pierdas navegando en tu propio código.*
+
+## 4. 📄 Archivos importantes en la raíz
+
+| Archivo | Función |
+|---------|---------|
+| **`main.py`** | Enciende la app: splash, DB, servidor LAN, login, ventana principal |
+| **`config.json`** | Nombre del negocio, impresoras, tema, motor de BD (`mariadb` o `sqlite`), caja ID |
+| **`version.json`** | Versión y checksums de archivos para el actualizador remoto |
+| **`offline_queue.json`** | Ventas guardadas localmente cuando falla la red |
+| **`requirements.txt`** | Paquetes Python necesarios |
+| **`*.log`** (`crash.log`, etc.) | Registro de errores si la app falla |
+| **`.gitignore`** | Excluye `.venv/`, bases de datos, logs, ZIPs y binarios pesados de Git |
+
+### Base de datos
+
+El motor por defecto es **MariaDB** (`config.json` → `"db_engine": "mariadb"`), servido desde `mariadb_server/`.
+
+También se soporta **SQLite** (`*.db` en la raíz, p. ej. `AQVGI.db`) para instalaciones simples o legacy.
+
+La contabilidad del módulo Jefe usa además un SQLite auxiliar en `src/jefe/contabilidad/database.py`.
+
+---
+
+## 5. 📂 Documentación (`docs/`)
+
+| Archivo | Contenido |
+|---------|-----------|
+| `MANUAL_ESTRUCTURA_PROYECTO.md` | Este manual |
+| `manual_cajero.md` / `manual_admin.md` | Guías de usuario |
+| `checklist_testing.md` | Checklist manual de hardware y flujos |
+| `servidor_local.md` | Configuración del servidor LAN |
+| `README_HARDWARE.md` | Impresoras, cajón, balanza |
+
+---
+
+## 6. 🧹 Qué NO debería estar en el repo
+
+Estos elementos fueron eliminados o ignorados por `.gitignore` porque no forman parte del TPV en producción:
+
+*   `chatbot/` duplicado (el chatbot vive en `src/cajero/chat_bot.py`)
+*   `IPython/` (extensiones ajenas al proyecto)
+*   `scripts_historicos/` (parches one-shot ya aplicados)
+*   `reportes/backups_actualizacion/` (snapshots viejos de código)
+*   `src/_deprecated/` (módulos legacy archivados)
+*   Carpetas `.venv/`, `__pycache__/`, bases de datos locales y logs
+
+> **Nota:** Tras cambios grandes de estructura, regenerar `version.json` con `01_Compiladores_y_Ejecutables/generar_version.py` antes de publicar una actualización.
+
+---
+*Actualizado para reflejar la estructura real del proyecto — TPV Pro 2026.*

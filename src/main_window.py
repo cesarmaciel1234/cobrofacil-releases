@@ -264,10 +264,16 @@ class MainWindow(QMainWindow):
 
         if current == 19:
             # ─ Jefe → Admin ───────────────────────────────────────
+            from src.config import config
+            if hasattr(self, '_admin_user_before_escalation') and self._admin_user_before_escalation:
+                config.current_user = self._admin_user_before_escalation.copy()
+            else:
+                self._restore_user_role(0)
+                
             self._escalando = True
             self.switch_tab(0)
             self._escalando = False
-            self._restore_user_role(0)
+            
             if self._came_from_cajero:
                 # Todavía hay un piso más abajo
                 self.btn_flotante.show()
@@ -282,6 +288,11 @@ class MainWindow(QMainWindow):
             self._came_from_cajero  = False
             self._supervisor_mode   = False
             self.btn_flotante.hide()
+            
+            from src.config import config
+            if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
+                config.current_user = self._prev_user_before_escalation.copy()
+                
             self.pantalla_ventas.refresh_terminal_data()
             self.switch_tab(1)
 
@@ -291,6 +302,14 @@ class MainWindow(QMainWindow):
             self._supervisor_mode   = False
             self._nav_stack.clear()
             self.btn_flotante.hide()
+            
+            from src.config import config
+            if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
+                config.current_user = self._prev_user_before_escalation.copy()
+            
+            if hasattr(self, 'pantalla_ventas'):
+                self.pantalla_ventas.refresh_terminal_data()
+            self.switch_tab(1)
 
 
     def _restore_user_role(self, screen_index: int):
@@ -336,7 +355,7 @@ class MainWindow(QMainWindow):
             None,    # 3  — Admin2Ofertas            (lazy)
             None,    # 4  — Admin3Reportes           (lazy)
             None,    # 5  — Admin5Configuracion      (lazy)
-            _Dead(), # 6  — [LIBRE]
+            None,    # 6  — Admin6RedLan             (lazy)
             None,    # 7  — Admin7Cierre             (lazy)
             None,    # 8  — AdminEtiquetas           (lazy)
             None,    # 9  — JefeContabilidad         (lazy)
@@ -352,6 +371,8 @@ class MainWindow(QMainWindow):
             None,    # 19 — Jefe0Dashboard           (lazy)
             None,    # 20 — JefeReportes             (lazy)
             None,    # 21 — CarteleriaMain           (lazy)
+            None,    # 22 — Admin15Carteleria        (lazy)
+            None,    # 23 — JefeIAProactiva          (lazy)
         ]
 
         # Fábricas: callable que crea el widget cuando se necesita
@@ -361,9 +382,10 @@ class MainWindow(QMainWindow):
             3:  lambda: __import__('src.admin.admin2_ofertas',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.admin3_reportes',   fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.admin5_configuracion', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
+            6:  lambda: __import__('src.admin.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.admin7_cierre',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
             8:  lambda: __import__('src.admin.etiquetas.admin_etiquetas', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
-            9:  lambda: __import__('src.jefe.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
+            9:  lambda: __import__('src.jefe.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
             10: lambda: __import__('src.admin.admin10_mp',        fromlist=['Admin10MP']).Admin10MP(),
             11: lambda: __import__('src.admin.admin11_proveedores', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.admin13_hardware',  fromlist=['Admin13Hardware']).Admin13Hardware(),
@@ -372,7 +394,9 @@ class MainWindow(QMainWindow):
             18: lambda: __import__('src.admin.admin7_nexus',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
             20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
-            21: lambda: __import__('src.carteleria.carteleria_main', fromlist=['CarteleriaMain']).CarteleriaMain(),
+            21: lambda: __import__('src.carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
+            22: lambda: __import__('src.admin.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
+            23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
         }
 
         # Añadir todos los slots al QStackedWidget
@@ -492,6 +516,9 @@ class MainWindow(QMainWindow):
 
         # ── Nivel 1: Cajero → Admin ───────────────────────────────────
         if current == 1:
+            from src.config import config
+            self._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
+
             dlg = LoginPantalla(role="admin")
             if dlg.exec_():
                 from src.cajero.paso5_terminal import CajeroActivo
@@ -518,6 +545,9 @@ class MainWindow(QMainWindow):
 
         # ── Nivel 2: Admin → Jefe ────────────────────────────────────
         if current == 0:
+            from src.config import config
+            self._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
+            
             dlg = LoginPantalla(role="jefe")
             if dlg.exec_():
                 # _came_from_cajero se preserva tal como está
@@ -556,7 +586,7 @@ class MainWindow(QMainWindow):
             index = 19
 
         # Guard: slots libres — redirigir al home del rol activo
-        if index in (6, 12, 15, 16):
+        if index in (12, 15, 16):
             index = 19 if role == 'jefe' else 0
 
         hay_venta = self.pantalla_ventas.tabla.rowCount() > 0
@@ -573,6 +603,41 @@ class MainWindow(QMainWindow):
             # Refrescar datos y título del terminal al activarlo
             if hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
                 self.pantalla_ventas.refresh_terminal_data()
+        elif index == 21:
+            self.btn_flotante.hide()
+            
+            # --- MODO BORDERLESS MAXIMIZED (PANTALLA SECUNDARIA) ---
+            from PyQt5.QtWidgets import QApplication
+            from PyQt5.QtCore import Qt
+            desktop = QApplication.desktop()
+            
+            # Cambiar flags oculta la ventana temporalmente
+            self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+            self.setAttribute(Qt.WA_ShowWithoutActivating)
+            
+            if desktop.screenCount() > 1:
+                screen_rect = desktop.screenGeometry(1) # Segunda pantalla
+                self.setGeometry(screen_rect)
+            else:
+                screen_rect = desktop.screenGeometry(0)
+                self.setGeometry(screen_rect)
+                
+            self.showMaximized()
+            self.show()
+            
+            if self.chatbot_overlay is not None:
+                self.chatbot_overlay.hide()
+                self.chatbot_overlay.cerrar_chat()
+        elif index == 22:
+            top_bar = getattr(self, 'top_bar', None)
+            if top_bar is not None:
+                top_bar.lbl_title.setText("🌟 CARTELERÍA / OFERTAS RELÁMPAGO")
+                top_bar.show()
+        elif index == 23:
+            top_bar = getattr(self, 'top_bar', None)
+            if top_bar is not None:
+                top_bar.lbl_title.setText("🧠 IA PROACTIVA - CENTRO DE INTELIGENCIA")
+                top_bar.show()
         else:
             # Mostrar si estamos fuera de ventas y HAY UNA VENTA PENDIENTE o es INTERVENCIÓN DE SUPERVISOR
             if hay_venta or is_supervisor:
@@ -598,6 +663,23 @@ class MainWindow(QMainWindow):
         s = self.screens[index]
         if s is not None and hasattr(s, 'cargar_datos'):
             s.cargar_datos()
+
+        # ── INYECCIÓN GLOBAL DE TEMAS ───────
+        import os
+        from PyQt5.QtWidgets import QApplication
+        from src.utils.paths import get_resource_path
+        
+        # El Cajero (index 1) usa el modo Oscuro (styles.qss)
+        # El resto (Admin, Jefe, Nexus) usan el modo Claro Cartelería (styles_light.qss)
+        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
+        qss_path = get_resource_path(os.path.join("src", theme_file))
+        
+        if os.path.exists(qss_path):
+            try:
+                with open(qss_path, "r", encoding="utf-8") as f:
+                    QApplication.instance().setStyleSheet(f.read())
+            except Exception as e:
+                print(f"Error cargando tema {theme_file}: {e}")
 
     def apply_roles(self):
         user = config.current_user

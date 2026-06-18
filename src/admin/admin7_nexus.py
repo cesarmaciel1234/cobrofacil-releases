@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QRect
 from PyQt5.QtGui import QColor, QFont, QPainter, QBrush, QPen
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 
 try:
@@ -142,39 +142,163 @@ class NexusExtremeControl(QWidget):
         super().__init__()
         self.setObjectName("NexusExtremeControl")
         self.setFocusPolicy(Qt.StrongFocus)
-        self.setStyleSheet(EXTREME_STYLE)
+        self.setStyleSheet("")
         
-        self.last_sale_id = None
+        # Obtener el máximo ID de venta hoy para no duplicar ventas históricas al abrir la pantalla
+        try:
+            hoy = datetime.now().strftime("%Y-%m-%d")
+            max_id = db_manager.execute_scalar("SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,))
+            self.last_sale_id = max_id if max_id is not None else 0
+        except Exception as e:
+            print(f"Error inicializando last_sale_id: {e}")
+            self.last_sale_id = 0
+            
         self.total_esperado_cache = 0.0
         
         self._setup_ui()
         self._start_timers()
+        self._connect_to_network()
+        
+        # Aplicar modo claro permanentemente a los paneles
+        if hasattr(self, "panel_cen") and hasattr(self.panel_cen, "aplicar_tema"): self.panel_cen.aplicar_tema(False)
+        if hasattr(self.panel_der, "aplicar_tema"): self.panel_der.aplicar_tema(False)
+        if hasattr(self.panel_izq, "aplicar_tema"): self.panel_izq.aplicar_tema(False)
 
     def hideEvent(self, event):
         if hasattr(self, 't_matrix'): self.t_matrix.stop()
-        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq.spectrum, 'timer'): self.panel_izq.spectrum.timer.stop()
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'spectrum') and hasattr(self.panel_izq.spectrum, 'timer'): 
+            self.panel_izq.spectrum.timer.stop()
         super().hideEvent(event)
 
     def showEvent(self, event):
         if hasattr(self, 't_matrix'): self.t_matrix.start(3000) 
-        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq.spectrum, 'timer'): self.panel_izq.spectrum.timer.start(100)
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'spectrum') and hasattr(self.panel_izq.spectrum, 'timer'): 
+            self.panel_izq.spectrum.timer.start(100)
+            
+        # Al mostrarse, actualizar last_sale_id al máximo actual de hoy para no procesar como "nuevas"
+        # las ventas que ocurrieron mientras Nexus estaba cerrado y que ya fueron registradas via UDP.
+        try:
+            hoy = datetime.now().strftime("%Y-%m-%d")
+            max_id = db_manager.execute_scalar("SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,))
+            self.last_sale_id = max_id if max_id is not None else 0
+        except Exception as e:
+            print(f"Error actualizando last_sale_id en showEvent: {e}")
+            
         super().showEvent(event)
+
+    def closeEvent(self, event):
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'closeEvent'):
+            self.panel_izq.closeEvent(event)
+        super().closeEvent(event)
+
+    def _connect_to_network(self):
+        from src.network.network_engine import get_network_engine
+        engine = get_network_engine()
+        if engine:
+            engine.message_received.connect(self._on_udp_message)
+            engine.heartbeat_received.connect(self._on_udp_heartbeat)
+            engine.connection_lost.connect(self._on_connection_lost)
+
+    def _on_udp_heartbeat(self, origen):
+        # Registrar en memoria dinámica sin usar SQLite
+        import time
+        self.active_terminals[origen] = time.time()
+        
+        # Actualizar estado de terminales en el switchboard y agregar blip al radar
+        if hasattr(self, 'panel_cen'):
+            self.panel_cen.mark_active(origen)
+            self.panel_cen.registrar_nodo_dinamico(origen)
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'spectrum'):
+            self.panel_izq.spectrum.add_blip(origen, is_heartbeat=True)
+
+    def _on_udp_message(self, origen, tipo, datos):
+        # Actualizar estado de terminales en el switchboard y agregar blip al radar
+        if hasattr(self, 'panel_cen'):
+            self.panel_cen.mark_active(origen)
+            self.panel_cen.registrar_nodo_dinamico(origen)
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'spectrum'):
+            self.panel_izq.spectrum.add_blip(origen, is_heartbeat=False)
+
+        if tipo == "VENTA":
+            total = datos.get("total", 0)
+            metodo = datos.get("metodo_pago", "Efectivo")
+            self._registrar_evento_caja(origen, "VENTA", f"{metodo} - ${int(total):,}")
+        elif tipo == "ALERTA_SEGURIDAD":
+            msg = datos.get("mensaje", "Brecha de seguridad")
+            self._registrar_evento_caja(origen, "ALERTA", msg)
+            self._trigger_glitch()
+
+    def _on_connection_lost(self, origen):
+        self._play_sound("alert")
+        src = str(origen).upper()
+        self._append_terminal(f"⚠️ CONEXIÓN PERDIDA CON {src}", "#EF4444")
+        self._registrar_evento_caja(origen, "ALERTA", "CONEXIÓN PERDIDA (Pérdida de latido)")
+        self._trigger_glitch()
+        
+        # Emitir Alerta Sonora de Caída (Tres Beeps)
+        try:
+            import winsound
+            winsound.Beep(1000, 200)
+            winsound.Beep(1000, 200)
+            winsound.Beep(1000, 200)
+        except:
+            pass
 
     def _play_sound(self, sound_type):
         pass # Desactivado temporalmente para prevenir RPC_E_CANTCALLOUT_ININPUTSYNCCALL en Windows
 
     def _start_timers(self):
         self.t_reloj = QTimer(self)
-        self.t_reloj.timeout.connect(lambda: self.lbl_reloj.setText(datetime.now().strftime("%H:%M:%S // %d-%m-%Y")))
+        self.t_reloj.timeout.connect(self._update_hud_status)
         self.t_reloj.start(1000)
 
         self.t_matrix = QTimer(self)
         self.t_matrix.timeout.connect(self._sync_live_data)
         self.t_matrix.start(2000)
 
+    def _update_hud_status(self):
+        import time
+        now = time.time()
+        
+        # Mantener el rol local activo permanentemente para que no expire en la matriz
+        from src.network.network_engine import get_network_engine
+        engine = get_network_engine()
+        if engine and engine.role:
+            self.active_terminals[engine.role] = now
+            if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'spectrum'):
+                # Enviar blip del local cada 15 segundos para no saturar el radar
+                if not hasattr(self, '_last_local_blip') or now - self._last_local_blip >= 15:
+                    self.panel_izq.spectrum.add_blip(engine.role, is_heartbeat=True)
+                    self._last_local_blip = now
+
+        # Limpiar terminales inactivas (timeout 45s) y sincronizar el switchboard con las pcs activas
+        activos = 0
+        for origen in list(self.active_terminals.keys()):
+            if now - self.active_terminals[origen] > 45:
+                del self.active_terminals[origen]
+            else:
+                activos += 1
+                if hasattr(self, 'panel_cen'):
+                    self.panel_cen.mark_active(origen)
+                    self.panel_cen.registrar_nodo_dinamico(origen)
+                
+        time_str = datetime.now().strftime("%H:%M:%S // %d-%m-%Y")
+        self.lbl_reloj.setText(f"{time_str}  |  🟢 TERMINALES ACTIVAS: {activos}")
+
     def keyPressEvent(self, event):
+        import time
+        if not hasattr(self, 'last_action_time'):
+            self.last_action_time = 0
+            
         key = event.key()
-        if key in (Qt.Key_Right, Qt.Key_Down):
+        
+        # Filtro antirrebote de 1500ms para Reporte Z
+        if key == Qt.Key_F12:
+            if time.time() - self.last_action_time < 1.5:
+                return
+            self.last_action_time = time.time()
+            self._mostrar_reporte_rapido()
+        elif key in (Qt.Key_Right, Qt.Key_Down):
             self.focusNextChild()
         elif key in (Qt.Key_Left, Qt.Key_Up):
             self.focusPreviousChild()
@@ -183,15 +307,13 @@ class NexusExtremeControl(QWidget):
             if isinstance(fw, QPushButton):
                 fw.click()
                 self._append_terminal(f"> COMANDO EJECUTADO: {fw.text()}")
-        elif key == Qt.Key_F12:
-            self._force_z_close()
         elif key == Qt.Key_Escape:
             self.request_dashboard.emit()
         else:
             super().keyPressEvent(event)
 
     def _setup_ui(self):
-        self.is_dark_mode = True
+        self.is_dark_mode = False
         self.setStyleSheet("")
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(15, 15, 15, 15)
@@ -224,83 +346,52 @@ class NexusExtremeControl(QWidget):
             background: transparent; border: none;
         """)
 
-        self.btn_theme = QPushButton("☀ MODO DÍA")
-        self.btn_theme.setCursor(Qt.PointingHandCursor)
-        self.btn_theme.setStyleSheet("""
-            QPushButton {
-                background: rgba(217,119,6,0.12);
-                color: #FDE68A; border: 1px solid rgba(217,119,6,0.45);
-                border-radius: 6px; padding: 5px 14px; font-weight: 800;
-                font-size: 11px; font-family: 'Segoe UI', sans-serif;
-            }
-            QPushButton:hover {
-                background: rgba(217,119,6,0.25); color: #FEF3C7;
-            }
-        """)
-        self.btn_theme.clicked.connect(self._toggle_theme)
-
         lay_h.addWidget(self.btn_abort)
-        lay_h.addSpacing(8)
-        lay_h.addWidget(self.btn_theme)
         lay_h.addStretch()
         lay_h.addWidget(lbl_titulo)
         lay_h.addStretch()
         lay_h.addWidget(self.lbl_reloj)
         main_layout.addWidget(hdr)
 
-        # --- GRID TÁCTICO 3 COLUMNAS ---
-        grid = QGridLayout()
-        grid.setSpacing(10)
+        # --- ESTRUCTURA DE 3 PANES (IZQUIERDA, CENTRO, DERECHA) ---
+        layout_paneles = QHBoxLayout()
+        layout_paneles.setSpacing(10)
+        layout_paneles.setContentsMargins(0, 0, 0, 0)
 
-        # Importar paneles modulares
+        # Importar paneles modulares originales
         from src.admin.nexus.nexus_panel_izq import NexusPanelIzq
         from src.admin.nexus.nexus_panel_cen import NexusPanelCen
         from src.admin.nexus.nexus_panel_der import NexusPanelDer
 
-        # 1. COLUMNA IZQ
+        # 1. PANEL IZQ (Logs de terminal y CyberRadar con flujo en vivo de tickets)
         self.panel_izq = NexusPanelIzq()
-        grid.addWidget(self.panel_izq, 0, 0, 2, 1)
+        layout_paneles.addWidget(self.panel_izq, 25) # 25% del ancho
 
-        # 2. COLUMNA CENTRO
+        # 2. PANEL CEN (Switchboard táctico de terminales y tarjetas métricas)
         self.panel_cen = NexusPanelCen()
+        layout_paneles.addWidget(self.panel_cen, 35) # 35% del ancho
+
+        # Conectar señales del panel central
         self.panel_cen.request_z_close.connect(self._force_z_close_from_panel)
-        grid.addWidget(self.panel_cen, 0, 1, 2, 1)
-
-        # 3. COLUMNA DER
-        self.panel_der = NexusPanelDer()
-        grid.addWidget(self.panel_der, 0, 2, 2, 1)
-
-        grid.setColumnStretch(0, 1)
-        grid.setColumnStretch(1, 1)
-        grid.setColumnStretch(2, 2)
-        grid.setRowStretch(0, 1)
-        grid.setRowStretch(1, 1)
-
-        main_layout.addLayout(grid)
-        
-        self.current_caja_filter = 0
         self.panel_cen.caja_selected.connect(self._on_caja_selected)
 
+        # 3. PANEL DER (Auditoría y Bitácora histórica/eventos)
+        self.panel_der = NexusPanelDer()
+        layout_paneles.addWidget(self.panel_der, 40) # 40% del ancho
+
+        main_layout.addLayout(layout_paneles, 1) # Ocupará el resto del espacio
+        
+        # Diccionario local en memoria para monitoreo de cajas
+        self.active_terminals = {}
+        self.current_caja_filter = "todas"
+
     def _toggle_theme(self):
-        self.is_dark_mode = not self.is_dark_mode
-        if self.is_dark_mode:
-            self.setStyleSheet(EXTREME_STYLE)
-            self.btn_theme.setText("☀️ MODO DÍA")
-            self.btn_theme.setStyleSheet("QPushButton {  background-color: #3b82f6; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; } QPushButton:hover {  }")
-        else:
-            self.setStyleSheet("")
-            self.btn_theme.setText("🌙 MODO NOCHE")
-            self.btn_theme.setStyleSheet("QPushButton {   border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; } QPushButton:hover {  }")
-            
-        if hasattr(self.panel_cen, "aplicar_tema"): self.panel_cen.aplicar_tema(self.is_dark_mode)
-        if hasattr(self.panel_der, "aplicar_tema"): self.panel_der.aplicar_tema(self.is_dark_mode)
-        # Panel izquierdo se queda oscuro siempre por estética, o podemos forzarlo
-        if hasattr(self.panel_izq, "aplicar_tema"): self.panel_izq.aplicar_tema(self.is_dark_mode)
+        pass # Función eliminada, modo claro forzado
 
     def _on_caja_selected(self, caja_id):
         self.current_caja_filter = caja_id
-        if caja_id > 0:
-            self._append_terminal(f"> [SYSTEM] FILTRO ACTIVADO: CAJA {caja_id}", "#6366F1")
+        if caja_id != "todas":
+            self._append_terminal(f"> [SYSTEM] FILTRO ACTIVADO: {str(caja_id).upper()}", "#6366F1")
         else:
             self._append_terminal("> [SYSTEM] FILTRO GLOBAL (TODAS LAS CAJAS)", "#10B981")
             
@@ -349,15 +440,11 @@ class NexusExtremeControl(QWidget):
         self.glitch_count += 1
 
     def _force_z_close(self):
-        try:
-            monto_fisico = float(self.panel_cen.txt_fisico.text().replace(',', '.'))
-        except ValueError:
-            self._play_sound("alert")
-            QMessageBox.critical(self, "ERROR CRÍTICO", "INPUT FÍSICO CORRUPTO.")
-            return
-            monto_fisico = 0.0
-
-        self._ejecutar_cierre_z_db(monto_fisico)
+        # Esta función fue adaptada porque panel_cen ha sido removido
+        # TODO: Implementar un nuevo diálogo para Cierre Z Global
+        self._play_sound("alert")
+        QMessageBox.warning(self, "Aviso", "El panel central manual fue removido. Usa el panel de auditoría o los comandos de consola para realizar cierres globales.")
+        return
 
     def _force_z_close_from_panel(self, monto_fisico):
         if monto_fisico < 0:
@@ -380,70 +467,56 @@ class NexusExtremeControl(QWidget):
             )
             return
 
-        if self.current_caja_filter <= 0:
+        caja_num = 0
+        if self.current_caja_filter != "todas":
+            try:
+                import re
+                num_match = re.search(r'\d+', str(self.current_caja_filter))
+                caja_num = int(num_match.group()) if num_match else 0
+            except:
+                caja_num = 0
+
+        if caja_num <= 0:
             self._append_terminal("> [ERROR] NO SE PUEDE FORZAR CIERRE GLOBAL. SELECCIONA UNA CAJA ESPECÍFICA PRIMERO.", "#E11D48")
             self._play_sound("error")
             return
 
         # Calcular si hay descuadre en la caja seleccionada
+        total_efectivo = 0.0
+        fondo_inicial = 0.0
+        esperado = 0.0
+        diferencia = monto_fisico
         try:
-            from src.base_de_datos.database import db_manager
-            from datetime import datetime
             hoy = datetime.now().strftime("%Y-%m-%d")
             total_efectivo = db_manager.execute_scalar(
                 "SELECT SUM(total) FROM ventas WHERE fecha LIKE ? AND metodo_pago = 'Efectivo' AND caja_id = ?",
-                (f"{hoy}%", self.current_caja_filter)
+                (f"{hoy}%", caja_num)
             ) or 0.0
             
             # Ajustar por el fondo inicial
             fondo_inicial = float(db_manager.execute_scalar(
                 "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                (self.current_caja_filter,)
+                (caja_num,)
             ) or 0.0)
             
             esperado = total_efectivo + fondo_inicial
             diferencia = monto_fisico - esperado
             
             if diferencia < 0:
-                self._append_terminal(f"> [FATAL] DESCUADRE CRÍTICO EN CAJA {self.current_caja_filter} DE ${diferencia:.2f}. INICIANDO PROTOCOLOS DE AUDITORÍA.")
-            elif diferencia > 1000.0:
-                self._play_sound("alert")
-                self._append_terminal(f"> [WARN] EXCESO NO JUSTIFICADO EN CAJA {self.current_caja_filter} DE ${diferencia:.2f}.")
-        except Exception as e:
-            print(f"Error calculando cuadre en F12: {e}")
-
-        try:
-            hoy = datetime.now().strftime("%Y-%m-%d")
-            total_efectivo = db_manager.execute_scalar(
-                "SELECT SUM(total) FROM ventas WHERE fecha LIKE ? AND metodo_pago = 'Efectivo' AND caja_id = ?",
-                (f"{hoy}%", self.current_caja_filter)
-            ) or 0.0
-
-            fondo_inicial = float(db_manager.execute_scalar(
-                "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                (self.current_caja_filter,)
-            ) or 0.0)
-
-            esperado  = total_efectivo + fondo_inicial
-            diferencia = monto_fisico - esperado
-
-            if diferencia < 0:
                 self._append_terminal(
-                    f"> [FATAL] DESCUADRE CRÍTICO EN CAJA {self.current_caja_filter}"
+                    f"> [FATAL] DESCUADRE CRÍTICO EN CAJA {caja_num}"
                     f" DE ${diferencia:.2f}. INICIANDO PROTOCOLOS DE AUDITORÍA.")
             elif diferencia > 1000.0:
                 self._play_sound("alert")
                 self._append_terminal(
-                    f"> [WARN] EXCESO NO JUSTIFICADO EN CAJA {self.current_caja_filter}"
+                    f"> [WARN] EXCESO NO JUSTIFICADO EN CAJA {caja_num}"
                     f" DE ${diferencia:.2f}.")
         except Exception as e:
             print(f"Error calculando cuadre en F12: {e}")
-            esperado   = 0.0
-            diferencia = monto_fisico
 
         self._append_terminal(
             f"> [CRITICAL] SECUENCIA F12 INICIADA. EJECUTANDO CIERRE Z "
-            f"CAJA {self.current_caja_filter} (FÍSICO: {monto_fisico})")
+            f"CAJA {caja_num} (FÍSICO: {monto_fisico})")
 
         # Confirmar y ejecutar
         try:
@@ -451,7 +524,7 @@ class NexusExtremeControl(QWidget):
             reply = QMessageBox.question(
                 self,
                 "Confirmación Crítica — NEXUS OVERRIDE",
-                f"¿Estás seguro de emitir el CIERRE Z DEFINITIVO para la CAJA {self.current_caja_filter}?\n"
+                f"¿Estás seguro de emitir el CIERRE Z DEFINITIVO para la CAJA {caja_num}?\n"
                 f"Monto Físico Declarado: ${monto_fisico:,.2f}",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
@@ -465,11 +538,11 @@ class NexusExtremeControl(QWidget):
                 " VALUES (?, ?, ?, ?, ?)",
                 ("CIERRE_Z", diferencia, "nexus_admin",
                  f"Modo:global | Fis:${monto_fisico:.2f} | Esp:${esperado:.2f}",
-                 self.current_caja_filter)
+                 caja_num)
             )
             db_manager.execute_non_query(
                 "UPDATE ventas SET estado='CERRADA' WHERE estado='COMPLETADA' AND caja_id=?",
-                (self.current_caja_filter,)
+                (caja_num,)
             )
 
             # Imprimir ticket Z
@@ -486,11 +559,77 @@ class NexusExtremeControl(QWidget):
 
             QMessageBox.information(
                 self, "Cierre Exitoso",
-                f"Cierre Z completado para Caja {self.current_caja_filter}.")
+                f"Cierre Z completado para Caja {caja_num}.")
             self._append_terminal("> [OK] CIERRE Z EJECUTADO Y SESIÓN FINALIZADA.", "#10B981")
 
         except Exception as e:
             self._append_terminal(f"> [FATAL] ERROR EN DB DURANTE CIERRE Z: {e}", "#E11D48")
+
+    def _mostrar_reporte_rapido(self):
+        try:
+            conn = db_manager.get_connection()
+            cursor = conn.cursor()
+            hoy = datetime.now().strftime("%Y-%m-%d")
+            
+            # Caja Total y Transacciones
+            cursor.execute("SELECT SUM(total), COUNT(id) FROM ventas WHERE DATE(fecha) = ? AND estado != 'CANCELADA'", (hoy,))
+            row = cursor.fetchone()
+            total_caja = float(row[0] or 0.0)
+            transacciones = int(row[1] or 0)
+            
+            # Kilos Vendidos (solo productos pesables o asumido si la unidad es KG)
+            kilos_totales = 0.0
+            try:
+                # Intenta buscar por departamento carniceria o unidad KG
+                cursor.execute("""
+                    SELECT SUM(d.cantidad) FROM detalles_ventas d
+                    JOIN ventas v ON d.id_venta = v.id
+                    JOIN productos p ON d.id_producto = p.codigo
+                    WHERE DATE(v.fecha) = ? AND p.unidad IN ('KG', 'Kg', 'kg') AND v.estado != 'CANCELADA'
+                """, (hoy,))
+                kilos_totales = float(cursor.fetchone()[0] or 0.0)
+            except: pass
+            
+            # ROI Carteleria Inteligente
+            roi_carteleria = 0.0
+            producto_estrella = "Ninguno"
+            try:
+                cursor.execute("""
+                    SELECT SUM(d.subtotal) FROM detalles_ventas d
+                    JOIN ventas v ON d.id_venta = v.id
+                    WHERE DATE(v.fecha) = ? AND d.vendido_por_carteleria = 1 AND v.estado != 'CANCELADA'
+                """, (hoy,))
+                res_roi = cursor.fetchone()
+                roi_carteleria = float(res_roi[0] or 0.0)
+                
+                cursor.execute("""
+                    SELECT d.nombre_producto, COUNT(d.id) as ventas_count FROM detalles_ventas d
+                    JOIN ventas v ON d.id_venta = v.id
+                    WHERE DATE(v.fecha) = ? AND d.vendido_por_carteleria = 1 AND v.estado != 'CANCELADA'
+                    GROUP BY d.nombre_producto
+                    ORDER BY ventas_count DESC LIMIT 1
+                """, (hoy,))
+                res_estrella = cursor.fetchone()
+                if res_estrella:
+                    producto_estrella = res_estrella[0]
+            except Exception as e:
+                pass
+            
+            conn.close()
+            
+            QMessageBox.information(
+                self, "📊 Reporte Rápido (F12)",
+                f"RESUMEN DEL DÍA ({hoy})\n\n"
+                f"💰 Caja Total: ${total_caja:,.2f}\n"
+                f"🛒 Transacciones: {transacciones}\n"
+                f"🥩 Kilos Vendidos: {kilos_totales:,.2f} kg\n\n"
+                f"--- 🤖 IMPACTO IA (CARTELERÍA) ---\n"
+                f"📈 Retorno Generado: +${roi_carteleria:,.2f}\n"
+                f"🌟 Producto Estrella: {producto_estrella}"
+            )
+            self._append_terminal("> [INFO] Reporte rápido consultado vía teclado (F12).", "#3B82F6")
+        except Exception as e:
+            self._append_terminal(f"> [ERROR] Fallo al generar reporte rápido: {e}", "#EF4444")
 
     # ==============================================================================
     # MOTOR DE DATOS REALES (CONEXIÓN A DATABASE)
@@ -504,9 +643,12 @@ class NexusExtremeControl(QWidget):
             # DATE(fecha) = ? funciona en SQLite y MariaDB (columna DATETIME)
             params_totales = [hoy]
             filtro_caja_sql = ""
-            if self.current_caja_filter > 0:
+            if self.current_caja_filter != "todas":
+                import re
+                num_match = re.search(r'\d+', str(self.current_caja_filter))
+                caja_num = int(num_match.group()) if num_match else 1
                 filtro_caja_sql = " AND caja_id = ?"
-                params_totales.append(self.current_caja_filter)
+                params_totales.append(caja_num)
 
             total_efectivo = db_manager.execute_scalar(
                 f"SELECT SUM(total) FROM ventas"
@@ -524,14 +666,34 @@ class NexusExtremeControl(QWidget):
             str_efectivo = f"$ {int(total_efectivo):,}"
             str_digital  = f"$ {int(total_digital):,}"
 
-            if self.panel_cen.lbl_efectivo.val_label.text() != str_efectivo:
+            # Actualizar tarjetas métricas del panel central
+            if hasattr(self, 'panel_cen'):
                 self.panel_cen.lbl_efectivo.val_label.setText(str_efectivo)
-            if self.panel_cen.lbl_digital.val_label.text() != str_digital:
                 self.panel_cen.lbl_digital.val_label.setText(str_digital)
+                
+                # Obtener fondo de apertura para la caja seleccionada
+                fondo_inicial = 0.0
+                if self.current_caja_filter != "todas":
+                    import re
+                    num_match = re.search(r'\d+', str(self.current_caja_filter))
+                    caja_num = int(num_match.group()) if num_match else 1
+                    fondo_inicial = float(db_manager.execute_scalar(
+                        "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
+                        (caja_num,)
+                    ) or 0.0)
+                else:
+                    # Sumar fondos de todas las terminales activas hoy
+                    fondo_inicial = float(db_manager.execute_scalar(
+                        "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='APERTURA' AND DATE(fecha) = ?",
+                        (hoy,)
+                    ) or 0.0)
+                
+                self.panel_cen.lbl_fondo.val_label.setText(f"$ {int(fondo_inicial):,}")
+                self.panel_cen.lbl_live_esperado.setText(f"$ {int(total_efectivo + fondo_inicial):,}")
 
             # 2. Buscar ventas nuevas desde la última consulta
             query_nuevas = (
-                "SELECT id, caja_id, metodo_pago, total, usuario"
+                "SELECT id, caja_id, metodo_pago, total, usuario, fecha"
                 " FROM ventas WHERE DATE(fecha) = ?"
             )
             params_nuevas = [hoy]
@@ -546,7 +708,16 @@ class NexusExtremeControl(QWidget):
                 for v in nuevas_ventas:
                     self.last_sale_id = v['id']
                     tot_str = f"{int(v['total']):,}"
-                    self._registrar_evento_caja(v['caja_id'], "VENTA", f"{v['metodo_pago']} - ${tot_str}")
+                    # Parsear la fecha del registro en ventas
+                    try:
+                        fecha_val = v['fecha']
+                        if isinstance(fecha_val, str):
+                            sale_date = datetime.strptime(fecha_val, "%Y-%m-%d %H:%M:%S")
+                        else:
+                            sale_date = fecha_val
+                    except:
+                        sale_date = None
+                    self._registrar_evento_caja(v['caja_id'], "VENTA", f"{v['metodo_pago']} - ${tot_str}", sale_date)
             else:
                 if random.random() > 0.8:
                     self._inyectar_ruido_red()
@@ -556,39 +727,74 @@ class NexusExtremeControl(QWidget):
                 f.write(traceback.format_exc())
             print(f"Error _sync_live_data: {e}")
 
-    def _registrar_evento_caja(self, caja_id, cat, msg):
-        self._play_sound("sale")
-        self.panel_izq.spectrum.add_blip() # Añadir detección al radar
+    def _registrar_evento_caja(self, origen_id, cat, msg, sale_date=None):
+        self._play_sound("sale" if cat == "VENTA" else "alert")
         
         fg_color = "#10B981" if cat == "VENTA" else "#F43F5E"
         bg_color = "#065F46" if cat == "VENTA" else "#991B1B"
         
-        # En la UI: indice 0 es TODAS, indice 1 es CAJA 1, etc.
-        caja_index = caja_id if caja_id and caja_id < len(self.panel_cen.nodos_ui) else 0
-        src = f"CAJA {caja_id}"
+        origen = str(origen_id)
+        src = origen.upper()
         
-        # Brillo del botón
-        boton = self.panel_cen.nodos_ui[caja_index]
-        self.panel_cen.mark_active(caja_index)
-        if not hasattr(boton, "estilo_original"):
-            boton.estilo_original = boton.styleSheet()
-        estilo_brillo = f"background-color: {bg_color}; color: white; border: 2px solid {fg_color};"
-        boton.setStyleSheet(estilo_brillo)
-        QTimer.singleShot(500, lambda b=boton, c=caja_index: self._restaurar_estilo_boton(b, c))
-        # Terminal y Bitácora
-        if cat == "VENTA":
-            self._append_terminal(f"{src}: {msg}", "#10B981") # Verde esmeralda para ventas
-        else:
-            self._append_terminal(f"> [TX] {src}: {msg}")
-            self._agregar_log_tabla(src, f"[{cat}] {msg}", fg_color)
+        # Intentamos extraer el ID de caja numérico (ej. de 'CAJERO-PC-02' -> 2)
+        c_id = 1
+        try:
+            import re
+            match = re.search(r'\d+', src)
+            if match:
+                c_id = int(match.group())
+        except:
+            pass
 
-    def _restaurar_estilo_boton(self, boton, caja_index):
-        if hasattr(self.panel_cen, 'selected_caja_id') and self.panel_cen.selected_caja_id == caja_index:
-            # Si justo está seleccionado, forzamos aplicar el estilo seleccionado
-            self.panel_cen.aplicar_estilos_botones()
+        # Formatear tipo y observaciones para la BD
+        if cat == "VENTA":
+            tipo_db = "[TICKET] Venta Remota"
+            obs_db = f"[TICKET] {msg}"
         else:
-            if hasattr(boton, "estilo_original"):
-                boton.setStyleSheet(boton.estilo_original)
+            tipo_db = "ALERTA_SEGURIDAD" if cat == "ALERTA" else cat.upper()
+            obs_db = f"[{cat}] {msg}"
+
+        # Guardar en la base de datos para persistencia total y bitácora
+        try:
+            ts_now = datetime.now()
+            # Usar fecha exacta de venta si viene del sync de DB para mantener orden cronológico
+            ref_date = sale_date if sale_date is not None else ts_now
+            ts = ref_date.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Chequeo de duplicados robusto
+            if cat == "VENTA":
+                # Validar en un rango de +/- 60 segundos alrededor de la fecha de la venta
+                ts_min = (ref_date - timedelta(seconds=60)).strftime("%Y-%m-%d %H:%M:%S")
+                ts_max = (ref_date + timedelta(seconds=60)).strftime("%Y-%m-%d %H:%M:%S")
+                existe = db_manager.execute_scalar(
+                    "SELECT COUNT(id) FROM movimientos_caja WHERE observaciones = ? AND caja_id = ? AND fecha BETWEEN ? AND ?",
+                    (obs_db, c_id, ts_min, ts_max)
+                )
+            else:
+                ts_limite = (ts_now - timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
+                existe = db_manager.execute_scalar(
+                    "SELECT COUNT(id) FROM movimientos_caja WHERE observaciones = ? AND tipo = ? AND caja_id = ? AND fecha >= ?",
+                    (obs_db, tipo_db, c_id, ts_limite)
+                )
+
+            if not existe or existe == 0:
+                db_manager.execute_non_query(
+                    "INSERT INTO movimientos_caja (fecha, tipo, observaciones, caja_id, usuario, monto) VALUES (?, ?, ?, ?, ?, ?)",
+                    (ts, tipo_db, obs_db, c_id, "SISTEMA", 0.0)
+                )
+        except Exception as e:
+            print(f"Error insertando evento de caja en DB: {e}")
+
+        # Si el evento no es una venta, o si es para actualizar la tabla del panel derecho
+        if cat != "VENTA":
+            self._agregar_log_tabla(src, f"[{cat}] {msg}", fg_color)
+            
+        # Refrescar la tabla de auditoría del panel derecho directamente desde la base de datos
+        if hasattr(self, 'panel_der'):
+            self.panel_der.filtrar_auditoria()
+
+    def _restaurar_estilo_boton(self, boton, origen):
+        pass # Función deprecada (Solid State UI)
 
     def _inyectar_ruido_red(self):
         eventos = [

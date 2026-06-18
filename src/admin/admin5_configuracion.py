@@ -2683,7 +2683,12 @@ class DialogoTerminalTPV(QDialog):
     def _guardar(self):
         from PyQt5.QtWidgets import QMessageBox
         config.set("mp_access_token", self.txt_mp_token.text().strip())
-        config.set("mp_device_id", self.txt_mp_device.text().strip())
+        
+        dev_id = self.txt_mp_device.text().strip()
+        if dev_id.startswith("N950") and "NEWLAND_N950__" not in dev_id:
+            dev_id = f"NEWLAND_N950__{dev_id}"
+            
+        config.set("mp_device_id", dev_id)
         config.set("clover_ip", self.txt_clover_ip.text().strip())
         config.set("clover_port", self.txt_clover_port.text().strip())
         QMessageBox.information(self, "Guardado", "Configuración de terminales guardada correctamente.")

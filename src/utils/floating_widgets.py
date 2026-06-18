@@ -70,7 +70,7 @@ class BotonFlotanteRegreso(QPushButton):
             if self.press_pos:
                 # Calcular distancia recorrida en píxeles (Manhattan Length)
                 dist = (event.globalPos() - self.press_pos).manhattanLength()
-                if dist < 6: # Si se movió menos de 6px, es un click real (retorno)
+                if dist <= 20: # Si se movió menos de 20px (ajustado para táctil), es un click real (retorno)
                     self.clicked_return.emit()
         self.old_pos = None
         self.press_pos = None

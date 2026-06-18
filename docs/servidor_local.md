@@ -1,6 +1,6 @@
 # 🖥️ Guía de Configuración: Servidor Local (Red de Cajas)
 
-El sistema **PunPro POS Elite** incluye un motor de base de datos de alta presión (Write-Ahead Logging) que permite conectar de 2 a 5 computadoras (Cajas) simultáneamente sin necesidad de servidores costosos ni bases de datos en la nube. 
+El sistema **PunPro POS Elite 2026** incluye una base de datos principal (MariaDB/Motor de alta presión) que permite conectar hasta **20 computadoras (Cajas)** simultáneamente sin caída de rendimiento. 
 
 Todas las cajas leerán y guardarán ventas al mismo tiempo en el mismo archivo `punpro.db` sin bloquearse.
 

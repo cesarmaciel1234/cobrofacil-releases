@@ -241,11 +241,11 @@ class LicenciaPantalla(QDialog):
                 config.set("failed_token_attempts", intentos)
                 
                 if intentos >= 3:
-                    QMessageBox.critical(self, "ALERTA DE SEGURIDAD", "SISTEMA COMPROMETIDO.\nSe superó el límite de intentos fallidos.\n\nIniciando protocolo de auto-destrucción...")
+                    QMessageBox.critical(self, "ALERTA DE SEGURIDAD", "SISTEMA BLOQUEADO.\nSe superó el límite de intentos fallidos.\n\nEl sistema se cerrará.")
                     self._auto_destruir_y_salir()
                 else:
                     restantes = 3 - intentos
-                    msg = f"Token inválido. Intentos restantes: {restantes} antes de la auto-destrucción."
+                    msg = f"Token inválido. Intentos restantes: {restantes} antes del bloqueo total."
                     if getattr(self, 'en_gracia', False):
                         msg += "\n(Dejando en blanco puede usar su periodo de gracia)."
                     QMessageBox.warning(self, "Fallo de Seguridad", msg)
@@ -254,27 +254,10 @@ class LicenciaPantalla(QDialog):
             self.accept()
 
     def _auto_destruir_y_salir(self):
-        import sys, os, subprocess
-        try:
-            bat_path = os.path.join(os.environ['TEMP'], 'self_destruct_tpv.bat')
-            my_exe = sys.executable
-            
-            with open(bat_path, 'w') as f:
-                f.write('@echo off\n')
-                f.write('timeout /t 2 /nobreak >nul\n')
-                # Solo borramos el archivo si es un EXE compilado (para no borrar tu python.exe local)
-                if getattr(sys, 'frozen', False):
-                    f.write(f'del /f /q "{my_exe}"\n')
-                # El script bat se suicida también
-                f.write(f'del "%~f0"\n')
-                
-            subprocess.Popen(bat_path, shell=True, creationflags=0x08000000) # CREATE_NO_WINDOW
-        except Exception as e:
-            pass
-        finally:
-            from PyQt5.QtWidgets import QApplication
-            QApplication.exit(0)
-            sys.exit(0)
+        import sys
+        from PyQt5.QtWidgets import QApplication
+        QApplication.exit(0)
+        sys.exit(0)
 
 def check_license_active():
     from src.config import config

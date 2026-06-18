@@ -114,6 +114,7 @@ class MariaDBController:
             conn.close()
             logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (con contraseña).")
             self._initialized = True
+            self._create_punpro_db()
             return True
         except Exception:
             pass
@@ -131,6 +132,7 @@ class MariaDBController:
             conn.close()
             logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (sin contraseña).")
             self._initialized = True
+            self._create_punpro_db()
             return True
         except Exception:
             pass
