@@ -613,8 +613,7 @@ class MainWindow(QMainWindow):
             self.btn_flotante.hide()
             
             # --- MODO BORDERLESS MAXIMIZED (PANTALLA SECUNDARIA) ---
-            from PyQt5.QtWidgets import QApplication
-            from PyQt5.QtCore import Qt
+            # QApplication y Qt ya están importados a nivel de módulo
             desktop = QApplication.desktop()
             
             # Cambiar flags oculta la ventana temporalmente
