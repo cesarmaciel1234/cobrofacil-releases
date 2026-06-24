@@ -55,6 +55,10 @@ class MainWindow(QMainWindow):
         # ChatBot: se instancia SOLO cuando el cajero presiona el botón por primera vez
         self.chatbot_overlay = None
         self._chatbot_active = False
+        self._active_theme_file = None
+        self._cargar_datos_timer = QTimer(self)
+        self._cargar_datos_timer.setSingleShot(True)
+        self._preload_qss_cache()
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(10000, self._chequear_actualizaciones_bg)
@@ -417,6 +421,63 @@ class MainWindow(QMainWindow):
         # Conectar señales para el terminal de ventas (ya instanciado)
         self._connect_screen_signals(1, self.pantalla_ventas)
 
+    def _preload_qss_cache(self):
+        """Lee ambos temas una sola vez al arrancar."""
+        import os
+        from src.utils.paths import get_resource_path
+        for theme_file in ("styles.qss", "styles_light.qss"):
+            if theme_file in _QSS_CACHE:
+                continue
+            qss_path = get_resource_path(os.path.join("src", theme_file))
+            try:
+                with open(qss_path, "r", encoding="utf-8") as f:
+                    _QSS_CACHE[theme_file] = f.read()
+            except Exception as e:
+                print(f"Error precargando tema {theme_file}: {e}")
+                _QSS_CACHE[theme_file] = ""
+
+    def _pregwarm_screens_for_role(self, role: str):
+        """Instancia módulos frecuentes en idle para que la 1ª navegación no congele."""
+        if role == "admin":
+            warm = (2, 3, 4, 5, 7, 10, 11)
+        elif role == "jefe":
+            warm = (9, 20, 18)
+        else:
+            return
+        for idx in warm:
+            if idx >= len(self.screens) or self.screens[idx] is not None:
+                continue
+            try:
+                self._build_lazy_screen(idx)
+                QApplication.processEvents()
+            except Exception as e:
+                logger.warning(f"Prewarm pantalla {idx} falló: {e}")
+
+    def _apply_theme_for_index(self, index: int):
+        """Solo reaplica QSS al cambiar oscuro↔claro; evita repintar todo en cada tab admin."""
+        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
+        if theme_file == self._active_theme_file:
+            return
+        css = _QSS_CACHE.get(theme_file, "")
+        if css:
+            QApplication.instance().setStyleSheet(css)
+        self._active_theme_file = theme_file
+
+    def _schedule_cargar_datos(self, index: int):
+        """Evita encolar cargar_datos() duplicados al hacer clic rápido entre módulos."""
+        try:
+            self._cargar_datos_timer.timeout.disconnect()
+        except Exception:
+            pass
+
+        def _run():
+            s = self.screens[index] if index < len(self.screens) else None
+            if s is not None and hasattr(s, "cargar_datos"):
+                s.cargar_datos()
+
+        self._cargar_datos_timer.timeout.connect(_run)
+        self._cargar_datos_timer.start(50)
+
     def _build_lazy_screen(self, index: int):
         """Instancia el widget real para `index` y lo registra en el stack.
 
@@ -664,32 +725,8 @@ class MainWindow(QMainWindow):
 
         self.stacked_widget.setCurrentIndex(index)
 
-        # ── INYECCIÓN GLOBAL DE TEMAS (con cache en RAM) ────────────────────
-        # El tema se lee del disco UNA sola vez y se cachea en _QSS_CACHE.
-        # Esto elimina el I/O de disco en cada transición de pantalla.
-        import os
-        from src.utils.paths import get_resource_path
-        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
-        if theme_file not in _QSS_CACHE:
-            qss_path = get_resource_path(os.path.join("src", theme_file))
-            if os.path.exists(qss_path):
-                try:
-                    with open(qss_path, "r", encoding="utf-8") as f:
-                        _QSS_CACHE[theme_file] = f.read()
-                except Exception as e:
-                    print(f"Error cargando tema {theme_file}: {e}")
-                    _QSS_CACHE[theme_file] = ""
-            else:
-                _QSS_CACHE[theme_file] = ""
-        if _QSS_CACHE.get(theme_file):
-            QApplication.instance().setStyleSheet(_QSS_CACHE[theme_file])
-
-        # ── Cargas de datos diferidas (no bloquean la transición visual) ─────
-        # cargar_datos() se ejecuta 80ms después de mostrar la pantalla para que
-        # el cambio de tab sea instantáneo y el usuario no vea un freeze.
-        s = self.screens[index]
-        if s is not None and hasattr(s, 'cargar_datos'):
-            QTimer.singleShot(80, s.cargar_datos)
+        self._apply_theme_for_index(index)
+        self._schedule_cargar_datos(index)
 
     def apply_roles(self):
         user = config.current_user
@@ -699,13 +736,19 @@ class MainWindow(QMainWindow):
         if role == "cajero":
             self.switch_tab(1)
         elif role == "jefe":
+            if self.screens[19] is None:
+                self._build_lazy_screen(19)
             self.switch_tab(19)
+            QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("jefe"))
         elif role == "carteleria":
             if hasattr(self, 'nav_bar_v3'): self.nav_bar_v3.hide()
             if hasattr(self, 'top_bar_v3'): self.top_bar_v3.hide()
             self.switch_tab(21)
         else:
+            if self.screens[0] is None:
+                self._build_lazy_screen(0)
             self.switch_tab(0)
+            QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("admin"))
 
     def _on_jefe_request_tab(self, tab_index: int):
         """El jefe pide un tab específico del ERP contable (ej: 3 = Proveedores)."""

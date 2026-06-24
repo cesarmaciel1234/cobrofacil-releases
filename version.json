@@ -1,7 +1,7 @@
 {
   "app_version": "31000.0",
   "channel": "stable",
-  "build_date": "2026-06-18 11:53:50",
+  "build_date": "2026-06-19 15:15:20",
   "server_host": "cesar",
   "modules": {
     "main.py": {
@@ -408,9 +408,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "f5c32fcfdea1831daf837c4108557b96",
+      "checksum": "ea2b7b9ffe5b9626977d4af2c6c04afb",
       "channel": "stable",
-      "size": 38464
+      "size": 39910
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -606,9 +606,9 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "37bc977768a55f81c2af8baabe581a3c",
+      "checksum": "56d91d973788843f2f1ef6fc621191cb",
       "channel": "stable",
-      "size": 138716
+      "size": 145903
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
