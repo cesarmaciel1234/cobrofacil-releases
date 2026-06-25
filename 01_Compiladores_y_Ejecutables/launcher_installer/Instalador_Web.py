@@ -20,12 +20,10 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
-# Release CI: .github/workflows/release.yml → tag "latest"
-GITHUB_RELEASE_ZIP_URL = (
-    "https://github.com/cesarmaciel1234/cobrofacil-releases/"
-    "releases/download/latest/CobroFacil_POS_Release.zip"
-)
+# Release CI: .github/workflows/release.yml → GitHub Releases (API)
+GITHUB_REPO = "cesarmaciel1234/cobrofacil-releases"
 GITHUB_RELEASE_ZIP_NAME = "CobroFacil_POS_Release.zip"
+GITHUB_RELEASE_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
 SHORTCUT_NAME = "Cobro Fácil POS.lnk"
 SHORTCUT_LABEL = "Cobro Fácil POS"
 LEGACY_INSTALL_DIR_NAMES = (
@@ -260,6 +258,47 @@ def _create_lnk(lnk_path, target_exe):
     return os.path.exists(lnk_path)
 
 
+def _resolve_release_zip_url():
+    """Obtiene la URL real del ZIP desde la API de GitHub Releases."""
+    import json as _json
+
+    headers = {
+        "User-Agent": "CobroFacil-Installer/2026",
+        "Accept": "application/vnd.github+json",
+    }
+    api_base = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
+
+    def _pick_url(release):
+        for asset in release.get("assets") or []:
+            if asset.get("name") == GITHUB_RELEASE_ZIP_NAME:
+                return asset.get("browser_download_url")
+        return None
+
+    for api_url in (f"{api_base}/latest", f"{api_base}?per_page=10"):
+        try:
+            req = urllib.request.Request(api_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = _json.loads(resp.read().decode("utf-8"))
+            if isinstance(data, list):
+                for release in data:
+                    url = _pick_url(release)
+                    if url:
+                        return url
+            else:
+                url = _pick_url(data)
+                if url:
+                    return url
+        except urllib.error.HTTPError as exc:
+            _log_installer_error(f"API releases ({api_url}): HTTP {exc.code}")
+        except Exception as exc:
+            _log_installer_error(f"API releases ({api_url}): {exc}")
+
+    return (
+        f"https://github.com/{GITHUB_REPO}/releases/latest/download/"
+        f"{GITHUB_RELEASE_ZIP_NAME}"
+    )
+
+
 def _log_installer_error(message):
     try:
         log_path = os.path.join(
@@ -428,12 +467,10 @@ class InstallWorker(QThread):
                 zip_to_extract = local_zip_path
                 time.sleep(1)
             else:
-                if not self.download_url:
-                    self.finished.emit(False, f"No se encontró el archivo '{self.zip_filename}' junto al instalador y no hay URL de descarga.", "", "")
-                    return
-                
                 self.progress_update.emit(10, "Descargando módulos del sistema (esto puede tardar)...")
                 zip_to_extract = os.path.join(os.environ['TEMP'], self.zip_filename)
+                download_url = _resolve_release_zip_url()
+                _log_installer_error(f"Descarga desde: {download_url}")
                 
                 def report(block_num, block_size, total_size):
                     if total_size > 0:
@@ -446,16 +483,15 @@ class InstallWorker(QThread):
                     opener = urllib.request.build_opener()
                     opener.addheaders = [("User-Agent", "CobroFacil-Installer/2026")]
                     urllib.request.install_opener(opener)
-                    urllib.request.urlretrieve(self.download_url, zip_to_extract, reporthook=report)
+                    urllib.request.urlretrieve(download_url, zip_to_extract, reporthook=report)
                 except urllib.error.HTTPError as exc:
                     if exc.code == 404:
                         self.finished.emit(
                             False,
                             "No hay release publicado en GitHub (error 404).\n\n"
-                            "El administrador debe subir CobroFacil_POS_Release.zip en:\n"
-                            "github.com/cesarmaciel1234/cobrofacil-releases/releases\n"
-                            "con el tag «latest» (Actions → Build y Release Windows).\n\n"
-                            "Mientras tanto, coloque el .zip junto al instalador.",
+                            "El paquete aún no está disponible. Espere a que termine el build en:\n"
+                            f"{GITHUB_RELEASE_PAGE}\n\n"
+                            "O coloque CobroFacil_POS_Release.zip junto al instalador.",
                             "",
                             "",
                         )
@@ -621,7 +657,7 @@ class InstallerWindow(QWidget):
         layout.addWidget(self.browser)
 
         self.is_update_mode = "--update" in sys.argv
-        self.download_url = GITHUB_RELEASE_ZIP_URL
+        self.download_url = None  # se resuelve vía API al descargar
         self.zip_filename = GITHUB_RELEASE_ZIP_NAME
         self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
 

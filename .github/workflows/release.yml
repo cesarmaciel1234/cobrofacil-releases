@@ -47,6 +47,7 @@ jobs:
           pip install pyinstaller
 
       - name: Incrementar version de release
+        id: version
         shell: pwsh
         run: |
           $path = "version.json"
@@ -55,6 +56,8 @@ jobs:
           $data.app_version = [string]($current + 1)
           $data.build_date = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
           $data | ConvertTo-Json -Depth 20 | Set-Content $path -Encoding utf8
+          echo "tag=v$($data.app_version)" >> $env:GITHUB_OUTPUT
+          echo "app_version=$($data.app_version)" >> $env:GITHUB_OUTPUT
 
       # -----------------------------------------------------------------------
       # 4. Compilar main.py → dist/CobroFacil_POS/CobroFacil_POS.exe
@@ -104,31 +107,35 @@ jobs:
         run: python 01_Compiladores_y_Ejecutables/package_release_zip.py
 
       # -----------------------------------------------------------------------
-      # 5. Preparar tag "latest" (reemplaza el release anterior con el mismo tag)
+      # 5. Crear Release en GitHub (tag por versión; /releases/latest apunta al más nuevo)
       # -----------------------------------------------------------------------
-      - name: Eliminar release/tag latest previo (si existe)
+      - name: Publicar Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: CobroFacil POS ${{ steps.version.outputs.app_version }}
+          body: |
+            Build automático — [cobrofacil-releases](https://github.com/cesarmaciel1234/cobrofacil-releases)
+            - Versión: ${{ steps.version.outputs.app_version }}
+            - Commit: ${{ github.sha }}
+            - Workflow: ${{ github.run_id }}
+            - Descargar **CobroFacil_POS_Release.zip**, descomprimir y ejecutar `CobroFacil_POS.exe`.
+            - Enlace: https://github.com/cesarmaciel1234/cobrofacil-releases/releases/latest
+          files: dist/CobroFacil_POS_Release.zip
+          fail_on_unmatched_files: true
+          make_latest: true
+          draft: false
+          prerelease: false
+
+      - name: Verificar que el ZIP quedó publicado
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest -y 2>/dev/null || true
-          git push --delete origin latest 2>/dev/null || true
-
-      # -----------------------------------------------------------------------
-      # 6. Crear Release en GitHub y subir el .zip (enlace permanente de descarga)
-      # -----------------------------------------------------------------------
-      - name: Publicar Release (tag latest)
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: CobroFacil POS — Latest
-          body: |
-            Build automático — [cobrofacil-releases](https://github.com/cesarmaciel1234/cobrofacil-releases)
-            - Commit: ${{ github.sha }}
-            - Workflow: ${{ github.run_id }}
-            - Descargar **CobroFacil_POS_Release.zip**, descomprimir y ejecutar `CobroFacil_POS.exe`.
-            - Enlace fijo: https://github.com/cesarmaciel1234/cobrofacil-releases/releases/latest
-          files: dist/CobroFacil_POS_Release.zip
-          make_latest: true
-          draft: false
-          prerelease: false
+          TAG="${{ steps.version.outputs.tag }}"
+          COUNT=$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets | length')
+          if [ "$COUNT" -lt 1 ]; then
+            echo "ERROR: el release $TAG no tiene assets adjuntos"
+            exit 1
+          fi
+          gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].name'

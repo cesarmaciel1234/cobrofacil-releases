@@ -21,10 +21,7 @@ from datetime import datetime, timezone
 
 from src.utils.paths import get_base_path
 
-RELEASE_ZIP_URL = (
-    "https://github.com/cesarmaciel1234/cobrofacil-releases/"
-    "releases/download/latest/CobroFacil_POS_Release.zip"
-)
+from src.updater.github_release_url import release_zip_url_or_fallback
 REMOTE_VERSION_URL = (
     "https://raw.githubusercontent.com/cesarmaciel1234/cobrofacil-releases/main/version.json"
 )
@@ -157,9 +154,10 @@ def download_and_stage_update(progress_callback=None) -> bool:
     emit("Descargando actualización en segundo plano...")
     zip_path = _zip_path()
     staging = _staging_dir()
+    download_url = release_zip_url_or_fallback()
 
     try:
-        req = urllib.request.Request(RELEASE_ZIP_URL, headers={"User-Agent": "CobroFacil-SilentUpdater/2026"})
+        req = urllib.request.Request(download_url, headers={"User-Agent": "CobroFacil-SilentUpdater/2026"})
         with urllib.request.urlopen(req, timeout=300, context=_ssl_context()) as resp, open(zip_path, "wb") as out:
             total = int(resp.headers.get("Content-Length") or 0)
             done = 0
