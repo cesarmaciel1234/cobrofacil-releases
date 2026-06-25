@@ -48,6 +48,12 @@ app_exit_event = threading.Event()
 
 def launch_app():
     global main_window
+
+    try:
+        from src.updater.silent_auto_updater import apply_pending_update_on_startup
+        apply_pending_update_on_startup()
+    except Exception:
+        pass
     
     app = QApplication.instance()
     if not app:
@@ -362,6 +368,16 @@ if __name__ == "__main__":
 
     from src.logger import setup_logger
     setup_logger()
+
+    try:
+        from src.updater.silent_auto_updater import (
+            apply_pending_update_on_startup,
+            start_background_update_service,
+        )
+        apply_pending_update_on_startup()
+        start_background_update_service()
+    except Exception:
+        pass
     
     # Asegurar reglas de firewall de forma automática en el arranque
     try:

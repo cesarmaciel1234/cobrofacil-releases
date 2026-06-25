@@ -46,6 +46,16 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Incrementar version de release
+        shell: pwsh
+        run: |
+          $path = "version.json"
+          $data = Get-Content $path -Raw | ConvertFrom-Json
+          $current = [double]$data.app_version
+          $data.app_version = [string]($current + 1)
+          $data.build_date = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+          $data | ConvertTo-Json -Depth 20 | Set-Content $path -Encoding utf8
+
       # -----------------------------------------------------------------------
       # 4. Compilar main.py → dist/CobroFacil_POS/CobroFacil_POS.exe
       #    (--onedir: carpeta con el .exe y librerías; mismo criterio que Compilar_Todo.bat)
@@ -69,6 +79,9 @@ jobs:
             --add-data "src/styles.qss;src/" `
             --add-data "src/styles_light.qss;src/" `
             main.py
+
+      - name: Copiar version.json al paquete instalable
+        run: Copy-Item version.json dist/CobroFacil_POS/version.json
 
       # -----------------------------------------------------------------------
       # 4b. MariaDB portable + ZIP del release (POS + mariadb_server)

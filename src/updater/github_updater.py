@@ -14,8 +14,10 @@ import sys
 import threading
 from PyQt5.QtWidgets import QMessageBox
 
+from src.utils.paths import get_base_path
+
 FIREBASE_VERSION_URL = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/version.json?alt=media"
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = get_base_path()
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 
 def get_local_version():
@@ -121,8 +123,41 @@ class ResultadoGitHub:
 
 def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
     if getattr(sys, 'frozen', False):
-        return verificar_actualizaciones_exe(dry_run, callback_progreso)
-        
+        from src.updater.silent_auto_updater import (
+            is_update_available,
+            is_update_staged,
+            download_and_stage_update,
+        )
+        res = ResultadoGitHub()
+        if is_update_staged():
+            pending_path = os.path.join(get_base_path(), "_update_cache", "pending.json")
+            try:
+                with open(pending_path, encoding="utf-8") as f:
+                    pending = json.load(f)
+                res.version_nueva = pending.get("remote_version", "")
+            except Exception:
+                pass
+            res.version_local = get_local_version()
+            res.actualizados = ["CobroFacil_POS_Release.zip"]
+            res.necesita_reinicio = True
+            return res
+
+        available, local, remote = is_update_available()
+        res.version_local = local
+        res.version_nueva = remote
+        if not available:
+            return res
+        res.actualizados = ["CobroFacil_POS_Release.zip"]
+        if dry_run:
+            return res
+        if download_and_stage_update(
+            progress_callback=lambda m: callback_progreso(50, m) if callback_progreso else None
+        ):
+            res.necesita_reinicio = True
+        else:
+            res.errores.append("No se pudo descargar la actualización desde GitHub.")
+        return res
+
     res = ResultadoGitHub()
     
     def progreso(pct, msg):
@@ -236,6 +271,13 @@ def verificar_actualizaciones_github(dry_run=False, callback_progreso=None):
             
     progreso(100, f"✅ {len(res.actualizados)} módulos actualizados desde GitHub.")
     return res
+
+try:
+    from src.updater.silent_auto_updater import FirebaseUpdateWorker, SilentUpdateWorker
+except ImportError:
+    FirebaseUpdateWorker = None
+    SilentUpdateWorker = None
+
 
 def verificar_actualizaciones_exe(dry_run=False, callback_progreso=None):
     res = ResultadoGitHub()

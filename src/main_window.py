@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QGraphicsDropShadowEffect, QApplication, QMessageBox, QPushButton,
     QHBoxLayout, QVBoxLayout
 )
+import sys
 from PyQt5.QtGui import QKeySequence, QColor
 from PyQt5.QtCore import Qt, QTimer
 # NOTA: Paso5Terminal se importa dentro de _init_screens (lazy) para no
@@ -69,7 +70,7 @@ class MainWindow(QMainWindow):
         self._preload_qss_cache()
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
-        QTimer.singleShot(10000, self._chequear_actualizaciones_bg)
+        QTimer.singleShot(5000, self._chequear_actualizaciones_bg)
 
     def _init_security_monitor(self):
         """ Motor de Vigilancia Global: Monitorea el hardware 24/7 sin importar el módulo activo. """
@@ -190,19 +191,46 @@ class MainWindow(QMainWindow):
         import threading
         def _check():
             try:
-                from src.updater.github_updater import verificar_actualizaciones_github
-                res_firebase = verificar_actualizaciones_github(dry_run=True)
-                if res_firebase and res_firebase.hay_cambios:
-                    n = len(res_firebase.actualizados)
-                    canal = res_firebase.canal.upper()
-                    ver   = res_firebase.version_nueva
-                    msg = (f"Nueva versión {ver} ({canal}) desde la nube — "
-                           f"{n} módulo{'s' if n!=1 else ''} listo{'s' if n!=1 else ''} para instalar")
-                    self._origen_actualizacion = 'firebase'
-                    QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
+                from src.updater.silent_auto_updater import (
+                    get_status_message,
+                    is_update_available,
+                    is_update_staged,
+                    download_and_stage_update,
+                )
+                if is_update_staged():
+                    msg = get_status_message()
+                    if msg:
+                        QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
                     return
 
+                available, _, remote = is_update_available()
+                if available:
+                    msg = f"Nueva versión {remote} — descargando en segundo plano..."
+                    QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
+                    threading.Thread(
+                        target=download_and_stage_update,
+                        kwargs={
+                            "progress_callback": lambda m: QTimer.singleShot(
+                                0,
+                                lambda text=m: self._mostrar_banner_update(text),
+                            )
+                        },
+                        daemon=True,
+                    ).start()
+                    return
 
+                from src.updater.github_updater import verificar_actualizaciones_github
+                res = verificar_actualizaciones_github(dry_run=True)
+                if res and res.hay_cambios and not getattr(sys, "frozen", False):
+                    n = len(res.actualizados)
+                    canal = res.canal.upper()
+                    ver = res.version_nueva
+                    msg = (
+                        f"Nueva versión {ver} ({canal}) desde la nube — "
+                        f"{n} módulo{'s' if n != 1 else ''} listo{'s' if n != 1 else ''} para instalar"
+                    )
+                    self._origen_actualizacion = "github"
+                    QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
             except Exception as e:
                 from src.logger import logger
                 logger.error(f"Error buscando actualizaciones bg: {e}")
@@ -218,8 +246,8 @@ class MainWindow(QMainWindow):
             self._update_banner.raise_()
 
     def _instalar_actualizacion_rapida(self):
-        """Un clic: descarga, instala y ofrece reiniciar. Igual que el celular."""
-        from src.updater.github_updater import FirebaseUpdateWorker
+        """Descarga en segundo plano y aplica al reiniciar (estilo web app)."""
+        from src.updater.silent_auto_updater import SilentUpdateWorker
         self._update_banner.hide()
 
         # Dialogo de progreso minimalista
@@ -232,7 +260,7 @@ class MainWindow(QMainWindow):
         dlg.setValue(0)
         dlg.show()
 
-        self._uw = FirebaseUpdateWorker(dry_run=False)
+        self._uw = SilentUpdateWorker(dry_run=False)
 
         def on_progreso(pct, msg):
             dlg.setLabelText(msg)
@@ -243,16 +271,17 @@ class MainWindow(QMainWindow):
             if res.hay_cambios:
                 n = len(res.actualizados)
                 ret = QMessageBox.information(
-                    self, "\u2705 Actualizacion instalada",
-                    f"Se instalaron {n} modulo(s) correctamente.\n\n"
-                    "\u26a0\ufe0f Reinicia el programa para que los cambios tomen efecto.",
-                    QMessageBox.Ok
+                    self, "\u2705 Actualizacion lista",
+                    f"Se descargaron {n} paquete(s) correctamente.\n\n"
+                    "Al reiniciar el programa se aplicará al instante, "
+                    "como una web app.",
+                    QMessageBox.Ok,
                 )
                 if res.necesita_reinicio:
                     ret2 = QMessageBox.question(
                         self, "Reiniciar ahora",
-                        "\u00bfReiniciar ahora para aplicar todos los cambios?",
-                        QMessageBox.Yes | QMessageBox.No
+                        "\u00bfReiniciar ahora para aplicar la actualizacion?",
+                        QMessageBox.Yes | QMessageBox.No,
                     )
                     if ret2 == QMessageBox.Yes:
                         QApplication.exit(99)
