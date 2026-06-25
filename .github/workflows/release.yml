@@ -46,14 +46,12 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Incrementar version de release
+      - name: Preparar version de release
         id: version
         shell: pwsh
         run: |
           $path = "version.json"
           $data = Get-Content $path -Raw | ConvertFrom-Json
-          $current = [double]$data.app_version
-          $data.app_version = [string]($current + 1)
           $data.build_date = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
           $data | ConvertTo-Json -Depth 20 | Set-Content $path -Encoding utf8
           echo "tag=v$($data.app_version)" >> $env:GITHUB_OUTPUT

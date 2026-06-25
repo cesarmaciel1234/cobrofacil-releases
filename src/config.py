@@ -39,6 +39,7 @@ class Config:
         "cierre_auto_hora": "00:00",
         "cierre_auto_activo": True,
         "stock_alerta_activa": True,
+        "opt_stock_negativo": False,
         "jefe_db_path": "",
         "tasa_usd": 1200.0,
         "github_error_report": True,

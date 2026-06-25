@@ -914,6 +914,11 @@ class Paso5Terminal(QWidget):
 
 
 
+    def _refresh_urgencia_stock_banner(self):
+        activo = bool(config.get("opt_stock_negativo", False))
+        if hasattr(self, "urgencia_stock_banner"):
+            self.urgencia_stock_banner.set_active(activo)
+
     def refresh_terminal_title(self):
         title = config.get('business_name', 'Punto de Venta [20.09.02]')
         self.lbl_terminal_title.setText(title)
@@ -1017,6 +1022,7 @@ class Paso5Terminal(QWidget):
         # Recargar título y barra de estado dinámicamente
         self.refresh_terminal_title()
         self.refresh_status_bar()
+        self._refresh_urgencia_stock_banner()
         
         # 2. Actualizar ítems en la tabla
         for i in range(self.tabla.rowCount()):
@@ -1145,6 +1151,14 @@ class Paso5Terminal(QWidget):
         self.lbl_stock_alert.setStyleSheet("color: #D97706; font-weight: bold; font-size: 14px; border: none;")
         sa_lay.addWidget(self.lbl_stock_alert)
         self.main_layout.addWidget(self.stock_alert_bar)
+
+        from src.shared.urgencia_stock_banner import UrgenciaStockBanner
+        self.urgencia_stock_banner = UrgenciaStockBanner(
+            self,
+            "🚨 URGENCIA ACTIVA — Venta permitida SIN STOCK (desactívelo en Admin → Inventario)",
+        )
+        self.main_layout.addWidget(self.urgencia_stock_banner)
+        self._refresh_urgencia_stock_banner()
 
         
         # Inicializar barra de estado con datos reales
@@ -2782,6 +2796,12 @@ class Paso5Terminal(QWidget):
         
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        from src.config import config as _c
+        _c._load_config()
+        self._refresh_urgencia_stock_banner()
 
     def keyPressEvent(self, event):
         k = event.key()

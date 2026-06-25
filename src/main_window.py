@@ -23,12 +23,25 @@ _TERMINAL_MIN_W = 1280
 _TERMINAL_MIN_H = 720
 
 
+def _terminal_window_sizes():
+    try:
+        from src.utils.qt_dpi import scaled_size
+
+        return (
+            *scaled_size(_TERMINAL_REF_W, _TERMINAL_REF_H),
+            *scaled_size(_TERMINAL_MIN_W, _TERMINAL_MIN_H),
+        )
+    except Exception:
+        return _TERMINAL_REF_W, _TERMINAL_REF_H, _TERMINAL_MIN_W, _TERMINAL_MIN_H
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Cobro Fácil")
-        self.resize(_TERMINAL_REF_W, _TERMINAL_REF_H)
-        self.setMinimumSize(_TERMINAL_MIN_W, _TERMINAL_MIN_H)
+        ref_w, ref_h, min_w, min_h = _terminal_window_sizes()
+        self.resize(ref_w, ref_h)
+        self.setMinimumSize(min_w, min_h)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget); self.main_layout.setContentsMargins(0, 0, 0, 0)

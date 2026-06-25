@@ -4,6 +4,10 @@ import os
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
+
+configure_process_dpi()
+
 import traceback
 import threading
 import time
@@ -14,6 +18,8 @@ sys.argv.append('--disable-gpu')
 sys.argv.append('--disable-software-rasterizer')
 
 from PyQt5.QtCore import Qt, QTimer, QCoreApplication
+
+configure_qt_application_attributes()
 # Vital: configurar antes de importar QApplication y QtWebEngineWidgets
 QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
 

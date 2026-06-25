@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
     QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QThread
+from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt5.QtGui import QColor, QFont, QBrush
 
 try:
@@ -780,6 +780,12 @@ class CatalogoProductos(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
+        from src.config import config
+        from src.shared.urgencia_stock_banner import UrgenciaStockBanner
+
+        self._urgencia_banner = UrgenciaStockBanner(self)
+        root.addWidget(self._urgencia_banner)
+
         # ── Barra de filtros ─────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
         fb.setStyleSheet("QFrame{border-bottom:1px solid #cbd5e1;}")
@@ -808,8 +814,26 @@ class CatalogoProductos(QWidget):
         fl.addWidget(self.txt_buscar)
         fl.addSpacing(15)
         fl.addWidget(lbl_dep); fl.addWidget(self.cmb_depto)
+        fl.addSpacing(20)
+
+        self.chk_venta_sin_stock = QCheckBox("🚨 Urgencia: vender sin stock")
+        self.chk_venta_sin_stock.setToolTip(
+            "Solo para emergencias. El cajero podrá vender aunque no haya existencia "
+            "y se mostrará una alerta parpadeante mientras esté activo."
+        )
+        self.chk_venta_sin_stock.setStyleSheet(
+            "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
+            "border: 1px solid #FECACA; border-radius: 6px; background: #FFF7ED; }"
+            "QCheckBox::indicator { width: 18px; height: 18px; }"
+        )
+        self.chk_venta_sin_stock.setChecked(bool(config.get("opt_stock_negativo", False)))
+        self.chk_venta_sin_stock.toggled.connect(self._toggle_venta_sin_stock)
+        fl.addWidget(self.chk_venta_sin_stock)
+
         fl.addStretch()
         root.addWidget(fb)
+
+        self._sync_urgencia_banner()
 
         # ── Tabla ────────────────────────────────────────
         self.tabla = QTableWidget()
@@ -883,6 +907,52 @@ class CatalogoProductos(QWidget):
 
         self.tabla.itemSelectionChanged.connect(self._actualizar_sel)
         self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
+
+    def _sync_urgencia_banner(self):
+        activo = bool(self.chk_venta_sin_stock.isChecked())
+        self._urgencia_banner.set_active(activo)
+        self.chk_venta_sin_stock.setStyleSheet(
+            "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
+            "border: 2px solid #DC2626; border-radius: 6px; background: #FEE2E2; }"
+            "QCheckBox::indicator { width: 18px; height: 18px; }"
+            if activo
+            else "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
+            "border: 1px solid #FECACA; border-radius: 6px; background: #FFF7ED; }"
+            "QCheckBox::indicator { width: 18px; height: 18px; }"
+        )
+
+    def _toggle_venta_sin_stock(self, checked: bool):
+        from src.config import config
+
+        if checked:
+            r = QMessageBox.warning(
+                self,
+                "Modo urgencia — vender sin stock",
+                "Estás activando una excepción a las reglas de inventario.\n\n"
+                "• El cajero podrá vender productos sin existencia.\n"
+                "• Habrá una alerta PARPADEANTE en inventario y en el terminal.\n\n"
+                "Desactivalo cuando termine la urgencia.",
+                QMessageBox.Ok | QMessageBox.Cancel,
+                QMessageBox.Cancel,
+            )
+            if r != QMessageBox.Ok:
+                self.chk_venta_sin_stock.blockSignals(True)
+                self.chk_venta_sin_stock.setChecked(False)
+                self.chk_venta_sin_stock.blockSignals(False)
+                self._sync_urgencia_banner()
+                return
+
+        config.set("opt_stock_negativo", bool(checked))
+        self._sync_urgencia_banner()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        from src.config import config
+
+        self.chk_venta_sin_stock.blockSignals(True)
+        self.chk_venta_sin_stock.setChecked(bool(config.get("opt_stock_negativo", False)))
+        self.chk_venta_sin_stock.blockSignals(False)
+        self._sync_urgencia_banner()
 
     def _cargar_deptos(self):
         self.cmb_depto.blockSignals(True)
