@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import (
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
     QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox
 )
-from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal
-from PyQt5.QtGui import QColor, QFont
+from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
+from PyQt5.QtGui import QColor, QFont, QPen, QPainter
 from datetime import datetime
 import time
 import logging
@@ -96,6 +96,58 @@ class DialogoAtencion(QDialog):
             self.reject()
         else:
             super().keyPressEvent(event)
+
+SCAN_ROW_BG = "#EFF6FF"
+NAV_ROW_BORDER = "#F59E0B"
+
+
+class NavRowBorderOverlay(QWidget):
+    """Marco naranja flotante: no se ancla a celdas, sigue la fila activa con flechas."""
+    def __init__(self, tabla):
+        super().__init__(tabla.viewport())
+        self.tabla = tabla
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WA_NoSystemBackground)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.hide()
+
+    def _sync_geometry(self):
+        vp = self.tabla.viewport()
+        if vp:
+            self.setGeometry(vp.rect())
+
+    def sync_and_repaint(self):
+        self._sync_geometry()
+        t = self.tabla
+        if t.hasFocus() and t.currentRow() >= 0:
+            self.show()
+            self.raise_()
+            self.update()
+        else:
+            self.hide()
+
+    def paintEvent(self, event):
+        t = self.tabla
+        if not t.hasFocus() or t.currentRow() < 0:
+            return
+        model = t.model()
+        if model is None or t.columnCount() <= 0:
+            return
+        row = t.currentRow()
+        r0 = t.visualRect(model.index(row, 0))
+        rN = t.visualRect(model.index(row, t.columnCount() - 1))
+        if r0.width() <= 0 or rN.width() <= 0:
+            return
+        rect = QRect(r0.topLeft(), rN.bottomRight()).adjusted(2, 2, -2, -2)
+        if not self.rect().intersects(rect):
+            return
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(QPen(QColor(NAV_ROW_BORDER), 3))
+        p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(rect, 6, 6)
+        p.end()
+
 
 class DialogoEditarCantidad(QDialog):
     def __init__(self, cant_actual, nombre, parent=None):
@@ -978,9 +1030,9 @@ class Paso5Terminal(QWidget):
                     nombre = p['nombre']
                 
                 self.tabla.item(i, 1).setText(nombre)
-                self.tabla.item(i, 2).setText(f"{p_final:.2f}")
-                self.tabla.item(i, 4).setText(f"{desc:.2f}")
-                self.tabla.item(i, 5).setText(f"{cant * p_final:.2f}")
+                self.tabla.item(i, 2).setText(fmt_moneda_sin_centavos(p_final))
+                self.tabla.item(i, 4).setText(fmt_moneda_sin_centavos(desc))
+                self.tabla.item(i, 5).setText(fmt_moneda_sin_centavos(cant * p_final))
                 self._reaplicar_estilo_fila(i)
         
         self.actualizar_totales()
@@ -1123,8 +1175,8 @@ class Paso5Terminal(QWidget):
                 background-color: #F1F5F9;
             }
             QTableWidget::item:selected {
-                background-color: #1E3A8A; 
-                color: #FFFFFF;
+                background-color: #EFF6FF;
+                color: #1E3A8A;
                 font-weight: 900;
             }
             QHeaderView::section { 
@@ -1155,6 +1207,13 @@ class Paso5Terminal(QWidget):
         self.tabla.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tabla.installEventFilter(self) # BINDING INDUSTRIAL PARA ENTER EN LA TABLA
+        self._nav_border_overlay = NavRowBorderOverlay(self.tabla)
+        self.tabla.viewport().installEventFilter(self)
+        self.tabla.verticalScrollBar().valueChanged.connect(lambda *_: self._sync_nav_border_overlay())
+        self.tabla.horizontalScrollBar().valueChanged.connect(lambda *_: self._sync_nav_border_overlay())
+        self.tabla.currentCellChanged.connect(self._on_tabla_nav_changed)
+        self.tabla.itemSelectionChanged.connect(self._on_tabla_nav_row_only)
+        self._nav_prev_row = -1
         central_layout.addWidget(self.tabla)
         
         self.main_layout.addWidget(self.central_frame)
@@ -1602,8 +1661,8 @@ class Paso5Terminal(QWidget):
                         border-top-right-radius: 12px;
                         font-size: 19px; 
                         font-weight: 800; 
-                        selection-background-color: #334155;
-                        selection-color: #38BDF8; 
+                        selection-background-color: #EFF6FF;
+                        selection-color: #1E3A8A; 
                         outline: none;
                     }
                     QTableWidget::item {
@@ -1614,8 +1673,8 @@ class Paso5Terminal(QWidget):
                         background-color: #334155;
                     }
                     QTableWidget::item:selected {
-                        background-color: #3B82F6; 
-                        color: #FFFFFF;
+                        background-color: #EFF6FF;
+                        color: #1E3A8A;
                         font-weight: 900;
                     }
                     QHeaderView::section { 
@@ -1734,8 +1793,8 @@ class Paso5Terminal(QWidget):
                         background-color: #F1F5F9;
                     }
                     QTableWidget::item:selected {
-                        background-color: #1E3A8A; 
-                        color: #FFFFFF;
+                        background-color: #EFF6FF;
+                        color: #1E3A8A;
                         font-weight: 900;
                     }
                     QHeaderView::section { 
@@ -1978,12 +2037,14 @@ class Paso5Terminal(QWidget):
                         self.tabla.setFocus()
                         self.tabla.selectRow(self.tabla.rowCount() - 1)
                         self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
+                        QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
                 elif key == Qt.Key_Up:
                     if self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
                         self.tabla.selectRow(self.tabla.rowCount() - 1)
                         self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
+                        QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
                 elif key in (Qt.Key_Return, Qt.Key_Enter):
                     # Si la lista de resultados está desplegada, procesamos el ítem seleccionado directamente
@@ -2006,7 +2067,11 @@ class Paso5Terminal(QWidget):
                     QTimer.singleShot(50, lambda: getattr(self, 'txt_scan', None) is not None and self.txt_scan.setFocus())
 
         elif obj == self.tabla:
-            if event.type() == QEvent.KeyPress:
+            if event.type() == QEvent.FocusOut:
+                QTimer.singleShot(0, self._sync_nav_border_overlay)
+            elif event.type() == QEvent.FocusIn:
+                QTimer.singleShot(0, self._sync_nav_border_overlay)
+            elif event.type() == QEvent.KeyPress:
                 if event.key() in (Qt.Key_Return, Qt.Key_Enter):
                     row = self.tabla.currentRow()
                     if row != -1:
@@ -2016,7 +2081,9 @@ class Paso5Terminal(QWidget):
                         dlg = DialogoEditarCantidad(cant_actual, nombre, self)
                         if dlg.exec_():
                             new_cant = dlg.get_value()
-                            self.tabla.item(row, 3).setText(f"{new_cant:.2f}")
+                            self.tabla.item(row, 3).setText(
+                                f"{new_cant:.2f}" if new_cant % 1 != 0 else f"{int(new_cant)}"
+                            )
                             
                             # Verificación dinámica de ofertas al ingresar con el Enter
                             p_id = self.tabla.item(row, 0).text()
@@ -2040,14 +2107,14 @@ class Paso5Terminal(QWidget):
                                         clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
                                         self.tabla.item(row, 1).setText(clean_name)
                                         
-                                self.tabla.item(row, 2).setText(f"{p_ap:.2f}")
-                                self.tabla.item(row, 4).setText(f"{desc_t:.2f}")
+                                self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
+                                self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                                 p_unit = p_ap
                             else:
-                                p_unit = float(self.tabla.item(row, 2).text())
+                                p_unit = parse_float_safe(self.tabla.item(row, 2).text())
                             
                             # Actualizar Subtotal
-                            self.tabla.item(row, 5).setText(f"{new_cant * p_unit:.2f}")
+                            self.tabla.item(row, 5).setText(fmt_moneda_sin_centavos(new_cant * p_unit))
                             self._reaplicar_estilo_fila(row)
                             self.actualizar_totales()
                         
@@ -2062,6 +2129,10 @@ class Paso5Terminal(QWidget):
                             self.actualizar_totales()
                         QTimer.singleShot(50, self.txt_scan.setFocus)
                     return True
+
+        elif obj is self.tabla.viewport():
+            if event.type() == QEvent.Resize:
+                QTimer.singleShot(0, self._sync_nav_border_overlay)
 
         return super().eventFilter(obj, event)
 
@@ -2752,6 +2823,7 @@ class Paso5Terminal(QWidget):
                 self.tabla.setFocus()
                 self.tabla.selectRow(self.tabla.rowCount() - 1)
                 self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
+                QTimer.singleShot(0, self._on_tabla_nav_row_only)
             return
 
         # Navegar en lista de resultados
@@ -2885,6 +2957,10 @@ class Paso5Terminal(QWidget):
                     return
                     
             # Permitir que las flechas naveguen por las casillas de la tabla de forma fluida
+            if k in (Qt.Key_Up, Qt.Key_Down):
+                super().keyPressEvent(event)
+                QTimer.singleShot(0, self._on_tabla_nav_row_only)
+                return
             super().keyPressEvent(event)
             return
 
@@ -3129,6 +3205,42 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
+    def _is_fila_navegacion(self, row):
+        return row >= 0 and self.tabla.hasFocus() and row == self.tabla.currentRow()
+
+    def _sync_nav_border_overlay(self):
+        if hasattr(self, "_nav_border_overlay"):
+            self._nav_border_overlay.sync_and_repaint()
+
+    def _repintar_filas_nav(self, *rows):
+        model = self.tabla.model()
+        if model is None:
+            return
+        for r in rows:
+            if r is None or r < 0:
+                continue
+            for c in range(self.tabla.columnCount()):
+                self.tabla.update(model.index(r, c))
+
+    def _on_tabla_nav_row_only(self):
+        curr = self.tabla.currentRow()
+        prev = getattr(self, "_nav_prev_row", -1)
+        if prev != curr:
+            self._on_tabla_nav_changed(curr, self.tabla.currentColumn(), prev, -1)
+
+    def _on_tabla_nav_changed(self, current_row=-1, current_col=-1, prev_row=-1, prev_col=-1):
+        if current_row < 0:
+            current_row = self.tabla.currentRow()
+        if prev_row < 0 and hasattr(self, "_nav_prev_row"):
+            prev_row = self._nav_prev_row
+        self._nav_prev_row = current_row
+
+        for i in range(self.tabla.rowCount()):
+            self._reaplicar_estilo_fila(i)
+
+        self._repintar_filas_nav(prev_row, current_row)
+        self._sync_nav_border_overlay()
+
     def _reaplicar_estilo_fila(self, row):
         try:
             desc_val = parse_float_safe(self.tabla.item(row, 4).text())
@@ -3137,12 +3249,13 @@ class Paso5Terminal(QWidget):
             
         is_oferta = desc_val > 0
         is_ultimo = (row == getattr(self, "last_active_row", -1))
+        is_nav = self._is_fila_navegacion(row)
+        activa = is_ultimo or is_nav
         
-        # Fondo premium de fila
-        if is_ultimo:
-            bg_color = QColor("#EFF6FF") # Hermoso fondo azul real suave para el último escaneado
+        if activa:
+            bg_color = QColor(SCAN_ROW_BG)
         elif is_oferta:
-            bg_color = QColor("#FFEDD5") # Naranja suave para ofertas
+            bg_color = QColor("#FFEDD5")
         else:
             bg_color = QColor("#FFFFFF") if row % 2 == 0 else QColor("#F8FAFC")
             
@@ -3150,27 +3263,24 @@ class Paso5Terminal(QWidget):
             it = self.tabla.item(row, col)
             if not it: continue
             
-            # Reset/Apply background (El subtotal tiene fondo verde agua permanente tipo columna Excel)
             if col == 5:
-                it.setBackground(QColor("#D1FAE5") if is_ultimo else QColor("#F0FAF4")) # Verde agua destacado o pastel Excel
+                it.setBackground(QColor("#D1FAE5") if activa else QColor("#F0FAF4"))
             else:
                 it.setBackground(bg_color)
             
-            # Reapply font settings (El último escaneado tiene letra más grande)
             f = it.font()
             f.setBold(True)
-            f.setPointSize(20 if is_ultimo else 16) # 20pt para fila activa y 16pt para el resto
+            f.setPointSize(20 if activa else 16)
             it.setFont(f)
             
-            # Reapply foreground colors based on column type
             if col == 1:
-                it.setForeground(QColor("#1E3A8A") if is_ultimo else (QColor("#C2410C") if is_oferta else QColor("#1E3A8A")))
+                it.setForeground(QColor("#1E3A8A") if activa else (QColor("#C2410C") if is_oferta else QColor("#1E3A8A")))
             elif col == 4:
-                it.setForeground(QColor("#1E3A8A") if is_ultimo else (QColor("#EA580C") if is_oferta else QColor("#EF4444")))
+                it.setForeground(QColor("#1E3A8A") if activa else (QColor("#EA580C") if is_oferta else QColor("#EF4444")))
             elif col == 5:
-                it.setForeground(QColor("#047857")) # Verde esmeralda oscuro
+                it.setForeground(QColor("#047857"))
             else:
-                it.setForeground(QColor("#1E3A8A") if is_ultimo else (QColor("#C2410C") if is_oferta else QColor("#1E293B")))
+                it.setForeground(QColor("#1E3A8A") if activa else (QColor("#C2410C") if is_oferta else QColor("#1E293B")))
 
 
 
