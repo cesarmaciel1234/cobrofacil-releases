@@ -76,6 +76,17 @@ jobs:
       - name: Preparar MariaDB portable
         run: python 01_Compiladores_y_Ejecutables/prepare_mariadb_release.py
 
+      - name: Configurar reporte automático de errores
+        shell: pwsh
+        env:
+          REPORT_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
+        run: |
+          $cfg = @{
+            token = $env:REPORT_TOKEN
+            repo  = "cesarmaciel1234/cobrofacil-releases"
+          } | ConvertTo-Json -Compress
+          Set-Content -Path "dist/CobroFacil_POS/error_report.json" -Value $cfg -Encoding utf8
+
       - name: Empaquetar release (.zip)
         run: python 01_Compiladores_y_Ejecutables/package_release_zip.py
 

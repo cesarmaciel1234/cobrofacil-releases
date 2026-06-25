@@ -7,6 +7,8 @@ import urllib.error
 import subprocess
 import ctypes
 import glob
+import shutil
+import stat
 
 try:
     import win32com.client
@@ -26,6 +28,114 @@ GITHUB_RELEASE_ZIP_URL = (
 GITHUB_RELEASE_ZIP_NAME = "CobroFacil_POS_Release.zip"
 SHORTCUT_NAME = "Cobro Fácil POS.lnk"
 SHORTCUT_LABEL = "Cobro Fácil POS"
+LEGACY_INSTALL_DIR_NAMES = (
+    "CobroFacil_POS_Install",
+    "CobroFacilPOS_Install",
+    "CajaFacil_POS_Install",
+)
+
+
+def _kill_blocking_processes():
+    """Cierra POS y MariaDB portable para liberar archivos bloqueados."""
+    for exe in ("CobroFacil_POS.exe", "CobroFacilPOS_PRO.exe", "mysqld.exe"):
+        subprocess.run(
+            f"taskkill /f /im {exe}",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    try:
+        import psutil
+
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                cmd = " ".join(proc.info.get("cmdline") or [])
+                name = (proc.info.get("name") or "").lower()
+                if "python" in name and "main.py" in cmd:
+                    proc.kill()
+            except Exception:
+                pass
+    except ImportError:
+        pass
+
+
+def _rmtree_force(path):
+    """Borra una carpeta aunque haya archivos de solo lectura (típico de MariaDB)."""
+    if not os.path.isdir(path):
+        return
+
+    def _onerror(func, p, _exc_info):
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+
+    try:
+        shutil.rmtree(path, onerror=_onerror)
+    except Exception as exc:
+        _log_installer_error(f"No se pudo borrar {path}: {exc}")
+
+
+def _legacy_install_dirs(primary_install_dir):
+    """Rutas conocidas de instalaciones viejas en el perfil del usuario."""
+    profile = os.environ.get("USERPROFILE", "")
+    dirs = []
+    seen = set()
+    candidates = [primary_install_dir]
+    candidates.extend(os.path.join(profile, name) for name in LEGACY_INSTALL_DIR_NAMES)
+    for path in candidates:
+        norm = os.path.normcase(os.path.abspath(path))
+        if norm not in seen:
+            seen.add(norm)
+            dirs.append(path)
+    return dirs
+
+
+def _cleanup_installer_temp_files():
+    """Elimina ZIPs y restos temporales de instalaciones anteriores."""
+    temp_dir = os.environ.get("TEMP", "")
+    if not temp_dir:
+        return
+
+    for pattern in ("*CobroFacil*", "decrypted_installer_payload_temp.zip"):
+        for path in glob.glob(os.path.join(temp_dir, pattern)):
+            try:
+                if os.path.isdir(path):
+                    _rmtree_force(path)
+                elif os.path.isfile(path):
+                    os.remove(path)
+            except OSError as exc:
+                _log_installer_error(f"Temp sin borrar ({path}): {exc}")
+
+
+def _absolute_fresh_install_cleanup(install_dir, progress_callback=None):
+    """
+    Limpieza total antes de una instalación nueva:
+    procesos, carpetas viejas, temporales y accesos directos obsoletos.
+    """
+    def emit(percent, message):
+        if progress_callback:
+            progress_callback(percent, message)
+
+    emit(3, "Cerrando Cobro Fácil POS y base de datos...")
+    _kill_blocking_processes()
+    time.sleep(3)
+
+    emit(6, "Eliminando instalación anterior por completo...")
+    removed_dirs = []
+    for path in _legacy_install_dirs(install_dir):
+        if os.path.isdir(path):
+            _rmtree_force(path)
+            removed_dirs.append(path)
+    if removed_dirs:
+        _log_installer_error("Limpieza absoluta — carpetas eliminadas:")
+        for path in removed_dirs:
+            _log_installer_error(f"  - {path}")
+
+    emit(8, "Limpiando temporales y accesos directos viejos...")
+    _cleanup_installer_temp_files()
+    _remove_old_shortcuts()
 
 
 def _local_zip_candidates(zip_filename):
@@ -162,6 +272,60 @@ def _log_installer_error(message):
         pass
 
 
+def _report_installer_failure_to_github(message: str):
+    """Crea un Issue en GitHub si hay token configurado (CI / error_report.json)."""
+    try:
+        import json as _json
+        import socket as _socket
+
+        token = os.environ.get("COBROFACIL_GITHUB_TOKEN", "").strip()
+        repo = "cesarmaciel1234/cobrofacil-releases"
+        bases = []
+        if getattr(sys, "frozen", False):
+            bases.append(os.path.dirname(sys.executable))
+        bases.append(os.path.dirname(os.path.abspath(__file__)))
+        install = os.path.join(os.environ.get("USERPROFILE", ""), "CobroFacil_POS_Install")
+        if os.path.isdir(install):
+            bases.append(install)
+        for base in bases:
+            cfg_path = os.path.join(base, "error_report.json")
+            if not os.path.isfile(cfg_path):
+                continue
+            with open(cfg_path, encoding="utf-8") as f:
+                cfg = _json.load(f)
+            if isinstance(cfg, dict):
+                token = token or str(cfg.get("token", "") or "").strip()
+                repo = str(cfg.get("repo", repo) or repo).strip()
+        if not token:
+            return
+
+        host = _socket.gethostname()
+        title = f"[Instalador ERROR] {host} — {str(message)[:80]}"
+        body = (
+            "## Fallo del instalador web\n\n"
+            f"- **Equipo:** {host}\n"
+            f"- **Mensaje:** {message}\n\n"
+            f"Log local: `%TEMP%\\web_installer_error.log`"
+        )
+        payload = _json.dumps(
+            {"title": title[:200], "body": body[:8000], "labels": ["auto-report", "installer"]}
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{repo}/issues",
+            data=payload,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "User-Agent": "CobroFacil-Installer-ErrorReporter",
+            },
+        )
+        urllib.request.urlopen(req, timeout=20)
+    except Exception as exc:
+        _log_installer_error(f"github report falló: {exc}")
+
+
 def _desktop_paths():
     """Rutas reales del escritorio (registro Windows + OneDrive + fallbacks)."""
     paths = []
@@ -218,25 +382,17 @@ class InstallWorker(QThread):
 
     def run(self):
         try:
-            self.progress_update.emit(5, "Preparando entorno y cerrando instancias previas...")
-            import subprocess
-            subprocess.run("taskkill /f /im CobroFacil_POS.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run("taskkill /f /im CobroFacilPOS_PRO.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            # Add dynamic process killer for running python scripts
-            import psutil
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                try:
-                    cmd = ' '.join(proc.info.get('cmdline') or [])
-                    if ('python' in proc.info.get('name', '').lower() and 'main.py' in cmd):
-                        proc.kill()
-                except Exception:
-                    pass
-                    
-            time.sleep(3)
-
             if self.is_update_mode:
-                self.progress_update.emit(8, "Modo Actualización iniciado...")
+                self.progress_update.emit(5, "Preparando entorno y cerrando instancias previas...")
+                _kill_blocking_processes()
+                time.sleep(3)
+                self.progress_update.emit(8, "Modo actualización: conservando datos existentes...")
                 time.sleep(1)
+            else:
+                _absolute_fresh_install_cleanup(
+                    self.install_dir,
+                    progress_callback=self.progress_update.emit,
+                )
                 
             # 1. Buscar si el ZIP está localmente
             base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -326,10 +482,11 @@ class InstallWorker(QThread):
                     return
                 time.sleep(1)
 
-            # 2. Extracción
+            # 2. Extracción (carpeta limpia solo en instalación nueva)
             self.progress_update.emit(65, "Extrayendo sistema base...")
-            if not os.path.exists(self.install_dir):
-                os.makedirs(self.install_dir)
+            if not self.is_update_mode and os.path.isdir(self.install_dir):
+                _rmtree_force(self.install_dir)
+            os.makedirs(self.install_dir, exist_ok=True)
 
             errors = self._extract_zip(zip_to_extract, self.install_dir)
             if errors:
@@ -478,7 +635,14 @@ class InstallerWindow(QWidget):
         self.worker.start()
 
     def update_ui(self, val, text):
-        js_code = f"window.actualizar_interfaz({val}, '{text}');"
+        safe = (
+            str(text)
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\r", " ")
+            .replace("\n", " ")
+        )
+        js_code = f"window.actualizar_interfaz({val}, '{safe}');"
         self.browser.page().runJavaScript(js_code)
 
     def on_finished(self, success, msg, target_exe, shortcut_path):
@@ -516,6 +680,7 @@ class InstallerWindow(QWidget):
                     os.startfile(target_exe)
                 self.close()
         else:
+            _report_installer_failure_to_github(msg)
             QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\n{msg}")
             self.close()
 

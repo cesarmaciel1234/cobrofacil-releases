@@ -40,5 +40,21 @@ def setup_logger(name: str = "PunPro") -> logging.Logger:
 
     return logger
 
+def setup_github_reporting():
+    """Activa envío automático de errores a GitHub Issues."""
+    try:
+        from src.services.github_error_reporter import install_github_error_handler, flush_pending_reports
+        import threading
+
+        install_github_error_handler(logger)
+        threading.Thread(
+            target=flush_pending_reports,
+            name="GitHubErrorStartupFlush",
+            daemon=True,
+        ).start()
+    except Exception:
+        pass
+
 # Global logger instance
 logger = setup_logger()
+setup_github_reporting()

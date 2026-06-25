@@ -20,10 +20,12 @@ if exist "build" rmdir /s /q "build"
 if exist "dist" rmdir /s /q "dist"
 
 echo Construyendo un Setup.exe ultra ligero (Un solo archivo)...
-pyinstaller --noconfirm --onefile --windowed ^
+python -m PyInstaller --noconfirm --onefile --windowed ^
   --name "Setup_CobroFacil_Web" ^
   --hidden-import "win32com" ^
   --hidden-import "win32com.client" ^
+  --hidden-import "psutil" ^
+  --hidden-import "PyQt5.QtWebEngineWidgets" ^
   --icon=NONE ^
   --add-data "web;web" ^
   Instalador_Web.py

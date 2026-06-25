@@ -26,6 +26,16 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
         logger.error("Excepción global no capturada:", exc_info=(exc_type, exc_value, exc_traceback))
         with open("crash.log", "w", encoding="utf-8") as f:
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=f)
+        try:
+            from src.services.github_error_reporter import queue_error_report
+            queue_error_report(
+                f"{exc_type.__name__}: {exc_value}",
+                level="CRITICAL",
+                source="global_excepthook",
+                exc_info=(exc_type, exc_value, exc_traceback),
+            )
+        except Exception:
+            pass
     except: pass
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 sys.excepthook = global_excepthook

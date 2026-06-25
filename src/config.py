@@ -40,7 +40,10 @@ class Config:
         "cierre_auto_activo": True,
         "stock_alerta_activa": True,
         "jefe_db_path": "",
-        "tasa_usd": 1200.0
+        "tasa_usd": 1200.0,
+        "github_error_report": True,
+        "github_report_repo": "cesarmaciel1234/cobrofacil-releases",
+        "github_report_token": "",
     }
 
     _instance = None

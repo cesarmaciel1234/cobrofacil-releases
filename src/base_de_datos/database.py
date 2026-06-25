@@ -847,6 +847,8 @@ class DatabaseManager:
             
             cursor.execute(insert_query, ('admin', h_admin, 'admin'))
             cursor.execute(insert_query, ('cajero', h_cajero, 'cajero'))
+            h_jefe = hashlib.sha256("jefe".encode()).hexdigest()
+            cursor.execute(insert_query, ('jefe', h_jefe, 'jefe'))
             
             conn.commit()
             if getattr(self, "db_engine_type", "sqlite") == "sqlite":

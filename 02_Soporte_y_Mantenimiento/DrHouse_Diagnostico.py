@@ -1,4 +1,5 @@
 import os
+import sys
 import sqlite3
 import psutil
 import datetime
@@ -116,30 +117,11 @@ def main():
             
         elif opc == "2":
             print("\n--- RESCATE DE CONTRASEÑA ---")
-            print("Se restablecera la contraseña del usuario 'admin' a 'admin1234'.")
-            conf = input("Desea continuar? (s/n): ")
-            if conf.lower().strip() == 's':
-                try:
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-                    # The password might be hashed, but let's try to update it to "admin1234"
-                    # This relies on the system having a way to authenticate "admin1234" or raw strings.
-                    # We assume it uses bcrypt, we will provide the bcrypt hash for 'admin1234'
-                    # Hash of 'admin1234' is typically $2b$12$...
-                    # If we don't have bcrypt here, we can't easily hash. Wait, TPV uses bcrypt or plain?
-                    # I'll just write 'admin1234' and it might be checked in plain or hashed by TPV login.
-                    # For safety, I'll update plain text, and if login requires hash, they will fix it later.
-                    # Wait, the login uses `bcrypt.checkpw`. I should import bcrypt if available to hash.
-                    import bcrypt
-                    hashed = bcrypt.hashpw(b"admin1234", bcrypt.gensalt())
-                    cursor.execute("UPDATE usuarios SET password = ? WHERE rol = 'admin'", (hashed,))
-                    conn.commit()
-                    print(" [OK] Contraseña restablecida exitosamente. Inicie sesion con 'admin1234'.")
-                except Exception as e:
-                    print(f" [ERROR] No se pudo restablecer la contraseña: {e}")
-                finally:
-                    try: conn.close()
-                    except: pass
+            script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Restaurar_Contraseña.py")
+            if not os.path.isfile(script):
+                print(f" [ERROR] No se encuentra: {script}")
+                continue
+            os.system(f'"{sys.executable}" "{script}"')
                     
         elif opc == "3":
             break
