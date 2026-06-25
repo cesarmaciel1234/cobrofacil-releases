@@ -1,7 +1,9 @@
 """Candados de perfil: evita dos sesiones del mismo rol en la misma PC."""
 
 import os
+import sys
 import atexit
+import subprocess
 
 from src.utils.paths import get_base_path
 
@@ -14,13 +16,46 @@ def _lock_path(role: str) -> str:
 
 
 def _pid_alive(pid: int) -> bool:
+    """Comprueba si un PID sigue activo. En Windows no usa os.kill (falla en .exe)."""
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return False
     if pid <= 0:
         return False
+
+    if sys.platform == "win32":
+        try:
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            result = subprocess.run(
+                ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
+                capture_output=True,
+                text=True,
+                creationflags=flags,
+                timeout=5,
+            )
+            output = f"{result.stdout or ''}{result.stderr or ''}"
+            if "No tasks are running" in output:
+                return False
+            return str(pid) in output
+        except Exception:
+            return False
+
     try:
         os.kill(pid, 0)
         return True
     except OSError:
         return False
+
+
+def _purge_stale_lock(path: str, other_pid: int) -> None:
+    """Quita candados de procesos que ya no existen."""
+    if _pid_alive(other_pid):
+        return
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 class PerfilLocker:
@@ -36,9 +71,20 @@ class PerfilLocker:
             with open(path, "r", encoding="utf-8") as f:
                 other = int(f.read().strip() or "0")
         except Exception:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
             return False
+
         pid = os.getpid()
-        return other != pid and _pid_alive(other)
+        if other == pid:
+            return False
+        if _pid_alive(other):
+            return True
+
+        _purge_stale_lock(path, other)
+        return False
 
     @classmethod
     def lock_profile(cls, role: str) -> bool:
@@ -54,10 +100,7 @@ class PerfilLocker:
                 other = 0
             if other != pid and _pid_alive(other):
                 return False
-            try:
-                os.remove(path)
-            except OSError:
-                return False
+            _purge_stale_lock(path, other)
 
         try:
             with open(path, "w", encoding="utf-8") as f:

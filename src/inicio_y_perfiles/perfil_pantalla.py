@@ -359,6 +359,12 @@ class PerfilPantalla(QDialog):
         self.btn_carteleria.set_active(self.selected_index == 3)
 
     def _check_locked_profiles(self):
+        try:
+            self._apply_locked_profiles_ui()
+        except Exception:
+            self._roles_bloqueados = set()
+
+    def _apply_locked_profiles_ui(self):
         from src.utils.candados import PerfilLocker
         
         # Diccionario para mapear roles a sus botones respectivos

@@ -62,7 +62,12 @@ jobs:
             --hidden-import "openpyxl" `
             --hidden-import "win32com" `
             --hidden-import "win32com.client" `
+            --collect-submodules "src.admin" `
+            --collect-submodules "src.jefe" `
+            --collect-submodules "src.carteleria" `
+            --collect-submodules "src.services" `
             --add-data "src/styles.qss;src/" `
+            --add-data "src/styles_light.qss;src/" `
             main.py
 
       # -----------------------------------------------------------------------

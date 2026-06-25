@@ -15,12 +15,19 @@ from src.base_de_datos.database import db_manager
 # Cache de temas QSS — se leen UNA sola vez del disco y se reutilizan
 _QSS_CACHE: dict = {}
 
+# Terminal TPV (pantalla cajero): referencia y mínimo para monitores chicos
+_TERMINAL_REF_W = 1366
+_TERMINAL_REF_H = 768
+_TERMINAL_MIN_W = 1280
+_TERMINAL_MIN_H = 720
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Cobro Fácil")
-        self.resize(1240, 820)
+        self.resize(_TERMINAL_REF_W, _TERMINAL_REF_H)
+        self.setMinimumSize(_TERMINAL_MIN_W, _TERMINAL_MIN_H)
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget); self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -38,6 +45,7 @@ class MainWindow(QMainWindow):
         # El botón flotante desciende: Jefe → Admin → Cajero
         self._came_from_cajero: bool = False
         self._nav_stack: list = []   # alias por retrocompatibilidad
+        self._kiosk_mode: bool = False
 
         # Inicializar cajón y cargar pantallas y atajos
         from src.hardware.cash_drawer import drawer_manager
@@ -538,14 +546,18 @@ class MainWindow(QMainWindow):
             s.request_logout.connect(self._logout_to_selector)
 
     def _init_shortcuts(self):
-        # F11: ÚNICO atajo para intervención de supervisor / pantalla completa
-        QShortcut(QKeySequence("F11"), self).activated.connect(self.handle_f11_global)
-        
-        # F3: Historial rápido (Cajero) o Reportes (Admin)
-        QShortcut(QKeySequence("F3"), self).activated.connect(self._handle_f3_logic)
-        
-        # F12: Cierre Z (Admin) o Cierre de Caja (Cajero) - BLINDADO
-        QShortcut(QKeySequence("F12"), self).activated.connect(self._handle_f12_logic)
+        # ApplicationShortcut: siguen activos en modo kiosco / fullscreen
+        self._sc_f11 = QShortcut(QKeySequence(Qt.Key_F11), self)
+        self._sc_f11.setContext(Qt.ApplicationShortcut)
+        self._sc_f11.activated.connect(self.handle_f11_global)
+
+        self._sc_f3 = QShortcut(QKeySequence(Qt.Key_F3), self)
+        self._sc_f3.setContext(Qt.ApplicationShortcut)
+        self._sc_f3.activated.connect(self._handle_f3_logic)
+
+        self._sc_f12 = QShortcut(QKeySequence(Qt.Key_F12), self)
+        self._sc_f12.setContext(Qt.ApplicationShortcut)
+        self._sc_f12.activated.connect(self._handle_f12_logic)
 
     def _handle_f3_logic(self):
         if self.stacked_widget.currentIndex() == 1: # Estamos en Ventas
@@ -578,6 +590,12 @@ class MainWindow(QMainWindow):
 
         El botón flotante desciende paso a paso el camino inverso.
         """
+        import time
+        now = time.monotonic()
+        if now - getattr(self, "_last_f11_ts", 0.0) < 0.4:
+            return
+        self._last_f11_ts = now
+
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
         current = self.stacked_widget.currentIndex()
 
@@ -589,7 +607,7 @@ class MainWindow(QMainWindow):
             dlg = LoginPantalla(role="admin")
             if dlg.exec_():
                 from src.cajero.paso5_terminal import CajeroActivo
-                from src.hardware.printer import printer_manager
+                from src.hardware.cash_drawer import drawer_manager
                 supervisor = config.current_user.get('username', 'admin')
                 cajero     = CajeroActivo.nombre
                 db_manager.execute_non_query(
@@ -597,8 +615,7 @@ class MainWindow(QMainWindow):
                     " VALUES ('INTERVENCION', 0, ?, ?)",
                     (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
                 )
-                self.pantalla_ventas._apertura_autorizada = True
-                printer_manager.abrir_cajon()
+                drawer_manager.abrir(autorizada=True)
                 # Marcar que la escalada vino del cajero
                 self._came_from_cajero  = True
                 self._supervisor_mode   = True
@@ -635,6 +652,29 @@ class MainWindow(QMainWindow):
 
 
 
+    def _show_terminal_window(self):
+        """Terminal TPV — kiosco: pantalla completa sin recrear la ventana (F11 intacto)."""
+        self._kiosk_mode = True
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            self.setGeometry(screen.geometry())
+        if not self.isFullScreen():
+            self.showFullScreen()
+        self.raise_()
+        self.activateWindow()
+
+    def _restore_office_window(self):
+        """Sale del kiosco cajero → ventana maximizada con barra (admin / jefe)."""
+        self._kiosk_mode = False
+        if self.isFullScreen():
+            self.showNormal()
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            self.setGeometry(screen.availableGeometry())
+        self.showMaximized()
+        self.raise_()
+        self.activateWindow()
+
     def switch_tab(self, index):
         """Navega a la pantalla indicada por su índice en el QStackedWidget.
 
@@ -662,7 +702,7 @@ class MainWindow(QMainWindow):
         if index == 1:
             self._supervisor_mode = False
             self.btn_flotante.hide()
-            self.showFullScreen()
+            self._show_terminal_window()
             # Mostrar chatbot solo en Terminal de Ventas SI fue activado por el usuario
             if self.chatbot_overlay is not None and self._chatbot_active:
                 self.chatbot_overlay.show()
@@ -671,6 +711,7 @@ class MainWindow(QMainWindow):
             if hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
                 self.pantalla_ventas.refresh_terminal_data()
         elif index == 21:
+            self._kiosk_mode = False
             self.btn_flotante.hide()
             
             # --- MODO BORDERLESS MAXIMIZED (PANTALLA SECUNDARIA) ---
@@ -716,8 +757,8 @@ class MainWindow(QMainWindow):
             if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
                 self.chatbot_overlay.cerrar_chat()  # Cerrar burbuja si quedó abierta
-                
-            self.showMaximized()
+
+            self._restore_office_window()
         
         # ── Lazy Loading: instanciar el widget si es la primera visita ───────
         if self.screens[index] is None:

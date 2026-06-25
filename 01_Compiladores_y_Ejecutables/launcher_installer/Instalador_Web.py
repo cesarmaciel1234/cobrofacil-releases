@@ -3,18 +3,211 @@ import os
 import time
 import zipfile
 import urllib.request
+import urllib.error
 import subprocess
 import ctypes
 import glob
+
+try:
+    import win32com.client
+except ImportError:
+    win32com = None
 
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
+# Release CI: .github/workflows/release.yml → tag "latest"
+GITHUB_RELEASE_ZIP_URL = (
+    "https://github.com/cesarmaciel1234/cobrofacil-releases/"
+    "releases/download/latest/CobroFacil_POS_Release.zip"
+)
+GITHUB_RELEASE_ZIP_NAME = "CobroFacil_POS_Release.zip"
+SHORTCUT_NAME = "Cobro Fácil POS.lnk"
+SHORTCUT_LABEL = "Cobro Fácil POS"
+
+
+def _local_zip_candidates(zip_filename):
+    """ZIP embebido, junto al .exe del instalador o en la carpeta del script."""
+    paths = []
+    if getattr(sys, "frozen", False):
+        paths.append(os.path.join(os.path.dirname(sys.executable), zip_filename))
+        paths.append(os.path.join(sys._MEIPASS, zip_filename))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    paths.append(os.path.join(script_dir, zip_filename))
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        paths.append(os.path.join(meipass, zip_filename))
+    seen = set()
+    ordered = []
+    for path in paths:
+        norm = os.path.normcase(os.path.abspath(path))
+        if norm not in seen:
+            seen.add(norm)
+            ordered.append(path)
+    return ordered
+
+
+def _ps_escape(value):
+    return value.replace("'", "''")
+
+
+def _shortcut_directories():
+    """Escritorio (varias rutas Windows/OneDrive) y menú Inicio."""
+    dirs = []
+    profile = os.environ.get("USERPROFILE", "")
+    public = os.environ.get("PUBLIC", r"C:\Users\Public")
+    appdata = os.environ.get("APPDATA", "")
+    programdata = os.environ.get("PROGRAMDATA", r"C:\ProgramData")
+
+    for rel in (
+        "Desktop",
+        "Escritorio",
+        os.path.join("OneDrive", "Desktop"),
+        os.path.join("OneDrive", "Escritorio"),
+    ):
+        path = os.path.join(profile, rel)
+        if os.path.isdir(path):
+            dirs.append(path)
+
+    public_desktop = os.path.join(public, "Desktop")
+    if os.path.isdir(public_desktop):
+        dirs.append(public_desktop)
+
+    start_menu = os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs")
+    if os.path.isdir(start_menu):
+        dirs.append(start_menu)
+        dirs.append(os.path.join(start_menu, SHORTCUT_LABEL))
+
+    common_start = os.path.join(programdata, "Microsoft", "Windows", "Start Menu", "Programs")
+    if os.path.isdir(common_start):
+        dirs.append(common_start)
+        dirs.append(os.path.join(common_start, SHORTCUT_LABEL))
+
+    return dirs
+
+
+def _remove_old_shortcuts():
+    """Elimina accesos directos viejos o duplicados antes de crear uno nuevo."""
+    patterns = (
+        "*obro*Facil*.lnk",
+        "*aja*Facil*.lnk",
+        "*Cobro*Facil*.lnk",
+        "*Caja*Facil*.lnk",
+        "CajaFacil PRO.lnk",
+        SHORTCUT_NAME,
+    )
+    for directory in _shortcut_directories():
+        for pattern in patterns:
+            for path in glob.glob(os.path.join(directory, pattern)):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+
+
+def _create_lnk(lnk_path, target_exe):
+    directory = os.path.dirname(lnk_path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
+
+    target_exe = os.path.abspath(target_exe)
+    lnk_path = os.path.abspath(lnk_path)
+
+    if win32com is not None:
+        try:
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortcut(lnk_path)
+            shortcut.TargetPath = target_exe
+            shortcut.WorkingDirectory = os.path.dirname(target_exe)
+            shortcut.IconLocation = target_exe
+            shortcut.Description = f"Abrir {SHORTCUT_LABEL}"
+            shortcut.save()
+            return os.path.exists(lnk_path)
+        except Exception as exc:
+            _log_installer_error(f"win32com shortcut ({lnk_path}): {exc}")
+
+    ps_script = (
+        "$WshShell = New-Object -ComObject WScript.Shell; "
+        f"$Shortcut = $WshShell.CreateShortcut('{_ps_escape(lnk_path)}'); "
+        f"$Shortcut.TargetPath = '{_ps_escape(target_exe)}'; "
+        f"$Shortcut.WorkingDirectory = '{_ps_escape(os.path.dirname(target_exe))}'; "
+        f"$Shortcut.IconLocation = '{_ps_escape(target_exe)}'; "
+        f"$Shortcut.Description = 'Abrir {SHORTCUT_LABEL}'; "
+        "$Shortcut.Save()"
+    )
+    result = subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script],
+        shell=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        _log_installer_error(
+            f"powershell shortcut ({lnk_path}): {result.stderr.strip() or result.stdout.strip()}"
+        )
+    return os.path.exists(lnk_path)
+
+
+def _log_installer_error(message):
+    try:
+        log_path = os.path.join(
+            os.environ.get("TEMP", "."),
+            "web_installer_error.log",
+        )
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(message + "\n")
+    except OSError:
+        pass
+
+
+def _desktop_paths():
+    """Rutas reales del escritorio (registro Windows + OneDrive + fallbacks)."""
+    paths = []
+    try:
+        import winreg
+
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+        ) as key:
+            desktop, _ = winreg.QueryValueEx(key, "Desktop")
+            paths.append(os.path.expandvars(desktop))
+    except OSError:
+        pass
+
+    profile = os.environ.get("USERPROFILE", "")
+    for rel in (
+        os.path.join("OneDrive", "Desktop"),
+        os.path.join("OneDrive", "Escritorio"),
+        "Desktop",
+        "Escritorio",
+    ):
+        paths.append(os.path.join(profile, rel))
+
+    seen = set()
+    ordered = []
+    for path in paths:
+        norm = os.path.normcase(os.path.abspath(path))
+        if norm in seen:
+            continue
+        seen.add(norm)
+        if os.path.isdir(path):
+            ordered.append(path)
+    return ordered
+
+
+def _primary_desktop_path():
+    desktops = _desktop_paths()
+    if desktops:
+        return desktops[0]
+    return os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
+
+
 class InstallWorker(QThread):
     progress_update = pyqtSignal(int, str)
-    finished = pyqtSignal(bool, str, str) # success, msg, target_exe
+    finished = pyqtSignal(bool, str, str, str)  # success, msg, target_exe, shortcut_path
 
     def __init__(self, download_url, zip_filename, install_dir, is_update_mode=False):
         super().__init__()
@@ -50,8 +243,11 @@ class InstallWorker(QThread):
                 base_path = sys._MEIPASS 
                 
             local_bin_path = os.path.join(base_path, "payload.bin")
-            local_zip_path = os.path.join(base_path, self.zip_filename)
             zip_to_extract = None
+            local_zip_path = next(
+                (p for p in _local_zip_candidates(self.zip_filename) if os.path.exists(p)),
+                None,
+            )
 
             if os.path.exists(local_bin_path):
                 self.progress_update.emit(10, "Desencriptando motor base...")
@@ -70,13 +266,13 @@ class InstallWorker(QThread):
                 self.progress_update.emit(20, "Sistema desencriptado y listo.")
                 time.sleep(1)
 
-            elif os.path.exists(local_zip_path):
+            elif local_zip_path:
                 self.progress_update.emit(10, f"Encontrado módulo local: {self.zip_filename}")
                 zip_to_extract = local_zip_path
                 time.sleep(1)
             else:
                 if not self.download_url:
-                    self.finished.emit(False, f"No se encontró el archivo '{self.zip_filename}' junto al instalador y no hay URL de descarga.", "")
+                    self.finished.emit(False, f"No se encontró el archivo '{self.zip_filename}' junto al instalador y no hay URL de descarga.", "", "")
                     return
                 
                 self.progress_update.emit(10, "Descargando módulos del sistema (esto puede tardar)...")
@@ -89,7 +285,29 @@ class InstallWorker(QThread):
                         if percent % 5 == 0: 
                             self.progress_update.emit(percent, f"Descargando paquete principal... {int((percent-10)*2)}%")
 
-                urllib.request.urlretrieve(self.download_url, zip_to_extract, reporthook=report)
+                try:
+                    opener = urllib.request.build_opener()
+                    opener.addheaders = [("User-Agent", "CobroFacil-Installer/2026")]
+                    urllib.request.install_opener(opener)
+                    urllib.request.urlretrieve(self.download_url, zip_to_extract, reporthook=report)
+                except urllib.error.HTTPError as exc:
+                    if exc.code == 404:
+                        self.finished.emit(
+                            False,
+                            "No hay release publicado en GitHub (error 404).\n\n"
+                            "El administrador debe subir CobroFacil_POS_Release.zip en:\n"
+                            "github.com/cesarmaciel1234/cobrofacil-releases/releases\n"
+                            "con el tag «latest» (Actions → Build y Release Windows).\n\n"
+                            "Mientras tanto, coloque el .zip junto al instalador.",
+                            "",
+                            "",
+                        )
+                    else:
+                        self.finished.emit(False, f"Error al descargar ({exc.code}): {exc.reason}", "", "")
+                    return
+                except Exception as exc:
+                    self.finished.emit(False, f"Error al descargar: {exc}", "", "")
+                    return
                 self.progress_update.emit(60, "Descarga completada. Preparando despliegue...")
                 time.sleep(1)
 
@@ -115,7 +333,7 @@ class InstallWorker(QThread):
 
             # 3. Crear acceso directo
             self.progress_update.emit(95, "Configurando accesos directos...")
-            target_exe = self.create_shortcut()
+            target_exe, shortcut_path = self.create_shortcut()
 
             # 4. Limpieza (Borrando rastro del ZIP descargado)
             self.progress_update.emit(98, "Eliminando archivos temporales por seguridad...")
@@ -127,10 +345,10 @@ class InstallWorker(QThread):
 
             self.progress_update.emit(100, "¡Sistema desplegado con éxito!")
             time.sleep(1)
-            self.finished.emit(True, "Instalación completada.", target_exe)
+            self.finished.emit(True, "Instalación completada.", target_exe, shortcut_path)
 
         except Exception as e:
-            self.finished.emit(False, str(e), "")
+            self.finished.emit(False, str(e), "", "")
 
     def create_shortcut(self):
         try:
@@ -142,29 +360,42 @@ class InstallWorker(QThread):
                 elif 'CobroFacil_POS.exe' in files:
                     target_exe = os.path.join(root, 'CobroFacil_POS.exe')
                     break
-            
-            if not target_exe: return ""
 
-            desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
-            old_shortcuts = glob.glob(os.path.join(desktop, '*obro*Facil*.lnk')) + glob.glob(os.path.join(desktop, '*aja*Facil*.lnk'))
-            for old in old_shortcuts:
-                try: os.remove(old)
-                except: pass
-                
-            path = os.path.join(desktop, 'CajaFacil PRO.lnk')
-            ps_script = f"""
-            $WshShell = New-Object -comObject WScript.Shell
-            $Shortcut = $WshShell.CreateShortcut('{path}')
-            $Shortcut.TargetPath = '{target_exe}'
-            $Shortcut.WorkingDirectory = '{os.path.dirname(target_exe)}'
-            $Shortcut.IconLocation = '{target_exe}'
-            $Shortcut.Save()
-            """
-            subprocess.run(["powershell", "-Command", ps_script], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return target_exe
+            if not target_exe:
+                return "", ""
+
+            _remove_old_shortcuts()
+
+            desktop_shortcut = ""
+            for desktop in _desktop_paths():
+                candidate = os.path.join(desktop, SHORTCUT_NAME)
+                if _create_lnk(candidate, target_exe):
+                    desktop_shortcut = candidate
+                    break
+
+            if not desktop_shortcut:
+                fallback = os.path.join(_primary_desktop_path(), SHORTCUT_NAME)
+                if _create_lnk(fallback, target_exe):
+                    desktop_shortcut = fallback
+
+            appdata = os.environ.get("APPDATA", "")
+            start_menu_shortcut = os.path.join(
+                appdata,
+                "Microsoft", "Windows", "Start Menu", "Programs",
+                SHORTCUT_LABEL,
+                SHORTCUT_NAME,
+            )
+            _create_lnk(start_menu_shortcut, target_exe)
+
+            if not desktop_shortcut:
+                _log_installer_error(
+                    f"No se pudo crear acceso en escritorio. EXE: {target_exe}"
+                )
+
+            return target_exe, desktop_shortcut
         except Exception as e:
-            with open("web_installer_error.log", "a") as f: f.write(f"Error shortcut: {e}\n")
-            return ""
+            _log_installer_error(f"Error shortcut: {e}")
+            return "", ""
 
 class InstallerWindow(QWidget):
     def __init__(self):
@@ -189,8 +420,8 @@ class InstallerWindow(QWidget):
         layout.addWidget(self.browser)
 
         self.is_update_mode = "--update" in sys.argv
-        self.download_url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacilPOS_v3.zip?alt=media&token=86d6ae06-db24-4ac3-873b-1c3d22280615"
-        self.zip_filename = "CobroFacilPOS_v3.zip"
+        self.download_url = GITHUB_RELEASE_ZIP_URL
+        self.zip_filename = GITHUB_RELEASE_ZIP_NAME
         self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
 
         import threading
@@ -206,40 +437,42 @@ class InstallerWindow(QWidget):
         js_code = f"window.actualizar_interfaz({val}, '{text}');"
         self.browser.page().runJavaScript(js_code)
 
-    def on_finished(self, success, msg, target_exe):
+    def on_finished(self, success, msg, target_exe, shortcut_path):
         if success:
+            shortcut_hint = (
+                f"\n\nEn tu ESCRITORIO quedó el acceso directo:\n«{SHORTCUT_LABEL}»\n\n"
+                "La próxima vez, ábrelo desde ahí (doble clic)."
+            )
             if self.is_update_mode:
-                QMessageBox.information(self, "Actualización Completada", "Sistema actualizado exitosamente.\\n\\nCobro Fácil POS se iniciará ahora.")
+                QMessageBox.information(
+                    self,
+                    "Actualización Completada",
+                    "Sistema actualizado exitosamente."
+                    + shortcut_hint
+                    + "\n\nCobro Fácil POS se iniciará ahora.",
+                )
                 if target_exe and os.path.exists(target_exe):
                     os.startfile(target_exe)
                 self.close()
             else:
                 QMessageBox.information(
-                    self, "Instalación Completada", 
-                    "El sistema fue desplegado con éxito.\\n\\nIniciando Cobro Fácil POS...\\n\\n(El instalador se auto-destruirá por seguridad)."
+                    self,
+                    "Instalación Completada",
+                    "El sistema fue desplegado con éxito."
+                    + shortcut_hint
+                    + "\n\nIniciando Cobro Fácil POS...",
                 )
-                self.auto_destruct_and_launch(target_exe)
-        else:
-            QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\\n{msg}")
-            self.close()
-
-    def auto_destruct_and_launch(self, target_exe):
-        try:
-            bat_path = os.path.join(os.environ['TEMP'], 'post_install_cleanup.bat')
-            my_exe = sys.executable
-            with open(bat_path, "w") as f:
-                f.write("@echo off\n")
-                f.write("timeout /t 2 /nobreak > NUL\n")
-                f.write(f"del /f /q \"{my_exe}\"\n")
+                if shortcut_path and os.path.exists(shortcut_path):
+                    subprocess.Popen(
+                        ["explorer", f"/select,{os.path.normpath(shortcut_path)}"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
                 if target_exe and os.path.exists(target_exe):
-                    f.write(f"start \"\" \"{target_exe}\"\n")
-                f.write(f"del \"%~f0\"\n")
-            import subprocess
-            subprocess.Popen([bat_path], shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            self.close()
-        except:
-            if target_exe and os.path.exists(target_exe):
-                os.startfile(target_exe)
+                    os.startfile(target_exe)
+                self.close()
+        else:
+            QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\n{msg}")
             self.close()
 
 if __name__ == '__main__':

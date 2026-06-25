@@ -54,11 +54,15 @@ class StampLabel(QLabel):
         super().paintEvent(event)
 
 class DialogoHistorialDia(QDialog):
+    # Tamaño modal F3 — proporción lista (izq) / detalle ticket (der)
+    _DLG_W = 1060
+    _DLG_H = 820
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(910, 760)
+        self.setFixedSize(self._DLG_W, self._DLG_H)
         
         self.ticket_seleccionado = None
         self.setup_ui()
@@ -82,7 +86,7 @@ class DialogoHistorialDia(QDialog):
         main_container = QWidget(self)
         main_container.setObjectName("HistoryDialog")
         outer_layout = QVBoxLayout(self)
-        outer_layout.setContentsMargins(30, 30, 30, 30)
+        outer_layout.setContentsMargins(22, 22, 22, 22)
         outer_layout.addWidget(main_container)
 
         # Aplicar estilos AL CONTENEDOR (no al QDialog) para ganar en especificidad
@@ -198,9 +202,9 @@ class DialogoHistorialDia(QDialog):
         self.tabla_tickets.setHorizontalHeaderLabels(["Folio", "Arts", "Hora", "Total"])
         self.tabla_tickets.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tabla_tickets.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
-        self.tabla_tickets.setColumnWidth(0, 60)
-        self.tabla_tickets.setColumnWidth(1, 50)
-        self.tabla_tickets.setColumnWidth(2, 90)
+        self.tabla_tickets.setColumnWidth(0, 68)
+        self.tabla_tickets.setColumnWidth(1, 52)
+        self.tabla_tickets.setColumnWidth(2, 96)
         self.tabla_tickets.verticalHeader().setVisible(False)
         self.tabla_tickets.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabla_tickets.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -303,16 +307,16 @@ class DialogoHistorialDia(QDialog):
         self.tabla_detalle.setHorizontalHeaderLabels(["Cant.", "Descripción", "Importe"])
         self.tabla_detalle.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tabla_detalle.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        self.tabla_detalle.setColumnWidth(0, 50)
-        self.tabla_detalle.setColumnWidth(2, 100)
+        self.tabla_detalle.setColumnWidth(0, 56)
+        self.tabla_detalle.setColumnWidth(2, 110)
         self.tabla_detalle.verticalHeader().setVisible(False)
-        self.tabla_detalle.setFixedHeight(220)
+        self.tabla_detalle.setFixedHeight(255)
         det_layout.addWidget(self.tabla_detalle)
         
         # --- SELLO CANCELADO (Overlay) ---
         self.sello_cancelado = StampLabel("CANCELADO", self.frame_det)
         # Posicionarlo en el centro del detalle
-        self.sello_cancelado.move(60, 180)
+        self.sello_cancelado.move(80, 205)
         
         pago_layout = QGridLayout()
         pago_layout.setSpacing(6)

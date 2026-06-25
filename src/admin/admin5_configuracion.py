@@ -2562,7 +2562,7 @@ class DialogoTerminalTPV(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Terminales TPV de Cobro")
-        self.setFixedSize(500, 500)
+        self.setFixedSize(500, 700)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         self._build()
 
@@ -2769,8 +2769,12 @@ class DialogoTerminalTPV(QDialog):
         except Exception as e:
             resumen.append(f"⚠️  Error conectando a MP: {e}")
 
-        # ── 2. Obtener External POS ID desde /pos ────────────────────────────
+        # ── 2. Obtener External POS ID desde /pos (o crear si no hay) ───────
         try:
+            from src.services.mercadopago_instore import obtener_user_id, asegurar_pos_qr
+            uid = obtener_user_id(token)
+            if uid:
+                config.set("mp_user_id", uid)
             r_pos = requests.get(
                 "https://api.mercadopago.com/pos",
                 headers=headers, timeout=8
@@ -2795,10 +2799,12 @@ class DialogoTerminalTPV(QDialog):
                             pos_id_final = elegido_pos.split("|")[0].strip()
                             resumen.append(f"✅  POS ID (QR): {pos_id_final}")
                 else:
-                    resumen.append(
-                        "⚠️  No hay Puntos de Venta QR creados.\n"
-                        "   Creá uno en mercadopago.com → Tu negocio → Puntos de venta."
-                    )
+                    try:
+                        _, pos_auto = asegurar_pos_qr(token)
+                        pos_id_final = pos_auto
+                        resumen.append(f"✅  POS QR creado/detectado: {pos_auto}")
+                    except ValueError as e:
+                        resumen.append(f"⚠️  {e}")
             else:
                 resumen.append(f"⚠️  No se obtuvieron POS (HTTP {r_pos.status_code})")
         except Exception as e:
@@ -2846,15 +2852,37 @@ class DialogoTerminalTPV(QDialog):
 
     def _guardar(self):
         from PyQt5.QtWidgets import QMessageBox
-        config.set("mp_access_token", self.txt_mp_token.text().strip())
-        
+        import requests
+
+        token = self.txt_mp_token.text().strip()
+        config.set("mp_access_token", token)
+
         dev_id = self.txt_mp_device.text().strip()
         if dev_id.startswith("N950") and "NEWLAND_N950__" not in dev_id:
             dev_id = f"NEWLAND_N950__{dev_id}"
-            
+
         config.set("mp_device_id", dev_id)
+        config.set("mp_qr_pos_external_id", self.txt_mp_pos_id.text().strip())
         config.set("clover_ip", self.txt_clover_ip.text().strip())
         config.set("clover_port", self.txt_clover_port.text().strip())
+
+        # Obtener y persistir el user_id de la cuenta automáticamente
+        if token:
+            try:
+                me_resp = requests.get(
+                    "https://api.mercadopago.com/users/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=6,
+                    verify=False,
+                )
+                if me_resp.status_code == 200:
+                    mp_user_id = me_resp.json().get("id")
+                    if mp_user_id:
+                        config.set("mp_user_id", str(mp_user_id))
+            except Exception:
+                # Sin conexión — no bloqueamos el guardado
+                pass
+
         QMessageBox.information(self, "Guardado", "Configuración de terminales guardada correctamente.")
         self.accept()
 

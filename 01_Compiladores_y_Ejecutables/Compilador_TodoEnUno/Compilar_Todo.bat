@@ -34,7 +34,12 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --hidden-import "lxml" ^
   --hidden-import "html5lib" ^
   --hidden-import "openpyxl" ^
+  --collect-submodules "src.admin" ^
+  --collect-submodules "src.jefe" ^
+  --collect-submodules "src.carteleria" ^
+  --collect-submodules "src.services" ^
   --add-data "src/styles.qss;src/" ^
+  --add-data "src/styles_light.qss;src/" ^
   main.py
 
 echo.

@@ -2443,40 +2443,30 @@ class Paso5Terminal(QWidget):
             return
 
         # 2. Lógica PRO: Códigos de Balanza (Configuración Dinámica)
-        if len(txt) == 13 and txt.isdigit() and config.get("balanza_habilitada", True):
-            # Try to get PLU to see if it exists
-            prefijo_balanza = str(config.get("balanza_prefijo", "20"))
-            if txt.startswith(prefijo_balanza) or txt.startswith("21"):
-                p_start = max(0, int(config.get("balanza_plu_inicio", 3)) - 1)
-                p_len   = int(config.get("balanza_plu_largo", 5))
-                plu     = txt[p_start : p_start + p_len]
-                plu_limpio = plu.lstrip('0') or '0'
-                
-                res = db_manager.execute_query(
-                    "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR id = ?", 
-                    (plu, plu_limpio)
-                )
-                if res:
-                    p = res[0]
-                    precio_unitario = float(p['precio'])
-                    
-                    _, cantidad_balanza = BarcodeParser.parse_balanza_code(txt, precio_unitario)
-                    
-                    if cantidad_balanza is not None:
-                        self.agregar_a_tabla(p, cantidad_balanza)
-                        self.txt_scan.clear()
-                        self.list_results.hide()
-                        self.txt_scan.setFocus()
-                        return
-                else:
-                    # Si el PLU no existe, avisar específicamente
-                    from PyQt5.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Balanza: Producto no encontrado", 
-                        f"El código de balanza es correcto, pero el producto con PLU '{plu}' no existe en el sistema.\n\n"
-                        "Por favor, asegúrate de crear el producto con ese código en el inventario.")
-                    self.txt_scan.selectAll()
+        if BarcodeParser.is_balanza_ean(txt):
+            from src.repositories.producto_repository import ProductoRepository
+            plu, plu_limpio = BarcodeParser.extract_plu_from_barcode(txt)
+            p = ProductoRepository.obtener_por_plu_balanza(plu)
+            if p:
+                precio_unitario = float(p['precio'])
+                _, cantidad_balanza = BarcodeParser.parse_balanza_code(txt, precio_unitario)
+                if cantidad_balanza is not None and cantidad_balanza > 0:
+                    self.agregar_a_tabla(p, cantidad_balanza)
+                    self.txt_scan.clear()
+                    self.list_results.hide()
                     self.txt_scan.setFocus()
                     return
+            else:
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self, "Balanza: Producto no encontrado",
+                    f"Etiqueta de balanza leída (PLU {plu_limpio}), pero no hay producto con ese código en inventario.\n\n"
+                    f"El ID del producto debe coincidir con el PLU de la balanza (ej. producto 2050 → PLU 02050).\n"
+                    f"Código escaneado: {txt}"
+                )
+                self.txt_scan.selectAll()
+                self.txt_scan.setFocus()
+                return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
         res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))

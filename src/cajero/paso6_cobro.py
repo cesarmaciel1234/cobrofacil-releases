@@ -467,6 +467,42 @@ class Paso6Cobro(QDialog):
                 btn.setStyleSheet(f"QPushButton {{ background: #10B981; color: white; border: none; {base} }} QPushButton:hover {{ background: #059669; }}")
             elif style == "orange":
                 btn.setStyleSheet(f"QPushButton {{ background: #F59E0B; color: white; border: none; {base} }} QPushButton:hover {{ background: #D97706; }}")
+            elif style == "featured":
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #34D399, stop:1 #059669);
+                        color: white; border: 2px solid #6EE7B7; {base}
+                    }}
+                    QPushButton:hover {{
+                        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #10B981, stop:1 #047857);
+                        border-color: #A7F3D0;
+                    }}
+                    QPushButton:pressed {{ background: #065F46; }}
+                """)
+            elif style == "mp":
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #38BDF8, stop:1 #0284C7);
+                        color: white; border: 2px solid #7DD3FC; {base}
+                    }}
+                    QPushButton:hover {{
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0EA5E9, stop:1 #0369A1);
+                        border-color: #BAE6FD;
+                    }}
+                    QPushButton:pressed {{ background: #075985; }}
+                """)
+            elif style == "qr":
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #A78BFA, stop:1 #7C3AED);
+                        color: white; border: 2px solid #C4B5FD; {base}
+                    }}
+                    QPushButton:hover {{
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8B5CF6, stop:1 #6D28D9);
+                        border-color: #DDD6FE;
+                    }}
+                    QPushButton:pressed {{ background: #5B21B6; }}
+                """)
             elif theme == "dark":
                 btn.setStyleSheet(f"""
                     QPushButton {{
@@ -496,15 +532,16 @@ class Paso6Cobro(QDialog):
         actions_grid.setColumnStretch(1, 1)
 
         actions_grid.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 0, 0)
-        actions_grid.addWidget(create_action_btn("F2", "s/imprime", lambda: self.finalizar(False)), 0, 1)
+        self.btn_f2 = create_action_btn("F2", "s/imprime", lambda: self.finalizar(False), style="featured")
+        actions_grid.addWidget(self.btn_f2, 0, 1)
 
         self.btn_descuento = create_action_btn("F3", "descuento", self.abrir_descuento, style="green")
         self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="orange")
         actions_grid.addWidget(self.btn_descuento, 1, 0)
         actions_grid.addWidget(self.btn_recargo, 1, 1)
 
-        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point())
-        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp())
+        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point(), style="mp")
+        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp(), style="qr")
         actions_grid.addWidget(self.btn_f11, 2, 0)
         actions_grid.addWidget(self.btn_f12, 2, 1)
 
@@ -906,6 +943,19 @@ class Paso6Cobro(QDialog):
             return None
 
     def intentar_finalizar(self):
+        if self.current_metodo == "QR":
+            from src.config import config
+            config._load_config()
+            token = config.get("mp_access_token", "")
+            if not token:
+                QMessageBox.warning(
+                    self, "Configuración Faltante",
+                    "Falta el Access Token de Mercado Pago.\n\n"
+                    "Admin → Configuración → Terminales TPV → pegar token y Guardar."
+                )
+                return
+            self._procesar_cobro_qr_pantalla(token, self.total_final)
+            return
         vals = self._validar_pago()
         if vals:
             # Enter se comporta como F2 (Solo registrar, sin imprimir) para máxima velocidad
@@ -1145,8 +1195,16 @@ class Paso6Cobro(QDialog):
         
         token = config.get("mp_access_token", "")
         device_id = config.get("mp_device_id", "")
-        
-        if not token or not device_id:
+
+        if self.current_metodo == "QR":
+            if not token:
+                QMessageBox.warning(
+                    self, "Configuración Faltante",
+                    "Falta el Access Token de Mercado Pago.\n\n"
+                    "Admin → Configuración → Terminales TPV."
+                )
+                return
+        elif not token or not device_id:
             QMessageBox.warning(self, "Configuración Faltante", "Falta el Access Token o el Device ID de Mercado Pago Point en la configuración.")
             return
 
@@ -1313,18 +1371,26 @@ class Paso6Cobro(QDialog):
         import qrcode
         import io
         from src.config import config
+        from src.services.mercadopago_instore import asegurar_pos_qr, mp_headers, url_crear_qr
         from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
         from PyQt5.QtGui import QPixmap, QImage
         from PyQt5.QtCore import QTimer, Qt
 
-        # Datos de la cuenta MP
-        user_id = 171085024
-        external_pos_id = config.get("mp_qr_pos_external_id", "default")
-        
-        headers_mp = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
+        if token.upper().startswith("TEST-"):
+            QMessageBox.warning(
+                self, "Token de prueba",
+                "Estás usando un token TEST-... en producción.\n\n"
+                "Usá el Access Token APP_USR-... de Credenciales de Producción en mercadopago.com/developers."
+            )
+            return
+
+        try:
+            user_id, external_pos_id = asegurar_pos_qr(token)
+        except ValueError as e:
+            QMessageBox.warning(self, "Configuración QR", str(e))
+            return
+
+        headers_mp = mp_headers(token)
 
         ref = str(uuid.uuid4())
         payload = {
@@ -1347,7 +1413,7 @@ class Paso6Cobro(QDialog):
             "cash_out": {"amount": 0}
         }
 
-        url = f"https://api.mercadopago.com/instore/orders/qr/seller/collectors/{user_id}/pos/{external_pos_id}/qrs"
+        url = url_crear_qr(user_id, external_pos_id)
 
         try:
             resp = requests.put(url, json=payload, headers=headers_mp, timeout=10)
@@ -1367,17 +1433,16 @@ class Paso6Cobro(QDialog):
 
             if resp.status_code == 403 or "UNAUTHORIZED" in err_code:
                 msg_usuario = (
-                    "\u26a0\ufe0f  Tu token NO tiene permiso para crear \u00f3rdenes QR (Error 403).\n\n"
-                    "Caus as m\u00e1s comunes:\n"
-                    "  1\u25e6 El token es de PRUEBA (TEST-...) pero la cuenta es Productiva.\n"
-                    "  2\u25e6 El cajero QR no fue creado en el panel de Mercado Pago.\n"
-                    "  3\u25e6 El 'external_pos_id' no coincide con el POS registrado.\n\n"
-                    "\u2705  Soluci\u00f3n paso a paso:\n"
-                    "  1. Ing res\u00e1 a mercadopago.com/developers\n"
-                    "  2. Cre\u00e1 una aplicaci\u00f3n con permiso 'QR Code'\n"
-                    "  3. En 'Credenciales de Producci\u00f3n' copi\u00e1 el Access Token\n"
-                    "  4. En 'Puntos de venta' cre\u00e1 un cajero y cop i\u00e1 el 'external_id'\n"
-                    "  5. Peg\u00e1 ambos datos en Admin \u2192 Configuraci\u00f3n \u2192 Mercado Pago"
+                    "Tu token NO tiene permiso para crear órdenes QR (Error 403).\n\n"
+                    "Causas más comunes:\n"
+                    "  1. El token es de PRUEBA (TEST-...) pero la cuenta es productiva.\n"
+                    "  2. La app en developers no tiene el producto 'Código QR' habilitado.\n"
+                    "  3. El external_pos_id no coincide con un Punto de Venta de tu cuenta.\n\n"
+                    "Solución:\n"
+                    "  1. mercadopago.com/developers → Tu integración\n"
+                    "  2. Agregá el producto 'Código QR' / 'Pagos presenciales'\n"
+                    "  3. Credenciales de Producción → copiá Access Token (APP_USR-...)\n"
+                    "  4. Admin → Terminales TPV → Auto-configurar → Guardar"
                 )
             elif resp.status_code == 401:
                 msg_usuario = (
@@ -1420,40 +1485,68 @@ class Paso6Cobro(QDialog):
         parent_ref = self
 
         class QRDialog(QDialog):
+            _MP_BLUE = "#009EE3"
+            _MP_BLUE_DK = "#007EB5"
+            _MP_BG = "#F7FCFF"
+
             def __init__(self, parent):
                 super().__init__(parent)
                 self.pagado = False
                 self.setWindowTitle("Cobro QR - Mercado Pago")
                 self.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
-                self.setFixedSize(420, 520)
-                self.setStyleSheet("background-color: #0F172A; border-radius: 16px;")
+                self.setFixedSize(700, 700)
+                self.setStyleSheet(f"""
+                    QDialog {{
+                        background-color: {QRDialog._MP_BG};
+                        border: 3px solid {QRDialog._MP_BLUE};
+                        border-radius: 16px;
+                    }}
+                """)
 
                 lay = QVBoxLayout(self)
-                lay.setSpacing(10)
+                lay.setContentsMargins(28, 22, 28, 22)
+                lay.setSpacing(12)
 
                 lbl_titulo = QLabel("Que el cliente escanee con\nla app de Mercado Pago")
                 lbl_titulo.setAlignment(Qt.AlignCenter)
-                lbl_titulo.setStyleSheet("font-size: 15px; font-weight: bold; color: #38BDF8; padding: 8px; border: none;")
+                lbl_titulo.setStyleSheet(
+                    f"font-size: 15px; font-weight: 800; color: {QRDialog._MP_BLUE_DK}; "
+                    "padding: 4px; border: none; background: transparent;"
+                )
                 lay.addWidget(lbl_titulo)
 
                 lbl_qr = QLabel()
-                lbl_qr.setPixmap(pixmap.scaled(300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                lbl_qr.setPixmap(pixmap.scaled(340, 340, Qt.KeepAspectRatio, Qt.SmoothTransformation))
                 lbl_qr.setAlignment(Qt.AlignCenter)
-                lbl_qr.setStyleSheet("background: white; border-radius: 12px; padding: 10px;")
-                lay.addWidget(lbl_qr)
+                lbl_qr.setStyleSheet(
+                    f"background: white; border-radius: 12px; padding: 12px; "
+                    f"border: 2px solid {QRDialog._MP_BLUE};"
+                )
+                lay.addWidget(lbl_qr, alignment=Qt.AlignCenter)
 
                 lbl_monto = QLabel(f"${monto:,.2f}")
                 lbl_monto.setAlignment(Qt.AlignCenter)
-                lbl_monto.setStyleSheet("font-size: 32px; font-weight: 900; color: #10B981; border: none;")
+                lbl_monto.setStyleSheet(
+                    f"font-size: 42px; font-weight: 900; color: {QRDialog._MP_BLUE}; border: none; background: transparent;"
+                )
                 lay.addWidget(lbl_monto)
 
                 self.lbl_estado = QLabel("Esperando pago...")
                 self.lbl_estado.setAlignment(Qt.AlignCenter)
-                self.lbl_estado.setStyleSheet("font-size: 12px; color: #94A3B8; border: none;")
+                self.lbl_estado.setStyleSheet(
+                    "font-size: 13px; color: #64748B; font-weight: 600; border: none; background: transparent;"
+                )
                 lay.addWidget(self.lbl_estado)
 
+                lay.addStretch()
+
                 btn_cancelar = QPushButton("Cancelar")
-                btn_cancelar.setStyleSheet("background-color: #EF4444; color: white; padding: 10px; font-weight: bold; border-radius: 8px; font-size: 13px; border: none;")
+                btn_cancelar.setCursor(Qt.PointingHandCursor)
+                btn_cancelar.setStyleSheet(
+                    "QPushButton { background-color: #EF4444; color: white; padding: 12px; "
+                    "font-weight: 800; border-radius: 10px; font-size: 14px; border: none; }"
+                    "QPushButton:hover { background-color: #DC2626; }"
+                )
                 btn_cancelar.clicked.connect(self.cancelar)
                 lay.addWidget(btn_cancelar)
 
@@ -1477,7 +1570,9 @@ class Paso6Cobro(QDialog):
                             self.timer.stop()
                             self.pagado = True
                             self.lbl_estado.setText("PAGO APROBADO!")
-                            self.lbl_estado.setStyleSheet("font-size: 14px; color: #10B981; font-weight: bold; border: none;")
+                            self.lbl_estado.setStyleSheet(
+                                f"font-size: 15px; color: {QRDialog._MP_BLUE_DK}; font-weight: 900; border: none;"
+                            )
                             QTimer.singleShot(1000, self.accept)
                 except:
                     pass
@@ -1486,7 +1581,7 @@ class Paso6Cobro(QDialog):
                 self.timer.stop()
                 # Borrar la orden QR
                 try:
-                    del_url = f"https://api.mercadopago.com/instore/orders/qr/seller/collectors/{user_id}/pos/{external_pos_id}/qrs"
+                    del_url = url_crear_qr(user_id, external_pos_id)
                     requests.delete(del_url, headers=headers_mp, timeout=5)
                 except:
                     pass
