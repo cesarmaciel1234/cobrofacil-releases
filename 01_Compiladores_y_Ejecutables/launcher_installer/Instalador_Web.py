@@ -221,6 +221,7 @@ class InstallWorker(QThread):
             self.progress_update.emit(5, "Preparando entorno y cerrando instancias previas...")
             import subprocess
             subprocess.run("taskkill /f /im CobroFacil_POS.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run("taskkill /f /im CobroFacilPOS_PRO.exe", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             # Add dynamic process killer for running python scripts
             import psutil
             for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -231,7 +232,7 @@ class InstallWorker(QThread):
                 except Exception:
                     pass
                     
-            time.sleep(1)
+            time.sleep(3)
 
             if self.is_update_mode:
                 self.progress_update.emit(8, "Modo Actualización iniciado...")
@@ -309,27 +310,41 @@ class InstallWorker(QThread):
                     self.finished.emit(False, f"Error al descargar: {exc}", "", "")
                     return
                 self.progress_update.emit(60, "Descarga completada. Preparando despliegue...")
+                try:
+                    with zipfile.ZipFile(zip_to_extract, "r") as zip_ref:
+                        bad = zip_ref.testzip()
+                        if bad:
+                            raise zipfile.BadZipFile(f"archivo dañado: {bad}")
+                except zipfile.BadZipFile as exc:
+                    self.finished.emit(
+                        False,
+                        f"La descarga del paquete está incompleta o corrupta.\n\n{exc}\n\n"
+                        "Vuelva a ejecutar el instalador.",
+                        "",
+                        "",
+                    )
+                    return
                 time.sleep(1)
 
-            # 2. Extracción ultra rápida
+            # 2. Extracción
             self.progress_update.emit(65, "Extrayendo sistema base...")
             if not os.path.exists(self.install_dir):
                 os.makedirs(self.install_dir)
 
-            with zipfile.ZipFile(zip_to_extract, 'r') as zip_ref:
-                try: zip_ref.setpassword(b"punpro2026")
-                except: pass
-                
-                total_files = len(zip_ref.namelist())
-                extracted = 0
-                for file in zip_ref.namelist():
-                    try: zip_ref.extract(file, self.install_dir)
-                    except Exception as e:
-                        with open("web_installer_error.log", "a") as f: f.write(f"Error extrayendo {file}: {e}\n")
-                    extracted += 1
-                    percent = 65 + int((extracted / total_files) * 30)
-                    if extracted % 20 == 0:  
-                        self.progress_update.emit(percent, f"Actualizando/Generando: {file}")
+            errors = self._extract_zip(zip_to_extract, self.install_dir)
+            if errors:
+                for line in errors[:20]:
+                    _log_installer_error(line)
+                if not self._find_target_exe():
+                    self.finished.emit(
+                        False,
+                        "La instalación quedó incompleta.\n\n"
+                        "Cierre Cobro Fácil POS (Administrador de tareas) y vuelva a ejecutar el instalador.\n"
+                        "Si persiste, borre la carpeta CobroFacil_POS_Install y reintente.",
+                        "",
+                        "",
+                    )
+                    return
 
             # 3. Crear acceso directo
             self.progress_update.emit(95, "Configurando accesos directos...")
@@ -350,16 +365,45 @@ class InstallWorker(QThread):
         except Exception as e:
             self.finished.emit(False, str(e), "", "")
 
+    def _find_target_exe(self):
+        for root, dirs, files in os.walk(self.install_dir):
+            if 'CobroFacilPOS_PRO.exe' in files:
+                return os.path.join(root, 'CobroFacilPOS_PRO.exe')
+            if 'CobroFacil_POS.exe' in files:
+                return os.path.join(root, 'CobroFacil_POS.exe')
+        return ""
+
+    def _extract_zip(self, zip_path, install_dir):
+        """Extrae el release. Solo usa contraseña si el ZIP está cifrado (Firebase)."""
+        errors = []
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                bad = zip_ref.testzip()
+                if bad:
+                    return [f"ZIP corrupto o descarga incompleta (archivo dañado: {bad})"]
+
+                encrypted = any(info.flag_bits & 0x1 for info in zip_ref.infolist())
+                if encrypted:
+                    zip_ref.setpassword(b"punpro2026")
+
+                total_files = len(zip_ref.namelist())
+                for i, name in enumerate(zip_ref.namelist(), start=1):
+                    try:
+                        zip_ref.extract(name, install_dir)
+                    except Exception as exc:
+                        errors.append(f"Error extrayendo {name}: {exc}")
+                    if i % 20 == 0:
+                        percent = 65 + int((i / max(total_files, 1)) * 30)
+                        self.progress_update.emit(percent, f"Extrayendo: {name}")
+        except zipfile.BadZipFile as exc:
+            errors.append(f"ZIP inválido: {exc}")
+        except Exception as exc:
+            errors.append(f"Error al abrir ZIP: {exc}")
+        return errors
+
     def create_shortcut(self):
         try:
-            target_exe = None
-            for root, dirs, files in os.walk(self.install_dir):
-                if 'CobroFacilPOS_PRO.exe' in files:
-                    target_exe = os.path.join(root, 'CobroFacilPOS_PRO.exe')
-                    break
-                elif 'CobroFacil_POS.exe' in files:
-                    target_exe = os.path.join(root, 'CobroFacil_POS.exe')
-                    break
+            target_exe = self._find_target_exe()
 
             if not target_exe:
                 return "", ""
