@@ -1,18 +1,9 @@
 import sys
 import os
-import ctypes
 
-# Alto DPI: antes de importar PyQt (monitores 1366×768, 1920×1080, 4K, escalas 125 %…)
-os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
-os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
-if sys.platform == "win32":
-    try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except Exception:
-        try:
-            ctypes.windll.user32.SetProcessDPIAware()
-        except Exception:
-            pass
+# Escudo anti-Windows: escala fija 100 % (sin AA_EnableHighDpiScaling)
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
+os.environ["QT_SCALE_FACTOR"] = "1"
 
 import time
 import zipfile
@@ -29,11 +20,6 @@ except ImportError:
     win32com = None
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl, QCoreApplication
-
-if hasattr(Qt, "AA_EnableHighDpiScaling"):
-    QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-if hasattr(Qt, "AA_UseHighDpiPixmaps"):
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox
 from PyQt5.QtGui import QIcon
@@ -657,8 +643,7 @@ class InstallerWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        sw, sh = self._installer_size()
-        self.setFixedSize(sw, sh)
+        self.setFixedSize(700, 400)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
@@ -683,27 +668,6 @@ class InstallerWindow(QWidget):
 
         import threading
         threading.Timer(1.5, self.start_install).start()
-
-    @staticmethod
-    def _installer_size():
-        app = QApplication.instance()
-        base_w, base_h = 700, 400
-        if app is None:
-            return base_w, base_h
-        screen = app.primaryScreen()
-        if screen is None:
-            return base_w, base_h
-        geo = screen.availableGeometry()
-        try:
-            dpi = float(screen.logicalDotsPerInchX())
-        except Exception:
-            dpi = float(screen.logicalDotsPerInch())
-        factor = max(0.85, min(dpi / 96.0, 2.5))
-        w = int(round(base_w * factor))
-        h = int(round(base_h * factor))
-        w = min(w, max(480, int(geo.width() * 0.9)))
-        h = min(h, max(300, int(geo.height() * 0.85)))
-        return w, h
 
     def start_install(self):
         self.worker = InstallWorker(self.download_url, self.zip_filename, self.install_dir, self.is_update_mode)

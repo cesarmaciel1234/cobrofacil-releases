@@ -29,8 +29,12 @@ class LoginPantalla(QDialog):
         self.role = role
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(520, 510)
+        from src.utils.qt_dpi import scaled_dialog_size, center_on_primary_screen
+
+        dlg_w, dlg_h = scaled_dialog_size(520, 510)
+        self.setFixedSize(dlg_w, dlg_h)
         self._setup_ui()
+        center_on_primary_screen(self)
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso3")

@@ -34,21 +34,23 @@ class ProfileCard(QFrame):
     """Tarjeta de perfil — Warm-Cold Premium 2026."""
     clicked = pyqtSignal()
 
-    def __init__(self, role_key: str, icon: str, title: str, desc: str, parent=None):
+    def __init__(self, role_key: str, icon: str, title: str, desc: str, parent=None, card_w=230, card_h=215):
         super().__init__(parent)
         accent, bg_pill, tag_text, tag_fg = CARD_STYLE[role_key]
         self._accent  = accent
         self._bg_pill = bg_pill
+        self._card_w = card_w
+        self._card_h = card_h
         self.is_active = False
         r, g, b = self._hex(accent)
 
-        self.setFixedSize(230, 215)
+        self.setFixedSize(card_w, card_h)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("background: transparent; border: none;")
 
         # Marco interno
         self.inner = QFrame(self)
-        self.inner.setGeometry(0, 14, 230, 190)
+        self.inner.setGeometry(0, 14, card_w, card_h - 25)
         self._shadow = QGraphicsDropShadowEffect(self)
         self._shadow.setBlurRadius(20)
         self._shadow.setColor(QColor(r, g, b, 28))
@@ -201,6 +203,12 @@ class ProfileCard(QFrame):
     def mousePressEvent(self, event):
         self.clicked.emit()
 
+    def resize_card(self, card_w: int, card_h: int) -> None:
+        self._card_w = card_w
+        self._card_h = card_h
+        self.setFixedSize(card_w, card_h)
+        self.inner.setGeometry(0, 14, card_w, card_h - 25)
+
 
 class PerfilPantalla(QDialog):
     """PASO 2: SELECCIÓN DE PERFIL — Warm-Cold Premium 2026."""
@@ -213,14 +221,49 @@ class PerfilPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(1100, 490)
+        from src.utils.qt_dpi import profile_selector_size, center_on_primary_screen
+
+        dlg_w, dlg_h, self._card_w, self._card_h = profile_selector_size()
+        self.setFixedSize(dlg_w, dlg_h)
+        try:
+            from src.logger import logger
+            logger.info(
+                f"Perfil pantalla: {dlg_w}x{dlg_h} tarjetas {self._card_w}x{self._card_h}"
+            )
+        except Exception:
+            pass
         self.selected_index = 0
         self._setup_ui()
         self.update_selection_ui()
         self._check_locked_profiles()
+        center_on_primary_screen(self)
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso2")
+        except Exception:
+            pass
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._apply_screen_size()
+
+    def _apply_screen_size(self):
+        from src.utils.qt_dpi import profile_selector_size, center_on_primary_screen
+
+        dlg_w, dlg_h, card_w, card_h = profile_selector_size()
+        if dlg_w == self.width() and dlg_h == self.height() and card_w == self._card_w:
+            return
+
+        self._card_w, self._card_h = card_w, card_h
+        self.setFixedSize(dlg_w, dlg_h)
+        for btn in (self.btn_cajero, self.btn_admin, self.btn_jefe, self.btn_carteleria):
+            btn.resize_card(card_w, card_h)
+        center_on_primary_screen(self)
+        try:
+            from src.logger import logger
+            logger.info(
+                f"Perfil pantalla: {dlg_w}x{dlg_h} tarjetas {card_w}x{card_h}"
+            )
         except Exception:
             pass
 
@@ -310,25 +353,26 @@ class PerfilPantalla(QDialog):
         # ── Cards ─────────────────────────────────────────────────────────────
         cards_lay = QHBoxLayout()
         cards_lay.setSpacing(20)
+        cards_lay.setContentsMargins(0, 0, 0, 0)
 
         self.btn_cajero = ProfileCard(
             "cajero", "🛒", "CAJERO / POS",
-            "Ventas rápidas · Cobro directo")
+            "Ventas rápidas · Cobro directo", card_w=self._card_w, card_h=self._card_h)
         self.btn_cajero.clicked.connect(lambda: self._elegir("cajero"))
 
         self.btn_admin = ProfileCard(
             "admin", "👔", "ADMINISTRADOR",
-            "Gestión · Inventarios · Reportes")
+            "Gestión · Inventarios · Reportes", card_w=self._card_w, card_h=self._card_h)
         self.btn_admin.clicked.connect(lambda: self._elegir("admin"))
 
         self.btn_jefe = ProfileCard(
             "jefe", "👑", "JEFE / DUEÑO",
-            "Control total · Reportes · Cierres")
+            "Control total · Reportes · Cierres", card_w=self._card_w, card_h=self._card_h)
         self.btn_jefe.clicked.connect(lambda: self._elegir("jefe"))
 
         self.btn_carteleria = ProfileCard(
             "carteleria", "📺", "CARTELERÍA",
-            "Pantalla Pública · Publicidad")
+            "Pantalla Pública · Publicidad", card_w=self._card_w, card_h=self._card_h)
         self.btn_carteleria.clicked.connect(lambda: self._elegir("carteleria"))
 
         cards_lay.addStretch()

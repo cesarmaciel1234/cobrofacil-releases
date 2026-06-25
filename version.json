@@ -1,14 +1,14 @@
 {
   "app_version": "4.0",
   "channel": "stable",
-  "build_date": "2026-06-25 19:10:00",
+  "build_date": "2026-06-25 18:15:31",
   "server_host": "cesar",
   "modules": {
     "main.py": {
       "version": "1.0.0",
-      "checksum": "8fa3205fb2aea7731a0cb10b90f25ecb",
+      "checksum": "27f696d4c4ec4837722a030e951b7f55",
       "channel": "stable",
-      "size": 16180
+      "size": 16520
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -48,9 +48,9 @@
     },
     "01_Compiladores_y_Ejecutables/launcher_installer/Instalador_Web.py": {
       "version": "1.0.0",
-      "checksum": "edfe06131b5565e692bcc04c537e6185",
+      "checksum": "63e260f7bb59c405516ce4d0ff983788",
       "channel": "stable",
-      "size": 29546
+      "size": 28285
     },
     "02_Soporte_y_Mantenimiento/ConfiguraFirewall.py": {
       "version": "1.0.0",
@@ -426,9 +426,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "a3f5930c2c153bd3c42534ae4e3ea659",
+      "checksum": "b937517c2ba159ca1bd19c9a0264abe3",
       "channel": "stable",
-      "size": 43883
+      "size": 43479
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -630,9 +630,9 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "f416fd9a35a0449fb01d5d8b1f26fc09",
+      "checksum": "5ff2530d9e64671375370bd8c1b3ac71",
       "channel": "stable",
-      "size": 152626
+      "size": 155835
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
@@ -840,21 +840,21 @@
     },
     "src/inicio_y_perfiles/apertura_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "3609b37f3ba06f5b9bfd54efdd5a9cdf",
+      "checksum": "c297a38f921775d87827ecc2174dbaec",
       "channel": "stable",
-      "size": 6798
+      "size": 6980
     },
     "src/inicio_y_perfiles/licencia_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "05155893ffc57255bee603340b499554",
+      "checksum": "2a70f9868cba7064c1ca8e878d5c5ff2",
       "channel": "stable",
-      "size": 13312
+      "size": 13494
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "d1074680b23e53cc54923eae0b9619e4",
+      "checksum": "6de874aad4c0150ff29d374800d28705",
       "channel": "stable",
-      "size": 14526
+      "size": 14708
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",
@@ -864,9 +864,9 @@
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "a9618d6cc257f138fbc88336784f4c80",
+      "checksum": "684f51fa5f6983afd0ce9d3af4382162",
       "channel": "stable",
-      "size": 17068
+      "size": 18957
     },
     "src/inicio_y_perfiles/__init__.py": {
       "version": "1.0.0",
@@ -1356,9 +1356,9 @@
     },
     "src/utils/qt_dpi.py": {
       "version": "1.0.0",
-      "checksum": "37136a804e5ab34e671f0ea1cc3232e3",
+      "checksum": "6b904077ab75cd3b55122a34abfdc406",
       "channel": "stable",
-      "size": 2498
+      "size": 4353
     },
     "src/utils/theme_manager.py": {
       "version": "1.0.0",

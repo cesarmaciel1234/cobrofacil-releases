@@ -83,6 +83,9 @@ def launch_app():
     
     # FORZAR ESTILO FUSION (VITAL PARA QUE LOS SCROLLBARS ACEPTEN CSS EN WINDOWS)
     app.setStyle('Fusion')
+
+    from src.utils.qt_dpi import apply_app_screen_adaptation
+    apply_app_screen_adaptation(app)
     
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
     from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
@@ -254,7 +257,9 @@ def launch_app():
                 step = 2
         elif step == 4:
             main_window.apply_roles()
-            main_window.show()
+            from src.utils.qt_dpi import present_main_window
+
+            present_main_window(main_window)
             
             # --- ANIMACIÓN PRECARGADA (Arranca al instante) ---
             if hasattr(main_window, '_welcome_overlay') and main_window._welcome_overlay is not None:
@@ -392,8 +397,11 @@ if __name__ == "__main__":
     except Exception as e:
         pass
     
-    # 1. Inicializar
+    # 1. Inicializar (pasos 1–2 del piloto ya aplicados al importar main.py)
     app = QApplication(sys.argv)
+
+    from src.utils.qt_dpi import apply_app_screen_adaptation
+    apply_app_screen_adaptation(app)
     
     # --- FEEDBACK TACTIL (MODULO INDEPENDIENTE) ---
     from src.ui_components.touch_feedback import TouchFeedbackManager
