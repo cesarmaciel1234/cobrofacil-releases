@@ -437,22 +437,19 @@ class DatabaseManager:
             cursor.execute("UPDATE ventas SET estado = 'COMPLETADA' WHERE estado = 'COMPLETADO'")
             cursor.execute("UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'")
             cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'")
-        except Exception as e:
-            pass
-            
-        try:
-            cursor.execute("ALTER TABLE ventas ADD COLUMN cliente_nombre TEXT DEFAULT ''")
         except Exception:
             pass
-            logger.warning(f"Error estandarizando estados de ventas: {e}")
-
 
         
         def add_column_if_not_exists(table, col_name, col_type):
             try:
                 if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
                     cursor.execute(f"SHOW COLUMNS FROM {table}")
-                    columns = [col[0] for col in cursor.fetchall()]
+                    rows = cursor.fetchall()
+                    if rows and isinstance(rows[0], dict):
+                        columns = [row.get('Field') or row.get('field') for row in rows]
+                    else:
+                        columns = [col[0] for col in rows]
                 else:
                     cursor.execute(f"PRAGMA table_info({table})")
                     columns = [col[1] for col in cursor.fetchall()]
@@ -494,6 +491,7 @@ class DatabaseManager:
         add_column_if_not_exists('ventas', 'caja_id', 'INTEGER DEFAULT 1')
         add_column_if_not_exists('ventas', 'descuento', 'REAL DEFAULT 0')
         add_column_if_not_exists('ventas', 'recargo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('ventas', 'cliente_nombre', "TEXT DEFAULT ''")
         add_column_if_not_exists('movimientos_caja', 'caja_id', 'INTEGER DEFAULT 1')
         add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
         
@@ -620,6 +618,12 @@ class DatabaseManager:
             logger.error(f"Error haciendo commit en _migrate_db: {e}")
         finally:
             conn.close()
+
+        try:
+            from src.base_de_datos.offline_sync import offline_sync_manager
+            offline_sync_manager.sync_pendientes()
+        except Exception as e:
+            logger.warning(f"No se pudo sincronizar cola offline post-migración: {e}")
 
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
@@ -957,6 +961,13 @@ class DatabaseManager:
         query = re.sub(r"date\(\s*['\"]now['\"]\s*,\s*['\"][+](\d+)\s+days?['\"]\s*\)", r"DATE_ADD(CURDATE(), INTERVAL \1 DAY)", query, flags=re.IGNORECASE)
         # 8. date('now') → CURDATE()
         query = re.sub(r"date\(\s*['\"]now['\"]\s*\)", "CURDATE()", query, flags=re.IGNORECASE)
+        # 9. GROUP_CONCAT(col, 'sep') → GROUP_CONCAT(col SEPARATOR 'sep')  (SQLite → MariaDB)
+        query = re.sub(
+            r"GROUP_CONCAT\s*\(\s*([^,)]+)\s*,\s*'([^']*)'\s*\)",
+            r"GROUP_CONCAT(\1 SEPARATOR '\2')",
+            query,
+            flags=re.IGNORECASE,
+        )
         return query
 
     def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
@@ -1136,13 +1147,14 @@ class DatabaseManager:
             
             cursor.execute("""
                 INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
-                                   usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                   usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
-                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0)
+                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
+                venta_data.get('cliente_nombre', '')
             ))
             id_venta = cursor.lastrowid
             

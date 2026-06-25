@@ -1,0 +1,108 @@
+# =============================================================================
+# Release automático — CobroFacil POS (TPV Pro 2026)
+# Repositorio: https://github.com/cesarmaciel1234/cobrofacil-releases
+# Descarga permanente: https://github.com/cesarmaciel1234/cobrofacil-releases/releases/latest
+# Se dispara en cada push a main (o manualmente desde Actions).
+# =============================================================================
+
+name: Build y Release Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:   # Permite lanzar el build desde GitHub → Actions → Run workflow
+
+permissions:
+  contents: write   # Necesario para crear Releases y subir assets
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Clonar el repositorio
+      # -----------------------------------------------------------------------
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Configurar Python
+      # -----------------------------------------------------------------------
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      # -----------------------------------------------------------------------
+      # 3. Instalar dependencias del proyecto + PyInstaller
+      # -----------------------------------------------------------------------
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      # -----------------------------------------------------------------------
+      # 4. Compilar main.py → dist/CobroFacil_POS/CobroFacil_POS.exe
+      #    (--onedir: carpeta con el .exe y librerías; mismo criterio que Compilar_Todo.bat)
+      # -----------------------------------------------------------------------
+      - name: Compilar ejecutable con PyInstaller
+        run: |
+          python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" `
+            --hidden-import "reportlab.graphics.barcode.code93" `
+            --hidden-import "reportlab.graphics.barcode.code128" `
+            --hidden-import "reportlab.graphics.barcode.code39" `
+            --hidden-import "reportlab.graphics.barcode.eanbc" `
+            --hidden-import "lxml" `
+            --hidden-import "html5lib" `
+            --hidden-import "openpyxl" `
+            --hidden-import "win32com" `
+            --hidden-import "win32com.client" `
+            --add-data "src/styles.qss;src/" `
+            main.py
+
+      # -----------------------------------------------------------------------
+      # 4b. Comprimir la carpeta dist (onedir requiere todos los archivos, no solo el .exe)
+      # -----------------------------------------------------------------------
+      - name: Empaquetar release (.zip)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist/CobroFacil_POS/CobroFacil_POS.exe")) {
+            Write-Error "No se generó dist/CobroFacil_POS/CobroFacil_POS.exe"
+            exit 1
+          }
+          Compress-Archive -Path "dist/CobroFacil_POS/*" -DestinationPath "dist/CobroFacil_POS_Release.zip" -Force
+
+      # -----------------------------------------------------------------------
+      # 5. Preparar tag "latest" (reemplaza el release anterior con el mismo tag)
+      # -----------------------------------------------------------------------
+      - name: Eliminar release/tag latest previo (si existe)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest -y 2>/dev/null || true
+          git push --delete origin latest 2>/dev/null || true
+
+      # -----------------------------------------------------------------------
+      # 6. Crear Release en GitHub y subir el .zip (enlace permanente de descarga)
+      # -----------------------------------------------------------------------
+      - name: Publicar Release (tag latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: CobroFacil POS — Latest
+          body: |
+            Build automático — [cobrofacil-releases](https://github.com/cesarmaciel1234/cobrofacil-releases)
+            - Commit: ${{ github.sha }}
+            - Workflow: ${{ github.run_id }}
+            - Descargar **CobroFacil_POS_Release.zip**, descomprimir y ejecutar `CobroFacil_POS.exe`.
+            - Enlace fijo: https://github.com/cesarmaciel1234/cobrofacil-releases/releases/latest
+          files: dist/CobroFacil_POS_Release.zip
+          make_latest: true
+          draft: false
+          prerelease: false

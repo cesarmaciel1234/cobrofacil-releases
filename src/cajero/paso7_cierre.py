@@ -117,58 +117,83 @@ class Paso7CierreCaja(QDialog):
         self.main_container.setGraphicsEffect(glow)
 
     def _get_data(self):
-        # Usar la fecha local exacta de Python para blindar contra desajustes de zona horaria en SQLite
+        from src.config import config
+        c_id = config.get("caja_id", 1)
         today_str = datetime.now().strftime("%Y-%m-%d")
-        
-        # Obtener el fondo de caja de la última apertura del usuario (con fallback al general)
-        fondo = float(db_manager.execute_scalar(
-            "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND LOWER(usuario) = LOWER(?) ORDER BY id DESC LIMIT 1",
-            (self.user,)
-        ) or db_manager.execute_scalar(
-            "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' ORDER BY id DESC LIMIT 1"
-        ) or 0)
-        
-        # Consultar ventas del usuario de hoy usando LOWER y la fecha de Python
+
+        ap_rows = db_manager.execute_query(
+            "SELECT fecha, monto FROM movimientos_caja WHERE caja_id=? AND tipo='APERTURA' ORDER BY id DESC LIMIT 1",
+            (c_id,),
+        )
+        if ap_rows:
+            self._apertura_fecha = ap_rows[0]["fecha"]
+            fondo = float(ap_rows[0]["monto"] or 0)
+        else:
+            self._apertura_fecha = f"{today_str} 00:00:00"
+            fondo = float(
+                db_manager.execute_scalar(
+                    "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND LOWER(usuario) = LOWER(?) ORDER BY id DESC LIMIT 1",
+                    (self.user,),
+                )
+                or db_manager.execute_scalar(
+                    "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' ORDER BY id DESC LIMIT 1"
+                )
+                or 0
+            )
+
         res_v = db_manager.execute_query(
-            "SELECT SUM(total) as t, SUM(CASE WHEN metodo_pago != 'Fiado' THEN pago_otro ELSE 0 END) as ta, SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as tf FROM ventas WHERE estado='COMPLETADA' AND LOWER(usuario) = LOWER(?) AND date(fecha) = ?",
-            (self.user, today_str)
+            """SELECT SUM(total) as t,
+                      SUM(CASE WHEN metodo_pago != 'Fiado' THEN COALESCE(pago_otro, 0) ELSE 0 END) as ta,
+                      SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as tf,
+                      SUM(COALESCE(pago_efectivo, 0) - COALESCE(cambio, 0)) as te
+               FROM ventas
+               WHERE caja_id=? AND fecha >= ? AND estado IN ('COMPLETADA', 'CERRADA')
+                 AND LOWER(usuario) = LOWER(?)""",
+            (c_id, self._apertura_fecha, self.user),
         )
         v_total = float((res_v[0]["t"] if res_v else 0) or 0)
         v_tarj = float((res_v[0]["ta"] if res_v else 0) or 0)
         v_fiado = float((res_v[0]["tf"] if res_v else 0) or 0)
-        
-        # Fallback de Emergencia: Si las ventas personales dan 0, traemos las ventas totales del día en la estación
-        if v_total == 0:
-            res_v_fallback = db_manager.execute_query(
-                "SELECT SUM(total) as t, SUM(CASE WHEN metodo_pago != 'Fiado' THEN pago_otro ELSE 0 END) as ta, SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as tf FROM ventas WHERE estado='COMPLETADA' AND date(fecha) = ?",
-                (today_str,)
-            )
-            v_total = float((res_v_fallback[0]["t"] if res_v_fallback else 0) or 0)
-            v_tarj = float((res_v_fallback[0]["ta"] if res_v_fallback else 0) or 0)
-            v_fiado = float((res_v_fallback[0]["tf"] if res_v_fallback else 0) or 0)
-        
+        v_efec_ventas = float((res_v[0]["te"] if res_v else 0) or 0)
+
         alertas = db_manager.execute_scalar(
             "SELECT COUNT(*) FROM movimientos_caja WHERE tipo='ALERTA_SEGURIDAD' AND LOWER(usuario) = LOWER(?) AND date(fecha) = ?",
-            (self.user, today_str)
+            (self.user, today_str),
         ) or 0
-        
+
         res_d = db_manager.execute_query(
             "SELECT SUM(total) as t, SUM(CASE WHEN metodo_pago != 'Fiado' THEN pago_otro ELSE 0 END) as ta, SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as tf FROM ventas WHERE date(fecha) = ? AND estado IN ('COMPLETADA','CERRADA')",
-            (today_str,)
+            (today_str,),
         )
         d_total = float((res_d[0]["t"] if res_d else 0) or 0)
         d_tarj = float((res_d[0]["ta"] if res_d else 0) or 0)
         d_fiado = float((res_d[0]["tf"] if res_d else 0) or 0)
-        
-        f_hist = abs(float(db_manager.execute_scalar(
-            "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='CIERRE_Z' AND LOWER(usuario) = LOWER(?) AND monto < 0",
-            (self.user,)
-        ) or 0))
-        
+
+        f_hist = abs(
+            float(
+                db_manager.execute_scalar(
+                    "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='CIERRE_Z' AND LOWER(usuario) = LOWER(?) AND monto < 0",
+                    (self.user,),
+                )
+                or 0
+            )
+        )
+
+        esperado = db_manager.get_efectivo_en_caja(c_id)
+
         return {
-            "fondo": fondo, "t_efec": v_total - v_tarj - v_fiado, "t_tarj": v_tarj, "t_fiado": v_fiado, "t_total": v_total,
-            "d_total": d_total, "d_tarj": d_tarj, "d_fiado": d_fiado, "f_hist": f_hist, "alertas": alertas,
-            "esperado": fondo + (v_total - v_tarj - v_fiado)
+            "fondo": fondo,
+            "t_efec": v_efec_ventas,
+            "t_tarj": v_tarj,
+            "t_fiado": v_fiado,
+            "t_total": v_total,
+            "d_total": d_total,
+            "d_tarj": d_tarj,
+            "d_fiado": d_fiado,
+            "f_hist": f_hist,
+            "alertas": alertas,
+            "esperado": esperado,
+            "caja_id": c_id,
         }
 
     def setup_ui(self):
@@ -378,9 +403,19 @@ class Paso7CierreCaja(QDialog):
             fisico = parse_float_regional(self.txt_fisico.text())
             dif = fisico - self.datos["esperado"]
             from src.config import config
-            c_id = config.get("caja_id", 1)
+            c_id = self.datos.get("caja_id", config.get("caja_id", 1))
             db_manager.execute_non_query("INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id) VALUES ('CIERRE_Z', ?, ?, ?, ?)", (dif, self.user, f"Modo:{self.modo} | Fis:${fisico:.2f} | Esp:${self.datos['esperado']:.2f}", c_id))
-            db_manager.execute_non_query("UPDATE ventas SET estado='CERRADA' WHERE estado='COMPLETADA' AND usuario=? AND caja_id=?", (self.user, c_id))
+            ap_fecha = getattr(self, "_apertura_fecha", None)
+            if ap_fecha:
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado='CERRADA' WHERE estado='COMPLETADA' AND caja_id=? AND fecha >= ?",
+                    (c_id, ap_fecha),
+                )
+            else:
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado='CERRADA' WHERE estado='COMPLETADA' AND usuario=? AND caja_id=?",
+                    (self.user, c_id),
+                )
             
             from src.hardware.printer import printer_manager
             # Pasamos modo='turno' para que el ticket lo refleje

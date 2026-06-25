@@ -16,6 +16,14 @@ def fmt_moneda(val):
     except:
         return f"${val}"
 
+
+def _fecha_a_texto(fecha_val):
+    if fecha_val is None:
+        return ""
+    if hasattr(fecha_val, "strftime"):
+        return fecha_val.strftime("%Y-%m-%d %H:%M:%S")
+    return str(fecha_val)
+
 class StampLabel(QLabel):
     def __init__(self, text="CANCELADO", parent=None):
         super().__init__(text, parent)
@@ -442,7 +450,7 @@ class DialogoHistorialDia(QDialog):
         total_exitoso = 0
         
         for r in raw_res:
-            f_str = str(r['fecha'])
+            f_str = _fecha_a_texto(r['fecha'])
             match_date = (f_iso in f_str or f_l1 in f_str or f_l2 in f_str)
             
             match_time = True

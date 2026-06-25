@@ -146,28 +146,7 @@ class DialogoEditarCantidad(QDialog):
 
 
 # ──────────────────────────────────────────────────────────────
-# ESTADO GLOBAL DEL CAJERO ACTIVO
-# Determina qué impresora y cajón se usan en cada venta
-# ──────────────────────────────────────────────────────────────
-class CajeroActivo:
-    numero = 1           # 1 o 2
-    nombre = "CAJERO"
-
-    @classmethod
-    def set(cls, numero):
-        from src.config import config
-        cls.numero = numero
-        cls.nombre = config.get(f"nombre_cajero_{numero}", "CAJERO" if numero == 1 else "AUXILIAR").upper()
-
-    @classmethod
-    def printer_key(cls):
-        """Retorna la clave de config para la impresora del cajero activo."""
-        return "ticket_printer_2" if cls.numero == 2 else "ticket_printer"
-
-    @classmethod
-    def get_printer_name(cls):
-        from src.config import config as _c
-        return _c.get(cls.printer_key(), '')
+from src.cajero.cajero_activo import CajeroActivo
 
 
 class DialogoPIN(QDialog):
@@ -232,6 +211,7 @@ class DialogoPIN(QDialog):
         QTimer.singleShot(100, self.txt_pin.setFocus)
 
     def _verificar(self):
+        from src.utils.pin_auth import verify_pin
         entered_pin = self.txt_pin.text().strip()
         
         # Buscar el PIN en la base de datos para el usuario con este nombre
@@ -248,8 +228,7 @@ class DialogoPIN(QDialog):
                 if res_curr and res_curr[0]['pin']:
                     pin_valido = str(res_curr[0]['pin'])
 
-                    
-        if entered_pin == pin_valido:
+        if verify_pin(entered_pin, pin_valido or ""):
             self.ok = True
             self.accept()
         else:

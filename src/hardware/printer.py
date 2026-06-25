@@ -30,6 +30,17 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def _impresora_cajero_activo():
+    """Tiketera/cajón según CajeroActivo (1 titular, 2 auxiliar tras F8+PIN)."""
+    try:
+        from src.cajero.cajero_activo import CajeroActivo
+        destino = CajeroActivo.get_drawer_target()
+        if destino:
+            return destino
+    except Exception:
+        pass
+    return config.get('ticket_printer', config.get('printer_name', ''))
+
 # Comandos estándar ESC/POS
 ESC = b'\x1B'
 GS = b'\x1D'
@@ -111,9 +122,9 @@ class PosPrinter:
         comando = ESC + b'\x42\x02\x01' 
         return self._send_raw_data(comando)
 
-    def abrir_cajon(self):
+    def abrir_cajon(self, printer_name_override=None):
         """ Envía el comando ESC/POS estándar para patear el cajón de dinero. """
-        p_name = config.get('ticket_printer', config.get('printer_name', ''))
+        p_name = printer_name_override or _impresora_cajero_activo()
         logger.info(f"Enviando señal de apertura a {p_name}...")
         
         # Seleccionar pin (0=Pin 2, 1=Pin 5)
@@ -437,14 +448,14 @@ class PosPrinter:
                 data.extend(GS_A_1)
             data.extend(kick)
         
-        p_principal = config.get('ticket_printer', config.get('printer_name', ''))
+        p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         
-        # Segunda tiketera: si está configurada y habilitada, imprimir copia
+        # Copia en la otra estación solo si se pidió explícitamente (no duplicar al cobrar auxiliar)
         if segunda_tiketera:
-            printer2 = config.get('ticket_printer_2', '')
-            if printer2:
-                self._send_raw_data(bytes(data), printer_name_override=printer2)
+            otra = config.get('ticket_printer_2', '') if p_principal == config.get('ticket_printer', '') else config.get('ticket_printer', '')
+            if otra and otra != p_principal:
+                self._send_raw_data(bytes(data), printer_name_override=otra)
         
         return result
 
@@ -471,7 +482,7 @@ class PosPrinter:
         data.extend(b"\n\n\n\n\n")
         data.extend(CUT_PAPER)
         
-        p_principal = config.get('ticket_printer', config.get('printer_name', ''))
+        p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 

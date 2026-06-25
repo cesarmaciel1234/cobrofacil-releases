@@ -10,10 +10,10 @@ if root_path not in sys.path:
 
 try:
     from src.config import config
-    from src.hardware.printer import printer_manager
+    from src.hardware.printer import printer_manager, _impresora_cajero_activo
 except (ImportError, ModuleNotFoundError):
     from config import config
-    from hardware.printer import printer_manager
+    from hardware.printer import printer_manager, _impresora_cajero_activo
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class CashDrawerManager(QObject):
                     self._opos_active = False
 
             # 2. Intento Genérico/Serial
-            p1 = config.get('ticket_printer', '')
+            p1 = _impresora_cajero_activo()
             status = printer_manager.check_drawer_status(p1) if p1 else False
             
             self._process_status_change(status)

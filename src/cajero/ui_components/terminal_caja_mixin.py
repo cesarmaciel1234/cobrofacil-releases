@@ -321,7 +321,28 @@ class TerminalCajaMixin:
             self.flash_feedback(success=False)
             
         QTimer.singleShot(100, self.txt_scan.setFocus)
+
+    def _hay_ticket_activo(self):
+        if getattr(self, "_cobro_abierto", False):
+            return True
+        if getattr(self, "tabla", None) is not None and self.tabla.rowCount() > 0:
+            return True
+        if getattr(self, "tickets_espera", None) and len(self.tickets_espera) > 0:
+            return True
+        return False
+
     def abrir_cierre_caja(self):
+        if self._hay_ticket_activo():
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                "Ticket activo",
+                "No podés cerrar turno con productos en el ticket.\n\n"
+                "Cobrá la venta (F12) o vaciá el carrito antes de usar F4.",
+            )
+            QTimer.singleShot(50, self.txt_scan.setFocus)
+            return
+
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
         from PyQt5.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()

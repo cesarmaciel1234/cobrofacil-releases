@@ -248,28 +248,9 @@ class DialogoEditarCantidad(QDialog):
 
 
 # ──────────────────────────────────────────────────────────────
-# ESTADO GLOBAL DEL CAJERO ACTIVO
-# Determina qué impresora y cajón se usan en cada venta
+# ESTADO GLOBAL DEL CAJERO ACTIVO (módulo compartido)
 # ──────────────────────────────────────────────────────────────
-class CajeroActivo:
-    numero = 1           # 1 o 2
-    nombre = "CAJERO"
-
-    @classmethod
-    def set(cls, numero):
-        from src.config import config
-        cls.numero = numero
-        cls.nombre = config.get(f"nombre_cajero_{numero}", "CAJERO" if numero == 1 else "AUXILIAR").upper()
-
-    @classmethod
-    def printer_key(cls):
-        """Retorna la clave de config para la impresora del cajero activo."""
-        return "ticket_printer_2" if cls.numero == 2 else "ticket_printer"
-
-    @classmethod
-    def get_printer_name(cls):
-        from src.config import config as _c
-        return _c.get(cls.printer_key(), '')
+from src.cajero.cajero_activo import CajeroActivo
 
 
 class DialogoPIN(QDialog):
@@ -334,6 +315,7 @@ class DialogoPIN(QDialog):
         QTimer.singleShot(100, self.txt_pin.setFocus)
 
     def _verificar(self):
+        from src.utils.pin_auth import verify_pin
         entered_pin = self.txt_pin.text().strip()
         
         # Buscar el PIN en la base de datos para el usuario con este nombre
@@ -350,8 +332,7 @@ class DialogoPIN(QDialog):
                 if res_curr and res_curr[0]['pin']:
                     pin_valido = str(res_curr[0]['pin'])
 
-                    
-        if entered_pin == pin_valido:
+        if verify_pin(entered_pin, pin_valido or ""):
             self.ok = True
             self.accept()
         else:
@@ -780,7 +761,7 @@ class DialogoCandado(QDialog):
         lbl_t1 = QLabel(f"🔵  [1]  {name_c1.upper()}")
         lbl_t1.setAlignment(Qt.AlignCenter)
         lbl_t1.setStyleSheet("font-size: 18px; font-weight: 900; color: #1E3A8A; background: transparent; border: none;")
-        lbl_p1 = QLabel("Perfil Principal\n(Impresora 1)")
+        lbl_p1 = QLabel("Perfil Principal\n(Cajón e impresora 1)")
         lbl_p1.setAlignment(Qt.AlignCenter)
         lbl_p1.setStyleSheet("font-size: 12px; font-weight: bold; color: #64748B; background: transparent; border: none;")
         lay_c1.addWidget(lbl_t1); lay_c1.addWidget(lbl_p1)
@@ -804,7 +785,7 @@ class DialogoCandado(QDialog):
         lbl_t2 = QLabel(f"🟢  [2]  {name_c2.upper()}")
         lbl_t2.setAlignment(Qt.AlignCenter)
         lbl_t2.setStyleSheet("font-size: 18px; font-weight: 900; color: #059669; background: transparent; border: none;")
-        lbl_p2 = QLabel("Perfil Secundario\n(Impresora 2)")
+        lbl_p2 = QLabel("Perfil Secundario\n(Cajón e impresora 2)")
         lbl_p2.setAlignment(Qt.AlignCenter)
         lbl_p2.setStyleSheet("font-size: 12px; font-weight: bold; color: #64748B; background: transparent; border: none;")
         lay_c2.addWidget(lbl_t2); lay_c2.addWidget(lbl_p2)
@@ -817,7 +798,7 @@ class DialogoCandado(QDialog):
         main_lay.addStretch()
 
         # Mensaje IA / Aprendizaje
-        ai_tip = QLabel("🤖 TIP IA: El nombre del perfil será registrado en cada ticket impreso. Usa [ESC] para mantener bloqueado.")
+        ai_tip = QLabel("🤖 Misma sesión de turno: el auxiliar cobra con su PIN y activa su cajón físico. Usa F8 para bloquear al salir.")
         ai_tip.setAlignment(Qt.AlignCenter)
         ai_tip.setWordWrap(True)
         ai_tip.setStyleSheet("font-size: 13px; color: #0284C7; font-weight: bold; background: #E0F2FE; padding: 12px; border-radius: 8px; border: none;")
@@ -902,6 +883,34 @@ class Paso5Terminal(QWidget):
         self.timer_alerta_espera = QTimer(self)
         self.timer_alerta_espera.timeout.connect(self._alerta_tickets_espera)
         self.timer_alerta_espera.start(120000)
+
+    def _stock_disponible(self, p, p_id):
+        if p_id == "000":
+            return None
+        try:
+            if hasattr(p, "keys") and "stock" in p.keys():
+                return float(p["stock"] or 0)
+            if isinstance(p, dict) and "stock" in p:
+                return float(p["stock"] or 0)
+        except (TypeError, ValueError):
+            pass
+        res = db_manager.execute_query("SELECT stock FROM productos WHERE id=?", (p_id,))
+        return float(res[0]["stock"] or 0) if res else 0.0
+
+    def _validar_stock(self, p, p_id, cantidad_necesaria):
+        if p_id == "000" or config.get("opt_stock_negativo", False):
+            return True
+        stock = self._stock_disponible(p, p_id)
+        if stock is None:
+            return True
+        if cantidad_necesaria > stock + 1e-9:
+            QMessageBox.warning(
+                self,
+                "Sin stock",
+                f"Stock insuficiente.\n\nDisponible: {stock:g}\nSolicitado: {cantidad_necesaria:g}",
+            )
+            return False
+        return True
 
 
 
@@ -2424,7 +2433,7 @@ class Paso5Terminal(QWidget):
 
         # --- BUSQUEDA DE PRODUCTO ---
         # 1. Intentar búsqueda por ID exacto (Barcode completo) primero
-        res_direct = db_manager.execute_query("SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ?", (txt,))
+        res_direct = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ?", (txt,))
         if res_direct:
             p = res_direct[0]
             self.agregar_a_tabla(p, cantidad_multiplicador)
@@ -2444,7 +2453,7 @@ class Paso5Terminal(QWidget):
                 plu_limpio = plu.lstrip('0') or '0'
                 
                 res = db_manager.execute_query(
-                    "SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ? OR id = ?", 
+                    "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR id = ?", 
                     (plu, plu_limpio)
                 )
                 if res:
@@ -2470,7 +2479,7 @@ class Paso5Terminal(QWidget):
                     return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
-        res = db_manager.execute_query("SELECT id, nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
+        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
 
         if res:
             p = res[0]
@@ -2503,6 +2512,9 @@ class Paso5Terminal(QWidget):
                 if self.tabla.item(i, 0).text() == p_id:
                     old_cant = float(self.tabla.item(i, 3).text())
                     new_cant = old_cant + cantidad
+                    if not self._validar_stock(p, p_id, new_cant):
+                        self.setUpdatesEnabled(True)
+                        return
                     
                     # Verificamos si alcanza o supera la cantidad de oferta
                     if cant_of > 0 and precio_of > 0 and new_cant >= cant_of:
@@ -2533,6 +2545,10 @@ class Paso5Terminal(QWidget):
                     self.setUpdatesEnabled(True)
                     self.repaint()
                     return
+
+        if not self._validar_stock(p, p_id, cantidad):
+            self.setUpdatesEnabled(True)
+            return
 
         # 2. Si no existe, calculamos para la inserción de la fila nueva
         if cant_of > 0 and precio_of > 0 and cantidad >= cant_of:
@@ -3170,7 +3186,27 @@ class Paso5Terminal(QWidget):
                 winsound.Beep(1000, 300)
                 winsound.Beep(1000, 300)
 
+    def _hay_ticket_activo(self):
+        """True si hay venta pendiente: carrito, cobro abierto o tickets en espera."""
+        if getattr(self, "_cobro_abierto", False):
+            return True
+        if getattr(self, "tabla", None) is not None and self.tabla.rowCount() > 0:
+            return True
+        if getattr(self, "tickets_espera", None) and len(self.tickets_espera) > 0:
+            return True
+        return False
+
     def abrir_cierre_caja(self):
+        if self._hay_ticket_activo():
+            QMessageBox.warning(
+                self,
+                "Ticket activo",
+                "No podés cerrar turno con productos en el ticket.\n\n"
+                "Cobrá la venta (F12) o vaciá el carrito antes de usar F4.",
+            )
+            QTimer.singleShot(50, self.txt_scan.setFocus)
+            return
+
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
         from PyQt5.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()

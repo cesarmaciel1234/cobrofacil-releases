@@ -14,7 +14,7 @@ class OfflineSync:
         self._ensure_queue_file()
         
         self.sync_worker = threading.Thread(target=self._sync_loop, daemon=True)
-        # self.sync_worker.start() # Deshabilitado temporalmente para pruebas de crash (0x8001010d) a los 15s
+        self.sync_worker.start()
 
     def _ensure_queue_file(self):
         if not os.path.exists(self.queue_file):
@@ -41,6 +41,35 @@ class OfflineSync:
             logger.info("Venta guardada en BUFFER OFFLINE.")
         except Exception as e:
             logger.error(f"Error escribiendo en buffer offline: {e}")
+
+    def sync_pendientes(self):
+        """Sincroniza ventas en offline_queue.json hacia la base de datos."""
+        from src.base_de_datos.database import db_manager
+        try:
+            with open(self.queue_file, "r", encoding="utf-8") as f:
+                queue = json.load(f)
+        except Exception:
+            queue = []
+        if not queue:
+            return 0
+
+        logger.info(f"Sincronizando {len(queue)} ventas offline pendientes...")
+        exitosas = []
+        for i, record in enumerate(queue):
+            if db_manager.sync_venta_to_master(record["venta_data"], record["items"]):
+                exitosas.append(i)
+            else:
+                break
+
+        if exitosas:
+            queue = [q for idx, q in enumerate(queue) if idx not in exitosas]
+            try:
+                with open(self.queue_file, "w", encoding="utf-8") as f:
+                    json.dump(queue, f, indent=4)
+                logger.info(f"{len(exitosas)} ventas offline sincronizadas.")
+            except Exception as e:
+                logger.error(f"Error actualizando cola post-sync: {e}")
+        return len(exitosas)
 
     def _sync_loop(self):
         """Intenta sincronizar cada 15 segundos si hay red."""
