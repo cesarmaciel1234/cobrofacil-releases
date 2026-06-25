@@ -43,6 +43,22 @@ def launch_app():
     if not app:
         app = QApplication(sys.argv)
     
+    # Tras reinicio 888: cerrar ventanas/diálogos que hayan quedado abiertos
+    if main_window is not None:
+        try:
+            main_window.hide()
+            main_window.close()
+        except Exception:
+            pass
+        main_window = None
+    for w in app.topLevelWidgets():
+        try:
+            w.hide()
+            w.close()
+        except Exception:
+            pass
+    app.processEvents()
+    
     # FORZAR ESTILO FUSION (VITAL PARA QUE LOS SCROLLBARS ACEPTEN CSS EN WINDOWS)
     app.setStyle('Fusion')
     

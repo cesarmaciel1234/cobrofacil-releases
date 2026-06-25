@@ -84,8 +84,27 @@ HTML_CHAT = r"""
     }
     .app-container {
         position: relative; width: 100%; height: 100%;
-        display: flex; align-items: flex-end; justify-content: flex-end;
-        padding-right: 20px; padding-bottom: 20px; box-sizing: border-box;
+        display: flex; flex-direction: column;
+        align-items: flex-end; justify-content: flex-end;
+        padding: 8px; box-sizing: border-box;
+    }
+    .app-container.chat-open {
+        align-items: stretch;
+        justify-content: flex-end;
+    }
+    .app-container.chat-open .thought-bubble.active {
+        position: relative;
+        right: auto; bottom: auto;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+        margin-bottom: 6px;
+    }
+    .app-container.chat-open .robot-head {
+        flex-shrink: 0;
+        align-self: flex-end;
+        margin-right: 4px;
     }
 
     /* ── Robot ── */
@@ -173,39 +192,107 @@ HTML_CHAT = r"""
 
     /* Globo principal */
     .thought-bubble {
-        position:absolute; right:125px;
-        background:rgba(255,255,255,0.92);
+        position:absolute; right:20px; bottom:110px;
+        background:rgba(255,255,255,0.98);
         backdrop-filter:blur(12px);
-        border:3px solid #0F172A; border-radius:20px;
-        width:370px; padding:14px; box-sizing:border-box;
+        border:3px solid #0F172A; border-radius:16px;
+        width:calc(100% - 16px); max-width:100%; padding:0; box-sizing:border-box;
         box-shadow:5px 5px 0px rgba(15,23,42,0.2);
-        opacity:0; transform:scale(0.7) translate(30px,10px);
+        opacity:0; transform:scale(0.92) translateY(12px);
         pointer-events:none;
-        transition:opacity 0.35s cubic-bezier(0.175,0.885,0.32,1.275),
-                    transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
+        transition:opacity 0.3s ease, transform 0.3s ease;
         z-index:5;
         max-height:calc(100vh - 160px);
-        overflow-y:auto;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
     }
-    .thought-bubble::-webkit-scrollbar{width:6px;}
-    .thought-bubble::-webkit-scrollbar-track{background:transparent;}
-    .thought-bubble::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.2);border-radius:3px;}
-    .thought-bubble.active { opacity:1; transform:scale(1) translate(0,0); pointer-events:auto; transition-delay:0.08s; }
-    .toast-bubble { bottom:120px; height:auto; min-height:80px; max-height:calc(100vh - 140px); }
-    .bubble-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; color:#0F172A; font-size:20px; font-weight:bold; }
-    .btn-close { background:transparent; border:none; color:#64748B; font-weight:bold; font-size:22px; cursor:pointer; transition:color 0.2s; }
-    .btn-close:hover { color:#EF4444; }
+    .thought-bubble.active {
+        opacity:1;
+        transform:scale(1) translateY(0);
+        pointer-events:auto;
+    }
+    .toast-bubble { min-height:0; }
+
+    /* Techo superior del chat */
+    .bubble-techo {
+        flex-shrink:0;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:12px 14px;
+        background:linear-gradient(135deg, #1E3A8A 0%, #2563EB 55%, #1D4ED8 100%);
+        border-bottom:3px solid #0F172A;
+        border-radius:17px 17px 0 0;
+    }
+    .bubble-techo-title {
+        color:#F8FAFC;
+        font-size:15px;
+        font-weight:900;
+        letter-spacing:0.6px;
+    }
+    .btn-close-techo {
+        background:rgba(255,255,255,0.14);
+        border:1.5px solid rgba(255,255,255,0.35);
+        color:#F8FAFC;
+        font-weight:bold;
+        font-size:16px;
+        width:28px;
+        height:28px;
+        border-radius:8px;
+        cursor:pointer;
+        line-height:1;
+        transition:background 0.2s, border-color 0.2s;
+    }
+    .btn-close-techo:hover {
+        background:rgba(239,68,68,0.85);
+        border-color:#FCA5A5;
+    }
+
+    .bubble-body {
+        display:flex;
+        flex-direction:column;
+        flex:1;
+        min-height:0;
+        padding:0;
+        overflow:hidden;
+    }
+
+    .bubble-chat-zone {
+        flex:1;
+        min-height:0;
+        display:flex;
+        flex-direction:column;
+        padding:8px 12px 0;
+        overflow:hidden;
+    }
+
+    .bubble-footer {
+        flex-shrink:0;
+        padding:8px 12px 12px;
+        border-top:1.5px solid #E2E8F0;
+        background:#FAFBFC;
+    }
     .toast-category { font-size:11px; font-weight:900; color:#64748B; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; border-bottom:1.5px dashed #E2E8F0; padding-bottom:6px; }
     .toast-content { color:#0F172A; font-size:15px; font-weight:600; line-height:1.5; white-space:pre-line; }
 
     /* Chat messages */
-    .msg-list { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; max-height:280px; overflow-y:auto; }
+    .msg-list {
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        flex:1;
+        min-height:0;
+        overflow-y:auto;
+        margin:0;
+        padding-right:2px;
+    }
     .msg-list::-webkit-scrollbar{width:5px;} .msg-list::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.2);border-radius:3px;}
     .msg-bot { align-self:flex-start; background:#EFF6FF; border:1.5px solid #BFDBFE; border-radius:12px; border-top-left-radius:2px; padding:10px 12px; font-size:14px; font-weight:600; color:#1E3A5F; line-height:1.4; max-width:92%; white-space:pre-line; }
     .msg-user { align-self:flex-end; background:#4F46E5; border-radius:12px; border-top-right-radius:2px; padding:10px 12px; font-size:14px; font-weight:700; color:#fff; max-width:80%; }
 
     /* Input chat */
-    .chat-input-row { display:flex; gap:6px; margin-top:6px; }
+    .chat-input-row { display:flex; gap:6px; margin:0; }
     .input-field { flex:1; background:#F1F5F9; border:2px solid #0F172A; border-radius:8px; padding:8px 12px; box-sizing:border-box; color:#0F172A; font-size:14px; font-weight:600; outline:none; transition:border-color 0.2s; }
     .input-field:focus { background:#fff; border-color:#4F46E5; }
     .btn-send { background:#4F46E5; color:#fff; font-weight:900; font-size:16px; border:2px solid #0F172A; border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:2px 2px 0px #0F172A; transition:transform 0.1s,box-shadow 0.1s,background 0.2s; }
@@ -213,12 +300,28 @@ HTML_CHAT = r"""
     .btn-send:active { transform:translate(1px,1px); box-shadow:1px 1px 0px #0F172A; }
 
     /* Sugerencias */
-    .sugerencias { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
-    .sug-btn { background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:20px; padding:4px 10px; font-size:12px; font-weight:700; color:#334155; cursor:pointer; transition:background 0.15s; }
+    .sugerencias {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:6px;
+        margin:0 0 8px 0;
+    }
+    .sug-btn {
+        background:#F8FAFC;
+        border:1.5px solid #CBD5E1;
+        border-radius:12px;
+        padding:6px 8px;
+        font-size:11px;
+        font-weight:800;
+        color:#334155;
+        cursor:pointer;
+        transition:background 0.15s;
+        text-align:center;
+    }
     .sug-btn:hover { background:#E2E8F0; }
 
     /* Tutor progress */
-    .tutor-bar { display:none; align-items:center; gap:8px; margin-bottom:8px; }
+    .tutor-bar { display:none; align-items:center; gap:8px; margin:0 0 8px 0; flex-shrink:0; }
     .tutor-bar.active { display:flex; }
     .tutor-progress { flex:1; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; }
     .tutor-fill { height:100%; background:#4F46E5; border-radius:3px; transition:width 0.4s ease; }
@@ -242,12 +345,14 @@ HTML_CHAT = r"""
   <!-- Globo principal (chat + tutor) -->
   <div id="toastBubble" class="thought-bubble toast-bubble">
 
-    <!-- Header -->
-    <div class="bubble-header">
-      <span>📖 Manual del Cajero</span>
-      <button class="btn-close" onclick="cerrar()">✕</button>
+    <div class="bubble-techo">
+      <span class="bubble-techo-title">📖 Manual del Cajero</span>
+      <button class="btn-close-techo" onclick="cerrar()" title="Cerrar">✕</button>
     </div>
 
+    <div class="bubble-body">
+
+    <div class="bubble-chat-zone">
     <!-- Barra tutor -->
     <div id="tutorBar" class="tutor-bar">
       <span class="tutor-label" id="tutorLabel">Paso 1/15</span>
@@ -257,7 +362,9 @@ HTML_CHAT = r"""
 
     <!-- Mensajes -->
     <div class="msg-list" id="msgList"></div>
+    </div>
 
+    <div class="bubble-footer">
     <!-- Sugerencias -->
     <div class="sugerencias" id="sugerencias">
       <button class="sug-btn" onclick="preguntar('atajos de teclado')">⌨️ Atajos</button>
@@ -273,6 +380,9 @@ HTML_CHAT = r"""
       <input type="text" id="chatInput" class="input-field" placeholder="Escribí tu consulta..."
              onkeypress="if(event.key==='Enter') enviar()">
       <button class="btn-send" onclick="enviar()">➤</button>
+    </div>
+    </div>
+
     </div>
   </div>
 
@@ -307,6 +417,7 @@ const dots    = document.getElementById("dots");
 const tutorBar  = document.getElementById("tutorBar");
 const tutorFill = document.getElementById("tutorFill");
 const tutorLabel= document.getElementById("tutorLabel");
+const appRoot   = document.querySelector(".app-container");
 
 let bubbleOpen   = false;
 let tutorRunning = false;
@@ -340,12 +451,14 @@ function hablar(on) {
 }
 
 // ── Burbuja ──────────────────────────────────────────────────────────────────
-function toggleBubble() {
-  bubbleOpen = !bubbleOpen;
-  if(bubbleOpen) { bubble.classList.add("active"); dots.classList.remove("active"); }
-  else           { bubble.classList.remove("active"); }
+function setChatOpen(open) {
+  bubbleOpen = open;
+  appRoot.classList.toggle("chat-open", open);
+  if (open) { bubble.classList.add("active"); dots.classList.remove("active"); }
+  else      { bubble.classList.remove("active"); }
 }
-function cerrar() { bubbleOpen=false; bubble.classList.remove("active"); console.log("close://"); }
+function toggleBubble() { setChatOpen(!bubbleOpen); }
+function cerrar() { setChatOpen(false); console.log("close://"); }
 
 // ── Agregar mensaje ───────────────────────────────────────────────────────────
 function addMsg(txt, esBot) {
@@ -372,7 +485,7 @@ function enviar() {
   preguntar(txt);
 }
 function preguntar(txt) {
-  if(!bubbleOpen) { bubbleOpen=true; bubble.classList.add("active"); }
+  if(!bubbleOpen) { setChatOpen(true); }
   addMsg(txt, false);
   hablar(true);
   dots.classList.add("active");
@@ -384,7 +497,7 @@ function preguntar(txt) {
 function iniciarTutor() {
   tutorRunning = true; tutorIdx = 0;
   tutorBar.classList.add("active");
-  if(!bubbleOpen){ bubbleOpen=true; bubble.classList.add("active"); }
+  if(!bubbleOpen){ setChatOpen(true); }
   nextTutorStep();
 }
 function nextTutorStep() {
@@ -431,7 +544,7 @@ class ChatManualWidget(QWidget):
         super().__init__(parent)
         self.parent_window = parent
         self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.resize(520, 520)
+        self.resize(520, 700)
         self.motor     = ChatManual()
         self._tutor_idx = 0
         self._tutor_activo = False
@@ -520,7 +633,7 @@ class ChatManualWidget(QWidget):
         self.show()
         self.raise_()
         self.activateWindow()
-        self._js("if(!bubbleOpen){ toggleBubble(); }")
+        self._js("setChatOpen(true);")
 
     def cerrar_chat(self):
         self.hide()

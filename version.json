@@ -1,14 +1,14 @@
 {
   "app_version": "31000.0",
   "channel": "stable",
-  "build_date": "2026-06-19 15:15:20",
+  "build_date": "2026-06-24 22:44:30",
   "server_host": "cesar",
   "modules": {
     "main.py": {
       "version": "1.0.0",
-      "checksum": "2f5e4b96211938214b9b536afb529cf7",
+      "checksum": "9499afcd7cfec979a85a9272ef8ecf82",
       "channel": "stable",
-      "size": 14351
+      "size": 14771
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -594,9 +594,9 @@
     },
     "src/cajero/chat_bot.py": {
       "version": "1.0.0",
-      "checksum": "c3cc3c21d48a7d4b40a6f94e7c62f639",
+      "checksum": "91d03e92aab142201b72af853ded06a7",
       "channel": "stable",
-      "size": 27608
+      "size": 29368
     },
     "src/cajero/chat_bot_animado.py": {
       "version": "1.0.0",
@@ -606,21 +606,21 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "56d91d973788843f2f1ef6fc621191cb",
+      "checksum": "8961a862b8fda4498449a07945cf66dc",
       "channel": "stable",
-      "size": 145903
+      "size": 145928
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "d6c38e6daec2ade3ff5f40b50a291f98",
+      "checksum": "4e59c92f0e932c7d037c4c77684b2cad",
       "channel": "stable",
-      "size": 81885
+      "size": 81295
     },
     "src/cajero/paso7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "e19ed18ff3f81c0f4417c2bb058b517a",
+      "checksum": "463693bd46142f21c25af96de7ca4eb5",
       "channel": "stable",
-      "size": 22052
+      "size": 21989
     },
     "src/cajero/paso8_historial.py": {
       "version": "1.0.0",
@@ -642,9 +642,9 @@
     },
     "src/cajero/ui_components/terminal_caja_mixin.py": {
       "version": "1.0.0",
-      "checksum": "6b60c962e2a163f6c9e51fab0ae5b160",
+      "checksum": "b128d885f5a109eb2c755175595c7529",
       "channel": "stable",
-      "size": 20050
+      "size": 20075
     },
     "src/cajero/ui_components/terminal_ui_mixin.py": {
       "version": "1.0.0",
@@ -822,9 +822,9 @@
     },
     "src/inicio_y_perfiles/licencia_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "5330f37345215f4d6345a5061679de64",
+      "checksum": "099bfd8c9858c9490133a30d8b2b3f27",
       "channel": "stable",
-      "size": 12718
+      "size": 13023
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",

@@ -11,7 +11,7 @@ class LicenciaPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(500, 500)
+        self.setFixedSize(650, 790)
         self.setup_ui()
         self.apply_glow()
 
@@ -24,7 +24,7 @@ class LicenciaPantalla(QDialog):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setContentsMargins(30, 30, 30, 30)
         
         self.container = QFrame()
         self.container.setObjectName("MainContainer")
@@ -38,8 +38,8 @@ class LicenciaPantalla(QDialog):
         layout.addWidget(self.container)
         
         main_lay = QVBoxLayout(self.container)
-        main_lay.setContentsMargins(40, 40, 40, 40)
-        main_lay.setSpacing(20)
+        main_lay.setContentsMargins(48, 48, 48, 48)
+        main_lay.setSpacing(26)
         
         # Logo o Ícono Gigante
         lbl_icon = QLabel("💎")
@@ -74,11 +74,12 @@ class LicenciaPantalla(QDialog):
         # Campo para clave de licencia (oculto por defecto)
         self.txt_license = QLineEdit()
         self.txt_license.setPlaceholderText("Ingrese clave de activación (ej: PRO-1234)")
+        self.txt_license.setMinimumHeight(44)
         self.txt_license.setStyleSheet("""
             QLineEdit {
                 background: rgba(255, 255, 255, 0.1);
                 color: white; font-size: 13px; font-weight: bold;
-                padding: 10px; border-radius: 8px; border: 1px solid #3B82F6;
+                padding: 12px 16px; border-radius: 8px; border: 1px solid #3B82F6;
             }
         """)
         self.txt_license.setAlignment(Qt.AlignCenter)
@@ -88,11 +89,12 @@ class LicenciaPantalla(QDialog):
         # Botón de Entrada Premium
         self.btn_enter = QPushButton("INICIAR TERMINAL")
         self.btn_enter.setCursor(Qt.PointingHandCursor)
+        self.btn_enter.setMinimumHeight(48)
         self.btn_enter.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3B82F6, stop:1 #1D4ED8);
                 color: white; font-size: 13px; font-weight: 900; letter-spacing: 2px;
-                padding: 15px; border-radius: 12px; border: none;
+                padding: 16px 20px; border-radius: 12px; border: none;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #60A5FA, stop:1 #2563EB);
@@ -107,11 +109,12 @@ class LicenciaPantalla(QDialog):
         # Botón de WhatsApp (Nuevo)
         self.btn_whatsapp = QPushButton("💬 Pedir Licencia Gratuita por WhatsApp")
         self.btn_whatsapp.setCursor(Qt.PointingHandCursor)
+        self.btn_whatsapp.setMinimumHeight(44)
         self.btn_whatsapp.setStyleSheet("""
             QPushButton {
                 background: #25D366;
                 color: white; font-size: 13px; font-weight: 900;
-                padding: 10px; border-radius: 8px; border: none;
+                padding: 12px 16px; border-radius: 8px; border: none;
             }
             QPushButton:hover { background: #128C7E; }
         """)
@@ -122,10 +125,13 @@ class LicenciaPantalla(QDialog):
         # Advertencia de Bomba Nuclear (Oculta por defecto)
         self.lbl_nuke_warning = QLabel("☢️ ¡ADVERTENCIA CRÍTICA! ☢️\nAl 3er intento fallido el sistema se AUTO-DESTRUIRÁ.")
         self.lbl_nuke_warning.setAlignment(Qt.AlignCenter)
+        self.lbl_nuke_warning.setWordWrap(True)
+        self.lbl_nuke_warning.setMinimumHeight(96)
         self.lbl_nuke_warning.setStyleSheet("""
-            font-size: 11px; font-weight: 900; color: #EF4444; 
+            font-size: 12px; font-weight: 900; color: #EF4444; 
             background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; 
-            border-radius: 6px; padding: 5px;
+            border-radius: 8px; padding: 28px 24px; margin-top: 12px;
+            line-height: 1.6;
         """)
         self.lbl_nuke_warning.hide()
         main_lay.addWidget(self.lbl_nuke_warning)

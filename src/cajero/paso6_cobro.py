@@ -4,7 +4,7 @@ from PIL import Image, ImageChops
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QFrame, QGridLayout,
-    QWidget, QGraphicsDropShadowEffect, QApplication
+    QWidget, QGraphicsDropShadowEffect, QApplication, QSizePolicy
 )
 from PyQt5.QtCore import Qt, QTimer, QEvent
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
@@ -99,7 +99,7 @@ class Paso6Cobro(QDialog):
         
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(1100, 780)
+        self.setFixedSize(1200, 780)
         
         self.current_metodo = "Efectivo"
         self.setup_ui()
@@ -437,107 +437,87 @@ class Paso6Cobro(QDialog):
         
         content_lay.addStretch()
         left_lay.addLayout(content_lay)
-        main_lay.addWidget(left_panel, 7)
+        main_lay.addWidget(left_panel, 11)
         
-        # --- SECCIÓN DERECHA: ACCIONES (25%) ---
+        # --- SECCIÓN DERECHA: ACCIONES (~35%) ---
         theme = config.get("theme", "light")
         right_panel = QFrame()
         self.right_panel = right_panel
+        right_panel.setMinimumWidth(400)
         right_lay = QVBoxLayout(right_panel)
-        right_lay.setContentsMargins(15, 30, 15, 30)
-        right_lay.setSpacing(12)
+        right_lay.setContentsMargins(12, 24, 12, 24)
+        right_lay.setSpacing(6)
         
-        def create_action_btn(text, callback, is_primary=False):
-            btn = QPushButton(text)
-            btn.setFixedHeight(48)
-            if is_primary:
-                btn.setStyleSheet("""
-                    QPushButton {
+        def create_action_btn(fn_key, subtitle, callback, style="default"):
+            btn = QPushButton(f"{fn_key}\n{subtitle}")
+            btn.setFixedHeight(40)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            base = "border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;"
+            if style == "primary":
+                btn.setStyleSheet(f"""
+                    QPushButton {{
                         background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3B82F6, stop:1 #2563EB);
-                        color: white; 
-                        border: none; 
-                        border-radius: 24px; 
-                        font-size: 12px; 
-                        font-weight: 900;
-                        font-family: 'Segoe UI', sans-serif;
-                        letter-spacing: 0.5px;
-                    }
-                    QPushButton:hover { 
+                        color: white; border: none; {base}
+                    }}
+                    QPushButton:hover {{
                         background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563EB, stop:1 #1D4ED8);
-                    }
+                    }}
                 """)
-                sh = QGraphicsDropShadowEffect(btn)
-                sh.setBlurRadius(12)
-                sh.setColor(QColor(59, 130, 246, 60))
-                sh.setOffset(0, 4)
-                btn.setGraphicsEffect(sh)
+            elif style == "green":
+                btn.setStyleSheet(f"QPushButton {{ background: #10B981; color: white; border: none; {base} }} QPushButton:hover {{ background: #059669; }}")
+            elif style == "orange":
+                btn.setStyleSheet(f"QPushButton {{ background: #F59E0B; color: white; border: none; {base} }} QPushButton:hover {{ background: #D97706; }}")
+            elif theme == "dark":
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: #334155; color: #F8FAFC;
+                        border: 1.5px solid #475569; {base}
+                    }}
+                    QPushButton:hover {{ background-color: #475569; border-color: #64748B; }}
+                    QPushButton:pressed {{ background-color: #1E293B; }}
+                """)
             else:
-                if theme == "dark":
-                    btn.setStyleSheet("""
-                        QPushButton {
-                            background-color: #334155; 
-                            color: #F8FAFC; 
-                            border: 1.5px solid #475569; 
-                            border-radius: 24px; 
-                            font-size: 12px; 
-                            font-weight: 800;
-                            font-family: 'Segoe UI', sans-serif;
-                        }
-                        QPushButton:hover { 
-                            background-color: #475569; 
-                            border-color: #64748B; 
-                        }
-                        QPushButton:pressed { 
-                            background-color: #1E293B; 
-                        }
-                    """)
-                else:
-                    btn.setStyleSheet("""
-                        QPushButton {
-                            background-color: #FFFFFF; 
-                            color: #1E293B; 
-                            border: 1.5px solid #E2E8F0; 
-                            border-radius: 24px; 
-                            font-size: 12px; 
-                            font-weight: 800;
-                            font-family: 'Segoe UI', sans-serif;
-                        }
-                        QPushButton:hover { 
-                            background-color: #F1F5F9; 
-                            border-color: #CBD5E1; 
-                        }
-                        QPushButton:pressed { 
-                            background-color: #E2E8F0; 
-                        }
-                    """)
+                btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: #FFFFFF; color: #1E293B;
+                        border: 1.5px solid #E2E8F0; {base}
+                    }}
+                    QPushButton:hover {{ background-color: #F1F5F9; border-color: #CBD5E1; }}
+                    QPushButton:pressed {{ background-color: #E2E8F0; }}
+                """)
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(callback)
             return btn
 
-        right_lay.addWidget(create_action_btn("🖨️ F1 - Cobrar e Imprimir", lambda: self.finalizar(True), is_primary=True))
-        right_lay.addWidget(create_action_btn("🤝 F2 - Cobrar sin imprimir", lambda: self.finalizar(False)))
-        right_lay.addSpacing(20)
-        
-        self.btn_descuento = create_action_btn("🏷️ F3 - Descuento", self.abrir_descuento)
-        self.btn_recargo = create_action_btn("📈 F4 - Recargo", self.abrir_recargo)
-        right_lay.addWidget(self.btn_descuento)
-        right_lay.addWidget(self.btn_recargo)
-        
-        right_lay.addSpacing(10)
-        btn_f10 = create_action_btn("🏛️ F10 - Efectivo (AFIP)", lambda: self.finalizar_fiscal_efectivo())
-        btn_f10.hide() # Lo mantenemos oculto (secreto)
+        actions_grid = QGridLayout()
+        actions_grid.setSpacing(6)
+        actions_grid.setContentsMargins(0, 0, 0, 0)
+        actions_grid.setColumnStretch(0, 1)
+        actions_grid.setColumnStretch(1, 1)
+
+        actions_grid.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 0, 0)
+        actions_grid.addWidget(create_action_btn("F2", "s/imprime", lambda: self.finalizar(False)), 0, 1)
+
+        self.btn_descuento = create_action_btn("F3", "descuento", self.abrir_descuento, style="green")
+        self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="orange")
+        actions_grid.addWidget(self.btn_descuento, 1, 0)
+        actions_grid.addWidget(self.btn_recargo, 1, 1)
+
+        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point())
+        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp())
+        actions_grid.addWidget(self.btn_f11, 2, 0)
+        actions_grid.addWidget(self.btn_f12, 2, 1)
+
+        right_lay.addLayout(actions_grid)
+
+        btn_f10 = create_action_btn("F10", "AFIP", lambda: self.finalizar_fiscal_efectivo())
+        btn_f10.hide()
         right_lay.addWidget(btn_f10)
-        
-        btn_f11 = create_action_btn("💳 F11 - Terminal Point (MP)", lambda: self.procesar_pago_mercadopago_point())
-        right_lay.addWidget(btn_f11)
-        
-        btn_f12 = create_action_btn("📱 F12 - Verif. Transf./QR", lambda: self.verificar_transferencia_mp())
-        right_lay.addWidget(btn_f12)
         
         # Teclado numérico físico propio (incrustado directamente)
         self.build_teclado_propio(right_lay)
 
-        main_lay.addWidget(right_panel, 3)
+        main_lay.addWidget(right_panel, 6)
         self.apply_theme()
 
         # Aplicar método inicial después de crear todos los widgets
@@ -944,20 +924,20 @@ class Paso6Cobro(QDialog):
         self.lbl_neto.setText(f"NETO A PAGAR: ${self.total_final:,.2f}")
         
         # Actualizar visualización del botón de Descuento (Premium UX!)
+        _btn_compact = "border-radius: 16px; font-weight: 900; font-size: 10px; border: none; padding: 2px 8px;"
         if getattr(self, 'descuento_monto', 0.0) > 0:
-            self.btn_descuento.setText(f"🏷️ DESC: ${self.descuento_monto:,.2f} (F3)")
-            self.btn_descuento.setStyleSheet("background: #047857; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_descuento.setText(f"F3\n-${self.descuento_monto:,.0f}")
+            self.btn_descuento.setStyleSheet(f"background: #047857; color: white; {_btn_compact}")
         else:
-            self.btn_descuento.setText("🏷️ DESCUENTO (F3)")
-            self.btn_descuento.setStyleSheet("background: #10B981; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_descuento.setText("F3\ndescuento")
+            self.btn_descuento.setStyleSheet(f"background: #10B981; color: white; {_btn_compact}")
             
-        # Actualizar visualización del botón de Recargo (Premium UX!)
         if getattr(self, 'recargo_monto', 0.0) > 0:
-            self.btn_recargo.setText(f"📈 REC: ${self.recargo_monto:,.2f} (F4)")
-            self.btn_recargo.setStyleSheet("background: #B45309; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_recargo.setText(f"F4\n+${self.recargo_monto:,.0f}")
+            self.btn_recargo.setStyleSheet(f"background: #B45309; color: white; {_btn_compact}")
         else:
-            self.btn_recargo.setText("📈 RECARGO (F4)")
-            self.btn_recargo.setStyleSheet("background: #F59E0B; color: white; border-radius: 24px; font-weight: 900; font-size: 12px; border: none;")
+            self.btn_recargo.setText("F4\nrecargo")
+            self.btn_recargo.setStyleSheet(f"background: #F59E0B; color: white; {_btn_compact}")
             
         # Si el método es electrónico, actualizar el autocompletado del pago de inmediato
         if self.current_metodo in ["Tarjeta", "Transferencia"]:
@@ -1684,10 +1664,11 @@ class Paso6Cobro(QDialog):
                     border-radius: 24px;
                 }
             """)
-        self.kb_frame.setFixedSize(240, 330)
+        self.kb_frame.setMinimumHeight(330)
+        self.kb_frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
         kb_layout = QVBoxLayout(self.kb_frame)
-        kb_layout.setContentsMargins(8, 8, 8, 8)
+        kb_layout.setContentsMargins(10, 10, 10, 10)
         kb_layout.setSpacing(5)
         
         rows = [
@@ -1768,7 +1749,7 @@ class Paso6Cobro(QDialog):
                     btn.setStyleSheet(btn_style + "QPushButton { background-color: #3B82F6; color: white; }")
                 
                 btn.clicked.connect(lambda checked, k=key: self.on_teclado_key_clicked(k))
-                row_lay.addWidget(btn)
+                row_lay.addWidget(btn, 1)
                 
             kb_layout.addLayout(row_lay)
             

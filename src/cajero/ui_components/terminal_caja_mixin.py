@@ -335,8 +335,10 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(None)
 
         if ok:
-            # Si el cierre fue exitoso, cerramos el turno y volvemos a la pantalla de Perfil/Login
             from PyQt5.QtWidgets import QApplication
+            from src.config import config
+            config.current_user = None
+            QApplication.processEvents()
             QApplication.exit(888)
         else:
             QTimer.singleShot(50, self.txt_scan.setFocus)

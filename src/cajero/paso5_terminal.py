@@ -101,41 +101,62 @@ class DialogoEditarCantidad(QDialog):
     def __init__(self, cant_actual, nombre, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setFixedSize(450, 280)
-        self.setStyleSheet("""
-            QDialog { background-color: white; border: 4px solid #437EE8; border-radius: 12px; }
-            QLabel { color: #1e293b; font-weight: 800; font-family: 'Segoe UI'; }
-            QDoubleSpinBox { 
-                font-size: 50px; 
-                padding: 10px; 
-                border: 2px solid #cbd5e1; 
-                border-radius: 8px; 
-                background: #f8fafc;
-                color: #1e293b;
+        self.setFixedSize(540, 340)
+        self.setStyleSheet("QDialog { background: transparent; }")
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        box = QFrame()
+        box.setObjectName("EditCantDialog")
+        box.setStyleSheet("""
+            QFrame#EditCantDialog {
+                background: #FFFFFF;
+                border: 4px solid #437EE8;
+                border-radius: 12px;
             }
-            QPushButton { 
-                border-radius: 8px; 
-                padding: 15px; 
-                font-size: 14px; 
-                font-weight: bold; 
-                letter-spacing: 1px;
+            QFrame#EditCantDialog QLabel {
+                background: transparent;
+                border: none;
+                color: #1E293B;
+                font-family: 'Segoe UI';
+                font-weight: 800;
+            }
+            QFrame#EditCantDialog QDoubleSpinBox {
+                font-size: 48px;
+                padding: 10px;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                background: #F8FAFC;
+                color: #1E293B;
+            }
+            QFrame#EditCantDialog QPushButton {
+                border-radius: 8px;
+                padding: 14px 12px;
+                font-size: 13px;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+                min-height: 48px;
             }
         """)
-        
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(15)
-        
+        outer.addWidget(box)
+
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(28, 24, 28, 24)
+        layout.setSpacing(14)
+
         lbl_prod = QLabel(f"MODIFICAR: {nombre.upper()}")
+        lbl_prod.setObjectName("EditCantProducto")
         lbl_prod.setAlignment(Qt.AlignCenter)
-        lbl_prod.setStyleSheet("font-size: 14px; color: #64748b; border: none;")
+        lbl_prod.setStyleSheet("font-size: 15px; color: #64748B; background: transparent; border: none;")
         layout.addWidget(lbl_prod)
-        
+
         lbl_title = QLabel("CANTIDAD")
-        lbl_title.setStyleSheet("font-size: 24px; color: #1e293b; border: none;")
+        lbl_title.setObjectName("EditCantTitle")
+        lbl_title.setStyleSheet("font-size: 26px; font-weight: 900; color: #1E3A8A; background: transparent; border: none;")
         lbl_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_title)
-        
+
         self.spin = QDoubleSpinBox()
         self.spin.setRange(0.001, 9999.999)
         self.spin.setDecimals(3)
@@ -143,25 +164,23 @@ class DialogoEditarCantidad(QDialog):
         self.spin.setAlignment(Qt.AlignCenter)
         self.spin.setFocus()
         self.spin.selectAll()
-        # Estilo para las flechas del spinbox (estilo industrial)
         self.spin.setButtonSymbols(QDoubleSpinBox.UpDownArrows)
         layout.addWidget(self.spin)
-        
-        layout.addSpacing(10)
-        
+
         btns = QHBoxLayout()
+        btns.setSpacing(12)
         btn_ok = QPushButton("✅ CONFIRMAR (ENTER)")
-        btn_ok.setStyleSheet("background: #10B981; color: white;")
+        btn_ok.setStyleSheet("background: #10B981; color: white; border: none;")
         btn_ok.setCursor(Qt.PointingHandCursor)
         btn_ok.clicked.connect(self.accept)
-        
+
         btn_cancel = QPushButton("❌ CANCELAR (ESC)")
-        btn_cancel.setStyleSheet("background: #ef4444; color: white;")
+        btn_cancel.setStyleSheet("background: #EF4444; color: white; border: none;")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)
-        
-        btns.addWidget(btn_ok)
-        btns.addWidget(btn_cancel)
+
+        btns.addWidget(btn_ok, 1)
+        btns.addWidget(btn_cancel, 1)
         layout.addLayout(btns)
 
     def keyPressEvent(self, event):
@@ -3089,8 +3108,10 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(None)
 
         if ok:
-            # Si el cierre fue exitoso, cerramos el turno y volvemos a la pantalla de Perfil/Login
             from PyQt5.QtWidgets import QApplication
+            from src.config import config
+            config.current_user = None
+            QApplication.processEvents()
             QApplication.exit(888)
         else:
             QTimer.singleShot(50, self.txt_scan.setFocus)

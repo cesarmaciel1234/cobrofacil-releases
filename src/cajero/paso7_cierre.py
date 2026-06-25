@@ -402,8 +402,7 @@ class Paso7CierreCaja(QDialog):
             except Exception as email_err:
                 print(f"Error enviando email: {email_err}")
 
-            from PyQt5.QtWidgets import QApplication
-            QApplication.exit(888)
+            self.accept()
         except Exception as e: QMessageBox.critical(self, "Error", str(e))
 
     def mostrar_corte_diario(self):
