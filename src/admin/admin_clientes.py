@@ -399,16 +399,35 @@ class AdminClientes(QWidget):
                     btn_sim.setStyleSheet("background: transparent; color: transparent; border: none;")
                 self.tabla.setCellWidget(i, 5, btn_sim)
                 
-                # Acciones (Solo informativo, los pagos se hacen por F6 en caja para cuadrar turnos, o se mantiene el botón para admin)
-                btn_abonar = QPushButton("Abonar Deuda")
+                # Acciones: abono + editar límite de crédito
+                acc_w = QWidget()
+                acc_lay = QHBoxLayout(acc_w)
+                acc_lay.setContentsMargins(2, 2, 2, 2)
+                acc_lay.setSpacing(4)
+
+                btn_abonar = QPushButton("Abonar")
                 btn_abonar.setCursor(Qt.PointingHandCursor)
                 if deuda <= 0:
                     btn_abonar.setEnabled(False)
-                    btn_abonar.setStyleSheet(" background-color: #3b82f6; color: white; border-radius: 6px; padding: 6px;")
+                    btn_abonar.setStyleSheet("background-color: #94A3B8; color: white; border-radius: 6px; padding: 4px 8px;")
                 else:
-                    btn_abonar.setStyleSheet(" background-color: #3b82f6; color: white; border-radius: 6px; padding: 6px; font-weight: bold;")
-                    btn_abonar.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu))
-                self.tabla.setCellWidget(i, 6, btn_abonar)
+                    btn_abonar.setStyleSheet("background-color: #3b82f6; color: white; border-radius: 6px; padding: 4px 8px; font-weight: bold;")
+                    btn_abonar.clicked.connect(
+                        lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu)
+                    )
+                acc_lay.addWidget(btn_abonar)
+
+                limite = float(c['limite_credito'])
+                btn_limite = QPushButton("Límite")
+                btn_limite.setCursor(Qt.PointingHandCursor)
+                btn_limite.setToolTip("Ampliar cupo de fiado (Express o habitual)")
+                btn_limite.setStyleSheet("background-color: #10B981; color: white; border-radius: 6px; padding: 4px 8px; font-weight: bold;")
+                btn_limite.clicked.connect(
+                    lambda ch, cid=c['id'], cnom=c['nombre'], lim=limite: self.editar_limite_credito(cid, cnom, lim)
+                )
+                acc_lay.addWidget(btn_limite)
+
+                self.tabla.setCellWidget(i, 6, acc_w)
                 
         self.card_deuda.set_valor(total_deuda, True)
         self.card_activos.set_valor(deudores)
@@ -422,6 +441,25 @@ class AdminClientes(QWidget):
                 QMessageBox.warning(self, "Error", "El nombre es obligatorio.")
                 return
             self.db.execute_non_query("INSERT INTO clientes (nombre, telefono, limite_credito) VALUES (?, ?, ?)", (data['nombre'], data['telefono'], data['limite_credito']))
+            self.cargar_clientes()
+
+    def editar_limite_credito(self, cliente_id, nombre, limite_actual):
+        from PyQt6.QtWidgets import QInputDialog
+        nuevo, ok = QInputDialog.getDouble(
+            self,
+            "Límite de crédito",
+            f"Cliente: {nombre}\nLímite actual: ${limite_actual:,.2f}\n\nNuevo límite ($):",
+            limite_actual,
+            0,
+            99_999_999,
+            2,
+        )
+        if ok and nuevo >= 0:
+            self.db.execute_non_query(
+                "UPDATE clientes SET limite_credito = ? WHERE id = ?",
+                (nuevo, cliente_id),
+            )
+            QMessageBox.information(self, "Listo", f"Límite actualizado a ${nuevo:,.2f}")
             self.cargar_clientes()
 
     def abonar_deuda_admin(self, cliente_id, nombre, deuda_actual):

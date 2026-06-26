@@ -529,30 +529,16 @@ class DialogoIngresoEfectivo(QDialog):
         pn_lay.addWidget(self.txt_desc)
         self.stack.addWidget(panel_normal)
         
-        # Panel Fiado
+        # Panel Fiado (compartido con Fiado Express — modo abono)
+        from src.cajero.widgets.panel_cliente_fiado import PanelClienteFiado
+
         panel_fiado = QWidget()
         pf_lay = QVBoxLayout(panel_fiado)
         pf_lay.setContentsMargins(20, 10, 20, 10)
-        
-        pf_lay.addWidget(QLabel("Seleccionar Cliente:"))
-        self.cmb_clientes = QComboBox()
-        self.cmb_clientes.setStyleSheet("""
-            QComboBox { font-size: 16px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; }
-        """)
-        self.cmb_clientes.currentIndexChanged.connect(self._on_cliente_changed)
-        pf_lay.addWidget(self.cmb_clientes)
-        
-        self.lbl_deuda = QLabel("Deuda: $0.00")
-        self.lbl_deuda.setAlignment(Qt.AlignCenter)
-        self.lbl_deuda.setStyleSheet("font-size: 16px; color: #DC2626; font-weight: bold;")
-        pf_lay.addWidget(self.lbl_deuda)
-        
-        pf_lay.addWidget(QLabel("Monto a Abonar ($):"))
-        self.txt_monto_fiado = QLineEdit()
-        self.txt_monto_fiado.setAlignment(Qt.AlignCenter)
-        self.txt_monto_fiado.setStyleSheet(self.txt_monto.styleSheet())
-        self.txt_monto_fiado.returnPressed.connect(self._procesar)
-        pf_lay.addWidget(self.txt_monto_fiado)
+        self.panel_fiado = PanelClienteFiado(modo="abono", theme="light")
+        if self.panel_fiado.txt_monto is not None:
+            self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
+        pf_lay.addWidget(self.panel_fiado)
         self.stack.addWidget(panel_fiado)
         
         lay.addWidget(self.stack)
@@ -607,26 +593,6 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addWidget(lbl_t)
         return btn
 
-    def _cargar_clientes_con_deuda(self):
-        self.cmb_clientes.clear()
-        res = db_manager.execute_query("SELECT id, nombre, deuda_actual FROM clientes WHERE deuda_actual > 0 ORDER BY nombre ASC")
-        if res:
-            for r in res:
-                self.cmb_clientes.addItem(f"{r['nombre']}", userData=r)
-            self.cmb_clientes.setCurrentIndex(0)
-            self._on_cliente_changed(0)
-        else:
-            self.cmb_clientes.addItem("No hay deudores", userData=None)
-            self.lbl_deuda.setText("Nadie tiene deuda activa")
-
-    def _on_cliente_changed(self, idx):
-        if idx >= 0:
-            data = self.cmb_clientes.itemData(idx)
-            if data:
-                self.deuda_actual = float(data['deuda_actual'])
-                self.lbl_deuda.setText(f"Deuda Actual: ${self.deuda_actual:,.2f}")
-                self.txt_monto_fiado.setText(f"{self.deuda_actual:.2f}")
-
     def _set_modo(self, modo):
         self.tipo_ingreso = modo
         self.btn_cambio.setChecked(modo == "CAMBIO")
@@ -635,9 +601,8 @@ class DialogoIngresoEfectivo(QDialog):
         
         if modo == "FIADO":
             self.stack.setCurrentIndex(1)
-            self._cargar_clientes_con_deuda()
-            self.txt_monto_fiado.setFocus()
-            self.txt_monto_fiado.selectAll()
+            self.panel_fiado.cargar_clientes_abono()
+            self.panel_fiado.focus_monto()
         else:
             self.stack.setCurrentIndex(0)
             self.txt_monto.setFocus()
@@ -652,20 +617,15 @@ class DialogoIngresoEfectivo(QDialog):
     def _procesar(self):
         try:
             if self.tipo_ingreso == "FIADO":
-                data = self.cmb_clientes.itemData(self.cmb_clientes.currentIndex())
-                if not data:
-                    self.lbl_err.setText("⚠️ Ningún cliente seleccionado")
+                ok, err = self.panel_fiado.validar()
+                if not ok:
+                    self.lbl_err.setText(err)
                     return
-                val = float(self.txt_monto_fiado.text().strip())
-                if val <= 0:
-                    self.lbl_err.setText("⚠️ Ingresa un abono mayor a 0")
-                    return
-                if val > self.deuda_actual + 0.01:
-                    self.lbl_err.setText("⚠️ El abono no puede superar la deuda")
-                    return
-                self.monto_ingresado = val
-                self.cliente_id = data['id']
-                self.cliente_nombre = data['nombre']
+                data = self.panel_fiado.cliente_actual()
+                self.monto_ingresado = self.panel_fiado.monto()
+                self.deuda_actual = self.panel_fiado.deuda_actual()
+                self.cliente_id = data["id"]
+                self.cliente_nombre = data["nombre"]
                 self.motivo = f"Abono Fiado: {self.cliente_nombre}"
             else:
                 val = float(self.txt_monto.text().strip())

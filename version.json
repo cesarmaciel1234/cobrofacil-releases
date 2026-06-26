@@ -1,7 +1,7 @@
 {
-  "app_version": "4.6.1",
+  "app_version": "4.7",
   "channel": "stable",
-  "build_date": "2026-06-26 19:18:03",
+  "build_date": "2026-06-26 20:35:25",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -9,6 +9,12 @@
       "checksum": "0e192468942fa5f396645c0d1df1e0e0",
       "channel": "stable",
       "size": 3785
+    },
+    ".~lock.productos_20260626_1917.xlsx#": {
+      "version": "1.0.0",
+      "checksum": "f9e47f518e7d612b4b7ebf0a1480ad61",
+      "channel": "stable",
+      "size": 89
     },
     "error_report.json.example": {
       "version": "1.0.0",
@@ -27,6 +33,12 @@
       "checksum": "0d9006b29b32e6101f605053e69bead7",
       "channel": "stable",
       "size": 16857
+    },
+    "productos_20260626_1917.xlsx": {
+      "version": "1.0.0",
+      "checksum": "d2a6f1a3f564b7cdd8e6ef5046d2d065",
+      "channel": "stable",
+      "size": 10226
     },
     "README.md": {
       "version": "1.0.0",
@@ -54,9 +66,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "e29ef4e8bd6503080216e13d011e8f19",
+      "checksum": "dfe285886a54d9656de1f7694ec885e0",
       "channel": "stable",
-      "size": 48503
+      "size": 48881
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -354,9 +366,9 @@
     },
     "src/admin/admin_clientes.py": {
       "version": "1.0.0",
-      "checksum": "5044e40af6376349b230a1abec670867",
+      "checksum": "147e85ab0e842da3113963820baa1834",
       "channel": "stable",
-      "size": 20326
+      "size": 21889
     },
     "src/admin/admin_etiquetas.py": {
       "version": "1.0.0",
@@ -426,9 +438,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "197cf94e483ff6b4de529a4757382b9d",
+      "checksum": "5381cf0c2e9eecc179c2ae19ae12135f",
       "channel": "stable",
-      "size": 62517
+      "size": 62666
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -468,15 +480,15 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "3fb209790a6ad2c81927b332027fd577",
+      "checksum": "719f5111b0a3ddff6893c1c9139dd666",
       "channel": "stable",
-      "size": 160391
+      "size": 158479
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "620e13f616e71d18e432ab5ce74fd782",
+      "checksum": "3ea18a53f3f912c663f3dd2f5956ffb9",
       "channel": "stable",
-      "size": 87225
+      "size": 89012
     },
     "src/cajero/paso7_cierre.py": {
       "version": "1.0.0",
@@ -516,15 +528,27 @@
     },
     "src/cajero/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
-      "checksum": "477167f7fe3263b06985abde300e6e1f",
+      "checksum": "3594ae79dbaab10e72a22e33be8845a9",
       "channel": "stable",
-      "size": 30624
+      "size": 28707
+    },
+    "src/cajero/widgets/fiado_express.py": {
+      "version": "1.0.0",
+      "checksum": "2c48dc16ce8d6932eeff71703d60abf4",
+      "channel": "stable",
+      "size": 11686
     },
     "src/cajero/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
       "checksum": "e0fa14f6a14065e3aab91e99053a3b70",
       "channel": "stable",
       "size": 7318
+    },
+    "src/cajero/widgets/panel_cliente_fiado.py": {
+      "version": "1.0.0",
+      "checksum": "9ce00886cc92b5d7279233738d1cfe1c",
+      "channel": "stable",
+      "size": 6559
     },
     "src/carteleria/banderin.py": {
       "version": "1.0.0",
@@ -900,9 +924,9 @@
     },
     "src/repositories/cliente_repository.py": {
       "version": "1.0.0",
-      "checksum": "f1173a968be7c0d665dea1c444b103d8",
+      "checksum": "8d9011f4777873740594db38431a9499",
       "channel": "stable",
-      "size": 877
+      "size": 3292
     },
     "src/repositories/producto_repository.py": {
       "version": "1.0.0",

@@ -253,6 +253,8 @@ class Paso6Cobro(QDialog):
             btn_overlay.setFocusPolicy(Qt.NoFocus)
             
             def make_callback(k=key):
+                if k == "Fiado":
+                    return lambda: self._activar_fiado()
                 return lambda: self.set_metodo(k)
                 
             btn_overlay.clicked.connect(make_callback())
@@ -724,6 +726,7 @@ class Paso6Cobro(QDialog):
                 """)
 
     def set_metodo(self, key):
+        metodo_previo = self.current_metodo
         self.current_metodo = key
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         assets_dir = os.path.join(base_dir, "assets")
@@ -816,11 +819,15 @@ class Paso6Cobro(QDialog):
                 self.lbl_mp_status.hide()
                 self.timer_mp.stop()
         elif key == "Fiado":
+            if metodo_previo != "Fiado":
+                self._revertir_tras_fiado = metodo_previo
             self.lbl_input1.setText("MONTO A FIAR ($):")
-            self.lbl_input2.hide(); self.txt_otro.hide()
-            self.lbl_cliente.show(); self.cmb_cliente.show()
+            self.lbl_input2.hide()
+            self.txt_otro.hide()
+            self.lbl_cliente.hide()
+            self.cmb_cliente.hide()
             self.txt_pago.setText(f"{self.total_final:.2f}")
-            self.txt_pago.setReadOnly(True) # No puede fiar una parte y pagar el resto aquí, para mixto usar mixto
+            self.txt_pago.setReadOnly(True)
             self.lbl_mp_status.hide()
             self.timer_mp.stop()
         else:
@@ -833,10 +840,33 @@ class Paso6Cobro(QDialog):
             self.lbl_mp_status.hide()
             self.timer_mp.stop()
         self.calcular_vuelto()
-        
-        # El cursor siempre vive en el casillero de monto y se selecciona todo al cambiar de método
         self.txt_pago.setFocus()
         self.txt_pago.selectAll()
+
+    def _activar_fiado(self):
+        """Clic en tarjeta Fiado → resalta y abre Fiado Express."""
+        rev = self.current_metodo if self.current_metodo != "Fiado" else "Efectivo"
+        self.set_metodo("Fiado")
+        self._abrir_fiado_express(rev)
+
+    def _abrir_fiado_express(self, revertir_a="Efectivo"):
+        """Abre Fiado Express (ventana negra) y finaliza la venta si el cajero confirma."""
+        from PyQt6.QtWidgets import QDialog
+        from src.cajero.widgets.fiado_express import DialogoFiadoExpress
+
+        rev = revertir_a if revertir_a != "Fiado" else getattr(self, "_revertir_tras_fiado", "Efectivo")
+        dlg = DialogoFiadoExpress(self.total_final, self)
+        if qt_exec(dlg) == QDialog.DialogCode.Accepted:
+            self.current_metodo = "Fiado"
+            self._fiado_cliente_id = dlg.cliente_id
+            idx = self.cmb_cliente.findData(dlg.cliente_id)
+            if idx >= 0:
+                self.cmb_cliente.setCurrentIndex(idx)
+            self.txt_pago.setText(f"{self.total_final:.2f}")
+            self.finalizar(imprimir=False)
+        else:
+            self._fiado_cliente_id = None
+            self.set_metodo(rev)
 
     def calcular_vuelto(self):
         try:
@@ -905,17 +935,18 @@ class Paso6Cobro(QDialog):
             return None
 
         if self.current_metodo == "Fiado":
-            if self.cmb_cliente.count() == 0:
-                QMessageBox.warning(self, "Error", "No hay clientes registrados para fiar.")
+            from src.repositories.cliente_repository import ClienteRepository
+
+            cliente_id = getattr(self, "_fiado_cliente_id", None) or self.cmb_cliente.currentData()
+            if not cliente_id:
+                self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
                 return None
-            cliente_id = self.cmb_cliente.currentData()
-            c_index = self.cmb_cliente.currentIndex()
-            # Fetch client to check limit
-            c = self.lista_clientes[c_index]
-            disp = float(c['limite_credito']) - float(c['deuda_actual'])
+            c = ClienteRepository.obtener_por_id(cliente_id)
+            if not c:
+                return None
+            disp = ClienteRepository.credito_disponible(c)
             p1_float = float(p1_t) if p1_t else 0
-            if p1_float > disp:
-                QMessageBox.critical(self, "Límite Excedido", f"El monto a fiar (${p1_float:,.2f}) excede el límite disponible del cliente (${disp:,.2f}).")
+            if p1_float > disp + 0.01:
                 return None
 
         try:
@@ -945,6 +976,9 @@ class Paso6Cobro(QDialog):
             return None
 
     def intentar_finalizar(self):
+        if self.current_metodo == "Fiado":
+            self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+            return
         if self.current_metodo == "QR":
             from src.config import config
             config._load_config()
@@ -1085,20 +1119,28 @@ class Paso6Cobro(QDialog):
             id_v = db_manager.guardar_venta_completa(self.resultado_venta, self.items_carrito)
             if id_v:
                 # Si fue fiado, actualizar la deuda y registrar en cuenta corriente
-                if self.current_metodo == "Fiado" and self.cmb_cliente.count() > 0:
-                    cliente_id = self.cmb_cliente.currentData()
-                    c_index = self.cmb_cliente.currentIndex()
-                    c = self.lista_clientes[c_index]
-                    nueva_deuda = float(c['deuda_actual']) + self.total_final
-                    
+                if self.current_metodo == "Fiado":
+                    from src.repositories.cliente_repository import ClienteRepository
+
+                    cliente_id = getattr(self, "_fiado_cliente_id", None) or self.cmb_cliente.currentData()
+                    if not cliente_id:
+                        return
+                    c = ClienteRepository.obtener_por_id(cliente_id)
+                    if not c:
+                        return
+                    nueva_deuda = float(c.get("deuda_actual", 0)) + self.total_final
+                    nombre_cli = c.get("nombre", "")
+
                     db_manager.execute_non_query(
                         "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
-                        (nueva_deuda, cliente_id)
+                        (nueva_deuda, cliente_id),
                     )
                     db_manager.execute_non_query(
-                        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) VALUES (?, ?, ?, ?, ?, ?)",
-                        (cliente_id, 'CARGO', self.total_final, nueva_deuda, f'Venta a crédito Ticket #{id_v}', id_v)
+                        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (cliente_id, "CARGO", self.total_final, nueva_deuda, f"Venta a crédito Ticket #{id_v}", id_v),
                     )
+                    self.resultado_venta["cliente_nombre"] = nombre_cli
             
                 from src.hardware.printer import printer_manager
                 # Determinar si el cajón debe abrirse según el método y configuración
@@ -1729,8 +1771,10 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key_F12: self.verificar_transferencia_mp()
         elif k == Qt.Key_Escape: self.reject()
         elif k in (Qt.Key_Return, Qt.Key_Enter):
-            # Lógica de Enter Inteligente: 3 Pasos
             foco = self.focusWidget()
+            if self.current_metodo == "Fiado":
+                self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+                return
             if isinstance(foco, QPushButton) and foco in self.btns.values():
                 # 1. ENTER ELIGE MÉTODO -> Salta al casillero de monto
                 self.txt_pago.setFocus()
