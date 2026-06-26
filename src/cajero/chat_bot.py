@@ -11,7 +11,9 @@ if BASE_DIR not in sys.path:
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
-from PyQt6.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEnginePage
+from src.utils.qt_compat import connect_webengine_console, webengine_page_transparent
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 _DIR       = os.path.dirname(os.path.abspath(__file__))
@@ -565,14 +567,14 @@ class ChatManualWidget(QWidget):
         self.web.setAttribute(Qt.WA_TranslucentBackground)
         self.web.setStyleSheet("background: transparent;")
         page = self._make_page()
-        page.setBackgroundColor(Qt.transparent)
+        webengine_page_transparent(page)
         self.web.setPage(page)
         self.web.setHtml(HTML_CHAT, QUrl("about:blank"))
         lay.addWidget(self.web)
 
     def _make_page(self):
         page = QWebEnginePage(self.web)
-        page.javaScriptConsoleMessage = self._on_js_message
+        connect_webengine_console(page, self._on_js_message)
         return page
 
     def _on_js_message(self, level, message, line, source):

@@ -11,8 +11,10 @@ if BASE_DIR not in sys.path:
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel
 from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
-from PyQt6.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEnginePage
 from PyQt6.QtNetwork import QUdpSocket, QHostAddress
+from src.utils.qt_compat import connect_webengine_console, webengine_page_transparent
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 MANUAL_JSON = os.path.join(_DIR, "manual_cajero.json")
@@ -497,7 +499,8 @@ class ChatAnimadoStandalone(QWidget):
 
     def _make_page(self):
         page = QWebEnginePage(self.web)
-        page.javaScriptConsoleMessage = self._on_js_message
+        connect_webengine_console(page, self._on_js_message)
+        webengine_page_transparent(page)
         return page
 
     def _on_js_message(self, level, message, line, source):

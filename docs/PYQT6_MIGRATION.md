@@ -57,7 +57,13 @@ from src.utils.qt_compat import (
 - [x] `QAction` → `QtGui` (admin10_mp)
 - [x] `compileall` OK + smoke PyQt6 OK
 
-### Fase 3 — APIs puntuales (en curso)
+### Fase 3 — Hecho
+- [x] `invoke_method()` en `qt_compat` — `github_updater`, `admin13_hardware`
+- [x] WebEngine: `connect_webengine_console`, `webengine_page_transparent`
+- [x] `chat_bot.py`, `chat_bot_animado.py` adaptados a Qt6
+- [x] `tools/smoke_webengine.py`
+
+### Fase 4 — Cajero + empaquetado (siguiente)
 | API PyQt5 | PyQt6 |
 |-----------|-------|
 | `QApplication.desktop()` | `app.screens()[i].availableGeometry()` |

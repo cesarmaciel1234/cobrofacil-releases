@@ -79,9 +79,52 @@ def configure_qt_application_attributes() -> None:
 def set_share_opengl_contexts() -> None:
     """Requerido por QtWebEngine antes de QApplication."""
     try:
-        QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
+        attr = getattr(Qt, "AA_ShareOpenGLContexts", None)
+        if attr is not None:
+            QCoreApplication.setAttribute(attr)
     except Exception:
         pass
+
+
+def queued_connection():
+    try:
+        return Qt.ConnectionType.QueuedConnection
+    except AttributeError:
+        return Qt.QueuedConnection
+
+
+def invoke_method(obj, method_name: str, *args) -> bool:
+    """Invoca un @pyqtSlot en el hilo del QObject (seguro desde threads)."""
+    conn = queued_connection()
+    if args:
+        return QtCore.QMetaObject.invokeMethod(
+            obj,
+            method_name,
+            conn,
+            *[QtCore.Q_ARG(type(a), a) for a in args],
+        )
+    return QtCore.QMetaObject.invokeMethod(obj, method_name, conn)
+
+
+def connect_webengine_console(page, callback) -> None:
+    """console.log del HTML → Python (PyQt5 asignación / PyQt6 señal)."""
+    if IS_QT6:
+        page.javaScriptConsoleMessage.connect(callback)
+    else:
+        page.javaScriptConsoleMessage = callback
+
+
+def webengine_page_transparent(page) -> None:
+    """Fondo transparente del canvas WebEngine."""
+    try:
+        from PyQt6.QtGui import QColor
+
+        page.setBackgroundColor(QColor(0, 0, 0, 0))
+    except Exception:
+        try:
+            page.setBackgroundColor(Qt.transparent)
+        except Exception:
+            pass
 
 
 def screen_count(app=None) -> int:

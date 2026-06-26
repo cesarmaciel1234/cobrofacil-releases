@@ -8,7 +8,8 @@ import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout, 
                              QMessageBox, QComboBox, QPlainTextEdit, QGroupBox, QGraphicsDropShadowEffect)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer, pyqtSlot
+from src.utils.qt_compat import invoke_method, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QIcon
 
 try:
@@ -571,18 +572,14 @@ class Admin13Hardware(QWidget):
                     if final_exe != exe_path: break
             
             if os.path.exists(final_exe):
-                from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
-                QMetaObject.invokeMethod(self, "_lanzar_despues_descarga", Qt.QueuedConnection, Q_ARG(str, final_exe), Q_ARG(str, os.path.dirname(final_exe)))
+                invoke_method(self, "_lanzar_despues_descarga", final_exe, os.path.dirname(final_exe))
             else:
                 if len(os.listdir(dest_dir)) > 0:
-                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
-                    QMetaObject.invokeMethod(self, "_abrir_carpeta_despues_descarga", Qt.QueuedConnection, Q_ARG(str, dest_dir))
+                    invoke_method(self, "_abrir_carpeta_despues_descarga", dest_dir)
                 else:
-                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
-                    QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, "No se encontró el archivo ejecutable."))
+                    invoke_method(self, "_mostrar_error_hilo", "No se encontró el archivo ejecutable.")
         except Exception as e:
-            from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
-            QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, str(e)))
+            invoke_method(self, "_mostrar_error_hilo", str(e))
 
     @pyqtSlot(str, str)
     def _lanzar_despues_descarga(self, exe_path, cwd):

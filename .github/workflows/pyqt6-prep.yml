@@ -34,3 +34,6 @@ jobs:
 
       - name: Tests qt_compat
         run: python -m unittest tests.test_qt_compat -v
+
+      - name: Smoke WebEngine
+        run: python tools/smoke_webengine.py

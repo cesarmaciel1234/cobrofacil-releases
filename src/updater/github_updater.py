@@ -13,6 +13,7 @@ import subprocess
 import sys
 import threading
 from PyQt6.QtWidgets import QMessageBox
+from src.utils.qt_compat import invoke_method
 
 from src.utils.paths import get_base_path
 
@@ -55,12 +56,8 @@ def buscar_actualizacion_background(parent_widget=None):
             
             # Simple string comparison (e.g. v2026.2.1 > v2026.2.0)
             if latest_tag and latest_tag > local_tag:
-                if zip_url and parent_widget:
-                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
-                    QMetaObject.invokeMethod(parent_widget, "mostrar_alerta_actualizacion", 
-                                             Qt.QueuedConnection, 
-                                             Q_ARG(str, latest_tag), 
-                                             Q_ARG(str, zip_url))
+                if zip_url and parent_widget and hasattr(parent_widget, "mostrar_alerta_actualizacion"):
+                    invoke_method(parent_widget, "mostrar_alerta_actualizacion", latest_tag, zip_url)
         except Exception as e:
             print("Error buscando actualizaciones:", e)
 
