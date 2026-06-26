@@ -1,4 +1,4 @@
-"""Tests de la capa qt_compat (PyQt5 por defecto)."""
+"""Tests de la capa qt_compat (PyQt6 por defecto en main)."""
 from src.utils.qt_compat import qt_exec
 import os
 import sys
@@ -21,7 +21,10 @@ class TestQtCompat(unittest.TestCase):
 
         info = binding_info()
         self.assertIn("binding", info)
-        if os.environ.get("TPV_QT", "5") == "5":
+        if os.environ.get("TPV_QT", "6") == "6":
+            self.assertTrue(IS_QT6)
+            self.assertEqual(QT_BINDING, "PyQt6")
+        else:
             self.assertFalse(IS_QT6)
             self.assertEqual(QT_BINDING, "PyQt5")
 

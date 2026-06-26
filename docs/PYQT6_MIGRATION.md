@@ -4,8 +4,9 @@
 
 | Componente | Estado |
 |------------|--------|
-| Producción | **PyQt5** (`requirements.txt`) |
-| Capa compat | `src/utils/qt_compat.py` |
+| Producción | **PyQt6** (`requirements.txt`) — rama `main` tras Fase 6 |
+| Rollback dev | `TPV_QT=5` + `pip install PyQt5 PyQtWebEngine` (solo emergencia) |
+| Capa compat | `src/utils/qt_compat.py` (dual Qt5/Qt6) |
 | Bootstrap | `main.py`, `qt_dpi.py`, `main_window.py` preparados |
 | Animaciones float | `VariantFloatAnimation` (reemplaza `QVariantAnimation`) |
 | Auditoría | `python tools/pyqt6_audit.py` |
@@ -79,10 +80,13 @@ from src.utils.qt_compat import (
 - [x] `tests/test_flujo_cajero_console.py` — bootstrap Qt6 (`set_share_opengl_contexts`)
 - [ ] Regresión visual manual: terminal, F1–F12, cobro, `styles.qss`, hardware
 
-### Fase 6 — Merge a main
-- `requirements.txt` ya en PyQt6 en rama `feature/pyqt6`
-- `.github/workflows/release.yml` actualizado
-- Validar release CI tras merge
+### Fase 6 — Merge a main — Hecho
+- [x] `requirements.txt` → PyQt6 + PyQt6-WebEngine (producción)
+- [x] `.github/workflows/release.yml` — build PyInstaller con WebEngine
+- [x] `.github/workflows/pyqt6-prep.yml` — auditoría + smokes en cada push a `main`
+- [x] `feature/pyqt6` fusionada en `main`
+- [ ] Validar release CI en GitHub tras `git push`
+- [ ] Compilar `.exe` local y smoke en máquina cliente
 
 ## Reglas del proyecto
 

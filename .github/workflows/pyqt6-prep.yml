@@ -1,5 +1,5 @@
 # Ejecuta auditoría y tests de compat Qt en cada push (no requiere PyQt6).
-name: PyQt6 prep check
+name: Qt6 check
 
 on:
   push:
@@ -26,7 +26,9 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.txt
 
-      - name: Instalar PyQt6 (rama feature/pyqt6)
+      - name: Instalar dependencias (PyQt6)
+        env:
+          TPV_QT: "6"
         run: pip install -r requirements.txt
 
       - name: Auditoría PyQt6

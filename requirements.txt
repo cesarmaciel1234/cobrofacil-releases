@@ -1,4 +1,4 @@
-# Rama feature/pyqt6 — PyQt6 + WebEngine
+# Cobro Fácil POS — PyQt6 + WebEngine (producción)
 PyQt6>=6.6.0
 PyQt6-WebEngine>=6.6.0
 python-escpos

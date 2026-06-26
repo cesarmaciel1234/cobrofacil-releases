@@ -1,5 +1,4 @@
-# Dependencias para rama de migración PyQt6.
-# Producción sigue en requirements.txt (PyQt5).
+# Alias de requirements.txt (PyQt6 es producción desde Fase 6).
 # Uso: pip install -r requirements-pyqt6.txt
 #      set TPV_QT=6   (Windows CMD)
 #      $env:TPV_QT="6" (PowerShell)
