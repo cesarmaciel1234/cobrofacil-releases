@@ -28,16 +28,10 @@ try:
 except ImportError:
     win32com = None
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl, QCoreApplication
-
-if hasattr(Qt, "AA_EnableHighDpiScaling"):
-    QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-if hasattr(Qt, "AA_UseHighDpiPixmaps"):
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QUrl, QCoreApplication
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 # Release CI: .github/workflows/release.yml → GitHub Releases (API)
 GITHUB_REPO = "cesarmaciel1234/cobrofacil-releases"
@@ -659,15 +653,15 @@ class InstallerWindow(QWidget):
 
         sw, sh = self._installer_size()
         self.setFixedSize(sw, sh)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
         self.browser = QWebEngineView()
-        self.browser.page().setBackgroundColor(Qt.transparent) 
+        self.browser.page().setBackgroundColor(Qt.GlobalColor.transparent) 
         
         # En pyinstaller debemos buscar en sys._MEIPASS
         base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -747,12 +741,6 @@ class InstallerWindow(QWidget):
                     + shortcut_hint
                     + "\n\nIniciando Cobro Fácil POS...",
                 )
-                if shortcut_path and os.path.exists(shortcut_path):
-                    subprocess.Popen(
-                        ["explorer", f"/select,{os.path.normpath(shortcut_path)}"],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
                 if target_exe and os.path.exists(target_exe):
                     os.startfile(target_exe)
                 self.close()
@@ -774,7 +762,7 @@ if __name__ == '__main__':
         app.setWindowIcon(QIcon(icon_path))
 
     window = InstallerWindow()
-    from PyQt5.QtWidgets import QApplication as _QApp
+    from PyQt6.QtWidgets import QApplication as _QApp
 
     _app = _QApp.instance()
     if _app is not None:
@@ -785,4 +773,4 @@ if __name__ == '__main__':
             frame.moveCenter(geo.center())
             window.move(frame.topLeft())
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

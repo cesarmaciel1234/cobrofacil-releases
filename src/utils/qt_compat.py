@@ -90,6 +90,30 @@ _WIDGET_ENUM_CLASSES = (
     "QMessageBox",
     "QSizePolicy",
     "QTableWidget",
+    "QStyle",
+    "QApplication",
+    "QGraphicsEffect",
+    "QAbstractSpinBox",
+    "QSpinBox",
+    "QDoubleSpinBox",
+)
+
+_CORE_ENUM_CLASSES = (
+    "QEvent",
+    "QEasingCurve",
+    "QIODevice",
+    "QTimer",
+    "QThread",
+)
+
+_GUI_ENUM_CLASSES = (
+    "QPainter",
+    "QKeySequence",
+    "QPalette",
+    "QFont",
+    "QCursor",
+    "QTextCursor",
+    "QTextOption",
 )
 
 
@@ -98,6 +122,16 @@ def _patch_widget_enums() -> None:
         return
     for name in _WIDGET_ENUM_CLASSES:
         cls = getattr(QtWidgets, name, None)
+        if cls is not None:
+            _patch_class_enums(cls)
+            
+    for name in _CORE_ENUM_CLASSES:
+        cls = getattr(QtCore, name, None)
+        if cls is not None:
+            _patch_class_enums(cls)
+            
+    for name in _GUI_ENUM_CLASSES:
+        cls = getattr(QtGui, name, None)
         if cls is not None:
             _patch_class_enums(cls)
 
@@ -173,12 +207,21 @@ def invoke_method(obj, method_name: str, *args) -> bool:
     return QtCore.QMetaObject.invokeMethod(obj, method_name, conn)
 
 
-def connect_webengine_console(page, callback) -> None:
-    """console.log del HTML → Python (PyQt5 asignación / PyQt6 señal)."""
-    if IS_QT6:
-        page.javaScriptConsoleMessage.connect(callback)
-    else:
-        page.javaScriptConsoleMessage = callback
+def create_webengine_page(parent, callback):
+    """Crea una QWebEnginePage que intercepta console.log de forma segura en PyQt5 y PyQt6."""
+    try:
+        if IS_QT6:
+            from PyQt6.QtWebEngineCore import QWebEnginePage
+        else:
+            from PyQt5.QtWebEngineWidgets import QWebEnginePage
+    except ImportError:
+        return None
+
+    class HookedPage(QWebEnginePage):
+        def javaScriptConsoleMessage(self, level, message, line, source):
+            callback(level, message, line, source)
+    
+    return HookedPage(parent)
 
 
 def webengine_page_transparent(page) -> None:

@@ -8,6 +8,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.environ["TPV_QT"] = "6"
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 def main() -> int:
@@ -16,6 +17,13 @@ def main() -> int:
 
     info = binding_info()
     print(f"  binding: {info['binding']} Qt {info['qt_version']}")
+
+    from src.utils.qt_compat import configure_qt_application_attributes, set_share_opengl_contexts
+    from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes as _dpi_attrs
+
+    configure_process_dpi()
+    _dpi_attrs()
+    set_share_opengl_contexts()
 
     from PyQt6.QtWidgets import QApplication, QDialog
     from PyQt6.QtCore import Qt
@@ -34,10 +42,6 @@ def main() -> int:
     app.processEvents()
     anim.stop()
 
-    from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
-
-    configure_process_dpi()
-    configure_qt_application_attributes()
     print("  qt_dpi OK")
     print("SMOKE PyQt6: OK")
     return 0

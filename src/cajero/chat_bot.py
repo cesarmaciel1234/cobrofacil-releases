@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage
-from src.utils.qt_compat import connect_webengine_console, webengine_page_transparent
+from src.utils.qt_compat import create_webengine_page, webengine_page_transparent
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 _DIR       = os.path.dirname(os.path.abspath(__file__))
@@ -546,7 +546,8 @@ class ChatManualWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_window = parent
-        self.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # No usamos Qt.Tool ni window flags para que sea un widget hijo real
+        # Esto evita que Windows minimice o parpadee la ventana principal al abrirlo.
         self.resize(520, 700)
         self.motor     = ChatManual()
         self._tutor_idx = 0
@@ -573,8 +574,7 @@ class ChatManualWidget(QWidget):
         lay.addWidget(self.web)
 
     def _make_page(self):
-        page = QWebEnginePage(self.web)
-        connect_webengine_console(page, self._on_js_message)
+        page = create_webengine_page(self.web, self._on_js_message)
         return page
 
     def _on_js_message(self, level, message, line, source):
@@ -626,16 +626,16 @@ class ChatManualWidget(QWidget):
         pw = self.parent_window or self.parent()
         if not pw:
             return
-        rect = pw.frameGeometry()
-        x = rect.x() + rect.width() - self.width() - 20
-        y = rect.y() + rect.height() - self.height() - 80
+        # Al ser un widget hijo, nos movemos relativo al tamaño del padre, no en coordenadas globales.
+        x = pw.width() - self.width() - 20
+        y = pw.height() - self.height() - 80
         self.move(max(0, x), max(0, y))
 
     def abrir_y_desplegar(self):
         self.actualizar_posicion()
         self.show()
         self.raise_()
-        self.activateWindow()
+        # No usamos activateWindow() porque roba el foco de la ventana padre
         self._js("setChatOpen(true);")
 
     def cerrar_chat(self):

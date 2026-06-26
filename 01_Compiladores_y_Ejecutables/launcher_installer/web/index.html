@@ -204,10 +204,10 @@
                         vy: 0, 
                         angleX: Math.random() * Math.PI * 2,
                         angleY: Math.random() * Math.PI * 2,
-                        speedX: 0.01 + Math.random() * 0.02,
-                        speedY: 0.01 + Math.random() * 0.02,
-                        ampX: 2 + Math.random() * 12,
-                        ampY: 2 + Math.random() * 12,
+                        speedX: 0.02 + Math.random() * 0.03,
+                        speedY: 0.02 + Math.random() * 0.03,
+                        ampX: 3 + Math.random() * 15,
+                        ampY: 3 + Math.random() * 15,
                         radius: 0.3 + Math.random() * 1.5 
                     });
                 }
@@ -247,8 +247,8 @@
                     }
                 }
 
-                p.vx += (targetX - p.x) * 0.015;
-                p.vy += (targetY - p.y) * 0.015;
+                p.vx += (targetX - p.x) * 0.025;
+                p.vy += (targetY - p.y) * 0.025;
                 p.vx *= 0.92;
                 p.vy *= 0.92;
                 p.x += p.vx;

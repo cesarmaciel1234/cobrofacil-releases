@@ -427,11 +427,10 @@ class DialogoHistorialDia(QDialog):
                        GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names
                 FROM ventas v
                 LEFT JOIN detalles_ventas dv ON dv.id_venta = v.id
-                WHERE LOWER(v.usuario) = LOWER(?) AND v.caja_id = ?
                 GROUP BY v.id
                 ORDER BY v.id DESC LIMIT 500
             """
-            raw_res = db_manager.execute_query(query, (user, caja_id))
+            raw_res = db_manager.execute_query(query)
 
         if not raw_res:
             self.lbl_total_filtrado.setText("Sin ventas")

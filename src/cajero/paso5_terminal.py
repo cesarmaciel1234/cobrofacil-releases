@@ -1086,7 +1086,7 @@ class Paso5Terminal(QWidget):
         self.main_layout.setSpacing(8)
 
         self.header_frame = QFrame()
-        self.header_frame.setFixedHeight(75)
+        self.header_frame.setFixedHeight(130)  # Much larger top header
         self.header_frame.setStyleSheet("""
             QFrame {
                 background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1E3A8A, stop:1 #3B82F6); 
@@ -1096,12 +1096,13 @@ class Paso5Terminal(QWidget):
             QLabel { background: transparent; color: #F8FAFC; }
         """)
         header_layout = QHBoxLayout(self.header_frame)
+        header_layout.setContentsMargins(20, 15, 20, 15)
         
         col1 = QVBoxLayout(); col1.setSpacing(0)
         self.lbl_estado = QLabel("Estado:           MAESTRA")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;")
         self.lbl_instalacion = QLabel("№ 0000-0000-0000")
-        self.lbl_instalacion.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.lbl_instalacion.setStyleSheet("font-weight: bold; font-size: 16px;")
         col1.addWidget(self.lbl_estado)
         col1.addWidget(self.lbl_instalacion)
         header_layout.addLayout(col1)
@@ -1122,14 +1123,14 @@ class Paso5Terminal(QWidget):
         row_caja.addWidget(self.led_status, 0, Qt.AlignVCenter)
         
         self.lbl_caja_num = QLabel("Caja №:        [01] SERVER")
-        self.lbl_caja_num.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.lbl_caja_num.setStyleSheet("font-weight: bold; font-size: 16px;")
         row_caja.addWidget(self.lbl_caja_num)
         row_caja.addStretch()
         
         col2.addLayout(row_caja)
         
         self.lbl_fecha = QLabel(f"Fecha:  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        self.lbl_fecha.setStyleSheet("font-weight: bold; font-size: 14px;")
+        self.lbl_fecha.setStyleSheet("font-weight: bold; font-size: 16px;")
         col2.addWidget(self.lbl_fecha)
         header_layout.addLayout(col2)
         
@@ -1176,7 +1177,7 @@ class Paso5Terminal(QWidget):
         # --- TABLA CENTRAL ---
         self.tabla = QTableWidget()
         self.tabla.setColumnCount(6)
-        self.tabla.setHorizontalHeaderLabels(["ID", "DESCRIPCION", "PRECIO", "CANT", "DESC.", "TOTAL"])
+        self.tabla.setHorizontalHeaderLabels(["ID", "DESCRIPCION PRODUCTO", "PRECIO", "CANT", "DES. TOTAL", "TOTAL"])
         self.tabla.setStyleSheet("""
             QTableWidget { 
                 background-color: white;
@@ -1186,7 +1187,7 @@ class Paso5Terminal(QWidget):
                 border: none; 
                 border-top-left-radius: 12px;
                 border-top-right-radius: 12px;
-                font-size: 19px; 
+                font-size: 14px; 
                 font-weight: 800; 
                 selection-background-color: #EFF6FF;
                 selection-color: #1E3A8A; 
@@ -1221,13 +1222,13 @@ class Paso5Terminal(QWidget):
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Solo la descripción se estira dinámicamente
         
         # Distribuir anchos de columna profesionales y bloqueados (Garantía Cero Truncamientos)
-        self.tabla.setColumnWidth(0, 100) # ID / Barcode (100px)
-        self.tabla.setColumnWidth(2, 280) # PRECIO (280px)
-        self.tabla.setColumnWidth(3, 120) # CANT (120px)
-        self.tabla.setColumnWidth(4, 250) # DES. TOTAL (250px)
-        self.tabla.setColumnWidth(5, 350) # SUBTOTAL (350px)
+        self.tabla.setColumnWidth(0, 100) # ID / Barcode
+        self.tabla.setColumnWidth(2, 150) # PRECIO
+        self.tabla.setColumnWidth(3, 100) # CANT
+        self.tabla.setColumnWidth(4, 150) # DES. TOTAL
+        self.tabla.setColumnWidth(5, 200) # SUBTOTAL
         self.tabla.verticalHeader().setVisible(False)
-        self.tabla.verticalHeader().setDefaultSectionSize(55) # Mayor respiro para los items (Evita que estén muy unidos)
+        self.tabla.verticalHeader().setDefaultSectionSize(40)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabla.setSelectionMode(QAbstractItemView.SingleSelection)
         self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -1241,11 +1242,11 @@ class Paso5Terminal(QWidget):
         self._nav_prev_row = -1
         central_layout.addWidget(self.tabla)
         
-        self.main_layout.addWidget(self.central_frame)
+        self.main_layout.addWidget(self.central_frame, 2)
 
         # --- BOTTOM DASHBOARD ---
         self.dashboard_frame = QFrame()
-        self.dashboard_frame.setFixedHeight(140)
+        self.dashboard_frame.setFixedHeight(230)  # Drastically increase bottom panel height
         self.dashboard_frame.setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border: 1px solid #CBD5E1;")
         dash_layout = QHBoxLayout(self.dashboard_frame)
         dash_layout.setContentsMargins(10, 5, 10, 5)
@@ -1263,7 +1264,7 @@ class Paso5Terminal(QWidget):
         self.txt_scan.setStyleSheet("""
             QLineEdit {
                 background: white; border: 3px solid #3B82F6; border-radius: 12px; 
-                color: #1E3A8A; font-size: 34px; padding: 12px; font-weight: 900;
+                color: #1E3A8A; font-size: 24px; padding: 10px; font-weight: 900;
             }
         """)
         
@@ -1313,7 +1314,7 @@ class Paso5Terminal(QWidget):
         self.lbl_ahorro_val.hide()
 
         self.lbl_total_val = QLabel("0")
-        self.lbl_total_val.setStyleSheet("font-size: 75px; color: #059669; font-weight: 900; border: none;")
+        self.lbl_total_val.setStyleSheet("font-size: 55px; color: #059669; font-weight: 900; border: none;")
         self.lbl_total_val.setAlignment(Qt.AlignRight)
         
         # Agrupar Ahorro y Total lado a lado en un contenedor horizontal perfectamente centrado verticalmente
@@ -1345,11 +1346,11 @@ class Paso5Terminal(QWidget):
         self.lbl_side_cambio = QLabel("CAMBIO:         0.00")
         
         for l in [self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos, self.lbl_side_cambio]:
-            l.setStyleSheet("font-size: 14px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
+            l.setStyleSheet("font-size: 13px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
             sl.addWidget(l)
             
         # Resaltar Cambio
-        self.lbl_side_cambio.setStyleSheet("font-size: 16px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
+        self.lbl_side_cambio.setStyleSheet("font-size: 15px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
         
         dash_layout.addWidget(self.side_box, stretch=1)
         
@@ -1437,10 +1438,7 @@ class Paso5Terminal(QWidget):
         hints_layout.setContentsMargins(0, 0, 0, 0)
         self._hints_layout = hints_layout
 
-        self.icon_lbl = QLabel("⌨️")
-        self.icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
-        hints_layout.addWidget(self.icon_lbl)
-
+        # Icono de teclado eliminado a petición del usuario
         self._shortcut_btn_base_style = """
             QPushButton {{
                 background: #FFFFFF;
@@ -2217,19 +2215,24 @@ class Paso5Terminal(QWidget):
 
     def _apply_screen_layout(self):
         """Ajusta tamaños al monitor real (14\" laptop vs 24\" POS)."""
-        from src.utils.qt_dpi import layout_scale, scale_px
+        from src.utils.qt_dpi import terminal_layout_metrics
 
-        ls = layout_scale()
-        self.header_frame.setFixedHeight(scale_px(75, ls))
-        self.dashboard_frame.setFixedHeight(scale_px(140, ls))
-        self.status_bar.setFixedHeight(scale_px(55, ls))
-        self._shortcuts_scroll.setFixedHeight(scale_px(44, ls))
+        m = terminal_layout_metrics()
+        ls = m["layout_scale"]
 
-        total_px = scale_px(75, ls)
-        scan_px = scale_px(34, ls)
-        side_px = scale_px(14, ls)
-        title_px = scale_px(26, ls)
-        row_h = scale_px(55, ls)
+        self.main_layout.setContentsMargins(m["main_margin"], m["main_margin"], m["main_margin"], m["main_margin"])
+
+        self.header_frame.setFixedHeight(m["header_height"])
+        self.dashboard_frame.setFixedHeight(m["dashboard_height"])
+        self.status_bar.setFixedHeight(m["status_height"])
+        self._shortcuts_scroll.setFixedHeight(m["shortcuts_height"])
+
+        self.txt_scan.setMinimumHeight(m["scan_min_height"])
+        scan_px = m["scan_font"]
+        total_px = m["total_font"]
+        side_px = m["side_font"]
+        title_px = m["title_font"]
+        row_h = m["table_row"]
 
         self.lbl_terminal_title.setStyleSheet(
             f"font-size: {title_px}px; font-weight: bold;"
@@ -2255,6 +2258,7 @@ class Paso5Terminal(QWidget):
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
         self._apply_status_bar_shortcuts_layout(ls)
         self._apply_tabla_column_layout()
+        self._layout_list_results_popup(m)
 
     def _apply_status_bar_shortcuts_layout(self, ls=None):
         """F-keys blancas: todas visibles junto a candado/chatbot."""
@@ -2272,11 +2276,9 @@ class Paso5Terminal(QWidget):
         spacing = self._hints_layout.spacing()
 
         if viewport_w < 420:
-            self.icon_lbl.hide()
             icon_w = 0
         else:
-            self.icon_lbl.show()
-            icon_w = 22
+            icon_w = 0
 
         gaps = spacing * max(0, n - 1)
         available = max(0, viewport_w - icon_w - gaps)
@@ -2311,12 +2313,26 @@ class Paso5Terminal(QWidget):
         self.tabla.setColumnWidth(4, max(64, int(vw * 0.10)))
         self.tabla.setColumnWidth(5, max(70, int(vw * 0.15)))
 
+    def _layout_list_results_popup(self, metrics=None):
+        if not hasattr(self, "list_results") or not hasattr(self, "dashboard_frame"):
+            return
+        from src.utils.qt_dpi import terminal_layout_metrics, scale_px
+        if metrics is None:
+            metrics = terminal_layout_metrics()
+        popup_y = self.dashboard_frame.y() - metrics["list_results_h"] - scale_px(8, metrics["layout_scale"])
+        self.list_results.setGeometry(
+            self.dashboard_frame.x() + 10,
+            max(0, popup_y),
+            metrics["list_results_w"],
+            metrics["list_results_h"],
+        )
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._apply_screen_layout()
-        # Hacer la ventana emergente extra ancha (900x350) para que el código no oculte el nombre
-        if hasattr(self, 'dashboard_frame') and hasattr(self, 'list_results'):
-            self.list_results.setGeometry(self.dashboard_frame.x() + 10, self.height() - 180 - 360, 900, 350)
+        if hasattr(self, "list_results"):
+            from src.utils.qt_dpi import terminal_layout_metrics
+            self._layout_list_results_popup(terminal_layout_metrics())
 
     def actualizar_reloj(self):
         ahora = datetime.now()

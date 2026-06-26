@@ -29,24 +29,30 @@ class TouchFeedbackManager(QObject):
             parent_app.setStyleSheet(current_style + glow_css)
 
     def eventFilter(self, obj, event):
+        # Compatibilidad PyQt5 / PyQt6
+        try:
+            EventType = QEvent.Type
+        except AttributeError:
+            EventType = QEvent
+            
         # Capturar clics de ratón
-        if event.type() == QEvent.MouseButtonPress:
+        if event.type() == EventType.MouseButtonPress:
             if isinstance(obj, QPushButton):
                 self.trigger_button_feedback(obj)
-        elif event.type() == QEvent.MouseButtonRelease:
+        elif event.type() == EventType.MouseButtonRelease:
             if isinstance(obj, QPushButton):
                 self.release_button_feedback(obj)
                 
         # Capturar pulsaciones de teclado (Enter/Espacio en botón con foco)
-        elif event.type() == QEvent.KeyPress:
-            if isinstance(obj, QPushButton) and event.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Space):
+        elif event.type() == EventType.KeyPress:
+            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key_Space):
                 self.trigger_button_feedback(obj)
-        elif event.type() == QEvent.KeyRelease:
-            if isinstance(obj, QPushButton) and event.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Space):
+        elif event.type() == EventType.KeyRelease:
+            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key_Space):
                 self.release_button_feedback(obj)
                 
         # Capturar atajos de teclado globales (ej. F1, F4 ligados a botones)
-        elif event.type() == QEvent.Shortcut:
+        elif event.type() == EventType.Shortcut:
             if isinstance(obj, QPushButton):
                 self.trigger_button_feedback(obj)
                 # Liberación automática para atajos (no hay evento de soltar atajo confiable)

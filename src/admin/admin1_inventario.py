@@ -19,24 +19,26 @@ except ImportError:
 
 STYLE = """
 QWidget {
-    font-family: 'Segoe UI', 'Inter', sans-serif;
+    font-family: 'Inter', 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
     font-size: 13px;
-    color: #0F172A;
+    background-color: #F8FAFC;
+    color: #334155;
 }
 QFrame#header {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #3B82F6);
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F1F5F9, stop:1 #E2E8F0);
+    border-bottom: 2px solid #CBD5E1;
     border-radius: 12px;
 }
 QLabel#titulo {
-    color: #1e293b;
+    color: #0F172A;
     background: transparent;
     font-size: 22px;
     font-weight: 900;
     letter-spacing: 1px;
 }
 QPushButton {
-    background-color: white;
-    color: #1E293B;
+    background-color: #FFFFFF;
+    color: #0F172A;
     border: 1px solid #CBD5E1;
     border-radius: 8px;
     padding: 10px 20px;
@@ -44,20 +46,21 @@ QPushButton {
     font-size: 12px;
 }
 QPushButton:hover {
-    background-color: #F8FAFC;
-    border: 1px solid #94A3B8;
+    background-color: #F1F5F9;
+    border-color: #94A3B8;
     color: #0F172A;
 }
 QPushButton#blue {
     background-color: #2563EB;
-    color: #1e293b;
+    color: #FFFFFF;
     border: none;
 }
 QPushButton#blue:hover {
     background-color: #1D4ED8;
+    color: #FFFFFF;
 }
 QPushButton#danger {
-    background-color: white;
+    background-color: #FFFFFF;
     color: #DC2626;
     border: 1px solid #FECACA;
 }
@@ -67,7 +70,7 @@ QPushButton#danger:hover {
     border: 1px solid #FCA5A5;
 }
 QPushButton#gray {
-    background-color: white;
+    background-color: #FFFFFF;
     color: #475569;
     border: 1px solid #E2E8F0;
 }
@@ -75,8 +78,8 @@ QPushButton#gray:hover {
     background-color: #F1F5F9;
 }
 QLineEdit, QComboBox {
-    background-color: white;
-    color: #1E293B;
+    background-color: #FFFFFF;
+    color: #0F172A;
     border: 1px solid #CBD5E1;
     border-radius: 8px;
     padding: 10px 14px;
@@ -84,20 +87,21 @@ QLineEdit, QComboBox {
 }
 QLineEdit:focus, QComboBox:focus {
     border: 2px solid #3B82F6;
-    background-color: #F8FAFC;
+    background-color: #FFFFFF;
 }
 QTreeWidget, QTableWidget {
-    background-color: white;
+    background-color: #FFFFFF;
     color: #0F172A;
     border: 1px solid #E2E8F0;
     gridline-color: #F1F5F9;
-    selection-background-color: #E0F2FE;
-    selection-color: #0369A1;
+    selection-background-color: #EFF6FF;
+    selection-color: #1D4ED8;
     border-radius: 12px;
+    alternate-background-color: #F8FAFC;
 }
 QHeaderView::section {
     background-color: #F8FAFC;
-    color: #475569;
+    color: #64748B;
     font-weight: 800;
     padding: 15px 12px;
     border: none;
@@ -764,8 +768,8 @@ class CatalogoProductos(QWidget):
                "Inv. Mínimo", "Inv. Máximo", "Tipo de Venta"]
 
     DEPTO_COLORS = [
-        "#1e293b", "#0f172a", "#111827", "#1e1b4b",
-        "#312e81", "#1e3a8a", "#1e40af", "#020617",
+        "#FFFFFF", "#F8FAFC", "#F0F9FF", "#ECFDF5",
+        "#FFFBEB", "#FFF1F2", "#F5F3FF", "#FDF4FF",
     ]
 
     def __init__(self, parent=None):
@@ -779,8 +783,9 @@ class CatalogoProductos(QWidget):
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
+        root.setContentsMargins(12, 8, 12, 8)
+        root.setSpacing(8)
+        self.setStyleSheet("background-color: #F8FAFC;")
 
         from src.config import config
         from src.shared.urgencia_stock_banner import UrgenciaStockBanner
@@ -790,7 +795,7 @@ class CatalogoProductos(QWidget):
 
         # ── Barra de filtros ─────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame{border-bottom:1px solid #cbd5e1;}")
+        fb.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
@@ -843,24 +848,24 @@ class CatalogoProductos(QWidget):
         self.tabla.setHorizontalHeaderLabels(self.HEADERS)
         self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tabla.setAlternatingRowColors(True)
+        self.tabla.setAlternatingRowColors(False)
         self.tabla.verticalHeader().setVisible(False)
-        self.tabla.setShowGrid(True)
-        self.tabla.setGridStyle(Qt.SolidLine)
+        self.tabla.setShowGrid(False)
         self.tabla.setStyleSheet("""
             QTableWidget {
-                background: white;
+                background: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 8px;
+                border-radius: 12px;
                 gridline-color: transparent;
                 outline: none;
             }
             QTableWidget::item {
-                padding: 4px; 
+                padding: 8px 10px;
+                color: #0F172A;
                 border-bottom: 1px solid #F1F5F9;
             }
             QTableWidget::item:hover {
-                background-color: #F8FAFC;
+                background-color: #F1F5F9;
             }
             QTableWidget::item:selected {
                 background-color: #EFF6FF;
@@ -894,8 +899,8 @@ class CatalogoProductos(QWidget):
         root.addWidget(self.tabla)
 
         # ── Footer ───────────────────────────────────────
-        ft = QFrame(); ft.setFixedHeight(34)
-        ft.setStyleSheet("QFrame{border-top:1px solid #cbd5e1;}")
+        ft = QFrame(); ft.setFixedHeight(38)
+        ft.setStyleSheet("QFrame { background: #FFFFFF; border-top: 1px solid #E2E8F0; }")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
@@ -909,6 +914,56 @@ class CatalogoProductos(QWidget):
 
         self.tabla.itemSelectionChanged.connect(self._actualizar_sel)
         self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
+
+    def _apply_catalogo_theme(self):
+        """Mantiene tabla y filtros en modo claro aunque theme_manager reaplique estilos."""
+        self.setStyleSheet("background-color: #F8FAFC;")
+        if hasattr(self, "tabla"):
+            self.tabla.setStyleSheet("""
+                QTableWidget {
+                    background: #FFFFFF;
+                    border: 1px solid #E2E8F0;
+                    border-radius: 12px;
+                    gridline-color: transparent;
+                    outline: none;
+                }
+                QTableWidget::item {
+                    padding: 8px 10px;
+                    color: #0F172A;
+                    border-bottom: 1px solid #F1F5F9;
+                }
+                QTableWidget::item:hover {
+                    background-color: #F1F5F9;
+                }
+                QTableWidget::item:selected {
+                    background-color: #EFF6FF;
+                    color: #1D4ED8;
+                    border-bottom: 2px solid #3B82F6;
+                }
+                QHeaderView::section {
+                    background-color: #F8FAFC;
+                    color: #64748B;
+                    font-weight: 900;
+                    padding: 12px 8px;
+                    border: none;
+                    border-bottom: 2px solid #E2E8F0;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+            """)
+        if hasattr(self, "txt_buscar"):
+            self.txt_buscar.setStyleSheet(
+                "QLineEdit { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
+                "border-radius: 8px; padding: 10px 14px; font-size: 13px; }"
+                "QLineEdit:focus { border: 2px solid #3B82F6; }"
+            )
+        if hasattr(self, "cmb_depto"):
+            self.cmb_depto.setStyleSheet(
+                "QComboBox { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
+                "border-radius: 8px; padding: 8px 12px; }"
+                "QComboBox:focus { border: 2px solid #3B82F6; }"
+            )
 
     def _sync_urgencia_banner(self):
         activo = bool(self.chk_venta_sin_stock.isChecked())
@@ -988,6 +1043,7 @@ class CatalogoProductos(QWidget):
         # q += " LIMIT 5000"  # Removido para permitir carga completa con paginación diferida
 
         self.all_rows = db_manager.execute_query(q, tuple(p)) or []
+        self._depto_color_map = {}
         self.loaded_count = 0
         self.tabla.setRowCount(0)
         
@@ -1040,7 +1096,14 @@ class CatalogoProductos(QWidget):
                 else:
                     depto_iva = float(depto_iva)
 
-                row_bg = QColor("white")
+                dep_key = (dep or "GENERAL").upper()
+                if dep_key not in self._depto_color_map:
+                    idx = len(self._depto_color_map) % len(self.DEPTO_COLORS)
+                    self._depto_color_map[dep_key] = self.DEPTO_COLORS[idx]
+                base_hex = self._depto_color_map[dep_key]
+                if i % 2 == 1 and base_hex == "#FFFFFF":
+                    base_hex = "#F8FAFC"
+                row_bg = QColor(base_hex)
                 chk = QTableWidgetItem()
                 chk.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                 chk.setCheckState(Qt.Unchecked)
@@ -1067,25 +1130,25 @@ class CatalogoProductos(QWidget):
                     it = QTableWidgetItem(v)
                     it.setTextAlignment(Qt.AlignVCenter | align)
                     it.setBackground(row_bg)
-                    it.setForeground(QColor("#1e293b"))
+                    it.setForeground(QColor("#0F172A"))
 
                     if j == 7 or j == 8:  # Resaltar si hay oferta
                         if v != "-":
-                            it.setForeground(QColor("#ef4444"))
+                            it.setForeground(QColor("#EA580C"))
                             it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
                     if j == 9: # Stock
                         if stock <= 0:
-                            it.setForeground(QColor("#ef4444"))
-                            it.setBackground(QColor("#fef2f2"))
+                            it.setForeground(QColor("#DC2626"))
+                            it.setBackground(QColor("#FEF2F2"))
                         elif stock < 5:
-                            it.setForeground(QColor("#f59e0b"))
-                            it.setBackground(QColor("#fffbeb"))
+                            it.setForeground(QColor("#D97706"))
+                            it.setBackground(QColor("#FFFBEB"))
                         else:
-                            it.setForeground(QColor("#10b981"))
+                            it.setForeground(QColor("#059669"))
 
                     if j == 12: # Tipo
-                        it.setForeground(QColor("#1e3a8a"))
+                        it.setForeground(QColor("#2563EB"))
                         it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
                     self.tabla.setItem(i, j, it)
@@ -1373,6 +1436,17 @@ class Admin1Inventario(QWidget):
     def __init__(self):
         super().__init__()
         self._setup_ui()
+        self._apply_inventario_theme()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._apply_inventario_theme()
+
+    def _apply_inventario_theme(self):
+        """Reaplica tema claro tras theme_manager (se ejecuta al lazy-load)."""
+        self.setStyleSheet(STYLE)
+        if hasattr(self, "catalogo"):
+            self.catalogo._apply_catalogo_theme()
 
     def _setup_ui(self):
         self.setStyleSheet(STYLE)
@@ -1386,23 +1460,24 @@ class Admin1Inventario(QWidget):
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: rgba(255, 255, 255, 0.2); color: white; font-weight: 800; border-radius: 10px; 
-                padding: 10px 25px; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 11px; letter-spacing: 1px;
+                background: #FFFFFF; color: #0F172A; font-weight: 800; border-radius: 10px;
+                padding: 10px 25px; border: 1px solid #CBD5E1; font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: white;  }
+            QPushButton:hover { background: #EFF6FF; border-color: #3B82F6; color: #1D4ED8; }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
         
         hl.addSpacing(20)
-        tit = QLabel("📦 GESTIÓN DE INVENTARIO <span style='color: rgba(255,255,255,0.7);'>2026</span>"); tit.setObjectName("titulo")
-        tit.setStyleSheet("background: transparent;") # Protege contra solapamiento gris/blanco
+        tit = QLabel("📦 GESTIÓN DE INVENTARIO <span style='color:#64748B;'>2026</span>")
+        tit.setObjectName("titulo")
+        tit.setStyleSheet("background: transparent;")
         hl.addWidget(tit); hl.addStretch()
         root.addWidget(hdr)
 
-        # Toolbar superior (Industrial White)
+        # Toolbar superior
         self.toolbar = QFrame(); self.toolbar.setFixedHeight(70)
-        self.toolbar.setStyleSheet("background-color: white; border-bottom: 2px solid #e2e8f0;")
+        self.toolbar.setStyleSheet("background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
         tl = QHBoxLayout(self.toolbar); tl.setContentsMargins(25,0,25,0); tl.setSpacing(12)
         self.btn_nuevo    = QPushButton("➕ NUEVO PRODUCTO")
         self.btn_nuevo.clicked.connect(self._nuevo)
@@ -1419,10 +1494,7 @@ class Admin1Inventario(QWidget):
         self.btn_precarga = QPushButton("📦 PRECARGA NUBE")
         self.btn_precarga.clicked.connect(lambda: self.catalogo._descargar_precarga())
         self.btn_unificar = QPushButton("🧹 UNIFICAR DUPLICADOS")
-        self.btn_unificar.setStyleSheet("""
-            QPushButton {  background-color: #3b82f6; color: white; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; }
-            QPushButton:hover {  }
-        """)
+        self.btn_unificar.setObjectName("blue")
         self.btn_unificar.clicked.connect(lambda: self.catalogo._unificar_duplicados())
         
         self.btn_categorias = QPushButton("📁 DEPARTAMENTOS")
@@ -1432,15 +1504,10 @@ class Admin1Inventario(QWidget):
         self.btn_deptos.clicked.connect(self._mostrar_departamentos)
         
         self.btn_catalogo = QPushButton("📰 CATÁLOGO PDF")
-        self.btn_catalogo.setStyleSheet("""
-            QPushButton {  background-color: #3b82f6; color: white; border-radius: 8px; font-weight: bold; padding: 10px 20px; font-size: 11px; }
-            QPushButton:hover {  }
-        """)
+        self.btn_catalogo.setObjectName("blue")
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
         
         for b in [self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, self.btn_exportar, self.btn_precarga, self.btn_unificar, self.btn_categorias, self.btn_deptos, self.btn_catalogo]:
-            if b not in (self.btn_unificar, self.btn_catalogo):
-                b.setStyleSheet("QPushButton { color: #1E293B; background-color: white; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; padding: 10px 15px; font-size: 11px; } QPushButton:hover { background-color: #F8FAFC; border: 1px solid #94A3B8; }")
             tl.addWidget(b)
         tl.addStretch()
         root.addWidget(self.toolbar)

@@ -325,40 +325,50 @@ class MainWindow(QMainWindow):
 
         if current == 19:
             # ─ Jefe → Admin ───────────────────────────────────────
-            from src.config import config
-            if hasattr(self, '_admin_user_before_escalation') and self._admin_user_before_escalation:
-                config.current_user = self._admin_user_before_escalation.copy()
-            else:
-                self._restore_user_role(0)
+            self.setUpdatesEnabled(False)
+            try:
+                from src.config import config
+                if hasattr(self, '_admin_user_before_escalation') and self._admin_user_before_escalation:
+                    config.current_user = self._admin_user_before_escalation.copy()
+                else:
+                    self._restore_user_role(0)
+                    
+                self._escalando = True
+                self.apply_roles()
+                self._escalando = False
                 
-            self._escalando = True
-            self.switch_tab(0)
-            self._escalando = False
-            
-            if self._came_from_cajero:
-                # Todavía hay un piso más abajo
-                self.btn_flotante.show()
-                self.btn_flotante.raise_()
-            else:
-                # Vino directo del admin — no hay cajero esperando
-                self._supervisor_mode = False
-                self.btn_flotante.hide()
+                if getattr(self, '_came_from_cajero', False):
+                    # Todavía hay un piso más abajo
+                    self.btn_flotante.show()
+                    self.btn_flotante.raise_()
+                else:
+                    # Vino directo del admin — no hay cajero esperando
+                    self._supervisor_mode = False
+                    self.btn_flotante.hide()
+            finally:
+                self.setUpdatesEnabled(True)
 
-        elif current == 0 and self._came_from_cajero:
-            # ─ Admin → Cajero ──────────────────────────────────────
-            self._came_from_cajero  = False
-            self._supervisor_mode   = False
-            self.btn_flotante.hide()
-            
-            from src.config import config
-            if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
-                config.current_user = self._prev_user_before_escalation.copy()
+        elif getattr(self, '_came_from_cajero', False):
+            # ─ Admin/Cualquier Pantalla → Cajero ──────────────────────────────────────
+            self.setUpdatesEnabled(False)
+            try:
+                self._came_from_cajero  = False
+                self._supervisor_mode   = False
+                self.btn_flotante.hide()
                 
-            self.pantalla_ventas.refresh_terminal_data()
-            self.switch_tab(1)
+                from src.config import config
+                if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
+                    config.current_user = self._prev_user_before_escalation.copy()
+                    
+                if hasattr(self, 'pantalla_ventas'):
+                    self.pantalla_ventas.refresh_terminal_data()
+                
+                self.apply_roles()
+            finally:
+                self.setUpdatesEnabled(True)
 
         else:
-            # ─ Fallback (cualquier otra pantalla) ───────────────────────
+            # ─ Fallback (cualquier otra pantalla sin origen cajero) ───────────────────────
             self._came_from_cajero  = False
             self._supervisor_mode   = False
             self._nav_stack.clear()
@@ -642,51 +652,53 @@ class MainWindow(QMainWindow):
         self._last_f11_ts = now
 
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        current = self.stacked_widget.currentIndex()
+        from src.config import config
+        role = (config.current_user or {}).get("role", "cajero").lower()
 
         # ── Nivel 1: Cajero → Admin ───────────────────────────────────
-        if current == 1:
-            from src.config import config
+        if role == "cajero":
             self._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
 
             dlg = LoginPantalla(role="admin")
             if qt_exec(dlg):
-                from src.cajero.paso5_terminal import CajeroActivo
-                from src.hardware.cash_drawer import drawer_manager
-                supervisor = config.current_user.get('username', 'admin')
-                cajero     = CajeroActivo.nombre
-                db_manager.execute_non_query(
-                    "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones)"
-                    " VALUES ('INTERVENCION', 0, ?, ?)",
-                    (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
-                )
-                drawer_manager.abrir(autorizada=True)
-                # Marcar que la escalada vino del cajero
-                self._came_from_cajero  = True
-                self._supervisor_mode   = True
-                self.btn_flotante.show()
-                self.btn_flotante.raise_()
-                self._escalando = True
-                self.switch_tab(0)
-                self._escalando = False
-                self.apply_roles()
+                self.setUpdatesEnabled(False)
+                try:
+                    from src.cajero.paso5_terminal import CajeroActivo
+                    supervisor = config.current_user.get('username', 'admin')
+                    cajero     = CajeroActivo.nombre
+                    db_manager.execute_non_query(
+                        "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones)"
+                        " VALUES ('INTERVENCION', 0, ?, ?)",
+                        (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
+                    )
+                    
+                    self._came_from_cajero  = True
+                    self._supervisor_mode   = True
+                    self._escalando = True
+                    self.apply_roles()
+                    self.btn_flotante.show()
+                    self.btn_flotante.raise_()
+                finally:
+                    self._escalando = False
+                    self.setUpdatesEnabled(True)
             return
 
-        # ── Nivel 2: Admin → Jefe ────────────────────────────────────
-        if current == 0:
-            from src.config import config
+        # ── Nivel 2: Admin → Jefe ──
+        if role == "admin":
             self._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
             
             dlg = LoginPantalla(role="jefe")
             if qt_exec(dlg):
-                # _came_from_cajero se preserva tal como está
-                # (True si vino del cajero, False si entro directo como admin)
-                self._supervisor_mode = True
-                self.btn_flotante.show()
-                self.btn_flotante.raise_()
-                self._escalando = True
-                self.switch_tab(19)
-                self._escalando = False
+                self.setUpdatesEnabled(False)
+                try:
+                    self._supervisor_mode = True
+                    self._escalando = True
+                    self.apply_roles()
+                    self.btn_flotante.show()
+                    self.btn_flotante.raise_()
+                finally:
+                    self._escalando = False
+                    self.setUpdatesEnabled(True)
             return
 
         # ── Nivel 3: Jefe (cima) → toggle fullscreen ────────────────────
@@ -700,9 +712,6 @@ class MainWindow(QMainWindow):
     def _show_terminal_window(self):
         """Terminal TPV — kiosco: pantalla completa sin recrear la ventana (F11 intacto)."""
         self._kiosk_mode = True
-        screen = QApplication.primaryScreen()
-        if screen is not None:
-            self.setGeometry(screen.geometry())
         if not self.isFullScreen():
             self.showFullScreen()
         self.raise_()
@@ -713,9 +722,6 @@ class MainWindow(QMainWindow):
         self._kiosk_mode = False
         if self.isFullScreen():
             self.showNormal()
-        screen = QApplication.primaryScreen()
-        if screen is not None:
-            self.setGeometry(screen.availableGeometry())
         self.showMaximized()
         self.raise_()
         self.activateWindow()

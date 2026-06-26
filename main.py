@@ -175,8 +175,8 @@ def launch_app():
         except Exception as e:
             print(f"Error auto-iniciando bot asistente: {e}")
 
-    QTimer.singleShot(5000, _launch_bot)  # 5s de margen para que Qt/Chromium esté listo
-
+    # El bot asistente ahora permanece dormido por defecto y se despierta solo a demanda
+    # QTimer.singleShot(5000, _launch_bot)
     if not ok:
         QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
@@ -385,6 +385,11 @@ if __name__ == "__main__":
     setup_logger()
 
     try:
+        import ctypes
+        if sys.platform == 'win32':
+            myappid = 'punpro.cobrofacil.pos.31'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+            
         from src.updater.silent_auto_updater import (
             apply_pending_update_on_startup,
             start_background_update_service,

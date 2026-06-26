@@ -123,10 +123,7 @@ class WelcomeOverlay(QWidget):
         self.tick_count = 0
         self.max_ticks = ANIMATION_TIME
         self.progress = 0.0
-
-        self.opacity_effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_effect)
-        self.opacity_effect.setOpacity(1.0)
+        self.current_opacity = 1.0
 
         self.w = self.width()
         self.h = self.height()
@@ -167,7 +164,7 @@ class WelcomeOverlay(QWidget):
 
         if self.progress > 0.85:
             fade = 1.0 - ((self.progress - 0.85) / 0.15)
-            self.opacity_effect.setOpacity(max(0.0, fade))
+            self.current_opacity = max(0.0, fade)
 
         if self.progress >= 1.0:
             self.timer.stop()
@@ -179,6 +176,7 @@ class WelcomeOverlay(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setOpacity(self.current_opacity)
         
         current_radius = self.particle_system.current_border_radius
         bg_color = QColor(5, 5, 5)

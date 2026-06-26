@@ -167,6 +167,7 @@ class DatabaseManager:
 
                 self.db_path = "mariadb://" + host
                 self._create_tables()
+                self._migrate_db()
                 self._ensure_test_users()
                 return  # Salir de _init_db porque SQLite ya no importa
 

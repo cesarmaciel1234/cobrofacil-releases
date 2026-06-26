@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTableWidget, QHeaderView, QFrame, QAbstractItemView, QListWidget, QPushButton, QWidget, QGraphicsDropShadowEffect, QGridLayout, QComboBox, QDoubleSpinBox, QMessageBox)
+from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTableWidget, QHeaderView, QFrame, QAbstractItemView, QListWidget, QPushButton, QWidget, QGraphicsDropShadowEffect, QGridLayout, QComboBox, QDoubleSpinBox, QMessageBox, QSizePolicy)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor
 from src.config import config
@@ -20,7 +20,7 @@ class TerminalUIMixin:
         self.main_layout.setSpacing(8)
 
         self.header_frame = QFrame()
-        self.header_frame.setFixedHeight(75)
+        self.header_frame.setFixedHeight(130)
         self.header_frame.setStyleSheet("""
             QFrame {
                 background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1E3A8A, stop:1 #3B82F6); 
@@ -182,29 +182,32 @@ class TerminalUIMixin:
         self.tabla.installEventFilter(self) # BINDING INDUSTRIAL PARA ENTER EN LA TABLA
         central_layout.addWidget(self.tabla)
         
-        self.main_layout.addWidget(self.central_frame)
+        self.main_layout.addWidget(self.central_frame, 2)
 
         # --- BOTTOM DASHBOARD ---
         self.dashboard_frame = QFrame()
-        self.dashboard_frame.setFixedHeight(140)
+        self.dashboard_frame.setFixedHeight(230)
+        self.dashboard_frame.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.dashboard_frame.setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border: 1px solid #CBD5E1;")
         dash_layout = QHBoxLayout(self.dashboard_frame)
-        dash_layout.setContentsMargins(10, 5, 10, 5)
+        dash_layout.setContentsMargins(15, 10, 15, 10)
         
         # F1-Barcode
         f1_box = QFrame()
-        f1_box.setFixedWidth(420)
         f1_box.setStyleSheet("border: none;")
+        f1_box.setMinimumWidth(400)
+        f1_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         f1_l = QVBoxLayout(f1_box)
-        f1_l.setContentsMargins(5, 15, 5, 15)
+        f1_l.setContentsMargins(0, 0, 0, 0)
         f1_l.setSpacing(0)
         
         self.txt_scan = QLineEdit()
         self.txt_scan.setPlaceholderText("🔍 Código o Producto (F1)...")
+        self.txt_scan.setMinimumHeight(80)
         self.txt_scan.setStyleSheet("""
             QLineEdit {
                 background: white; border: 3px solid #3B82F6; border-radius: 12px; 
-                color: #1E3A8A; font-size: 34px; padding: 12px; font-weight: 900;
+                color: #1E3A8A; font-size: 32px; padding: 12px; font-weight: 900;
             }
         """)
         
@@ -218,8 +221,8 @@ class TerminalUIMixin:
         self.txt_scan.textChanged.connect(self.actualizar_busqueda)
         self.txt_scan.returnPressed.connect(self.procesar_scan)
         
-        f1_l.addWidget(self.txt_scan)
-        dash_layout.addWidget(f1_box)
+        f1_l.addWidget(self.txt_scan, alignment=Qt.AlignVCenter)
+        dash_layout.addWidget(f1_box, 1) # stretch factor 1
         
         # Overlay de Búsqueda
         self.list_results = QListWidget(self)
@@ -231,14 +234,8 @@ class TerminalUIMixin:
         # Cantidad (Oculto a petición para dar más espacio al total)
         self.lbl_cant_val = QLabel("0")
         self.lbl_cant_val.hide()
-        # cant_box = QVBoxLayout()
-        # cant_box.setSpacing(0)
-        # lbl_cant_tit = QLabel("Cantidad")
-        # lbl_cant_tit.setStyleSheet("color: #64748B; font-size: 24px; font-weight: bold; border: none;")
-        # self.lbl_cant_val.setStyleSheet("font-size: 70px; color: #1C2E85; font-weight: bold; border: none;")
-        # cant_box.addWidget(lbl_cant_tit)
-        # cant_box.addWidget(self.lbl_cant_val)
-        dash_layout.addStretch()
+        
+        dash_layout.addStretch(1) # stretch factor 1 para separar
         
         # Ahorro Label (Contenedor para la animación de Ahorro / Descuento)
         self.lbl_ahorro_val = QLabel("")
@@ -254,21 +251,21 @@ class TerminalUIMixin:
         self.lbl_ahorro_val.hide()
 
         self.lbl_total_val = QLabel("0")
-        self.lbl_total_val.setStyleSheet("font-size: 75px; color: #059669; font-weight: 900; border: none;")
-        self.lbl_total_val.setAlignment(Qt.AlignRight)
+        self.lbl_total_val.setStyleSheet("font-size: 80px; color: #059669; font-weight: 900; border: none;")
+        self.lbl_total_val.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         
-        # Agrupar Ahorro y Total lado a lado en un contenedor horizontal perfectamente centrado verticalmente
+        # Agrupar Ahorro y Total lado a lado en un contenedor horizontal
         self.totales_container = QHBoxLayout()
         self.totales_container.setSpacing(35)
         self.totales_container.addWidget(self.lbl_total_val, alignment=Qt.AlignVCenter)
         self.totales_container.addWidget(self.lbl_ahorro_val, alignment=Qt.AlignVCenter)
         dash_layout.addLayout(self.totales_container)
         
-        dash_layout.addSpacing(10)
+        dash_layout.addSpacing(20)
         
         # Sidebar Resumen (Persistencia de última venta)
         self.side_box = QFrame()
-        self.side_box.setFixedWidth(240)
+        self.side_box.setMinimumWidth(260)
         self.side_box.setStyleSheet("""
             QFrame {
                 background: #f8fafc; 
@@ -287,11 +284,11 @@ class TerminalUIMixin:
         self.lbl_side_cambio = QLabel("CAMBIO:         0.00")
         
         for l in [self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos, self.lbl_side_cambio]:
-            l.setStyleSheet("font-size: 14px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
+            l.setStyleSheet("font-size: 15px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
             sl.addWidget(l)
             
         # Resaltar Cambio
-        self.lbl_side_cambio.setStyleSheet("font-size: 16px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
+        self.lbl_side_cambio.setStyleSheet("font-size: 17px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
         
         dash_layout.addWidget(self.side_box)
         
@@ -306,7 +303,7 @@ class TerminalUIMixin:
         
         if HAS_KEYBOARD:
             self.btn_teclado = QPushButton("⌨️ TECLADO")
-            self.btn_teclado.setFixedHeight(40)
+            self.btn_teclado.setFixedHeight(50)
             self.btn_teclado.setCursor(Qt.PointingHandCursor)
             self.btn_teclado.setFocusPolicy(Qt.NoFocus)
             self.btn_teclado.setStyleSheet("""
@@ -322,7 +319,7 @@ class TerminalUIMixin:
             sl.addSpacing(10)
 
         self.btn_theme = QPushButton()
-        self.btn_theme.setFixedHeight(40)
+        self.btn_theme.setFixedHeight(50)
         self.btn_theme.setCursor(Qt.PointingHandCursor)
         self.btn_theme.setFocusPolicy(Qt.NoFocus)
         self.btn_theme.setStyleSheet("""
@@ -388,24 +385,24 @@ class TerminalUIMixin:
         self.icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
         hints_layout.addWidget(self.icon_lbl)
         
-        btn_style = """
-            QPushButton {
+        self._shortcut_btn_base_style = """
+            QPushButton {{
                 background: #1E293B; 
                 color: #F8FAFC; 
                 border: 1px solid #334155; 
                 border-radius: 5px;
-                font-size: 13px; 
+                font-size: {font_px}px; 
                 font-weight: bold;
                 padding: 0px;
-            }
-            QPushButton:hover { 
+            }}
+            QPushButton:hover {{ 
                 background: #334155; 
                 border-color: #475569; 
                 color: #FFFFFF;
-            }
-            QPushButton:pressed {
+            }}
+            QPushButton:pressed {{
                 background: #0F172A;
-            }
+            }}
         """
         
         hints = [
@@ -423,27 +420,29 @@ class TerminalUIMixin:
         self.shortcut_buttons = []
         for text, func, tooltip in hints:
             btn = QPushButton(text)
-            btn.setStyleSheet(btn_style)
+            btn.setStyleSheet(self._shortcut_btn_base_style.format(font_px=13))
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFocusPolicy(Qt.NoFocus)
-            btn.setFixedSize(45, 40) # 45px width by 40px height
+            btn.setFixedSize(55, 50) # Increased width and height
             btn.setToolTip(tooltip)
             btn.clicked.connect(func)
             hints_layout.addWidget(btn)
             self.shortcut_buttons.append(btn)
                 
         # Widget contenedor para el layout de atajos
-        hints_widget = QWidget()
-        hints_widget.setLayout(hints_layout)
-        hints_widget.setStyleSheet("background: transparent; border: none;")
-        scroll_area.setWidget(hints_widget)
+        self._hints_widget = QWidget()
+        self._hints_widget.setLayout(hints_layout)
+        self._hints_widget.setStyleSheet("background: transparent; border: none;")
+        self._hints_layout = hints_layout
+        self._shortcuts_scroll = scroll_area
+        scroll_area.setWidget(self._hints_widget)
         
         sl.addWidget(scroll_area, 2) # Give it a stretch factor of 2 to occupy a large harmonious portion (approx. half the screen)
         sl.addSpacing(10)
         
         # Botón Candado
         self.btn_candado = QPushButton("🔒")
-        self.btn_candado.setFixedSize(40, 40) # Square size 40x40
+        self.btn_candado.setFixedSize(50, 50) # Square size 50x50
         self.btn_candado.setToolTip("Bloquear terminal (F8)")
         self.btn_candado.setCursor(Qt.PointingHandCursor)
         self.btn_candado.setStyleSheet("""
@@ -474,7 +473,72 @@ class TerminalUIMixin:
         sl.addWidget(self.btn_chatbot)
         
         self.main_layout.addWidget(self.status_bar)
+        QTimer.singleShot(0, self._apply_screen_layout)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
+
+    def _apply_screen_layout(self):
+        from src.utils.qt_dpi import terminal_layout_metrics, layout_scale, scale_px
+
+        m = terminal_layout_metrics()
+        ls = m["layout_scale"]
+        self.main_layout.setContentsMargins(m["main_margin"], m["main_margin"], m["main_margin"], m["main_margin"])
+        self.header_frame.setFixedHeight(m["header_height"])
+        self.dashboard_frame.setFixedHeight(m["dashboard_height"])
+        self.status_bar.setFixedHeight(m["status_height"])
+        if hasattr(self, "_shortcuts_scroll"):
+            self._shortcuts_scroll.setFixedHeight(m["shortcuts_height"])
+        self.txt_scan.setMinimumHeight(m["scan_min_height"])
+        self.lbl_terminal_title.setStyleSheet(f"font-size: {m['title_font']}px; font-weight: bold;")
+        self.lbl_total_val.setStyleSheet(
+            f"font-size: {m['total_font']}px; color: #059669; font-weight: 900; border: none;"
+        )
+        self.txt_scan.setStyleSheet(f"""
+            QLineEdit {{
+                background: white; border: 3px solid #3B82F6; border-radius: 12px;
+                color: #1E3A8A; font-size: {m['scan_font']}px; padding: 12px; font-weight: 900;
+            }}
+        """)
+        for lbl in (self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos):
+            lbl.setStyleSheet(
+                f"font-size: {m['side_font']}px; color: #475569; font-weight: 800; "
+                "font-family: 'Consolas', monospace;"
+            )
+        self.lbl_side_cambio.setStyleSheet(
+            f"font-size: {m['side_font'] + 2}px; color: #10b981; font-weight: 900; "
+            "font-family: 'Consolas', monospace;"
+        )
+        self.tabla.verticalHeader().setDefaultSectionSize(m["table_row"])
+        self._apply_status_bar_shortcuts_layout(ls)
+
+    def _apply_status_bar_shortcuts_layout(self, ls=None):
+        if not hasattr(self, "_shortcuts_scroll") or not getattr(self, "shortcut_buttons", None):
+            return
+        from src.utils.qt_dpi import layout_scale, scale_px
+
+        if ls is None:
+            ls = layout_scale()
+        viewport_w = self._shortcuts_scroll.viewport().width()
+        if viewport_w < 80:
+            return
+        n = len(self.shortcut_buttons)
+        spacing = self._hints_layout.spacing()
+        gaps = spacing * max(0, n - 1)
+        available = max(0, viewport_w - gaps)
+        min_w = scale_px(34, ls)
+        max_w = scale_px(45, ls)
+        btn_w = max(min_w, min(max_w, int(available / n) if n else max_w))
+        btn_h = scale_px(40, ls)
+        font_px = 13 if btn_w >= scale_px(40, ls) else 11
+        style = self._shortcut_btn_base_style.format(font_px=font_px)
+        for btn in self.shortcut_buttons:
+            btn.setFixedSize(btn_w, btn_h)
+            btn.setStyleSheet(style)
+        content_w = n * btn_w + gaps
+        self._hints_widget.setMinimumWidth(content_w)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._apply_screen_layout()
         

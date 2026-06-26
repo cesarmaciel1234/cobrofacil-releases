@@ -2,7 +2,7 @@ import sys
 import time
 import os
 import threading
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from src.cajero.paso5_terminal import Paso5Terminal
 from src.services.lan_server import init_lan_server
 

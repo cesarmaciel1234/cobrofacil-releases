@@ -1,6 +1,7 @@
+from src.utils.qt_compat import qt_exec
 import sys
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QTimer
 
 # Evitar que QTimer o la UI colapse sin app
 app = QApplication(sys.argv)
@@ -20,7 +21,7 @@ try:
     
     print(">>> Esperando 4 segundos para escuchar la red (y enviando nuestro propio heartbeat)...")
     QTimer.singleShot(4000, app.quit)
-    app.exec_()
+    qt_exec(app)
     print(">>> Test finalizado correctamente sin crasheos.")
 except Exception as e:
     import traceback

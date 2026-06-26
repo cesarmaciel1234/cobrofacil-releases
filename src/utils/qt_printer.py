@@ -9,7 +9,7 @@ def _qprinter():
         from PyQt6.QtPrintSupport import QPrinter
 
         return QPrinter
-    from PyQt5.QtPrintSupport import QPrinter
+    from PyQt6.QtPrintSupport import QPrinter
 
     return QPrinter
 
@@ -19,7 +19,7 @@ def _qprinterinfo():
         from PyQt6.QtPrintSupport import QPrinterInfo
 
         return QPrinterInfo
-    from PyQt5.QtPrintSupport import QPrinterInfo
+    from PyQt6.QtPrintSupport import QPrinterInfo
 
     return QPrinterInfo
 

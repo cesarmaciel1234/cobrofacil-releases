@@ -54,15 +54,15 @@ class BotonFlotanteRegreso(QPushButton):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.old_pos = event.globalPos()
-            self.press_pos = event.globalPos()
+            self.old_pos = event.globalPosition().toPoint()
+            self.press_pos = event.globalPosition().toPoint()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         if self.old_pos:
-            delta = QPoint(event.globalPos() - self.old_pos)
+            delta = QPoint(event.globalPosition().toPoint() - self.old_pos)
             self.move(self.x() + delta.x(), self.y() + delta.y())
-            self.old_pos = event.globalPos()
+            self.old_pos = event.globalPosition().toPoint()
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
@@ -70,7 +70,7 @@ class BotonFlotanteRegreso(QPushButton):
         if event.button() == Qt.LeftButton:
             if self.press_pos:
                 # Calcular distancia recorrida en píxeles (Manhattan Length)
-                dist = (event.globalPos() - self.press_pos).manhattanLength()
+                dist = (event.globalPosition().toPoint() - self.press_pos).manhattanLength()
                 if dist <= 20: # Si se movió menos de 20px (ajustado para táctil), es un click real (retorno)
                     self.clicked_return.emit()
         self.old_pos = None

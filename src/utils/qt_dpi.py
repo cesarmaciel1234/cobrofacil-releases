@@ -25,12 +25,47 @@ PROFILE_CARD_COUNT = 4
 PROFILE_CARD_W_MAX = 230
 PROFILE_CARD_W_MIN = 140
 
+# Terminal cajero @ 1920×1080 (monitor POS 24")
+TERMINAL_HEADER_H = 130
+TERMINAL_DASHBOARD_H = 230
+TERMINAL_STATUS_H = 55
+TERMINAL_SHORTCUTS_H = 44
+TERMINAL_SCAN_MIN_H = 80
+TERMINAL_SCAN_FONT = 24
+TERMINAL_TOTAL_FONT = 75
+TERMINAL_TITLE_FONT = 26
+TERMINAL_SIDE_FONT = 17
+TERMINAL_TABLE_ROW = 40
+TERMINAL_MAIN_MARGIN = 10
+TERMINAL_CENTRAL_STRETCH = 2
+
 
 def configure_process_dpi() -> None:
     # Apaga el auto-escalado de Windows para que Qt no herede el zoom del sistema (125%, 150%)
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
-    # Fuerza la escala base a 1 (100%), permitiendo que la lógica manual se encargue
-    os.environ["QT_SCALE_FACTOR"] = "1"
+    
+    scale_factor = 1.0
+    try:
+        import ctypes
+        hdc = ctypes.windll.user32.GetDC(0)
+        width_px = ctypes.windll.user32.GetSystemMetrics(0)
+        height_px = ctypes.windll.user32.GetSystemMetrics(1)
+        width_mm = ctypes.windll.gdi32.GetDeviceCaps(hdc, 4)
+        height_mm = ctypes.windll.gdi32.GetDeviceCaps(hdc, 6)
+        ctypes.windll.user32.ReleaseDC(0, hdc)
+        
+        diag_in = ((width_mm**2 + height_mm**2)**0.5) / 25.4
+        
+        # En caso de que se necesite, un pequeño bump para que no sea excesivamente diminuto
+        # pero que permita encajar en pantallas chicas
+        scale_factor = compute_layout_scale(width_px, height_px, diag_in)
+        # Limitar el scale_factor a un mínimo razonable para no achicar demasiado
+        scale_factor = max(0.70, scale_factor)
+    except Exception:
+        pass
+
+    # Fuerza la escala base, aplicando el factor de achique global para laptops
+    os.environ["QT_SCALE_FACTOR"] = str(scale_factor)
     os.environ.pop("QT_SCREEN_SCALE_FACTORS", None)
 
 
@@ -176,6 +211,44 @@ def screen_info(screen=None, app=None) -> dict:
     }
 
 
+def terminal_layout_metrics(screen=None, app=None) -> dict:
+    """
+    Dimensiones del terminal de caja escaladas al monitor real.
+    Referencia: POS 24\" @ 1920×1080 con panel inferior amplio y barra superior alta.
+    """
+    ls = layout_scale(screen, app)
+    geo = screen_geometry(screen, app)
+    screen_h = geo.height() if geo else REF_HEIGHT
+
+    dash_base = TERMINAL_DASHBOARD_H
+    header_base = TERMINAL_HEADER_H
+    if screen_h < 768:
+        dash_base, header_base = 170, 95
+    elif screen_h < 900:
+        dash_base, header_base = 200, 110
+
+    font_scale = max(0.85, ls)
+    return {
+        "layout_scale": ls,
+        "screen_width": geo.width() if geo else REF_WIDTH,
+        "screen_height": screen_h,
+        "header_height": scale_px(header_base, ls),
+        "dashboard_height": scale_px(dash_base, ls),
+        "status_height": scale_px(TERMINAL_STATUS_H, ls),
+        "shortcuts_height": scale_px(TERMINAL_SHORTCUTS_H, ls),
+        "scan_min_height": scale_px(TERMINAL_SCAN_MIN_H, ls),
+        "scan_font": max(18, int(TERMINAL_SCAN_FONT * font_scale)),
+        "total_font": max(42, int(TERMINAL_TOTAL_FONT * font_scale)),
+        "title_font": max(18, int(TERMINAL_TITLE_FONT * font_scale)),
+        "side_font": max(12, int(TERMINAL_SIDE_FONT * font_scale)),
+        "table_row": max(32, scale_px(TERMINAL_TABLE_ROW, ls)),
+        "main_margin": scale_px(TERMINAL_MAIN_MARGIN, ls),
+        "central_stretch": TERMINAL_CENTRAL_STRETCH,
+        "list_results_h": scale_px(350, ls),
+        "list_results_w": min(900, scale_px(900, ls)),
+    }
+
+
 def profile_selector_size(screen=None, app=None) -> tuple[int, int, int, int]:
     screen, app = _resolve_screen_app(screen, app)
     geo = screen_geometry(screen, app)
@@ -211,11 +284,11 @@ def adapt_main_window(window, screen=None, app=None) -> None:
     min_w = max(scale_px(1024, ls), min(scale_px(1280, ls), geo.width()))
     min_h = max(scale_px(600, ls), min(scale_px(720, ls), geo.height()))
     window.setMinimumSize(min(min_w, geo.width()), min(min_h, geo.height()))
-    window.setGeometry(geo)
 
 
 def present_main_window(window) -> None:
     """Muestra la ventana principal del cajero."""
+    adapt_main_window(window)
     if window.isFullScreen() or getattr(window, "_kiosk_mode", False):
         window.showFullScreen()
     else:

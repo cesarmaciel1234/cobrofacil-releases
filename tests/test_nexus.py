@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 import os
 import random
@@ -6,8 +7,8 @@ from datetime import datetime
 # Asegurar que el directorio raíz esté en el PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer, Qt
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QTimer, Qt
 from src.admin.admin7_nexus import NexusExtremeControl
 from src.base_de_datos.database import db_manager
 
@@ -61,7 +62,7 @@ def main():
     timer_sim.timeout.connect(simulate_activity)
     timer_sim.start(50) # Un ciclo de 3 eventos cada 50 ms (60 eventos por segundo!)
     
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))
 
 if __name__ == '__main__':
     main()
