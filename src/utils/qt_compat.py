@@ -79,9 +79,12 @@ def configure_qt_application_attributes() -> None:
 def set_share_opengl_contexts() -> None:
     """Requerido por QtWebEngine antes de QApplication."""
     try:
-        attr = getattr(Qt, "AA_ShareOpenGLContexts", None)
+        if IS_QT6:
+            attr = Qt.ApplicationAttribute.AA_ShareOpenGLContexts
+        else:
+            attr = getattr(Qt, "AA_ShareOpenGLContexts", None)
         if attr is not None:
-            QCoreApplication.setAttribute(attr)
+            QCoreApplication.setAttribute(attr, True)
     except Exception:
         pass
 

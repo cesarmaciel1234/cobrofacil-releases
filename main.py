@@ -161,6 +161,9 @@ def launch_app():
     # Auto-iniciar el bot burbuja asistente (retrasado 5s para que Qt esté estable)
     def _launch_bot():
         try:
+            # En .exe empaquetado no hay chat_bot_animado.py suelto; el widget in-process basta.
+            if getattr(sys, "frozen", False):
+                return
             import subprocess
             bot_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "cajero", "chat_bot_animado.py")
             if os.path.exists(bot_script):

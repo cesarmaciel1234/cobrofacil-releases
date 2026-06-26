@@ -13,7 +13,7 @@ if exist "..\.venv\Scripts\activate.bat" (
 )
 
 :: Garantizar que PyInstaller y dependencias de Windows esten
-pip install pyinstaller pywin32 PyQt5 >nul 2>&1
+pip install pyinstaller pywin32 PyQt6 PyQt6-WebEngine >nul 2>&1
 
 :: Limpiar basuras
 if exist "build" rmdir /s /q "build"
@@ -25,7 +25,10 @@ python -m PyInstaller --noconfirm --onefile --windowed ^
   --hidden-import "win32com" ^
   --hidden-import "win32com.client" ^
   --hidden-import "psutil" ^
-  --hidden-import "PyQt5.QtWebEngineWidgets" ^
+  --hidden-import "PyQt6.QtWebEngineWidgets" ^
+  --hidden-import "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineWidgets" ^
   --icon=NONE ^
   --add-data "web;web" ^
   Instalador_Web.py

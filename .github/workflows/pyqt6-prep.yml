@@ -37,3 +37,8 @@ jobs:
 
       - name: Smoke WebEngine
         run: python tools/smoke_webengine.py
+
+      - name: Smoke import MainWindow
+        env:
+          TPV_QT: "6"
+        run: python tools/smoke_main_import.py

@@ -34,6 +34,12 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --hidden-import "lxml" ^
   --hidden-import "html5lib" ^
   --hidden-import "openpyxl" ^
+  --hidden-import "win32com" ^
+  --hidden-import "win32com.client" ^
+  --hidden-import "PyQt6.QtWebEngineWidgets" ^
+  --hidden-import "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineWidgets" ^
   --collect-submodules "src.admin" ^
   --collect-submodules "src.jefe" ^
   --collect-submodules "src.carteleria" ^
@@ -69,6 +75,10 @@ python -m PyInstaller --noconfirm --onefile --windowed ^
   --name "Setup_CobroFacil_Web" ^
   --hidden-import "win32com" ^
   --hidden-import "win32com.client" ^
+  --hidden-import "PyQt6.QtWebEngineWidgets" ^
+  --hidden-import "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineCore" ^
+  --collect-all "PyQt6.QtWebEngineWidgets" ^
   --icon=NONE ^
   --add-data "web;web" ^
   Instalador_Web.py

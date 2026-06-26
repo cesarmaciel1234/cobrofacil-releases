@@ -62,6 +62,8 @@ jobs:
       #    (--onedir: carpeta con el .exe y librerías; mismo criterio que Compilar_Todo.bat)
       # -----------------------------------------------------------------------
       - name: Compilar ejecutable con PyInstaller
+        env:
+          TPV_QT: "6"
         run: |
           python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" `
             --hidden-import "reportlab.graphics.barcode.code93" `
@@ -73,6 +75,10 @@ jobs:
             --hidden-import "openpyxl" `
             --hidden-import "win32com" `
             --hidden-import "win32com.client" `
+            --hidden-import "PyQt6.QtWebEngineWidgets" `
+            --hidden-import "PyQt6.QtWebEngineCore" `
+            --collect-all "PyQt6.QtWebEngineCore" `
+            --collect-all "PyQt6.QtWebEngineWidgets" `
             --collect-submodules "src.admin" `
             --collect-submodules "src.jefe" `
             --collect-submodules "src.carteleria" `

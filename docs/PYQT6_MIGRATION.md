@@ -63,30 +63,23 @@ from src.utils.qt_compat import (
 - [x] `chat_bot.py`, `chat_bot_animado.py` adaptados a Qt6
 - [x] `tools/smoke_webengine.py`
 
-### Fase 4 — Cajero + empaquetado (siguiente)
-| API PyQt5 | PyQt6 |
-|-----------|-------|
-| `QApplication.desktop()` | `app.screens()[i].availableGeometry()` |
-| `QVariantAnimation` | `VariantFloatAnimation` |
-| `AA_EnableHighDpiScaling` | `setHighDpiScaleFactorRoundingPolicy` |
-| `QPrinter.HighResolution` | `QPrinter.PrinterMode.HighResolution` |
-| `QDesktopServices` | `QtGui.QDesktopServices` |
-| `QMetaObject.invokeMethod` + `Q_ARG` | Revisar tipos / usar señales |
-
-### Fase 4 — QtWebEngine (crítico)
-Archivos: `chat_bot.py`, `chat_bot_animado.py`, `Instalador_Web.py`
-
-- Validar `--disable-gpu` y `AA_ShareOpenGLContexts` en Qt6.
-- PyInstaller: `PyQt6.QtWebEngineWidgets` + collect hooks.
-- El chatbot corre como subproceso `pythonw` → actualizar instalador.
+### Fase 4 — Empaquetado PyQt6 (en curso)
+- [x] `pyinstaller_qt6_extras.py` — `collect_all` WebEngine compartido
+- [x] `CobroFacil_POS.spec`, `Compilar_Todo.bat`, `release.yml` — flags PyQt6-WebEngine
+- [x] Instalador web: `Setup_CobroFacil_Web.spec`, `compilar_instalador_web.bat`
+- [x] `main.py` — no lanzar subprocess chatbot si `sys.frozen` (empaquetado)
+- [x] `tools/smoke_main_import.py` — regresión imports sin UI
+- [x] `tools/smoke_webengine.py` — solo imports en CI (`--gui` para ventana manual)
+- [ ] Compilar `.exe` local y probar instalador + POS en máquina real
+- [ ] Regresión visual cajero (Fase 5)
 
 ### Fase 5 — Cajero (último, regresión visual)
 `paso5` → `paso8`, `styles.qss`, teclas F, hardware.
 
-### Fase 6 — Empaquetado
-- `requirements.txt` → PyQt6
-- `.github/workflows/release.yml`
-- `CobroFacil_POS.spec`, `Compilar_Todo.bat`, specs del instalador
+### Fase 6 — Merge a main
+- `requirements.txt` ya en PyQt6 en rama `feature/pyqt6`
+- `.github/workflows/release.yml` actualizado
+- Validar release CI tras merge
 
 ## Reglas del proyecto
 
