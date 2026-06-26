@@ -5,12 +5,12 @@ import sqlite3
 import json
 import shutil
 import time
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
 
                              QHBoxLayout, QPushButton, QLabel, QTextEdit, 
                              QMessageBox, QProgressBar)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QColor, QTextCursor
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFont, QColor, QTextCursor
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -211,4 +211,4 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     window = DoctorApp()
     window.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

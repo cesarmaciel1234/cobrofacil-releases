@@ -1,10 +1,10 @@
-from PyQt5.QtCore import QPoint
+from PyQt6.QtCore import QPoint
 from src.carteleria.theme import C_THEME
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGraphicsDropShadowEffect, QGridLayout
 )
-from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QPixmap, QColor
 import os
 from src.utils.paths import get_base_path
 
@@ -210,7 +210,7 @@ class PantallaEspia(QWidget):
         main_layout.setStretch(1, 1) 
         
         # Animación de latido en el Chef Lobo (Opacidad)
-        from PyQt5.QtWidgets import QGraphicsOpacityEffect
+        from PyQt6.QtWidgets import QGraphicsOpacityEffect
         self.eff_lobo = QGraphicsOpacityEffect(self.lbl_lobo)
         self.lbl_lobo.setGraphicsEffect(self.eff_lobo)
         

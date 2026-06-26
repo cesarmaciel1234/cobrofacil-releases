@@ -1,12 +1,12 @@
 from src.utils.theme_manager import theme_manager
 import sys, random, math
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QApplication, QGridLayout, QTextEdit, QMessageBox
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QRect
-from PyQt5.QtGui import QColor, QFont, QPainter, QBrush, QPen
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QRect
+from PyQt6.QtGui import QColor, QFont, QPainter, QBrush, QPen
 from datetime import datetime, timedelta
 import threading
 
@@ -459,7 +459,7 @@ class NexusExtremeControl(QWidget):
             self._append_terminal(
                 "> [BLOCKED] CIERRE Z DENEGADO: esta terminal corre en modo ESCLAVO."
                 " Solo el servidor maestro puede ejecutar cierres fiscales.", "#F43F5E")
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self, "Operación No Permitida",
                 "El Cierre Z solo puede ejecutarse desde la PC MAESTRA.\n"
@@ -520,7 +520,7 @@ class NexusExtremeControl(QWidget):
 
         # Confirmar y ejecutar
         try:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             reply = QMessageBox.question(
                 self,
                 "Confirmación Crítica — NEXUS OVERRIDE",

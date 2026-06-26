@@ -1,13 +1,13 @@
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
-    QMainWindow, QWidget, QStackedWidget, QLabel, QFrame, QShortcut,
+    QMainWindow, QWidget, QStackedWidget, QLabel, QFrame,
     QGraphicsDropShadowEffect, QApplication, QMessageBox, QPushButton,
     QHBoxLayout, QVBoxLayout
 )
 import sys
-from PyQt5.QtGui import QKeySequence, QColor
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6.QtGui import QKeySequence, QColor, QShortcut
+from PyQt6.QtCore import Qt, QTimer
 # NOTA: Paso5Terminal se importa dentro de _init_screens (lazy) para no
 # bloquear la splash screen durante la carga del módulo main_window.
 from src.utils.floating_widgets import BotonFlotanteRegreso
@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
         self._update_banner.hide()
 
         # Dialogo de progreso minimalista
-        from PyQt5.QtWidgets import QProgressDialog
+        from PyQt6.QtWidgets import QProgressDialog
         dlg = QProgressDialog(
             "Descargando e instalando actualizacion...", None, 0, 0, self)
         dlg.setWindowTitle("Actualizando TPV Pro")
@@ -932,7 +932,7 @@ class MainWindow(QMainWindow):
             self.marco_alerta.setStyleSheet("border: 60px solid #7F1D1D; background: rgba(185, 28, 28, 150);")
             if hasattr(self.pantalla_ventas, 'lbl_terminal_title'):
                 self.pantalla_ventas.lbl_terminal_title.setText("🚨 ALERTA DE SEGURIDAD 🚨")
-            try: import PyQt5.QtWidgets as qw; qw.QApplication.beep()
+            try: import PyQt6.QtWidgets as qw; qw.QApplication.beep()
             except: pass
         else:
             self.marco_alerta.setStyleSheet("border: 40px solid #EF4444; background: transparent;")
@@ -945,4 +945,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

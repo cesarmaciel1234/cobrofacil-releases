@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 
 class Mensaje(QLabel):

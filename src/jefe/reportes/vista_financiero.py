@@ -2,15 +2,15 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 
 import json
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
     QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QRect, QPoint, QSize, QThread, QUrl
-from PyQt5.QtGui import QColor, QFont, QPainter, QBrush, QPen, QLinearGradient, QPolygon, QPainterPath
+from PyQt6.QtCore import Qt, pyqtSignal, QRect, QPoint, QSize, QThread, QUrl
+from PyQt6.QtGui import QColor, QFont, QPainter, QBrush, QPen, QLinearGradient, QPolygon, QPainterPath
 import datetime
 
 try:
@@ -108,8 +108,8 @@ class StockAreaChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPainterPath, QLinearGradient
-        from PyQt5.QtCore import QPoint, QRect, Qt
+        from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPainterPath, QLinearGradient
+        from PyQt6.QtCore import QPoint, QRect, Qt
         
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -305,8 +305,8 @@ class BarChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush
-        from PyQt5.QtCore import QPoint, QRect, Qt
+        from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush
+        from PyQt6.QtCore import QPoint, QRect, Qt
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
@@ -427,8 +427,8 @@ class DonutChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush
-        from PyQt5.QtCore import QPoint, QRect, QRectF, Qt
+        from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush
+        from PyQt6.QtCore import QPoint, QRect, QRectF, Qt
         import math
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -554,7 +554,7 @@ class AIAssistantWidget(ModernCard):
         lay.addWidget(self.lbl_content)
         
         # Timer for animation
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         self.anim_timer = QTimer(self)
         self.anim_timer.timeout.connect(self._animate_typing)
         self.full_text = ""
@@ -605,7 +605,7 @@ class DialogoVentasPorHora(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Ventas por Hora")
         self.resize(600, 400)
-        from PyQt5.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView
+        from PyQt6.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView
         lay = QVBoxLayout(self)
         tabla = QTableWidget()
         tabla.setColumnCount(2)
@@ -635,7 +635,7 @@ class DialogoInventarioBajo(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Inventario Bajo (Reorden)")
         self.resize(800, 600)
-        from PyQt5.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView
+        from PyQt6.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView
         lay = QVBoxLayout(self)
         tabla = QTableWidget()
         tabla.setColumnCount(3)
@@ -653,7 +653,7 @@ class DialogoInventarioBajo(QDialog):
         lay.addWidget(tabla)
 
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 class DataLoaderThread(QThread):
     data_loaded = pyqtSignal(dict)
@@ -759,7 +759,7 @@ class VistaFinanciero(QWidget):
         
         # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
         from src.config import config
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         db_path = config.get("db_path", "")
         if db_path and db_path != "":
             self.sync_timer = QTimer(self)
@@ -870,7 +870,7 @@ class VistaFinanciero(QWidget):
             filters_layout.addWidget(f_btn)
         filters_layout.addStretch()
         
-        from PyQt5.QtWidgets import QCheckBox
+        from PyQt6.QtWidgets import QCheckBox
         self.chk_comparativa = QCheckBox("Comparar con periodo anterior")
         self.chk_comparativa.setStyleSheet(" font-weight: bold; font-size: 13px;")
         self.chk_comparativa.stateChanged.connect(lambda: self.cargar_datos(getattr(self, "current_period", "Mes Actual")))
@@ -1675,7 +1675,7 @@ class VistaFinanciero(QWidget):
 
             # Actualizar IA
             if hasattr(self, 'ai_assistant'):
-                from PyQt5.QtCore import QTimer
+                from PyQt6.QtCore import QTimer
                 self.ai_assistant.lbl_status.show()
                 self.ai_assistant.lbl_content.setText("")
                 QTimer.singleShot(800, lambda: self.ai_assistant.update_insights(chart_data, pago_sum, donut_data))
@@ -1968,7 +1968,7 @@ class VistaFinanciero(QWidget):
                                       filtro in str(r.get('departamento','')).lower()]
         
         self.tabla_historial_crudo.setRowCount(0)
-        from PyQt5.QtGui import QColor, QFont
+        from PyQt6.QtGui import QColor, QFont
         
         font_mono = QFont("Consolas", 10, QFont.Bold)
         col_green = QColor("#039855") # Verde oscuro legible

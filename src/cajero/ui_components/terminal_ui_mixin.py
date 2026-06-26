@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
-from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTableWidget, QHeaderView, QFrame, QAbstractItemView, QListWidget, QPushButton, QWidget, QGraphicsDropShadowEffect, QGridLayout, QComboBox, QDoubleSpinBox, QMessageBox)
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTableWidget, QHeaderView, QFrame, QAbstractItemView, QListWidget, QPushButton, QWidget, QGraphicsDropShadowEffect, QGridLayout, QComboBox, QDoubleSpinBox, QMessageBox)
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor
 from src.config import config
 try:
     from src.ui_components.virtual_keyboard_paso5 import VirtualKeyboardPaso5 as VirtualKeyboard
@@ -75,7 +75,7 @@ class TerminalUIMixin:
         self.btn_campana.setCursor(Qt.PointingHandCursor)
         self.btn_campana.setFocusPolicy(Qt.NoFocus)
         self.btn_campana.setStyleSheet("background: transparent; border: none; font-size: 24px;")
-        from PyQt5.QtWidgets import QGraphicsOpacityEffect
+        from PyQt6.QtWidgets import QGraphicsOpacityEffect
         self.campana_op_effect = QGraphicsOpacityEffect(self.btn_campana)
         self.campana_op_effect.setOpacity(0.0) # Camuflado por defecto
         self.btn_campana.setGraphicsEffect(self.campana_op_effect)
@@ -365,7 +365,7 @@ class TerminalUIMixin:
         sl.addStretch(1)
         
         # Scroll Area para los atajos del teclado (Previene descuadre en pantallas chicas)
-        from PyQt5.QtWidgets import QScrollArea
+        from PyQt6.QtWidgets import QScrollArea
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)

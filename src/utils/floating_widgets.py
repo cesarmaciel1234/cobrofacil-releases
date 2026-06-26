@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QPushButton, QGraphicsDropShadowEffect
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QRect, QEasingCurve, QTimer
-from PyQt5.QtGui import QColor, QCursor
+from PyQt6.QtWidgets import QPushButton, QGraphicsDropShadowEffect
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QRect, QEasingCurve, QTimer
+from PyQt6.QtGui import QColor, QCursor
 
 class BotonFlotanteRegreso(QPushButton):
     """

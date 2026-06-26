@@ -1,7 +1,7 @@
 """
 Capa de compatibilidad Qt — Cobro Fácil POS.
 
-Producción actual: PyQt5 (por defecto).
+Rama feature/pyqt6: PyQt6 por defecto.
 Migración: exportar TPV_QT=6 e instalar requirements-pyqt6.txt.
 
 Uso recomendado en código nuevo o al tocar bootstrap:
@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import sys
 
-_QT_PREF = os.environ.get("TPV_QT", "5").strip()
+_QT_PREF = os.environ.get("TPV_QT", "6").strip()
 
 
 def _load_qt():

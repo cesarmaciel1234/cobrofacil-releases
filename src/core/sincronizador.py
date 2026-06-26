@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
 import sqlite3
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox
 from src.base_de_datos.database import db_manager
 
 def sincronizar_facturas(sqlite_db_path, parent_widget=None):

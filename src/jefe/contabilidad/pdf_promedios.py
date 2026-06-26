@@ -6,7 +6,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 
 def exportar_pdf_interno(tabla, proveedor, fecha, kilos_media, merma, precio, parent=None):
-    from PyQt5.QtWidgets import QFileDialog, QMessageBox
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
     try:
         ruta, _ = QFileDialog.getSaveFileName(parent, "Guardar PDF Interno", "", "Archivo PDF (*.pdf)")
         if not ruta:
@@ -92,7 +92,7 @@ def exportar_pdf_interno(tabla, proveedor, fecha, kilos_media, merma, precio, pa
         QMessageBox.warning(parent, "Error", f"Error al generar PDF:\\n{e}")
 
 def exportar_pdf_clientes(tabla, proveedor, fecha, parent=None):
-    from PyQt5.QtWidgets import QFileDialog, QMessageBox, QInputDialog
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox, QInputDialog
     try:
         mensaje, ok = QInputDialog.getText(parent, "Mensaje para Clientes", "Ingrese un mensaje opcional para el encabezado (ej: Ofertas de la semana):")
         if not ok: return

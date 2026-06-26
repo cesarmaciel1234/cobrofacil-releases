@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
@@ -8,8 +8,8 @@ from PyQt5.QtWidgets import (
     QFormLayout, QSplitter, QComboBox, QCheckBox,
     QDoubleSpinBox, QRadioButton, QScrollArea
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtGui import QColor, QFont
 
 try:
     from src.base_de_datos.database import db_manager

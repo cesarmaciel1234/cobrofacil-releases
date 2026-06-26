@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 
 class MensajeAtencion(QDialog):
     def __init__(self, mensaje="Ingresa Artículo Falta Precio", parent=None):

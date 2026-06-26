@@ -12,7 +12,7 @@ import zipfile
 import subprocess
 import sys
 import threading
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox
 
 from src.utils.paths import get_base_path
 
@@ -56,7 +56,7 @@ def buscar_actualizacion_background(parent_widget=None):
             # Simple string comparison (e.g. v2026.2.1 > v2026.2.0)
             if latest_tag and latest_tag > local_tag:
                 if zip_url and parent_widget:
-                    from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
                     QMetaObject.invokeMethod(parent_widget, "mostrar_alerta_actualizacion", 
                                              Qt.QueuedConnection, 
                                              Q_ARG(str, latest_tag), 
@@ -402,7 +402,7 @@ del "%~f0"
             # Lanzar el BAT y salir
             subprocess.Popen([bat_path], creationflags=subprocess.CREATE_NO_WINDOW)
             
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             app = QApplication.instance()
             if app: app.quit()
             sys.exit(0)

@@ -2,8 +2,16 @@ import os
 import html
 import shutil
 from datetime import datetime
-from PyQt5.QtGui import QTextDocument, QPageSize
-from PyQt5.QtPrintSupport import QPrinter
+from PyQt6.QtGui import QTextDocument, QPageSize
+from PyQt6.QtPrintSupport import QPrinter
+from src.utils.qt_printer import (
+    available_printer_names,
+    print_document,
+    printer_high_resolution,
+    printer_pdf_format,
+    set_page_margins_mm,
+    set_page_orientation_portrait,
+)
 import barcode
 from barcode.writer import ImageWriter
 
@@ -28,8 +36,8 @@ def abrir_archivo_pdf(pdf_path):
         return False
         
     try:
-        from PyQt5.QtGui import QDesktopServices
-        from PyQt5.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
         
         # 1. Intentar abrir con Chrome explícitamente (solicitado por el usuario)
         if sys.platform == 'win32':
@@ -112,15 +120,15 @@ class EtiquetaRenderer:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Gondola_{timestamp}.pdf")
 
-        printer = QPrinter(QPrinter.HighResolution)
-        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer = QPrinter(printer_high_resolution())
+        printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
         printer.setPageSize(QPageSize(QPageSize.A4))
         printer.setResolution(600)
         # Margen estándar de 2mm para evitar cortes
-        printer.setPageMargins(2, 2, 2, 2, QPrinter.Millimeter)
+        set_page_margins_mm(printer, 2, 2, 2, 2)
 
-        doc.print_(printer)
+        print_document(doc, printer)
         
         # ── LIBERACIÓN EXPLÍCITA DE MANEJADORES DE ARCHIVO ──
         del printer
@@ -846,17 +854,17 @@ class EtiquetaRenderer:
         os.makedirs(base_dir, exist_ok=True)
         pdf_path = os.path.join(base_dir, "Folleto_Ofertas.pdf")
         
-        printer = QPrinter(QPrinter.HighResolution)
-        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer = QPrinter(printer_high_resolution())
+        printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
         printer.setResolution(300)
         printer.setFullPage(True)
-        printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
+        set_page_margins_mm(printer, 10, 10, 10, 10)
         printer.setPageSize(QPageSize(QPageSize.A4))
-        printer.setOrientation(QPrinter.Portrait)
+        set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
-        from PyQt5.QtCore import QSizeF
+        from PyQt6.QtCore import QSizeF
         doc.setPageSize(QSizeF(printer.pageRect().size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
@@ -1033,7 +1041,7 @@ class EtiquetaRenderer:
         """
         
         doc.setHtml(full_html)
-        doc.print_(printer)
+        print_document(doc, printer)
         
         del printer
         del doc
@@ -1049,17 +1057,17 @@ class EtiquetaRenderer:
         os.makedirs(base_dir, exist_ok=True)
         pdf_path = os.path.join(base_dir, "Catalogo_Productos.pdf")
         
-        printer = QPrinter(QPrinter.HighResolution)
-        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer = QPrinter(printer_high_resolution())
+        printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
         printer.setResolution(300)
         printer.setFullPage(True)
-        printer.setPageMargins(10, 10, 10, 10, QPrinter.Millimeter)
+        set_page_margins_mm(printer, 10, 10, 10, 10)
         printer.setPageSize(QPageSize(QPageSize.A4))
-        printer.setOrientation(QPrinter.Portrait)
+        set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
-        from PyQt5.QtCore import QSizeF
+        from PyQt6.QtCore import QSizeF
         doc.setPageSize(QSizeF(printer.pageRect().size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
@@ -1207,7 +1215,7 @@ class EtiquetaRenderer:
 
         full_html = f"<html><head><style>body {{ margin:0; padding:0; background:white; }}</style></head><body>{''.join(html_pages)}</body></html>"
         doc.setHtml(full_html)
-        doc.print_(printer)
+        print_document(doc, printer)
         
         del printer
         del doc
@@ -1229,18 +1237,18 @@ class EtiquetaRenderer:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Personalizadas_{timestamp}.pdf")
         
-        printer = QPrinter(QPrinter.HighResolution)
-        printer.setOutputFormat(QPrinter.PdfFormat)
+        printer = QPrinter(printer_high_resolution())
+        printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
         printer.setResolution(300)
         printer.setFullPage(True)
-        printer.setPageMargins(5, 5, 5, 5, QPrinter.Millimeter)
+        set_page_margins_mm(printer, 5, 5, 5, 5)
         printer.setPageSize(QPageSize(QPageSize.A4))
-        printer.setOrientation(QPrinter.Portrait)
+        set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
         doc.setDefaultStyleSheet("body { background-color: #ffffff; color: #000000; }")
-        from PyQt5.QtCore import QSizeF
+        from PyQt6.QtCore import QSizeF
         doc.setPageSize(QSizeF(printer.pageRect().size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
@@ -1422,7 +1430,7 @@ class EtiquetaRenderer:
         """
         
         doc.setHtml(full_html)
-        doc.print_(printer)
+        print_document(doc, printer)
         
         del printer
         del doc

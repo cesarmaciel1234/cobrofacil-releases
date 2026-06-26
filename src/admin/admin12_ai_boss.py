@@ -3,8 +3,8 @@ from src.utils.theme_manager import theme_manager
 import sys
 import random
 import datetime
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QScrollArea, QLineEdit, QProgressBar, QGridLayout
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, QScrollArea, QLineEdit, QProgressBar, QGridLayout
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 try:
     from src.base_de_datos.database import db_manager
     from src.config import config
@@ -144,8 +144,8 @@ class AIBubble(QPushButton):
         """)
         
         # Efecto de sombra/resplandor
-        from PyQt5.QtWidgets import QGraphicsDropShadowEffect
-        from PyQt5.QtGui import QColor
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtGui import QColor
         self.shadow = QGraphicsDropShadowEffect(self)
         self.shadow.setBlurRadius(15)
         self.shadow.setColor(QColor(168, 85, 247, 150))
@@ -175,8 +175,8 @@ class AIBubble(QPushButton):
         super().mousePressEvent(event)
 
 if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     win = Admin12AIBoss()
     win.showMaximized()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

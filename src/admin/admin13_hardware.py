@@ -5,14 +5,14 @@ import time
 import webbrowser
 import subprocess
 import datetime
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout, 
                              QMessageBox, QComboBox, QPlainTextEdit, QGroupBox, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, pyqtSlot
-from PyQt5.QtGui import QColor, QIcon
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, pyqtSlot
+from PyQt6.QtGui import QColor, QIcon
 
 try:
-    from PyQt5.QtPrintSupport import QPrinterInfo, QPrinter
+    from PyQt6.QtPrintSupport import QPrinterInfo, QPrinter
 except ImportError:
     QPrinterInfo = None
     QPrinter = None
@@ -571,17 +571,17 @@ class Admin13Hardware(QWidget):
                     if final_exe != exe_path: break
             
             if os.path.exists(final_exe):
-                from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
                 QMetaObject.invokeMethod(self, "_lanzar_despues_descarga", Qt.QueuedConnection, Q_ARG(str, final_exe), Q_ARG(str, os.path.dirname(final_exe)))
             else:
                 if len(os.listdir(dest_dir)) > 0:
-                    from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
                     QMetaObject.invokeMethod(self, "_abrir_carpeta_despues_descarga", Qt.QueuedConnection, Q_ARG(str, dest_dir))
                 else:
-                    from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+                    from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
                     QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, "No se encontró el archivo ejecutable."))
         except Exception as e:
-            from PyQt5.QtCore import QMetaObject, Qt, Q_ARG
+            from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
             QMetaObject.invokeMethod(self, "_mostrar_error_hilo", Qt.QueuedConnection, Q_ARG(str, str(e)))
 
     @pyqtSlot(str, str)
@@ -696,7 +696,9 @@ class Admin13Hardware(QWidget):
         if not QPrinterInfo: return
         cmb.blockSignals(True)
         cmb.clear()
-        printers = QPrinterInfo.availablePrinterNames()
+        from src.utils.qt_printer import available_printer_names
+
+        printers = available_printer_names()
         cmb.addItems(printers)
         saved = config.get(config_key)
         if saved in printers:

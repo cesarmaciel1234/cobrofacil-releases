@@ -1,12 +1,12 @@
 import os
 import datetime
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect,
     QSizePolicy, QSpacerItem
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient, QBrush, QPalette
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QFont, QColor, QPainter, QLinearGradient, QBrush, QPalette
 
 try:
     from src.base_de_datos.database import db_manager

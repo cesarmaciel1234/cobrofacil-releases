@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
 import logging
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer, QMutex, QMutexLocker
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer, QMutex, QMutexLocker
 import sys
 import os
 
@@ -157,7 +157,7 @@ reset_drawer_manager()
 
 if __name__ == "__main__":
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     
     # Configuración de log para el test
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     timer.start(2000)
     
     logger.info("📡 Monitoreando señales. Cierre la ventana o Ctrl+C para terminar.")
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

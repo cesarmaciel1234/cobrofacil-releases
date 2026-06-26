@@ -1,6 +1,6 @@
 import time
-from PyQt5.QtWidgets import QPushButton, QTableWidget
-from PyQt5.QtCore import QObject, QEvent, QTimer, Qt
+from PyQt6.QtWidgets import QPushButton, QTableWidget
+from PyQt6.QtCore import QObject, QEvent, QTimer, Qt
 
 class TouchFeedbackManager(QObject):
     """

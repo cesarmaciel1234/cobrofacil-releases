@@ -1,11 +1,11 @@
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QFrame, QGridLayout, QRadioButton, QButtonGroup
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
 from src.ui_components.alerts import MensajeAtencion
 
 class PantallaCobroIndustrial(QDialog):

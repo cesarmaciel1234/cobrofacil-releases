@@ -1,6 +1,6 @@
 import json
 import os
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 
 THEME_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "theme_prefs.json")
 

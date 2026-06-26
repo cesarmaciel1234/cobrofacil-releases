@@ -23,14 +23,14 @@ import csv
 import json
 import shutil
 from datetime import datetime
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QFileDialog, QMessageBox, QTabWidget, QGraphicsDropShadowEffect,
     QComboBox, QLineEdit, QDateEdit, QCheckBox
 )
-from PyQt5.QtCore import Qt, QDate
-from PyQt5.QtGui import QColor, QFont, QBrush
+from PyQt6.QtCore import Qt, QDate
+from PyQt6.QtGui import QColor, QFont, QBrush
 
 # ── Rutas base ──────────────────────────────────────────────────────────────
 RAIZ_VENTAS = os.path.join("reportes", "ventas_digitales")
@@ -305,7 +305,7 @@ class Admin14VentasDigitales(QWidget):
     Módulo fiscal de ventas digitales.
     Unifica Mercado Pago + Banco Provincia en una vista consolidada.
     """
-    from PyQt5.QtCore import pyqtSignal
+    from PyQt6.QtCore import pyqtSignal
     request_dashboard = pyqtSignal()
 
     def __init__(self):

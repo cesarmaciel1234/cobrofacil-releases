@@ -1,7 +1,7 @@
 import sys
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                              QStackedWidget, QSpacerItem, QSizePolicy)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 
 class ReportesMain(QWidget):
     request_dashboard = pyqtSignal()

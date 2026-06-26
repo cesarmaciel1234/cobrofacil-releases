@@ -6,7 +6,7 @@ It emits progress messages, error notifications and a finished signal.
 
 import time
 import traceback
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 from src.logger import logger
 
 

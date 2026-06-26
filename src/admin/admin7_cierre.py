@@ -1,11 +1,11 @@
 import os
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea,
     QPushButton, QMessageBox, QFrame, QGraphicsDropShadowEffect, QGridLayout,
     QSizePolicy, QSpacerItem, QInputDialog
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtGui import QFont, QColor
 from datetime import datetime
 
 try:
@@ -36,7 +36,7 @@ class Admin7Cierre(QWidget):
         self._load_data()
         theme_manager.theme_changed.connect(self._apply_theme)
         # Retrasar levemente la aplicación del tema para que gane precedencia
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         QTimer.singleShot(50, self._apply_theme)
 
     def _create_shadow(self):
@@ -500,5 +500,5 @@ class Admin7Cierre(QWidget):
         if respuesta == QMessageBox.Yes:
             # Aquí podrías guardar el log del turno en la BD
             QMessageBox.information(self, "Turno Cerrado", "El turno ha finalizado correctamente.")
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             QApplication.exit(888)

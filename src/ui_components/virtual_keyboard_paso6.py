@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QFrame, QGridLayout, QPushButton, QApplication, QLineEdit
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QFrame, QGridLayout, QPushButton, QApplication, QLineEdit
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QKeyEvent
 
 class VirtualKeyboardPaso6(QFrame):
     """

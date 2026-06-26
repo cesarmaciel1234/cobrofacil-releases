@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QScrollArea, QFrame, QVBoxLayout, QWidget, QLabel, QHBoxLayout
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QScrollArea, QFrame, QVBoxLayout, QWidget, QLabel, QHBoxLayout
+from PyQt6.QtCore import Qt, QTimer
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 
 class Pantalla2(QFrame):

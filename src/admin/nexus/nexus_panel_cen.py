@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGridLayout, QScrollArea, QSizePolicy
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGridLayout, QScrollArea, QSizePolicy
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 import os
 import json
 import time

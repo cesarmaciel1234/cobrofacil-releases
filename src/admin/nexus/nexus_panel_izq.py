@@ -1,9 +1,9 @@
 import random
 import math
 import time
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QListWidget, QListWidgetItem, QFrame
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
-from PyQt5.QtGui import QColor, QPainter, QBrush, QPen
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QListWidget, QListWidgetItem, QFrame
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QBrush, QPen
 from src.base_de_datos.database import db_manager
 
 class CyberRadar(QWidget):

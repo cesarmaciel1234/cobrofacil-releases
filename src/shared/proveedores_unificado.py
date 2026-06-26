@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 import datetime
 import re
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
 
 # Utilidades visuales importadas desde el módulo del Jefe
 from src.jefe.contabilidad.shared_globals import (

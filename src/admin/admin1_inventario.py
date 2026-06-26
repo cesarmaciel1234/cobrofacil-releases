@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import (
     QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
     QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
-from PyQt5.QtGui import QColor, QFont, QBrush
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
+from PyQt6.QtGui import QColor, QFont, QBrush
 
 try:
     from src.base_de_datos.database import db_manager
@@ -800,7 +800,7 @@ class CatalogoProductos(QWidget):
         self.txt_buscar.setMinimumWidth(350)
         
         # Debounce timer para búsqueda rápida sin lag
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.cargar_datos)
@@ -1468,7 +1468,7 @@ class Admin1Inventario(QWidget):
         
         # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
         from src.config import config
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         db_path = config.get("db_path", "")
         if db_path and db_path != "":
             self.sync_timer = QTimer(self)
@@ -1547,7 +1547,7 @@ class Admin1Inventario(QWidget):
         lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
         
-        from PyQt5.QtWidgets import QFormLayout, QRadioButton, QSpinBox
+        from PyQt6.QtWidgets import QFormLayout, QRadioButton, QSpinBox
         form = QFormLayout()
         form.setSpacing(10)
         

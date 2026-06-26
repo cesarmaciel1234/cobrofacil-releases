@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QHBoxLayout, QFrame, QGraphicsDropShadowEffect
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDoubleSpinBox, QPushButton, QHBoxLayout, QFrame, QGraphicsDropShadowEffect
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
 
 class DialogoMontoRápido(QDialog):
     def __init__(self, titulo, parent=None):

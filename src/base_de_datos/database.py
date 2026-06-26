@@ -134,7 +134,7 @@ class DatabaseManager:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
-                        from PyQt5.QtWidgets import QMessageBox, QApplication
+                        from PyQt6.QtWidgets import QMessageBox, QApplication
                         from src.config import config
                         app = QApplication.instance()
                         if not app:
@@ -291,7 +291,7 @@ class DatabaseManager:
             import json
             import sys
             from src.utils.paths import get_base_path
-            from PyQt5.QtWidgets import QApplication, QMessageBox
+            from PyQt6.QtWidgets import QApplication, QMessageBox
             
             # Asegurar QApplication para poder mostrar la alerta bonita
             if not QApplication.instance():

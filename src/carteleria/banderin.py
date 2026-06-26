@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QLabel, QWidget, QVBoxLayout
-from PyQt5.QtCore import QPropertyAnimation, QEasingCurve, QPoint, Qt
-from PyQt5.QtGui import QPixmap
+from PyQt6.QtWidgets import QLabel, QWidget, QVBoxLayout
+from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, QPoint, Qt
+from PyQt6.QtGui import QPixmap
 import random
 import os
 from src.carteleria.theme import C_THEME, apply_apple_shadow

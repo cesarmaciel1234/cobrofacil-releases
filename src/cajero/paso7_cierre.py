@@ -1,13 +1,13 @@
 from src.utils.qt_compat import qt_exec
 import os, sys
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QLineEdit, QPushButton, QMessageBox, QWidget,
     QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView
 )
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont, QColor, QPixmap
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QFont, QColor, QPixmap
 from datetime import datetime
 
 try:

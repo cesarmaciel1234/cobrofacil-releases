@@ -3,7 +3,7 @@ import random
 import math
 import numpy as np
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import (
     QLabel,
     QGraphicsOpacityEffect
 )
-from PyQt5.QtCore import Qt, QTimer, QPointF, QRect, QRectF, QEvent
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QTimer, QPointF, QRect, QRectF, QEvent
+from PyQt6.QtGui import (
     QPainter,
     QColor,
     QFont,

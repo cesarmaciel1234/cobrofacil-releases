@@ -1,7 +1,7 @@
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QApplication, QFrame
-from PyQt5.QtCore import Qt, QEvent, QPoint
-from PyQt5.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QApplication, QFrame
+from PyQt6.QtCore import Qt, QEvent, QPoint
+from PyQt6.QtGui import QKeyEvent
 from src.config import config
 
 class VirtualKeyboardPaso5(QWidget):

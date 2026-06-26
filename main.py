@@ -19,14 +19,14 @@ import logging
 sys.argv.append('--disable-gpu')
 sys.argv.append('--disable-software-rasterizer')
 
-from PyQt5.QtCore import QTimer, QCoreApplication
+from PyQt6.QtCore import QTimer, QCoreApplication
 
 configure_qt_application_attributes()
 # Vital: configurar antes de importar QApplication y QtWebEngineWidgets
 set_share_opengl_contexts()
 
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtGui import QIcon
 
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:

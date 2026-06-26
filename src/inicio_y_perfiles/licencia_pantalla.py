@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QFrame, QGraphicsDropShadowEffect, QLineEdit
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor, QLinearGradient, QPalette, QBrush
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QFrame, QGraphicsDropShadowEffect, QLineEdit
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor, QLinearGradient, QPalette, QBrush
 
 class LicenciaPantalla(QDialog):
     """
@@ -219,7 +219,7 @@ class LicenciaPantalla(QDialog):
 
     def verificar_acceso(self):
         from src.config import config
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         
         if self.txt_license.isVisible():
             key = self.txt_license.text().strip().upper()
@@ -261,7 +261,7 @@ class LicenciaPantalla(QDialog):
 
     def _auto_destruir_y_salir(self):
         import sys
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         QApplication.exit(0)
         sys.exit(0)
 

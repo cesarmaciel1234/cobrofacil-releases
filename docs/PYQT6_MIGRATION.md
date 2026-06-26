@@ -50,12 +50,14 @@ from src.utils.qt_compat import (
 - [x] Rama `feature/pyqt6`
 - [x] Smoke test: `python tools/smoke_pyqt6.py` (requiere `requirements-pyqt6.txt`)
 
-### Fase 2 — Imports
-1. Cambiar `from PyQt5...` → `from src.utils.qt_compat import ...` en módulos nuevos.
-2. O migración masiva `PyQt5` → `PyQt6` cuando `TPV_QT=6` esté estable.
-3. Sustituir 13 star-imports en `jefe/contabilidad/vista_*.py`.
+### Fase 2 — Hecho (rama `feature/pyqt6`)
+- [x] Imports `PyQt5` → `PyQt6` en ~109 archivos
+- [x] `requirements.txt` → PyQt6 + PyQt6-WebEngine
+- [x] `qt_printer.py` — QPrinter, márgenes, `print_document`
+- [x] `QAction` → `QtGui` (admin10_mp)
+- [x] `compileall` OK + smoke PyQt6 OK
 
-### Fase 3 — APIs específicas
+### Fase 3 — APIs puntuales (en curso)
 | API PyQt5 | PyQt6 |
 |-----------|-------|
 | `QApplication.desktop()` | `app.screens()[i].availableGeometry()` |

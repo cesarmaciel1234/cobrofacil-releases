@@ -5,12 +5,12 @@ import shutil
 import zipfile
 import datetime
 import tempfile
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
 
                              QHBoxLayout, QPushButton, QLabel, QProgressBar, 
                              QMessageBox, QFileDialog)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFont, QIcon
 
 # Añadir el path padre para poder importar configuraciones si hace falta
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -205,4 +205,4 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     window = RespaldoApp()
     window.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

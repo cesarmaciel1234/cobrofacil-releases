@@ -1,11 +1,11 @@
 import os
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, 
     QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, 
     QAbstractItemView, QFrame, QMessageBox, QFileDialog, QStackedWidget
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
 from datetime import datetime
 from src.base_de_datos.database import db_manager
 

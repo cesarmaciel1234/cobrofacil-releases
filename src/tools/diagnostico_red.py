@@ -1,8 +1,8 @@
 from src.utils.qt_compat import qt_exec
 import sys
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QPushButton
-from PyQt5.QtNetwork import QUdpSocket, QHostAddress
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QPushButton
+from PyQt6.QtNetwork import QUdpSocket, QHostAddress
 
 class HiloEscuchaDiagnostico(QThread):
     # Señal que envía el texto recibido y la IP de origen a la UI
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     app = QApplication(sys.args if hasattr(sys, 'args') else sys.argv)
     ventana = VentanaDiagnosticoNexus()
     ventana.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

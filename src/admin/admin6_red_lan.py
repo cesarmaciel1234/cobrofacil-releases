@@ -1,12 +1,12 @@
 """Panel dedicado de red LAN / multicaja."""
 
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea,
 )
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QCursor
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QCursor
 
 from src.config import config
 from src.base_de_datos.database import db_manager

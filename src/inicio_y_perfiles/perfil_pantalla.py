@@ -3,10 +3,10 @@ perfil_pantalla.py — Selector de Perfil
 Paleta: Warm-Cold 2026 — fondo marfil cálido, acentos mezclados cálido+frío,
 letras siempre bien marcadas y legibles.
 """
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                               QFrame, QGraphicsDropShadowEffect)
-from PyQt5.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent
-from PyQt5.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent
+from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
 
 
 # ── Paleta global Warm-Cold ───────────────────────────────────────────────────

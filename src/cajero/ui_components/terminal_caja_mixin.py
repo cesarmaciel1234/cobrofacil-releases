@@ -1,7 +1,7 @@
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem, QAbstractItemView
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem, QAbstractItemView
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor
 from src.base_de_datos.database import db_manager
 from src.config import config
 from src.cajero.paso5_terminal import parse_float_safe, fmt_moneda_sin_centavos
@@ -138,7 +138,7 @@ class TerminalCajaMixin:
         from src.config import config
         c_id = config.get("caja_id", 1)
         efectivo = db_manager.get_efectivo_en_caja(c_id)
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
@@ -165,14 +165,14 @@ class TerminalCajaMixin:
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
-                    from PyQt5.QtWidgets import QMessageBox
+                    from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el retiro en la base de datos.")
         
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
     def abrir_ingreso_efectivo(self):
         """Abre el panel de ingreso manual de dinero a la caja (F6)."""
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
@@ -207,7 +207,7 @@ class TerminalCajaMixin:
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
-                    from PyQt5.QtWidgets import QMessageBox
+                    from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
         
         self.setGraphicsEffect(None)
@@ -238,7 +238,7 @@ class TerminalCajaMixin:
             })
             
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
@@ -334,7 +334,7 @@ class TerminalCajaMixin:
 
     def abrir_cierre_caja(self):
         if self._hay_ticket_activo():
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
                 "Ticket activo",
@@ -345,7 +345,7 @@ class TerminalCajaMixin:
             return
 
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
@@ -357,7 +357,7 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(None)
 
         if ok:
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             from src.config import config
             config.current_user = None
             QApplication.processEvents()
@@ -366,7 +366,7 @@ class TerminalCajaMixin:
             QTimer.singleShot(50, self.txt_scan.setFocus)
     def abrir_historial_dia(self):
         # --- EFECTO DE DESENFOQUE ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)

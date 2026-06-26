@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
 import os
 from src.utils.paths import get_base_path
 from src.jefe.theme_pro import THEME_PRO as PAL
@@ -94,8 +94,8 @@ def kpi_card(title, value, color, subtitle=""):
         lay.addWidget(lbl_s)
 
     
-    from PyQt5.QtWidgets import QGraphicsDropShadowEffect
-    from PyQt5.QtGui import QColor
+    from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+    from PyQt6.QtGui import QColor
     sh = QGraphicsDropShadowEffect()
     sh.setBlurRadius(30)
     sh.setColor(QColor(0, 0, 0, 15))

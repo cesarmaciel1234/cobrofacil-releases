@@ -9,10 +9,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel
-from PyQt5.QtCore import Qt, QTimer, QUrl, pyqtSignal
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from PyQt5.QtNetwork import QUdpSocket, QHostAddress
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QLabel
+from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
+from PyQt6.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt6.QtNetwork import QUdpSocket, QHostAddress
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 MANUAL_JSON = os.path.join(_DIR, "manual_cajero.json")
@@ -435,7 +435,7 @@ setTimeout(()=>{
 </html>
 """
 
-from PyQt5.QtNetwork import QUdpSocket
+from PyQt6.QtNetwork import QUdpSocket
 
 class ChatAnimadoStandalone(QWidget):
     def __init__(self, parent=None):
@@ -558,4 +558,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = ChatAnimadoStandalone()
     widget.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

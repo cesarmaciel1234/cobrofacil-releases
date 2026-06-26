@@ -1,8 +1,8 @@
 from src.utils.qt_compat import qt_exec
 import os, json
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QDoubleSpinBox, QFrame, QWidget
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QDoubleSpinBox, QFrame, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor
 from src.config import config
 from src.base_de_datos.database import db_manager
 
@@ -395,7 +395,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addLayout(grid)
         
         # Stack para paneles dinámicos
-        from PyQt5.QtWidgets import QStackedWidget, QComboBox
+        from PyQt6.QtWidgets import QStackedWidget, QComboBox
         self.stack = QStackedWidget()
         self.stack.setStyleSheet("background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;")
         
@@ -473,7 +473,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addLayout(h_btns)
 
         self._set_modo("CAMBIO")
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         QTimer.singleShot(100, self.txt_monto.setFocus)
 
     def _crear_btn_opcion(self, icono, titulo, subtitulo, color):
@@ -614,7 +614,7 @@ class DialogoCandado(QDialog):
         container.setStyleSheet("background: white; border-radius: 20px; border: 1px solid #CBD5E1;")
         
         # Efecto de elevación para el cuadro central
-        from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(40)
         shadow.setColor(QColor(0, 0, 0, 40))

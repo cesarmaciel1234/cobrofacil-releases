@@ -12,8 +12,8 @@ from src.admin.etiquetas.admin_etiquetas import AdminEtiquetas
 
 if __name__ == "__main__":
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = AdminEtiquetas()
     window.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

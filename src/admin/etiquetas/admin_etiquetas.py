@@ -1,15 +1,15 @@
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import os
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QLineEdit,
     QDialog, QFormLayout, QComboBox, QRadioButton, QFrame, QGridLayout,
     QCheckBox, QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QColor, QFont, QBrush
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtGui import QColor, QFont, QBrush
 
 try:
     from src.base_de_datos.database import db_manager
@@ -506,8 +506,8 @@ class AdminEtiquetas(QWidget):
 
 if __name__ == "__main__":
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = AdminEtiquetas()
     window.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

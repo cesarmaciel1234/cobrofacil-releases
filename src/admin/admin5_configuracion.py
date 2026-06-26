@@ -1,14 +1,14 @@
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
     QFileDialog, QTextEdit, QGraphicsDropShadowEffect
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QThread
-from PyQt5.QtGui import QCursor, QFont, QColor
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtGui import QCursor, QFont, QColor
 import os, shutil, datetime, glob
 from src.config import config
 try:
@@ -324,7 +324,7 @@ class ConfigButton(QFrame):
             self.clicked.emit()
 
     def _show_help(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         explicaciones = {
             "Alertas de\nEfectivo": "Te avisa si hay mucho dinero en la caja para que lo guardes (evita robos).",
             "Opciones\nhabilitadas": "Activa o desactiva módulos clave como vender sin stock, fiar, imprimir solo, etc.",
@@ -720,7 +720,7 @@ class DialogoTicket(QDialog):
         config.set('business_cuit', self.txt_cuit.text())
         config.set('footer_message', self.txt_msg.text())
         
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         QMessageBox.information(self, "Guardado", "Diseño de ticket actualizado correctamente.")
         self.accept()
 
@@ -818,7 +818,7 @@ class DialogoCajon(QDialog):
         lbl_inst.setStyleSheet("font-size: 13px;  margin-bottom: 10px;")
         layout.addWidget(lbl_inst)
         
-        from PyQt5.QtWidgets import QCheckBox
+        from PyQt6.QtWidgets import QCheckBox
         self.chk_efectivo = QCheckBox("Abrir en ventas con EFECTIVO")
         self.chk_tarjeta = QCheckBox("Abrir en ventas con TARJETA")
         self.chk_transf = QCheckBox("Abrir en ventas con TRANSFERENCIA")
@@ -1012,8 +1012,9 @@ class DialogoDosTiketeras(QDialog):
 
     def _load_printers_and_ports(self):
         try:
-            from PyQt5.QtPrintSupport import QPrinterInfo
-            printers = list(QPrinterInfo.availablePrinterNames())
+            from src.utils.qt_printer import available_printer_names
+
+            printers = list(available_printer_names())
             for cmb in [self.cmb_p1, self.cmb_p2]:
                 cmb.blockSignals(True)
                 cmb.clear()
@@ -1832,9 +1833,9 @@ class DialogoLicencia(QDialog):
         self._build()
 
     def _build(self):
-        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QRadioButton, QPushButton
-        from PyQt5.QtGui import QCursor
-        from PyQt5.QtCore import Qt
+        from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QRadioButton, QPushButton
+        from PyQt6.QtGui import QCursor
+        from PyQt6.QtCore import Qt
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(30, 30, 30, 30)
@@ -1884,8 +1885,8 @@ class DialogoLicencia(QDialog):
 
     def abrir_whatsapp(self):
         import urllib.parse
-        from PyQt5.QtGui import QDesktopServices
-        from PyQt5.QtCore import QUrl
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
 
         opcion = ""
         if self.rbtn_mensual.isChecked(): opcion = "Licencia Mensual"
@@ -1910,9 +1911,9 @@ class DialogoRespaldo(QDialog):
         self._build()
 
     def _build(self):
-        from PyQt5.QtWidgets import QVBoxLayout, QLabel, QPushButton
-        from PyQt5.QtGui import QCursor
-        from PyQt5.QtCore import Qt
+        from PyQt6.QtWidgets import QVBoxLayout, QLabel, QPushButton
+        from PyQt6.QtGui import QCursor
+        from PyQt6.QtCore import Qt
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(30, 30, 30, 30)
@@ -1942,7 +1943,7 @@ class DialogoRespaldo(QDialog):
         lay.addWidget(btn_import)
 
     def _exportar(self):
-        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
         from src.base_de_datos.database import db_manager
         import os
         import datetime
@@ -1982,7 +1983,7 @@ class DialogoRespaldo(QDialog):
             QMessageBox.critical(self, "Error", f"Ocurrió un error al crear el respaldo:\n{e}")
 
     def _importar(self):
-        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
         from src.base_de_datos.database import db_manager
         import os
         import shutil
@@ -1995,7 +1996,7 @@ class DialogoRespaldo(QDialog):
         if not filepath:
             return
 
-        from PyQt5.QtWidgets import QInputDialog, QLineEdit
+        from PyQt6.QtWidgets import QInputDialog, QLineEdit
         pwd, ok = QInputDialog.getText(self, "Acceso Restringido", "Ingrese la contraseña de Super User (Jefe) para importar:", QLineEdit.Password)
         if not ok: return
         
@@ -2569,7 +2570,7 @@ class DialogoTerminalTPV(QDialog):
         self._build()
 
     def _build(self):
-        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QPushButton, QMessageBox
+        from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QPushButton, QMessageBox
         
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(20, 20, 20, 20)
@@ -2715,7 +2716,7 @@ class DialogoTerminalTPV(QDialog):
 
     def _buscar_devices_mp(self):
         """Auto-configura Device ID y POS ID consultando la API de Mercado Pago."""
-        from PyQt5.QtWidgets import QMessageBox, QInputDialog
+        from PyQt6.QtWidgets import QMessageBox, QInputDialog
         import requests
 
         token = self.txt_mp_token.text().strip()
@@ -2829,7 +2830,7 @@ class DialogoTerminalTPV(QDialog):
                 "Completá los campos manualmente.")
 
     def _show_help_mp(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         QMessageBox.information(self, "Cómo obtener el Access Token",
             "💳  OBTENER EL ACCESS TOKEN DE MP\n\n"
             "1. Ingresá a: mercadopago.com/developers\n"
@@ -2844,7 +2845,7 @@ class DialogoTerminalTPV(QDialog):
         )
 
     def _show_help_clover(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         msg = ("ℹ️ CÓMO VINCULAR CLOVER POSNET\n\n"
                "1. Enciende tu terminal Clover y conéctala a la misma red WiFi que esta computadora.\n"
                "2. En la terminal Clover, abre la aplicación 'Network Pay' o revisa la configuración de red para ver su 'Dirección IP' (ej: 192.168.1.50).\n"
@@ -2853,7 +2854,7 @@ class DialogoTerminalTPV(QDialog):
         QMessageBox.information(self, "Ayuda - Clover", msg)
 
     def _guardar(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         import requests
 
         token = self.txt_mp_token.text().strip()
@@ -3000,7 +3001,7 @@ class DialogoPINLocal(QDialog):
         body_layout.setContentsMargins(25, 20, 25, 20)
         body_layout.setSpacing(15)
         
-        from PyQt5.QtWidgets import QFormLayout
+        from PyQt6.QtWidgets import QFormLayout
         form_layout = QFormLayout()
         form_layout.setSpacing(12)
         form_layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)

@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton,
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton,
                               QMessageBox, QFrame, QGraphicsDropShadowEffect, QComboBox,
                               QHBoxLayout)
-from PyQt5.QtCore import Qt, QTimer, QEvent
-from PyQt5.QtGui import QColor
+from PyQt6.QtCore import Qt, QTimer, QEvent
+from PyQt6.QtGui import QColor
 import hashlib
 from src.config import config
 from src.base_de_datos.database import db_manager

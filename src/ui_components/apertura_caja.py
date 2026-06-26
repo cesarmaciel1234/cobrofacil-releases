@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
+from PyQt6.QtCore import Qt
 from datetime import datetime
 from src.base_de_datos.database import db_manager
 from src.config import config

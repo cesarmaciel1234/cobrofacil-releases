@@ -85,8 +85,8 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 config.set("db_host", master_ip)
                 config.save()
                 self._send_response(200, {"status": "success", "message": f"Rol cambiado a ESCLAVA exitosamente. Conectando a {master_ip}."})
-                from PyQt5.QtWidgets import QApplication
-                from PyQt5.QtCore import QTimer
+                from PyQt6.QtWidgets import QApplication
+                from PyQt6.QtCore import QTimer
                 QTimer.singleShot(1000, lambda: QApplication.instance().exit(888))
             except Exception as e:
                 logger.error(f"Error procesando /api/set_master: {e}")

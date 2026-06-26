@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QGraphicsDropShadowEffect
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+from PyQt6.QtGui import QColor
 
 # ── TEMA VISUAL: APPLE macOS / iOS STYLE (GLASSMORPHISM) ────────────────────────
 C_THEME = {

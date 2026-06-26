@@ -2,13 +2,13 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import sys
 from datetime import datetime
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 
                              QPushButton, QTableWidget, QTableWidgetItem, 
                              QHeaderView, QLineEdit, QMessageBox, QDialog, 
                              QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QScrollArea)
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from src.base_de_datos.database import DatabaseManager
 
 class MetricCard(QFrame):
@@ -425,7 +425,7 @@ class AdminClientes(QWidget):
             self.cargar_clientes()
 
     def abonar_deuda_admin(self, cliente_id, nombre, deuda_actual):
-        from PyQt5.QtWidgets import QInputDialog
+        from PyQt6.QtWidgets import QInputDialog
         monto, ok = QInputDialog.getDouble(self, "Abonar a Deuda", f"Cliente: {nombre}\\nDeuda actual: ${deuda_actual:,.2f}\\n\\nIngrese monto a abonar ($):", 0, 0, deuda_actual, 2)
         if ok and monto > 0:
             nuevo_saldo = deuda_actual - monto

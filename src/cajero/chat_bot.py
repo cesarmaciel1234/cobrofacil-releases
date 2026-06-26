@@ -9,9 +9,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
-from PyQt5.QtCore import Qt, QTimer, QUrl, pyqtSignal
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
+from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
+from PyQt6.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 _DIR       = os.path.dirname(os.path.abspath(__file__))
@@ -648,4 +648,4 @@ if __name__ == "__main__":
     win.setWindowTitle("Manual del Cajero - CobroFacil POS")
     win.resize(900, 700)
     win.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

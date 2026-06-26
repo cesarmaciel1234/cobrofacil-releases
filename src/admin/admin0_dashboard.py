@@ -6,12 +6,12 @@ import datetime
 import json
 import os
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QGridLayout, QGraphicsDropShadowEffect, QPushButton, QScrollArea
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint
-from PyQt5.QtGui import QColor
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint
+from PyQt6.QtGui import QColor
 
 try:
     from src.base_de_datos.database import db_manager
@@ -208,7 +208,7 @@ class AdminCard(QFrame):
 
     def mousePressEvent(self, event):
         if self._locked:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "Acceso Denegado",
                                 "No tienes permisos para acceder a esta función.")
             return
@@ -533,5 +533,5 @@ class Admin0Dashboard(QWidget):
         pass  # LAN eliminada — siempre modo local
 
     def logout(self):
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         QApplication.exit(888)

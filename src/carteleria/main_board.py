@@ -3,9 +3,9 @@ import random
 import logging
 import urllib.request
 import json
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget, QGridLayout, QLabel, QApplication, QGraphicsOpacityEffect
-from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
-from PyQt5.QtGui import QPixmap
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget, QGridLayout, QLabel, QApplication, QGraphicsOpacityEffect
+from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QPixmap
 
 # Componentes modulares
 from src.carteleria.theme import C_THEME
@@ -29,7 +29,7 @@ except ImportError:
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
-from PyQt5.QtCore import QThread
+from PyQt6.QtCore import QThread
 class EspiaWorker(QThread):
     recomendacion_lista = pyqtSignal(float, str, list, list)
     limpiar_solicitado = pyqtSignal()
@@ -238,8 +238,7 @@ class CarteleriaMain(QWidget):
         QTimer.singleShot(800, self._conectar_engine_indicador)
 
         # Botón de emergencia F11 (Global para esta ventana)
-        from PyQt5.QtWidgets import QShortcut
-        from PyQt5.QtGui import QKeySequence
+        from PyQt6.QtGui import QShortcut, QKeySequence
         self.shortcut_f11 = QShortcut(QKeySequence(Qt.Key_F11), self)
         self.shortcut_f11.activated.connect(self._f11_pressed)
 
@@ -350,7 +349,7 @@ class CarteleriaMain(QWidget):
             print(f"Error al obtener clima: {e}")
 
     def _abrir_configuracion(self):
-        from PyQt5.QtWidgets import QInputDialog, QMessageBox
+        from PyQt6.QtWidgets import QInputDialog, QMessageBox
         from src.config import config
         
         current_ip = config.get("carteleria_master_ip", "")
@@ -829,7 +828,7 @@ class CarteleriaMain(QWidget):
             engine = get_network_engine()
             if engine:
                 # singleShot(0) ejecuta en el event loop del hilo principal → thread-safe
-                from PyQt5.QtCore import QTimer as _QT
+                from PyQt6.QtCore import QTimer as _QT
                 _QT.singleShot(0, lambda: engine.heartbeat_received.emit("carteleria"))
         except Exception:
             pass

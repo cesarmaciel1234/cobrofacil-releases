@@ -1,8 +1,8 @@
 import math
 import random
-from PyQt5.QtWidgets import QSplashScreen, QVBoxLayout, QLabel, QFrame, QGraphicsDropShadowEffect, QProgressBar
-from PyQt5.QtCore import Qt, QTimer, QPointF, QRectF
-from PyQt5.QtGui import QPixmap, QColor, QPainter, QPainterPath, QLinearGradient, QRadialGradient, QPen, QBrush
+from PyQt6.QtWidgets import QSplashScreen, QVBoxLayout, QLabel, QFrame, QGraphicsDropShadowEffect, QProgressBar
+from PyQt6.QtCore import Qt, QTimer, QPointF, QRectF
+from PyQt6.QtGui import QPixmap, QColor, QPainter, QPainterPath, QLinearGradient, QRadialGradient, QPen, QBrush
 
 class CobroFacilSplash(QSplashScreen):
     """
@@ -547,7 +547,7 @@ class CobroFacilSplash(QSplashScreen):
         if progress_val is not None:
             self.progress_bar.setValue(progress_val)
         self.update()
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
             app.processEvents()

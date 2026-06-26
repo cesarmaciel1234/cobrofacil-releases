@@ -1,9 +1,9 @@
 from src.utils.theme_manager import theme_manager
 import os
 import sys
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QPushButton, QFrame, QTabWidget, QApplication)
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
 # Imports pesados movidos al inicio para evitar crashes de Qt
 import matplotlib
@@ -96,7 +96,7 @@ class Admin4Gastos(QWidget):
                     @staticmethod
                     def critical(*args): pass
                 
-                from PyQt5.QtCore import QTimer as RealQTimer
+                from PyQt6.QtCore import QTimer as RealQTimer
                 contabilidad_main.QMessageBox = DummyMsgBox
                 contabilidad_main.QTimer = RealQTimer
                 

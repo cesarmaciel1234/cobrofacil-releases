@@ -5,14 +5,14 @@ import json
 import subprocess
 import time
 from datetime import datetime
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QMessageBox, QDialog,
     QGraphicsDropShadowEffect, QDateEdit, QCheckBox, QFileDialog
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QColor, QFont
 from src.config import config
 from src.base_de_datos.database import db_manager
 
@@ -284,7 +284,7 @@ class Admin10MP(QWidget):
         """)
         self.txt_buscar.textChanged.connect(self.aplicar_filtros)
         
-        from PyQt5.QtWidgets import QComboBox
+        from PyQt6.QtWidgets import QComboBox
         self.cmb_fecha = QComboBox()
         self.cmb_fecha.addItems(["Todos los registros", "Solo Hoy", "Este Mes", "Día Específico..."])
         self.cmb_fecha.setStyleSheet("""
@@ -299,7 +299,7 @@ class Admin10MP(QWidget):
         """)
         self.cmb_fecha.currentIndexChanged.connect(self.on_combo_fecha_changed)
         
-        from PyQt5.QtCore import QDate
+        from PyQt6.QtCore import QDate
         self.date_picker = QDateEdit()
         self.date_picker.setCalendarPopup(True)
         self.date_picker.setDate(QDate.currentDate())
@@ -774,7 +774,8 @@ class Admin10MP(QWidget):
         if not id_item: return
         id_pago = id_item.text()
         
-        from PyQt5.QtWidgets import QMenu, QAction
+        from PyQt6.QtWidgets import QMenu
+        from PyQt6.QtGui import QAction
         menu = QMenu(self)
         
         pago_actual = None

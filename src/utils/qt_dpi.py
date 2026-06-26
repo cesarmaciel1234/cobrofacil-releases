@@ -43,14 +43,14 @@ def configure_qt_application_attributes() -> None:
 # --- UTILIDADES DE PANTALLA ---
 
 def primary_screen(app=None):
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = app or QApplication.instance()
     return app.primaryScreen() if app else None
 
 
 def _resolve_screen_app(screen=None, app=None):
     """Si llaman foo(app) por posición, no confundir QApplication con QScreen."""
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
 
     if screen is not None and app is None and isinstance(screen, QApplication):
         app = screen
@@ -61,7 +61,7 @@ def _resolve_screen_app(screen=None, app=None):
 
 
 def secondary_screen(app=None):
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = app or QApplication.instance()
     if app and len(app.screens()) > 1:
         return app.screens()[1]

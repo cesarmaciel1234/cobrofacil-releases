@@ -13,7 +13,7 @@ import datetime
 import calendar
 import logging
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
     QListWidget, QListWidgetItem, QStackedWidget, QTableWidget,
     QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QDateEdit,
@@ -21,8 +21,8 @@ from PyQt5.QtWidgets import (
     QFileDialog, QInputDialog, QAbstractItemView, QSpinBox, QTextEdit,
     QSplitter, QDialog, QFormLayout, QDialogButtonBox
 )
-from PyQt5.QtCore import Qt, QDate, QTimer, pyqtSignal, QSize
-from PyQt5.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, QDate, QTimer, pyqtSignal, QSize
+from PyQt6.QtGui import QFont, QColor
 
 logger = logging.getLogger("JefeContabilidad")
 

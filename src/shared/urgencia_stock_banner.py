@@ -1,7 +1,7 @@
 """Banner parpadeante cuando está activo el modo urgencia (vender sin stock)."""
 
-from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel
-from PyQt5.QtCore import QTimer
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel
+from PyQt6.QtCore import QTimer
 
 _BLINK_STYLES = (
     "QFrame#UrgenciaStockBanner { background: #FEE2E2; border: 2px solid #DC2626; border-radius: 6px; }",

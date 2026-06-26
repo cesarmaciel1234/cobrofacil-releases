@@ -5,7 +5,7 @@ import socket
 import threading
 import time
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.config import config
 from src.logger import logger

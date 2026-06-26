@@ -5,8 +5,8 @@ It is a lightweight, dark‑theme widget suitable for embedding at the bottom
 of the main window.
 """
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPlainTextEdit, QProgressBar
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPlainTextEdit, QProgressBar
+from PyQt6.QtCore import Qt
 
 
 class ConsoleWidget(QWidget):

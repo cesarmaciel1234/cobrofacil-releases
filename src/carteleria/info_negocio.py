@@ -1,6 +1,6 @@
 from src.utils.qt_compat import qt_exec
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
-from PyQt5.QtCore import QTimer, QTime, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
+from PyQt6.QtCore import QTimer, QTime, pyqtSignal
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 
 class InfoNegocio(QWidget):
@@ -28,7 +28,7 @@ class InfoNegocio(QWidget):
         self.lbl_red_dot = QLabel("⚫")
         self.lbl_red_dot.setToolTip("Estado conexión con Terminal de Ventas")
         self.lbl_red_dot.setStyleSheet("font-size: 14px; background: transparent;")
-        from PyQt5.QtCore import Qt
+        from PyQt6.QtCore import Qt
         self.lbl_red_dot.setCursor(Qt.PointingHandCursor)
         self.lbl_red_dot.mousePressEvent = self._show_connection_info
 
@@ -115,7 +115,7 @@ class InfoNegocio(QWidget):
                     f"💻 Caja N°: {caja_id}\n"
                     f"📺 Cartelería IP: {carteleria_ip}\n\n"
                     f"Estado: {estado_texto}")
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             msg_box = QMessageBox(self)
             msg_box.setWindowTitle("Información de Red")
             msg_box.setText(info)

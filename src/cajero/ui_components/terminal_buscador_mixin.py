@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem, QAbstractItemView, QListWidgetItem
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QMessageBox, QTableWidgetItem, QAbstractItemView, QListWidgetItem
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor
 from src.base_de_datos.database import db_manager
 from src.config import config
 from src.cajero.paso5_terminal import parse_float_safe, fmt_moneda_sin_centavos, AUDIO_ENABLED
@@ -141,7 +141,7 @@ class TerminalBuscadorMixin:
                         return
                 else:
                     # Si el PLU no existe, avisar específicamente
-                    from PyQt5.QtWidgets import QMessageBox
+                    from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.warning(self, "Balanza: Producto no encontrado", 
                         f"El código de balanza es correcto, pero el producto con PLU '{plu}' no existe en el sistema.\n\n"
                         "Por favor, asegúrate de crear el producto con ese código en el inventario.")
@@ -159,7 +159,7 @@ class TerminalBuscadorMixin:
             self.list_results.hide()
             self.txt_scan.setFocus()
         else:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "No Encontrado", f"No se encontró ningún producto con el código o nombre: '{txt}'")
             self.txt_scan.selectAll()
             self.txt_scan.setFocus()

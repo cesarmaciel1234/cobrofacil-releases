@@ -346,7 +346,7 @@ def get_status_message() -> str | None:
 
 
 try:
-    from PyQt5.QtCore import QThread, pyqtSignal
+    from PyQt6.QtCore import QThread, pyqtSignal
 
     class SilentUpdateWorker(QThread):
         """Worker Qt para descarga manual desde el banner."""

@@ -2,14 +2,14 @@ from src.utils.qt_compat import qt_exec
 import os, sys, threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
     QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox, QScrollArea, QSizePolicy,
 )
-from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
-from PyQt5.QtGui import QColor, QFont, QPen, QPainter
+from PyQt6.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
+from PyQt6.QtGui import QColor, QFont, QPen, QPainter
 from datetime import datetime
 import time
 import logging
@@ -497,7 +497,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addLayout(grid)
         
         # Stack para paneles dinámicos
-        from PyQt5.QtWidgets import QStackedWidget, QComboBox
+        from PyQt6.QtWidgets import QStackedWidget, QComboBox
         self.stack = QStackedWidget()
         self.stack.setStyleSheet("background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;")
         
@@ -575,7 +575,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addLayout(h_btns)
 
         self._set_modo("CAMBIO")
-        from PyQt5.QtCore import QTimer
+        from PyQt6.QtCore import QTimer
         QTimer.singleShot(100, self.txt_monto.setFocus)
 
     def _crear_btn_opcion(self, icono, titulo, subtitulo, color):
@@ -715,7 +715,7 @@ class DialogoCandado(QDialog):
         container.setStyleSheet("background: white; border-radius: 20px; border: 1px solid #CBD5E1;")
         
         # Efecto de elevación para el cuadro central
-        from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(40)
         shadow.setColor(QColor(0, 0, 0, 40))
@@ -1551,8 +1551,8 @@ class Paso5Terminal(QWidget):
             main_win.handle_f11_global()
 
     def paintEvent(self, event):
-        from PyQt5.QtWidgets import QStyle, QStyleOption
-        from PyQt5.QtGui import QPainter
+        from PyQt6.QtWidgets import QStyle, QStyleOption
+        from PyQt6.QtGui import QPainter
         opt = QStyleOption()
         opt.initFrom(self)
         p = QPainter(self)
@@ -1606,7 +1606,7 @@ class Paso5Terminal(QWidget):
 
         # Conectar detector de foco para teclado virtual automático (estilo celular)
         if HAS_KEYBOARD:
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             QApplication.instance().focusChanged.connect(self.on_focus_changed)
 
     def mousePressEvent(self, event):
@@ -1639,7 +1639,7 @@ class Paso5Terminal(QWidget):
             self.btn_theme.setText("☀️ TEMAS" if theme == "dark" else "🌙 TEMAS")
         
         # Style QToolTip globally to be always dark with white text (highest readability, bypasses native OS theme quirks)
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
             app.setStyleSheet("""
@@ -1941,8 +1941,8 @@ class Paso5Terminal(QWidget):
                 self.teclado_virtual.hide()
             return
             
-        from PyQt5.QtWidgets import QLineEdit, QApplication
-        from PyQt5.QtCore import Qt
+        from PyQt6.QtWidgets import QLineEdit, QApplication
+        from PyQt6.QtCore import Qt
         
         # Si el foco entra a una caja de texto (QLineEdit)
         if new_widget and isinstance(new_widget, QLineEdit):
@@ -2000,7 +2000,7 @@ class Paso5Terminal(QWidget):
                 self.teclado_virtual.hide()
 
     def eventFilter(self, obj, event):
-        from PyQt5.QtCore import QEvent
+        from PyQt6.QtCore import QEvent
         
         if getattr(self, 'list_results', None) is not None and obj == self.list_results:
             if event.type() == QEvent.KeyPress:
@@ -2171,7 +2171,7 @@ class Paso5Terminal(QWidget):
 
     def bloquear_terminal(self):
         """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo."""
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(15)
         self.setGraphicsEffect(blur_effect)
@@ -2339,7 +2339,7 @@ class Paso5Terminal(QWidget):
             if self.tabla.hasFocus() or self.list_results.hasFocus():
                 return
             # Si hay algún widget modal activo (diálogo de cantidad, cobro, etc.), no robarlo
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             if QApplication.activeModalWidget() is not None:
                 return
             # Si el chatbot flotante está visible y activo, no robar el foco
@@ -2386,7 +2386,7 @@ class Paso5Terminal(QWidget):
     def check_midnight_closure(self):
         """ Verifica si hay ventas del día anterior y reinicia la app si es necesario """
         from src.services.caja_service import verificar_y_realizar_autocierre
-        from PyQt5.QtWidgets import QMessageBox, QApplication
+        from PyQt6.QtWidgets import QMessageBox, QApplication
         
         hizo, monto = verificar_y_realizar_autocierre()
         if hizo:
@@ -2430,7 +2430,7 @@ class Paso5Terminal(QWidget):
                 )
                 
                 # Mostrar cuadro de diálogo informativo industrial alertando del Cierre Remoto
-                from PyQt5.QtWidgets import QMessageBox
+                from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.warning(
                     self, "⚠️ ARQUEO DE CAJA REQUERIDO",
                     "La administración central ha solicitado el arqueo y cierre de esta terminal.\n\n"
@@ -2559,7 +2559,7 @@ class Paso5Terminal(QWidget):
                     self.txt_scan.setFocus()
                     return
             else:
-                from PyQt5.QtWidgets import QMessageBox
+                from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.warning(
                     self, "Balanza: Producto no encontrado",
                     f"Etiqueta de balanza leída (PLU {plu_limpio}), pero no hay producto con ese código en inventario.\n\n"
@@ -2580,7 +2580,7 @@ class Paso5Terminal(QWidget):
             self.list_results.hide()
             self.txt_scan.setFocus()
         else:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "No Encontrado", f"No se encontró ningún producto con el código o nombre: '{txt}'")
             self.txt_scan.selectAll()
             self.txt_scan.setFocus()
@@ -2809,7 +2809,7 @@ class Paso5Terminal(QWidget):
         from src.config import config
         c_id = config.get("caja_id", 1)
         efectivo = db_manager.get_efectivo_en_caja(c_id)
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
@@ -2836,7 +2836,7 @@ class Paso5Terminal(QWidget):
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
-                    from PyQt5.QtWidgets import QMessageBox
+                    from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el retiro en la base de datos.")
         
         self.setGraphicsEffect(None)
@@ -2844,7 +2844,7 @@ class Paso5Terminal(QWidget):
 
     def abrir_ingreso_efectivo(self):
         """Abre el panel de ingreso manual de dinero a la caja (F6)."""
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
@@ -2879,7 +2879,7 @@ class Paso5Terminal(QWidget):
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
-                    from PyQt5.QtWidgets import QMessageBox
+                    from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
         
         self.setGraphicsEffect(None)
@@ -3103,7 +3103,7 @@ class Paso5Terminal(QWidget):
             })
             
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
@@ -3306,7 +3306,7 @@ class Paso5Terminal(QWidget):
             return
 
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
@@ -3318,7 +3318,7 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(None)
 
         if ok:
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             from src.config import config
             config.current_user = None
             QApplication.processEvents()
@@ -3328,7 +3328,7 @@ class Paso5Terminal(QWidget):
 
     def abrir_historial_dia(self):
         # --- EFECTO DE DESENFOQUE ---
-        from PyQt5.QtWidgets import QGraphicsBlurEffect
+        from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
@@ -3419,7 +3419,7 @@ class Paso5Terminal(QWidget):
 
 
 if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     # Mocking config for direct run
     try:
@@ -3428,4 +3428,4 @@ if __name__ == "__main__":
     except: pass
     win = Paso5Terminal()
     win.showMaximized()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

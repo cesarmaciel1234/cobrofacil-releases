@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QGraphicsOpacityEffect
-from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QPoint
-from PyQt5.QtGui import QColor, QPainter, QPainterPath
+from PyQt6.QtWidgets import QLabel, QWidget, QHBoxLayout, QGraphicsOpacityEffect
+from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QPoint
+from PyQt6.QtGui import QColor, QPainter, QPainterPath
 
 class Toast(QWidget):
     def __init__(self, parent, message, type="info", duration=3000):

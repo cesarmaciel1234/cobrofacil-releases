@@ -1,13 +1,13 @@
 from src.utils.qt_compat import qt_exec
 import sys
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit
 )
-from PyQt5.QtCore import Qt, QDate, QTime, QTimer
-from PyQt5.QtGui import QColor, QBrush, QPainter
+from PyQt6.QtCore import Qt, QDate, QTime, QTimer
+from PyQt6.QtGui import QColor, QBrush, QPainter
 from datetime import datetime
 from src.base_de_datos.database import db_manager
 
@@ -72,7 +72,7 @@ class DialogoHistorialDia(QDialog):
         self.cargar_ventas()
 
     def apply_glow(self):
-        from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
         container = self.findChild(QWidget, "HistoryDialog")
         if container:
             glow = QGraphicsDropShadowEffect()
@@ -608,7 +608,7 @@ class DialogoHistorialDia(QDialog):
                 self.tabla_detalle.setItem(i, 2, it_imp)
 
     def cancelar_venta_accion(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         if not self.ticket_seleccionado: return
         
         venta = db_manager.execute_query("SELECT estado FROM ventas WHERE id = ?", (self.ticket_seleccionado,))
@@ -640,7 +640,7 @@ class DialogoHistorialDia(QDialog):
             self.mostrar_detalle()
 
     def reimprimir_ticket_accion(self):
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         if not self.ticket_seleccionado: return
         try:
             v = db_manager.execute_query("SELECT * FROM ventas WHERE id = ?", (self.ticket_seleccionado,))
@@ -669,7 +669,7 @@ class DialogoHistorialDia(QDialog):
 if __name__ == "__main__":
     # Test block to verify the "Vista"
     import sys
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     
     # Mock de configuración para prueba local
@@ -686,4 +686,4 @@ if __name__ == "__main__":
 
     dlg = DialogoHistorialDia()
     dlg.show()
-sys.exit(qt_exec(app))
+    sys.exit(qt_exec(app))

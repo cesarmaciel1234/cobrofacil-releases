@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QWidget
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QPixmap
+from PyQt6.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QPixmap
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 import os
 

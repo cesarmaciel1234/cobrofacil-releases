@@ -2,14 +2,14 @@ from src.utils.qt_compat import qt_exec
 import hashlib
 import os
 from PIL import Image, ImageChops
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QFrame, QGridLayout,
     QWidget, QGraphicsDropShadowEffect, QApplication, QSizePolicy
 )
-from PyQt5.QtCore import Qt, QTimer, QEvent
-from PyQt5.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
+from PyQt6.QtCore import Qt, QTimer, QEvent
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
 from src.base_de_datos.database import db_manager
 from src.config import config
 from src.hardware.cash_drawer import drawer_manager
@@ -315,7 +315,7 @@ class Paso6Cobro(QDialog):
         self.txt_otro.installEventFilter(self)
         self.lbl_input2.hide(); self.txt_otro.hide()
 
-        from PyQt5.QtWidgets import QComboBox
+        from PyQt6.QtWidgets import QComboBox
         self.lbl_cliente = QLabel("CLIENTE:")
         self.lbl_cliente.setStyleSheet(self.lbl_input1.styleSheet())
         self.lbl_cliente.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -1189,8 +1189,8 @@ class Paso6Cobro(QDialog):
     def procesar_pago_mercadopago_point(self):
         import requests
         from src.config import config
-        from PyQt5.QtWidgets import QProgressDialog, QMessageBox, QDialog, QVBoxLayout, QLabel, QPushButton
-        from PyQt5.QtCore import QTimer, Qt
+        from PyQt6.QtWidgets import QProgressDialog, QMessageBox, QDialog, QVBoxLayout, QLabel, QPushButton
+        from PyQt6.QtCore import QTimer, Qt
         
         # Forzar recarga por si se editó el archivo externamente
         config._load_config()
@@ -1374,9 +1374,9 @@ class Paso6Cobro(QDialog):
         import io
         from src.config import config
         from src.services.mercadopago_instore import asegurar_pos_qr, mp_headers, url_crear_qr
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
-        from PyQt5.QtGui import QPixmap, QImage
-        from PyQt5.QtCore import QTimer, Qt
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
+        from PyQt6.QtGui import QPixmap, QImage
+        from PyQt6.QtCore import QTimer, Qt
 
         if token.upper().startswith("TEST-"):
             QMessageBox.warning(
@@ -1597,7 +1597,7 @@ class Paso6Cobro(QDialog):
     def verificar_transferencia_mp(self):
         import requests
         from src.config import config
-        from PyQt5.QtWidgets import QProgressDialog, QMessageBox
+        from PyQt6.QtWidgets import QProgressDialog, QMessageBox
         import datetime
         from src.database.db_manager import db_manager
 
@@ -1697,7 +1697,7 @@ class Paso6Cobro(QDialog):
                     qt_exec(msg_box)
                     
                     if msg_box.clickedButton() == btn_forzar:
-                        from PyQt5.QtWidgets import QInputDialog
+                        from PyQt6.QtWidgets import QInputDialog
                         nombre, ok = QInputDialog.getText(self, "Cobro Pendiente", "Ingrese el nombre del cliente para buscarlo luego:")
                         if ok and nombre.strip():
                             self.nombre_pendiente = nombre.strip()

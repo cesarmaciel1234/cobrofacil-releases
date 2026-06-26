@@ -3,13 +3,13 @@ jefe0_dashboard.py — Dashboard exclusivo del JEFE / DUEÑO
 Paleta: Light Soft 2026 — blanco puro, acentos suaves, tarjetas con gradientes claros.
 """
 import datetime
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QScrollArea, QGraphicsDropShadowEffect, QGridLayout,
     QFileDialog, QMessageBox, QSizePolicy
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize
+from PyQt6.QtGui import QColor, QFont
 
 try:
     from src.base_de_datos.database import db_manager
@@ -165,7 +165,7 @@ class JefeCard(QFrame):
 
     def mousePressEvent(self, event):
         if self._locked:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "Acceso Denegado",
                                 "No tienes permisos para acceder a esta función.")
             return

@@ -1,5 +1,6 @@
-# Producción: PyQt5. Migración PyQt6 → ver docs/PYQT6_MIGRATION.md y requirements-pyqt6.txt
-PyQt5
+# Rama feature/pyqt6 — PyQt6 + WebEngine
+PyQt6>=6.6.0
+PyQt6-WebEngine>=6.6.0
 python-escpos
 pywin32
 openpyxl
@@ -14,4 +15,3 @@ pyserial
 pymysql
 xlrd
 numpy
-PyQtWebEngine

@@ -1,12 +1,12 @@
 import os
 import json
 import logging
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QPushButton, QStackedWidget, QGridLayout, QScrollArea
 )
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint
+from PyQt6.QtGui import QFont, QPixmap
 
 try:
     from src.base_de_datos.database import Database
