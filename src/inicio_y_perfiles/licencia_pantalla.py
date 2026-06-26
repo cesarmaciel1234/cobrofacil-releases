@@ -11,13 +11,9 @@ class LicenciaPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        from src.utils.qt_dpi import scaled_dialog_size, center_on_primary_screen
-
-        dlg_w, dlg_h = scaled_dialog_size(650, 790)
-        self.setFixedSize(dlg_w, dlg_h)
+        self.setFixedSize(650, 790)
         self.setup_ui()
         self.apply_glow()
-        center_on_primary_screen(self)
 
     def apply_glow(self):
         glow = QGraphicsDropShadowEffect(self)

@@ -14,13 +14,9 @@ class AperturaCajaPantalla(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        from src.utils.qt_dpi import scaled_dialog_size, center_on_primary_screen
-
-        dlg_w, dlg_h = scaled_dialog_size(450, 380)
-        self.setFixedSize(dlg_w, dlg_h)
+        self.setFixedSize(450, 380)
         self.setup_ui()
         self.apply_glow()
-        center_on_primary_screen(self)
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso4")
