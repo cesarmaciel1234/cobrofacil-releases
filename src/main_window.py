@@ -1,4 +1,5 @@
 from src.utils.qt_compat import qt_exec
+import src.utils.qt_compat  # noqa: F401 — enums Qt6 antes de widgets
 from PyQt6.QtWidgets import (
 
     QMainWindow, QWidget, QStackedWidget, QLabel, QFrame,

@@ -41,6 +41,70 @@ Qt = QtCore.Qt
 IS_QT6 = QT_VERSION >= 6
 QT_BINDING = "PyQt6" if IS_QT6 else "PyQt5"
 
+
+def _patch_qt_enums() -> None:
+    """Re-exporta enums anidados en Qt (PyQt5 API) para código legacy del cajero."""
+    if not IS_QT6:
+        return
+    for group_name in dir(Qt):
+        if group_name.startswith("_"):
+            continue
+        group = getattr(Qt, group_name)
+        members = getattr(group, "__members__", None)
+        if members is None:
+            continue
+        for member_name, member_val in members.items():
+            if not hasattr(Qt, member_name):
+                setattr(Qt, member_name, member_val)
+
+
+def _patch_class_enums(cls) -> None:
+    """Re-exporta enums anidados en widgets (QHeaderView.Fixed, QMessageBox.Yes…)."""
+    if not IS_QT6:
+        return
+    for group_name in dir(cls):
+        if group_name.startswith("_"):
+            continue
+        try:
+            group = getattr(cls, group_name)
+        except AttributeError:
+            continue
+        members = getattr(group, "__members__", None)
+        if members is None:
+            continue
+        for member_name, member_val in members.items():
+            if not hasattr(cls, member_name):
+                setattr(cls, member_name, member_val)
+
+
+_WIDGET_ENUM_CLASSES = (
+    "QAbstractItemView",
+    "QAbstractScrollArea",
+    "QComboBox",
+    "QDialog",
+    "QFileDialog",
+    "QFrame",
+    "QHeaderView",
+    "QInputDialog",
+    "QLineEdit",
+    "QMessageBox",
+    "QSizePolicy",
+    "QTableWidget",
+)
+
+
+def _patch_widget_enums() -> None:
+    if not IS_QT6:
+        return
+    for name in _WIDGET_ENUM_CLASSES:
+        cls = getattr(QtWidgets, name, None)
+        if cls is not None:
+            _patch_class_enums(cls)
+
+
+_patch_qt_enums()
+_patch_widget_enums()
+
 # Re-export frecuentes (import único en módulos que migren)
 QApplication = QtWidgets.QApplication
 QCoreApplication = QtCore.QCoreApplication
@@ -165,6 +229,14 @@ def _easing_linear():
         return QEasingCurve.Type.Linear  # PyQt6
     except AttributeError:
         return QEasingCurve.Linear  # PyQt5
+
+
+def easing_sine_curve():
+    """QEasingCurve.SineCurve compatible PyQt5/PyQt6."""
+    try:
+        return QEasingCurve.Type.SineCurve
+    except AttributeError:
+        return QEasingCurve.SineCurve
 
 
 class VariantFloatAnimation(QObject):

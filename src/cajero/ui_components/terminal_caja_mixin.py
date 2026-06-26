@@ -101,7 +101,7 @@ class TerminalCajaMixin:
         Inicia un efecto continuo de respiración (zoom + brillo intermitente) 
         en la etiqueta de ahorro para que se vea súper llamativa y orgánica.
         """
-        from src.utils.qt_compat import VariantFloatAnimation, QEasingCurve
+        from src.utils.qt_compat import VariantFloatAnimation, easing_sine_curve
         
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             return
@@ -110,7 +110,7 @@ class TerminalCajaMixin:
         self._respiracion_anim.setStartValue(0.0)
         self._respiracion_anim.setEndValue(1.0)
         self._respiracion_anim.setDuration(1500) # Ciclo suave de 1.5 segundos
-        self._respiracion_anim.setEasingCurve(QEasingCurve.SineCurve)
+        self._respiracion_anim.setEasingCurve(easing_sine_curve())
         self._respiracion_anim.setLoopCount(-1) # Bucle infinito
         
         def on_step(t):
@@ -248,7 +248,7 @@ class TerminalCajaMixin:
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
         
         # Ejecutamos el cobro
-        qt_exec(ok = dlg)
+        ok = qt_exec(dlg)
         self._cobro_abierto = False
         
         # Quitamos el desenfoque
@@ -351,7 +351,7 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(blur_effect)
 
         cierre = Paso7CierreCaja(self)
-        qt_exec(ok = cierre)
+        ok = qt_exec(cierre)
         
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)

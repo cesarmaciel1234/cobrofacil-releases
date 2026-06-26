@@ -1,3 +1,4 @@
+import src.utils.qt_compat  # noqa: F401 — enums Qt6 en namespace Qt
 from PyQt6.QtWidgets import QPushButton, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QRect, QEasingCurve, QTimer
 from PyQt6.QtGui import QColor, QCursor

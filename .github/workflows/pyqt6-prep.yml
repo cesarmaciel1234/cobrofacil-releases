@@ -42,3 +42,8 @@ jobs:
         env:
           TPV_QT: "6"
         run: python tools/smoke_main_import.py
+
+      - name: Smoke cajero (offscreen)
+        env:
+          TPV_QT: "6"
+        run: python tools/smoke_cajero.py

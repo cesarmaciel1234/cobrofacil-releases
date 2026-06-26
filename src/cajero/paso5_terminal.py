@@ -2,6 +2,7 @@ from src.utils.qt_compat import qt_exec
 import os, sys, threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+import src.utils.qt_compat  # noqa: F401 — enums Qt6 (Qt + widgets)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
@@ -2771,7 +2772,7 @@ class Paso5Terminal(QWidget):
         Inicia un efecto continuo de respiración (zoom + brillo intermitente) 
         en la etiqueta de ahorro para que se vea súper llamativa y orgánica.
         """
-        from src.utils.qt_compat import VariantFloatAnimation, QEasingCurve
+        from src.utils.qt_compat import VariantFloatAnimation, easing_sine_curve
         
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             return
@@ -2780,7 +2781,7 @@ class Paso5Terminal(QWidget):
         self._respiracion_anim.setStartValue(0.0)
         self._respiracion_anim.setEndValue(1.0)
         self._respiracion_anim.setDuration(1500) # Ciclo suave de 1.5 segundos
-        self._respiracion_anim.setEasingCurve(QEasingCurve.SineCurve)
+        self._respiracion_anim.setEasingCurve(easing_sine_curve())
         self._respiracion_anim.setLoopCount(-1) # Bucle infinito
         
         def on_step(t):
@@ -3113,7 +3114,7 @@ class Paso5Terminal(QWidget):
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
         
         # Ejecutamos el cobro
-        qt_exec(ok = dlg)
+        ok = qt_exec(dlg)
         self._cobro_abierto = False
         
         # Quitamos el desenfoque
@@ -3312,7 +3313,7 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur_effect)
 
         cierre = Paso7CierreCaja(self)
-        qt_exec(ok = cierre)
+        ok = qt_exec(cierre)
         
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)

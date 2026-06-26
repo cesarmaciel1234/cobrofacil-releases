@@ -63,7 +63,7 @@ from src.utils.qt_compat import (
 - [x] `chat_bot.py`, `chat_bot_animado.py` adaptados a Qt6
 - [x] `tools/smoke_webengine.py`
 
-### Fase 4 — Empaquetado PyQt6 (en curso)
+### Fase 4 — Empaquetado PyQt6 — Hecho
 - [x] `pyinstaller_qt6_extras.py` — `collect_all` WebEngine compartido
 - [x] `CobroFacil_POS.spec`, `Compilar_Todo.bat`, `release.yml` — flags PyQt6-WebEngine
 - [x] Instalador web: `Setup_CobroFacil_Web.spec`, `compilar_instalador_web.bat`
@@ -71,10 +71,13 @@ from src.utils.qt_compat import (
 - [x] `tools/smoke_main_import.py` — regresión imports sin UI
 - [x] `tools/smoke_webengine.py` — solo imports en CI (`--gui` para ventana manual)
 - [ ] Compilar `.exe` local y probar instalador + POS en máquina real
-- [ ] Regresión visual cajero (Fase 5)
 
-### Fase 5 — Cajero (último, regresión visual)
-`paso5` → `paso8`, `styles.qss`, teclas F, hardware.
+### Fase 5 — Cajero (regresión PyQt6) — Hecho
+- [x] Fix codemod: `ok = qt_exec(dlg)` en cobro y cierre (`paso5`, `terminal_caja_mixin`)
+- [x] `easing_sine_curve()` — animación respiración ahorro en Qt6
+- [x] `tools/smoke_cajero.py` — imports paso5–8 + MainWindow rol cajero (offscreen)
+- [x] `tests/test_flujo_cajero_console.py` — bootstrap Qt6 (`set_share_opengl_contexts`)
+- [ ] Regresión visual manual: terminal, F1–F12, cobro, `styles.qss`, hardware
 
 ### Fase 6 — Merge a main
 - `requirements.txt` ya en PyQt6 en rama `feature/pyqt6`
