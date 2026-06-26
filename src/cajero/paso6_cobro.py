@@ -1,7 +1,9 @@
+from src.utils.qt_compat import qt_exec
 import hashlib
 import os
 from PIL import Image, ImageChops
 from PyQt5.QtWidgets import (
+
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QFrame, QGridLayout,
     QWidget, QGraphicsDropShadowEffect, QApplication, QSizePolicy
@@ -773,7 +775,7 @@ class Paso6Cobro(QDialog):
             from src.cajero.widgets.pagos_mixtos import DialogoPagosMixtos
             tasa = config.get("tasa_usd", 1200.0)
             dlg = DialogoPagosMixtos(self.total_final, tasa, self)
-            if dlg.exec_():
+            if qt_exec(dlg):
                 self.valores_mixtos = dlg.get_valores()
                 self.current_metodo = "Mixto"
                 self.lbl_input1.setText("MÚLTIPLES PAGOS ($):")
@@ -1349,7 +1351,7 @@ class Paso6Cobro(QDialog):
                         
                 # Mostrar el diálogo
                 dialog = MPPollingDialog(self, token, device_id, mp_intent_id, monto, modo=self.current_metodo)
-                if dialog.exec_() == QDialog.Accepted:
+                if qt_exec(dialog) == QDialog.Accepted:
                     # El pago fue exitoso y FINALIZADO
                     self.txt_pago.setText(str(monto))
                     self.finalizar(True)
@@ -1588,7 +1590,7 @@ class Paso6Cobro(QDialog):
                 self.reject()
 
         dlg = QRDialog(self)
-        if dlg.exec_() == QDialog.Accepted and dlg.pagado:
+        if qt_exec(dlg) == QDialog.Accepted and dlg.pagado:
             self.txt_pago.setText(str(monto))
             self.finalizar(True)
 
@@ -1692,7 +1694,7 @@ class Paso6Cobro(QDialog):
                     btn_ok = msg_box.addButton("Aceptar", QMessageBox.AcceptRole)
                     btn_forzar = msg_box.addButton("Forzar Pendiente", QMessageBox.ActionRole)
                     
-                    msg_box.exec_()
+                    qt_exec(msg_box)
                     
                     if msg_box.clickedButton() == btn_forzar:
                         from PyQt5.QtWidgets import QInputDialog

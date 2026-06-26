@@ -1,5 +1,7 @@
+from src.utils.qt_compat import qt_exec
 import os, sys
 from PyQt5.QtWidgets import (
+
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QLineEdit, QPushButton, QMessageBox, QWidget,
     QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView
@@ -463,7 +465,7 @@ class Paso7CierreCaja(QDialog):
         btn.setStyleSheet("background: #1E3A8A; color: white; padding: 10px; border-radius: 8px; font-weight: 900;")
         btn.clicked.connect(lambda: [dlg.accept(), self.main_container.show()])
         l.addWidget(btn)
-        dlg.exec_()
+        qt_exec(dlg)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape: self.reject()

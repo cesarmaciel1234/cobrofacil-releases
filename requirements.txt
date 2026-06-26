@@ -1,3 +1,4 @@
+# Producción: PyQt5. Migración PyQt6 → ver docs/PYQT6_MIGRATION.md y requirements-pyqt6.txt
 PyQt5
 python-escpos
 pywin32

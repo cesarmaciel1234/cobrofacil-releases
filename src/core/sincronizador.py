@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sqlite3
 from PyQt5.QtWidgets import QMessageBox
 from src.base_de_datos.database import db_manager
@@ -84,7 +85,7 @@ def sincronizar_facturas(sqlite_db_path, parent_widget=None):
                         
                         btn_local = mbox.addButton("Conservar versión del Local", QMessageBox.AcceptRole)
                         btn_notebook = mbox.addButton("Conservar versión de la Notebook", QMessageBox.RejectRole)
-                        mbox.exec_()
+                        qt_exec(mbox)
                         
                         if mbox.clickedButton() == btn_notebook:
                             # Sobrescribir en MariaDB con los datos de SQLite

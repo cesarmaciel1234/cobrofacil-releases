@@ -1,7 +1,9 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 
 import json
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
     QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
@@ -1056,7 +1058,7 @@ class Admin3Reportes(QWidget):
             if periodo == "Periodo...":
                 try:
                     dialog = DialogoSeleccionPeriodo(self)
-                    if dialog.exec_() == QDialog.Accepted:
+                    if qt_exec(dialog) == QDialog.Accepted:
                         start_str, end_str = dialog.get_fechas()
                     else:
                         return

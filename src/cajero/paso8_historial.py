@@ -1,5 +1,7 @@
+from src.utils.qt_compat import qt_exec
 import sys
 from PyQt5.QtWidgets import (
+
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QLineEdit, QPushButton, QGridLayout, QComboBox, QDateEdit, QTimeEdit
@@ -622,7 +624,7 @@ class DialogoHistorialDia(QDialog):
         if role != 'admin':
             from src.cajero.paso5_terminal import DialogoPIN
             pin_dlg = DialogoPIN("admin", parent=self)
-            if not pin_dlg.exec_() or not pin_dlg.ok:
+            if not qt_exec(pin_dlg) or not pin_dlg.ok:
                 return
             # Registrar que el cajero actual realizó la acción autorizada por el administrador
             username = f"{username} (Autorizado por Admin)"
@@ -684,4 +686,4 @@ if __name__ == "__main__":
 
     dlg = DialogoHistorialDia()
     dlg.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

@@ -1,5 +1,7 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
@@ -1139,7 +1141,7 @@ class CatalogoProductos(QWidget):
             'categoria': r['categoria'] or 'GENERAL'
         }
         dlg = DialogoProducto(datos, self)
-        if dlg.exec_():
+        if qt_exec(dlg):
             d = dlg.get_data()
             ok = db_manager.execute_non_query(
                 "UPDATE productos SET codigo=?,nombre=?,precio=?,precio_mayoreo=?,cant_oferta=?,precio_oferta=?,costo=?,stock=?,"
@@ -1610,7 +1612,7 @@ class Admin1Inventario(QWidget):
         lay.addSpacing(10)
         lay.addWidget(btn_ok)
         
-        if dlg.exec_():
+        if qt_exec(dlg):
             if rb_sel.isChecked():
                 productos_a_procesar = checked_rows
             else:
@@ -1656,7 +1658,7 @@ class Admin1Inventario(QWidget):
 
     def _nuevo(self, *args, **kwargs):
         dlg = DialogoProducto(parent=self)
-        if dlg.exec_():
+        if qt_exec(dlg):
             d = dlg.get_data()
             ok = db_manager.execute_non_query(
                 "INSERT INTO productos (codigo,nombre,precio,precio_mayoreo,cant_oferta,precio_oferta,costo,stock,"

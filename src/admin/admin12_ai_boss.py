@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import sys
 import random
@@ -178,4 +179,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = Admin12AIBoss()
     win.showMaximized()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import os, json
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QGridLayout, QDoubleSpinBox, QFrame, QWidget
 from PyQt5.QtCore import Qt, QTimer
@@ -707,7 +708,7 @@ class DialogoCandado(QDialog):
         from src.config import config
         nombre = config.get(f"nombre_cajero_{numero_cajero}", f"Cajero {numero_cajero}").upper()
         dlg = DialogoPIN(nombre, parent=self)
-        if dlg.exec_() and dlg.ok:
+        if qt_exec(dlg) and dlg.ok:
             CajeroActivo.set(numero_cajero)
             self.accept()
 
@@ -720,7 +721,6 @@ class DialogoCandado(QDialog):
         if event.key() == Qt.Key_2:
             self._pedir_pin(2)
             return
-
 
 
 

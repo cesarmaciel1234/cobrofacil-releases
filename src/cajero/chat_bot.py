@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import os
 import sys
 import json
@@ -647,4 +648,4 @@ if __name__ == "__main__":
     win.setWindowTitle("Manual del Cajero - CobroFacil POS")
     win.resize(900, 700)
     win.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

@@ -1,4 +1,6 @@
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import (
+
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QFrame, QGridLayout, QRadioButton, QButtonGroup
 )
@@ -165,7 +167,7 @@ class PantallaCobroIndustrial(QDialog):
             recibido = parse_float_regional(self.txt_recibido.text())
             if recibido < self.total:
                 alert = MensajeAtencion(f"PAGO INSUFICIENTE\nFaltan: {self.total - recibido:.2f}", self)
-                alert.exec_()
+                qt_exec(alert)
                 return
             self.accept()
         except: pass

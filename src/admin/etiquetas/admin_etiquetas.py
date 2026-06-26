@@ -1,6 +1,8 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import os
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QLineEdit,
     QDialog, QFormLayout, QComboBox, QRadioButton, QFrame, QGridLayout,
@@ -470,7 +472,7 @@ class AdminEtiquetas(QWidget):
         btn_ok.clicked.connect(dlg.accept)
         lay.addWidget(btn_ok)
         
-        if dlg.exec_():
+        if qt_exec(dlg):
             grilla = "3x7"
             if rb_3x10.isChecked(): grilla = "3x10"
             elif rb_4x10.isChecked(): grilla = "4x10"
@@ -508,4 +510,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = AdminEtiquetas()
     window.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

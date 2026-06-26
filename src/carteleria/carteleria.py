@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 import os
 
@@ -12,4 +13,4 @@ if __name__ == "__main__":
     window = CarteleriaMain()
     window.setWindowTitle("Cartelería Autónoma - Apple Style Modular")
     window.showFullScreen()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

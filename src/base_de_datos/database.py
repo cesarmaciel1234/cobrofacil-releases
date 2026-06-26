@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 from typing import List, Tuple, Any, Optional
@@ -147,7 +148,7 @@ class DatabaseManager:
                         
                         btn_reintentar = msg.addButton("Reintentar Conexión", QMessageBox.AcceptRole)
                         btn_local = msg.addButton("Forzar Modo Local", QMessageBox.DestructiveRole)
-                        msg.exec_()
+                        qt_exec(msg)
                         
                         clicked = msg.clickedButton()
                         
@@ -312,7 +313,7 @@ class DatabaseManager:
             btn_local = box.addButton("Cobro Local", QMessageBox.AcceptRole)
             btn_salir = box.addButton("Salir y Reintentar", QMessageBox.RejectRole)
             
-            box.exec_()
+            qt_exec(box)
             
             if box.clickedButton() == btn_salir:
                 sys.exit(1)

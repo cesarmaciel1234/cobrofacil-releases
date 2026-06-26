@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import os, sys, threading
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
@@ -5,7 +6,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
-    QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox
+    QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox, QScrollArea, QSizePolicy,
 )
 from PyQt5.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
 from PyQt5.QtGui import QColor, QFont, QPen, QPainter
@@ -808,7 +809,7 @@ class DialogoCandado(QDialog):
         from src.config import config
         nombre = config.get(f"nombre_cajero_{numero_cajero}", f"Cajero {numero_cajero}").upper()
         dlg = DialogoPIN(nombre, parent=self)
-        if dlg.exec_() and dlg.ok:
+        if qt_exec(dlg) and dlg.ok:
             CajeroActivo.set(numero_cajero)
             self.accept()
 
@@ -1174,7 +1175,7 @@ class Paso5Terminal(QWidget):
         # --- TABLA CENTRAL ---
         self.tabla = QTableWidget()
         self.tabla.setColumnCount(6)
-        self.tabla.setHorizontalHeaderLabels(["ID", "DESCRIPCION PRODUCTO", "PRECIO", "CANT", "DES. TOTAL", "TOTAL"])
+        self.tabla.setHorizontalHeaderLabels(["ID", "DESCRIPCION", "PRECIO", "CANT", "DESC.", "TOTAL"])
         self.tabla.setStyleSheet("""
             QTableWidget { 
                 background-color: white;
@@ -1249,10 +1250,10 @@ class Paso5Terminal(QWidget):
         dash_layout.setContentsMargins(10, 5, 10, 5)
         
         # F1-Barcode
-        f1_box = QFrame()
-        f1_box.setFixedWidth(420)
-        f1_box.setStyleSheet("border: none;")
-        f1_l = QVBoxLayout(f1_box)
+        self.f1_box = QFrame()
+        self.f1_box.setStyleSheet("border: none;")
+        self.f1_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        f1_l = QVBoxLayout(self.f1_box)
         f1_l.setContentsMargins(5, 15, 5, 15)
         f1_l.setSpacing(0)
         
@@ -1276,7 +1277,7 @@ class Paso5Terminal(QWidget):
         self.txt_scan.returnPressed.connect(self.procesar_scan)
         
         f1_l.addWidget(self.txt_scan)
-        dash_layout.addWidget(f1_box)
+        dash_layout.addWidget(self.f1_box, stretch=2)
         
         # Overlay de Búsqueda
         self.list_results = QListWidget(self)
@@ -1319,13 +1320,12 @@ class Paso5Terminal(QWidget):
         self.totales_container.setSpacing(35)
         self.totales_container.addWidget(self.lbl_total_val, alignment=Qt.AlignVCenter)
         self.totales_container.addWidget(self.lbl_ahorro_val, alignment=Qt.AlignVCenter)
-        dash_layout.addLayout(self.totales_container)
+        dash_layout.addLayout(self.totales_container, stretch=3)
         
-        dash_layout.addSpacing(10)
-        
-        # Sidebar Resumen (Persistencia de última venta)
+        # Sidebar Resumen
         self.side_box = QFrame()
-        self.side_box.setFixedWidth(240)
+        self.side_box.setMinimumWidth(120)
+        self.side_box.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.side_box.setStyleSheet("""
             QFrame {
                 background: #f8fafc; 
@@ -1350,7 +1350,7 @@ class Paso5Terminal(QWidget):
         # Resaltar Cambio
         self.lbl_side_cambio.setStyleSheet("font-size: 16px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
         
-        dash_layout.addWidget(self.side_box)
+        dash_layout.addWidget(self.side_box, stretch=1)
         
         self.en_venta = False
         self.main_layout.addWidget(self.dashboard_frame)
@@ -1397,12 +1397,13 @@ class Paso5Terminal(QWidget):
         from src.updater.github_updater import get_local_version
         v_local = get_local_version()
         self.lbl_version = QLabel(f"🚀 COBRO FACIL {v_local}")
-        self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;") 
+        self.lbl_version.setStyleSheet("color: #10B981; font-weight: 900; font-size: 11px; letter-spacing: 1px; border: none;")
+        self.lbl_version.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         sl.addWidget(self.lbl_version)
         sl.addSpacing(10)
         sl.addStretch(1)
 
-        self.btn_espera = QPushButton("⏳ 0 Tickets en Espera")
+        self.btn_espera = QPushButton("⏳ 0 Espera")
         self.btn_espera.setFixedHeight(40)
         self.btn_espera.setCursor(Qt.PointingHandCursor)
         self.btn_espera.setFocusPolicy(Qt.NoFocus)
@@ -1419,51 +1420,45 @@ class Paso5Terminal(QWidget):
         sl.addWidget(self.btn_espera)
 
         sl.addStretch(1)
-        
-        # Scroll Area para los atajos del teclado (Previene descuadre en pantallas chicas)
-        from PyQt5.QtWidgets import QScrollArea
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll_area.setStyleSheet("""
-            QScrollArea {
-                background: transparent;
-                border: none;
-            }
-        """)
-        scroll_area.setFixedHeight(44)
-        
-        hints_layout = QHBoxLayout()
-        hints_layout.setSpacing(10) # More spacing between keyboard shortcut buttons
-        hints_layout.setContentsMargins(0,0,0,0)
-        
-        hints_layout.addStretch() # Push buttons to the right side (from right to left)
-        
+
+        self._shortcuts_scroll = QScrollArea()
+        self._shortcuts_scroll.setWidgetResizable(False)
+        self._shortcuts_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self._shortcuts_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._shortcuts_scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self._shortcuts_scroll.setFixedHeight(44)
+        self._shortcuts_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        self._hints_widget = QWidget()
+        self._hints_widget.setStyleSheet("background: transparent; border: none;")
+        hints_layout = QHBoxLayout(self._hints_widget)
+        hints_layout.setSpacing(6)
+        hints_layout.setContentsMargins(0, 0, 0, 0)
+        self._hints_layout = hints_layout
+
         self.icon_lbl = QLabel("⌨️")
         self.icon_lbl.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
         hints_layout.addWidget(self.icon_lbl)
-        
-        btn_style = """
-            QPushButton {
-                background: #1E293B; 
-                color: #F8FAFC; 
-                border: 1px solid #334155; 
+
+        self._shortcut_btn_base_style = """
+            QPushButton {{
+                background: #FFFFFF;
+                color: #0F172A;
+                border: 1px solid #CBD5E1;
                 border-radius: 5px;
-                font-size: 13px; 
+                font-size: {font_px}px;
                 font-weight: bold;
                 padding: 0px;
-            }
-            QPushButton:hover { 
-                background: #334155; 
-                border-color: #475569; 
-                color: #FFFFFF;
-            }
-            QPushButton:pressed {
-                background: #0F172A;
-            }
+            }}
+            QPushButton:hover {{
+                background: #F1F5F9;
+                border-color: #94A3B8;
+            }}
+            QPushButton:pressed {{
+                background: #CBD5E1;
+            }}
         """
-        
+
         hints = [
             ("F1", self._do_busqueda, "Buscar Producto (F1)"),
             ("F3", self.abrir_historial_dia, "Ver Historial del Día (F3)"),
@@ -1473,28 +1468,23 @@ class Paso5Terminal(QWidget):
             ("F7", self._leer_bascula, "Leer Báscula (F7)"),
             ("F8", self.bloquear_terminal, "Bloquear Terminal (F8)"),
             ("F4", self.abrir_cierre_caja, "Cierre de Turno / Caja (F4)"),
-            ("F11", self.llamar_supervisor, "Llamar Supervisor (F11)")
+            ("F11", self.llamar_supervisor, "Llamar Supervisor (F11)"),
         ]
-        
+
         self.shortcut_buttons = []
         for text, func, tooltip in hints:
             btn = QPushButton(text)
-            btn.setStyleSheet(btn_style)
+            btn.setStyleSheet(self._shortcut_btn_base_style.format(font_px=13))
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFocusPolicy(Qt.NoFocus)
-            btn.setFixedSize(45, 40) # 45px width by 40px height
+            btn.setFixedSize(45, 40)
             btn.setToolTip(tooltip)
             btn.clicked.connect(func)
             hints_layout.addWidget(btn)
             self.shortcut_buttons.append(btn)
-                
-        # Widget contenedor para el layout de atajos
-        hints_widget = QWidget()
-        hints_widget.setLayout(hints_layout)
-        hints_widget.setStyleSheet("background: transparent; border: none;")
-        scroll_area.setWidget(hints_widget)
-        
-        sl.addWidget(scroll_area, 2) # Give it a stretch factor of 2 to occupy a large harmonious portion (approx. half the screen)
+
+        self._shortcuts_scroll.setWidget(self._hints_widget)
+        sl.addWidget(self._shortcuts_scroll, stretch=2)
         sl.addSpacing(10)
         
         # Botón Candado
@@ -1530,6 +1520,7 @@ class Paso5Terminal(QWidget):
         sl.addWidget(self.btn_chatbot)
         
         self.main_layout.addWidget(self.status_bar)
+        QTimer.singleShot(0, self._apply_screen_layout)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
@@ -2102,7 +2093,7 @@ class Paso5Terminal(QWidget):
                         cant_actual = float(self.tabla.item(row, 3).text())
                         
                         dlg = DialogoEditarCantidad(cant_actual, nombre, self)
-                        if dlg.exec_():
+                        if qt_exec(dlg):
                             new_cant = dlg.get_value()
                             self.tabla.item(row, 3).setText(
                                 f"{new_cant:.2f}" if new_cant % 1 != 0 else f"{int(new_cant)}"
@@ -2147,7 +2138,7 @@ class Paso5Terminal(QWidget):
                     row = self.tabla.currentRow()
                     if row != -1:
                         dlg = DialogoAtencion(self)
-                        if dlg.exec_():
+                        if qt_exec(dlg):
                             self.tabla.removeRow(row)
                             self.actualizar_totales()
                         QTimer.singleShot(50, self.txt_scan.setFocus)
@@ -2186,7 +2177,7 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur_effect)
         
         dlg = DialogoCandado(parent=self)
-        dlg.exec_()   # Si no se desbloquea, la terminal queda bloqueada
+        qt_exec(dlg)   # Si no se desbloquea, la terminal queda bloqueada
         
         self.setGraphicsEffect(None)
 
@@ -2223,8 +2214,105 @@ class Paso5Terminal(QWidget):
 
 
 
+    def _apply_screen_layout(self):
+        """Ajusta tamaños al monitor real (14\" laptop vs 24\" POS)."""
+        from src.utils.qt_dpi import layout_scale, scale_px
+
+        ls = layout_scale()
+        self.header_frame.setFixedHeight(scale_px(75, ls))
+        self.dashboard_frame.setFixedHeight(scale_px(140, ls))
+        self.status_bar.setFixedHeight(scale_px(55, ls))
+        self._shortcuts_scroll.setFixedHeight(scale_px(44, ls))
+
+        total_px = scale_px(75, ls)
+        scan_px = scale_px(34, ls)
+        side_px = scale_px(14, ls)
+        title_px = scale_px(26, ls)
+        row_h = scale_px(55, ls)
+
+        self.lbl_terminal_title.setStyleSheet(
+            f"font-size: {title_px}px; font-weight: bold;"
+        )
+        self.lbl_total_val.setStyleSheet(
+            f"font-size: {total_px}px; color: #059669; font-weight: 900; border: none;"
+        )
+        self.txt_scan.setStyleSheet(f"""
+            QLineEdit {{
+                background: white; border: 3px solid #3B82F6; border-radius: 12px;
+                color: #1E3A8A; font-size: {scan_px}px; padding: 12px; font-weight: 900;
+            }}
+        """)
+        for lbl in (self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos):
+            lbl.setStyleSheet(
+                f"font-size: {side_px}px; color: #475569; font-weight: 800; "
+                "font-family: 'Consolas', monospace;"
+            )
+        self.lbl_side_cambio.setStyleSheet(
+            f"font-size: {side_px + 2}px; color: #10b981; font-weight: 900; "
+            "font-family: 'Consolas', monospace;"
+        )
+        self.tabla.verticalHeader().setDefaultSectionSize(row_h)
+        self._apply_status_bar_shortcuts_layout(ls)
+        self._apply_tabla_column_layout()
+
+    def _apply_status_bar_shortcuts_layout(self, ls=None):
+        """F-keys blancas: todas visibles junto a candado/chatbot."""
+        if not hasattr(self, "_shortcuts_scroll") or not self.shortcut_buttons:
+            return
+        from src.utils.qt_dpi import layout_scale, scale_px
+
+        if ls is None:
+            ls = layout_scale()
+        viewport_w = self._shortcuts_scroll.viewport().width()
+        if viewport_w < 80:
+            return
+
+        n = len(self.shortcut_buttons)
+        spacing = self._hints_layout.spacing()
+
+        if viewport_w < 420:
+            self.icon_lbl.hide()
+            icon_w = 0
+        else:
+            self.icon_lbl.show()
+            icon_w = 22
+
+        gaps = spacing * max(0, n - 1)
+        available = max(0, viewport_w - icon_w - gaps)
+        min_w = scale_px(34, ls)
+        max_w = scale_px(45, ls)
+        btn_w = max(min_w, min(max_w, int(available / n) if n else max_w))
+        btn_h = scale_px(40, ls)
+        font_px = 13 if btn_w >= scale_px(40, ls) else 11
+        style = self._shortcut_btn_base_style.format(font_px=font_px)
+        for btn in self.shortcut_buttons:
+            btn.setFixedSize(btn_w, btn_h)
+            btn.setStyleSheet(style)
+
+        content_w = icon_w + n * btn_w + gaps
+        self._hints_widget.setMinimumWidth(content_w)
+        if content_w > viewport_w:
+            self._shortcuts_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            bar = self._shortcuts_scroll.horizontalScrollBar()
+            QTimer.singleShot(0, lambda: bar.setValue(bar.maximum()))
+        else:
+            self._shortcuts_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def _apply_tabla_column_layout(self):
+        if not hasattr(self, "tabla"):
+            return
+        vw = self.tabla.viewport().width()
+        if vw < 320:
+            return
+        self.tabla.setColumnWidth(0, max(60, int(vw * 0.08)))
+        self.tabla.setColumnWidth(2, max(70, int(vw * 0.15)))
+        self.tabla.setColumnWidth(3, max(56, int(vw * 0.10)))
+        self.tabla.setColumnWidth(4, max(64, int(vw * 0.10)))
+        self.tabla.setColumnWidth(5, max(70, int(vw * 0.15)))
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self._apply_screen_layout()
         # Hacer la ventana emergente extra ancha (900x350) para que el código no oculte el nombre
         if hasattr(self, 'dashboard_frame') and hasattr(self, 'list_results'):
             self.list_results.setGeometry(self.dashboard_frame.x() + 10, self.height() - 180 - 360, 900, 350)
@@ -2636,7 +2724,7 @@ class Paso5Terminal(QWidget):
     def animar_ahorro(self, nuevo_ahorro):
         """ 
         Animación interactiva premium tipo 'saldo ascendente' (+100).
-        Incrementa el valor del ahorro de forma asíncrona y fluida usando QVariantAnimation.
+        Incrementa el valor del ahorro de forma asíncrona y fluida.
         """
         if not hasattr(self, 'current_ahorro'):
             self.current_ahorro = 0.0
@@ -2656,11 +2744,11 @@ class Paso5Terminal(QWidget):
         # Color y tamaño de impacto (Naranja vibrante para el incremento)
         self.lbl_ahorro_val.setStyleSheet("font-size: 48px; color: #FF4500; font-weight: 900; border: none;")
         
-        from PyQt5.QtCore import QVariantAnimation
+        from src.utils.qt_compat import VariantFloatAnimation
         if hasattr(self, '_ahorro_anim') and self._ahorro_anim:
             self._ahorro_anim.stop()
             
-        self._ahorro_anim = QVariantAnimation(self)
+        self._ahorro_anim = VariantFloatAnimation(self)
         self._ahorro_anim.setStartValue(self.current_ahorro)
         self._ahorro_anim.setEndValue(nuevo_ahorro)
         self._ahorro_anim.setDuration(2000) # 2000ms (2.0s) de animación suave e impactante
@@ -2683,12 +2771,12 @@ class Paso5Terminal(QWidget):
         Inicia un efecto continuo de respiración (zoom + brillo intermitente) 
         en la etiqueta de ahorro para que se vea súper llamativa y orgánica.
         """
-        from PyQt5.QtCore import QVariantAnimation, QEasingCurve
+        from src.utils.qt_compat import VariantFloatAnimation, QEasingCurve
         
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             return
             
-        self._respiracion_anim = QVariantAnimation(self)
+        self._respiracion_anim = VariantFloatAnimation(self)
         self._respiracion_anim.setStartValue(0.0)
         self._respiracion_anim.setEndValue(1.0)
         self._respiracion_anim.setDuration(1500) # Ciclo suave de 1.5 segundos
@@ -2727,10 +2815,10 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur)
         
         dlg = DialogoRetiroEfectivo(efectivo, parent=self)
-        if dlg.exec_() and dlg.monto_retirado > 0:
+        if qt_exec(dlg) and dlg.monto_retirado > 0:
             # Solicitar PIN de confirmación del operador activo
             pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if pin_dlg.exec_() and pin_dlg.ok:
+            if qt_exec(pin_dlg) and pin_dlg.ok:
                 monto = dlg.monto_retirado
                 motivo = getattr(dlg, "motivo", "Retiro rápido de efectivo en terminal")
                 usuario = CajeroActivo.nombre
@@ -2762,10 +2850,10 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur)
         
         dlg = DialogoIngresoEfectivo(parent=self)
-        if dlg.exec_() and dlg.monto_ingresado > 0:
+        if qt_exec(dlg) and dlg.monto_ingresado > 0:
             # Solicitar PIN de confirmación del operador activo
             pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if pin_dlg.exec_() and pin_dlg.ok:
+            if qt_exec(pin_dlg) and pin_dlg.ok:
                 monto = dlg.monto_ingresado
                 motivo = getattr(dlg, "motivo", "Ingreso manual de efectivo en terminal")
                 usuario = CajeroActivo.nombre
@@ -2930,7 +3018,7 @@ class Paso5Terminal(QWidget):
                     
                 elif event.key() == Qt.Key_Delete:
                     dlg = DialogoAtencion(self)
-                    if dlg.exec_():
+                    if qt_exec(dlg):
                         self.tabla.removeRow(row)
                         self.actualizar_totales()
                     QTimer.singleShot(50, self.txt_scan.setFocus)
@@ -2941,7 +3029,7 @@ class Paso5Terminal(QWidget):
                     cant_actual = float(self.tabla.item(row, 3).text())
                     
                     dlg = DialogoEditarCantidad(cant_actual, nombre, self)
-                    if dlg.exec_():
+                    if qt_exec(dlg):
                         new_cant = dlg.get_value()
                         self.tabla.item(row, 3).setText(f"{new_cant:.2f}" if new_cant % 1 != 0 else f"{int(new_cant)}")
                         
@@ -3025,7 +3113,7 @@ class Paso5Terminal(QWidget):
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
         
         # Ejecutamos el cobro
-        ok = dlg.exec_()
+        qt_exec(ok = dlg)
         self._cobro_abierto = False
         
         # Quitamos el desenfoque
@@ -3154,7 +3242,7 @@ class Paso5Terminal(QWidget):
                 QPushButton:hover { background: #CA8A04; }
             """)
         else:
-            self.btn_espera.setText("⏳ 0 Tickets en Espera")
+            self.btn_espera.setText("⏳ 0 Espera")
             self.btn_espera.setStyleSheet("""
                 QPushButton {
                     background: #FFFFFF; color: #000000; border-radius: 5px;
@@ -3224,7 +3312,7 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur_effect)
 
         cierre = Paso7CierreCaja(self)
-        ok = cierre.exec_()
+        qt_exec(ok = cierre)
         
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)
@@ -3246,7 +3334,7 @@ class Paso5Terminal(QWidget):
         self.setGraphicsEffect(blur_effect)
         
         dlg = DialogoHistorialDia(self)
-        dlg.exec_()
+        qt_exec(dlg)
         
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
@@ -3340,5 +3428,4 @@ if __name__ == "__main__":
     except: pass
     win = Paso5Terminal()
     win.showMaximized()
-    sys.exit(app.exec_())
-
+sys.exit(qt_exec(app))

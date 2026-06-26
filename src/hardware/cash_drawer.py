@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import logging
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer, QMutex, QMutexLocker
 import sys
@@ -184,4 +185,4 @@ if __name__ == "__main__":
     timer.start(2000)
     
     logger.info("📡 Monitoreando señales. Cierre la ventana o Ctrl+C para terminar.")
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

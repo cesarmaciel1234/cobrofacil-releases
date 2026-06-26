@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 from PyQt5.QtCore import QTimer, QTime, pyqtSignal
 from src.carteleria.theme import C_THEME, apply_apple_shadow
@@ -123,7 +124,7 @@ class InfoNegocio(QWidget):
             btn_ping = msg_box.addButton("Ping de Prueba", QMessageBox.ActionRole)
             msg_box.addButton(QMessageBox.Ok)
             
-            msg_box.exec_()
+            qt_exec(msg_box)
             
             if msg_box.clickedButton() == btn_ping:
                 from src.network.network_engine import get_network_engine

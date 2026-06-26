@@ -1,0 +1,36 @@
+# Ejecuta auditoría y tests de compat Qt en cada push (no requiere PyQt6).
+name: PyQt6 prep check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "main.py"
+      - "tools/pyqt6_audit.py"
+      - "tests/test_qt_compat.py"
+      - "requirements*.txt"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar PyQt5 (producción)
+        run: pip install -r requirements.txt
+
+      - name: Auditoría PyQt6
+        run: python tools/pyqt6_audit.py
+
+      - name: Tests qt_compat
+        run: python -m unittest tests.test_qt_compat -v

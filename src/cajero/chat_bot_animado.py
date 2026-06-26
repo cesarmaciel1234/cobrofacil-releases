@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import os
 import sys
 import json
@@ -557,4 +558,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = ChatAnimadoStandalone()
     widget.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

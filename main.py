@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 import os
 
@@ -5,6 +6,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
+from src.utils.qt_compat import set_share_opengl_contexts, qt_exec
 
 configure_process_dpi()
 
@@ -17,11 +19,11 @@ import logging
 sys.argv.append('--disable-gpu')
 sys.argv.append('--disable-software-rasterizer')
 
-from PyQt5.QtCore import Qt, QTimer, QCoreApplication
+from PyQt5.QtCore import QTimer, QCoreApplication
 
 configure_qt_application_attributes()
 # Vital: configurar antes de importar QApplication y QtWebEngineWidgets
-QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
+set_share_opengl_contexts()
 
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtGui import QIcon
@@ -83,6 +85,9 @@ def launch_app():
     
     # FORZAR ESTILO FUSION (VITAL PARA QUE LOS SCROLLBARS ACEPTEN CSS EN WINDOWS)
     app.setStyle('Fusion')
+
+    from src.utils.qt_dpi import apply_app_screen_adaptation
+    apply_app_screen_adaptation(app)
     
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
     from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
@@ -126,7 +131,7 @@ def launch_app():
     if not check_license_active():
         splash.finish(None)
         lic = LicenciaPantalla()
-        if not lic.exec_(): sys.exit()
+        if not qt_exec(lic): sys.exit()
         splash.show()
 
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
@@ -200,7 +205,7 @@ def launch_app():
 
     while True:
         if step == 1:
-            if perfil_dlg.exec_():
+            if qt_exec(perfil_dlg):
                 from src.utils.candados import PerfilLocker
                 if not PerfilLocker.lock_profile(role_selected):
                     QMessageBox.warning(None, "Error", f"El perfil '{role_selected}' ya está en uso.")
@@ -225,7 +230,7 @@ def launch_app():
                 continue
                 
             login_dlg = LoginPantalla(role_selected)
-            if login_dlg.exec_():
+            if qt_exec(login_dlg):
                 login_dlg.hide()
                 app.processEvents()
                 if role_selected == "cajero":
@@ -244,7 +249,7 @@ def launch_app():
                     f"El sistema realizó un CIERRE AUTOMÁTICO de ${monto_c:.2f}.")
 
             apertura = AperturaCajaPantalla()
-            if apertura.exec_():
+            if qt_exec(apertura):
                 apertura.hide()
                 app.processEvents()
                 step = 4
@@ -254,14 +259,15 @@ def launch_app():
                 step = 2
         elif step == 4:
             main_window.apply_roles()
-            main_window.show()
+            from src.utils.qt_dpi import present_main_window
+            present_main_window(main_window)
             
             # --- ANIMACIÓN PRECARGADA (Arranca al instante) ---
             if hasattr(main_window, '_welcome_overlay') and main_window._welcome_overlay is not None:
                 main_window._welcome_overlay.show()
                 main_window._welcome_overlay.raise_()
             
-            result = app.exec_()
+            result = qt_exec(app)
             main_window.close()
             main_window = None
             return result

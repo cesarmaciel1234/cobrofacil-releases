@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 import os
 import shutil
@@ -5,6 +6,7 @@ import zipfile
 import datetime
 import tempfile
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+
                              QHBoxLayout, QPushButton, QLabel, QProgressBar, 
                              QMessageBox, QFileDialog)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -203,4 +205,4 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     window = RespaldoApp()
     window.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

@@ -1,18 +1,6 @@
 import sys
 import os
-import ctypes
 
-# Alto DPI: antes de importar PyQt (monitores 1366×768, 1920×1080, 4K, escalas 125 %…)
-os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
-os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
-if sys.platform == "win32":
-    try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except Exception:
-        try:
-            ctypes.windll.user32.SetProcessDPIAware()
-        except Exception:
-            pass
 
 import time
 import zipfile
@@ -21,6 +9,9 @@ import urllib.error
 import subprocess
 import glob
 import shutil
+_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 import stat
 
 try:
@@ -28,16 +19,9 @@ try:
 except ImportError:
     win32com = None
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QUrl, QCoreApplication
-
-if hasattr(Qt, "AA_EnableHighDpiScaling"):
-    QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-if hasattr(Qt, "AA_UseHighDpiPixmaps"):
-    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QMessageBox
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+import webview
+import ctypes
+import threading
 
 # Release CI: .github/workflows/release.yml → GitHub Releases (API)
 GITHUB_REPO = "cesarmaciel1234/cobrofacil-releases"
@@ -139,16 +123,49 @@ def _absolute_fresh_install_cleanup(install_dir, progress_callback=None):
     _kill_blocking_processes()
     time.sleep(3)
 
-    emit(6, "Eliminando instalación anterior por completo...")
-    removed_dirs = []
+    emit(6, "Limpiando instalación anterior (conservando datos críticos)...")
+    sensitive_items = {
+        "config.json",
+        "theme_prefs.json",
+        "offline_queue.json",
+        "sugerencia_activa.json",
+        "inventario_precargado.json"
+    }
+
     for path in _legacy_install_dirs(install_dir):
-        if os.path.isdir(path):
-            _rmtree_force(path)
-            removed_dirs.append(path)
-    if removed_dirs:
-        _log_installer_error("Limpieza absoluta — carpetas eliminadas:")
-        for path in removed_dirs:
-            _log_installer_error(f"  - {path}")
+        if not os.path.isdir(path):
+            continue
+            
+        for item in os.listdir(path):
+            if item.endswith(".db") or item in sensitive_items:
+                continue
+                
+            item_path = os.path.join(path, item)
+            
+            if item == "mariadb_server":
+                if os.path.isdir(item_path):
+                    for m_item in os.listdir(item_path):
+                        if m_item == "data":
+                            continue
+                        m_item_path = os.path.join(item_path, m_item)
+                        if os.path.isdir(m_item_path):
+                            _rmtree_force(m_item_path)
+                        else:
+                            try:
+                                os.chmod(m_item_path, stat.S_IWRITE)
+                                os.remove(m_item_path)
+                            except OSError:
+                                pass
+                continue
+                
+            if os.path.isdir(item_path):
+                _rmtree_force(item_path)
+            else:
+                try:
+                    os.chmod(item_path, stat.S_IWRITE)
+                    os.remove(item_path)
+                except OSError as exc:
+                    _log_installer_error(f"No se pudo borrar {item_path}: {exc}")
 
     emit(8, "Limpiando temporales y accesos directos viejos...")
     _cleanup_installer_temp_files()
@@ -427,29 +444,68 @@ def _primary_desktop_path():
     return os.path.join(os.environ.get("USERPROFILE", ""), "Desktop")
 
 
-class InstallWorker(QThread):
-    progress_update = pyqtSignal(int, str)
-    finished = pyqtSignal(bool, str, str, str)  # success, msg, target_exe, shortcut_path
 
-    def __init__(self, download_url, zip_filename, install_dir, is_update_mode=False):
-        super().__init__()
-        self.download_url = download_url
-        self.zip_filename = zip_filename
-        self.install_dir = install_dir
-        self.is_update_mode = is_update_mode
+class InstallerLogic:
+    def __init__(self):
+        self.is_update_mode = "--update" in sys.argv
+        self.download_url = None
+        self.zip_filename = GITHUB_RELEASE_ZIP_NAME
+        self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
+        self.window = None
+
+    def set_window(self, window):
+        self.window = window
+
+    def progress_update(self, val, text):
+        if not self.window: return
+        safe = (
+            str(text)
+            .replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace("\r", " ")
+            .replace("\n", " ")
+        )
+        js_code = f"window.actualizar_interfaz({val}, '{safe}');"
+        self.window.evaluate_js(js_code)
+        
+    def show_message(self, title, msg, is_error=False):
+        flags = 0x10 if is_error else 0x40
+        ctypes.windll.user32.MessageBoxW(0, msg, title, flags)
+
+    def on_finished(self, success, msg, target_exe, shortcut_path):
+        if success:
+            shortcut_hint = (
+                f"\n\nEn tu ESCRITORIO quedó el acceso directo:\n«{SHORTCUT_LABEL}»\n\n"
+                "La próxima vez, ábrelo desde ahí (doble clic)."
+            )
+            if self.is_update_mode:
+                self.show_message("Actualización Completada", "Sistema actualizado exitosamente." + shortcut_hint + "\n\nCobro Fácil POS se iniciará ahora.")
+            else:
+                self.show_message("Instalación Completada", "El sistema fue desplegado con éxito." + shortcut_hint + "\n\nIniciando Cobro Fácil POS...")
+            
+            if not self.is_update_mode and shortcut_path and os.path.exists(shortcut_path):
+                subprocess.Popen(["explorer", f"/select,{os.path.normpath(shortcut_path)}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if target_exe and os.path.exists(target_exe):
+                os.startfile(target_exe)
+        else:
+            _report_installer_failure_to_github(msg)
+            self.show_message("Error de Instalación", f"No se pudo completar el proceso:\n{msg}", is_error=True)
+            
+        if self.window:
+            self.window.destroy()
 
     def run(self):
         try:
             if self.is_update_mode:
-                self.progress_update.emit(5, "Preparando entorno y cerrando instancias previas...")
+                self.progress_update(5, "Preparando entorno y cerrando instancias previas...")
                 _kill_blocking_processes()
                 time.sleep(3)
-                self.progress_update.emit(8, "Modo actualización: conservando datos existentes...")
+                self.progress_update(8, "Modo actualización: conservando datos existentes...")
                 time.sleep(1)
             else:
                 _absolute_fresh_install_cleanup(
                     self.install_dir,
-                    progress_callback=self.progress_update.emit,
+                    progress_callback=self.progress_update,
                 )
                 
             # 1. Buscar si el ZIP está localmente
@@ -459,14 +515,11 @@ class InstallWorker(QThread):
                 
             local_bin_path = os.path.join(base_path, "payload.bin")
             zip_to_extract = None
-            local_zip_path = next(
-                (p for p in _local_zip_candidates(self.zip_filename) if os.path.exists(p)),
-                None,
-            )
+            local_zip_path = next((p for p in _local_zip_candidates(self.zip_filename) if os.path.exists(p)), None)
 
             if os.path.exists(local_bin_path):
-                self.progress_update.emit(10, "Desencriptando motor base...")
-                zip_to_extract = os.path.join(os.environ['TEMP'], "decrypted_installer_payload_temp.zip")
+                self.progress_update(10, "Desencriptando motor base...")
+                zip_to_extract = os.path.join(os.environ.get('TEMP', '.'), "decrypted_installer_payload_temp.zip")
                 key = "PUNPRO2026_BLINDAJE_ULTIMATE"
                 key_bytes = key.encode('utf-8')
                 key_len = len(key_bytes)
@@ -478,16 +531,15 @@ class InstallWorker(QThread):
                         decrypted_chunk = bytearray(b ^ key_bytes[i % key_len] for i, b in enumerate(chunk))
                         f_out.write(decrypted_chunk)
                 
-                self.progress_update.emit(20, "Sistema desencriptado y listo.")
+                self.progress_update(20, "Sistema desencriptado y listo.")
                 time.sleep(1)
-
             elif local_zip_path:
-                self.progress_update.emit(10, f"Encontrado módulo local: {self.zip_filename}")
+                self.progress_update(10, f"Encontrado módulo local: {self.zip_filename}")
                 zip_to_extract = local_zip_path
                 time.sleep(1)
             else:
-                self.progress_update.emit(10, "Descargando módulos del sistema (esto puede tardar)...")
-                zip_to_extract = os.path.join(os.environ['TEMP'], self.zip_filename)
+                self.progress_update(10, "Descargando módulos del sistema (esto puede tardar)...")
+                zip_to_extract = os.path.join(os.environ.get('TEMP', '.'), self.zip_filename)
                 download_url = _resolve_release_zip_url()
                 _log_installer_error(f"Descarga desde: {download_url}")
                 
@@ -496,7 +548,7 @@ class InstallWorker(QThread):
                         percent = int((block_num * block_size * 50) / total_size) + 10
                         if percent > 60: percent = 60
                         if percent % 5 == 0: 
-                            self.progress_update.emit(percent, f"Descargando paquete principal... {int((percent-10)*2)}%")
+                            self.progress_update(percent, f"Descargando paquete principal... {int((percent-10)*2)}%")
 
                 try:
                     opener = urllib.request.build_opener()
@@ -505,7 +557,7 @@ class InstallWorker(QThread):
                     urllib.request.urlretrieve(download_url, zip_to_extract, reporthook=report)
                 except urllib.error.HTTPError as exc:
                     if exc.code == 404:
-                        self.finished.emit(
+                        self.on_finished(
                             False,
                             "No hay release publicado en GitHub (error 404).\n\n"
                             "El paquete aún no está disponible. Espere a que termine el build en:\n"
@@ -515,19 +567,19 @@ class InstallWorker(QThread):
                             "",
                         )
                     else:
-                        self.finished.emit(False, f"Error al descargar ({exc.code}): {exc.reason}", "", "")
+                        self.on_finished(False, f"Error al descargar ({exc.code}): {exc.reason}", "", "")
                     return
                 except Exception as exc:
-                    self.finished.emit(False, f"Error al descargar: {exc}", "", "")
+                    self.on_finished(False, f"Error al descargar: {exc}", "", "")
                     return
-                self.progress_update.emit(60, "Descarga completada. Preparando despliegue...")
+                self.progress_update(60, "Descarga completada. Preparando despliegue...")
                 try:
                     with zipfile.ZipFile(zip_to_extract, "r") as zip_ref:
                         bad = zip_ref.testzip()
                         if bad:
                             raise zipfile.BadZipFile(f"archivo dañado: {bad}")
                 except zipfile.BadZipFile as exc:
-                    self.finished.emit(
+                    self.on_finished(
                         False,
                         f"La descarga del paquete está incompleta o corrupta.\n\n{exc}\n\n"
                         "Vuelva a ejecutar el instalador.",
@@ -537,10 +589,8 @@ class InstallWorker(QThread):
                     return
                 time.sleep(1)
 
-            # 2. Extracción (carpeta limpia solo en instalación nueva)
-            self.progress_update.emit(65, "Extrayendo sistema base...")
-            if not self.is_update_mode and os.path.isdir(self.install_dir):
-                _rmtree_force(self.install_dir)
+            # 2. Extracción (ya se limpió lo viejo, preservando datos)
+            self.progress_update(65, "Extrayendo sistema base...")
             os.makedirs(self.install_dir, exist_ok=True)
 
             errors = self._extract_zip(zip_to_extract, self.install_dir)
@@ -548,7 +598,7 @@ class InstallWorker(QThread):
                 for line in errors[:20]:
                     _log_installer_error(line)
                 if not self._find_target_exe():
-                    self.finished.emit(
+                    self.on_finished(
                         False,
                         "La instalación quedó incompleta.\n\n"
                         "Cierre Cobro Fácil POS (Administrador de tareas) y vuelva a ejecutar el instalador.\n"
@@ -559,23 +609,23 @@ class InstallWorker(QThread):
                     return
 
             # 3. Crear acceso directo
-            self.progress_update.emit(95, "Configurando accesos directos...")
+            self.progress_update(95, "Configurando accesos directos...")
             target_exe, shortcut_path = self.create_shortcut()
 
             # 4. Limpieza (Borrando rastro del ZIP descargado)
-            self.progress_update.emit(98, "Eliminando archivos temporales por seguridad...")
+            self.progress_update(98, "Eliminando archivos temporales por seguridad...")
             try:
                 if zip_to_extract and os.path.exists(zip_to_extract):
                     os.remove(zip_to_extract)
             except:
                 pass
 
-            self.progress_update.emit(100, "¡Sistema desplegado con éxito!")
+            self.progress_update(100, "¡Sistema desplegado con éxito!")
             time.sleep(1)
-            self.finished.emit(True, "Instalación completada.", target_exe, shortcut_path)
+            self.on_finished(True, "Instalación completada.", target_exe, shortcut_path)
 
         except Exception as e:
-            self.finished.emit(False, str(e), "", "")
+            self.on_finished(False, str(e), "", "")
 
     def _find_target_exe(self):
         for root, dirs, files in os.walk(self.install_dir):
@@ -586,7 +636,6 @@ class InstallWorker(QThread):
         return ""
 
     def _extract_zip(self, zip_path, install_dir):
-        """Extrae el release. Solo usa contraseña si el ZIP está cifrado (Firebase)."""
         errors = []
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -606,7 +655,7 @@ class InstallWorker(QThread):
                         errors.append(f"Error extrayendo {name}: {exc}")
                     if i % 20 == 0:
                         percent = 65 + int((i / max(total_files, 1)) * 30)
-                        self.progress_update.emit(percent, f"Extrayendo: {name}")
+                        self.progress_update(percent, f"Extrayendo: {name}")
         except zipfile.BadZipFile as exc:
             errors.append(f"ZIP inválido: {exc}")
         except Exception as exc:
@@ -616,10 +665,7 @@ class InstallWorker(QThread):
     def create_shortcut(self):
         try:
             target_exe = self._find_target_exe()
-
-            if not target_exe:
-                return "", ""
-
+            if not target_exe: return "", ""
             _remove_old_shortcuts()
 
             desktop_shortcut = ""
@@ -635,154 +681,46 @@ class InstallWorker(QThread):
                     desktop_shortcut = fallback
 
             appdata = os.environ.get("APPDATA", "")
-            start_menu_shortcut = os.path.join(
-                appdata,
-                "Microsoft", "Windows", "Start Menu", "Programs",
-                SHORTCUT_LABEL,
-                SHORTCUT_NAME,
-            )
+            start_menu_shortcut = os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", SHORTCUT_LABEL, SHORTCUT_NAME)
             _create_lnk(start_menu_shortcut, target_exe)
 
             if not desktop_shortcut:
-                _log_installer_error(
-                    f"No se pudo crear acceso en escritorio. EXE: {target_exe}"
-                )
+                _log_installer_error(f"No se pudo crear acceso en escritorio. EXE: {target_exe}")
 
             return target_exe, desktop_shortcut
         except Exception as e:
             _log_installer_error(f"Error shortcut: {e}")
             return "", ""
 
-class InstallerWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        sw, sh = self._installer_size()
-        self.setFixedSize(sw, sh)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        self.browser = QWebEngineView()
-        self.browser.page().setBackgroundColor(Qt.transparent) 
-        
-        # En pyinstaller debemos buscar en sys._MEIPASS
-        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        html_path = os.path.join(base_dir, 'web', 'index.html')
-        self.browser.setUrl(QUrl.fromLocalFile(html_path))
-        
-        layout.addWidget(self.browser)
-
-        self.is_update_mode = "--update" in sys.argv
-        self.download_url = None  # se resuelve vía API al descargar
-        self.zip_filename = GITHUB_RELEASE_ZIP_NAME
-        self.install_dir = os.path.join(os.environ['USERPROFILE'], 'CobroFacil_POS_Install')
-
-        import threading
-        threading.Timer(1.5, self.start_install).start()
-
-    @staticmethod
-    def _installer_size():
-        app = QApplication.instance()
-        base_w, base_h = 700, 400
-        if app is None:
-            return base_w, base_h
-        screen = app.primaryScreen()
-        if screen is None:
-            return base_w, base_h
-        geo = screen.availableGeometry()
-        try:
-            dpi = float(screen.logicalDotsPerInchX())
-        except Exception:
-            dpi = float(screen.logicalDotsPerInch())
-        factor = max(0.85, min(dpi / 96.0, 2.5))
-        w = int(round(base_w * factor))
-        h = int(round(base_h * factor))
-        w = min(w, max(480, int(geo.width() * 0.9)))
-        h = min(h, max(300, int(geo.height() * 0.85)))
-        return w, h
-
-    def start_install(self):
-        self.worker = InstallWorker(self.download_url, self.zip_filename, self.install_dir, self.is_update_mode)
-        self.worker.progress_update.connect(self.update_ui)
-        self.worker.finished.connect(self.on_finished)
-        self.worker.start()
-
-    def update_ui(self, val, text):
-        safe = (
-            str(text)
-            .replace("\\", "\\\\")
-            .replace("'", "\\'")
-            .replace("\r", " ")
-            .replace("\n", " ")
-        )
-        js_code = f"window.actualizar_interfaz({val}, '{safe}');"
-        self.browser.page().runJavaScript(js_code)
-
-    def on_finished(self, success, msg, target_exe, shortcut_path):
-        if success:
-            shortcut_hint = (
-                f"\n\nEn tu ESCRITORIO quedó el acceso directo:\n«{SHORTCUT_LABEL}»\n\n"
-                "La próxima vez, ábrelo desde ahí (doble clic)."
-            )
-            if self.is_update_mode:
-                QMessageBox.information(
-                    self,
-                    "Actualización Completada",
-                    "Sistema actualizado exitosamente."
-                    + shortcut_hint
-                    + "\n\nCobro Fácil POS se iniciará ahora.",
-                )
-                if target_exe and os.path.exists(target_exe):
-                    os.startfile(target_exe)
-                self.close()
-            else:
-                QMessageBox.information(
-                    self,
-                    "Instalación Completada",
-                    "El sistema fue desplegado con éxito."
-                    + shortcut_hint
-                    + "\n\nIniciando Cobro Fácil POS...",
-                )
-                if shortcut_path and os.path.exists(shortcut_path):
-                    subprocess.Popen(
-                        ["explorer", f"/select,{os.path.normpath(shortcut_path)}"],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                if target_exe and os.path.exists(target_exe):
-                    os.startfile(target_exe)
-                self.close()
-        else:
-            _report_installer_failure_to_github(msg)
-            QMessageBox.critical(self, "Error de Instalación", f"No se pudo completar el proceso:\n{msg}")
-            self.close()
-
-if __name__ == '__main__':
+def main():
     try:
         myappid = 'punpro.cobrofacil.instalador.2026'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except Exception: pass 
-
-    app = QApplication(sys.argv)
     
-    icon_path = os.path.join(os.path.dirname(__file__), 'logo.ico')
-    if os.path.exists(icon_path):
-        app.setWindowIcon(QIcon(icon_path))
+    base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    html_path = os.path.join(base_dir, 'web', 'index.html')
+    
+    logic = InstallerLogic()
+    
+    def start_install(window):
+        logic.set_window(window)
+        # Give UI a moment to render
+        time.sleep(1.5)
+        logic.run()
 
-    window = InstallerWindow()
-    from PyQt5.QtWidgets import QApplication as _QApp
+    window = webview.create_window(
+        'Cobro Fácil POS - Instalador',
+        url=html_path,
+        width=700,
+        height=400,
+        frameless=True,
+        background_color='#0a0a0c',
+        easy_drag=True,
+        resizable=False
+    )
+    
+    webview.start(start_install, window, gui='edgechromium')
 
-    _app = _QApp.instance()
-    if _app is not None:
-        screen = _app.primaryScreen()
-        if screen is not None:
-            geo = screen.availableGeometry()
-            frame = window.frameGeometry()
-            frame.moveCenter(geo.center())
-            window.move(frame.topLeft())
-    window.show()
-    sys.exit(app.exec_())
+if __name__ == '__main__':
+    main()

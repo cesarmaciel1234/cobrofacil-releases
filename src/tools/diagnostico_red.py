@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QPushButton
@@ -86,4 +87,4 @@ if __name__ == '__main__':
     app = QApplication(sys.args if hasattr(sys, 'args') else sys.argv)
     ventana = VentanaDiagnosticoNexus()
     ventana.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

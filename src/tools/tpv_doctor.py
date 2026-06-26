@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import sys
 import os
 import sqlite3
@@ -5,6 +6,7 @@ import json
 import shutil
 import time
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+
                              QHBoxLayout, QPushButton, QLabel, QTextEdit, 
                              QMessageBox, QProgressBar)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -209,4 +211,4 @@ if __name__ == '__main__':
     app.setStyle('Fusion')
     window = DoctorApp()
     window.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

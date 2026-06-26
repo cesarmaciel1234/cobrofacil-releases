@@ -1,7 +1,9 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import sys
 from datetime import datetime
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+
                              QPushButton, QTableWidget, QTableWidgetItem, 
                              QHeaderView, QLineEdit, QMessageBox, QDialog, 
                              QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QScrollArea)
@@ -391,7 +393,7 @@ class AdminClientes(QWidget):
                 btn_sim.setCursor(Qt.PointingHandCursor)
                 if deuda > 0:
                     btn_sim.setStyleSheet("  font-weight: bold; border-radius: 6px; padding: 6px;")
-                    btn_sim.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre']: DialogoRecalculoFiado(cid, cnom, self).exec_())
+                    qt_exec(btn_sim.clicked.connect(lambda ch, cid=c['id'], cnom=c['nombre']: DialogoRecalculoFiado(cid, cnom, self)))
                 else:
                     btn_sim.setEnabled(False)
                     btn_sim.setStyleSheet("background: transparent; color: transparent; border: none;")
@@ -414,7 +416,7 @@ class AdminClientes(QWidget):
 
     def nuevo_cliente(self):
         dlg = DialogoNuevoCliente(self)
-        if dlg.exec_():
+        if qt_exec(dlg):
             data = dlg.get_data()
             if not data['nombre']:
                 QMessageBox.warning(self, "Error", "El nombre es obligatorio.")

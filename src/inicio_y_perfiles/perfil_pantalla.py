@@ -219,6 +219,11 @@ class PerfilPantalla(QDialog):
         self.update_selection_ui()
         self._check_locked_profiles()
         try:
+            from src.utils.qt_dpi import center_on_primary_screen
+            center_on_primary_screen(self)
+        except Exception:
+            pass
+        try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso2")
         except Exception:

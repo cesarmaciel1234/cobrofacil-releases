@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 # ==============================================================================
 # CAJAFACIL PRO 2026 - REDIRECCIONAMIENTO DE SEGURIDAD
@@ -15,4 +16,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = AdminEtiquetas()
     window.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

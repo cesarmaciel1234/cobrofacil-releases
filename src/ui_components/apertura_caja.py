@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
 from PyQt5.QtCore import Qt
 from datetime import datetime
@@ -91,7 +92,7 @@ class PantallaAperturaCaja(QDialog):
         except Exception as e:
             from src.ui_components.alerts import MensajeAtencion
             alert = MensajeAtencion(f"Error: {str(e)}", self)
-            alert.exec_()
+            qt_exec(alert)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:

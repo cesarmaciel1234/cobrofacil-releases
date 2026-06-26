@@ -1,5 +1,7 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
@@ -2137,13 +2139,13 @@ class Admin5Configuracion(QWidget):
     def ejecutar_accion(self, opcion):
         if opcion == "Alertas de\nEfectivo":
             dlg = DialogoAlertasEfectivo(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Opciones\nhabilitadas":
             dlg = DialogoOpcionesHabilitadas(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Cajeros":
             dlg = DialogoCajeros(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Administrar\nCajas":
             # Bloqueo Premium de Red (Fase de Pruebas / Versión Paga)
             pwd, ok = QInputDialog.getText(self, "Licencia Multi-Caja Requerida", 
@@ -2151,64 +2153,64 @@ class Admin5Configuracion(QWidget):
                                            QLineEdit.Password)
             if ok and pwd == "209470":
                 dlg = DialogoAdministrarCajas(self)
-                dlg.exec_()
+                qt_exec(dlg)
             elif ok:
                 QMessageBox.warning(self, "Acceso Denegado", 
                                     "Clave incorrecta. Esta función será desbloqueada al adquirir el módulo de Red en próximas actualizaciones.")
         elif opcion == "Ticket":
             dlg = DialogoTicket(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Logotipo del\nPrograma":
             dlg = DialogoTicket(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Lector de\nCódigos":
             dlg = DialogoLectorCodigos(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Dos Tiketeras\n2 Cajas":
             dlg = DialogoDosTiketeras(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Cajón de\nDinero":
             dlg = DialogoCajon(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Símbolo de\nMoneda":
             dlg = DialogoSimboloMoneda(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Unidades de\nMedida":
             dlg = DialogoUnidadesMedida(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Báscula":
             dlg = DialogoBalanza(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Hardware\nIndustrial":
             self.request_screen.emit(13)
         elif opcion == "Base de datos\nPC Esclava":
             dlg = DialogoPINLocal(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Facturación":
             dlg = DialogoFacturacion(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Impuestos":
             dlg = DialogoImpuestos(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Respaldo":
             dlg = DialogoRespaldo(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Terminal\nTPV":
             dlg = DialogoTerminalTPV(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Actualizaciones":
             dlg = DialogoActualizaciones(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Integraciones\nNube":
             dlg = DialogoIntegracionesNube(self)
-            dlg.exec_()
+            qt_exec(dlg)
 
         elif opcion == "Licencia":
             dlg = DialogoLicencia(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "Notificaciones\npor Correo":
             dlg = DialogoNotificacionesCorreo(self)
-            dlg.exec_()
+            qt_exec(dlg)
         elif opcion == "App\nCobro Fácil":
             QMessageBox.information(self, "📱 App Cobro Fácil", "Búscanos en las redes para tener tu App Móvil de Jefe, donde podrás ver cada billete que entra en la caja o sale por que tenemos alarmas de apertura de caja sin permiso.")
         else:

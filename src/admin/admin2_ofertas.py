@@ -1,5 +1,7 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
@@ -912,7 +914,7 @@ class Admin2Ofertas(QWidget):
         btn_ok.clicked.connect(dlg.accept)
         lay.addSpacing(10); lay.addWidget(btn_ok)
 
-        if dlg.exec_():
+        if qt_exec(dlg):
             try:
                 from src.services.etiquetas.renderer import EtiquetaRenderer, abrir_archivo_pdf
             except ImportError:
@@ -1014,7 +1016,7 @@ class Admin2Ofertas(QWidget):
         btn_ok.clicked.connect(dlg.accept)
         lay.addWidget(btn_ok)
         
-        if dlg.exec_():
+        if qt_exec(dlg):
             try:
                 from src.services.etiquetas.renderer import EtiquetaRenderer, abrir_archivo_pdf
             except ImportError:
@@ -1136,7 +1138,7 @@ class Admin2Ofertas(QWidget):
         lay.addSpacing(10)
         lay.addWidget(btn_ok)
         
-        if dlg.exec_():
+        if qt_exec(dlg):
             # Determinar qué productos procesar
             productos_a_procesar = []
             if rb_sel.isChecked():
@@ -1258,7 +1260,7 @@ class Admin2Ofertas(QWidget):
         btn_m_ok.clicked.connect(dlg_marca.accept)
         lay_m.addWidget(btn_m_ok)
         
-        if not dlg_marca.exec_():
+        if not qt_exec(dlg_marca):
             return
             
         rubro = txt_rub.text().strip().upper() or "CARNICERÍA"
@@ -1328,7 +1330,7 @@ class Admin2Ofertas(QWidget):
             bx_btn.addStretch(); bx_btn.addWidget(btn_ok)
             lay.addLayout(bx_btn)
             
-            if dlg.exec_():
+            if qt_exec(dlg):
                 lote_ofertas.append({
                     "id": str(prod["id"]),
                     "nombre": prod["nombre"],

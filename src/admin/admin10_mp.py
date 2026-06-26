@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 import os
 import json
@@ -5,6 +6,7 @@ import subprocess
 import time
 from datetime import datetime
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QMessageBox, QDialog,
     QGraphicsDropShadowEffect, QDateEdit, QCheckBox, QFileDialog
@@ -788,7 +790,7 @@ class Admin10MP(QWidget):
             action_omitir.triggered.connect(lambda: self.toggle_omitir_pago(id_pago))
             menu.addAction(action_omitir)
             
-            menu.exec_(self.tabla.mapToGlobal(pos))
+            qt_exec(menu, self.tabla.mapToGlobal(pos))
 
     def toggle_omitir_pago(self, id_pago):
         csv_file = os.path.join("reportes", "mercado_pago_sync.csv")

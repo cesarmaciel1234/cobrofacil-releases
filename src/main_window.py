@@ -1,4 +1,6 @@
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import (
+
     QMainWindow, QWidget, QStackedWidget, QLabel, QFrame, QShortcut,
     QGraphicsDropShadowEffect, QApplication, QMessageBox, QPushButton,
     QHBoxLayout, QVBoxLayout
@@ -617,7 +619,7 @@ class MainWindow(QMainWindow):
 
     def jump_to_admin_secure(self):
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        if LoginPantalla(role="admin").exec_():
+        if qt_exec(LoginPantalla(role="admin")):
             self._supervisor_mode = True
             self.btn_flotante.show()
             self.switch_tab(0)
@@ -647,7 +649,7 @@ class MainWindow(QMainWindow):
             self._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
 
             dlg = LoginPantalla(role="admin")
-            if dlg.exec_():
+            if qt_exec(dlg):
                 from src.cajero.paso5_terminal import CajeroActivo
                 from src.hardware.cash_drawer import drawer_manager
                 supervisor = config.current_user.get('username', 'admin')
@@ -675,7 +677,7 @@ class MainWindow(QMainWindow):
             self._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
             
             dlg = LoginPantalla(role="jefe")
-            if dlg.exec_():
+            if qt_exec(dlg):
                 # _came_from_cajero se preserva tal como está
                 # (True si vino del cajero, False si entro directo como admin)
                 self._supervisor_mode = True
@@ -757,18 +759,17 @@ class MainWindow(QMainWindow):
             self.btn_flotante.hide()
             
             # --- MODO BORDERLESS MAXIMIZED (PANTALLA SECUNDARIA) ---
-            # QApplication y Qt ya están importados a nivel de módulo
-            desktop = QApplication.desktop()
-            
+            from src.utils.qt_compat import screen_count, screen_geometry_at
+
             # Cambiar flags oculta la ventana temporalmente
             self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
             self.setAttribute(Qt.WA_ShowWithoutActivating)
-            
-            if desktop.screenCount() > 1:
-                screen_rect = desktop.screenGeometry(1) # Segunda pantalla
-                self.setGeometry(screen_rect)
+
+            if screen_count() > 1:
+                screen_rect = screen_geometry_at(1)
             else:
-                screen_rect = desktop.screenGeometry(0)
+                screen_rect = screen_geometry_at(0)
+            if screen_rect is not None:
                 self.setGeometry(screen_rect)
                 
             self.showMaximized()
@@ -944,4 +945,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.show()
-    sys.exit(app.exec_())
+sys.exit(qt_exec(app))

@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 import datetime
 import re
 from PyQt5.QtWidgets import *
@@ -6,6 +7,7 @@ from PyQt5.QtGui import *
 
 # Utilidades visuales importadas desde el módulo del Jefe
 from src.jefe.contabilidad.shared_globals import (
+
     section_title, date_field, input_field, build_table, 
     btn_primary, btn_ghost, PAL
 )
@@ -383,7 +385,7 @@ class ModuloProveedoresUnificado(QWidget):
         btn_cerrar = btn_ghost("Cerrar")
         btn_cerrar.clicked.connect(dlg.reject)
         lay.addWidget(btn_cerrar)
-        dlg.exec_()
+        qt_exec(dlg)
 
     def _pagar_proveedor(self, debt_id, restante):
         if restante <= 0:

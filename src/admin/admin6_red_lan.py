@@ -1,6 +1,8 @@
 """Panel dedicado de red LAN / multicaja."""
 
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import (
+
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea,
 )
 from PyQt5.QtCore import pyqtSignal, Qt
@@ -132,8 +134,8 @@ class Admin6RedLan(QWidget):
 
     def _open_administrar_cajas(self):
         from src.admin.admin5_configuracion import DialogoAdministrarCajas
-        DialogoAdministrarCajas(self).exec_()
+        qt_exec(DialogoAdministrarCajas(self))
 
     def _open_pin_esclava(self):
         from src.admin.admin5_configuracion import DialogoPINLocal
-        DialogoPINLocal(self).exec_()
+        qt_exec(DialogoPINLocal(self))

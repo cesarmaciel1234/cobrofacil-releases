@@ -1,3 +1,4 @@
+from src.utils.qt_compat import qt_exec
 from PyQt5.QtWidgets import QMessageBox, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor
@@ -54,7 +55,7 @@ class TerminalCajaMixin:
     def animar_ahorro(self, nuevo_ahorro):
         """ 
         Animación interactiva premium tipo 'saldo ascendente' (+100).
-        Incrementa el valor del ahorro de forma asíncrona y fluida usando QVariantAnimation.
+        Incrementa el valor del ahorro de forma asíncrona y fluida.
         """
         if not hasattr(self, 'current_ahorro'):
             self.current_ahorro = 0.0
@@ -74,11 +75,11 @@ class TerminalCajaMixin:
         # Color y tamaño de impacto (Naranja vibrante para el incremento)
         self.lbl_ahorro_val.setStyleSheet("font-size: 48px; color: #FF4500; font-weight: 900; border: none;")
         
-        from PyQt5.QtCore import QVariantAnimation
+        from src.utils.qt_compat import VariantFloatAnimation
         if hasattr(self, '_ahorro_anim') and self._ahorro_anim:
             self._ahorro_anim.stop()
             
-        self._ahorro_anim = QVariantAnimation(self)
+        self._ahorro_anim = VariantFloatAnimation(self)
         self._ahorro_anim.setStartValue(self.current_ahorro)
         self._ahorro_anim.setEndValue(nuevo_ahorro)
         self._ahorro_anim.setDuration(2000) # 2000ms (2.0s) de animación suave e impactante
@@ -100,12 +101,12 @@ class TerminalCajaMixin:
         Inicia un efecto continuo de respiración (zoom + brillo intermitente) 
         en la etiqueta de ahorro para que se vea súper llamativa y orgánica.
         """
-        from PyQt5.QtCore import QVariantAnimation, QEasingCurve
+        from src.utils.qt_compat import VariantFloatAnimation, QEasingCurve
         
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             return
             
-        self._respiracion_anim = QVariantAnimation(self)
+        self._respiracion_anim = VariantFloatAnimation(self)
         self._respiracion_anim.setStartValue(0.0)
         self._respiracion_anim.setEndValue(1.0)
         self._respiracion_anim.setDuration(1500) # Ciclo suave de 1.5 segundos
@@ -143,10 +144,10 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(blur)
         
         dlg = DialogoRetiroEfectivo(efectivo, parent=self)
-        if dlg.exec_() and dlg.monto_retirado > 0:
+        if qt_exec(dlg) and dlg.monto_retirado > 0:
             # Solicitar PIN de confirmación del operador activo
             pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if pin_dlg.exec_() and pin_dlg.ok:
+            if qt_exec(pin_dlg) and pin_dlg.ok:
                 monto = dlg.monto_retirado
                 motivo = getattr(dlg, "motivo", "Retiro rápido de efectivo en terminal")
                 usuario = CajeroActivo.nombre
@@ -177,10 +178,10 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(blur)
         
         dlg = DialogoIngresoEfectivo(parent=self)
-        if dlg.exec_() and dlg.monto_ingresado > 0:
+        if qt_exec(dlg) and dlg.monto_ingresado > 0:
             # Solicitar PIN de confirmación del operador activo
             pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if pin_dlg.exec_() and pin_dlg.ok:
+            if qt_exec(pin_dlg) and pin_dlg.ok:
                 monto = dlg.monto_ingresado
                 motivo = getattr(dlg, "motivo", "Ingreso manual de efectivo en terminal")
                 usuario = CajeroActivo.nombre
@@ -247,7 +248,7 @@ class TerminalCajaMixin:
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
         
         # Ejecutamos el cobro
-        ok = dlg.exec_()
+        qt_exec(ok = dlg)
         self._cobro_abierto = False
         
         # Quitamos el desenfoque
@@ -350,7 +351,7 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(blur_effect)
 
         cierre = Paso7CierreCaja(self)
-        ok = cierre.exec_()
+        qt_exec(ok = cierre)
         
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)
@@ -371,7 +372,7 @@ class TerminalCajaMixin:
         self.setGraphicsEffect(blur_effect)
         
         dlg = DialogoHistorialDia(self)
-        dlg.exec_()
+        qt_exec(dlg)
         
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
