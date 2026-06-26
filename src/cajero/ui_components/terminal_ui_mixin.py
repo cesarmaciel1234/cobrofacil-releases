@@ -489,6 +489,7 @@ class TerminalUIMixin:
         self.status_bar.setFixedHeight(m["status_height"])
         if hasattr(self, "_shortcuts_scroll"):
             self._shortcuts_scroll.setFixedHeight(m["shortcuts_height"])
+        self._apply_status_bar_controls(m)
         self.txt_scan.setMinimumHeight(m["scan_min_height"])
         self.lbl_terminal_title.setStyleSheet(f"font-size: {m['title_font']}px; font-weight: bold;")
         self.lbl_total_val.setStyleSheet(
@@ -512,10 +513,31 @@ class TerminalUIMixin:
         self.tabla.verticalHeader().setDefaultSectionSize(m["table_row"])
         self._apply_status_bar_shortcuts_layout(ls)
 
+    def _apply_status_bar_controls(self, metrics):
+        from src.utils.qt_dpi import scale_px
+
+        ls = metrics["layout_scale"]
+        ctrl_h = metrics["status_control_height"]
+        icon_sz = metrics["status_icon_size"]
+
+        sl = self.status_bar.layout()
+        if sl is not None:
+            sl.setContentsMargins(scale_px(15, ls), scale_px(5, ls), scale_px(5, ls), scale_px(5, ls))
+
+        for attr in ("btn_teclado", "btn_theme", "btn_espera"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                btn.setFixedHeight(ctrl_h)
+
+        for attr in ("btn_candado", "btn_chatbot"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                btn.setFixedSize(icon_sz, icon_sz)
+
     def _apply_status_bar_shortcuts_layout(self, ls=None):
         if not hasattr(self, "_shortcuts_scroll") or not getattr(self, "shortcut_buttons", None):
             return
-        from src.utils.qt_dpi import layout_scale, scale_px
+        from src.utils.qt_dpi import layout_scale, scale_px, TERMINAL_STATUS_CTRL_H
 
         if ls is None:
             ls = layout_scale()
@@ -529,7 +551,7 @@ class TerminalUIMixin:
         min_w = scale_px(34, ls)
         max_w = scale_px(45, ls)
         btn_w = max(min_w, min(max_w, int(available / n) if n else max_w))
-        btn_h = scale_px(40, ls)
+        btn_h = scale_px(TERMINAL_STATUS_CTRL_H, ls)
         font_px = 13 if btn_w >= scale_px(40, ls) else 11
         style = self._shortcut_btn_base_style.format(font_px=font_px)
         for btn in self.shortcut_buttons:

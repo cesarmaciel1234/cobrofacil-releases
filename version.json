@@ -1,7 +1,7 @@
 {
-  "app_version": "4.6",
+  "app_version": "4.6.1",
   "channel": "stable",
-  "build_date": "2026-06-26 17:22:28",
+  "build_date": "2026-06-26 19:18:03",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -36,25 +36,25 @@
     },
     "requirements-pyqt5.txt": {
       "version": "1.0.0",
-      "checksum": "83e52dbf61b4f70d5e1c46f70b129fcb",
+      "checksum": "b18699ed6bcf86e228b051f2abfce4a4",
       "channel": "stable",
-      "size": 290
+      "size": 310
     },
     "requirements-pyqt6.txt": {
       "version": "1.0.0",
-      "checksum": "6016887a7ccd72bcf5ff9d6c115e16ac",
+      "checksum": "14d912a58c4b346cdaaa191bc89ec994",
       "channel": "stable",
-      "size": 347
+      "size": 368
     },
     "requirements.txt": {
       "version": "1.0.0",
-      "checksum": "5d96c20a62cded91229dc89b4e19d83f",
+      "checksum": "e38ee217fea3067f8b871d29f13bbe76",
       "channel": "stable",
-      "size": 219
+      "size": 236
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "0f61a4b2dcdaa809e18890b63683498b",
+      "checksum": "e29ef4e8bd6503080216e13d011e8f19",
       "channel": "stable",
       "size": 48503
     },
@@ -66,9 +66,9 @@
     },
     "01_Compiladores_y_Ejecutables/generar_version.py": {
       "version": "1.0.0",
-      "checksum": "537d297b7dddbf1e4dbba5ac0dfc5b46",
+      "checksum": "27d3641baee5153ecd463702ebbbfd1e",
       "channel": "stable",
-      "size": 3093
+      "size": 3190
     },
     "01_Compiladores_y_Ejecutables/package_release_zip.py": {
       "version": "1.0.0",
@@ -84,9 +84,9 @@
     },
     "01_Compiladores_y_Ejecutables/pyinstaller_qt6_extras.py": {
       "version": "1.0.0",
-      "checksum": "79ae780e85392a53b3665aaa19be6ad4",
+      "checksum": "7b74a204a77feb535ba1bf608cf209d7",
       "channel": "stable",
-      "size": 1636
+      "size": 1689
     },
     "01_Compiladores_y_Ejecutables/run_pyinstaller.py": {
       "version": "1.0.0",
@@ -318,9 +318,9 @@
     },
     "src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
-      "checksum": "30d805094b08ae5ef834851ef38d7fe4",
+      "checksum": "24f5381f11284bbf053284f4d2c52c27",
       "channel": "stable",
-      "size": 64623
+      "size": 66629
     },
     "src/admin/admin3_reportes.py": {
       "version": "1.0.0",
@@ -468,9 +468,9 @@
     },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "0c187102a66372d3b9db1807169d7769",
+      "checksum": "3fb209790a6ad2c81927b332027fd577",
       "channel": "stable",
-      "size": 157306
+      "size": 160391
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
@@ -510,9 +510,9 @@
     },
     "src/cajero/ui_components/terminal_ui_mixin.py": {
       "version": "1.0.0",
-      "checksum": "07535db5d6276ec346b45815dfebea31",
+      "checksum": "916d84f8e91e44792173c70eb44f4b76",
       "channel": "stable",
-      "size": 25552
+      "size": 26426
     },
     "src/cajero/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
@@ -1206,9 +1206,9 @@
     },
     "src/utils/qt_dpi.py": {
       "version": "1.0.0",
-      "checksum": "fdb5ae4e984f6810c08eab04cf411fae",
+      "checksum": "c0b54c0fe658a849a00ce1dfbcf470f3",
       "channel": "stable",
-      "size": 11818
+      "size": 12015
     },
     "src/utils/qt_printer.py": {
       "version": "1.0.0",
@@ -1368,75 +1368,75 @@
     },
     "tools/codemod_exec_to_qt_exec.py": {
       "version": "1.0.0",
-      "checksum": "a8957e5ea8ad61e43c851f5b7a2c4ea8",
+      "checksum": "0c4e73feeda0af5258925910cd850c91",
       "channel": "stable",
-      "size": 3855
+      "size": 3975
     },
     "tools/codemod_pyqt5_to_pyqt6.py": {
       "version": "1.0.0",
-      "checksum": "e899744747a7fd566e45227e49b81e33",
+      "checksum": "0647c16f4db7c572a3be156d7ae86bb5",
       "channel": "stable",
-      "size": 2689
+      "size": 2772
     },
     "tools/fix_qt_exec_codemod_damage.py": {
       "version": "1.0.0",
-      "checksum": "0a59da612e4b8bea6f7d3ee8a8691659",
+      "checksum": "27b13617f33386fa9523f9a40141f1de",
       "channel": "stable",
-      "size": 2907
+      "size": 3013
     },
     "tools/fix_qt_exec_final.py": {
       "version": "1.0.0",
-      "checksum": "073a822f14e2af9e1d2fb51d91f8d9f1",
+      "checksum": "7935fc64b609e5ab274932c3a321028a",
       "channel": "stable",
-      "size": 2262
+      "size": 2336
     },
     "tools/fix_qt_exec_imports.py": {
       "version": "1.0.0",
-      "checksum": "7c1ec801fd006102a62ab28576588583",
+      "checksum": "530c6c8878137f5a61f7490d78d0454f",
       "channel": "stable",
-      "size": 1818
+      "size": 1877
     },
     "tools/fix_qt_import_blocks.py": {
       "version": "1.0.0",
-      "checksum": "adac231c1c9e6a2b3559d5dc885ebc46",
+      "checksum": "0891ca1a2536a87d3d5f69923389cc87",
       "channel": "stable",
-      "size": 2610
+      "size": 2691
     },
     "tools/pyqt6_audit.py": {
       "version": "1.0.0",
-      "checksum": "2809ccbc378a8734e6710af2efe10780",
+      "checksum": "48879f8c82bbe517b611e1f9bd146001",
       "channel": "stable",
-      "size": 4997
+      "size": 5149
     },
     "tools/smoke_cajero.py": {
       "version": "1.0.0",
-      "checksum": "b986e9e017f143edebe44bc2ae86d913",
+      "checksum": "7cc74ab6b6b85b92051dec77b57a903c",
       "channel": "stable",
-      "size": 2159
+      "size": 2220
     },
     "tools/smoke_main_import.py": {
       "version": "1.0.0",
-      "checksum": "72088ebe464d4aaeadcddd20c2d8c3c7",
+      "checksum": "1991f2700ffef941b97e16008704184f",
       "channel": "stable",
-      "size": 1322
+      "size": 1364
     },
     "tools/smoke_pyqt6.py": {
       "version": "1.0.0",
-      "checksum": "db3d158a50cdd13a5d3b61268c967d7d",
+      "checksum": "7cb689681a19b47e2355dbb9d251d15b",
       "channel": "stable",
-      "size": 1601
+      "size": 1657
     },
     "tools/smoke_webengine.py": {
       "version": "1.0.0",
-      "checksum": "4816fa097390942e74f2bc5f08e96568",
+      "checksum": "95aa1c51b96a8f8513db0986e6f2fb4f",
       "channel": "stable",
-      "size": 927
+      "size": 962
     },
     "tools/test_screen_scales.py": {
       "version": "1.0.0",
-      "checksum": "01161aab482fb0a6839ef7915eaa6779",
+      "checksum": "12834ca6124b4b4068fab55d16291c73",
       "channel": "stable",
-      "size": 2100
+      "size": 2170
     }
   }
 }

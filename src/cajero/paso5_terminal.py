@@ -1268,12 +1268,12 @@ class Paso5Terminal(QWidget):
             }
         """)
         
-        # Efecto de Brillo Industrial (Neon Glow)
-        glow = QGraphicsDropShadowEffect(self.txt_scan)
-        glow.setBlurRadius(20)
-        glow.setColor(QColor(59, 130, 246, 150))
-        glow.setOffset(0, 0)
-        self.txt_scan.setGraphicsEffect(glow)
+        # Sombra sutil (elevación nivel 2) — no glow neón
+        self._scan_shadow = QGraphicsDropShadowEffect(self.txt_scan)
+        self._scan_shadow.setOffset(0, 4)
+        self._scan_shadow.setBlurRadius(10)
+        self._scan_shadow.setColor(QColor(0, 0, 0, 56))  # ~22% opacidad
+        self.txt_scan.setGraphicsEffect(self._scan_shadow)
 
         self.txt_scan.textChanged.connect(self.actualizar_busqueda)
         self.txt_scan.returnPressed.connect(self.procesar_scan)
@@ -1338,19 +1338,22 @@ class Paso5Terminal(QWidget):
         """)
         sl = QVBoxLayout(self.side_box)
         sl.setContentsMargins(15, 10, 15, 10)
-        sl.setSpacing(5)
-        
-        self.lbl_side_cant = QLabel("CANTIDAD:       0.00")
-        self.lbl_side_total = QLabel("TOTAL VENTA:    0.00")
-        self.lbl_side_pagos = QLabel("PAGOS:          0.00")
-        self.lbl_side_cambio = QLabel("CAMBIO:         0.00")
-        
-        for l in [self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos, self.lbl_side_cambio]:
-            l.setStyleSheet("font-size: 13px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
-            sl.addWidget(l)
-            
-        # Resaltar Cambio
-        self.lbl_side_cambio.setStyleSheet("font-size: 15px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
+        sl.setSpacing(6)
+
+        self.lbl_side_cant_t, self.lbl_side_cant = self._build_side_summary_row(sl, "CANTIDAD")
+        self.lbl_side_cant.setText("0")
+        self.lbl_side_total_t, self.lbl_side_total = self._build_side_summary_row(sl, "TOTAL VENTA")
+        self.lbl_side_total.setText("0")
+        self.lbl_side_ahorro_t, self.lbl_side_ahorro = self._build_side_summary_row(sl, "AHORRO OFER")
+        self.lbl_side_ahorro.setText("0")
+        self.lbl_side_ahorro_t.hide()
+        self.lbl_side_ahorro.hide()
+        self.lbl_side_pagos_t, self.lbl_side_pagos = self._build_side_summary_row(sl, "PAGOS")
+        self.lbl_side_pagos.setText("0")
+        self.lbl_side_cambio_t, self.lbl_side_cambio = self._build_side_summary_row(sl, "CAMBIO")
+        self.lbl_side_cambio.setText("0")
+
+        self._style_side_labels(cambio_highlight=False)
         
         dash_layout.addWidget(self.side_box, stretch=1)
         
@@ -1434,7 +1437,7 @@ class Paso5Terminal(QWidget):
         self._hints_widget = QWidget()
         self._hints_widget.setStyleSheet("background: transparent; border: none;")
         hints_layout = QHBoxLayout(self._hints_widget)
-        hints_layout.setSpacing(6)
+        hints_layout.setSpacing(8)
         hints_layout.setContentsMargins(0, 0, 0, 0)
         self._hints_layout = hints_layout
 
@@ -1893,6 +1896,9 @@ class Paso5Terminal(QWidget):
                 for btn in self.shortcut_buttons:
                     btn.setStyleSheet(btn_style_light)
 
+        if hasattr(self, 'lbl_side_cant'):
+            self._style_side_labels(cambio_highlight=False)
+
     def toggle_keyboard(self):
         if not HAS_KEYBOARD:
             return
@@ -2226,6 +2232,7 @@ class Paso5Terminal(QWidget):
         self.dashboard_frame.setFixedHeight(m["dashboard_height"])
         self.status_bar.setFixedHeight(m["status_height"])
         self._shortcuts_scroll.setFixedHeight(m["shortcuts_height"])
+        self._apply_status_bar_controls(m)
 
         self.txt_scan.setMinimumHeight(m["scan_min_height"])
         scan_px = m["scan_font"]
@@ -2246,25 +2253,88 @@ class Paso5Terminal(QWidget):
                 color: #1E3A8A; font-size: {scan_px}px; padding: 12px; font-weight: 900;
             }}
         """)
-        for lbl in (self.lbl_side_cant, self.lbl_side_total, self.lbl_side_pagos):
-            lbl.setStyleSheet(
-                f"font-size: {side_px}px; color: #475569; font-weight: 800; "
-                "font-family: 'Consolas', monospace;"
-            )
-        self.lbl_side_cambio.setStyleSheet(
-            f"font-size: {side_px + 2}px; color: #10b981; font-weight: 900; "
-            "font-family: 'Consolas', monospace;"
-        )
+        self._style_side_labels(cambio_highlight=False, side_px=side_px)
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
         self._apply_status_bar_shortcuts_layout(ls)
         self._apply_tabla_column_layout()
         self._layout_list_results_popup(m)
 
+    def _build_side_summary_row(self, parent_layout, title: str):
+        """Fila resumen: etiqueta pequeña + valor numérico grande."""
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        row.setContentsMargins(0, 0, 0, 0)
+        lbl_t = QLabel(title)
+        lbl_v = QLabel("0")
+        lbl_v.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        lbl_t.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        lbl_v.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        row.addWidget(lbl_t)
+        row.addWidget(lbl_v, stretch=1)
+        parent_layout.addLayout(row)
+        return lbl_t, lbl_v
+
+    def _style_side_labels(self, cambio_highlight=False, side_px=None):
+        """Resumen lateral: título discreto + valor numérico en negrita."""
+        from src.utils.qt_dpi import terminal_layout_metrics
+
+        if side_px is None:
+            side_px = terminal_layout_metrics()["side_font"]
+        theme = config.get("theme", "light")
+        title_c = "#94A3B8" if theme == "dark" else "#64748B"
+        value_c = "#F8FAFC" if theme == "dark" else "#0F172A"
+        cambio_c = "#34D399" if theme == "dark" else "#059669"
+        title_px = max(12, side_px - 4)
+        value_px = max(16, side_px)
+        cambio_px = max(17, side_px + 1)
+        title_style = (
+            f"font-family: 'Segoe UI'; font-size: {title_px}px; color: {title_c}; "
+            "font-weight: 600; border: none; background: transparent;"
+        )
+        value_style = (
+            f"font-family: 'Segoe UI'; font-size: {value_px}px; color: {value_c}; "
+            "font-weight: 800; border: none; background: transparent;"
+        )
+        cambio_style = (
+            f"font-family: 'Segoe UI'; font-size: {cambio_px}px; color: {cambio_c}; "
+            "font-weight: 800; border: none; background: transparent;"
+        )
+        for lbl_t in (
+            self.lbl_side_cant_t, self.lbl_side_total_t, self.lbl_side_ahorro_t,
+            self.lbl_side_pagos_t, self.lbl_side_cambio_t,
+        ):
+            lbl_t.setStyleSheet(title_style)
+        for lbl_v in (self.lbl_side_cant, self.lbl_side_total, self.lbl_side_ahorro, self.lbl_side_pagos):
+            lbl_v.setStyleSheet(value_style)
+        self.lbl_side_cambio.setStyleSheet(cambio_style if cambio_highlight else value_style)
+
+    def _apply_status_bar_controls(self, metrics):
+        """Escala altura de botones del pie para que coincidan con status_bar."""
+        from src.utils.qt_dpi import scale_px
+
+        ls = metrics["layout_scale"]
+        ctrl_h = metrics["status_control_height"]
+        icon_sz = metrics["status_icon_size"]
+
+        sl = self.status_bar.layout()
+        if sl is not None:
+            sl.setContentsMargins(scale_px(15, ls), scale_px(5, ls), scale_px(5, ls), scale_px(5, ls))
+
+        for attr in ("btn_teclado", "btn_theme", "btn_espera"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                btn.setFixedHeight(ctrl_h)
+
+        for attr in ("btn_candado", "btn_chatbot"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                btn.setFixedSize(icon_sz, icon_sz)
+
     def _apply_status_bar_shortcuts_layout(self, ls=None):
         """F-keys blancas: todas visibles junto a candado/chatbot."""
         if not hasattr(self, "_shortcuts_scroll") or not self.shortcut_buttons:
             return
-        from src.utils.qt_dpi import layout_scale, scale_px
+        from src.utils.qt_dpi import layout_scale, scale_px, TERMINAL_STATUS_CTRL_H
 
         if ls is None:
             ls = layout_scale()
@@ -2285,7 +2355,7 @@ class Paso5Terminal(QWidget):
         min_w = scale_px(34, ls)
         max_w = scale_px(45, ls)
         btn_w = max(min_w, min(max_w, int(available / n) if n else max_w))
-        btn_h = scale_px(40, ls)
+        btn_h = scale_px(TERMINAL_STATUS_CTRL_H, ls)
         font_px = 13 if btn_w >= scale_px(40, ls) else 11
         style = self._shortcut_btn_base_style.format(font_px=font_px)
         for btn in self.shortcut_buttons:
@@ -2724,16 +2794,21 @@ class Paso5Terminal(QWidget):
         
         # Si estamos agregando items, limpiamos los "Pagos" y "Cambio" de la venta anterior
         if self.en_venta:
-            self.lbl_side_cant.setText(f"CANTIDAD:    {cant:>10.2f}" if cant % 1 != 0 else f"CANTIDAD:    {int(cant):>10,}")
+            cant_txt = f"{cant:.2f}" if cant % 1 != 0 else f"{int(cant):,}"
+            self.lbl_side_cant.setText(cant_txt)
             total_sin = fmt_moneda_sin_centavos(total)
             desc_sin = fmt_moneda_sin_centavos(total_desc)
+            self.lbl_side_total.setText(total_sin)
             if total_desc > 0:
-                self.lbl_side_total.setText(f"TOTAL VENTA: {total_sin:>10}\nAHORRO OFER: {desc_sin:>10}")
+                self.lbl_side_ahorro.setText(desc_sin)
+                self.lbl_side_ahorro_t.show()
+                self.lbl_side_ahorro.show()
             else:
-                self.lbl_side_total.setText(f"TOTAL VENTA: {total_sin:>10}")
-            self.lbl_side_pagos.setText(f"PAGOS:       {'0':>10}")
-            self.lbl_side_cambio.setText(f"CAMBIO:      {'0':>10}")
-            self.lbl_side_cambio.setStyleSheet("font-size: 14px; color: #475569; font-weight: 800; font-family: 'Consolas', monospace;")
+                self.lbl_side_ahorro_t.hide()
+                self.lbl_side_ahorro.hide()
+            self.lbl_side_pagos.setText("0")
+            self.lbl_side_cambio.setText("0")
+            self._style_side_labels(cambio_highlight=False)
             
         # Gatillar la animación interactiva de ahorro total
         self.animar_ahorro(total_desc)
@@ -3146,11 +3221,10 @@ class Paso5Terminal(QWidget):
             self.flash_feedback(success=True)
             
             if res:
-                # Mostrar resumen de la última venta
-                self.lbl_side_total.setText(f"TOTAL VENTA: {fmt_moneda_sin_centavos(res['total']):>10}")
-                self.lbl_side_pagos.setText(f"PAGOS:       {fmt_moneda_sin_centavos(res['pago_con']):>10}")
-                self.lbl_side_cambio.setText(f"CAMBIO:      {fmt_moneda_sin_centavos(res['cambio']):>10}")
-                self.lbl_side_cambio.setStyleSheet("font-size: 16px; color: #10b981; font-weight: 900; font-family: 'Consolas', monospace;")
+                self.lbl_side_total.setText(fmt_moneda_sin_centavos(res['total']))
+                self.lbl_side_pagos.setText(fmt_moneda_sin_centavos(res['pago_con']))
+                self.lbl_side_cambio.setText(fmt_moneda_sin_centavos(res['cambio']))
+                self._style_side_labels(cambio_highlight=True)
         else:
             self.flash_feedback(success=False)
             

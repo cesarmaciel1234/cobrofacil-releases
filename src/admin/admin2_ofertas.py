@@ -1,5 +1,4 @@
 from src.utils.qt_compat import qt_exec
-from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -105,6 +104,112 @@ QLineEdit, QComboBox, QDoubleSpinBox {
 QLineEdit:focus, QComboBox:focus, QDoubleSpinBox:focus {
     border: 2px solid #3B82F6;
 }
+QTableWidget {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
+    gridline-color: #F1F5F9;
+    selection-background-color: #EFF6FF;
+    selection-color: #1D4ED8;
+    border-radius: 12px;
+    alternate-background-color: #F8FAFC;
+}
+QHeaderView::section {
+    background-color: #F8FAFC;
+    color: #64748B;
+    font-weight: 800;
+    padding: 12px 8px;
+    border: none;
+    border-bottom: 2px solid #E2E8F0;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+QScrollBar:vertical {
+    border: none;
+    background: #F1F5F9;
+    width: 10px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical {
+    background: #CBD5E1;
+    min-height: 20px;
+    border-radius: 5px;
+}
+"""
+
+TABLE_STYLE = """
+    QTableWidget {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        gridline-color: transparent;
+        outline: none;
+    }
+    QTableWidget::item {
+        padding: 8px 10px;
+        color: #0F172A;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    QTableWidget::item:hover {
+        background-color: #F1F5F9;
+    }
+    QTableWidget::item:selected {
+        background-color: #EFF6FF;
+        color: #1D4ED8;
+        border-bottom: 2px solid #3B82F6;
+    }
+    QHeaderView::section {
+        background-color: #F8FAFC;
+        color: #64748B;
+        font-weight: 900;
+        padding: 12px 8px;
+        border: none;
+        border-bottom: 2px solid #E2E8F0;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+"""
+
+BTN_PRIMARY_STYLE = """
+    QPushButton {
+        background-color: #2563EB;
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 11px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: none;
+    }
+    QPushButton:hover { background-color: #1D4ED8; }
+    QPushButton:disabled { background-color: #CBD5E1; color: #94A3B8; }
+"""
+
+BTN_SUCCESS_STYLE = """
+    QPushButton {
+        background-color: #059669;
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 11px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: none;
+    }
+    QPushButton:hover { background-color: #047857; }
+"""
+
+BTN_WARN_STYLE = """
+    QPushButton {
+        background-color: #EA580C;
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 11px;
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: none;
+    }
+    QPushButton:hover { background-color: #C2410C; }
+    QPushButton:disabled { background-color: #CBD5E1; color: #94A3B8; }
 """
 
 class Admin2Ofertas(QWidget):
@@ -119,7 +224,48 @@ class Admin2Ofertas(QWidget):
         self.all_rows = []
         self.loaded_count = 0
         self._setup_ui()
+        self._apply_ofertas_theme()
         QTimer.singleShot(50, self._inicializar_datos)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._apply_ofertas_theme()
+
+    def _apply_ofertas_theme(self):
+        """Reaplica tema claro tras theme_manager (lazy-load admin)."""
+        self.setStyleSheet(STYLE)
+        if hasattr(self, "tabla"):
+            self.tabla.setStyleSheet(TABLE_STYLE)
+        if hasattr(self, "panel_control"):
+            self.panel_control.setStyleSheet("""
+                QFrame#ControlCenter {
+                    background-color: #FFFFFF;
+                    border-left: 1px solid #E2E8F0;
+                }
+                QLabel { background: transparent; color: #334155; }
+                QDoubleSpinBox, QLineEdit {
+                    background-color: #F8FAFC;
+                    color: #0F172A;
+                    border: 1px solid #CBD5E1;
+                }
+            """)
+        if hasattr(self, "txt_buscar"):
+            self.txt_buscar.setStyleSheet(
+                "QLineEdit { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
+                "border-radius: 8px; padding: 10px 14px; }"
+                "QLineEdit:focus { border: 2px solid #3B82F6; }"
+            )
+        if hasattr(self, "cmb_depto"):
+            self.cmb_depto.setStyleSheet(
+                "QComboBox { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
+                "border-radius: 8px; padding: 8px 12px; }"
+                "QComboBox:focus { border: 2px solid #3B82F6; }"
+            )
+        if hasattr(self, "btn_imprimir_masivo"):
+            self.btn_imprimir_masivo.setStyleSheet(BTN_PRIMARY_STYLE)
+            self.btn_crear_folleto.setStyleSheet(BTN_SUCCESS_STYLE)
+            self.btn_asistente_promo.setStyleSheet(BTN_WARN_STYLE)
+            self.btn_imprimir_quick_cartel.setStyleSheet(BTN_WARN_STYLE)
 
     def _inicializar_datos(self):
         self._cargar_deptos()
@@ -156,7 +302,7 @@ class Admin2Ofertas(QWidget):
 
         # ── FILTRO SUPERIOR ──────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame{border-bottom:1px solid #cbd5e1;}")
+        fb.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
@@ -192,44 +338,20 @@ class Admin2Ofertas(QWidget):
         fl.addSpacing(15)
         self.btn_imprimir_masivo = QPushButton("📚 IMPRIMIR MASIVO (A4)")
         self.btn_imprimir_masivo.setCursor(Qt.PointingHandCursor)
-        self.btn_imprimir_masivo.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #0284c7);
-                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
-            }
-            QPushButton:hover {  background-color: #3b82f6; color: white; }
-            QPushButton:disabled {   }
-        """)
+        self.btn_imprimir_masivo.setStyleSheet(BTN_PRIMARY_STYLE)
         self.btn_imprimir_masivo.setEnabled(False)
         self.btn_imprimir_masivo.clicked.connect(self._imprimir_cartelera_masiva)
         fl.addWidget(self.btn_imprimir_masivo)
 
-        # Botón para Crear Folleto Publicitario (PDF)
-        fl.addSpacing(15)
         self.btn_crear_folleto = QPushButton("📰 CREAR FOLLETO (PDF)")
         self.btn_crear_folleto.setCursor(Qt.PointingHandCursor)
-        self.btn_crear_folleto.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
-                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
-            }
-            QPushButton:hover {  background-color: #3b82f6; color: white; }
-        """)
+        self.btn_crear_folleto.setStyleSheet(BTN_SUCCESS_STYLE)
         self.btn_crear_folleto.clicked.connect(self._crear_folleto_pdf)
         fl.addWidget(self.btn_crear_folleto)
         
-        # Botón de Asistente de Promo Caliente (A4)
-        fl.addSpacing(15)
         self.btn_asistente_promo = QPushButton("🔥 ASISTENTE PROMO (A4)")
         self.btn_asistente_promo.setCursor(Qt.PointingHandCursor)
-        self.btn_asistente_promo.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
-                color: #1e293b; font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 6px; border: none;
-            }
-            QPushButton:hover {  background-color: #3b82f6; color: white; }
-            QPushButton:disabled {   }
-        """)
+        self.btn_asistente_promo.setStyleSheet(BTN_WARN_STYLE)
         self.btn_asistente_promo.setEnabled(False)
         self.btn_asistente_promo.clicked.connect(self._configurar_ofertas_secuencial)
         fl.addWidget(self.btn_asistente_promo)
@@ -240,7 +362,7 @@ class Admin2Ofertas(QWidget):
         # ── CUERPO PRINCIPAL CON SPLITTER ──────────────────
         cuerpo = QWidget()
         lay_body = QVBoxLayout(cuerpo)
-        lay_body.setContentsMargins(15, 15, 15, 15)
+        lay_body.setContentsMargins(12, 8, 12, 8)
         lay_body.setSpacing(0)
 
         splitter = QSplitter(Qt.Horizontal)
@@ -253,42 +375,10 @@ class Admin2Ofertas(QWidget):
         self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tabla.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.tabla.setAlternatingRowColors(True)
+        self.tabla.setAlternatingRowColors(False)
         self.tabla.verticalHeader().setVisible(False)
-        self.tabla.setShowGrid(True)
-        self.tabla.setGridStyle(Qt.SolidLine)
-        self.tabla.setStyleSheet("""
-            QTableWidget {
-                background: white;
-                border: 1px solid #E2E8F0;
-                border-radius: 8px;
-                gridline-color: transparent;
-                outline: none;
-            }
-            QTableWidget::item {
-                padding: 4px; 
-                border-bottom: 1px solid #F1F5F9;
-            }
-            QTableWidget::item:hover {
-                background-color: #F8FAFC;
-            }
-            QTableWidget::item:selected {
-                background-color: #EFF6FF;
-                color: #1D4ED8;
-                border-bottom: 2px solid #3B82F6;
-            }
-            QHeaderView::section {
-                background-color: #F8FAFC;
-                color: #64748B;
-                font-weight: 900;
-                padding: 12px 8px;
-                border: none;
-                border-bottom: 2px solid #E2E8F0;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-        """)
+        self.tabla.setShowGrid(False)
+        self.tabla.setStyleSheet(TABLE_STYLE)
         col_widths = [35, 120, -1, 110, 80, 80, 80, 80, 80, 80]
         hh = self.tabla.horizontalHeader()
         for i, w in enumerate(col_widths):
@@ -306,7 +396,7 @@ class Admin2Ofertas(QWidget):
         # Panel de Control Derecho (Scrollable)
         self.right_container = QScrollArea()
         self.right_container.setWidgetResizable(True)
-        self.right_container.setStyleSheet("QScrollArea { border: none; background: white; }")
+        self.right_container.setStyleSheet("QScrollArea { border: none; background: #F8FAFC; }")
         
         self.panel_control = QFrame()
         self.panel_control.setObjectName("ControlCenter")
@@ -509,13 +599,7 @@ class Admin2Ofertas(QWidget):
         lay_ctrl.addLayout(lay_promo_btns)
         
         self.btn_imprimir_quick_cartel = QPushButton("🖨️ IMPRIMIR CARTEL (A4)")
-        self.btn_imprimir_quick_cartel.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316);
-                color: #1e293b; font-weight: 900; font-size: 11px; padding: 11px; border-radius: 6px; border: none;
-            }
-            QPushButton:hover {  }
-        """)
+        self.btn_imprimir_quick_cartel.setStyleSheet(BTN_WARN_STYLE)
         self.btn_imprimir_quick_cartel.clicked.connect(self._imprimir_cartel_a4_rapido)
         lay_ctrl.addWidget(self.btn_imprimir_quick_cartel)
         
@@ -529,8 +613,8 @@ class Admin2Ofertas(QWidget):
         root.addWidget(cuerpo)
 
         # ── Footer ───────────────────────────────────────
-        ft = QFrame(); ft.setFixedHeight(34)
-        ft.setStyleSheet("QFrame{border-top:1px solid #cbd5e1;}")
+        ft = QFrame(); ft.setFixedHeight(38)
+        ft.setStyleSheet("QFrame { background: #FFFFFF; border-top: 1px solid #E2E8F0; }")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
@@ -633,6 +717,7 @@ class Admin2Ofertas(QWidget):
         self.all_rows = db_manager.execute_query(q, tuple(p)) or []
         self.loaded_count = 0
         self.tabla.setRowCount(0)
+        self._apply_ofertas_theme()
         
         self._cargar_siguiente_pagina()
 
@@ -687,11 +772,11 @@ class Admin2Ofertas(QWidget):
             c_of = float(r['cant_oferta'] or 0.0)
             p_of = float(r['precio_oferta'] or 0.0)
             nombre_display = r['nombre'] or ''
-            if c_of > 0 and p_of > 0:
-                pass # Eliminamos la inyección basura al Master Data
-            # Casilla de verificación en columna 0
+            row_bg = QColor("#FFFFFF" if i % 2 == 0 else "#F8FAFC")
+
             it_check = QTableWidgetItem()
             it_check.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            it_check.setBackground(row_bg)
             if str(r['id']) in self.checked_product_ids:
                 it_check.setCheckState(Qt.Checked)
             else:
@@ -719,19 +804,22 @@ class Admin2Ofertas(QWidget):
                 if j == 1:
                     it.setData(Qt.UserRole, str(r['id'])) # Guardar ID puro internamente
                 it.setTextAlignment(Qt.AlignVCenter | align)
-                it.setForeground(QColor("#1e293b"))
+                it.setBackground(row_bg)
+                it.setForeground(QColor("#0F172A"))
 
                 if j == 2 and c_of > 0 and p_of > 0:
-                    it.setForeground(QColor("#ea580c")) # Naranja destacado para promos
+                    it.setForeground(QColor("#EA580C"))
                     it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
                 if j == 6: # Stock
                     if stock <= 0:
-                        it.setForeground(QColor("#ef4444"))
+                        it.setForeground(QColor("#DC2626"))
+                        it.setBackground(QColor("#FEF2F2"))
                     elif stock < 5:
-                        it.setForeground(QColor("#f59e0b"))
+                        it.setForeground(QColor("#D97706"))
+                        it.setBackground(QColor("#FFFBEB"))
                     else:
-                        it.setForeground(QColor("#10b981"))
+                        it.setForeground(QColor("#059669"))
 
                 self.tabla.setItem(i, j, it)
                 

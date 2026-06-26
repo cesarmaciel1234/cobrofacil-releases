@@ -28,8 +28,10 @@ PROFILE_CARD_W_MIN = 140
 # Terminal cajero @ 1920×1080 (monitor POS 24")
 TERMINAL_HEADER_H = 130
 TERMINAL_DASHBOARD_H = 230
-TERMINAL_STATUS_H = 55
-TERMINAL_SHORTCUTS_H = 44
+TERMINAL_STATUS_H = 68
+TERMINAL_STATUS_CTRL_H = 46
+TERMINAL_STATUS_ICON_H = 44
+TERMINAL_SHORTCUTS_H = 50
 TERMINAL_SCAN_MIN_H = 80
 TERMINAL_SCAN_FONT = 24
 TERMINAL_TOTAL_FONT = 75
@@ -235,6 +237,8 @@ def terminal_layout_metrics(screen=None, app=None) -> dict:
         "header_height": scale_px(header_base, ls),
         "dashboard_height": scale_px(dash_base, ls),
         "status_height": scale_px(TERMINAL_STATUS_H, ls),
+        "status_control_height": scale_px(TERMINAL_STATUS_CTRL_H, ls),
+        "status_icon_size": scale_px(TERMINAL_STATUS_ICON_H, ls),
         "shortcuts_height": scale_px(TERMINAL_SHORTCUTS_H, ls),
         "scan_min_height": scale_px(TERMINAL_SCAN_MIN_H, ls),
         "scan_font": max(18, int(TERMINAL_SCAN_FONT * font_scale)),
