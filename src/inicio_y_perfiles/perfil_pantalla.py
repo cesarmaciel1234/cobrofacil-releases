@@ -1,29 +1,30 @@
 """
-perfil_pantalla.py — Selector de perfil (diseño plano, estable en monitores modestos).
+perfil_pantalla.py — Selector de Perfil
+Paleta Warm-Cold 2026, sin sombras ni animaciones 3D.
 """
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent
 from PyQt6.QtGui import QKeyEvent
 
 WC = {
-    "bg": "#F8FAFC",
+    "bg": "#FEF8EF",
     "surface": "#FFFFFF",
-    "text": "#0F172A",
-    "text2": "#475569",
-    "text3": "#94A3B8",
-    "border": "#CBD5E1",
+    "text": "#1C1917",
+    "text2": "#57534E",
+    "text3": "#A8A29E",
+    "border": "#E7E0D8",
 }
 
 CARD_STYLE = {
     "cajero": ("#0284C7", "#E0F2FE", "VENTA DIRECTA", "#0369A1"),
     "admin": ("#059669", "#DCFCE7", "FULL ACCESS", "#047857"),
     "jefe": ("#D97706", "#FEF3C7", "ACCESO GERENCIAL", "#B45309"),
-    "carteleria": ("#7C3AED", "#EDE9FE", "MODO VISOR", "#6D28D9"),
+    "carteleria": ("#8B5CF6", "#EDE9FE", "MODO VISOR", "#6D28D9"),
 }
 
 
 class ProfileCard(QFrame):
-    """Tarjeta de perfil sin sombras ni animaciones."""
+    """Tarjeta de perfil — Warm-Cold Premium, plana."""
     clicked = pyqtSignal()
 
     def __init__(self, role_key: str, icon: str, title: str, desc: str,
@@ -32,9 +33,8 @@ class ProfileCard(QFrame):
         accent, bg_pill, tag_text, tag_fg = CARD_STYLE[role_key]
         self._accent = accent
         self._bg_pill = bg_pill
+        self._accent_light = bg_pill
         self.is_active = False
-        self._card_w = card_w
-        self._card_h = card_h
 
         self.setFixedSize(card_w, card_h)
         self.setCursor(Qt.PointingHandCursor)
@@ -48,46 +48,60 @@ class ProfileCard(QFrame):
         lay.addWidget(self.inner)
 
         inner_lay = QVBoxLayout(self.inner)
-        inner_lay.setContentsMargins(14, 14, 14, 12)
-        inner_lay.setSpacing(6)
+        inner_lay.setContentsMargins(18, 18, 18, 16)
+        inner_lay.setSpacing(0)
 
         tag = QLabel(tag_text)
         tag.setAlignment(Qt.AlignCenter)
+        tag.setFixedHeight(20)
         tag.setStyleSheet(f"""
-            font-size: 8px; font-weight: bold;
-            color: {tag_fg}; background: {bg_pill};
-            border: 1px solid {accent}; border-radius: 4px;
-            padding: 2px 8px; font-family: 'Segoe UI', sans-serif;
+            font-size: 8px; font-weight: 900; letter-spacing: 2px;
+            color: {tag_fg};
+            background: {bg_pill};
+            border: none; border-radius: 6px;
+            padding: 2px 10px;
+            font-family: 'Segoe UI', sans-serif;
         """)
         tag_wrap = QHBoxLayout()
         tag_wrap.addStretch()
         tag_wrap.addWidget(tag)
         tag_wrap.addStretch()
         inner_lay.addLayout(tag_wrap)
+        inner_lay.addSpacing(10)
 
         ico = QLabel(icon)
+        ico.setFixedSize(62, 62)
         ico.setAlignment(Qt.AlignCenter)
         ico.setStyleSheet(f"""
-            font-size: 28px; background: {bg_pill};
-            border: 1px solid {WC['border']}; border-radius: 12px;
-            padding: 8px;
+            font-size: 30px;
+            background: {bg_pill};
+            border-radius: 18px; border: none;
         """)
-        inner_lay.addWidget(ico)
+        ico_wrap = QHBoxLayout()
+        ico_wrap.addStretch()
+        ico_wrap.addWidget(ico)
+        ico_wrap.addStretch()
+        inner_lay.addLayout(ico_wrap)
+        inner_lay.addSpacing(12)
 
         self.lbl_title = QLabel(title)
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setStyleSheet(f"""
-            font-size: 12px; font-weight: bold; color: {WC['text']};
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
+            color: {WC['text']};
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
         inner_lay.addWidget(self.lbl_title)
+        inner_lay.addSpacing(4)
 
         self.lbl_desc = QLabel(desc)
         self.lbl_desc.setAlignment(Qt.AlignCenter)
         self.lbl_desc.setWordWrap(True)
         self.lbl_desc.setStyleSheet(f"""
             font-size: 10px; font-weight: 600; color: {WC['text2']};
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
         inner_lay.addWidget(self.lbl_desc)
 
@@ -97,16 +111,25 @@ class ProfileCard(QFrame):
         self.inner.setStyleSheet(f"""
             QFrame#ProfileCardInner {{
                 background: {WC['surface']};
-                border-radius: 12px;
+                border-radius: 22px;
                 border: 2px solid {WC['border']};
+            }}
+        """)
+
+    def _set_hover_style(self):
+        self.inner.setStyleSheet(f"""
+            QFrame#ProfileCardInner {{
+                background: {WC['surface']};
+                border-radius: 22px;
+                border: 2px solid {self._accent};
             }}
         """)
 
     def _set_active_style(self):
         self.inner.setStyleSheet(f"""
             QFrame#ProfileCardInner {{
-                background: {WC['surface']};
-                border-radius: 12px;
+                background: {self._accent_light};
+                border-radius: 22px;
                 border: 3px solid {self._accent};
             }}
         """)
@@ -121,13 +144,7 @@ class ProfileCard(QFrame):
     def enterEvent(self, event):
         super().enterEvent(event)
         if not self.is_active:
-            self.inner.setStyleSheet(f"""
-                QFrame#ProfileCardInner {{
-                    background: {WC['surface']};
-                    border-radius: 12px;
-                    border: 2px solid {self._accent};
-                }}
-            """)
+            self._set_hover_style()
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
@@ -139,7 +156,7 @@ class ProfileCard(QFrame):
 
 
 class PerfilPantalla(QDialog):
-    """PASO 2: selección de perfil."""
+    """PASO 2: SELECCIÓN DE PERFIL — Warm-Cold Premium 2026 (plano)."""
     perfil_seleccionado = pyqtSignal(str)
     _ROLES = ["cajero", "admin", "jefe", "carteleria"]
 
@@ -152,7 +169,7 @@ class PerfilPantalla(QDialog):
         self._card_h = card_h
 
         self.setWindowFlags(Qt.Dialog)
-        self.setStyleSheet(f"QDialog {{ background-color: {WC['bg']}; }}")
+        self.setStyleSheet(f"QDialog {{ background-color: #E2E8F0; }}")
         self.setFixedSize(dlg_w, dlg_h)
         self.selected_index = 0
         self._setup_ui()
@@ -170,67 +187,95 @@ class PerfilPantalla(QDialog):
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(16, 16, 16, 16)
+        root.setContentsMargins(20, 20, 20, 20)
 
         self.container = QFrame()
         self.container.setObjectName("PerfilContainer")
         self.container.setStyleSheet(f"""
             QFrame#PerfilContainer {{
-                background: {WC['surface']};
-                border-radius: 12px;
+                background: {WC['bg']};
+                border-radius: 28px;
                 border: 2px solid {WC['border']};
             }}
         """)
         root.addWidget(self.container)
 
         main_lay = QVBoxLayout(self.container)
-        main_lay.setContentsMargins(24, 20, 24, 24)
-        main_lay.setSpacing(12)
+        main_lay.setContentsMargins(0, 0, 0, 0)
+        main_lay.setSpacing(0)
 
-        badge = QLabel("IDENTIFICACIÓN DE ENTORNO")
+        stripe = QFrame()
+        stripe.setFixedHeight(5)
+        stripe.setStyleSheet("""
+            QFrame {
+                background-color: #D97706;
+                border: none;
+                border-top-left-radius: 28px;
+                border-top-right-radius: 28px;
+            }
+        """)
+        main_lay.addWidget(stripe)
+
+        content = QVBoxLayout()
+        content.setContentsMargins(40, 28, 40, 32)
+        content.setSpacing(0)
+
+        badge = QLabel("⚡  IDENTIFICACIÓN DE ENTORNO  ⚡")
         badge.setAlignment(Qt.AlignCenter)
         badge.setStyleSheet("""
-            font-size: 9px; font-weight: bold; color: #D97706;
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-size: 9px; font-weight: 900; letter-spacing: 4px;
+            color: #D97706;
+            background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
         """)
-        main_lay.addWidget(badge)
+        content.addWidget(badge)
+        content.addSpacing(10)
 
         title = QLabel("Bienvenido")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(f"""
-            font-size: 26px; font-weight: bold; color: {WC['text']};
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-size: 30px; font-weight: 900; letter-spacing: -1px;
+            color: {WC['text']};
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
-        main_lay.addWidget(title)
+        content.addWidget(title)
+        content.addSpacing(6)
 
         subtitle = QLabel("Seleccioná tu rol operativo para continuar")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setStyleSheet(f"""
             font-size: 12px; font-weight: 600; color: {WC['text2']};
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
-        main_lay.addWidget(subtitle)
+        content.addWidget(subtitle)
+        content.addSpacing(28)
 
         cards_lay = QHBoxLayout()
-        cards_lay.setSpacing(12)
+        cards_lay.setSpacing(20)
 
         self.btn_cajero = ProfileCard(
-            "cajero", "🛒", "CAJERO / POS", "Ventas rápidas · Cobro directo",
+            "cajero", "🛒", "CAJERO / POS",
+            "Ventas rápidas · Cobro directo",
             self._card_w, self._card_h)
         self.btn_cajero.clicked.connect(lambda: self._elegir("cajero"))
 
         self.btn_admin = ProfileCard(
-            "admin", "👔", "ADMINISTRADOR", "Gestión · Inventarios · Reportes",
+            "admin", "👔", "ADMINISTRADOR",
+            "Gestión · Inventarios · Reportes",
             self._card_w, self._card_h)
         self.btn_admin.clicked.connect(lambda: self._elegir("admin"))
 
         self.btn_jefe = ProfileCard(
-            "jefe", "👑", "JEFE / DUEÑO", "Control total · Reportes · Cierres",
+            "jefe", "👑", "JEFE / DUEÑO",
+            "Control total · Reportes · Cierres",
             self._card_w, self._card_h)
         self.btn_jefe.clicked.connect(lambda: self._elegir("jefe"))
 
         self.btn_carteleria = ProfileCard(
-            "carteleria", "📺", "CARTELERÍA", "Pantalla pública · Publicidad",
+            "carteleria", "📺", "CARTELERÍA",
+            "Pantalla pública · Publicidad",
             self._card_w, self._card_h)
         self.btn_carteleria.clicked.connect(lambda: self._elegir("carteleria"))
 
@@ -238,15 +283,19 @@ class PerfilPantalla(QDialog):
         for btn in (self.btn_cajero, self.btn_admin, self.btn_jefe, self.btn_carteleria):
             cards_lay.addWidget(btn)
         cards_lay.addStretch()
-        main_lay.addLayout(cards_lay)
+        content.addLayout(cards_lay)
+        content.addSpacing(22)
 
-        hint = QLabel("← → para navegar · Enter para confirmar")
+        hint = QLabel("←  →  para navegar  ·  Enter para confirmar")
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet(f"""
             font-size: 10px; font-weight: 600; color: {WC['text3']};
-            font-family: 'Segoe UI', sans-serif; background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
-        main_lay.addWidget(hint)
+        content.addWidget(hint)
+
+        main_lay.addLayout(content)
 
     def update_selection_ui(self):
         self.btn_cajero.set_active(self.selected_index == 0)
@@ -277,18 +326,20 @@ class PerfilPantalla(QDialog):
                 btn = buttons_map[rol]
                 btn.inner.setStyleSheet("""
                     QFrame#ProfileCardInner {
-                        background: #F1F5F9;
-                        border-radius: 12px;
-                        border: 2px dashed #94A3B8;
+                        background: #F8FAFC;
+                        border-radius: 22px;
+                        border: 2px dashed #CBD5E1;
                     }
                 """)
                 btn.lbl_title.setText(btn.lbl_title.text() + " (EN USO)")
                 btn.lbl_title.setStyleSheet(
-                    "font-size: 12px; font-weight: bold; color: #94A3B8; background: transparent; border: none;"
+                    "font-size: 13px; font-weight: 900; color: #94A3B8; "
+                    "background: transparent; border: none;"
                 )
                 btn.lbl_desc.setText("Esta instancia ya está en ejecución en esta terminal.")
                 btn.lbl_desc.setStyleSheet(
-                    "font-size: 10px; font-weight: 600; color: #94A3B8; background: transparent; border: none;"
+                    "font-size: 10px; font-weight: 600; color: #94A3B8; "
+                    "background: transparent; border: none;"
                 )
                 btn.setCursor(Qt.ForbiddenCursor)
 

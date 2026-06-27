@@ -21,7 +21,7 @@ class ClickableComboBox(QComboBox):
 
 
 class LoginPantalla(QDialog):
-    """PASO 3: LOGIN — diseño plano, estable en monitores de baja calidad."""
+    """PASO 3: LOGIN — Light Premium 2026 (plano, sin capas 3D ni sombras)."""
     def __init__(self, role, parent=None):
         super().__init__(parent)
         self.role = role
@@ -30,7 +30,7 @@ class LoginPantalla(QDialog):
         self._ls = layout_scale()
         self.setWindowFlags(Qt.Dialog)
         self.setStyleSheet("QDialog { background-color: #E2E8F0; }")
-        self.setFixedSize(scale_px(500, self._ls), scale_px(480, self._ls))
+        self.setFixedSize(scale_px(520, self._ls), scale_px(510, self._ls))
         self._setup_ui()
         try:
             center_on_primary_screen(self)
@@ -48,18 +48,21 @@ class LoginPantalla(QDialog):
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(self._px(16), self._px(16), self._px(16), self._px(16))
+        root.setContentsMargins(self._px(20), self._px(20), self._px(20), self._px(20))
 
         if self.role == "admin":
             accent = "#10B981"
+            accent_light = "#D1FAE5"
             role_icon = "🛡️"
             role_label = "ADMINISTRADOR"
         elif self.role == "jefe":
             accent = "#F59E0B"
+            accent_light = "#FEF3C7"
             role_icon = "👑"
             role_label = "JEFE / DUEÑO"
         else:
             accent = "#3B82F6"
+            accent_light = "#DBEAFE"
             role_icon = "🛒"
             role_label = "CAJERO / POS"
 
@@ -68,69 +71,86 @@ class LoginPantalla(QDialog):
         self.container.setStyleSheet(f"""
             QFrame#LoginContainer {{
                 background: #FFFFFF;
-                border-radius: {self._px(12)}px;
+                border-radius: {self._px(28)}px;
                 border: 2px solid {accent};
             }}
         """)
         root.addWidget(self.container)
 
         main_lay = QVBoxLayout(self.container)
-        main_lay.setContentsMargins(self._px(20), self._px(16), self._px(20), self._px(20))
-        main_lay.setSpacing(self._px(10))
+        main_lay.setContentsMargins(0, 0, 0, 0)
+        main_lay.setSpacing(0)
+
+        header_frame = QFrame()
+        header_frame.setStyleSheet("QFrame { background: transparent; border: none; }")
+        header_lay = QVBoxLayout(header_frame)
+        header_lay.setContentsMargins(0, self._px(24), 0, self._px(8))
 
         header_lbl = QLabel(f"🔐  AUTENTICACIÓN: {role_label}")
         header_lbl.setStyleSheet(f"""
             color: {accent};
-            font-size: {self._px(10)}px; font-weight: bold;
+            font-size: {self._px(10)}px; font-weight: 900; letter-spacing: 4px;
             font-family: 'Segoe UI', sans-serif;
             background: transparent; border: none;
         """)
         header_lbl.setAlignment(Qt.AlignCenter)
-        main_lay.addWidget(header_lbl)
+        header_lay.addWidget(header_lbl)
+        main_lay.addWidget(header_frame)
 
         if db_manager.is_master:
-            badge_text = "Modo: LOCAL · Base de datos activa"
-            badge_fg = "#059669"
+            badge_text = "⚡  Modo: LOCAL  ·  Base de datos activa"
             badge_bg = "#DCFCE7"
+            badge_fg = "#059669"
         else:
-            badge_text = "Modo: LAN REMOTA · PC Maestra conectada"
-            badge_fg = "#B45309"
+            badge_text = "⚡  Modo: LAN REMOTA  ·  PC Maestra conectada"
             badge_bg = "#FEF3C7"
+            badge_fg = "#D97706"
 
         badge_lbl = QLabel(badge_text)
         badge_lbl.setAlignment(Qt.AlignCenter)
         badge_lbl.setStyleSheet(f"""
-            font-size: {self._px(9)}px; font-weight: bold;
-            color: {badge_fg}; background: {badge_bg};
-            border: 1px solid {badge_fg}; border-radius: {self._px(6)}px;
-            padding: {self._px(6)}px;
+            font-size: {self._px(9)}px; font-weight: 800; letter-spacing: 1px;
+            color: {badge_fg};
+            background: {badge_bg};
+            border: 1px solid {badge_fg};
+            border-radius: {self._px(8)}px;
+            padding: {self._px(6)}px {self._px(16)}px;
             font-family: 'Segoe UI', sans-serif;
         """)
-        main_lay.addWidget(badge_lbl)
+
+        badge_wrap = QHBoxLayout()
+        badge_wrap.addStretch()
+        badge_wrap.addWidget(badge_lbl)
+        badge_wrap.addStretch()
+        main_lay.addLayout(badge_wrap)
+
+        content = QVBoxLayout()
+        content.setContentsMargins(self._px(48), self._px(20), self._px(48), self._px(28))
+        content.setSpacing(self._px(14))
 
         avatar_lbl = QLabel(role_icon)
-        avatar_lbl.setFixedSize(self._px(56), self._px(56))
+        avatar_lbl.setFixedSize(self._px(68), self._px(68))
         avatar_lbl.setAlignment(Qt.AlignCenter)
         avatar_lbl.setStyleSheet(f"""
-            font-size: {self._px(28)}px;
-            background: #F8FAFC;
+            font-size: {self._px(32)}px;
+            background: {accent_light};
             border: 2px solid {accent};
-            border-radius: {self._px(28)}px;
+            border-radius: {self._px(34)}px;
         """)
         avatar_wrap = QHBoxLayout()
         avatar_wrap.addStretch()
         avatar_wrap.addWidget(avatar_lbl)
         avatar_wrap.addStretch()
-        main_lay.addLayout(avatar_wrap)
+        content.addLayout(avatar_wrap)
 
-        title_lbl = QLabel("Identificación segura")
+        title_lbl = QLabel("Identificación Segura")
         title_lbl.setStyleSheet(f"""
-            font-size: {self._px(18)}px; font-weight: bold; color: #0F172A;
+            font-size: {self._px(20)}px; font-weight: 900; color: #0F172A;
             font-family: 'Segoe UI', sans-serif;
-            background: transparent; border: none;
+            background: transparent; border: none; letter-spacing: -0.3px;
         """)
         title_lbl.setAlignment(Qt.AlignCenter)
-        main_lay.addWidget(title_lbl)
+        content.addWidget(title_lbl)
 
         self.txt_user = ClickableComboBox()
         if self.role == "cajero":
@@ -149,10 +169,10 @@ class LoginPantalla(QDialog):
 
         field_style = f"""
             QComboBox, QLineEdit {{
-                background: #FFFFFF;
-                border: 2px solid #CBD5E1;
-                border-radius: {self._px(8)}px;
-                padding: {self._px(10)}px;
+                background: #F8FAFC;
+                border: 2px solid #E2E8F0;
+                border-radius: {self._px(16)}px;
+                padding: {self._px(12)}px {self._px(16)}px;
                 font-size: {self._px(14)}px;
                 color: #1E293B;
                 font-family: 'Segoe UI', sans-serif;
@@ -160,13 +180,19 @@ class LoginPantalla(QDialog):
             }}
             QComboBox:focus, QLineEdit:focus {{
                 border: 2px solid {accent};
+                background: #FFFFFF;
+                color: #0F172A;
             }}
-            QComboBox::drop-down {{ border: none; width: {self._px(24)}px; }}
+            QComboBox::drop-down {{ border: none; width: {self._px(28)}px; }}
             QComboBox QAbstractItemView {{
                 background: #FFFFFF;
-                border: 1px solid #CBD5E1;
-                selection-background-color: #EFF6FF;
+                border: 1px solid #EEF2F8;
+                border-radius: {self._px(12)}px;
+                selection-background-color: {accent_light};
+                selection-color: #0F172A;
                 font-size: {self._px(13)}px;
+                color: #1E293B;
+                padding: {self._px(6)}px;
             }}
         """
         self.txt_user.setStyleSheet(field_style)
@@ -178,51 +204,54 @@ class LoginPantalla(QDialog):
         else:
             index = self.txt_user.findText("cajero")
             self.txt_user.setCurrentIndex(index if index >= 0 else (0 if self.txt_user.count() else -1))
-        main_lay.addWidget(self.txt_user)
+        content.addWidget(self.txt_user)
 
         self.txt_pass = QLineEdit()
         if self.role == "admin":
-            self.txt_pass.setPlaceholderText("Contraseña operativa")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa")
         elif self.role == "jefe":
-            self.txt_pass.setPlaceholderText("Contraseña gerencial")
+            self.txt_pass.setPlaceholderText("Contraseña Gerencial")
         else:
-            self.txt_pass.setPlaceholderText("Contraseña operativa")
+            self.txt_pass.setPlaceholderText("Contraseña Operativa")
         self.txt_pass.setEchoMode(QLineEdit.Password)
         self.txt_pass.setStyleSheet(field_style)
         self.txt_pass.returnPressed.connect(self.verificar)
-        main_lay.addWidget(self.txt_pass)
+        content.addWidget(self.txt_pass)
+
+        content.addSpacing(self._px(4))
 
         btn_login = QPushButton("VERIFICAR CREDENCIALES")
         btn_login.setCursor(Qt.PointingHandCursor)
-        btn_login.setFixedHeight(self._px(44))
+        btn_login.setFixedHeight(self._px(50))
         btn_login.setStyleSheet(f"""
             QPushButton {{
                 background-color: {accent};
                 color: white;
-                font-size: {self._px(12)}px; font-weight: bold;
-                border-radius: {self._px(8)}px;
+                font-size: {self._px(12)}px; font-weight: 900; letter-spacing: 2.5px;
+                border-radius: {self._px(25)}px;
                 border: none;
                 font-family: 'Segoe UI', sans-serif;
             }}
-            QPushButton:hover {{ background-color: {accent}; opacity: 0.9; }}
+            QPushButton:hover {{ background-color: {accent}; }}
             QPushButton:pressed {{ background-color: #334155; }}
         """)
         btn_login.clicked.connect(self.verificar)
-        main_lay.addWidget(btn_login)
+        content.addWidget(btn_login)
 
         btn_cancel = QPushButton("Cancelar y volver")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.setStyleSheet(f"""
             QPushButton {{
-                color: #64748B; font-size: {self._px(11)}px; font-weight: 600;
+                color: #94A3B8; font-size: {self._px(11)}px; font-weight: 600;
                 border: none; background: transparent;
-                font-family: 'Segoe UI', sans-serif;
+                font-family: 'Segoe UI', sans-serif; padding: {self._px(6)}px;
             }}
             QPushButton:hover {{ color: #EF4444; }}
         """)
         btn_cancel.clicked.connect(self.reject)
-        main_lay.addWidget(btn_cancel)
+        content.addWidget(btn_cancel)
 
+        main_lay.addLayout(content)
         QTimer.singleShot(100, self.txt_pass.setFocus if self.txt_user.currentText() else self.txt_user.setFocus)
 
     def verificar(self):

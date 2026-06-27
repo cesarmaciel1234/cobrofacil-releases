@@ -1,7 +1,7 @@
 {
-  "app_version": "4.9.1",
+  "app_version": "5.0",
   "channel": "stable",
-  "build_date": "2026-06-27 15:32:45",
+  "build_date": "2026-06-27 15:56:35",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -66,9 +66,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "33372e2dcd386943ab1c6b054e9f8655",
+      "checksum": "094969d955eabf13d4feb5f18324dbe8",
       "channel": "stable",
-      "size": 49420
+      "size": 49422
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -726,9 +726,9 @@
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "9a25e07ac4997d12176d7be156662044",
+      "checksum": "c2c620fe3420e77a33b86e37944166a8",
       "channel": "stable",
-      "size": 10793
+      "size": 11956
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",
@@ -738,9 +738,9 @@
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "5aedf7d56cc4095b13356993bbf324e9",
+      "checksum": "4e0c48c889f08fe5fb6c9fe10a7ed185",
       "channel": "stable",
-      "size": 12098
+      "size": 13380
     },
     "src/inicio_y_perfiles/__init__.py": {
       "version": "1.0.0",
