@@ -1869,7 +1869,7 @@ class Paso6Cobro(QDialog):
             ["4", "5", "6"],
             ["7", "8", "9"],
             [",", "0", "⌫"],
-            ["ESC", "ENTER"]
+            ["VOLVER", "ENTER"]
         ]
         
         # Mapeo de teclas de caracteres comunes
@@ -1898,8 +1898,8 @@ class Paso6Cobro(QDialog):
             """
             bg_backspace = "#7F1D1D"
             color_backspace = "#FCA5A5"
-            bg_esc = "#334155"
-            color_esc = "#94A3B8"
+            bg_volver = "#991B1B"
+            color_volver = "#FFFFFF"
         else:
             btn_style = """
                 QPushButton {
@@ -1919,8 +1919,8 @@ class Paso6Cobro(QDialog):
             """
             bg_backspace = "#FEE2E2"
             color_backspace = "#EF4444"
-            bg_esc = "#F3F4F6"
-            color_esc = "#475569"
+            bg_volver = "#DC2626"
+            color_volver = "#FFFFFF"
         
         for row in rows:
             row_lay = QHBoxLayout()
@@ -1936,8 +1936,8 @@ class Paso6Cobro(QDialog):
                 # Estilos específicos para teclas especiales
                 if key == "⌫":
                     btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_backspace}; color: {color_backspace}; }}")
-                elif key == "ESC":
-                    btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_esc}; color: {color_esc}; }}")
+                elif key == "VOLVER":
+                    btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_volver}; color: {color_volver}; }}")
                 elif key == "ENTER":
                     btn.setStyleSheet(btn_style + "QPushButton { background-color: #3B82F6; color: white; }")
                 
@@ -1963,7 +1963,7 @@ class Paso6Cobro(QDialog):
             QApplication.sendEvent(focused, event_press)
             event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Return, Qt.NoModifier, "\n")
             QApplication.sendEvent(focused, event_release)
-        elif key == "ESC":
+        elif key == "VOLVER":
             self.reject()
         else:
             key_code = self.teclado_key_map.get(key, Qt.Key_unknown)
