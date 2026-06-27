@@ -993,6 +993,22 @@ class Paso5Terminal(QWidget):
         except Exception as e:
             logger.error(f"Autoclose error: {e}")
 
+    def _is_terminal_page_active(self) -> bool:
+        """True si el cajero es la pantalla visible del stack (evita layout en F11→admin)."""
+        mw = self.window()
+        if mw is not None and hasattr(mw, "stacked_widget"):
+            try:
+                return int(mw.stacked_widget.currentIndex()) == 1
+            except Exception:
+                pass
+        return self.isVisible()
+
+    def _schedule_screen_layout(self, delay_ms: int = 0):
+        """Reaplica layout tras fullscreen / volver desde admin (viewport ya estable)."""
+        QTimer.singleShot(delay_ms, self._apply_screen_layout)
+        if delay_ms < 200:
+            QTimer.singleShot(200, self._apply_screen_layout)
+
     def refresh_terminal_data(self):
         """ 
         REFRESCO TOTAL (F11 Back): Actualiza precios de la tabla, ofertas y config. 
@@ -1035,6 +1051,7 @@ class Paso5Terminal(QWidget):
                 self._reaplicar_estilo_fila(i)
         
         self.actualizar_totales()
+        self._schedule_screen_layout()
         if hasattr(self, 'txt_scan') and self.txt_scan:
             self.txt_scan.setFocus()
 
@@ -2359,6 +2376,8 @@ class Paso5Terminal(QWidget):
             return
         vw = self.tabla.viewport().width()
         if vw < 480:
+            # Ventana aún en transición (p. ej. volver de admin F11) — reintentar
+            QTimer.singleShot(120, self._apply_tabla_column_layout)
             return
         w_id = max(72, int(vw * 0.07))
         w_precio = max(120, int(vw * 0.12))
@@ -2387,6 +2406,8 @@ class Paso5Terminal(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        if not self._is_terminal_page_active():
+            return
         self._apply_screen_layout()
         if hasattr(self, "list_results"):
             from src.utils.qt_dpi import terminal_layout_metrics
@@ -2465,10 +2486,21 @@ class Paso5Terminal(QWidget):
         
         hizo, monto = verificar_y_realizar_autocierre()
         if hizo:
-             QMessageBox.warning(self, "🌙 CIERRE AUTOMÁTICO DIARIO", 
+            extra = ""
+            try:
+                from src.updater.silent_auto_updater import is_update_staged, get_status_message
+                if is_update_staged():
+                    extra = (
+                        f"\n\n{get_status_message() or 'Hay una actualización pendiente.'}\n"
+                        "Al reiniciar se aplicará automáticamente."
+                    )
+            except Exception:
+                pass
+            QMessageBox.warning(self, "🌙 CIERRE AUTOMÁTICO DIARIO",
                 f"El sistema ha realizado el cierre automático del día anterior por valor de ${monto:.2f}.\n\n"
-                "Para continuar, la aplicación se reiniciará para que inicies el nuevo turno del día.")
-             QApplication.exit(888) # Código de reinicio en main.py
+                f"Para continuar, la aplicación se reiniciará para que inicies el nuevo turno del día."
+                f"{extra}")
+            QApplication.exit(888)
 
     def check_solicitud_cierre_remoto(self):
         if not self.isVisible():
@@ -2801,6 +2833,14 @@ class Paso5Terminal(QWidget):
         # Gatillar la animación interactiva de ahorro total
         self.animar_ahorro(total_desc)
 
+        if self.tabla.rowCount() > 0:
+            if not hasattr(self, "_timer_volcar_cart"):
+                from PyQt6.QtCore import QTimer
+                self._timer_volcar_cart = QTimer(self)
+                self._timer_volcar_cart.setSingleShot(True)
+                self._timer_volcar_cart.timeout.connect(self._volcar_carrito_a_carteleria)
+            self._timer_volcar_cart.start(500)
+
     def animar_ahorro(self, nuevo_ahorro):
         """ 
         Animación interactiva premium tipo 'saldo ascendente' (+100).
@@ -2970,6 +3010,7 @@ class Paso5Terminal(QWidget):
         from src.config import config as _c
         _c._load_config()
         self._refresh_urgencia_stock_banner()
+        self._schedule_screen_layout()
 
     def keyPressEvent(self, event):
         k = event.key()
@@ -3287,26 +3328,47 @@ class Paso5Terminal(QWidget):
 
         carrito = []
         total_ahorro = 0.0
+        total_carrito = 0.0
         ultimo_producto = ""
 
         for i in range(self.tabla.rowCount()):
             try:
+                p_id = self.tabla.item(i, 0).text().strip()
+                if p_id.startswith(">"):
+                    continue
                 nombre = self.tabla.item(i, 1).text().replace("🔥 [OFERTA] ", "").replace("🌟 ", "")
                 precio_str = self.tabla.item(i, 2).text().replace("$", "")
                 precio_str = precio_str.replace(".", "").replace(",", ".")
-                precio = float(precio_str)
-                carrito.append({"producto": nombre, "precio": precio})
-                ultimo_producto = nombre
+                precio_unit = float(precio_str)
+                cant_str = self.tabla.item(i, 3).text().replace(",", ".")
+                cantidad = float(cant_str) if cant_str else 1.0
                 try:
                     desc_str = self.tabla.item(i, 4).text().replace("$", "")
                     desc_str = desc_str.replace(".", "").replace(",", ".")
-                    total_ahorro += float(desc_str) if desc_str else 0.0
+                    desc_linea = float(desc_str) if desc_str else 0.0
+                    total_ahorro += desc_linea
                 except Exception:
-                    pass
+                    desc_linea = 0.0
+                try:
+                    sub_str = self.tabla.item(i, 5).text().replace("$", "")
+                    sub_str = sub_str.replace(".", "").replace(",", ".")
+                    total_carrito += float(sub_str) if sub_str else precio_unit * cantidad
+                except Exception:
+                    total_carrito += precio_unit * cantidad
+                precio_lista = precio_unit + (desc_linea / cantidad) if cantidad > 0 else precio_unit
+                carrito.append({
+                    "id": p_id,
+                    "producto": nombre,
+                    "cantidad": cantidad,
+                    "precio_lista": precio_lista,
+                    "precio_unitario": precio_unit,
+                    "precio": precio_unit,
+                })
+                ultimo_producto = nombre
             except Exception:
                 pass
 
-        CarteleriaService.notificar_escaneo(carrito, total_ahorro, ultimo_producto)
+        CarteleriaService.notificar_escaneo(carrito, total_ahorro, ultimo_producto, total_carrito)
 
     def _actualizar_boton_espera(self):
         c = len(self.tickets_espera)

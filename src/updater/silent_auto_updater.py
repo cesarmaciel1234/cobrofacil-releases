@@ -30,10 +30,23 @@ PRESERVE_PREFIXES = (
     "config.json",
     "error_report.json",
     "offline_queue.json",
+    "live_scan.json",
+    "sugerencia_activa.json",
+    "last_ai_gen.json",
     "logs/",
     "locks/",
+    "certificados/",
+    "reportes/",
+    "backups/",
     "mariadb_server/data/",
     "_update_cache/",
+    "data/",
+)
+
+PRESERVE_SUFFIXES = (
+    ".db",
+    ".sqlite",
+    ".sqlite3",
 )
 
 _bg_started = False
@@ -127,10 +140,56 @@ def _save_pending(data: dict) -> None:
 
 def _should_preserve(rel_path: str) -> bool:
     rel = rel_path.replace("\\", "/").lstrip("./")
+    lower = rel.lower()
+    for suffix in PRESERVE_SUFFIXES:
+        if lower.endswith(suffix):
+            return True
     for prefix in PRESERVE_PREFIXES:
-        if rel == prefix.rstrip("/") or rel.startswith(prefix):
+        p = prefix.rstrip("/")
+        if rel == p or rel.startswith(prefix):
             return True
     return False
+
+
+def relaunch_application() -> None:
+    """Vuelve a lanzar el POS (necesario para cargar un .exe recién aplicado)."""
+    import subprocess
+
+    base = get_base_path()
+    exe = sys.executable
+    args = [exe] + sys.argv[1:]
+    try:
+        if sys.platform == "win32":
+            subprocess.Popen(
+                args,
+                cwd=base,
+                creationflags=getattr(subprocess, "DETACHED_PROCESS", 0)
+                | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+                close_fds=False,
+            )
+        else:
+            subprocess.Popen(args, cwd=base, close_fds=False)
+    except Exception as exc:
+        try:
+            from src.logger import logger
+            logger.error(f"No se pudo relanzar la aplicación: {exc}")
+        except Exception:
+            pass
+        return
+    sys.exit(0)
+
+
+def restart_to_apply_update() -> None:
+    """Cierra la app para que el próximo arranque aplique la actualización pendiente."""
+    try:
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            app.exit(99)
+            return
+    except Exception:
+        pass
+    relaunch_application()
 
 
 def _sha256_file(path: str) -> str:
@@ -285,6 +344,8 @@ def apply_pending_update_on_startup() -> bool:
 
         if logger:
             logger.info("Actualización silenciosa aplicada correctamente.")
+        if getattr(sys, "frozen", False):
+            relaunch_application()
         return True
     except Exception as exc:
         if logger:

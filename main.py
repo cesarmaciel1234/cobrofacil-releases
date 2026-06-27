@@ -423,9 +423,26 @@ if __name__ == "__main__":
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
     while True:
+        try:
+            from src.updater.silent_auto_updater import (
+                apply_pending_update_on_startup,
+                is_update_staged,
+                relaunch_application,
+            )
+            apply_pending_update_on_startup()
+        except Exception:
+            pass
+
         exit_code = launch_app()
-        if exit_code not in (99, 888):
-            break
+
+        if exit_code in (99, 888):
+            try:
+                if is_update_staged():
+                    relaunch_application()
+            except Exception:
+                pass
+            continue
+        break
             
     try:
         from src.services.mariadb_controller import mariadb_controller

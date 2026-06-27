@@ -29,10 +29,10 @@ class Screen:
     JEFE_DASHBOARD = 19
     JEFE_REPORTES = 20
     CARTELERIA = 21
-    CARTELERIA_CONFIG = 22
+    # 22 — libre (config cartelería movida al módulo src/carteleria/)
     IA_BOSS = 23
 
-    FREE = (12, 15, 16)
+    FREE = (12, 15, 16, 22)
 
     @classmethod
     def home_for_role(cls, role: str) -> int:

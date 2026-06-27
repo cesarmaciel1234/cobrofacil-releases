@@ -16,6 +16,7 @@ from src.carteleria.pantalla2 import Pantalla2
 from src.carteleria.pantalla3 import Pantalla3
 from src.carteleria.pantalla4 import Pantalla4
 from src.carteleria.pantalla_espia import PantallaEspia
+from src.carteleria.pantalla_espia_combo import PantallaEspiaCombo
 from src.carteleria.oferta_relampago import OfertaRelampago
 from src.carteleria.banderin import BanderinVolador
 from src.carteleria.motor_logico import MotorLogico
@@ -32,6 +33,7 @@ logger = logging.getLogger("Carteleria_Autonoma")
 from PyQt6.QtCore import QThread
 class EspiaWorker(QThread):
     recomendacion_lista = pyqtSignal(float, str, list, list)
+    combo_detectado = pyqtSignal(dict)
     limpiar_solicitado = pyqtSignal()
 
     def __init__(self, master_ip, path_local):
@@ -133,14 +135,20 @@ class EspiaWorker(QThread):
                         prod = data.get("ultimo_escaneado", "")
                         
                         if ahorro > 0 or carrito or prod:
-                            self.espia_log(f"[ESPIA_DEBUG] Evaluando salto Inteligencia Artificial (Ahorro=${ahorro}).")
-                            cart_eval = carrito if carrito else [{'producto': prod, 'precio': 0}]
-                            from src.carteleria.motor_ia import MotorIA
-                            from src.base_de_datos.database import db_manager
-                            clima_para_ia = ("sol", "20°C Pilar")
-                            msg, l_gas, l_aho = MotorIA.generar_recomendacion_dual(db_manager, ahorro, cart_eval, clima_para_ia)
-                            self.espia_log("[ESPIA_DEBUG] Recomendacion generada en Worker. Emitiendo...")
-                            self.recomendacion_lista.emit(ahorro, msg or "¡EXCELENTE ELECCIÓN!", l_gas, l_aho)
+                            self.espia_log(f"[ESPIA_DEBUG] Evaluando combos y espía (Ahorro=${ahorro}).")
+                            from src.services.motor_combos import MotorCombos
+                            combo = MotorCombos.evaluar(carrito)
+                            if combo:
+                                self.espia_log(f"[ESPIA_DEBUG] Combo detectado: {combo.get('nombre')}")
+                                self.combo_detectado.emit(combo)
+                            else:
+                                cart_eval = carrito if carrito else [{'producto': prod, 'precio': 0}]
+                                from src.carteleria.motor_ia import MotorIA
+                                from src.base_de_datos.database import db_manager
+                                clima_para_ia = ("sol", "20°C Pilar")
+                                msg, l_gas, l_aho = MotorIA.generar_recomendacion_dual(db_manager, ahorro, cart_eval, clima_para_ia)
+                                self.espia_log("[ESPIA_DEBUG] Recomendacion generada en Worker. Emitiendo...")
+                                self.recomendacion_lista.emit(ahorro, msg or "¡EXCELENTE ELECCIÓN!", l_gas, l_aho)
             
             time.sleep(0.2)
 
@@ -219,6 +227,7 @@ class CarteleriaMain(QWidget):
         master_ip = config.get("carteleria_master_ip", "")
         self.espia_worker = EspiaWorker(master_ip, path_ls)
         self.espia_worker.recomendacion_lista.connect(self._on_espia_recomendacion)
+        self.espia_worker.combo_detectado.connect(self._on_espia_combo)
         self.espia_worker.limpiar_solicitado.connect(self._on_espia_limpiar)
         self.espia_worker.start()
         
@@ -272,10 +281,12 @@ class CarteleriaMain(QWidget):
         # --- PANTALLA SOS ---
         self.page_sos = OfertaRelampago()
         self.page_espia = PantallaEspia(self)
+        self.page_espia_combo = PantallaEspiaCombo(self)
         
         self.stack.addWidget(self.page_normal) # Index 0
         self.stack.addWidget(self.page_sos)    # Index 1
         self.stack.addWidget(self.page_espia) # Index 2
+        self.stack.addWidget(self.page_espia_combo)  # Index 3
         root.addWidget(self.stack)
 
         # 🛸 WIDGET FLOTANTE MODULARIZADO
@@ -539,7 +550,7 @@ class CarteleriaMain(QWidget):
         def forzar_cierre():
             self._espia_ui_log("Forzando cierre de Pantalla Espia")
             self.ultimo_cambio_ia = time.time() - 16
-            if self.stack.currentIndex() == 2:
+            if self.stack.currentIndex() in (2, 3):
                 self._fade_to_index(0)
                 if hasattr(self, 'timer'): self.timer.start(self.rotacion_ms if hasattr(self, 'rotacion_ms') else 15000)
                 if hasattr(self, 'timer_db'): self.timer_db.start(10000)
@@ -577,6 +588,35 @@ class CarteleriaMain(QWidget):
             if hasattr(self, 'timer_db'): self.timer_db.start(10000)
             
         QTimer.singleShot(15000, restaurar_estado)
+
+    def _on_espia_combo(self, combo_data):
+        import time
+        self._espia_ui_log(f"Slot Combo ejecutado: {combo_data.get('nombre', '')}")
+        self.ultimo_cambio_ia = time.time()
+        if hasattr(self, 'timer') and self.timer.isActive():
+            self.timer.stop()
+        if hasattr(self, 'timer_db') and self.timer_db.isActive():
+            self.timer_db.stop()
+        try:
+            self.page_espia_combo.iniciar_animacion(combo_data)
+            self._espia_ui_log("page_espia_combo.iniciar_animacion OK")
+        except Exception:
+            import traceback
+            self._espia_ui_log(f"ERROR combo espia: {traceback.format_exc()}")
+        if hasattr(self, 'banderin'):
+            self.banderin.hide()
+        QTimer.singleShot(10, lambda: self._fade_to_index(3))
+
+        def restaurar_estado():
+            self._espia_ui_log("Restaurando estado tras combo (18s)")
+            self._fade_to_index(0)
+            if hasattr(self, 'timer'):
+                self.timer.start(self.rotacion_ms if hasattr(self, 'rotacion_ms') else 15000)
+            if hasattr(self, 'timer_db'):
+                self.timer_db.start(10000)
+
+        QTimer.singleShot(18000, restaurar_estado)
+
     def _actualizar_pantallas_promocionales(self):
         import time
         inactividad = time.time() - getattr(self, 'ultimo_cambio_ia', 0)

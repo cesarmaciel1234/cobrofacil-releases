@@ -29,8 +29,8 @@ class CarteleriaService:
         return False
 
     @staticmethod
-    def notificar_escaneo(carrito: list, ahorro_total: float, ultimo_producto: str):
-        """Envía el estado actual del carrito a la Cartelería para que evalúe si debe mostrar recomendaciones."""
+    def notificar_escaneo(carrito: list, ahorro_total: float, ultimo_producto: str, total_carrito: float = 0.0):
+        """Envía el estado actual del carrito a la Cartelería para que evalúe combos / recomendaciones."""
         path = CarteleriaService._get_live_scan_path()
         for attempt in range(5):
             try:
@@ -38,6 +38,7 @@ class CarteleriaService:
                     json.dump({
                         "carrito": carrito,
                         "ahorro": ahorro_total,
+                        "total": total_carrito,
                         "timestamp": time.time(),
                         "limpiar": False,
                         "ultimo_escaneado": ultimo_producto

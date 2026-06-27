@@ -66,9 +66,6 @@ def build_screen_factories(main_window):
         Screen.CARTELERIA: lambda: _imp(
             "src.carteleria.main_board", fromlist=["CarteleriaMain"]
         ).CarteleriaMain(),
-        Screen.CARTELERIA_CONFIG: lambda: _imp(
-            "src.admin.admin15_carteleria", fromlist=["Admin15Carteleria"]
-        ).Admin15Carteleria(),
         Screen.IA_BOSS: lambda: _imp(
             "src.admin.admin12_ai_boss", fromlist=["Admin12AIBoss"]
         ).Admin12AIBoss(),

@@ -480,6 +480,7 @@ class DatabaseManager:
         add_column_if_not_exists('productos', 'precio_oferta_promedio', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'limite_oferta_relampago', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'ventas_oferta_relampago', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'es_sos', 'INTEGER DEFAULT 0')
         add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
         
         # Verificar columnas de ventas
@@ -523,6 +524,24 @@ class DatabaseManager:
                 cursor.executemany("INSERT INTO departamentos (nombre, iva) VALUES (?, ?)", deps)
         except Exception as e:
             logger.warning(f"Error sembrando departamentos: {e}")
+
+        # Combos / promociones multi-artículo (motor espía + descuentos)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS combos_descuento (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL,
+                    activo INTEGER DEFAULT 1,
+                    tipo TEXT DEFAULT 'combo_fijo',
+                    precio_combo REAL DEFAULT 0,
+                    descuento_pct REAL DEFAULT 0,
+                    elegir_n INTEGER DEFAULT 0,
+                    requisitos_json TEXT DEFAULT '[]',
+                    orden INTEGER DEFAULT 0
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla combos_descuento: {e}")
 
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'detalle_ventas' (alias de 'detalles_ventas') ──
         # Algunos módulos usan el nombre sin la 's' final. Creamos la tabla con ese nombre

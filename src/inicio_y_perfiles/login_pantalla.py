@@ -1,8 +1,6 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton,
-                              QMessageBox, QFrame, QGraphicsDropShadowEffect, QComboBox,
-                              QHBoxLayout)
+                              QMessageBox, QFrame, QComboBox, QHBoxLayout)
 from PyQt6.QtCore import Qt, QTimer, QEvent
-from PyQt6.QtGui import QColor
 import hashlib
 from src.config import config
 from src.base_de_datos.database import db_manager
@@ -23,145 +21,117 @@ class ClickableComboBox(QComboBox):
 
 
 class LoginPantalla(QDialog):
-    """PASO 3: LOGIN — Light Premium 2026."""
+    """PASO 3: LOGIN — diseño plano, estable en monitores de baja calidad."""
     def __init__(self, role, parent=None):
         super().__init__(parent)
         self.role = role
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(520, 510)
+        from src.utils.qt_dpi import scale_px, layout_scale, center_on_primary_screen
+
+        self._ls = layout_scale()
+        self.setWindowFlags(Qt.Dialog)
+        self.setStyleSheet("QDialog { background-color: #E2E8F0; }")
+        self.setFixedSize(scale_px(500, self._ls), scale_px(480, self._ls))
         self._setup_ui()
+        try:
+            center_on_primary_screen(self)
+        except Exception:
+            pass
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso3")
-        except:
+        except Exception:
             pass
+
+    def _px(self, n):
+        from src.utils.qt_dpi import scale_px
+        return max(1, scale_px(n, self._ls))
 
     def _setup_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
+        root.setContentsMargins(self._px(16), self._px(16), self._px(16), self._px(16))
 
-        # Acento por rol
         if self.role == "admin":
             accent = "#10B981"
-            accent_r, accent_g, accent_b = 16, 185, 129
             role_icon = "🛡️"
             role_label = "ADMINISTRADOR"
         elif self.role == "jefe":
             accent = "#F59E0B"
-            accent_r, accent_g, accent_b = 245, 158, 11
             role_icon = "👑"
             role_label = "JEFE / DUEÑO"
         else:
             accent = "#3B82F6"
-            accent_r, accent_g, accent_b = 59, 130, 246
             role_icon = "🛒"
             role_label = "CAJERO / POS"
 
-        # Contenedor blanco sin bordes duros
         self.container = QFrame()
         self.container.setObjectName("LoginContainer")
         self.container.setStyleSheet(f"""
             QFrame#LoginContainer {{
                 background: #FFFFFF;
-                border-radius: 28px;
-                border: none;
+                border-radius: {self._px(12)}px;
+                border: 2px solid {accent};
             }}
         """)
-
-        outer_shadow = QGraphicsDropShadowEffect(self)
-        outer_shadow.setBlurRadius(45)
-        outer_shadow.setColor(QColor(accent_r, accent_g, accent_b, 35))
-        outer_shadow.setOffset(0, 12)
-        self.container.setGraphicsEffect(outer_shadow)
         root.addWidget(self.container)
 
         main_lay = QVBoxLayout(self.container)
-        main_lay.setContentsMargins(0, 0, 0, 0)
-        main_lay.setSpacing(0)
-
-        # ── Header (Integrado y transparente) ─────────────────────────────────
-        header_frame = QFrame()
-        header_frame.setStyleSheet(f"""
-            QFrame {{
-                background: transparent;
-                border: none;
-            }}
-        """)
-        header_lay = QVBoxLayout(header_frame)
-        header_lay.setContentsMargins(0, 24, 0, 8)
+        main_lay.setContentsMargins(self._px(20), self._px(16), self._px(20), self._px(20))
+        main_lay.setSpacing(self._px(10))
 
         header_lbl = QLabel(f"🔐  AUTENTICACIÓN: {role_label}")
         header_lbl.setStyleSheet(f"""
             color: {accent};
-            font-size: 10px; font-weight: 900; letter-spacing: 4px;
+            font-size: {self._px(10)}px; font-weight: bold;
             font-family: 'Segoe UI', sans-serif;
             background: transparent; border: none;
         """)
         header_lbl.setAlignment(Qt.AlignCenter)
-        header_lay.addWidget(header_lbl)
-        main_lay.addWidget(header_frame)
+        main_lay.addWidget(header_lbl)
 
-        # ── Badge conexión (Píldora flotante centrada) ───────────────────────────
         if db_manager.is_master:
-            badge_text = "⬡  Modo: LOCAL  ·  Base de datos activa"
-            badge_bg    = "rgba(16,185,129,0.08)"
-            badge_fg    = "#059669"
+            badge_text = "Modo: LOCAL · Base de datos activa"
+            badge_fg = "#059669"
+            badge_bg = "#DCFCE7"
         else:
-            badge_text = "⬡  Modo: LAN REMOTA  ·  PC Maestra conectada"
-            badge_bg    = "rgba(245,158,11,0.08)"
-            badge_fg    = "#D97706"
+            badge_text = "Modo: LAN REMOTA · PC Maestra conectada"
+            badge_fg = "#B45309"
+            badge_bg = "#FEF3C7"
 
         badge_lbl = QLabel(badge_text)
         badge_lbl.setAlignment(Qt.AlignCenter)
         badge_lbl.setStyleSheet(f"""
-            font-size: 9px; font-weight: 800; letter-spacing: 1px;
-            color: {badge_fg};
-            background: {badge_bg};
-            border: none;
-            border-radius: 8px;
-            padding: 6px 16px;
+            font-size: {self._px(9)}px; font-weight: bold;
+            color: {badge_fg}; background: {badge_bg};
+            border: 1px solid {badge_fg}; border-radius: {self._px(6)}px;
+            padding: {self._px(6)}px;
             font-family: 'Segoe UI', sans-serif;
         """)
-        
-        badge_wrap = QHBoxLayout()
-        badge_wrap.addStretch()
-        badge_wrap.addWidget(badge_lbl)
-        badge_wrap.addStretch()
-        main_lay.addLayout(badge_wrap)
+        main_lay.addWidget(badge_lbl)
 
-        # ── Content ────────────────────────────────────────────────────────────
-        content = QVBoxLayout()
-        content.setContentsMargins(48, 20, 48, 28)
-        content.setSpacing(14)
-
-        # Avatar
         avatar_lbl = QLabel(role_icon)
-        avatar_lbl.setFixedSize(68, 68)
+        avatar_lbl.setFixedSize(self._px(56), self._px(56))
         avatar_lbl.setAlignment(Qt.AlignCenter)
         avatar_lbl.setStyleSheet(f"""
-            font-size: 32px;
-            background: rgba({accent_r},{accent_g},{accent_b},0.08);
-            border: none;
-            border-radius: 34px;
+            font-size: {self._px(28)}px;
+            background: #F8FAFC;
+            border: 2px solid {accent};
+            border-radius: {self._px(28)}px;
         """)
         avatar_wrap = QHBoxLayout()
         avatar_wrap.addStretch()
         avatar_wrap.addWidget(avatar_lbl)
         avatar_wrap.addStretch()
-        content.addLayout(avatar_wrap)
+        main_lay.addLayout(avatar_wrap)
 
-        # Título
-        title_lbl = QLabel("Identificación Segura")
-        title_lbl.setStyleSheet("""
-            font-size: 20px; font-weight: 900; color: #0F172A;
-            font-family: 'Segoe UI', 'Outfit', sans-serif;
-            background: transparent; border: none; letter-spacing: -0.3px;
+        title_lbl = QLabel("Identificación segura")
+        title_lbl.setStyleSheet(f"""
+            font-size: {self._px(18)}px; font-weight: bold; color: #0F172A;
+            font-family: 'Segoe UI', sans-serif;
+            background: transparent; border: none;
         """)
         title_lbl.setAlignment(Qt.AlignCenter)
-        content.addWidget(title_lbl)
+        main_lay.addWidget(title_lbl)
 
-        # ── Campo usuario ──────────────────────────────────────────────────────
         self.txt_user = ClickableComboBox()
         if self.role == "cajero":
             res_users = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'cajero'")
@@ -179,30 +149,24 @@ class LoginPantalla(QDialog):
 
         field_style = f"""
             QComboBox, QLineEdit {{
-                background: #F8FAFC;
-                border: 1.5px solid #E2E8F0;
-                border-radius: 16px;
-                padding: 12px 16px;
-                font-size: 14px;
+                background: #FFFFFF;
+                border: 2px solid #CBD5E1;
+                border-radius: {self._px(8)}px;
+                padding: {self._px(10)}px;
+                font-size: {self._px(14)}px;
                 color: #1E293B;
                 font-family: 'Segoe UI', sans-serif;
                 font-weight: 600;
             }}
             QComboBox:focus, QLineEdit:focus {{
                 border: 2px solid {accent};
-                background: rgba({accent_r},{accent_g},{accent_b},0.04);
-                color: #0F172A;
             }}
-            QComboBox::drop-down {{ border: none; width: 28px; }}
+            QComboBox::drop-down {{ border: none; width: {self._px(24)}px; }}
             QComboBox QAbstractItemView {{
                 background: #FFFFFF;
-                border: 1px solid #EEF2F8;
-                border-radius: 12px;
-                selection-background-color: rgba({accent_r},{accent_g},{accent_b},0.08);
-                selection-color: #0F172A;
-                font-size: 13px;
-                color: #1E293B;
-                padding: 6px;
+                border: 1px solid #CBD5E1;
+                selection-background-color: #EFF6FF;
+                font-size: {self._px(13)}px;
             }}
         """
         self.txt_user.setStyleSheet(field_style)
@@ -210,86 +174,60 @@ class LoginPantalla(QDialog):
             self.txt_user.setCurrentText("admin")
         elif self.role == "jefe":
             index = self.txt_user.findText("jefe")
-            if index >= 0:
-                self.txt_user.setCurrentIndex(index)
-            else:
-                self.txt_user.setCurrentIndex(0 if self.txt_user.count() > 0 else -1)
+            self.txt_user.setCurrentIndex(index if index >= 0 else (0 if self.txt_user.count() else -1))
         else:
-            # Intenta seleccionar 'cajero' si existe, de lo contrario primer index
             index = self.txt_user.findText("cajero")
-            if index >= 0:
-                self.txt_user.setCurrentIndex(index)
-            else:
-                self.txt_user.setCurrentIndex(0 if self.txt_user.count() > 0 else -1)
-        content.addWidget(self.txt_user)
+            self.txt_user.setCurrentIndex(index if index >= 0 else (0 if self.txt_user.count() else -1))
+        main_lay.addWidget(self.txt_user)
 
-        # ── Campo contraseña ───────────────────────────────────────────────────
         self.txt_pass = QLineEdit()
         if self.role == "admin":
-            self.txt_pass.setPlaceholderText("Contraseña Operativa")
+            self.txt_pass.setPlaceholderText("Contraseña operativa")
         elif self.role == "jefe":
-            self.txt_pass.setPlaceholderText("Contraseña Gerencial")
+            self.txt_pass.setPlaceholderText("Contraseña gerencial")
         else:
-            self.txt_pass.setPlaceholderText("Contraseña Operativa")
+            self.txt_pass.setPlaceholderText("Contraseña operativa")
         self.txt_pass.setEchoMode(QLineEdit.Password)
         self.txt_pass.setStyleSheet(field_style)
         self.txt_pass.returnPressed.connect(self.verificar)
-        content.addWidget(self.txt_pass)
+        main_lay.addWidget(self.txt_pass)
 
-        content.addSpacing(4)
-
-        # ── Botón verificar ────────────────────────────────────────────────────
         btn_login = QPushButton("VERIFICAR CREDENCIALES")
         btn_login.setCursor(Qt.PointingHandCursor)
-        btn_login.setFixedHeight(50)
+        btn_login.setFixedHeight(self._px(44))
         btn_login.setStyleSheet(f"""
             QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgb({accent_r},{accent_g},{accent_b}),
-                    stop:1 rgba({accent_r},{accent_g},{accent_b},0.85));
+                background-color: {accent};
                 color: white;
-                font-size: 12px; font-weight: 900; letter-spacing: 2.5px;
-                border-radius: 25px;
+                font-size: {self._px(12)}px; font-weight: bold;
+                border-radius: {self._px(8)}px;
                 border: none;
                 font-family: 'Segoe UI', sans-serif;
             }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 rgba({accent_r},{accent_g},{accent_b},1.0),
-                    stop:1 rgba({accent_r},{accent_g},{accent_b},0.90));
-            }}
-            QPushButton:pressed {{
-                background: rgba({accent_r},{accent_g},{accent_b},0.75);
-            }}
+            QPushButton:hover {{ background-color: {accent}; opacity: 0.9; }}
+            QPushButton:pressed {{ background-color: #334155; }}
         """)
-        btn_shadow = QGraphicsDropShadowEffect(btn_login)
-        btn_shadow.setBlurRadius(15)
-        btn_shadow.setColor(QColor(accent_r, accent_g, accent_b, 60))
-        btn_shadow.setOffset(0, 4)
-        btn_login.setGraphicsEffect(btn_shadow)
         btn_login.clicked.connect(self.verificar)
-        content.addWidget(btn_login)
+        main_lay.addWidget(btn_login)
 
-        # ── Botón cancelar ─────────────────────────────────────────────────────
         btn_cancel = QPushButton("Cancelar y volver")
         btn_cancel.setCursor(Qt.PointingHandCursor)
-        btn_cancel.setStyleSheet("""
-            QPushButton {
-                color: #94A3B8; font-size: 11px; font-weight: 600;
+        btn_cancel.setStyleSheet(f"""
+            QPushButton {{
+                color: #64748B; font-size: {self._px(11)}px; font-weight: 600;
                 border: none; background: transparent;
-                font-family: 'Segoe UI', sans-serif; padding: 6px;
-            }
-            QPushButton:hover { color: #EF4444; }
+                font-family: 'Segoe UI', sans-serif;
+            }}
+            QPushButton:hover {{ color: #EF4444; }}
         """)
         btn_cancel.clicked.connect(self.reject)
-        content.addWidget(btn_cancel)
+        main_lay.addWidget(btn_cancel)
 
-        main_lay.addLayout(content)
         QTimer.singleShot(100, self.txt_pass.setFocus if self.txt_user.currentText() else self.txt_user.setFocus)
 
     def verificar(self):
         user = self.txt_user.currentText().strip()
-        pwd  = self.txt_pass.text().strip()
+        pwd = self.txt_pass.text().strip()
         if not user or not pwd:
             return
 
@@ -297,26 +235,23 @@ class LoginPantalla(QDialog):
             "SELECT id, username, password_hash, rol FROM usuarios WHERE username = ?", (user,))
         if not res:
             QMessageBox.critical(self, "Error", "Credenciales inválidas.")
-            self.txt_pass.clear(); self.txt_pass.setFocus()
+            self.txt_pass.clear()
+            self.txt_pass.setFocus()
             return
 
-        db_user  = res[0]
+        db_user = res[0]
         user_rol = db_user['rol'].lower()
 
-        # Verificar contraseña
         if hashlib.sha256(pwd.encode()).hexdigest() != db_user['password_hash']:
             QMessageBox.critical(self, "Error", "Credenciales inválidas.")
-            self.txt_pass.clear(); self.txt_pass.setFocus()
+            self.txt_pass.clear()
+            self.txt_pass.setFocus()
             return
 
-        # ── Tabla de roles permitidos por perfil de acceso ────────────────────
-        # cajero → solo cajeros
-        # admin  → solo admins
-        # jefe   → solo jefes (el admin tiene su propio perfil separado)
         ACCESO = {
             "cajero": {"cajero"},
-            "admin":  {"admin"},
-            "jefe":   {"jefe"},
+            "admin": {"admin"},
+            "jefe": {"jefe"},
         }
         permitidos = ACCESO.get(self.role, {self.role})
 
@@ -328,11 +263,10 @@ class LoginPantalla(QDialog):
             )
             return
 
-        # ── Sesión iniciada ───────────────────────────────────────────────────
         config.current_user = {
-            "id":       db_user['id'],
+            "id": db_user['id'],
             "username": db_user['username'],
-            "role":     db_user['rol'],
+            "role": db_user['rol'],
         }
         self.accept()
 

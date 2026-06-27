@@ -2527,24 +2527,56 @@ class DialogoActualizaciones(QDialog):
         config.set('auto_update_when', self.cmb_when.currentText())
 
     def checar_actualizacion(self):
-        self.btn_check.setText("Verificando en GitHub...")
+        self.btn_check.setText("Verificando actualizaciones...")
         self.btn_check.setEnabled(False)
         self.repaint()
         try:
-            from src.updater.github_updater import verificar_actualizaciones_github
-            res = verificar_actualizaciones_github(dry_run=True)
-            self.btn_check.setText("Checar si hay una actualización disponible ...")
-            self.btn_check.setEnabled(True)
-            if res.errores:
-                QMessageBox.warning(self, "Sin conexión", f"No se pudo conectar a GitHub:\n{res.errores[0]}")
+            import sys
+            from src.updater.silent_auto_updater import (
+                is_update_staged,
+                is_update_available,
+                restart_to_apply_update,
+                SilentUpdateWorker,
+            )
+
+            if is_update_staged():
+                QMessageBox.information(
+                    self, "Actualización lista",
+                    "Se reiniciará el programa para aplicar la nueva versión.\n\n"
+                    "Se conservan configuración, licencia y base de datos.",
+                )
+                restart_to_apply_update()
                 return
-            if not res.hay_cambios:
-                QMessageBox.information(self, "Al día", f"Cobro Fácil POS está actualizado.\nVersión: {res.version_local}")
+
+            available, local, remote = is_update_available()
+            if not available and getattr(sys, "frozen", False):
+                QMessageBox.information(
+                    self, "Al día",
+                    f"Cobro Fácil POS está actualizado.\nVersión: {local}",
+                )
+                self.btn_check.setText("Checar si hay una actualización disponible ...")
+                self.btn_check.setEnabled(True)
                 return
-            reply = QMessageBox.question(self, "Actualización Disponible",
-                f"¡Nueva versión disponible!\nActual: {res.version_local}\nNueva: {res.version_nueva}\nArchivos a descargar: {len(res.actualizados)}\n\n¿Descargar e instalar ahora?",
-                QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
+
+            if not getattr(sys, "frozen", False):
+                from src.updater.github_updater import verificar_actualizaciones_github
+                res = verificar_actualizaciones_github(dry_run=True)
+                self.btn_check.setText("Checar si hay una actualización disponible ...")
+                self.btn_check.setEnabled(True)
+                if res.errores:
+                    QMessageBox.warning(self, "Sin conexión", f"No se pudo conectar:\n{res.errores[0]}")
+                    return
+                if not res.hay_cambios:
+                    QMessageBox.information(self, "Al día", f"Versión actual: {res.version_local}")
+                    return
+                reply = QMessageBox.question(
+                    self, "Actualización disponible",
+                    f"Nueva versión: {res.version_nueva}\nActual: {res.version_local}\n\n"
+                    f"Archivos: {len(res.actualizados)}\n\n¿Descargar ahora?",
+                    QMessageBox.Yes | QMessageBox.No,
+                )
+                if reply != QMessageBox.Yes:
+                    return
                 self.btn_check.setText("Descargando...")
                 self.btn_check.setEnabled(False)
                 self.repaint()
@@ -2552,14 +2584,53 @@ class DialogoActualizaciones(QDialog):
                 self.btn_check.setText("Checar si hay una actualización disponible ...")
                 self.btn_check.setEnabled(True)
                 if res2.actualizados:
-                    extra = "\n\nReinicia el programa para aplicar los cambios." if res2.necesita_reinicio else ""
-                    QMessageBox.information(self, "Listo", f"{len(res2.actualizados)} archivos actualizados.{extra}")
+                    if res2.necesita_reinicio:
+                        QMessageBox.information(self, "Listo", "Reiniciá el programa para aplicar los cambios.")
+                    else:
+                        QMessageBox.information(self, "Listo", f"{len(res2.actualizados)} archivos actualizados.")
                 else:
                     QMessageBox.warning(self, "Error", "No se completó la actualización.")
+                return
+
+            reply = QMessageBox.question(
+                self, "Actualización disponible",
+                f"Nueva versión {remote} (actual {local}).\n\n"
+                "¿Descargar e instalar ahora?\n"
+                "Tus datos y configuración no se borran.",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if reply != QMessageBox.Yes:
+                self.btn_check.setText("Checar si hay una actualización disponible ...")
+                self.btn_check.setEnabled(True)
+                return
+
+            from PyQt6.QtWidgets import QApplication, QProgressDialog
+
+            dlg = QProgressDialog("Descargando...", None, 0, 0, self)
+            dlg.setWindowTitle("Actualizando")
+            dlg.setMinimumDuration(0)
+            dlg.show()
+
+            worker = SilentUpdateWorker(dry_run=False)
+            worker.progreso.connect(lambda _p, m: dlg.setLabelText(m))
+            worker.terminado.connect(lambda _r: dlg.close())
+            worker.start()
+            while worker.isRunning():
+                QApplication.processEvents()
+
+            if is_update_staged():
+                QMessageBox.information(
+                    self, "Listo",
+                    "Descarga completa. Se reiniciará para aplicar la actualización.",
+                )
+                restart_to_apply_update()
+            else:
+                QMessageBox.warning(self, "Error", "No se pudo descargar la actualización.")
         except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error al verificar:\n{e}")
+        finally:
             self.btn_check.setText("Checar si hay una actualización disponible ...")
             self.btn_check.setEnabled(True)
-            QMessageBox.critical(self, "Error", f"Error al verificar:\n{e}")
 
 class DialogoTerminalTPV(QDialog):
     def __init__(self, parent=None):

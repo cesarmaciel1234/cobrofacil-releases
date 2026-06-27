@@ -181,6 +181,7 @@ class MainWindow(QMainWindow):
             "QPushButton:hover{background:#6ee7b7;}"
             "QPushButton:pressed{background:#10b981;}")
         btn_instalar.clicked.connect(self._instalar_actualizacion_rapida)
+        self._btn_update_install = btn_instalar
         ban_lay.addWidget(btn_instalar)
 
         btn_luego = QPushButton("Mas tarde")
@@ -216,7 +217,7 @@ class MainWindow(QMainWindow):
                 if is_update_staged():
                     msg = get_status_message()
                     if msg:
-                        QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg))
+                        QTimer.singleShot(0, lambda: self._mostrar_banner_update(msg, listo=True))
                     return
 
                 available, _, remote = is_update_available()
@@ -253,23 +254,40 @@ class MainWindow(QMainWindow):
                 
         threading.Thread(target=_check, daemon=True).start()
 
-    def _mostrar_banner_update(self, mensaje: str):
+    def _mostrar_banner_update(self, mensaje: str, listo: bool = False):
         if hasattr(self, '_lbl_update_msg'):
             self._lbl_update_msg.setText(mensaje)
+        if hasattr(self, '_btn_update_install'):
+            self._btn_update_install.setText(
+                "\U0001f504  REINICIAR Y ACTUALIZAR" if listo else "\u2b07\ufe0f  INSTALAR AHORA"
+            )
         if hasattr(self, '_update_banner'):
             self._posicionar_banner()
             self._update_banner.show()
             self._update_banner.raise_()
 
     def _instalar_actualizacion_rapida(self):
-        """Descarga en segundo plano y aplica al reiniciar (estilo web app)."""
-        from src.updater.silent_auto_updater import SilentUpdateWorker
+        """Descarga si falta y reinicia para aplicar (sin borrar config ni datos)."""
+        from src.updater.silent_auto_updater import (
+            SilentUpdateWorker,
+            is_update_staged,
+            restart_to_apply_update,
+        )
         self._update_banner.hide()
 
-        # Dialogo de progreso minimalista
+        if is_update_staged():
+            QMessageBox.information(
+                self,
+                "Actualización lista",
+                "Se reiniciará el programa para aplicar la nueva versión.\n\n"
+                "Tus ventas, configuración y base de datos no se modifican.",
+            )
+            restart_to_apply_update()
+            return
+
         from PyQt6.QtWidgets import QProgressDialog
         dlg = QProgressDialog(
-            "Descargando e instalando actualizacion...", None, 0, 0, self)
+            "Descargando actualización...", None, 0, 0, self)
         dlg.setWindowTitle("Actualizando TPV Pro")
         dlg.setWindowModality(Qt.WindowModal)
         dlg.setMinimumDuration(0)
@@ -284,26 +302,22 @@ class MainWindow(QMainWindow):
 
         def on_terminado(res):
             dlg.close()
-            if res.hay_cambios:
-                n = len(res.actualizados)
-                ret = QMessageBox.information(
-                    self, "\u2705 Actualizacion lista",
-                    f"Se descargaron {n} paquete(s) correctamente.\n\n"
-                    "Al reiniciar el programa se aplicará al instante, "
-                    "como una web app.",
-                    QMessageBox.Ok,
+            if res.hay_cambios and res.necesita_reinicio:
+                QMessageBox.information(
+                    self,
+                    "Actualización descargada",
+                    "Descarga completa. El programa se reiniciará ahora para aplicar "
+                    "la versión nueva.\n\nConfiguración y datos de caja se conservan.",
                 )
-                if res.necesita_reinicio:
-                    ret2 = QMessageBox.question(
-                        self, "Reiniciar ahora",
-                        "\u00bfReiniciar ahora para aplicar la actualizacion?",
-                        QMessageBox.Yes | QMessageBox.No,
-                    )
-                    if ret2 == QMessageBox.Yes:
-                        QApplication.exit(99)
+                restart_to_apply_update()
+            elif res.hay_cambios:
+                QMessageBox.information(
+                    self, "Listo",
+                    f"Se actualizaron {len(res.actualizados)} elemento(s).",
+                )
             else:
                 QMessageBox.information(self, "Sin cambios",
-                    "Ya estas en la ultima version.")
+                    "Ya estás en la última versión.")
 
         self._uw.progreso.connect(on_progreso)
         self._uw.terminado.connect(on_terminado)
@@ -444,7 +458,7 @@ class MainWindow(QMainWindow):
             None,    # 19 — Jefe0Dashboard           (lazy)
             None,    # 20 — JefeReportes             (lazy)
             None,    # 21 — CarteleriaMain           (lazy)
-            None,    # 22 — Admin15Carteleria        (lazy)
+            _Dead(), # 22 — [LIBRE]
             None,    # 23 — JefeIAProactiva          (lazy)
         ]
 
@@ -468,7 +482,6 @@ class MainWindow(QMainWindow):
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
             20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
             21: lambda: __import__('src.carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
-            22: lambda: __import__('src.admin.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
             23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
         }
 
@@ -749,7 +762,8 @@ class MainWindow(QMainWindow):
 
         hay_venta = self.pantalla_ventas.tabla.rowCount() > 0
         is_supervisor = getattr(self, '_supervisor_mode', False)
-        
+        refresh_cajero = False
+
         if index == 1:
             self._supervisor_mode = False
             self.btn_flotante.hide()
@@ -758,9 +772,7 @@ class MainWindow(QMainWindow):
             if self.chatbot_overlay is not None and self._chatbot_active:
                 self.chatbot_overlay.show()
                 self.chatbot_overlay.raise_()
-            # Refrescar datos y título del terminal al activarlo
-            if hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
-                self.pantalla_ventas.refresh_terminal_data()
+            refresh_cajero = True
         elif index == 21:
             self._kiosk_mode = False
             self.btn_flotante.hide()
@@ -785,11 +797,6 @@ class MainWindow(QMainWindow):
             if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
                 self.chatbot_overlay.cerrar_chat()
-        elif index == 22:
-            top_bar = getattr(self, 'top_bar', None)
-            if top_bar is not None:
-                top_bar.lbl_title.setText("🌟 CARTELERÍA / OFERTAS RELÁMPAGO")
-                top_bar.show()
         elif index == 23:
             top_bar = getattr(self, 'top_bar', None)
             if top_bar is not None:
@@ -815,6 +822,9 @@ class MainWindow(QMainWindow):
             self._build_lazy_screen(index)
 
         self.stacked_widget.setCurrentIndex(index)
+
+        if refresh_cajero and hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
+            self.pantalla_ventas.refresh_terminal_data()
 
         self._apply_theme_for_index(index)
         self._schedule_cargar_datos(index)

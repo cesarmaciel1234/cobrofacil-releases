@@ -355,6 +355,12 @@ class Admin2Ofertas(QWidget):
         self.btn_asistente_promo.setEnabled(False)
         self.btn_asistente_promo.clicked.connect(self._configurar_ofertas_secuencial)
         fl.addWidget(self.btn_asistente_promo)
+
+        self.btn_combos_espia = QPushButton("🎯 COMBOS ESPÍA")
+        self.btn_combos_espia.setCursor(Qt.PointingHandCursor)
+        self.btn_combos_espia.setStyleSheet(BTN_PRIMARY_STYLE)
+        self.btn_combos_espia.clicked.connect(self._abrir_combos_espia)
+        fl.addWidget(self.btn_combos_espia)
         
         fl.addStretch()
         root.addWidget(fb)
@@ -1189,6 +1195,15 @@ class Admin2Ofertas(QWidget):
                 abrir_archivo_pdf(pdf_path)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"No se pudo generar ni abrir la cartelera: {e}")
+
+    def _abrir_combos_espia(self):
+        from src.admin.admin2_combos_dialog import AdminCombosDialog
+        from src.utils.qt_compat import qt_exec
+        seleccionados = []
+        for pid in self.checked_product_ids:
+            seleccionados.append({"id": pid})
+        dlg = AdminCombosDialog(productos_seleccionados=seleccionados, parent=self)
+        qt_exec(dlg)
 
     def _crear_folleto_pdf(self):
         # Obtener todas las ofertas activas en la base de datos por defecto
