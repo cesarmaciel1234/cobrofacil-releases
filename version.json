@@ -1,7 +1,7 @@
 {
-  "app_version": "4.7",
+  "app_version": "4.8",
   "channel": "stable",
-  "build_date": "2026-06-26 20:35:25",
+  "build_date": "2026-06-27 00:50:11",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -66,9 +66,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "dfe285886a54d9656de1f7694ec885e0",
+      "checksum": "be20db72f7d34d12e80508e2c0e394be",
       "channel": "stable",
-      "size": 48881
+      "size": 49056
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -366,9 +366,9 @@
     },
     "src/admin/admin_clientes.py": {
       "version": "1.0.0",
-      "checksum": "147e85ab0e842da3113963820baa1834",
+      "checksum": "8549086e1a7dbea8e8dd8af70c3f2f2f",
       "channel": "stable",
-      "size": 21889
+      "size": 42457
     },
     "src/admin/admin_etiquetas.py": {
       "version": "1.0.0",
@@ -438,9 +438,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "5381cf0c2e9eecc179c2ae19ae12135f",
+      "checksum": "bb9c30b948bb4b5a61d1f61db6a3a7f6",
       "channel": "stable",
-      "size": 62666
+      "size": 62733
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -478,17 +478,23 @@
       "channel": "stable",
       "size": 27515
     },
+    "src/cajero/paso5cobranza.py": {
+      "version": "1.0.0",
+      "checksum": "7f4f4f0f270c54ff3e2bba5245f4d343",
+      "channel": "stable",
+      "size": 16228
+    },
     "src/cajero/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "719f5111b0a3ddff6893c1c9139dd666",
+      "checksum": "78f74f21c90a2b8ac093eef179f2138d",
       "channel": "stable",
-      "size": 158479
+      "size": 159375
     },
     "src/cajero/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "3ea18a53f3f912c663f3dd2f5956ffb9",
+      "checksum": "c9f2f40946000acdb61dd2da8f7c5ed7",
       "channel": "stable",
-      "size": 89012
+      "size": 90987
     },
     "src/cajero/paso7_cierre.py": {
       "version": "1.0.0",
@@ -528,15 +534,15 @@
     },
     "src/cajero/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
-      "checksum": "3594ae79dbaab10e72a22e33be8845a9",
+      "checksum": "eacf38e0eac7b35a817be91f49088955",
       "channel": "stable",
-      "size": 28707
+      "size": 29350
     },
     "src/cajero/widgets/fiado_express.py": {
       "version": "1.0.0",
-      "checksum": "2c48dc16ce8d6932eeff71703d60abf4",
+      "checksum": "682966a7f184d683af20512d9c62d7c9",
       "channel": "stable",
-      "size": 11686
+      "size": 16803
     },
     "src/cajero/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
@@ -924,9 +930,9 @@
     },
     "src/repositories/cliente_repository.py": {
       "version": "1.0.0",
-      "checksum": "8d9011f4777873740594db38431a9499",
+      "checksum": "dde40930122c054865f8dee1e5cfc7aa",
       "channel": "stable",
-      "size": 3292
+      "size": 3473
     },
     "src/repositories/producto_repository.py": {
       "version": "1.0.0",

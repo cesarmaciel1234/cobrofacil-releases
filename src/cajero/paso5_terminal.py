@@ -461,8 +461,16 @@ class DialogoIngresoEfectivo(QDialog):
         self.deuda_actual = 0.0
         
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setFixedSize(500, 600)
-        self.setStyleSheet("background: white; border-radius: 16px; border: 3px solid #10B981;")
+        from src.cajero.paso5cobranza import (
+            COBRANZA_DIALOG_ANCHO, COBRANZA_DIALOG_ALTO_FIADO, COBRANZA_DIALOG_ALTO_NORMAL,
+        )
+        self._ancho = COBRANZA_DIALOG_ANCHO
+        self._altura_normal = COBRANZA_DIALOG_ALTO_NORMAL
+        self._altura_fiado = COBRANZA_DIALOG_ALTO_FIADO
+        self.setFixedSize(self._ancho, self._altura_normal)
+        self.setStyleSheet(
+            "background: #FAFBFC; border-radius: 18px; border: 2px solid #1A2332;"
+        )
         self._build()
 
     def _build(self):
@@ -472,12 +480,16 @@ class DialogoIngresoEfectivo(QDialog):
 
         lbl = QLabel("💵  INGRESO DE DINERO")
         lbl.setAlignment(Qt.AlignCenter)
-        lbl.setStyleSheet("font-size: 20px; font-weight: 900; color: #10B981; border: none;")
+        lbl.setStyleSheet(
+            "font-size: 20px; font-weight: 900; color: #1A2332; border: none; letter-spacing: 1px;"
+        )
         lay.addWidget(lbl)
 
         lbl_sub = QLabel("Seleccione el concepto del ingreso físico")
         lbl_sub.setAlignment(Qt.AlignCenter)
-        lbl_sub.setStyleSheet("font-size: 13px; color: #64748b; font-weight: bold; border: none;")
+        lbl_sub.setStyleSheet(
+            "font-size: 12px; color: #64748B; font-weight: 600; border: none;"
+        )
         lay.addWidget(lbl_sub)
         
         # Grid de opciones 3D
@@ -485,7 +497,7 @@ class DialogoIngresoEfectivo(QDialog):
         grid.setSpacing(10)
         
         self.btn_cambio = self._crear_btn_opcion("🪙", "CAMBIO", "Fondo Fijo", "#3B82F6")
-        self.btn_fiado = self._crear_btn_opcion("👥", "FIADO", "Pago de Deuda", "#10B981")
+        self.btn_fiado = self._crear_btn_opcion("👥", "FIADO", "Centro Cobranzas", "#1A2332")
         self.btn_otros = self._crear_btn_opcion("📦", "OTROS", "Varios", "#6366F1")
         
         self.btn_cambio.clicked.connect(lambda: self._set_modo("CAMBIO"))
@@ -500,7 +512,9 @@ class DialogoIngresoEfectivo(QDialog):
         # Stack para paneles dinámicos
         from PyQt6.QtWidgets import QStackedWidget, QComboBox
         self.stack = QStackedWidget()
-        self.stack.setStyleSheet("background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;")
+        self.stack.setStyleSheet(
+            "background: transparent; border: none; border-radius: 12px;"
+        )
         
         # Panel Normal (Cambio/Otros)
         panel_normal = QWidget()
@@ -529,13 +543,14 @@ class DialogoIngresoEfectivo(QDialog):
         pn_lay.addWidget(self.txt_desc)
         self.stack.addWidget(panel_normal)
         
-        # Panel Fiado (compartido con Fiado Express — modo abono)
-        from src.cajero.widgets.panel_cliente_fiado import PanelClienteFiado
+        # Panel Centro de Cobranzas (F6 → FIADO)
+        from src.cajero.paso5cobranza import CentroCobranzasPanel
 
         panel_fiado = QWidget()
         pf_lay = QVBoxLayout(panel_fiado)
-        pf_lay.setContentsMargins(20, 10, 20, 10)
-        self.panel_fiado = PanelClienteFiado(modo="abono", theme="light")
+        pf_lay.setContentsMargins(0, 4, 0, 4)
+        pf_lay.setAlignment(Qt.AlignCenter)
+        self.panel_fiado = CentroCobranzasPanel()
         if self.panel_fiado.txt_monto is not None:
             self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
         pf_lay.addWidget(self.panel_fiado)
@@ -550,11 +565,17 @@ class DialogoIngresoEfectivo(QDialog):
 
         h_btns = QHBoxLayout()
         btn_cancel = QPushButton("Cancelar")
-        btn_cancel.setStyleSheet("background: #F1F5F9; color: #475569; font-weight: bold; padding: 12px; border-radius: 8px;")
+        btn_cancel.setStyleSheet(
+            "background: #F1F5F9; color: #475569; font-weight: 700; padding: 12px; "
+            "border-radius: 10px; border: 1px solid #E2E8F0;"
+        )
         btn_cancel.clicked.connect(self.reject)
         
-        btn_ok = QPushButton("🚀 CONFIRMAR")
-        btn_ok.setStyleSheet("background: #10B981; color: white; font-weight: 900; font-size: 15px; padding: 12px; border-radius: 8px;")
+        btn_ok = QPushButton("CONFIRMAR")
+        btn_ok.setStyleSheet(
+            "background: #1A2332; color: #F5F0E6; font-weight: 900; font-size: 14px; "
+            "padding: 12px; border-radius: 10px; letter-spacing: 1px;"
+        )
         btn_ok.clicked.connect(self._procesar)
 
         h_btns.addWidget(btn_cancel)
@@ -600,10 +621,11 @@ class DialogoIngresoEfectivo(QDialog):
         self.btn_otros.setChecked(modo == "OTROS")
         
         if modo == "FIADO":
+            self.setFixedSize(self._ancho, self._altura_fiado)
             self.stack.setCurrentIndex(1)
             self.panel_fiado.cargar_clientes_abono()
-            self.panel_fiado.focus_monto()
         else:
+            self.setFixedSize(self._ancho, self._altura_normal)
             self.stack.setCurrentIndex(0)
             self.txt_monto.setFocus()
             self.txt_monto.selectAll()
@@ -1181,12 +1203,12 @@ class Paso5Terminal(QWidget):
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed) # Bloquear columnas numéricas para evitar que Qt las exprima
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch) # Solo la descripción se estira dinámicamente
         
-        # Distribuir anchos de columna profesionales y bloqueados (Garantía Cero Truncamientos)
-        self.tabla.setColumnWidth(0, 100) # ID / Barcode
-        self.tabla.setColumnWidth(2, 150) # PRECIO
-        self.tabla.setColumnWidth(3, 100) # CANT
-        self.tabla.setColumnWidth(4, 150) # DES. TOTAL
-        self.tabla.setColumnWidth(5, 200) # SUBTOTAL
+        # Anchos iniciales (referencia 1920×1080); _apply_tabla_column_layout los ajusta al redimensionar
+        self.tabla.setColumnWidth(0, 80)   # ID / Barcode
+        self.tabla.setColumnWidth(2, 120)  # PRECIO — cabe $999.999
+        self.tabla.setColumnWidth(3, 72)   # CANT
+        self.tabla.setColumnWidth(4, 110)  # DES. TOTAL
+        self.tabla.setColumnWidth(5, 130)  # TOTAL
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.verticalHeader().setDefaultSectionSize(40)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -2332,16 +2354,22 @@ class Paso5Terminal(QWidget):
             self._shortcuts_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def _apply_tabla_column_layout(self):
+        """Reparte columnas: montos con mínimo fijo para no truncar ($3.500, etc.)."""
         if not hasattr(self, "tabla"):
             return
         vw = self.tabla.viewport().width()
-        if vw < 320:
+        if vw < 480:
             return
-        self.tabla.setColumnWidth(0, max(60, int(vw * 0.08)))
-        self.tabla.setColumnWidth(2, max(70, int(vw * 0.15)))
-        self.tabla.setColumnWidth(3, max(56, int(vw * 0.10)))
-        self.tabla.setColumnWidth(4, max(64, int(vw * 0.10)))
-        self.tabla.setColumnWidth(5, max(70, int(vw * 0.15)))
+        w_id = max(72, int(vw * 0.07))
+        w_precio = max(120, int(vw * 0.12))
+        w_cant = max(72, int(vw * 0.08))
+        w_des = max(110, int(vw * 0.11))
+        w_total = max(130, int(vw * 0.13))
+        self.tabla.setColumnWidth(0, w_id)
+        self.tabla.setColumnWidth(2, w_precio)
+        self.tabla.setColumnWidth(3, w_cant)
+        self.tabla.setColumnWidth(4, w_des)
+        self.tabla.setColumnWidth(5, w_total)
 
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "list_results") or not hasattr(self, "dashboard_frame"):

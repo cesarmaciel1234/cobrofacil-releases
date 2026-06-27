@@ -18,6 +18,99 @@ try:
 except ImportError:
     from database import db_manager
 
+# Paleta 2026 — claros, contraste marcado, profundidad 3D suave
+_FIN = {
+    "bg_page": "#F0F4F8",
+    "card": "#FFFFFF",
+    "card_border": "#E2E8F0",
+    "row_white": "#FFFFFF",
+    "row_gray": "#F1F5F9",
+    "text_on_white": "#0F172A",
+    "text_on_gray": "#1E293B",
+    "muted_on_white": "#64748B",
+    "muted_on_gray": "#475569",
+    "text": "#0F172A",
+    "text_soft": "#475569",
+    "text_muted": "#94A3B8",
+    "header_bg": "#E8EEF4",
+    "header_text": "#334155",
+    "accent": "#3B82F6",
+    "accent_light": "#EFF6FF",
+    "accent_hover": "#2563EB",
+    "border_row": "#E2E8F0",
+    "green": "#10B981",
+    "red": "#EF4444",
+}
+
+_KEEP_FG = frozenset({"#10b981", "#059669", "#ef4444", "#dc2626"})
+
+
+def _estilo_tabla_financiera() -> str:
+    return f"""
+        QTableWidget {{
+            background-color: {_FIN['row_white']};
+            border: 1px solid {_FIN['card_border']};
+            border-radius: 12px;
+            gridline-color: transparent;
+            font-size: 13px;
+            color: {_FIN['text_on_white']};
+            outline: none;
+        }}
+        QTableWidget::item {{
+            padding: 11px 10px;
+            border-bottom: 1px solid {_FIN['border_row']};
+        }}
+        QTableWidget::item:selected {{
+            background-color: {_FIN['accent_light']};
+            color: #1E40AF;
+        }}
+        QHeaderView::section {{
+            background-color: {_FIN['header_bg']};
+            color: {_FIN['header_text']};
+            font-weight: 800;
+            font-size: 11px;
+            padding: 12px 10px;
+            border: none;
+            border-bottom: 2px solid {_FIN['accent']};
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+    """
+
+
+def _aplicar_paleta_tabla(tabla: QTableWidget):
+    from PyQt6.QtGui import QPalette
+    tabla.setAlternatingRowColors(False)
+    pal = tabla.palette()
+    pal.setColor(QPalette.ColorRole.Base, QColor(_FIN["row_white"]))
+    pal.setColor(QPalette.ColorRole.AlternateBase, QColor(_FIN["row_gray"]))
+    pal.setColor(QPalette.ColorRole.Text, QColor(_FIN["text_on_white"]))
+    pal.setColor(QPalette.ColorRole.Window, QColor(_FIN["row_white"]))
+    tabla.setPalette(pal)
+    tabla.setStyleSheet(_estilo_tabla_financiera())
+    tabla.viewport().setStyleSheet(f"background-color: {_FIN['row_white']};")
+
+
+def _pintar_filas_tabla(tabla: QTableWidget):
+    """Filas alternadas blanco / gris claro — texto oscuro bien marcado en ambas."""
+    for row in range(tabla.rowCount()):
+        es_gris = (row % 2) == 1
+        bg = QColor(_FIN["row_gray"] if es_gris else _FIN["row_white"])
+        fg = QColor(_FIN["text_on_gray"] if es_gris else _FIN["text_on_white"])
+        fg_muted = QColor(_FIN["muted_on_gray"] if es_gris else _FIN["muted_on_white"])
+        for col in range(tabla.columnCount()):
+            item = tabla.item(row, col)
+            if not item:
+                continue
+            item.setBackground(bg)
+            cur = item.foreground().color().name().lower()
+            if cur in _KEEP_FG:
+                continue
+            if cur in ("#94a3b8", "#64748b", "#9ca3af", "#cbd5e1"):
+                item.setForeground(fg_muted)
+            else:
+                item.setForeground(fg)
+
 def get_depto_icon(depto_name):
     if not depto_name:
         return "📦"
@@ -54,18 +147,18 @@ class ModernCard(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("card")
-        self.setStyleSheet("""
-            #card {
-                
-                border: none;
-                border-radius: 20px;
-            }
+        self.setStyleSheet(f"""
+            #card {{
+                background: {_FIN['card']};
+                border: 1px solid {_FIN['card_border']};
+                border-radius: 18px;
+            }}
         """)
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(40)
         shadow.setXOffset(0)
         shadow.setYOffset(10)
-        shadow.setColor(QColor(0, 0, 0, 10))
+        shadow.setColor(QColor(15, 23, 42, 22))
         self.setGraphicsEffect(shadow)
 
 
@@ -109,7 +202,7 @@ class StockAreaChartWidget(QWidget):
 
     def paintEvent(self, event):
         from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPainterPath, QLinearGradient
-        from PyQt6.QtCore import QPoint, QRect, Qt
+        from PyQt6.QtCore import QPointF, QRect, Qt
         
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -143,6 +236,8 @@ class StockAreaChartWidget(QWidget):
             painter.setPen(QPen(QColor("#EEF2F8"), 1, Qt.DashLine))
             
         keys = list(self.data.keys())
+        if not keys:
+            return
         step = chart_w / max(1, len(keys) - 1)
         
         # X labels
@@ -159,51 +254,59 @@ class StockAreaChartWidget(QWidget):
                 x = padding_l + i * step
                 v = self.data_prev.get(key, {}).get('ventas', 0)
                 y = h - padding_b - (v / max_val) * chart_h
-                pts_prev.append(QPoint(int(x), int(y)))
+                pts_prev.append(QPointF(x, y))
                 
-            path_prev = QPainterPath()
-            path_prev.moveTo(pts_prev[0])
-            for i in range(1, len(pts_prev)):
-                # Bezier smoothing
-                p1 = pts_prev[i-1]
-                p2 = pts_prev[i]
-                c1 = QPoint(int((p1.x() + p2.x()) / 2), p1.y())
-                c2 = QPoint(int((p1.x() + p2.x()) / 2), p2.y())
-                path_prev.cubicTo(c1, c2, p2)
-                
-            pen_prev = QPen(QColor("#94A3B8"), 3, Qt.DashLine)
-            painter.setPen(pen_prev)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(path_prev)
+            if pts_prev:
+                path_prev = QPainterPath()
+                path_prev.moveTo(pts_prev[0])
+                for i in range(1, len(pts_prev)):
+                    p1 = pts_prev[i - 1]
+                    p2 = pts_prev[i]
+                    c1 = QPointF((p1.x() + p2.x()) / 2, p1.y())
+                    c2 = QPointF((p1.x() + p2.x()) / 2, p2.y())
+                    path_prev.cubicTo(c1, c2, p2)
+                    
+                pen_prev = QPen(QColor("#94A3B8"), 3, Qt.DashLine)
+                painter.setPen(pen_prev)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPath(path_prev)
 
         # Draw Current Ventas Area
         pts_v = []
         for i, key in enumerate(keys):
             x = padding_l + i * step
             y = h - padding_b - (self.data[key].get('ventas', 0) / max_val) * chart_h
-            pts_v.append(QPoint(int(x), int(y)))
+            pts_v.append(QPointF(x, y))
+
+        if not pts_v:
+            return
             
         path_v = QPainterPath()
         path_v.moveTo(pts_v[0])
-        for i in range(1, len(pts_v)):
-            p1 = pts_v[i-1]
-            p2 = pts_v[i]
-            c1 = QPoint(int((p1.x() + p2.x()) / 2), p1.y())
-            c2 = QPoint(int((p1.x() + p2.x()) / 2), p2.y())
-            path_v.cubicTo(c1, c2, p2)
+        if len(pts_v) == 1:
+            painter.setPen(QPen(QColor(59, 130, 246), 4))
+            painter.setBrush(QColor(59, 130, 246))
+            painter.drawEllipse(pts_v[0], 5, 5)
+        else:
+            for i in range(1, len(pts_v)):
+                p1 = pts_v[i - 1]
+                p2 = pts_v[i]
+                c1 = QPointF((p1.x() + p2.x()) / 2, p1.y())
+                c2 = QPointF((p1.x() + p2.x()) / 2, p2.y())
+                path_v.cubicTo(c1, c2, p2)
+                
+            fill_path = QPainterPath(path_v)
+            fill_path.lineTo(padding_l + (len(keys) - 1) * step, h - padding_b)
+            fill_path.lineTo(padding_l, h - padding_b)
+            fill_path.closeSubpath()
             
-        fill_path = QPainterPath(path_v)
-        fill_path.lineTo(padding_l + (len(keys)-1)*step, h - padding_b)
-        fill_path.lineTo(padding_l, h - padding_b)
-        fill_path.closeSubpath()
-        
-        grad_v = QLinearGradient(0, padding_t, 0, h - padding_b)
-        grad_v.setColorAt(0, QColor(59, 130, 246, 100))
-        grad_v.setColorAt(1, QColor(59, 130, 246, 0))
-        painter.fillPath(fill_path, QBrush(grad_v))
-        
-        painter.setPen(QPen(QColor(59, 130, 246), 4))
-        painter.drawPath(path_v)
+            grad_v = QLinearGradient(0, padding_t, 0, h - padding_b)
+            grad_v.setColorAt(0, QColor(59, 130, 246, 100))
+            grad_v.setColorAt(1, QColor(59, 130, 246, 0))
+            painter.fillPath(fill_path, QBrush(grad_v))
+            
+            painter.setPen(QPen(QColor(59, 130, 246), 4))
+            painter.drawPath(path_v)
         
         # Hover
         if self.hover_index != -1 and self.hover_index < len(keys):
@@ -216,13 +319,13 @@ class StockAreaChartWidget(QWidget):
             
             painter.setPen(QPen(QColor(255, 255, 255), 2))
             painter.setBrush(QColor(59, 130, 246))
-            painter.drawEllipse(QPoint(int(x), int(y_v)), 6, 6)
+            painter.drawEllipse(QPointF(x, y_v), 6, 6)
             
             if self.data_prev:
                 v_prev = self.data_prev.get(keys[self.hover_index], {}).get('ventas', 0)
                 y_prev = h - padding_b - (v_prev / max_val) * chart_h
                 painter.setBrush(QColor("#94A3B8"))
-                painter.drawEllipse(QPoint(int(x), int(y_prev)), 5, 5)
+                painter.drawEllipse(QPointF(x, y_prev), 5, 5)
                 
             # Tooltip
             tt_w = 260
@@ -786,14 +889,16 @@ class VistaFinanciero(QWidget):
         
         lbl_tit = QLabel(titulo)
         lbl_tit.setObjectName("lbl_tit_tabla")
-        lbl_tit.setStyleSheet("font-size: 18px; font-weight: 900;  background: transparent; border: none; letter-spacing: -0.5px;")
+        lbl_tit.setStyleSheet(
+            f"font-size: 17px; font-weight: 800; color: {_FIN['text']}; "
+            "background: transparent; border: none; letter-spacing: -0.3px;"
+        )
         lay.addWidget(lbl_tit)
         
         tabla = QTableWidget()
         tabla.setColumnCount(col_count)
         tabla.horizontalHeader().setVisible(False)
         tabla.verticalHeader().setVisible(False)
-        tabla.setAlternatingRowColors(True)
         tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
         tabla.setSelectionMode(QAbstractItemView.NoSelection)
         tabla.setShowGrid(False)
@@ -802,27 +907,13 @@ class VistaFinanciero(QWidget):
         if col_count > 2:
             for i in range(2, col_count):
                 tabla.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeToContents)
-        tabla.setStyleSheet("""
-            QTableWidget {
-                background-color: transparent;
-                border: none;
-            }
-            QTableWidget::item {
-                padding: 12px;
-                border-bottom: 1px solid #F1F5F9;
-                font-size: 14px;
-                font-weight: 500;
-                
-            }
-            QTableWidget::item:selected {
-                
-                
-            }
-        """)
+        _aplicar_paleta_tabla(tabla)
         lay.addWidget(tabla)
         
         lbl_total = QLabel("")
-        lbl_total.setStyleSheet("font-size: 14px; font-weight: 800;  text-align: right;")
+        lbl_total.setStyleSheet(
+            f"font-size: 13px; font-weight: 700; color: {_FIN['text_soft']}; text-align: right; border: none;"
+        )
         lbl_total.setAlignment(Qt.AlignRight)
         lay.addWidget(lbl_total)
         
@@ -830,13 +921,17 @@ class VistaFinanciero(QWidget):
 
     def setup_ui(self):
         self.setObjectName("Admin3Reportes")
-        self.setStyleSheet("""
-            QWidget#Admin3Reportes {  font-family: 'Segoe UI', sans-serif; }
-            QScrollArea { border: none; background: transparent; }
-            QWidget#ScrollContainer { background: transparent; }
-            QScrollBar:vertical { background: transparent; width: 5px; }
-            QScrollBar::handle:vertical { background: rgba(99,102,241,0.25); border-radius: 3px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+        self.setStyleSheet(f"""
+            QWidget#Admin3Reportes {{
+                background: {_FIN['bg_page']};
+                font-family: 'Segoe UI', sans-serif;
+                color: {_FIN['text']};
+            }}
+            QScrollArea {{ border: none; background: transparent; }}
+            QWidget#ScrollContainer {{ background: transparent; }}
+            QScrollBar:vertical {{ background: transparent; width: 6px; }}
+            QScrollBar::handle:vertical {{ background: rgba(75,85,99,0.35); border-radius: 3px; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
         """)
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -855,16 +950,30 @@ class VistaFinanciero(QWidget):
         # TITLE AND FILTERS
         lbl_main = QLabel("Resumen de Ventas de Mayo")
         lbl_main.setObjectName("lbl_main_title_financial")
-        lbl_main.setStyleSheet("font-size: 24px; font-weight: bold;  margin-bottom: 5px;")
+        lbl_main.setStyleSheet(
+            f"font-size: 24px; font-weight: 800; color: {_FIN['text']}; margin-bottom: 5px; border: none;"
+        )
         self.content_layout.addWidget(lbl_main)
         
         filters_layout = QHBoxLayout()
-        filters_layout.setSpacing(20)
+        filters_layout.setSpacing(12)
         self.period_buttons = {}
+        self._period_btn_active = (
+            f"QPushButton {{ color: white; font-size: 13px; font-weight: 800; "
+            f"border: none; background: {_FIN['accent']}; border-radius: 10px; padding: 8px 16px; }}"
+            f"QPushButton:hover {{ background: {_FIN['accent_hover']}; }}"
+        )
+        self._period_btn_idle = (
+            f"QPushButton {{ color: {_FIN['text_soft']}; font-size: 13px; font-weight: 600; "
+            f"background: white; padding: 8px 16px; border-radius: 10px; "
+            f"border: 1px solid {_FIN['card_border']}; }}"
+            f"QPushButton:hover {{ color: {_FIN['accent']}; background: {_FIN['accent_light']}; "
+            f"border-color: #BFDBFE; }}"
+        )
         for f_text in ["Semana Actual", "Mes Actual", "Mes Anterior", "Año actual", "Periodo..."]:
             f_btn = QPushButton(f_text)
             f_btn.setCursor(Qt.PointingHandCursor)
-            f_btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover {  }")
+            f_btn.setStyleSheet(self._period_btn_idle)
             f_btn.clicked.connect(lambda checked, t=f_text: self.cargar_datos(t))
             self.period_buttons[f_text] = f_btn
             filters_layout.addWidget(f_btn)
@@ -872,7 +981,9 @@ class VistaFinanciero(QWidget):
         
         from PyQt6.QtWidgets import QCheckBox
         self.chk_comparativa = QCheckBox("Comparar con periodo anterior")
-        self.chk_comparativa.setStyleSheet(" font-weight: bold; font-size: 13px;")
+        self.chk_comparativa.setStyleSheet(
+            f"font-weight: 600; font-size: 13px; color: {_FIN['text_soft']}; border: none;"
+        )
         self.chk_comparativa.stateChanged.connect(lambda: self.cargar_datos(getattr(self, "current_period", "Mes Actual")))
         filters_layout.addWidget(self.chk_comparativa)
         
@@ -904,7 +1015,10 @@ class VistaFinanciero(QWidget):
         
         # KPIS
         self.kpi_container = QFrame()
-        self.kpi_container.setStyleSheet("background: transparent; border-top: 1px dashed #CBD5E1; border-bottom: 1px dashed #CBD5E1;")
+        self.kpi_container.setStyleSheet(
+            f"background: transparent; border-top: 1px solid {_FIN['card_border']}; "
+            f"border-bottom: 1px solid {_FIN['card_border']};"
+        )
         self.kpi_layout = QGridLayout(self.kpi_container)
         self.kpi_layout.setContentsMargins(10, 20, 10, 20)
         self.kpi_layout.setSpacing(20)
@@ -992,10 +1106,7 @@ class VistaFinanciero(QWidget):
             self.current_start_str = start_str
             self.current_end_str = end_str
             for text, btn in self.period_buttons.items():
-                if text == periodo:
-                    btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; }")
-                else:
-                    btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover {  }")
+                btn.setStyleSheet(self._period_btn_active if text == periodo else self._period_btn_idle)
             
             lbl_title = self.findChild(QLabel, "lbl_main_title_financial")
             if lbl_title:
@@ -1051,16 +1162,29 @@ class VistaFinanciero(QWidget):
                 w = self.kpi_layout.itemAt(i).widget()
                 if w: w.deleteLater()
             
-            def create_kpi(title, value, color="#0F172A", align="left"):
+            def create_kpi(title, value, color=None, align="left"):
+                if color is None:
+                    color = _FIN["text"]
                 w = QFrame()
-                w.setStyleSheet(f"background: white; border-radius: 12px; border: 1px solid #E2E8F0;")
+                w.setStyleSheet(
+                    f"background: {_FIN['card']}; border-radius: 16px; "
+                    f"border: 1px solid {_FIN['card_border']};"
+                )
+                kpi_shadow = QGraphicsDropShadowEffect(w)
+                kpi_shadow.setBlurRadius(28)
+                kpi_shadow.setOffset(0, 6)
+                kpi_shadow.setColor(QColor(15, 23, 42, 16))
+                w.setGraphicsEffect(kpi_shadow)
                 l = QVBoxLayout(w)
-                l.setContentsMargins(20,20,20,20)
-                l.setSpacing(8)
+                l.setContentsMargins(20, 18, 20, 18)
+                l.setSpacing(6)
                 t = QLabel(title.upper())
-                t.setStyleSheet(" font-size: 12px; font-weight: 800; letter-spacing: 1px; border: none;")
+                t.setStyleSheet(
+                    f"font-size: 11px; font-weight: 800; letter-spacing: 0.8px; "
+                    f"color: {_FIN['muted_on_white']}; border: none;"
+                )
                 v = QLabel(value)
-                v.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 900; border: none;")
+                v.setStyleSheet(f"color: {color}; font-size: 26px; font-weight: 800; border: none;")
                 
                 t.setAlignment(Qt.AlignCenter)
                 v.setAlignment(Qt.AlignCenter)
@@ -1072,7 +1196,7 @@ class VistaFinanciero(QWidget):
             self.kpi_layout.addWidget(create_kpi("Ganancia Neta", f"${ganancia:,.2f}"), 0, 2)
             self.kpi_layout.addWidget(create_kpi("Número de Ventas", f"{t_cant}"), 1, 0)
             self.kpi_layout.addWidget(create_kpi("Ticket Promedio", f"${t_promedio:,.2f}"), 2, 0)
-            self.kpi_layout.addWidget(create_kpi("Margen de utilidad promedio", f"{margen:,.0f}%", "#10B981"), 1, 2, 2, 1)
+            self.kpi_layout.addWidget(create_kpi("Margen de utilidad promedio", f"{margen:,.0f}%", _FIN["green"]), 1, 2, 2, 1)
             
             # 3. Main Chart Data (Agrupacion inteligente)
             period_type = "day"
@@ -1266,12 +1390,7 @@ class VistaFinanciero(QWidget):
                 it.setFont(font)
                 return it
 
-            table_style = """
-                QTableWidget { background-color: white; border: none; }
-                QTableWidget::item { padding: 10px; border-bottom: 1px solid #F1F5F9; font-size: 13px;  }
-                QTableWidget::item:hover {   }
-                QHeaderView::section {   font-weight: bold; border: none; padding: 10px; text-transform: uppercase; font-size: 11px; }
-            """
+            table_style = _estilo_tabla_financiera()
 
             # 4. Ventas por semana (Día a Día)
             self.tabla_vtas_tiempo.setRowCount(0)
@@ -1283,10 +1402,8 @@ class VistaFinanciero(QWidget):
             else:
                 self.tabla_vtas_tiempo.horizontalHeader().setVisible(False)
                 
-            self.tabla_vtas_tiempo.setStyleSheet(table_style)
-            self.tabla_vtas_depto.setStyleSheet(table_style)
-            self.tabla_gan_depto.setStyleSheet(table_style)
-            self.tabla_pago.setStyleSheet(table_style)
+            for tbl in (self.tabla_vtas_tiempo, self.tabla_vtas_depto, self.tabla_gan_depto, self.tabla_pago):
+                _aplicar_paleta_tabla(tbl)
             
             self.tabla_vtas_depto.setSelectionBehavior(QTableWidget.SelectRows)
             self.tabla_gan_depto.setSelectionBehavior(QTableWidget.SelectRows)
@@ -1597,6 +1714,7 @@ class VistaFinanciero(QWidget):
                 self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)", "Cant. ant.", "Monto ant. ($)"])
             else:
                 self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)"])
+            _aplicar_paleta_tabla(self.tabla_rec)
                 
             for row, p in enumerate(display_rec):
                 self.tabla_rec.setItem(row, 0, QTableWidgetItem(p['nombre']))
@@ -1632,6 +1750,7 @@ class VistaFinanciero(QWidget):
                 self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)", "Cant. ant.", "Monto ant. ($)"])
             else:
                 self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)"])
+            _aplicar_paleta_tabla(self.tabla_vol)
                 
             for row, p in enumerate(display_vol):
                 self.tabla_vol.setItem(row, 0, QTableWidgetItem(p['nombre']))
@@ -1672,6 +1791,12 @@ class VistaFinanciero(QWidget):
                         header.setSectionResizeMode(c, QHeaderView.ResizeToContents)
             except Exception as e:
                 print("Error resizing columns:", e)
+
+            for tbl in (
+                self.tabla_vtas_tiempo, self.tabla_vtas_depto, self.tabla_gan_depto,
+                self.tabla_pago, self.tabla_rec, self.tabla_vol,
+            ):
+                _pintar_filas_tabla(tbl)
 
             # Actualizar IA
             if hasattr(self, 'ai_assistant'):

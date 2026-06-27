@@ -2,6 +2,7 @@ import sys
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                              QStackedWidget, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
+from src.jefe.reportes.vista_financiero import _FIN
 
 class ReportesMain(QWidget):
     request_dashboard = pyqtSignal()
@@ -18,7 +19,9 @@ class ReportesMain(QWidget):
         # Top Bar for Navigation
         top_bar = QWidget()
         top_bar.setFixedHeight(55)
-        top_bar.setStyleSheet("background-color: rgba(255, 255, 255, 0.85); border-bottom: 1px solid #E2E8F0;")
+        top_bar.setStyleSheet(
+            f"background-color: {_FIN['card']}; border-bottom: 1px solid {_FIN['card_border']};"
+        )
         top_lay = QHBoxLayout(top_bar)
         top_lay.setContentsMargins(20, 0, 20, 0)
         top_lay.setSpacing(15)
@@ -34,19 +37,20 @@ class ReportesMain(QWidget):
         self.btn_historial = QPushButton("🕰️ HISTORIAL")
 
         # Styling
-        btn_style = """
-            QPushButton {
+        btn_style = f"""
+            QPushButton {{
                 background: transparent;
                 font-weight: 700;
                 border-radius: 12px;
                 padding: 8px 18px;
                 font-size: 12px;
                 border: none;
-                color: #1E293B;
-            }
-            QPushButton:hover {
-                background-color: #E2E8F0;
-            }
+                color: {_FIN['text']};
+            }}
+            QPushButton:hover {{
+                background-color: {_FIN['accent_light']};
+                color: {_FIN['accent']};
+            }}
         """
         for btn in [self.btn_volver, self.btn_ventas, self.btn_auditoria, self.btn_historial]:
             btn.setStyleSheet(btn_style)
@@ -84,30 +88,35 @@ class ReportesMain(QWidget):
         self._update_tab_buttons()
 
     def _update_tab_buttons(self):
-        active_style = """
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #6366F1, stop:1 #4F46E5);
+        active_style = f"""
+            QPushButton {{
+                background: {_FIN['accent']};
                 color: white;
-                font-weight: 800;
-                border-radius: 12px;
-                padding: 8px 18px;
-                font-size: 12px;
-                border: none;
-            }
-        """
-        inactive_style = """
-            QPushButton {
-                background: transparent;
-                color: #1E293B;
                 font-weight: 700;
-                border-radius: 12px;
+                border-radius: 10px;
                 padding: 8px 18px;
                 font-size: 12px;
                 border: none;
-            }
-            QPushButton:hover {
-                background-color: #E2E8F0;
-            }
+            }}
+            QPushButton:hover {{
+                background: {_FIN['accent_hover']};
+            }}
+        """
+        inactive_style = f"""
+            QPushButton {{
+                background: white;
+                color: {_FIN['text_soft']};
+                font-weight: 600;
+                border-radius: 10px;
+                padding: 8px 18px;
+                font-size: 12px;
+                border: 1px solid {_FIN['card_border']};
+            }}
+            QPushButton:hover {{
+                background-color: {_FIN['accent_light']};
+                color: {_FIN['accent']};
+                border-color: #BFDBFE;
+            }}
         """
         idx = self.stack_views.currentIndex()
         self.btn_ventas.setStyleSheet(active_style if idx == 0 else inactive_style)

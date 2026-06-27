@@ -50,14 +50,21 @@ class ClienteRepository:
         return rows[0] if rows else None
 
     @staticmethod
+    def normalizar_dni(dni: str) -> str:
+        dni = (dni or "").strip().replace(".", "").replace("-", "").replace(" ", "")
+        if not dni or not dni.isdigit() or len(dni) < 7:
+            return ""
+        return dni
+
+    @staticmethod
     def verificar_y_crear_cliente(dni: str):
         """
         Fiado Express: identifica por DNI o crea perfil 'Express [DNI]'.
         Retorna (cliente_dict | None, estado_str, mensaje_ui).
         estado: 'identificado' | 'creado' | 'error'
         """
-        dni = (dni or "").strip().replace(".", "").replace("-", "").replace(" ", "")
-        if not dni or not dni.isdigit() or len(dni) < 7:
+        dni = ClienteRepository.normalizar_dni(dni)
+        if not dni:
             return None, "error", "DNI inválido (mínimo 7 dígitos)"
 
         existente = ClienteRepository.buscar_por_dni(dni)
@@ -69,7 +76,7 @@ class ClienteRepository:
         ok = db_manager.execute_non_query(
             "INSERT INTO clientes (nombre, telefono, limite_credito, deuda_actual, dni, tipo_cliente) "
             "VALUES (?, ?, ?, 0, ?, 'express')",
-            (nombre, dni, limite, dni),
+            (nombre, None, limite, dni),
         )
         if not ok:
             return None, "error", "No se pudo crear el cliente Express"

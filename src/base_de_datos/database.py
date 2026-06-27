@@ -498,6 +498,7 @@ class DatabaseManager:
         add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
         add_column_if_not_exists('clientes', 'dni', 'TEXT')
         add_column_if_not_exists('clientes', 'tipo_cliente', "TEXT DEFAULT 'regular'")
+        add_column_if_not_exists('clientes', 'direccion', 'TEXT')
         
         # Crear tabla departamentos si no existe (migración)
         try:
