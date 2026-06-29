@@ -1023,7 +1023,6 @@ class Paso5Terminal(QWidget):
         self._style_side_labels(cambio_highlight=False, side_px=side_px)
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
         self._apply_status_bar_shortcuts_layout(ls)
-        self._apply_tabla_column_layout()
         self._layout_list_results_popup(m)
 
     def _build_side_summary_row(self, parent_layout, title: str):
@@ -1102,22 +1101,8 @@ class Paso5Terminal(QWidget):
         pass
 
     def _apply_tabla_column_layout(self):
-        """Reparte columnas: montos con mínimo fijo para no truncar ($3.500, etc.)."""
-        if not hasattr(self, "tabla"):
-            return
-        vw = self.tabla.viewport().width()
-        if vw < 480:
-            return
-        w_id = max(110, int(vw * 0.08))
-        w_precio = max(160, int(vw * 0.12))
-        w_cant = max(85, int(vw * 0.06))
-        w_des = max(150, int(vw * 0.11))
-        w_total = max(170, int(vw * 0.13))
-        self.tabla.setColumnWidth(0, w_id)
-        self.tabla.setColumnWidth(2, w_precio)
-        self.tabla.setColumnWidth(3, w_cant)
-        self.tabla.setColumnWidth(4, w_des)
-        self.tabla.setColumnWidth(5, w_total)
+        # Delegamos la responsabilidad nativamente a Qt usando QHeaderView
+        pass
 
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "list_results") or not hasattr(self, "dashboard_frame"):

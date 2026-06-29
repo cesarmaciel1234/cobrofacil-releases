@@ -19,12 +19,12 @@ class TablaDeProductos(QFrame):
         # Solo la descripción se estira dinámicamente
         self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch) 
         
-        # Anchos iniciales (referencia 1920×1080)
-        self.tabla.setColumnWidth(0, 110)  # ID / Barcode
-        self.tabla.setColumnWidth(2, 160)  # PRECIO
-        self.tabla.setColumnWidth(3, 85)   # CANT
-        self.tabla.setColumnWidth(4, 150)  # DES. TOTAL
-        self.tabla.setColumnWidth(5, 170)  # TOTAL
+        # Anchos fijos y robustos (evitan el resizing manual y saltos)
+        self.tabla.setColumnWidth(0, 130)  # ID / Barcode
+        self.tabla.setColumnWidth(2, 140)  # PRECIO
+        self.tabla.setColumnWidth(3, 90)   # CANT
+        self.tabla.setColumnWidth(4, 130)  # DES. TOTAL
+        self.tabla.setColumnWidth(5, 160)  # TOTAL
         
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.verticalHeader().setDefaultSectionSize(40)
