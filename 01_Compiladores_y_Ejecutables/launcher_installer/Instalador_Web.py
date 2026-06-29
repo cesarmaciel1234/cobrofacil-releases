@@ -531,10 +531,21 @@ class InstallWorker(QThread):
                     return
                 time.sleep(1)
 
-            # 2. Extracción (carpeta limpia solo en instalación nueva)
+            # 2. Extracción (carpeta limpia solo en instalación nueva, preservando BBDD y config)
             self.progress_update.emit(65, "Extrayendo sistema base...")
             if not self.is_update_mode and os.path.isdir(self.install_dir):
-                _rmtree_force(self.install_dir)
+                # En lugar de borrar TODO _rmtree_force(self.install_dir), borramos archivo por archivo
+                # respetando las bases de datos.
+                for item in os.listdir(self.install_dir):
+                    item_path = os.path.join(self.install_dir, item)
+                    if item.endswith(".db") or item == "config.json" or item == "offline_queue.json" or item == "mariadb_server":
+                        continue
+                    if os.path.isdir(item_path):
+                        _rmtree_force(item_path)
+                    else:
+                        try:
+                            os.remove(item_path)
+                        except: pass
             os.makedirs(self.install_dir, exist_ok=True)
 
             errors = self._extract_zip(zip_to_extract, self.install_dir)
