@@ -705,7 +705,7 @@ class Paso6Cobro(QDialog):
                 self.current_metodo,
                 p1, p2,
                 self.items_carrito,
-                config.current_user.get('username', 'cajero'),
+                dict(config.current_user).get('username', 'cajero') if config.current_user else 'cajero',
                 cajero_secundario,
                 getattr(self, 'descuento_monto', 0.0),
                 getattr(self, 'recargo_monto', 0.0),
@@ -727,8 +727,8 @@ class Paso6Cobro(QDialog):
                         self._procesando_pago = False
                         QMessageBox.warning(self, "Fiado", "Cliente no encontrado en la base de datos.")
                         return
-                    nueva_deuda = float(c.get("deuda_actual", 0)) + self.total_final
-                    nombre_cli = c.get("nombre", "")
+                    nueva_deuda = float(dict(c).get("deuda_actual", 0)) + self.total_final
+                    nombre_cli = dict(c).get("nombre", "")
 
                     db_manager.execute_non_query(
                         "UPDATE clientes SET deuda_actual = ? WHERE id = ?",

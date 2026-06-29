@@ -1,7 +1,7 @@
 {
   "app_version": "5.0",
   "channel": "stable",
-  "build_date": "2026-06-29 10:54:15",
+  "build_date": "2026-06-29 11:23:59",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -750,9 +750,9 @@
     },
     "src/cajero/paso5_terminal/componentes_visuales/tabla_de_productos.py": {
       "version": "1.0.0",
-      "checksum": "46e27140a6628110d72b2f224a58b591",
+      "checksum": "cc17f9a086d764e6211630c045278cbc",
       "channel": "stable",
-      "size": 2034
+      "size": 2282
     },
     "src/cajero/paso5_terminal/componentes_visuales/__init__.py": {
       "version": "1.0.0",
@@ -870,9 +870,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "d9246575e16a7caa95510ac18a2f2602",
+      "checksum": "c1a499043d5fcd0ab2e55dcc1f0e09f8",
       "channel": "stable",
-      "size": 41852
+      "size": 41864
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -918,9 +918,9 @@
     },
     "src/cajero/paso6_cobro/widgets/fiado_express.py": {
       "version": "1.0.0",
-      "checksum": "682966a7f184d683af20512d9c62d7c9",
+      "checksum": "53acc783e97a3ecfa9645259d0be348c",
       "channel": "stable",
-      "size": 16803
+      "size": 16827
     },
     "src/cajero/paso6_cobro/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
@@ -1182,9 +1182,9 @@
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "b4a7c4aabd41c81eb457f6627eaf9028",
+      "checksum": "8d1fb952d7d3ed8ed880a55b1198d1ab",
       "channel": "stable",
-      "size": 7549
+      "size": 7952
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",
