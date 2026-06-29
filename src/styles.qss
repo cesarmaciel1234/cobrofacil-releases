@@ -1,0 +1,261 @@
+/* 
+   PUNPRO BUSINESS EDITION - ULTRA PREMIUM DARK THEME
+   Nivel Dios: Estética Fluent Design / macOS Dark Mode
+*/
+
+* {
+    font-family: 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+    outline: none;
+}
+
+/* ────────────────────────────────────────────────────────
+   FONDOS Y VENTANAS PRINCIPALES
+──────────────────────────────────────────────────────── */
+QMainWindow, QDialog, QStackedWidget {
+    background-color: #0B0F19; /* Fondo ultra oscuro y limpio */
+    color: #F8FAFC;
+}
+
+QWidget {
+    color: #F8FAFC;
+}
+
+/* ────────────────────────────────────────────────────────
+   TARJETAS Y PANELES (Glassmorphism & Elevación)
+──────────────────────────────────────────────────────── */
+#MainCard, QFrame, QGroupBox {
+    background-color: #111827; 
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+}
+
+/* Sidebar Elite */
+#SidebarFrame {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #05080F, stop:1 #0B0F19);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#SidebarTitle {
+    color: #FFFFFF;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+#SidebarButton {
+    background-color: transparent;
+    color: #94A3B8;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: left;
+    padding: 14px 20px;
+    margin: 4px 10px;
+}
+
+#SidebarButton:hover {
+    background-color: rgba(56, 189, 248, 0.15);
+    color: #E0F2FE;
+}
+
+#SidebarButton:checked {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(56, 189, 248, 0.25), stop:1 transparent);
+    color: #38BDF8;
+    border-left: 4px solid #38BDF8;
+    font-weight: 800;
+}
+
+/* ────────────────────────────────────────────────────────
+   BOTONES PREMIUM (Hover states y bordes suaves)
+──────────────────────────────────────────────────────── */
+QPushButton {
+    background-color: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #334155;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+QPushButton:pressed {
+    background-color: #0F172A;
+    border: 1px solid #38BDF8;
+}
+
+/* Botones Especiales por Clases (Acentos) */
+QPushButton#BtnPrimary, QPushButton[type="primary"] {
+    background-color: #0284C7;
+    border: 1px solid #0369A1;
+    color: white;
+}
+QPushButton#BtnPrimary:hover { background-color: #0369A1; }
+
+QPushButton#BtnSuccess, QPushButton[type="success"] {
+    background-color: #059669;
+    border: 1px solid #047857;
+    color: white;
+}
+QPushButton#BtnSuccess:hover { background-color: #047857; }
+
+QPushButton#BtnDanger, QPushButton[type="danger"] {
+    background-color: #DC2626;
+    border: 1px solid #B91C1C;
+    color: white;
+}
+QPushButton#BtnDanger:hover { background-color: #B91C1C; }
+
+
+/* ────────────────────────────────────────────────────────
+   CAMPOS DE TEXTO (Entradas limpias tipo Neumorphism)
+──────────────────────────────────────────────────────── */
+QLineEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #F8FAFC;
+    padding: 10px 14px;
+    font-size: 15px;
+    selection-background-color: #38BDF8;
+}
+
+QLineEdit:focus, QTextEdit:focus, QSpinBox:focus, QComboBox:focus {
+    border: 2px solid #38BDF8;
+    background-color: #0F172A;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 30px;
+}
+QComboBox QAbstractItemView {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    selection-background-color: #38BDF8;
+}
+
+/* ────────────────────────────────────────────────────────
+   TABLAS (Estilo Dashboard Moderno, Sin Rejilla)
+──────────────────────────────────────────────────────── */
+QTableWidget, QTableView {
+    background-color: #111827;
+    color: #E2E8F0;
+    gridline-color: transparent; /* Sin lineas verticales/horizontales feas */
+    border: 1px solid #1F2937;
+    border-radius: 12px;
+    selection-background-color: rgba(56, 189, 248, 0.2);
+    selection-color: #38BDF8;
+    font-size: 14px;
+    outline: none;
+}
+
+QHeaderView::section {
+    background-color: #0B0F19;
+    color: #94A3B8;
+    padding: 15px;
+    border: none;
+    border-bottom: 2px solid #1F2937;
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+QTableWidget::item {
+    padding: 12px;
+    border-bottom: 1px solid #1F2937; /* Linea separadora suave */
+}
+
+/* ────────────────────────────────────────────────────────
+   SCROLLBARS (Ocultos/Modernos al estilo macOS)
+──────────────────────────────────────────────────────── */
+QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 12px;
+    margin: 0px 2px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(148, 163, 184, 0.3);
+    min-height: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: rgba(148, 163, 184, 0.6);
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: transparent;
+    height: 12px;
+    margin: 0px 0px 2px 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background: rgba(148, 163, 184, 0.3);
+    min-width: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: rgba(148, 163, 184, 0.6);
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+
+/* ────────────────────────────────────────────────────────
+   TABS Y ETIQUETAS
+──────────────────────────────────────────────────────── */
+QTabWidget::pane {
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #111827;
+}
+
+QTabBar::tab {
+    background: #1E293B;
+    color: #94A3B8;
+    padding: 10px 20px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin-right: 2px;
+    font-weight: bold;
+}
+
+QTabBar::tab:selected {
+    background: #0284C7;
+    color: #FFFFFF;
+}
+
+/* Labels y Tipografías */
+QLabel {
+    color: #F1F5F9;
+}
+
+QLabel#TitleLabel {
+    font-size: 24px;
+    font-weight: 800;
+    color: #FFFFFF;
+}
+
+/* Ventana Cobro (Se adaptó al modo dark premium para uniformidad) */
+QDialog#VentanaCobroClara {
+    background-color: #111827;
+    border: 1px solid #38BDF8;
+    border-radius: 12px;
+}
