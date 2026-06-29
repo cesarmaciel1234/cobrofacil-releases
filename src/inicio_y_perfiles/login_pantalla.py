@@ -141,7 +141,7 @@ class LoginPantalla(QDialog):
         
         # Autoseleccionar el primer usuario si existe
         if self.txt_user.count() > 0:
-            self.txt_user.setCurrentIndex(0)
+            self.txt_user.setCurrentIndex(-1)
 
         # Contraseña
         lbl_pass = QLabel("CONTRASEÑA")

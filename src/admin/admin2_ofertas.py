@@ -868,7 +868,7 @@ class Admin2Ofertas(QWidget):
             self._recargar_simulador()
             return
             
-        p = rows[0]
+        p = dict(rows[0])
         self.producto_seleccionado_id = p['id']
         self.lbl_prod_nombre.setText(p['nombre'])
         self.lbl_prod_detalles.setText(f"ID: {p['id']}  |  PLU: {p['codigo'] or 'Sin Código'}")

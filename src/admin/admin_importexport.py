@@ -187,59 +187,52 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
         for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
             if not any(row): continue  # fila vacía o nula
 
-            def get_val(campo_logico, default=''):
+            def get_val(campo_logico, default=None):
                 if campo_logico in col_indices:
                     idx = col_indices[campo_logico]
                     if idx < len(row):
                         v = row[idx]
-                        return v if v is not None else default
+                        if v is not None and str(v).strip() != '':
+                            return v
                 return default
 
             def parse_float(val):
-                if val is None or val == '': return 0.0
+                if val is None: return None
                 if isinstance(val, (int, float)): return float(val)
                 s = str(val).strip()
-                # Extraer solo números, comas, puntos y signo negativo
                 s = re.sub(r'[^\d.,-]', '', s)
-                if not s: return 0.0
+                if not s: return None
                 if ',' in s and '.' not in s: s = s.replace(',', '.')
                 elif ',' in s and '.' in s: s = s.replace('.', '').replace(',', '.')
                 try: return float(s)
-                except: return 0.0
+                except: return None
 
-            codigo_val  = str(get_val('codigo', '')).strip()
+            codigo_val  = str(get_val('codigo', '') or '').strip()
             if codigo_val.endswith('.0'):
                 codigo_val = codigo_val[:-2]
 
-            nombre = str(get_val('nombre', '')).strip()
+            nombre = str(get_val('nombre', '') or '').strip()
             
-            # Lógica de Descripción e ID (código) variado
-            # Si no hay nombre pero hay código, el código funciona como nombre
             if not nombre and codigo_val:
                 nombre = "Producto " + codigo_val
-            # Si no hay código pero hay nombre, intentamos generar un código o dejamos que la base de datos lo asigne
-            elif not codigo_val and nombre:
-                # Opcional: Podríamos intentar extraer algún número del nombre, pero mejor dejamos que SQLite auto-asigne el ID
-                pass
             
             if not nombre and not codigo_val: continue
 
-            costo       = parse_float(get_val('costo', 0))
-            precio      = parse_float(get_val('precio', 0))
-            mayoreo     = parse_float(get_val('mayoreo', 0))
-            cant_of     = parse_float(get_val('cant_oferta', 0))
-            precio_of   = parse_float(get_val('precio_oferta', 0))
-            stock       = parse_float(get_val('stock', 0))
-            minimo      = parse_float(get_val('minimo', 0))
-            maximo      = parse_float(get_val('maximo', 0))
+            costo       = parse_float(get_val('costo'))
+            precio      = parse_float(get_val('precio'))
+            mayoreo     = parse_float(get_val('mayoreo'))
+            cant_of     = parse_float(get_val('cant_oferta'))
+            precio_of   = parse_float(get_val('precio_oferta'))
+            stock       = parse_float(get_val('stock'))
+            minimo      = parse_float(get_val('minimo'))
+            maximo      = parse_float(get_val('maximo'))
 
-            depto  = str(get_val('depto', '')).strip() or None
-            tipo   = str(get_val('tipo', 'UNIDAD')).strip().upper()
+            depto  = str(get_val('depto', '') or '').strip() or None
+            tipo   = str(get_val('tipo', 'UNIDAD') or 'UNIDAD').strip().upper()
             unidad = 'KG' if 'GRANEL' in tipo or 'KG' in tipo else 'UN'
             es_pes = 1 if unidad == 'KG' else 0
             cat    = depto.upper() if depto else 'GENERAL'
 
-            # Búsqueda instantánea O(1) en los diccionarios pre-cargados
             existe_id = None
             if codigo_val and codigo_val.isdigit():
                 existe_id = existentes_id.get(codigo_val)
@@ -248,26 +241,23 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
 
             try:
                 if existe_id:
-                    # Actualizar solo si hay nombre, de lo contrario mantener el nombre anterior no es posible fácilmente aquí
-                    # Si 'nombre' está vacío pero la columna sí existe (el usuario la vació), podríamos ignorar, pero mejor actualizar
-                    # Para seguridad, si nombre viene vacío pero detectó columna, y existe, podemos dejar el de la BD (omitimos por brevedad)
                     cursor.execute(
-                        "UPDATE productos SET nombre=COALESCE(NULLIF(?, ''), nombre),precio=?,costo=?,stock=?,precio_mayoreo=?,stock_minimo=?,stock_maximo=?,"
-                        "unidad=?,es_pesable=?,departamento=?,categoria=?,cant_oferta=?,precio_oferta=? WHERE id=?",
+                        "UPDATE productos SET nombre=COALESCE(NULLIF(?, ''), nombre),precio=COALESCE(?, precio),costo=COALESCE(?, costo),stock=COALESCE(?, stock),precio_mayoreo=COALESCE(?, precio_mayoreo),stock_minimo=COALESCE(?, stock_minimo),stock_maximo=COALESCE(?, stock_maximo),"
+                        "unidad=COALESCE(?, unidad),es_pesable=COALESCE(?, es_pesable),departamento=COALESCE(?, departamento),categoria=COALESCE(?, categoria),cant_oferta=COALESCE(?, cant_oferta),precio_oferta=COALESCE(?, precio_oferta) WHERE id=?",
                         (nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of, existe_id))
                     actualizados += 1
                 else:
                     if not nombre: 
                         nombre = "Producto " + codigo_val
                     params = (codigo_val if not codigo_val.isdigit() else None,
-                              nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of)
+                              nombre, precio or 0.0, costo or 0.0, stock or 0.0, mayoreo or 0.0, minimo or 0.0, maximo or 0.0, unidad, es_pes, depto, cat, cant_of or 0.0, precio_of or 0.0)
                     if codigo_val and codigo_val.isdigit():
                         insert_keyword = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
                         cursor.execute(
                             f"{insert_keyword} productos "
                             "(id,codigo,nombre,precio,costo,stock,precio_mayoreo,stock_minimo,stock_maximo,unidad,es_pesable,departamento,categoria,cant_oferta,precio_oferta) "
                             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                            (int(codigo_val), None, nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of))
+                            (int(codigo_val), None, nombre, precio or 0.0, costo or 0.0, stock or 0.0, mayoreo or 0.0, minimo or 0.0, maximo or 0.0, unidad, es_pes, depto, cat, cant_of or 0.0, precio_of or 0.0))
                         existentes_id[codigo_val] = int(codigo_val)
                     else:
                         cursor.execute(
@@ -280,6 +270,12 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                     insertados += 1
             except Exception as ex:
                 errores += 1
+
+        # Sincronizar departamentos nuevos
+        try:
+            cursor.execute("INSERT OR IGNORE INTO departamentos (nombre) SELECT DISTINCT departamento FROM productos WHERE departamento IS NOT NULL AND departamento != ''")
+        except Exception as e:
+            print(f"Error al sincronizar departamentos: {e}")
 
         # Confirmar todo el lote masivo en una sola ráfaga atómica
         conn.commit()

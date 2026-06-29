@@ -1,7 +1,7 @@
 {
   "app_version": "5.0",
   "channel": "stable",
-  "build_date": "2026-06-29 11:23:59",
+  "build_date": "2026-06-29 14:58:09",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -412,6 +412,12 @@
       "channel": "stable",
       "size": 1697
     },
+    "scratch/test_math.py": {
+      "version": "1.0.0",
+      "checksum": "669271e20ba65feb1fdf8440518900e7",
+      "channel": "stable",
+      "size": 2864
+    },
     "scratch/test_nodos.py": {
       "version": "1.0.0",
       "checksum": "84413bbf968885837f4c3fcf548db3f2",
@@ -552,15 +558,15 @@
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "d0f6416fa66a4e3879407cd0d9ee94e1",
+      "checksum": "1b5ddc089ab30ee51b8b805927502b61",
       "channel": "stable",
-      "size": 81219
+      "size": 81268
     },
     "src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
-      "checksum": "24f5381f11284bbf053284f4d2c52c27",
+      "checksum": "7c35e222dbb89dfa7fcf30aa4dcfefb3",
       "channel": "stable",
-      "size": 66629
+      "size": 66635
     },
     "src/admin/admin3_reportes.py": {
       "version": "1.0.0",
@@ -606,9 +612,9 @@
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "542792d068288f71227f2d4f950230dc",
+      "checksum": "d52ae79028841c3adae34e8936382f74",
       "channel": "stable",
-      "size": 15470
+      "size": 15319
     },
     "src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -870,9 +876,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "c1a499043d5fcd0ab2e55dcc1f0e09f8",
+      "checksum": "747f027b9f06bcffc75e5b57ade4a10e",
       "channel": "stable",
-      "size": 41864
+      "size": 42250
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -1182,9 +1188,9 @@
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "8d1fb952d7d3ed8ed880a55b1198d1ab",
+      "checksum": "5dcf7b63dd20defa50eb49e342bac5e6",
       "channel": "stable",
-      "size": 7952
+      "size": 7953
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",

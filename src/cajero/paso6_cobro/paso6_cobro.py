@@ -444,16 +444,10 @@ class Paso6Cobro(QDialog):
             cliente_ok = dlg1.cliente
             dni_ref = dlg1.dni_ref
 
-            self.hide()
-            QApplication.processEvents()
-
             dlg2 = DialogoFiadoExpressConfirmacion(
                 self.total_final, cliente_ok, dni_ref, terminal
             )
             res2 = qt_exec(dlg2)
-
-            self.show()
-            QApplication.processEvents()
 
             if res2 == QDialog.DialogCode.Accepted:
                 self.current_metodo = "Fiado"
@@ -545,13 +539,17 @@ class Paso6Cobro(QDialog):
             if not cliente_id:
                 if not getattr(self, "_fiado_flujo_activo", False):
                     self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+                else:
+                    QMessageBox.warning(self, "Fiado", "No se seleccionó cliente.")
                 return None
             c = ClienteRepository.obtener_por_id(cliente_id)
             if not c:
+                QMessageBox.warning(self, "Fiado", "Cliente no encontrado.")
                 return None
             disp = ClienteRepository.credito_disponible(c)
             p1_float = float(p1_t) if p1_t else 0
             if p1_float > disp + 0.01:
+                QMessageBox.warning(self, "Fiado", f"Crédito insuficiente.\nDisp: ${disp:.2f}\nReq: ${p1_float:.2f}")
                 return None
 
         p1, p2 = CobroController.validar_monto_suficiente(
@@ -762,8 +760,12 @@ class Paso6Cobro(QDialog):
 
                 self.accept()
         except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
             self._procesando_pago = False
-            QMessageBox.critical(self, "Error", f"Fallo al cobrar: {e}")
+            self.btn_cobrar.setEnabled(True)
+            self.btn_cancelar.setEnabled(True)
+            QMessageBox.critical(self, "Error", f"Fallo al cobrar:\n{e}\n\n{tb}")
 
     def imprimir_ticket(self, id_v, abrir_manual=False, force_fiscal=False):
         try:

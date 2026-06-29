@@ -688,7 +688,7 @@ class PanelCategorias(QWidget):
 
         # Lista
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Nombre del Departamento", "ID"])
+        self.tree.setHeaderLabels(["Nombre del Departamento", "N° Productos"])
         self.tree.setColumnWidth(0, 300)
         self.tree.setStyleSheet("QTreeWidget { background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; }")
         grid.addWidget(self.tree, 0, 1)
@@ -705,17 +705,32 @@ class PanelCategorias(QWidget):
 
     def _cargar(self):
         try:
-            insert_kw = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
             db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS categorias (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL)")
-            db_manager.execute_non_query(f"{insert_kw} categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
+            db_manager.execute_non_query("INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
         except: pass
 
         self.tree.clear()
-        sd = QTreeWidgetItem(self.tree, ["- Sin Departamento -", "—"])
+        
+        # Calcular productos sin departamento asignado (General o nulo)
+        try:
+            sd_res = db_manager.execute_query("SELECT COUNT(id) as c FROM productos WHERE categoria IS NULL OR categoria = '' OR categoria = 'GENERAL'")
+            sd_qty = sd_res[0]['c'] if sd_res else 0
+        except:
+            sd_qty = 0
+            
+        sd = QTreeWidgetItem(self.tree, ["- Sin Departamento -", str(sd_qty)])
         sd.setForeground(0, QBrush(QColor("#64748b")))
-        rows = db_manager.execute_query("SELECT id, nombre FROM categorias ORDER BY nombre") or []
+        
+        query = """
+            SELECT c.id, c.nombre, COUNT(p.id) as qty 
+            FROM categorias c 
+            LEFT JOIN productos p ON UPPER(p.categoria) = UPPER(c.nombre) 
+            GROUP BY c.id, c.nombre 
+            ORDER BY c.nombre
+        """
+        rows = db_manager.execute_query(query) or []
         for r in rows:
-            it = QTreeWidgetItem(self.tree, [r['nombre'], str(r['id'])])
+            it = QTreeWidgetItem(self.tree, [r['nombre'], str(r['qty'])])
             it.setData(0, Qt.UserRole, r['id'])
 
     def _iniciar_nuevo(self):
@@ -1016,14 +1031,16 @@ class CatalogoProductos(QWidget):
         self.cmb_depto.clear()
         self.cmb_depto.addItem("— Todas las categorías —", None)
         try:
-            cats = db_manager.execute_query(
-                "SELECT DISTINCT categoria FROM productos "
-                "WHERE categoria IS NOT NULL ORDER BY categoria"
+            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS categorias (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT UNIQUE NOT NULL)")
+            db_manager.execute_non_query("INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
+            
+            deps = db_manager.execute_query(
+                "SELECT nombre FROM categorias ORDER BY nombre"
             ) or []
-            for r in cats:
-                cat = r['categoria']
-                if cat and cat.upper() != "GENERAL":
-                    self.cmb_depto.addItem(cat, cat)
+            for r in deps:
+                dep = r['nombre']
+                if dep and dep.upper() != "GENERAL":
+                    self.cmb_depto.addItem(dep, dep)
         except: pass
         self.cmb_depto.blockSignals(False)
 
@@ -1037,7 +1054,7 @@ class CatalogoProductos(QWidget):
             q += " AND (p.nombre LIKE ? OR CAST(p.id AS TEXT) LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
             p += [f"%{buscar}%"] * 3
         if depto:
-            q += " AND p.departamento=?"
+            q += " AND UPPER(p.departamento)=UPPER(?)"
             p.append(depto)
         q += " ORDER BY p.departamento, p.nombre"
         # q += " LIMIT 5000"  # Removido para permitir carga completa con paginación diferida
