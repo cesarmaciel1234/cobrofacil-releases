@@ -84,8 +84,6 @@ jobs:
             --collect-submodules "src.jefe" `
             --collect-submodules "src.carteleria" `
             --collect-submodules "src.services" `
-            --add-data "src/styles.qss;src/" `
-            --add-data "src/styles_light.qss;src/" `
             main.py
 
       - name: Copiar version.json al paquete instalable
