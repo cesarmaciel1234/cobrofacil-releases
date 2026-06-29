@@ -255,12 +255,32 @@ def apply_pending_update_on_startup() -> bool:
                 src = os.path.join(root, name)
                 dst = os.path.join(base, rel_root, name)
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
+                
+                # En Windows no se puede sobrescribir un .exe o .dll en uso, 
+                # pero SI se puede renombrar.
                 try:
                     if os.path.exists(dst):
+                        if dst.lower().endswith('.exe') or dst.lower().endswith('.dll') or dst.lower().endswith('.pyd'):
+                            old_path = dst + ".old"
+                            if os.path.exists(old_path):
+                                try:
+                                    os.remove(old_path)
+                                except OSError:
+                                    pass
+                            try:
+                                os.rename(dst, old_path)
+                            except OSError:
+                                pass
                         os.chmod(dst, 0o666)
                 except OSError:
                     pass
-                shutil.copy2(src, dst)
+                
+                try:
+                    shutil.copy2(src, dst)
+                except Exception as e:
+                    if logger:
+                        logger.error(f"Fallo copiando {src} a {dst}: {e}")
+                    raise
 
         remote_ver = pending.get("remote_version") or read_remote_version()
         if remote_ver:
