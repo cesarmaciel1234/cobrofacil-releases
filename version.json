@@ -1,7 +1,7 @@
 {
   "app_version": "5.0",
   "channel": "stable",
-  "build_date": "2026-06-29 10:25:30",
+  "build_date": "2026-06-29 10:54:15",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -498,9 +498,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "e784aa6aa26df15b0acd1b877cdd7e4c",
+      "checksum": "60af3513e3750f3efd4e59584d7dbeb5",
       "channel": "stable",
-      "size": 37559
+      "size": 37646
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -552,9 +552,9 @@
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "efc7fc20aea64a170bd4a8d00f1c9f89",
+      "checksum": "d0f6416fa66a4e3879407cd0d9ee94e1",
       "channel": "stable",
-      "size": 81051
+      "size": 81219
     },
     "src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
@@ -702,9 +702,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "1515d79a16f9d68e97ec075f81024c43",
+      "checksum": "a46537e83cd4a26c6c487aa729b6b6c2",
       "channel": "stable",
-      "size": 106675
+      "size": 106043
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -750,9 +750,9 @@
     },
     "src/cajero/paso5_terminal/componentes_visuales/tabla_de_productos.py": {
       "version": "1.0.0",
-      "checksum": "2f5e6de95216c36ceab88375725e2e97",
+      "checksum": "46e27140a6628110d72b2f224a58b591",
       "channel": "stable",
-      "size": 2014
+      "size": 2034
     },
     "src/cajero/paso5_terminal/componentes_visuales/__init__.py": {
       "version": "1.0.0",

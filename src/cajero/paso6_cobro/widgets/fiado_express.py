@@ -234,7 +234,7 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
 
         disp = ClienteRepository.credito_disponible(cliente)
         if ClienteRepository.limite_credito_excedido(cliente, self.monto_total):
-            limite = float(cliente.get("limite_credito", 0))
+            limite = float(dict(cliente).get("limite_credito", 0))
             sonar_alarma_limite_fiado()
             self.lbl_cliente.clear()
             self.lbl_err.setText(
@@ -275,7 +275,7 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         self.cliente = cliente
         self.dni_ref = dni_ref
         self.cliente_id = cliente["id"]
-        self.cliente_nombre = cliente.get("nombre", "")
+        self.cliente_nombre = dict(cliente).get("nombre", "")
         self.reintentar_dni = False
         self._dni_verificado = False
         self._build()
@@ -311,9 +311,9 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
             "Paso 2 — El cliente debe repetir su DNI. Debe coincidir con el paso anterior."
         ))
 
-        nombre = self.cliente.get("nombre", "")
+        nombre = dict(self.cliente).get("nombre", "")
         disp = ClienteRepository.credito_disponible(self.cliente)
-        limite = float(self.cliente.get("limite_credito", 0))
+        limite = float(dict(self.cliente).get("limite_credito", 0))
 
         lbl_cli = QLabel(f"Cliente: {nombre}")
         lbl_cli.setWordWrap(True)

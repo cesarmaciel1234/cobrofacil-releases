@@ -30,7 +30,7 @@ class LoginPantalla(QDialog):
         self.role = role
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(520, 510)
+        self.setFixedSize(520, 600) # Más alto para evitar que se aplaste
         self._setup_ui()
         try:
             from src.utils.bot_state import update_bot_state
@@ -138,6 +138,10 @@ class LoginPantalla(QDialog):
             print(f"Error cargando usuarios: {e}")
             
         content_lay.addWidget(self.txt_user)
+        
+        # Autoseleccionar el primer usuario si existe
+        if self.txt_user.count() > 0:
+            self.txt_user.setCurrentIndex(0)
 
         # Contraseña
         lbl_pass = QLabel("CONTRASEÑA")
@@ -150,6 +154,10 @@ class LoginPantalla(QDialog):
         self.txt_pass.setEchoMode(QLineEdit.Password)
         self.txt_pass.returnPressed.connect(self.verificar)
         content_lay.addWidget(self.txt_pass)
+        
+        # Auto-cargar contraseña para admin si es el único y estamos en pruebas
+        if self.role == "admin" and self.txt_user.currentText() == "admin":
+            self.txt_pass.setText("admin")
 
         content_lay.addSpacing(15)
 

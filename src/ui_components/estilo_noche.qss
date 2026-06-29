@@ -852,7 +852,7 @@ QDialog[theme="dark"] QLabel#LoginBadge {
 
 QLabel#LoginAvatar { font-size: 60px; background: transparent; border: none; }
 QLabel#LoginTitle {
-    color: #1E293B; font-size: 26px; font-weight: 900;
+    color: #F8FAFC; font-size: 26px; font-weight: 900;
     font-family: 'Segoe UI Black', sans-serif;
     background: transparent; border: none; letter-spacing: -0.5px;
 }
@@ -862,16 +862,16 @@ QLabel#LoginFieldLbl { color: #64748B; font-weight: 900; font-size: 11px; }
 QDialog[theme="dark"] QLabel#LoginFieldLbl { color: #94A3B8; }
 
 QComboBox#LoginUserCb, QLineEdit#LoginPass {
-    background: #F8FAFC; border: 1.5px solid #E2E8F0;
+    background: #0F172A; border: 1.5px solid #334155;
     border-radius: 12px; padding: 12px 16px;
-    font-size: 14px; font-weight: 600; color: #1E293B;
+    font-size: 14px; font-weight: 600; color: #F8FAFC;
 }
 QDialog[theme="dark"] QComboBox#LoginUserCb, QDialog[theme="dark"] QLineEdit#LoginPass {
     background: #1E293B; border-color: #334155; color: #F8FAFC;
 }
 
 QComboBox#LoginUserCb:focus, QLineEdit#LoginPass:focus {
-    border: 2px solid #3B82F6; background: rgba(59, 130, 246, 0.04);
+    border: 2px solid #3B82F6; background: #1E293B;
 }
 QDialog[theme="dark"] QComboBox#LoginUserCb:focus, QDialog[theme="dark"] QLineEdit#LoginPass:focus {
     background: rgba(59, 130, 246, 0.1);

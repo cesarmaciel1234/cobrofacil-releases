@@ -14,17 +14,20 @@ class TablaDeProductos(QFrame):
         self.tabla.setHorizontalHeaderLabels(["ID", "DESCRIPCION PRODUCTO", "PRECIO", "CANT", "DES. TOTAL", "TOTAL"])
         self.tabla.setObjectName("TerminalTabla")
         self.tabla.setAlternatingRowColors(True)
-        # Bloquear columnas numéricas para evitar que Qt las exprima
-        self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed) 
-        # Solo la descripción se estira dinámicamente
-        self.tabla.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch) 
+        header = self.tabla.horizontalHeader()
         
-        # Anchos fijos y robustos (evitan el resizing manual y saltos)
-        self.tabla.setColumnWidth(0, 130)  # ID / Barcode
-        self.tabla.setColumnWidth(2, 140)  # PRECIO
-        self.tabla.setColumnWidth(3, 90)   # CANT
-        self.tabla.setColumnWidth(4, 130)  # DES. TOTAL
-        self.tabla.setColumnWidth(5, 160)  # TOTAL
+        # 1. Definir un tamaño mínimo global para que las celdas nunca se aplasten
+        header.setMinimumSectionSize(100)
+        
+        # 2. Las columnas numéricas se ajustan a su contenido para nunca mostrar '...'
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)  # ID
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)  # PRECIO
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)  # CANT
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)  # DES. TOTAL
+        header.setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)  # TOTAL
+        
+        # 3. La descripción estira para ocupar todo el espacio sobrante en pantallas 14" a 24"
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.verticalHeader().setDefaultSectionSize(40)
