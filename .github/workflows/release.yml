@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - main
+      - backup-pre-v4.8-restore
   workflow_dispatch:   # Permite lanzar el build desde GitHub → Actions → Run workflow
 
 permissions:
