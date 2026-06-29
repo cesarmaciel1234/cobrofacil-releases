@@ -310,26 +310,26 @@ class DialogoEditarCliente(QDialog):
         form = QFormLayout()
         form.setSpacing(10)
 
-        self.txt_nombre = QLineEdit(self.cliente.get("nombre", ""))
+        self.txt_nombre = QLineEdit(dict(self.cliente).get("nombre", ""))
         self.txt_nombre.setPlaceholderText("Nombre completo")
 
-        dni_guardado = (self.cliente.get("dni") or "").strip()
+        dni_guardado = (dict(self.cliente).get("dni") or "").strip()
         self.txt_dni = QLineEdit(dni_guardado)
         self.txt_dni.setPlaceholderText("7+ dígitos")
 
-        telefono = (self.cliente.get("telefono") or "").strip()
+        telefono = (dict(self.cliente).get("telefono") or "").strip()
         if telefono and telefono == dni_guardado:
             telefono = ""
         self.txt_telefono = QLineEdit(telefono)
         self.txt_telefono.setPlaceholderText("Teléfono / WhatsApp (opcional)")
 
-        self.txt_direccion = QLineEdit(self.cliente.get("direccion") or "")
+        self.txt_direccion = QLineEdit(dict(self.cliente).get("direccion") or "")
         self.txt_direccion.setPlaceholderText("Calle, número, barrio…")
 
         self.cmb_perfil = QComboBox()
         self.cmb_perfil.addItem("⚡ Express (fiado mostrador)", "express")
         self.cmb_perfil.addItem("Regular (cuenta habitual)", "regular")
-        tipo = (self.cliente.get("tipo_cliente") or "regular").lower()
+        tipo = (dict(self.cliente).get("tipo_cliente") or "regular").lower()
         self.cmb_perfil.setCurrentIndex(0 if tipo == "express" else 1)
 
         form.addRow("Nombre:", self.txt_nombre)
@@ -377,7 +377,7 @@ class DialogoEditarCliente(QDialog):
             return
         if dni:
             otro = ClienteRepository.buscar_por_dni(dni)
-            if otro and int(otro.get("id", 0)) != int(self.cliente_id):
+            if otro and int(dict(otro).get("id", 0)) != int(self.cliente_id):
                 QMessageBox.warning(self, "DNI duplicado", f"El DNI {dni} ya pertenece a otro cliente.")
                 return
 
@@ -509,17 +509,17 @@ class DialogoHistorialCliente(QDialog):
         lay.addLayout(foot)
 
     def _actualizar_cabecera(self):
-        nombre = self.cliente.get("nombre", "—")
-        dni = (self.cliente.get("dni") or "").strip() or "—"
-        tipo = (self.cliente.get("tipo_cliente") or "regular").lower()
+        nombre = dict(self.cliente).get("nombre", "—")
+        dni = (dict(self.cliente).get("dni") or "").strip() or "—"
+        tipo = (dict(self.cliente).get("tipo_cliente") or "regular").lower()
         tipo_txt = "⚡ Express" if tipo == "express" else "Regular"
-        limite = float(self.cliente.get("limite_credito") or 0)
-        deuda = float(self.cliente.get("deuda_actual") or 0)
+        limite = float(dict(self.cliente).get("limite_credito") or 0)
+        deuda = float(dict(self.cliente).get("deuda_actual") or 0)
         if tipo == "express" and limite <= 0:
             limite = FIADO_EXPRESS_LIMITE_DEFAULT
         disponible = ClienteRepository.credito_disponible(self.cliente)
-        telefono = (self.cliente.get("telefono") or "").strip()
-        direccion = (self.cliente.get("direccion") or "").strip()
+        telefono = (dict(self.cliente).get("telefono") or "").strip()
+        direccion = (dict(self.cliente).get("direccion") or "").strip()
 
         self.lbl_tit.setText(f"📋  HISTORIAL — {nombre.upper()}")
         self.lbl_meta.setText(
@@ -561,13 +561,13 @@ class DialogoHistorialCliente(QDialog):
             self.tabla.insertRow(row)
             self.tabla.setRowHeight(row, 48)
 
-            fecha_raw = str(m.get("fecha") or "")
+            fecha_raw = str(dict(m).get("fecha") or "")
             fecha_txt = fecha_raw.split(".")[0] if fecha_raw else "—"
-            tipo = (m.get("tipo") or "").upper()
-            monto = float(m.get("monto") or 0)
-            saldo = float(m.get("saldo_resultante") or 0)
-            desc = (m.get("descripcion") or "—").strip()
-            venta_id = m.get("venta_id")
+            tipo = (dict(m).get("tipo") or "").upper()
+            monto = float(dict(m).get("monto") or 0)
+            saldo = float(dict(m).get("saldo_resultante") or 0)
+            desc = (dict(m).get("descripcion") or "—").strip()
+            venta_id = dict(m).get("venta_id")
             ticket = f"#{venta_id}" if venta_id else "—"
 
             if tipo == "CARGO":
@@ -751,11 +751,11 @@ class AdminClientes(QWidget):
         
         if clientes:
             for i, c in enumerate(clientes):
-                deuda = float(c.get('deuda_actual') or 0)
-                limite = float(c.get('limite_credito') or 0)
+                deuda = float(dict(c).get('deuda_actual') or 0)
+                limite = float(dict(c).get('limite_credito') or 0)
                 disponible = ClienteRepository.credito_disponible(c)
-                dni = (c.get('dni') or '').strip()
-                tipo = (c.get('tipo_cliente') or 'regular').lower()
+                dni = (dict(c).get('dni') or '').strip()
+                tipo = (dict(c).get('tipo_cliente') or 'regular').lower()
                 tipo_txt = "⚡ Express" if tipo == 'express' else "Regular"
                 if tipo == 'express' and limite <= 0:
                     limite = FIADO_EXPRESS_LIMITE_DEFAULT

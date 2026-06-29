@@ -137,9 +137,9 @@ class DialogoProducto(QDialog):
         self.setWindowTitle("📦 " + ("Editar Producto" if datos else "Nuevo Producto"))
         self.setFixedSize(780, 680)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
-        self._id = datos.get('id') if datos else None
-        self._cant_oferta = datos.get('cant_oferta', 0.0) if datos else 0.0
-        self._precio_oferta = datos.get('precio_oferta', 0.0) if datos else 0.0
+        self._id = dict(datos).get('id') if datos else None
+        self._cant_oferta = dict(datos).get('cant_oferta', 0.0) if datos else 0.0
+        self._precio_oferta = dict(datos).get('precio_oferta', 0.0) if datos else 0.0
         self.setup_ui(datos)
 
     def setup_ui(self, datos):
@@ -166,7 +166,7 @@ class DialogoProducto(QDialog):
         
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
         lbl_bc.setStyleSheet("font-weight: bold; font-size: 11px; border: none; color: #64748B;")
-        self.txt_codigo = QLineEdit(datos.get('codigo', '') if datos else '')
+        self.txt_codigo = QLineEdit(dict(datos).get('codigo', '') if datos else '')
         self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
         self.txt_codigo.setStyleSheet("""
             QLineEdit { 
@@ -188,7 +188,7 @@ class DialogoProducto(QDialog):
         grid.setSpacing(20)
 
         # Columna 1: Info Básica
-        self.txt_nombre = QLineEdit(datos.get('nombre', '') if datos else '')
+        self.txt_nombre = QLineEdit(dict(datos).get('nombre', '') if datos else '')
         self.txt_nombre.setPlaceholderText("Nombre descriptivo...")
         self.add_field(grid, "Nombre del Producto *:", self.txt_nombre, 0, 0)
 
@@ -209,7 +209,7 @@ class DialogoProducto(QDialog):
                     existentes_cat.add(cp['categoria'])
         except: pass
         
-        idx_cat = self.cmb_cat.findText(datos.get('categoria', 'GENERAL') if datos else 'GENERAL')
+        idx_cat = self.cmb_cat.findText(dict(datos).get('categoria', 'GENERAL') if datos else 'GENERAL')
         if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
 
         v_cat = QVBoxLayout()
@@ -248,7 +248,7 @@ class DialogoProducto(QDialog):
         
         self.cmb_depto.currentIndexChanged.connect(self._actualizar_info_iva)
 
-        depto_actual = datos.get('departamento', '') if datos else ''
+        depto_actual = dict(datos).get('departamento', '') if datos else ''
         idx_dep = self.cmb_depto.findText(depto_actual)
         if idx_dep >= 0: 
             self.cmb_depto.setCurrentIndex(idx_dep)
@@ -257,12 +257,12 @@ class DialogoProducto(QDialog):
 
         self.cmb_uni = QComboBox()
         self.cmb_uni.addItems(['UN','KG','LT','MT','CJ'])
-        idx = self.cmb_uni.findText(datos.get('unidad', 'UN') if datos else 'UN')
+        idx = self.cmb_uni.findText(dict(datos).get('unidad', 'UN') if datos else 'UN')
         if idx >= 0: self.cmb_uni.setCurrentIndex(idx)
         self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 3, 0)
 
         self.chk_pes = QCheckBox("Es pesable / fraccionable (Balanza)")
-        self.chk_pes.setChecked(bool(datos.get('es_pesable', 0)) if datos else False)
+        self.chk_pes.setChecked(bool(dict(datos).get('es_pesable', 0)) if datos else False)
         self.chk_pes.setStyleSheet("font-weight: bold;  margin-top: 10px;")
         grid.addWidget(self.chk_pes, 4, 0)
 
@@ -279,9 +279,9 @@ class DialogoProducto(QDialog):
         p_lay = QFormLayout(price_card)
         p_lay.setSpacing(12)
 
-        self.txt_costo = self.create_price_input(str(datos.get('costo', '0.00')) if datos else '0.00')
-        self.txt_precio = self.create_price_input(str(datos.get('precio', '0.00')) if datos else '0.00', bold=True)
-        self.txt_mayoreo = self.create_price_input(str(datos.get('precio_mayoreo', '0.00')) if datos else '0.00')
+        self.txt_costo = self.create_price_input(str(dict(datos).get('costo', '0.00')) if datos else '0.00')
+        self.txt_precio = self.create_price_input(str(dict(datos).get('precio', '0.00')) if datos else '0.00', bold=True)
+        self.txt_mayoreo = self.create_price_input(str(dict(datos).get('precio_mayoreo', '0.00')) if datos else '0.00')
         
         p_lay.addRow(QLabel("Costo Compra ($):"), self.txt_costo)
         p_lay.addRow(QLabel("Precio Venta ($) *:"), self.txt_precio)
@@ -291,9 +291,9 @@ class DialogoProducto(QDialog):
 
         # Stock Info
         stock_lay = QHBoxLayout()
-        self.txt_stock = self.create_price_input(str(datos.get('stock', '0')) if datos else '0')
-        self.txt_min = self.create_price_input(str(datos.get('stock_minimo', '0')) if datos else '0')
-        self.txt_max = self.create_price_input(str(datos.get('stock_maximo', '0')) if datos else '0')
+        self.txt_stock = self.create_price_input(str(dict(datos).get('stock', '0')) if datos else '0')
+        self.txt_min = self.create_price_input(str(dict(datos).get('stock_minimo', '0')) if datos else '0')
+        self.txt_max = self.create_price_input(str(dict(datos).get('stock_maximo', '0')) if datos else '0')
         
         v_stock = QVBoxLayout(); v_stock.addWidget(QLabel("Stock Act.")); v_stock.addWidget(self.txt_stock)
         v_min = QVBoxLayout(); v_min.addWidget(QLabel("Min.")); v_min.addWidget(self.txt_min)
@@ -1117,9 +1117,9 @@ class CatalogoProductos(QWidget):
                     (f"{depto_iva:.1f}%", Qt.AlignCenter),
                     (f"${r['costo']:.2f}", Qt.AlignRight),
                     (f"${r['precio']:.2f}", Qt.AlignRight),
-                    (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if r.get('precio_oferta') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_relampago']:.2f}" if r.get('precio_oferta_relampago') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_promedio']:.2f}" if r.get('precio_oferta_promedio') else "-", Qt.AlignCenter),
+                    (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if dict(r).get('precio_oferta') else "-", Qt.AlignCenter),
+                    (f"${r['precio_oferta_relampago']:.2f}" if dict(r).get('precio_oferta_relampago') else "-", Qt.AlignCenter),
+                    (f"${r['precio_oferta_promedio']:.2f}" if dict(r).get('precio_oferta_promedio') else "-", Qt.AlignCenter),
                     (f"{stock:.2f}",     Qt.AlignRight),
                     (f"{r['stock_minimo'] or 0:.2f}", Qt.AlignCenter),
                     (f"{r['stock_maximo'] or 0:.2f}", Qt.AlignCenter),
@@ -1283,8 +1283,8 @@ class CatalogoProductos(QWidget):
                     # Preparar lista para inserción masiva
                     values = []
                     for item in data:
-                        codigo = str(item.get("codigo", "") or "").strip()
-                        nombre = str(item.get("descripcion", "") or "").strip()
+                        codigo = str(dict(item).get("codigo", "") or "").strip()
+                        nombre = str(dict(item).get("descripcion", "") or "").strip()
                         if not codigo or not nombre:
                             continue
                         if codigo in existing_codes:
@@ -1293,14 +1293,14 @@ class CatalogoProductos(QWidget):
                         values.append((
                             codigo,
                             nombre,
-                            float(item.get("precio_venta") or 0.0),
-                            float(item.get("precio_costo") or 0.0),
-                            float(item.get("precio_mayoreo") or 0.0),
-                            str(item.get("departamento", "GENERAL") or "GENERAL"),
-                            float(item.get("stock") or 0.0),
-                            float(item.get("stock_minimo") or 0.0),
-                            float(item.get("stock_maximo") or 0.0),
-                            1 if str(item.get("tipo_venta", "")).strip().lower() in ("granel", "a granel") else 0
+                            float(dict(item).get("precio_venta") or 0.0),
+                            float(dict(item).get("precio_costo") or 0.0),
+                            float(dict(item).get("precio_mayoreo") or 0.0),
+                            str(dict(item).get("departamento", "GENERAL") or "GENERAL"),
+                            float(dict(item).get("stock") or 0.0),
+                            float(dict(item).get("stock_minimo") or 0.0),
+                            float(dict(item).get("stock_maximo") or 0.0),
+                            1 if str(dict(item).get("tipo_venta", "")).strip().lower() in ("granel", "a granel") else 0
                         ))
                         # Add to existing so we don't insert duplicate barcodes from the JSON itself
                         existing_codes.add(codigo)

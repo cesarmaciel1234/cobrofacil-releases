@@ -52,9 +52,6 @@ class MainWindow(QMainWindow):
         self.stacked_widget = QStackedWidget()
         self.main_layout.addWidget(self.stacked_widget)
 
-        self.btn_flotante = BotonFlotanteRegreso(self)
-        self.btn_flotante.clicked_return.connect(self.return_to_terminal_refresh)
-        self.btn_flotante.hide()
         self._supervisor_mode = False
 
         # ── Pirámide de acceso F11 ───────────────────────────────────────
@@ -309,79 +306,6 @@ class MainWindow(QMainWindow):
         self._uw.terminado.connect(on_terminado)
         self._uw.start()
 
-    def return_to_terminal_refresh(self):
-        """Botón flotante — desciende UN nivel en la pirámide.
-
-        Pirámide de descenso (siempre paso a paso):
-          Jefe (19)  → Admin (0)   → Cajero (1)
-
-        Regla:
-          - Desde screen 19 (Jefe)  → siempre va a Admin.
-          - Desde screen  0 (Admin) → va a Cajero SI la escalada
-            arrancó desde el terminal (_came_from_cajero=True);
-            si no, solo oculta el botón.
-        """
-        current = self.stacked_widget.currentIndex()
-
-        if current == 19:
-            # ─ Jefe → Admin ───────────────────────────────────────
-            self.setUpdatesEnabled(False)
-            try:
-                from src.config import config
-                if hasattr(self, '_admin_user_before_escalation') and self._admin_user_before_escalation:
-                    config.current_user = self._admin_user_before_escalation.copy()
-                else:
-                    self._restore_user_role(0)
-                    
-                self._escalando = True
-                self.apply_roles()
-                self._escalando = False
-                
-                if getattr(self, '_came_from_cajero', False):
-                    # Todavía hay un piso más abajo
-                    self.btn_flotante.show()
-                    self.btn_flotante.raise_()
-                else:
-                    # Vino directo del admin — no hay cajero esperando
-                    self._supervisor_mode = False
-                    self.btn_flotante.hide()
-            finally:
-                self.setUpdatesEnabled(True)
-
-        elif getattr(self, '_came_from_cajero', False):
-            # ─ Admin/Cualquier Pantalla → Cajero ──────────────────────────────────────
-            self.setUpdatesEnabled(False)
-            try:
-                self._came_from_cajero  = False
-                self._supervisor_mode   = False
-                self.btn_flotante.hide()
-                
-                from src.config import config
-                if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
-                    config.current_user = self._prev_user_before_escalation.copy()
-                    
-                if hasattr(self, 'pantalla_ventas'):
-                    self.pantalla_ventas.refresh_terminal_data()
-                
-                self.apply_roles()
-            finally:
-                self.setUpdatesEnabled(True)
-
-        else:
-            # ─ Fallback (cualquier otra pantalla sin origen cajero) ───────────────────────
-            self._came_from_cajero  = False
-            self._supervisor_mode   = False
-            self._nav_stack.clear()
-            self.btn_flotante.hide()
-            
-            from src.config import config
-            if hasattr(self, '_prev_user_before_escalation') and self._prev_user_before_escalation:
-                config.current_user = self._prev_user_before_escalation.copy()
-            
-            if hasattr(self, 'pantalla_ventas'):
-                self.pantalla_ventas.refresh_terminal_data()
-            self.switch_tab(1)
-
 
     def _restore_user_role(self, screen_index: int):
         """Restaura el rol activo en config.current_user según la pantalla destino."""
@@ -412,18 +336,11 @@ class MainWindow(QMainWindow):
             """Slot libre en el stacked widget — nunca se navega aquí."""
             pass
 
-        # Pantallas instanciadas de inmediato (esenciales para el arranque)
-        # Import diferido aquí en vez del tope del archivo para no bloquear splash
-        from src.cajero.paso5_terminal import Paso5Terminal
-        self.pantalla_ventas = Paso5Terminal()
-        self.pantalla_ventas.request_admin_jump = self.jump_to_admin_secure
-        self.pantalla_ventas.request_chatbot_toggle.connect(self._toggle_chatbot_overlay)
-
         # El stacked_widget necesita exactamente 20 slots fijos.
         # Usamos QWidget() vacíos como placeholder para los lazy.
         self.screens = [
             None,    # 0  — Admin0Dashboard          (lazy)
-            self.pantalla_ventas,                  # 1  — Cajero (cargado ahora)
+            None,    # 1  — Cajero                   (lazy)
             None,    # 2  — Admin1Inventario         (lazy)
             None,    # 3  — Admin2Ofertas            (lazy)
             None,    # 4  — Admin3Reportes           (lazy)
@@ -451,6 +368,7 @@ class MainWindow(QMainWindow):
         # Fábricas: callable que crea el widget cuando se necesita
         self._screen_factories = {
             0:  lambda: __import__('src.admin.admin0_dashboard',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
+            1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
             2:  lambda: __import__('src.admin.admin1_inventario', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.admin.admin2_ofertas',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.admin3_reportes',   fromlist=['Admin3Reportes']).Admin3Reportes(),
@@ -481,8 +399,7 @@ class MainWindow(QMainWindow):
                 # Guardar el placeholder para poder reemplazarlo luego
                 self.stacked_widget.widget(i).setObjectName(f"_lazy_placeholder_{i}")
 
-        # Conectar señales para el terminal de ventas (ya instanciado)
-        self._connect_screen_signals(1, self.pantalla_ventas)
+        # Paso5Terminal ahora se carga de manera lazy en _build_lazy_screen
 
     def _preload_qss_cache(self):
         """Lee ambos temas una sola vez al arrancar."""
@@ -491,7 +408,10 @@ class MainWindow(QMainWindow):
         for theme_file in ("styles.qss", "styles_light.qss"):
             if theme_file in _QSS_CACHE:
                 continue
+            # Check in src first, then src/ui_components
             qss_path = get_resource_path(os.path.join("src", theme_file))
+            if not os.path.exists(qss_path):
+                qss_path = get_resource_path(os.path.join("src", "ui_components", theme_file))
             try:
                 with open(qss_path, "r", encoding="utf-8") as f:
                     _QSS_CACHE[theme_file] = f.read()
@@ -515,6 +435,13 @@ class MainWindow(QMainWindow):
                 QApplication.processEvents()
             except Exception as e:
                 logger.warning(f"Prewarm pantalla {idx} falló: {e}")
+
+    @property
+    def pantalla_ventas(self):
+        """Lazy load de la terminal de ventas (Paso 5)"""
+        if self.screens[1] is None:
+            self._build_lazy_screen(1)
+        return self.screens[1]
 
     def _apply_theme_for_index(self, index: int):
         """Solo reaplica QSS al cambiar oscuro↔claro; evita repintar todo en cada tab admin."""
@@ -571,6 +498,11 @@ class MainWindow(QMainWindow):
 
         self._connect_screen_signals(index, widget)
 
+        # Conexiones especiales para Cajero (index 1)
+        if index == 1:
+            self.screens[1].request_admin_jump = self.jump_to_admin_secure
+            self.screens[1].request_chatbot_toggle.connect(self._toggle_chatbot_overlay)
+
     def _connect_screen_signals(self, index: int, s):
         """Conecta las señales de navegación de un widget recién creado."""
         if hasattr(s, 'request_dashboard'):
@@ -598,13 +530,12 @@ class MainWindow(QMainWindow):
             except:
                 pass
             s.request_logout.connect(self._logout_to_selector)
-            s.request_logout.connect(self._logout_to_selector)
 
     def _init_shortcuts(self):
-        # ApplicationShortcut: siguen activos en modo kiosco / fullscreen
-        self._sc_f11 = QShortcut(QKeySequence(Qt.Key_F11), self)
-        self._sc_f11.setContext(Qt.ApplicationShortcut)
-        self._sc_f11.activated.connect(self.handle_f11_global)
+        # ── Pirámide de acceso F11 ───────────────────────────────────────
+        from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.escalada_f11.f11_escalation_manager import GestorEscaladaF11
+        self.gestor_f11 = GestorEscaladaF11(self)
+        self.btn_flotante = self.gestor_f11.btn_flotante
 
         self._sc_f3 = QShortcut(QKeySequence(Qt.Key_F3), self)
         self._sc_f3.setContext(Qt.ApplicationShortcut)
@@ -629,83 +560,11 @@ class MainWindow(QMainWindow):
             self.switch_tab(18)
 
     def jump_to_admin_secure(self):
-        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        if qt_exec(LoginPantalla(role="admin")):
-            self._supervisor_mode = True
-            self.btn_flotante.show()
-            self.switch_tab(0)
-            self.apply_roles()
+        self.gestor_f11.jump_to_admin_secure()
 
     def handle_f11_global(self):
-        """Sistema de escalada piramidal de acceso.
-
-        Cajero (1)  ─F11→  Admin (0)   pide credencial admin
-        Admin  (0)  ─F11→  Jefe  (19)  pide credencial jefe
-        Jefe   (19) ─F11→  toggle fullscreen (ya está en la cima)
-
-        El botón flotante desciende paso a paso el camino inverso.
-        """
-        import time
-        now = time.monotonic()
-        if now - getattr(self, "_last_f11_ts", 0.0) < 0.4:
-            return
-        self._last_f11_ts = now
-
-        from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        from src.config import config
-        role = (config.current_user or {}).get("role", "cajero").lower()
-
-        # ── Nivel 1: Cajero → Admin ───────────────────────────────────
-        if role == "cajero":
-            self._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
-
-            dlg = LoginPantalla(role="admin")
-            if qt_exec(dlg):
-                self.setUpdatesEnabled(False)
-                try:
-                    from src.cajero.paso5_terminal import CajeroActivo
-                    supervisor = config.current_user.get('username', 'admin')
-                    cajero     = CajeroActivo.nombre
-                    db_manager.execute_non_query(
-                        "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones)"
-                        " VALUES ('INTERVENCION', 0, ?, ?)",
-                        (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
-                    )
-                    
-                    self._came_from_cajero  = True
-                    self._supervisor_mode   = True
-                    self._escalando = True
-                    self.apply_roles()
-                    self.btn_flotante.show()
-                    self.btn_flotante.raise_()
-                finally:
-                    self._escalando = False
-                    self.setUpdatesEnabled(True)
-            return
-
-        # ── Nivel 2: Admin → Jefe ──
-        if role == "admin":
-            self._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
-            
-            dlg = LoginPantalla(role="jefe")
-            if qt_exec(dlg):
-                self.setUpdatesEnabled(False)
-                try:
-                    self._supervisor_mode = True
-                    self._escalando = True
-                    self.apply_roles()
-                    self.btn_flotante.show()
-                    self.btn_flotante.raise_()
-                finally:
-                    self._escalando = False
-                    self.setUpdatesEnabled(True)
-            return
-
-        # ── Nivel 3: Jefe (cima) → toggle fullscreen ────────────────────
-        if self.isFullScreen():
-            self.showMaximized()
-        else:
-            self.showFullScreen()
+        self.gestor_f11.handle_f11_global()
+        pass
 
 
 
@@ -797,11 +656,7 @@ class MainWindow(QMainWindow):
                 top_bar.show()
         else:
             # Mostrar si estamos fuera de ventas y HAY UNA VENTA PENDIENTE o es INTERVENCIÓN DE SUPERVISOR
-            if hay_venta or is_supervisor:
-                self.btn_flotante.show()
-                self.btn_flotante.raise_()
-            else:
-                self.btn_flotante.hide()
+            self.gestor_f11.update_floating_button_visibility(index, hay_venta, is_supervisor)
                 
             # Ocultar chatbot en las demás pantallas
             if self.chatbot_overlay is not None:
@@ -822,7 +677,8 @@ class MainWindow(QMainWindow):
     def apply_roles(self):
         user = config.current_user
         if not user: return
-        role = user.get("role", "cajero").lower()
+        # Aceptar tanto 'rol' (DB) como 'role' (Config manual)
+        role = (user.get("role") or user.get("rol") or "cajero").lower()
         # Cajero → terminal. Jefe → panel exclusivo (19). Admin → dashboard (0).
         if role == "cajero":
             self.switch_tab(1)
@@ -883,8 +739,7 @@ class MainWindow(QMainWindow):
         except RuntimeError:
             # The overlay widget was already deleted; ignore
             pass
-        if self.btn_flotante.isVisible():
-            self.btn_flotante.move(self.width() - 100, 80)
+        self.gestor_f11.update_floating_button_position(self.width(), self.height())
         self._posicionar_banner()
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
@@ -919,7 +774,7 @@ class MainWindow(QMainWindow):
     def _toggle_chatbot_overlay(self):
         # Lazy init: se crea la primera vez que el cajero presiona el botón
         if self.chatbot_overlay is None:
-            from src.cajero.chat_bot import ChatManualWidget as ChatBotWidget
+            from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
             self.chatbot_overlay = ChatBotWidget(self)
             self.chatbot_overlay.hide()
             self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))

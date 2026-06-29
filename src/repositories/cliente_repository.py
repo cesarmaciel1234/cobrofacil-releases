@@ -88,4 +88,5 @@ class ClienteRepository:
 
     @staticmethod
     def credito_disponible(cliente: dict) -> float:
-        return float(cliente.get("limite_credito", 0)) - float(cliente.get("deuda_actual", 0))
+        c_dict = dict(cliente) if hasattr(cliente, "keys") else cliente
+        return float(c_dict.get("limite_credito", 0)) - float(c_dict.get("deuda_actual", 0))

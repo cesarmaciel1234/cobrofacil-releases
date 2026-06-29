@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="darkGrey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4b5563" />
+      <stop offset="100%" stop-color="#374151" />
+    </linearGradient>
+    <linearGradient id="drawerGrey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6b7280" />
+      <stop offset="100%" stop-color="#4b5563" />
+    </linearGradient>
+    <linearGradient id="orangeTrim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="screen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#e2e8f0" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Base Shadow -->
+  <ellipse cx="400" cy="700" rx="280" ry="30" fill="#000" opacity="0.2" filter="url(#shadow)" />
+
+  <!-- Main Base / Cash Drawer Outer -->
+  <path d="M150 550 L650 550 L650 680 L150 680 Z" fill="url(#darkGrey)" stroke="url(#orangeTrim)" stroke-width="6" rx="10" ry="10" />
+  
+  <!-- Open Cash Drawer -->
+  <path d="M120 600 L620 600 L620 720 L120 720 Z" fill="url(#drawerGrey)" stroke="#1f2937" stroke-width="3" rx="5" ry="5" filter="url(#shadow)" />
+  
+  <!-- Drawer Slots -->
+  <rect x="140" y="620" width="80" height="80" fill="#1f2937" rx="3" />
+  <rect x="235" y="620" width="80" height="80" fill="#1f2937" rx="3" />
+  <rect x="330" y="620" width="80" height="80" fill="#1f2937" rx="3" />
+  <rect x="425" y="620" width="80" height="80" fill="#1f2937" rx="3" />
+  <rect x="520" y="620" width="80" height="80" fill="#1f2937" rx="3" />
+  
+  <!-- Bills -->
+  <rect x="150" y="630" width="60" height="30" fill="#86efac" rx="2" transform="rotate(-5 180 645)" />
+  <rect x="245" y="630" width="60" height="30" fill="#86efac" rx="2" transform="rotate(3 275 645)" />
+  <rect x="340" y="630" width="60" height="30" fill="#86efac" rx="2" transform="rotate(-2 370 645)" />
+  
+  <!-- Coins -->
+  <circle cx="450" cy="650" r="10" fill="#fbbf24" />
+  <circle cx="465" cy="660" r="10" fill="#94a3b8" />
+  <circle cx="550" cy="650" r="10" fill="#94a3b8" />
+  <circle cx="565" cy="670" r="10" fill="#fbbf24" />
+
+  <!-- Drawer Lock -->
+  <circle cx="370" cy="700" r="8" fill="#94a3b8" />
+  <rect x="368" y="698" width="4" height="8" fill="#334155" />
+
+  <!-- Central Stand / Printer Body -->
+  <path d="M320 550 L480 550 L460 380 L340 380 Z" fill="url(#darkGrey)" stroke="url(#orangeTrim)" stroke-width="4" />
+  
+  <!-- Printer Output -->
+  <rect x="360" y="420" width="80" height="10" fill="#1f2937" rx="2" />
+  
+  <!-- Receipt Paper -->
+  <path d="M365 425 L435 425 L445 500 L355 500 Z" fill="#ffffff" filter="url(#shadow)" />
+  <line x1="370" y1="440" x2="430" y2="440" stroke="#94a3b8" stroke-width="2" />
+  <line x1="370" y1="450" x2="410" y2="450" stroke="#94a3b8" stroke-width="2" />
+  <line x1="370" y1="460" x2="420" y2="460" stroke="#94a3b8" stroke-width="2" />
+  
+  <!-- Barcode on receipt -->
+  <rect x="370" y="475" width="4" height="15" fill="#000" />
+  <rect x="376" y="475" width="2" height="15" fill="#000" />
+  <rect x="380" y="475" width="6" height="15" fill="#000" />
+  <rect x="388" y="475" width="2" height="15" fill="#000" />
+  <rect x="392" y="475" width="4" height="15" fill="#000" />
+  
+  <!-- Back Screen (Customer Facing) -->
+  <path d="M370 340 L580 300 L560 140 L390 170 Z" fill="#1f2937" stroke="url(#orangeTrim)" stroke-width="4" stroke-linejoin="round" />
+  <path d="M385 320 L565 285 L545 155 L395 185 Z" fill="#334155" />
+
+  <!-- Main Screen -->
+  <path d="M200 380 L520 380 L540 120 L180 120 Z" fill="#1f2937" stroke="url(#orangeTrim)" stroke-width="6" stroke-linejoin="round" filter="url(#shadow)" />
+  
+  <!-- Screen Display Area -->
+  <path d="M215 360 L505 360 L520 140 L200 140 Z" fill="url(#screen)" />
+  
+  <!-- Screen UI Elements -->
+  <!-- Left Sidebar (Ticket) -->
+  <path d="M215 360 L320 360 L325 140 L200 140 Z" fill="#ffffff" opacity="0.9" />
+  <line x1="220" y1="170" x2="310" y2="170" stroke="#cbd5e1" stroke-width="2" />
+  <rect x="215" y="180" width="100" height="15" fill="#f1f5f9" />
+  <rect x="212" y="200" width="100" height="15" fill="#e2e8f0" />
+  <rect x="210" y="220" width="100" height="15" fill="#f1f5f9" />
+  
+  <!-- Total Area -->
+  <rect x="225" y="320" width="80" height="25" fill="#ef4444" rx="4" />
+  <rect x="410" y="310" width=\"70\" height="35" fill="#3b82f6" rx="4" />
+
+  <!-- Right Grid (Products) -->
+  <rect x="345" y="180" width="40" height="40" fill="#f87171" rx="6" />
+  <rect x="395" y="180" width="40" height="40" fill="#fbbf24" rx="6" />
+  <rect x="445" y="180" width="40" height="40" fill="#34d399" rx="6" />
+  <rect x="340" y="230" width="40" height="40" fill="#60a5fa" rx="6" />
+  <rect x="390" y="230" width="40" height="40" fill="#a78bfa" rx="6" />
+  <rect x="440" y="230" width="40" height="40" fill="#f472b6" rx="6" />
+
+  <!-- Scanner on the Right -->
+  <ellipse cx="680" cy="520" rx="45" ry="25" fill="url(#darkGrey)" filter="url(#shadow)" />
+  <!-- Scanner Handle -->
+  <path d="M680 500 C 650 450, 680 400, 710 420 C 730 440, 700 480, 680 500" fill="url(#darkGrey)" stroke="url(#orangeTrim)" stroke-width="5" />
+  <!-- Scanner Head -->
+  <path d="M660 400 Q 720 380 730 430 L 680 430 Z" fill="#1f2937" stroke="url(#orangeTrim)" stroke-width="3" />
+  <!-- Laser Window -->
+  <path d="M670 405 Q 710 395 720 425 L 685 425 Z" fill="#000" />
+  <line x1="675" y1="415" x2="715" y2="415" stroke="#ef4444" stroke-width="2" />
+</svg>

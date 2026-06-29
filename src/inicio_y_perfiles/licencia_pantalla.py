@@ -17,7 +17,7 @@ class LicenciaPantalla(QDialog):
 
     def apply_glow(self):
         glow = QGraphicsDropShadowEffect(self)
-        glow.setBlurRadius(35)
+        glow.setBlurRadius(10) # Optimizado (antes 35)
         glow.setColor(QColor(30, 58, 138, 200)) # Azul Neón Profundo
         glow.setOffset(0, 0)
         self.container.setGraphicsEffect(glow)

@@ -25,7 +25,7 @@ class AperturaCajaPantalla(QDialog):
 
     def apply_glow(self):
         glow = QGraphicsDropShadowEffect(self)
-        glow.setBlurRadius(45)
+        glow.setBlurRadius(10) # Optimizado (antes 45)
         glow.setColor(QColor(16, 185, 129, 35)) # Glow Esmeralda suave y realista
         glow.setOffset(0, 12)
         self.container.setGraphicsEffect(glow)
@@ -145,26 +145,9 @@ class AperturaCajaPantalla(QDialog):
     def guardar_y_seguir(self):
         from src.utils.parser import parse_float_regional
         monto = parse_float_regional(self.txt_saldo.text())
-            
-        usuario = config.current_user.get("username", "cajero")
-        fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        c_id = config.get("caja_id", 1)
         
-        # Verificar si la caja ya está abierta para no duplicar la apertura
-        mov = db_manager.execute_query(
-            "SELECT id, tipo FROM movimientos_caja WHERE caja_id = ? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO') ORDER BY id DESC LIMIT 1",
-            (c_id,)
-        )
-        if mov and mov[0]["tipo"] == "APERTURA":
-            # Si ya está abierta, actualizamos la última apertura para evitar duplicados en auditoría
-            last_id = mov[0]["id"]
-            db_manager.execute_non_query(
-                "UPDATE movimientos_caja SET fecha = ?, monto = ?, usuario = ?, observaciones = 'Reapertura por reinicio/crash' WHERE id = ?",
-                (fecha, monto, usuario, last_id)
-            )
-        else:
-            db_manager.execute_non_query(
-                "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, 'APERTURA', ?, ?, 'Inicio', ?)",
-                (fecha, monto, usuario, c_id)
-            )
+        from src.inicio_y_perfiles.logica.caja_controller import CajaController
+        caja_ctrl = CajaController()
+        caja_ctrl.abrir_caja(monto)
+        
         self.accept()

@@ -175,20 +175,29 @@ class MariaDBController:
             import time
             import socket
             
-            max_retries = 30
+            max_retries = 40 # 20 segundos máximo para evitar bloqueos (en PCs lentas MariaDB tarda en iniciar)
+            connected = False
             for i in range(max_retries):
                 try:
+                    # Mantenemos viva la animación (el event loop corre en main)
+                    pass
+                    
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.settimeout(0.5)
                     result = s.connect_ex(("127.0.0.1", 3306))
                     s.close()
                     if result == 0:
                         logger.info(f"MariaDB listo despues de {i*0.5} segundos.")
+                        connected = True
                         break
                 except:
                     pass
                 time.sleep(0.5)
             
+            if not connected:
+                logger.error("MariaDB no abrio el puerto a tiempo. Abortando inicializacion.")
+                return False
+                
             self._initialized = True
             
             # Aqui creamos la base de datos 'punpro_db' si no existe, a través de mysql.exe
@@ -215,6 +224,23 @@ class MariaDBController:
         
         creationflags = 0x08000000
         
+        # Helper loop for responsive waiting
+        def _wait_responsive(proc, timeout_sec):
+            try:
+                from PyQt6.QtCore import QCoreApplication
+                app = QCoreApplication.instance()
+            except:
+                app = None
+            import time
+            start = time.time()
+            while proc.poll() is None:
+                if app: app.processEvents()
+                if time.time() - start > timeout_sec:
+                    proc.kill()
+                    return False
+                time.sleep(0.1)
+            return proc.returncode == 0
+
         # Intentar primero sin contraseña (primera inicialización)
         try:
             process = subprocess.Popen(
@@ -224,8 +250,8 @@ class MariaDBController:
                 stderr=subprocess.DEVNULL,
                 creationflags=creationflags
             )
-            process.communicate(timeout=5)
-            if process.returncode == 0:
+            success = _wait_responsive(process, 2)
+            if success:
                 logger.info("Base de datos punpro_db garantizada en MariaDB local (inicializada con contraseña '1234').")
                 return
         except Exception:
@@ -240,7 +266,7 @@ class MariaDBController:
                 stderr=subprocess.DEVNULL,
                 creationflags=creationflags
             )
-            process.communicate(timeout=5)
+            _wait_responsive(process, 2)
             logger.info("Base de datos punpro_db garantizada en MariaDB local (con contraseña '1234' confirmada).")
         except Exception as e:
             logger.error(f"Error creando la base de datos punpro_db local: {e}")

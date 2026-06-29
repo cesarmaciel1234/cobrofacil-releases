@@ -95,40 +95,62 @@ def launch_app():
     splash.show()
     app.processEvents()
     
+    def update_status(text, progress_val=None):
+        splash.update_status(text, progress_val)
+
+    def run_heavy_task_fluid(task_func, timeout_sec=60):
+        """Ejecuta una función pesada en un hilo manteniendo el Splash fluido."""
+        import threading, time
+        t = threading.Thread(target=task_func, daemon=True)
+        t.start()
+        start_t = time.time()
+        while t.is_alive():
+            app.processEvents()
+            time.sleep(0.01)
+            if time.time() - start_t > timeout_sec:
+                break # Evitar cuelgue infinito si el hilo falla internamente
+        return t
+
     # 1. Recargar configuración desde el disco (vital tras reinicio 888)
     from src.config import config
     config._load_config()
     config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
     
-    # 2. Recargar motor de base de datos para tomar la nueva ruta LAN
+    # 2. Recargar motor de base de datos de manera FLUIDA (Splash no se congela)
+    update_status("Inicializando base de datos...", 15)
     from src.base_de_datos.database import db_manager
-    db_manager._init_db()
+    run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
     
-    # Iniciar Servidor LAN si esta PC es la Maestra
-    # NOTA: init_lan_server() ya se llama una vez en el bloque __main__.
-    # No se llama de nuevo aquí para evitar el error OSError: [WinError 10048]
-    # (doble bind del mismo puerto UDP 38001).
     app.processEvents()
 
-    def update_status(text, progress_val=None):
-        splash.update_status(text, progress_val)
-
     # --- PASO 1: CARGAR RUTAS E ICONOS ---
-    update_status("Cargando identidad visual...", 20)
+    update_status("Cargando identidad visual...", 30)
     from src.utils.paths import get_resource_path
     icon_path = get_resource_path(os.path.join("src", "icon.png"))
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
     # --- PASO 2: CARGAR HARDWARE ---
-    update_status("Conectando periféricos industriales...", 40)
+    update_status("Conectando periféricos industriales...", 45)
     from src.hardware.printer import printer_manager
-    ok, msg = printer_manager.verificar_estado()
+    # Hacer que la impresora también cargue de forma fluida si tarda en detectar
+    ok_ref = [False]
+    msg_ref = [""]
+    def _check_printer():
+        ok, msg = printer_manager.verificar_estado()
+        ok_ref[0] = ok
+        msg_ref[0] = msg
+    run_heavy_task_fluid(_check_printer, timeout_sec=5)
+    ok, msg = ok_ref[0], msg_ref[0]
 
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
     update_status("Verificando licencia de seguridad...", 60)
     from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
-    if not check_license_active():
+    
+    lic_active = [False]
+    run_heavy_task_fluid(lambda: lic_active.__setitem__(0, check_license_active()), timeout_sec=5)
+    
+    if not lic_active[0]:
         splash.finish(None)
         lic = LicenciaPantalla()
         if not qt_exec(lic): sys.exit()
@@ -141,10 +163,10 @@ def launch_app():
     from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
     from src.services.caja_service import verificar_y_realizar_autocierre
     
-    update_status("Inicializando sistema...", 100)
+    update_status("Inicializando sistema (Lazy Loading)...", 100)
     from src.main_window import MainWindow
     
-    # Pre-creación de la ventana principal para ocultar la pausa en la pantalla de carga (Splash)
+    # ¡Gracias al verdadero Lazy Loading, esto es instantáneo!
     main_window = MainWindow()
     
     # Precarga extrema de animaciones pesadas
@@ -408,6 +430,16 @@ if __name__ == "__main__":
     
     # 1. Inicializar
     app = QApplication(sys.argv)
+    
+    # --- APLICAR TEMA (QSS GLOBAL) ---
+    try:
+        from src.ui_components.tema_estilos import aplicar_tema
+        from src.config import config
+        tema_actual = config.get("theme", "light")
+        qss_filename = "estilo_dia.qss" if tema_actual == "light" else "estilo_noche.qss"
+        aplicar_tema(app, qss_filename)
+    except Exception as e:
+        print(f"No se pudo cargar el módulo de temas: {e}")
     
     # --- FEEDBACK TACTIL (MODULO INDEPENDIENTE) ---
     from src.ui_components.touch_feedback import TouchFeedbackManager

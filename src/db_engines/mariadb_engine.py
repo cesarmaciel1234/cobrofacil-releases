@@ -89,7 +89,7 @@ class MariaDBEngine:
                 password=self.password,
                 database=self.database,
                 autocommit=False,
-                connect_timeout=10
+                connect_timeout=2
             )
             return MariaDBConnectionWrapper(conn)
         except Exception as e:
@@ -103,7 +103,7 @@ class MariaDBEngine:
                         password="",
                         database=self.database,
                         autocommit=False,
-                        connect_timeout=5
+                        connect_timeout=2
                     )
                     return MariaDBConnectionWrapper(conn)
                 except Exception:

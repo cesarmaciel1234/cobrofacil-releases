@@ -103,3 +103,6 @@ offline_queue.json
 error_report.json
 _update_cache/
 ia_doc_content.txt
+mariadb_server/data/
+mariadb_server/data_corrupt/
+_internal/

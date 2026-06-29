@@ -50,7 +50,7 @@ class ProfileCard(QFrame):
         self.inner = QFrame(self)
         self.inner.setGeometry(0, 14, 230, 190)
         self._shadow = QGraphicsDropShadowEffect(self)
-        self._shadow.setBlurRadius(20)
+        self._shadow.setBlurRadius(8) 
         self._shadow.setColor(QColor(r, g, b, 28))
         self._shadow.setOffset(0, 6)
         self.inner.setGraphicsEffect(self._shadow)
@@ -134,7 +134,7 @@ class ProfileCard(QFrame):
             }}
         """)
         r, g, b = self._hex(self._accent)
-        self._shadow.setBlurRadius(18)
+        self._shadow.setBlurRadius(8)
         self._shadow.setColor(QColor(r, g, b, 28))
         self._shadow.setOffset(0, 5)
 
@@ -147,7 +147,7 @@ class ProfileCard(QFrame):
                 border: 2px solid rgba({r},{g},{b},0.55);
             }}
         """)
-        self._shadow.setBlurRadius(28)
+        self._shadow.setBlurRadius(12)
         self._shadow.setColor(QColor(r, g, b, 70))
         self._shadow.setOffset(0, 10)
 
@@ -162,7 +162,7 @@ class ProfileCard(QFrame):
                 border: 2px solid rgba({r},{g},{b},0.80);
             }}
         """)
-        self._shadow.setBlurRadius(32)
+        self._shadow.setBlurRadius(10)
         self._shadow.setColor(QColor(r, g, b, 80))
         self._shadow.setOffset(0, 12)
 
@@ -244,7 +244,7 @@ class PerfilPantalla(QDialog):
             }}
         """)
         outer_sh = QGraphicsDropShadowEffect(self)
-        outer_sh.setBlurRadius(50)
+        outer_sh.setBlurRadius(10)
         outer_sh.setColor(QColor(120, 80, 20, 45))   # sombra cálida
         outer_sh.setOffset(0, 14)
         self.container.setGraphicsEffect(outer_sh)
