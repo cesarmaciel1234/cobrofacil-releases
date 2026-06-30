@@ -39,7 +39,8 @@ class CobroFacilSplash(QSplashScreen):
         # Logo - Escalado optimizado
         self.img_logo = QLabel()
         self.img_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pix = QPixmap(r"C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\src\assets\pos_icon.png")
+        from src.utils.paths import get_resource_path
+        pix = QPixmap(get_resource_path("src/assets/pos_icon.png"))
         self.img_logo.setPixmap(pix.scaled(150, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.FastTransformation))
         layout.addWidget(self.img_logo)
         
