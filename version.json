@@ -1,7 +1,7 @@
 {
   "app_version": "5.3",
   "channel": "stable",
-  "build_date": "2026-06-30 11:48:26",
+  "build_date": "2026-06-30 14:25:10",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -720,15 +720,15 @@
     },
     "src/cajero/paso5_terminal/paso5cobranza.py": {
       "version": "1.0.0",
-      "checksum": "535ee6c612ab5ba746bbe91ae355cb62",
+      "checksum": "c995b2181e71aa82e213215c59b4d9fc",
       "channel": "stable",
-      "size": 12581
+      "size": 12421
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "33d2510112a90f72434ab5fcb2284cdc",
+      "checksum": "c65fa50e0549d615998c246162bd4bef",
       "channel": "stable",
-      "size": 106183
+      "size": 102280
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -765,6 +765,12 @@
       "checksum": "cc985d6d6c177a75a18e499fdc1eadbd",
       "channel": "stable",
       "size": 2826
+    },
+    "src/cajero/paso5_terminal/componentes_visuales/nav_row_border_overlay.py": {
+      "version": "1.0.0",
+      "checksum": "a91df3dacb7d36f3d47df838c3d73949",
+      "channel": "stable",
+      "size": 1778
     },
     "src/cajero/paso5_terminal/componentes_visuales/panel_de_totales.py": {
       "version": "1.0.0",
@@ -870,9 +876,9 @@
     },
     "src/cajero/paso5_terminal/dialogos/dialogo_candado.py": {
       "version": "1.0.0",
-      "checksum": "b1ed609d28a6a20a30ce99e07b8b23d6",
+      "checksum": "d0e492ac25e5aa90535b3100209270f8",
       "channel": "stable",
-      "size": 5718
+      "size": 5557
     },
     "src/cajero/paso5_terminal/dialogos/dialogo_editar_cantidad.py": {
       "version": "1.0.0",
@@ -894,15 +900,15 @@
     },
     "src/cajero/paso5_terminal/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
-      "checksum": "eacf38e0eac7b35a817be91f49088955",
+      "checksum": "1b1ab02f24c36f818f296ccd10512463",
       "channel": "stable",
-      "size": 29350
+      "size": 29178
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "ee946edef25f80d396c0810ce716cd81",
+      "checksum": "9c67d7ff70570979f8a3142d7f79984c",
       "channel": "stable",
-      "size": 42249
+      "size": 41499
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -954,9 +960,9 @@
     },
     "src/cajero/paso6_cobro/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
-      "checksum": "e0fa14f6a14065e3aab91e99053a3b70",
+      "checksum": "fe1d746b305629f397e0904d17c4c4b3",
       "channel": "stable",
-      "size": 7318
+      "size": 7164
     },
     "src/cajero/paso6_cobro/widgets/panel_cliente_fiado.py": {
       "version": "1.0.0",
@@ -966,9 +972,9 @@
     },
     "src/cajero/paso7_cierre/paso7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "ca26d1a42438ea80a46c82c0d8ca0c47",
+      "checksum": "7ad6e37ebf0a90a8f7b96bfcd8621aa0",
       "channel": "stable",
-      "size": 8857
+      "size": 8702
     },
     "src/cajero/paso7_cierre/__init__.py": {
       "version": "1.0.0",
@@ -984,15 +990,15 @@
     },
     "src/cajero/paso7_cierre/componentes_paso7_cierre/metric_card.py": {
       "version": "1.0.0",
-      "checksum": "5503cc706ccf813b8853b9b749c31ce6",
+      "checksum": "b6e5f6b1e8867debdc17badcaea38f56",
       "channel": "stable",
-      "size": 2416
+      "size": 2265
     },
     "src/cajero/paso7_cierre/componentes_paso7_cierre/panel_arqueo.py": {
       "version": "1.0.0",
-      "checksum": "f95a2fac3ce9b363b83d8e9e39e7bef9",
+      "checksum": "1b00f0c83500a8fa4be48f235b5948c1",
       "channel": "stable",
-      "size": 4541
+      "size": 4384
     },
     "src/cajero/paso7_cierre/componentes_paso7_cierre/__init__.py": {
       "version": "1.0.0",
@@ -1014,9 +1020,9 @@
     },
     "src/cajero/paso8_historial/paso8_historial.py": {
       "version": "1.0.0",
-      "checksum": "087d77d47c13d1e442489bacc7083275",
+      "checksum": "1a44184e8a15071a6aa77eeb96611d27",
       "channel": "stable",
-      "size": 14306
+      "size": 13990
     },
     "src/cajero/paso8_historial/__init__.py": {
       "version": "1.0.0",
