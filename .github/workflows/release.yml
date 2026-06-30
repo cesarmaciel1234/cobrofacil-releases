@@ -82,6 +82,7 @@ jobs:
             --collect-all "PyQt6.QtWebEngineWidgets" `
             --collect-submodules "src.admin" `
             --collect-submodules "src.jefe" `
+            --collect-submodules "src.cajero" `
             --collect-submodules "src.carteleria" `
             --collect-submodules "src.services" `
             --add-data "src/styles.qss;src/" `
