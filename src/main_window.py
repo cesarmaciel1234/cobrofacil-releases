@@ -74,8 +74,12 @@ class MainWindow(QMainWindow):
         self._init_security_monitor()
         self._init_update_banner()
 
-        # ChatBot: se instancia SOLO cuando el cajero presiona el botón por primera vez
-        self.chatbot_overlay = None
+        # ChatBot: Pre-cargado aquí para evitar parpadeos/reseteos del sistema en pantalla completa por Chromium.
+        from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
+        self.chatbot_overlay = ChatBotWidget(self)
+        self.chatbot_overlay.hide()
+        self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
+        
         self._chatbot_active = False
         self._active_theme_file = None
         self._cargar_datos_timer = QTimer(self)
@@ -778,13 +782,6 @@ class MainWindow(QMainWindow):
                 self.pantalla_ventas.lbl_terminal_title.setText(title)
 
     def _toggle_chatbot_overlay(self):
-        # Lazy init: se crea la primera vez que el cajero presiona el botón
-        if self.chatbot_overlay is None:
-            from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
-            self.chatbot_overlay = ChatBotWidget(self)
-            self.chatbot_overlay.hide()
-            self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
-
         self._chatbot_active = not self._chatbot_active
         if self._chatbot_active:
             self.chatbot_overlay.actualizar_posicion()
