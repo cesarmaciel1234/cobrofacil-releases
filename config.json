@@ -82,7 +82,7 @@
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
     "last_weekly_report_sent": "2026-W27",
-    "carteleria_master_ip": "",
+    "carteleria_master_ip": "192.168.0.3",
     "clover_ip": "",
     "clover_port": "1234",
     "license_key": "",

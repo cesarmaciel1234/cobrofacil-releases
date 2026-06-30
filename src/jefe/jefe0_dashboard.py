@@ -69,10 +69,10 @@ class Jefe0Dashboard(QWidget):
         # Brand
         brand = QLabel()
         brand.setText(
-            "<span style='font-size:16px; font-weight:900; color:#1E293B; letter-spacing:-0.5px;'>"
+            "<span style='font-size:16px; font-weight:900; letter-spacing:-0.5px;'>"
             "TPV PRO</span>"
             "<span style='font-size:16px; font-weight:900; color: #C084FC;'> 2026</span>"
-            "<span style='font-size:11px; font-weight:500; color:#94A3B8; margin-left:12px;'>"
+            "<span style='font-size:11px; font-weight:500; margin-left:12px;'>"
             "  ·  Panel del Jefe</span>"
         )
         brand.setStyleSheet("background: transparent; border: none;")
@@ -81,7 +81,7 @@ class Jefe0Dashboard(QWidget):
 
         self.lbl_clock = QLabel()
         self.lbl_clock.setStyleSheet(
-            "font-size: 11px; color: #94A3B8; font-weight: 600;"
+            "font-size: 11px; font-weight: 600;"
             " background: transparent; border: none;")
         nav_lay.addWidget(self.lbl_clock)
         nav_lay.addSpacing(8)
@@ -100,6 +100,28 @@ class Jefe0Dashboard(QWidget):
         """)
         self.btn_portabilidad.clicked.connect(self._mudar_base_datos_jefe)
         nav_lay.addWidget(self.btn_portabilidad)
+
+        self.btn_tema = QPushButton("🌙 Noche")
+        self.btn_tema.setCursor(Qt.PointingHandCursor)
+        self.btn_tema.setFixedHeight(34)
+        self.btn_tema.setStyleSheet("""
+            QPushButton {
+                background: transparent; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; }
+        """)
+        self.btn_tema.clicked.connect(self._toggle_theme)
+        
+        try:
+            from src.config import config
+            if config and config.get("theme", "light") == "dark":
+                self.btn_tema.setText("☀️ Día")
+        except: pass
+        
+        nav_lay.addWidget(self.btn_tema)
 
         self.btn_logout = QPushButton("Cerrar Sesión")
         self.btn_logout.setCursor(Qt.PointingHandCursor)
@@ -170,7 +192,7 @@ class Jefe0Dashboard(QWidget):
         lbl_sec = QLabel("MÓDULOS GERENCIALES")
         lbl_sec.setStyleSheet(
             f"font-size: 9px; font-weight: 900; letter-spacing: 2.5px;"
-            f" color: {L['text3']}; background: transparent; border: none;")
+            f" background: transparent; border: none;")
         page_lay.addWidget(lbl_sec)
         page_lay.addSpacing(18)
 
@@ -211,7 +233,7 @@ class Jefe0Dashboard(QWidget):
         self.lbl_footer = QLabel("Cobro Fácil POS  ·  TPV Pro 2026  ·  Panel Exclusivo Jefe / Dueño")
         self.lbl_footer.setAlignment(Qt.AlignCenter)
         self.lbl_footer.setStyleSheet(
-            f"font-size: 9px; color: {L['text3']}; letter-spacing: 2px;"
+            f"font-size: 9px; letter-spacing: 2px;"
             " background: transparent; border: none;")
         page_lay.addWidget(self.lbl_footer)
 
@@ -235,15 +257,27 @@ class Jefe0Dashboard(QWidget):
             nombre = "Jefe"
         self.lbl_greeting.setText(f"{greet}, {nombre} 👑")
 
+    def _toggle_theme(self):
+        try:
+            from src.config import config
+            from src.ui_components.tema_estilos import aplicar_tema
+            from PyQt6.QtWidgets import QApplication
+            current = config.get("theme", "light")
+            nuevo = "dark" if current == "light" else "light"
+            config.set("theme", nuevo)
+            
+            qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
+            aplicar_tema(QApplication.instance(), qss)
+            
+            self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
+        except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error alternando tema en Jefe: {e}")
+
     def _apply_theme(self):
         self.setStyleSheet(f"""
             QWidget#JefeDashboard {{
-                background: {L['bg']};
                 font-family: 'Inter', 'Segoe UI', sans-serif;
-            }}
-            QFrame#JefeNav {{
-                background: {L['nav_bg']};
-                border-bottom: 1px solid {L['nav_border']};
             }}
             QFrame#JefeHero {{
                 background: qlineargradient(
@@ -256,7 +290,7 @@ class Jefe0Dashboard(QWidget):
                 border-radius: 24px;
                 border: 1px solid rgba(255, 255, 255, 0.5);
             }}
-            QLabel {{ background: transparent; border: none; color: {L['text']}; }}
+            QLabel {{ background: transparent; border: none; }}
             QScrollArea {{ border: none; background: transparent; }}
         """)
 

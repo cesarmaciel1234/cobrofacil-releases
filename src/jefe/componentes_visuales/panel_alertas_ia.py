@@ -9,12 +9,10 @@ except ImportError:
 class PanelAlertasIA(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("PanelIA")
+        self.setObjectName("DashboardCard")
         self.setStyleSheet("""
-            QFrame#PanelIA {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1E293B, stop:1 #0F172A);
+            QFrame#DashboardCard {
                 border-radius: 20px;
-                border: 1px solid #334155;
             }
         """)
 
@@ -29,7 +27,7 @@ class PanelAlertasIA(QFrame):
         h_head.addWidget(lbl_ico)
 
         lbl_tit = QLabel("ASESOR DE I.A. PREDICTIVO")
-        lbl_tit.setStyleSheet("color: #E2E8F0; font-size: 14px; font-weight: 900; letter-spacing: 2px; background: transparent; border: none;")
+        lbl_tit.setStyleSheet("font-size: 14px; font-weight: 900; letter-spacing: 2px; background: transparent; border: none;")
         h_head.addWidget(lbl_tit)
         h_head.addStretch()
 
@@ -140,12 +138,12 @@ class PanelAlertasIA(QFrame):
         lay.setSpacing(5)
 
         lbl_t = QLabel(f"{icon_txt} {alerta['titulo']}")
-        lbl_t.setStyleSheet("color: white; font-weight: 900; font-size: 13px; background: transparent; border: none;")
+        lbl_t.setStyleSheet("font-weight: 900; font-size: 13px; background: transparent; border: none;")
         lay.addWidget(lbl_t)
 
         lbl_d = QLabel(alerta['desc'])
         lbl_d.setWordWrap(True)
-        lbl_d.setStyleSheet("color: rgba(255,255,255,0.7); font-size: 11px; background: transparent; border: none;")
+        lbl_d.setStyleSheet("font-size: 11px; background: transparent; border: none;")
         lay.addWidget(lbl_d)
 
         return card

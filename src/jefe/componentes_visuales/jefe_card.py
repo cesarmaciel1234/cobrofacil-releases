@@ -23,12 +23,11 @@ class JefeCard(QFrame):
         # Marco interno flotante
         self.inner = QFrame(self)
         self.inner.setGeometry(0, 12, 230, 178)
-        self.inner.setStyleSheet(f"""
-            QFrame {{
-                background: {L['surface']};
+        self.inner.setObjectName("DashboardCard")
+        self.inner.setStyleSheet("""
+            QFrame#DashboardCard {
                 border-radius: 24px;
-                border: 1.5px solid {L['border']};
-            }}
+            }
         """)
 
 
@@ -59,7 +58,6 @@ class JefeCard(QFrame):
         self.lbl_title.setWordWrap(True)
         self.lbl_title.setStyleSheet(f"""
             font-size: 13px; font-weight: 800;
-            color: {L['text']};
             font-family: 'Segoe UI', sans-serif;
             background: none; border: none;
         """)
@@ -98,8 +96,7 @@ class JefeCard(QFrame):
             self.anim.start()
             r, g, b = self._hex2rgb(self._accent)
             self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: {L['surface']};
+                QFrame#DashboardCard {{
                     border-radius: 24px;
                     border: 2px solid rgba({r},{g},{b},0.55);
                 }}
@@ -114,10 +111,8 @@ class JefeCard(QFrame):
             self.anim.start()
             r, g, b = self._hex2rgb(self._accent)
             self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: {L['surface']};
+                QFrame#DashboardCard {{
                     border-radius: 24px;
-                    border: 1.5px solid {L['border']};
                 }}
             """)
         super().leaveEvent(event)
