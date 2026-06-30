@@ -560,9 +560,9 @@ Paso5Terminal[theme="dark"] QFrame#CajaResumen { background: #F8FAFC; border: 2p
 
 Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="titulo"] { color: #64748B; font-weight: 600; font-size: 12px; border: none; background: transparent; }
 
-Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #1E3A8A; font-weight: 800; font-size: 16px; border: none; background: transparent; }
+Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #1D4ED8; font-weight: 900; font-size: 18px; border: none; background: transparent; }
 
-Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #34D399; font-size: 18px; }
+Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #059669; font-size: 20px; font-weight: 900; }
 
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales { background-color: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
@@ -577,9 +577,9 @@ Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #1E3A8A; border: 2
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="titulo"] { color: #64748B; font-weight: 600; font-size: 12px; border: none; background: transparent; }
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #F8FAFC; font-weight: 800; font-size: 16px; border: none; background: transparent; }
+Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #38BDF8; font-weight: 900; font-size: 18px; border: none; background: transparent; }
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #059669; font-size: 18px; }
+Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #34D399; font-size: 20px; font-weight: 900; }
 
 
 /* --- PASO 6: BOTONES DE ACCION (F1, F2, F3...) --- */

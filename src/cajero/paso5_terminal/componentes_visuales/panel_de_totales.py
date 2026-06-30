@@ -38,7 +38,7 @@ class PanelDeTotales(QFrame):
         layout_resumen.setContentsMargins(10, 5, 10, 5)
         layout_resumen.setSpacing(2)
 
-        self.titulo_cant, self.valor_cant = self._crear_fila(layout_resumen, "CANTIDAD")
+        self.titulo_cant, self.valor_cant = self._crear_fila(layout_resumen, "ARTÍCULOS")
         self.titulo_total, self.valor_total = self._crear_fila(layout_resumen, "TOTAL")
         self.titulo_ahorro, self.valor_ahorro = self._crear_fila(layout_resumen, "AHORRO")
         self.titulo_pagos, self.valor_pagos = self._crear_fila(layout_resumen, "PAGOS")
