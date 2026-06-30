@@ -451,7 +451,14 @@ class MainWindow(QMainWindow):
         """Solo reaplica QSS al cambiar oscuro↔claro; evita repintar todo en cada tab admin."""
         if index == 1:
             if hasattr(self, 'pantalla_ventas') and hasattr(self.pantalla_ventas, 'apply_theme'):
-                self.pantalla_ventas.apply_theme()
+                self.setUpdatesEnabled(False)
+                try:
+                    self.pantalla_ventas.apply_theme()
+                    if hasattr(self.pantalla_ventas, 'teclado_virtual') and hasattr(self.pantalla_ventas.teclado_virtual, 'apply_theme'):
+                        self.pantalla_ventas.teclado_virtual.apply_theme()
+                finally:
+                    self.setUpdatesEnabled(True)
+                    self.repaint()
             self._active_theme_file = "terminal_theme"
             return
 
