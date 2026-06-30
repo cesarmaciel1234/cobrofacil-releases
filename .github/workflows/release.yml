@@ -86,7 +86,7 @@ jobs:
             --collect-submodules "src.carteleria" `
             --collect-submodules "src.services" `
             --add-data "src/ui_components/*.qss;src/ui_components/" `
-            --add-data "assets/*;assets/" `
+            --add-data "src/assets/*;src/assets/" `
             main.py
 
       - name: Copiar version.json al paquete instalable
