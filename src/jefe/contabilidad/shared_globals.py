@@ -94,10 +94,7 @@ def kpi_card(title, value, color, subtitle=""):
         lay.addWidget(lbl_s)
 
     
-    from PyQt6.QtWidgets import QGraphicsDropShadowEffect
     from PyQt6.QtGui import QColor
-    sh = QGraphicsDropShadowEffect()
-    sh.setBlurRadius(30)
     sh.setColor(QColor(0, 0, 0, 15))
     sh.setOffset(0, 8)
     card.setGraphicsEffect(sh)

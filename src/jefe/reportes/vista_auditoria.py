@@ -3,7 +3,7 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -59,8 +59,6 @@ class ModernCard(QFrame):
                 border-radius: 20px;
             }
         """)
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(40)
         shadow.setXOffset(0)
         shadow.setYOffset(10)
         shadow.setColor(QColor(0, 0, 0, 10))
@@ -1036,8 +1034,6 @@ class VistaAuditoria(QWidget):
                     border: 1px solid {border_color};
                 }}
             """)
-            sh = QGraphicsDropShadowEffect(card)
-            sh.setBlurRadius(10)
             sh.setColor(QColor(0, 0, 0, 15))
             sh.setOffset(0, 2)
             card.setGraphicsEffect(sh)
@@ -1360,8 +1356,6 @@ class VistaAuditoria(QWidget):
             h_color = accent.lstrip('#')
             r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
             
-            sh = QGraphicsDropShadowEffect(f)
-            sh.setBlurRadius(16)
             sh.setColor(QColor(r, g, b, 20))
             sh.setOffset(0, 4)
             f.setGraphicsEffect(sh)

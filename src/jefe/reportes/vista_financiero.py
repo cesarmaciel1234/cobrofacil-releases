@@ -5,7 +5,7 @@ import json
 from PyQt6.QtWidgets import (
 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -154,8 +154,6 @@ class ModernCard(QFrame):
                 border-radius: 18px;
             }}
         """)
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(40)
         shadow.setXOffset(0)
         shadow.setYOffset(10)
         shadow.setColor(QColor(15, 23, 42, 22))
@@ -1170,9 +1168,6 @@ class VistaFinanciero(QWidget):
                     f"background: {_FIN['card']}; border-radius: 16px; "
                     f"border: 1px solid {_FIN['card_border']};"
                 )
-                kpi_shadow = QGraphicsDropShadowEffect(w)
-                kpi_shadow.setBlurRadius(28)
-                kpi_shadow.setOffset(0, 6)
                 kpi_shadow.setColor(QColor(15, 23, 42, 16))
                 w.setGraphicsEffect(kpi_shadow)
                 l = QVBoxLayout(w)
@@ -1918,8 +1913,6 @@ class VistaFinanciero(QWidget):
             h_color = accent.lstrip('#')
             r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
             
-            sh = QGraphicsDropShadowEffect(f)
-            sh.setBlurRadius(16)
             sh.setColor(QColor(r, g, b, 20))
             sh.setOffset(0, 4)
             f.setGraphicsEffect(sh)

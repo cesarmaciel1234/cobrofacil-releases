@@ -2,7 +2,7 @@ import os
 import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect,
+    QFrame, QGridLayout, QScrollArea,
     QSizePolicy, QSpacerItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer, QPropertyAnimation, QEasingCurve
@@ -57,8 +57,6 @@ class CardIA(QFrame):
         """)
         self.setObjectName("CardIA")
 
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(28)
         shadow.setColor(QColor(0, 0, 0, 18))
         shadow.setOffset(0, 6)
         self.setGraphicsEffect(shadow)

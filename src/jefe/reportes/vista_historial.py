@@ -72,11 +72,8 @@ class VistaHistorial(QWidget):
         self.cargar_ventas()
 
     def apply_glow(self):
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
         container = self.findChild(QWidget, "HistoryDialog")
         if container:
-            glow = QGraphicsDropShadowEffect()
-            glow.setBlurRadius(35)
             glow.setColor(QColor(37, 99, 235, 230)) # Royal Blue ultra-brillante
             glow.setOffset(0, 0)
             container.setGraphicsEffect(glow)

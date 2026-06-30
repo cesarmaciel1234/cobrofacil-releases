@@ -5,7 +5,7 @@ Paleta: Light Soft 2026 — blanco puro, acentos suaves, tarjetas con gradientes
 import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QGraphicsDropShadowEffect, QGridLayout,
+    QFrame, QScrollArea, QGridLayout,
     QFileDialog, QMessageBox, QSizePolicy
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize
@@ -61,8 +61,6 @@ class JefeCard(QFrame):
         """)
 
         # Sombra suave
-        self._sh = QGraphicsDropShadowEffect(self)
-        self._sh.setBlurRadius(30)
         self._sh.setColor(QColor(r, g, b, 25))
         self._sh.setOffset(0, 6)
         self.inner.setGraphicsEffect(self._sh)
@@ -186,8 +184,6 @@ class PanelAlertasIA(QFrame):
                 border: 1px solid #334155;
             }
         """)
-        self._sh = QGraphicsDropShadowEffect(self)
-        self._sh.setBlurRadius(40)
         self._sh.setColor(QColor(99, 102, 241, 60))
         self._sh.setOffset(0, 10)
         self.setGraphicsEffect(self._sh)
@@ -421,9 +417,6 @@ class Jefe0Dashboard(QWidget):
         hero = QFrame()
         hero.setFixedHeight(110)
         hero.setObjectName("JefeHero")
-        sh_hero = QGraphicsDropShadowEffect()
-        sh_hero.setBlurRadius(24)
-        sh_hero.setOffset(0, 4)
         sh_hero.setColor(QColor(99, 102, 241, 40))
         hero.setGraphicsEffect(sh_hero)
 
