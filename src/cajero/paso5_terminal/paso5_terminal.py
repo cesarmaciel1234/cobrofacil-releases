@@ -1018,6 +1018,7 @@ class Paso5Terminal(QWidget):
         row_h = m["table_row"]
 
         self.lbl_terminal_title.setObjectName("TerminalTitle")
+        self.lbl_terminal_title.setStyleSheet(f"font-size: {title_px}px; font-weight: 900; color: white; letter-spacing: 2px;")
         self.lbl_total_val.setObjectName("TerminalTotalVal")
         self.txt_scan.setObjectName("TerminalScan")
         self._style_side_labels(cambio_highlight=False, side_px=side_px)
