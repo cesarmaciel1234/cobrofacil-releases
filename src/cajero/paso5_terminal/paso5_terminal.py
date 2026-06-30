@@ -811,9 +811,17 @@ class Paso5Terminal(QWidget):
                 # CRÍTICO: Si el terminal no está visible (ej: estamos en IA Boss), no forzamos el foco
                 if not self.isVisible():
                     return super().eventFilter(obj, event)
-                # Solo permitimos perder foco hacia la lista de resultados o la tabla (navegación)
+                # Solo permitimos perder foco hacia la lista de resultados, la tabla, o campos de texto externos (ej: chatbot)
                 if not (self.list_results.hasFocus() or self.tabla.hasFocus()):
-                    QTimer.singleShot(50, lambda: getattr(self, 'txt_scan', None) is not None and self.txt_scan.setFocus())
+                    def restore_focus():
+                        from PyQt6.QtWidgets import QApplication, QLineEdit, QTextEdit
+                        fw = QApplication.focusWidget()
+                        if getattr(self, 'txt_scan', None) is not None:
+                            # Si el foco pasó a otro campo de texto (como el chatbot), NO lo robamos
+                            if isinstance(fw, (QLineEdit, QTextEdit)) and fw != self.txt_scan:
+                                return
+                            self.txt_scan.setFocus()
+                    QTimer.singleShot(50, restore_focus)
 
         elif obj == self.tabla:
             if event.type() == QEvent.FocusOut:

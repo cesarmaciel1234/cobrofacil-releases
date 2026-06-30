@@ -1205,31 +1205,6 @@ Paso5Terminal[theme="light"] QTableWidget#TerminalTabla QHeaderView::section {
 }
 
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-}
-
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="titulo"] {
-    color: #64748B;
-}
-
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"] {
-    color: #1E3A8A;
-}
-
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] {
-    color: #059669;
-}
-
-Paso5Terminal[theme="light"] QFrame#CajaResumen {
-    background-color: #FFFFFF;
-}
-
-Paso5Terminal[theme="light"] QFrame#CajaResumen QLabel {
-    color: #475569;
-}
-
 
 Paso5Terminal[theme="light"] QFrame#TerminalStatusBar {
     background-color: #F1F5F9;

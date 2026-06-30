@@ -1,7 +1,7 @@
 {
   "app_version": "5.4",
   "channel": "stable",
-  "build_date": "2026-06-30 18:03:30",
+  "build_date": "2026-06-30 18:19:28",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -786,9 +786,9 @@
     },
     "src/cajero/paso5_terminal/componentes_visuales/panel_de_totales.py": {
       "version": "1.0.0",
-      "checksum": "e2124602ded65d9ee42d6eed935c4245",
+      "checksum": "eb26bcf3150b1c38c4e8801bba94210b",
       "channel": "stable",
-      "size": 2966
+      "size": 2968
     },
     "src/cajero/paso5_terminal/componentes_visuales/tabla_de_productos.py": {
       "version": "1.0.0",
