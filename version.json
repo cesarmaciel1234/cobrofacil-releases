@@ -1,7 +1,7 @@
 {
   "app_version": "5.3",
   "channel": "stable",
-  "build_date": "2026-06-29 16:48:36",
+  "build_date": "2026-06-30 11:48:26",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -45,6 +45,12 @@
       "checksum": "10a2768ddc9d33958c3cc41e11e78284",
       "channel": "stable",
       "size": 18089
+    },
+    "refactor_qss.py": {
+      "version": "1.0.0",
+      "checksum": "456d3d6f47b122dc463de3100919be9e",
+      "channel": "stable",
+      "size": 3488
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -516,9 +522,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "9bec7c01cd95744c726fb0c1346497d0",
+      "checksum": "4ffa93c3fc17ec82b5a5de98881ecd4e",
       "channel": "stable",
-      "size": 37867
+      "size": 38128
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -720,9 +726,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "a46537e83cd4a26c6c487aa729b6b6c2",
+      "checksum": "33d2510112a90f72434ab5fcb2284cdc",
       "channel": "stable",
-      "size": 106043
+      "size": 106183
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -832,6 +838,12 @@
       "channel": "stable",
       "size": 27515
     },
+    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
     "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/escalada_f11/f11_escalation_manager.py": {
       "version": "1.0.0",
       "checksum": "13bffa2a027cc9505c6a5dca9cf3eca8",
@@ -888,9 +900,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "747f027b9f06bcffc75e5b57ade4a10e",
+      "checksum": "ee946edef25f80d396c0810ce716cd81",
       "channel": "stable",
-      "size": 42250
+      "size": 42249
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -918,9 +930,9 @@
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago.py": {
       "version": "1.0.0",
-      "checksum": "09f1b641d870836a6fde9f97cd656ca7",
+      "checksum": "c182c247f0cc61c8ff6f5c84e44ab9da",
       "channel": "stable",
-      "size": 5126
+      "size": 4976
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/teclado_numerico_lateral.py": {
       "version": "1.0.0",
@@ -1206,9 +1218,9 @@
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",
-      "checksum": "b1d4b46648c202cbfd440c0d7baec2a0",
+      "checksum": "084d584cfd45172a612ce653d6a62ea4",
       "channel": "stable",
-      "size": 3363
+      "size": 3391
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
@@ -1578,9 +1590,9 @@
     },
     "src/ui_components/tema_estilos.py": {
       "version": "1.0.0",
-      "checksum": "d23c020b06546c59322a04b9fca988c2",
+      "checksum": "cca456d9bf70a42ccda1de66fcc5487a",
       "channel": "stable",
-      "size": 1606
+      "size": 2004
     },
     "src/ui_components/toast.py": {
       "version": "1.0.0",

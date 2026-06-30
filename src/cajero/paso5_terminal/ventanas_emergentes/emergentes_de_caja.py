@@ -593,12 +593,7 @@ class DialogoCandado(QDialog):
         container.setStyleSheet("background: white; border-radius: 20px; border: 1px solid #CBD5E1;")
         
         # Efecto de elevación para el cuadro central
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        shadow.setOffset(0, 10)
-        container.setGraphicsEffect(shadow)
+        # Se elimina QGraphicsDropShadowEffect para rendimiento en equipos de bajos recursos.
 
         main_lay = QVBoxLayout(container)
         main_lay.setContentsMargins(40, 40, 40, 40)

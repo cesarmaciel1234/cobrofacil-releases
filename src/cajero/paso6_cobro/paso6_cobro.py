@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QPushButton, QMessageBox, QFrame, QGridLayout,
-    QWidget, QGraphicsDropShadowEffect, QApplication, QSizePolicy
+    QWidget, QApplication, QSizePolicy
 )
 from PyQt6.QtCore import Qt, QTimer, QEvent
 from PyQt6.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
@@ -59,11 +59,8 @@ class Paso6Cobro(QDialog):
         self.apply_glow()
 
     def apply_glow(self):
-        glow = QGraphicsDropShadowEffect(self)
-        glow.setBlurRadius(30)
-        glow.setColor(QColor(67, 126, 232, 150)) # Brillo azul Elite
-        glow.setOffset(0, 0)
-        self.main_frame.setGraphicsEffect(glow)
+        # Se elimina QGraphicsDropShadowEffect para rendimiento.
+        pass
 
     def apply_theme(self):
         theme = config.get("theme", "light")
@@ -310,17 +307,7 @@ class Paso6Cobro(QDialog):
             frame.style().polish(frame)
             frame.update()
             
-            # Modificar la sombra dinámicamente para simular que el botón "flota" más alto al estar seleccionado
-            shadow = frame.graphicsEffect()
-            if isinstance(shadow, QGraphicsDropShadowEffect):
-                if is_active:
-                    shadow.setBlurRadius(28)
-                    shadow.setColor(QColor(59, 130, 246, 60)) # Brillo azul iOS flotante
-                    shadow.setOffset(0, 10) # Sombra más lejana para elevar el widget
-                else:
-                    shadow.setBlurRadius(16)
-                    shadow.setColor(QColor(59, 130, 246, 20)) # Sombra suave base
-                    shadow.setOffset(0, 5)
+            # Se elimina la lógica de sombra dinámica (QGraphicsDropShadowEffect) por rendimiento.
             
             # Zoom dinámico de los iconos:
             # Encontrar el QLabel de la imagen dentro del frame

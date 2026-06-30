@@ -7,7 +7,6 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QListWidget, QListWidgetItem, QAbstractItemView, QFrame,
-    QGraphicsDropShadowEffect,
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont
@@ -71,11 +70,7 @@ class CentroCobranzasPanel(QWidget):
                 border-radius: 18px;
             }}
         """)
-        shadow = QGraphicsDropShadowEffect(self.card)
-        shadow.setBlurRadius(40)
-        shadow.setOffset(0, 10)
-        shadow.setColor(QColor(15, 23, 42, 20))
-        self.card.setGraphicsEffect(shadow)
+        # Se elimina la sombra (QGraphicsDropShadowEffect) para optimizar rendimiento.
 
         lay = QVBoxLayout(self.card)
         lay.setContentsMargins(22, 18, 22, 20)

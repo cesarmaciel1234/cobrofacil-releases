@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor
 
@@ -15,11 +15,7 @@ class MetricCard(QFrame):
         """)
         
         # Sombra premium
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        self.setGraphicsEffect(shadow)
+        # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
         
         lay = QHBoxLayout(self)
         lay.setContentsMargins(20, 10, 20, 10)

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
-    QComboBox, QDoubleSpinBox, QGraphicsDropShadowEffect, QMessageBox, QScrollArea, QSizePolicy,
+    QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QSizePolicy,
 )
 from PyQt6.QtCore import Qt, QTimer, QDate, QTime, QObject, pyqtSignal, QRect, QEvent
 from PyQt6.QtGui import QColor, QFont, QPen, QPainter

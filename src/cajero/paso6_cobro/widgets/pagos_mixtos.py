@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QFrame, QGridLayout, QGraphicsDropShadowEffect
+    QPushButton, QFrame, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
@@ -42,11 +42,7 @@ class DialogoPagosMixtos(QDialog):
             }
         """)
         
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(30)
-        shadow.setColor(QColor(0, 0, 0, 100))
-        shadow.setOffset(0, 10)
-        frame.setGraphicsEffect(shadow)
+        # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
         
         layout = QVBoxLayout(frame)
         layout.setSpacing(20)

@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QLineEdit, QPushButton, QMessageBox, QWidget,
-    QGraphicsDropShadowEffect, QTableWidget, QTableWidgetItem, QHeaderView
+    QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont, QColor, QPixmap
@@ -46,11 +46,8 @@ class Paso7CierreCaja(QDialog):
         self.apply_glow()
 
     def apply_glow(self):
-        glow = QGraphicsDropShadowEffect(self)
-        glow.setBlurRadius(40)
-        glow.setColor(QColor(0, 0, 0, 80))
-        glow.setOffset(0, 8)
-        self.main_container.setGraphicsEffect(glow)
+        # Se elimina QGraphicsDropShadowEffect por rendimiento.
+        pass
 
     def _get_data(self):
         from src.config import config

@@ -5,8 +5,9 @@ import shutil
 
 # Rutas
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ZIP_PATH = os.path.join(BASE_DIR, "CATORTA_USB_PUNPRO", "2_Archivos_Comprimidos_ZIP", "Batallon_TPV_Win8_Win11.zip")
-INSTALLER_SCRIPT = os.path.join(BASE_DIR, "launcher_installer", "web_installer.py")
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+ZIP_PATH = os.path.join(PROJECT_ROOT, "CATORTA_USB_PUNPRO", "2_Archivos_Comprimidos_ZIP", "Batallon_TPV_Win8_Win11.zip")
+INSTALLER_SCRIPT = os.path.join(BASE_DIR, "launcher_installer", "Instalador_Web.py")
 DIST_DIR = os.path.join(BASE_DIR, "launcher_installer", "dist")
 PAYLOAD_BIN = os.path.join(BASE_DIR, "launcher_installer", "payload.bin")
 

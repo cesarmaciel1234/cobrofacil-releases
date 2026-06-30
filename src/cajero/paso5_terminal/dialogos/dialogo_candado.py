@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
@@ -32,12 +32,7 @@ class DialogoCandado(QDialog):
         container.move((self.width() - w) // 2, (self.height() - h) // 2)
         container.setObjectName("DialogoCandadoContenedor")
         
-        # Efecto de elevación para el cuadro central
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(40)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        shadow.setOffset(0, 10)
-        container.setGraphicsEffect(shadow)
+        # Se elimina el efecto de sombra (QGraphicsDropShadowEffect) para mejorar rendimiento en equipos de bajos recursos.
 
         main_lay = QVBoxLayout(container)
         main_lay.setContentsMargins(40, 40, 40, 40)

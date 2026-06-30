@@ -2,17 +2,12 @@
 from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.utils.hooks import collect_all
 
-datas = [
-    ('src/styles.qss', 'src/'), 
-    ('src/styles_light.qss', 'src/'),
-    ('src/assets/*', 'src/assets/'),
-    ('src/ui_components/*.qss', 'src/ui_components/'),
-    ('src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/manual_cajero.json', 'src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/')
-]
+datas = [('src/styles.qss', 'src/'), ('src/ui_components/*.qss', 'src/ui_components/'), ('assets/*', 'assets/')]
 binaries = []
 hiddenimports = ['reportlab.graphics.barcode.code93', 'reportlab.graphics.barcode.code128', 'reportlab.graphics.barcode.code39', 'reportlab.graphics.barcode.eanbc', 'lxml', 'html5lib', 'openpyxl', 'win32com', 'win32com.client', 'PyQt6.QtWebEngineWidgets', 'PyQt6.QtWebEngineCore']
 hiddenimports += collect_submodules('src.admin')
 hiddenimports += collect_submodules('src.jefe')
+hiddenimports += collect_submodules('src.cajero')
 hiddenimports += collect_submodules('src.carteleria')
 hiddenimports += collect_submodules('src.services')
 tmp_ret = collect_all('PyQt6.QtWebEngineCore')

@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
 
@@ -12,11 +12,7 @@ class PanelArqueo(QFrame):
         self.esperado = 0.0
         
         # Sombra de elevación para el panel derecho
-        p_shadow = QGraphicsDropShadowEffect()
-        p_shadow.setBlurRadius(30)
-        p_shadow.setColor(QColor(0, 0, 0, 15))
-        p_shadow.setOffset(0, 8)
-        self.setGraphicsEffect(p_shadow)
+        # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
         
         pa_lay = QVBoxLayout(self)
         pa_lay.setContentsMargins(30, 30, 30, 30)
