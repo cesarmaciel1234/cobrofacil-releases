@@ -85,7 +85,6 @@ jobs:
             --collect-submodules "src.cajero" `
             --collect-submodules "src.carteleria" `
             --collect-submodules "src.services" `
-            --add-data "src/styles.qss;src/" `
             --add-data "src/ui_components/*.qss;src/ui_components/" `
             --add-data "assets/*;assets/" `
             main.py
