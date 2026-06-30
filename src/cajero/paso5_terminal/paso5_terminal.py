@@ -1018,8 +1018,8 @@ class Paso5Terminal(QWidget):
         row_h = m["table_row"]
 
         self.lbl_terminal_title.setObjectName("TerminalTitle")
-        self.lbl_total_val.setObjectName("TotalVal")
-        self.txt_scan.setObjectName("ScanInput")
+        self.lbl_total_val.setObjectName("TerminalTotalVal")
+        self.txt_scan.setObjectName("TerminalScan")
         self._style_side_labels(cambio_highlight=False, side_px=side_px)
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
         self._apply_status_bar_shortcuts_layout(ls)
