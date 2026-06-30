@@ -30,6 +30,7 @@ class LoginPantalla(QDialog):
         self.role = role
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setProperty("theme", "dark")
         self.setFixedSize(520, 600) # Más alto para evitar que se aplaste
         self._setup_ui()
         try:
