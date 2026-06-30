@@ -1,7 +1,7 @@
 {
-  "app_version": "5.1",
+  "app_version": "5.2",
   "channel": "stable",
-  "build_date": "2026-06-29 14:58:09",
+  "build_date": "2026-06-29 16:48:36",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -33,6 +33,12 @@
       "checksum": "6cd456a351bd0e32361fcedc32629cbf",
       "channel": "stable",
       "size": 350
+    },
+    "fetch_runs.py": {
+      "version": "1.0.0",
+      "checksum": "224d14a25b5f4977ff7a98d1610a533b",
+      "channel": "stable",
+      "size": 1005
     },
     "main.py": {
       "version": "1.0.0",
@@ -78,15 +84,15 @@
     },
     "01_Compiladores_y_Ejecutables/launcher_installer/crear_instalador_blindado.py": {
       "version": "1.0.0",
-      "checksum": "1b6c7bc1d20b7f9e1ef0ced297f31a9b",
+      "checksum": "9458c0f15c987e588d7038bd58a37092",
       "channel": "stable",
-      "size": 2943
+      "size": 2990
     },
     "01_Compiladores_y_Ejecutables/launcher_installer/Instalador_Web.py": {
       "version": "1.0.0",
-      "checksum": "b055c7b282a5bb63fe5f214ad036bee3",
+      "checksum": "1bae3e5cc93431350ac13e0e910fd1a5",
       "channel": "stable",
-      "size": 29839
+      "size": 30511
     },
     "02_Soporte_y_Mantenimiento/ConfiguraFirewall.py": {
       "version": "1.0.0",
@@ -436,6 +442,12 @@
       "channel": "stable",
       "size": 5012
     },
+    "scratch/test_produccion_masiva.py": {
+      "version": "1.0.0",
+      "checksum": "b598fbd26d33687af6b1de5468a9bf01",
+      "channel": "stable",
+      "size": 4285
+    },
     "scratch/test_set_master.py": {
       "version": "1.0.0",
       "checksum": "55a0a98de9b18f8e6e869a1ce4a7eda4",
@@ -558,9 +570,9 @@
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
-      "checksum": "1b5ddc089ab30ee51b8b805927502b61",
+      "checksum": "3dae6f768155cad34a73df34dab7d6bd",
       "channel": "stable",
-      "size": 81268
+      "size": 81988
     },
     "src/admin/admin2_ofertas.py": {
       "version": "1.0.0",
@@ -612,9 +624,9 @@
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "d52ae79028841c3adae34e8936382f74",
+      "checksum": "74effffce36d25978b13ace572eae684",
       "channel": "stable",
-      "size": 15319
+      "size": 15181
     },
     "src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -1614,9 +1626,9 @@
     },
     "src/updater/silent_auto_updater.py": {
       "version": "1.0.0",
-      "checksum": "89c5c685da1bd42356a3d859ff6caa59",
+      "checksum": "94362a44d8e1acfa4c68bffaba4a57fb",
       "channel": "stable",
-      "size": 12348
+      "size": 13305
     },
     "src/updater/update_client.py": {
       "version": "1.0.0",
