@@ -228,7 +228,7 @@ class Paso6Cobro(QDialog):
         right_lay.setSpacing(6)
         
         def create_action_btn(fn_key, subtitle, callback, style="default"):
-            btn = QPushButton(f"{fn_key}\\n{subtitle}")
+            btn = QPushButton(f"{fn_key}\n{subtitle}")
             btn.setFixedHeight(40)
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             btn.setProperty("action_type", style)
@@ -621,7 +621,7 @@ class Paso6Cobro(QDialog):
         self.lbl_neto.setText(f"NETO A PAGAR: ${self.total_final:,.2f}")
         
         # Actualizar visualización del botón de Descuento (Premium UX!)
-        _btn_compact = "border-radius: 16px; font-weight: 900; font-size: 10px; border: none; padding: 2px 8px;"
+        _btn_compact = "border-radius: 8px; font-weight: 900; font-size: 14px; border: none; padding: 8px 12px;"
         if getattr(self, 'descuento_monto', 0.0) > 0:
             self.btn_descuento.setText(f"F3\n-${self.descuento_monto:,.0f}")
             self.btn_descuento.setStyleSheet(f"background: #047857; color: white; {_btn_compact}")

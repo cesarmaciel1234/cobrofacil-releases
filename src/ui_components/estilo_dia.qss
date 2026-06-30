@@ -585,7 +585,7 @@ Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado=
 /* --- PASO 6: BOTONES DE ACCION (F1, F2, F3...) --- */
 QPushButton[action_type="primary"] {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3B82F6, stop:1 #2563EB);
-    color: white; border: none; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    color: white; border: none; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 QPushButton[action_type="primary"]:hover {
@@ -594,14 +594,14 @@ QPushButton[action_type="primary"]:hover {
 
 
 QPushButton[action_type="green"] {
-    background: #10B981; color: white; border: none; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    background: #10B981; color: white; border: none; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 QPushButton[action_type="green"]:hover { background: #059669; }
 
 
 QPushButton[action_type="orange"] {
-    background: #F59E0B; color: white; border: none; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    background: #F59E0B; color: white; border: none; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 QPushButton[action_type="orange"]:hover { background: #D97706; }
@@ -609,7 +609,7 @@ QPushButton[action_type="orange"]:hover { background: #D97706; }
 
 QPushButton[action_type="featured"] {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #34D399, stop:1 #059669);
-    color: white; border: 2px solid #6EE7B7; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    color: white; border: 2px solid #6EE7B7; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 QPushButton[action_type="featured"]:hover {
@@ -620,7 +620,7 @@ QPushButton[action_type="featured"]:pressed { background: #065F46; }
 
 
 Paso6Main[theme="dark"] QPushButton[action_type="default"] {
-    background-color: #E2E8F0; color: #1E3A8A; border: 1.5px solid #475569; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    background-color: #E2E8F0; color: #1E3A8A; border: 1.5px solid #475569; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 Paso6Main[theme="dark"] QPushButton[action_type="default"]:hover { background-color: #475569; border-color: #64748B; }
@@ -629,7 +629,7 @@ Paso6Main[theme="dark"] QPushButton[action_type="default"]:pressed { background-
 
 
 Paso6Main[theme="light"] QPushButton[action_type="default"] {
-    background-color: #FFFFFF; color: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 16px; font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: 900; padding: 2px 8px;
+    background-color: #FFFFFF; color: #1E3A8A; border: 1.5px solid #E2E8F0; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; font-weight: 900; padding: 6px 10px;
 }
 
 Paso6Main[theme="light"] QPushButton[action_type="default"]:hover { background-color: #F1F5F9; border-color: #CBD5E1; }

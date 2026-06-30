@@ -80,12 +80,7 @@ class SelectorMetodoPago(QWidget):
                 """)
             container.setProperty("active", False)
             
-            # Sombra inicial suave
-            shadow = QGraphicsDropShadowEffect(container)
-            shadow.setBlurRadius(16)
-            shadow.setColor(QColor(59, 130, 246, 20))
-            shadow.setOffset(0, 5)
-            container.setGraphicsEffect(shadow)
+            # Se elimina la sombra para optimizar rendimiento en W10 de bajos recursos y evitar artefactos gráficos
             
             c_lay = QVBoxLayout(container)
             c_lay.setContentsMargins(5, 5, 5, 5)
