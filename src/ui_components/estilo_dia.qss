@@ -305,7 +305,7 @@ Paso5Terminal[theme="dark"] QFrame#TerminalCentralFrame { background-color: #FFF
 
 Paso5Terminal[theme="dark"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; }
 
-Paso5Terminal[theme="dark"] QLineEdit#TerminalScan { background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 8px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #38BDF8; }
+Paso5Terminal[theme="dark"] QLineEdit#TerminalScan { background: #F8FAFC; border: 2px solid #64748B; border-bottom: 4px solid #475569; border-radius: 8px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #38BDF8; }
 
 Paso5Terminal[theme="dark"] QLineEdit#TerminalScan:focus { border: 2px solid #3B82F6; }
 
@@ -353,7 +353,7 @@ Paso5Terminal[theme="light"] QFrame#TerminalCentralFrame { background-color: whi
 
 Paso5Terminal[theme="light"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #CBD5E1; }
 
-Paso5Terminal[theme="light"] QLineEdit#TerminalScan { background: #F1F5F9; border: 2px solid #CBD5E1; border-radius: 8px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #FFFFFF; }
+Paso5Terminal[theme="light"] QLineEdit#TerminalScan { background: #F1F5F9; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 8px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #FFFFFF; }
 
 Paso5Terminal[theme="light"] QLineEdit#TerminalScan:focus { border: 2px solid #3b82f6; }
 
@@ -415,9 +415,9 @@ QLabel#TerminalNotificacionUrgenciaLbl { color: #B91C1C; font-weight: bold; font
 
 
 /* Tabla Contenedor */
-Paso5Terminal[theme="dark"] QFrame#TerminalTablaContainer { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; }
+Paso5Terminal[theme="dark"] QFrame#TerminalTablaContainer { background-color: #FFFFFF; border-radius: 8px; border: 2px solid #64748B; border-bottom: 4px solid #475569; }
 
-Paso5Terminal[theme="light"] QFrame#TerminalTablaContainer { background-color: white; border-radius: 8px; border: 1px solid #CBD5E1; }
+Paso5Terminal[theme="light"] QFrame#TerminalTablaContainer { background-color: white; border-radius: 8px; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; }
 
 
 /* Scroll Atajos */
@@ -548,7 +548,7 @@ QListWidget#TerminalListResults { background: white; border: 2px solid #437EE8; 
 
 
 /* Panel de Totales */
-Paso5Terminal[theme="dark"] QFrame#PanelTotales { background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 4px; }
+Paso5Terminal[theme="dark"] QFrame#PanelTotales { background-color: #FFFFFF; border: 2px solid #64748B; border-bottom: 4px solid #475569; border-radius: 4px; }
 
 Paso5Terminal[theme="dark"] QFrame#PanelTotales QLineEdit { background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 6px; padding: 10px; font-size: 24px; font-weight: 900; color: #38BDF8; }
 
@@ -556,7 +556,7 @@ Paso5Terminal[theme="dark"] QFrame#PanelTotales QLineEdit:focus { background: #F
 
 Paso5Terminal[theme="dark"] QLabel#TotalGrande { background-color: #064E3B; border: 2px solid #059669; color: #34D399; font-size: 55px; font-weight: 900; padding: 0 15px; border-radius: 6px; }
 
-Paso5Terminal[theme="dark"] QFrame#CajaResumen { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; }
+Paso5Terminal[theme="dark"] QFrame#CajaResumen { background: #F8FAFC; border: 2px solid #64748B; border-bottom: 4px solid #475569; border-radius: 6px; }
 
 Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="titulo"] { color: #64748B; font-weight: 600; font-size: 12px; border: none; background: transparent; }
 
@@ -565,7 +565,7 @@ Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #1
 Paso5Terminal[theme="dark"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #34D399; font-size: 18px; }
 
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales { background-color: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 4px; }
+Paso5Terminal[theme="light"] QFrame#PanelTotales { background-color: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 4px; }
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales QLineEdit { background: #FFFFFF; border: 2px solid #3B82F6; border-radius: 6px; padding: 10px; font-size: 24px; font-weight: 900; color: #1E3A8A; }
 
@@ -573,7 +573,7 @@ Paso5Terminal[theme="light"] QFrame#PanelTotales QLineEdit:focus { background: #
 
 Paso5Terminal[theme="light"] QLabel#TotalGrande { background-color: #F0FDF4; border: 2px solid #22C55E; color: #166534; font-size: 55px; font-weight: 900; padding: 0 15px; border-radius: 6px; }
 
-Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #1E3A8A; border: 1px solid #E2E8F0; border-radius: 6px; }
+Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #1E3A8A; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 6px; }
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="titulo"] { color: #64748B; font-weight: 600; font-size: 12px; border: none; background: transparent; }
 
