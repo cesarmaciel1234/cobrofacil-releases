@@ -57,9 +57,6 @@ class CardIA(QFrame):
         """)
         self.setObjectName("CardIA")
 
-        shadow.setColor(QColor(0, 0, 0, 18))
-        shadow.setOffset(0, 6)
-        self.setGraphicsEffect(shadow)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)

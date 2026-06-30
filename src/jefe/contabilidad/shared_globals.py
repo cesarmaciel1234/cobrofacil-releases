@@ -95,9 +95,6 @@ def kpi_card(title, value, color, subtitle=""):
 
     
     from PyQt6.QtGui import QColor
-    sh.setColor(QColor(0, 0, 0, 15))
-    sh.setOffset(0, 8)
-    card.setGraphicsEffect(sh)
     return card
 
 def build_table(headers):

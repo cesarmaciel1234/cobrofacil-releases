@@ -156,8 +156,6 @@ class ModernCard(QFrame):
         """)
         shadow.setXOffset(0)
         shadow.setYOffset(10)
-        shadow.setColor(QColor(15, 23, 42, 22))
-        self.setGraphicsEffect(shadow)
 
 
 class StockAreaChartWidget(QWidget):
@@ -1168,8 +1166,6 @@ class VistaFinanciero(QWidget):
                     f"background: {_FIN['card']}; border-radius: 16px; "
                     f"border: 1px solid {_FIN['card_border']};"
                 )
-                kpi_shadow.setColor(QColor(15, 23, 42, 16))
-                w.setGraphicsEffect(kpi_shadow)
                 l = QVBoxLayout(w)
                 l.setContentsMargins(20, 18, 20, 18)
                 l.setSpacing(6)
@@ -1913,9 +1909,6 @@ class VistaFinanciero(QWidget):
             h_color = accent.lstrip('#')
             r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
             
-            sh.setColor(QColor(r, g, b, 20))
-            sh.setOffset(0, 4)
-            f.setGraphicsEffect(sh)
             
             l = QVBoxLayout(f)
             l.setContentsMargins(18, 14, 18, 14)

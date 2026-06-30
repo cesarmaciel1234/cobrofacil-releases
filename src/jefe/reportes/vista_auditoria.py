@@ -61,8 +61,6 @@ class ModernCard(QFrame):
         """)
         shadow.setXOffset(0)
         shadow.setYOffset(10)
-        shadow.setColor(QColor(0, 0, 0, 10))
-        self.setGraphicsEffect(shadow)
 
 
 class StockAreaChartWidget(QWidget):
@@ -1034,9 +1032,6 @@ class VistaAuditoria(QWidget):
                     border: 1px solid {border_color};
                 }}
             """)
-            sh.setColor(QColor(0, 0, 0, 15))
-            sh.setOffset(0, 2)
-            card.setGraphicsEffect(sh)
             
             c_lay = QVBoxLayout(card)
             c_lay.setContentsMargins(15, 10, 15, 10)
@@ -1356,9 +1351,6 @@ class VistaAuditoria(QWidget):
             h_color = accent.lstrip('#')
             r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
             
-            sh.setColor(QColor(r, g, b, 20))
-            sh.setOffset(0, 4)
-            f.setGraphicsEffect(sh)
             
             l = QVBoxLayout(f)
             l.setContentsMargins(18, 14, 18, 14)

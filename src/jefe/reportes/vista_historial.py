@@ -74,9 +74,6 @@ class VistaHistorial(QWidget):
     def apply_glow(self):
         container = self.findChild(QWidget, "HistoryDialog")
         if container:
-            glow.setColor(QColor(37, 99, 235, 230)) # Royal Blue ultra-brillante
-            glow.setOffset(0, 0)
-            container.setGraphicsEffect(glow)
 
     def apply_theme(self):
         theme = config.get("theme", "light")
