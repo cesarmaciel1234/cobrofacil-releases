@@ -1,5 +1,5 @@
 {
-  "app_version": "5.2",
+  "app_version": "5.3",
   "channel": "stable",
   "build_date": "2026-06-29 16:48:36",
   "server_host": "cesar",
@@ -516,9 +516,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "60af3513e3750f3efd4e59584d7dbeb5",
+      "checksum": "9bec7c01cd95744c726fb0c1346497d0",
       "channel": "stable",
-      "size": 37646
+      "size": 37867
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -834,9 +834,9 @@
     },
     "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/escalada_f11/f11_escalation_manager.py": {
       "version": "1.0.0",
-      "checksum": "047209a867e62dac68a037e9cd36e82a",
+      "checksum": "13bffa2a027cc9505c6a5dca9cf3eca8",
       "channel": "stable",
-      "size": 7133
+      "size": 7208
     },
     "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/teclado_virtual/virtual_keyboard_paso5.py": {
       "version": "1.0.0",
@@ -1200,9 +1200,9 @@
     },
     "src/inicio_y_perfiles/login_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "5dcf7b63dd20defa50eb49e342bac5e6",
+      "checksum": "d45e85ef09a1423bf898b52726d27227",
       "channel": "stable",
-      "size": 7953
+      "size": 7996
     },
     "src/inicio_y_perfiles/pantallaentrada.py": {
       "version": "1.0.0",
@@ -1578,9 +1578,9 @@
     },
     "src/ui_components/tema_estilos.py": {
       "version": "1.0.0",
-      "checksum": "c8a08cc7a57e5482d6f48a7878e05c62",
+      "checksum": "d23c020b06546c59322a04b9fca988c2",
       "channel": "stable",
-      "size": 1405
+      "size": 1606
     },
     "src/ui_components/toast.py": {
       "version": "1.0.0",
