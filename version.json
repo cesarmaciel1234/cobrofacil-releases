@@ -1,7 +1,7 @@
 {
-  "app_version": "5.3",
+  "app_version": "5.4",
   "channel": "stable",
-  "build_date": "2026-06-30 14:25:10",
+  "build_date": "2026-06-30 14:58:00",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
