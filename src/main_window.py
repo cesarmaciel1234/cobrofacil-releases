@@ -445,7 +445,13 @@ class MainWindow(QMainWindow):
 
     def _apply_theme_for_index(self, index: int):
         """Solo reaplica QSS al cambiar oscuro↔claro; evita repintar todo en cada tab admin."""
-        theme_file = "styles.qss" if index == 1 else "styles_light.qss"
+        if index == 1:
+            if hasattr(self, 'pantalla_ventas') and hasattr(self.pantalla_ventas, 'apply_theme'):
+                self.pantalla_ventas.apply_theme()
+            self._active_theme_file = "terminal_theme"
+            return
+
+        theme_file = "styles_light.qss"
         if theme_file == self._active_theme_file:
             return
         css = _QSS_CACHE.get(theme_file, "")

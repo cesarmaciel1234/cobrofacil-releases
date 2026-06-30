@@ -14,9 +14,13 @@ def aplicar_tema(app: QApplication, qss_file: str = "estilo_noche.qss") -> bool:
         bool: True si el estilo se aplicó correctamente, False de lo contrario.
     """
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        qss_path = os.path.join(current_dir, qss_file)
+        from src.utils.paths import get_resource_path
+        qss_path = get_resource_path(os.path.join("src", "ui_components", qss_file))
         
+        if not os.path.exists(qss_path):
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            qss_path = os.path.join(current_dir, qss_file)
+            
         if not os.path.exists(qss_path):
             logger.error(f"No se encontró el archivo de estilos: {qss_path}")
             return False
