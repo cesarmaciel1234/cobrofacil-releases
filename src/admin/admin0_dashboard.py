@@ -91,12 +91,11 @@ class AdminCard(QFrame):
         # Marco flotante
         self.inner = QFrame(self)
         self.inner.setGeometry(0, 12, 220, 178)
-        self.inner.setStyleSheet(f"""
-            QFrame {{
-                background: {L['surface']};
+        self.inner.setObjectName("DashboardCard")
+        self.inner.setStyleSheet("""
+            QFrame#DashboardCard {
                 border-radius: 20px;
-                border: 1.5px solid {L['border']};
-            }}
+            }
         """)
 
         # Sombra de color suave
@@ -131,8 +130,8 @@ class AdminCard(QFrame):
         self.lbl_title = QLabel(title)
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setWordWrap(True)
-        self.lbl_title.setStyleSheet(f"""
-            font-size: 12px; font-weight: 800; color: {L['text']};
+        self.lbl_title.setStyleSheet("""
+            font-size: 12px; font-weight: 800;
             font-family: 'Segoe UI', sans-serif;
             background: none; border: none;
         """)
@@ -141,8 +140,8 @@ class AdminCard(QFrame):
         if subtitle:
             self.sub = QLabel(subtitle)
             self.sub.setAlignment(Qt.AlignCenter)
-            self.sub.setStyleSheet(f"""
-                font-size: 9px; color: {L['text2']};
+            self.sub.setStyleSheet("""
+                font-size: 9px;
                 background: none; border: none;
                 font-family: 'Segoe UI', sans-serif;
             """)
@@ -176,8 +175,7 @@ class AdminCard(QFrame):
             self.anim.start()
             r, g, b = self._r, self._g, self._b
             self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: {L['surface']};
+                QFrame#DashboardCard {{
                     border-radius: 20px;
                     border: 2px solid rgba({r},{g},{b},0.50);
                 }}
@@ -194,12 +192,10 @@ class AdminCard(QFrame):
             self.anim.setEndValue(QPoint(0, 12))
             self.anim.start()
             r, g, b = self._r, self._g, self._b
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: {L['surface']};
+            self.inner.setStyleSheet("""
+                QFrame#DashboardCard {
                     border-radius: 20px;
-                    border: 1.5px solid {L['border']};
-                }}
+                }
             """)
             self._sh.setBlurRadius(18)
             self._sh.setColor(QColor(r, g, b, 30))
@@ -220,24 +216,20 @@ class AdminCard(QFrame):
             self.setCursor(Qt.ForbiddenCursor)
             self.lbl_link.setText(
                 "<span style='color:#CBD5E1; font-size:9px; font-weight:900;'>BLOQUEADO</span>")
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: #F8FAFC;
+            self.inner.setStyleSheet("""
+                QFrame#DashboardCard {
                     border-radius: 20px;
-                    border: 1.5px solid {L['border']};
-                }}
+                }
             """)
         else:
             self.setCursor(Qt.PointingHandCursor)
             self.lbl_link.setText(
                 f"<span style='color:{self._accent}; font-size:9px;"
                 f" font-weight:900; letter-spacing:1px;'>ABRIR  →</span>")
-            self.inner.setStyleSheet(f"""
-                QFrame {{
-                    background: {L['surface']};
+            self.inner.setStyleSheet("""
+                QFrame#DashboardCard {
                     border-radius: 20px;
-                    border: 1.5px solid {L['border']};
-                }}
+                }
             """)
 
 
@@ -280,11 +272,33 @@ class Admin0Dashboard(QWidget):
 
         self.lbl_clock = QLabel()
         self.lbl_clock.setStyleSheet(
-            f"color: {L['text3']}; font-size: 11px; font-weight: 600;"
+            "font-size: 11px; font-weight: 600;"
             " background: transparent; border: none; margin-right: 16px;")
         self._tick()
         QTimer(self, timeout=self._tick, singleShot=False).start(30000)
         nav_lay.addWidget(self.lbl_clock)
+
+        self.btn_tema = QPushButton("🌙 Noche")
+        self.btn_tema.setCursor(Qt.PointingHandCursor)
+        self.btn_tema.setFixedHeight(34)
+        self.btn_tema.setStyleSheet("""
+            QPushButton {
+                background: transparent; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; }
+        """)
+        self.btn_tema.clicked.connect(self._toggle_theme)
+        
+        try:
+            from src.config import config
+            if config and config.get("theme", "light") == "dark":
+                self.btn_tema.setText("☀️ Día")
+        except: pass
+        
+        nav_lay.addWidget(self.btn_tema)
 
         self.btn_out = QPushButton("Cerrar sesión")
         self.btn_out.setCursor(Qt.PointingHandCursor)
@@ -363,7 +377,7 @@ class Admin0Dashboard(QWidget):
         self.lbl_sec = QLabel("MÓDULOS DEL SISTEMA")
         self.lbl_sec.setStyleSheet(
             f"font-size: 9px; font-weight: 900; letter-spacing: 2.5px;"
-            f" color: {L['text3']}; background: transparent; border: none;")
+            f" background: transparent; border: none;")
         page_lay.addWidget(self.lbl_sec)
         page_lay.addSpacing(18)
 
@@ -422,29 +436,41 @@ class Admin0Dashboard(QWidget):
         self.ft = QLabel("Cobro Fácil POS  ·  TPV 2026  ·  Industrial POS")
         self.ft.setAlignment(Qt.AlignCenter)
         self.ft.setStyleSheet(
-            f"color: {L['text3']}; font-size: 9px; letter-spacing: 2px;"
+            f"font-size: 9px; letter-spacing: 2px;"
             " background: transparent; border: none;")
         page_lay.addWidget(self.ft)
 
         scroll.setWidget(page)
         root.addWidget(scroll)
 
+    def _toggle_theme(self):
+        try:
+            from src.config import config
+            from src.ui_components.tema_estilos import aplicar_tema
+            from PyQt6.QtWidgets import QApplication
+            current = config.get("theme", "light")
+            nuevo = "dark" if current == "light" else "light"
+            config.set("theme", nuevo)
+            
+            qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
+            aplicar_tema(QApplication.instance(), qss)
+            
+            self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
+        except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error alternando tema en Admin: {e}")
+
     def _apply_theme(self):
-        self.setStyleSheet(f"""
-            QWidget#AdminDashboard {{
-                background: {L['bg']};
+        self.setStyleSheet("""
+            QWidget#AdminDashboard {
                 font-family: 'Segoe UI', sans-serif;
-            }}
-            QScrollArea  {{ border: none; background: transparent; }}
-            QWidget#ScrollContainer {{ background: transparent; }}
-            QScrollBar:vertical {{ background: transparent; width: 4px; }}
-            QScrollBar::handle:vertical {{ background: #E2E8F0; border-radius: 2px; }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-            QFrame#NavBar {{
-                background: {L['nav_bg']};
-                border-bottom: 1px solid {L['nav_border']};
-            }}
-            QFrame#AdminHero {{
+            }
+            QScrollArea  { border: none; background: transparent; }
+            QWidget#ScrollContainer { background: transparent; }
+            QScrollBar:vertical { background: transparent; width: 4px; }
+            QScrollBar::handle:vertical { background: #E2E8F0; border-radius: 2px; }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+            QFrame#AdminHero {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
                     stop:0.00 #3B82F6,
@@ -458,10 +484,10 @@ class Admin0Dashboard(QWidget):
         """)
         # Actualizar brand
         self.brand_lbl.setText(
-            "<span style='font-size:16px; font-weight:900; color:#1E293B; letter-spacing:-0.5px;'>"
+            "<span style='font-size:16px; font-weight:900; letter-spacing:-0.5px;'>"
             "TPV PRO</span>"
             "<span style='font-size:16px; font-weight:900; color:#6366F1;'> 2026</span>"
-            "<span style='font-size:11px; font-weight:500; color:#94A3B8; margin-left:12px;'>"
+            "<span style='font-size:11px; font-weight:500; margin-left:12px;'>"
             "  ·  Dashboard Esencial</span>"
         )
 
