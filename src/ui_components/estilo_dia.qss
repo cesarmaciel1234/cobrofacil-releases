@@ -573,13 +573,13 @@ Paso5Terminal[theme="light"] QFrame#PanelTotales QLineEdit:focus { background: #
 
 Paso5Terminal[theme="light"] QLabel#TotalGrande { background-color: #F0FDF4; border: 2px solid #22C55E; color: #166534; font-size: 55px; font-weight: 900; padding: 0 15px; border-radius: 6px; }
 
-Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #1E3A8A; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
+Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="titulo"] { color: #64748B; font-weight: 600; font-size: 12px; border: none; background: transparent; }
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #38BDF8; font-weight: 900; font-size: 18px; border: none; background: transparent; }
+Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"] { color: #2563EB; font-weight: 900; font-size: 18px; border: none; background: transparent; }
 
-Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #34D399; font-size: 20px; font-weight: 900; }
+Paso5Terminal[theme="light"] QFrame#PanelTotales QLabel[tipo="valor"][resaltado="true"] { color: #059669; font-size: 20px; font-weight: 900; }
 
 
 /* --- PASO 6: BOTONES DE ACCION (F1, F2, F3...) --- */
