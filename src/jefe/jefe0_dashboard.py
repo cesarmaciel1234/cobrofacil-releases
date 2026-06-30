@@ -36,23 +36,6 @@ JEFE_MODULES = [
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-            }}
-        """)
-        lay = QVBoxLayout(card)
-        lay.setContentsMargins(15, 10, 15, 10)
-        lay.setSpacing(5)
-
-        lbl_t = QLabel(f"{icon_txt} {alerta['titulo']}")
-        lbl_t.setStyleSheet("color: white; font-weight: 900; font-size: 13px; background: transparent; border: none;")
-        lay.addWidget(lbl_t)
-
-        lbl_d = QLabel(alerta['desc'])
-        lbl_d.setWordWrap(True)
-        lbl_d.setStyleSheet("color: #CBD5E1; font-weight: 600; font-size: 11px; background: transparent; border: none;")
-        lay.addWidget(lbl_d)
-        return card
-
-# ─────────────────────────────────────────────────────────────────────────────
 #  DASHBOARD PRINCIPAL
 # ─────────────────────────────────────────────────────────────────────────────
 class Jefe0Dashboard(QWidget):
