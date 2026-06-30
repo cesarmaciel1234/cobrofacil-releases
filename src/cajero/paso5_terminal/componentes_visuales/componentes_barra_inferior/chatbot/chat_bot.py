@@ -626,7 +626,13 @@ class ChatManualWidget(QWidget):
         pw = self.parent_window or self.parent()
         if not pw:
             return
-        # Al ser un widget hijo, nos movemos relativo al tamaño del padre, no en coordenadas globales.
+        
+        # Ajustar alto dinámicamente para evitar recortes en monitores pequeños (ej. 768p)
+        # El chatbot deja 80px libres para la barra inferior.
+        target_h = min(700, pw.height() - 80)
+        self.resize(520, max(300, target_h))
+
+        # Al ser un widget hijo, nos movemos relativo al tamaño del padre
         x = pw.width() - self.width() - 20
         y = pw.height() - self.height() - 80
         self.move(max(0, x), max(0, y))
