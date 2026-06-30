@@ -304,7 +304,15 @@ def apply_pending_update_on_startup() -> bool:
         _save_pending({})
 
         if logger:
-            logger.info("Actualización silenciosa aplicada correctamente.")
+            logger.info("Actualización silenciosa aplicada correctamente. Reiniciando proceso...")
+            
+        import subprocess
+        if getattr(sys, 'frozen', False):
+            subprocess.Popen([sys.executable] + sys.argv[1:])
+        else:
+            subprocess.Popen([sys.executable] + sys.argv)
+        os._exit(0)
+        
         return True
     except Exception as exc:
         if logger:
