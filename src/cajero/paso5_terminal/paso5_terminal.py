@@ -2052,6 +2052,15 @@ class Paso5Terminal(QWidget):
             from src.config import config
             config.current_user = None
             QApplication.processEvents()
+            
+            # --- Auto-aplicar actualización tras corte de caja ---
+            try:
+                from src.updater.silent_auto_updater import is_update_staged, apply_pending_update_on_startup
+                if is_update_staged():
+                    apply_pending_update_on_startup()
+            except Exception:
+                pass
+                
             QApplication.exit(888)
         else:
             QTimer.singleShot(50, self.txt_scan.setFocus)
