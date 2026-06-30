@@ -51,6 +51,7 @@ from src.cajero.paso5_terminal.componentes_visuales.centro_de_notificaciones imp
 from src.cajero.paso5_terminal.componentes_visuales.tabla_de_productos import TablaDeProductos
 from src.cajero.paso5_terminal.componentes_visuales.panel_de_totales import PanelDeTotales
 from src.cajero.paso5_terminal.componentes_visuales.barra_de_herramientas_inferior import BarraDeHerramientasInferior
+from src.cajero.paso5_terminal.componentes_visuales.nav_row_border_overlay import NavRowBorderOverlay
 
 def fmt_moneda_sin_centavos(val):
     try:
@@ -71,54 +72,6 @@ def parse_float_safe(val_str):
         return 0.0
 SCAN_ROW_BG = "#EFF6FF"
 NAV_ROW_BORDER = "#F59E0B"
-
-
-class NavRowBorderOverlay(QWidget):
-    """Marco naranja flotante: no se ancla a celdas, sigue la fila activa con flechas."""
-    def __init__(self, tabla):
-        super().__init__(tabla.viewport())
-        self.tabla = tabla
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setAttribute(Qt.WA_NoSystemBackground)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.hide()
-
-    def _sync_geometry(self):
-        vp = self.tabla.viewport()
-        if vp:
-            self.setGeometry(vp.rect())
-
-    def sync_and_repaint(self):
-        self._sync_geometry()
-        t = self.tabla
-        if t.hasFocus() and t.currentRow() >= 0:
-            self.show()
-            self.raise_()
-            self.update()
-        else:
-            self.hide()
-
-    def paintEvent(self, event):
-        t = self.tabla
-        if not t.hasFocus() or t.currentRow() < 0:
-            return
-        model = t.model()
-        if model is None or t.columnCount() <= 0:
-            return
-        row = t.currentRow()
-        r0 = t.visualRect(model.index(row, 0))
-        rN = t.visualRect(model.index(row, t.columnCount() - 1))
-        if r0.width() <= 0 or rN.width() <= 0:
-            return
-        rect = QRect(r0.topLeft(), rN.bottomRight()).adjusted(2, 2, -2, -2)
-        if not self.rect().intersects(rect):
-            return
-        p = QPainter(self)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(QPen(QColor(NAV_ROW_BORDER), 3))
-        p.setBrush(Qt.NoBrush)
-        p.drawRoundedRect(rect, 6, 6)
-        p.end()
 
 
 
@@ -668,7 +621,7 @@ class Paso5Terminal(QWidget):
         self.style().polish(self)
         
         if hasattr(self, 'lbl_side_cant'):
-            self._style_side_labels(cambio_highlight=False)
+            self.panel_totales.actualizar_estilo_cambio(False)
 
     def toggle_keyboard(self):
         if not HAS_KEYBOARD:
@@ -1021,59 +974,14 @@ class Paso5Terminal(QWidget):
         self.lbl_terminal_title.setStyleSheet(f"font-size: {title_px}px; font-weight: 900; color: white; letter-spacing: 2px;")
         self.lbl_total_val.setObjectName("TerminalTotalVal")
         self.txt_scan.setObjectName("TerminalScan")
-        self._style_side_labels(cambio_highlight=False, side_px=side_px)
+        self.panel_totales.actualizar_estilo_cambio(False)
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
         self._apply_status_bar_shortcuts_layout(ls)
         self._layout_list_results_popup(m)
 
-    def _build_side_summary_row(self, parent_layout, title: str):
-        """Fila resumen: etiqueta pequeña + valor numérico grande."""
-        row = QHBoxLayout()
-        row.setSpacing(8)
-        row.setContentsMargins(0, 0, 0, 0)
-        lbl_t = QLabel(title)
-        lbl_v = QLabel("0")
-        lbl_v.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        lbl_t.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        lbl_v.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        row.addWidget(lbl_t)
-        row.addWidget(lbl_v, stretch=1)
-        parent_layout.addLayout(row)
-        return lbl_t, lbl_v
 
-    def _style_side_labels(self, cambio_highlight=False, side_px=None):
-        """Resumen lateral: título discreto + valor numérico en negrita."""
-        from src.utils.qt_dpi import terminal_layout_metrics
 
-        if side_px is None:
-            side_px = terminal_layout_metrics()["side_font"]
-        theme = config.get("theme", "light")
-        title_c = "#94A3B8" if theme == "dark" else "#64748B"
-        value_c = "#F8FAFC" if theme == "dark" else "#0F172A"
-        cambio_c = "#34D399" if theme == "dark" else "#059669"
-        title_px = max(12, side_px - 4)
-        value_px = max(16, side_px)
-        cambio_px = max(17, side_px + 1)
-        title_style = (
-            f"font-family: 'Segoe UI'; font-size: {title_px}px; color: {title_c}; "
-            "font-weight: 600; border: none; background: transparent;"
-        )
-        value_style = (
-            f"font-family: 'Segoe UI'; font-size: {value_px}px; color: {value_c}; "
-            "font-weight: 800; border: none; background: transparent;"
-        )
-        cambio_style = (
-            f"font-family: 'Segoe UI'; font-size: {cambio_px}px; color: {cambio_c}; "
-            "font-weight: 800; border: none; background: transparent;"
-        )
-        for lbl_t in (
-            self.lbl_side_cant_t, self.lbl_side_total_t, self.lbl_side_ahorro_t,
-            self.lbl_side_pagos_t, self.lbl_side_cambio_t,
-        ):
-            lbl_t.setStyleSheet(title_style)
-        for lbl_v in (self.lbl_side_cant, self.lbl_side_total, self.lbl_side_ahorro, self.lbl_side_pagos):
-            lbl_v.setStyleSheet(value_style)
-        self.lbl_side_cambio.setStyleSheet(cambio_style if cambio_highlight else value_style)
+
 
     def _apply_status_bar_controls(self, metrics):
         """Escala altura de botones del pie para que coincidan con status_bar."""
@@ -1547,7 +1455,7 @@ class Paso5Terminal(QWidget):
                 self.lbl_side_ahorro.hide()
             self.lbl_side_pagos.setText("0")
             self.lbl_side_cambio.setText("0")
-            self._style_side_labels(cambio_highlight=False)
+            self.panel_totales.actualizar_estilo_cambio(False)
             
         # Gatillar la animación interactiva de ahorro total
         self.animar_ahorro(total_desc)
@@ -1963,7 +1871,7 @@ class Paso5Terminal(QWidget):
                 self.lbl_side_total.setText(fmt_moneda_sin_centavos(res['total']))
                 self.lbl_side_pagos.setText(fmt_moneda_sin_centavos(res['pago_con']))
                 self.lbl_side_cambio.setText(fmt_moneda_sin_centavos(res['cambio']))
-                self._style_side_labels(cambio_highlight=True)
+                self.panel_totales.actualizar_estilo_cambio(True)
                 
             # Al cobrar exitosamente, si hay un ticket en espera, lo cargamos automáticamente
             if getattr(self, 'tickets_espera', None):

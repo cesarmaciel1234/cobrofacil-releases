@@ -2,7 +2,7 @@
 from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('src/styles.qss', 'src/'), ('src/ui_components/*.qss', 'src/ui_components/'), ('assets/*', 'assets/')]
+datas = [('src/ui_components/*.qss', 'src/ui_components/'), ('assets', 'assets')]
 binaries = []
 hiddenimports = ['reportlab.graphics.barcode.code93', 'reportlab.graphics.barcode.code128', 'reportlab.graphics.barcode.code39', 'reportlab.graphics.barcode.eanbc', 'lxml', 'html5lib', 'openpyxl', 'win32com', 'win32com.client', 'PyQt6.QtWebEngineWidgets', 'PyQt6.QtWebEngineCore']
 hiddenimports += collect_submodules('src.admin')
