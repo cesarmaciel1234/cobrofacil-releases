@@ -26,14 +26,23 @@ def aplicar_tema(app: QApplication, qss_file: str = "estilo_noche.qss") -> bool:
             return False
             
         with open(qss_path, "r", encoding="utf-8") as f:
-            estilo = f.read()
+            estilo_tema = f.read()
             
-        # Opcional: Reemplazar rutas relativas de assets si usamos imágenes en el QSS
+        # Intentar cargar base.qss
+        base_path = os.path.join(os.path.dirname(qss_path), "base.qss")
+        estilo_base = ""
+        if os.path.exists(base_path):
+            with open(base_path, "r", encoding="utf-8") as f_base:
+                estilo_base = f_base.read()
+                
+        estilo_completo = estilo_base + "\n" + estilo_tema
+        
+        # Opcional: Reemplazar rutas relativas de assets si usamos imǭgenes en el QSS
         # base_dir = os.path.dirname(os.path.dirname(current_dir))
         # assets_dir = os.path.join(base_dir, "assets").replace("\\", "/")
-        # estilo = estilo.replace("url(assets/", f"url({assets_dir}/")
+        # estilo_completo = estilo_completo.replace("url(assets/", f"url({assets_dir}/")
         
-        app.setStyleSheet(estilo)
+        app.setStyleSheet(estilo_completo)
         logger.info(f"Tema cargado correctamente desde {qss_file}")
         return True
         

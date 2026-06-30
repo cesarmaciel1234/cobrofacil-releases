@@ -1,0 +1,781 @@
+/* BASE STRUCTURAL STYLES */
+/* =========================================================
+   TPV Pro 2026 - Centralized Stylesheet (QSS)
+   =========================================================
+   Variables de Diseño Recomendadas (Referencia):
+   - Backgrounds: #F0F4F8 (Light), #FFFFFF (White Cards)
+   - Primary Accent: #3B82F6 (Blue), Hover: #2563EB
+   - Success: #10B981, Hover: #059669
+   - Danger:  #EF4444, Hover: #DC2626
+   - Texts: #FFFFFF (Dark text), #64748B (Muted)
+   - Borders: #E2E8F0
+   ========================================================= */
+
+/* --- QWidget --- */
+QWidget {
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+
+/* --- QPushButton --- */
+QPushButton {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+/* --- QLineEdit --- */
+QLineEdit {
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+
+/* --- QComboBox --- */
+QComboBox {
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 16px;
+}
+
+
+QComboBox::drop-down {
+    border: none;
+    width: 30px;
+}
+
+
+QComboBox::down-arrow {
+    width: 14px;
+    height: 14px;
+}
+
+
+/* --- QTableWidget --- */
+QTableWidget {
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+
+QHeaderView::section {
+    font-weight: bold;
+    padding: 8px;
+    border: none;
+}
+
+
+/* --- QScrollBar --- */
+QScrollBar:vertical {
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+
+/* --- QTabWidget --- */
+QTabWidget::pane {
+    border-radius: 8px;
+}
+
+
+QTabBar::tab {
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+
+/* --- QCheckBox --- */
+QCheckBox {
+    font-size: 14px;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+}
+
+QFrame#Paso6Main[theme="dark"] QLabel#InputLabel {
+ font-weight: 900; color: #1E3A8A; font-size: 18px; 
+}
+
+QFrame#Paso6Main[theme="dark"] QLabel#NetoLabel {
+ font-weight: 900; color: #38BDF8; font-size: 26px; letter-spacing: 1px; margin-top: 5px; 
+}
+
+QFrame#Paso6Main[theme="light"] QLabel#InputLabel {
+ font-weight: 900; color: #1E3A8A; font-size: 18px; 
+}
+
+QFrame#Paso6Main[theme="light"] QLabel#NetoLabel {
+ font-weight: 900; color: #1E3A8A; font-size: 26px; letter-spacing: 1px; margin-top: 5px; 
+}
+
+QLabel#HistorialIcon {
+ font-size: 24px; background: transparent; border: none; 
+}
+
+QLabel#HistorialTitle {
+ font-size: 18px; font-weight: 900; color: #1E3A8A; letter-spacing: 2px; 
+}
+
+QLabel#HistorialTotalFiltered {
+ font-size: 16px; font-weight: 900; color: #2563EB; border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="dark"] QLabel#TerminalAhorroVal {
+ font-size: 42px; color: #F43F5E; font-weight: 900; border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="dark"] QLabel#TerminalTotalVal {
+ font-size: 75px; color: #34D399; font-weight: 900; border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="dark"] QFrame#TerminalSideBox QLabel {
+ border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="dark"] QTableWidget#TerminalTabla::item {
+ padding: 18px 15px; border-bottom: 1px solid #E2E8F0; 
+}
+
+Paso5Terminal[theme="light"] QLabel#TerminalAhorroVal {
+ font-size: 42px; color: #FF4500; font-weight: 900; border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="light"] QLabel#TerminalTotalVal {
+ font-size: 75px; color: #059669; font-weight: 900; border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="light"] QFrame#TerminalSideBox QLabel {
+ border: none; background: transparent; 
+}
+
+Paso5Terminal[theme="light"] QTableWidget#TerminalTabla::item {
+ padding: 18px 15px; border-bottom: 1px solid #E2E8F0; 
+}
+
+QLabel#TerminalCabeceraEstado, QLabel#TerminalCabeceraInstalacion, QLabel#TerminalCabeceraCaja, QLabel#TerminalCabeceraFecha {
+ font-weight: bold; font-size: 16px; 
+}
+
+QLabel#TerminalCabeceraTitulo {
+ font-size: 26px; font-weight: bold; 
+}
+
+QFrame#EditCantDialog QDoubleSpinBox {
+ font-size: 48px; padding: 10px; border: 2px solid #CBD5E1; border-radius: 8px; background: #1E3A8A; color: #FFFFFF; 
+}
+
+QFrame#EditCantDialog QPushButton {
+ border-radius: 8px; padding: 14px 12px; font-size: 13px; font-weight: bold; letter-spacing: 0.5px; min-height: 48px; 
+}
+
+QLabel#EditCantProducto {
+ font-size: 15px; color: #64748B; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#EditCantTitle {
+ font-size: 26px; font-weight: 900; color: #1E3A8A; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoPINLbl1 {
+ font-size: 20px; font-weight: 900; color: #1E3A8A; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoPINLbl2 {
+ font-size: 13px; color: #64748b; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLineEdit#DialogoPINTxt {
+ font-size: 32px; font-weight: 900; letter-spacing: 8px; border: 2px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #1E3A8A; color: #FFFFFF; 
+}
+
+QLabel#DialogoPINError {
+ font-size: 12px; color: #EF4444; font-weight: bold; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoRetiroEfectivoLbl {
+ font-size: 20px; font-weight: 900; color: #EA580C; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoRetiroEfectivoDisp {
+ font-size: 13px; color: #64748b; font-weight: bold; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoRetiroEfectivoLbl2 {
+ font-size: 13px; color: #E2E8F0; font-weight: bold; border: none; 
+}
+
+QLineEdit#DialogoRetiroEfectivoMonto {
+ font-size: 32px; font-weight: 900; color: #DC2626; border: 2px solid #cbd5e1; border-radius: 10px; padding: 6px; background: #1E3A8A; 
+}
+
+QLabel#DialogoRetiroEfectivoMotivoLbl {
+ font-size: 13px; color: #E2E8F0; font-weight: bold; border: none; 
+}
+
+QLineEdit#DialogoRetiroEfectivoMotivoTxt {
+ font-size: 14px; color: #FFFFFF; font-weight: 600; border: 2px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #1E3A8A; 
+}
+
+QLabel#DialogoRetiroEfectivoError {
+ font-size: 12px; color: #DC2626; font-weight: bold; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoIngresoEfectivoLbl {
+ font-size: 20px; font-weight: 900; color: #1A2332; border: none; letter-spacing: 1px; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoIngresoEfectivoSub {
+ font-size: 12px; color: #64748B; font-weight: 600; border: none; qproperty-alignment: AlignCenter; 
+}
+
+
+QLabel#DialogoIngresoEfectivoOpcionIcono {
+ font-size: 24px; border: none; background: transparent; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoIngresoEfectivoOpcionTitulo {
+ font-weight: 900; font-size: 12px; border: none; background: transparent; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoIngresoEfectivoTituloMonto {
+ font-size: 13px; color: #E2E8F0; font-weight: bold; border: none; 
+}
+
+QLineEdit#DialogoIngresoEfectivoMontoTxt {
+ font-size: 36px; font-weight: 900; color: #059669; border: 2px solid #cbd5e1; border-radius: 10px; padding: 8px; background: white; 
+}
+
+QLineEdit#DialogoIngresoEfectivoDesc {
+ font-size: 14px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; 
+}
+
+QLabel#DialogoIngresoEfectivoError {
+ font-size: 12px; color: #DC2626; font-weight: bold; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoTitulo {
+ font-size: 26px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoSubtitulo {
+ font-size: 14px; font-weight: 600; color: #64748B; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoCajeroT1 {
+ font-size: 18px; font-weight: 900; color: #1E3A8A; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoCajeroP1 {
+ font-size: 12px; font-weight: bold; color: #64748B; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoAuxiliarT2 {
+ font-size: 18px; font-weight: 900; color: #059669; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoAuxiliarP2 {
+ font-size: 12px; font-weight: bold; color: #64748B; background: transparent; border: none; qproperty-alignment: AlignCenter; 
+}
+
+QLabel#DialogoCandadoIA {
+ font-size: 13px; color: #0284C7; font-weight: bold; background: #E0F2FE; padding: 12px; border-radius: 8px; border: none; qproperty-alignment: AlignCenter; 
+}
+
+
+/* --- PASO 6: LABELS METODOS DE PAGO --- */
+Paso6Main[theme="dark"] QLabel[type="metodo_lbl"][active="true"] {
+ font-size: 13px; font-weight: 900; color: #38BDF8; background: transparent; border: none; 
+}
+
+Paso6Main[theme="dark"] QLabel[type="metodo_lbl"][active="false"] {
+ font-size: 13px; font-weight: 900; color: #64748B; background: transparent; border: none; 
+}
+
+Paso6Main[theme="light"] QLabel[type="metodo_lbl"][active="true"] {
+ font-size: 13px; font-weight: 900; color: #1E3A8A; background: transparent; border: none; 
+}
+
+Paso6Main[theme="light"] QLabel[type="metodo_lbl"][active="false"] {
+ font-size: 13px; font-weight: 900; color: #475569; background: transparent; border: none; 
+}
+
+
+/* --- PASO 6: RESUMEN VUELTO --- */
+Paso6Main[theme="dark"] QLabel#LblVueltoTit {
+ font-weight: 900; color: #64748B; font-size: 20px; 
+}
+
+Paso6Main[theme="light"] QLabel#LblVueltoTit {
+ font-weight: 900; color: #64748B; font-size: 20px; 
+}
+
+
+/* --- PASO 6: ESTADOS MERCADOPAGO --- */
+QLabel#LblMpStatus[estado="info"] {
+ font-weight: 800; font-size: 12px; font-family: 'Segoe UI'; border: none; border-radius: 10px; 
+}
+
+
+QLabel#LblMpStatus[estado="waiting"] {
+ font-weight: bold; font-size: 13px; border-radius: 8px; padding: 10px; 
+}
+
+
+QLabel#LblMpStatus[estado="success"] {
+ font-weight: 900; font-size: 13px; border-radius: 8px; padding: 10px; 
+}
+
+
+
+/* =========================================
+   PASO 7: CIERRE Y ARQUEO
+   ========================================= */
+
+/* --- Contenedor Principal --- */
+QFrame#CierreMain {
+    border-radius: 20px;
+}
+
+
+QLabel#CierreTitle {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+
+QLabel#CierreSos {
+    font-size: 16px;
+    font-weight: 900;
+    padding: 5px 15px;
+    border-radius: 8px;
+}
+
+
+QLabel#CierreUser {
+    font-size: 14px;
+    font-weight: 800;
+}
+
+
+QLabel#CierreBanner {
+    font-weight: 900;
+    font-size: 14px;
+}
+
+
+/* --- Panel Arqueo --- */
+QFrame#PanelArq {
+    border-radius: 20px;
+}
+
+
+QLabel#PanelArqTitEsp, QLabel#PanelArqTitFis {
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 1px;
+    border: none;
+}
+
+
+QLabel#PanelArqValEsp {
+    font-size: 40px;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+
+QLineEdit#PanelArqValFis {
+    font-size: 40px;
+    font-weight: 900;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+
+/* --- Diferencia (Sobrante/Faltante) --- */
+QFrame#FrameDif {
+    border-radius: 15px;
+}
+
+
+QLabel#FrameDifTit {
+    font-weight: 900;
+    font-size: 16px;
+    border: none;
+}
+
+
+QLabel#FrameDifVal {
+    font-size: 32px;
+    font-weight: 900;
+    border: none;
+}
+
+
+/* --- Metric Card --- */
+QFrame#MetricCard {
+    border-radius: 16px;
+}
+
+
+QFrame#MetricIconFrame {
+ border-radius: 25px; border: none; 
+}
+
+QLabel#MetricIconLbl {
+ font-size: 24px; background: transparent; border: none; 
+}
+
+
+QLabel#MetricTit {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    border: none;
+}
+
+
+QLabel#MetricVal {
+    font-size: 24px;
+    font-weight: 900;
+    border: none;
+}
+
+
+
+/* --- Corte Diario Admin --- */
+QFrame#CorteDiarioMain {
+    border-radius: 15px;
+}
+
+QLabel#CorteDiarioTit {
+    padding: 15px;
+    font-weight: 900;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+}
+
+QTableWidget#CorteDiarioTable {
+    border: none;
+    font-size: 13px;
+}
+
+QTableWidget#CorteDiarioTable::item {
+    padding: 5px;
+}
+
+QHeaderView#CorteDiarioHeader::section {
+    font-weight: 900;
+    border: none;
+}
+
+
+
+/* =========================================
+   INICIO Y PERFILES (Fase 1)
+   ========================================= */
+
+/* --- Login Pantalla --- */
+QFrame#LoginContainer {
+    border-radius: 28px;
+    border: none;
+}
+
+QLabel#LoginHeaderLbl {
+    font-size: 10px; font-weight: 900; letter-spacing: 4px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+
+QLabel#LoginBadge {
+    padding: 4px 10px; border-radius: 6px; border: none;
+}
+
+
+QLabel#LoginAvatar {
+ font-size: 60px; background: transparent; border: none; 
+}
+
+QLabel#LoginTitle {
+    font-family: 'Segoe UI Black', sans-serif;
+}
+
+
+QComboBox#LoginUserCb, QLineEdit#LoginPass {
+    border-radius: 12px; padding: 12px 16px;
+    font-size: 14px; font-weight: 600; color: #0F172A;
+}
+
+
+QPushButton#BtnLogin {
+    border-radius: 14px; border: none;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+
+QPushButton#BtnLoginCancel {
+    border: none; background: transparent;
+    font-family: 'Segoe UI', sans-serif; padding: 6px;
+}
+
+
+QLabel#AperturaMsg {
+ font-size: 14px; font-weight: 700; color: #64748B; border: none; background: transparent; 
+}
+
+
+QLineEdit#AperturaSaldo {
+    padding: 15px; font-size: 32px; font-weight: 900; color: #FFFFFF;
+}
+
+
+QPushButton#BtnApertura {
+    border-radius: 25px; border: none; font-family: 'Segoe UI', sans-serif;
+}
+
+
+QLabel#LicenciaIcon {
+ font-size: 50px; background: transparent; border: none; 
+}
+
+
+QLabel#LicenciaSub {
+ font-size: 10px; font-weight: 700; color: #64748B; letter-spacing: 2px; border: none; 
+}
+
+
+QLabel#LicenciaHwid {
+ font-size: 12px; font-weight: bold; color: #FCD34D; border: none; 
+}
+
+
+QLineEdit#LicenciaInput {
+    padding: 12px; font-size: 13px; font-weight: bold; color: #FFFFFF;
+}
+
+
+QLabel#LicenciaNuke {
+ font-size: 12px; font-weight: 900; color: #EF4444; border: 1px solid #EF4444; padding: 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); 
+}
+
+QLabel#LicenciaFoot {
+ font-size: 9px; color: #475569; border: none; 
+}
+
+QProgressBar#SplashProgress {
+ border: none; background: rgba(255,255,255,0.2); border-radius: 3px; height: 6px; 
+}
+
+
+QLabel#PerfilCardTag {
+ padding: 4px 10px; border-radius: 8px; font-weight: 900; font-size: 10px; letter-spacing: 1px; border: none; 
+}
+
+
+QLabel#PerfilCardIco {
+ font-size: 42px; background: transparent; border: none; 
+}
+
+QLabel#PerfilCardTit {
+ font-size: 18px; font-weight: 900; border: none; background: transparent; 
+}
+
+
+QLabel#PerfilCardDesc {
+ font-size: 11px; font-weight: 600; color: #64748B; border: none; background: transparent; 
+}
+
+QLabel#PerfilActionTit {
+ font-size: 13px; font-weight: 900; color: #64748B; background: transparent; border: none; 
+}
+
+QLabel#PerfilActionDesc {
+ font-size: 10px; font-weight: 600; color: #64748B; background: transparent; border: none; 
+}
+
+
+
+
+
+
+/* Ajustes específicos Tema Día */
+QFrame#TerminalCabecera {
+    border: none;
+}
+
+QLabel#TerminalCabeceraEstado,
+QLabel#TerminalCabeceraCaja,
+QLabel#TerminalCabeceraFecha,
+QLabel#TerminalCabeceraTitulo,
+QLabel#TerminalCabeceraInstalacion {
+    font-weight: bold;
+}
+
+
+
+/* =========================================
+   CORRECCIONES FINALES TEMA DIA
+   ========================================= */
+Paso5Terminal[theme="light"] QFrame#TerminalCabecera {
+    border: none;
+}
+
+QFrame#Paso6Main[theme="light"] QFrame#KbFrame {
+    border: none !important;
+}
+
+Paso5Terminal[theme="light"] QTableWidget#TerminalTabla::item {
+    padding: 8px 15px; 
+}
+
+/* Articulo ultimo cargado (Seleccionado) - Azul Suave Francia */
+Paso5Terminal[theme="light"] QTableWidget#TerminalTabla::item:selected {
+    font-weight: 900 !important; 
+}
+
+
+
+/* =========================================
+   CORRECCION BARRA INFERIOR TEMA DIA
+   ========================================= */
+Paso5Terminal[theme="light"] QPushButton#BtnTeclado, 
+Paso5Terminal[theme="light"] QPushButton#BtnTheme, 
+Paso5Terminal[theme="light"] QPushButton#BtnEspera {
+    border-radius: 5px !important; 
+    font-size: 13px !important; 
+    font-weight: bold !important; 
+    padding: 6px 16px !important; /* Mejores medidas */
+}
+
+
+Paso5Terminal[theme="light"] QPushButton[is_shortcut="true"],
+QPushButton[is_shortcut="true"] {
+    border-radius: 5px !important; 
+    font-size: 13px !important; 
+    font-weight: bold !important; 
+    padding: 4px 10px !important; /* Mejores medidas para que no se vean aplastados */
+}
+
+
+
+/* =========================================
+   CORRECCION DE TEXTO DE INSTALACION (MACIEL CARNICERIA)
+   ========================================= */
+QLabel#TerminalCabeceraInstalacion {
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+}
+
+
+/* 2. Tarjetas y Paneles internos a Blanco puro */
+QFrame#HistorialTotalCard, QFrame#AdminPanel, QFrame#InventarioPanel, 
+QFrame#MetricCard, QFrame#DashboardCard, QFrame#TerminalCentralFrame, 
+QFrame#TerminalDashboard, QFrame#TerminalSideBox {
+    border-radius: 12px !important;
+}
+
+
+/* 3. Globalizar el estilo de las Tablas (estilo Paso 5) a TODAS las tablas */
+QTableWidget {
+    border-radius: 8px !important;
+}
+
+QTableWidget::item {
+    padding: 8px 15px;
+}
+
+QTableWidget::item:selected {
+    font-weight: 900 !important;
+}
+
+QHeaderView::section {
+    font-weight: 900 !important;
+    border: none !important;
+    padding: 12px 15px !important;
+}
+
+
+/* 4. Globalizar Inputs de texto */
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateEdit, QTimeEdit, QDateTimeEdit {
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+}
+
+
+
+/* =========================================
+   FLASH FEEDBACK CABECERA TEMA DIA
+   ========================================= */
+QFrame#TerminalCabecera[estado="exito"] {
+    border: none !important;
+}
+
+
+QFrame#TerminalCabecera[estado="alerta"] {
+    border: none !important;
+}
+
+
+/* Encabezado del calendario (donde está el mes y los botones de navegación) */
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+
+/* Botones de navegación (mes anterior/siguiente) */
+QCalendarWidget QToolButton {
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+
+/* Spinbox de año y mes */
+QCalendarWidget QSpinBox {
+    border: none !important;
+}
+
+
+/* Grilla del calendario (los días) */
+QCalendarWidget QTableView {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+
+/* Encabezado de los días de la semana */
+QCalendarWidget QTableView QHeaderView::section {
+    font-weight: bold;
+    border: none;
+}
+
+
+
+/* =========================================
+   BOTON SALIR HISTORIAL ROJO TEMA DIA
+   ========================================= */
+QPushButton#BtnCloseHist {
+    font-weight: bold;
+    border: none;
+}
