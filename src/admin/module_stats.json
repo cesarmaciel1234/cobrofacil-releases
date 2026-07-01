@@ -3,7 +3,7 @@
     "inventario": 139,
     "cierre_z": 53,
     "hardware": 16,
-    "configuracion": 78,
+    "configuracion": 79,
     "lan_espectador": 33,
     "panel_fiscal": 22,
     "mercadopago": 22,
@@ -15,6 +15,6 @@
     "cierre": 25,
     "contabilidad": 14,
     "proveedores": 22,
-    "carteleria": 67,
+    "carteleria": 68,
     "red_lan": 32
 }

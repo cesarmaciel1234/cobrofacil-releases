@@ -5,10 +5,13 @@ import os
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
-    QTextEdit, QMessageBox, QFrame,
+    QTextEdit, QMessageBox, QFrame, QListWidget, QListWidgetItem, QInputDialog
 )
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QCursor
+import socket
+
+from src.network.network_engine import get_network_engine
 
 from src.utils.paths import get_resource_path
 
@@ -23,8 +26,13 @@ class Admin15Carteleria(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._path = _config_path()
+        self.tv_ips = {}
         self._build()
         self._load()
+        
+        self.engine = get_network_engine()
+        if self.engine:
+            self.engine.message_received.connect(self._on_net_message)
 
     def _build(self):
         root = QVBoxLayout(self)
@@ -60,13 +68,32 @@ class Admin15Carteleria(QWidget):
         body.addWidget(self.txt_phone)
 
         btn_save = QPushButton("💾 Guardar cartelería")
-        btn_save.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_save.setStyleSheet(
             "QPushButton { background: #E11D48; color: white; font-weight: bold; "
             "padding: 12px 24px; border-radius: 8px; border: none; }"
         )
         btn_save.clicked.connect(self._save)
         body.addWidget(btn_save)
+        
+        # Panel de Emparejamiento
+        pairing_frame = QFrame()
+        pairing_frame.setStyleSheet("background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;")
+        p_layout = QVBoxLayout(pairing_frame)
+        p_layout.addWidget(QLabel("📡 TVs esperando autorización en la red:"))
+        
+        self.list_tvs = QListWidget()
+        self.list_tvs.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px;")
+        self.list_tvs.setMinimumHeight(100)
+        p_layout.addWidget(self.list_tvs)
+        
+        btn_auth = QPushButton("🔑 Autorizar TV Seleccionada")
+        btn_auth.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_auth.setStyleSheet("background: #2563EB; color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
+        btn_auth.clicked.connect(self._authorize_tv)
+        p_layout.addWidget(btn_auth)
+        
+        body.addWidget(pairing_frame)
         body.addStretch()
 
         wrapper = QWidget()
@@ -94,3 +121,54 @@ class Admin15Carteleria(QWidget):
             QMessageBox.information(self, "Guardado", "Cartelería actualizada correctamente.")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"No se pudo guardar: {e}")
+
+    def _on_net_message(self, origen, tipo, datos):
+        if tipo == "CARTELERIA_WAITING_AUTH":
+            ip = datos.get("ip")
+            if ip and ip not in self.tv_ips:
+                self.tv_ips[ip] = origen
+                self._update_tv_list()
+                
+    def _update_tv_list(self):
+        self.list_tvs.clear()
+        for ip in self.tv_ips.keys():
+            self.list_tvs.addItem(f"TV Detectada - IP: {ip}")
+            
+    def _get_local_ip(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            s.close()
+            return ip
+        except:
+            return "127.0.0.1"
+
+    def _authorize_tv(self):
+        selected = self.list_tvs.currentItem()
+        if not selected:
+            QMessageBox.warning(self, "Atención", "Selecciona una TV de la lista.")
+            return
+            
+        ip_str = selected.text().split("IP: ")[-1]
+        
+        # Validar admin PIN
+        pin, ok = QInputDialog.getText(self, "Autorizar TV", "Ingresa el PIN de Administrador para autorizar:", QLineEdit.EchoMode.Password)
+        if ok and pin:
+            import sqlite3
+            from src.base_de_datos.database import db_manager
+            try:
+                res = db_manager.execute_query("SELECT pin FROM usuarios WHERE rol = 'admin'")
+                if res and len(res) > 0 and pin == res[0][0]:
+                    if self.engine:
+                        self.engine.broadcast("CARTELERIA_AUTH_GRANT", {
+                            "target_ip": ip_str,
+                            "db_host": self._get_local_ip()
+                        })
+                        QMessageBox.information(self, "Éxito", f"Autorización enviada a {ip_str}.")
+                        self.tv_ips.pop(ip_str, None)
+                        self._update_tv_list()
+                else:
+                    QMessageBox.warning(self, "Error", "PIN incorrecto.")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Error validando PIN: {e}")

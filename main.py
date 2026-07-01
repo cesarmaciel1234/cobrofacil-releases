@@ -249,16 +249,17 @@ def launch_app():
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                # Solicitar contraseña de administrador para enlazar de forma segura
-                login_dlg = LoginPantalla("admin")
-                if qt_exec(login_dlg):
+                # Esperar autorización de la computadora principal (Caja) por UDP
+                from src.carteleria.dialogo_espera_auth import DialogoEsperaAuth
+                wait_dlg = DialogoEsperaAuth()
+                if qt_exec(wait_dlg):
                     from src.config import config
                     config.current_user = {"role": "carteleria"}
-                    login_dlg.hide()
+                    wait_dlg.hide()
                     app.processEvents()
                     step = 4
                 else:
-                    login_dlg.hide()
+                    wait_dlg.hide()
                     app.processEvents()
                     step = 1
                 continue
