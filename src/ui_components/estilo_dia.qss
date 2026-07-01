@@ -1384,20 +1384,19 @@ QMainWindow, QDialog, Paso5Terminal[theme="light"], QFrame#Paso6Main[theme="ligh
 }
 
 
-QFrame#HistorialMain {
-    background-color: #F8FAFC !important;
+QFrame#HistorialMain, QFrame#AdminMain, QFrame#InventarioMain, 
+QFrame#ReportesMain, QFrame#ConfigMain, QFrame#CierreMain {
+    background-color: #FFFFFF !important;
+    border: 3px solid #64748B !important;
+    border-radius: 16px !important;
 }
-
-
 
 /* =========================================
    GLOBALIZACION DE MEJORAS MODO DIA (EXCEPTO PASO 6)
    ========================================= */
 
 /* 1. Fondos principales de contenedores a Gris Suave */
-QMainWindow, QDialog, 
-QFrame#HistorialMain, QFrame#AdminMain, QFrame#InventarioMain, 
-QFrame#ReportesMain, QFrame#ConfigMain, QFrame#CierreMain {
+QMainWindow, QDialog {
     background-color: #F8FAFC !important;
 }
 

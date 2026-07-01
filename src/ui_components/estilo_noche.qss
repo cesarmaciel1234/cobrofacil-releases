@@ -280,7 +280,7 @@ QPushButton#BtnCierreTurno:hover { background: #059669; }
 /* =========================================================
    PASO 8 HISTORIAL
    ========================================================= */
-QFrame#HistorialMain { background-color: #F8FAFC; border-radius: 20px; border: 1px solid #E2E8F0; }
+QFrame#HistorialMain { background-color: #0F172A; border-radius: 16px; border: 3px solid #334155; }
 
 QPushButton#BtnRefresh { background-color: #0EA5E9; color: white; font-weight: bold; }
 
