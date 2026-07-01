@@ -5,7 +5,8 @@ import os
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
-    QTextEdit, QMessageBox, QFrame, QListWidget, QListWidgetItem, QInputDialog
+    QTextEdit, QMessageBox, QFrame, QListWidget, QListWidgetItem, QInputDialog,
+    QScrollArea
 )
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QCursor
@@ -98,7 +99,13 @@ class Admin15Carteleria(QWidget):
 
         wrapper = QWidget()
         wrapper.setLayout(body)
-        root.addWidget(wrapper)
+        
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(wrapper)
+        scroll.setStyleSheet("QScrollArea { border: none; }")
+        
+        root.addWidget(scroll)
 
     def _load(self):
         try:
@@ -153,22 +160,28 @@ class Admin15Carteleria(QWidget):
         ip_str = selected.text().split("IP: ")[-1]
         
         # Validar admin PIN
-        pin, ok = QInputDialog.getText(self, "Autorizar TV", "Ingresa el PIN de Administrador para autorizar:", QLineEdit.EchoMode.Password)
+        pin, ok = QInputDialog.getText(self, "Autorizar TV", "Ingresa el PIN Operativo del Administrador para autorizar:", QLineEdit.EchoMode.Password)
         if ok and pin:
-            import sqlite3
+            import hashlib
             from src.base_de_datos.database import db_manager
             try:
                 res = db_manager.execute_query("SELECT pin FROM usuarios WHERE rol = 'admin'")
-                if res and len(res) > 0 and pin == res[0][0]:
-                    if self.engine:
-                        self.engine.broadcast("CARTELERIA_AUTH_GRANT", {
-                            "target_ip": ip_str,
-                            "db_host": self._get_local_ip()
-                        })
-                        QMessageBox.information(self, "Éxito", f"Autorización enviada a {ip_str}.")
-                        self.tv_ips.pop(ip_str, None)
-                        self._update_tv_list()
+                if res and len(res) > 0:
+                    pin_en_db = res[0][0] or ""
+                    pin_hash_ingresado = hashlib.sha256(pin.encode()).hexdigest()
+                    # Acepta tanto hash (nuevo) como texto plano (legado)
+                    if pin_hash_ingresado == pin_en_db or pin == pin_en_db:
+                        if self.engine:
+                            self.engine.broadcast("CARTELERIA_AUTH_GRANT", {
+                                "target_ip": ip_str,
+                                "db_host": self._get_local_ip()
+                            })
+                            QMessageBox.information(self, "Éxito", f"Autorización enviada a {ip_str}.")
+                            self.tv_ips.pop(ip_str, None)
+                            self._update_tv_list()
+                    else:
+                        QMessageBox.warning(self, "Error", "PIN incorrecto.")
                 else:
-                    QMessageBox.warning(self, "Error", "PIN incorrecto.")
+                    QMessageBox.warning(self, "Error", "No se encontró ningún usuario administrador.")
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Error validando PIN: {e}")

@@ -435,9 +435,10 @@ class DialogoCajeros(QDialog):
         self.cmb_rol.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; font-weight: bold;")
         
         self.txt_pin = QLineEdit()
-        self.txt_pin.setPlaceholderText("PIN (numérico, ej: 1234)...")
+        self.txt_pin.setPlaceholderText("PIN (vacío = no cambiar)")
         self.txt_pin.setMaxLength(6)
         self.txt_pin.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; font-weight: bold;")
+        self.current_user_id = None
 
         f_lay.addWidget(QLabel("Usuario:"), 0, 0)
         f_lay.addWidget(self.txt_user, 0, 1)
@@ -495,25 +496,34 @@ class DialogoCajeros(QDialog):
                 else: rol_it.setForeground(QColor("#475569"))
                 self.tabla.setItem(i, 2, rol_it)
 
-                pin_val = str(r['pin'] or '1234')
-                pin_it = QTableWidgetItem("••••" if len(pin_val) > 0 else "")
+                pin_val = str(r['pin'] or '')
+                pin_es_hash = len(pin_val) == 64  # SHA-256 = 64 hex chars
+                
+                if pin_es_hash:
+                    # PIN hasheado: mostrar indicador seguro
+                    pin_it = QTableWidgetItem("✓ Configurado")
+                    pin_it.setForeground(QColor("#16A34A"))
+                    pin_it.setFont(QFont("Segoe UI", 9, QFont.Bold))
+                elif pin_val:
+                    # PIN en texto plano (legado): mostrarlo para que el usuario lo actualice
+                    pin_it = QTableWidgetItem(f"⚠ {pin_val}")
+                    pin_it.setForeground(QColor("#D97706"))
+                else:
+                    pin_it = QTableWidgetItem("Sin PIN")
+                    pin_it.setForeground(QColor("#94A3B8"))
+                    
                 pin_it.setTextAlignment(Qt.AlignCenter)
-                pin_it.setData(Qt.UserRole, pin_val) # Guardar valor real
                 self.tabla.setItem(i, 3, pin_it)
 
     def _al_seleccionar(self, item):
         row = self.tabla.currentRow()
+        self.current_user_id = self.tabla.item(row, 0).text()
         self.txt_user.setText(self.tabla.item(row, 1).text())
         rol = self.tabla.item(row, 2).text().lower()
         idx = self.cmb_rol.findText(rol)
         if idx >= 0: self.cmb_rol.setCurrentIndex(idx)
         self.txt_pass.clear()
-        
-        pin_item = self.tabla.item(row, 3)
-        if pin_item:
-            self.txt_pin.setText(pin_item.data(Qt.UserRole))
-        else:
-            self.txt_pin.clear()
+        self.txt_pin.clear()
 
     def guardar_usuario(self):
         usr = self.txt_user.text().strip()
@@ -521,25 +531,38 @@ class DialogoCajeros(QDialog):
         rol = self.cmb_rol.currentText()
         pin = self.txt_pin.text().strip()
         if not usr: return
-        if not pin: pin = "1234"
         
         import hashlib
-        # Hash the PIN
-        h_pin = hashlib.sha256(pin.encode()).hexdigest()
         
-        exists = db_manager.execute_scalar("SELECT id FROM usuarios WHERE username = ?", (usr,))
-        if exists:
+        if getattr(self, 'current_user_id', None):
+            # Update existing user
+            uid = self.current_user_id
+            
+            query = "UPDATE usuarios SET username = ?, rol = ?"
+            params = [usr, rol]
+            
             if pwd:
-                h = hashlib.sha256(pwd.encode()).hexdigest()
-                db_manager.execute_non_query("UPDATE usuarios SET password_hash = ?, rol = ?, pin = ? WHERE username = ?", (h, rol, h_pin, usr))
-            else:
-                db_manager.execute_non_query("UPDATE usuarios SET rol = ?, pin = ? WHERE username = ?", (rol, h_pin, usr))
+                query += ", password_hash = ?"
+                params.append(hashlib.sha256(pwd.encode()).hexdigest())
+                
+            if pin:
+                query += ", pin = ?"
+                params.append(hashlib.sha256(pin.encode()).hexdigest())
+                
+            query += " WHERE id = ?"
+            params.append(uid)
+            
+            db_manager.execute_non_query(query, tuple(params))
         else:
+            # Create new user
+            if not pin: pin = "1234"
             if not pwd: pwd = usr # Default password is the username
             h = hashlib.sha256(pwd.encode()).hexdigest()
+            h_pin = hashlib.sha256(pin.encode()).hexdigest()
             db_manager.execute_non_query("INSERT INTO usuarios (username, password_hash, rol, pin) VALUES (?, ?, ?, ?)", (usr, h, rol, h_pin))
         
-        self.txt_user.clear(); self.txt_pass.clear(); self.txt_pin.clear(); self.cargar_usuarios()
+        self.txt_user.clear(); self.txt_pass.clear(); self.txt_pin.clear(); self.current_user_id = None
+        self.cargar_usuarios()
 
     def eliminar_usuario(self):
         row = self.tabla.currentRow()
@@ -548,7 +571,7 @@ class DialogoCajeros(QDialog):
         if uid == "1":
             QMessageBox.warning(self, "Protección", "El administrador raíz no puede ser eliminado.")
             return
-        if QMessageBox.question(self, "Eliminar", f"¿Eliminar a {self.tabla.item(row, 1).text()}?", QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
+        if QMessageBox.question(self, "Eliminar", f"¿Eliminar a {self.tabla.item(row, 1).text()}?", QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             db_manager.execute_non_query("DELETE FROM usuarios WHERE id = ?", (uid,))
             self.cargar_usuarios()
 
@@ -1766,9 +1789,9 @@ class DialogoImpuestos(QDialog):
             self, "Confirmar", 
             f"¿Estás seguro de que deseas eliminar el departamento '{nombre_val}'?\n"
             f"Los productos asociados a este departamento quedarán sin asignación.",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
-        if confirm == QMessageBox.Yes:
+        if confirm == QMessageBox.StandardButton.Yes:
             if id_val != "NUEVO":
                 from src.base_de_datos.database import db_manager
                 db_manager.execute_non_query("DELETE FROM departamentos WHERE id = ?", (int(id_val),))
@@ -2007,8 +2030,8 @@ class DialogoRespaldo(QDialog):
             QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta. Solo el administrador puede importar datos.")
             return
 
-        reply = QMessageBox.question(self, "Confirmar Restauración", "⚠️ ATENCIÓN: Esto reemplazará tu base de datos actual con la copia seleccionada. ¿Estás seguro?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply != QMessageBox.Yes:
+        reply = QMessageBox.question(self, "Confirmar Restauración", "⚠️ ATENCIÓN: Esto reemplazará tu base de datos actual con la copia seleccionada. ¿Estás seguro?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply != QMessageBox.StandardButton.Yes:
             return
 
         try:
@@ -2543,8 +2566,8 @@ class DialogoActualizaciones(QDialog):
                 return
             reply = QMessageBox.question(self, "Actualización Disponible",
                 f"¡Nueva versión disponible!\nActual: {res.version_local}\nNueva: {res.version_nueva}\nArchivos a descargar: {len(res.actualizados)}\n\n¿Descargar e instalar ahora?",
-                QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 self.btn_check.setText("Descargando...")
                 self.btn_check.setEnabled(False)
                 self.repaint()

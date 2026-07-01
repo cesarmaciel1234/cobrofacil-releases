@@ -105,5 +105,15 @@ class Config:
         self.data[key] = value
         self.save()
 
+    @property
+    def current_role(self) -> str:
+        """Devuelve el rol del usuario activo (lee tanto 'role' como 'rol' de la BD).
+        
+        La BD guarda el campo como 'rol', pero algunas partes del código lo seteaban
+        como 'role'. Esta propiedad normaliza ambas variantes.
+        """
+        u = self.current_user or {}
+        return (u.get("role") or u.get("rol") or "cajero").lower()
+
 # Global config instance
 config = Config()

@@ -61,7 +61,8 @@ class GestorEscaladaF11(QObject):
         self._last_f11_ts = now
 
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        role = (config.current_user or {}).get("role", "cajero").lower()
+        _u = config.current_user or {}
+        role = config.current_role
 
         if role == "cajero":
             self.main_window._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
@@ -101,7 +102,7 @@ class GestorEscaladaF11(QObject):
                     self.main_window._supervisor_mode = True
                     self.main_window._escalando = True
                     self.main_window.apply_roles()
-                    self.main_window.switch_tab(0)  # IR A PANEL ADMIN
+                    # ELIMINADO: self.main_window.switch_tab(0) porque forcejeaba al Panel Admin. apply_roles ya rutea a Jefe.
                     self.btn_flotante.show()
                     self.btn_flotante.raise_()
                 finally:

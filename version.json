@@ -1,7 +1,7 @@
 {
-  "app_version": "5.4",
+  "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-01 02:13:27",
+  "build_date": "2026-07-01 20:04:11",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -304,6 +304,12 @@
       "channel": "stable",
       "size": 1954
     },
+    "scratch/fix_pins.py": {
+      "version": "1.0.0",
+      "checksum": "a0f292a887916e66c53ac8a899393944",
+      "channel": "stable",
+      "size": 837
+    },
     "scratch/insert_clients.py": {
       "version": "1.0.0",
       "checksum": "91b4a3e2ceac1d4951480c878e8434b4",
@@ -510,9 +516,9 @@
     },
     "src/config.py": {
       "version": "1.0.0",
-      "checksum": "8e242f710249bdd67371d80870be872e",
+      "checksum": "dbec0a6b203cf8df5e4b879e76d1f787",
       "channel": "stable",
-      "size": 4217
+      "size": 4636
     },
     "src/logger.py": {
       "version": "1.0.0",
@@ -522,9 +528,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "093b6dc83a0c3f240e731d12b480e8af",
+      "checksum": "ef215ab8efdeee23aca2ec9e55f04440",
       "channel": "stable",
-      "size": 38193
+      "size": 38156
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -570,9 +576,9 @@
     },
     "src/admin/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "d67c536f3f9e969c0ec7673f58b24792",
+      "checksum": "30c2bbb0ea586186143cb8ab29b7edbf",
       "channel": "stable",
-      "size": 6833
+      "size": 7496
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
@@ -594,9 +600,9 @@
     },
     "src/admin/admin5_configuracion.py": {
       "version": "1.0.0",
-      "checksum": "d8f8d8ada4b647b4370bdb74bbe3dc11",
+      "checksum": "7146a480ad7de3508f1abee35da3a0a8",
       "channel": "stable",
-      "size": 144645
+      "size": 145690
     },
     "src/admin/admin6_red_lan.py": {
       "version": "1.0.0",
@@ -1428,9 +1434,9 @@
     },
     "src/navegacion_f11/f11_escalation_manager.py": {
       "version": "1.0.0",
-      "checksum": "13bffa2a027cc9505c6a5dca9cf3eca8",
+      "checksum": "02a6a0ef6e1dcae0184cf8e7050fa72e",
       "channel": "stable",
-      "size": 7208
+      "size": 7266
     },
     "src/navigation/screen_indices.py": {
       "version": "1.0.0",
