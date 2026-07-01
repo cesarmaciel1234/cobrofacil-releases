@@ -1384,7 +1384,8 @@ QMainWindow, QDialog, Paso5Terminal[theme="light"], QFrame#Paso6Main[theme="ligh
 }
 
 
-QDialog > QFrame {
+QDialog > QFrame, QFrame#HistorialMain, QFrame#AdminMain, QFrame#InventarioMain, 
+QFrame#ReportesMain, QFrame#ConfigMain, QFrame#CierreMain {
     background-color: #FFFFFF;
     border: 4px solid #3B82F6 !important;
     border-radius: 16px;

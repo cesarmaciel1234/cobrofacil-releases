@@ -254,12 +254,14 @@ class Admin0Dashboard(QWidget):
             from src.config import config
             from src.ui_components.tema_estilos import aplicar_tema
             from PyQt6.QtWidgets import QApplication
+            from src.utils.theme_manager import theme_manager
             current = config.get("theme", "light")
             nuevo = "dark" if current == "light" else "light"
             config.set("theme", nuevo)
             
             qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
             aplicar_tema(QApplication.instance(), qss)
+            theme_manager.set_theme(nuevo)
             
             self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
         except Exception as e:
