@@ -394,7 +394,7 @@ class CarteleriaMain(QWidget):
                 except Exception as e:
                     logger.warning(f"Error cargando config.json: {e}")
                 
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio FROM productos WHERE es_sos = 1 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE es_sos = 1 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
                 oferta_sos = db.execute_query(sos_query)
                 if oferta_sos:
                     r_sos = oferta_sos[0]
@@ -404,12 +404,22 @@ class CarteleriaMain(QWidget):
                         ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
                         validas = [x for x in ofertas if x > 0]
                         precio_oferta = min(validas) if validas else 0.0
+                        
+                        cant_of = float(r_sos.get('cant_oferta') or 0)
+                        if cant_of > 0:
+                            nombre = f"{nombre} [Llevando {int(cant_of)} {r_sos.get('tipo_unidad_oferta', 'un')}]"
                     else:
                         nombre = r_sos[0] if r_sos[0] else ''
                         precio = float(r_sos[1] if r_sos[1] else 0.0)
                         ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
                         validas = [x for x in ofertas if x > 0]
                         precio_oferta = min(validas) if validas else 0.0
+                        
+                        cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
+                        if cant_of > 0:
+                            tipo_un = str(r_sos[6]) if len(r_sos) > 6 else 'un'
+                            nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                            
                     self.page_sos.actualizar(nombre, precio, precio_oferta)
                     self.hay_oferta_sos = True
                 else:
@@ -417,7 +427,7 @@ class CarteleriaMain(QWidget):
                     if self.stack.currentIndex() == 1:
                         self._fade_to_index(0)
                 
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio FROM productos WHERE precio > 0 ORDER BY categoria"
+                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY categoria"
                 rows_precios = db.execute_query(precios_query)
                 import hashlib
                 current_hash = hashlib.md5(str(rows_precios).encode()).hexdigest()
@@ -487,7 +497,7 @@ class CarteleriaMain(QWidget):
                                 unique[r[0]] = (r[0], float(r[1] or 0), p_of)
                         self.datos_destacados = list(unique.values())
                     else:
-                        destacados_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
+                        destacados_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
                         rows_destacados = db.execute_query(destacados_query)
                         self.datos_destacados = []
                         if rows_destacados:
@@ -496,12 +506,25 @@ class CarteleriaMain(QWidget):
                                     ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
                                     validas = [x for x in ofertas if x > 0]
                                     p_of = min(validas) if validas else 0.0
-                                    self.datos_destacados.append((r.get('nombre', ''), float(r.get('precio', 0)), p_of))
+                                    
+                                    nombre = r.get('nombre', '')
+                                    cant_of = float(r.get('cant_oferta') or 0)
+                                    if cant_of > 0:
+                                        nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
+                                        
+                                    self.datos_destacados.append((nombre, float(r.get('precio', 0)), p_of))
                                 else:
                                     ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (2, 3, 4)]
                                     validas = [x for x in ofertas if x > 0]
                                     p_of = min(validas) if validas else 0.0
-                                    self.datos_destacados.append((r[0], float(r[1] if r[1] else 0), p_of))
+                                    
+                                    nombre = str(r[0])
+                                    cant_of = float(r[5]) if len(r) > 5 else 0.0
+                                    if cant_of > 0:
+                                        tipo_un = str(r[6]) if len(r) > 6 else 'un'
+                                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                                        
+                                    self.datos_destacados.append((nombre, float(r[1] if r[1] else 0), p_of))
             else:
                 self._cargar_demo_completa()
                 
@@ -618,12 +641,25 @@ class CarteleriaMain(QWidget):
                     ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
                     validas = [x for x in ofertas if x > 0]
                     p_of = min(validas) if validas else 0.0
-                    parsed.append((r.get('nombre', ''), float(r.get('precio', 0)), p_of))
+                    
+                    nombre = r.get('nombre', '')
+                    cant_of = float(r.get('cant_oferta') or 0)
+                    if cant_of > 0:
+                        nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
+                        
+                    parsed.append((nombre, float(r.get('precio', 0)), p_of))
                 else:
                     ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (2, 3, 4)]
                     validas = [x for x in ofertas if x > 0]
                     p_of = min(validas) if validas else 0.0
-                    parsed.append((r[0], float(r[1] if r[1] else 0), p_of))
+                    
+                    nombre = str(r[0])
+                    cant_of = float(r[5]) if len(r) > 5 else 0.0
+                    if cant_of > 0:
+                        tipo_un = str(r[6]) if len(r) > 6 else 'un'
+                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                        
+                    parsed.append((nombre, float(r[1] if r[1] else 0), p_of))
             return parsed
 
         choice = random.randint(1, 4)
@@ -700,6 +736,10 @@ class CarteleriaMain(QWidget):
                 ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
                 validas = [x for x in ofertas if x > 0]
                 precio_oferta = min(validas) if validas else 0.0
+                
+                cant_of = float(r.get('cant_oferta') or 0)
+                if cant_of > 0:
+                    nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
             else:
                 cat = str(r[0])
                 nombre = str(r[1])
@@ -707,6 +747,11 @@ class CarteleriaMain(QWidget):
                 ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (3, 4, 5)]
                 validas = [x for x in ofertas if x > 0]
                 precio_oferta = min(validas) if validas else 0.0
+                
+                cant_of = float(r[6]) if len(r) > 6 else 0.0
+                if cant_of > 0:
+                    tipo_un = str(r[7]) if len(r) > 7 else 'un'
+                    nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
 
             if cat not in agrupados: agrupados[cat] = []
             agrupados[cat].append((nombre, precio, precio_oferta))
