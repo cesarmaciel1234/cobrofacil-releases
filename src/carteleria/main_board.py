@@ -242,6 +242,12 @@ class CarteleriaMain(QWidget):
         self.shortcut_f11 = QShortcut(QKeySequence(Qt.Key_F11), self)
         self.shortcut_f11.activated.connect(self._f11_pressed)
 
+        # F10 — Selector de monitor / toggle fullscreen
+        from PyQt6.QtGui import QShortcut, QKeySequence
+        self.shortcut_f10 = QShortcut(QKeySequence(Qt.Key_F10), self)
+        self.shortcut_f10.activated.connect(self._f10_pressed)
+        self._selector_monitor = None  # panel flotante
+
     def resizeEvent(self, event):
         self.bg_label.resize(self.size())
         super().resizeEvent(event)
@@ -888,4 +894,130 @@ class CarteleriaMain(QWidget):
                 self.showNormal()
             else:
                 self.close()
+
+    def _f10_pressed(self):
+        """F10: Si está en fullscreen → sale y muestra selector de monitor.
+           Si ya está en modo ventana → vuelve a fullscreen en el monitor actual."""
+        # Si el selector ya está visible, cerrarlo y volver a fullscreen
+        if self._selector_monitor and self._selector_monitor.isVisible():
+            self._selector_monitor.hide()
+            if self.isWindow():
+                self.showFullScreen()
+            return
+
+        if self.isWindow() and self.isFullScreen():
+            # Salir del fullscreen y mostrar el selector
+            self.showNormal()
+            self.resize(900, 600)
+            QTimer.singleShot(150, self._mostrar_selector_monitor)
+        elif self.isWindow() and not self.isFullScreen():
+            # Ya está en ventana → volver a fullscreen en monitor actual
+            self.showFullScreen()
+
+    def _mostrar_selector_monitor(self):
+        """Muestra un panel flotante encima de la ventana para elegir el monitor destino."""
+        from PyQt6.QtWidgets import QPushButton, QFrame, QHBoxLayout, QVBoxLayout
+        from PyQt6.QtGui import QFont
+        from PyQt6.QtCore import QTimer
+
+        app = QApplication.instance()
+        screens = app.screens()
+        n_screens = len(screens)
+
+        # Crear panel flotante si no existe o fue destruido
+        if self._selector_monitor is None or not self._selector_monitor.isVisible():
+            panel = QFrame(self)
+            panel.setObjectName("SelectorMonitor")
+            panel.setStyleSheet("""
+                QFrame#SelectorMonitor {
+                    background: rgba(15, 23, 42, 230);
+                    border: 2px solid #38BDF8;
+                    border-radius: 18px;
+                }
+                QPushButton {
+                    background: #1E3A5F;
+                    color: white;
+                    border: 1.5px solid #38BDF8;
+                    border-radius: 12px;
+                    padding: 14px 22px;
+                    font-size: 15px;
+                    font-weight: bold;
+                    min-width: 120px;
+                }
+                QPushButton:hover {
+                    background: #2563EB;
+                    border-color: #7DD3FC;
+                }
+                QPushButton:pressed {
+                    background: #1D4ED8;
+                }
+            """)
+            v = QVBoxLayout(panel)
+            v.setContentsMargins(20, 18, 20, 18)
+            v.setSpacing(12)
+
+            from PyQt6.QtWidgets import QLabel
+            titulo = QLabel(f"📺  Mover a monitor  (F10 = fullscreen aquí)")
+            titulo.setStyleSheet("color: #7DD3FC; font-size: 13px; font-weight: bold; border: none; background: transparent;")
+            titulo.setAlignment(Qt.AlignCenter)
+            v.addWidget(titulo)
+
+            fila = QHBoxLayout()
+            fila.setSpacing(12)
+            for idx, screen in enumerate(screens):
+                geo = screen.geometry()
+                label = f"🖥  Monitor {idx + 1}\n{geo.width()}×{geo.height()}"
+                btn = QPushButton(label)
+                btn.setCursor(Qt.PointingHandCursor)
+                # Highlight del monitor actual
+                if self.isWindow():
+                    win_center = self.frameGeometry().center()
+                    if screen.geometry().contains(win_center):
+                        btn.setStyleSheet(
+                            btn.styleSheet() +
+                            "background: #065F46; border-color: #34D399;"
+                        )
+                btn.clicked.connect(lambda checked, i=idx: self._mover_a_monitor(i))
+                fila.addWidget(btn)
+
+            v.addLayout(fila)
+
+            nota = QLabel("Presioná F10 de nuevo para volver a pantalla completa")
+            nota.setStyleSheet("color: #94A3B8; font-size: 11px; border: none; background: transparent;")
+            nota.setAlignment(Qt.AlignCenter)
+            v.addWidget(nota)
+
+            panel.adjustSize()
+            # Centrar sobre la ventana
+            pw, ph = panel.width(), panel.height()
+            sx = (self.width() - pw) // 2
+            sy = (self.height() - ph) // 2
+            panel.move(sx, sy)
+            panel.show()
+            panel.raise_()
+            self._selector_monitor = panel
+
+            # Auto-ocultar tras 8 segundos
+            self._timer_selector = QTimer(self)
+            self._timer_selector.setSingleShot(True)
+            self._timer_selector.timeout.connect(lambda: panel.hide() if panel.isVisible() else None)
+            self._timer_selector.start(8000)
+
+    def _mover_a_monitor(self, screen_index: int):
+        """Mueve la ventana de cartelería al monitor indicado en fullscreen."""
+        if self._selector_monitor:
+            self._selector_monitor.hide()
+
+        app = QApplication.instance()
+        screens = app.screens()
+        if screen_index >= len(screens):
+            screen_index = 0
+
+        target_screen = screens[screen_index]
+        geo = target_screen.geometry()
+
+        # Quitar fullscreen primero, mover, luego fullscreen
+        self.showNormal()
+        self.setGeometry(geo)
+        QTimer.singleShot(120, self.showFullScreen)
 
