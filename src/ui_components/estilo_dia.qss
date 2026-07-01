@@ -1458,15 +1458,15 @@ QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QDateEdi
    ========================================= */
 Paso5Terminal[theme="light"][estado="exito"],
 QFrame#TerminalDashboard[estado="exito"] {
-    background-color: #DCFCE7 !important; /* Verde suave */
-    border-color: #22C55E !important;
+    background-color: #22C55E !important; /* Verde fuerte que rompa la vista */
+    border-color: #16A34A !important;
 }
 
 
 Paso5Terminal[theme="light"][estado="alerta"],
 QFrame#TerminalDashboard[estado="alerta"] {
-    background-color: #FEE2E2 !important; /* Rojo suave */
-    border-color: #EF4444 !important;
+    background-color: #EF4444 !important; /* Rojo fuerte para alertas */
+    border-color: #DC2626 !important;
 }
 
 
