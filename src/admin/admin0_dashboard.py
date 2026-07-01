@@ -148,11 +148,6 @@ class Admin0Dashboard(QWidget):
         hero = QFrame()
         hero.setObjectName("AdminHero")
         hero.setFixedHeight(110)
-        sh_hero = QGraphicsDropShadowEffect()
-        sh_hero.setBlurRadius(24)
-        sh_hero.setOffset(0, 4)
-        sh_hero.setColor(QColor(59, 130, 246, 45))
-        hero.setGraphicsEffect(sh_hero)
 
         hero_lay = QHBoxLayout(hero)
         hero_lay.setContentsMargins(36, 0, 36, 0)
