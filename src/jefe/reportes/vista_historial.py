@@ -74,6 +74,7 @@ class VistaHistorial(QWidget):
     def apply_glow(self):
         container = self.findChild(QWidget, "HistoryDialog")
         if container:
+            pass
 
     def apply_theme(self):
         theme = config.get("theme", "light")
