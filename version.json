@@ -1,7 +1,7 @@
 {
   "app_version": "5.4",
   "channel": "stable",
-  "build_date": "2026-07-01 00:23:26",
+  "build_date": "2026-07-01 00:34:03",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -522,9 +522,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "4ffa93c3fc17ec82b5a5de98881ecd4e",
+      "checksum": "093b6dc83a0c3f240e731d12b480e8af",
       "channel": "stable",
-      "size": 38128
+      "size": 38193
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -861,12 +861,6 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/escalada_f11/f11_escalation_manager.py": {
-      "version": "1.0.0",
-      "checksum": "13bffa2a027cc9505c6a5dca9cf3eca8",
-      "channel": "stable",
-      "size": 7208
     },
     "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/teclado_virtual/virtual_keyboard_paso5.py": {
       "version": "1.0.0",
@@ -1425,6 +1419,12 @@
       "checksum": "7e7275554811ea5e9f9676dca264e87b",
       "channel": "stable",
       "size": 22251
+    },
+    "src/navegacion_f11/f11_escalation_manager.py": {
+      "version": "1.0.0",
+      "checksum": "13bffa2a027cc9505c6a5dca9cf3eca8",
+      "channel": "stable",
+      "size": 7208
     },
     "src/navigation/screen_indices.py": {
       "version": "1.0.0",

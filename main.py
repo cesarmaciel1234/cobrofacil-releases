@@ -249,9 +249,18 @@ def launch_app():
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                from src.config import config
-                config.current_user = {"role": "carteleria"}
-                step = 4
+                # Solicitar contraseña de administrador para enlazar de forma segura
+                login_dlg = LoginPantalla("admin")
+                if qt_exec(login_dlg):
+                    from src.config import config
+                    config.current_user = {"role": "carteleria"}
+                    login_dlg.hide()
+                    app.processEvents()
+                    step = 4
+                else:
+                    login_dlg.hide()
+                    app.processEvents()
+                    step = 1
                 continue
                 
             login_dlg = LoginPantalla(role_selected)
