@@ -559,10 +559,11 @@ Paso5Terminal[theme="dark"] QLabel#TotalGrande { background-color: #064E3B; bord
 Paso5Terminal[theme="dark"] QFrame#CajaResumen { background: #F8FAFC; border: 2px solid #64748B; border-bottom: 4px solid #475569; border-radius: 12px; }
 
 Paso5Terminal[theme="dark"] QLabel[tipo="titulo"] { color: #000000; font-weight: 800; font-size: 13px; border: none; background: transparent; }
+Paso5Terminal[theme="dark"] QLabel#TituloCambio { color: #DC2626; }
 
 Paso5Terminal[theme="dark"] QLabel[tipo="valor"] { color: #1D4ED8; font-weight: 900; font-size: 18px; border: none; background: transparent; }
 
-Paso5Terminal[theme="dark"] QLabel[tipo="valor"][resaltado="true"] { color: #DC2626; font-size: 20px; font-weight: 900; }
+Paso5Terminal[theme="dark"] QLabel[tipo="valor"][resaltado="true"] { color: #059669; font-size: 20px; font-weight: 900; }
 
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales { background-color: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
@@ -576,10 +577,11 @@ Paso5Terminal[theme="light"] QLabel#TotalGrande { background-color: #F0FDF4; bor
 Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
 
 Paso5Terminal[theme="light"] QLabel[tipo="titulo"] { color: #000000; font-weight: 800; font-size: 13px; border: none; background: transparent; }
+Paso5Terminal[theme="light"] QLabel#TituloCambio { color: #DC2626; }
 
 Paso5Terminal[theme="light"] QLabel[tipo="valor"] { color: #2563EB; font-weight: 900; font-size: 18px; border: none; background: transparent; }
 
-Paso5Terminal[theme="light"] QLabel[tipo="valor"][resaltado="true"] { color: #DC2626; font-size: 20px; font-weight: 900; }
+Paso5Terminal[theme="light"] QLabel[tipo="valor"][resaltado="true"] { color: #059669; font-size: 20px; font-weight: 900; }
 
 
 /* --- PASO 6: BOTONES DE ACCION (F1, F2, F3...) --- */

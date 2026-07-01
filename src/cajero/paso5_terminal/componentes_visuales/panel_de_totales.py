@@ -43,6 +43,7 @@ class PanelDeTotales(QFrame):
         self.titulo_ahorro, self.valor_ahorro = self._crear_fila(layout_resumen, "AHORRO")
         self.titulo_pagos, self.valor_pagos = self._crear_fila(layout_resumen, "PAGOS")
         self.titulo_cambio, self.valor_cambio = self._crear_fila(layout_resumen, "CAMBIO")
+        self.titulo_cambio.setObjectName("TituloCambio")
         
         # Ocultar iniciales
         for item in [self.titulo_ahorro, self.valor_ahorro]: item.hide()
