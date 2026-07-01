@@ -1,7 +1,7 @@
 {
   "app_version": "5.4",
   "channel": "stable",
-  "build_date": "2026-06-30 21:52:17",
+  "build_date": "2026-06-30 22:06:25",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -1032,9 +1032,9 @@
     },
     "src/cajero/paso8_historial/paso8_historial.py": {
       "version": "1.0.0",
-      "checksum": "1a44184e8a15071a6aa77eeb96611d27",
+      "checksum": "1b73430af89fa5d83267038eb14a734c",
       "channel": "stable",
-      "size": 13990
+      "size": 13860
     },
     "src/cajero/paso8_historial/__init__.py": {
       "version": "1.0.0",
