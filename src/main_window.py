@@ -523,10 +523,7 @@ class MainWindow(QMainWindow):
     def _connect_screen_signals(self, index: int, s):
         """Conecta las señales de navegación de un widget recién creado."""
         if hasattr(s, 'request_dashboard'):
-            if index == 9:
-                s.request_dashboard.connect(lambda: self.switch_tab(19))
-            else:
-                s.request_dashboard.connect(lambda: self.switch_tab(0))
+            s.request_dashboard.connect(self._handle_global_dashboard_return)
 
         if hasattr(s, 'request_screen'):
             s.request_screen.connect(self.switch_tab)
@@ -548,9 +545,16 @@ class MainWindow(QMainWindow):
                 pass
             s.request_logout.connect(self._logout_to_selector)
 
+    def _handle_global_dashboard_return(self):
+        from src.config import config
+        if config.current_user and config.current_user.get('role') == 'jefe':
+            self.switch_tab(19)
+        else:
+            self.switch_tab(0)
+
     def _init_shortcuts(self):
         # ── Pirámide de acceso F11 ───────────────────────────────────────
-        from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.escalada_f11.f11_escalation_manager import GestorEscaladaF11
+        from src.navegacion_f11.f11_escalation_manager import GestorEscaladaF11
         self.gestor_f11 = GestorEscaladaF11(self)
         self.btn_flotante = self.gestor_f11.btn_flotante
 
