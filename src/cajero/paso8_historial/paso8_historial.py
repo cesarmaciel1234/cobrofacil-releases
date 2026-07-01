@@ -76,6 +76,15 @@ class DialogoHistorialDia(QDialog):
         h_layout.addWidget(lbl_titulo)
         
         h_layout.addStretch()
+        
+        btn_close = QPushButton("Salir")
+        btn_close.setObjectName("BtnCloseHist")
+        btn_close.setFixedWidth(120)
+        btn_close.setFixedHeight(40)
+        btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_close.clicked.connect(self.accept)
+        h_layout.addWidget(btn_close)
+        
         main_vbox.addWidget(header)
 
         # 2. CONTENT AREA
@@ -182,18 +191,6 @@ class DialogoHistorialDia(QDialog):
         content_hbox.addWidget(self.panel_detalle, 55)
         main_vbox.addLayout(content_hbox)
 
-        # 3. FINAL BOTTOM BAR
-        footer = QFrame()
-        footer.setFixedHeight(80)
-        f_layout = QHBoxLayout(footer)
-        f_layout.setContentsMargins(30, 0, 30, 0)
-        btn_close = QPushButton("Salir")
-        btn_close.setObjectName("BtnCloseHist")
-        btn_close.setFixedWidth(250)
-        btn_close.clicked.connect(self.accept)
-        f_layout.addWidget(btn_close)
-        f_layout.addStretch()
-        main_vbox.addWidget(footer)
 
     def cargar_ventas(self):
         txt = self.txt_search.text().lower().strip()
