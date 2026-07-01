@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - backup-pre-v4.8-restore
+      - feature/carteleria-remote-pairing
   workflow_dispatch:   # Permite lanzar el build desde GitHub → Actions → Run workflow
 
 permissions:
