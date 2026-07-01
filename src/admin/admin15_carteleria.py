@@ -44,7 +44,7 @@ class Admin15Carteleria(QWidget):
         h.setContentsMargins(24, 16, 24, 16)
 
         btn_back = QPushButton("← Dashboard")
-        btn_back.setCursor(QCursor(Qt.PointingHandCursor))
+        btn_back.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_back.clicked.connect(self.request_dashboard.emit)
         h.addWidget(btn_back)
 

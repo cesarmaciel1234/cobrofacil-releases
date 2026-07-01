@@ -1,7 +1,7 @@
 {
   "app_version": "5.4",
   "channel": "stable",
-  "build_date": "2026-07-01 01:17:56",
+  "build_date": "2026-07-01 02:13:27",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -42,9 +42,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "f093bb0d6b9b8f68c63385eda6f314d1",
+      "checksum": "8f009c919c65130b714d544d12a099e5",
       "channel": "stable",
-      "size": 18491
+      "size": 18563
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -570,9 +570,9 @@
     },
     "src/admin/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "cd7ae27b67b5f5e6ff6c58481908466b",
+      "checksum": "d67c536f3f9e969c0ec7673f58b24792",
       "channel": "stable",
-      "size": 3365
+      "size": 6833
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
@@ -1071,6 +1071,12 @@
       "checksum": "5cd1c4e171bcfd6c4d4c6ff6e164dcb8",
       "channel": "stable",
       "size": 556
+    },
+    "src/carteleria/dialogo_espera_auth.py": {
+      "version": "1.0.0",
+      "checksum": "ab9e3f27dd5391a0314f0cb96c579034",
+      "channel": "stable",
+      "size": 2713
     },
     "src/carteleria/gemini_worker.py": {
       "version": "1.0.0",
