@@ -26,7 +26,8 @@ from src.config import config
 from src.cajero.paso5_terminal.dialogos.dialogo_atencion import DialogoAtencion
 from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad
 from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
-from src.cajero.paso5_terminal.dialogos.dialogos_caja import DialogoRetiroEfectivo, DialogoIngresoEfectivo
+from src.cajero.paso5_terminal.ventanas_emergentes.sacar_efectivo import DialogoRetiroEfectivo
+from src.cajero.paso5_terminal.ventanas_emergentes.ingreso_dinero import DialogoIngresoEfectivo
 from src.cajero.paso5_terminal.dialogos.dialogo_candado import DialogoCandado
 from src.cajero.paso5_terminal.logica.terminal_controller import TerminalController
 from src.hardware.printer import printer_manager
