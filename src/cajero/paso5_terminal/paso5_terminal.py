@@ -23,7 +23,6 @@ except ImportError:
 from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
-from src.cajero.paso5_terminal.dialogos.dialogo_atencion import DialogoAtencion
 from src.cajero.paso5_terminal.componentes_visuales.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
 from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad
 from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
