@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 02:04:19",
+  "build_date": "2026-07-02 02:13:11",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -876,9 +876,9 @@
     },
     "src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/mensaje_eliminacion.py": {
       "version": "1.0.0",
-      "checksum": "8b7407dc77f107a79b5b75c2d42ccbcf",
+      "checksum": "4222990a0c039493a07f2348dd5b3b49",
       "channel": "stable",
-      "size": 3348
+      "size": 3468
     },
     "src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/suprimir_articulo.py": {
       "version": "1.0.0",
@@ -972,9 +972,9 @@
     },
     "src/cajero/paso6_cobro/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
-      "checksum": "5592d7158d850364b7a1fbdb78bf0124",
+      "checksum": "672d1f6bb4c6fb522be246b30fa0ab8a",
       "channel": "stable",
-      "size": 7517
+      "size": 7505
     },
     "src/cajero/paso6_cobro/widgets/panel_cliente_fiado.py": {
       "version": "1.0.0",

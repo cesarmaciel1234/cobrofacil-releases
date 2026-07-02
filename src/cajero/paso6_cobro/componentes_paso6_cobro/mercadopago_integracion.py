@@ -37,8 +37,7 @@ class MercadoPagoIntegracion:
             self.parent.set_metodo("Tarjeta")
             
         if self.parent.current_metodo == "Mixto":
-            if hasattr(self.parent, 'widget_mixto'):
-                self.parent.valores_mixtos = self.parent.widget_mixto.get_valores()
+            if getattr(self.parent, 'valores_mixtos', None):
                 monto = self.parent.valores_mixtos.get("tarjeta", 0.0)
             else:
                 monto = 0.0
@@ -409,8 +408,8 @@ class MercadoPagoIntegracion:
         except:
             monto = self.parent.total_final
             
-        if self.parent.current_metodo == "Mixto" and hasattr(self.parent, 'widget_mixto'):
-            monto = self.parent.widget_mixto.get_valores().get("mercadopago", 0.0)
+        if self.parent.current_metodo == "Mixto" and getattr(self.parent, 'valores_mixtos', None):
+            monto = self.parent.valores_mixtos.get("mercadopago", 0.0)
             
         if monto <= 0:
             msg = "El monto a verificar es cero. Asegúrese de haber ingresado un monto válido en Transf./QR."
