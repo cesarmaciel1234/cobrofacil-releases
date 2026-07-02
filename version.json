@@ -1,7 +1,7 @@
 {
   "app_version": "5.8",
   "channel": "stable",
-  "build_date": "2026-07-02 16:07:19",
+  "build_date": "2026-07-02 18:12:13",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -136,7 +136,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00f1a.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",
@@ -568,12 +568,6 @@
       "channel": "stable",
       "size": 66635
     },
-    "src/admin/admin3_reportes.py": {
-      "version": "1.0.0",
-      "checksum": "1379a7756d402863396e834d669f0c21",
-      "channel": "stable",
-      "size": 127766
-    },
     "src/admin/admin5_configuracion.py": {
       "version": "1.0.0",
       "checksum": "7146a480ad7de3508f1abee35da3a0a8",
@@ -606,9 +600,9 @@
     },
     "src/admin/admin_etiquetas.py": {
       "version": "1.0.0",
-      "checksum": "280c3a1fa0f353cd23593b4d9e61288f",
+      "checksum": "631b5cd6e07773b1dac1c08ce8fa1136",
       "channel": "stable",
-      "size": 853
+      "size": 23738
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
@@ -628,6 +622,12 @@
       "channel": "stable",
       "size": 78
     },
+    "src/admin/admin_etiquetas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "bd4d4c131b753e3a4789e51923b99321",
+      "channel": "stable",
+      "size": 35
+    },
     "src/admin/componentes_visuales/admin_card.py": {
       "version": "1.0.0",
       "checksum": "eacf33ad3d6fce1be34fa7586edc04ef",
@@ -639,18 +639,6 @@
       "checksum": "d51748ccadfffa4827e8f06c190ed9e3",
       "channel": "stable",
       "size": 46
-    },
-    "src/admin/etiquetas/admin_etiquetas.py": {
-      "version": "1.0.0",
-      "checksum": "631b5cd6e07773b1dac1c08ce8fa1136",
-      "channel": "stable",
-      "size": 23738
-    },
-    "src/admin/etiquetas/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "bd4d4c131b753e3a4789e51923b99321",
-      "channel": "stable",
-      "size": 35
     },
     "src/admin/nexus/nexus_panel_cen.py": {
       "version": "1.0.0",
@@ -1791,18 +1779,6 @@
       "checksum": "3a83ccaf5bb0e582685dad212fb44128",
       "channel": "stable",
       "size": 17
-    },
-    "src/vistas/proveedores.py": {
-      "version": "1.0.0",
-      "checksum": "c0cbbb012bf86e4e76c8bd787d946f38",
-      "channel": "stable",
-      "size": 192
-    },
-    "src/vistas/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "c0cbbb012bf86e4e76c8bd787d946f38",
-      "channel": "stable",
-      "size": 192
     },
     "tests/tests_features.py": {
       "version": "1.0.0",
