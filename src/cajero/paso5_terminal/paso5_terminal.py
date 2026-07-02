@@ -24,6 +24,7 @@ from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
 from src.cajero.paso5_terminal.dialogos.dialogo_atencion import DialogoAtencion
+from src.cajero.paso5_terminal.componentes_visuales.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
 from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad
 from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
 from src.cajero.sacar_efectivo import DialogoRetiroEfectivo
@@ -880,12 +881,7 @@ class Paso5Terminal(QWidget):
                     return True # Consumido incondicionalmente
                 elif event.key() == Qt.Key_Delete:
                     row = self.tabla.currentRow()
-                    if row != -1:
-                        dlg = DialogoAtencion(self)
-                        if qt_exec(dlg):
-                            self.tabla.removeRow(row)
-                            self.actualizar_totales()
-                        QTimer.singleShot(50, self.txt_scan.setFocus)
+                    suprimir_articulo(self, row)
                     return True
 
         elif obj is self.tabla.viewport():
@@ -1766,12 +1762,8 @@ class Paso5Terminal(QWidget):
                     return # intercepted
                     
                 elif event.key() == Qt.Key_Delete:
-                    dlg = DialogoAtencion(self)
-                    if qt_exec(dlg):
-                        self.tabla.removeRow(row)
-                        self.actualizar_totales()
-                    QTimer.singleShot(50, self.txt_scan.setFocus)
-                    return
+                    suprimir_articulo(self, row)
+                    return True
                     
                 elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                     nombre = self.tabla.item(row, 1).text()

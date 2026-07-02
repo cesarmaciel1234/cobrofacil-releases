@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 01:23:30",
+  "build_date": "2026-07-02 01:37:49",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -708,9 +708,9 @@
     },
     "src/cajero/ingresar_efectivo/dialogo_ingreso.py": {
       "version": "1.0.0",
-      "checksum": "47a01c7e537c0f4eef8373db6529c5b4",
+      "checksum": "a1913336044a59e7e80f2d611e57545f",
       "channel": "stable",
-      "size": 9362
+      "size": 9405
     },
     "src/cajero/ingresar_efectivo/fiado.py": {
       "version": "1.0.0",
@@ -912,9 +912,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "122306e83c82355c133ba8089ef50090",
+      "checksum": "72203ce870ec8883908b5bdfff1b678d",
       "channel": "stable",
-      "size": 44015
+      "size": 44012
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -978,9 +978,9 @@
     },
     "src/cajero/paso7_cierre/paso7_cierre.py": {
       "version": "1.0.0",
-      "checksum": "7ad6e37ebf0a90a8f7b96bfcd8621aa0",
+      "checksum": "af86eae2d3c057d3173ef719f513d662",
       "channel": "stable",
-      "size": 8702
+      "size": 8850
     },
     "src/cajero/paso7_cierre/__init__.py": {
       "version": "1.0.0",
@@ -1014,9 +1014,9 @@
     },
     "src/cajero/paso7_cierre/logica/cierre_controller.py": {
       "version": "1.0.0",
-      "checksum": "3071b4c5d3f2493a1a4a75293712e5f3",
+      "checksum": "735c8200a96f0d322a51d4f22cc82529",
       "channel": "stable",
-      "size": 5979
+      "size": 6143
     },
     "src/cajero/paso7_cierre/logica/__init__.py": {
       "version": "1.0.0",
@@ -1038,9 +1038,9 @@
     },
     "src/cajero/paso8_historial/componentes_paso8_historial/panel_detalle.py": {
       "version": "1.0.0",
-      "checksum": "029a9386b5cbdc5cd73af48c1244ee23",
+      "checksum": "88183ac53c2aec2ceccd4fd7d511ee13",
       "channel": "stable",
-      "size": 8912
+      "size": 8911
     },
     "src/cajero/paso8_historial/componentes_paso8_historial/stamp_label.py": {
       "version": "1.0.0",
@@ -1224,7 +1224,7 @@
     },
     "src/hardware/printer.py": {
       "version": "1.0.0",
-      "checksum": "e9655d688dc50295e8e89925dbd37786",
+      "checksum": "08c928a6e65d28828ad2314419b7ed0a",
       "channel": "stable",
       "size": 36506
     },
