@@ -198,6 +198,7 @@ class CentroCobranzasPanel(QWidget):
 
         self.txt_monto = QLineEdit()
         self.txt_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.txt_monto.setMinimumHeight(70)
         self.txt_monto.setStyleSheet(f"""
             QLineEdit {{
                 font-size: 34px; font-weight: 900; color: {_EXEC['accent']};
