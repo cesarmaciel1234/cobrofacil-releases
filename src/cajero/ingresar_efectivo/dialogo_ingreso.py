@@ -21,7 +21,7 @@ class DialogoIngresoEfectivo(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        from src.cajero.paso5_terminal.paso5cobranza import (
+        from src.cajero.ingresar_efectivo.paso5cobranza import (
             COBRANZA_DIALOG_ANCHO, COBRANZA_DIALOG_ALTO_FIADO, COBRANZA_DIALOG_ALTO_NORMAL,
             _EXEC,
         )
@@ -113,7 +113,7 @@ class DialogoIngresoEfectivo(QDialog):
         self.stack.addWidget(panel_normal)
 
         # Panel Centro de Cobranzas (F6 → FIADO)
-        from src.cajero.paso5_terminal.paso5cobranza import CentroCobranzasPanel
+        from src.cajero.ingresar_efectivo.paso5cobranza import CentroCobranzasPanel
 
         panel_fiado = QWidget()
         pf_lay = QVBoxLayout(panel_fiado)
