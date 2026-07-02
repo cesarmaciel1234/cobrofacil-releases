@@ -10,35 +10,73 @@ class DialogoAtencion(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setFixedSize(500, 300)
-        self.setStyleSheet("background-color: #008080; border: 3px solid #888;")
-        
-        layout = QVBoxLayout(self)
-        
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(460, 260)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+
+        card = QFrame()
+        card.setObjectName("DialogoAtencionCard")
+        card.setStyleSheet("""
+            QFrame#DialogoAtencionCard {
+                background: #FFFFFF;
+                border: 3px solid #1E3A8A;
+                border-radius: 18px;
+            }
+        """)
+        outer.addWidget(card)
+
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(28, 22, 28, 22)
+        layout.setSpacing(14)
+
         # Header
-        header = QLabel("Mensaje de Atención")
-        header.setStyleSheet("color: red; font-size: 28px; font-weight: bold; border: none;")
+        header = QLabel("⚠️  Confirmar Eliminación")
+        header.setStyleSheet(
+            "font-size: 20px; font-weight: 900; color: #1E3A8A; "
+            "border: none; background: transparent; letter-spacing: 0.5px;"
+        )
         header.setAlignment(Qt.AlignCenter)
         layout.addWidget(header)
-        
+
         # Body
-        body = QLabel("Cancelar\n¿Desea eliminar el artículo?")
-        body.setStyleSheet("color: white; font-size: 22px; font-weight: bold; border: none;")
+        body = QLabel("¿Desea eliminar el artículo del carrito?")
+        body.setStyleSheet(
+            "font-size: 15px; color: #475569; font-weight: 600; "
+            "border: none; background: transparent;"
+        )
         body.setAlignment(Qt.AlignCenter)
+        body.setWordWrap(True)
         layout.addWidget(body)
-        
+
         layout.addStretch()
-        
-        # Footer
-        footer = QHBoxLayout()
-        lbl_ent = QLabel("ENT-Continuar")
-        lbl_ent.setStyleSheet("color: white; font-size: 20px; font-weight: bold; border: none;")
-        lbl_esc = QLabel("ESC-NO")
-        lbl_esc.setStyleSheet("color: white; font-size: 20px; font-weight: bold; border: none; background-color: #666; padding: 5px;")
-        footer.addWidget(lbl_ent)
-        footer.addStretch()
-        footer.addWidget(lbl_esc)
-        layout.addLayout(footer)
+
+        # Buttons
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(14)
+
+        btn_cancel = QPushButton("  ESC  Cancelar")
+        btn_cancel.setCursor(Qt.PointingHandCursor)
+        btn_cancel.setStyleSheet(
+            "QPushButton { background: #2563EB; color: white; font-weight: bold; "
+            "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
+            "QPushButton:hover { background: #1D4ED8; }"
+        )
+        btn_cancel.clicked.connect(self.reject)
+
+        btn_delete = QPushButton("🗑  Eliminar")
+        btn_delete.setCursor(Qt.PointingHandCursor)
+        btn_delete.setStyleSheet(
+            "QPushButton { background: #DC2626; color: white; font-weight: bold; "
+            "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
+            "QPushButton:hover { background: #B91C1C; }"
+        )
+        btn_delete.clicked.connect(self.accept)
+
+        btn_row.addWidget(btn_cancel, 1)
+        btn_row.addWidget(btn_delete, 1)
+        layout.addLayout(btn_row)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
@@ -47,6 +85,7 @@ class DialogoAtencion(QDialog):
             self.reject()
         else:
             super().keyPressEvent(event)
+
 
 class DialogoEditarCantidad(QDialog):
     def __init__(self, cant_actual, nombre, parent=None):
