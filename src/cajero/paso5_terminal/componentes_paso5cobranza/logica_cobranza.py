@@ -106,6 +106,9 @@ def buscar_deudores(consulta: str) -> list:
 
     base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"
     rows = db_manager.execute_query(base, tuple(params)) or []
+    result = []
     for r in rows:
-        r["_parse"] = p
-    return rows
+        row_dict = dict(r)
+        row_dict["_parse"] = p
+        result.append(row_dict)
+    return result
