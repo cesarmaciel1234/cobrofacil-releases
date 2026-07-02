@@ -79,21 +79,67 @@ class Admin15Carteleria(QWidget):
         
         # Panel de Emparejamiento
         pairing_frame = QFrame()
-        pairing_frame.setStyleSheet("background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;")
+        pairing_frame.setStyleSheet("background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: 8px;")
         p_layout = QVBoxLayout(pairing_frame)
-        p_layout.addWidget(QLabel("📡 TVs esperando autorización en la red:"))
-        
+        p_layout.setSpacing(10)
+
+        # IP de esta caja
+        ip_row = QHBoxLayout()
+        lbl_miip = QLabel("📡 IP de esta Caja:")
+        lbl_miip.setStyleSheet("font-weight: bold; color: #0369A1; border: none;")
+        self.lbl_local_ip = QLabel(self._get_local_ip())
+        self.lbl_local_ip.setStyleSheet(
+            "background: #0369A1; color: white; font-weight: bold; "
+            "padding: 4px 12px; border-radius: 6px; font-size: 14px; border: none;"
+        )
+        ip_row.addWidget(lbl_miip)
+        ip_row.addWidget(self.lbl_local_ip)
+        ip_row.addStretch()
+        p_layout.addLayout(ip_row)
+
+        p_layout.addWidget(QLabel("📺 TVs detectadas en la red (esperando autorización):"))
+
         self.list_tvs = QListWidget()
         self.list_tvs.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px;")
-        self.list_tvs.setMinimumHeight(100)
+        self.list_tvs.setMinimumHeight(80)
         p_layout.addWidget(self.list_tvs)
-        
+
         btn_auth = QPushButton("🔑 Autorizar TV Seleccionada")
         btn_auth.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_auth.setStyleSheet("background: #2563EB; color: white; font-weight: bold; padding: 10px; border-radius: 6px;")
+        btn_auth.setStyleSheet("background: #2563EB; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none;")
         btn_auth.clicked.connect(self._authorize_tv)
         p_layout.addWidget(btn_auth)
-        
+
+        # Separador
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet("color: #BAE6FD;")
+        p_layout.addWidget(sep)
+
+        # Autorización manual por IP (para VirtualBox / redes con NAT)
+        lbl_manual = QLabel("Si la TV no aparece (ej: VirtualBox / NAT), ingresá su IP:")
+        lbl_manual.setStyleSheet("color: #0369A1; font-size: 12px; border: none;")
+        lbl_manual.setWordWrap(True)
+        p_layout.addWidget(lbl_manual)
+
+        manual_row = QHBoxLayout()
+        self.txt_ip_manual = QLineEdit()
+        self.txt_ip_manual.setPlaceholderText("IP de la TV  (ej: 192.168.0.7)")
+        self.txt_ip_manual.setStyleSheet(
+            "border: 1px solid #BAE6FD; border-radius: 6px; padding: 6px 10px; font-size: 13px;"
+        )
+        self.txt_ip_manual.returnPressed.connect(self._authorize_tv_manual)
+        btn_auth_manual = QPushButton("📡 Autorizar por IP")
+        btn_auth_manual.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_auth_manual.setStyleSheet(
+            "background: #0369A1; color: white; font-weight: bold; "
+            "padding: 8px 14px; border-radius: 6px; border: none; font-size: 12px;"
+        )
+        btn_auth_manual.clicked.connect(self._authorize_tv_manual)
+        manual_row.addWidget(self.txt_ip_manual, 1)
+        manual_row.addWidget(btn_auth_manual)
+        p_layout.addLayout(manual_row)
+
         body.addWidget(pairing_frame)
         body.addStretch()
 
@@ -185,3 +231,67 @@ class Admin15Carteleria(QWidget):
                     QMessageBox.warning(self, "Error", "No se encontró ningún usuario administrador.")
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Error validando PIN: {e}")
+
+    def _authorize_tv_manual(self):
+        """Envía la autorización directamente a la IP ingresada manualmente."""
+        ip_tv = self.txt_ip_manual.text().strip()
+        if not ip_tv:
+            QMessageBox.warning(self, "Atención", "Ingresá la IP de la TV cartelería.")
+            return
+
+        pin, ok = QInputDialog.getText(
+            self, "Autorizar por IP",
+            f"Autorizando {ip_tv}\nIngresá el PIN Operativo del Administrador:",
+            QLineEdit.EchoMode.Password
+        )
+        if not ok or not pin:
+            return
+
+        import hashlib
+        from src.base_de_datos.database import db_manager
+        try:
+            res = db_manager.execute_query("SELECT pin FROM usuarios WHERE rol = 'admin'")
+            if not res:
+                QMessageBox.warning(self, "Error", "No se encontró usuario administrador.")
+                return
+
+            pin_en_db = res[0][0] or ""
+            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
+            if pin_hash != pin_en_db and pin != pin_en_db:
+                QMessageBox.warning(self, "Error", "PIN incorrecto.")
+                return
+
+            # Enviar GRANT directo por UDP unicast a la IP de la TV
+            from src.network.network_engine import NEXUS_UDP_PORT
+            import socket, json, time
+
+            payload = json.dumps({
+                "origen": self.engine._origen if self.engine else "caja|admin|caja1",
+                "tipo": "CARTELERIA_AUTH_GRANT",
+                "datos": {
+                    "target_ip": ip_tv,
+                    "db_host": self._get_local_ip()
+                },
+                "ts": time.time(),
+            }, ensure_ascii=False).encode("utf-8")
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.settimeout(1.0)
+            # Enviar unicast + broadcast
+            sock.sendto(payload, (ip_tv, NEXUS_UDP_PORT))
+            sock.sendto(payload, ("255.255.255.255", NEXUS_UDP_PORT))
+            sock.close()
+
+            # También emitir por el engine interno (si el proceso es el mismo)
+            if self.engine:
+                self.engine.broadcast("CARTELERIA_AUTH_GRANT", {
+                    "target_ip": ip_tv,
+                    "db_host": self._get_local_ip()
+                })
+
+            QMessageBox.information(self, "Enviado", f"✅ Autorización enviada a {ip_tv}.\nLa TV debería conectarse en segundos.")
+            self.txt_ip_manual.clear()
+
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"No se pudo enviar: {e}")
