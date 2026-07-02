@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-01 20:44:35",
+  "build_date": "2026-07-02 01:02:05",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -166,12 +166,6 @@
       "channel": "stable",
       "size": 990
     },
-    "04_Respaldos_y_Migraciones/importar_eleventa.py": {
-      "version": "1.0.0",
-      "checksum": "12c46726daae3dccde690e31ddc014d3",
-      "channel": "stable",
-      "size": 16887
-    },
     "04_Respaldos_y_Migraciones/init_db.py": {
       "version": "1.0.0",
       "checksum": "4f026c89dceedbe5b700299d9f4d43c3",
@@ -255,12 +249,6 @@
       "checksum": "5431a458f14eb136e378849d36cc19b8",
       "channel": "stable",
       "size": 2211
-    },
-    "scratch/diagnose_eleventa.py": {
-      "version": "1.0.0",
-      "checksum": "298883347d5776a87c8de14f9e0c78de",
-      "channel": "stable",
-      "size": 1706
     },
     "scratch/diagnose_printers.py": {
       "version": "1.0.0",
@@ -496,23 +484,11 @@
       "channel": "stable",
       "size": 631
     },
-    "scratch/update_imports.py": {
-      "version": "1.0.0",
-      "checksum": "996687c35f5be173ac5ce8ed27cfd244",
-      "channel": "stable",
-      "size": 3025
-    },
     "scratch/view_git_diff.py": {
       "version": "1.0.0",
       "checksum": "b3e7b2ed77d8a04ab10fc499765668b7",
       "channel": "stable",
       "size": 307
-    },
-    "scratch/zip_catorta.py": {
-      "version": "1.0.0",
-      "checksum": "87dc5f21c81f1be83ed4806274b3287a",
-      "channel": "stable",
-      "size": 2028
     },
     "src/config.py": {
       "version": "1.0.0",
@@ -576,9 +552,9 @@
     },
     "src/admin/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "30c2bbb0ea586186143cb8ab29b7edbf",
+      "checksum": "6034f4f3a481aaceba4434c078b0c6c2",
       "channel": "stable",
-      "size": 7496
+      "size": 12299
     },
     "src/admin/admin1_inventario.py": {
       "version": "1.0.0",
@@ -606,9 +582,9 @@
     },
     "src/admin/admin6_red_lan.py": {
       "version": "1.0.0",
-      "checksum": "e88254b60a05b36a94b37c6195e3e87f",
+      "checksum": "f6f9dc1ab644e110cce12ba91c4b17c7",
       "channel": "stable",
-      "size": 5448
+      "size": 19099
     },
     "src/admin/admin7_cierre.py": {
       "version": "1.0.0",
@@ -730,41 +706,53 @@
       "channel": "stable",
       "size": 78
     },
+    "src/cajero/ingresar_efectivo/dialogo_ingreso.py": {
+      "version": "1.0.0",
+      "checksum": "7cf2d22fa5f11a4bedf2ab7f87746774",
+      "channel": "stable",
+      "size": 10100
+    },
+    "src/cajero/ingresar_efectivo/paso5cobranza.py": {
+      "version": "1.0.0",
+      "checksum": "59164ac1d0668bd97d93175add309a16",
+      "channel": "stable",
+      "size": 15249
+    },
+    "src/cajero/ingresar_efectivo/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "af833ef39735d392c0d0e3c789178c3f",
+      "channel": "stable",
+      "size": 161
+    },
+    "src/cajero/ingresar_efectivo/componentes_paso5cobranza/logica_cobranza.py": {
+      "version": "1.0.0",
+      "checksum": "7ba8e41b0b6a1b460dd1a97813735e6c",
+      "channel": "stable",
+      "size": 4275
+    },
+    "src/cajero/ingresar_efectivo/componentes_paso5cobranza/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f69749e6a60f247d99e0fd34a19aeb67",
+      "channel": "stable",
+      "size": 56
+    },
     "src/cajero/paso5_terminal/carlis_list.py": {
       "version": "1.0.0",
       "checksum": "d1fbb7eabd8d1586f39029b9d1a98934",
       "channel": "stable",
       "size": 4889
     },
-    "src/cajero/paso5_terminal/paso5cobranza.py": {
-      "version": "1.0.0",
-      "checksum": "c995b2181e71aa82e213215c59b4d9fc",
-      "channel": "stable",
-      "size": 12421
-    },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "ffc387e8b939882ececaf3340af90788",
+      "checksum": "92955bd574d8f91ff695fca26bb95553",
       "channel": "stable",
-      "size": 103172
+      "size": 103311
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
       "checksum": "308043239aced672991013e744af1623",
       "channel": "stable",
       "size": 43
-    },
-    "src/cajero/paso5_terminal/componentes_paso5cobranza/logica_cobranza.py": {
-      "version": "1.0.0",
-      "checksum": "0b2e17091427c85627c4f95e007d244f",
-      "channel": "stable",
-      "size": 3942
-    },
-    "src/cajero/paso5_terminal/componentes_paso5cobranza/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "f69749e6a60f247d99e0fd34a19aeb67",
-      "channel": "stable",
-      "size": 56
     },
     "src/cajero/paso5_terminal/componentes_visuales/barra_de_herramientas_inferior.py": {
       "version": "1.0.0",
@@ -874,17 +862,11 @@
       "channel": "stable",
       "size": 13962
     },
-    "src/cajero/paso5_terminal/dialogos/dialogos_caja.py": {
-      "version": "1.0.0",
-      "checksum": "a2370a3ad4de17a249b7048c8f76b183",
-      "channel": "stable",
-      "size": 11171
-    },
     "src/cajero/paso5_terminal/dialogos/dialogo_atencion.py": {
       "version": "1.0.0",
-      "checksum": "d1f5101568e64ecd3350e3c4f64bbae8",
+      "checksum": "586e1bf89c74a3e6471200e6d271aee7",
       "channel": "stable",
-      "size": 1618
+      "size": 3271
     },
     "src/cajero/paso5_terminal/dialogos/dialogo_candado.py": {
       "version": "1.0.0",
@@ -912,15 +894,15 @@
     },
     "src/cajero/paso5_terminal/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
-      "checksum": "1b1ab02f24c36f818f296ccd10512463",
+      "checksum": "9b8311ba6322818d2dbae852c17a31bb",
       "channel": "stable",
-      "size": 29178
+      "size": 16925
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "9c67d7ff70570979f8a3142d7f79984c",
+      "checksum": "122306e83c82355c133ba8089ef50090",
       "channel": "stable",
-      "size": 41499
+      "size": 44015
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -1066,6 +1048,18 @@
       "channel": "stable",
       "size": 5360
     },
+    "src/cajero/sacar_efectivo/dialogo_retiro.py": {
+      "version": "1.0.0",
+      "checksum": "acfe202fefc837cc58079abbb7ce7bff",
+      "channel": "stable",
+      "size": 5642
+    },
+    "src/cajero/sacar_efectivo/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "52c66777db885c2ce494d2c85e1548e9",
+      "channel": "stable",
+      "size": 154
+    },
     "src/carteleria/banderin.py": {
       "version": "1.0.0",
       "checksum": "6ea284e004d1199a75a4f4f20dcb9f1c",
@@ -1080,9 +1074,9 @@
     },
     "src/carteleria/dialogo_espera_auth.py": {
       "version": "1.0.0",
-      "checksum": "ab9e3f27dd5391a0314f0cb96c579034",
+      "checksum": "6cace64606893172d7d877091836a2e2",
       "channel": "stable",
-      "size": 2713
+      "size": 9279
     },
     "src/carteleria/gemini_worker.py": {
       "version": "1.0.0",
@@ -1104,9 +1098,9 @@
     },
     "src/carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "db24974ed3dec9a298155b3a655a1bf0",
+      "checksum": "3c607a4bc1d1b86c38d940bdc2f5f474",
       "channel": "stable",
-      "size": 44426
+      "size": 50063
     },
     "src/carteleria/mensaje.py": {
       "version": "1.0.0",
@@ -1218,9 +1212,9 @@
     },
     "src/hardware/printer.py": {
       "version": "1.0.0",
-      "checksum": "8be68fa4b76396cc9a09966dc8a2f833",
+      "checksum": "e9655d688dc50295e8e89925dbd37786",
       "channel": "stable",
-      "size": 35063
+      "size": 36506
     },
     "src/inicio_y_perfiles/apertura_pantalla.py": {
       "version": "1.0.0",

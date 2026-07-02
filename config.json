@@ -1,5 +1,5 @@
 {
-    "caja_id": 1,
+    "caja_id": 5,
     "business_name": "MACIEL CARNICERIA",
     "currency_symbol": "$",
     "currency_code": "ARS",
@@ -22,7 +22,7 @@
     "update_server_ip": "",
     "update_auth_token": "1234",
     "shared_folder_name": "tpv pro 2026",
-    "local_pin": "1234",
+    "local_pin": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "machine_hostname": "cesar",
     "install_date": "2026-06-27T23:32:19.689481",
     "auto_virtual_keyboard": false,

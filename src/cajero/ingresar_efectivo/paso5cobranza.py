@@ -16,7 +16,7 @@ from src.repositories.cliente_repository import ClienteRepository
 
 # Diálogo F6 — FIADO (+20% ancho vs 500px base)
 COBRANZA_DIALOG_ANCHO = 600
-COBRANZA_DIALOG_ALTO_FIADO = 700
+COBRANZA_DIALOG_ALTO_FIADO = 580
 COBRANZA_DIALOG_ALTO_NORMAL = 420
 
 # Paleta ejecutiva 2026 — clara, lustrada, 3D suave
