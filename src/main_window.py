@@ -373,7 +373,7 @@ class MainWindow(QMainWindow):
         self._screen_factories = {
             0:  lambda: __import__('src.admin.admin0_dashboard',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
-            2:  lambda: __import__('src.admin.admin1_inventario', fromlist=['Admin1Inventario']).Admin1Inventario(),
+            2:  lambda: __import__('src.admin.inventario.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.admin.admin2_ofertas',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.admin3_reportes',   fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.admin5_configuracion', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
@@ -385,7 +385,7 @@ class MainWindow(QMainWindow):
             11: lambda: __import__('src.admin.admin11_proveedores', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.admin13_hardware',  fromlist=['Admin13Hardware']).Admin13Hardware(),
             14: lambda: __import__('src.admin.admin14_ventas_digitales', fromlist=['Admin14VentasDigitales']).Admin14VentasDigitales(),
-            17: lambda: __import__('src.admin.admin_clientes',    fromlist=['AdminClientes']).AdminClientes(),
+            17: lambda: __import__('src.admin.clientes.admin_clientes_main',    fromlist=['AdminClientes']).AdminClientes(),
             18: lambda: __import__('src.admin.admin7_nexus',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
             20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
