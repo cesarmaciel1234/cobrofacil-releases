@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 01:05:09",
+  "build_date": "2026-07-02 01:18:09",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -708,15 +708,27 @@
     },
     "src/cajero/ingresar_efectivo/dialogo_ingreso.py": {
       "version": "1.0.0",
-      "checksum": "7cf2d22fa5f11a4bedf2ab7f87746774",
+      "checksum": "5561b657331d6a5794ab410e8bc2d472",
       "channel": "stable",
-      "size": 10100
+      "size": 9362
     },
-    "src/cajero/ingresar_efectivo/paso5cobranza.py": {
+    "src/cajero/ingresar_efectivo/fiado.py": {
       "version": "1.0.0",
-      "checksum": "59164ac1d0668bd97d93175add309a16",
+      "checksum": "a69473c4d13e7c87436cae0fe0c91ad0",
       "channel": "stable",
-      "size": 15249
+      "size": 15169
+    },
+    "src/cajero/ingresar_efectivo/ingreso_efectivo.py": {
+      "version": "1.0.0",
+      "checksum": "4171349fdc9ee963a2f0a4a7c1b19886",
+      "channel": "stable",
+      "size": 1558
+    },
+    "src/cajero/ingresar_efectivo/otros_ingresos.py": {
+      "version": "1.0.0",
+      "checksum": "f2723ce2fb3543485ca5522fcb8a88eb",
+      "channel": "stable",
+      "size": 2027
     },
     "src/cajero/ingresar_efectivo/__init__.py": {
       "version": "1.0.0",
