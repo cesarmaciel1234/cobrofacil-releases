@@ -250,6 +250,7 @@ class CentroCobranzasPanel(QWidget):
         self.lbl_cliente.setText("Seleccione un cliente")
         self.txt_monto.clear()
         self.lista.clear()
+        self.lista.show()
         self._ejecutar_busqueda()
         QTimer.singleShot(120, self.focus_busqueda)
 
@@ -277,6 +278,7 @@ class CentroCobranzasPanel(QWidget):
         consulta = self.txt_buscar.text().strip()
         
         self.lista.clear()
+        self.lista.show()
         
         if not consulta:
             self.lbl_modo.setText("Escriba para buscar por privacidad...")
@@ -359,6 +361,8 @@ class CentroCobranzasPanel(QWidget):
             self.lbl_cliente.setText(nombre)
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
         self.txt_monto.setText(f"{self._deuda_actual:.2f}")
+        self.lista.hide()
+        
         if hasattr(self, 'btn_imprimir'):
             self.btn_imprimir.setVisible(True)
 
