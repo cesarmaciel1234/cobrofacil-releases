@@ -376,7 +376,7 @@ class MainWindow(QMainWindow):
             2:  lambda: __import__('src.admin.inventario.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.admin.admin2_ofertas',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.admin3_reportes',   fromlist=['Admin3Reportes']).Admin3Reportes(),
-            5:  lambda: __import__('src.admin.admin5_configuracion', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
+            5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
             6:  lambda: __import__('src.admin.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.admin7_cierre',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
             8:  lambda: __import__('src.admin.etiquetas.admin_etiquetas', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
