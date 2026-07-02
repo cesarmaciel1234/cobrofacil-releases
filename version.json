@@ -1,7 +1,7 @@
 {
-  "app_version": "5.7",
+  "app_version": "5.8",
   "channel": "stable",
-  "build_date": "2026-07-02 02:13:11",
+  "build_date": "2026-07-02 16:07:19",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -936,9 +936,9 @@
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/mercadopago_integracion.py": {
       "version": "1.0.0",
-      "checksum": "5d9965f7974d04c0f45c6a016a7760cb",
+      "checksum": "3bed66235fbaad453a4b67423113be33",
       "channel": "stable",
-      "size": 24630
+      "size": 24549
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/resumen_vuelto.py": {
       "version": "1.0.0",
