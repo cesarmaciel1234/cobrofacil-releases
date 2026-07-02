@@ -15,9 +15,9 @@ from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository
 
 # Diálogo F6 — FIADO (+20% ancho vs 500px base)
-COBRANZA_DIALOG_ANCHO = 600
-COBRANZA_DIALOG_ALTO_FIADO = 780
-COBRANZA_DIALOG_ALTO_NORMAL = 620
+COBRANZA_DIALOG_ANCHO = 500
+COBRANZA_DIALOG_ALTO_FIADO = 600
+COBRANZA_DIALOG_ALTO_NORMAL = 420
 
 # Paleta ejecutiva 2026 — clara, lustrada, 3D suave
 _EXEC = {
@@ -93,7 +93,7 @@ class CentroCobranzasPanel(QWidget):
             f"color: {_EXEC['navy']}; font-size: 14px; font-weight: 900; "
             "letter-spacing: 2px; border: none; background: transparent;"
         )
-        sub = QLabel("Busque cliente por DNI · nombre · monto · fecha")
+        sub = QLabel("Busque por DNI · nombre · dirección · teléfono")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub.setWordWrap(True)
         sub.setStyleSheet(
@@ -113,7 +113,7 @@ class CentroCobranzasPanel(QWidget):
         lay.addWidget(self.lbl_modo)
 
         self.txt_buscar = QLineEdit()
-        self.txt_buscar.setPlaceholderText("DNI, nombre, monto o fecha…")
+        self.txt_buscar.setPlaceholderText("DNI, nombre, dirección o teléfono…")
         self.txt_buscar.setClearButtonEnabled(True)
         self.txt_buscar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_buscar.setStyleSheet(f"""
@@ -275,11 +275,18 @@ class CentroCobranzasPanel(QWidget):
 
         for r in resultados:
             dni = (r.get("dni") or "").strip()
+            tel = (r.get("telefono") or "").strip()
+            direc = (r.get("direccion") or "").strip()
             deuda = float(r.get("deuda_actual") or 0)
             ult = r.get("ultimo_cargo")
             ult_txt = f" · {str(ult).split('.')[0][:10]}" if ult else ""
-            dni_txt = f"DNI {dni} · " if dni else ""
-            texto = f"{r['nombre']}\n{dni_txt}Deuda ${deuda:,.2f}{ult_txt}"
+            dni_txt = f"DNI {dni}" if dni else ""
+            tel_txt = f"Tel {tel}" if tel else ""
+            direc_txt = f"{direc}" if direc else ""
+            # Build info line from available fields
+            info_parts = [p for p in (dni_txt, tel_txt, direc_txt) if p]
+            info_line = " · ".join(info_parts) if info_parts else ""
+            texto = f"{r['nombre']}\n{info_line}\nDeuda ${deuda:,.2f}{ult_txt}" if info_line else f"{r['nombre']}\nDeuda ${deuda:,.2f}{ult_txt}"
             item = QListWidgetItem(texto)
             item.setData(Qt.ItemDataRole.UserRole, r)
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -304,9 +311,19 @@ class CentroCobranzasPanel(QWidget):
         self._cliente = data
         self._deuda_actual = float(data.get("deuda_actual") or 0)
         dni = (data.get("dni") or "").strip()
+        tel = (data.get("telefono") or "").strip()
+        direc = (data.get("direccion") or "").strip()
         nombre = data.get("nombre", "")
+        info_parts = []
         if dni:
-            self.lbl_cliente.setText(f"{nombre}\nDNI {dni}")
+            info_parts.append(f"DNI {dni}")
+        if tel:
+            info_parts.append(f"Tel {tel}")
+        if direc:
+            info_parts.append(direc)
+        info_line = " · ".join(info_parts)
+        if info_line:
+            self.lbl_cliente.setText(f"{nombre}\n{info_line}")
         else:
             self.lbl_cliente.setText(nombre)
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")

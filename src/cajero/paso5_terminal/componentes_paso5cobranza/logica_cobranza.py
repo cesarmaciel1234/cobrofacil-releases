@@ -65,7 +65,8 @@ def parse_consulta_cobranza(texto: str) -> dict:
 def buscar_deudores(consulta: str) -> list:
     p = parse_consulta_cobranza(consulta)
     base = """
-        SELECT c.id, c.nombre, c.dni, c.deuda_actual, c.limite_credito, c.tipo_cliente,
+        SELECT c.id, c.nombre, c.dni, c.telefono, c.direccion,
+               c.deuda_actual, c.limite_credito, c.tipo_cliente,
                (SELECT MAX(cc.fecha) FROM cuenta_corriente cc
                 WHERE cc.cliente_id = c.id AND cc.tipo = 'CARGO') AS ultimo_cargo
         FROM clientes c
@@ -75,12 +76,13 @@ def buscar_deudores(consulta: str) -> list:
 
     if p["tipo"] == "dni":
         v = p["valor"]
-        base += " AND (c.dni = ? OR c.dni LIKE ? OR c.nombre LIKE ?)"
-        params.extend([v, f"%{v}%", f"%{v}%"])
+        base += " AND (c.dni = ? OR c.dni LIKE ? OR c.nombre LIKE ? OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)"
+        params.extend([v, f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
     elif p["tipo"] == "nombre":
         v = p["valor"]
-        base += " AND (c.nombre LIKE ? OR COALESCE(c.dni, '') LIKE ?)"
-        params.extend([f"%{v}%", f"%{v}%"])
+        base += (" AND (c.nombre LIKE ? OR COALESCE(c.dni, '') LIKE ?"
+                 " OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)")
+        params.extend([f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
     elif p["tipo"] == "monto":
         m = float(p["valor"])
         base += """
