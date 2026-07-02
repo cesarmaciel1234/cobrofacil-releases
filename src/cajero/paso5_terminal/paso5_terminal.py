@@ -23,7 +23,7 @@ except ImportError:
 from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
-from src.cajero.paso5_terminal.componentes_visuales.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
+from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
 from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad
 from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
 from src.cajero.sacar_efectivo import DialogoRetiroEfectivo
@@ -39,7 +39,7 @@ except ImportError:
     AUDIO_ENABLED = False
 
 try:
-    from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.teclado_virtual.virtual_keyboard_paso5 import VirtualKeyboardPaso5 as VirtualKeyboard
+    from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.teclado_virtual.virtual_keyboard_paso5 import VirtualKeyboardPaso5 as VirtualKeyboard
     HAS_KEYBOARD = True
 except Exception as e:
     import logging
@@ -47,12 +47,12 @@ except Exception as e:
     HAS_KEYBOARD = False
 
 # --- Componentes Visuales Modularizados ---
-from src.cajero.paso5_terminal.componentes_visuales.cabecera_superior import CabeceraSuperior
-from src.cajero.paso5_terminal.componentes_visuales.centro_de_notificaciones import CentroDeNotificaciones
-from src.cajero.paso5_terminal.componentes_visuales.tabla_de_productos import TablaDeProductos
-from src.cajero.paso5_terminal.componentes_visuales.panel_de_totales import PanelDeTotales
-from src.cajero.paso5_terminal.componentes_visuales.barra_de_herramientas_inferior import BarraDeHerramientasInferior
-from src.cajero.paso5_terminal.componentes_visuales.nav_row_border_overlay import NavRowBorderOverlay
+from src.cajero.paso5_terminal.componentes_paso5_terminal.cabecera_superior import CabeceraSuperior
+from src.cajero.paso5_terminal.componentes_paso5_terminal.centro_de_notificaciones import CentroDeNotificaciones
+from src.cajero.paso5_terminal.componentes_paso5_terminal.tabla_de_productos import TablaDeProductos
+from src.cajero.paso5_terminal.componentes_paso5_terminal.panel_de_totales import PanelDeTotales
+from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior import BarraDeHerramientasInferior
+from src.cajero.paso5_terminal.componentes_paso5_terminal.nav_row_border_overlay import NavRowBorderOverlay
 
 def fmt_moneda_sin_centavos(val):
     try:
