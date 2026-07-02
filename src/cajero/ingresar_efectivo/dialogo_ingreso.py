@@ -18,8 +18,8 @@ class DialogoIngresoEfectivo(QDialog):
         self.en_venta = False
         self.deuda_actual = 0.0
 
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         from src.cajero.paso5_terminal.paso5cobranza import (
             COBRANZA_DIALOG_ANCHO, COBRANZA_DIALOG_ALTO_FIADO, COBRANZA_DIALOG_ALTO_NORMAL,
@@ -48,7 +48,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.setSpacing(15)
 
         lbl = QLabel("💵  INGRESO DE DINERO")
-        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet(
             "font-size: 20px; font-weight: 900; color: #1E3A8A; border: none; "
             "letter-spacing: 1px; background: transparent;"
@@ -56,7 +56,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addWidget(lbl)
 
         lbl_sub = QLabel("Seleccione el concepto del ingreso físico")
-        lbl_sub.setAlignment(Qt.AlignCenter)
+        lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_sub.setStyleSheet(
             "font-size: 12px; color: #64748B; font-weight: 600; border: none;"
         )
@@ -94,7 +94,7 @@ class DialogoIngresoEfectivo(QDialog):
         pn_lay.addWidget(self.lbl_titulo_monto)
 
         self.txt_monto = QLineEdit()
-        self.txt_monto.setAlignment(Qt.AlignCenter)
+        self.txt_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_monto.setStyleSheet("""
             QLineEdit {
                 font-size: 36px; font-weight: 900; color: #059669;
@@ -118,7 +118,7 @@ class DialogoIngresoEfectivo(QDialog):
         panel_fiado = QWidget()
         pf_lay = QVBoxLayout(panel_fiado)
         pf_lay.setContentsMargins(0, 4, 0, 4)
-        pf_lay.setAlignment(Qt.AlignCenter)
+        pf_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.panel_fiado = CentroCobranzasPanel()
         if self.panel_fiado.txt_monto is not None:
             self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
@@ -128,7 +128,7 @@ class DialogoIngresoEfectivo(QDialog):
         lay.addWidget(self.stack)
 
         self.lbl_err = QLabel("")
-        self.lbl_err.setAlignment(Qt.AlignCenter)
+        self.lbl_err.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_err.setStyleSheet("font-size: 12px; color: #DC2626; font-weight: bold; border: none;")
         lay.addWidget(self.lbl_err)
 
@@ -138,18 +138,18 @@ class DialogoIngresoEfectivo(QDialog):
         btn_cancel = QPushButton("  ESC  Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.setStyleSheet(
-            "QPushButton { background: #2563EB; color: white; font-weight: bold; "
+            "QPushButton { background: #DC2626; color: white; font-weight: bold; "
             "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
-            "QPushButton:hover { background: #1D4ED8; }"
+            "QPushButton:hover { background: #B91C1C; }"
         )
         btn_cancel.clicked.connect(self.reject)
 
         btn_ok = QPushButton("✅ CONFIRMAR")
         btn_ok.setCursor(Qt.PointingHandCursor)
         btn_ok.setStyleSheet(
-            "QPushButton { background: #0D9488; color: white; font-weight: 900; font-size: 14px; "
+            "QPushButton { background: #2563EB; color: white; font-weight: 900; font-size: 14px; "
             "padding: 12px 20px; border-radius: 10px; border: none; letter-spacing: 1px; }"
-            "QPushButton:hover { background: #0F766E; }"
+            "QPushButton:hover { background: #1D4ED8; }"
         )
         btn_ok.clicked.connect(self._procesar)
 
@@ -175,14 +175,14 @@ class DialogoIngresoEfectivo(QDialog):
         btn.setAutoExclusive(True)
 
         lay = QVBoxLayout(btn)
-        lay.setAlignment(Qt.AlignCenter)
+        lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_i = QLabel(icono)
         lbl_i.setStyleSheet("font-size: 24px; border: none; background: transparent;")
-        lbl_i.setAlignment(Qt.AlignCenter)
+        lbl_i.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_t = QLabel(titulo)
         lbl_t.setStyleSheet("font-weight: 900; font-size: 12px; border: none; background: transparent;")
-        lbl_t.setAlignment(Qt.AlignCenter)
+        lbl_t.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lay.addWidget(lbl_i)
         lay.addWidget(lbl_t)

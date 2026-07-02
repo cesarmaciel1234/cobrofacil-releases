@@ -10,8 +10,8 @@ class DialogoRetiroEfectivo(QDialog):
         self.efectivo_actual = efectivo_actual
         self.monto_retirado = 0.0
         self.motivo = ""
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(420, 400)
         self._build()
 
@@ -30,12 +30,12 @@ class DialogoRetiroEfectivo(QDialog):
         lay.setSpacing(10)
 
         lbl = QLabel("💸  RETIRO DE EFECTIVO")
-        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet("font-size: 20px; font-weight: 900; color: #1E3A8A; border: none; background: transparent;")
         lay.addWidget(lbl)
 
         lbl_disp = QLabel(f"Disponible en Caja: ${self.efectivo_actual:,.2f}")
-        lbl_disp.setAlignment(Qt.AlignCenter)
+        lbl_disp.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_disp.setStyleSheet("font-size: 13px; color: #64748b; font-weight: bold; border: none; background: transparent;")
         lay.addWidget(lbl_disp)
 
@@ -44,7 +44,7 @@ class DialogoRetiroEfectivo(QDialog):
         lay.addWidget(lbl2)
 
         self.txt_monto = QLineEdit()
-        self.txt_monto.setAlignment(Qt.AlignCenter)
+        self.txt_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sugerido = max(0.0, self.efectivo_actual - 40000) if self.efectivo_actual > 50000 else 0.0
         if sugerido > 0:
             self.txt_monto.setText(f"{int(sugerido)}")
@@ -77,7 +77,7 @@ class DialogoRetiroEfectivo(QDialog):
         lay.addWidget(self.txt_motivo)
 
         self.lbl_err = QLabel("")
-        self.lbl_err.setAlignment(Qt.AlignCenter)
+        self.lbl_err.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_err.setStyleSheet("font-size: 12px; color: #DC2626; font-weight: bold; border: none; background: transparent;")
         lay.addWidget(self.lbl_err)
 
@@ -87,18 +87,18 @@ class DialogoRetiroEfectivo(QDialog):
         btn_cancel = QPushButton("  ESC  Cancelar")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.setStyleSheet(
-            "QPushButton { background: #2563EB; color: white; font-weight: bold; "
+            "QPushButton { background: #DC2626; color: white; font-weight: bold; "
             "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
-            "QPushButton:hover { background: #1D4ED8; }"
+            "QPushButton:hover { background: #B91C1C; }"
         )
         btn_cancel.clicked.connect(self.reject)
 
         btn_ok = QPushButton("💸 RETIRAR")
         btn_ok.setCursor(Qt.PointingHandCursor)
         btn_ok.setStyleSheet(
-            "QPushButton { background: #DC2626; color: white; font-weight: 900; "
+            "QPushButton { background: #2563EB; color: white; font-weight: 900; "
             "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
-            "QPushButton:hover { background: #B91C1C; }"
+            "QPushButton:hover { background: #1D4ED8; }"
         )
         btn_ok.clicked.connect(self._procesar)
 
