@@ -1616,6 +1616,7 @@ class Paso5Terminal(QWidget):
                         "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) VALUES (?, ?, ?, ?, ?)",
                         (dlg.cliente_id, 'ABONO', monto, nuevo_saldo, 'Abono Fiado en Caja')
                     )
+                    motivo = f"Abono Fiado: {getattr(dlg, 'cliente_nombre', '')} - Saldo restante: ${nuevo_saldo:,.2f}"
 
                 query = "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id) VALUES ('INGRESO', ?, ?, ?, ?)"
                 if db_manager.execute_non_query(query, (monto, usuario, motivo, c_id)):

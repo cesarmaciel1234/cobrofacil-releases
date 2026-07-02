@@ -486,6 +486,37 @@ class PosPrinter:
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 
+    def imprimir_estado_deuda(self, cliente_nombre, dni, deuda_actual, usuario):
+        """ Imprime el estado actual de la cuenta corriente de un cliente """
+        data = bytearray()
+        data.extend(ESC + b'\x40') # Reset
+        data.extend(ALIGN_CENTER)
+        data.extend(BOLD_ON)
+        data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
+        data.extend(b"ESTADO DE CUENTA CORRIENTE\n")
+        data.extend(BOLD_OFF)
+        data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n".encode('cp850'))
+        data.extend(f"Operador: {usuario}\n".encode('cp850', errors='replace'))
+        data.extend(b"--------------------------------\n")
+        
+        data.extend(ALIGN_LEFT)
+        data.extend(f"CLIENTE: {cliente_nombre}\n".encode('cp850', errors='replace'))
+        if dni:
+            data.extend(f"DNI/CUIT: {dni}\n".encode('cp850', errors='replace'))
+        data.extend(b"\n")
+        
+        data.extend(ALIGN_CENTER)
+        data.extend(BOLD_ON)
+        data.extend(f"DEUDA ACTUAL: ${deuda_actual:,.2f}\n".encode('cp850'))
+        data.extend(BOLD_OFF)
+        data.extend(b"--------------------------------\n")
+        data.extend(b"\n\n\n\n\n")
+        data.extend(CUT_PAPER)
+        
+        p_principal = _impresora_cajero_activo()
+        result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
+        return result
+
     def imprimir_ticket_z(self, usuario, fisico, dif, datos_z):
         """ Imprime el Cierre de Caja (Reporte Z) """
         # Mapeo robusto de claves con soporte a ambos formatos de diccionario

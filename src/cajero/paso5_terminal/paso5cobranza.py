@@ -15,8 +15,8 @@ from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository
 
 # Diálogo F6 — FIADO (+20% ancho vs 500px base)
-COBRANZA_DIALOG_ANCHO = 500
-COBRANZA_DIALOG_ALTO_FIADO = 600
+COBRANZA_DIALOG_ANCHO = 600
+COBRANZA_DIALOG_ALTO_FIADO = 700
 COBRANZA_DIALOG_ALTO_NORMAL = 420
 
 # Paleta ejecutiva 2026 — clara, lustrada, 3D suave
@@ -61,8 +61,8 @@ class CentroCobranzasPanel(QWidget):
         row_center.addStretch(1)
         self.card = QFrame()
         self.card.setObjectName("CobranzaCard")
-        self.card.setMinimumWidth(520)
-        self.card.setMaximumWidth(560)
+        self.card.setMinimumWidth(560)
+        self.card.setMaximumWidth(580)
         self.card.setStyleSheet(f"""
             QFrame#CobranzaCard {{
                 background: {_EXEC['card']};
@@ -215,6 +215,23 @@ class CentroCobranzasPanel(QWidget):
         row_center.addWidget(self.card, stretch=0)
         row_center.addStretch(1)
         outer.addLayout(row_center)
+        
+        btn_lay = QHBoxLayout()
+        btn_lay.addStretch(1)
+        self.btn_imprimir = QPushButton("🖨 IMPRIMIR TICKET DEUDA")
+        self.btn_imprimir.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_imprimir.setStyleSheet(f"""
+            QPushButton {{
+                background: {_EXEC['navy']}; color: white; font-weight: 800; font-size: 11px;
+                border-radius: 8px; padding: 10px; letter-spacing: 1px;
+            }}
+            QPushButton:hover {{ background: {_EXEC['accent']}; color: {_EXEC['navy']}; }}
+        """)
+        self.btn_imprimir.setVisible(False)
+        self.btn_imprimir.clicked.connect(self._imprimir_estado_deuda)
+        btn_lay.addWidget(self.btn_imprimir)
+        btn_lay.addStretch(1)
+        outer.addLayout(btn_lay)
 
         self._timer_buscar = QTimer(self)
         self._timer_buscar.setSingleShot(True)
@@ -256,7 +273,20 @@ class CentroCobranzasPanel(QWidget):
         self._timer_buscar.start()
 
     def _ejecutar_busqueda(self):
-        consulta = self.txt_buscar.text()
+        consulta = self.txt_buscar.text().strip()
+        
+        self.lista.clear()
+        
+        if not consulta:
+            self.lbl_modo.setText("Escriba para buscar por privacidad...")
+            self.lbl_cliente.setText("Esperando búsqueda...")
+            self.btn_imprimir.setVisible(False)
+            if not self._cliente:
+                self.txt_monto.clear()
+                self._deuda_actual = 0.0
+                self.lbl_deuda.clear()
+            return
+
         p = parse_consulta_cobranza(consulta)
         self.lbl_modo.setText(f"Mostrando: {p['etiqueta']}")
 
@@ -328,6 +358,20 @@ class CentroCobranzasPanel(QWidget):
             self.lbl_cliente.setText(nombre)
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
         self.txt_monto.setText(f"{self._deuda_actual:.2f}")
+        if hasattr(self, 'btn_imprimir'):
+            self.btn_imprimir.setVisible(True)
+
+    def _imprimir_estado_deuda(self):
+        if not self._cliente: return
+        from src.hardware.printer import printer_manager
+        from src.admin.logueo_usuarios.CajeroActivo import CajeroActivo
+        printer_manager.imprimir_estado_deuda(
+            self._cliente.get("nombre", ""),
+            self._cliente.get("dni", ""),
+            self._deuda_actual,
+            CajeroActivo.nombre
+        )
+        self.txt_buscar.setFocus()
 
     def cliente_actual(self):
         return self._cliente
