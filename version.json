@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 01:37:49",
+  "build_date": "2026-07-02 01:45:05",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -756,9 +756,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "92955bd574d8f91ff695fca26bb95553",
+      "checksum": "bb4c84b2ff72b469623d644d84d1a9e7",
       "channel": "stable",
-      "size": 103311
+      "size": 102894
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -874,11 +874,17 @@
       "channel": "stable",
       "size": 13962
     },
-    "src/cajero/paso5_terminal/dialogos/dialogo_atencion.py": {
+    "src/cajero/paso5_terminal/componentes_visuales/componente_tabla_de_productos/mensaje_eliminacion.py": {
       "version": "1.0.0",
-      "checksum": "586e1bf89c74a3e6471200e6d271aee7",
+      "checksum": "8b7407dc77f107a79b5b75c2d42ccbcf",
       "channel": "stable",
-      "size": 3271
+      "size": 3348
+    },
+    "src/cajero/paso5_terminal/componentes_visuales/componente_tabla_de_productos/suprimir_articulo.py": {
+      "version": "1.0.0",
+      "checksum": "e8d3039add2daae25ba949250a1d8f9b",
+      "channel": "stable",
+      "size": 1182
     },
     "src/cajero/paso5_terminal/dialogos/dialogo_candado.py": {
       "version": "1.0.0",
@@ -906,9 +912,9 @@
     },
     "src/cajero/paso5_terminal/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
-      "checksum": "9b8311ba6322818d2dbae852c17a31bb",
+      "checksum": "4c5ddac21b51b8392ef735fa53a5becf",
       "channel": "stable",
-      "size": 16925
+      "size": 14056
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
