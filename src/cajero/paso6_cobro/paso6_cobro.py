@@ -50,6 +50,7 @@ class Paso6Cobro(QDialog):
         self.setFixedSize(1200, 780)
         
         self.current_metodo = "Efectivo"
+        self._fondo_blur_pixmap = None   # fondo desenfocado capturado
         self.setup_ui()
         try:
             from src.utils.bot_state import update_bot_state
@@ -57,6 +58,70 @@ class Paso6Cobro(QDialog):
         except:
             pass
         self.apply_glow()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Capturar y desenfocar el fondo del padre al mostrarse
+        QTimer.singleShot(0, self._capturar_fondo_blur)
+
+    def _capturar_fondo_blur(self):
+        """Captura la pantalla detrás del diálogo y aplica blur con PIL."""
+        try:
+            parent = self.parent()
+            if parent is None:
+                return
+
+            # Capturar el widget padre como pixmap
+            src = parent.grab()
+
+            # Convertir QPixmap → PIL Image
+            img_bytes = src.toImage()
+            img_bytes = img_bytes.convertToFormat(
+                img_bytes.Format.Format_RGBA8888
+            )
+            ptr = img_bytes.bits()
+            ptr.setsize(img_bytes.sizeInBytes())
+            from PIL import Image, ImageFilter
+            import numpy as np
+            arr = np.frombuffer(ptr, dtype=np.uint8).reshape(
+                (img_bytes.height(), img_bytes.width(), 4)
+            )
+            pil_img = Image.fromarray(arr, 'RGBA')
+
+            # Escalar al tamaño del diálogo, aplicar blur fuerte
+            pil_img = pil_img.resize(
+                (self.width(), self.height()), Image.LANCZOS
+            )
+            pil_img = pil_img.filter(ImageFilter.GaussianBlur(radius=22))
+
+            # Oscurecer ligeramente (overlay semitransparente)
+            from PIL import ImageDraw
+            overlay = Image.new('RGBA', pil_img.size, (10, 15, 40, 140))
+            pil_img = Image.alpha_composite(pil_img, overlay)
+
+            # Convertir PIL → QPixmap
+            from PyQt6.QtGui import QImage
+            raw = pil_img.tobytes('raw', 'RGBA')
+            qimg = QImage(
+                raw, pil_img.width, pil_img.height,
+                QImage.Format.Format_RGBA8888
+            )
+            self._fondo_blur_pixmap = QPixmap.fromImage(qimg)
+            self.update()   # forzar repaint
+        except Exception as e:
+            import logging
+            logging.debug(f"[Paso6] blur fondo: {e}")
+
+    def paintEvent(self, event):
+        """Dibuja el fondo desenfocado si está disponible."""
+        if self._fondo_blur_pixmap:
+            from PyQt6.QtGui import QPainter
+            painter = QPainter(self)
+            painter.drawPixmap(self.rect(), self._fondo_blur_pixmap)
+            painter.end()
+        else:
+            super().paintEvent(event)
+
 
     def apply_glow(self):
         # Se elimina QGraphicsDropShadowEffect para rendimiento.
