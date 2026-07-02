@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
         self._init_update_banner()
 
         # ChatBot: Pre-cargado aquí para evitar parpadeos/reseteos del sistema en pantalla completa por Chromium.
-        from src.cajero.paso5_terminal.componentes_visuales.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
         self.chatbot_overlay = ChatBotWidget(self)
         self.chatbot_overlay.hide()
         self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
