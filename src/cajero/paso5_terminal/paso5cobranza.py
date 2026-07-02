@@ -38,7 +38,7 @@ _EXEC = {
     "head_from": "#FFFFFF",
     "head_to": "#F0FDFA",
 }
-from src.cajero.componentes_paso5cobranza.logica_cobranza import parse_consulta_cobranza, buscar_deudores
+from src.cajero.paso5_terminal.componentes_paso5cobranza.logica_cobranza import parse_consulta_cobranza, buscar_deudores
 
 
 class CentroCobranzasPanel(QWidget):
