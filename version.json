@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 01:18:09",
+  "build_date": "2026-07-02 01:23:30",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -708,7 +708,7 @@
     },
     "src/cajero/ingresar_efectivo/dialogo_ingreso.py": {
       "version": "1.0.0",
-      "checksum": "5561b657331d6a5794ab410e8bc2d472",
+      "checksum": "47a01c7e537c0f4eef8373db6529c5b4",
       "channel": "stable",
       "size": 9362
     },

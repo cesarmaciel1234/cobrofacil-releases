@@ -229,7 +229,8 @@ class DialogoIngresoEfectivo(QDialog):
         super().showEvent(event)
         parent = self.parent()
         if parent:
-            geo = parent.geometry()
+            top_level = parent.window()
+            geo = top_level.geometry()
             self.move(
                 geo.center().x() - self.width() // 2,
                 geo.center().y() - self.height() // 2
