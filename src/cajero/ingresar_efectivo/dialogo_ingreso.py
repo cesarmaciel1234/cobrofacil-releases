@@ -1,18 +1,22 @@
-"""Diálogo de Ingreso de Dinero (F6) — Estilo global premium."""
+"""Diálogo de Ingreso de Dinero (F6) — Orquestador de paneles."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QGridLayout, QFrame, QWidget, QStackedWidget,
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QGridLayout, QFrame, QStackedWidget
 )
 from PyQt6.QtCore import Qt, QTimer
 
+# Importar paneles
+from src.cajero.ingresar_efectivo.ingreso_efectivo import PanelIngresoEfectivo
+from src.cajero.ingresar_efectivo.fiado import CentroCobranzasPanel, _EXEC
+from src.cajero.ingresar_efectivo.otros_ingresos import PanelOtrosIngresos
 
 class DialogoIngresoEfectivo(QDialog):
-    """Diálogo premium para ingresar dinero a la caja (F6)."""
+    """Diálogo contenedor para Cambio, Fiado y Otros ingresos (F6)."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.monto_ingresado = 0.0
         self.motivo = ""
-        self.tipo_ingreso = "CAMBIO"
+        self.tipo_ingreso = "FIADO"
         self.cliente_id = None
         self.cliente_nombre = ""
         self.en_venta = False
@@ -21,19 +25,14 @@ class DialogoIngresoEfectivo(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        from src.cajero.ingresar_efectivo.paso5cobranza import (
-            COBRANZA_DIALOG_ANCHO, COBRANZA_DIALOG_ALTO_FIADO, COBRANZA_DIALOG_ALTO_NORMAL,
-            _EXEC,
-        )
-        self._ancho = COBRANZA_DIALOG_ANCHO
-        self._altura_normal = COBRANZA_DIALOG_ALTO_NORMAL
-        self._altura_fiado = COBRANZA_DIALOG_ALTO_FIADO
-        self._EXEC = _EXEC
-        self.setFixedSize(self._ancho, self._altura_normal)
+        # Unified size for all panels to prevent layout collapse
+        self._ancho = 500
+        self._altura = 600
+        self.setFixedSize(self._ancho, self._altura)
+        
         self._build()
 
     def _build(self):
-        _EXEC = self._EXEC
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
 
@@ -44,9 +43,10 @@ class DialogoIngresoEfectivo(QDialog):
         outer.addWidget(self._card)
 
         lay = QVBoxLayout(self._card)
-        lay.setContentsMargins(30, 22, 30, 22)
-        lay.setSpacing(15)
+        lay.setContentsMargins(20, 20, 20, 20)
+        lay.setSpacing(10)
 
+        # Header Title
         lbl = QLabel("💵  INGRESO DE DINERO")
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet(
@@ -55,20 +55,13 @@ class DialogoIngresoEfectivo(QDialog):
         )
         lay.addWidget(lbl)
 
-        lbl_sub = QLabel("Seleccione el concepto del ingreso físico")
-        lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_sub.setStyleSheet(
-            "font-size: 12px; color: #64748B; font-weight: 600; border: none;"
-        )
-        lay.addWidget(lbl_sub)
-
-        # Grid de opciones
+        # Tabs Grid
         grid = QGridLayout()
         grid.setSpacing(10)
 
-        self.btn_cambio = self._crear_btn_opcion("🪙", "CAMBIO", "Fondo Fijo", "#3B82F6")
-        self.btn_fiado = self._crear_btn_opcion("👥", "FIADO", "Centro Cobranzas", _EXEC["accent"])
-        self.btn_otros = self._crear_btn_opcion("📦", "OTROS", "Varios", "#6366F1")
+        self.btn_cambio = self._crear_btn_opcion("🪙", "CAMBIO", "#3B82F6")
+        self.btn_fiado = self._crear_btn_opcion("👥", "FIADO", _EXEC["accent"])
+        self.btn_otros = self._crear_btn_opcion("📦", "OTROS", "#6366F1")
 
         self.btn_cambio.clicked.connect(lambda: self._set_modo("CAMBIO"))
         self.btn_fiado.clicked.connect(lambda: self._set_modo("FIADO"))
@@ -79,64 +72,39 @@ class DialogoIngresoEfectivo(QDialog):
         grid.addWidget(self.btn_otros, 0, 2)
         lay.addLayout(grid)
 
-        # Stack para paneles dinámicos
+        # Stack para paneles
         self.stack = QStackedWidget()
-        self.stack.setStyleSheet(
-            "background: transparent; border: none; border-radius: 12px;"
-        )
+        self.stack.setStyleSheet("background: transparent; border: none;")
 
-        # Panel Normal (Cambio/Otros)
-        panel_normal = QWidget()
-        pn_lay = QVBoxLayout(panel_normal)
-        pn_lay.setContentsMargins(20, 20, 20, 20)
-        self.lbl_titulo_monto = QLabel("Monto a ingresar ($):")
-        self.lbl_titulo_monto.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border: none;")
-        pn_lay.addWidget(self.lbl_titulo_monto)
-
-        self.txt_monto = QLineEdit()
-        self.txt_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.txt_monto.setStyleSheet("""
-            QLineEdit {
-                font-size: 36px; font-weight: 900; color: #059669;
-                border: 2px solid #cbd5e1; border-radius: 10px;
-                padding: 8px; background: white;
-            }
-            QLineEdit:focus { border-color: #10B981; }
-        """)
-        self.txt_monto.returnPressed.connect(self._procesar)
-        pn_lay.addWidget(self.txt_monto)
-
-        self.txt_desc = QLineEdit()
-        self.txt_desc.setPlaceholderText("Descripción (Opcional)...")
-        self.txt_desc.setStyleSheet("font-size: 14px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white;")
-        pn_lay.addWidget(self.txt_desc)
-        self.stack.addWidget(panel_normal)
-
-        # Panel Centro de Cobranzas (F6 → FIADO)
-        from src.cajero.ingresar_efectivo.paso5cobranza import CentroCobranzasPanel
-
-        panel_fiado = QWidget()
-        pf_lay = QVBoxLayout(panel_fiado)
-        pf_lay.setContentsMargins(0, 4, 0, 4)
-        pf_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.panel_cambio = PanelIngresoEfectivo()
+        if hasattr(self.panel_cambio, 'txt_monto'):
+            self.panel_cambio.txt_monto.returnPressed.connect(self._procesar)
+        
         self.panel_fiado = CentroCobranzasPanel()
-        if self.panel_fiado.txt_monto is not None:
+        if hasattr(self.panel_fiado, 'txt_monto') and self.panel_fiado.txt_monto is not None:
             self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
-        pf_lay.addWidget(self.panel_fiado)
-        self.stack.addWidget(panel_fiado)
+            
+        self.panel_otros = PanelOtrosIngresos()
+        if hasattr(self.panel_otros, 'txt_monto'):
+            self.panel_otros.txt_monto.returnPressed.connect(self._procesar)
 
+        self.stack.addWidget(self.panel_cambio)  # index 0
+        self.stack.addWidget(self.panel_fiado)   # index 1
+        self.stack.addWidget(self.panel_otros)   # index 2
         lay.addWidget(self.stack)
 
+        # Error label
         self.lbl_err = QLabel("")
         self.lbl_err.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_err.setStyleSheet("font-size: 12px; color: #DC2626; font-weight: bold; border: none;")
         lay.addWidget(self.lbl_err)
 
+        # Buttons
         h_btns = QHBoxLayout()
         h_btns.setSpacing(14)
 
         btn_cancel = QPushButton("  ESC  Cancelar")
-        btn_cancel.setCursor(Qt.PointingHandCursor)
+        btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cancel.setStyleSheet(
             "QPushButton { background: #DC2626; color: white; font-weight: bold; "
             "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
@@ -145,7 +113,7 @@ class DialogoIngresoEfectivo(QDialog):
         btn_cancel.clicked.connect(self.reject)
 
         btn_ok = QPushButton("✅ CONFIRMAR")
-        btn_ok.setCursor(Qt.PointingHandCursor)
+        btn_ok.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_ok.setStyleSheet(
             "QPushButton { background: #2563EB; color: white; font-weight: 900; font-size: 14px; "
             "padding: 12px 20px; border-radius: 10px; border: none; letter-spacing: 1px; }"
@@ -159,10 +127,10 @@ class DialogoIngresoEfectivo(QDialog):
 
         self._set_modo("FIADO")
 
-    def _crear_btn_opcion(self, icono, titulo, subtitulo, color):
+    def _crear_btn_opcion(self, icono, titulo, color):
         btn = QPushButton()
         btn.setFixedHeight(80)
-        btn.setCursor(Qt.PointingHandCursor)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setStyleSheet(f"""
             QPushButton {{
                 background: white; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center;
@@ -193,25 +161,29 @@ class DialogoIngresoEfectivo(QDialog):
         self.btn_fiado.setChecked(modo == "FIADO")
         self.btn_otros.setChecked(modo == "OTROS")
 
-        if modo == "FIADO":
-            self.setFixedSize(self._ancho, self._altura_fiado)
+        self.lbl_err.setText("")
+        
+        if modo == "CAMBIO":
+            self.stack.setCurrentIndex(0)
+            self.panel_cambio.reset()
+        elif modo == "FIADO":
             self.stack.setCurrentIndex(1)
             self.panel_fiado.cargar_clientes_abono()
-        else:
-            self.setFixedSize(self._ancho, self._altura_normal)
-            self.stack.setCurrentIndex(0)
-            self.txt_monto.setFocus()
-            self.txt_monto.selectAll()
-            if modo == "CAMBIO":
-                self.txt_desc.setText("Fondo fijo / Cambio")
-                self.txt_desc.hide()
-            else:
-                self.txt_desc.setText("")
-                self.txt_desc.show()
+        elif modo == "OTROS":
+            self.stack.setCurrentIndex(2)
+            self.panel_otros.reset()
 
     def _procesar(self):
         try:
-            if self.tipo_ingreso == "FIADO":
+            if self.tipo_ingreso == "CAMBIO":
+                ok, err = self.panel_cambio.validar()
+                if not ok:
+                    self.lbl_err.setText(err)
+                    return
+                self.monto_ingresado = self.panel_cambio.monto()
+                self.motivo = "Ingreso de Cambio / Fondo Fijo"
+                
+            elif self.tipo_ingreso == "FIADO":
                 ok, err = self.panel_fiado.validar()
                 if not ok:
                     self.lbl_err.setText(err)
@@ -222,27 +194,34 @@ class DialogoIngresoEfectivo(QDialog):
                 self.cliente_id = data["id"]
                 self.cliente_nombre = data["nombre"]
                 self.motivo = f"Abono Fiado: {self.cliente_nombre}"
-            else:
-                val = float(self.txt_monto.text().strip())
-                if val <= 0:
-                    self.lbl_err.setText("⚠️ Ingresa un monto mayor a 0")
+                
+            elif self.tipo_ingreso == "OTROS":
+                ok, err = self.panel_otros.validar()
+                if not ok:
+                    self.lbl_err.setText(err)
                     return
-                self.monto_ingresado = val
-                desc = self.txt_desc.text().strip()
-                if self.tipo_ingreso == "CAMBIO":
-                    self.motivo = "Ingreso de Cambio / Fondo Fijo"
-                else:
-                    self.motivo = desc if desc else "Otros Ingresos Manuales"
+                self.monto_ingresado = self.panel_otros.monto()
+                self.motivo = self.panel_otros.descripcion()
 
             self.accept()
-        except ValueError:
-            self.lbl_err.setText("⚠️ Monto inválido")
+        except Exception as e:
+            self.lbl_err.setText("⚠️ Error interno al procesar el ingreso")
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             self._procesar()
         elif event.key() == Qt.Key_Escape:
             self.reject()
+        elif event.key() == Qt.Key_Left:
+            if self.tipo_ingreso == "FIADO":
+                self._set_modo("CAMBIO")
+            elif self.tipo_ingreso == "OTROS":
+                self._set_modo("FIADO")
+        elif event.key() == Qt.Key_Right:
+            if self.tipo_ingreso == "CAMBIO":
+                self._set_modo("FIADO")
+            elif self.tipo_ingreso == "FIADO":
+                self._set_modo("OTROS")
         else:
             super().keyPressEvent(event)
 

@@ -61,8 +61,6 @@ class CentroCobranzasPanel(QWidget):
         row_center.addStretch(1)
         self.card = QFrame()
         self.card.setObjectName("CobranzaCard")
-        self.card.setMinimumWidth(560)
-        self.card.setMaximumWidth(580)
         self.card.setStyleSheet(f"""
             QFrame#CobranzaCard {{
                 background: {_EXEC['card']};
