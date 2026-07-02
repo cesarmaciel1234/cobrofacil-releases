@@ -1,0 +1,4 @@
+﻿Fecha Aprobacion,ID de Pago,Monto,Cliente,Email Cliente,Estado,Fecha Registro Local,Tipo Operacion,Monto Neto,Tarifa
+2026-07-02 15:49:15.000-04:00,166874669378,100.00,None None,cesar-th123@live.com,APPROVED,2026-07-02 16:49:27,account_fund,100.00,0.00
+2026-07-02 15:49:53.000-04:00,166033376287,100.00,None None,cesar-th123@live.com,APPROVED,2026-07-02 16:50:00,account_fund,100.00,0.00
+2026-07-02 15:54:57.000-04:00,166875647158,11600.00,None None,cesar-th123@live.com,APPROVED,2026-07-02 16:55:06,account_fund,11368.00,232.00
