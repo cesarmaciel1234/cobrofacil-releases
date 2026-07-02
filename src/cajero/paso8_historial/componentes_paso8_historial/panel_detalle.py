@@ -76,7 +76,7 @@ class PanelDetalle(QWidget):
         pago_layout = QGridLayout()
         pago_layout.setSpacing(6)
         
-        self.lbl_det_desc_tit = QLabel("<b>Descuento:</b>")
+        self.lbl_det_desc_tit = QLabel("<b>Redondeo:</b>")
         self.lbl_det_desc_tit.setStyleSheet("color: #10B981; font-size: 14px;")
         self.lbl_det_desc = QLabel("-$0,00")
         self.lbl_det_desc.setStyleSheet("color: #10B981; font-size: 14px; font-weight: bold;")

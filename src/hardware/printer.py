@@ -396,7 +396,7 @@ class PosPrinter:
             
             if discount_amount and discount_amount > 0:
                 data.extend(BOLD_ON)
-                data.extend(f"USTED AHORRO: -${discount_amount:.2f}\n".encode('cp850'))
+                data.extend(f"REDONDEO:     -${discount_amount:.2f}\n".encode('cp850'))
                 data.extend(BOLD_OFF)
                 
             if surcharge_amount and surcharge_amount > 0:

@@ -228,7 +228,7 @@ class Paso6Cobro(QDialog):
         # NUEVA LÍNEA HORIZONTAL DE MODIFICADORES COMPACTA
         grid_desc_rec = QGridLayout()
         
-        self.lbl_desc = QLabel("Descuento ($):")
+        self.lbl_desc = QLabel("Redondeo ($):")
         self.lbl_desc.setObjectName("InputLabel")
         grid_desc_rec.addWidget(self.lbl_desc, 0, 0)
         
@@ -308,7 +308,7 @@ class Paso6Cobro(QDialog):
         self.btn_f2 = create_action_btn("F2", "s/imprime", lambda: self.finalizar(False), style="featured")
         actions_grid.addWidget(self.btn_f2, 0, 1)
 
-        self.btn_descuento = create_action_btn("F3", "descuento", self.abrir_descuento, style="green")
+        self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="green")
         self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="orange")
         actions_grid.addWidget(self.btn_descuento, 1, 0)
         actions_grid.addWidget(self.btn_recargo, 1, 1)
@@ -678,7 +678,7 @@ class Paso6Cobro(QDialog):
             self.btn_descuento.setText(f"F3\n-${self.descuento_monto:,.0f}")
             self.btn_descuento.setStyleSheet(f"background: #047857; color: white; {_btn_compact}")
         else:
-            self.btn_descuento.setText("F3\ndescuento")
+            self.btn_descuento.setText("F3\nredondeo")
             self.btn_descuento.setStyleSheet(f"background: #10B981; color: white; {_btn_compact}")
             
         if getattr(self, 'recargo_monto', 0.0) > 0:

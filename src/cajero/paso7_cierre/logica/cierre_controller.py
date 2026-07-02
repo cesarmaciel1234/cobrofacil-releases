@@ -33,7 +33,8 @@ class CierreController:
             """SELECT SUM(total) as t,
                       SUM(CASE WHEN metodo_pago != 'Fiado' THEN COALESCE(pago_otro, 0) ELSE 0 END) as ta,
                       SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as tf,
-                      SUM(COALESCE(pago_efectivo, 0) - COALESCE(cambio, 0)) as te
+                      SUM(COALESCE(pago_efectivo, 0) - COALESCE(cambio, 0)) as te,
+                      SUM(COALESCE(descuento, 0)) as tr
                FROM ventas
                WHERE caja_id=? AND fecha >= ? AND estado IN ('COMPLETADA', 'CERRADA')
                  AND LOWER(usuario) = LOWER(?)""",
@@ -43,6 +44,7 @@ class CierreController:
         v_tarj = float((res_v[0]["ta"] if res_v else 0) or 0)
         v_fiado = float((res_v[0]["tf"] if res_v else 0) or 0)
         v_efec_ventas = float((res_v[0]["te"] if res_v else 0) or 0)
+        v_redondeo = float((res_v[0]["tr"] if res_v else 0) or 0)
 
         # 3. Alertas
         alertas = db_manager.execute_scalar(
@@ -85,7 +87,8 @@ class CierreController:
             "alertas": alertas,
             "esperado": esperado,
             "caja_id": caja_id,
-            "apertura_fecha": apertura_fecha
+            "apertura_fecha": apertura_fecha,
+            "t_redondeo": v_redondeo
         }
 
     @staticmethod

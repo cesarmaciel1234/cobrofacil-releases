@@ -110,8 +110,9 @@ class Paso7CierreCaja(QDialog):
         self.card_tarj = MetricCard("Ventas Digital", "💳", "#3B82F6")
         self.card_fiado = MetricCard("Ventas a Fiado", "👥", "#F59E0B")
         self.card_fondo = MetricCard("Fondo Apertura", "🏁", "#6366F1")
+        self.card_redondeo = MetricCard("Redondeos", "✂️", "#8B5CF6")
         self.card_alertas = MetricCard("Alertas Seguridad", "🚨", "#EF4444")
-        for c in [self.card_efec, self.card_tarj, self.card_fiado, self.card_fondo, self.card_alertas]: v_met.addWidget(c)
+        for c in [self.card_efec, self.card_tarj, self.card_fiado, self.card_fondo, self.card_redondeo, self.card_alertas]: v_met.addWidget(c)
         body.addLayout(v_met, 4)
         
         # Derecha: Arqueo
@@ -159,6 +160,7 @@ class Paso7CierreCaja(QDialog):
         self.card_tarj.revelar(d["t_tarj"])
         self.card_fiado.revelar(d["t_fiado"])
         self.card_fondo.revelar(d["fondo"])
+        self.card_redondeo.revelar(d["t_redondeo"])
         self.card_alertas.revelar(float(d["alertas"]), formato=False)
         
         self.panel_arq.set_esperado(d['esperado'])
