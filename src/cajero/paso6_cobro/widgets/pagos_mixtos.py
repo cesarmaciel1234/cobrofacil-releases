@@ -178,10 +178,10 @@ class DialogoPagosMixtos(QDialog):
 
     def keyPressEvent(self, event):
         from PyQt6.QtCore import Qt
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             if self.btn_confirmar.isEnabled():
                 self.accept()
-        elif event.key() == Qt.Key.Key_Escape:
+        elif event.key() == Qt.Key_Escape:
             self.reject()
         else:
             super().keyPressEvent(event)

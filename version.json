@@ -1,7 +1,7 @@
 {
   "app_version": "5.5",
   "channel": "stable",
-  "build_date": "2026-07-02 01:45:05",
+  "build_date": "2026-07-02 02:04:19",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -504,9 +504,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "ef215ab8efdeee23aca2ec9e55f04440",
+      "checksum": "811e104cdb5c4e8f51176126e04fb8d0",
       "channel": "stable",
-      "size": 38156
+      "size": 38162
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -756,9 +756,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "bb4c84b2ff72b469623d644d84d1a9e7",
+      "checksum": "17e87318d7d19cc6fcf96cb19c8fd3bc",
       "channel": "stable",
-      "size": 102894
+      "size": 102942
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -766,125 +766,125 @@
       "channel": "stable",
       "size": 43
     },
-    "src/cajero/paso5_terminal/componentes_visuales/barra_de_herramientas_inferior.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/barra_de_herramientas_inferior.py": {
       "version": "1.0.0",
       "checksum": "e897b45eb864ee00a54d950a41599dfb",
       "channel": "stable",
       "size": 3376
     },
-    "src/cajero/paso5_terminal/componentes_visuales/cabecera_superior.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/cabecera_superior.py": {
       "version": "1.0.0",
       "checksum": "2d5144b89ed597f408935554a6d367b6",
       "channel": "stable",
       "size": 3370
     },
-    "src/cajero/paso5_terminal/componentes_visuales/centro_de_notificaciones.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/centro_de_notificaciones.py": {
       "version": "1.0.0",
       "checksum": "a620c267225f042a014257e21b79eb82",
       "channel": "stable",
       "size": 2887
     },
-    "src/cajero/paso5_terminal/componentes_visuales/nav_row_border_overlay.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/nav_row_border_overlay.py": {
       "version": "1.0.0",
       "checksum": "c749afa180bc4a717a5f5374ccff8213",
       "channel": "stable",
       "size": 1830
     },
-    "src/cajero/paso5_terminal/componentes_visuales/panel_de_totales.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/panel_de_totales.py": {
       "version": "1.0.0",
       "checksum": "5d6f95d46b514f9c1ee06feeee497ea0",
       "channel": "stable",
       "size": 3026
     },
-    "src/cajero/paso5_terminal/componentes_visuales/tabla_de_productos.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/tabla_de_productos.py": {
       "version": "1.0.0",
       "checksum": "cc17f9a086d764e6211630c045278cbc",
       "channel": "stable",
       "size": 2282
     },
-    "src/cajero/paso5_terminal/componentes_visuales/__init__.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/__init__.py": {
       "version": "1.0.0",
       "checksum": "292f48e72b64e78cf8cf4552a0f27179",
       "channel": "stable",
       "size": 42
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/botones_atajos.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/botones_atajos.py": {
       "version": "1.0.0",
       "checksum": "35eb371fa6791b7f3d84f197168877b3",
       "channel": "stable",
       "size": 1973
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/boton_bloquear.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_bloquear.py": {
       "version": "1.0.0",
       "checksum": "bf23aed5242c587c2f75f63422e22324",
       "channel": "stable",
       "size": 695
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/boton_chatbot.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_chatbot.py": {
       "version": "1.0.0",
       "checksum": "3b779377b32fd525b812ee2ca1a9bb8e",
       "channel": "stable",
       "size": 687
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/boton_espera.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_espera.py": {
       "version": "1.0.0",
       "checksum": "7a114c0370b84a087cf064d5ca57d8e8",
       "channel": "stable",
       "size": 429
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/boton_teclado.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_teclado.py": {
       "version": "1.0.0",
       "checksum": "8a052271c598eea679b831eb02365b2d",
       "channel": "stable",
       "size": 355
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/boton_tema.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_tema.py": {
       "version": "1.0.0",
       "checksum": "f5822ea6fbc3b218d16030e6bbd13a29",
       "channel": "stable",
       "size": 348
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/__init__.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/__init__.py": {
       "version": "1.0.0",
       "checksum": "4938112596c7a1147d5b8c9d677a7478",
       "channel": "stable",
       "size": 60
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/chat_bot.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/chatbot/chat_bot.py": {
       "version": "1.0.0",
       "checksum": "5182e3644cfdee9f8f90fcf16258b5ff",
       "channel": "stable",
       "size": 30535
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/chat_bot_animado.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/chatbot/chat_bot_animado.py": {
       "version": "1.0.0",
       "checksum": "868bec1a405ee654ee0def313b3eb2ff",
       "channel": "stable",
       "size": 27515
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/chatbot/__init__.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/chatbot/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componentes_barra_inferior/teclado_virtual/virtual_keyboard_paso5.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/teclado_virtual/virtual_keyboard_paso5.py": {
       "version": "1.0.0",
       "checksum": "89c942b3008bac7b7bf66739c7f4ebc6",
       "channel": "stable",
       "size": 13962
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componente_tabla_de_productos/mensaje_eliminacion.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/mensaje_eliminacion.py": {
       "version": "1.0.0",
       "checksum": "8b7407dc77f107a79b5b75c2d42ccbcf",
       "channel": "stable",
       "size": 3348
     },
-    "src/cajero/paso5_terminal/componentes_visuales/componente_tabla_de_productos/suprimir_articulo.py": {
+    "src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/suprimir_articulo.py": {
       "version": "1.0.0",
-      "checksum": "e8d3039add2daae25ba949250a1d8f9b",
+      "checksum": "2e7f3d8e271be9352f923b2e57b20a70",
       "channel": "stable",
-      "size": 1182
+      "size": 1244
     },
     "src/cajero/paso5_terminal/dialogos/dialogo_candado.py": {
       "version": "1.0.0",
@@ -972,9 +972,9 @@
     },
     "src/cajero/paso6_cobro/widgets/pagos_mixtos.py": {
       "version": "1.0.0",
-      "checksum": "fe1d746b305629f397e0904d17c4c4b3",
+      "checksum": "5592d7158d850364b7a1fbdb78bf0124",
       "channel": "stable",
-      "size": 7164
+      "size": 7517
     },
     "src/cajero/paso6_cobro/widgets/panel_cliente_fiado.py": {
       "version": "1.0.0",
@@ -1803,18 +1803,6 @@
       "checksum": "c0cbbb012bf86e4e76c8bd787d946f38",
       "channel": "stable",
       "size": 192
-    },
-    "src/_deprecated/admin4_gastos.py": {
-      "version": "1.0.0",
-      "checksum": "637c3b6fc3208ae3e364e27137a9ea6d",
-      "channel": "stable",
-      "size": 7528
-    },
-    "src/_deprecated/admin9_contabilidad.py": {
-      "version": "1.0.0",
-      "checksum": "ca08eb25775f36c1df050b5467fe6bad",
-      "channel": "stable",
-      "size": 608
     },
     "tests/tests_features.py": {
       "version": "1.0.0",

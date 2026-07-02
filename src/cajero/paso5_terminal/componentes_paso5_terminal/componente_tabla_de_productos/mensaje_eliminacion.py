@@ -80,10 +80,14 @@ class MensajeEliminacion(QDialog):
         btn_row.addWidget(btn_delete, 1)
         layout.addLayout(btn_row)
 
+        # Hacer que el botón eliminar tenga el foco por defecto
+        btn_delete.setFocus()
+        btn_delete.setDefault(True)
+
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
             self.accept()
-        elif event.key() == Qt.Key.Key_Escape:
+        elif event.key() == Qt.Key_Escape:
             self.reject()
         else:
             super().keyPressEvent(event)
