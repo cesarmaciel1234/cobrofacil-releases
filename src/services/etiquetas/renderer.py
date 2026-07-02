@@ -123,7 +123,7 @@ class EtiquetaRenderer:
         printer = QPrinter(printer_high_resolution())
         printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
-        printer.setPageSize(QPageSize(QPageSize.A4))
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
         printer.setResolution(600)
         # Margen estándar de 2mm para evitar cortes
         set_page_margins_mm(printer, 2, 2, 2, 2)
@@ -860,7 +860,7 @@ class EtiquetaRenderer:
         printer.setResolution(300)
         printer.setFullPage(True)
         set_page_margins_mm(printer, 10, 10, 10, 10)
-        printer.setPageSize(QPageSize(QPageSize.A4))
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
         set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
@@ -1063,7 +1063,7 @@ class EtiquetaRenderer:
         printer.setResolution(300)
         printer.setFullPage(True)
         set_page_margins_mm(printer, 10, 10, 10, 10)
-        printer.setPageSize(QPageSize(QPageSize.A4))
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
         set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
@@ -1243,7 +1243,7 @@ class EtiquetaRenderer:
         printer.setResolution(300)
         printer.setFullPage(True)
         set_page_margins_mm(printer, 5, 5, 5, 5)
-        printer.setPageSize(QPageSize(QPageSize.A4))
+        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
         set_page_orientation_portrait(printer)
 
         doc = QTextDocument()
