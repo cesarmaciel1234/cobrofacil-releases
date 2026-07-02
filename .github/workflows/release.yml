@@ -72,6 +72,7 @@ jobs:
             --hidden-import "reportlab.graphics.barcode.code128" `
             --hidden-import "reportlab.graphics.barcode.code39" `
             --hidden-import "reportlab.graphics.barcode.eanbc" `
+            --hidden-import "src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot" `
             --hidden-import "lxml" `
             --hidden-import "html5lib" `
             --hidden-import "openpyxl" `
