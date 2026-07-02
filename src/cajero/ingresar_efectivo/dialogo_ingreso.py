@@ -245,3 +245,19 @@ class DialogoIngresoEfectivo(QDialog):
             self.reject()
         else:
             super().keyPressEvent(event)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        parent = self.parent()
+        if parent:
+            geo = parent.geometry()
+            self.move(
+                geo.center().x() - self.width() // 2,
+                geo.center().y() - self.height() // 2
+            )
+        else:
+            screen = self.screen().geometry()
+            self.move(
+                screen.center().x() - self.width() // 2,
+                screen.center().y() - self.height() // 2
+            )
