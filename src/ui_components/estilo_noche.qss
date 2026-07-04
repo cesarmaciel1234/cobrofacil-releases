@@ -1165,3 +1165,27 @@ QFrame#PerfilActionInner { background: transparent; border-radius: 12px; border:
 QFrame#PerfilActionInner:hover { background: #F1F5F9; border-color: #E2E8F0; }
 
 QDialog[theme="dark"] QFrame#PerfilActionInner:hover { background: #1E293B; border-color: #334155; }
+
+/* --- CUSTOM BUTTON CLASSES (NIGHT) --- */
+QPushButton.primary-btn { background-color: #3B82F6; color: #FFFFFF; }
+QPushButton.primary-btn:hover { background-color: #60A5FA; }
+QPushButton.primary-btn:disabled { background-color: #334155; color: #475569; }
+
+QPushButton.success-btn { background-color: #10B981; color: #FFFFFF; }
+QPushButton.success-btn:hover { background-color: #34D399; }
+QPushButton.success-btn:disabled { background-color: #334155; color: #475569; }
+
+QPushButton.warn-btn { background-color: #F97316; color: #FFFFFF; }
+QPushButton.warn-btn:hover { background-color: #FDBA74; }
+QPushButton.warn-btn:disabled { background-color: #334155; color: #475569; }
+
+/* --- CUSTOM LABELS (NIGHT) --- */
+QLabel#titulo-ofertas { color: #F8FAFC; }
+
+
+
+/* --- JEFE CLASSES (NIGHT) --- */
+QFrame.kpi-card, QFrame.jefe-card { background-color: #1E293B; border-color: #334155; }
+QLabel.kpi-title { color: #64748B; }
+QLabel.kpi-value { color: #F8FAFC; }
+

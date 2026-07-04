@@ -658,8 +658,11 @@ class AIAssistantWidget(ModernCard):
         self.current_char = 0
 
     def update_insights(self, chart_data, pago_sum, donut_data):
-        self.lbl_status.show()
-        self.lbl_content.setText("")
+        try:
+            self.lbl_status.show()
+            self.lbl_content.setText("")
+        except RuntimeError:
+            return  # Widget ya fue destruido (usuario cambió de pestaña)
         
         # Generar texto de insights
         total_ventas = sum([d.get('ventas', 0) for d in chart_data.values()])

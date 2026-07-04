@@ -51,14 +51,14 @@ def get_depto_icon(depto_name):
     return "📦"
 
 
-from src.admin.reportes.componentes.modern_card import ModernCard
-from src.admin.reportes.componentes.stock_area_chart_widget import StockAreaChartWidget
-from src.admin.reportes.componentes.bar_chart_widget import BarChartWidget
-from src.admin.reportes.componentes.donut_chart_widget import DonutChartWidget
-from src.admin.reportes.componentes.ai_assistant_widget import AIAssistantWidget
-from src.admin.reportes.componentes.dialogo_ventas_por_hora import DialogoVentasPorHora
-from src.admin.reportes.componentes.dialogo_inventario_bajo import DialogoInventarioBajo
-from src.admin.reportes.componentes.data_loader_thread import DataLoaderThread
+from src.jefe.reportes.admin_reportes.componentes.modern_card import ModernCard
+from src.jefe.reportes.admin_reportes.componentes.stock_area_chart_widget import StockAreaChartWidget
+from src.jefe.reportes.admin_reportes.componentes.bar_chart_widget import BarChartWidget
+from src.jefe.reportes.admin_reportes.componentes.donut_chart_widget import DonutChartWidget
+from src.jefe.reportes.admin_reportes.componentes.ai_assistant_widget import AIAssistantWidget
+from src.jefe.reportes.admin_reportes.componentes.dialogo_ventas_por_hora import DialogoVentasPorHora
+from src.jefe.reportes.admin_reportes.componentes.dialogo_inventario_bajo import DialogoInventarioBajo
+from src.jefe.reportes.admin_reportes.componentes.data_loader_thread import DataLoaderThread
 
 class Admin3Reportes(QWidget):
 
@@ -1316,11 +1316,6 @@ class Admin3Reportes(QWidget):
                     border: 1px solid {border_color};
                 }}
             """)
-            sh = QGraphicsDropShadowEffect(card)
-            sh.setBlurRadius(10)
-            sh.setColor(QColor(0, 0, 0, 15))
-            sh.setOffset(0, 2)
-            card.setGraphicsEffect(sh)
             
             c_lay = QVBoxLayout(card)
             c_lay.setContentsMargins(15, 10, 15, 10)
@@ -1640,11 +1635,6 @@ class Admin3Reportes(QWidget):
             h_color = accent.lstrip('#')
             r, g, b = tuple(int(h_color[i:i+2], 16) for i in (0, 2, 4))
             
-            sh = QGraphicsDropShadowEffect(f)
-            sh.setBlurRadius(16)
-            sh.setColor(QColor(r, g, b, 20))
-            sh.setOffset(0, 4)
-            f.setGraphicsEffect(sh)
             
             l = QVBoxLayout(f)
             l.setContentsMargins(18, 14, 18, 14)

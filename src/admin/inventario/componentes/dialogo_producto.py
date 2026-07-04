@@ -17,7 +17,6 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.admin.inventario.theme import STYLE
 
 class DialogoProducto(QDialog):
     def __init__(self, datos=None, parent=None):
@@ -294,7 +293,7 @@ class DialogoProducto(QDialog):
 
     def _actualizar_info_iva(self):
         dep = self.cmb_depto.currentText().strip()
-        from src.admin.admin5_configuracion import config
+        from src.config import config
         iva_gen = float(config.get("tax_percentage", 21.0))
         if not dep:
             self.lbl_iva_info.setText(f"ℹ️ IVA Aplicado: {iva_gen:.1f}% (tasa general)")

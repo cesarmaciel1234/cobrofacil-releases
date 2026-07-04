@@ -18,7 +18,7 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.admin.reportes.componentes.modern_card import ModernCard
+from src.jefe.reportes.admin_reportes.componentes.modern_card import ModernCard
 
 def get_depto_icon(depto_name):
     if not depto_name:

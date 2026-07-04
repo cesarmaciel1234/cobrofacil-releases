@@ -17,7 +17,6 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.admin.inventario.theme import STYLE
 
 from src.admin.inventario.componentes.dialogo_producto import DialogoProducto
 from src.admin.inventario.componentes.panel_departamentos import PanelDepartamentos
@@ -38,12 +37,10 @@ class Admin1Inventario(QWidget):
 
     def _apply_inventario_theme(self):
         """Reaplica tema claro tras theme_manager (se ejecuta al lazy-load)."""
-        self.setStyleSheet(STYLE)
         if hasattr(self, "catalogo"):
             self.catalogo._apply_catalogo_theme()
 
     def _setup_ui(self):
-        self.setStyleSheet(STYLE)
         root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
         # Header Elite Blue (Cajero Style unificado sin recuadro blanco)

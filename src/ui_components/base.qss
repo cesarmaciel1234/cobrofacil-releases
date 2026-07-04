@@ -779,3 +779,21 @@ QPushButton#BtnCloseHist {
     font-weight: bold;
     border: none;
 }
+
+/* --- CUSTOM BUTTON CLASSES --- */
+QPushButton.primary-btn { font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 8px; border: none; }
+QPushButton.success-btn { font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 8px; border: none; }
+QPushButton.warn-btn { font-weight: 800; font-size: 11px; padding: 8px 15px; border-radius: 8px; border: none; }
+
+/* --- CUSTOM LABELS --- */
+QLabel#titulo-ofertas { font-size: 22px; font-weight: 900; letter-spacing: 1px; }
+QLabel#titulo-ofertas-year { color: #64748B; }
+
+
+
+/* --- JEFE / PREMIUM FLAT CLASSES --- */
+QFrame.kpi-card { border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; }
+QFrame.jefe-card { border-radius: 12px; border: 1px solid #E2E8F0; background: #FFFFFF; }
+QLabel.kpi-title { font-size: 10px; font-weight: 800; letter-spacing: 1px; color: #94A3B8; background: transparent; }
+QLabel.kpi-value { font-size: 32px; font-weight: 900; color: #0F172A; background: transparent; }
+

@@ -1551,3 +1551,27 @@ QPushButton#BtnCloseHist {
 QPushButton#BtnCloseHist:hover {
     background-color: #DC2626 !important;
 }
+
+/* --- CUSTOM BUTTON CLASSES (DAY) --- */
+QPushButton.primary-btn { background-color: #2563EB; color: #FFFFFF; }
+QPushButton.primary-btn:hover { background-color: #1D4ED8; }
+QPushButton.primary-btn:disabled { background-color: #CBD5E1; color: #94A3B8; }
+
+QPushButton.success-btn { background-color: #059669; color: #FFFFFF; }
+QPushButton.success-btn:hover { background-color: #047857; }
+QPushButton.success-btn:disabled { background-color: #CBD5E1; color: #94A3B8; }
+
+QPushButton.warn-btn { background-color: #EA580C; color: #FFFFFF; }
+QPushButton.warn-btn:hover { background-color: #C2410C; }
+QPushButton.warn-btn:disabled { background-color: #CBD5E1; color: #94A3B8; }
+
+/* --- CUSTOM LABELS (DAY) --- */
+QLabel#titulo-ofertas { color: #0F172A; }
+
+
+
+/* --- JEFE CLASSES (DAY) --- */
+QFrame.kpi-card, QFrame.jefe-card { background-color: #FFFFFF; border-color: #E2E8F0; }
+QLabel.kpi-title { color: #94A3B8; }
+QLabel.kpi-value { color: #0F172A; }
+

@@ -216,9 +216,9 @@ class MariaDBController:
         
         sql_commands = (
             "CREATE DATABASE IF NOT EXISTS punpro_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-            "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '1234';"
-            "ALTER USER 'root'@'%' IDENTIFIED BY '1234';"
-            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '1234' WITH GRANT OPTION;"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '1234' WITH GRANT OPTION;"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '1234' WITH GRANT OPTION;"
             "FLUSH PRIVILEGES;"
         )
         
@@ -250,7 +250,7 @@ class MariaDBController:
                 stderr=subprocess.DEVNULL,
                 creationflags=creationflags
             )
-            success = _wait_responsive(process, 2)
+            success = _wait_responsive(process, 15)
             if success:
                 logger.info("Base de datos punpro_db garantizada en MariaDB local (inicializada con contraseña '1234').")
                 return
@@ -266,10 +266,13 @@ class MariaDBController:
                 stderr=subprocess.DEVNULL,
                 creationflags=creationflags
             )
-            _wait_responsive(process, 2)
-            logger.info("Base de datos punpro_db garantizada en MariaDB local (con contraseña '1234' confirmada).")
+            success = _wait_responsive(process, 15)
+            if success:
+                logger.info("Base de datos punpro_db garantizada en MariaDB local (con contraseña '1234' confirmada).")
+            else:
+                logger.error("Fallo al inicializar base de datos con contraseña predeterminada.")
         except Exception as e:
-            logger.error(f"Error creando la base de datos punpro_db local: {e}")
+            logger.error(f"Excepcion al inicializar DB: {e}")
 
     def stop_server(self):
         """Detiene el servidor MariaDB limpiamente."""

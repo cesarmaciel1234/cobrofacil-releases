@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QGridLayout, QPushButton, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from src.admin.componentes_visuales.admin_card import AdminCard
+from src.admin.admin_card import AdminCard
 
 try:
     from src.base_de_datos.database import db_manager
@@ -288,7 +288,7 @@ class Admin0Dashboard(QWidget):
                 );
                 border-radius: 18px;
                 border: none;
-            }
+            }}
         """)
         # Actualizar brand
         self.brand_lbl.setText(

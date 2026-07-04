@@ -22,10 +22,7 @@ from src.carteleria.motor_logico import MotorLogico
 import time
 from src.carteleria.gemini_worker import GeminiWorker
 
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    db_manager = None
+db_manager = None  # Refactorizado a API REST
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
@@ -36,68 +33,40 @@ class EspiaWorker(QThread):
 
     def __init__(self, master_ip, path_local):
         super().__init__()
-        self.master_ip = master_ip
-        self.path_local = path_local
-        self.live_scan_last_mtime = 0
-        self.live_scan_processed = True
-        self.live_scan_last_change_time = 0
-        self.ultimo_espia_timestamp = 0
         self.running = True
 
     def espia_log(self, msg):
-        print(msg)
-        try:
-            import os
-            from datetime import datetime
-            from src.utils.paths import get_base_path
-            log_p = os.path.join(get_base_path(), "logs", "espia_debug.log")
-            with open(log_p, "a", encoding="utf-8") as f:
-                f.write(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}\n")
-        except: pass
+        pass
 
     def run(self):
-        import json, os, urllib.request, time
-        from src.utils.paths import get_base_path
-        
-        while self.running:
-            data = None
-            mtime = 0
+        import socket, json
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind(('0.0.0.0', 37021))
+            sock.settimeout(2.0)
+        except Exception as e:
+            print(f"Error binding UDP port 37021: {e}")
+            return
             
-            # Buscar IP dinamicamente si no hay
-            master_ip = self.master_ip
-            es_local = False
-            if master_ip in ("127.0.0.1", "localhost", "0.0.0.0", ""): es_local = True
+        while self.running:
             try:
-                import socket
-                if master_ip == socket.gethostbyname(socket.gethostname()): es_local = True
-            except: pass
-            if es_local and os.path.exists(self.path_local): master_ip = ""
-
-            if not master_ip and not os.path.exists(self.path_local):
-                from src.network.network_engine import get_network_engine
-                engine = get_network_engine()
-                if engine and hasattr(engine, '_active_ips') and engine._active_ips:
-                    for rol, ip in engine._active_ips.items():
-                        if any(x in rol.upper() for x in ["CAJA", "CAJERO", "TERMINAL", "ADMIN", "JEFE"]):
-                            master_ip = ip
-                            break
-                    if not master_ip and engine._active_ips:
-                        master_ip = list(engine._active_ips.values())[0]
-
-            try:
-                if master_ip:
-                    url = f"http://{master_ip}:8000/api/live_scan"
-                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req, timeout=0.2) as response:
-                        data = json.loads(response.read().decode('utf-8'))
-                        if data: mtime = data.get("timestamp", 0)
+                data_bytes, addr = sock.recvfrom(4096)
+                data = json.loads(data_bytes.decode('utf-8'))
+                
+                if data.get("limpiar"):
+                    self.limpiar_solicitado.emit()
                 else:
-                    if os.path.exists(self.path_local):
-                        mtime = os.path.getmtime(self.path_local)
-                        with open(self.path_local, "r", encoding="utf-8") as f:
-                            data = json.load(f)
+                    carrito = data.get("carrito", [])
+                    ahorro = data.get("ahorro", 0.0)
+                    ultimo = data.get("ultimo_escaneado", "")
+                    
+                    if carrito:
+                        self.recomendacion_lista.emit(ahorro, ultimo, carrito, [])
+            except socket.timeout:
+                continue
             except Exception as e:
-                time.sleep(0.2)
+                continue
                 continue
 
             if not data or mtime == 0:
@@ -138,7 +107,7 @@ class EspiaWorker(QThread):
                             from src.carteleria.motor_ia import MotorIA
                             from src.base_de_datos.database import db_manager
                             clima_para_ia = ("sol", "20°C Pilar")
-                            msg, l_gas, l_aho = MotorIA.generar_recomendacion_dual(db_manager, ahorro, cart_eval, clima_para_ia)
+                            msg, l_gas, l_aho = MotorIA.generar_recomendacion_dual(None, ahorro, cart_eval, clima_para_ia)
                             self.espia_log("[ESPIA_DEBUG] Recomendacion generada en Worker. Emitiendo...")
                             self.recomendacion_lista.emit(ahorro, msg or "¡EXCELENTE ELECCIÓN!", l_gas, l_aho)
             
@@ -369,174 +338,108 @@ class CarteleriaMain(QWidget):
 
     def _sincronizar_todo_con_db(self):
         try:
-            if db_manager:
-                db = db_manager
-                is_mariadb = getattr(db, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                
-                # --- LECTURA DE CONFIGURACIÓN DIRECTA ---
-                try:
-                    import json
-                    from src.utils.paths import get_base_path
-                    config_path = os.path.join(get_base_path(), "config.json")
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        cfg_data = json.load(f)
-                    nombre_negocio = cfg_data.get("business_name", "Carnicería")
-                    telefono_negocio = cfg_data.get("phone", "No disponible")
+            from src.config import config
+            import urllib.request
+            import json
+            import urllib.error
+            import socket
+            
+            # Buscar IP dinamicamente si no hay
+            master_ip = config.get("carteleria_master_ip", "")
+            es_local = False
+            if master_ip in ("127.0.0.1", "localhost", "0.0.0.0", ""): es_local = True
+            try:
+                if master_ip == socket.gethostbyname(socket.gethostname()): es_local = True
+            except: pass
+
+            if not master_ip:
+                from src.network.network_engine import get_network_engine
+                engine = get_network_engine()
+                if engine and hasattr(engine, '_active_ips') and engine._active_ips:
+                    for rol, ip in engine._active_ips.items():
+                        if any(x in rol.upper() for x in ["CAJA", "CAJERO", "TERMINAL", "ADMIN", "JEFE"]):
+                            master_ip = ip
+                            break
+                    if not master_ip and engine._active_ips:
+                        master_ip = list(engine._active_ips.values())[0]
+
+            if not master_ip: master_ip = "127.0.0.1"
+
+            url = f"http://{master_ip}:8000/api/carteleria/data"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=3.0) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            
+            # 1. Configuracion
+            cfg_data = data.get("config", {})
+            nombre_negocio = cfg_data.get("business_name", "Carnicería")
+            telefono_negocio = cfg_data.get("phone", "No disponible")
+            
+            self.info_negocio.actualizar_nombre(nombre_negocio)
+            msg_publicitario = f"👨‍👩‍👧‍👦 ¡La mejor calidad para disfrutar en familia! Más de 500 familias nos eligen cada semana. ¡Gracias por su apoyo! ❤️ | Consultas por WhatsApp al: {telefono_negocio}"
+            self.mensaje.actualizar_texto(msg_publicitario)
+            
+            # Actualizar tiempo de rotación
+            nueva_rotacion = cfg_data.get("carteleria_rotacion", 15) * 1000
+            if hasattr(self, 'rotacion_ms') and nueva_rotacion != self.rotacion_ms:
+                self.rotacion_ms = nueva_rotacion
+                if self.timer.isActive() and self.stack.currentIndex() == 0:
+                    self.timer.setInterval(self.rotacion_ms)
                     
-                    self.info_negocio.actualizar_nombre(nombre_negocio)
-                    msg_publicitario = f"👨‍👩‍👧‍👦 ¡La mejor calidad para disfrutar en familia! Más de 500 familias nos eligen cada semana. ¡Gracias por su apoyo! ❤️ | Consultas por WhatsApp al: {telefono_negocio}"
-                    self.mensaje.actualizar_texto(msg_publicitario)
+            self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
+            self.frec_sos = cfg_data.get("carteleria_frec_sos", 2)
+
+            # 2. Oferta SOS
+            oferta_sos = data.get("sos", [])
+            if oferta_sos:
+                r_sos = oferta_sos[0]
+                if isinstance(r_sos, dict):
+                    nombre = r_sos.get('nombre') or ''
+                    precio = float(r_sos.get('precio') or 0.0)
+                    ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
+                    validas = [x for x in ofertas if x > 0]
+                    precio_oferta = min(validas) if validas else 0.0
                     
-                    # Actualizar tiempo de rotación
-                    nueva_rotacion = cfg_data.get("carteleria_rotacion", 15) * 1000
-                    if hasattr(self, 'rotacion_ms') and nueva_rotacion != self.rotacion_ms:
-                        self.rotacion_ms = nueva_rotacion
-                        if self.timer.isActive() and self.stack.currentIndex() == 0:
-                            self.timer.setInterval(self.rotacion_ms)
-                            
-                    self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
-                    self.frec_sos = cfg_data.get("carteleria_frec_sos", 2)
-                except Exception as e:
-                    logger.warning(f"Error cargando config.json: {e}")
-                
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE es_sos = 1 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
-                oferta_sos = db.execute_query(sos_query)
-                if oferta_sos:
-                    r_sos = oferta_sos[0]
-                    if isinstance(r_sos, dict):
-                        nombre = r_sos.get('nombre') or ''
-                        precio = float(r_sos.get('precio') or 0.0)
-                        ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
-                        validas = [x for x in ofertas if x > 0]
-                        precio_oferta = min(validas) if validas else 0.0
-                        
-                        cant_of = float(r_sos.get('cant_oferta') or 0)
-                        if cant_of > 0:
-                            nombre = f"{nombre} [Llevando {int(cant_of)} {r_sos.get('tipo_unidad_oferta', 'un')}]"
-                    else:
-                        nombre = r_sos[0] if r_sos[0] else ''
-                        precio = float(r_sos[1] if r_sos[1] else 0.0)
-                        ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
-                        validas = [x for x in ofertas if x > 0]
-                        precio_oferta = min(validas) if validas else 0.0
-                        
-                        cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
-                        if cant_of > 0:
-                            tipo_un = str(r_sos[6]) if len(r_sos) > 6 else 'un'
-                            nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
-                            
-                    self.page_sos.actualizar(nombre, precio, precio_oferta)
-                    self.hay_oferta_sos = True
+                    cant_of = float(r_sos.get('cant_oferta') or 0)
+                    if cant_of > 0:
+                        nombre = f"{nombre} [Llevando {int(cant_of)} {r_sos.get('tipo_unidad_oferta', 'un')}]"
                 else:
-                    self.hay_oferta_sos = False
-                    if self.stack.currentIndex() == 1:
-                        self._fade_to_index(0)
-                
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY categoria"
-                rows_precios = db.execute_query(precios_query)
-                import hashlib
-                current_hash = hashlib.md5(str(rows_precios).encode()).hexdigest()
-                if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
-                    self.last_precios_hash = current_hash
-                    if rows_precios:
-                        self.zona2_precios.set_items(self._agrupar(rows_precios))
-                
-                import time
-                now = time.time()
-                if not hasattr(self, 'last_top10_update') or (now - self.last_top10_update) > 60:
-                    self.last_top10_update = now
+                    nombre = r_sos[0] if r_sos[0] else ''
+                    precio = float(r_sos[1] if r_sos[1] else 0.0)
+                    ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
+                    validas = [x for x in ofertas if x > 0]
+                    precio_oferta = min(validas) if validas else 0.0
                     
-                    query_hoy = """
-                    SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, p.precio_oferta_promedio, SUM(d.cantidad) as total_vendido
-                    FROM detalles_ventas d
-                    JOIN ventas v ON d.id_venta = v.id
-                    JOIN productos p ON d.id_producto = p.id
-                    WHERE DATE(v.fecha) = CURDATE() AND v.estado != 'CANCELADA' AND p.precio > 0
-                    GROUP BY p.id
-                    ORDER BY total_vendido DESC
-                    LIMIT 10
-                    """
-                    query_semanal = """
-                    SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, p.precio_oferta_promedio, SUM(d.cantidad) as total_vendido
-                    FROM detalles_ventas d
-                    JOIN ventas v ON d.id_venta = v.id
-                    JOIN productos p ON d.id_producto = p.id
-                    WHERE v.fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND v.estado != 'CANCELADA' AND p.precio > 0
-                    GROUP BY p.id
-                    ORDER BY total_vendido DESC
-                    LIMIT 10
-                    """
-                    query_mensual = """
-                    SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, p.precio_oferta_promedio, SUM(d.cantidad) as total_vendido
-                    FROM detalles_ventas d
-                    JOIN ventas v ON d.id_venta = v.id
-                    JOIN productos p ON d.id_producto = p.id
-                    WHERE MONTH(v.fecha) = MONTH(CURDATE()) AND YEAR(v.fecha) = YEAR(CURDATE()) AND v.estado != 'CANCELADA' AND p.precio > 0
-                    GROUP BY p.id
-                    ORDER BY total_vendido DESC
-                    LIMIT 10
-                    """
-                    try:
-                        self.top10_hoy = db.execute_query(query_hoy) or []
-                        self.top10_semanal = db.execute_query(query_semanal) or []
-                        self.top10_mensual = db.execute_query(query_mensual) or []
-                    except Exception as e:
-                        logger.error(f"Error queries Top10: {e}")
-                        self.top10_hoy = []
-                        self.top10_semanal = []
-                        self.top10_mensual = []
+                    cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
+                    if cant_of > 0:
+                        tipo_un = str(r_sos[6]) if len(r_sos) > 6 else 'un'
+                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
                         
-                    all_tops = self.top10_hoy + self.top10_semanal + self.top10_mensual
-                    if all_tops:
-                        unique = {}
-                        for r in all_tops:
-                            if isinstance(r, dict):
-                                ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
-                                validas = [x for x in ofertas if x > 0]
-                                p_of = min(validas) if validas else 0.0
-                                unique[r['nombre']] = (r['nombre'], float(r['precio'] or 0), p_of)
-                            else:
-                                ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (2, 3, 4)]
-                                validas = [x for x in ofertas if x > 0]
-                                p_of = min(validas) if validas else 0.0
-                                unique[r[0]] = (r[0], float(r[1] or 0), p_of)
-                        self.datos_destacados = list(unique.values())
-                    else:
-                        destacados_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
-                        rows_destacados = db.execute_query(destacados_query)
-                        self.datos_destacados = []
-                        if rows_destacados:
-                            for r in rows_destacados:
-                                if isinstance(r, dict):
-                                    ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
-                                    validas = [x for x in ofertas if x > 0]
-                                    p_of = min(validas) if validas else 0.0
-                                    
-                                    nombre = r.get('nombre', '')
-                                    cant_of = float(r.get('cant_oferta') or 0)
-                                    if cant_of > 0:
-                                        nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
-                                        
-                                    self.datos_destacados.append((nombre, float(r.get('precio', 0)), p_of))
-                                else:
-                                    ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (2, 3, 4)]
-                                    validas = [x for x in ofertas if x > 0]
-                                    p_of = min(validas) if validas else 0.0
-                                    
-                                    nombre = str(r[0])
-                                    cant_of = float(r[5]) if len(r) > 5 else 0.0
-                                    if cant_of > 0:
-                                        tipo_un = str(r[6]) if len(r) > 6 else 'un'
-                                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
-                                        
-                                    self.datos_destacados.append((nombre, float(r[1] if r[1] else 0), p_of))
+                self.page_sos.actualizar(nombre, precio, precio_oferta)
+                self.hay_oferta_sos = True
             else:
-                self._cargar_demo_completa()
-                
+                self.hay_oferta_sos = False
+                if self.stack.currentIndex() == 1:
+                    self._fade_to_index(0)
+
+            # 3. Precios Generales
+            rows_precios = data.get("precios", [])
+            import hashlib
+            current_hash = hashlib.md5(str(rows_precios).encode()).hexdigest()
+            if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
+                self.last_precios_hash = current_hash
+                if rows_precios:
+                    self.zona2_precios.set_items(self._agrupar(rows_precios))
+                    
+            # 4. Top 10 para Banderin
+            rows_top10 = data.get("top10", [])
+            if rows_top10:
+                self.datos_destacados = rows_top10
+
         except Exception as e:
-            logger.warning(f"Simulando Base de Datos: {e}")
-            self._cargar_demo_completa()
+            logger.warning(f"Error sincronizando carteleria via API: {e}")
+                
+
 
     def _guardar_sugerencia_activa(self, productos_sugeridos):
         import json, os, time
@@ -692,12 +595,11 @@ class CarteleriaMain(QWidget):
             else:
                 # Generar un combo real a partir del inventario
                 nombres = []
-                if db_manager:
-                    is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                    rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                    res = db_manager.execute_query(f"SELECT nombre FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 3")
-                    if res and len(res) >= 2:
-                        nombres = [r.get('nombre', '') if isinstance(r, dict) else r[0] for r in res]
+                # Fallback to in-memory data for combo
+                if len(self.datos_destacados) >= 2:
+                    import random
+                    nombres = [p[0] for p in random.sample(self.datos_destacados, min(3, len(self.datos_destacados)))]
+                
                         
                 if nombres:
                     centro_compra_simulado = random.choice([prod_siguiente[0], prod_actual[0]])
@@ -717,7 +619,7 @@ class CarteleriaMain(QWidget):
             else:
                 self.timer.setInterval((self.rotacion_ms if hasattr(self, 'rotacion_ms') else 16000) + 12000) # MÁS TIEMPO para IA
                 msg, prod, precio, precio_oferta = MotorLogico.generar_recomendacion(
-                    db_manager, 
+                    None, 
                     self.clima_pilar, 
                     self.datos_destacados
                 )

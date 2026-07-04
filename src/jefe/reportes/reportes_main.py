@@ -35,6 +35,7 @@ class ReportesMain(QWidget):
         self.btn_ventas = QPushButton("📉 REPORTE FINANCIERO")
         self.btn_auditoria = QPushButton("🔍 AUDITORÍA DE VENTAS")
         self.btn_historial = QPushButton("🕰️ HISTORIAL")
+        self.btn_admin_reporte = QPushButton("📊 REPORTE ADMIN")
 
         # Styling
         btn_style = f"""
@@ -52,7 +53,7 @@ class ReportesMain(QWidget):
                 color: {_FIN['accent']};
             }}
         """
-        for btn in [self.btn_volver, self.btn_ventas, self.btn_auditoria, self.btn_historial]:
+        for btn in [self.btn_volver, self.btn_ventas, self.btn_auditoria, self.btn_historial, self.btn_admin_reporte]:
             btn.setStyleSheet(btn_style)
             top_lay.addWidget(btn)
         
@@ -67,11 +68,13 @@ class ReportesMain(QWidget):
         self.setup_ventas_ui()
         self.setup_audit_ui()
         self.setup_historial_ui()
+        self.setup_admin_reporte_ui()
 
         # Connections
         self.btn_ventas.clicked.connect(self._show_ventas_tab)
         self.btn_auditoria.clicked.connect(self._show_auditoria_tab)
         self.btn_historial.clicked.connect(self._show_historial_tab)
+        self.btn_admin_reporte.clicked.connect(self._show_admin_reporte_tab)
 
         self._show_ventas_tab()
 
@@ -85,6 +88,10 @@ class ReportesMain(QWidget):
 
     def _show_historial_tab(self):
         self.stack_views.setCurrentIndex(2)
+        self._update_tab_buttons()
+
+    def _show_admin_reporte_tab(self):
+        self.stack_views.setCurrentIndex(3)
         self._update_tab_buttons()
 
     def _update_tab_buttons(self):
@@ -122,6 +129,7 @@ class ReportesMain(QWidget):
         self.btn_ventas.setStyleSheet(active_style if idx == 0 else inactive_style)
         self.btn_auditoria.setStyleSheet(active_style if idx == 1 else inactive_style)
         self.btn_historial.setStyleSheet(active_style if idx == 2 else inactive_style)
+        self.btn_admin_reporte.setStyleSheet(active_style if idx == 3 else inactive_style)
 
     def setup_ventas_ui(self):
         from src.jefe.reportes.vista_financiero import VistaFinanciero
@@ -137,3 +145,8 @@ class ReportesMain(QWidget):
         from src.jefe.reportes.vista_historial import VistaHistorial
         self.tab_historial = VistaHistorial(self)
         self.stack_views.addWidget(self.tab_historial)
+
+    def setup_admin_reporte_ui(self):
+        from src.jefe.reportes.admin_reportes.reportes_main import Admin3Reportes
+        self.tab_admin = Admin3Reportes()
+        self.stack_views.addWidget(self.tab_admin)

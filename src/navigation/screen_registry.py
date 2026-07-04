@@ -16,31 +16,31 @@ def build_screen_factories(main_window):
             "src.admin.admin0_dashboard", fromlist=["Admin0Dashboard"]
         ).Admin0Dashboard(),
         Screen.INVENTARIO: lambda: _imp(
-            "src.admin.admin1_inventario", fromlist=["Admin1Inventario"]
+            "src.admin.inventario.inventario_main", fromlist=["Admin1Inventario"]
         ).Admin1Inventario(),
         Screen.OFERTAS: lambda: _imp(
-            "src.admin.admin2_ofertas", fromlist=["Admin2Ofertas"]
+            "src.admin.ofertas.ofertas_main", fromlist=["Admin2Ofertas"]
         ).Admin2Ofertas(),
         Screen.REPORTES: lambda: _imp(
-            "src.admin.admin3_reportes", fromlist=["Admin3Reportes"]
+            "src.jefe.reportes.admin_reportes.reportes_main", fromlist=["Admin3Reportes"]
         ).Admin3Reportes(),
         Screen.CONFIGURACION: lambda: _imp(
-            "src.admin.admin5_configuracion", fromlist=["Admin5Configuracion"]
+            "src.admin.configuracion.configuracion_main", fromlist=["Admin5Configuracion"]
         ).Admin5Configuracion(),
         Screen.RED_LAN: lambda: _imp(
             "src.admin.admin6_red_lan", fromlist=["Admin6RedLan"]
         ).Admin6RedLan(),
         Screen.CIERRE: lambda: _imp(
-            "src.admin.admin7_cierre", fromlist=["Admin7Cierre"]
+            "src.admin.cierre.cierre_main", fromlist=["Admin7Cierre"]
         ).Admin7Cierre(mw),
         Screen.ETIQUETAS: lambda: _imp(
-            "src.admin.etiquetas.admin_etiquetas", fromlist=["AdminEtiquetas"]
+            "src.admin.etiquetas_panel.etiquetas_panel_main", fromlist=["AdminEtiquetas"]
         ).AdminEtiquetas(),
         Screen.CONTABILIDAD: lambda: _imp(
             "src.jefe.contabilidad.jefe_contabilidad", fromlist=["JefeContabilidad"]
         ).JefeContabilidad(),
         Screen.MERCADO_PAGO: lambda: _imp(
-            "src.admin.admin10_mp", fromlist=["Admin10MP"]
+            "src.admin.mercadopago.mercadopago_main", fromlist=["Admin10MP"]
         ).Admin10MP(),
         Screen.PROVEEDORES: lambda: _imp(
             "src.admin.admin11_proveedores", fromlist=["Admin11Proveedores"]
@@ -52,10 +52,10 @@ def build_screen_factories(main_window):
             "src.admin.admin14_ventas_digitales", fromlist=["Admin14VentasDigitales"]
         ).Admin14VentasDigitales(),
         Screen.CLIENTES: lambda: _imp(
-            "src.admin.admin_clientes", fromlist=["AdminClientes"]
+            "src.admin.clientes.admin_clientes_main", fromlist=["AdminClientes"]
         ).AdminClientes(),
         Screen.NEXUS: lambda: _imp(
-            "src.admin.admin7_nexus", fromlist=["NexusExtremeControl"]
+            "src.admin.nexus_admin.nexus_admin_main", fromlist=["NexusExtremeControl"]
         ).NexusExtremeControl(),
         Screen.JEFE_DASHBOARD: lambda: _imp(
             "src.jefe.jefe0_dashboard", fromlist=["Jefe0Dashboard"]

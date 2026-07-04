@@ -23,9 +23,9 @@ class VistaPromediosMixin:
         self._btn_tipo_cerdo = QPushButton("🐖 CERDO")
         self._btn_tipo_pollo = QPushButton("🍗 POLLO")
         
-        self._btn_tipo_carne.setCursor(Qt.PointingHandCursor)
-        self._btn_tipo_cerdo.setCursor(Qt.PointingHandCursor)
-        self._btn_tipo_pollo.setCursor(Qt.PointingHandCursor)
+        self._btn_tipo_carne.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_tipo_cerdo.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_tipo_pollo.setCursor(Qt.CursorShape.PointingHandCursor)
         
         self._btn_tipo_carne.clicked.connect(lambda: self._cambiar_tipo_promedio("Carne"))
         self._btn_tipo_cerdo.clicked.connect(lambda: self._cambiar_tipo_promedio("Cerdo"))
@@ -178,9 +178,13 @@ class VistaPromediosMixin:
                     self._prom_tabla.setItem(i, c, QTableWidgetItem(val))
         else:
             cortes = []
-            if self._tipo_promedio == "Carne": cortes = self.CORTES_CARNE
-            elif self._tipo_promedio == "Cerdo": cortes = self.CORTES_CERDO
-            elif self._tipo_promedio == "Pollo": cortes = self.CORTES_POLLO
+            from src.jefe.promedios.res import PromedioRes
+            from src.jefe.promedios.cerdo import PromedioCerdo
+            from src.jefe.promedios.pollo import PromedioPollo
+            
+            if self._tipo_promedio == "Carne": cortes = PromedioRes.get_cortes()
+            elif self._tipo_promedio == "Cerdo": cortes = PromedioCerdo.get_cortes()
+            elif self._tipo_promedio == "Pollo": cortes = PromedioPollo.get_cortes()
             
             for i, (corte, kilos, pct) in enumerate(cortes):
                 self._prom_tabla.insertRow(i)
@@ -198,7 +202,7 @@ class VistaPromediosMixin:
             for c in [0, 2, 7, 8]: # Corte, Costo, Venta Tot, Ganancia Neta son solo lectura
                 it = self._prom_tabla.item(r, c)
                 if it:
-                    it.setFlags(it.flags() & ~Qt.ItemIsEditable)
+                    it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                     if c == 2: it.setForeground(QColor(PAL['text3']))
                     
         self._prom_tabla.blockSignals(False)
@@ -337,42 +341,62 @@ class VistaPromediosMixin:
 
         self._prom_tabla.blockSignals(False)
 
+
     def _prom_exportar_inventario(self):
         pwd, ok = QInputDialog.getText(self, "Exportar Inventario", "Ingrese contraseña de Jefe para autorizar:", QLineEdit.Password)
         if not ok or not pwd: return
         
         from src.base_de_datos.database import DatabaseManager
+        import hashlib
         db = DatabaseManager()
-        res = db.execute_query("SELECT rol FROM usuarios WHERE pin = ? OR password_hash = ?", (pwd, pwd))
+        pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
+        res = db.execute_query("SELECT rol FROM usuarios WHERE pin = ? OR password_hash = ?", (pwd, pwd_hash))
         if not res or res[0]['rol'] != 'jefe':
             QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta o el usuario no es Jefe.")
             return
             
         try:
+            self._guardar_estado_actual()
+            
+            from src.jefe.promedios.res import PromedioRes
+            from src.jefe.promedios.cerdo import PromedioCerdo
+            from src.jefe.promedios.pollo import PromedioPollo
+            for t, cls in [("Carne", PromedioRes), ("Cerdo", PromedioCerdo), ("Pollo", PromedioPollo)]:
+                if t not in self._estado_promedios:
+                    filas = []
+                    for c in cls.get_cortes():
+                        row = [c[0], str(c[1]), "0.00", str(c[2]), "0.00", "", "", "0.00", "0.00"]
+                        filas.append(row)
+                    self._estado_promedios[t] = {"kilos": "", "merma": "", "precio": "", "filas": filas}
+                    
             actualizados = 0
-            for r in range(self._prom_tabla.rowCount()):
-                corte = self._prom_tabla.item(r, 0).text().strip()
-                oferta_str = self._prom_tabla.item(r, 5).text().replace(',','').strip()
-                precio_base_str = self._prom_tabla.item(r, 4).text().replace(',','').strip()
-                
-                cant_str = self._prom_tabla.item(r, 6).text().replace(',','').strip()
-                precio = 0.0
-                precio_oferta = 0.0
-                cant_oferta = 0.0
-                
-                try: 
-                    if precio_base_str: precio = float(precio_base_str)
-                except: pass
-                try:
-                    if oferta_str: precio_oferta = float(oferta_str)
-                except: pass
-                try:
-                    if cant_str: cant_oferta = float(cant_str)
-                except: pass
-                
-                if precio > 0 or precio_oferta > 0:
-                    db.execute_non_query("UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ? WHERE nombre = ?", (precio, precio_oferta, cant_oferta, corte))
-                    actualizados += 1
+            
+            for tipo, estado in self._estado_promedios.items():
+                filas = estado.get("filas", [])
+                for row_data in filas:
+                    if len(row_data) >= 9:
+                        corte = str(row_data[0]).strip()
+                        precio_base_str = str(row_data[4]).replace(',', '').strip()
+                        oferta_str = str(row_data[5]).replace(',', '').strip()
+                        cant_str = str(row_data[6]).replace(',', '').strip()
+                        
+                        precio = 0.0
+                        precio_oferta = 0.0
+                        cant_oferta = 0.0
+                        
+                        try:
+                            if precio_base_str: precio = float(precio_base_str)
+                        except: pass
+                        try:
+                            if oferta_str: precio_oferta = float(oferta_str)
+                        except: pass
+                        try:
+                            if cant_str: cant_oferta = float(cant_str)
+                        except: pass
+                        
+                        if precio > 0 or precio_oferta > 0:
+                            db.execute_non_query("UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ? WHERE nombre = ?", (precio, precio_oferta, cant_oferta, corte))
+                            actualizados += 1
             
             QMessageBox.information(self, "Éxito", f"Se exportaron los precios de {actualizados} cortes al inventario general.")
         except Exception as e:
@@ -383,43 +407,48 @@ class VistaPromediosMixin:
         db = DatabaseManager()
         
         try:
-            actualizados = 0
-            self._prom_tabla.blockSignals(True)
-            for r in range(self._prom_tabla.rowCount()):
-                corte = self._prom_tabla.item(r, 0).text().strip()
-                res = db.execute_query("SELECT precio, precio_oferta_promedio, cant_oferta FROM productos WHERE nombre = ?", (corte,))
-                
-                if res and len(res) > 0:
-                    row = res[0]
-                    try:
-                        precio = float(row['precio'] or 0)
-                        precio_oferta = float(row['precio_oferta_promedio'] or 0)
-                        cant_oferta = float(row['cant_oferta'] or 0)
-                    except:
-                        precio = float(row[0] or 0)
-                        precio_oferta = float(row[1] or 0)
-                        cant_oferta = float(row[2] or 0)
-                    
-                    if precio > 0:
-                        self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{precio:,.2f}"))
-                    
-                    if precio_oferta > 0:
-                        self._prom_tabla.setItem(r, 5, QTableWidgetItem(f"{precio_oferta:,.2f}"))
-                    else:
-                        self._prom_tabla.setItem(r, 5, QTableWidgetItem(""))
-                        
-                    if cant_oferta > 0:
-                        self._prom_tabla.setItem(r, 6, QTableWidgetItem(f"{cant_oferta:g}"))
-                    else:
-                        self._prom_tabla.setItem(r, 6, QTableWidgetItem(""))
-                        
-                    actualizados += 1
+            self._guardar_estado_actual()
             
-            self._prom_tabla.blockSignals(False)
-            self._on_prom_tabla_changed(None) # Force recalculation to update percentages and totals
+            from src.jefe.promedios.res import PromedioRes
+            from src.jefe.promedios.cerdo import PromedioCerdo
+            from src.jefe.promedios.pollo import PromedioPollo
+            for t, cls in [("Carne", PromedioRes), ("Cerdo", PromedioCerdo), ("Pollo", PromedioPollo)]:
+                if t not in self._estado_promedios:
+                    filas = []
+                    for c in cls.get_cortes():
+                        row = [c[0], str(c[1]), "0.00", str(c[2]), "0.00", "", "", "0.00", "0.00"]
+                        filas.append(row)
+                    self._estado_promedios[t] = {"kilos": "", "merma": "", "precio": "", "filas": filas}
+                    
+            actualizados = 0
+            for tipo, estado in self._estado_promedios.items():
+                filas = estado.get("filas", [])
+                for idx in range(len(filas)):
+                    corte = str(filas[idx][0]).strip()
+                    res = db.execute_query("SELECT precio, precio_oferta_promedio, cant_oferta FROM productos WHERE nombre = ?", (corte,))
+                    if res and len(res) > 0:
+                        row = res[0]
+                        try:
+                            precio = float(row['precio'] or 0)
+                            precio_oferta = float(row['precio_oferta_promedio'] or 0)
+                            cant_oferta = float(row['cant_oferta'] or 0)
+                        except:
+                            precio = float(row[0] or 0)
+                            precio_oferta = float(row[1] or 0)
+                            cant_oferta = float(row[2] or 0)
+                            
+                        if precio > 0: filas[idx][4] = f"{precio:,.2f}"
+                        if precio_oferta > 0: filas[idx][5] = f"{precio_oferta:,.2f}"
+                        else: filas[idx][5] = ""
+                        
+                        if cant_oferta > 0: filas[idx][6] = f"{cant_oferta:g}"
+                        else: filas[idx][6] = ""
+                        
+                        actualizados += 1
+                        
+            self._load_cortes_base()
             QMessageBox.information(self, "Sincronizado", f"Se importaron {actualizados} precios/ofertas desde el Inventario.")
         except Exception as e:
-            self._prom_tabla.blockSignals(False)
             QMessageBox.warning(self, "Error", f"Fallo la sincronización: {e}")
 
     def _prom_pdf_interno(self):

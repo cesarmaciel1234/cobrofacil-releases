@@ -18,7 +18,6 @@ except ImportError:
     config = None
 
 # ── Paleta global Light Soft ──────────────────────────────────────────────────
-from src.jefe.theme_pro import THEME_PRO as L
 
 # ── Componentes importados ────────────────────────────────────────────────────
 from src.jefe.componentes_visuales.jefe_card import JefeCard
@@ -30,6 +29,7 @@ JEFE_MODULES = [
     ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
     ("contabilidad", "Contabilidad\nERP",         "💹", "#F59E0B", "#FEF3C7", "#92400E", 9,  None),
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
+    ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
     ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
 ]
 # (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
@@ -275,11 +275,11 @@ class Jefe0Dashboard(QWidget):
             logger.error(f"Error alternando tema en Jefe: {e}")
 
     def _apply_theme(self):
-        self.setStyleSheet(f"""
-            QWidget#JefeDashboard {{
+        self.setStyleSheet("""
+            QWidget#JefeDashboard {
                 font-family: 'Inter', 'Segoe UI', sans-serif;
-            }}
-            QFrame#JefeHero {{
+            }
+            QFrame#JefeHero {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
                     stop:0.00 #818CF8,
@@ -289,9 +289,9 @@ class Jefe0Dashboard(QWidget):
                 );
                 border-radius: 24px;
                 border: 1px solid rgba(255, 255, 255, 0.5);
-            }}
-            QLabel {{ background: transparent; border: none; }}
-            QScrollArea {{ border: none; background: transparent; }}
+            }
+            QLabel { background: transparent; border: none; }
+            QScrollArea { border: none; background: transparent; }
         """)
 
     def cargar_datos(self):

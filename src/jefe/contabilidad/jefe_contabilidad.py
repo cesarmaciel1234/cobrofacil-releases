@@ -66,10 +66,9 @@ from src.jefe.contabilidad.vista_tarjetas import VistaTarjetasMixin
 from src.jefe.contabilidad.vista_inversiones import VistaInversionesMixin
 from src.jefe.contabilidad.vista_costos_fijos import VistaCostosFijosMixin
 from src.jefe.contabilidad.vista_historial import VistaHistorialMixin
-from src.jefe.contabilidad.vista_promedios import VistaPromediosMixin
 from src.jefe.contabilidad.vista_reportes import VistaReportesMixin
 
-class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGastosMixin, VistaProveedoresMixin, VistaPrestamosMixin, VistaChequesMixin, VistaTarjetasMixin, VistaInversionesMixin, VistaCostosFijosMixin, VistaHistorialMixin, VistaPromediosMixin, VistaReportesMixin):
+class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGastosMixin, VistaProveedoresMixin, VistaPrestamosMixin, VistaChequesMixin, VistaTarjetasMixin, VistaInversionesMixin, VistaCostosFijosMixin, VistaHistorialMixin, VistaReportesMixin):
     """
     ERP Contable nativo — Perfil Jefe / Dueño
     Integrado 100% en el stacked widget de MainWindow.
@@ -88,7 +87,6 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
     IDX_COSTOS_F   = 8
     IDX_HISTORIAL  = 9
     IDX_REPORTES   = 10
-    IDX_PROMEDIOS  = 11
 
 
     def __init__(self, parent=None):
@@ -319,8 +317,6 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
             ("🔒  Costos Fijos",       self.IDX_COSTOS_F),
             ("📜  Historial",          self.IDX_HISTORIAL),
             ("📄  Reportes PDF",       self.IDX_REPORTES),
-            (None, None),
-            ("📈  Promedios",          self.IDX_PROMEDIOS),
         ]
 
         for label, idx in ALL_ITEMS:
@@ -426,7 +422,6 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
         self._build_tab_costos_fijos()
         self._build_tab_historial()
         self._build_tab_reportes()
-        self._build_tab_promedios()
 
     # ── Página de contenido con scroll ────────────────────────────────────────
     def _page(self):

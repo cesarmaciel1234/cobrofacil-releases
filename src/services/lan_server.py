@@ -111,8 +111,49 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     self._send_response(200, data)
                 except Exception as e:
                     self._send_response(500, {"error": str(e)})
-            else:
-                self._send_response(200, {})
+    
+        elif self.path == '/api/carteleria/data':
+            try:
+                import json
+                from src.utils.paths import get_base_path
+                config_path = os.path.join(get_base_path(), "config.json")
+                cfg_data = {}
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        cfg_data = json.load(f)
+                        
+                is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+                rand_func = "RAND()" if is_mariadb else "RANDOM()"
+                
+                # SOS
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE es_sos = 1 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                oferta_sos = db_manager.execute_query(sos_query)
+                
+                # Precios
+                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY categoria"
+                rows_precios = db_manager.execute_query(precios_query)
+                
+                # Top 10 (fallback a aleatorios para evitar SQL errors con JOINS o columnas faltantes)
+                query_hoy = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
+                rows_top10 = db_manager.execute_query(query_hoy)
+                
+                # Resumen para el dashboard
+                response_data = {
+                    "config": {
+                        "business_name": cfg_data.get("business_name", "Carnicería"),
+                        "phone": cfg_data.get("phone", "No disponible"),
+                        "carteleria_rotacion": cfg_data.get("carteleria_rotacion", 15),
+                        "carteleria_tiempo_sos": cfg_data.get("carteleria_tiempo_sos", 10),
+                        "carteleria_frec_sos": cfg_data.get("carteleria_frec_sos", 2)
+                    },
+                    "sos": oferta_sos,
+                    "precios": rows_precios,
+                    "top10": rows_top10
+                }
+                
+                self._send_response(200, response_data)
+            except Exception as e:
+                self._send_response(500, {"error": str(e)})
         else:
             self._send_response(404, {"status": "not_found"})
 

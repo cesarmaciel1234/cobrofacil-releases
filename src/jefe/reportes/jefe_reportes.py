@@ -61,8 +61,6 @@ class ModernCard(QFrame):
                 border-radius: 20px;
             }
         """)
-        shadow.setXOffset(0)
-        shadow.setYOffset(10)
 
 
 class StockAreaChartWidget(QWidget):

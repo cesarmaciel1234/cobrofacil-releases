@@ -17,7 +17,6 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.admin.inventario.theme import STYLE
 
 class PanelCategorias(QWidget):
     categorias_cambiadas = pyqtSignal()

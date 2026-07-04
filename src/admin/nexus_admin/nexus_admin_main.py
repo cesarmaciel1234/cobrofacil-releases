@@ -359,9 +359,9 @@ class NexusExtremeControl(QWidget):
         layout_paneles.setContentsMargins(0, 0, 0, 0)
 
         # Importar paneles modulares originales
-        from src.admin.nexus.nexus_panel_izq import NexusPanelIzq
-        from src.admin.nexus.nexus_panel_cen import NexusPanelCen
-        from src.admin.nexus.nexus_panel_der import NexusPanelDer
+        from src.admin.nexus_admin.componentes.nexus_panel_izq import NexusPanelIzq
+        from src.admin.nexus_admin.componentes.nexus_panel_cen import NexusPanelCen
+        from src.admin.nexus_admin.componentes.nexus_panel_der import NexusPanelDer
 
         # 1. PANEL IZQ (Logs de terminal y CyberRadar con flujo en vivo de tickets)
         self.panel_izq = NexusPanelIzq()

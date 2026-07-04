@@ -26,7 +26,7 @@ def btn_primary(text, icon=""):
         QPushButton:hover {{ background: {PAL['primary_h']}; }}
         QPushButton:pressed {{ background: #4338CA; }}
     """)
-    b.setCursor(Qt.PointingHandCursor)
+    b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
 
 def btn_danger(text, icon=""):
@@ -39,7 +39,7 @@ def btn_danger(text, icon=""):
         }}
         QPushButton:hover {{ background: {PAL['danger']}; color: #fff; }}
     """)
-    b.setCursor(Qt.PointingHandCursor)
+    b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
 
 def btn_ghost(text):
@@ -52,7 +52,7 @@ def btn_ghost(text):
         }}
         QPushButton:hover {{ background: {PAL['surface']}; color: {PAL['text']}; }}
     """)
-    b.setCursor(Qt.PointingHandCursor)
+    b.setCursor(Qt.CursorShape.PointingHandCursor)
     return b
 
 def section_title(text):
@@ -125,11 +125,11 @@ def build_table(headers):
         QScrollBar:vertical {{ background: {PAL['surface']}; width: 7px; border-radius: 4px; }}
         QScrollBar::handle:vertical {{ background: {PAL['border2']}; border-radius: 4px; }}
     """)
-    t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+    t.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     t.verticalHeader().setVisible(False)
     t.setAlternatingRowColors(True)
-    t.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    t.setSelectionBehavior(QAbstractItemView.SelectRows)
+    t.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+    t.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
     return t
 
 def input_field(placeholder="", is_combo=False, items=None):

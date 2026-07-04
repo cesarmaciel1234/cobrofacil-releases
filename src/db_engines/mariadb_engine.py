@@ -108,6 +108,23 @@ class MariaDBEngine:
                     return MariaDBConnectionWrapper(conn)
                 except Exception:
                     pass
+                    
+            # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
+            if self.host == "127.0.0.1":
+                try:
+                    conn = pymysql.connect(
+                        host="localhost",
+                        port=self.port,
+                        user=self.user,
+                        password=self.password,
+                        database=self.database,
+                        autocommit=False,
+                        connect_timeout=2
+                    )
+                    return MariaDBConnectionWrapper(conn)
+                except Exception:
+                    pass
+                    
             logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
             raise
             

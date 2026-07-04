@@ -17,7 +17,6 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.admin.inventario.theme import STYLE
 
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
@@ -352,7 +351,7 @@ class CatalogoProductos(QWidget):
                     pass
                     
                 if depto_iva is None:
-                    from src.admin.admin5_configuracion import config
+                    from src.config import config
                     depto_iva = float(config.get("tax_percentage", 21.0))
                 else:
                     depto_iva = float(depto_iva)
@@ -464,6 +463,7 @@ class CatalogoProductos(QWidget):
             'departamento': r['departamento'] or '', 
             'categoria': r['categoria'] or 'GENERAL'
         }
+        from src.admin.inventario.componentes.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
             d = dlg.get_data()

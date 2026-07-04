@@ -3,7 +3,6 @@ from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QMessageBo
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
 from PyQt6.QtGui import QColor
 
-from src.jefe.theme_pro import THEME_PRO as L
 
 class JefeCard(QFrame):
     clicked = pyqtSignal()
@@ -72,10 +71,7 @@ class JefeCard(QFrame):
         self.lbl_link.setStyleSheet("background: none; border: none;")
         layout.addWidget(self.lbl_link)
 
-        # Animación lift
-        self.anim = QPropertyAnimation(self.inner, b"pos")
-        self.anim.setDuration(150)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutQuad)
+        # Animación eliminada para PCs de bajos recursos
 
     @staticmethod
     def _hex2rgb(h):
@@ -90,10 +86,6 @@ class JefeCard(QFrame):
 
     def enterEvent(self, event):
         if not self._locked:
-            self.anim.stop()
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 2))
-            self.anim.start()
             r, g, b = self._hex2rgb(self._accent)
             self.inner.setStyleSheet(f"""
                 QFrame#DashboardCard {{
@@ -105,10 +97,6 @@ class JefeCard(QFrame):
 
     def leaveEvent(self, event):
         if not self._locked:
-            self.anim.stop()
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 12))
-            self.anim.start()
             r, g, b = self._hex2rgb(self._accent)
             self.inner.setStyleSheet(f"""
                 QFrame#DashboardCard {{

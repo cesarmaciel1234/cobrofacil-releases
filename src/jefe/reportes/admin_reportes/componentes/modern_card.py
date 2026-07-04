@@ -62,11 +62,5 @@ class ModernCard(QFrame):
                 border-radius: 20px;
             }
         """)
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(40)
-        shadow.setXOffset(0)
-        shadow.setYOffset(10)
-        shadow.setColor(QColor(0, 0, 0, 10))
-        self.setGraphicsEffect(shadow)
 
 

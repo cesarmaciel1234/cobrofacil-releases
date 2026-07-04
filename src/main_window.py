@@ -367,22 +367,23 @@ class MainWindow(QMainWindow):
             None,    # 21 — CarteleriaMain           (lazy)
             None,    # 22 — Admin15Carteleria        (lazy)
             None,    # 23 — JefeIAProactiva          (lazy)
+            None,    # 24 — PromediosMain            (lazy)
         ]
 
         # Fábricas: callable que crea el widget cuando se necesita
         self._screen_factories = {
-            0:  lambda: __import__('src.admin.admin0_dashboard',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
+            0:  lambda: __import__('src.admin.dashboard.dashboard_main',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
             2:  lambda: __import__('src.admin.inventario.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.admin.ofertas.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
-            6:  lambda: __import__('src.admin.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
+            6:  lambda: __import__('src.admin.red_lan.red_lan_main',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.cierre.cierre_main',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
             8:  lambda: __import__('src.admin.etiquetas_panel.etiquetas_panel_main', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
             9:  lambda: __import__('src.jefe.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
             10: lambda: __import__('src.admin.mercadopago.mercadopago_main', fromlist=['Admin10MP']).Admin10MP(),
-            11: lambda: __import__('src.admin.admin11_proveedores', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
+            11: lambda: __import__('src.admin.proveedores.proveedores_main', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.hardware.hardware_main', fromlist=['Admin13Hardware']).Admin13Hardware(),
             14: lambda: __import__('src.admin.ventas_digitales.ventas_digitales_main', fromlist=['Admin14VentasDigitales']).Admin14VentasDigitales(),
             17: lambda: __import__('src.admin.clientes.admin_clientes_main',    fromlist=['AdminClientes']).AdminClientes(),
@@ -392,6 +393,7 @@ class MainWindow(QMainWindow):
             21: lambda: __import__('src.carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
             22: lambda: __import__('src.admin.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
             23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
+            24: lambda: __import__('src.jefe.promedios.promedios_main', fromlist=['PromediosMain']).PromediosMain(),
         }
 
         # Añadir todos los slots al QStackedWidget
