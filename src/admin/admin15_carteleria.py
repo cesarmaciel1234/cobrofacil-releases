@@ -213,7 +213,7 @@ class Admin15Carteleria(QWidget):
             try:
                 res = db_manager.execute_query("SELECT pin FROM usuarios WHERE rol = 'admin'")
                 if res and len(res) > 0:
-                    pin_en_db = res[0][0] or ""
+                    pin_en_db = res[0].get("pin", "")
                     pin_hash_ingresado = hashlib.sha256(pin.encode()).hexdigest()
                     # Acepta tanto hash (nuevo) como texto plano (legado)
                     if pin_hash_ingresado == pin_en_db or pin == pin_en_db:
@@ -255,7 +255,7 @@ class Admin15Carteleria(QWidget):
                 QMessageBox.warning(self, "Error", "No se encontró usuario administrador.")
                 return
 
-            pin_en_db = res[0][0] or ""
+            pin_en_db = res[0].get("pin", "")
             pin_hash = hashlib.sha256(pin.encode()).hexdigest()
             if pin_hash != pin_en_db and pin != pin_en_db:
                 QMessageBox.warning(self, "Error", "PIN incorrecto.")

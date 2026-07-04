@@ -1,7 +1,7 @@
 {
-  "app_version": "6.7",
+  "app_version": "6.7.1",
   "channel": "stable",
-  "build_date": "2026-07-04 15:49:18",
+  "build_date": "2026-07-04 16:15:30",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -1602,9 +1602,9 @@
     },
     "src/jefe/vista_promedios.py": {
       "version": "1.0.0",
-      "checksum": "dc59ce59eba2a5298c70ebd41a6fe512",
+      "checksum": "f52e8644a8842753eb072604b7a4ee88",
       "channel": "stable",
-      "size": 23620
+      "size": 23629
     },
     "src/jefe/__init__.py": {
       "version": "1.0.0",
@@ -1650,9 +1650,9 @@
     },
     "src/jefe/contabilidad/shared_globals.py": {
       "version": "1.0.0",
-      "checksum": "33f49f79adef7678fd41f49bdf580db2",
+      "checksum": "03478f49cf437dc7c42111fa9af89162",
       "channel": "stable",
-      "size": 7150
+      "size": 7227
     },
     "src/jefe/contabilidad/styles.py": {
       "version": "1.0.0",
