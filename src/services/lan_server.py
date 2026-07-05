@@ -115,6 +115,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         elif self.path == '/api/carteleria/data':
             try:
                 import json
+                import os
                 from src.utils.paths import get_base_path
                 config_path = os.path.join(get_base_path(), "config.json")
                 cfg_data = {}
@@ -126,7 +127,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
                 
                 # SOS
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE es_sos = 1 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
                 oferta_sos = db_manager.execute_query(sos_query)
                 
                 # Precios
