@@ -81,9 +81,10 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.red)
         self.showNormal()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    
+def lanzar_app(app=None):
+    if app is None:
+        app = QApplication(sys.argv)
+        
     # Iniciar el motor de red centralizado para que este perfil pueda ser maestro/esclavo
     from src.central_red_global.lan_server import init_lan_server
     init_lan_server()
@@ -125,5 +126,14 @@ if __name__ == "__main__":
         print("Error aplicando tema global a los paneles de cartelería:", e)
 
     window.show()
-    sys.exit(qt_exec(app))
+    # Guardamos referencia para que no sea destruida por el recolector de basura
+    app._carteleria_window = window 
+    
+    if app and not getattr(app, '_is_running', False):
+        app._is_running = True
+        return qt_exec(app)
+    return window
+
+if __name__ == "__main__":
+    sys.exit(lanzar_app())
 

@@ -249,14 +249,10 @@ def launch_app():
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                import subprocess
-                # Lanzar la Cartelería como una aplicación independiente
-                carteleria_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "carteleria", "carteleria.py")
-                proc = subprocess.Popen([sys.executable, carteleria_path])
-                # Ocultar y esperar a que termine para no apagar MariaDB
+                # Lanzar la Cartelería en el mismo proceso (clave para el ejecutable)
+                from src.carteleria.carteleria import lanzar_app
                 perfil_dlg.hide()
-                proc.wait()
-                # Salir del Launcher (main.py)
+                lanzar_app(app)
                 return 0
                 
             login_dlg = LoginPantalla(role_selected)
