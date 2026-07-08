@@ -61,8 +61,12 @@ def scan_modules() -> dict:
             if rel_path in SKIP_ROOT_FILES:
                 continue
 
-            with open(file_path, "rb") as f:
-                content = f.read()
+            try:
+                with open(file_path, "rb") as f:
+                    content = f.read()
+            except OSError as e:
+                print(f"Skipping {rel_path} due to error: {e}")
+                continue
             modules[rel_path] = {
                 "version": "1.0.0",
                 "checksum": hashlib.md5(content).hexdigest(),
