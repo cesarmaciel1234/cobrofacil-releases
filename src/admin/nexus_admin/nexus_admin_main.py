@@ -192,7 +192,7 @@ class NexusExtremeControl(QWidget):
         super().closeEvent(event)
 
     def _connect_to_network(self):
-        from src.network.network_engine import get_network_engine
+        from src.central_red_global.network_engine import get_network_engine
         engine = get_network_engine()
         if engine:
             engine.message_received.connect(self._on_udp_message)
@@ -261,7 +261,7 @@ class NexusExtremeControl(QWidget):
         now = time.time()
         
         # Mantener el rol local activo permanentemente para que no expire en la matriz
-        from src.network.network_engine import get_network_engine
+        from src.central_red_global.network_engine import get_network_engine
         engine = get_network_engine()
         if engine and engine.role:
             self.active_terminals[engine.role] = now

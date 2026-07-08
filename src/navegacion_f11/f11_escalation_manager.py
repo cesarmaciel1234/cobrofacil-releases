@@ -23,7 +23,7 @@ class GestorEscaladaF11(QObject):
         self.btn_flotante.hide()
         
         # Registrar atajo global F11
-        self._sc_f11 = QShortcut(QKeySequence(Qt.Key_F11), self.main_window)
+        self._sc_f11 = QShortcut(QKeySequence("F11"), self.main_window)
         self._sc_f11.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self._sc_f11.activated.connect(self.handle_f11_global)
         
@@ -31,7 +31,8 @@ class GestorEscaladaF11(QObject):
 
     def update_floating_button_visibility(self, index: int, hay_venta: bool, is_supervisor: bool):
         """Llamar a este método al cambiar de pestaña."""
-        if index in (1, 21):
+        # 1: Ventas, 21: CarteleriaMain, 22: CarteleriaDashboard
+        if index in (1, 21, 22):
             self.btn_flotante.hide()
         else:
             if hay_venta or is_supervisor:
@@ -59,6 +60,11 @@ class GestorEscaladaF11(QObject):
         if now - self._last_f11_ts < 0.4:
             return
         self._last_f11_ts = now
+
+        # Si estamos en Cartelería TV (21), F11 vuelve al Dashboard de Cartelería (22)
+        if self.main_window.stacked_widget.currentIndex() == 21:
+            self.main_window.switch_tab(22)
+            return
 
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
         _u = config.current_user or {}

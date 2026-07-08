@@ -61,6 +61,18 @@ class ThemeManager(QObject):
                 "btn_border": "#E5E5EA",
                 "btn_hover": "#F2F2F7",
                 "footer": "#86868B",
+                # Inventory Specific
+                "stock_saludable": "#059669",
+                "stock_bajo": "#D97706",
+                "bg_stock_bajo": "#FFFBEB",
+                "stock_agotado": "#DC2626",
+                "bg_stock_agotado": "#FEF2F2",
+                "texto_primario": "#0F172A",
+                "texto_secundario": "#64748b",
+                "oferta": "#EA580C",
+                "tipo_producto": "#2563EB",
+                "bg_fila_impar": "#F8FAFC",
+                "bg_fila_par": "#FFFFFF",
             },
             "dark": {
                 "nav_bg": "#020617",
@@ -75,9 +87,33 @@ class ThemeManager(QObject):
                 "btn_border": "#334155",
                 "btn_hover": "#334155",
                 "footer": "#334155",
+                # Inventory Specific (Dark adjustments)
+                "stock_saludable": "#10B981",
+                "stock_bajo": "#F59E0B",
+                "bg_stock_bajo": "#78350F",
+                "stock_agotado": "#EF4444",
+                "bg_stock_agotado": "#7F1D1D",
+                "texto_primario": "#F8FAFC",
+                "texto_secundario": "#94A3B8",
+                "oferta": "#F97316",
+                "tipo_producto": "#3B82F6",
+                "bg_fila_impar": "#1E293B",
+                "bg_fila_par": "#0F172A",
             }
         }
         return palettes[self.current_theme].get(element, "#FF00FF")
+
+    def get_depto_colors(self):
+        if self.current_theme == "light":
+            return [
+                "#FFFFFF", "#F8FAFC", "#F0FDF4", "#EFF6FF", 
+                "#FEF2F2", "#FFFBEB", "#FDF4FF", "#F0FDFA"
+            ]
+        else:
+            return [
+                "#0F172A", "#1E293B", "#064E3B", "#1E3A8A",
+                "#7F1D1D", "#78350F", "#4A044E", "#134E4A"
+            ]
 
     def apply_to_admin(self, widget):
         bg      = self.get_color("app_bg")

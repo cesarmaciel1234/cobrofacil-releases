@@ -1,7 +1,7 @@
 {
   "app_version": "6.7.1",
   "channel": "stable",
-  "build_date": "2026-07-04 16:15:30",
+  "build_date": "2026-07-08 15:09:05",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -42,15 +42,21 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "8f009c919c65130b714d544d12a099e5",
+      "checksum": "07fcef48f242a82a376d4ad0686b8f2c",
       "channel": "stable",
-      "size": 18563
+      "size": 18488
     },
     "refactor_qss.py": {
       "version": "1.0.0",
       "checksum": "456d3d6f47b122dc463de3100919be9e",
       "channel": "stable",
       "size": 3488
+    },
+    "test_slave.py": {
+      "version": "1.0.0",
+      "checksum": "84a79c9ed06a0f1fd264c56911bb6803",
+      "channel": "stable",
+      "size": 536
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -136,7 +142,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00f1a.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",
@@ -504,21 +510,15 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "22fd5d6964214c8ddbf640de06268250",
+      "checksum": "01b3973648222cb51f2d954e0420da87",
       "channel": "stable",
-      "size": 38474
+      "size": 40015
     },
     "src/__init__.py": {
       "version": "1.0.0",
       "checksum": "6d64996e93b5e633bc65c4401d10c749",
       "channel": "stable",
       "size": 47
-    },
-    "src/admin/admin0_dashboard.py": {
-      "version": "1.0.0",
-      "checksum": "ea94da734c4bc6bf01d68d7621f49b01",
-      "channel": "stable",
-      "size": 16684
     },
     "src/admin/admin11_proveedores.py": {
       "version": "1.0.0",
@@ -532,17 +532,11 @@
       "channel": "stable",
       "size": 7862
     },
-    "src/admin/admin15_carteleria.py": {
-      "version": "1.0.0",
-      "checksum": "6034f4f3a481aaceba4434c078b0c6c2",
-      "channel": "stable",
-      "size": 12299
-    },
     "src/admin/admin6_red_lan.py": {
       "version": "1.0.0",
-      "checksum": "539af1f8062ca2a73a02263c0783173f",
+      "checksum": "4565492a8a71610fe03cd9089f3c130e",
       "channel": "stable",
-      "size": 19153
+      "size": 20362
     },
     "src/admin/admin_card.py": {
       "version": "1.0.0",
@@ -642,9 +636,15 @@
     },
     "src/admin/configuracion/configuracion_main.py": {
       "version": "1.0.0",
-      "checksum": "e59c62e6ee6f00f34e3958e7a70fd0b7",
+      "checksum": "2f91df53a74da408edf5ca97aca288a1",
       "channel": "stable",
-      "size": 10402
+      "size": 18806
+    },
+    "src/admin/configuracion/componentes/configuracion_pcmaestra.py": {
+      "version": "1.0.0",
+      "checksum": "3566ca97bd26bf77e6c58b1167745f9a",
+      "channel": "stable",
+      "size": 4309
     },
     "src/admin/configuracion/componentes/config_button.py": {
       "version": "1.0.0",
@@ -774,9 +774,9 @@
     },
     "src/admin/configuracion/componentes/dialogo_ticket.py": {
       "version": "1.0.0",
-      "checksum": "f8868325a2bccbababa8d22abf79d74d",
+      "checksum": "3eea89329a97118a9cfea89543359523",
       "channel": "stable",
-      "size": 8414
+      "size": 6591
     },
     "src/admin/configuracion/componentes/dialogo_unidades_medida.py": {
       "version": "1.0.0",
@@ -792,9 +792,9 @@
     },
     "src/admin/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "d33ee2d01c9fbcb9604fbe99ca7c7949",
+      "checksum": "fe33da15b0f282fcf2f895b7a8bc2fd6",
       "channel": "stable",
-      "size": 16664
+      "size": 16498
     },
     "src/admin/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -802,13 +802,13 @@
       "channel": "stable",
       "size": 0
     },
-    "src/admin/etiquetas_panel/etiquetas_panel_main.py": {
+    "src/admin/etiquetas_panel_ui/etiquetas_panel_main.py": {
       "version": "1.0.0",
-      "checksum": "631b5cd6e07773b1dac1c08ce8fa1136",
+      "checksum": "08675c8901c487ec5bbfc6783729cb81",
       "channel": "stable",
-      "size": 23738
+      "size": 23739
     },
-    "src/admin/etiquetas_panel/__init__.py": {
+    "src/admin/etiquetas_panel_ui/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
@@ -838,35 +838,35 @@
       "channel": "stable",
       "size": 0
     },
-    "src/admin/inventario/inventario_main.py": {
+    "src/admin/inventario_ui/inventario_main.py": {
       "version": "1.0.0",
-      "checksum": "3fd29dd1b2782f307c74d2f570e688df",
+      "checksum": "4608de5f4128ebe67cf23eaa41a7841e",
       "channel": "stable",
-      "size": 17288
+      "size": 17158
     },
-    "src/admin/inventario/componentes/catalogo_productos.py": {
+    "src/admin/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "e864ca5acb0b0a0819bc5a88414e8211",
+      "checksum": "d6c150c4ed166789e123dc2fb4393d55",
       "channel": "stable",
-      "size": 32589
+      "size": 27361
     },
-    "src/admin/inventario/componentes/dialogo_producto.py": {
+    "src/admin/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
-      "checksum": "3f11a81f7a7ce69c2b246877d40063b7",
+      "checksum": "cdea7709f147bb684b4218b6f47aa7e9",
       "channel": "stable",
-      "size": 15072
+      "size": 13569
     },
-    "src/admin/inventario/componentes/panel_categorias.py": {
+    "src/admin/inventario_ui/componentes/panel_categorias.py": {
       "version": "1.0.0",
-      "checksum": "1e462c050f18a49ea792997f9e122a0a",
+      "checksum": "84e565373765fe816bde1761c57af51e",
       "channel": "stable",
-      "size": 7915
+      "size": 6872
     },
-    "src/admin/inventario/componentes/panel_departamentos.py": {
+    "src/admin/inventario_ui/componentes/panel_departamentos.py": {
       "version": "1.0.0",
-      "checksum": "94ace894c5cb92d6c1d4b8ee862cc59b",
+      "checksum": "97245c72fab328681eb5089692bc5211",
       "channel": "stable",
-      "size": 9471
+      "size": 8362
     },
     "src/admin/mercadopago/mercadopago_main.py": {
       "version": "1.0.0",
@@ -880,11 +880,47 @@
       "channel": "stable",
       "size": 6644
     },
+    "src/admin/motor_descuentos_ui/ofertas_main.py": {
+      "version": "1.0.0",
+      "checksum": "d6e0daf9a0581aa8b2c4af2eb80efe51",
+      "channel": "stable",
+      "size": 30662
+    },
+    "src/admin/motor_descuentos_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/admin/motor_descuentos_ui/componentes/creador_promociones.py": {
+      "version": "1.0.0",
+      "checksum": "c96f7333b04f734a7098fb1d663f8334",
+      "channel": "stable",
+      "size": 17159
+    },
+    "src/admin/motor_descuentos_ui/componentes/dialogo_combos.py": {
+      "version": "1.0.0",
+      "checksum": "1e5294c8dd1fca1f1d86d30e123159ff",
+      "channel": "stable",
+      "size": 9629
+    },
+    "src/admin/motor_descuentos_ui/componentes/tabla_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
+      "channel": "stable",
+      "size": 5809
+    },
+    "src/admin/motor_descuentos_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "0389611360d3fbe1e818a13f04d3cd4a",
+      "channel": "stable",
+      "size": 37
+    },
     "src/admin/nexus_admin/nexus_admin_main.py": {
       "version": "1.0.0",
-      "checksum": "2913a57be4e34ddc0592e355c939f780",
+      "checksum": "9ade123e9c2280dff6d3f136f65d5421",
       "channel": "stable",
-      "size": 34409
+      "size": 34431
     },
     "src/admin/nexus_admin/__init__.py": {
       "version": "1.0.0",
@@ -916,36 +952,6 @@
       "channel": "stable",
       "size": 5394
     },
-    "src/admin/ofertas/ofertas_main.py": {
-      "version": "1.0.0",
-      "checksum": "7a9ee25fa625a7837a7f7d1ce7cf703c",
-      "channel": "stable",
-      "size": 31285
-    },
-    "src/admin/ofertas/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
-      "channel": "stable",
-      "size": 0
-    },
-    "src/admin/ofertas/componentes/creador_promociones.py": {
-      "version": "1.0.0",
-      "checksum": "d9ec76c652626a43e32ffc1e4c9a26d1",
-      "channel": "stable",
-      "size": 17157
-    },
-    "src/admin/ofertas/componentes/tabla_ofertas.py": {
-      "version": "1.0.0",
-      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
-      "channel": "stable",
-      "size": 5809
-    },
-    "src/admin/ofertas/componentes/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "0389611360d3fbe1e818a13f04d3cd4a",
-      "channel": "stable",
-      "size": 37
-    },
     "src/admin/proveedores/proveedores_main.py": {
       "version": "1.0.0",
       "checksum": "11a5bcb03792dea166edee6a3d781367",
@@ -960,9 +966,9 @@
     },
     "src/admin/red_lan/red_lan_main.py": {
       "version": "1.0.0",
-      "checksum": "539af1f8062ca2a73a02263c0783173f",
+      "checksum": "41ec8a2789edd5c9cf2af70f4a36295d",
       "channel": "stable",
-      "size": 19153
+      "size": 18189
     },
     "src/admin/red_lan/__init__.py": {
       "version": "1.0.0",
@@ -984,9 +990,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "bb9c30b948bb4b5a61d1f61db6a3a7f6",
+      "checksum": "5f44ad1966add4a8cd953ff1f58e2290",
       "channel": "stable",
-      "size": 62733
+      "size": 62997
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -1062,9 +1068,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "17e87318d7d19cc6fcf96cb19c8fd3bc",
+      "checksum": "6fe26ca5efd04a0b8f99fe3bff5c6ae8",
       "channel": "stable",
-      "size": 102942
+      "size": 108659
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -1384,101 +1390,17 @@
       "channel": "stable",
       "size": 154
     },
-    "src/carteleria/banderin.py": {
+    "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "6ea284e004d1199a75a4f4f20dcb9f1c",
+      "checksum": "d3ad11ba0f8b1ebf2e37c5d2466c1c9f",
       "channel": "stable",
-      "size": 2845
+      "size": 5148
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "5cd1c4e171bcfd6c4d4c6ff6e164dcb8",
+      "checksum": "1188fb4fa12c429ba5920dcd20fbe1a2",
       "channel": "stable",
-      "size": 556
-    },
-    "src/carteleria/dialogo_espera_auth.py": {
-      "version": "1.0.0",
-      "checksum": "6cace64606893172d7d877091836a2e2",
-      "channel": "stable",
-      "size": 9279
-    },
-    "src/carteleria/gemini_worker.py": {
-      "version": "1.0.0",
-      "checksum": "6fe882fc0ce7635998002a7d1201360b",
-      "channel": "stable",
-      "size": 7308
-    },
-    "src/carteleria/info_negocio.py": {
-      "version": "1.0.0",
-      "checksum": "062fa417c53a3b40f8cf41f0a68783f1",
-      "channel": "stable",
-      "size": 9293
-    },
-    "src/carteleria/legacy_carteleria_main.py": {
-      "version": "1.0.0",
-      "checksum": "c24309c5bceb902e3a63b052636a83bf",
-      "channel": "stable",
-      "size": 13069
-    },
-    "src/carteleria/main_board.py": {
-      "version": "1.0.0",
-      "checksum": "8abfdad2fd34d4eee2713b5d2d9ae613",
-      "channel": "stable",
-      "size": 42479
-    },
-    "src/carteleria/mensaje.py": {
-      "version": "1.0.0",
-      "checksum": "8e390cc76e19e960cd047fd15668556e",
-      "channel": "stable",
-      "size": 820
-    },
-    "src/carteleria/motor_ia.py": {
-      "version": "1.0.0",
-      "checksum": "fdaa5dca7a37bbf34d9cf2ac48d906d0",
-      "channel": "stable",
-      "size": 22061
-    },
-    "src/carteleria/motor_logico.py": {
-      "version": "1.0.0",
-      "checksum": "3954ce92880309aab267e16f8852fd28",
-      "channel": "stable",
-      "size": 5796
-    },
-    "src/carteleria/oferta_relampago.py": {
-      "version": "1.0.0",
-      "checksum": "8a54ef8595e734ea2f6dccc6e63d4ff3",
-      "channel": "stable",
-      "size": 3224
-    },
-    "src/carteleria/pantalla1.py": {
-      "version": "1.0.0",
-      "checksum": "c4c99744a1c5d6f87251ebe355e4de91",
-      "channel": "stable",
-      "size": 5506
-    },
-    "src/carteleria/pantalla2.py": {
-      "version": "1.0.0",
-      "checksum": "6619c1826db66c61d30820fc51ac82a8",
-      "channel": "stable",
-      "size": 5201
-    },
-    "src/carteleria/pantalla3.py": {
-      "version": "1.0.0",
-      "checksum": "2ade772f4027fe01871f07041e4d0494",
-      "channel": "stable",
-      "size": 3013
-    },
-    "src/carteleria/pantalla4.py": {
-      "version": "1.0.0",
-      "checksum": "867a8922e2bf4f333e9b686beafc5a8d",
-      "channel": "stable",
-      "size": 7134
-    },
-    "src/carteleria/pantalla_espia.py": {
-      "version": "1.0.0",
-      "checksum": "27cfcd83e106303ec74a1ed8afa17dc6",
-      "channel": "stable",
-      "size": 12729
+      "size": 5051
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -1488,9 +1410,9 @@
     },
     "src/carteleria/__init__.py": {
       "version": "1.0.0",
-      "checksum": "d12879c685fcabfa064d0ece09687c79",
+      "checksum": "0c6a2d2c6a0d4f42c5778490975aee01",
       "channel": "stable",
-      "size": 148
+      "size": 165
     },
     "src/carteleria/assets/download_icons.py": {
       "version": "1.0.0",
@@ -1510,11 +1432,287 @@
       "channel": "stable",
       "size": 777
     },
+    "src/carteleria/carteleria_hub/hub_admin.py": {
+      "version": "1.0.0",
+      "checksum": "b504cb8ee5bd5fe09fae97d6b8b0d85f",
+      "channel": "stable",
+      "size": 2463
+    },
+    "src/carteleria/carteleria_hub/hub_principal.py": {
+      "version": "1.0.0",
+      "checksum": "a944cf88117feb155b820ae5c852dafd",
+      "channel": "stable",
+      "size": 3391
+    },
+    "src/carteleria/configuraciones/indicador_red_widget.py": {
+      "version": "1.0.0",
+      "checksum": "61dc9cd0adbf4b6e69f832fd19774fdd",
+      "channel": "stable",
+      "size": 5213
+    },
+    "src/carteleria/configuraciones/info_negocio.py": {
+      "version": "1.0.0",
+      "checksum": "eb821cbd135a8900de3b346910e82121",
+      "channel": "stable",
+      "size": 2326
+    },
+    "src/carteleria/configuraciones/reloj_widget.py": {
+      "version": "1.0.0",
+      "checksum": "3c616b213fe9ee35c7533c032be52291",
+      "channel": "stable",
+      "size": 682
+    },
+    "src/carteleria/dashboard/dashboard_main.py": {
+      "version": "1.0.0",
+      "checksum": "fa3de93459e7ea7b3d4f66a31afb08cc",
+      "channel": "stable",
+      "size": 8894
+    },
+    "src/carteleria/dashboard/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "7de5df82d50cef32aa0cc81a6d80c987",
+      "channel": "stable",
+      "size": 53
+    },
+    "src/carteleria/ia_chef_lobo/gemini_worker.py": {
+      "version": "1.0.0",
+      "checksum": "6fe882fc0ce7635998002a7d1201360b",
+      "channel": "stable",
+      "size": 7308
+    },
+    "src/carteleria/ia_chef_lobo/motor_ia.py": {
+      "version": "1.0.0",
+      "checksum": "dc992df7f7734cef71e17d4ac3896f2a",
+      "channel": "stable",
+      "size": 5792
+    },
+    "src/carteleria/interfaz_principal/carrusel_destacados.py": {
+      "version": "1.0.0",
+      "checksum": "7b2040a46121888ea988f2657701899b",
+      "channel": "stable",
+      "size": 5532
+    },
+    "src/carteleria/interfaz_principal/grilla_precios.py": {
+      "version": "1.0.0",
+      "checksum": "0c683fc52c60c34adfdc8bd1653afcb6",
+      "channel": "stable",
+      "size": 5205
+    },
+    "src/carteleria/interfaz_principal/mensaje.py": {
+      "version": "1.0.0",
+      "checksum": "8e390cc76e19e960cd047fd15668556e",
+      "channel": "stable",
+      "size": 820
+    },
+    "src/carteleria/interfaz_principal/panel_combos.py": {
+      "version": "1.0.0",
+      "checksum": "4a994619ace5cdf09424419897701b65",
+      "channel": "stable",
+      "size": 3015
+    },
+    "src/carteleria/interfaz_principal/panel_ia.py": {
+      "version": "1.0.0",
+      "checksum": "e01ff386c288c70a99d0a0774f548395",
+      "channel": "stable",
+      "size": 7166
+    },
+    "src/carteleria/interfaz_relampagos/banderin.py": {
+      "version": "1.0.0",
+      "checksum": "520b4151a0e3ce8c8565ba59b244f632",
+      "channel": "stable",
+      "size": 3091
+    },
+    "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
+      "version": "1.0.0",
+      "checksum": "8a54ef8595e734ea2f6dccc6e63d4ff3",
+      "channel": "stable",
+      "size": 3224
+    },
+    "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
+      "version": "1.0.0",
+      "checksum": "03f4f0fc9b1dc86a595b1ff2c94bbc6f",
+      "channel": "stable",
+      "size": 4520
+    },
+    "src/carteleria/inventario_ui/inventario_main.py": {
+      "version": "1.0.0",
+      "checksum": "d6e017749c431496f05b298d400150a7",
+      "channel": "stable",
+      "size": 17180
+    },
+    "src/carteleria/inventario_ui/componentes/catalogo_productos.py": {
+      "version": "1.0.0",
+      "checksum": "182985fbbd6260dd192e46b9797eada4",
+      "channel": "stable",
+      "size": 27366
+    },
+    "src/carteleria/inventario_ui/componentes/dialogo_producto.py": {
+      "version": "1.0.0",
+      "checksum": "cdea7709f147bb684b4218b6f47aa7e9",
+      "channel": "stable",
+      "size": 13569
+    },
+    "src/carteleria/inventario_ui/componentes/panel_categorias.py": {
+      "version": "1.0.0",
+      "checksum": "5699ba1fd52079ae3e782ae21d0811ad",
+      "channel": "stable",
+      "size": 6873
+    },
+    "src/carteleria/inventario_ui/componentes/panel_departamentos.py": {
+      "version": "1.0.0",
+      "checksum": "97245c72fab328681eb5089692bc5211",
+      "channel": "stable",
+      "size": 8362
+    },
+    "src/carteleria/modo_procesos/buscador_red_worker.py": {
+      "version": "1.0.0",
+      "checksum": "7eac5bd722e4d2c1ce2cb06cc4848681",
+      "channel": "stable",
+      "size": 2314
+    },
+    "src/carteleria/modo_procesos/espera_conexion.py": {
+      "version": "1.0.0",
+      "checksum": "fb71982e8231d14017b56fced9391787",
+      "channel": "stable",
+      "size": 7415
+    },
+    "src/carteleria/motor_carteleria/clima_worker.py": {
+      "version": "1.0.0",
+      "checksum": "9517f878a2e25b2d61006ebf5685c869",
+      "channel": "stable",
+      "size": 1165
+    },
+    "src/carteleria/motor_carteleria/db_sync_worker.py": {
+      "version": "1.0.0",
+      "checksum": "3e0fd02f6438539fe3f84df7bae29c2d",
+      "channel": "stable",
+      "size": 3131
+    },
+    "src/carteleria/motor_carteleria/espia_worker.py": {
+      "version": "1.0.0",
+      "checksum": "af15a3c8158f69823a9acb0b17625e65",
+      "channel": "stable",
+      "size": 2351
+    },
+    "src/carteleria/motor_carteleria/layout_manager.py": {
+      "version": "1.0.0",
+      "checksum": "1fc5ef9a8bb21ea9d44b77d8b43cd6b3",
+      "channel": "stable",
+      "size": 2384
+    },
+    "src/carteleria/motor_carteleria/main_board.py": {
+      "version": "1.0.0",
+      "checksum": "46ccb9a265f7ff9020d5b9970ac51a75",
+      "channel": "stable",
+      "size": 15739
+    },
+    "src/carteleria/motor_carteleria/network_manager.py": {
+      "version": "1.0.0",
+      "checksum": "b294960023bd5193b6aba5d5f0d2b424",
+      "channel": "stable",
+      "size": 3122
+    },
+    "src/carteleria/motor_carteleria/promo_manager.py": {
+      "version": "1.0.0",
+      "checksum": "9d242d0345dfec3047e2dd3a610ee418",
+      "channel": "stable",
+      "size": 7698
+    },
+    "src/carteleria/motor_carteleria/window_manager.py": {
+      "version": "1.0.0",
+      "checksum": "8b45926d3bc569e8d1dd82f01ee126f2",
+      "channel": "stable",
+      "size": 5583
+    },
+    "src/carteleria/motor_descuentos_ui/ofertas_main.py": {
+      "version": "1.0.0",
+      "checksum": "5b4141c0213e415a7f10cd0a65c79999",
+      "channel": "stable",
+      "size": 30679
+    },
+    "src/carteleria/motor_descuentos_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/carteleria/motor_descuentos_ui/componentes/creador_promociones.py": {
+      "version": "1.0.0",
+      "checksum": "c96f7333b04f734a7098fb1d663f8334",
+      "channel": "stable",
+      "size": 17159
+    },
+    "src/carteleria/motor_descuentos_ui/componentes/dialogo_combos.py": {
+      "version": "1.0.0",
+      "checksum": "f562a46b6af989455adeb8e33d88b436",
+      "channel": "stable",
+      "size": 9866
+    },
+    "src/carteleria/motor_descuentos_ui/componentes/tabla_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
+      "channel": "stable",
+      "size": 5809
+    },
+    "src/carteleria/motor_descuentos_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e814d9f4229c3404898b4690a5e07b56",
+      "channel": "stable",
+      "size": 38
+    },
+    "src/carteleria/red_lan/red_lan_main.py": {
+      "version": "1.0.0",
+      "checksum": "d0ad68411676ba07684be7f09d31c0fd",
+      "channel": "stable",
+      "size": 18048
+    },
+    "src/carteleria/red_lan/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/central_red_global/lan_server.py": {
+      "version": "1.0.0",
+      "checksum": "96c660cc813c0c7354cfd3235fb9547d",
+      "channel": "stable",
+      "size": 11340
+    },
+    "src/central_red_global/motor_red.py": {
+      "version": "1.0.0",
+      "checksum": "238051fef382bf219bea09fb1caf8045",
+      "channel": "stable",
+      "size": 2472
+    },
+    "src/central_red_global/network_engine.py": {
+      "version": "1.0.0",
+      "checksum": "91fae8ccbec2be36688faf01a3958cb2",
+      "channel": "stable",
+      "size": 4246
+    },
     "src/core/sincronizador.py": {
       "version": "1.0.0",
       "checksum": "4826a876af2ffea410f2470c5bc4614d",
       "channel": "stable",
       "size": 6665
+    },
+    "src/creador_pdf_global/motor_pdf.py": {
+      "version": "1.0.0",
+      "checksum": "1f877122218813fb2fbc37c066c3603a",
+      "channel": "stable",
+      "size": 69730
+    },
+    "src/creador_pdf_global/motor_pdf_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "5f28fd3330c4618ea4441e8d6c51ffb5",
+      "channel": "stable",
+      "size": 7262
+    },
+    "src/creador_pdf_global/motor_pdf_reportes.py": {
+      "version": "1.0.0",
+      "checksum": "74945f97b87914feb30ceece5bbaa074",
+      "channel": "stable",
+      "size": 8078
     },
     "src/db_engines/mariadb_engine.py": {
       "version": "1.0.0",
@@ -1602,9 +1800,9 @@
     },
     "src/jefe/vista_promedios.py": {
       "version": "1.0.0",
-      "checksum": "f52e8644a8842753eb072604b7a4ee88",
+      "checksum": "edcf7392f52db54893d82d599a12ba44",
       "channel": "stable",
-      "size": 23629
+      "size": 29842
     },
     "src/jefe/__init__.py": {
       "version": "1.0.0",
@@ -1641,12 +1839,6 @@
       "checksum": "c85afb15220d9cd70bf5972409e0812f",
       "channel": "stable",
       "size": 5401
-    },
-    "src/jefe/contabilidad/pdf_generator.py": {
-      "version": "1.0.0",
-      "checksum": "e131f5ae2fbfeff536d39624efc24bd7",
-      "channel": "stable",
-      "size": 7376
     },
     "src/jefe/contabilidad/shared_globals.py": {
       "version": "1.0.0",
@@ -1716,9 +1908,9 @@
     },
     "src/jefe/contabilidad/vista_reportes.py": {
       "version": "1.0.0",
-      "checksum": "d04c863cfe763f92bd4525e428021bd4",
+      "checksum": "ecace6bafa24708f798020ecc6422ec7",
       "channel": "stable",
-      "size": 5760
+      "size": 5052
     },
     "src/jefe/contabilidad/vista_resumen.py": {
       "version": "1.0.0",
@@ -1774,11 +1966,53 @@
       "channel": "stable",
       "size": 20
     },
+    "src/motor_descuentos/motor_combos.py": {
+      "version": "1.0.0",
+      "checksum": "1203b3263c1195d6f057653650a2a508",
+      "channel": "stable",
+      "size": 2358
+    },
+    "src/motor_descuentos/motor_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "bf63656746eff2811a56568f0de3c884",
+      "channel": "stable",
+      "size": 5134
+    },
+    "src/motor_descuentos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e4301fb9b32152673c480d2f5faf24e5",
+      "channel": "stable",
+      "size": 72
+    },
+    "src/motor_inventario/motor_catalogo.py": {
+      "version": "1.0.0",
+      "checksum": "dec7f2692f8f3067a30f4414193f3e63",
+      "channel": "stable",
+      "size": 5936
+    },
+    "src/motor_inventario/motor_departamentos.py": {
+      "version": "1.0.0",
+      "checksum": "bfeb2ad8869b46b1f98470202d4038e5",
+      "channel": "stable",
+      "size": 5120
+    },
+    "src/motor_inventario/motor_importacion.py": {
+      "version": "1.0.0",
+      "checksum": "8d03b7005f76a567ce13561f40d652b0",
+      "channel": "stable",
+      "size": 3539
+    },
+    "src/motor_inventario/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "0191db4e579f3d6deda34a8d9977c3cb",
+      "channel": "stable",
+      "size": 236
+    },
     "src/navegacion_f11/f11_escalation_manager.py": {
       "version": "1.0.0",
-      "checksum": "02a6a0ef6e1dcae0184cf8e7050fa72e",
+      "checksum": "39ebb96db280b69fd58df4da00aa4358",
       "channel": "stable",
-      "size": 7266
+      "size": 7554
     },
     "src/navigation/screen_indices.py": {
       "version": "1.0.0",
@@ -1788,27 +2022,15 @@
     },
     "src/navigation/screen_registry.py": {
       "version": "1.0.0",
-      "checksum": "c3bb717087ef8417e153b1ce23470475",
+      "checksum": "a1243dee473fbdeb76b1864ed75ada15",
       "channel": "stable",
-      "size": 3375
+      "size": 3417
     },
     "src/navigation/__init__.py": {
       "version": "1.0.0",
       "checksum": "9fcd6d0ca2cca8029ed2ce4ca00a531e",
       "channel": "stable",
       "size": 320
-    },
-    "src/network/network_engine.py": {
-      "version": "1.0.0",
-      "checksum": "62e68abd5efeca57d6b47ac16fcf21d7",
-      "channel": "stable",
-      "size": 4017
-    },
-    "src/network/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "ddb327120f451bc3acfe7a646731282e",
-      "channel": "stable",
-      "size": 218
     },
     "src/repositories/cliente_repository.py": {
       "version": "1.0.0",
@@ -1852,12 +2074,6 @@
       "channel": "stable",
       "size": 9691
     },
-    "src/services/lan_server.py": {
-      "version": "1.0.0",
-      "checksum": "49f641ef3b4655a30b1f6c1598a75284",
-      "channel": "stable",
-      "size": 11296
-    },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
       "checksum": "2550cc9c70e2c9d83e881e64711be347",
@@ -1881,12 +2097,6 @@
       "checksum": "713c37dc3dee5c05a84b0e83446a791d",
       "channel": "stable",
       "size": 1471
-    },
-    "src/services/etiquetas/renderer.py": {
-      "version": "1.0.0",
-      "checksum": "2deeb8fd0562860ad210a37ba8e9cc93",
-      "channel": "stable",
-      "size": 69655
     },
     "src/services/etiquetas/__init__.py": {
       "version": "1.0.0",
@@ -1926,9 +2136,9 @@
     },
     "src/tools/run_lan_server.py": {
       "version": "1.0.0",
-      "checksum": "dd32f1cb640db443b52b35cef6abd4b1",
+      "checksum": "6ee5ed5565efcd8c46a52f8a21d31b5e",
       "channel": "stable",
-      "size": 229
+      "size": 239
     },
     "src/tools/setup_firewall.py": {
       "version": "1.0.0",
@@ -1971,6 +2181,12 @@
       "checksum": "32aab93f0f1e052cd3a2922bc38ca093",
       "channel": "stable",
       "size": 8383
+    },
+    "src/ui_components/panel_negocio.py": {
+      "version": "1.0.0",
+      "checksum": "f64908fa8a5952a265f34ac9d1b60adb",
+      "channel": "stable",
+      "size": 4075
     },
     "src/ui_components/tema_estilos.py": {
       "version": "1.0.0",
@@ -2112,9 +2328,9 @@
     },
     "src/utils/theme_manager.py": {
       "version": "1.0.0",
-      "checksum": "f9eed200bb153e5aa76c55cd45076a7e",
+      "checksum": "8783c349435e2cfb83a10b6f0b0621b5",
       "channel": "stable",
-      "size": 8190
+      "size": 9679
     },
     "src/utils/__init__.py": {
       "version": "1.0.0",
@@ -2154,9 +2370,9 @@
     },
     "tests/test_estructura_completa.py": {
       "version": "1.0.0",
-      "checksum": "3f1d4767d015f4e17fe478d2e0b4ae17",
+      "checksum": "09a43c2afaa846da392197c6f9ba1823",
       "channel": "stable",
-      "size": 2715
+      "size": 2725
     },
     "tests/test_flujo_cajero_console.py": {
       "version": "1.0.0",
@@ -2172,15 +2388,15 @@
     },
     "tests/test_lan_multicaja.py": {
       "version": "1.0.0",
-      "checksum": "66063d8baf78a2832d832bbe47909386",
+      "checksum": "92406d315ce7df3dc21a7ee875f2a9d8",
       "channel": "stable",
-      "size": 4425
+      "size": 4435
     },
     "tests/test_network.py": {
       "version": "1.0.0",
-      "checksum": "9a855c57d6d2319d03e6c99b83406b1a",
+      "checksum": "07709fd9a6e1d9a71a00fc2feecd2f50",
       "channel": "stable",
-      "size": 954
+      "size": 965
     },
     "tests/test_nexus.py": {
       "version": "1.0.0",

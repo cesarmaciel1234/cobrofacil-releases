@@ -16,6 +16,7 @@ try:
 except ImportError:
     from database import db_manager
 
+from src.ui_components.panel_negocio import PanelDatosNegocio
 
 class DialogoTicket(QDialog):
     def __init__(self, parent=None):
@@ -29,53 +30,16 @@ class DialogoTicket(QDialog):
         main_layout.setSpacing(20)
         
         # LEFT: Form fields
-        left_panel = QFrame()
-        left_panel.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #E2E8F0;")
+        self.panel_negocio = PanelDatosNegocio(self, show_save_button=True)
+        self.panel_negocio.datos_actualizados.connect(self._update_preview)
         
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        left_panel.setGraphicsEffect(shadow)
+        # intercept the save button click to also close the dialog if needed, or we just rely on its own internal QMessageBox.
+        # Let's override its guardar method behavior slightly to also close dialog, or we can just leave it.
+        # We will add a custom wrapper around save.
+        self.panel_negocio.btn_save.clicked.disconnect()
+        self.panel_negocio.btn_save.clicked.connect(self.guardar)
         
-        form_layout = QVBoxLayout(left_panel)
-        form_layout.setContentsMargins(25, 25, 25, 25)
-        
-        lbl_title = QLabel("📝 Datos del Negocio")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold;  border: none;")
-        form_layout.addWidget(lbl_title)
-        form_layout.addSpacing(10)
-        
-        self.txt_name = QLineEdit(config.get('business_name', ''))
-        self.txt_addr = QLineEdit(config.get('address', ''))
-        self.txt_phone = QLineEdit(config.get('phone', ''))
-        self.txt_cuit = QLineEdit(config.get('business_cuit', ''))
-        self.txt_msg = QLineEdit(config.get('footer_message', ''))
-        
-        for txt, lbl in [
-            (self.txt_name, "Nombre Comercial (Logotipo):"),
-            (self.txt_addr, "Dirección Comercial:"),
-            (self.txt_phone, "Teléfono / Contacto:"),
-            (self.txt_cuit, "CUIT / RUT / NIT:"),
-            (self.txt_msg, "Mensaje de Despedida:")
-        ]:
-            l = QLabel(lbl)
-            l.setStyleSheet(" font-size: 13px; font-weight: bold; border: none;")
-            txt.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px;  color: black; font-size: 13px;")
-            txt.textChanged.connect(self._update_preview)
-            form_layout.addWidget(l)
-            form_layout.addWidget(txt)
-            form_layout.addSpacing(5)
-            
-        form_layout.addStretch()
-        
-        btn_save = QPushButton("💾 Guardar y Aplicar")
-        btn_save.setCursor(Qt.PointingHandCursor)
-        btn_save.setStyleSheet(" background-color: #3B82F6; color: white; padding: 12px; font-weight: bold; border-radius: 6px; font-size: 14px;")
-        btn_save.clicked.connect(self.guardar)
-        form_layout.addWidget(btn_save)
-        
-        main_layout.addWidget(left_panel, 1)
+        main_layout.addWidget(self.panel_negocio, 1)
         
         # RIGHT: Live Preview
         right_panel = QFrame()
@@ -172,20 +136,15 @@ class DialogoTicket(QDialog):
         self._update_preview()
 
     def _update_preview(self):
-        self.lbl_t_name.setText(self.txt_name.text() or "MI EMPRESA")
-        self.lbl_t_cuit.setText(self.txt_cuit.text() or "CUIT: 00-00000000-0")
-        self.lbl_t_addr.setText(self.txt_addr.text() or "Dirección del Local")
-        self.lbl_t_phone.setText(f"Tel: {self.txt_phone.text()}" if self.txt_phone.text() else "")
-        self.lbl_t_msg.setText(self.txt_msg.text() or "Gracias por su compra!")
+        data = self.panel_negocio.get_data()
+        self.lbl_t_name.setText(data.get("business_name") or "MI EMPRESA")
+        self.lbl_t_cuit.setText(data.get("business_cuit") or "CUIT: 00-00000000-0")
+        self.lbl_t_addr.setText(data.get("address") or "Dirección del Local")
+        self.lbl_t_phone.setText(f"Tel: {data.get('phone')}" if data.get('phone') else "")
+        self.lbl_t_msg.setText(data.get("footer_message") or "Gracias por su compra!")
 
     def guardar(self):
-        config.set('business_name', self.txt_name.text())
-        config.set('address', self.txt_addr.text())
-        config.set('phone', self.txt_phone.text())
-        config.set('business_cuit', self.txt_cuit.text())
-        config.set('footer_message', self.txt_msg.text())
-        
-        from PyQt6.QtWidgets import QMessageBox
-        QMessageBox.information(self, "Guardado", "Diseño de ticket actualizado correctamente.")
+        # Usar la lógica interna de guardado
+        self.panel_negocio.guardar()
         self.accept()
 

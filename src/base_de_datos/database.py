@@ -134,36 +134,15 @@ class DatabaseManager:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
-                        from PyQt6.QtWidgets import QMessageBox, QApplication
-                        from src.config import config
-                        app = QApplication.instance()
-                        if not app:
-                            import sys
-                            app = QApplication(sys.argv)
-                        
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Warning)
-                        msg.setWindowTitle("⚠️ RED NO ENCONTRADA")
-                        msg.setText(f"No se pudo conectar a la base de datos maestra en: {host}.\n\n¿Deseas volver a intentarlo o forzar el inicio en modo local (aislado)?\n(Nota: Si fuerzas el modo local, trabajarás desconectado y tus ventas se guardarán temporalmente).")
-                        
-                        btn_reintentar = msg.addButton("Reintentar Conexión", QMessageBox.AcceptRole)
-                        btn_local = msg.addButton("Forzar Modo Local", QMessageBox.DestructiveRole)
-                        qt_exec(msg)
-                        
-                        clicked = msg.clickedButton()
-                        
-                        if clicked == btn_reintentar:
-                            continue
-                        else:
-                            logger.info("Usuario forzó modo local. Se mantendrá la config JSON pero se iniciará en SQLite.")
-                            self.is_master = True
-                            self.db_path = "sqlite:///" + os.path.join(self.base_dir, "punpro.db")
-                            self.mariadb_engine = None
-                            self.sqlite_engine = SQLiteEngine(self.db_path.replace("sqlite:///", ""))
-                            self._create_tables()
-                            self._ensure_test_users()
-                            # No levantamos error, simplemente sale y continua en modo local temporalmente
-                            return
+                        logger.info("Auto-forzando modo local. Se iniciará con base de datos local SQLite de forma transparente.")
+                        self.is_master = True
+                        self.db_path = "sqlite:///" + os.path.join(self.base_dir, "punpro.db")
+                        self.mariadb_engine = None
+                        self.sqlite_engine = SQLiteEngine(self.db_path.replace("sqlite:///", ""))
+                        self._create_tables()
+                        self._ensure_test_users()
+                        # No levantamos error, simplemente sale y continua en modo local temporalmente
+                        return
 
                 self.db_path = "mariadb://" + host
                 self._create_tables()
@@ -421,6 +400,18 @@ class DatabaseManager:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
 
+    def is_connected(self) -> bool:
+        """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
+        engine = self.mariadb_engine if self.db_engine_type == "mariadb" else self.sqlite_engine
+        if not engine:
+            return False
+        try:
+            res = self.execute_scalar("SELECT 1")
+            return res == 1
+        except Exception:
+            return False
+            raise
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -474,6 +465,7 @@ class DatabaseManager:
         add_column_if_not_exists('productos', 'codigo', 'TEXT')
         add_column_if_not_exists('productos', 'departamento', 'TEXT')
         add_column_if_not_exists('productos', 'es_pesable', 'INTEGER DEFAULT 0')
+        add_column_if_not_exists('productos', 'es_sos', 'INTEGER DEFAULT 0')
         add_column_if_not_exists('productos', 'cant_oferta', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'precio_oferta', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'precio_oferta_relampago', 'REAL DEFAULT 0')
@@ -548,7 +540,7 @@ class DatabaseManager:
         try:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS configuracion (
-                    clave TEXT PRIMARY KEY,
+                    clave VARCHAR(100) PRIMARY KEY,
                     valor TEXT
                 )
             """)
@@ -624,11 +616,17 @@ class DatabaseManager:
         finally:
             conn.close()
 
-        try:
-            from src.base_de_datos.offline_sync import offline_sync_manager
-            offline_sync_manager.sync_pendientes()
-        except Exception as e:
-            logger.warning(f"No se pudo sincronizar cola offline post-migración: {e}")
+        def trigger_sync():
+            import time
+            time.sleep(2)
+            try:
+                from src.base_de_datos.offline_sync import offline_sync_manager
+                offline_sync_manager.sync_pendientes()
+            except Exception as e:
+                logger.warning(f"No se pudo sincronizar cola offline post-migración: {e}")
+        
+        import threading
+        threading.Thread(target=trigger_sync, daemon=True).start()
 
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
@@ -688,7 +686,7 @@ class DatabaseManager:
                     cambio REAL,
                     pago_efectivo REAL DEFAULT 0,
                     pago_otro REAL DEFAULT 0,
-                    usuario TEXT,
+                    usuario VARCHAR(100),
                     estado TEXT DEFAULT 'COMPLETADA',
                     metodo_pago TEXT DEFAULT 'Efectivo',
                     caja_id INTEGER DEFAULT 1,
@@ -738,7 +736,7 @@ class DatabaseManager:
                 CREATE TABLE IF NOT EXISTS movimientos_caja (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    tipo TEXT,
+                    tipo VARCHAR(50),
                     monto REAL,
                     usuario TEXT,
                     observaciones TEXT,
@@ -815,6 +813,29 @@ class DatabaseManager:
                     nro_garrote TEXT,
                     peso REAL,
                     FOREIGN KEY(romaneo_id) REFERENCES romaneos(id)
+                )
+            """)
+
+            # 14. HISTORIAL PROMEDIOS
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS historial_promedios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tipo_carne TEXT,
+                    fecha_guardado TEXT,
+                    proveedor TEXT,
+                    kilos_base REAL,
+                    precio_kg_base REAL,
+                    datos_json TEXT
+                )
+            """)
+            
+            # 15. COMBOS
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS combos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT NOT NULL,
+                    precio_combo REAL NOT NULL,
+                    productos_json TEXT NOT NULL
                 )
             """)
             

@@ -71,7 +71,7 @@ def run_multicaja_test():
     )
     
     # Empezar servidor LAN en un hilo (Si no está corriendo)
-    from src.services.lan_server import init_lan_server
+    from src.central_red_global.lan_server import init_lan_server
     init_lan_server()
     print("Servidor LAN Maestro iniciado. Esperando 2 segundos...")
     time.sleep(2)

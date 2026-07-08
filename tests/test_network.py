@@ -6,7 +6,7 @@ from PyQt6.QtCore import QTimer
 # Evitar que QTimer o la UI colapse sin app
 app = QApplication(sys.argv)
 
-from src.network.network_engine import init_network_engine
+from src.central_red_global.network_engine import init_network_engine
 
 print(">>> Iniciando Test de NetworkEngine (Modo: admin)")
 try:

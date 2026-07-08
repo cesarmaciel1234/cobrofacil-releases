@@ -4,7 +4,7 @@ import os
 import threading
 from PyQt6.QtWidgets import QApplication
 from src.cajero.paso5_terminal import Paso5Terminal
-from src.services.lan_server import init_lan_server
+from src.central_red_global.lan_server import init_lan_server
 
 print('====================================================')
 print('[TEST ESTRUCTURA] Iniciando Prueba Completa E2E')

@@ -237,7 +237,7 @@ def launch_app():
                     continue
                 
                 # Inicializar el Cerebro Conector UDP (NetworkEngine)
-                from src.network.network_engine import init_network_engine
+                from src.central_red_global.network_engine import init_network_engine
                 init_network_engine(role_selected)
                 
                 perfil_dlg.hide()
@@ -249,20 +249,15 @@ def launch_app():
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                # Esperar autorización de la computadora principal (Caja) por UDP
-                from src.carteleria.dialogo_espera_auth import DialogoEsperaAuth
-                wait_dlg = DialogoEsperaAuth()
-                if qt_exec(wait_dlg):
-                    from src.config import config
-                    config.current_user = {"role": "carteleria"}
-                    wait_dlg.hide()
-                    app.processEvents()
-                    step = 4
-                else:
-                    wait_dlg.hide()
-                    app.processEvents()
-                    step = 1
-                continue
+                import subprocess
+                # Lanzar la Cartelería como una aplicación independiente
+                carteleria_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "carteleria", "carteleria.py")
+                proc = subprocess.Popen([sys.executable, carteleria_path])
+                # Ocultar y esperar a que termine para no apagar MariaDB
+                perfil_dlg.hide()
+                proc.wait()
+                # Salir del Launcher (main.py)
+                return 0
                 
             login_dlg = LoginPantalla(role_selected)
             if qt_exec(login_dlg):
@@ -460,7 +455,7 @@ if __name__ == "__main__":
     reset_drawer_manager()
 
     start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
-    from src.services.lan_server import init_lan_server
+    from src.central_red_global.lan_server import init_lan_server
     init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
@@ -476,7 +471,7 @@ if __name__ == "__main__":
         print(f"Error al detener MariaDB: {e}")
         
     try:
-        from src.services.lan_server import stop_lan_server
+        from src.central_red_global.lan_server import stop_lan_server
         stop_lan_server()
     except Exception as e:
         print(f"Error al detener LAN Server: {e}")

@@ -1,4 +1,4 @@
-from src.services.lan_server import init_lan_server
+from src.central_red_global.lan_server import init_lan_server
 import time
 
 print("Iniciando servidor LAN...")

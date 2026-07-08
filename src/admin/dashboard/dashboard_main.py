@@ -190,7 +190,6 @@ class Admin0Dashboard(QWidget):
         # ── GRID ─────────────────────────────────────────────────────────────
         self.modules_info = [
             ("nexus_pro",     "Nexus Pro\nControl Center",  "🌌", "indigo",  "Gestión Centralizada",  18),
-            ("carteleria",    "Cartelería\nInteligente",    "📺", "rose",    "Ofertas Relámpago",      22),
             ("inventario",    "Gestión de\nInventario",     "📦", "blue",    "Stock y productos",      2),
             ("ofertas",       "Motor de\nPromociones",      "🏷️", "amber",   "Gestión de Reglas de Precio", 3),
             ("reportes",      "Reportes y\nVentas",         "📊", "emerald", "Analytics",              4),
@@ -225,7 +224,6 @@ class Admin0Dashboard(QWidget):
         self.card_hw     = self.cards["hardware"]
         self.card_vd     = self.cards["panel_fiscal"]
         self.card_cli    = self.cards["clientes"]
-        self.card_cart   = self.cards["carteleria"]
 
         grid_container = QHBoxLayout()
         grid_container.addStretch(1)

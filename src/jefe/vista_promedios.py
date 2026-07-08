@@ -47,6 +47,19 @@ class VistaPromediosMixin:
         cab.addStretch()
         cab.addWidget(QLabel("Fecha:"))
         cab.addWidget(self._prom_fecha)
+
+        btn_guardar_hist = QPushButton("💾 Guardar Historial")
+        btn_guardar_hist.setStyleSheet(f"QPushButton {{ background: {PAL['primary']}; color: white; border-radius: 6px; padding: 8px 12px; font-weight: bold; }}")
+        btn_guardar_hist.clicked.connect(self._prom_guardar_historial)
+        
+        btn_cargar_hist = QPushButton("📂 Cargar Historial")
+        btn_cargar_hist.setStyleSheet(f"QPushButton {{ background: {PAL['info']}; color: white; border-radius: 6px; padding: 8px 12px; font-weight: bold; }}")
+        btn_cargar_hist.clicked.connect(self._prom_cargar_historial)
+
+        cab.addSpacing(20)
+        cab.addWidget(btn_guardar_hist)
+        cab.addWidget(btn_cargar_hist)
+        
         lay.addLayout(cab)
 
         media_frame = QFrame()
@@ -251,15 +264,26 @@ class VistaPromediosMixin:
         if item is not None:
             r = item.row()
             col = item.column()
+            
+            # --- VALIDACIÓN AUTOMÁTICA NUMÉRICA ---
+            # Columnas editables: Kilos(1), Ganancia(3), Venta(4), Oferta(5), Cantidad(6)
+            if col in [1, 3, 4, 5, 6]:
+                txt = item.text().replace(',', '.')
+                # Mantener solo dígitos, punto decimal y signo menos
+                clean_txt = ''.join(c for c in txt if c.isdigit() or c in '.-')
+                if clean_txt != item.text():
+                    item.setText(clean_txt)
+
             try:
                 if col == 3: # % Ganancia
-                    pct = float(item.text().replace(',','.'))
+                    pct = float(item.text() or 0)
                     precio_venta = self._costo_real_kg * (1 + pct / 100)
                     self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{precio_venta:,.2f}"))
                 elif col == 4: # Precio Venta
-                    precio_venta = float(item.text().replace(',','.'))
-                    pct = ((precio_venta / self._costo_real_kg) - 1) * 100
-                    self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pct:.2f}"))
+                    precio_venta = float(item.text() or 0)
+                    if self._costo_real_kg > 0:
+                        pct = ((precio_venta / self._costo_real_kg) - 1) * 100
+                        self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pct:.2f}"))
             except: pass
 
         t_venta_normal = 0.0
@@ -453,7 +477,7 @@ class VistaPromediosMixin:
 
     def _prom_pdf_interno(self):
         try:
-            from src.jefe.contabilidad.pdf_promedios import exportar_pdf_interno
+            from src.creador_pdf_global.motor_pdf_promedios import exportar_pdf_interno
             kilos = float(self._prom_kilos.text().replace(',', '.') or 0)
             merma = float(self._prom_merma.text().replace(',', '.') or 0)
             precio = float(self._prom_precio.text().replace(',', '.') or 0)
@@ -463,13 +487,122 @@ class VistaPromediosMixin:
 
     def _prom_pdf_clientes(self):
         try:
-            from src.jefe.contabilidad.pdf_promedios import exportar_pdf_clientes
+            from src.creador_pdf_global.motor_pdf_promedios import exportar_pdf_clientes
             exportar_pdf_clientes(self._prom_tabla, self._prom_prov.text(), self._prom_fecha.date().toString("yyyy-MM-dd"), self)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Fallo al abrir PDF público: {e}")
 
     def _load_promedios(self):
         pass
+
+    def _prom_guardar_historial(self):
+        self._guardar_estado_actual()
+        estado = self._estado_promedios.get(self._tipo_promedio)
+        if not estado: return
+        
+        import json
+        from src.base_de_datos.database import DatabaseManager
+        
+        kilos = float(estado.get("kilos") or 0)
+        precio = float(estado.get("precio") or 0)
+        if kilos == 0 or precio == 0:
+            QMessageBox.warning(self, "Atención", "Debe cargar kilos y precio de compra para guardar un historial.")
+            return
+            
+        datos_json = json.dumps(estado["filas"])
+        fecha_str = self._prom_fecha.date().toString("yyyy-MM-dd")
+        prov_str = self._prom_prov.text().strip() or "General"
+        
+        db = DatabaseManager()
+        db.execute_non_query(
+            "INSERT INTO historial_promedios (tipo_carne, fecha_guardado, proveedor, kilos_base, precio_kg_base, datos_json) VALUES (?, ?, ?, ?, ?, ?)",
+            (self._tipo_promedio, fecha_str, prov_str, kilos, precio, datos_json)
+        )
+        QMessageBox.information(self, "Historial", "Configuración guardada exitosamente en el historial.")
+
+    def _prom_cargar_historial(self):
+        from src.base_de_datos.database import DatabaseManager
+        import json
+        
+        db = DatabaseManager()
+        # Create table if not exists just in case (hot patch)
+        db.execute_non_query("""
+            CREATE TABLE IF NOT EXISTS historial_promedios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo_carne TEXT, fecha_guardado TEXT, proveedor TEXT, kilos_base REAL, precio_kg_base REAL, datos_json TEXT
+            )
+        """)
+        
+        historial = db.execute_query(
+            "SELECT id, fecha_guardado, proveedor, kilos_base, precio_kg_base, datos_json FROM historial_promedios WHERE tipo_carne = ? ORDER BY id DESC LIMIT 50",
+            (self._tipo_promedio,)
+        )
+        
+        if not historial:
+            QMessageBox.information(self, "Historial Vacío", f"No hay configuraciones guardadas para {self._tipo_promedio}.")
+            return
+            
+        dlg = QDialog(self)
+        dlg.setWindowTitle(f"Historial de {self._tipo_promedio}")
+        dlg.setMinimumSize(600, 400)
+        lay = QVBoxLayout(dlg)
+        
+        lista = QListWidget()
+        lista.setStyleSheet("QListWidget { font-size: 14px; } QListWidget::item { padding: 10px; border-bottom: 1px solid #ccc; }")
+        
+        for idx, row in enumerate(historial):
+            k = row.get("kilos_base", 0)
+            p = row.get("precio_kg_base", 0)
+            f = row.get("fecha_guardado", "")
+            prov = row.get("proveedor", "")
+            texto = f"[{f}] {prov} - Kilos: {k:g} - Costo/kg: ${p:,.2f}"
+            
+            it = QListWidgetItem(texto)
+            it.setData(Qt.ItemDataRole.UserRole, row["datos_json"])
+            it.setData(Qt.ItemDataRole.UserRole + 1, k)
+            it.setData(Qt.ItemDataRole.UserRole + 2, p)
+            it.setData(Qt.ItemDataRole.UserRole + 3, prov)
+            it.setData(Qt.ItemDataRole.UserRole + 4, f)
+            lista.addItem(it)
+            
+        lay.addWidget(lista)
+        
+        btn_cargar = btn_primary("Cargar Seleccionado")
+        btn_cargar.clicked.connect(dlg.accept)
+        lay.addWidget(btn_cargar)
+        
+        lista.itemDoubleClicked.connect(dlg.accept)
+        
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            sel = lista.currentItem()
+            if not sel: return
+            
+            json_str = sel.data(Qt.ItemDataRole.UserRole)
+            kilos = sel.data(Qt.ItemDataRole.UserRole + 1)
+            precio = sel.data(Qt.ItemDataRole.UserRole + 2)
+            prov = sel.data(Qt.ItemDataRole.UserRole + 3)
+            fecha_str = sel.data(Qt.ItemDataRole.UserRole + 4)
+            
+            try:
+                filas_recuperadas = json.loads(json_str)
+                self._estado_promedios[self._tipo_promedio] = {
+                    "kilos": str(kilos),
+                    "merma": "", # Auto calculada
+                    "precio": str(precio),
+                    "filas": filas_recuperadas
+                }
+                
+                self._prom_prov.setText(prov)
+                try:
+                    from datetime import datetime
+                    fecha_obj = datetime.strptime(fecha_str, "%yyyy-%MM-%dd").date()
+                    self._prom_fecha.setDate(QDate(fecha_obj.year, fecha_obj.month, fecha_obj.day))
+                except: pass
+                
+                self._load_cortes_base()
+                QMessageBox.information(self, "Recuperado", "Configuración restaurada con éxito.")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"No se pudo restaurar el historial: {e}")
 
 
     # ─────────────────────────────────────────────────────────────────────────

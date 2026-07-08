@@ -1429,7 +1429,112 @@ class Paso5Terminal(QWidget):
         self.setUpdatesEnabled(True)
         self.repaint()
 
+    def _evaluar_combos(self):
+        if getattr(self, '_evaluando_combos', False): return
+        self._evaluando_combos = True
+        try:
+            # 1. Eliminar filas previas de combo
+            i = 0
+            while i < self.tabla.rowCount():
+                if self.tabla.item(i, 0).text().startswith("COMBO-"):
+                    self.tabla.removeRow(i)
+                else:
+                    i += 1
+                    
+            # 2. Recolectar stock virtual en la canasta actual
+            canasta = {}
+            for row in range(self.tabla.rowCount()):
+                id_p = self.tabla.item(row, 0).text()
+                cant = float(self.tabla.item(row, 3).text())
+                precio = parse_float_safe(self.tabla.item(row, 2).text())
+                if id_p not in canasta:
+                    canasta[id_p] = {"cant": 0, "precio": precio}
+                canasta[id_p]["cant"] += cant
+                
+            # 3. Buscar combos en BD
+            from src.base_de_datos.database import db_manager
+            import json, socket
+            combos_activos = []
+            try:
+                res = db_manager.execute_query("SELECT id, nombre, precio_combo, productos_json FROM combos")
+                if res:
+                    for r in res:
+                        try:
+                            reqs = json.loads(r.get('productos_json', r[3] if isinstance(r, tuple) else '[]'))
+                            combos_activos.append({
+                                "id": r.get('id', r[0] if isinstance(r, tuple) else ''),
+                                "nombre": r.get('nombre', r[1] if isinstance(r, tuple) else ''),
+                                "precio_combo": float(r.get('precio_combo', r[2] if isinstance(r, tuple) else 0)),
+                                "reqs": reqs
+                            })
+                        except: pass
+            except: pass
+            
+            # 4. Aplicar Combos
+            combos_aplicados_ahora = []
+            for combo in combos_activos:
+                # Cuántas veces podemos aplicar este combo con la canasta actual?
+                veces_aplicable = 999999
+                costo_original_por_combo = 0
+                for req in combo["reqs"]:
+                    req_id = str(req["id_producto"])
+                    req_cant = float(req["cantidad"])
+                    disp = canasta.get(req_id, {"cant": 0, "precio": 0})
+                    if req_cant > 0:
+                        veces = int(disp["cant"] // req_cant)
+                        if veces < veces_aplicable: veces_aplicable = veces
+                    costo_original_por_combo += (disp["precio"] * req_cant)
+                    
+                if veces_aplicable > 0 and veces_aplicable < 999999:
+                    for req in combo["reqs"]:
+                        req_id = str(req["id_producto"])
+                        req_cant = float(req["cantidad"])
+                        canasta[req_id]["cant"] -= (req_cant * veces_aplicable)
+                        
+                    precio_final_combo = combo["precio_combo"]
+                    ahorro_unitario = costo_original_por_combo - precio_final_combo
+                    if ahorro_unitario > 0:
+                        ahorro_total_desc = ahorro_unitario * veces_aplicable
+                        
+                        r = self.tabla.rowCount()
+                        self.tabla.insertRow(r)
+                        
+                        from src.cajero.paso5_terminal.paso5_terminal import fmt_moneda_sin_centavos
+                        items = [f"COMBO-{combo['id']}", f"🎁 [COMBO] {combo['nombre']}", fmt_moneda_sin_centavos(-ahorro_unitario), str(veces_aplicable), "0", fmt_moneda_sin_centavos(-ahorro_total_desc)]
+                        for idx, v in enumerate(items):
+                            it = QTableWidgetItem(v)
+                            it.setTextAlignment(Qt.AlignCenter if idx != 1 else Qt.AlignLeft | Qt.AlignVCenter)
+                            if idx in (2, 3, 4, 5): it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                            font = it.font(); font.setBold(True); it.setFont(font)
+                            if idx == 5:
+                                from PyQt6.QtGui import QColor
+                                it.setForeground(QColor("#059669"))
+                                it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+                            self.tabla.setItem(r, idx, it)
+                            
+                        combos_aplicados_ahora.append(combo["nombre"])
+                        
+                        # Emitir señal UDP
+                        try:
+                            udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                            from src.config import config
+                            msg = json.dumps({
+                                "type": "COMBO_TRIGGERED",
+                                "combo": combo["nombre"],
+                                "precio_original": costo_original_por_combo * veces_aplicable,
+                                "precio_final": precio_final_combo * veces_aplicable,
+                                "ahorro": ahorro_total_desc,
+                                "caja_id": config.get("caja_id", 1)
+                            })
+                            udp_s.sendto(msg.encode('utf-8'), ("<broadcast>", 37021)) # Broadcast port for carteleria
+                        except Exception as e: pass
+
+        finally:
+            self._evaluando_combos = False
+
     def actualizar_totales(self):
+        self._evaluar_combos()
+        
         # Refrescar en cascada los estilos para que el destaque azul y el subtotal verde agua se muevan dinámicamente
         for i in range(self.tabla.rowCount()):
             self._reaplicar_estilo_fila(i)

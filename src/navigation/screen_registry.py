@@ -16,10 +16,10 @@ def build_screen_factories(main_window):
             "src.admin.admin0_dashboard", fromlist=["Admin0Dashboard"]
         ).Admin0Dashboard(),
         Screen.INVENTARIO: lambda: _imp(
-            "src.admin.inventario.inventario_main", fromlist=["Admin1Inventario"]
+            "src.admin.inventario_ui.inventario_main", fromlist=["Admin1Inventario"]
         ).Admin1Inventario(),
         Screen.OFERTAS: lambda: _imp(
-            "src.admin.ofertas.ofertas_main", fromlist=["Admin2Ofertas"]
+            "src.admin.motor_descuentos_ui.ofertas_main", fromlist=["Admin2Ofertas"]
         ).Admin2Ofertas(),
         Screen.REPORTES: lambda: _imp(
             "src.jefe.reportes.admin_reportes.reportes_main", fromlist=["Admin3Reportes"]
@@ -34,7 +34,7 @@ def build_screen_factories(main_window):
             "src.admin.cierre.cierre_main", fromlist=["Admin7Cierre"]
         ).Admin7Cierre(mw),
         Screen.ETIQUETAS: lambda: _imp(
-            "src.admin.etiquetas_panel.etiquetas_panel_main", fromlist=["AdminEtiquetas"]
+            "src.admin.etiquetas_panel_ui.etiquetas_panel_main", fromlist=["AdminEtiquetas"]
         ).AdminEtiquetas(),
         Screen.CONTABILIDAD: lambda: _imp(
             "src.jefe.contabilidad.jefe_contabilidad", fromlist=["JefeContabilidad"]
@@ -64,12 +64,13 @@ def build_screen_factories(main_window):
             "src.jefe.reportes.reportes_main", fromlist=["ReportesMain"]
         ).ReportesMain(),
         Screen.CARTELERIA: lambda: _imp(
-            "src.carteleria.main_board", fromlist=["CarteleriaMain"]
+            "src.carteleria.motor_carteleria.main_board", fromlist=["CarteleriaMain"]
         ).CarteleriaMain(),
         Screen.CARTELERIA_CONFIG: lambda: _imp(
-            "src.admin.admin15_carteleria", fromlist=["Admin15Carteleria"]
+            "src.carteleria.admin15_carteleria", fromlist=["Admin15Carteleria"]
         ).Admin15Carteleria(),
         Screen.IA_BOSS: lambda: _imp(
             "src.admin.admin12_ai_boss", fromlist=["Admin12AIBoss"]
         ).Admin12AIBoss(),
     }
+

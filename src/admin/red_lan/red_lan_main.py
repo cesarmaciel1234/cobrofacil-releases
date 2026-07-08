@@ -8,9 +8,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QCursor
 
-from src.config import config
-from src.base_de_datos.database import db_manager
 from src.navigation.screen_indices import Screen
+from src.central_red_global.motor_red import MotorRed
 
 
 class Admin6RedLan(QWidget):
@@ -113,10 +112,13 @@ class Admin6RedLan(QWidget):
     # TARJETA ESTADO
     # ──────────────────────────────────────────────────────────────────────────
     def _build_card_estado(self) -> QFrame:
-        is_master      = getattr(db_manager, "is_master", True)
-        caja_id        = config.get("caja_id", 1)
-        db_engine      = getattr(db_manager, "db_engine_type", "sqlite")
-        db_host        = config.get("db_host", "") or "localhost"
+        motor = MotorRed()
+        estado = motor.obtener_estado_red()
+        
+        is_master      = estado["is_master"]
+        caja_id        = estado["caja_id"]
+        db_engine      = estado["db_engine"]
+        db_host        = estado["db_host"]
         modo           = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
         color_modo     = "#065F46" if is_master else "#1E3A8A"
         bg_modo        = "#D1FAE5" if is_master else "#DBEAFE"
@@ -239,7 +241,8 @@ class Admin6RedLan(QWidget):
             "font-size: 13px; background: white;"
         )
         # Precargar la IP guardada si ya era esclava
-        ip_guardada = config.get("db_host", "")
+        motor = MotorRed()
+        ip_guardada = motor.obtener_estado_red()["db_host"]
         if ip_guardada and ip_guardada not in ("localhost", "127.0.0.1", ""):
             self.txt_ip_maestra.setText(ip_guardada)
         self.txt_ip_maestra.returnPressed.connect(self._convertir_esclava)
@@ -281,7 +284,8 @@ class Admin6RedLan(QWidget):
     # ──────────────────────────────────────────────────────────────────────────
     def _actualizar_botones(self):
         """Deshabilita el botón del modo ya activo."""
-        is_master = getattr(db_manager, "is_master", True)
+        motor = MotorRed()
+        is_master = motor.obtener_estado_red()["is_master"]
         self.btn_hacer_maestra.setEnabled(not is_master)
         self.btn_hacer_esclava.setEnabled(is_master)
         if not is_master:
@@ -306,18 +310,13 @@ class Admin6RedLan(QWidget):
         if resp != QMessageBox.StandardButton.Yes:
             return
 
-        try:
-            # Borrar IP de esclava en config
-            config.set("db_host", "")
-            db_manager.reconectar_local()
+        motor = MotorRed()
+        ok, msg = motor.convertir_en_maestra()
+        if ok:
+            QMessageBox.information(self, "Éxito", msg)
             self._refrescar_estado()
-            QMessageBox.information(
-                self, "✅ Modo MAESTRA activado",
-                "Esta PC ahora funciona como MAESTRA con su base de datos local.\n"
-                "Reiniciá la aplicación si notas algún problema."
-            )
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo cambiar a MAESTRA:\n{e}")
+        else:
+            QMessageBox.warning(self, "Error", msg)
 
     def _convertir_esclava(self):
         """Pasa esta PC a modo ESCLAVA conectándose a la IP indicada."""
@@ -339,35 +338,20 @@ class Admin6RedLan(QWidget):
         if resp != QMessageBox.StandardButton.Yes:
             return
 
-        # Mostrar spinner visual
-        self.btn_hacer_esclava.setEnabled(False)
-        self.btn_hacer_esclava.setText("⏳ Conectando...")
-        QApplication.processEvents()
-
-        try:
-            config.set("db_host", ip)
-            db_manager.reconectar_mariadb(ip)
+        motor = MotorRed()
+        ok, msg = motor.convertir_en_esclava(ip)
+        if ok:
+            QMessageBox.information(self, "Conectado", msg)
             self._refrescar_estado()
-            QMessageBox.information(
-                self, "✅ Modo ESCLAVA activado",
-                f"Esta PC ahora funciona como ESCLAVA conectada a:\n  {ip}\n\n"
-                "Si la conexión falla, verificá que la Maestra esté activa\n"
-                "y que el firewall permita el puerto 3306."
-            )
-        except Exception as e:
-            # Revertir si falla
-            config.set("db_host", "")
-            QMessageBox.critical(
-                self, "Error de conexión",
-                f"No se pudo conectar como ESCLAVA a {ip}:\n\n{e}\n\n"
-                "Verificá que la IP sea correcta y la Maestra esté encendida."
-            )
-        finally:
-            self._actualizar_botones()
+        else:
+            QMessageBox.warning(self, "Atención", msg)
+        self._actualizar_botones()
 
     def _refrescar_estado(self):
         """Actualiza el badge de modo y los botones."""
-        is_master  = getattr(db_manager, "is_master", True)
+        motor = MotorRed()
+        estado = motor.obtener_estado_red()
+        is_master  = estado["is_master"]
         modo       = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
         color_modo = "#065F46" if is_master else "#1E3A8A"
         bg_modo    = "#D1FAE5" if is_master else "#DBEAFE"

@@ -365,7 +365,7 @@ class MainWindow(QMainWindow):
             None,    # 19 — Jefe0Dashboard           (lazy)
             None,    # 20 — JefeReportes             (lazy)
             None,    # 21 — CarteleriaMain           (lazy)
-            None,    # 22 — Admin15Carteleria        (lazy)
+            None,    # 21 — CarteleriaMain           (lazy)
             None,    # 23 — JefeIAProactiva          (lazy)
             None,    # 24 — PromediosMain            (lazy)
         ]
@@ -374,13 +374,13 @@ class MainWindow(QMainWindow):
         self._screen_factories = {
             0:  lambda: __import__('src.admin.dashboard.dashboard_main',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
-            2:  lambda: __import__('src.admin.inventario.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
-            3:  lambda: __import__('src.admin.ofertas.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
+            2:  lambda: __import__('src.admin.inventario_ui.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
+            3:  lambda: __import__('src.admin.motor_descuentos_ui.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
             6:  lambda: __import__('src.admin.red_lan.red_lan_main',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.cierre.cierre_main',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
-            8:  lambda: __import__('src.admin.etiquetas_panel.etiquetas_panel_main', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
+            8:  lambda: __import__('src.admin.etiquetas_panel_ui.etiquetas_panel_main', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
             9:  lambda: __import__('src.jefe.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),
             10: lambda: __import__('src.admin.mercadopago.mercadopago_main', fromlist=['Admin10MP']).Admin10MP(),
             11: lambda: __import__('src.admin.proveedores.proveedores_main', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
@@ -390,8 +390,8 @@ class MainWindow(QMainWindow):
             18: lambda: __import__('src.admin.nexus_admin.nexus_admin_main',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
             20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
-            21: lambda: __import__('src.carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
-            22: lambda: __import__('src.admin.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
+            21: lambda: __import__('src.carteleria.motor_carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
+            22: lambda: __import__('src.carteleria.dashboard.dashboard_main', fromlist=['CarteleriaDashboard']).CarteleriaDashboard(),
             23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
             24: lambda: __import__('src.jefe.promedios.promedios_main', fromlist=['PromediosMain']).PromediosMain(),
         }
@@ -428,7 +428,7 @@ class MainWindow(QMainWindow):
     def _pregwarm_screens_for_role(self, role: str):
         """Instancia módulos frecuentes en idle para que la 1ª navegación no congele."""
         if role == "admin":
-            warm = (2, 3, 4, 5, 7, 10, 11)
+            warm = (2, 3, 5, 7, 10, 11)
         elif role == "jefe":
             warm = (9, 20, 18)
         else:
@@ -506,8 +506,8 @@ class MainWindow(QMainWindow):
         self.stacked_widget.removeWidget(old)
         old.deleteLater()
 
-        # Aplicar tema si corresponde
-        if index not in (0, 1, 6, 12, 15, 16, 18, 19):
+        # Aplicar tema si corresponde (Excluimos 21: Carteleria TV, para mantener su estilo Mac)
+        if index not in (0, 1, 6, 12, 15, 16, 18, 19, 21):
             try:
                 from src.utils.theme_manager import theme_manager
                 theme_manager.apply_to_admin(widget)
@@ -529,6 +529,13 @@ class MainWindow(QMainWindow):
 
         if hasattr(s, 'request_screen'):
             s.request_screen.connect(self.switch_tab)
+            
+        if hasattr(s, 'request_carteleria'):
+            s.request_carteleria.connect(lambda: self.switch_tab(22)) # Carteleria entra al Dashboard 22, no directo a TV
+            
+        if index == 22: # Carteleria Dashboard
+            s.request_launch_tv.connect(lambda: self.switch_tab(21))
+            s.request_exit.connect(self._logout_to_selector)
 
         if hasattr(s, 'request_tab'):
             s.request_tab.connect(self._on_jefe_request_tab)
@@ -560,18 +567,28 @@ class MainWindow(QMainWindow):
         self.gestor_f11 = GestorEscaladaF11(self)
         self.btn_flotante = self.gestor_f11.btn_flotante
 
-        self._sc_f3 = QShortcut(QKeySequence(Qt.Key_F3), self)
-        self._sc_f3.setContext(Qt.ApplicationShortcut)
+        self._sc_f3 = QShortcut(QKeySequence(Qt.Key.Key_F3), self)
+        self._sc_f3.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self._sc_f3.activated.connect(self._handle_f3_logic)
 
-        self._sc_f12 = QShortcut(QKeySequence(Qt.Key_F12), self)
-        self._sc_f12.setContext(Qt.ApplicationShortcut)
+        self._sc_f12 = QShortcut(QKeySequence(Qt.Key.Key_F12), self)
+        self._sc_f12.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self._sc_f12.activated.connect(self._handle_f12_logic)
+
+        self._sc_f10 = QShortcut(QKeySequence(Qt.Key.Key_F10), self)
+        self._sc_f10.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self._sc_f10.activated.connect(self._toggle_fullscreen)
+
+    def _toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
 
     def _handle_f3_logic(self):
         if self.stacked_widget.currentIndex() == 1: # Estamos en Ventas
             self.pantalla_ventas.abrir_historial_dia()
-        elif config.current_user.get('role') == 'admin':
+        elif config.current_user and config.current_user.get('role') == 'admin':
             self.switch_tab(4)
 
     def _handle_f12_logic(self):
@@ -579,8 +596,20 @@ class MainWindow(QMainWindow):
         if self.stacked_widget.currentIndex() == 1:
             self.pantalla_ventas.finalizar_venta()
         # Si estamos en el Dashboard de Admin, F12 va a Nexus Extreme (18)
-        elif config.current_user.get('role') == 'admin':
+        elif config.current_user and config.current_user.get('role') == 'admin':
             self.switch_tab(18)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_F10:
+            self._toggle_fullscreen()
+            event.accept()
+            return
+        elif event.key() == Qt.Key.Key_F11:
+            if hasattr(self, 'gestor_f11'):
+                self.gestor_f11.handle_f11_global()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def jump_to_admin_secure(self):
         self.gestor_f11.jump_to_admin_secure()
@@ -647,13 +676,11 @@ class MainWindow(QMainWindow):
             self._kiosk_mode = False
             self.btn_flotante.hide()
             
-            # --- MODO BORDERLESS MAXIMIZED (PANTALLA SECUNDARIA) ---
+            # --- MODO VENTANA NORMAL (PANTALLA SECUNDARIA) ---
+            # Removemos FramelessWindowHint para que tenga barra de titulo y se pueda mover
+            self.setWindowFlags(Qt.WindowType.Window)
+
             from src.utils.qt_compat import screen_count, screen_geometry_at
-
-            # Cambiar flags oculta la ventana temporalmente
-            self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-            self.setAttribute(Qt.WA_ShowWithoutActivating)
-
             if screen_count() > 1:
                 screen_rect = screen_geometry_at(1)
             else:
@@ -661,7 +688,7 @@ class MainWindow(QMainWindow):
             if screen_rect is not None:
                 self.setGeometry(screen_rect)
                 
-            self.showMaximized()
+            self.showNormal()
             self.show()
             
             if self.chatbot_overlay is not None:
@@ -710,10 +737,6 @@ class MainWindow(QMainWindow):
                 self._build_lazy_screen(19)
             self.switch_tab(19)
             QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("jefe"))
-        elif role == "carteleria":
-            if hasattr(self, 'nav_bar_v3'): self.nav_bar_v3.hide()
-            if hasattr(self, 'top_bar_v3'): self.top_bar_v3.hide()
-            self.switch_tab(21)
         else:
             if self.screens[0] is None:
                 self._build_lazy_screen(0)
@@ -748,6 +771,14 @@ class MainWindow(QMainWindow):
         from src.config import config
         config.current_user = None
         QApplication.exit(99)
+
+    def changeEvent(self, event):
+        # Si el usuario hace clic en Maximizar, lo pasamos a FullScreen en Carteleria
+        if event.type() == 105: # QEvent.Type.WindowStateChange
+            if self.windowState() & Qt.WindowState.WindowMaximized:
+                if getattr(self, 'stacked_widget', None) and self.stacked_widget.currentIndex() == 21:
+                    QTimer.singleShot(0, self.showFullScreen)
+        super().changeEvent(event)
 
 
 
@@ -824,3 +855,4 @@ if __name__ == "__main__":
     win = MainWindow()
     win.show()
     sys.exit(qt_exec(app))
+

@@ -45,33 +45,16 @@ class VistaReportesMixin:
 
     def _gen_pdf_mensual(self):
         try:
-            from reportlab.pdfgen import canvas as pdf_canvas
-            from reportlab.lib.pagesizes import A4
-
             path, _ = QFileDialog.getSaveFileName(self, "Guardar PDF",
                 f"reporte_{self._mes:02d}_{self._año}.pdf", "PDF (*.pdf)")
             if not path: return
 
             stats = self._db.get_stats(self._mes, self._año)
-            c = pdf_canvas.Canvas(path, pagesize=A4)
-            w_pg, h_pg = A4
-
-            c.setFont("Helvetica-Bold", 18)
-            c.drawString(50, h_pg - 60, f"Reporte Contable — {MESES[self._mes-1]} {self._año}")
-            c.setFont("Helvetica", 12)
-            y = h_pg - 100
-            for key, val in [
-                ("Ingresos Totales", f"$ {stats['total_income']:,.2f}"),
-                ("Gastos Totales",   f"$ {stats['total_expenses']:,.2f}"),
-                ("Saldo Neto",       f"$ {stats['balance']:,.2f}"),
-            ]:
-                c.drawString(50, y, f"{key}: {val}"); y -= 24
-
-            c.save()
+            
+            from src.creador_pdf_global.motor_pdf_reportes import generar_pdf_mensual_stats
+            generar_pdf_mensual_stats(path, stats, self._mes, self._año, MESES[self._mes-1])
+            
             QMessageBox.information(self, "PDF Generado", f"Guardado en:\n{path}")
-        except ImportError:
-            QMessageBox.warning(self, "Faltan librerías",
-                               "Instalar: pip install reportlab")
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
