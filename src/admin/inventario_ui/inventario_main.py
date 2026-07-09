@@ -33,9 +33,8 @@ class Admin1Inventario(QWidget):
         self._apply_inventario_theme()
 
     def _apply_inventario_theme(self):
-        """Reaplica tema claro tras theme_manager (se ejecuta al lazy-load)."""
-        if hasattr(self, "catalogo"):
-            self.catalogo._apply_catalogo_theme()
+        """El tema global se aplica automáticamente; ya no forzamos el modo claro."""
+        pass
 
     def _setup_ui(self):
         root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
@@ -48,10 +47,9 @@ class Admin1Inventario(QWidget):
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet("""
             QPushButton {
-                background: #FFFFFF; color: #0F172A; font-weight: 800; border-radius: 10px;
+                border-radius: 10px;
                 padding: 10px 25px; border: 1px solid #CBD5E1; font-size: 11px; letter-spacing: 1px;
             }
-            QPushButton:hover { background: #EFF6FF; border-color: #3B82F6; color: #1D4ED8; }
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
         hl.addWidget(btn_back)
@@ -65,7 +63,7 @@ class Admin1Inventario(QWidget):
 
         # Toolbar superior
         self.toolbar = QFrame(); self.toolbar.setFixedHeight(70)
-        self.toolbar.setStyleSheet("background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
+        self.toolbar.setObjectName("inventarioToolbar")
         tl = QHBoxLayout(self.toolbar); tl.setContentsMargins(25,0,25,0); tl.setSpacing(12)
         self.btn_nuevo    = QPushButton("➕ NUEVO PRODUCTO")
         self.btn_nuevo.clicked.connect(self._nuevo)

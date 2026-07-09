@@ -46,7 +46,8 @@ class CatalogoProductos(QWidget):
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 8, 12, 8)
         root.setSpacing(8)
-        self.setStyleSheet("background-color: #F8FAFC;")
+        root.setSpacing(8)
+        self.setObjectName("catalogoProductosMain")
 
         from src.config import config
         from src.shared.urgencia_stock_banner import UrgenciaStockBanner
@@ -56,7 +57,7 @@ class CatalogoProductos(QWidget):
 
         # ── Barra de filtros ─────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
+        fb.setObjectName("catalogoToolbar")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
@@ -112,39 +113,7 @@ class CatalogoProductos(QWidget):
         self.tabla.setAlternatingRowColors(False)
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setShowGrid(False)
-        self.tabla.setStyleSheet("""
-            QTableWidget {
-                background: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-                gridline-color: transparent;
-                outline: none;
-            }
-            QTableWidget::item {
-                padding: 8px 10px;
-                color: #0F172A;
-                border-bottom: 1px solid #F1F5F9;
-            }
-            QTableWidget::item:hover {
-                background-color: #F1F5F9;
-            }
-            QTableWidget::item:selected {
-                background-color: #EFF6FF;
-                color: #1D4ED8;
-                border-bottom: 2px solid #3B82F6;
-            }
-            QHeaderView::section {
-                background-color: #F8FAFC;
-                color: #64748B;
-                font-weight: 900;
-                padding: 12px 8px;
-                border: none;
-                border-bottom: 2px solid #E2E8F0;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-        """)
+        self.tabla.setObjectName("catalogoTable")
         # Agregamos el ancho de "Regla Promo" (110) para tener 14 columnas
         col_widths = [28, 100, -1, 130, 70, 80, 80, 110, 95, 95, 80, 80, 80, 90]
         hh = self.tabla.horizontalHeader()
@@ -161,7 +130,7 @@ class CatalogoProductos(QWidget):
 
         # ── Footer ───────────────────────────────────────
         ft = QFrame(); ft.setFixedHeight(38)
-        ft.setStyleSheet("QFrame { background: #FFFFFF; border-top: 1px solid #E2E8F0; }")
+        ft.setObjectName("catalogoFooter")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
@@ -176,55 +145,7 @@ class CatalogoProductos(QWidget):
         self.tabla.itemSelectionChanged.connect(self._actualizar_sel)
         self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
 
-    def _apply_catalogo_theme(self):
-        """Mantiene tabla y filtros en modo claro aunque theme_manager reaplique estilos."""
-        self.setStyleSheet("background-color: #F8FAFC;")
-        if hasattr(self, "tabla"):
-            self.tabla.setStyleSheet("""
-                QTableWidget {
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
-                    border-radius: 12px;
-                    gridline-color: transparent;
-                    outline: none;
-                }
-                QTableWidget::item {
-                    padding: 8px 10px;
-                    color: #0F172A;
-                    border-bottom: 1px solid #F1F5F9;
-                }
-                QTableWidget::item:hover {
-                    background-color: #F1F5F9;
-                }
-                QTableWidget::item:selected {
-                    background-color: #EFF6FF;
-                    color: #1D4ED8;
-                    border-bottom: 2px solid #3B82F6;
-                }
-                QHeaderView::section {
-                    background-color: #F8FAFC;
-                    color: #64748B;
-                    font-weight: 900;
-                    padding: 12px 8px;
-                    border: none;
-                    border-bottom: 2px solid #E2E8F0;
-                    font-size: 11px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-            """)
-        if hasattr(self, "txt_buscar"):
-            self.txt_buscar.setStyleSheet(
-                "QLineEdit { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
-                "border-radius: 8px; padding: 10px 14px; font-size: 13px; }"
-                "QLineEdit:focus { border: 2px solid #3B82F6; }"
-            )
-        if hasattr(self, "cmb_depto"):
-            self.cmb_depto.setStyleSheet(
-                "QComboBox { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
-                "border-radius: 8px; padding: 8px 12px; }"
-                "QComboBox:focus { border: 2px solid #3B82F6; }"
-            )
+    # The hardcoded theme method was removed to allow global theme propagation
 
     def _sync_urgencia_banner(self):
         activo = bool(self.chk_venta_sin_stock.isChecked())
