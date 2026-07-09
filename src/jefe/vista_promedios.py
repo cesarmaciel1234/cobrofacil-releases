@@ -80,6 +80,9 @@ class VistaPromediosMixin:
         btn_calc = btn_primary("⚙️ Calcular Costo Base")
         btn_calc.clicked.connect(self._calc_media_res)
         
+        self._prom_kilos.textChanged.connect(lambda: self._calc_media_res(quiet=True))
+        self._prom_precio.textChanged.connect(lambda: self._calc_media_res(quiet=True))
+        
         lbl_kilos = QLabel("Kilos:")
         lbl_merma = QLabel("Merma:")
         lbl_precio = QLabel("Precio/kg:")
@@ -221,7 +224,7 @@ class VistaPromediosMixin:
         self._prom_tabla.blockSignals(False)
         self._calc_media_res()
 
-    def _calc_media_res(self):
+    def _calc_media_res(self, quiet=False):
         try:
             kilos_totales = float(self._prom_kilos.text().replace(',', '.') or "0")
             precio = float(self._prom_precio.text().replace(',', '.') or "0")
@@ -239,7 +242,7 @@ class VistaPromediosMixin:
             self._costo_real_kg = total_compra / self._kilos_utiles if self._kilos_utiles > 0 else 0
             
             self._lbl_prom_costos.setText(f"Kilos útiles: {self._kilos_utiles:.2f} kg | Costo real kg: ${self._costo_real_kg:,.2f}")
-            self._on_prom_tabla_changed(None)
+            self._on_prom_tabla_changed(None, from_calc=True)
         except Exception as e:
             pass # Silent on load
 
@@ -257,8 +260,8 @@ class VistaPromediosMixin:
         self._prom_tabla.blockSignals(False)
         self._on_prom_tabla_changed(None)
 
-    def _on_prom_tabla_changed(self, item):
-        if getattr(self, '_costo_real_kg', 0) == 0: return
+    def _on_prom_tabla_changed(self, item, from_calc=False):
+        if not hasattr(self, '_costo_real_kg'): self._costo_real_kg = 0.0
         self._prom_tabla.blockSignals(True)
 
         if item is not None:
@@ -266,10 +269,8 @@ class VistaPromediosMixin:
             col = item.column()
             
             # --- VALIDACIÓN AUTOMÁTICA NUMÉRICA ---
-            # Columnas editables: Kilos(1), Ganancia(3), Venta(4), Oferta(5), Cantidad(6)
             if col in [1, 3, 4, 5, 6]:
                 txt = item.text().replace(',', '.')
-                # Mantener solo dígitos, punto decimal y signo menos
                 clean_txt = ''.join(c for c in txt if c.isdigit() or c in '.-')
                 if clean_txt != item.text():
                     item.setText(clean_txt)
@@ -277,13 +278,18 @@ class VistaPromediosMixin:
             try:
                 if col == 3: # % Ganancia
                     pct = float(item.text() or 0)
-                    precio_venta = self._costo_real_kg * (1 + pct / 100)
-                    self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{precio_venta:,.2f}"))
+                    if self._costo_real_kg > 0:
+                        precio_venta = self._costo_real_kg * (1 + pct / 100)
+                        self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{precio_venta:,.2f}"))
                 elif col == 4: # Precio Venta
                     precio_venta = float(item.text() or 0)
                     if self._costo_real_kg > 0:
                         pct = ((precio_venta / self._costo_real_kg) - 1) * 100
                         self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pct:.2f}"))
+                elif col == 1: # Kilos
+                    self._calc_media_res(quiet=True)
+                    self._prom_tabla.blockSignals(False)
+                    return # calc already loops
             except: pass
 
         t_venta_normal = 0.0
@@ -300,8 +306,18 @@ class VistaPromediosMixin:
         for r in range(self._prom_tabla.rowCount()):
             try:
                 kilos = float(self._prom_tabla.item(r, 1).text() or 0)
-                precio_venta_base = float(self._prom_tabla.item(r, 4).text().replace(',','') or 0)
                 
+                # If global cost changed, recalculate sale price from profit margin
+                if from_calc and self._costo_real_kg > 0:
+                    pct = float(self._prom_tabla.item(r, 3).text() or 0)
+                    precio_venta_base = self._costo_real_kg * (1 + pct / 100)
+                    self._prom_tabla.setItem(r, 4, QTableWidgetItem(f"{precio_venta_base:,.2f}"))
+                else:
+                    precio_venta_base = float(self._prom_tabla.item(r, 4).text().replace(',','') or 0)
+                    if self._costo_real_kg > 0 and precio_venta_base > 0:
+                        pct = ((precio_venta_base / self._costo_real_kg) - 1) * 100
+                        self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pct:.2f}"))
+
                 oferta_str = self._prom_tabla.item(r, 5).text().replace(',','').strip()
                 precio_oferta = 0.0
                 tiene_oferta = False
@@ -318,10 +334,6 @@ class VistaPromediosMixin:
                 else:
                     it_venta.setFont(font_normal)
                     it_venta.setForeground(QColor(PAL['text']))
-                
-                if self._costo_real_kg > 0 and precio_venta_base > 0:
-                    pct = ((precio_venta_base / self._costo_real_kg) - 1) * 100
-                    self._prom_tabla.setItem(r, 3, QTableWidgetItem(f"{pct:.2f}"))
                 
                 costo_tot = kilos * self._costo_real_kg
                 
