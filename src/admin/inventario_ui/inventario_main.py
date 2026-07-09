@@ -33,8 +33,9 @@ class Admin1Inventario(QWidget):
         self._apply_inventario_theme()
 
     def _apply_inventario_theme(self):
-        """El tema global se aplica automáticamente; ya no forzamos el modo claro."""
-        pass
+        """Aplica el tema dinámicamente según el theme_manager."""
+        if hasattr(self, "catalogo"):
+            self.catalogo._apply_catalogo_theme()
 
     def _setup_ui(self):
         root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)

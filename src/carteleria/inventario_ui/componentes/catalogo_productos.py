@@ -177,54 +177,70 @@ class CatalogoProductos(QWidget):
         self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
 
     def _apply_catalogo_theme(self):
-        """Mantiene tabla y filtros en modo claro aunque theme_manager reaplique estilos."""
-        self.setStyleSheet("background-color: #F8FAFC;")
+        from src.utils.theme_manager import theme_manager
+        
+        # Colors based on current theme
+        is_dark = theme_manager.is_dark()
+        bg = "#1E293B" if is_dark else "#FFFFFF"
+        text = "#F8FAFC" if is_dark else "#0F172A"
+        border = "#334155" if is_dark else "#E2E8F0"
+        hover = "#334155" if is_dark else "#F1F5F9"
+        sel_bg = "#EFF6FF" if is_dark else "#EFF6FF"
+        sel_text = "#1E3A8A" if is_dark else "#1D4ED8"
+        header_bg = "#0F172A" if is_dark else "#F8FAFC"
+        header_text = "#94A3B8" if is_dark else "#64748B"
+        main_bg = "#0F172A" if is_dark else "#F8FAFC"
+        
+        self.setStyleSheet(f"background-color: {main_bg};")
+        
         if hasattr(self, "tabla"):
-            self.tabla.setStyleSheet("""
-                QTableWidget {
-                    background: #FFFFFF;
-                    border: 1px solid #E2E8F0;
+            self.tabla.setStyleSheet(f"""
+                QTableWidget {{
+                    background: {bg};
+                    border: 1px solid {border};
                     border-radius: 12px;
                     gridline-color: transparent;
                     outline: none;
-                }
-                QTableWidget::item {
+                }}
+                QTableWidget::item {{
                     padding: 8px 10px;
-                    color: #0F172A;
-                    border-bottom: 1px solid #F1F5F9;
-                }
-                QTableWidget::item:hover {
-                    background-color: #F1F5F9;
-                }
-                QTableWidget::item:selected {
-                    background-color: #EFF6FF;
-                    color: #1D4ED8;
+                    color: {text};
+                    border-bottom: 1px solid {hover};
+                }}
+                QTableWidget::item:hover {{
+                    background-color: {hover};
+                }}
+                QTableWidget::item:selected {{
+                    background-color: {sel_bg};
+                    color: {sel_text};
                     border-bottom: 2px solid #3B82F6;
-                }
-                QHeaderView::section {
-                    background-color: #F8FAFC;
-                    color: #64748B;
+                }}
+                QHeaderView::section {{
+                    background-color: {header_bg};
+                    color: {header_text};
                     font-weight: 900;
                     padding: 12px 8px;
                     border: none;
-                    border-bottom: 2px solid #E2E8F0;
+                    border-bottom: 2px solid {border};
                     font-size: 11px;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
-                }
+                }}
             """)
+            
         if hasattr(self, "txt_buscar"):
-            self.txt_buscar.setStyleSheet(
-                "QLineEdit { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
-                "border-radius: 8px; padding: 10px 14px; font-size: 13px; }"
-                "QLineEdit:focus { border: 2px solid #3B82F6; }"
-            )
+            self.txt_buscar.setStyleSheet(f"""
+                QLineEdit {{ background: {bg}; color: {text}; border: 1px solid {border}; 
+                border-radius: 8px; padding: 10px 14px; font-size: 13px; }}
+                QLineEdit:focus {{ border: 2px solid #3B82F6; }}
+            """)
+            
         if hasattr(self, "cmb_depto"):
-            self.cmb_depto.setStyleSheet(
-                "QComboBox { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
-                "border-radius: 8px; padding: 8px 12px; }"
-                "QComboBox:focus { border: 2px solid #3B82F6; }"
-            )
+            self.cmb_depto.setStyleSheet(f"""
+                QComboBox {{ background: {bg}; color: {text}; border: 1px solid {border}; 
+                border-radius: 8px; padding: 8px 12px; }}
+                QComboBox:focus {{ border: 2px solid #3B82F6; }}
+            """)
 
     def _sync_urgencia_banner(self):
         activo = bool(self.chk_venta_sin_stock.isChecked())

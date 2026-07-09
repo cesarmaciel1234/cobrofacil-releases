@@ -11,7 +11,7 @@ class ThemeManager(QObject):
         super().__init__()
         self.current_theme = "light"
         self._load_theme()
-        self.current_theme = "light" # FORZAR MODO CLARO SIEMPRE
+        self._load_theme()
 
     def _load_theme(self):
         if os.path.exists(THEME_FILE):
@@ -34,8 +34,8 @@ class ThemeManager(QObject):
             pass
 
     def toggle_theme(self):
-        # Deshabilitado
-        pass
+        new_theme = "dark" if self.current_theme == "light" else "light"
+        self.set_theme(new_theme)
 
     def set_theme(self, theme):
         if theme in ["light", "dark"]:
