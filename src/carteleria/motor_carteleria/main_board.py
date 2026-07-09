@@ -52,7 +52,8 @@ class CarteleriaMain(QWidget):
         # --- FONDO macOS ---
         self.bg_label = QLabel(self)
         self.bg_label.setScaledContents(True)
-        img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "macos_bg.png")
+        from src.utils.paths import get_resource_path
+        img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
         if os.path.exists(img_path):
             self.bg_label.setPixmap(QPixmap(img_path))
         else:
