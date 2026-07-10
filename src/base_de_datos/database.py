@@ -391,7 +391,9 @@ class DatabaseManager:
             # Cerrar BD SQLite si estaba abierta
             self.db_path = "mariadb://" + host
             self.db_engine_type = "mariadb"
-            self.is_master = False
+            
+            from src.config import config
+            self.is_master = config.get("is_master", host in ("localhost", "127.0.0.1"))
 
             self.mariadb_engine = MariaDBEngine(host=host)
 

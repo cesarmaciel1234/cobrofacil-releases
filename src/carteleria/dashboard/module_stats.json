@@ -1,8 +1,8 @@
 {
-    "Red_LAN": 9,
-    "Lanzar_TV": 12,
+    "Red_LAN": 12,
+    "Lanzar_TV": 15,
     "Admin_TV": 3,
-    "IA_Chef": 3,
+    "IA_Chef": 4,
     "Ofertas": 6,
-    "Inventario": 8
+    "Inventario": 10
 }

@@ -28,7 +28,7 @@
     "auto_virtual_keyboard": false,
     "facturacion_afip_global": false,
     "db_engine": "mariadb",
-    "db_host": "192.168.56.1",
+    "db_host": "localhost",
     "cierre_auto_hora": "00:00",
     "cierre_auto_activo": true,
     "stock_alerta_activa": true,
@@ -92,5 +92,5 @@
     "carteleria_rotacion": 15,
     "carteleria_tiempo_sos": 10,
     "carteleria_frec_sos": 2,
-    "is_master": false
+    "is_master": true
 }
