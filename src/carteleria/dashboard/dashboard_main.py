@@ -82,6 +82,7 @@ class CarteleriaDashboard(QWidget):
     request_inventario = pyqtSignal()
     request_ofertas = pyqtSignal()
     request_red_lan = pyqtSignal()
+    request_toggle_theme = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -113,6 +114,21 @@ class CarteleriaDashboard(QWidget):
         self.lbl_clock = QLabel()
         self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #475569; background: transparent; border: none; margin-right: 16px;")
         nav_lay.addWidget(self.lbl_clock)
+        
+        self.btn_theme = QPushButton("☀️ / 🌙 Tema")
+        self.btn_theme.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_theme.setFixedHeight(34)
+        self.btn_theme.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 12px;
+                margin-right: 8px;
+            }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }
+        """)
+        self.btn_theme.clicked.connect(self.request_toggle_theme.emit)
+        nav_lay.addWidget(self.btn_theme)
 
         self.btn_out = QPushButton("Cerrar")
         self.btn_out.setCursor(Qt.CursorShape.PointingHandCursor)

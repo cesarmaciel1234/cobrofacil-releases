@@ -44,6 +44,7 @@ class CarteleriaApp(QStackedWidget):
         self.dashboard.request_ofertas.connect(self.lanzar_ofe)
         self.dashboard.request_red_lan.connect(self.lanzar_red)
         self.dashboard.request_exit.connect(self.close)
+        self.dashboard.request_toggle_theme.connect(self.toggle_carteleria_theme)
 
         # Conectar Admin (Volver al dashboard)
         self.admin.request_back.connect(self.volver_dashboard)
@@ -81,6 +82,50 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.red)
         self.showNormal()
 
+    def toggle_carteleria_theme(self):
+        from src.utils.theme_manager import theme_manager
+        theme_manager.toggle_theme()
+        self.apply_theme()
+
+    def apply_theme(self):
+        try:
+            from src.config import config
+            from src.utils.paths import get_resource_path
+            from src.utils.theme_manager import theme_manager
+            import os
+            
+            tema_actual = theme_manager.current_theme
+            qss_filename = "estilo_dia.qss" if tema_actual == "light" else "estilo_noche.qss"
+            qss_path = get_resource_path(os.path.join("src", "ui_components", qss_filename))
+            
+            if not os.path.exists(qss_path):
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                qss_path = os.path.join(os.path.dirname(os.path.dirname(current_dir)), "src", "ui_components", qss_filename)
+
+            with open(qss_path, "r", encoding="utf-8") as f:
+                estilo_tema = f.read()
+
+            base_path = os.path.join(os.path.dirname(qss_path), "base.qss")
+            estilo_base = ""
+            if os.path.exists(base_path):
+                with open(base_path, "r", encoding="utf-8") as f_base:
+                    estilo_base = f_base.read()
+
+            estilo_completo = estilo_base + "\n" + estilo_tema
+            
+            self.dashboard.setStyleSheet(estilo_completo)
+            self.admin.setStyleSheet(estilo_completo)
+            self.inv.setStyleSheet(estilo_completo)
+            self.ofe.setStyleSheet(estilo_completo)
+            self.red.setStyleSheet(estilo_completo)
+            
+            # Notificar al inventario para que actualice sus colores internos
+            if hasattr(self.inv, "_apply_inventario_theme"):
+                self.inv._apply_inventario_theme()
+                
+        except Exception as e:
+            print("Error aplicando tema global a los paneles de cartelería:", e)
+
 def lanzar_app(app=None):
     if app is None:
         app = QApplication(sys.argv)
@@ -92,38 +137,7 @@ def lanzar_app(app=None):
     window = CarteleriaApp()
     
     # Aplicar el tema global a los módulos administrativos, excluyendo el TV (CarteleriaTV)
-    try:
-        from src.config import config
-        from src.utils.paths import get_resource_path
-        import os
-        
-        tema_actual = config.get("theme", "light")
-        qss_filename = "estilo_dia.qss" if tema_actual == "light" else "estilo_noche.qss"
-        qss_path = get_resource_path(os.path.join("src", "ui_components", qss_filename))
-        
-        if not os.path.exists(qss_path):
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            qss_path = os.path.join(os.path.dirname(os.path.dirname(current_dir)), "src", "ui_components", qss_filename)
-
-        with open(qss_path, "r", encoding="utf-8") as f:
-            estilo_tema = f.read()
-
-        base_path = os.path.join(os.path.dirname(qss_path), "base.qss")
-        estilo_base = ""
-        if os.path.exists(base_path):
-            with open(base_path, "r", encoding="utf-8") as f_base:
-                estilo_base = f_base.read()
-
-        estilo_completo = estilo_base + "\n" + estilo_tema
-        
-        window.dashboard.setStyleSheet(estilo_completo)
-        window.admin.setStyleSheet(estilo_completo)
-        window.inv.setStyleSheet(estilo_completo)
-        window.ofe.setStyleSheet(estilo_completo)
-        window.red.setStyleSheet(estilo_completo)
-        
-    except Exception as e:
-        print("Error aplicando tema global a los paneles de cartelería:", e)
+    window.apply_theme()
 
     window.show()
     # Guardamos referencia para que no sea destruida por el recolector de basura
