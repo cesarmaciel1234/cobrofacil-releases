@@ -19,16 +19,18 @@ class WindowManager:
         self.shortcut_f10.activated.connect(self.f10_pressed)
 
     def f11_pressed(self):
+        # Intentar volver al dashboard a través de la señal
         try:
-            self.main.request_screen.emit(0) # Retornar al Dashboard Admin
+            if hasattr(self.main, "request_back"):
+                self.main.request_back.emit()
+            elif hasattr(self.main, "request_screen"):
+                self.main.request_screen.emit(0)
         except Exception: pass
         
+        # Solo salir de pantalla completa, NO cerrar la aplicación entera
         top_window = self.main.window()
-        if top_window:
-            if top_window.isFullScreen():
-                top_window.showNormal()
-            else:
-                top_window.close()
+        if top_window and top_window.isFullScreen():
+            top_window.showNormal()
 
     def f10_pressed(self):
         """F10: Alterna entre pantalla completa y modo ventana."""

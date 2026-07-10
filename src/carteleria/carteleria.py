@@ -52,11 +52,14 @@ class CarteleriaApp(QStackedWidget):
         self.ofe.request_dashboard.connect(self.volver_dashboard)
         self.red.request_dashboard.connect(self.volver_dashboard)
         
-        # Conectar TV (Si tuviera un botón de salir, pero usualmente con Escape o doble clic. Implementaremos uno básico si lo solicita).
-        # Por ahora, un atajo para salir de la TV:
+        # Conectar TV
         from PyQt6.QtGui import QShortcut, QKeySequence
         self.shortcut = QShortcut(QKeySequence("Esc"), self)
         self.shortcut.activated.connect(self.volver_dashboard)
+        
+        # Conectar la señal que emite F11 (request_screen) para que vuelva al dashboard
+        if hasattr(self.tv_main, "request_screen"):
+            self.tv_main.request_screen.connect(lambda x: self.volver_dashboard())
 
     def volver_dashboard(self):
         self.setCurrentWidget(self.dashboard)
