@@ -22,7 +22,6 @@ class CarteleriaConfigPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._path = _config_path()
         self._build()
         self._load()
 
@@ -96,32 +95,19 @@ class CarteleriaConfigPanel(QWidget):
         root.addWidget(scroll)
 
     def _load(self):
-        try:
-            with open(self._path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            data = {}
-        self.txt_mensaje.setPlainText(data.get("mensaje_zocalo", ""))
+        from src.config import config
+        self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
 
     def _save_all(self):
         # 1. Guardar motor global (config.json)
         self.panel_negocio.guardar()
         
-        # 2. Guardar carteleria_config.json (solo zócalo específico de cartelería)
-        data = {
-            "mensaje_zocalo": self.txt_mensaje.toPlainText().strip()
-            # El telefono_delivery ya no se guarda aquí, se guarda en el panel de negocio global (phone)
-        }
-        try:
-            os.makedirs(os.path.dirname(self._path), exist_ok=True)
-            with open(self._path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            # El QMessageBox ya es lanzado por self.panel_negocio.guardar(), 
-            # pero podemos lanzar otro o silenciar el del panel_negocio si quisiéramos. 
-            # Como ambos guardan, dejamos el de panel_negocio o mostramos un Toast.
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"No se pudo guardar config de cartelería: {e}")
+        # 2. Guardar mensaje_zocalo en config.json para que sea global
+        from src.config import config
+        config.set("mensaje_zocalo", self.txt_mensaje.toPlainText().strip())
+        config.save()
+        
+        QMessageBox.information(self, "Guardado", "Configuración de cartelería guardada correctamente.")
 
 
 from PyQt6.QtWidgets import QStackedWidget

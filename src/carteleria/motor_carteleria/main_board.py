@@ -211,7 +211,11 @@ class CarteleriaMain(QWidget):
             telefono_negocio = cfg_data.get("phone", "No disponible")
             
             self.info_negocio.actualizar_nombre(nombre_negocio)
-            msg_publicitario = f"👨‍👩‍👧‍👦 ¡La mejor calidad para disfrutar en familia! Más de 500 familias nos eligen cada semana. ¡Gracias por su apoyo! ❤️ | Consultas por WhatsApp al: {telefono_negocio}"
+            
+            # 2. Zocalo globalizado
+            msg_publicitario = cfg_data.get("mensaje_zocalo", "")
+            if not msg_publicitario:
+                msg_publicitario = f"👨‍👩‍👧‍👦 ¡La mejor calidad para disfrutar en familia! Más de 500 familias nos eligen cada semana. ¡Gracias por su apoyo! ❤️ | Consultas por WhatsApp al: {telefono_negocio}"
             self.mensaje.actualizar_texto(msg_publicitario)
             
             # Actualizar tiempo de rotación

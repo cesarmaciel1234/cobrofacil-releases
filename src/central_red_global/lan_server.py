@@ -145,7 +145,8 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         "phone": cfg_data.get("phone", "No disponible"),
                         "carteleria_rotacion": cfg_data.get("carteleria_rotacion", 15),
                         "carteleria_tiempo_sos": cfg_data.get("carteleria_tiempo_sos", 10),
-                        "carteleria_frec_sos": cfg_data.get("carteleria_frec_sos", 2)
+                        "carteleria_frec_sos": cfg_data.get("carteleria_frec_sos", 2),
+                        "mensaje_zocalo": cfg_data.get("mensaje_zocalo", "")
                     },
                     "sos": oferta_sos,
                     "precios": rows_precios,
