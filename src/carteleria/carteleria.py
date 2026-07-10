@@ -123,6 +123,10 @@ class CarteleriaApp(QStackedWidget):
             if hasattr(self.inv, "_apply_inventario_theme"):
                 self.inv._apply_inventario_theme()
                 
+            # Notificar al dashboard principal
+            if hasattr(self.dashboard, "apply_dashboard_theme"):
+                self.dashboard.apply_dashboard_theme(theme_manager.is_dark())
+                
         except Exception as e:
             print("Error aplicando tema global a los paneles de cartelería:", e)
 

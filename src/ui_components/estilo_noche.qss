@@ -12,7 +12,7 @@
 
 /* --- QWidget --- */
 QWidget {
-    color: #1E293B;
+    color: #F8FAFC;
 }
 
 
@@ -47,9 +47,9 @@ QPushButton:disabled {
 
 /* --- QLineEdit --- */
 QLineEdit {
-    background-color: #FFFFFF;
-    border: 2px solid #E2E8F0;
-    color: #1E293B;
+    background-color: #0F172A;
+    border: 2px solid #334155;
+    color: #F8FAFC;
 }
 
 
@@ -59,16 +59,16 @@ QLineEdit:focus {
 
 
 QLineEdit:disabled {
-    background-color: #F1F5F9;
-    color: #94A3B8;
+    background-color: #1E293B;
+    color: #64748B;
 }
 
 
 /* --- QComboBox --- */
 QComboBox {
-    background-color: #FFFFFF;
-    border: 2px solid #E2E8F0;
-    color: #1E293B;
+    background-color: #0F172A;
+    border: 2px solid #334155;
+    color: #F8FAFC;
 }
 
 
@@ -89,12 +89,12 @@ QComboBox::down-arrow {
 
 /* --- QTableWidget --- */
 QTableWidget {
-    background-color: #FFFFFF;
-    alternate-background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    selection-background-color: #EFF6FF;
-    selection-color: #1E293B;
-    gridline-color: #E2E8F0;
+    background-color: #0F172A;
+    alternate-background-color: #1E293B;
+    border: 1px solid #334155;
+    selection-background-color: #1D4ED8;
+    selection-color: #F8FAFC;
+    gridline-color: #334155;
 }
 
 

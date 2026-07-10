@@ -35,17 +35,13 @@ class CarteleriaCard(QFrame):
 
     def __init__(self, title, icon, color_bg, color_txt, desc="", parent=None):
         super().__init__(parent)
+        self.color_bg_light = color_bg
+        self.color_txt_light = color_txt
+        
+        self.color_bg_dark = "#1E293B"
+        self.color_txt_dark = "#F8FAFC"
+        
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setStyleSheet(f"""
-            CarteleriaCard {{
-                background-color: {color_bg};
-                border: 1px solid rgba(0,0,0,0.1);
-                border-radius: 12px;
-            }}
-            CarteleriaCard:hover {{
-                border: 2px solid {color_txt};
-            }}
-        """)
         self.setFixedSize(220, 150)
 
         lay = QVBoxLayout(self)
@@ -55,23 +51,40 @@ class CarteleriaCard(QFrame):
         lbl_icon.setStyleSheet("font-size: 38px; background: transparent; border: none;")
         lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        lbl_title = QLabel(title)
-        lbl_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {color_txt}; background: transparent; border: none;")
-        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_title = QLabel(title)
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        lbl_sub = QLabel(desc)
-        lbl_sub.setStyleSheet(f"font-size: 11px; color: {color_txt}; opacity: 0.8; background: transparent; border: none;")
-        lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_sub.setWordWrap(True)
+        self.lbl_sub = QLabel(desc)
+        self.lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_sub.setWordWrap(True)
         
         lay.addWidget(lbl_icon)
-        lay.addWidget(lbl_title)
-        lay.addWidget(lbl_sub)
+        lay.addWidget(self.lbl_title)
+        lay.addWidget(self.lbl_sub)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
+        
+    def apply_theme(self, is_dark):
+        bg = self.color_bg_dark if is_dark else self.color_bg_light
+        txt = self.color_txt_dark if is_dark else self.color_txt_light
+        border_hover = "#3B82F6" if is_dark else self.color_txt_light
+        
+        self.setStyleSheet(f"""
+            CarteleriaCard {{
+                background-color: {bg};
+                border: 1px solid {'rgba(255,255,255,0.1)' if is_dark else 'rgba(0,0,0,0.1)'};
+                border-radius: 12px;
+            }}
+            CarteleriaCard:hover {{
+                border: 2px solid {border_hover};
+            }}
+        """)
+        
+        self.lbl_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {txt}; background: transparent; border: none;")
+        self.lbl_sub.setStyleSheet(f"font-size: 11px; color: {txt}; opacity: 0.8; background: transparent; border: none;")
 
 
 class CarteleriaDashboard(QWidget):
@@ -99,11 +112,10 @@ class CarteleriaDashboard(QWidget):
         root.setSpacing(0)
 
         # ── NAVBAR ────────────────────────────────────────────────────────────
-        nav = QFrame()
-        nav.setObjectName("NavBar")
-        nav.setFixedHeight(64)
-        nav.setStyleSheet("background: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
-        nav_lay = QHBoxLayout(nav)
+        self.nav = QFrame()
+        self.nav.setObjectName("NavBar")
+        self.nav.setFixedHeight(64)
+        nav_lay = QHBoxLayout(self.nav)
         nav_lay.setContentsMargins(32, 0, 32, 0)
 
         self.brand_lbl = QLabel("🚀 CENTRAL DE CARTELERÍA")
@@ -143,16 +155,13 @@ class CarteleriaDashboard(QWidget):
         """)
         self.btn_out.clicked.connect(self.request_exit.emit)
         nav_lay.addWidget(self.btn_out)
-        root.addWidget(nav)
+        root.addWidget(self.nav)
 
-        # ── SCROLL & BODY ─────────────────────────────────────────────────────
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: #F8FAFC; }")
-
-        page = QWidget()
-        page.setStyleSheet("background: transparent;")
-        page_lay = QVBoxLayout(page)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.page = QWidget()
+        self.page.setStyleSheet("background: transparent;")
+        page_lay = QVBoxLayout(self.page)
         page_lay.setContentsMargins(48, 36, 48, 48)
         page_lay.setSpacing(24)
 
@@ -180,9 +189,8 @@ class CarteleriaDashboard(QWidget):
         page_lay.addWidget(hero)
 
         # Grid de Tarjetas
-        lbl_modulos = QLabel("Acciones Principales")
-        lbl_modulos.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E293B;")
-        page_lay.addWidget(lbl_modulos)
+        self.lbl_modulos = QLabel("Acciones Principales")
+        page_lay.addWidget(self.lbl_modulos)
 
         grid = QGridLayout()
         grid.setSpacing(20)
@@ -213,8 +221,65 @@ class CarteleriaDashboard(QWidget):
         page_lay.addLayout(grid)
         page_lay.addStretch()
 
-        scroll.setWidget(page)
-        root.addWidget(scroll)
+        self.scroll_area.setWidget(self.page)
+        root.addWidget(self.scroll_area)
+        
+        # Apply initial theme
+        from src.utils.theme_manager import theme_manager
+        self.apply_dashboard_theme(theme_manager.is_dark())
+
+    def apply_dashboard_theme(self, is_dark):
+        if is_dark:
+            self.nav.setStyleSheet("background: #0F172A; border-bottom: 1px solid #334155;")
+            self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #F8FAFC; background: transparent; border: none;")
+            self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #94A3B8; background: transparent; border: none; margin-right: 16px;")
+            self.btn_theme.setStyleSheet("""
+                QPushButton {
+                    background: #1E293B; color: #94A3B8;
+                    border: 1.5px solid #334155; border-radius: 8px;
+                    padding: 0 16px; font-weight: 700; font-size: 12px; margin-right: 8px;
+                }
+                QPushButton:hover { background: #334155; color: #F8FAFC; border-color: #475569; }
+            """)
+            self.btn_out.setStyleSheet("""
+                QPushButton {
+                    background: #1E293B; color: #94A3B8;
+                    border: 1.5px solid #334155; border-radius: 8px;
+                    padding: 0 16px; font-weight: 700; font-size: 12px;
+                }
+                QPushButton:hover { background: #7F1D1D; color: #FECACA; border-color: #991B1B; }
+            """)
+            self.scroll_area.setStyleSheet("QScrollArea { border: none; background: #020617; }")
+            self.lbl_modulos.setStyleSheet("font-size: 18px; font-weight: bold; color: #F8FAFC;")
+        else:
+            self.nav.setStyleSheet("background: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
+            self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #0F172A; background: transparent; border: none;")
+            self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #475569; background: transparent; border: none; margin-right: 16px;")
+            self.btn_theme.setStyleSheet("""
+                QPushButton {
+                    background: #F1F5F9; color: #475569;
+                    border: 1.5px solid #E2E8F0; border-radius: 8px;
+                    padding: 0 16px; font-weight: 700; font-size: 12px; margin-right: 8px;
+                }
+                QPushButton:hover { background: #E2E8F0; color: #0F172A; border-color: #CBD5E1; }
+            """)
+            self.btn_out.setStyleSheet("""
+                QPushButton {
+                    background: #F1F5F9; color: #475569;
+                    border: 1.5px solid #E2E8F0; border-radius: 8px;
+                    padding: 0 16px; font-weight: 700; font-size: 12px;
+                }
+                QPushButton:hover { background: #FEE2E2; color: #EF4444; border-color: #FECACA; }
+            """)
+            self.scroll_area.setStyleSheet("QScrollArea { border: none; background: #F8FAFC; }")
+            self.lbl_modulos.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E293B;")
+            
+        self.card_tv.apply_theme(is_dark)
+        self.card_admin.apply_theme(is_dark)
+        self.card_chef.apply_theme(is_dark)
+        self.card_inv.apply_theme(is_dark)
+        self.card_ofe.apply_theme(is_dark)
+        self.card_red.apply_theme(is_dark)
 
     def _tick(self):
         ahora = datetime.datetime.now()
