@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
             _Dead(), # 12 — [LIBRE]
             None,    # 13 — Admin13Hardware          (lazy)
             None,    # 14 — Admin14VentasDigitales   (lazy)
-            _Dead(), # 15 — [LIBRE]
+            None,    # 15 — Admin15Carteleria        (lazy)
             _Dead(), # 16 — [LIBRE]
             None,    # 17 — AdminClientes            (lazy)
             None,    # 18 — NexusExtremeControl      (lazy)
@@ -387,6 +387,7 @@ class MainWindow(QMainWindow):
             11: lambda: __import__('src.admin.proveedores.proveedores_main', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.hardware.hardware_main', fromlist=['Admin13Hardware']).Admin13Hardware(),
             14: lambda: __import__('src.admin.ventas_digitales.ventas_digitales_main', fromlist=['Admin14VentasDigitales']).Admin14VentasDigitales(),
+            15: lambda: __import__('src.carteleria.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
             17: lambda: __import__('src.admin.clientes.admin_clientes_main',    fromlist=['AdminClientes']).AdminClientes(),
             18: lambda: __import__('src.admin.nexus_admin.nexus_admin_main',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
@@ -535,8 +536,15 @@ class MainWindow(QMainWindow):
         if hasattr(s, 'request_carteleria'):
             s.request_carteleria.connect(lambda: self.switch_tab(22)) # Carteleria entra al Dashboard 22, no directo a TV
             
+        if index == 15: # Admin Carteleria
+            if hasattr(s, 'request_dashboard'):
+                try: s.request_dashboard.disconnect()
+                except: pass
+                s.request_dashboard.connect(lambda: self.switch_tab(22))
+
         if index == 22: # Carteleria Dashboard
             s.request_launch_tv.connect(lambda: self.switch_tab(21))
+            s.request_admin_tv.connect(lambda: self.switch_tab(15))
             s.request_exit.connect(self._logout_to_selector)
 
         if hasattr(s, 'request_tab'):
@@ -718,6 +726,13 @@ class MainWindow(QMainWindow):
             self._restore_office_window()
         
         # ── Lazy Loading: instanciar el widget si es la primera visita ───────
+        if index == 21 and self.screens[21] is not None:
+            # Forzar reconstrucción de Carteleria TV para que aplique cambios de tema "Temu" al vuelo
+            old_w = self.screens[21]
+            self.stacked_widget.removeWidget(old_w)
+            old_w.deleteLater()
+            self.screens[21] = None
+
         if self.screens[index] is None:
             self._build_lazy_screen(index)
 
