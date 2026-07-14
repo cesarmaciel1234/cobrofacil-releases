@@ -22,9 +22,9 @@ class PromoManager:
                 regla = ""
                 if cant_of > 0:
                     t_un = str(r.get('tipo_unidad_oferta', '')).strip().lower()
-                    if not t_un or t_un not in ['kilos', 'unidades']:
-                        t_un = "Kilos"
-                    if cant_of < 1 and t_un == "unidades":
+                    if 'unidad' in t_un or t_un == 'u':
+                        t_un = "Unidades"
+                    else:
                         t_un = "Kilos"
                     regla = f"llevando {cant_of:g} {t_un}"
             else:
@@ -39,9 +39,9 @@ class PromoManager:
                 regla = ""
                 if cant_of > 0:
                     t_un = str(r[7]).strip().lower() if len(r) > 7 and r[7] else ''
-                    if not t_un or t_un not in ['kilos', 'unidades']:
-                        t_un = "Kilos"
-                    if cant_of < 1 and t_un == "unidades":
+                    if 'unidad' in t_un or t_un == 'u':
+                        t_un = "Unidades"
+                    else:
                         t_un = "Kilos"
                     regla = f"llevando {cant_of:g} {t_un}"
 
@@ -88,15 +88,14 @@ class PromoManager:
                     cant_of = float(r.get('cant_oferta') or 0)
                     t_un = str(r.get('tipo_unidad_oferta', '')).strip().lower()
                     if cant_of > 0:
-                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
-                        if r.get('es_pesable') in (1, '1', True, 'true'):
+                        if 'unidad' in t_un or t_un == 'u':
+                            t_un = "Unidades"
+                        else:
                             t_un = "Kilos"
-                        elif t_un == "unidades":
-                            if cant_of < 1 or any(x in nombre.lower() for x in ['alitas', 'asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
-                                t_un = "Kilos"
                         pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                     else:
-                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
+                        if 'unidad' in t_un or t_un == 'u': t_un = "Unidades"
+                        else: t_un = "Kilos"
                     
                     stock_real = float(r.get('stock') or 0.0)
                     parsed.append((nombre, float(r.get('precio', 0)), p_of, stock_real, t_un))
@@ -109,17 +108,14 @@ class PromoManager:
                     cant_of = float(r[5]) if len(r) > 5 else 0.0
                     t_un = str(r[6]).strip().lower() if len(r) > 6 and r[6] else ''
                     if cant_of > 0:
-                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
-                        
-                        pesable_val = r[8] if len(r) > 8 else None
-                        if pesable_val in (1, '1', True, 'true'):
+                        if 'unidad' in t_un or t_un == 'u':
+                            t_un = "Unidades"
+                        else:
                             t_un = "Kilos"
-                        elif t_un == "unidades":
-                            if cant_of < 1 or any(x in nombre.lower() for x in ['alitas', 'asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
-                                t_un = "Kilos"
                         pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                     else:
-                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
+                        if 'unidad' in t_un or t_un == 'u': t_un = "Unidades"
+                        else: t_un = "Kilos"
                         
                     stock_real = float(r[7]) if len(r) > 7 and r[7] else 0.0
                     parsed.append((nombre, float(r[1]) if len(r)>1 else 0.0, p_of, stock_real, t_un))

@@ -258,9 +258,9 @@ class CarteleriaMain(QWidget):
                     cant_of = float(r_sos.get('cant_oferta') or 0)
                     if cant_of > 0:
                         t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
-                        if not t_un or t_un not in ['kilos', 'unidades']:
-                            t_un = "Kilos"
-                        if cant_of < 1 and t_un == "unidades":
+                        if 'unidad' in t_un or t_un == 'u':
+                            t_un = "Unidades"
+                        else:
                             t_un = "Kilos"
                         pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                 else:
@@ -273,11 +273,10 @@ class CarteleriaMain(QWidget):
                     cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
                     if cant_of > 0:
                         t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
-                        if not t_un or t_un not in ['kilos', 'unidades']:
+                        if 'unidad' in t_un or t_un == 'u':
+                            t_un = "Unidades"
+                        else:
                             t_un = "Kilos"
-                        if t_un == "unidades":
-                            if cant_of < 1 or any(x in nombre.lower() for x in ['asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
-                                t_un = "Kilos"
                         pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                         
                 self.page_sos.actualizar(nombre, precio, precio_oferta)
