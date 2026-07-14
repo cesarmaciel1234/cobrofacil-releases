@@ -66,6 +66,17 @@ class CarteleriaApp(QStackedWidget):
         self.showNormal()
 
     def lanzar_tv(self):
+        # Destruir la instancia actual y crear una nueva para aplicar cambios de tema
+        self.removeWidget(self.tv_main)
+        self.tv_main.deleteLater()
+        from src.carteleria.motor_carteleria.main_board import CarteleriaMain
+        self.tv_main = CarteleriaMain()
+        self.addWidget(self.tv_main)
+        
+        # Reconectar shortcut/señal
+        if hasattr(self.tv_main, "request_screen"):
+            self.tv_main.request_screen.connect(lambda x: self.volver_dashboard())
+            
         self.setCurrentWidget(self.tv_main)
         self.showFullScreen()
 
