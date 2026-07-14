@@ -123,14 +123,18 @@ class GeminiWorker:
         
         El mensaje puede contener estas etiquetas opcionales para ser reemplazadas: {barrio}, {localidad}, {momento_dia}, {dia_semana}.
         
+        NUEVAS REGLAS OBLIGATORIAS:
+        1. Venta Cruzada: Si recomiendas Asado o Parrilla, sugiere agregar carbón, leña o chinchulines.
+        2. Regla de fin de mes: Agrega al menos una plantilla orientada a carne picada, roast beef o falda especial para estofado o salsa, ideal para comer pastas o ñoquis los días 29.
+        3. Fiestas Patrias: Agrega al menos una plantilla para ingredientes de Locro (pechito de cerdo, patitas, mondongo, chorizo colorado).
+        
         Estructura requerida para cada plantilla en el JSON:
         - "texto_plantilla": El mensaje corto. (ej. "¡Qué frío en {barrio}! Llevá el mejor osobuco a la {momento_dia}.")
         - "filtro_clima": "frio", "calor", "lluvioso" o "indiferente"
         - "filtro_momento": "mañana", "tarde", "noche" o "indiferente"
         - "filtro_tipo_dia": "semana", "finde" o "indiferente"
-        - "categoria_producto": "Guiso/Horno", "Asado", "Minutas", "Cerdo", "Pollo" o "Indiferente"
+        - "categoria_producto": "Guiso/Horno", "Asado", "Minutas", "Cerdo", "Pollo", "Locro", "Pastas" o "Indiferente"
         
-        Varía el tipo de mensajes (algunos para asado el finde, otros para minutas rápidas, etc.).
         Devuelve SOLO el JSON válido, sin formato markdown extra.
         """
         

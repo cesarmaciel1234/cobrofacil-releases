@@ -8,7 +8,12 @@ class GrillaPrecios(QFrame):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+        from src.carteleria.theme import get_active_theme_name
+        if get_active_theme_name() == "temu":
+            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+        else:
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
@@ -50,32 +55,54 @@ class _AutoScrollList(QScrollArea):
         for _ in range(3): 
             for categoria, productos in items_by_category.items():
                 lbl_cat = QLabel(categoria.upper())
-                lbl_cat.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 24px; font-weight: 800; color: {C_THEME['blue']}; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 2px solid rgba(0, 122, 255, 0.2);")
+                from src.carteleria.theme import get_active_theme_name
+                if get_active_theme_name() == "temu":
+                    lbl_cat.setStyleSheet(f"font-family: Impact; font-size: 30px; color: #DC2626; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 4px solid #DC2626;")
+                else:
+                    lbl_cat.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 24px; font-weight: 800; color: {C_THEME['blue']}; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 2px solid rgba(0, 122, 255, 0.2);")
                 lbl_cat.setAlignment(Qt.AlignLeft)
                 self.inner_layout.addWidget(lbl_cat)
                 
-                for nombre, precio, precio_oferta in productos:
+                for nombre, precio, precio_oferta, regla in productos:
                     row = QFrame()
-                    row.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1);")
-                    # SOMBRA ELIMINADA POR RENDIMIENTO
+                    from src.carteleria.theme import get_active_theme_name
+                    if get_active_theme_name() == "temu":
+                        row.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 8px; border: 2px solid #F87171;")
+                    else:
+                        row.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1);")
                     
                     row_lay = QHBoxLayout(row) 
                     row_lay.setContentsMargins(20, 15, 20, 15)
                     
+                    # Layout vertical para Nombre y Regla
+                    name_lay = QVBoxLayout()
+                    name_lay.setSpacing(2)
+                    
                     lbl_n = QLabel(nombre)
                     lbl_n.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 20px; font-weight: 600; color: {C_THEME['text']}; background: transparent;")
                     lbl_n.setWordWrap(True)
+                    name_lay.addWidget(lbl_n)
                     
-                    row_lay.addWidget(lbl_n, stretch=1)
+                    if regla:
+                        lbl_r = QLabel(regla)
+                        lbl_r.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 14px; font-weight: 600; color: {C_THEME['accent']}; background: transparent;")
+                        lbl_r.setWordWrap(True)
+                        name_lay.addWidget(lbl_r)
+                        
+                    name_lay.addStretch()
+                    row_lay.addLayout(name_lay, stretch=1)
                     
                     if precio_oferta > 0:
                         lbl_old = QLabel(f"<s>${precio:,.2f}</s>")
                         lbl_old.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 16px; font-weight: 600; color: rgba(0,0,0,0.4); background: transparent;")
-                        lbl_old.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        lbl_old.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                         
                         lbl_p = QLabel(f"${precio_oferta:,.2f}")
-                        lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 22px; font-weight: 800; color: #FF3B30; background: transparent;")
-                        lbl_p.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        if get_active_theme_name() == "temu":
+                            lbl_p.setStyleSheet(f"font-family: 'Impact', 'Segoe UI Black', sans-serif; font-size: 26px; font-weight: 900; color: #FFFF00; background: #DC2626; padding: 2px 8px; border-radius: 6px;")
+                        else:
+                            lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 22px; font-weight: 800; color: {C_THEME['accent']}; background: transparent;")
+                        lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                         
                         precios_lay = QVBoxLayout()
                         precios_lay.setContentsMargins(0,0,0,0)

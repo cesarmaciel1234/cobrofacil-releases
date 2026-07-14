@@ -368,6 +368,7 @@ class MainWindow(QMainWindow):
             None,    # 21 — CarteleriaMain           (lazy)
             None,    # 23 — JefeIAProactiva          (lazy)
             None,    # 24 — PromediosMain            (lazy)
+            None,    # 25 — AuditoriaMain            (lazy)
         ]
 
         # Fábricas: callable que crea el widget cuando se necesita
@@ -394,6 +395,7 @@ class MainWindow(QMainWindow):
             22: lambda: __import__('src.carteleria.dashboard.dashboard_main', fromlist=['CarteleriaDashboard']).CarteleriaDashboard(),
             23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
             24: lambda: __import__('src.jefe.promedios.promedios_main', fromlist=['PromediosMain']).PromediosMain(),
+            25: lambda: __import__('src.admin.auditoria_inventario.auditoria_main', fromlist=['AuditoriaMain']).AuditoriaMain(),
         }
 
         # Añadir todos los slots al QStackedWidget

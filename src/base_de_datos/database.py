@@ -461,6 +461,7 @@ class DatabaseManager:
         add_column_if_not_exists('productos', 'categoria', 'TEXT DEFAULT \'GENERAL\'')
         add_column_if_not_exists('productos', 'unidad', 'TEXT DEFAULT \'UN\'')
         add_column_if_not_exists('productos', 'costo', 'REAL DEFAULT 0')
+        add_column_if_not_exists('productos', 'cant_mayoreo', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'precio_mayoreo', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'stock_minimo', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'stock_maximo', 'REAL DEFAULT 0')
@@ -666,6 +667,7 @@ class DatabaseManager:
                     categoria TEXT DEFAULT 'GENERAL',
                     unidad TEXT DEFAULT 'UN',
                     costo REAL DEFAULT 0,
+                    cant_mayoreo REAL DEFAULT 0,
                     precio_mayoreo REAL DEFAULT 0,
                     stock_minimo REAL DEFAULT 0,
                     stock_maximo REAL DEFAULT 0,

@@ -31,6 +31,13 @@ class MotorIA:
                 
             filtro_tipo_dia = "finde" if dia_idx >= 4 else "semana" # Viernes a Domingo = finde
             
+            # Reglas de fechas especiales
+            dia_mes = hoy.day
+            mes_actual = hoy.month
+            
+            es_dia_noquis = dia_mes in [28, 29]
+            es_dia_locro = mes_actual == 5 and dia_mes in [1, 24, 25]
+            
             # 2. Analizar contexto de clima (recibe tuple como ("sol", "22°C Pilar") o ("nube", ...) o ("lluvia", ...))
             icono_clima = clima_tupla[0].lower() if clima_tupla else "sol"
             if "lluvia" in icono_clima:
@@ -61,10 +68,13 @@ class MotorIA:
                         address = cfg.get("address", "")
                         if address:
                             # Heurística simple si no hay barrio explícito
-                            partes = address.split()
-                            if len(partes) > 1:
-                                barrio = partes[0]
-                                localidad = partes[1]
+                            import re
+                            partes = [p for p in re.split(r'[, ]+', address) if not p.isdigit() and len(p)>2]
+                            if len(partes) >= 1:
+                                barrio = partes[0].capitalize()
+                                localidad = partes[1].capitalize() if len(partes) > 1 else barrio
+                            else:
+                                barrio = address
             except Exception:
                 pass
 
@@ -89,8 +99,15 @@ class MotorIA:
             row = c.fetchone()
             conn.close()
             
+            # Fallback determinístico con venta cruzada
             plantilla = "¡Tenemos las mejores ofertas en carnes para vos!"
-            if row:
+            if es_dia_noquis:
+                plantilla = "¡Se acercan los 29! Llevate la mejor carne picada o falda para el estofado de {momento_dia} en {barrio}."
+            elif es_dia_locro:
+                plantilla = "¡Celebremos en {localidad}! Tenemos pechito de cerdo, patitas y chorizo colorado para el mejor Locro patrio."
+            elif dia_idx >= 4:
+                plantilla = "¡Salió Asado este {dia_semana}! Llevate nuestros cortes premium y no te olvides del carbón y los chinchulines."
+            elif row:
                 plantilla = row[0]
                 
             # 5. Reemplazar etiquetas
@@ -108,8 +125,17 @@ class MotorIA:
             
             if datos_destacados:
                 # Seleccionamos un producto al azar de los destacados para acompañar el mensaje
-                p = random.choice(datos_destacados)
-                if len(p) >= 3:
+                p = None
+                if isinstance(datos_destacados, dict):
+                    productos = []
+                    for cat, items in datos_destacados.items():
+                        if isinstance(items, list):
+                            productos.extend(items)
+                    if productos: p = random.choice(productos)
+                else:
+                    p = random.choice(datos_destacados)
+                    
+                if p and len(p) >= 3:
                     producto_sugerido = p[0]
                     precio = p[1]
                     poferta = p[2]

@@ -127,16 +127,64 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
                 
                 # SOS
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
                 oferta_sos = db_manager.execute_query(sos_query)
                 
                 # Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY categoria"
+                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
                 rows_precios = db_manager.execute_query(precios_query)
                 
-                # Top 10 (fallback a aleatorios para evitar SQL errors con JOINS o columnas faltantes)
-                query_hoy = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
-                rows_top10 = db_manager.execute_query(query_hoy)
+                # Top Ventas Reales (Hoy, Semana, Mes)
+                if is_mariadb:
+                    cond_hoy = "DATE(v.fecha) = CURDATE()"
+                    cond_semana = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+                    cond_mes = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+                    join_cond = "dv.id_producto COLLATE utf8mb4_unicode_ci = p.codigo COLLATE utf8mb4_unicode_ci OR dv.id_producto COLLATE utf8mb4_unicode_ci = CAST(p.id AS CHAR) COLLATE utf8mb4_unicode_ci"
+                else:
+                    cond_hoy = "date(v.fecha) = date('now', 'localtime')"
+                    cond_semana = "date(v.fecha) >= date('now', '-7 days', 'localtime')"
+                    cond_mes = "date(v.fecha) >= date('now', '-30 days', 'localtime')"
+                    join_cond = "dv.id_producto = p.codigo OR dv.id_producto = CAST(p.id AS TEXT)"
+                
+                def get_top_query(cond_date):
+                    return f"""
+                        SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, 
+                               p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
+                        FROM detalles_ventas dv
+                        JOIN ventas v ON dv.id_venta = v.id
+                        JOIN productos p ON {join_cond}
+                        WHERE {cond_date} AND p.precio > 0
+                        GROUP BY p.id, p.codigo, p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
+                        ORDER BY SUM(dv.cantidad) DESC
+                        LIMIT 10
+                    """
+                
+                top_dict = {"hoy": [], "semana": [], "mes": []}
+                
+                try:
+                    # SQLite usa CAST(p.id AS TEXT), MariaDB usa CAST(p.id AS CHAR)
+                    q_hoy = get_top_query(cond_hoy)
+                    q_sem = get_top_query(cond_semana)
+                    q_mes = get_top_query(cond_mes)
+                    
+                    if not is_mariadb:
+                        q_hoy = q_hoy.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
+                        q_sem = q_sem.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
+                        q_mes = q_mes.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
+                    
+                    top_dict["hoy"] = db_manager.execute_query(q_hoy)
+                    top_dict["semana"] = db_manager.execute_query(q_sem)
+                    top_dict["mes"] = db_manager.execute_query(q_mes)
+                except Exception as e_sql:
+                    # Fallback si las tablas no están listas o hay un error de JOIN
+                    pass
+                
+                # Si el real falló o está vacío por falta de ventas, rellenar con aleatorios
+                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
+                if not top_dict["hoy"]: top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                if not top_dict["semana"]: top_dict["semana"] = top_dict["hoy"]
+                if not top_dict["mes"]: top_dict["mes"] = top_dict["hoy"]
+
                 
                 # Resumen para el dashboard
                 response_data = {
@@ -150,7 +198,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     },
                     "sos": oferta_sos,
                     "precios": rows_precios,
-                    "top10": rows_top10
+                    "top10": top_dict
                 }
                 
                 self._send_response(200, response_data)

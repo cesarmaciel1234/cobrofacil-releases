@@ -5,7 +5,7 @@ Módulo Unificado
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.utils.theme_manager import theme_manager
-from src.shared.proveedores_unificado import ModuloProveedoresUnificado
+from src.ui_global.proveedor.vista_proveedor import VistaProveedor
 
 class Admin11Proveedores(QWidget):
     request_dashboard = pyqtSignal()
@@ -59,7 +59,7 @@ class Admin11Proveedores(QWidget):
         root.addWidget(nav)
 
         # ── MÓDULO UNIFICADO ───────────────────────────────────────────────────
-        self.modulo_unificado = ModuloProveedoresUnificado(perfil="admin", db_jefe=None)
+        self.modulo_unificado = VistaProveedor(perfil="admin", db_jefe=None)
         
         # Le damos un layout con márgenes a la vista unificada
         content_area = QWidget()

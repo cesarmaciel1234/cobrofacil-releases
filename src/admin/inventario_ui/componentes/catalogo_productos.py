@@ -19,7 +19,7 @@ class CatalogoProductos(QWidget):
     volver = pyqtSignal()
 
     HEADERS = ["", "Código", "Descripción del Producto", "Departamento", "IVA (%)",
-               "Costo", "P. Venta", "Regla Promo", "Of. Relámpago", "Of. Promedio", "Existencia",
+               "Costo", "P. Venta", "C. Mayoreo", "P. Mayoreo", "Regla Promo", "Of. Relámpago", "Of. Promedio", "Existencia",
                "Inv. Mínimo", "Inv. Máximo", "Tipo de Venta"]
 
     def __init__(self, parent=None):
@@ -114,8 +114,8 @@ class CatalogoProductos(QWidget):
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setShowGrid(False)
         self.tabla.setObjectName("catalogoTable")
-        # Agregamos el ancho de "Regla Promo" (110) para tener 14 columnas
-        col_widths = [28, 100, -1, 130, 70, 80, 80, 110, 95, 95, 80, 80, 80, 90]
+        # 16 columnas: Check, Codigo, Desc(Stretch), Depto, IVA, Costo, Venta, C.Mayoreo, P.Mayoreo, Promo, Relampago, Promedio, Existencia, Min, Max, Tipo
+        col_widths = [28, 80, -1, 100, 60, 75, 85, 90, 90, 110, 105, 105, 95, 85, 85, 90]
         hh = self.tabla.horizontalHeader()
         for i, w in enumerate(col_widths):
             if w == -1:
@@ -358,6 +358,8 @@ class CatalogoProductos(QWidget):
                     (f"{depto_iva:.1f}%", Qt.AlignCenter),
                     (f"${r['costo']:.2f}", Qt.AlignRight),
                     (f"${r['precio']:.2f}", Qt.AlignRight),
+                    (f"{r['cant_mayoreo']:g}" if dict(r).get('cant_mayoreo', 0) > 0 else "-", Qt.AlignCenter),
+                    (f"${r['precio_mayoreo']:.2f}" if dict(r).get('precio_mayoreo', 0) > 0 else "-", Qt.AlignRight),
                     (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if dict(r).get('precio_oferta') else "-", Qt.AlignCenter),
                     (f"${r['precio_oferta_relampago']:.2f}" if dict(r).get('precio_oferta_relampago') else "-", Qt.AlignCenter),
                     (f"${r['precio_oferta_promedio']:.2f}" if dict(r).get('precio_oferta_promedio') else "-", Qt.AlignCenter),
@@ -373,12 +375,12 @@ class CatalogoProductos(QWidget):
                     it.setBackground(row_bg)
                     it.setForeground(QColor(theme_manager.get_color("texto_primario")))
 
-                    if j == 7 or j == 8:  # Resaltar si hay oferta
+                    if j == 9 or j == 10:  # Resaltar si hay oferta
                         if v != "-":
                             it.setForeground(QColor(theme_manager.get_color("oferta")))
                             it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
-                    if j == 9: # Stock
+                    if j == 12: # Stock
                         if stock <= 0:
                             it.setForeground(QColor(theme_manager.get_color("stock_agotado")))
                             it.setBackground(QColor(theme_manager.get_color("bg_stock_agotado")))
@@ -388,7 +390,7 @@ class CatalogoProductos(QWidget):
                         else:
                             it.setForeground(QColor(theme_manager.get_color("stock_saludable")))
 
-                    if j == 12: # Tipo
+                    if j == 15: # Tipo
                         it.setForeground(QColor(theme_manager.get_color("tipo_producto")))
                         it.setFont(QFont("Segoe UI", 9, QFont.Bold))
 
@@ -438,6 +440,7 @@ class CatalogoProductos(QWidget):
             'nombre': r['nombre'] or '',
             'precio': r['precio'] if r['precio'] is not None else 0.0, 
             'precio_mayoreo': r['precio_mayoreo'] if r['precio_mayoreo'] is not None else 0.0,
+            'cant_mayoreo': r['cant_mayoreo'] if r['cant_mayoreo'] is not None else 0.0,
             'cant_oferta': get_val('cant_oferta', 0.0), 
             'precio_oferta': get_val('precio_oferta', 0.0),
             'costo': r['costo'] if r['costo'] is not None else 0.0, 
@@ -452,6 +455,7 @@ class CatalogoProductos(QWidget):
         from src.admin.inventario_ui.componentes.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
+            d = dlg.get_data()
             from src.motor_inventario.motor_catalogo import MotorCatalogo
             motor = MotorCatalogo()
             ok, msg = motor.guardar_producto(d, is_new=False, prod_id=d['id'])

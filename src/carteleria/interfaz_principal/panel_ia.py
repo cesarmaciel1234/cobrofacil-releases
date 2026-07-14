@@ -9,7 +9,12 @@ class PanelIA(QFrame):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+        from src.carteleria.theme import get_active_theme_name
+        if get_active_theme_name() == "temu":
+            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+        else:
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
@@ -44,16 +49,36 @@ class PanelIA(QFrame):
         if not self.lbl_clima.isHidden():
             self.lbl_clima.move(self.width() - self.lbl_clima.width() - 30, 30)
 
-    def actualizar_recomendacion(self, nombre, precio, precio_oferta=0):
-        t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: {C_THEME['blue']}; letter-spacing: 1px;"
-        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: {C_THEME['text']}; line-height: 1.2;"
+    def actualizar_recomendacion(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
+        t1 = f"font-family: -apple-system; font-size: 26px; font-weight: bold; color: {C_THEME['blue']};"
+        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: {C_THEME['text']};"
         t3 = f"font-family: -apple-system; font-size: 45px; font-weight: 900; color: {C_THEME['accent']};"
-        t_old = f"font-family: -apple-system; font-size: 24px; font-weight: 700; color: rgba(0,0,0,0.4); text-decoration: line-through;"
-        
+        t_old = f"font-family: -apple-system; font-size: 24px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
+
+        if is_temu:
+            nombre = nombre.upper()
+
         if precio_oferta > 0:
-            html = f"<div style='padding: 20px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+            if is_temu:
+                if stock > 0 and stock < 50:
+                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                else:
+                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
         else:
-            html = f"<div style='padding: 20px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+            if is_temu:
+                if stock > 0 and stock < 50:
+                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                else:
+                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
         self.lbl_content.setText(html)
 
     def actualizar_ia(self, mensaje_ia, prod_nombre, prod_precio, prod_precio_oferta, clima):
@@ -70,6 +95,9 @@ class PanelIA(QFrame):
         self.lbl_clima.show()
         self.lbl_clima.move(self.width() - self.lbl_clima.width() - 30, 30)
         
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
         # --- Contenido Central ---
         t1 = f"font-family: -apple-system; font-size: 28px; font-weight: 800; color: {C_THEME['blue']}; letter-spacing: 1px; text-align: center;"
         t_msg = f"font-family: -apple-system; font-size: 22px; font-weight: 600; color: {C_THEME['text_muted']}; line-height: 1.3; font-style: italic;"
@@ -77,17 +105,33 @@ class PanelIA(QFrame):
         t_precio = f"font-family: -apple-system; font-size: 45px; font-weight: 900; color: {C_THEME['accent']};"
         t_old = f"font-family: -apple-system; font-size: 24px; font-weight: 700; color: rgba(0,0,0,0.4); text-decoration: line-through;"
 
-        html = f"<div style='padding: 10px; text-align: center;'>"
-        html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
-        html += f"<span style='{t1}'>Chef Lobo Sugiere</span><br><br>"
-        html += f"<span style='{t_msg}'>\"{mensaje_ia}\"</span><br><br><br>"
-        html += f"<span style='{t_prod}'>{prod_nombre}</span><br><br>"
-        
-        if prod_precio_oferta > 0:
-            html += f"<span style='{t_old}'>${prod_precio:,.2f}</span><br>"
-            html += f"<span style='{t_precio}'>${prod_precio_oferta:,.2f}</span></div>"
+        if is_temu:
+            prod_nombre = prod_nombre.upper()
+            mensaje_ia = mensaje_ia.upper()
+
+        if is_temu:
+            html = f"<div align='center' style='padding: 10px;'>"
+            html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
+            html += f"<span style='font-family: Impact; font-size: 35px; color: #DC2626;'>EL CHEF LOBO RECOMIENDA:</span><br><br>"
+            html += f"<span style='font-family: Arial; font-size: 18px; font-weight: bold; color: #000000;'>{mensaje_ia}</span><br><br><br>"
+            html += f"<span style='font-family: Impact; font-size: 45px; color: #000000;'>{prod_nombre}</span><br><br>"
+            if prod_precio_oferta > 0:
+                html += f"<span style='font-family: Arial; font-size: 30px; color: #DC2626; text-decoration: line-through;'>${prod_precio:,.2f}</span><br>"
+                html += f"<span style='font-family: Impact; font-size: 80px; color: #DC2626; background-color: #FFFF00;'>${prod_precio_oferta:,.2f}</span></div>"
+            else:
+                html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.2f}</span></div>"
         else:
-            html += f"<br><span style='{t_precio}'>${prod_precio:,.2f}</span></div>"
+            html = f"<div style='padding: 10px; text-align: center;'>"
+            html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
+            html += f"<span style='{t1}'>Chef Lobo Sugiere</span><br><br>"
+            html += f"<span style='{t_msg}'>\"{mensaje_ia}\"</span><br><br><br>"
+            html += f"<span style='{t_prod}'>{prod_nombre}</span><br><br>"
+            
+            if prod_precio_oferta > 0:
+                html += f"<span style='{t_old}'>${prod_precio:,.2f}</span><br>"
+                html += f"<span style='{t_precio}'>${prod_precio_oferta:,.2f}</span></div>"
+            else:
+                html += f"<br><span style='{t_precio}'>${prod_precio:,.2f}</span></div>"
         
         self.lbl_content.setText(html)
 

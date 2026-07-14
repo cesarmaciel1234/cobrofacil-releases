@@ -292,15 +292,21 @@ class Paso5Terminal(QWidget):
         # 2. Actualizar ítems en la tabla
         for i in range(self.tabla.rowCount()):
             p_id = self.tabla.item(i, 0).text()
-            res = db_manager.execute_query("SELECT nombre, precio, cant_oferta, precio_oferta FROM productos WHERE id=?", (p_id,))
+            res = db_manager.execute_query("SELECT nombre, precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
             if res:
                 p = res[0]
                 p_base = float(p['precio'])
                 cant = float(self.tabla.item(i, 3).text())
                 c_of = float(p['cant_oferta'] or 0)
                 p_of = float(p['precio_oferta'] or 0)
+                c_may = float(p['cant_mayoreo'] or 0)
+                p_may = float(p['precio_mayoreo'] or 0)
                 
-                if c_of > 0 and p_of > 0 and cant >= c_of:
+                if c_may > 0 and p_may > 0 and cant >= c_may:
+                    p_final = p_may
+                    desc = (p_base - p_may) * cant
+                    nombre = f"📦 [MAYOREO] {p['nombre']}"
+                elif c_of > 0 and p_of > 0 and cant >= c_of:
                     p_final = p_of
                     desc = (p_base - p_of) * cant
                     nombre = f"🔥 [OFERTA] {p['nombre']}"
@@ -1332,9 +1338,13 @@ class Paso5Terminal(QWidget):
         
         cant_of = 0.0
         precio_of = 0.0
+        cant_may = 0.0
+        precio_may = 0.0
         if hasattr(p, 'keys'):
             if 'cant_oferta' in p.keys(): cant_of = float(p['cant_oferta'] or 0.0)
             if 'precio_oferta' in p.keys(): precio_of = float(p['precio_oferta'] or 0.0)
+            if 'cant_mayoreo' in p.keys(): cant_may = float(p['cant_mayoreo'] or 0.0)
+            if 'precio_mayoreo' in p.keys(): precio_may = float(p['precio_mayoreo'] or 0.0)
         
         # 1. Agrupar si el producto ya existe en la tabla (Auto-Suma), excepto Artículos Comunes
         if p_id != "000":
@@ -1346,8 +1356,12 @@ class Paso5Terminal(QWidget):
                         self.setUpdatesEnabled(True)
                         return
                     
-                    # Verificamos si alcanza o supera la cantidad de oferta
-                    if cant_of > 0 and precio_of > 0 and new_cant >= cant_of:
+                    # Verificamos si alcanza o supera la cantidad de mayoreo u oferta
+                    if cant_may > 0 and precio_may > 0 and new_cant >= cant_may:
+                        p_aplicar = precio_may
+                        desc_total = (precio_base - precio_may) * new_cant
+                        display_name = f"📦 [MAYOREO] {p['nombre']}"
+                    elif cant_of > 0 and precio_of > 0 and new_cant >= cant_of:
                         p_aplicar = precio_of
                         desc_total = (precio_base - precio_of) * new_cant
                         display_name = f"🔥 [OFERTA] {p['nombre']}"
@@ -1381,7 +1395,11 @@ class Paso5Terminal(QWidget):
             return
 
         # 2. Si no existe, calculamos para la inserción de la fila nueva
-        if cant_of > 0 and precio_of > 0 and cantidad >= cant_of:
+        if cant_may > 0 and precio_may > 0 and cantidad >= cant_may:
+            p_aplicar = precio_may
+            desc_total = (precio_base - precio_may) * cantidad
+            display_name = f"📦 [MAYOREO] {p['nombre']}"
+        elif cant_of > 0 and precio_of > 0 and cantidad >= cant_of:
             p_aplicar = precio_of
             desc_total = (precio_base - precio_of) * cantidad
             display_name = f"🔥 [OFERTA] {p['nombre']}"
@@ -1880,25 +1898,29 @@ class Paso5Terminal(QWidget):
                         
                         # Verificación dinámica de ofertas al ingresar con el Enter
                         p_id = self.tabla.item(row, 0).text()
-                        res_of = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta FROM productos WHERE id=?", (p_id,))
+                        res_of = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
                         if res_of and p_id != "000":
                             p_base = float(res_of[0]['precio'])
                             c_of = float(res_of[0]['cant_oferta'] or 0.0)
                             p_of = float(res_of[0]['precio_oferta'] or 0.0)
+                            c_may = float(res_of[0]['cant_mayoreo'] or 0.0)
+                            p_may = float(res_of[0]['precio_mayoreo'] or 0.0)
                             
-                            if c_of > 0 and p_of > 0 and new_cant >= c_of:
+                            nombre_txt = self.tabla.item(row, 1).text()
+                            clean_name = nombre_txt.replace("🔥 [OFERTA] ", "").replace("📦 [MAYOREO] ", "")
+                            
+                            if c_may > 0 and p_may > 0 and new_cant >= c_may:
+                                p_ap = p_may
+                                desc_t = (p_base - p_may) * new_cant
+                                self.tabla.item(row, 1).setText(f"📦 [MAYOREO] {clean_name}")
+                            elif c_of > 0 and p_of > 0 and new_cant >= c_of:
                                 p_ap = p_of
                                 desc_t = (p_base - p_of) * new_cant
-                                nombre_txt = self.tabla.item(row, 1).text()
-                                if "🔥 [OFERTA]" not in nombre_txt:
-                                    self.tabla.item(row, 1).setText(f"🔥 [OFERTA] {nombre_txt}")
+                                self.tabla.item(row, 1).setText(f"🔥 [OFERTA] {clean_name}")
                             else:
                                 p_ap = p_base
                                 desc_t = 0.0
-                                nombre_txt = self.tabla.item(row, 1).text()
-                                if "🔥 [OFERTA]" in nombre_txt:
-                                    clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
-                                    self.tabla.item(row, 1).setText(clean_name)
+                                self.tabla.item(row, 1).setText(clean_name)
                                     
                             self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                             self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))

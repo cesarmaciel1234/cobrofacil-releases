@@ -112,7 +112,15 @@ def build_table(headers):
             alternate-background-color: #F8FAFC;
             font-size: 12px; color: {PAL['text']};
         }}
-        QTableWidget::item {{ padding: 10px 12px; border: none; }}
+        QTableWidget::item {{ padding: 4px 8px; border: none; }}
+        QTableWidget QLineEdit {{
+            padding: 2px;
+            background: #ffffff;
+            color: #0F172A;
+            border: 2px solid #0EA5E9;
+            border-radius: 4px;
+            font-weight: bold;
+        }}
         QTableWidget::item:hover {{ background: {PAL['surface']}; }}
         QHeaderView::section {{
             background: {PAL['surface']};
@@ -127,6 +135,7 @@ def build_table(headers):
     """)
     t.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     t.verticalHeader().setVisible(False)
+    t.verticalHeader().setDefaultSectionSize(36)
     t.setAlternatingRowColors(True)
     t.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
     t.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)

@@ -10,7 +10,12 @@ class CarruselDestacados(QFrame):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+        from src.carteleria.theme import get_active_theme_name
+        if get_active_theme_name() == "temu":
+            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+        else:
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
@@ -65,19 +70,38 @@ class CarruselDestacados(QFrame):
         else:
             self.lbl_lobo.setStyleSheet("padding-top: 20px;")
 
-    def actualizar_especial(self, nombre, precio, precio_oferta=0):
+    def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
         self.footer_widget.hide()
         self.timer_baile.stop()
         self.lbl_content.setAlignment(Qt.AlignCenter)
-        t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: {C_THEME['blue']}; letter-spacing: 1px;"
-        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: {C_THEME['text']}; line-height: 1.2;"
-        t3 = f"font-family: -apple-system; font-size: 45px; font-weight: 900; color: {C_THEME['accent']};"
-        t_old = f"font-family: -apple-system; font-size: 24px; font-weight: 700; color: {C_THEME['text_muted']}; text-decoration: line-through;"
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
+        t1 = f"font-family: -apple-system; font-size: 30px; font-weight: bold; color: {C_THEME['blue']};"
+        t2 = f"font-family: -apple-system; font-size: 38px; font-weight: 800; color: {C_THEME['text']};"
+        t3 = f"font-family: -apple-system; font-size: 55px; font-weight: 900; color: {C_THEME['accent']};"
+        t_old = f"font-family: -apple-system; font-size: 28px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
+        
+        if is_temu:
+            nombre = nombre.upper()
 
         if precio_oferta > 0:
-            html = f"<div style='padding: 20px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+            if is_temu:
+                if stock > 0 and stock < 50:
+                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                else:
+                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 15px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
         else:
-            html = f"<div style='padding: 20px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+            if is_temu:
+                import random
+                quedan = random.randint(2, 8)
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #DC2626;'>🔥 IMPERDIBLE 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>¡SOLO QUEDAN {quedan}!</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 20px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
         self.lbl_content.setText(html)
 
     def actualizar_top10(self, productos, titulo="Top 10 Semanal"):
@@ -85,17 +109,42 @@ class CarruselDestacados(QFrame):
         if not self.timer_baile.isActive():
             self.timer_baile.start(400) # Baila cada 400ms
             
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
         self.lbl_content.setAlignment(Qt.AlignCenter)
-        t1 = f"font-family: 'Segoe UI Black', -apple-system; font-size: 46px; font-weight: 900; color: #FF4500; background: transparent; text-transform: uppercase; letter-spacing: 2px;"
+        if is_temu:
+            t1 = f"font-family: 'Impact', sans-serif; font-size: 60px; font-weight: 900; color: #DC2626; background-color: #FFFF00;"
+            titulo = titulo.upper()
+        else:
+            t1 = f"font-family: 'Segoe UI Black', -apple-system; font-size: 46px; font-weight: 900; color: #FF4500; letter-spacing: 2px;"
+            
         t_rank = f"font-family: -apple-system; font-size: 24px; font-weight: 900; color: {C_THEME['blue']};"
+        if is_temu:
+            t_rank = f"font-family: 'Impact', sans-serif; font-size: 35px; font-weight: 900; color: #000000;"
+            
         t_prod = f"font-family: -apple-system; font-size: 24px; font-weight: 700; color: {C_THEME['text']};"
+        if is_temu:
+            t_prod = f"font-family: 'Impact', sans-serif; font-size: 30px; font-weight: 700; color: #000000;"
 
         html = f"<div style='padding: 10px; width: 100%;'>"
-        html += f"<div style='text-align: center; margin-bottom: 40px;'><span style='{t1}'>{titulo}</span></div>"
+        if is_temu:
+            html += f"<div align='center' style='margin-bottom: 20px;'><span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>{titulo}</span></div>"
+        else:
+            html += f"<div style='text-align: center; margin-bottom: 40px;'><span style='{t1}'>{titulo}</span></div>"
         
-        for i, prod in enumerate(productos):
+        # Limitamos a 5 para no saturar la pantalla
+        for i, prod in enumerate(productos[:5]):
             nombre = prod[0]
-            html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span></div>"
+            if is_temu:
+                import random
+                desc_text = random.choice(["¡IDEAL ASADO!", "¡RECIÉN CORTADO!", "¡OFERTA MATADERO!", "¡SÚPER PRECIO!", "🔥 HOT 🔥"])
+                bg_color = random.choice(["#DC2626", "#00A859", "#FF9900", "#0055FF"]) # Mezcla fríos y calientes
+                nombre = nombre.upper()
+                if len(nombre) > 20: nombre = nombre[:17] + "..."
+                html += f"<div style='margin-bottom: 20px; margin-left: 2%;'><span style='font-family: Impact; font-size: 30px; color: #0055FF;'>#{i+1}</span> <span style='font-family: Impact; font-size: 30px; color: #000000;'>{nombre}</span> <span style='font-family: Arial; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: {bg_color}; padding: 3px 6px; border-radius: 5px;'>&nbsp;{desc_text}&nbsp;</span></div>"
+            else:
+                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span></div>"
         
         html += "</div>"
         self.lbl_content.setText(html)

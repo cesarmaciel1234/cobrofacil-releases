@@ -1,4 +1,4 @@
-from src.vistas.proveedores import ModuloProveedoresUnificado
+from src.ui_global.proveedor.vista_proveedor import VistaProveedor
 
 class VistaProveedoresMixin:
     """
@@ -10,7 +10,7 @@ class VistaProveedoresMixin:
         
         # Instanciar el módulo unificado pasándole el perfil y la BD del Jefe
         # self._db es el engine SQLite de JefeContabilidad
-        modulo = ModuloProveedoresUnificado(parent=self, perfil="jefe", db_jefe=self._db)
+        modulo = VistaProveedor(parent=self, perfil="jefe", db_jefe=self._db)
         self.modulo_proveedores = modulo
         lay.addWidget(modulo)
         lay.addStretch()

@@ -68,16 +68,20 @@ class DialogoProducto(QDialog):
         main_lay.addWidget(barcode_frame)
 
         # --- CUERPO EN DOS COLUMNAS ---
-        grid = QGridLayout()
-        grid.setSpacing(20)
+        body_lay = QHBoxLayout()
+        body_lay.setSpacing(20)
 
-        # Columna 1: Info Básica
-        self.txt_nombre = QLineEdit(dict(datos).get('nombre', '') if datos else '')
+        # Columna Izquierda
+        col_izq = QVBoxLayout()
+        col_izq.setSpacing(15)
+
+        self.txt_nombre = self.create_standard_input(dict(datos).get('nombre', '') if datos else '')
         self.txt_nombre.setPlaceholderText("Nombre descriptivo...")
-        self.add_field(grid, "Nombre del Producto *:", self.txt_nombre, 0, 0)
+        self.add_field_v(col_izq, "Nombre del Producto *:", self.txt_nombre)
 
         self.cmb_cat = QComboBox()
         self.cmb_cat.setEditable(True)
+        self.style_combo(self.cmb_cat)
         try:
             from src.motor_inventario.motor_departamentos import MotorDepartamentos
             motor_dep = MotorDepartamentos()
@@ -89,15 +93,11 @@ class DialogoProducto(QDialog):
         idx_cat = self.cmb_cat.findText(dict(datos).get('categoria', 'GENERAL') if datos else 'GENERAL')
         if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
 
-        v_cat = QVBoxLayout()
-        lbl_cat = QLabel("Departamento (Mercadería):")
-        lbl_cat.setStyleSheet("font-weight: bold;  font-size: 12px;")
-        v_cat.addWidget(lbl_cat)
-        v_cat.addWidget(self.cmb_cat)
-        grid.addLayout(v_cat, 1, 0)
+        self.add_field_v(col_izq, "Departamento (Mercadería):", self.cmb_cat)
 
         self.cmb_depto = QComboBox()
         self.cmb_depto.addItem("")
+        self.style_combo(self.cmb_depto)
         try:
             from src.motor_inventario.motor_departamentos import MotorDepartamentos
             motor_dep = MotorDepartamentos()
@@ -107,15 +107,16 @@ class DialogoProducto(QDialog):
         except: pass
 
         v_depto = QVBoxLayout()
+        v_depto.setSpacing(5)
         lbl_depto = QLabel("Impuesto (Departamento Fiscal):")
-        lbl_depto.setStyleSheet("font-weight: bold;  font-size: 12px;")
+        lbl_depto.setStyleSheet("font-weight: bold; font-size: 12px; border: none;")
         v_depto.addWidget(lbl_depto)
         v_depto.addWidget(self.cmb_depto)
         
         self.lbl_iva_info = QLabel("ℹ️ IVA Aplicado: 21.0% (tasa general)")
-        self.lbl_iva_info.setStyleSheet(" font-size: 11px; font-weight: bold; margin-top: 2px;")
+        self.lbl_iva_info.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none;")
         v_depto.addWidget(self.lbl_iva_info)
-        grid.addLayout(v_depto, 2, 0)
+        col_izq.addLayout(v_depto)
         
         self.cmb_depto.currentIndexChanged.connect(self._actualizar_info_iva)
 
@@ -128,14 +129,16 @@ class DialogoProducto(QDialog):
 
         self.cmb_uni = QComboBox()
         self.cmb_uni.addItems(['UN','KG','LT','MT','CJ'])
+        self.style_combo(self.cmb_uni)
         idx = self.cmb_uni.findText(dict(datos).get('unidad', 'UN') if datos else 'UN')
         if idx >= 0: self.cmb_uni.setCurrentIndex(idx)
-        self.add_field(grid, "Unidad de Medida:", self.cmb_uni, 3, 0)
+        self.add_field_v(col_izq, "Unidad de Medida:", self.cmb_uni)
 
-        self.chk_pes = QCheckBox("Es pesable / fraccionable (Balanza)")
-        self.chk_pes.setChecked(bool(dict(datos).get('es_pesable', 0)) if datos else False)
-        self.chk_pes.setStyleSheet("font-weight: bold;  margin-top: 10px;")
-        grid.addWidget(self.chk_pes, 4, 0)
+        col_izq.addStretch()
+
+        # Columna Derecha
+        col_der = QVBoxLayout()
+        col_der.setSpacing(20)
 
         # Tarjeta Finanzas (Derecha)
         price_card = QFrame()
@@ -153,27 +156,43 @@ class DialogoProducto(QDialog):
         self.txt_costo = self.create_price_input(str(dict(datos).get('costo', '0.00')) if datos else '0.00')
         self.txt_precio = self.create_price_input(str(dict(datos).get('precio', '0.00')) if datos else '0.00', bold=True)
         self.txt_mayoreo = self.create_price_input(str(dict(datos).get('precio_mayoreo', '0.00')) if datos else '0.00')
+        self.txt_cant_mayoreo = self.create_price_input(str(dict(datos).get('cant_mayoreo', '0')) if datos else '0')
         
-        p_lay.addRow(QLabel("Costo Compra ($):"), self.txt_costo)
-        p_lay.addRow(QLabel("Precio Venta ($) *:"), self.txt_precio)
-        p_lay.addRow(QLabel("Precio Mayoreo ($):"), self.txt_mayoreo)
+        lbl_costo = QLabel("Costo Compra ($):"); lbl_costo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
+        lbl_precio = QLabel("Precio Venta ($) *:"); lbl_precio.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
+        lbl_mayoreo = QLabel("Precio Mayoreo ($):"); lbl_mayoreo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
+        lbl_cant_mayoreo = QLabel("Cant. para Mayoreo:"); lbl_cant_mayoreo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
         
-        grid.addWidget(price_card, 0, 1, 3, 1)
+        p_lay.addRow(lbl_costo, self.txt_costo)
+        p_lay.addRow(lbl_precio, self.txt_precio)
+        p_lay.addRow(lbl_mayoreo, self.txt_mayoreo)
+        p_lay.addRow(lbl_cant_mayoreo, self.txt_cant_mayoreo)
+        
+        col_der.addWidget(price_card)
 
         # Stock Info
         stock_lay = QHBoxLayout()
+        stock_lay.setSpacing(10)
         self.txt_stock = self.create_price_input(str(dict(datos).get('stock', '0')) if datos else '0')
         self.txt_min = self.create_price_input(str(dict(datos).get('stock_minimo', '0')) if datos else '0')
         self.txt_max = self.create_price_input(str(dict(datos).get('stock_maximo', '0')) if datos else '0')
         
-        v_stock = QVBoxLayout(); v_stock.addWidget(QLabel("Stock Act.")); v_stock.addWidget(self.txt_stock)
-        v_min = QVBoxLayout(); v_min.addWidget(QLabel("Min.")); v_min.addWidget(self.txt_min)
-        v_max = QVBoxLayout(); v_max.addWidget(QLabel("Max.")); v_max.addWidget(self.txt_max)
+        def _lbl(t):
+            l = QLabel(t); l.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
+            return l
+            
+        v_stock = QVBoxLayout(); v_stock.addWidget(_lbl("Stock Act.")); v_stock.addWidget(self.txt_stock)
+        v_min = QVBoxLayout(); v_min.addWidget(_lbl("Min.")); v_min.addWidget(self.txt_min)
+        v_max = QVBoxLayout(); v_max.addWidget(_lbl("Max.")); v_max.addWidget(self.txt_max)
         
         stock_lay.addLayout(v_stock); stock_lay.addLayout(v_min); stock_lay.addLayout(v_max)
-        grid.addLayout(stock_lay, 3, 1, 2, 1)
+        col_der.addLayout(stock_lay)
+        col_der.addStretch()
 
-        main_lay.addLayout(grid)
+        body_lay.addLayout(col_izq, 1)
+        body_lay.addLayout(col_der, 1)
+
+        main_lay.addLayout(body_lay)
 
         # --- BOTONES DE ACCIÓN ---
         main_lay.addStretch()
@@ -200,13 +219,51 @@ class DialogoProducto(QDialog):
         h_btns.addWidget(btn_save)
         main_lay.addLayout(h_btns)
 
-    def add_field(self, grid, label, widget, row, col):
+    def add_field_v(self, layout, label, widget):
         v = QVBoxLayout()
+        v.setSpacing(5)
         lbl = QLabel(label)
-        lbl.setStyleSheet("font-weight: bold;  font-size: 12px;")
+        lbl.setStyleSheet("font-weight: bold; font-size: 12px; border: none;")
         v.addWidget(lbl)
         v.addWidget(widget)
-        grid.addLayout(v, row, col)
+        layout.addLayout(v)
+
+    def create_standard_input(self, val):
+        inp = QLineEdit(val)
+        inp.setStyleSheet("""
+            QLineEdit {
+                background: #F1F5F9; 
+                border: 1px solid #CBD5E1; 
+                border-radius: 8px; 
+                padding: 10px; 
+                font-size: 14px;
+                color: #1E293B;
+            }
+            QLineEdit:focus {
+                background: white;
+                border: 2px solid #3B82F6;
+            }
+        """)
+        return inp
+        
+    def style_combo(self, cmb):
+        cmb.setStyleSheet("""
+            QComboBox {
+                background: #F1F5F9; 
+                border: 1px solid #CBD5E1; 
+                border-radius: 8px; 
+                padding: 10px; 
+                font-size: 14px;
+                color: #1E293B;
+            }
+            QComboBox:focus {
+                background: white;
+                border: 2px solid #3B82F6;
+            }
+        """)
+
+    def add_field(self, grid, label, widget, row, col):
+        pass
 
     def create_price_input(self, val, bold=False):
         inp = QLineEdit(val)
@@ -291,6 +348,7 @@ class DialogoProducto(QDialog):
             'id':self._id, 'codigo':self.txt_codigo.text().strip() or None,
             'nombre':self.txt_nombre.text().strip(),
             'precio':parse_f(self.txt_precio.text()),
+            'cant_mayoreo':parse_f(self.txt_cant_mayoreo.text()),
             'precio_mayoreo':parse_f(self.txt_mayoreo.text()),
             'cant_oferta': self._cant_oferta,
             'precio_oferta': self._precio_oferta,
@@ -301,7 +359,7 @@ class DialogoProducto(QDialog):
             'departamento':self.cmb_depto.currentText().strip() or None,
             'categoria':self.cmb_cat.currentText().strip() or 'GENERAL',
             'unidad':self.cmb_uni.currentText(),
-            'es_pesable':1 if self.chk_pes.isChecked() else 0,
+            'es_pesable':1 if self.cmb_uni.currentText() == 'KG' else 0,
         }
 
 

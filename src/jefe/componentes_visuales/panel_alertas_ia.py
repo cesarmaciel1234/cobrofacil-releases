@@ -63,7 +63,7 @@ class PanelAlertasIA(QFrame):
 
         # 1. Traer todos los productos y su stock actual
         try:
-            prods = db_manager.execute_query("SELECT nombre, cantidad, departamento FROM productos WHERE tipo_venta != 'Servicio'") or []
+            prods = db_manager.execute_query("SELECT nombre, stock, departamento FROM productos WHERE tipo_venta != 'Servicio'") or []
         except Exception:
             prods = []
 

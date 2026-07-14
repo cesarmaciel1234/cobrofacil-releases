@@ -119,7 +119,12 @@ class CierreController:
             from src.hardware.printer import printer_manager
             # Mock de self.datos
             datos_impresion = {
-                "t_total": t_total,
+                "t_total": v_total,
+                "t_efec": v_efec_ventas,
+                "t_tarj": v_tarj,
+                "d_total": d_total,
+                "d_tarj": d_tarj,
+                "fondo": fondo,
                 "esperado": esperado,
                 "segunda_tiketera": True, 
                 "modo": modo

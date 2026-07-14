@@ -8,7 +8,12 @@ class PanelCombos(QFrame):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+        from src.carteleria.theme import get_active_theme_name
+        if get_active_theme_name() == "temu":
+            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+        else:
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
@@ -21,32 +26,69 @@ class PanelCombos(QFrame):
         
         self.layout.addWidget(self.lbl_content)
 
-    def actualizar_destacada(self, nombre, precio, precio_oferta=0):
-        t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: {C_THEME['blue']}; letter-spacing: 1px;"
-        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: {C_THEME['text']}; line-height: 1.2;"
-        t3 = f"font-family: -apple-system; font-size: 45px; font-weight: 900; color: {C_THEME['accent']};"
-        t_old = f"font-family: -apple-system; font-size: 24px; font-weight: 700; color: rgba(0,0,0,0.4); text-decoration: line-through;"
+    def actualizar_destacada(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+        
+        t1 = f"font-family: -apple-system; font-size: 26px; color: {C_THEME['text_muted']};"
+        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: bold; color: {C_THEME['text']};"
+        t3 = f"font-family: -apple-system; font-size: 40px; font-weight: bold; color: {C_THEME['accent']};"
+        t_old = f"font-family: -apple-system; font-size: 24px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
+        
+        if is_temu:
+            nombre = nombre.upper()
 
         if precio_oferta > 0:
-            html = f"<div style='padding: 20px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+            if is_temu:
+                if stock > 0 and stock < 50:
+                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                else:
+                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
         else:
-            html = f"<div style='padding: 20px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+            if is_temu:
+                import random
+                vistas = random.randint(400, 900)
+                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #DC2626;'>🔥 OFERTA DESTACADA 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>({vistas} personas viendo esto)</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+            else:
+                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
         self.lbl_content.setText(html)
 
     def actualizar_combo(self, base, relacionados):
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
         t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: {C_THEME['blue']}; letter-spacing: 1px;"
         t2 = f"font-family: -apple-system; font-size: 28px; font-weight: 800; color: {C_THEME['text']}; line-height: 1.2;"
         t3 = f"font-family: -apple-system; font-size: 22px; font-weight: 600; color: {C_THEME['text_muted']};"
 
+        if is_temu:
+            base = base.upper()
+
         if isinstance(relacionados, list):
             items_html = ""
             for item in relacionados:
-                items_html += f"<div style='margin-top: 8px;'>• {item}</div>"
+                if is_temu:
+                    item = item.upper()
+                    items_html += f"<div style='margin-top: 15px;'><span style='font-family: Impact; font-size: 35px; color: #0000FF;'>• {item}</span></div>"
+                else:
+                    items_html += f"<div style='margin-top: 8px;'>• {item}</div>"
         else:
-            items_html = f"<div>{relacionados}</div>"
+            if is_temu:
+                items_html = f"<div><span style='font-family: Impact; font-size: 35px; color: #0000FF;'>{relacionados.upper()}</span></div>"
+            else:
+                items_html = f"<div>{relacionados}</div>"
 
-        html = f"<div style='padding: 20px;'><span style='{t1}'>🛒 Sugerencia del Parrillero</span><br><br><br>"
-        html += f"<span style='{t2}'>¿Llevás {base}?</span><br><br><br>"
-        html += f"<span style='{t3}'>No te olvides:<br>{items_html}</span></div>"
+        if is_temu:
+            html = f"<div align='center' style='padding: 20px;'><span style='font-family: Impact; font-size: 30px; color: #DC2626;'>🛒 LLEVÁ TAMBIÉN 🛒</span><br><br><br>"
+            html += f"<span style='font-family: Impact; font-size: 45px; color: #000000;'>¿LLEVÁS {base}?</span><br><br><br>"
+            html += f"<span style='font-family: Impact; font-size: 35px; color: #000000; text-decoration: underline;'>¡NO TE OLVIDES DE ESTO!</span><br><br>{items_html}</div>"
+        else:
+            html = f"<div style='padding: 20px;'><span style='{t1}'>🛒 Sugerencia del Parrillero</span><br><br><br>"
+            html += f"<span style='{t2}'>¿Llevás {base}?</span><br><br><br>"
+            html += f"<span style='{t3}'>No te olvides:<br>{items_html}</span></div>"
         
         self.lbl_content.setText(html)

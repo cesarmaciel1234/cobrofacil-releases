@@ -1298,7 +1298,7 @@ class EtiquetaRenderer:
                             tipo_u = str(p.get("tipo_unidad_oferta") or "Unidades").lower()
                             if cant_of > 0:
                                 if tipo_u == "kilos" or p.get("unidad", "").upper() == "KG":
-                                    condicion = f"DESDE {cant_of:g} KG"
+                                    condicion = f"LLEVANDO {cant_of:g} KG"
                                 else:
                                     condicion = f"LLEVANDO {int(cant_of)} UN"
                                     

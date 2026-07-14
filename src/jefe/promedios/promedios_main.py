@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QFrame, QScrollArea, QSizePolicy
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from src.jefe.vista_promedios import VistaPromediosMixin
+from src.jefe.promedios.promedio_ui.vista_promedios import VistaPromediosMixin
 from src.jefe.contabilidad.shared_globals import PAL
 
 class PromediosMain(QWidget, VistaPromediosMixin):

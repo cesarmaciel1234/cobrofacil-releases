@@ -203,6 +203,7 @@ class Admin0Dashboard(QWidget):
             ("clientes",      "Fiado y\nClientes",          "👥", "sky",     "Cuenta Corriente",       17),
             ("contabilidad",  "Contabilidad",               "💹", "emerald", "Finanzas",                9),
             ("proveedores",   "Proveedores",                "🚚", "blue",    "Compras y Stock",        11),
+            ("auditoria",     "Auditoría\nInventario",      "📋", "amber",   "Ajustes Manuales",       25),
         ]
 
         self.JEFE_MODULES = {"nexus_pro", "contabilidad", "proveedores"}

@@ -39,7 +39,16 @@ class BanderinVolador(QWidget):
 
     def lanzar(self, datos_destacados):
         if not datos_destacados: return
-        prod = random.choice(datos_destacados)
+        
+        if isinstance(datos_destacados, dict):
+            productos = []
+            for cat, items in datos_destacados.items():
+                if isinstance(items, list):
+                    productos.extend(items)
+            if not productos: return
+            prod = random.choice(productos)
+        else:
+            prod = random.choice(datos_destacados)
         
         # Usar precio de oferta si está disponible, de lo contrario usar precio regular
         if isinstance(prod, dict):

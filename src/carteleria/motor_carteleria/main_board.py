@@ -42,6 +42,12 @@ class CarteleriaMain(QWidget):
         self.combos_relacionados = []
         
         self.setObjectName("CarteleriaMain")
+        from PyQt6.QtCore import Qt
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        
+        from src.config import config
+        from src.carteleria.theme import set_theme, get_active_theme_name
+        set_theme(config.get("carteleria_theme", "apple"))
 
         self.window_manager = WindowManager(self)
         self.layout_manager = LayoutManager(self)
@@ -49,15 +55,25 @@ class CarteleriaMain(QWidget):
         self.promo_manager = PromoManager(self)
 
         
-        # --- FONDO macOS ---
+        # --- FONDO ---
         self.bg_label = QLabel(self)
         self.bg_label.setScaledContents(True)
         from src.utils.paths import get_resource_path
-        img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
-        if os.path.exists(img_path):
-            self.bg_label.setPixmap(QPixmap(img_path))
+        
+        if get_active_theme_name() == "temu":
+            # Fondo vibrante para Temu (Gradiente Radial/Lineal de Amarillo a Naranja)
+            self.setStyleSheet("""
+                #CarteleriaMain {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                stop:0 #FFFF00, stop:1 #FF6600);
+                }
+            """)
         else:
-            self.setStyleSheet(f"#CarteleriaMain {{ background-color: {C_THEME['bg']}; }}")
+            img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
+            if os.path.exists(img_path):
+                self.bg_label.setPixmap(QPixmap(img_path))
+            else:
+                self.setStyleSheet(f"#CarteleriaMain {{ background-color: {C_THEME['bg']}; }}")
 
         # --- INSTANCIAR ZONAS MODULARES ---
         self.info_negocio = InfoNegocio()
@@ -241,7 +257,12 @@ class CarteleriaMain(QWidget):
                     
                     cant_of = float(r_sos.get('cant_oferta') or 0)
                     if cant_of > 0:
-                        nombre = f"{nombre} [Llevando {int(cant_of)} {r_sos.get('tipo_unidad_oferta', 'un')}]"
+                        t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
+                        if not t_un or t_un not in ['kilos', 'unidades']:
+                            t_un = "Kilos"
+                        if cant_of < 1 and t_un == "unidades":
+                            t_un = "Kilos"
+                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                 else:
                     nombre = r_sos[0] if r_sos[0] else ''
                     precio = float(r_sos[1] if r_sos[1] else 0.0)
@@ -251,8 +272,13 @@ class CarteleriaMain(QWidget):
                     
                     cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
                     if cant_of > 0:
-                        tipo_un = str(r_sos[6]) if len(r_sos) > 6 else 'un'
-                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                        t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
+                        if not t_un or t_un not in ['kilos', 'unidades']:
+                            t_un = "Kilos"
+                        if t_un == "unidades":
+                            if cant_of < 1 or any(x in nombre.lower() for x in ['asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
+                                t_un = "Kilos"
+                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                         
                 self.page_sos.actualizar(nombre, precio, precio_oferta)
                 self.hay_oferta_sos = True
@@ -271,8 +297,8 @@ class CarteleriaMain(QWidget):
                 if rows_precios:
                     self.zona2_precios.set_items(self.promo_manager.agrupar(rows_precios))
                     
-            # 4. Top 10 para Banderin
-            rows_top10 = data.get("top10", [])
+            # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
+            rows_top10 = data.get("top10", {})
             if rows_top10:
                 self.datos_destacados = rows_top10
 

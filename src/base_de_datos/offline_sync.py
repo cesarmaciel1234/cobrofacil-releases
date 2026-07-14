@@ -75,9 +75,44 @@ class OfflineSync:
         """Intenta sincronizar cada 15 segundos si hay red."""
         from src.base_de_datos.database import db_manager
         
+        loop_counter = 0
+        
         while True:
             time.sleep(15)
+            loop_counter += 1
             
+            # --- MODO OFFLINE EXTREMO: REPLICA DE PRODUCTOS ---
+            # Cada ~5 minutos (20 iteraciones) si somos esclavos y estamos ONLINE (mariadb_engine existe)
+            if loop_counter >= 20:
+                loop_counter = 0
+                if not db_manager.is_master and getattr(db_manager, 'mariadb_engine', None):
+                    try:
+                        # Descargar catálogo desde MariaDB
+                        prods = db_manager.mariadb_engine.execute_query("SELECT id, codigo, nombre, precio, stock, categoria, es_pesable, cant_oferta, precio_oferta, tipo_unidad_oferta FROM productos")
+                        if prods:
+                            # Conectar al SQLite local (punpro.db)
+                            import sqlite3
+                            local_db_path = os.path.join(self.base_path, "punpro.db")
+                            conn_loc = sqlite3.connect(local_db_path)
+                            c_loc = conn_loc.cursor()
+                            
+                            c_loc.execute("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo TEXT, nombre TEXT, precio REAL, stock REAL, categoria TEXT, es_pesable INTEGER, cant_oferta REAL, precio_oferta REAL, tipo_unidad_oferta TEXT)")
+                            c_loc.execute("DELETE FROM productos")
+                            
+                            reg_prods = [
+                                (p.get('id'), p.get('codigo'), p.get('nombre'), p.get('precio', 0), 
+                                 p.get('stock', 0), p.get('categoria', 'General'), p.get('es_pesable', 0),
+                                 p.get('cant_oferta', 0), p.get('precio_oferta', 0), p.get('tipo_unidad_oferta', 'Kilos'))
+                                for p in prods
+                            ]
+                            
+                            c_loc.executemany("INSERT INTO productos (id, codigo, nombre, precio, stock, categoria, es_pesable, cant_oferta, precio_oferta, tipo_unidad_oferta) VALUES (?,?,?,?,?,?,?,?,?,?)", reg_prods)
+                            conn_loc.commit()
+                            conn_loc.close()
+                            logger.info("Modo Offline Extremo: Catálogo de productos sincronizado silenciosamente al respaldo local.")
+                    except Exception as e_repl:
+                        logger.warning(f"Modo Offline Extremo: Falló la réplica local de productos: {e_repl}")
+
             try:
                 with open(self.queue_file, "r", encoding="utf-8") as f:
                     queue = json.load(f)

@@ -38,7 +38,7 @@ def _unidad_oferta_producto(producto):
 
 def _condicion_venta_texto(producto, cant_oferta):
     if _unidad_oferta_producto(producto) == "kilos":
-        return f"Desde {cant_oferta:g} Kilos"
+        return f"Llevando {cant_oferta:g} Kilos"
     cant = max(1, int(cant_oferta)) if cant_oferta else 1
     return f"Llevando {cant} Unidades"
 
@@ -332,7 +332,7 @@ class Admin2Ofertas(QWidget):
             
         t_u = "Kilos" if _unidad_oferta_producto(p) == "kilos" else "Unidades"
         if t_u.lower() == "kilos":
-            c_of_str = f"Desde {cant_oferta:g} Kilos"
+            c_of_str = f"Llevando {cant_oferta:g} Kilos"
             es_kilos = True
         else:
             c_of_str = f"Llevando {int(cant_oferta)} Unidades"

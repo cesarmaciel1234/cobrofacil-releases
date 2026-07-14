@@ -1,7 +1,7 @@
 {
-  "app_version": "6.9",
+  "app_version": "7.0",
   "channel": "stable",
-  "build_date": "2026-07-10 10:55:11",
+  "build_date": "2026-07-14 14:28:42",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -9,6 +9,12 @@
       "checksum": "2789df746d37011d26b7748198ec72de",
       "channel": "stable",
       "size": 506
+    },
+    "check_db.py": {
+      "version": "1.0.0",
+      "checksum": "4acfc8232e3f81a49d860b7c08b8b300",
+      "channel": "stable",
+      "size": 379
     },
     "debug_paso5.py": {
       "version": "1.0.0",
@@ -534,9 +540,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "01b3973648222cb51f2d954e0420da87",
+      "checksum": "57b5b16da1c0d76c1d33b7953b95dc3d",
       "channel": "stable",
-      "size": 40015
+      "size": 40208
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -603,6 +609,12 @@
       "checksum": "cf5e06fbb675e38bfe3b0e13e1c5446f",
       "channel": "stable",
       "size": 5780
+    },
+    "src/admin/auditoria_inventario/auditoria_main.py": {
+      "version": "1.0.0",
+      "checksum": "f72bc7ebcdac48300dac4396ad6194f0",
+      "channel": "stable",
+      "size": 8064
     },
     "src/admin/cierre/cierre_main.py": {
       "version": "1.0.0",
@@ -816,9 +828,9 @@
     },
     "src/admin/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "fe33da15b0f282fcf2f895b7a8bc2fd6",
+      "checksum": "b88cc1eaba60ca68dddae6092c30008a",
       "channel": "stable",
-      "size": 16498
+      "size": 16610
     },
     "src/admin/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -870,15 +882,15 @@
     },
     "src/admin/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "dabb404a92383332242ab943901bc540",
+      "checksum": "fd5f6fa89c3cc4a599aef8b783c4dffe",
       "channel": "stable",
-      "size": 26818
+      "size": 27290
     },
     "src/admin/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
-      "checksum": "cdea7709f147bb684b4218b6f47aa7e9",
+      "checksum": "19769baed18aa6d49df18fe6b4fa5bc1",
       "channel": "stable",
-      "size": 13569
+      "size": 15605
     },
     "src/admin/inventario_ui/componentes/panel_categorias.py": {
       "version": "1.0.0",
@@ -906,9 +918,9 @@
     },
     "src/admin/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",
-      "checksum": "d6e0daf9a0581aa8b2c4af2eb80efe51",
+      "checksum": "818eba21bbb4b8945cba1371607899d6",
       "channel": "stable",
-      "size": 30662
+      "size": 30668
     },
     "src/admin/motor_descuentos_ui/__init__.py": {
       "version": "1.0.0",
@@ -978,9 +990,9 @@
     },
     "src/admin/proveedores/proveedores_main.py": {
       "version": "1.0.0",
-      "checksum": "11a5bcb03792dea166edee6a3d781367",
+      "checksum": "a1072ebdabc8d23e0d0ad33e8f6eeb79",
       "channel": "stable",
-      "size": 2943
+      "size": 2926
     },
     "src/admin/proveedores/__init__.py": {
       "version": "1.0.0",
@@ -1014,15 +1026,15 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "cd65949544406dc59dd4d15e08060de0",
+      "checksum": "245fab5c90e5da36ccda5f01033c816f",
       "channel": "stable",
-      "size": 63108
+      "size": 63239
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
-      "checksum": "b137c455f5f087f86d165aa3a8873760",
+      "checksum": "6c6d1c2549aff7cbc420e5939635d05e",
       "channel": "stable",
-      "size": 4428
+      "size": 6982
     },
     "src/base_de_datos/__init__.py": {
       "version": "1.0.0",
@@ -1092,9 +1104,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "6fe26ca5efd04a0b8f99fe3bff5c6ae8",
+      "checksum": "9d872904b6c3f6696e274039b18a3ebb",
       "channel": "stable",
-      "size": 108659
+      "size": 110075
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -1242,9 +1254,9 @@
     },
     "src/cajero/paso5_terminal/logica/terminal_controller.py": {
       "version": "1.0.0",
-      "checksum": "320c39c5041941e605eeed2295058ef1",
+      "checksum": "fa5426a4bae9ffbe68772219eb25cc09",
       "channel": "stable",
-      "size": 4072
+      "size": 4132
     },
     "src/cajero/paso5_terminal/ventanas_emergentes/emergentes_de_caja.py": {
       "version": "1.0.0",
@@ -1356,9 +1368,9 @@
     },
     "src/cajero/paso7_cierre/logica/cierre_controller.py": {
       "version": "1.0.0",
-      "checksum": "735c8200a96f0d322a51d4f22cc82529",
+      "checksum": "5149acfdab1c7b2b6906fd4641abe1e1",
       "channel": "stable",
-      "size": 6143
+      "size": 6325
     },
     "src/cajero/paso7_cierre/logica/__init__.py": {
       "version": "1.0.0",
@@ -1416,9 +1428,9 @@
     },
     "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "d3ad11ba0f8b1ebf2e37c5d2466c1c9f",
+      "checksum": "5dd29046c310891abe4a7937b029d212",
       "channel": "stable",
-      "size": 5148
+      "size": 5168
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
@@ -1428,9 +1440,9 @@
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
-      "checksum": "25806f7dd791a9fb0a8c655c104d0028",
+      "checksum": "1bad4faf8ee5cd7d671c3c79d44c4cf4",
       "channel": "stable",
-      "size": 991
+      "size": 2520
     },
     "src/carteleria/__init__.py": {
       "version": "1.0.0",
@@ -1500,57 +1512,57 @@
     },
     "src/carteleria/ia_chef_lobo/gemini_worker.py": {
       "version": "1.0.0",
-      "checksum": "6fe882fc0ce7635998002a7d1201360b",
+      "checksum": "7ec3b6189a7c0657fc646e1deb2236f9",
       "channel": "stable",
-      "size": 7308
+      "size": 7710
     },
     "src/carteleria/ia_chef_lobo/motor_ia.py": {
       "version": "1.0.0",
-      "checksum": "dc992df7f7734cef71e17d4ac3896f2a",
+      "checksum": "171a70c89e5a785770b2b6da5a091ba9",
       "channel": "stable",
-      "size": 5792
+      "size": 7275
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "7b2040a46121888ea988f2657701899b",
+      "checksum": "7931d50474b9076f55158a0a4bda3cf7",
       "channel": "stable",
-      "size": 5532
+      "size": 9513
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "0c683fc52c60c34adfdc8bd1653afcb6",
+      "checksum": "3957a01749674f04ca2348235a44a2b0",
       "channel": "stable",
-      "size": 5205
+      "size": 7165
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
-      "checksum": "8e390cc76e19e960cd047fd15668556e",
+      "checksum": "89484d06f29b30d127bbc419ef0993f0",
       "channel": "stable",
-      "size": 820
+      "size": 3336
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "4a994619ace5cdf09424419897701b65",
+      "checksum": "04c6a01986db8a9c528a12e45dcc9304",
       "channel": "stable",
-      "size": 3015
+      "size": 6417
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "e01ff386c288c70a99d0a0774f548395",
+      "checksum": "d4cd3b094d6d97dbba7c46110347a473",
       "channel": "stable",
-      "size": 7166
+      "size": 10964
     },
     "src/carteleria/interfaz_relampagos/banderin.py": {
       "version": "1.0.0",
-      "checksum": "520b4151a0e3ce8c8565ba59b244f632",
+      "checksum": "ec7276ab098711583c475d067d225e4f",
       "channel": "stable",
-      "size": 3091
+      "size": 3426
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "8a54ef8595e734ea2f6dccc6e63d4ff3",
+      "checksum": "6c79c487c29cf584044497471fdd25a2",
       "channel": "stable",
-      "size": 3224
+      "size": 4312
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
@@ -1566,15 +1578,15 @@
     },
     "src/carteleria/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "bdfc8f82372c96009ddb88976b8b8b6b",
+      "checksum": "786ea854b9011e08916741e891f05ac6",
       "channel": "stable",
-      "size": 27993
+      "size": 28516
     },
     "src/carteleria/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
-      "checksum": "cdea7709f147bb684b4218b6f47aa7e9",
+      "checksum": "19769baed18aa6d49df18fe6b4fa5bc1",
       "channel": "stable",
-      "size": 13569
+      "size": 15605
     },
     "src/carteleria/inventario_ui/componentes/panel_categorias.py": {
       "version": "1.0.0",
@@ -1620,15 +1632,15 @@
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
-      "checksum": "1fc5ef9a8bb21ea9d44b77d8b43cd6b3",
+      "checksum": "01d8b61ff9e727752109f6b92b046343",
       "channel": "stable",
-      "size": 2384
+      "size": 3254
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "bbf7b6e6cf50a1c4cadd4d5c8206debb",
+      "checksum": "7d9df14b6052185dcbe2ed77a2fbce80",
       "channel": "stable",
-      "size": 15790
+      "size": 17540
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1638,9 +1650,9 @@
     },
     "src/carteleria/motor_carteleria/promo_manager.py": {
       "version": "1.0.0",
-      "checksum": "9d242d0345dfec3047e2dd3a610ee418",
+      "checksum": "37ac1513be04f3bda39483d124a9db9e",
       "channel": "stable",
-      "size": 7698
+      "size": 11420
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
       "version": "1.0.0",
@@ -1650,9 +1662,9 @@
     },
     "src/carteleria/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",
-      "checksum": "5b4141c0213e415a7f10cd0a65c79999",
+      "checksum": "c08eae1b83d68e31ff35352ade1b7c08",
       "channel": "stable",
-      "size": 30679
+      "size": 30685
     },
     "src/carteleria/motor_descuentos_ui/__init__.py": {
       "version": "1.0.0",
@@ -1698,9 +1710,9 @@
     },
     "src/central_red_global/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "96c660cc813c0c7354cfd3235fb9547d",
+      "checksum": "5fb9353b98a73c078ca39eb0e3a01f0b",
       "channel": "stable",
-      "size": 11340
+      "size": 14593
     },
     "src/central_red_global/motor_red.py": {
       "version": "1.0.0",
@@ -1714,6 +1726,24 @@
       "channel": "stable",
       "size": 4246
     },
+    "src/cerebro_global/auditoria/motor_auditoria.py": {
+      "version": "1.0.0",
+      "checksum": "4bf34bcfaa198a5c677c7379c6fd6495",
+      "channel": "stable",
+      "size": 3073
+    },
+    "src/cerebro_global/desposte/motor_rendimiento.py": {
+      "version": "1.0.0",
+      "checksum": "2bbaca582ed4d0cf78bb9e428a22dc08",
+      "channel": "stable",
+      "size": 3835
+    },
+    "src/cerebro_global/proveedor/motor_proveedor.py": {
+      "version": "1.0.0",
+      "checksum": "bb33000e5d1c75ebc9f51a22c8bca9e2",
+      "channel": "stable",
+      "size": 9689
+    },
     "src/core/sincronizador.py": {
       "version": "1.0.0",
       "checksum": "4826a876af2ffea410f2470c5bc4614d",
@@ -1722,9 +1752,9 @@
     },
     "src/creador_pdf_global/motor_pdf.py": {
       "version": "1.0.0",
-      "checksum": "1f877122218813fb2fbc37c066c3603a",
+      "checksum": "f14cdb806e6a23e6108b075ef0d94966",
       "channel": "stable",
-      "size": 69730
+      "size": 69733
     },
     "src/creador_pdf_global/motor_pdf_promedios.py": {
       "version": "1.0.0",
@@ -1836,9 +1866,9 @@
     },
     "src/jefe/componentes_visuales/panel_alertas_ia.py": {
       "version": "1.0.0",
-      "checksum": "772f4b45b124e70927ef816355308ac4",
+      "checksum": "46c069c5e919046c63dab07a1cd68e96",
       "channel": "stable",
-      "size": 6120
+      "size": 6117
     },
     "src/jefe/contabilidad/database.py": {
       "version": "1.0.0",
@@ -1860,9 +1890,9 @@
     },
     "src/jefe/contabilidad/shared_globals.py": {
       "version": "1.0.0",
-      "checksum": "03478f49cf437dc7c42111fa9af89162",
+      "checksum": "a05e29099404a331e8e5129166c413ba",
       "channel": "stable",
-      "size": 7227
+      "size": 7517
     },
     "src/jefe/contabilidad/styles.py": {
       "version": "1.0.0",
@@ -1920,9 +1950,9 @@
     },
     "src/jefe/contabilidad/vista_proveedores.py": {
       "version": "1.0.0",
-      "checksum": "9a20e5dabaa8894bdd49620ad22c2cb0",
+      "checksum": "e9caf20e18fbe21bcb0fad1beebca3d9",
       "channel": "stable",
-      "size": 977
+      "size": 970
     },
     "src/jefe/contabilidad/vista_reportes.py": {
       "version": "1.0.0",
@@ -1956,15 +1986,9 @@
     },
     "src/jefe/promedios/promedios_main.py": {
       "version": "1.0.0",
-      "checksum": "e046326d0191f2da3ac1d5b3b0ac4c51",
+      "checksum": "5c216ed86261adba9aa5325b96bd2c81",
       "channel": "stable",
-      "size": 3871
-    },
-    "src/jefe/promedios/vista_promedios.py": {
-      "version": "1.0.0",
-      "checksum": "d97636e7ba07c4d9a1b3288a2a3cb68e",
-      "channel": "stable",
-      "size": 30605
+      "size": 3893
     },
     "src/jefe/promedios/__init__.py": {
       "version": "1.0.0",
@@ -1978,6 +2002,12 @@
       "channel": "stable",
       "size": 316
     },
+    "src/jefe/promedios/promedio_motor/motor_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "298bd621ac495decf5bef08588f62152",
+      "channel": "stable",
+      "size": 7357
+    },
     "src/jefe/promedios/promedio_motor/pollo.py": {
       "version": "1.0.0",
       "checksum": "aefab9355535e5aadeb4a7cf2fd93a6d",
@@ -1986,9 +2016,15 @@
     },
     "src/jefe/promedios/promedio_motor/res.py": {
       "version": "1.0.0",
-      "checksum": "c67422a2c53e3d7dee3f542495f7b22b",
+      "checksum": "e1c033af0a78302c780db03f8996e1f4",
       "channel": "stable",
-      "size": 619
+      "size": 1045
+    },
+    "src/jefe/promedios/promedio_ui/vista_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "ae3b5b1dc4825c0982dabd352f956523",
+      "channel": "stable",
+      "size": 42280
     },
     "src/motor_descuentos/motor_combos.py": {
       "version": "1.0.0",
@@ -2128,12 +2164,6 @@
       "channel": "stable",
       "size": 26
     },
-    "src/shared/proveedores_unificado.py": {
-      "version": "1.0.0",
-      "checksum": "cb16784ee988d92f7f5ed070015713cd",
-      "channel": "stable",
-      "size": 25048
-    },
     "src/shared/urgencia_stock_banner.py": {
       "version": "1.0.0",
       "checksum": "9a81f124d53e49600cabbe51f4eb2ff6",
@@ -2142,9 +2172,9 @@
     },
     "src/shared/__init__.py": {
       "version": "1.0.0",
-      "checksum": "04147613519effb4c57e26f4b9c38041",
+      "checksum": "6770a01c67e75070cafc6e91bb62f533",
       "channel": "stable",
-      "size": 185
+      "size": 79
     },
     "src/tools/diagnostico_red.py": {
       "version": "1.0.0",
@@ -2253,6 +2283,12 @@
       "checksum": "8bb3a4122ebdee01f89941f569e0d6da",
       "channel": "stable",
       "size": 73
+    },
+    "src/ui_global/proveedor/vista_proveedor.py": {
+      "version": "1.0.0",
+      "checksum": "2ad4c12abf13d00456aa23affe93053c",
+      "channel": "stable",
+      "size": 18457
     },
     "src/updater/github_release_url.py": {
       "version": "1.0.0",
@@ -2367,12 +2403,6 @@
       "checksum": "3a83ccaf5bb0e582685dad212fb44128",
       "channel": "stable",
       "size": 17
-    },
-    "src/vistas/proveedores.py": {
-      "version": "1.0.0",
-      "checksum": "c0cbbb012bf86e4e76c8bd787d946f38",
-      "channel": "stable",
-      "size": 192
     },
     "src/vistas/__init__.py": {
       "version": "1.0.0",

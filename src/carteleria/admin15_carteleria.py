@@ -5,7 +5,7 @@ import os
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QFrame, QScrollArea
+    QTextEdit, QMessageBox, QFrame, QScrollArea, QComboBox
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QCursor
@@ -59,9 +59,18 @@ class CarteleriaConfigPanel(QWidget):
         c_layout = QVBoxLayout(carteleria_frame)
         c_layout.setContentsMargins(25, 25, 25, 25)
 
-        lbl_c_title = QLabel("📢 Mensajes en Pantalla")
+        lbl_c_title = QLabel("📢 Mensajes y Estilo")
         lbl_c_title.setStyleSheet("font-size: 18px; font-weight: bold; border: none;")
         c_layout.addWidget(lbl_c_title)
+        
+        c_layout.addSpacing(15)
+        c_layout.addWidget(QLabel("Estilo Visual de la Cartelería:"))
+        self.cmb_theme = QComboBox()
+        self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style - Premium)", "apple")
+        self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo - Alto Impacto)", "temu")
+        self.cmb_theme.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 14px; background: white;")
+        c_layout.addWidget(self.cmb_theme)
+
         c_layout.addSpacing(10)
 
         c_layout.addWidget(QLabel("Mensaje principal (Zócalo / Banner animado):"))
@@ -97,14 +106,19 @@ class CarteleriaConfigPanel(QWidget):
     def _load(self):
         from src.config import config
         self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
+        th = config.get("carteleria_theme", "apple")
+        index = self.cmb_theme.findData(th)
+        if index >= 0:
+            self.cmb_theme.setCurrentIndex(index)
 
     def _save_all(self):
         # 1. Guardar motor global (config.json)
         self.panel_negocio.guardar()
         
-        # 2. Guardar mensaje_zocalo en config.json para que sea global
+        # 2. Guardar opciones en config.json para que sea global
         from src.config import config
         config.set("mensaje_zocalo", self.txt_mensaje.toPlainText().strip())
+        config.set("carteleria_theme", self.cmb_theme.currentData())
         config.save()
         
         QMessageBox.information(self, "Guardado", "Configuración de cartelería guardada correctamente.")

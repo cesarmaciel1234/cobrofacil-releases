@@ -5,6 +5,7 @@ from src.carteleria.ia_chef_lobo.motor_ia import MotorIA
 class PromoManager:
     def __init__(self, main_window):
         self.main = main_window
+        self.top_current_mode = 0 # 0=Hoy, 1=Semana, 2=Mes
 
     def agrupar(self, rows):
         agrupados = {}
@@ -18,8 +19,14 @@ class PromoManager:
                 precio_oferta = min(validas) if validas else 0.0
                 
                 cant_of = float(r.get('cant_oferta') or 0)
+                regla = ""
                 if cant_of > 0:
-                    nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
+                    t_un = str(r.get('tipo_unidad_oferta', '')).strip().lower()
+                    if not t_un or t_un not in ['kilos', 'unidades']:
+                        t_un = "Kilos"
+                    if cant_of < 1 and t_un == "unidades":
+                        t_un = "Kilos"
+                    regla = f"llevando {cant_of:g} {t_un}"
             else:
                 cat = str(r[0])
                 nombre = str(r[1])
@@ -29,12 +36,17 @@ class PromoManager:
                 precio_oferta = min(validas) if validas else 0.0
                 
                 cant_of = float(r[6]) if len(r) > 6 else 0.0
+                regla = ""
                 if cant_of > 0:
-                    tipo_un = str(r[7]) if len(r) > 7 else 'un'
-                    nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                    t_un = str(r[7]).strip().lower() if len(r) > 7 and r[7] else ''
+                    if not t_un or t_un not in ['kilos', 'unidades']:
+                        t_un = "Kilos"
+                    if cant_of < 1 and t_un == "unidades":
+                        t_un = "Kilos"
+                    regla = f"llevando {cant_of:g} {t_un}"
 
             if cat not in agrupados: agrupados[cat] = []
-            agrupados[cat].append((nombre, precio, precio_oferta))
+            agrupados[cat].append((nombre, precio, precio_oferta, regla))
         return agrupados
 
     def actualizar_pantallas_promocionales(self):
@@ -65,6 +77,7 @@ class PromoManager:
         
         def parse_top(top_list):
             parsed = []
+            if not isinstance(top_list, list): return parsed
             for r in top_list:
                 if isinstance(r, dict):
                     ofertas = [float(r.get(k) or 0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
@@ -73,10 +86,20 @@ class PromoManager:
                     
                     nombre = r.get('nombre', '')
                     cant_of = float(r.get('cant_oferta') or 0)
+                    t_un = str(r.get('tipo_unidad_oferta', '')).strip().lower()
                     if cant_of > 0:
-                        nombre = f"{nombre} [Llevando {int(cant_of)} {r.get('tipo_unidad_oferta', 'un')}]"
-                        
-                    parsed.append((nombre, float(r.get('precio', 0)), p_of))
+                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
+                        if r.get('es_pesable') in (1, '1', True, 'true'):
+                            t_un = "Kilos"
+                        elif t_un == "unidades":
+                            if cant_of < 1 or any(x in nombre.lower() for x in ['alitas', 'asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
+                                t_un = "Kilos"
+                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
+                    else:
+                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
+                    
+                    stock_real = float(r.get('stock') or 0.0)
+                    parsed.append((nombre, float(r.get('precio', 0)), p_of, stock_real, t_un))
                 else:
                     ofertas = [float(r[i] if len(r)>i and r[i] else 0) for i in (2, 3, 4)]
                     validas = [x for x in ofertas if x > 0]
@@ -84,60 +107,104 @@ class PromoManager:
                     
                     nombre = str(r[0])
                     cant_of = float(r[5]) if len(r) > 5 else 0.0
+                    t_un = str(r[6]).strip().lower() if len(r) > 6 and r[6] else ''
                     if cant_of > 0:
-                        tipo_un = str(r[6]) if len(r) > 6 else 'un'
-                        nombre = f"{nombre} [Llevando {int(cant_of)} {tipo_un}]"
+                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
                         
-                    parsed.append((nombre, float(r[1] if r[1] else 0), p_of))
+                        pesable_val = r[8] if len(r) > 8 else None
+                        if pesable_val in (1, '1', True, 'true'):
+                            t_un = "Kilos"
+                        elif t_un == "unidades":
+                            if cant_of < 1 or any(x in nombre.lower() for x in ['alitas', 'asado', 'vacio', 'matambre', 'pollo', 'cerdo', 'carne', 'trozado', 'lomo', 'pata', 'muslo', 'pechuga', 'suprema', 'molida', 'picada', 'bife', 'falda', 'grasa']):
+                                t_un = "Kilos"
+                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
+                    else:
+                        if not t_un or t_un not in ['kilos', 'unidades']: t_un = "Kilos"
+                        
+                    stock_real = float(r[7]) if len(r) > 7 and r[7] else 0.0
+                    parsed.append((nombre, float(r[1]) if len(r)>1 else 0.0, p_of, stock_real, t_un))
             return parsed
 
-        datos_parsed = parse_top(self.main.datos_destacados)
-        self.main.img_index = (self.main.img_index + 1) % len(datos_parsed)
-        prod_actual = datos_parsed[self.main.img_index]
+        # Seleccionar lista según el modo actual (0=Hoy, 1=Semana, 2=Mes)
+        modos = ["hoy", "semana", "mes"]
+        titulos = ["LO MÁS VENDIDO - HOY", "TOP DE LA SEMANA", "TOP DEL MES"]
         
-        choice = random.randint(1, 4)
-        if choice == 1:
-            poferta = prod_actual[2] if len(prod_actual) > 2 else 0
-            self.main.zona1_carrusel.actualizar_especial(prod_actual[0], prod_actual[1], poferta)
-        elif choice == 2 and hasattr(self.main, 'top10_hoy') and self.main.top10_hoy:
-            self.main.zona1_carrusel.actualizar_top10(parse_top(self.main.top10_hoy), "🔥 Top Ventas Hoy 🔥")
-        elif choice == 3 and hasattr(self.main, 'top10_semanal') and self.main.top10_semanal:
-            self.main.zona1_carrusel.actualizar_top10(parse_top(self.main.top10_semanal), "🔥 Top Ventas Semana 🔥")
-        elif hasattr(self.main, 'top10_mensual') and self.main.top10_mensual:
-            self.main.zona1_carrusel.actualizar_top10(parse_top(self.main.top10_mensual), "🔥 Top Ventas del Mes 🔥")
+        modo_str = modos[self.top_current_mode]
+        titulo_str = titulos[self.top_current_mode]
+        
+        datos_crudos = self.main.datos_destacados
+        
+        if isinstance(datos_crudos, dict):
+            # Es el nuevo formato
+            top_list = datos_crudos.get(modo_str, [])
+            if not top_list: 
+                # Fallback al viejo si por alguna razón falla
+                top_list = datos_crudos.get("hoy", [])
         else:
+            # Compatibilidad si no se actualizó el backend
+            top_list = datos_crudos
+            titulo_str = "LO MÁS VENDIDO"
+            
+        prod_lista = parse_top(top_list)
+        
+        if prod_lista:
+            self.main.zona1_carrusel.actualizar_top10(prod_lista, titulo=titulo_str)
+            
+            # Rotar modo para la próxima vuelta
+            self.top_current_mode = (self.top_current_mode + 1) % 3
+
+        # Extraer para Combos y Recomendación
+        if prod_lista:
+            self.main.img_index = (self.main.img_index + 1) % len(prod_lista)
+            prod_actual = prod_lista[self.main.img_index]
+            
             poferta = prod_actual[2] if len(prod_actual) > 2 else 0
-            self.main.zona1_carrusel.actualizar_especial(prod_actual[0], prod_actual[1], poferta)
+            stock = prod_actual[3] if len(prod_actual) > 3 else 0
+            unidad = prod_actual[4] if len(prod_actual) > 4 else "Kilos"
             
-        if len(datos_parsed) > 1:
-            prod_siguiente = datos_parsed[(self.main.img_index + 1) % len(datos_parsed)]
+            # (El carrusel ya se actualizó completo arriba)
             
-            if random.choice([True, False]):
-                poferta_dest = prod_siguiente[2] if len(prod_siguiente) > 2 else 0
-                self.main.zona3_extra1.actualizar_destacada(prod_siguiente[0], prod_siguiente[1], poferta_dest)
-            else:
-                nombres = []
-                if len(datos_parsed) >= 2:
-                    nombres = [p[0] for p in random.sample(datos_parsed, min(3, len(datos_parsed)))]
-                        
-                if nombres:
+            if len(prod_lista) > 1:
+                prod_siguiente = prod_lista[(self.main.img_index + 1) % len(prod_lista)]
+                poferta_s = prod_siguiente[2] if len(prod_siguiente) > 2 else 0
+                stock_s = prod_siguiente[3] if len(prod_siguiente) > 3 else 0
+                unidad_s = prod_siguiente[4] if len(prod_siguiente) > 4 else "Kilos"
+                
+                if random.choice([True, False]):
+                    self.main.zona3_extra1.actualizar_destacada(prod_siguiente[0], prod_siguiente[1], poferta_s, stock=stock_s, unidad=unidad_s)
+                else:
+                    nombres = [p[0] for p in random.sample(prod_lista, min(3, len(prod_lista)))]
                     centro_compra_simulado = random.choice([prod_siguiente[0], prod_actual[0]])
                     self.main.zona3_extra1.actualizar_combo(centro_compra_simulado, nombres)
+                
+                prod_tercero = prod_lista[(self.main.img_index + 2) % len(prod_lista)]
+                poferta_t = prod_tercero[2] if len(prod_tercero) > 2 else 0
+                stock_t = prod_tercero[3] if len(prod_tercero) > 3 else 0
+                unidad_t = prod_tercero[4] if len(prod_tercero) > 4 else "Kilos"
+                
+                if random.choice([True, False]):
+                    self.main.timer.setInterval(self.main.rotacion_ms if hasattr(self.main, 'rotacion_ms') else 16000)
+                    self.main.zona4_extra2.actualizar_recomendacion(prod_tercero[0], prod_tercero[1], poferta_t, stock=stock_t, unidad=unidad_t)
                 else:
-                    poferta_dest = prod_siguiente[2] if len(prod_siguiente) > 2 else 0
-                    self.main.zona3_extra1.actualizar_destacada(prod_siguiente[0], prod_siguiente[1], poferta_dest)
-            
-            prod_tercero = datos_parsed[(self.main.img_index + 2) % len(datos_parsed)]
-            
-            if random.choice([True, False]):
-                self.main.timer.setInterval(self.main.rotacion_ms if hasattr(self.main, 'rotacion_ms') else 16000)
-                poferta = prod_tercero[2] if len(prod_tercero) > 2 else 0
-                self.main.zona4_extra2.actualizar_recomendacion(prod_tercero[0], prod_tercero[1], poferta)
-            else:
-                self.main.timer.setInterval((self.main.rotacion_ms if hasattr(self.main, 'rotacion_ms') else 16000) + 12000)
-                msg, prod, precio, precio_oferta = MotorIA.generar_recomendacion(
-                    None, 
-                    self.main.clima_pilar, 
-                    datos_parsed
-                )
-                self.main.zona4_extra2.actualizar_ia(msg, prod, precio, precio_oferta, self.main.clima_pilar)
+                    self.main.timer.setInterval((self.main.rotacion_ms if hasattr(self.main, 'rotacion_ms') else 16000) + 12000)
+                    msg, prod, precio, precio_oferta = MotorIA.generar_recomendacion(
+                        None, 
+                        self.main.clima_pilar, 
+                        prod_lista
+                    )
+                    self.main.zona4_extra2.actualizar_ia(msg, prod, precio, precio_oferta, self.main.clima_pilar)
+                    
+            # Rotación en Vista 3: Alternar entre Combos y Recomendación en el 3er espacio
+            if hasattr(self.main, 'layout_mode') and self.main.layout_mode == 3:
+                self.main.grid.removeWidget(self.main.zona3_extra1)
+                self.main.grid.removeWidget(self.main.zona4_extra2)
+                
+                # Alternamos dependiendo si es par o impar
+                if self.main.img_index % 2 == 0:
+                    self.main.zona4_extra2.hide()
+                    self.main.grid.addWidget(self.main.zona3_extra1, 0, 2)
+                    self.main.zona3_extra1.show()
+                else:
+                    self.main.zona3_extra1.hide()
+                    self.main.grid.addWidget(self.main.zona4_extra2, 0, 2)
+                    self.main.zona4_extra2.show()
