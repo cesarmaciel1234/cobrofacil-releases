@@ -97,14 +97,14 @@ class CarteleriaMain(QWidget):
         from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
         from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
 
-        self.db_worker = DbSyncWorker()
+        self.db_worker = DbSyncWorker(self)
         self.db_worker.sync_finished.connect(self._on_db_sync_finished)
         self.timer_db = QTimer(self)
         self.timer_db.timeout.connect(self.db_worker.start)
         self.timer_db.start(10000)
 
         self.clima_pilar = ("sol", "22°C Pilar")
-        self.clima_worker = ClimaWorker()
+        self.clima_worker = ClimaWorker(self)
         self.clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
         self.timer_clima = QTimer(self)
         self.timer_clima.timeout.connect(self.clima_worker.start)

@@ -5,8 +5,8 @@ from PyQt6.QtCore import QThread, pyqtSignal
 class ClimaWorker(QThread):
     clima_actualizado = pyqtSignal(str, str) # icon_name, text
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.running = True
 
     def run(self):

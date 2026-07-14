@@ -414,7 +414,7 @@ class MainWindow(QMainWindow):
         """Lee ambos temas una sola vez al arrancar."""
         import os
         from src.utils.paths import get_resource_path
-        for theme_file in ("styles.qss", "styles_light.qss"):
+        for theme_file in ("estilo_noche.qss", "estilo_dia.qss"):
             if theme_file in _QSS_CACHE:
                 continue
             # Check in src first, then src/ui_components

@@ -13,8 +13,8 @@ logger = logging.getLogger("Carteleria_Autonoma")
 class DbSyncWorker(QThread):
     sync_finished = pyqtSignal(dict, str) # data, status (online/offline/error)
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
     def run(self):
         try:
