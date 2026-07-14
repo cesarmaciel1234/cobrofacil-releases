@@ -16,7 +16,7 @@ class Mensaje(QFrame):
         if tema == "temu":
             self.setStyleSheet(f"background: {C_THEME.get('surface', '#FFFFFF')}; border-radius: 25px; border: 2px solid #F87171;")
             color_texto = "#DC2626"
-            apply_apple_shadow(self, blur=0, alpha=100, y_offset=6, color="#DC2626") # Sombra sólida temu
+            apply_apple_shadow(self, blur=0, alpha=100, y_offset=6) # Sombra sólida temu
         else:
             self.setStyleSheet(f"background: {C_THEME.get('surface', '#FFFFFF')}; border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);")
             color_texto = C_THEME.get('text_muted', '#666666')
