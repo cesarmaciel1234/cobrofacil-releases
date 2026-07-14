@@ -48,18 +48,8 @@ class ProfileCard(QFrame):
 
         # Marco interno
         self.inner = QFrame(self)
-        self.inner.setGeometry(0, 14, 230, 190)
-        self._shadow = QGraphicsDropShadowEffect(self)
-        self._shadow.setBlurRadius(8) 
-        self._shadow.setColor(QColor(r, g, b, 28))
-        self._shadow.setOffset(0, 6)
-        self.inner.setGraphicsEffect(self._shadow)
+        self.inner.setGeometry(0, 0, 230, 215)
         self._set_idle_style()
-
-        # Animación lift
-        self.anim = QPropertyAnimation(self.inner, b"pos")
-        self.anim.setDuration(160)
-        self.anim.setEasingCurve(QEasingCurve.OutQuad)
 
         # Layout interno
         lay = QVBoxLayout(self.inner)
@@ -129,73 +119,46 @@ class ProfileCard(QFrame):
         self.inner.setStyleSheet(f"""
             QFrame {{
                 background: {WC['surface']};
-                border-radius: 22px;
-                border: 1.5px solid {WC['border']};
+                border-radius: 16px;
+                border: 1px solid {WC['border']};
             }}
         """)
-        r, g, b = self._hex(self._accent)
-        self._shadow.setBlurRadius(8)
-        self._shadow.setColor(QColor(r, g, b, 28))
-        self._shadow.setOffset(0, 5)
 
     def _set_hover_style(self):
         r, g, b = self._hex(self._accent)
         self.inner.setStyleSheet(f"""
             QFrame {{
                 background: {WC['surface']};
-                border-radius: 22px;
-                border: 2px solid rgba({r},{g},{b},0.55);
+                border-radius: 16px;
+                border: 1px solid rgba({r},{g},{b},0.6);
             }}
         """)
-        self._shadow.setBlurRadius(12)
-        self._shadow.setColor(QColor(r, g, b, 70))
-        self._shadow.setOffset(0, 10)
 
     def _set_active_style(self):
         r, g, b = self._hex(self._accent)
         self.inner.setStyleSheet(f"""
             QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba({r},{g},{b},0.07),
-                    stop:1 rgba({r},{g},{b},0.03));
-                border-radius: 22px;
-                border: 2px solid rgba({r},{g},{b},0.80);
+                background: rgba({r},{g},{b},0.04);
+                border-radius: 16px;
+                border: 2px solid rgba({r},{g},{b},0.9);
             }}
         """)
-        self._shadow.setBlurRadius(10)
-        self._shadow.setColor(QColor(r, g, b, 80))
-        self._shadow.setOffset(0, 12)
 
     def set_active(self, active: bool):
         self.is_active = active
-        self.anim.stop()
         if active:
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 4))
-            self.anim.start()
             self._set_active_style()
         else:
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 14))
-            self.anim.start()
             self._set_idle_style()
 
     def enterEvent(self, event):
         super().enterEvent(event)
         if not self.is_active:
-            self.anim.stop()
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 4))
-            self.anim.start()
             self._set_hover_style()
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
         if not self.is_active:
-            self.anim.stop()
-            self.anim.setStartValue(self.inner.pos())
-            self.anim.setEndValue(QPoint(0, 14))
-            self.anim.start()
             self._set_idle_style()
 
     def mousePressEvent(self, event):
@@ -244,9 +207,9 @@ class PerfilPantalla(QDialog):
             }}
         """)
         outer_sh = QGraphicsDropShadowEffect(self)
-        outer_sh.setBlurRadius(10)
-        outer_sh.setColor(QColor(120, 80, 20, 45))   # sombra cálida
-        outer_sh.setOffset(0, 14)
+        outer_sh.setBlurRadius(20)
+        outer_sh.setColor(QColor(0, 0, 0, 30))
+        outer_sh.setOffset(0, 4)
         self.container.setGraphicsEffect(outer_sh)
         root.addWidget(self.container)
 
