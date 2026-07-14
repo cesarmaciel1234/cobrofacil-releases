@@ -2,7 +2,9 @@ import json
 import os
 from PyQt6.QtCore import QObject, pyqtSignal
 
-THEME_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "theme_prefs.json")
+from src.utils.paths import get_base_path
+
+THEME_FILE = os.path.join(get_base_path(), "theme_prefs.json")
 
 class ThemeManager(QObject):
     theme_changed = pyqtSignal(str) # "light" o "dark"
