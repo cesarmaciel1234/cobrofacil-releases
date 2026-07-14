@@ -110,13 +110,17 @@ class MotorIA:
             elif row:
                 plantilla = row[0]
                 
-            # 5. Reemplazar etiquetas
-            mensaje = plantilla.format(
+            # 5. Reemplazar etiquetas con safe mapping
+            class SafeDict(dict):
+                def __missing__(self, key):
+                    return '{' + key + '}'
+                    
+            mensaje = plantilla.format_map(SafeDict(
                 barrio=barrio,
                 localidad=localidad,
                 momento_dia=momento_dia,
                 dia_semana=dia_semana
-            )
+            ))
             
             # 6. Seleccionar producto relacionado de inventario/destacados
             producto_sugerido = "Oferta"

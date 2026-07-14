@@ -1,7 +1,7 @@
 {
   "app_version": "7.1",
   "channel": "stable",
-  "build_date": "2026-07-14 15:33:33",
+  "build_date": "2026-07-14 15:59:59",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -540,9 +540,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "434c4b764b38ea03f5f4414b7d0fe7ca",
+      "checksum": "19c71ad8b452431fd6b0377c1be344e5",
       "channel": "stable",
-      "size": 41006
+      "size": 40886
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -1536,9 +1536,9 @@
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
-      "checksum": "89484d06f29b30d127bbc419ef0993f0",
+      "checksum": "58fabee7be0db7ab5748b60ac06216d1",
       "channel": "stable",
-      "size": 3336
+      "size": 3319
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
