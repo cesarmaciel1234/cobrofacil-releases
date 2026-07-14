@@ -728,12 +728,8 @@ class MainWindow(QMainWindow):
         # ── Lazy Loading: instanciar el widget si es la primera visita ───────
         if index == 21 and self.screens[21] is not None:
             # Forzar reconstrucción de Carteleria TV para que aplique cambios de tema "Temu" al vuelo
-            old_w = self.screens[21]
-            self.stacked_widget.removeWidget(old_w)
-            old_w.deleteLater()
-            self.screens[21] = None
-
-        if self.screens[index] is None:
+            self._build_lazy_screen(21)
+        elif self.screens[index] is None:
             self._build_lazy_screen(index)
 
         self.stacked_widget.setCurrentIndex(index)
