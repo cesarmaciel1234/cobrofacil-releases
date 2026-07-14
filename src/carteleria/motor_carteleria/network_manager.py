@@ -38,20 +38,26 @@ class NetworkManager(QObject):
             try:
                 from src.ui_components.toast import Toast
                 Toast.show_success(self.main, f"🔔 ¡PING recibido desde {origen}!")
-            except:
+            except (RuntimeError, Exception):
                 pass
 
     def on_heartbeat_engine(self, origen: str):
         """Llega un heartbeat de cualquier origen. Si es del cajero → punto verde."""
-        origen_lower = origen.lower()
-        if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
-            self.main.info_negocio.on_heartbeat_terminal(origen)
+        try:
+            origen_lower = origen.lower()
+            if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
+                self.main.info_negocio.on_heartbeat_terminal(origen)
+        except RuntimeError:
+            pass
 
     def on_connection_lost_engine(self, origen: str):
         """Se perdió conexión con un nodo del terminal."""
-        origen_lower = origen.lower()
-        if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
-            self.main.info_negocio.set_estado_red('lost', 'Terminal desconectado')
+        try:
+            origen_lower = origen.lower()
+            if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
+                self.main.info_negocio.set_estado_red('lost', 'Terminal desconectado')
+        except RuntimeError:
+            pass
 
     def emitir_heartbeat(self):
         """
