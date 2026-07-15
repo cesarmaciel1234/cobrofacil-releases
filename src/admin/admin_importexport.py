@@ -273,7 +273,8 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
 
         # Sincronizar departamentos nuevos
         try:
-            cursor.execute("INSERT OR IGNORE INTO departamentos (nombre) SELECT DISTINCT departamento FROM productos WHERE departamento IS NOT NULL AND departamento != ''")
+            insert_dep = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"
+            cursor.execute(f"{insert_dep} departamentos (nombre) SELECT DISTINCT departamento FROM productos WHERE departamento IS NOT NULL AND departamento != ''")
         except Exception as e:
             print(f"Error al sincronizar departamentos: {e}")
 

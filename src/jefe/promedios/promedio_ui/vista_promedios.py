@@ -3,17 +3,30 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import datetime
 from src.jefe.contabilidad.shared_globals import *
+import json
+import os
 
 class VistaPromediosMixin:
     def _build_tab_promedios(self):
         lay, _ = self._page()
         
-        # ESTADOS
-        self._estado_promedios = {
+        # ESTADOS AUTO-GUARDADOS
+        self._promedios_json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "estado_promedios_borrador.json")
+        default_estado = {
             "Carne": {"kilos": "", "merma": "", "precio": "", "filas": []},
             "Cerdo": {"kilos": "", "merma": "", "precio": "", "filas": []},
             "Pollo": {"kilos": "", "merma": "", "precio": "", "filas": []}
         }
+        
+        try:
+            if os.path.exists(self._promedios_json_path):
+                with open(self._promedios_json_path, "r", encoding="utf-8") as f:
+                    self._estado_promedios = json.load(f)
+            else:
+                self._estado_promedios = default_estado
+        except:
+            self._estado_promedios = default_estado
+            
         self._tipo_promedio = "Carne"
         
         botones_lay = QHBoxLayout()
@@ -387,6 +400,14 @@ class VistaPromediosMixin:
             "costo_total": self._prom_costo_total.text(),
             "filas": filas
         }
+        
+        # Auto-guardado en JSON
+        try:
+            import json
+            with open(self._promedios_json_path, "w", encoding="utf-8") as f:
+                json.dump(self._estado_promedios, f, indent=4)
+        except Exception as e:
+            pass
 
     def _cambiar_tipo_promedio(self, tipo, from_main=False):
         if hasattr(self, '_prom_tabla'):

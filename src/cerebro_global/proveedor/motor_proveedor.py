@@ -159,9 +159,8 @@ class MotorProveedor:
                             )
                             
                     # Desposte Automático: Inyectar proporción de kilos al inventario base usando db_manager
-                    # (La base de jefe para leer el historial, y db_manager como admin para actualizar el stock)
-                    if db_jefe:
-                        MotorRendimiento.aplicar_desposte_a_stock(merc, total_kilos, db_manager, db_jefe)
+                    # (Tanto admin como jefe deben intentar actualizar el stock de la receta)
+                    MotorRendimiento.aplicar_desposte_a_stock(merc, total_kilos, db_manager, db_jefe)
         except Exception as e:
             print(f"Error DB central romaneos: {e}")
         

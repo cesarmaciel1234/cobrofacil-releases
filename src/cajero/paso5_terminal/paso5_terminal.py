@@ -2169,8 +2169,23 @@ class Paso5Terminal(QWidget):
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
 
-        cierre = Paso7CierreCaja(self)
-        ok = qt_exec(cierre)
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout
+        from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
+        
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Cierre de Caja Global")
+        dlg.setFixedSize(1000, 700)
+        lay = QVBoxLayout(dlg)
+        lay.setContentsMargins(0, 0, 0, 0)
+        
+        cierre = CierreGlobalUI(self, is_terminal=True)
+        cierre.btn_back.setText("❌ Cerrar")
+        cierre.request_dashboard.connect(dlg.reject)
+        cierre.turno_cerrado.connect(dlg.accept)
+        
+        lay.addWidget(cierre)
+        
+        ok = qt_exec(dlg)
         
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)

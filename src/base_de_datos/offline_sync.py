@@ -88,7 +88,7 @@ class OfflineSync:
                 if not db_manager.is_master and getattr(db_manager, 'mariadb_engine', None):
                     try:
                         # Descargar catálogo desde MariaDB
-                        prods = db_manager.mariadb_engine.execute_query("SELECT id, codigo, nombre, precio, stock, categoria, es_pesable, cant_oferta, precio_oferta, tipo_unidad_oferta FROM productos")
+                        prods = db_manager.execute_query("SELECT id, codigo, nombre, precio, stock, categoria, es_pesable, cant_oferta, precio_oferta, tipo_unidad_oferta FROM productos")
                         if prods:
                             # Conectar al SQLite local (punpro.db)
                             import sqlite3

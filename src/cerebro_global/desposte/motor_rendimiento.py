@@ -8,16 +8,16 @@ class MotorRendimiento:
     """
 
     @staticmethod
-    def calcular_promedio_rendimiento(tipo_carne, db_jefe):
+    def calcular_promedio_rendimiento(tipo_carne, db_lectura):
         """
         Lee los últimos 10 historiales de un tipo de carne, y devuelve 
         un diccionario con la proporción de cada corte respecto al peso de la res.
         Ejemplo: {"Tapa de asado": 0.05, "Roast beef": 0.12, ...}
         """
-        if not db_jefe: return {}
+        if not db_lectura: return {}
         
         try:
-            historial = db_jefe.execute_query(
+            historial = db_lectura.execute_query(
                 "SELECT kilos_base, datos_json FROM historial_promedios WHERE tipo_carne = ? ORDER BY id DESC LIMIT 10",
                 (tipo_carne,)
             )
@@ -60,14 +60,15 @@ class MotorRendimiento:
             return {}
 
     @staticmethod
-    def aplicar_desposte_a_stock(tipo_carne, kilos_totales, db_admin, db_jefe):
+    def aplicar_desposte_a_stock(tipo_carne, kilos_totales, db_admin, db_jefe=None):
         """
         Calcula cuántos kilos de cada corte rinde la res comprada y los suma al inventario.
         """
         if not db_admin: return False
         
         try:
-            receta = MotorRendimiento.calcular_promedio_rendimiento(tipo_carne, db_jefe)
+            db_lectura = db_admin if db_admin else db_jefe
+            receta = MotorRendimiento.calcular_promedio_rendimiento(tipo_carne, db_lectura)
             if not receta:
                 print(f"No hay receta histórica para {tipo_carne}")
                 return False

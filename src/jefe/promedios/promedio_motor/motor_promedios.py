@@ -51,6 +51,7 @@ class MotorPromedios:
         for row_data in filas:
             if len(row_data) >= 9:
                 corte = str(row_data[0]).strip()
+                costo_str = str(row_data[2]).replace(',', '').strip()
                 precio_base_str = str(row_data[4]).replace(',', '').strip()
                 oferta_str = str(row_data[5]).replace(',', '').strip()
                 cant_str = str(row_data[6]).replace(',', '').strip()
@@ -58,6 +59,7 @@ class MotorPromedios:
                 precio = 0.0
                 precio_oferta = 0.0
                 cant_oferta = 0.0
+                costo = 0.0
                 
                 if not corte: continue
 
@@ -71,21 +73,24 @@ class MotorPromedios:
                 try:
                     if cant_str: cant_oferta = float(cant_str)
                 except: pass
+                try:
+                    if costo_str: costo = float(costo_str)
+                except: pass
                 
                 if precio > 0 or precio_oferta > 0:
                     # Verificar si existe
                     res = db.execute_query("SELECT id FROM productos WHERE nombre = ?", (corte,))
                     if res:
                         db.execute_non_query(
-                            "UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ? WHERE nombre = ?", 
-                            (precio, precio_oferta, cant_oferta, corte)
+                            "UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ?, costo = ? WHERE nombre = ?", 
+                            (precio, precio_oferta, cant_oferta, costo, corte)
                         )
                     else:
                         import random
                         cod = f"PROM-{random.randint(1000, 9999)}"
                         db.execute_non_query(
-                            "INSERT INTO productos (nombre, precio, precio_oferta_promedio, cant_oferta, categoria, unidad, codigo, es_pesable) VALUES (?, ?, ?, ?, ?, 'KG', ?, 1)",
-                            (corte, precio, precio_oferta, cant_oferta, tipo_promedio.upper(), cod)
+                            "INSERT INTO productos (nombre, precio, precio_oferta_promedio, cant_oferta, categoria, unidad, codigo, es_pesable, costo) VALUES (?, ?, ?, ?, ?, 'KG', ?, 1, ?)",
+                            (corte, precio, precio_oferta, cant_oferta, tipo_promedio.upper(), cod, costo)
                         )
                     actualizados += 1
                         

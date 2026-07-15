@@ -22,11 +22,13 @@ except ImportError:
 # ── Componentes importados ────────────────────────────────────────────────────
 from src.jefe.componentes_visuales.jefe_card import JefeCard
 from src.jefe.componentes_visuales.panel_alertas_ia import PanelAlertasIA
+from src.cerebro_global.cerebro_jefe.analitica_jefe import WorkerAnaliticaJefe
 
 # ── Módulos del Jefe ──────────────────────────────────────────────────────────
 JEFE_MODULES = [
     ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
     ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
+    ("corte_caja",   "Corte y\nCierre Global",    "💵", "#34D399", "#ECFDF5", "#047857", 7,  None),
     ("contabilidad", "Contabilidad\nERP",         "💹", "#F59E0B", "#FEF3C7", "#92400E", 9,  None),
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
     ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
@@ -52,6 +54,21 @@ class Jefe0Dashboard(QWidget):
         self._clock.timeout.connect(self._tick)
         self._clock.start(60000)
         self._tick()
+        
+        # Iniciar Cerebro del Jefe en Segundo Plano
+        self.worker_analitica = WorkerAnaliticaJefe()
+        self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
+        self.worker_analitica.start()
+
+    def _on_analitica_lista(self, datos):
+        val_inv = datos.get("inventario_valor_costo", 0.0)
+        gan_real = datos.get("ventas_ganancia_real", 0.0)
+        
+        texto_analitica = (
+            f"📈 GANANCIA REAL DE HOY: <b>${gan_real:,.2f}</b>  |  "
+            f"📦 INVENTARIO VALORIZADO (COSTO): <b>${val_inv:,.2f}</b>"
+        )
+        self.lbl_analitica.setText(texto_analitica)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -150,9 +167,24 @@ class Jefe0Dashboard(QWidget):
 
         page = QWidget()
         page.setStyleSheet("QWidget { background: transparent; }")
-        page_lay = QVBoxLayout(page)
-        page_lay.setContentsMargins(48, 36, 48, 48)
+        
+        main_split_lay = QHBoxLayout(page)
+        main_split_lay.setContentsMargins(48, 36, 48, 48)
+        main_split_lay.setSpacing(40)
+        
+        left_col = QWidget()
+        left_col.setStyleSheet("background: transparent;")
+        page_lay = QVBoxLayout(left_col)
+        page_lay.setContentsMargins(0, 0, 0, 0)
         page_lay.setSpacing(0)
+        
+        right_col = QWidget()
+        right_col.setStyleSheet("background: transparent;")
+        self.right_lay = QVBoxLayout(right_col)
+        self.right_lay.setContentsMargins(0, 0, 0, 0)
+        
+        main_split_lay.addWidget(left_col, stretch=1)
+        main_split_lay.addWidget(right_col, stretch=1)
 
         # ── HERO — gradiente muy suave, casi pastel ───────────────────────────
         hero = QFrame()
@@ -186,15 +218,56 @@ class Jefe0Dashboard(QWidget):
         hero_lay.addWidget(self.lbl_date)
 
         page_lay.addWidget(hero)
-        page_lay.addSpacing(36)
+        page_lay.addSpacing(10)
+        
+        # ── PANEL ANALÍTICO ───────────────────────────────────────────────────
+        analitica_lay = QHBoxLayout()
+        analitica_lay.setContentsMargins(0, 0, 0, 0)
+        
+        self.lbl_analitica = QLabel("⚙️ Calculando métricas en segundo plano...")
+        self.lbl_analitica.setStyleSheet(
+            "font-size: 11px; font-weight: 700; color: #0284C7;"
+            " background: #E0F2FE; border-radius: 6px; padding: 10px;"
+        )
+        
+        self.btn_export_ganancias = QPushButton("📥 Exportar Ganancias (Excel)")
+        self.btn_export_ganancias.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_export_ganancias.setFixedHeight(34)
+        self.btn_export_ganancias.setStyleSheet("""
+            QPushButton {
+                background: #10B981; color: white;
+                border: none; border-radius: 6px;
+                padding: 0 16px; font-weight: bold; font-size: 11px;
+            }
+            QPushButton:hover { background: #059669; }
+        """)
+        self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
+        
+        analitica_lay.addWidget(self.lbl_analitica)
+        analitica_lay.addSpacing(10)
+        analitica_lay.addWidget(self.btn_export_ganancias)
+        analitica_lay.addStretch()
+        
+        page_lay.addLayout(analitica_lay)
+        page_lay.addSpacing(26)
 
-        # ── SECCIÓN LABEL ─────────────────────────────────────────────────────
+        # ── PANEL DE IA PREDICTIVO (IZQUIERDA) ──────────────────────────────────────────
+        lbl_ia = QLabel("INTELIGENCIA ACTIVA")
+        lbl_ia.setStyleSheet("font-size: 9px; font-weight: 900; letter-spacing: 2.5px; background: transparent; border: none;")
+        page_lay.addWidget(lbl_ia)
+        page_lay.addSpacing(18)
+        
+        self.panel_ia = PanelAlertasIA()
+        page_lay.addWidget(self.panel_ia)
+        page_lay.addStretch()
+
+        # ── SECCIÓN LABEL (DERECHA) ─────────────────────────────────────────────────────
         lbl_sec = QLabel("MÓDULOS GERENCIALES")
         lbl_sec.setStyleSheet(
             f"font-size: 9px; font-weight: 900; letter-spacing: 2.5px;"
             f" background: transparent; border: none;")
-        page_lay.addWidget(lbl_sec)
-        page_lay.addSpacing(18)
+        self.right_lay.addWidget(lbl_sec)
+        self.right_lay.addSpacing(18)
 
         # ── GRID ─────────────────────────────────────────────────────────────
         self.cards = {}
@@ -221,13 +294,8 @@ class Jefe0Dashboard(QWidget):
 
         grid_container.addLayout(self.grid)
         grid_container.addStretch()
-        page_lay.addLayout(grid_container)
-        page_lay.addSpacing(30)
-
-        # ── PANEL DE IA PREDICTIVO ──────────────────────────────────────────
-        self.panel_ia = PanelAlertasIA()
-        page_lay.addWidget(self.panel_ia)
-        page_lay.addStretch()
+        self.right_lay.addLayout(grid_container)
+        self.right_lay.addStretch()
 
         # ── FOOTER ────────────────────────────────────────────────────────────
         self.lbl_footer = QLabel("Cobro Fácil POS  ·  TPV Pro 2026  ·  Panel Exclusivo Jefe / Dueño")
@@ -239,6 +307,32 @@ class Jefe0Dashboard(QWidget):
 
         scroll.setWidget(page)
         root.addWidget(scroll)
+
+    def _exportar_ganancias(self):
+        from src.cerebro_global.cerebro_jefe.exportador_ganancias import WorkerExportGanancias
+        from datetime import datetime
+        
+        nombre_def = f"Reporte_Ganancias_Netas_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        filepath, _ = QFileDialog.getSaveFileName(
+            self, "Guardar Reporte de Ganancias", nombre_def, "Excel (*.xlsx);;Todos los archivos (*)"
+        )
+        if not filepath:
+            return
+            
+        self.btn_export_ganancias.setText("⏳ Exportando...")
+        self.btn_export_ganancias.setEnabled(False)
+        
+        self.worker_export = WorkerExportGanancias(filepath)
+        self.worker_export.finished.connect(self._on_export_ganancias_listo)
+        self.worker_export.start()
+        
+    def _on_export_ganancias_listo(self, success, msg):
+        self.btn_export_ganancias.setText("📥 Exportar Ganancias (Excel)")
+        self.btn_export_ganancias.setEnabled(True)
+        if success:
+            QMessageBox.information(self, "Exportación Exitosa", msg)
+        else:
+            QMessageBox.critical(self, "Error al Exportar", msg)
 
     def _tick(self):
         now = datetime.datetime.now()

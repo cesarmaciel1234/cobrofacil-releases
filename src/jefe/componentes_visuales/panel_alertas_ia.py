@@ -63,21 +63,21 @@ class PanelAlertasIA(QFrame):
 
         # 1. Traer todos los productos y su stock actual
         try:
-            prods = db_manager.execute_query("SELECT nombre, stock, departamento FROM productos WHERE tipo_venta != 'Servicio'") or []
+            prods = db_manager.execute_query("SELECT nombre, stock, departamento FROM productos WHERE categoria != 'Servicio'") or []
         except Exception:
             prods = []
 
         stock_actual = {}
         for p in prods:
-            stock_actual[p['nombre']] = p['cantidad']
+            stock_actual[p['nombre']] = p.get('stock', 0)
 
         # 2. Calcular Velocidad de Venta (Últimos 7 días)
         try:
             query = """
                 SELECT d.nombre_producto, SUM(d.cantidad) as total_vendido
-                FROM detalles_ventas d
+                FROM detalle_ventas d
                 JOIN ventas v ON d.id_venta = v.id
-                WHERE v.fecha >= date('now', '-7 days') AND v.estado = 'COMPLETADA'
+                WHERE v.fecha >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND v.estado = 'COMPLETADA'
                 GROUP BY d.nombre_producto
             """
             ventas_7d = db_manager.execute_query(query) or []
