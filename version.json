@@ -1,7 +1,7 @@
 {
   "app_version": "7.2",
   "channel": "stable",
-  "build_date": "2026-07-14 21:56:51",
+  "build_date": "2026-07-16 09:47:01",
   "server_host": "cesar",
   "modules": {
     "analyze_styles.py": {
@@ -48,15 +48,21 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "42243fdf76e670dd3eab54d5f73effc1",
+      "checksum": "cb9a10a2024bfa5bd2f05b84a6c33d2e",
       "channel": "stable",
-      "size": 18207
+      "size": 18329
     },
     "refactor_qss.py": {
       "version": "1.0.0",
       "checksum": "456d3d6f47b122dc463de3100919be9e",
       "channel": "stable",
       "size": 3488
+    },
+    "test_paso6.py": {
+      "version": "1.0.0",
+      "checksum": "256b3be4bbefa33ae24a0e00b9f51058",
+      "channel": "stable",
+      "size": 399
     },
     "test_slave.py": {
       "version": "1.0.0",
@@ -828,9 +834,9 @@
     },
     "src/admin/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "b88cc1eaba60ca68dddae6092c30008a",
+      "checksum": "c535308b73d993ad512c3e32ba4317ae",
       "channel": "stable",
-      "size": 16610
+      "size": 16609
     },
     "src/admin/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -882,9 +888,9 @@
     },
     "src/admin/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "fd5f6fa89c3cc4a599aef8b783c4dffe",
+      "checksum": "15f2acf02d52cd5872925f7dd03ff446",
       "channel": "stable",
-      "size": 27290
+      "size": 27127
     },
     "src/admin/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
@@ -918,9 +924,9 @@
     },
     "src/admin/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",
-      "checksum": "818eba21bbb4b8945cba1371607899d6",
+      "checksum": "33e0bb6cec6e4e5afd39a8615c075d3b",
       "channel": "stable",
-      "size": 30668
+      "size": 30724
     },
     "src/admin/motor_descuentos_ui/__init__.py": {
       "version": "1.0.0",
@@ -930,9 +936,9 @@
     },
     "src/admin/motor_descuentos_ui/componentes/creador_promociones.py": {
       "version": "1.0.0",
-      "checksum": "c96f7333b04f734a7098fb1d663f8334",
+      "checksum": "047549072b59dfd132e1e66e8b8b1b1c",
       "channel": "stable",
-      "size": 17159
+      "size": 17711
     },
     "src/admin/motor_descuentos_ui/componentes/dialogo_combos.py": {
       "version": "1.0.0",
@@ -954,9 +960,9 @@
     },
     "src/admin/nexus_admin/nexus_admin_main.py": {
       "version": "1.0.0",
-      "checksum": "9ade123e9c2280dff6d3f136f65d5421",
+      "checksum": "f647e70f1f20f4ce41560861cce4707d",
       "channel": "stable",
-      "size": 34431
+      "size": 34387
     },
     "src/admin/nexus_admin/__init__.py": {
       "version": "1.0.0",
@@ -1104,9 +1110,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "3b7004de9d92b6245790dfa68d5a9da0",
+      "checksum": "a10723725c04312bf27bf3d74080a3e7",
       "channel": "stable",
-      "size": 110646
+      "size": 110814
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -1266,9 +1272,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "72203ce870ec8883908b5bdfff1b678d",
+      "checksum": "43af1e67e2a120c2896b6d2c0cd689ec",
       "channel": "stable",
-      "size": 44012
+      "size": 51011
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -1296,25 +1302,31 @@
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago.py": {
       "version": "1.0.0",
-      "checksum": "1ef07eb63d51347c7f10d8c6e74f408d",
+      "checksum": "37316051dd5982d55e40a35598e6b091",
       "channel": "stable",
-      "size": 5100
+      "size": 6021
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/teclado_numerico_lateral.py": {
       "version": "1.0.0",
-      "checksum": "c9ddc72e877fc2558f9df420d90f8f58",
+      "checksum": "169fb429128ba0557b102af584f20fe2",
       "channel": "stable",
-      "size": 4336
+      "size": 4437
     },
     "src/cajero/paso6_cobro/componentes_paso6_cobro/logica/cobro_controller.py": {
       "version": "1.0.0",
-      "checksum": "7725b997169d6894a98ab3f6e7934394",
+      "checksum": "e57a012b6f5ef85b7a3924c631155df4",
       "channel": "stable",
-      "size": 3155
+      "size": 7998
+    },
+    "src/cajero/paso6_cobro/widgets/cliente_express.py": {
+      "version": "1.0.0",
+      "checksum": "4c3df0755d1c9ec233a603748a96d756",
+      "channel": "stable",
+      "size": 16990
     },
     "src/cajero/paso6_cobro/widgets/fiado_express.py": {
       "version": "1.0.0",
-      "checksum": "53acc783e97a3ecfa9645259d0be348c",
+      "checksum": "bcbae05b1b4eb5882897f257ef867fc4",
       "channel": "stable",
       "size": 16827
     },
@@ -1329,54 +1341,6 @@
       "checksum": "9ce00886cc92b5d7279233738d1cfe1c",
       "channel": "stable",
       "size": 6559
-    },
-    "src/cajero/paso7_cierre/paso7_cierre.py": {
-      "version": "1.0.0",
-      "checksum": "af86eae2d3c057d3173ef719f513d662",
-      "channel": "stable",
-      "size": 8850
-    },
-    "src/cajero/paso7_cierre/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "338a64760259f07a938970643387f742",
-      "channel": "stable",
-      "size": 43
-    },
-    "src/cajero/paso7_cierre/componentes_paso7_cierre/corte_diario_admin.py": {
-      "version": "1.0.0",
-      "checksum": "1a8643e2d7fddbdde24c26ff094afd0a",
-      "channel": "stable",
-      "size": 1222
-    },
-    "src/cajero/paso7_cierre/componentes_paso7_cierre/metric_card.py": {
-      "version": "1.0.0",
-      "checksum": "b6e5f6b1e8867debdc17badcaea38f56",
-      "channel": "stable",
-      "size": 2265
-    },
-    "src/cajero/paso7_cierre/componentes_paso7_cierre/panel_arqueo.py": {
-      "version": "1.0.0",
-      "checksum": "5dd6cc76b5f495ec1a57c624c64f595e",
-      "channel": "stable",
-      "size": 4500
-    },
-    "src/cajero/paso7_cierre/componentes_paso7_cierre/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "f753325e04d8ff645aa9d45c7b4d2918",
-      "channel": "stable",
-      "size": 38
-    },
-    "src/cajero/paso7_cierre/logica/cierre_controller.py": {
-      "version": "1.0.0",
-      "checksum": "5149acfdab1c7b2b6906fd4641abe1e1",
-      "channel": "stable",
-      "size": 6325
-    },
-    "src/cajero/paso7_cierre/logica/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
-      "channel": "stable",
-      "size": 0
     },
     "src/cajero/paso8_historial/paso8_historial.py": {
       "version": "1.0.0",
@@ -1662,9 +1626,9 @@
     },
     "src/carteleria/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",
-      "checksum": "c08eae1b83d68e31ff35352ade1b7c08",
+      "checksum": "a82419fd410892f3547380bca2e62fd9",
       "channel": "stable",
-      "size": 30685
+      "size": 30741
     },
     "src/carteleria/motor_descuentos_ui/__init__.py": {
       "version": "1.0.0",
@@ -1674,9 +1638,9 @@
     },
     "src/carteleria/motor_descuentos_ui/componentes/creador_promociones.py": {
       "version": "1.0.0",
-      "checksum": "c96f7333b04f734a7098fb1d663f8334",
+      "checksum": "1787eb683aeec5ebba55059cb9670b18",
       "channel": "stable",
-      "size": 17159
+      "size": 17221
     },
     "src/carteleria/motor_descuentos_ui/componentes/dialogo_combos.py": {
       "version": "1.0.0",
@@ -2052,9 +2016,9 @@
     },
     "src/motor_descuentos/motor_ofertas.py": {
       "version": "1.0.0",
-      "checksum": "bf63656746eff2811a56568f0de3c884",
+      "checksum": "c8c9bc48619a3f97d88f0127870ab016",
       "channel": "stable",
-      "size": 5134
+      "size": 5602
     },
     "src/motor_descuentos/__init__.py": {
       "version": "1.0.0",
@@ -2064,9 +2028,9 @@
     },
     "src/motor_inventario/motor_catalogo.py": {
       "version": "1.0.0",
-      "checksum": "dec7f2692f8f3067a30f4414193f3e63",
+      "checksum": "89061449f35da7b2c8d58f076ebd1fcf",
       "channel": "stable",
-      "size": 5936
+      "size": 6536
     },
     "src/motor_inventario/motor_departamentos.py": {
       "version": "1.0.0",
@@ -2112,9 +2076,9 @@
     },
     "src/repositories/cliente_repository.py": {
       "version": "1.0.0",
-      "checksum": "493bc2192d8e6bb97b34321a6a97239d",
+      "checksum": "d3c68aca46ec3ab19bf8cadd307f407d",
       "channel": "stable",
-      "size": 3544
+      "size": 5236
     },
     "src/repositories/producto_repository.py": {
       "version": "1.0.0",
@@ -2304,9 +2268,21 @@
     },
     "src/ui_global/cierre_diario_ui/cierre_main_ui.py": {
       "version": "1.0.0",
-      "checksum": "e866bcf238125a6e8a570a5e5fa5b8c3",
+      "checksum": "6ca6d5c7aa288fb091ba5f58c5e4db10",
       "channel": "stable",
-      "size": 21198
+      "size": 18268
+    },
+    "src/ui_global/cierre_diario_ui/componentes/metric_card.py": {
+      "version": "1.0.0",
+      "checksum": "b6e5f6b1e8867debdc17badcaea38f56",
+      "channel": "stable",
+      "size": 2265
+    },
+    "src/ui_global/cierre_diario_ui/componentes/panel_arqueo.py": {
+      "version": "1.0.0",
+      "checksum": "5dd6cc76b5f495ec1a57c624c64f595e",
+      "channel": "stable",
+      "size": 4500
     },
     "src/ui_global/proveedor/vista_proveedor.py": {
       "version": "1.0.0",

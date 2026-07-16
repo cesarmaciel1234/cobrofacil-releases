@@ -334,7 +334,6 @@ class NexusExtremeControl(QWidget):
             font-size: 16px; font-weight: 900; letter-spacing: 5px;
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #D97706, stop:0.5 #6366F1, stop:1 #0284C7);
-            -webkit-background-clip: text;
             color: #E0F2FE;
             font-family: 'Segoe UI', sans-serif;
         """)

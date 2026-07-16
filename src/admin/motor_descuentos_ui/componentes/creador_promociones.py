@@ -325,13 +325,27 @@ class CreadorPromociones(QWidget):
 
     def _emit_activar_promo(self):
         if not self.producto_id: return
+        
+        precio_reg = self.txt_quick_precio.value()
+        p_of = self.sp_quick_precio_oferta.value()
+        p_rel = self.sp_quick_oferta_relampago.value()
+        p_prom = self.sp_quick_oferta_promedio.value()
+        
+        if (p_of > 0 and p_of >= precio_reg) or \
+           (p_rel > 0 and p_rel >= precio_reg) or \
+           (p_prom > 0 and p_prom >= precio_reg):
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Error", "El precio de oferta no puede ser mayor o igual al precio de venta regular.")
+            return
+            
         data = {
             'id': self.producto_id,
             'cant_oferta': self.sp_quick_cant_oferta.value(),
-            'precio_oferta': self.sp_quick_precio_oferta.value(),
-            'precio_oferta_relampago': self.sp_quick_oferta_relampago.value(),
-            'precio_oferta_promedio': self.sp_quick_oferta_promedio.value(),
-            'limite_oferta_relampago': self.sp_limite_relampago.value()
+            'precio_oferta': p_of,
+            'precio_oferta_relampago': p_rel,
+            'precio_oferta_promedio': p_prom,
+            'limite_oferta_relampago': self.sp_limite_relampago.value(),
+            'precio_regular': precio_reg
         }
         self.activar_promo.emit(data)
 

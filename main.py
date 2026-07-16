@@ -14,6 +14,10 @@ import traceback
 import threading
 import time
 import logging
+import urllib3
+
+# Suppress InsecureRequestWarning
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Desactivar aceleración por hardware para evitar deadlocks del chatbot Chromium
 sys.argv.append('--disable-gpu')

@@ -1,4 +1,4 @@
-"""Fiado Express Mostrador — DNI doble confirmación en dos ventanas (F12 → Fiado)."""
+"""Cliente Express Mostrador — Nombre doble confirmación en dos ventanas (F12 → Clientes)."""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QLineEdit, QApplication,
@@ -115,15 +115,16 @@ class _FiadoExpressBase(QDialog):
         return monto
 
 
-class DialogoFiadoExpressPaso1(_FiadoExpressBase):
-    """Paso 1 sobre pantalla de cobro: DNI + CARGAR → cierra y pasa a confirmación."""
+class DialogoClienteExpressPaso1(_FiadoExpressBase):
+    """Paso 1 sobre pantalla de cobro: NOMBRE + CARGAR → cierra y pasa a confirmación."""
 
     def __init__(self, monto_total: float, parent=None):
         super().__init__(monto_total, parent)
         self.cliente = None
         self.cliente_id = None
         self.cliente_nombre = ""
-        self.dni_ref = ""
+        self.nombre_ref = ""
+        self.confirmado = False
         self._build()
 
     def _build(self):
@@ -137,7 +138,7 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(10)
 
-        tit = QLabel("⚡  FIADO EXPRESS MOSTRADOR")
+        tit = QLabel("⚡  CLIENTE EXPRESS MOSTRADOR")
         tit.setStyleSheet(
             "color: #22C55E; font-size: 16px; font-weight: 900; "
             "font-family: 'Consolas', monospace; letter-spacing: 1px;"
@@ -154,15 +155,15 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
         body.setSpacing(12)
 
         body.addWidget(self._hint_label(
-            f"Paso 1 — Ingrese DNI y pulse CARGAR. Clientes nuevos: límite ${FIADO_EXPRESS_LIMITE_DEFAULT:,.0f}."
+            f"Paso 1 — Ingrese el NOMBRE DEL CLIENTE y pulse CARGAR. Clientes nuevos: límite $50,000."
         ))
-        body.addWidget(self._section_label("DNI DEL CLIENTE (MANDATORIO) — luego pulse CARGAR"))
+        body.addWidget(self._section_label("NOMBRE DEL CLIENTE (MANDATORIO) — luego pulse CARGAR"))
 
         row = QHBoxLayout()
-        self.txt_dni = QLineEdit()
-        self.txt_dni.setPlaceholderText("Ej: 12345678")
-        self.txt_dni.returnPressed.connect(self._cargar)
-        row.addWidget(self.txt_dni, stretch=1)
+        self.txt_nombre = QLineEdit()
+        self.txt_nombre.setPlaceholderText("Ej: Juan Perez")
+        self.txt_nombre.returnPressed.connect(self._cargar)
+        row.addWidget(self.txt_nombre, stretch=1)
 
         self.btn_cargar = QPushButton("CARGAR")
         self.btn_cargar.setFixedSize(120, 44)
@@ -204,7 +205,7 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
         outer.addLayout(foot)
 
         root.addWidget(self.frame)
-        self.txt_dni.setFocus()
+        self.txt_nombre.setFocus()
 
     def _cargar(self):
         self.lbl_err.clear()
@@ -213,15 +214,15 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
         self.btn_cargar.setText("…")
         QApplication.processEvents()
 
-        dni_norm = ClienteRepository.normalizar_dni(self.txt_dni.text())
-        if not dni_norm:
+        nombre_ingresado = self.txt_nombre.text().strip()
+        if not nombre_ingresado:
             self.lbl_cliente.clear()
-            self.lbl_err.setText("DNI inválido (mínimo 7 dígitos)")
+            self.lbl_err.setText("Ingrese un nombre válido")
             self.btn_cargar.setEnabled(True)
             self.btn_cargar.setText("CARGAR")
             return
 
-        cliente, estado, msg = ClienteRepository.verificar_y_crear_cliente(self.txt_dni.text())
+        cliente, estado, msg = ClienteRepository.verificar_y_crear_por_nombre(nombre_ingresado)
         self.btn_cargar.setEnabled(True)
         self.btn_cargar.setText("CARGAR")
 
@@ -245,16 +246,11 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
             return
 
         self.cliente = cliente
-        self.dni_ref = dni_norm
+        self.nombre_ref = nombre_ingresado
         self.cliente_id = cliente["id"]
         self.cliente_nombre = cliente["nombre"]
         self.frame.setStyleSheet(self._FRAME_OK)
-
-        if estado == "creado":
-            self.lbl_cliente.setText(f"✚  {msg}")
-        else:
-            self.lbl_cliente.setText(f"✓  {cliente['nombre']}")
-        QApplication.processEvents()
+        self.confirmado = True
         self.accept()
 
     def keyPressEvent(self, event):
@@ -267,17 +263,18 @@ class DialogoFiadoExpressPaso1(_FiadoExpressBase):
             super().keyPressEvent(event)
 
 
-class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
-    """Paso 2 sobre el mostrador (paso6 oculto): repetir DNI y confirmar fiado."""
+class DialogoClienteExpressPaso2(_FiadoExpressBase):
+    """Paso 2 sobre el mostrador (paso6 oculto): repetir NOMBRE y confirmar fiado."""
 
-    def __init__(self, monto_total: float, cliente: dict, dni_ref: str, parent=None):
+    def __init__(self, monto_total: float, cliente: dict, nombre_ref: str, parent=None):
         super().__init__(monto_total, parent)
         self.cliente = cliente
-        self.dni_ref = dni_ref
+        self.nombre_ref = nombre_ref
+        self.nombre_esperado = nombre_ref
         self.cliente_id = cliente["id"]
         self.cliente_nombre = dict(cliente).get("nombre", "")
-        self.reintentar_dni = False
-        self._dni_verificado = False
+        self.confirmado = False
+        self._nombre_verificado = False
         self._build()
 
     def _build(self):
@@ -291,7 +288,7 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         outer.setContentsMargins(24, 20, 24, 20)
         outer.setSpacing(10)
 
-        tit = QLabel("⚡  FIADO EXPRESS — CONFIRMACIÓN")
+        tit = QLabel("⚡  CLIENTE EXPRESS — VERIFICACIÓN FINAL")
         tit.setStyleSheet(
             "color: #FBBF24; font-size: 16px; font-weight: 900; "
             "font-family: 'Consolas', monospace; letter-spacing: 1px;"
@@ -308,7 +305,7 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         body.setSpacing(12)
 
         body.addWidget(self._hint_label(
-            "Paso 2 — El cliente debe repetir su DNI. Debe coincidir con el paso anterior."
+            "Paso 2 — El cliente debe repetir su NOMBRE. Debe coincidir con el paso anterior."
         ))
 
         nombre = dict(self.cliente).get("nombre", "")
@@ -322,13 +319,13 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         )
         body.addWidget(lbl_cli)
 
-        body.addWidget(self._section_label("REPITA EL DNI PARA CONFIRMAR"))
+        body.addWidget(self._section_label("VERIFICACIÓN DE NOMBRE (VUELVA A CARGAR)"))
 
         row = QHBoxLayout()
-        self.txt_dni = QLineEdit()
-        self.txt_dni.setPlaceholderText("Vuelva a ingresar el DNI")
-        self.txt_dni.returnPressed.connect(self._verificar)
-        row.addWidget(self.txt_dni, stretch=1)
+        self.txt_nombre2 = QLineEdit()
+        self.txt_nombre2.setPlaceholderText("Reingrese Nombre")
+        self.txt_nombre2.returnPressed.connect(self._verificar)
+        row.addWidget(self.txt_nombre2, stretch=1)
 
         btn_verificar = QPushButton("VERIFICAR")
         btn_verificar.setFixedSize(120, 44)
@@ -353,16 +350,6 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         self.lbl_err.setWordWrap(True)
         self.lbl_err.setStyleSheet("color: #F87171; font-size: 12px; font-weight: 700;")
         body.addWidget(self.lbl_err)
-
-        btn_volver = QPushButton("← Volver a ingresar otro DNI")
-        btn_volver.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_volver.setStyleSheet(
-            "QPushButton { background: transparent; color: #94A3B8; border: none; "
-            "font-size: 11px; font-weight: 700; text-align: left; }"
-            "QPushButton:hover { color: #E2E8F0; }"
-        )
-        btn_volver.clicked.connect(self._volver_otro_dni)
-        body.addWidget(btn_volver)
         body.addStretch()
 
         outer.addLayout(body, stretch=1)
@@ -395,27 +382,27 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         outer.addLayout(foot)
 
         root.addWidget(self.frame)
-        self.txt_dni.setFocus()
+        self.txt_nombre2.setFocus()
 
     def _verificar(self):
         self.lbl_err.clear()
         self.lbl_ok.clear()
         self.btn_ok.setEnabled(False)
-        self._dni_verificado = False
+        self._nombre_verificado = False
 
-        dni2 = ClienteRepository.normalizar_dni(self.txt_dni.text())
-        if not dni2:
-            self.lbl_err.setText("Ingrese el DNI nuevamente")
+        nombre2 = self.txt_nombre2.text().strip()
+        if not nombre2:
+            self.lbl_err.setText("Ingrese el nombre nuevamente")
             return
 
-        if dni2 != self.dni_ref:
+        if nombre2.lower() != self.nombre_esperado.lower():
             sonar_dni_no_coincide()
-            self.lbl_err.setText("⛔ DNI NO COINCIDE — pida al cliente que lo repita correctamente")
+            self.lbl_err.setText(f"❌ ¡EL NOMBRE NO COINCIDE! (Esperaba: {self.nombre_esperado})")
             self.frame.setStyleSheet(self._FRAME_ERR)
             return
 
-        self._dni_verificado = True
-        self.lbl_ok.setText("✓ DNI verificado — puede confirmar el fiado")
+        self._nombre_verificado = True
+        self.lbl_ok.setText("✓ Nombre verificado — puede confirmar el fiado")
         self.frame.setStyleSheet(self._FRAME_OK)
         self.btn_ok.setEnabled(True)
         self.btn_ok.setFocus()
@@ -425,10 +412,11 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         self.reject()
 
     def _confirmar(self):
-        if not self._dni_verificado:
+        if not self._nombre_verificado:
             self._verificar()
-            if not self._dni_verificado:
+            if not self._nombre_verificado:
                 return
+        self.confirmado = True
         self.accept()
 
     def keyPressEvent(self, event):
@@ -436,7 +424,7 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
         if k == Qt.Key.Key_Escape:
             self.reject()
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-            if not self._dni_verificado:
+            if not self._nombre_verificado:
                 self._verificar()
             elif self.btn_ok.isEnabled():
                 self._confirmar()
@@ -444,5 +432,25 @@ class DialogoFiadoExpressConfirmacion(_FiadoExpressBase):
             super().keyPressEvent(event)
 
 
-# Alias retrocompatible
-DialogoFiadoExpress = DialogoFiadoExpressPaso1
+def abrir_cliente_express(parent_widget, monto_total: float):
+    """
+    Controlador principal Cliente Express (2 ventanas modales).
+    Retorna el dict del cliente si la transacción debe completarse, None si se cancela.
+    """
+    dlg1 = DialogoClienteExpressPaso1(monto_total, parent_widget)
+    dlg1.exec()
+
+    if not dlg1.confirmado:
+        return None
+
+    # Pasó el primer paso
+    cliente_seleccionado = dlg1.cliente
+    nombre_esperado = dlg1.nombre_ref
+
+    dlg2 = DialogoClienteExpressPaso2(monto_total, cliente_seleccionado, nombre_esperado, parent_widget)
+    dlg2.exec()
+
+    if dlg2.confirmado:
+        return cliente_seleccionado
+    
+    return None

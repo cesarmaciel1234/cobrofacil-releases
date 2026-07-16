@@ -73,13 +73,19 @@ class MotorOfertas:
             self.logger.error(f"Error al obtener productos en oferta: {e}")
             return []
 
-    def aplicar_oferta(self, id_p, cant_oferta, precio_oferta, precio_relampago=0, precio_promedio=0, es_porcentaje=False, valor_porcentaje=0, limit_date=""):
-        """Aplica una oferta a un producto."""
+    def aplicar_oferta(self, id_p, cant_oferta, precio_oferta, precio_relampago=0, precio_promedio=0, es_porcentaje=False, valor_porcentaje=0, limit_date="", precio_regular=None):
+        """Aplica una oferta a un producto y opcionalmente actualiza su precio regular."""
         try:
-            return db_manager.execute_non_query(
-                "UPDATE productos SET cant_oferta=?, precio_oferta=?, precio_oferta_relampago=?, precio_oferta_promedio=? WHERE id=?",
-                (cant_oferta, precio_oferta, precio_relampago, precio_promedio, id_p)
-            )
+            if precio_regular is not None:
+                return db_manager.execute_non_query(
+                    "UPDATE productos SET cant_oferta=?, precio_oferta=?, precio_oferta_relampago=?, precio_oferta_promedio=?, precio=? WHERE id=?",
+                    (cant_oferta, precio_oferta, precio_relampago, precio_promedio, precio_regular, id_p)
+                )
+            else:
+                return db_manager.execute_non_query(
+                    "UPDATE productos SET cant_oferta=?, precio_oferta=?, precio_oferta_relampago=?, precio_oferta_promedio=? WHERE id=?",
+                    (cant_oferta, precio_oferta, precio_relampago, precio_promedio, id_p)
+                )
         except Exception as e:
             self.logger.error(f"Error aplicando oferta al producto {id_p}: {e}")
             return False

@@ -420,14 +420,10 @@ class CatalogoProductos(QWidget):
             return
         id_p = item_id.text()
         # Usar el motor
-        buscar = f"{id_p}"
         from src.motor_inventario.motor_catalogo import MotorCatalogo
         motor = MotorCatalogo()
-        rows, _ = motor.obtener_productos(buscar, limite=1)
-        if not rows: return
-        r = rows[0]
-        # Verify it's actually the exact ID we want
-        if str(r['id']) != str(id_p): return
+        r = motor.obtener_producto_por_id(id_p)
+        if not r: return
         def get_val(col, default=0.0):
             try: 
                 return r[col] if r[col] is not None else default

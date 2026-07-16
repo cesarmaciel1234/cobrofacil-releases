@@ -13,12 +13,12 @@ class TecladoNumericoLateral(QFrame):
         super().__init__(parent)
         self.setObjectName("KeyboardFrame")
         self.setMinimumHeight(330)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         
         self.apply_theme()
         
         kb_layout = QVBoxLayout(self)
-        kb_layout.setContentsMargins(10, 10, 10, 10)
+        kb_layout.setContentsMargins(0, 0, 0, 0)
         kb_layout.setSpacing(5)
         
         rows = [
@@ -74,6 +74,9 @@ class TecladoNumericoLateral(QFrame):
             color_esc = "#FFFFFF"
         
         for row in rows:
+            if row == ["Salir", "ENTER"]:
+                kb_layout.addStretch()
+                
             row_lay = QHBoxLayout()
             row_lay.setSpacing(5)
             row_lay.setContentsMargins(0, 0, 0, 0)

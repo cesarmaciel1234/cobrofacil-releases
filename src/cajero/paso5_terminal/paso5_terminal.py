@@ -20,7 +20,6 @@ try:
     from src.base_de_datos.database import db_manager
 except ImportError:
     from database import db_manager
-from src.cajero.paso7_cierre import Paso7CierreCaja
 from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
 from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
@@ -214,6 +213,13 @@ class Paso5Terminal(QWidget):
             self.red_timer.start(15000) # Latido cada 15 segundos
             # Ejecutar una vez al inicio
             QTimer.singleShot(500, self.actualizar_red_heartbeat)
+            
+        from src.cajero.cajero_activo import CajeroActivo
+        perfil = "auxiliar" if CajeroActivo.numero == 2 else "cajero"
+        if self.property("cajero_perfil") != perfil:
+            self.setProperty("cajero_perfil", perfil)
+            self.style().unpolish(self)
+            self.style().polish(self)
 
     def actualizar_red_heartbeat(self):
         try:
@@ -671,27 +677,16 @@ class Paso5Terminal(QWidget):
             except RuntimeError:
                 self.teclado_virtual = None
                 
-        # Si la terminal de venta principal no está visible, ocultar y retornar
-        if not self.isVisible():
-            if getattr(self, 'teclado_virtual', None) is not None:
-                self.teclado_virtual.hide()
-            return
+        # Si la terminal de venta principal no está visible, permitir que el teclado flote 
+        # globalmente si un QLineEdit tiene foco (para el panel admin).
+        pass
             
         from PyQt6.QtWidgets import QLineEdit, QApplication
         from PyQt6.QtCore import Qt
         
         # Si el foco entra a una caja de texto (QLineEdit)
         if new_widget and isinstance(new_widget, QLineEdit):
-            # 1. Protección Panel Admin: no desplegar teclado virtual en formularios de administración
-            parent = new_widget.parent()
-            while parent:
-                class_name = parent.__class__.__name__.lower()
-                if 'admin' in class_name:
-                    if getattr(self, 'teclado_virtual', None) is not None:
-                        self.teclado_virtual.hide()
-                    return
-                parent = parent.parent()
-                
+            # 1. Ya no se bloquea en Panel Admin para soportar pantallas táctiles completas
             # 1.b Protección Paso 6 Cobro: el diálogo de cobro tiene el teclado incrustado directamente.
             is_paso6 = False
             parent = new_widget.parent()
@@ -948,12 +943,20 @@ class Paso5Terminal(QWidget):
             from src.updater.github_updater import get_local_version
             self.lbl_version.setText(f"🟢 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setObjectName("VersionLabel"); self.lbl_version.setProperty("estado", "normal"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
-            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal" if online else "offline"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
+            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
+            
+            # Activar el tema rosado para el auxiliar
+            self.setProperty("cajero_perfil", "auxiliar")
+            self.apply_theme()
         else:
             from src.updater.github_updater import get_local_version
             self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setProperty("estado", "offline"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
-            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal" if online else "offline"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
+            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
+            
+            # Volver al tema azul para cajero normal
+            self.setProperty("cajero_perfil", "principal")
+            self.apply_theme()
 
 
 
@@ -1559,7 +1562,7 @@ class Paso5Terminal(QWidget):
             
         total = sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
         cant = sum(float(self.tabla.item(i, 3).text()) for i in range(self.tabla.rowCount()))
-        total_desc = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
+        total_desc = sum(abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount()))
         
         # El total grande vuelve a usar el formato sin centavos con comas de miles
         total_str = fmt_moneda_sin_centavos(total)
@@ -2174,6 +2177,7 @@ class Paso5Terminal(QWidget):
         
         dlg = QDialog(self)
         dlg.setWindowTitle("Cierre de Caja Global")
+        dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         dlg.setFixedSize(1000, 700)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(0, 0, 0, 0)

@@ -1189,3 +1189,19 @@ QFrame.kpi-card, QFrame.jefe-card { background-color: #1E293B; border-color: #33
 QLabel.kpi-title { color: #64748B; }
 QLabel.kpi-value { color: #F8FAFC; }
 
+/* ==================================================== */
+/* 🎀 ESTILOS DE PERFIL AUXILIAR (ROSADO) */
+/* ==================================================== */
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] { background-color: #FDF2F8 !important; }
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #BE185D, stop:1 #F472B6) !important; }
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox { background: #BE185D !important; border-color: #9D174D !important; }
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalStatusBar { background: #FCE7F3 !important; border-top: 1px solid #FBCFE8 !important; }
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalTablaContainer { border-color: #DB2777 !important; border-bottom: 4px solid #9D174D !important; }
+Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#PanelTotales { border-color: #DB2777 !important; border-bottom: 4px solid #9D174D !important; }
+
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] { background-color: #4C0519 !important; }
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #831843, stop:1 #BE185D) !important; }
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox { background: #831843 !important; border-color: #9D174D !important; }
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalStatusBar { background: #4C0519 !important; border-top: 1px solid #831843 !important; }
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalTablaContainer { border-color: #9D174D !important; border-bottom: 4px solid #4C0519 !important; }
+Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#PanelTotales { border-color: #9D174D !important; border-bottom: 4px solid #4C0519 !important; }
