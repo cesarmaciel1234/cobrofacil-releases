@@ -56,9 +56,16 @@ class Database:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
                     amount REAL NOT NULL,
-                    category TEXT NOT NULL
+                    category TEXT NOT NULL,
+                    due_day INTEGER DEFAULT 1
                 )
             ''')
+            
+            # Migration check for 'due_day' in fixed_costs
+            cursor.execute("PRAGMA table_info(fixed_costs)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'due_day' not in columns:
+                cursor.execute("ALTER TABLE fixed_costs ADD COLUMN due_day INTEGER DEFAULT 1")
 
             # 3. Loans
             cursor.execute('''
@@ -267,10 +274,10 @@ class Database:
             cursor.execute('DELETE FROM investments WHERE id = ?', (inv_id,))
             conn.commit()
 
-    def add_fixed_cost(self, name, amount, category):
+    def add_fixed_cost(self, name, amount, category, due_day=1):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO fixed_costs (name, amount, category) VALUES (?, ?, ?)', (name, amount, category))
+            cursor.execute('INSERT INTO fixed_costs (name, amount, category, due_day) VALUES (?, ?, ?, ?)', (name, amount, category, due_day))
             conn.commit()
 
     def get_fixed_costs(self):

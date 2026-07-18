@@ -23,9 +23,21 @@ class VistaInversionesMixin:
         fl.addWidget(QLabel("Categoría:"), 1, 2)
         self._inv_cat = input_field(is_combo=True, items=CAT_INV); fl.addWidget(self._inv_cat, 1, 3)
 
-        btn_add = btn_primary("➕  Registrar Inversión")
+        fl.addWidget(QLabel("Cuotas:"), 2, 0)
+        self._inv_cuotas = QSpinBox(); self._inv_cuotas.setRange(1, 120); self._inv_cuotas.setValue(1)
+        self._inv_cuotas.setStyleSheet(f"background: {PAL['surface']}; border: 1px solid {PAL['border']}; border-radius: 8px; padding: 9px; color: {PAL['text']};")
+        fl.addWidget(self._inv_cuotas, 2, 1)
+
+        fl.addWidget(QLabel("Valor Cuota $:"), 2, 2)
+        self._inv_valor_cuota = input_field("0.00"); fl.addWidget(self._inv_valor_cuota, 2, 3)
+
+        btn_add = btn_primary("➕   Registrar Inversión")
         btn_add.clicked.connect(self._add_inversion)
-        fl.addWidget(btn_add, 2, 0, 1, 2)
+        fl.addWidget(btn_add, 3, 0, 1, 4)
+        
+        self._inv_monto.textChanged.connect(self._calc_inversion_from_monto)
+        self._inv_cuotas.valueChanged.connect(self._calc_inversion_from_monto)
+        self._inv_valor_cuota.textChanged.connect(self._calc_inversion_from_cuota)
         for lbl_w in form_frame.findChildren(QLabel):
             lbl_w.setStyleSheet(f"font-size: 12px; font-weight: 700; color: {PAL['text2']};"
                                  " background: transparent; border: none;")
@@ -69,6 +81,26 @@ class VistaInversionesMixin:
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_investment(iid)
             self._load_inversiones()
+
+    def _calc_inversion_from_monto(self):
+        if self._inv_valor_cuota.hasFocus(): return
+        try:
+            monto = float(self._inv_monto.text().replace(",", ".") or "0")
+            cuotas = max(1, self._inv_cuotas.value())
+            self._inv_valor_cuota.blockSignals(True)
+            self._inv_valor_cuota.setText(f"{monto / cuotas:.2f}")
+            self._inv_valor_cuota.blockSignals(False)
+        except: pass
+
+    def _calc_inversion_from_cuota(self):
+        if self._inv_monto.hasFocus(): return
+        try:
+            val = float(self._inv_valor_cuota.text().replace(",", ".") or "0")
+            cuotas = max(1, self._inv_cuotas.value())
+            self._inv_monto.blockSignals(True)
+            self._inv_monto.setText(f"{val * cuotas:.2f}")
+            self._inv_monto.blockSignals(False)
+        except: pass
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 8 — COSTOS FIJOS

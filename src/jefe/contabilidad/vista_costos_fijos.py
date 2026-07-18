@@ -22,19 +22,24 @@ class VistaCostosFijosMixin:
         fl.addWidget(QLabel("Monto $:"), 1, 0)
         self._cf_monto = input_field("0.00"); fl.addWidget(self._cf_monto, 1, 1)
 
-        btn_add = btn_primary("➕  Agregar Costo Fijo")
+        fl.addWidget(QLabel("Día de Pago:"), 1, 2)
+        self._cf_dia = QSpinBox(); self._cf_dia.setRange(1, 31); self._cf_dia.setValue(1)
+        self._cf_dia.setStyleSheet(f"background: {PAL['surface']}; border: 1px solid {PAL['border']}; border-radius: 8px; padding: 9px; color: {PAL['text']};")
+        fl.addWidget(self._cf_dia, 1, 3)
+
+        btn_add = btn_primary("➕   Agregar Costo Fijo")
         btn_add.clicked.connect(self._add_costo_fijo)
-        fl.addWidget(btn_add, 1, 2, 1, 2)
+        fl.addWidget(btn_add, 2, 0, 1, 4)
         for lbl_w in form_frame.findChildren(QLabel):
             lbl_w.setStyleSheet(f"font-size: 12px; font-weight: 700; color: {PAL['text2']};"
                                  " background: transparent; border: none;")
         lay.addWidget(form_frame)
 
-        self._tbl_cf = build_table(["Nombre", "Categoría", "Monto Mensual", "Acción"])
+        self._tbl_cf = build_table(["Nombre", "Categoría", "Día de Pago", "Monto Mensual", "Acción"])
         lay.addWidget(self._tbl_cf)
 
         # Total fijos
-        self._lbl_cf_total = QLabel("Total mensual estimado: $ 0,00")
+        self._lbl_cf_total = QLabel("Total mensual estimado: $ 0.00")
         self._lbl_cf_total.setStyleSheet(
             f"font-size: 14px; font-weight: 900; color: {PAL['danger']}; background: transparent; border: none;")
         lay.addWidget(self._lbl_cf_total)
@@ -50,14 +55,15 @@ class VistaCostosFijosMixin:
                 r = self._tbl_cf.rowCount()
                 self._tbl_cf.insertRow(r)
                 monto = float(row[2] or 0)
+                dia = str(row[4]) if len(row) > 4 and row[4] else "1"
                 total += monto
-                vals = [str(row[1] or ""), str(row[3] or ""), f"$ {monto:,.2f}"]
+                vals = [str(row[1] or ""), str(row[3] or ""), f"Día {dia}", f"$ {monto:,.2f}"]
                 for c, v in enumerate(vals):
                     self._tbl_cf.setItem(r, c, QTableWidgetItem(v))
                 btn = btn_danger("🗑", "")
                 btn.setFixedSize(36, 30)
                 btn.clicked.connect(lambda _, cid=row[0]: self._del_costo_fijo(cid))
-                self._tbl_cf.setCellWidget(r, 3, btn)
+                self._tbl_cf.setCellWidget(r, 4, btn)
             self._lbl_cf_total.setText(f"Total mensual estimado: $ {total:,.2f}")
         except Exception as e:
             logger.error(f"load_costos_fijos: {e}")
@@ -66,7 +72,8 @@ class VistaCostosFijosMixin:
         try:
             monto = float(self._cf_monto.text().replace(",", ".") or "0")
             if monto <= 0: raise ValueError("Monto inválido")
-            self._db.add_fixed_cost(self._cf_nombre.text(), monto, self._cf_cat.currentText())
+            dia = self._cf_dia.value()
+            self._db.add_fixed_cost(self._cf_nombre.text(), monto, self._cf_cat.currentText(), dia)
             self._cf_nombre.clear(); self._cf_monto.clear()
             self._load_costos_fijos()
         except Exception as e:
