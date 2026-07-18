@@ -620,6 +620,20 @@ class Database:
                             ELSE 'Pagado' END as status
                 FROM general_debts
                 WHERE due_date LIKE ? AND status != 'paid'
+                UNION ALL
+                SELECT due_date as date, 'CHEQUE' as type, 'Cheque' as cat, bank || ' - ' || recipient as description, -amount as amount, id, 
+                       CASE WHEN status = 'pending' THEN 'Pendiente' 
+                            ELSE 'Pagado' END as status
+                FROM checks
+                WHERE due_date LIKE ? AND status != 'paid'
+                UNION ALL
+                SELECT i.due_date as date, 'PRÉSTAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id, 
+                       CASE WHEN i.status = 'pending' THEN 'Pendiente' 
+                            WHEN i.status = 'partial' THEN 'Parcial'
+                            ELSE 'Pagado' END as status
+                FROM installments i
+                JOIN loans l ON i.loan_id = l.id
+                WHERE i.due_date LIKE ? AND i.status != 'paid'
                 ORDER BY date DESC
-            ''', (period_str, period_str, period_str))
+            ''', (period_str, period_str, period_str, period_str, period_str))
             return cursor.fetchall()
