@@ -535,6 +535,9 @@ class Database:
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'variable'", (f"{period_str}-%",))
             variable_expenses = cursor.fetchone()[0] or 0.0
             
+            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'tesoreria'", (f"{period_str}-%",))
+            financial_expenses = cursor.fetchone()[0] or 0.0
+            
             # Income for the period
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{period_str}-%",))
             total_income = cursor.fetchone()[0] or 0.0
@@ -558,19 +561,23 @@ class Database:
             cursor.execute("SELECT SUM(amount) FROM general_debts WHERE category = 'Proveedor' AND status = 'pending'")
             prov_balance = cursor.fetchone()[0] or 0.0
             
+            cursor.execute("SELECT SUM(amount) FROM investments")
+            inv_balance = cursor.fetchone()[0] or 0.0
+
             return {
                 "total_expenses": total_expenses,
                 "fixed_expenses": fixed_expenses,
                 "variable_expenses": variable_expenses,
+                "financial_expenses": financial_expenses,
                 "total_income": total_income,
-                "balance": total_income - total_expenses,
                 "categories": categories,
                 "balances": {
                     "Préstamos": loan_balance,
                     "Cheques": check_balance,
                     "Tarjetas": card_balance,
                     "Proveedores": prov_balance
-                }
+                },
+                "investments_balance": inv_balance
             }
 
     def get_pure_accounting_stats(self, date_obj=None):
