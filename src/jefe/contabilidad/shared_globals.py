@@ -139,6 +139,15 @@ def build_table(headers):
     t.setAlternatingRowColors(True)
     t.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
     t.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+    
+    t.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    t.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+    t.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+    
+    t.model().rowsInserted.connect(lambda: t.updateGeometry())
+    t.model().rowsRemoved.connect(lambda: t.updateGeometry())
+    t.model().layoutChanged.connect(lambda: t.updateGeometry())
+    
     return t
 
 def input_field(placeholder="", is_combo=False, items=None):
