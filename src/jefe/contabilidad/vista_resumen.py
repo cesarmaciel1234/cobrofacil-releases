@@ -209,9 +209,12 @@ class VistaResumenMixin:
                 item = self._kpi_layout.takeAt(i)
                 if item.widget(): item.widget().deleteLater()
 
+            drain = self._db.get_daily_drain()
+            d_tot = drain.get("total", 0.0)
+            
             kpis = [
                 ("INGRESOS MES",    f"${ing:,.0f}",   PAL["success"], "Ventas y Facturación"),
-                ("OPEX (GASTOS)",   f"${total_gas:,.0f}", PAL["warning"], "Gastos Operativos"),
+                ("SANGRADO DIARIO", f"${d_tot:,.0f}", PAL["danger"], "Provisión Mínima Diaria"),
                 ("GANANCIA NETA",   f"${ganancia_neta:,.0f}", PAL["primary"] if ganancia_neta >= 0 else PAL["danger"], "Bolsillo"),
                 ("FLUJO NETO",      f"${flujo_neto:,.0f}", PAL["success"] if flujo_neto >= 0 else PAL["danger"], "Caja Real"),
             ]
