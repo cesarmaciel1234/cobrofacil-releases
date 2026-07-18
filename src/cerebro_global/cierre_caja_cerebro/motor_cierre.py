@@ -79,3 +79,34 @@ class MotorCierre:
                 "fondo": 0.0, "v_efectivo": 0.0, "v_tarjeta": 0.0, "v_trans": 0.0,
                 "v_totales": 0.0, "v_caja_total": 0.0, "ganancia_estimada": 0.0
             }
+
+    @staticmethod
+    def cerrar_caja(username, caja_id, fisico, dif, esperado, t_total, modo):
+        try:
+            from datetime import datetime
+            fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            obs = f"Cierre {modo}. Esperado: {esperado:,.2f}. Dif: {dif:,.2f}. Total ventas: {t_total:,.2f}"
+            tipo_cierre = "CIERRE_TURNO" if modo == "cajero" else "CIERRE_Z"
+            
+            db_manager.execute_non_query(
+                "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (fecha, tipo_cierre, fisico, username, obs, caja_id)
+            )
+            
+            hoy = datetime.now().strftime("%Y-%m-%d")
+            
+            if modo == "dia":
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND date(fecha) = ?",
+                    (hoy,)
+                )
+            elif modo == "cajero":
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND date(fecha) = ?",
+                    (username, hoy)
+                )
+
+            return True
+        except Exception as e:
+            print(f"Error cerrando caja: {e}")
+            raise e
