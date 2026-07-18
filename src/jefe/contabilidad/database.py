@@ -525,8 +525,8 @@ class Database:
             
             period_str = f"{year}-{month:02d}"
             
-            # Expenses for the period
-            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ?", (f"{period_str}-%",))
+            # Expenses for the period (excluding debt payments to keep P&L accurate)
+            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type != 'tesoreria'", (f"{period_str}-%",))
             total_expenses = cursor.fetchone()[0] or 0.0
             
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'fijo'", (f"{period_str}-%",))
@@ -539,10 +539,10 @@ class Database:
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{period_str}-%",))
             total_income = cursor.fetchone()[0] or 0.0
             
-            # Category Breakdown
+            # Category Breakdown (OPEX only)
             cursor.execute('''
                 SELECT category, SUM(amount) FROM expenses 
-                WHERE date LIKE ? 
+                WHERE date LIKE ? AND type != 'tesoreria'
                 GROUP BY category 
                 ORDER BY SUM(amount) DESC
             ''', (f"{period_str}-%",))

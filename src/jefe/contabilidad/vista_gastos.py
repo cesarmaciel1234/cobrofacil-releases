@@ -40,7 +40,7 @@ class VistaGastosMixin:
         try:
             all_exp = self._db.get_expenses()
             period  = f"{self._año}-{self._mes:02d}"
-            rows    = [r for r in (all_exp or []) if str(r[1] or "").startswith(period)]
+            rows    = [r for r in (all_exp or []) if str(r[1] or "").startswith(period) and str(r[5] or "") != 'tesoreria']
             self._tbl_gas.setRowCount(0)
             for row in rows:
                 r = self._tbl_gas.rowCount()
