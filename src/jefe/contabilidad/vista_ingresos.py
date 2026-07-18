@@ -65,10 +65,10 @@ class VistaIngresosMixin:
             self._ing_monto.clear(); self._ing_desc.clear()
             self._load_ingresos()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _del_ingreso(self, rid):
-        if QMessageBox.question(self, "Eliminar", "¿Eliminar este ingreso?",
+        if QMessageBox.question(self.window(), "Eliminar", "¿Eliminar este ingreso?",
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_income(rid)
             self._load_ingresos()

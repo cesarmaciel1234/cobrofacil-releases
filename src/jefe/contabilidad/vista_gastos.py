@@ -65,10 +65,10 @@ class VistaGastosMixin:
             self._gas_monto.clear(); self._gas_desc.clear()
             self._load_gastos()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _del_gasto(self, rid):
-        if QMessageBox.question(self, "Eliminar", "¿Eliminar este gasto?",
+        if QMessageBox.question(self.window(), "Eliminar", "¿Eliminar este gasto?",
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_expense(rid)
             self._load_gastos()

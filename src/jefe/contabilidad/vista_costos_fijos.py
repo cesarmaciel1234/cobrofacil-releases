@@ -70,10 +70,10 @@ class VistaCostosFijosMixin:
             self._cf_nombre.clear(); self._cf_monto.clear()
             self._load_costos_fijos()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _del_costo_fijo(self, cid):
-        if QMessageBox.question(self, "Eliminar", "¿Eliminar este costo fijo?",
+        if QMessageBox.question(self.window(), "Eliminar", "¿Eliminar este costo fijo?",
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_fixed_cost(cid)
             self._load_costos_fijos()

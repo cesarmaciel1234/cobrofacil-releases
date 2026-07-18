@@ -62,10 +62,10 @@ class VistaInversionesMixin:
             self._inv_monto.clear(); self._inv_desc.clear()
             self._load_inversiones()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _del_inversion(self, iid):
-        if QMessageBox.question(self, "Eliminar", "¿Eliminar esta inversión?",
+        if QMessageBox.question(self.window(), "Eliminar", "¿Eliminar esta inversión?",
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_investment(iid)
             self._load_inversiones()
