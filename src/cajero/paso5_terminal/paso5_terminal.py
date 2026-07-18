@@ -2178,7 +2178,7 @@ class Paso5Terminal(QWidget):
         dlg = QDialog(self)
         dlg.setWindowTitle("Cierre de Caja Global")
         dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        dlg.setFixedSize(1000, 700)
+        dlg.setFixedSize(1200, 900)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(0, 0, 0, 0)
         
