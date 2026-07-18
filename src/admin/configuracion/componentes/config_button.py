@@ -51,7 +51,13 @@ class ConfigButton(QFrame):
         # Icono (Emoji)
         self.lbl_icon = QLabel(icon_emoji)
         self.lbl_icon.setAlignment(Qt.AlignCenter)
-        self.lbl_icon.setStyleSheet("font-size: 32px; background: transparent; border: none;")
+        
+        # Optimizacion para emojis en Windows 10 bajo recurso
+        font = QFont("Segoe UI Emoji", 26) # Equivalente aprox a 32px
+        font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.PreferQuality)
+        self.lbl_icon.setFont(font)
+        
+        self.lbl_icon.setStyleSheet("background: transparent; border: none;")
         layout.addWidget(self.lbl_icon)
         
         # Texto
