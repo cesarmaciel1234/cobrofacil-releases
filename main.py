@@ -317,8 +317,6 @@ def start_update_server():
         try:
             from src.updater.update_server import iniciar_servidor, detener_servidor
             from src.base_de_datos.database import db_manager
-    from src.cerebro_global.sincronizador_carteleria import sincronizador_carteleria
-    sincronizador_carteleria.start()
         except Exception as e:
             logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
             return
@@ -353,8 +351,6 @@ def start_update_discovery_server():
         import logging
         try:
             from src.base_de_datos.database import db_manager
-    from src.cerebro_global.sincronizador_carteleria import sincronizador_carteleria
-    sincronizador_carteleria.start()
         except ImportError:
             return
 
