@@ -112,6 +112,23 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 except Exception as e:
                     self._send_response(500, {"error": str(e)})
     
+        elif self.path == '/api/carteleria/grilla':
+            try:
+                import json
+                query = 'SELECT departamento, nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY departamento, nombre_producto'
+                rows = db_manager.execute_query(query)
+                
+                # Format to dictionary: {'ALMACEN': [('nombre', 100, 50, 'regla')], ...}
+                agrupados = {}
+                for r in rows:
+                    cat = str(r[0])
+                    if cat not in agrupados: agrupados[cat] = []
+                    agrupados[cat].append((str(r[1]), float(r[2]), float(r[3]), str(r[4] or '')))
+                
+                self._send_response(200, agrupados)
+            except Exception as e:
+                self._send_response(500, {'error': str(e)})
+
         elif self.path == '/api/carteleria/data':
             try:
                 import json

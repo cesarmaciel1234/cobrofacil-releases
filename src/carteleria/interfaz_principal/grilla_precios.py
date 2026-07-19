@@ -7,6 +7,14 @@ class GrillaPrecios(QFrame):
     Zona 2: Lista AutoScroll (Envuelto en un Frame estilo Apple)
     """
     def __init__(self, parent=None):
+        from src.carteleria.motor_carteleria.motor_grilla import MotorGrilla
+        self.motor = MotorGrilla(self)
+        self.motor.datos_listos.connect(self.set_items)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(30000) # 30 segundos
+        self.motor.start() # Carga inicial
         super().__init__(parent)
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":
@@ -39,6 +47,14 @@ class GrillaPrecios(QFrame):
 class _AutoScrollList(QScrollArea):
     """Componente interno que maneja el scroll y renderizado de ítems"""
     def __init__(self, parent=None):
+        from src.carteleria.motor_carteleria.motor_grilla import MotorGrilla
+        self.motor = MotorGrilla(self)
+        self.motor.datos_listos.connect(self.set_items)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(30000) # 30 segundos
+        self.motor.start() # Carga inicial
         super().__init__(parent)
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.NoFrame)

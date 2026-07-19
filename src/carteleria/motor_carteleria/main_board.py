@@ -293,8 +293,8 @@ class CarteleriaMain(QWidget):
             current_hash = hashlib.md5(stable_str.encode()).hexdigest()
             if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
                 self.last_precios_hash = current_hash
-                if rows_precios:
-                    self.zona2_precios.set_items(self.promo_manager.agrupar(rows_precios))
+                # La grilla de precios ahora es 100% autonoma y lee de /api/carteleria/grilla
+                pass
                     
             # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
             rows_top10 = data.get("top10", {})
