@@ -112,7 +112,7 @@ class CarruselDestacados(QFrame):
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
 
-        self.lbl_content.setAlignment(Qt.AlignCenter)
+        self.lbl_content.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         if is_temu:
             t1 = f"font-family: 'Impact', sans-serif; font-size: 60px; font-weight: 900; color: #DC2626; background-color: #FFFF00;"
             titulo = titulo.upper()
@@ -142,7 +142,7 @@ class CarruselDestacados(QFrame):
                 bg_color = random.choice(["#DC2626", "#00A859", "#FF9900", "#0055FF"]) # Mezcla fríos y calientes
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
-                html += f"<div style='margin-bottom: 20px; margin-left: 2%;'><span style='font-family: Impact; font-size: 30px; color: #0055FF;'>#{i+1}</span> <span style='font-family: Impact; font-size: 30px; color: #000000;'>{nombre}</span> <span style='font-family: Arial; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: {bg_color}; padding: 3px 6px; border-radius: 5px;'>&nbsp;{desc_text}&nbsp;</span></div>"
+                html += f"<div style='margin-bottom: 20px; margin-left: 10%;'><span style='font-family: Impact; font-size: 35px; color: #0055FF;'>#{i+1}</span> <span style='font-family: Impact; font-size: 35px; color: #000000;'>{nombre}</span> <span style='font-family: Arial; font-size: 16px; font-weight: bold; color: #FFFFFF; background-color: {bg_color}; padding: 3px 6px; border-radius: 5px;'>&nbsp;{desc_text}&nbsp;</span></div>"
             else:
                 html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span></div>"
         
