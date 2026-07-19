@@ -23,7 +23,8 @@ class MotorVentas:
                 # "mes"
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            with db_manager.get_connection() as conn:
+            conn = db_manager.get_connection()
+            try:
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND estado = 'COMPLETADA'",
@@ -31,6 +32,9 @@ class MotorVentas:
                 )
                 res = cursor.fetchone()
                 return res[0] if res else 0
+            finally:
+                if hasattr(conn, 'close'):
+                    conn.close()
         except Exception as e:
             print(f"Error en get_personas_viendo: {e}")
             return 0
@@ -47,7 +51,8 @@ class MotorVentas:
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            with db_manager.get_connection() as conn:
+            conn = db_manager.get_connection()
+            try:
                 cursor = conn.cursor()
                 # Join with ventas to filter by date and state
                 cursor.execute("""
@@ -59,6 +64,9 @@ class MotorVentas:
                 """, (start_date, nombre_producto))
                 res = cursor.fetchone()
                 return float(res[0]) if res and res[0] else 0.0
+            finally:
+                if hasattr(conn, 'close'):
+                    conn.close()
         except Exception as e:
             print(f"Error en get_unidades_vendidas: {e}")
             return 0.0
@@ -76,7 +84,8 @@ class MotorVentas:
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            with db_manager.get_connection() as conn:
+            conn = db_manager.get_connection()
+            try:
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
@@ -97,6 +106,9 @@ class MotorVentas:
                         "recaudacion": float(row[2] or 0)
                     })
                 return results
+            finally:
+                if hasattr(conn, 'close'):
+                    conn.close()
         except Exception as e:
             print(f"Error en get_top_ventas: {e}")
             return []
