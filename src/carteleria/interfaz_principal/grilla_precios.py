@@ -19,7 +19,9 @@ class GrillaPrecios(QFrame):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
         
+        from PyQt6.QtWidgets import QSizePolicy
         self.scroll_area = _AutoScrollList()
+        self.scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.layout.addWidget(self.scroll_area)
         
     def set_items(self, items_by_category):
@@ -57,9 +59,9 @@ class _AutoScrollList(QScrollArea):
                 lbl_cat = QLabel(categoria.upper())
                 from src.carteleria.theme import get_active_theme_name
                 if get_active_theme_name() == "temu":
-                    lbl_cat.setStyleSheet(f"font-family: Impact; font-size: 30px; color: #DC2626; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 4px solid #DC2626;")
+                    lbl_cat.setStyleSheet(f"font-family: Impact; font-size: 42px; color: #DC2626; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 4px solid #DC2626;")
                 else:
-                    lbl_cat.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 24px; font-weight: 800; color: {C_THEME['blue']}; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 2px solid rgba(0, 122, 255, 0.2);")
+                    lbl_cat.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 36px; font-weight: 800; color: {C_THEME['blue']}; background: transparent; padding-top: 25px; padding-bottom: 5px; border-bottom: 2px solid rgba(0, 122, 255, 0.2);")
                 lbl_cat.setAlignment(Qt.AlignLeft)
                 self.inner_layout.addWidget(lbl_cat)
                 
@@ -79,13 +81,13 @@ class _AutoScrollList(QScrollArea):
                     name_lay.setSpacing(2)
                     
                     lbl_n = QLabel(nombre)
-                    lbl_n.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 20px; font-weight: 600; color: {C_THEME['text']}; background: transparent;")
+                    lbl_n.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 28px; font-weight: 600; color: {C_THEME['text']}; background: transparent;")
                     lbl_n.setWordWrap(True)
                     name_lay.addWidget(lbl_n)
                     
                     if regla:
                         lbl_r = QLabel(regla)
-                        lbl_r.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 14px; font-weight: 600; color: {C_THEME['accent']}; background: transparent;")
+                        lbl_r.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 20px; font-weight: 600; color: {C_THEME['accent']}; background: transparent;")
                         lbl_r.setWordWrap(True)
                         name_lay.addWidget(lbl_r)
                         
@@ -94,14 +96,14 @@ class _AutoScrollList(QScrollArea):
                     
                     if precio_oferta > 0:
                         lbl_old = QLabel(f"<s>${precio:,.2f}</s>")
-                        lbl_old.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 16px; font-weight: 600; color: rgba(0,0,0,0.4); background: transparent;")
+                        lbl_old.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 22px; font-weight: 600; color: rgba(0,0,0,0.4); background: transparent;")
                         lbl_old.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                         
                         lbl_p = QLabel(f"${precio_oferta:,.2f}")
                         if get_active_theme_name() == "temu":
-                            lbl_p.setStyleSheet(f"font-family: 'Impact', 'Segoe UI Black', sans-serif; font-size: 26px; font-weight: 900; color: #FFFF00; background: #DC2626; padding: 2px 8px; border-radius: 6px;")
+                            lbl_p.setStyleSheet(f"font-family: 'Impact', 'Segoe UI Black', sans-serif; font-size: 36px; font-weight: 900; color: #FFFF00; background: #DC2626; padding: 2px 8px; border-radius: 6px;")
                         else:
-                            lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 22px; font-weight: 800; color: {C_THEME['accent']}; background: transparent;")
+                            lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 32px; font-weight: 800; color: {C_THEME['accent']}; background: transparent;")
                         lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                         
                         precios_lay = QVBoxLayout()
@@ -112,7 +114,7 @@ class _AutoScrollList(QScrollArea):
                         row_lay.addLayout(precios_lay)
                     else:
                         lbl_p = QLabel(f"${precio:,.2f}")
-                        lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 22px; font-weight: 800; color: {C_THEME['accent']}; background: transparent;")
+                        lbl_p.setStyleSheet(f"font-family: -apple-system, 'Segoe UI'; font-size: 32px; font-weight: 800; color: {C_THEME['accent']}; background: transparent;")
                         lbl_p.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                         row_lay.addWidget(lbl_p)
                     self.inner_layout.addWidget(row)
