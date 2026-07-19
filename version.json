@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 11:09:37",
+  "build_date": "2026-07-19 11:30:37",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -54,9 +54,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "cb9a10a2024bfa5bd2f05b84a6c33d2e",
+      "checksum": "9cb3a888f209f8bd79757d037bd33898",
       "channel": "stable",
-      "size": 18329
+      "size": 18453
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -1146,9 +1146,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "245fab5c90e5da36ccda5f01033c816f",
+      "checksum": "ad11f585aa0f425167e5e2473cb5f73b",
       "channel": "stable",
-      "size": 63239
+      "size": 63746
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -1686,15 +1686,15 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "0e0c80d3c9ea55db094a665d079830ec",
+      "checksum": "e7367b52945f3d3bdf908f668dd96354",
       "channel": "stable",
-      "size": 9967
+      "size": 10573
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "8b99daa37c90f4ff148c7d7376a99c9f",
+      "checksum": "75d7a9ac322a5a892c7f7fef0493b5d2",
       "channel": "stable",
-      "size": 8466
+      "size": 9274
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
@@ -1704,15 +1704,15 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "8764728cdfac0296938a01559b6c0f85",
+      "checksum": "cd34078a196f4ed965bec2992b99c05c",
       "channel": "stable",
-      "size": 6531
+      "size": 7064
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "d4cd3b094d6d97dbba7c46110347a473",
+      "checksum": "c069fcbd7d945b819c61a8d2c9457cbd",
       "channel": "stable",
-      "size": 10964
+      "size": 11422
     },
     "src/carteleria/interfaz_principal/__init__.py": {
       "version": "1.0.0",
@@ -1830,9 +1830,21 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "0b05b227430ebf6f1b82fdd51df7801b",
+      "checksum": "721e18c9f1690a7025aae16fecfce73d",
       "channel": "stable",
-      "size": 17228
+      "size": 17219
+    },
+    "src/carteleria/motor_carteleria/motor_grilla.py": {
+      "version": "1.0.0",
+      "checksum": "bbd110ba5b21a6f1effda4d68d40e798",
+      "channel": "stable",
+      "size": 1998
+    },
+    "src/carteleria/motor_carteleria/motor_paneles.py": {
+      "version": "1.0.0",
+      "checksum": "56feaf2c3a7cc5a02ec18453e0852852",
+      "channel": "stable",
+      "size": 4762
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1908,9 +1920,9 @@
     },
     "src/central_red_global/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "5fb9353b98a73c078ca39eb0e3a01f0b",
+      "checksum": "640bce6f8a4828159a0d10720b515b4a",
       "channel": "stable",
-      "size": 14593
+      "size": 15462
     },
     "src/central_red_global/motor_red.py": {
       "version": "1.0.0",
@@ -1929,6 +1941,12 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "src/cerebro_global/sincronizador_carteleria.py": {
+      "version": "1.0.0",
+      "checksum": "a0571868e554dc70eb7e4fc22a8f7838",
+      "channel": "stable",
+      "size": 4251
     },
     "src/cerebro_global/__init__.py": {
       "version": "1.0.0",

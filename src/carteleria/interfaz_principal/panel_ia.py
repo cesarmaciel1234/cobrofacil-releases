@@ -8,6 +8,16 @@ class PanelIA(QFrame):
     Zona 4: Recomendación Clásica / Espacio IA
     """
     def __init__(self, parent=None):
+        from PyQt6.QtCore import QTimer
+        from src.carteleria.motor_carteleria.motor_paneles import MotorIAPanel
+        self.motor = MotorIAPanel(self)
+        self.motor.ia_lista.connect(self.actualizar_ia)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(16000) # 16 segundos
+        
+        self.motor.start() # Carga inicial
         super().__init__(parent)
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":

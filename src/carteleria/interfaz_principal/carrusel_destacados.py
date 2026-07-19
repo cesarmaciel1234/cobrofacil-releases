@@ -11,6 +11,9 @@ class CarruselDestacados(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         from src.carteleria.theme import get_active_theme_name
+        from PyQt6.QtCore import QTimer
+        from src.carteleria.motor_carteleria.motor_paneles import MotorCarrusel
+        
         if get_active_theme_name() == "temu":
             # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
@@ -18,6 +21,15 @@ class CarruselDestacados(QFrame):
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
+        self.motor = MotorCarrusel(self)
+        self.motor.datos_listos.connect(self.actualizar_top10_y_rotar)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(16000) # 16 segundos
+        
+        self.motor.start() # Carga inicial
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(15, 15, 15, 15)
         
@@ -110,6 +122,9 @@ class CarruselDestacados(QFrame):
             else:
                 html = f"<div style='padding: 20px;'><span style='{t1}'>PRODUCTO DESTACADO</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
+
+    def actualizar_top10_y_rotar(self, datos_top10, titulo=""):
+        self.actualizar_top10(datos_top10, titulo)
 
     def actualizar_top10(self, productos, titulo="Top 10 Semanal"):
         self.footer_widget.show()
