@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 10:23:36",
+  "build_date": "2026-07-19 10:56:54",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1686,13 +1686,13 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "5f03c3876943640bd7679d4a468bd442",
+      "checksum": "0e0c80d3c9ea55db094a665d079830ec",
       "channel": "stable",
-      "size": 9558
+      "size": 9967
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "99febc710ce77b15b04b889ee60fdd4a",
+      "checksum": "6f734c127b8f93dd2190ba8b6201854c",
       "channel": "stable",
       "size": 7614
     },
@@ -1704,9 +1704,9 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "04c6a01986db8a9c528a12e45dcc9304",
+      "checksum": "8764728cdfac0296938a01559b6c0f85",
       "channel": "stable",
-      "size": 6417
+      "size": 6531
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
@@ -1842,9 +1842,9 @@
     },
     "src/carteleria/motor_carteleria/promo_manager.py": {
       "version": "1.0.0",
-      "checksum": "f7a8946a8d9b4f60e96f60fc5ea7a5a6",
+      "checksum": "3327377443444325bb7e168ed110aa5d",
       "channel": "stable",
-      "size": 10560
+      "size": 10979
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
       "version": "1.0.0",
@@ -2001,6 +2001,12 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
+      "version": "1.0.0",
+      "checksum": "9cc182c3f3d24180a4025884fdf8be1f",
+      "channel": "stable",
+      "size": 4089
     },
     "src/core/sincronizador.py": {
       "version": "1.0.0",

@@ -26,6 +26,9 @@ class LayoutManager:
         total_width = self.main.width()
         is_multimonitor = total_width > 2500
         
+        if hasattr(self.main.zona2_precios, 'set_layout_mode'):
+            self.main.zona2_precios.set_layout_mode(self.main.layout_mode)
+            
         if self.main.layout_mode == 1:
             self.main.grid.addWidget(self.main.zona2_precios, 0, 0)
             self.main.zona2_precios.show()
