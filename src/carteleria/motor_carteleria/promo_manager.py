@@ -128,20 +128,27 @@ class PromoManager:
         modo_str = modos[self.top_current_mode]
         titulo_str = titulos[self.top_current_mode]
         
-        datos_crudos = self.main.datos_destacados
+        # --- NUEVO MOTOR CENTRAL DE VENTAS ---
+        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+        top_real = motor_ventas.get_top_ventas(limit=5, periodo=modo_str)
         
-        if isinstance(datos_crudos, dict):
-            # Es el nuevo formato
-            top_list = datos_crudos.get(modo_str, [])
-            if not top_list: 
-                # Fallback al viejo si por alguna razón falla
-                top_list = datos_crudos.get("hoy", [])
-        else:
-            # Compatibilidad si no se actualizó el backend
-            top_list = datos_crudos
-            titulo_str = "LO MÁS VENDIDO"
+        # Mapear formato del motor al esperado por cartelería
+        prod_lista = []
+        for p in top_real:
+            nombre = p['nombre']
+            precio = 0.0
+            precio_of = 0.0
             
-        prod_lista = parse_top(top_list)
+            # Buscar el precio en el estado de la cartelería (grilla)
+            if hasattr(self.main, 'datos_grilla_completa'):
+                for cat, prods in self.main.datos_grilla_completa.items():
+                    for pp in prods:
+                        if pp[0].lower() == nombre.lower():
+                            precio = pp[1]
+                            precio_of = pp[2]
+                            break
+            
+            prod_lista.append((nombre, precio, precio_of, p['cantidad'], "Unidades"))
         
         if prod_lista:
             self.main.zona1_carrusel.actualizar_top10(prod_lista, titulo=titulo_str)

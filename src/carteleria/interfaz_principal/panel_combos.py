@@ -38,6 +38,9 @@ class PanelCombos(QFrame):
         if is_temu:
             nombre = nombre.upper()
 
+        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+        vistas = motor_ventas.get_personas_viendo("mes")
+        
         if precio_oferta > 0:
             if is_temu:
                 if stock > 0 and stock < 50:
@@ -45,16 +48,14 @@ class PanelCombos(QFrame):
                 else:
                     stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
                     
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+                html = f"<div align='center' style='padding: 5px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.0f}</span></div>"
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+                html = f"<div style='padding: 10px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                import random
-                vistas = random.randint(400, 900)
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #DC2626;'>🔥 OFERTA DESTACADA 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>({vistas} personas viendo esto)</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+                html = f"<div align='center' style='padding: 5px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>PRODUCTO DESTACADO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({vistas} personas compraron ya)</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.0f}</span></div>"
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+                html = f"<div style='padding: 10px;'><span style='{t1}'>Producto Destacado</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
 
     def actualizar_combo(self, base, relacionados):

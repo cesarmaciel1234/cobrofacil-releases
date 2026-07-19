@@ -1,9 +1,15 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-18 10:01:24",
+  "build_date": "2026-07-19 10:23:36",
   "server_host": "cesar",
   "modules": {
+    "add_drain.py": {
+      "version": "1.0.0",
+      "checksum": "47f6eee776efd13c0120e830f2cc5b6f",
+      "channel": "stable",
+      "size": 3780
+    },
     "analyze_styles.py": {
       "version": "1.0.0",
       "checksum": "2789df746d37011d26b7748198ec72de",
@@ -75,6 +81,18 @@
       "checksum": "84a79c9ed06a0f1fd264c56911bb6803",
       "channel": "stable",
       "size": 536
+    },
+    "update_kpis.py": {
+      "version": "1.0.0",
+      "checksum": "9bdf870125d502003d484d98b0886cc3",
+      "channel": "stable",
+      "size": 2145
+    },
+    "update_vista.py": {
+      "version": "1.0.0",
+      "checksum": "27e846e75feb59c39271607579e037b8",
+      "channel": "stable",
+      "size": 13396
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -726,9 +744,9 @@
     },
     "src/admin/configuracion/componentes/config_button.py": {
       "version": "1.0.0",
-      "checksum": "c27ba543d9e46f85aad0f796bc630d00",
+      "checksum": "5e4d8dbdd368a912ebcd6988c0170b5b",
       "channel": "stable",
-      "size": 5428
+      "size": 5706
     },
     "src/admin/configuracion/componentes/config_category.py": {
       "version": "1.0.0",
@@ -1308,9 +1326,9 @@
     },
     "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/chatbot/chat_bot.py": {
       "version": "1.0.0",
-      "checksum": "5182e3644cfdee9f8f90fcf16258b5ff",
+      "checksum": "dcd048c58c09a65b0acfa42b0355c1b8",
       "channel": "stable",
-      "size": 30535
+      "size": 30635
     },
     "src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/chatbot/chat_bot_animado.py": {
       "version": "1.0.0",
@@ -1668,15 +1686,15 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "7931d50474b9076f55158a0a4bda3cf7",
+      "checksum": "5f03c3876943640bd7679d4a468bd442",
       "channel": "stable",
-      "size": 9513
+      "size": 9558
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "3957a01749674f04ca2348235a44a2b0",
+      "checksum": "99febc710ce77b15b04b889ee60fdd4a",
       "channel": "stable",
-      "size": 7165
+      "size": 7614
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
@@ -1950,9 +1968,9 @@
     },
     "src/cerebro_global/cierre_caja_cerebro/motor_cierre.py": {
       "version": "1.0.0",
-      "checksum": "bc7a059db8c5903f6e5505103c78a7d4",
+      "checksum": "cc612b403a8354a60aa3c1bf5417db78",
       "channel": "stable",
-      "size": 3301
+      "size": 4661
     },
     "src/cerebro_global/cierre_caja_cerebro/__init__.py": {
       "version": "1.0.0",
@@ -2148,9 +2166,9 @@
     },
     "src/jefe/contabilidad/database.py": {
       "version": "1.0.0",
-      "checksum": "6ec457cd8e05d3b1fe46ed562bc17ff5",
+      "checksum": "ed61521f971b585dbddffac3b294e8fe",
       "channel": "stable",
-      "size": 29063
+      "size": 34344
     },
     "src/jefe/contabilidad/jefe_contabilidad.py": {
       "version": "1.0.0",
@@ -2166,9 +2184,9 @@
     },
     "src/jefe/contabilidad/shared_globals.py": {
       "version": "1.0.0",
-      "checksum": "a05e29099404a331e8e5129166c413ba",
+      "checksum": "4fcfc6aa73224bedbd3f12c45ee14694",
       "channel": "stable",
-      "size": 7517
+      "size": 7961
     },
     "src/jefe/contabilidad/styles.py": {
       "version": "1.0.0",
@@ -2184,45 +2202,45 @@
     },
     "src/jefe/contabilidad/vista_cheques.py": {
       "version": "1.0.0",
-      "checksum": "36c22a8b8a76090ecf4e34faf87b3c37",
+      "checksum": "9d5f08821059ae512aa19a1a33da2264",
       "channel": "stable",
-      "size": 4841
+      "size": 4868
     },
     "src/jefe/contabilidad/vista_costos_fijos.py": {
       "version": "1.0.0",
-      "checksum": "fcadab32cab4fbd51b79d5e99a6a207a",
+      "checksum": "4a3e1a37c12313cc8b03d06e65eedaf7",
       "channel": "stable",
-      "size": 4190
+      "size": 4705
     },
     "src/jefe/contabilidad/vista_gastos.py": {
       "version": "1.0.0",
-      "checksum": "1d495b798729bc7a3fffe09865d48bad",
+      "checksum": "e429d4e522094aafc7a1b833fe107cca",
       "channel": "stable",
-      "size": 4089
+      "size": 4142
     },
     "src/jefe/contabilidad/vista_historial.py": {
       "version": "1.0.0",
-      "checksum": "b62c5d73850ec9db8b94de93fbb77dfe",
+      "checksum": "d0b9dbdab191114851fa8515ef03d208",
       "channel": "stable",
-      "size": 3582
+      "size": 3600
     },
     "src/jefe/contabilidad/vista_ingresos.py": {
       "version": "1.0.0",
-      "checksum": "7c3fcee73bf71d1fbb179c84c182f302",
+      "checksum": "a66304f14d016abda82368c387926874",
       "channel": "stable",
-      "size": 3948
+      "size": 3966
     },
     "src/jefe/contabilidad/vista_inversiones.py": {
       "version": "1.0.0",
-      "checksum": "3952205b90b2833d223a7273f1ae248a",
+      "checksum": "1422b47689dd11ef1ba6c80fbad162aa",
       "channel": "stable",
-      "size": 3940
+      "size": 5589
     },
     "src/jefe/contabilidad/vista_prestamos.py": {
       "version": "1.0.0",
-      "checksum": "178e4678cff0db4d54d17f1239d80e75",
+      "checksum": "e2db680db78351901f657e41b901db66",
       "channel": "stable",
-      "size": 5650
+      "size": 5677
     },
     "src/jefe/contabilidad/vista_proveedores.py": {
       "version": "1.0.0",
@@ -2232,21 +2250,21 @@
     },
     "src/jefe/contabilidad/vista_reportes.py": {
       "version": "1.0.0",
-      "checksum": "ecace6bafa24708f798020ecc6422ec7",
+      "checksum": "93cfb827bd13a11671214f7617fdf508",
       "channel": "stable",
-      "size": 5052
+      "size": 5124
     },
     "src/jefe/contabilidad/vista_resumen.py": {
       "version": "1.0.0",
-      "checksum": "750ce15bbf92045ae4b19a7983d80bea",
+      "checksum": "9a62f9a5c5aa778d4f50b98ece4ad67d",
       "channel": "stable",
-      "size": 12916
+      "size": 13544
     },
     "src/jefe/contabilidad/vista_tarjetas.py": {
       "version": "1.0.0",
-      "checksum": "8c38100d1081af6fce0fcd52cf288e55",
+      "checksum": "17380ef2fe5ba2f02cddc4324586b3a7",
       "channel": "stable",
-      "size": 4927
+      "size": 4954
     },
     "src/jefe/contabilidad/__init__.py": {
       "version": "1.0.0",
@@ -2280,9 +2298,9 @@
     },
     "src/jefe/promedios/promedio_motor/cerdo.py": {
       "version": "1.0.0",
-      "checksum": "77815f5e8701f49bb891ce055582fc9e",
+      "checksum": "883a434f8305299b5e7ceabf430f4287",
       "channel": "stable",
-      "size": 316
+      "size": 307
     },
     "src/jefe/promedios/promedio_motor/motor_promedios.py": {
       "version": "1.0.0",
@@ -2298,9 +2316,9 @@
     },
     "src/jefe/promedios/promedio_motor/res.py": {
       "version": "1.0.0",
-      "checksum": "e1c033af0a78302c780db03f8996e1f4",
+      "checksum": "763c404ee11392c3af1cf6ebaddaecfa",
       "channel": "stable",
-      "size": 1045
+      "size": 1314
     },
     "src/jefe/promedios/promedio_motor/__init__.py": {
       "version": "1.0.0",
@@ -2310,9 +2328,9 @@
     },
     "src/jefe/promedios/promedio_ui/vista_promedios.py": {
       "version": "1.0.0",
-      "checksum": "b26e15032247c61a3e9d355cd226e096",
+      "checksum": "2dfbb2752a525c9d47018bb7b5d10566",
       "channel": "stable",
-      "size": 43052
+      "size": 43090
     },
     "src/jefe/promedios/promedio_ui/__init__.py": {
       "version": "1.0.0",
