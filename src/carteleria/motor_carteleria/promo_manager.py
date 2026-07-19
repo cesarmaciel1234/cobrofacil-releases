@@ -26,7 +26,7 @@ class PromoManager:
                         t_un = "Unidades"
                     else:
                         t_un = "Kilos"
-                    regla = f"llevando {cant_of:g} {t_un}"
+                    regla = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{cant_of:g} {t_un}</span>"
             else:
                 cat = str(r[0])
                 nombre = str(r[1])
@@ -43,7 +43,7 @@ class PromoManager:
                         t_un = "Unidades"
                     else:
                         t_un = "Kilos"
-                    regla = f"llevando {cant_of:g} {t_un}"
+                    regla = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{cant_of:g} {t_un}</span>"
 
             if cat not in agrupados: agrupados[cat] = []
             agrupados[cat].append((nombre, precio, precio_oferta, regla))

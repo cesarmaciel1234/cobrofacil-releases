@@ -101,7 +101,7 @@ class _AutoScrollList(QScrollArea):
                     if regla:
                         fs_r = 26 if self.current_mode == 1 else 18
                         lbl_r = QLabel(regla)
-                        lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_r}px; font-weight: 600; color: {C_THEME['accent']}; background: transparent; border: none; }}")
+                        lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_r}px; font-weight: 600; background: transparent; border: none; }}")
                         lbl_r.setWordWrap(True)
                         name_lay.addWidget(lbl_r)
                         
