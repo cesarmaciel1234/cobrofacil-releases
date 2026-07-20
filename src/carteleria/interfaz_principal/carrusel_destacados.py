@@ -104,8 +104,8 @@ class CarruselDestacados(QFrame):
             if is_temu:
                 if unidades_vendidas > 0:
                     stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()} este mes!"
-                elif stock > 0 and stock < 50:
-                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                elif stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
                 else:
                     stock_str = f"¡Oferta Limitada!"
                     

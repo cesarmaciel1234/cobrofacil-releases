@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 22:16:33",
+  "build_date": "2026-07-19 22:21:27",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1836,9 +1836,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "296d9a79a81943982fd8882b58cc5a63",
+      "checksum": "559d75e5a2ad87038c2485ead30d76f3",
       "channel": "stable",
-      "size": 5997
+      "size": 5777
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",

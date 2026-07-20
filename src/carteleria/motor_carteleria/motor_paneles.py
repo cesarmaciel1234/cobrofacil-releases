@@ -45,7 +45,14 @@ class MotorCarrusel(QThread):
                     if regla: unidad = "Kilos" if "Kilos" in regla else "Unidades"
                     else: unidad = "Unidades"
                     
-                    prod_lista.append((nombre, precio, precio_of, p['cantidad'], unidad))
+                    # Fetch real stock
+                    stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                    real_stock = 0.0
+                    if stock_rows:
+                        if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
+                        else: real_stock = float(stock_rows[0][0] or 0)
+                    
+                    prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
             
             self.modo_actual = (self.modo_actual + 1) % 3
             if prod_lista:
@@ -77,11 +84,23 @@ class MotorCombos(QThread):
                 # Emitir Destacada
                 r = rows[0]
                 if isinstance(r, dict):
+                    nombre = str(r.get('nombre_producto', ''))
                     unidad = "Kilos" if "Kilos" in str(r.get('regla_texto') or "") else "Unidades"
-                    self.destacada_lista.emit(str(r.get('nombre_producto', '')), float(r.get('precio_normal') or 0), float(r.get('precio_oferta') or 0), 1.0, unidad)
+                    precio = float(r.get('precio_normal') or 0)
+                    precio_of = float(r.get('precio_oferta') or 0)
                 else:
+                    nombre = str(r[0])
                     unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
-                    self.destacada_lista.emit(str(r[0]), float(r[1]), float(r[2]), 1.0, unidad)
+                    precio = float(r[1])
+                    precio_of = float(r[2])
+                    
+                stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                real_stock = 0.0
+                if stock_rows:
+                    if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
+                    else: real_stock = float(stock_rows[0][0] or 0)
+                    
+                self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad)
             else:
                 # Emitir Combo Simulado
                 if isinstance(rows[0], dict):
@@ -116,11 +135,23 @@ class MotorIAPanel(QThread):
             prod_lista = []
             for r in rows:
                 if isinstance(r, dict):
+                    nombre = str(r.get('nombre_producto', ''))
                     unidad = "Kilos" if "Kilos" in str(r.get('regla_texto') or "") else "Unidades"
-                    prod_lista.append((str(r.get('nombre_producto', '')), float(r.get('precio_normal') or 0), float(r.get('precio_oferta') or 0), 0.0, unidad))
+                    precio = float(r.get('precio_normal') or 0)
+                    precio_of = float(r.get('precio_oferta') or 0)
                 else:
+                    nombre = str(r[0])
                     unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
-                    prod_lista.append((str(r[0]), float(r[1]), float(r[2]), 0.0, unidad))
+                    precio = float(r[1])
+                    precio_of = float(r[2])
+                    
+                stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                real_stock = 0.0
+                if stock_rows:
+                    if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
+                    else: real_stock = float(stock_rows[0][0] or 0)
+                
+                prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
                 
             msg, prod, precio, precio_oferta = IAMotorCore.generar_recomendacion(None, self.clima, prod_lista)
             self.ia_lista.emit(msg, prod, precio, precio_oferta, self.clima)

@@ -73,19 +73,19 @@ class PanelIA(QFrame):
 
         if precio_oferta > 0:
             if is_temu:
-                if stock > 0 and stock < 50:
-                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                if stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
                 else:
-                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
                 html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
             else:
                 html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
         else:
             if is_temu:
-                if stock > 0 and stock < 50:
-                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                if stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
                 else:
-                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
                 html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
             else:
                 html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
