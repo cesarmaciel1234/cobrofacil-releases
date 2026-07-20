@@ -38,7 +38,7 @@ class SincronizadorCarteleria:
         try:
             # 1. Leer inventario de productos
             query_productos = """
-                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta
+                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
                 FROM productos 
                 WHERE precio > 0
             """
@@ -57,6 +57,7 @@ class SincronizadorCarteleria:
                     precio_oferta = float(fila.get('precio_oferta') or 0)
                     cant_oferta = float(fila.get('cant_oferta') or 0)
                     tipo_unidad = str(fila.get('tipo_unidad_oferta') or "").strip().lower()
+                    prod_unidad = str(fila.get('unidad') or "").strip().lower()
                 else:
                     departamento = str(fila[0])
                     nombre_producto = str(fila[1])
@@ -64,13 +65,21 @@ class SincronizadorCarteleria:
                     precio_oferta = float(fila[3] or 0)
                     cant_oferta = float(fila[4] or 0)
                     tipo_unidad = str(fila[5] or "").strip().lower()
+                    prod_unidad = str(fila[6] or "").strip().lower()
                 
                 regla_texto = ""
                 if cant_oferta > 0:
-                    if 'unidad' in tipo_unidad or tipo_unidad == 'u':
+                    if 'kilo' in prod_unidad or prod_unidad == 'kg':
+                        t_un = "Kilos"
+                    elif 'unidad' in prod_unidad or prod_unidad == 'u' or prod_unidad == 'un':
                         t_un = "Unidades"
                     else:
-                        t_un = "Kilos"
+                        # Fallback a tipo_unidad_oferta si la unidad del producto está vacía o es extraña
+                        if 'kilo' in tipo_unidad or tipo_unidad == 'kg':
+                            t_un = "Kilos"
+                        else:
+                            t_un = "Unidades"
+                    
                     regla_texto = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{cant_oferta:g} {t_un}</span>"
                 
                 nuevos_datos.append((
