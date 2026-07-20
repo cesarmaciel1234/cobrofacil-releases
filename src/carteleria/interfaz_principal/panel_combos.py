@@ -64,12 +64,27 @@ class PanelCombos(QFrame):
                 else:
                     stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
                     
-                html = f"<div align='center' style='padding: 5px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.0f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>OFERTA RELÁMPAGO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
+                    <span style='font-family: Arial; font-size: 45px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
+                </div>
+                """
             else:
                 html = f"<div style='padding: 10px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                html = f"<div align='center' style='padding: 5px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>PRODUCTO DESTACADO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({vistas} personas compraron ya)</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.0f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({vistas} personas compraron ya)</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626;'>${precio:,.0f}</span>
+                </div>
+                """
             else:
                 html = f"<div style='padding: 10px;'><span style='{t1}'>Producto Destacado</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
@@ -100,9 +115,14 @@ class PanelCombos(QFrame):
                 items_html = f"<div>{relacionados}</div>"
 
         if is_temu:
-            html = f"<div align='center' style='padding: 20px;'><span style='font-family: Impact; font-size: 30px; color: #DC2626;'>🛒 LLEVÁ TAMBIÉN 🛒</span><br><br><br>"
-            html += f"<span style='font-family: Impact; font-size: 45px; color: #000000;'>¿LLEVÁS {base}?</span><br><br><br>"
-            html += f"<span style='font-family: Impact; font-size: 35px; color: #000000; text-decoration: underline;'>¡NO TE OLVIDES DE ESTO!</span><br><br>{items_html}</div>"
+            html = f"""
+            <div align='center' style='padding: 30px;'>
+                <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>👉 LLEVÁ TAMBIÉN 👈</span><br><br><br><br><br>
+                <span style='font-family: Impact; font-size: 65px; color: #000000;'>¿LLEVÁS {base}?</span><br><br><br><br>
+                <span style='font-family: Impact; font-size: 45px; color: #000000; text-decoration: underline;'>¡NO TE OLVIDES DE ESTO!</span><br><br><br>
+                {items_html}
+            </div>
+            """
         else:
             html = f"<div style='padding: 20px;'><span style='{t1}'>🛒 Sugerencia del Parrillero</span><br><br><br>"
             html += f"<span style='{t2}'>¿Llevás {base}?</span><br><br><br>"

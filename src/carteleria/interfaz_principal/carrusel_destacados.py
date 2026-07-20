@@ -111,7 +111,15 @@ class CarruselDestacados(QFrame):
                 else:
                     stock_str = f"¡Oferta Limitada!"
                     
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.0f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>OFERTA RELÁMPAGO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
+                    <span style='font-family: Arial; font-size: 45px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
+                </div>
+                """
             else:
                 html = f"<div style='padding: 15px;'><span style='{t1}'>OFERTA</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
@@ -124,7 +132,14 @@ class CarruselDestacados(QFrame):
                     stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
                     stock_str = "¡Súper recomendado!"
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>PRODUCTO DESTACADO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>({stock_str})</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.0f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #DC2626;'>({stock_str})</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626;'>${precio:,.0f}</span>
+                </div>
+                """
             else:
                 html = f"<div style='padding: 20px;'><span style='{t1}'>PRODUCTO DESTACADO</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
