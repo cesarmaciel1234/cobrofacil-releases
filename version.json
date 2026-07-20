@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-20 00:15:05",
+  "build_date": "2026-07-20 00:28:02",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1566,9 +1566,9 @@
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "0ff612ef310c951491337487621f0529",
+      "checksum": "ee335092d03abe0722b3982cf2d3c2e9",
       "channel": "stable",
-      "size": 6855
+      "size": 7134
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -1650,9 +1650,9 @@
     },
     "src/carteleria/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "0ba27efbbbcc0729197aff042c71bab4",
+      "checksum": "26be857f3b6457009679974436cacb8b",
       "channel": "stable",
-      "size": 13127
+      "size": 13488
     },
     "src/carteleria/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -1842,9 +1842,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "01f4ad0f9cec562b64aeeab11da96f6a",
+      "checksum": "5cb7285ffdca59be7831b47c8268420f",
       "channel": "stable",
-      "size": 9590
+      "size": 9671
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -2160,9 +2160,9 @@
     },
     "src/jefe/jefe0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "3570d65b611e4aa7342fa38c5e9553ee",
+      "checksum": "c0f9471f7058b4ea98cbe35e58636c33",
       "channel": "stable",
-      "size": 21684
+      "size": 21883
     },
     "src/jefe/theme_pro.py": {
       "version": "1.0.0",

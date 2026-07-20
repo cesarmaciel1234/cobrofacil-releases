@@ -13,6 +13,7 @@ from src.carteleria.admin15_carteleria import CarteleriaConfigPanel
 from src.carteleria.inventario_ui.inventario_main import Admin1Inventario
 from src.carteleria.motor_descuentos_ui.ofertas_main import Admin2Ofertas
 from src.carteleria.red_lan.red_lan_main import Admin6RedLan
+from src.ui_global.proveedor.vista_proveedor import VistaProveedor
 from PyQt6.QtWidgets import QStackedWidget
 
 class CarteleriaApp(QStackedWidget):
@@ -29,6 +30,7 @@ class CarteleriaApp(QStackedWidget):
         self.inv = Admin1Inventario()
         self.ofe = Admin2Ofertas()
         self.red = Admin6RedLan()
+        self.prov = VistaProveedor()
 
         self.addWidget(self.dashboard)
         self.addWidget(self.tv_main)
@@ -36,6 +38,7 @@ class CarteleriaApp(QStackedWidget):
         self.addWidget(self.inv)
         self.addWidget(self.ofe)
         self.addWidget(self.red)
+        self.addWidget(self.prov)
 
         # Conectar Dashboard
         self.dashboard.request_launch_tv.connect(self.lanzar_tv)
@@ -43,6 +46,7 @@ class CarteleriaApp(QStackedWidget):
         self.dashboard.request_inventario.connect(self.lanzar_inv)
         self.dashboard.request_ofertas.connect(self.lanzar_ofe)
         self.dashboard.request_red_lan.connect(self.lanzar_red)
+        self.dashboard.request_proveedores.connect(self.lanzar_prov)
         self.dashboard.request_exit.connect(self.close)
         self.dashboard.request_toggle_theme.connect(self.toggle_carteleria_theme)
 
@@ -51,6 +55,7 @@ class CarteleriaApp(QStackedWidget):
         self.inv.request_dashboard.connect(self.volver_dashboard)
         self.ofe.request_dashboard.connect(self.volver_dashboard)
         self.red.request_dashboard.connect(self.volver_dashboard)
+        self.prov.request_dashboard.connect(self.volver_dashboard)
         
         # Conectar TV
         from PyQt6.QtGui import QShortcut, QKeySequence
@@ -169,3 +174,8 @@ def lanzar_app(app=None):
 if __name__ == "__main__":
     sys.exit(lanzar_app())
 
+
+    def lanzar_prov(self):
+        self.setCurrentWidget(self.prov)
+        if hasattr(self.prov, 'cargar_datos'):
+            self.prov.cargar_datos()
