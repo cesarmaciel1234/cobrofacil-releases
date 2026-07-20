@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-20 00:34:29",
+  "build_date": "2026-07-20 00:35:47",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -2160,9 +2160,9 @@
     },
     "src/jefe/jefe0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "c0f9471f7058b4ea98cbe35e58636c33",
+      "checksum": "8e5ded4a932dfaac471622a24ea1dc0d",
       "channel": "stable",
-      "size": 21883
+      "size": 21986
     },
     "src/jefe/theme_pro.py": {
       "version": "1.0.0",

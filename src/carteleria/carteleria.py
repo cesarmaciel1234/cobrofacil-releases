@@ -55,7 +55,6 @@ class CarteleriaApp(QStackedWidget):
         self.inv.request_dashboard.connect(self.volver_dashboard)
         self.ofe.request_dashboard.connect(self.volver_dashboard)
         self.red.request_dashboard.connect(self.volver_dashboard)
-        self.prov.request_dashboard.connect(self.volver_dashboard)
         
         # Conectar TV
         from PyQt6.QtGui import QShortcut, QKeySequence
