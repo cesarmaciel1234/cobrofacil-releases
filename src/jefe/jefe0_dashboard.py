@@ -132,6 +132,21 @@ class Jefe0Dashboard(QWidget):
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
         
+        self.btn_perfiles = QPushButton("👥 Personal")
+        self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_perfiles.setFixedHeight(34)
+        self.btn_perfiles.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+        """)
+        self.btn_perfiles.clicked.connect(self._abrir_perfiles)
+        nav_lay.addWidget(self.btn_perfiles)
+        
         try:
             from src.config import config
             if config and config.get("theme", "light") == "dark":
@@ -350,6 +365,15 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             nombre = "Jefe"
         self.lbl_greeting.setText(f"{greet}, {nombre} 👑")
+
+    def _abrir_perfiles(self):
+        try:
+            from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
+            from src.utils.qt_utils import qt_exec
+            dlg = DialogoPerfiles(self)
+            qt_exec(dlg)
+        except Exception as e:
+            print(f"Error abriendo perfiles: {e}")
 
     def _toggle_theme(self):
         try:
