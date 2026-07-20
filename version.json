@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 21:21:27",
+  "build_date": "2026-07-19 21:37:30",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1830,9 +1830,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "721e18c9f1690a7025aae16fecfce73d",
+      "checksum": "c514789c6e1f7d41310a53099a0b74c5",
       "channel": "stable",
-      "size": 17219
+      "size": 17149
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",
@@ -1842,9 +1842,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "56feaf2c3a7cc5a02ec18453e0852852",
+      "checksum": "3302875f7f3ede3b2fa519bdbbb41db5",
       "channel": "stable",
-      "size": 4762
+      "size": 5988
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1938,9 +1938,9 @@
     },
     "src/cerebro_global/sincronizador_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "a0571868e554dc70eb7e4fc22a8f7838",
+      "checksum": "1b0f1fec94de5b520862d5977240563e",
       "channel": "stable",
-      "size": 4251
+      "size": 4775
     },
     "src/cerebro_global/__init__.py": {
       "version": "1.0.0",

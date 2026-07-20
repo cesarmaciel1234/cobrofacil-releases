@@ -52,8 +52,6 @@ class CarteleriaMain(QWidget):
         self.window_manager = WindowManager(self)
         self.layout_manager = LayoutManager(self)
         self.network_manager = NetworkManager(self)
-        self.promo_manager = PromoManager(self)
-
         
         # --- FONDO ---
         self.bg_label = QLabel(self)
