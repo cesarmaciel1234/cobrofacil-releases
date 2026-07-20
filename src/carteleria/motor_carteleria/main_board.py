@@ -88,7 +88,7 @@ class CarteleriaMain(QWidget):
         
         # ⏱️ TIMER ROTACIÓN PROMOCIONES
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.promo_manager.actualizar_pantallas_promocionales)
+        # self.timer.timeout.connect(self.promo_manager.actualizar_pantallas_promocionales) # Deprecated
         self.rotacion_ms = 16000 # Por defecto
         self.timer.start(self.rotacion_ms) 
         
