@@ -627,14 +627,15 @@ class ChatManualWidget(QWidget):
         if not pw:
             return
         
-        # Ajustar alto dinámicamente para evitar recortes en monitores pequeños (ej. 768p)
-        # El chatbot deja 80px libres para la barra inferior.
-        target_h = min(700, pw.height() - 80)
+        # Ajustar alto dinamicamente para evitar recortes en monitores pequeos (ej. 768p)
+        # Dejamos ~220px libres en la parte inferior para evitar tapar el panel de totales y la botonera
+        margen_inferior = 220
+        target_h = min(700, pw.height() - margen_inferior - 20)
         self.resize(520, max(300, target_h))
 
-        # Al ser un widget hijo, nos movemos relativo al tamaño del padre
+        # Al ser un widget hijo, nos movemos relativo al tamao del padre
         x = pw.width() - self.width() - 20
-        y = pw.height() - self.height() - 80
+        y = pw.height() - self.height() - margen_inferior
         self.move(max(0, x), max(0, y))
 
     def abrir_y_desplegar(self):

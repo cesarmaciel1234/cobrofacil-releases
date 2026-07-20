@@ -10,7 +10,7 @@ class VistaResumenMixin:
 
         # Header
         hdr = QHBoxLayout()
-        title_lbl = QLabel("📊  Dashboard Financiero (CFO)")
+        title_lbl = QLabel("📈  Dashboard Financiero (CFO)")
         title_lbl.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {PAL['primary']}; background: transparent; border: none;")
         hdr.addWidget(title_lbl)
         hdr.addStretch()
@@ -19,7 +19,6 @@ class VistaResumenMixin:
         hdr.addWidget(self._btn_resumen_reload)
         lay.addLayout(hdr)
         
-        # Spacer
         lay.addSpacing(15)
 
         # KPIs row (4 columns)
@@ -29,73 +28,105 @@ class VistaResumenMixin:
         
         lay.addSpacing(20)
 
-        # P&L and Top Expenses Row
+        # ERP 3-Pillar Row
         mid_lay = QHBoxLayout()
         mid_lay.setSpacing(20)
         
-        # Left: P&L (Estado de Resultados)
+        # 1. P&L (Estado de Resultados)
         pnl_card = QFrame()
         pnl_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border-radius: 16px; border: 1px solid {PAL['border']}; }}")
         pnl_lay = QVBoxLayout(pnl_card)
         pnl_lay.setContentsMargins(20, 20, 20, 20)
         pnl_lay.setSpacing(10)
         
-        lbl_pnl_title = QLabel("📉 Estado de Resultados (P&L)")
-        lbl_pnl_title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {PAL['text']}; border: none; background: transparent;")
-        pnl_lay.addWidget(lbl_pnl_title)
+        lbl_pnl = QLabel("📊 Estado de Resultados (P&L)")
+        lbl_pnl.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {PAL['text']}; border: none; background: transparent;")
+        pnl_lay.addWidget(lbl_pnl)
         
-        self._pnl_ingresos = self._build_pnl_row("Ingresos Operativos", "$ 0.00", PAL['success'])
-        pnl_lay.addWidget(self._pnl_ingresos)
+        self._pnl_ing = self._build_pnl_row("Ingresos Operativos", "$ 0.00", PAL['success'])
+        pnl_lay.addWidget(self._pnl_ing)
+        self._pnl_cogs = self._build_pnl_row("(-) Costo Mercadería", "$ 0.00", PAL['danger'])
+        pnl_lay.addWidget(self._pnl_cogs)
+        self._pnl_mg = self._build_pnl_row("(=) MARGEN BRUTO", "$ 0.00", PAL['primary'], bold=True)
+        pnl_lay.addWidget(self._pnl_mg)
         
-        self._pnl_costo_merc = self._build_pnl_row("(-) Costo Mercadería", "$ 0.00", PAL['danger'])
-        pnl_lay.addWidget(self._pnl_costo_merc)
-        
-        self._pnl_margen_bruto = self._build_pnl_row("(=) MARGEN BRUTO", "$ 0.00", PAL['primary'], bold=True)
-        pnl_lay.addWidget(self._pnl_margen_bruto)
-        
-        # Divisor
         div1 = QFrame(); div1.setFixedHeight(1); div1.setStyleSheet(f"background: {PAL['border']}; border: none;")
         pnl_lay.addWidget(div1)
         
-        self._pnl_fijos = self._build_pnl_row("(-) Costos Fijos", "$ 0.00", PAL['warning'])
-        pnl_lay.addWidget(self._pnl_fijos)
+        self._pnl_opex_f = self._build_pnl_row("(-) OPEX Fijos", "$ 0.00", PAL['warning'])
+        pnl_lay.addWidget(self._pnl_opex_f)
+        self._pnl_opex_v = self._build_pnl_row("(-) OPEX Varios", "$ 0.00", PAL['warning'])
+        pnl_lay.addWidget(self._pnl_opex_v)
         
-        self._pnl_vars = self._build_pnl_row("(-) Gastos Varios", "$ 0.00", PAL['warning'])
-        pnl_lay.addWidget(self._pnl_vars)
-        
-        # Divisor
         div2 = QFrame(); div2.setFixedHeight(1); div2.setStyleSheet(f"background: {PAL['border']}; border: none;")
         pnl_lay.addWidget(div2)
         
-        self._pnl_neta = self._build_pnl_row("(=) GANANCIA NETA", "$ 0.00", PAL['success'], bold=True, is_total=True)
-        pnl_lay.addWidget(self._pnl_neta)
-        
+        self._pnl_ebitda = self._build_pnl_row("(=) GANANCIA NETA", "$ 0.00", PAL['success'], bold=True, is_total=True)
+        pnl_lay.addWidget(self._pnl_ebitda)
         pnl_lay.addStretch()
         mid_lay.addWidget(pnl_card, 1)
+
+        # 2. Cash Flow (Flujo de Efectivo)
+        cf_card = QFrame()
+        cf_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border-radius: 16px; border: 1px solid {PAL['border']}; }}")
+        cf_lay = QVBoxLayout(cf_card)
+        cf_lay.setContentsMargins(20, 20, 20, 20)
+        cf_lay.setSpacing(10)
         
-        # Right: Distribución de Gastos
-        exp_card = QFrame()
-        exp_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border-radius: 16px; border: 1px solid {PAL['border']}; }}")
-        exp_lay = QVBoxLayout(exp_card)
-        exp_lay.setContentsMargins(20, 20, 20, 20)
-        exp_lay.setSpacing(15)
+        lbl_cf = QLabel("💸 Flujo de Efectivo (Cash Flow)")
+        lbl_cf.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {PAL['text']}; border: none; background: transparent;")
+        cf_lay.addWidget(lbl_cf)
         
-        lbl_exp_title = QLabel("📊 Distribución de Gastos")
-        lbl_exp_title.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {PAL['text']}; border: none; background: transparent;")
-        exp_lay.addWidget(lbl_exp_title)
+        self._cf_in = self._build_pnl_row("Entradas (Ventas)", "$ 0.00", PAL['success'])
+        cf_lay.addWidget(self._cf_in)
+        self._cf_out_op = self._build_pnl_row("(-) Salidas Operativas", "$ 0.00", PAL['danger'])
+        cf_lay.addWidget(self._cf_out_op)
+        self._cf_out_fin = self._build_pnl_row("(-) Salidas Financieras", "$ 0.00", PAL['warning'])
+        cf_lay.addWidget(self._cf_out_fin)
         
-        self._exp_bars_layout = QVBoxLayout()
-        self._exp_bars_layout.setSpacing(15)
-        exp_lay.addLayout(self._exp_bars_layout)
-        exp_lay.addStretch()
+        div3 = QFrame(); div3.setFixedHeight(1); div3.setStyleSheet(f"background: {PAL['border']}; border: none;")
+        cf_lay.addWidget(div3)
         
-        mid_lay.addWidget(exp_card, 1)
+        self._cf_net = self._build_pnl_row("(=) FLUJO NETO", "$ 0.00", PAL['primary'], bold=True, is_total=True)
+        cf_lay.addWidget(self._cf_net)
+        cf_lay.addStretch()
+        mid_lay.addWidget(cf_card, 1)
+
+        # 3. Balance General Summary
+        bs_card = QFrame()
+        bs_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border-radius: 16px; border: 1px solid {PAL['border']}; }}")
+        bs_lay = QVBoxLayout(bs_card)
+        bs_lay.setContentsMargins(20, 20, 20, 20)
+        bs_lay.setSpacing(10)
+        
+        lbl_bs = QLabel("🏛️ Resumen de Balance")
+        lbl_bs.setStyleSheet(f"font-size: 16px; font-weight: bold; color: {PAL['text']}; border: none; background: transparent;")
+        bs_lay.addWidget(lbl_bs)
+        
+        self._bs_inv = self._build_pnl_row("Activos: Inversiones", "$ 0.00", PAL['success'])
+        bs_lay.addWidget(self._bs_inv)
+        self._bs_liq = self._build_pnl_row("Activos: Liquidez Mes", "$ 0.00", PAL['primary'])
+        bs_lay.addWidget(self._bs_liq)
+        
+        div4 = QFrame(); div4.setFixedHeight(1); div4.setStyleSheet(f"background: {PAL['border']}; border: none;")
+        bs_lay.addWidget(div4)
+        
+        self._bs_liab = self._build_pnl_row("(-) Pasivos: Deuda Total", "$ 0.00", PAL['danger'])
+        bs_lay.addWidget(self._bs_liab)
+        
+        div5 = QFrame(); div5.setFixedHeight(1); div5.setStyleSheet(f"background: {PAL['border']}; border: none;")
+        bs_lay.addWidget(div5)
+        
+        self._bs_equity = self._build_pnl_row("(=) SALUD FINANCIERA", "$ 0.00", PAL['success'], bold=True, is_total=True)
+        bs_lay.addWidget(self._bs_equity)
+        bs_lay.addStretch()
+        mid_lay.addWidget(bs_card, 1)
         
         lay.addLayout(mid_lay)
         lay.addSpacing(20)
 
         # Bottom: Historial
-        lay.addWidget(section_title("📋  Últimos Movimientos"))
+        lay.addWidget(section_title("🕒  Últimos Movimientos (Flujo de Caja General)"))
         self._tbl_resumen = build_table(["Fecha", "Tipo", "Categoría", "Descripción", "Monto"])
         self._tbl_resumen.setMaximumHeight(250)
         lay.addWidget(self._tbl_resumen)
@@ -122,71 +153,77 @@ class VistaResumenMixin:
     def _update_pnl_row(self, widget, value_str, color):
         lbl = widget.layout().itemAt(2).widget()
         lbl.setText(value_str)
-        lbl.setStyleSheet(lbl.styleSheet().replace(lbl.styleSheet().split('color: ')[1].split(';')[0], color))
+        lbl.setStyleSheet(lbl.styleSheet().replace(lbl.styleSheet().split("color: ")[1].split(";")[0], color))
 
     def _load_resumen(self):
         if not self._db: return
         try:
             stats = self._db.get_stats(self._mes, self._año)
-            ing   = stats.get("total_income", 0.0) or 0.0
+            
+            # --- P&L (Estado de Resultados) ---
+            ing = stats.get("total_income", 0.0) or 0.0
             total_gas = stats.get("total_expenses", 0.0) or 0.0
             
             cats = stats.get("categories", []) or []
             costo_mercaderia = 0.0
-            gastos_fijos = stats.get("fixed_expenses", 0.0) or 0.0
-            gastos_varios = 0.0
-            
-            other_cats = []
             for cat, amount in cats:
                 if cat in ("Mercadería", "Mercadería / Stock", "Proveedor", "Mercaderia"):
                     costo_mercaderia += amount
-                else:
-                    other_cats.append((cat, amount))
-            
+                    
+            gastos_fijos = stats.get("fixed_expenses", 0.0) or 0.0
             gastos_varios = total_gas - costo_mercaderia - gastos_fijos
             if gastos_varios < 0: gastos_varios = 0.0
             
             margen_bruto = ing - costo_mercaderia
             ganancia_neta = margen_bruto - gastos_fijos - gastos_varios
             
-            self._update_pnl_row(self._pnl_ingresos, f"$ {ing:,.2f}", PAL['success'])
-            self._update_pnl_row(self._pnl_costo_merc, f"$ {costo_mercaderia:,.2f}", PAL['danger'])
-            self._update_pnl_row(self._pnl_margen_bruto, f"$ {margen_bruto:,.2f}", PAL['primary'] if margen_bruto >= 0 else PAL['danger'])
-            self._update_pnl_row(self._pnl_fijos, f"$ {gastos_fijos:,.2f}", PAL['warning'])
-            self._update_pnl_row(self._pnl_vars, f"$ {gastos_varios:,.2f}", PAL['warning'])
-            self._update_pnl_row(self._pnl_neta, f"$ {ganancia_neta:,.2f}", PAL['success'] if ganancia_neta >= 0 else PAL['danger'])
+            self._update_pnl_row(self._pnl_ing, f"$ {ing:,.2f}", PAL["success"])
+            self._update_pnl_row(self._pnl_cogs, f"$ {costo_mercaderia:,.2f}", PAL["danger"])
+            self._update_pnl_row(self._pnl_mg, f"$ {margen_bruto:,.2f}", PAL["primary"] if margen_bruto >= 0 else PAL["danger"])
+            self._update_pnl_row(self._pnl_opex_f, f"$ {gastos_fijos:,.2f}", PAL["warning"])
+            self._update_pnl_row(self._pnl_opex_v, f"$ {gastos_varios:,.2f}", PAL["warning"])
+            self._update_pnl_row(self._pnl_ebitda, f"$ {ganancia_neta:,.2f}", PAL["success"] if ganancia_neta >= 0 else PAL["danger"])
 
+            # --- Cash Flow (Flujo de Efectivo) ---
+            fin_out = stats.get("financial_expenses", 0.0) or 0.0
+            flujo_neto = ing - total_gas - fin_out
+            
+            self._update_pnl_row(self._cf_in, f"$ {ing:,.2f}", PAL["success"])
+            self._update_pnl_row(self._cf_out_op, f"$ {total_gas:,.2f}", PAL["danger"])
+            self._update_pnl_row(self._cf_out_fin, f"$ {fin_out:,.2f}", PAL["warning"])
+            self._update_pnl_row(self._cf_net, f"$ {flujo_neto:,.2f}", PAL["primary"] if flujo_neto >= 0 else PAL["danger"])
+
+            # --- Balance General Summary ---
+            inv_bal = stats.get("investments_balance", 0.0) or 0.0
+            liq_mes = flujo_neto
+            liab = sum(stats.get("balances", {}).values())
+            salud = inv_bal + liq_mes - liab
+            
+            self._update_pnl_row(self._bs_inv, f"$ {inv_bal:,.2f}", PAL["success"])
+            self._update_pnl_row(self._bs_liq, f"$ {liq_mes:,.2f}", PAL["primary"] if liq_mes >= 0 else PAL["warning"])
+            self._update_pnl_row(self._bs_liab, f"$ {liab:,.2f}", PAL["danger"])
+            self._update_pnl_row(self._bs_equity, f"$ {salud:,.2f}", PAL["success"] if salud >= 0 else PAL["danger"])
+
+            # --- KPIs ---
             for i in reversed(range(self._kpi_layout.count())):
                 item = self._kpi_layout.takeAt(i)
                 if item.widget(): item.widget().deleteLater()
 
-            bal_c = sum(stats.get("balances", {}).values())
+            drain = self._db.get_daily_drain()
+            d_tot = drain.get("total", 0.0)
+            
             kpis = [
                 ("INGRESOS MES",    f"${ing:,.0f}",   PAL["success"], "Ventas y Facturación"),
-                ("EGRESOS MES",     f"${total_gas:,.0f}", PAL["danger"], "Todos los gastos"),
+                ("SANGRADO DIARIO", f"${d_tot:,.0f}", PAL["danger"], "Provisión Mínima Diaria"),
                 ("GANANCIA NETA",   f"${ganancia_neta:,.0f}", PAL["primary"] if ganancia_neta >= 0 else PAL["danger"], "Bolsillo"),
-                ("DEUDA FLOTANTE",  f"${bal_c:,.0f}", PAL["warning"], "A pagar (Cheques/Prov)"),
+                ("FLUJO NETO",      f"${flujo_neto:,.0f}", PAL["success"] if flujo_neto >= 0 else PAL["danger"], "Caja Real"),
             ]
             
             for t, v, c, s in kpis:
                 card = self._create_kpi_pro(t, v, c, s)
                 self._kpi_layout.addWidget(card)
 
-            for i in reversed(range(self._exp_bars_layout.count())):
-                item = self._exp_bars_layout.takeAt(i)
-                if item.widget(): item.widget().deleteLater()
-                
-            if total_gas > 0:
-                colors = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6']
-                for i, (cat, amount) in enumerate(cats[:6]):
-                    pct = (amount / total_gas) * 100
-                    bar = self._create_expense_bar(cat, amount, pct, colors[i % len(colors)])
-                    self._exp_bars_layout.addWidget(bar)
-            else:
-                lbl = QLabel("No hay gastos registrados en este período.")
-                lbl.setStyleSheet(f"color: {PAL['text3']}; background: transparent; border: none;")
-                self._exp_bars_layout.addWidget(lbl)
-
+            # --- Últimos Movimientos ---
             movs = self._db.get_all_movements(self._mes, self._año)
             self._tbl_resumen.setRowCount(0)
             for row_data in (movs or [])[:50]:
@@ -227,53 +264,11 @@ class VistaResumenMixin:
         l.addWidget(lbl_t)
         
         lbl_v = QLabel(value)
-        lbl_v.setStyleSheet(f"color: {color}; font-weight: 900; font-size: 28px; background: transparent; border: none;")
+        lbl_v.setStyleSheet(f"color: {color}; font-size: 28px; font-weight: 900; background: transparent; border: none;")
         l.addWidget(lbl_v)
         
         lbl_s = QLabel(subtitle)
-        lbl_s.setStyleSheet(f"color: {PAL['text2']}; font-size: 13px; text-transform: uppercase; background: transparent; border: none;")
+        lbl_s.setStyleSheet(f"color: {PAL['text2']}; font-size: 13px; background: transparent; border: none;")
         l.addWidget(lbl_s)
         
         return w
-
-    def _create_expense_bar(self, cat, amount, pct, color):
-        w = QWidget()
-        w.setStyleSheet("background: transparent; border: none;")
-        l = QVBoxLayout(w)
-        l.setContentsMargins(0, 0, 0, 0)
-        l.setSpacing(5)
-        
-        hl = QHBoxLayout()
-        lbl_cat = QLabel(cat)
-        lbl_cat.setStyleSheet(f"color: {PAL['text']}; font-weight: bold; font-size: 13px; background: transparent;")
-        
-        lbl_amt = QLabel(f"${amount:,.0f} ({pct:.1f}%)")
-        lbl_amt.setStyleSheet(f"color: {PAL['text2']}; font-size: 12px; background: transparent;")
-        
-        hl.addWidget(lbl_cat)
-        hl.addStretch()
-        hl.addWidget(lbl_amt)
-        l.addLayout(hl)
-        
-        pbar = QProgressBar()
-        pbar.setFixedHeight(8)
-        pbar.setTextVisible(False)
-        pbar.setValue(int(pct))
-        pbar.setStyleSheet(f"""
-            QProgressBar {{
-                background: {PAL['border']};
-                border: none;
-                border-radius: 4px;
-            }}
-            QProgressBar::chunk {{
-                background-color: {color};
-                border-radius: 4px;
-            }}
-        """)
-        l.addWidget(pbar)
-        
-        return w
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # TAB 1 — INGRESOS
-    # ─────────────────────────────────────────────────────────────────────────

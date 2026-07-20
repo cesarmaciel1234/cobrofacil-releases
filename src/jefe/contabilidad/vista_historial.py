@@ -56,9 +56,9 @@ class VistaHistorialMixin:
                 for row in (movs or []):
                     w.writerow([row[0], row[1], row[2], row[3], row[4],
                                 row[5] if len(row) > 5 else ""])
-            QMessageBox.information(self, "Exportado", f"Historial exportado:\n{path}")
+            QMessageBox.information(self.window(), "Exportado", f"Historial exportado:\n{path}")
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self.window(), "Error", str(e))
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 10 — REPORTES PDF

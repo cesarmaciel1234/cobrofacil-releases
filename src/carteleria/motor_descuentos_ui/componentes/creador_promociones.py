@@ -331,7 +331,8 @@ class CreadorPromociones(QWidget):
             'precio_oferta': self.sp_quick_precio_oferta.value(),
             'precio_oferta_relampago': self.sp_quick_oferta_relampago.value(),
             'precio_oferta_promedio': self.sp_quick_oferta_promedio.value(),
-            'limite_oferta_relampago': self.sp_limite_relampago.value()
+            'limite_oferta_relampago': self.sp_limite_relampago.value(),
+            'precio_regular': self.txt_quick_precio.value()
         }
         self.activar_promo.emit(data)
 

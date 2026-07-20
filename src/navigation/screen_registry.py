@@ -13,7 +13,7 @@ def build_screen_factories(main_window):
 
     return {
         Screen.ADMIN_DASHBOARD: lambda: _imp(
-            "src.admin.admin0_dashboard", fromlist=["Admin0Dashboard"]
+            "src.admin.dashboard.dashboard_main", fromlist=["Admin0Dashboard"]
         ).Admin0Dashboard(),
         Screen.INVENTARIO: lambda: _imp(
             "src.admin.inventario_ui.inventario_main", fromlist=["Admin1Inventario"]
@@ -46,10 +46,10 @@ def build_screen_factories(main_window):
             "src.admin.admin11_proveedores", fromlist=["Admin11Proveedores"]
         ).Admin11Proveedores(),
         Screen.HARDWARE: lambda: _imp(
-            "src.admin.admin13_hardware", fromlist=["Admin13Hardware"]
+            "src.admin.hardware.hardware_main", fromlist=["Admin13Hardware"]
         ).Admin13Hardware(),
         Screen.VENTAS_DIGITALES: lambda: _imp(
-            "src.admin.admin14_ventas_digitales", fromlist=["Admin14VentasDigitales"]
+            "src.admin.ventas_digitales.ventas_digitales_main", fromlist=["Admin14VentasDigitales"]
         ).Admin14VentasDigitales(),
         Screen.CLIENTES: lambda: _imp(
             "src.admin.clientes.admin_clientes_main", fromlist=["AdminClientes"]

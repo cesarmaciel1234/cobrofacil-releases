@@ -8,6 +8,18 @@ class PanelCombos(QFrame):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
+        from PyQt6.QtCore import QTimer
+        from src.carteleria.motor_carteleria.motor_paneles import MotorCombos
+        self.motor = MotorCombos(self)
+        self.motor.combo_listo.connect(self.actualizar_combo)
+        self.motor.destacada_lista.connect(self.actualizar_destacada)
+        self.motor.promo_lista.connect(self.actualizar_promo)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(16000) # 16 segundos
+        
+        self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":
             # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
@@ -38,23 +50,44 @@ class PanelCombos(QFrame):
         if is_temu:
             nombre = nombre.upper()
 
+        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+        vistas = motor_ventas.get_personas_viendo("mes")
+        unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
+        
         if precio_oferta > 0:
             if is_temu:
-                if stock > 0 and stock < 50:
-                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
+                elif stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
-                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
                     
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>OFERTA RELÁMPAGO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 65px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
+                    <span style='font-family: Arial; font-size: 35px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
+                    <span style='font-family: Impact; font-size: 80px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
+                </div>
+                """
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+                html = f"<div style='padding: 10px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                import random
-                vistas = random.randint(400, 900)
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #DC2626;'>🔥 OFERTA DESTACADA 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>({vistas} personas viendo esto)</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 65px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({vistas} personas compraron ya)</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${precio:,.0f}</span>
+                </div>
+                """
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+                html = f"<div style='padding: 10px;'><span style='{t1}'>Producto Destacado</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
 
     def actualizar_combo(self, base, relacionados):
@@ -83,12 +116,62 @@ class PanelCombos(QFrame):
                 items_html = f"<div>{relacionados}</div>"
 
         if is_temu:
-            html = f"<div align='center' style='padding: 20px;'><span style='font-family: Impact; font-size: 30px; color: #DC2626;'>🛒 LLEVÁ TAMBIÉN 🛒</span><br><br><br>"
-            html += f"<span style='font-family: Impact; font-size: 45px; color: #000000;'>¿LLEVÁS {base}?</span><br><br><br>"
-            html += f"<span style='font-family: Impact; font-size: 35px; color: #000000; text-decoration: underline;'>¡NO TE OLVIDES DE ESTO!</span><br><br>{items_html}</div>"
+            html = f"""
+            <div align='center' style='padding: 30px;'>
+                <br><br>
+                <span style='font-family: Impact; font-size: 65px; color: #000000;'>¿LLEVÁS {base}?</span><br><br><br><br>
+                <span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #DC2626; padding: 10px 20px; white-space: nowrap;'>👉 LLEVÁ TAMBIÉN 👈</span><br><br><br><br>
+                {items_html}
+            </div>
+            """
         else:
             html = f"<div style='padding: 20px;'><span style='{t1}'>🛒 Sugerencia del Parrillero</span><br><br><br>"
             html += f"<span style='{t2}'>¿Llevás {base}?</span><br><br><br>"
             html += f"<span style='{t3}'>No te olvides:<br>{items_html}</span></div>"
+        
+        self.lbl_content.setText(html)
+
+
+    def actualizar_promo(self, nombre_promo, precio_promo, lista_productos):
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
+        if is_temu:
+            nombre_promo = nombre_promo.upper()
+            
+        items_html = ""
+        for item in lista_productos:
+            try:
+                it_nom = item.get('nombre', '')
+                it_cant = item.get('cantidad', 1)
+                
+                if is_temu:
+                    it_nom = it_nom.upper()
+                    items_html += f"<div style='margin-top: 15px;'><span style='font-family: Impact; font-size: 30px; color: #000000;'>+ {it_cant}x {it_nom}</span></div>"
+                else:
+                    items_html += f"<div style='margin-top: 8px;'>+ {it_cant}x {it_nom}</div>"
+            except:
+                pass
+
+        if is_temu:
+            html = f"""
+            <div align='center' style='padding: 20px;'>
+                <span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #00A859; padding: 10px 20px;'>?? PROMO ESPECIAL ??</span><br><br><br>
+                <span style='font-family: Impact; font-size: 60px; color: #000000;'>{nombre_promo}</span><br><br><br>
+                {items_html}
+                <br><br><br>
+                <span style='font-family: Impact; font-size: 110px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_promo:,.2f}</span>
+            </div>
+            """
+        else:
+            t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: #00A859; letter-spacing: 1px;"
+            t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: #333333; line-height: 1.2;"
+            t3 = f"font-family: -apple-system; font-size: 22px; font-weight: 600; color: #666666;"
+            t4 = f"font-family: -apple-system; font-size: 55px; font-weight: 900; color: #DC2626;"
+            
+            html = f"<div style='padding: 20px;'><span style='{t1}'>PROMO ESPECIAL</span><br><br><br>"
+            html += f"<span style='{t2}'>{nombre_promo}</span><br><br><br>"
+            html += f"<span style='{t3}'>{items_html}</span><br><br><br>"
+            html += f"<span style='{t4}'>${precio_promo:,.2f}</span></div>"
         
         self.lbl_content.setText(html)

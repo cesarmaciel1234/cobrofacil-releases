@@ -11,6 +11,9 @@ class CarruselDestacados(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         from src.carteleria.theme import get_active_theme_name
+        from PyQt6.QtCore import QTimer
+        from src.carteleria.motor_carteleria.motor_paneles import MotorCarrusel
+        
         if get_active_theme_name() == "temu":
             # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
@@ -18,6 +21,15 @@ class CarruselDestacados(QFrame):
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
         apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
+        self.motor = MotorCarrusel(self)
+        self.motor.datos_listos.connect(self.actualizar_top10_y_rotar)
+        
+        self.auto_refresh_timer = QTimer(self)
+        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.start(16000) # 16 segundos
+        
+        self.motor.start() # Carga inicial
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(15, 15, 15, 15)
         
@@ -85,24 +97,55 @@ class CarruselDestacados(QFrame):
         if is_temu:
             nombre = nombre.upper()
 
+        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+        unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
+        
         if precio_oferta > 0:
             if is_temu:
-                if stock > 0 and stock < 50:
-                    stock_str = f"¡Solo quedan {stock:g} {unidad.capitalize()}!"
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
+                elif stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
-                    stock_str = f"¡Más de {max(50, int(stock))} {unidad.capitalize()} vendidos!"
+                    stock_str = f"¡Oferta Limitada!"
                     
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #DC2626; padding: 5px 15px;'>OFERTA RELÁMPAGO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><span style='font-family: Arial; font-size: 24px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><span style='font-family: Impact; font-size: 60px; color: #DC2626; background-color: #FFFF00;'>${precio_oferta:,.2f}</span></div>"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>OFERTA RELÁMPAGO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
+                    <span style='font-family: Arial; font-size: 45px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
+                </div>
+                """
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+                html = f"<div style='padding: 15px;'><span style='{t1}'>OFERTA</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                import random
-                quedan = random.randint(2, 8)
-                html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #DC2626;'>🔥 IMPERDIBLE 🔥</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>¡SOLO QUEDAN {quedan}!</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.2f}</span></div>"
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
+                elif stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
+                else:
+                    stock_str = "¡Súper recomendado!"
+                html = f"""
+                <div align='center' style='padding: 20px;'>
+                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
+                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #DC2626;'>({stock_str})</span><br><br><br><br>
+                    <span style='font-family: Impact; font-size: 130px; color: #DC2626;'>${precio:,.0f}</span>
+                </div>
+                """
             else:
-                html = f"<div style='padding: 20px;'><span style='{t1}'>Especial del Día</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
+                html = f"<div style='padding: 20px;'><span style='{t1}'>PRODUCTO DESTACADO</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
         self.lbl_content.setText(html)
+
+    def actualizar_top10_y_rotar(self, datos_top10, titulo=""):
+        self.actualizar_top10(datos_top10, titulo)
 
     def actualizar_top10(self, productos, titulo="Top 10 Semanal"):
         self.footer_widget.show()
@@ -112,7 +155,7 @@ class CarruselDestacados(QFrame):
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
 
-        self.lbl_content.setAlignment(Qt.AlignCenter)
+        self.lbl_content.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         if is_temu:
             t1 = f"font-family: 'Impact', sans-serif; font-size: 60px; font-weight: 900; color: #DC2626; background-color: #FFFF00;"
             titulo = titulo.upper()
@@ -133,18 +176,58 @@ class CarruselDestacados(QFrame):
         else:
             html += f"<div style='text-align: center; margin-bottom: 40px;'><span style='{t1}'>{titulo}</span></div>"
         
-        # Limitamos a 5 para no saturar la pantalla
         for i, prod in enumerate(productos[:5]):
             nombre = prod[0]
+            cantidad = 0.0
+            unidad_str = ""
+            is_kilos = False
+            if len(prod) >= 5:
+                unidad_raw = str(prod[4]).lower()
+                if 'kilo' in unidad_raw or unidad_raw == 'kg':
+                    is_kilos = True
+            
+            if len(prod) >= 6:
+                cantidad = prod[5]
+            
             if is_temu:
-                import random
-                desc_text = random.choice(["¡IDEAL ASADO!", "¡RECIÉN CORTADO!", "¡OFERTA MATADERO!", "¡SÚPER PRECIO!", "🔥 HOT 🔥"])
-                bg_color = random.choice(["#DC2626", "#00A859", "#FF9900", "#0055FF"]) # Mezcla fríos y calientes
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
-                html += f"<div style='margin-bottom: 20px; margin-left: 2%;'><span style='font-family: Impact; font-size: 30px; color: #0055FF;'>#{i+1}</span> <span style='font-family: Impact; font-size: 30px; color: #000000;'>{nombre}</span> <span style='font-family: Arial; font-size: 14px; font-weight: bold; color: #FFFFFF; background-color: {bg_color}; padding: 3px 6px; border-radius: 5px;'>&nbsp;{desc_text}&nbsp;</span></div>"
+                
+                if cantidad > 0:
+                    if is_kilos:
+                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
+                    else:
+                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}U. VENDIDAS"
+                else:
+                    texto_ventas = "🔥 SÚPER VENTAS"
+                
+                html += f"""
+                <div style='margin-bottom: 40px; margin-left: 5%;'>
+                    <table cellpadding='0' cellspacing='0' style='margin-bottom: -5px;'>
+                        <tr>
+                            <td valign='middle'>
+                                <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
+                            </td>
+                            <td valign='middle'>
+                                <span style='font-family: Arial; font-size: 23px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
+                            </td>
+                        </tr>
+                    </table>
+                    <div>
+                        <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
+                    </div>
+                </div>
+                """
             else:
-                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span></div>"
+                if cantidad > 0:
+                    if is_kilos:
+                        texto_ventas = f"Más de {cantidad:g}KG vendidos"
+                    else:
+                        texto_ventas = f"Más de {cantidad:g}U. vendidas"
+                else:
+                    texto_ventas = "Top Ventas"
+                    
+                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888; white-space: nowrap;'>({texto_ventas})</span></div>"
         
         html += "</div>"
         self.lbl_content.setText(html)

@@ -14,6 +14,10 @@ import traceback
 import threading
 import time
 import logging
+import urllib3
+
+# Suppress InsecureRequestWarning
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Desactivar aceleración por hardware para evitar deadlocks del chatbot Chromium
 sys.argv.append('--disable-gpu')
@@ -119,6 +123,8 @@ def launch_app():
     # 2. Recargar motor de base de datos de manera FLUIDA (Splash no se congela)
     update_status("Inicializando base de datos...", 15)
     from src.base_de_datos.database import db_manager
+    from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
+    sincronizador_carteleria.start()
     run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
     
     app.processEvents()

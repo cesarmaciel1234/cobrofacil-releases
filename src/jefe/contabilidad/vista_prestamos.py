@@ -83,10 +83,10 @@ class VistaPrestamosMixin:
             self._pr_capital.clear(); self._pr_interes.clear()
             self._load_prestamos()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _pagar_cuota(self, iid, restante):
-        monto_str, ok = QInputDialog.getText(self, "Pagar Cuota",
+        monto_str, ok = QInputDialog.getText(self.window(), "Pagar Cuota",
                                               f"Monto a pagar (restante: $ {restante:,.2f}):",
                                               QLineEdit.Normal, f"{restante:.2f}")
         if ok and monto_str:
@@ -94,7 +94,7 @@ class VistaPrestamosMixin:
                 self._db.pay_installment(iid, float(monto_str.replace(",", ".")))
                 self._load_prestamos()
             except Exception as e:
-                QMessageBox.warning(self, "Error", str(e))
+                QMessageBox.warning(self.window(), "Error", str(e))
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 5 — CHEQUES

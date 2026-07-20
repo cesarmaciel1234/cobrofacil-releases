@@ -40,7 +40,7 @@ class VistaGastosMixin:
         try:
             all_exp = self._db.get_expenses()
             period  = f"{self._año}-{self._mes:02d}"
-            rows    = [r for r in (all_exp or []) if str(r[1] or "").startswith(period)]
+            rows    = [r for r in (all_exp or []) if str(r[1] or "").startswith(period) and str(r[5] or "") != 'tesoreria']
             self._tbl_gas.setRowCount(0)
             for row in rows:
                 r = self._tbl_gas.rowCount()
@@ -65,10 +65,10 @@ class VistaGastosMixin:
             self._gas_monto.clear(); self._gas_desc.clear()
             self._load_gastos()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _del_gasto(self, rid):
-        if QMessageBox.question(self, "Eliminar", "¿Eliminar este gasto?",
+        if QMessageBox.question(self.window(), "Eliminar", "¿Eliminar este gasto?",
                                 QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
             self._db.delete_expense(rid)
             self._load_gastos()

@@ -287,7 +287,7 @@ class Admin0Dashboard(QWidget):
                 );
                 border-radius: 18px;
                 border: none;
-            }}
+            }
         """)
         # Actualizar brand
         self.brand_lbl.setText(

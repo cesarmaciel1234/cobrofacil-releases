@@ -22,7 +22,7 @@ from src.admin.configuracion.componentes.dialogo_unidades_medida import DialogoU
 from src.admin.configuracion.componentes.dialogo_notificaciones_correo import DialogoNotificacionesCorreo
 from src.admin.configuracion.componentes.dialogo_opciones_habilitadas import DialogoOpcionesHabilitadas
 from src.admin.configuracion.componentes.config_button import ConfigButton
-from src.admin.configuracion.componentes.dialogo_cajeros import DialogoCajeros
+from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
 from src.admin.configuracion.componentes.dialogo_ticket import DialogoTicket
 from src.admin.configuracion.componentes.dialogo_lector_codigos import DialogoLectorCodigos
 from src.admin.configuracion.componentes.config_category import ConfigCategory
@@ -153,7 +153,7 @@ class Admin5Configuracion(QWidget):
             dlg = DialogoOpcionesHabilitadas(self)
             qt_exec(dlg)
         elif opcion == "Cajeros":
-            dlg = DialogoCajeros(self)
+            dlg = DialogoPerfiles(self)
             qt_exec(dlg)
         elif opcion == "Administrar\nCajas":
             # Bloqueo Premium de Red (Fase de Pruebas / Versión Paga)
@@ -345,7 +345,7 @@ class Admin5Configuracion(QWidget):
             dlg = DialogoOpcionesHabilitadas(self)
             qt_exec(dlg)
         elif opcion == "Cajeros":
-            dlg = DialogoCajeros(self)
+            dlg = DialogoPerfiles(self)
             qt_exec(dlg)
         elif opcion == "Administrar\nCajas":
             # Bloqueo Premium de Red (Fase de Pruebas / Versión Paga)

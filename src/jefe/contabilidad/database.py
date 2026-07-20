@@ -56,9 +56,16 @@ class Database:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
                     amount REAL NOT NULL,
-                    category TEXT NOT NULL
+                    category TEXT NOT NULL,
+                    due_day INTEGER DEFAULT 1
                 )
             ''')
+            
+            # Migration check for 'due_day' in fixed_costs
+            cursor.execute("PRAGMA table_info(fixed_costs)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'due_day' not in columns:
+                cursor.execute("ALTER TABLE fixed_costs ADD COLUMN due_day INTEGER DEFAULT 1")
 
             # 3. Loans
             cursor.execute('''
@@ -267,10 +274,10 @@ class Database:
             cursor.execute('DELETE FROM investments WHERE id = ?', (inv_id,))
             conn.commit()
 
-    def add_fixed_cost(self, name, amount, category):
+    def add_fixed_cost(self, name, amount, category, due_day=1):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO fixed_costs (name, amount, category) VALUES (?, ?, ?)', (name, amount, category))
+            cursor.execute('INSERT INTO fixed_costs (name, amount, category, due_day) VALUES (?, ?, ?, ?)', (name, amount, category, due_day))
             conn.commit()
 
     def get_fixed_costs(self):
@@ -508,6 +515,97 @@ class Database:
                 expense_data.append(cursor.fetchone()[0] or 0.0)
             return income_data, expense_data
 
+
+    def get_daily_drain(self):
+        import datetime
+        from datetime import date
+        today = date.today()
+        drain = {
+            'prestamos': 0.0,
+            'tarjetas_prov': 0.0,
+            'cheques': 0.0,
+            'fijos': 0.0,
+            'total': 0.0
+        }
+        
+        def days_until(target_date_str):
+            if not target_date_str: return 1
+            try:
+                t_date = datetime.datetime.strptime(target_date_str, '%Y-%m-%d').date()
+                diff = (t_date - today).days
+                return max(1, diff)
+            except:
+                return 1
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # 1. Prestamos (cuotas pendientes)
+            cursor.execute("SELECT amount, due_date, paid_amount FROM installments WHERE status != 'paid'")
+            for row in cursor.fetchall():
+                total = row[0] or 0.0
+                paid = row[2] or 0.0
+                rem = total - paid
+                if rem > 0:
+                    d = days_until(row[1])
+                    drain['prestamos'] += (rem / d)
+                    
+            # 2. General Debts
+            cursor.execute("SELECT amount, due_date, paid_amount FROM general_debts WHERE status != 'paid'")
+            for row in cursor.fetchall():
+                total = row[0] or 0.0
+                paid = row[2] or 0.0
+                rem = total - paid
+                if rem > 0:
+                    d = days_until(row[1])
+                    drain['tarjetas_prov'] += (rem / d)
+                    
+            # 3. Checks
+            cursor.execute("SELECT amount, due_date, paid_amount FROM checks WHERE status != 'paid'")
+            for row in cursor.fetchall():
+                total = row[0] or 0.0
+                paid = row[2] or 0.0
+                rem = total - paid
+                if rem > 0:
+                    d = days_until(row[1])
+                    drain['cheques'] += (rem / d)
+                    
+            # 4. Fixed Costs
+            cursor.execute("SELECT amount, due_day FROM fixed_costs")
+            for row in cursor.fetchall():
+                amount = row[0] or 0.0
+                due_day = row[1] or 1
+                try:
+                    due_day = int(due_day)
+                except:
+                    due_day = 1
+                    
+                if due_day < today.day:
+                    if today.month == 12:
+                        y = today.year + 1
+                        m = 1
+                    else:
+                        y = today.year
+                        m = today.month + 1
+                else:
+                    y = today.year
+                    m = today.month
+                    
+                try:
+                    target = datetime.date(y, m, due_day)
+                except ValueError:
+                    if m == 12:
+                        target = datetime.date(y+1, 1, 1)
+                    else:
+                        target = datetime.date(y, m+1, 1)
+                
+                diff = (target - today).days
+                d = max(1, diff)
+                drain['fijos'] += (amount / d)
+                
+        drain['total'] = drain['prestamos'] + drain['tarjetas_prov'] + drain['cheques'] + drain['fijos']
+        return drain
+
     def get_stats(self, month=None, year=None):
         """Calcula los totales de ingresos, egresos y saldos pendientes para los cuadros del Dashboard."""
         with self.get_connection() as conn:
@@ -518,8 +616,8 @@ class Database:
             
             period_str = f"{year}-{month:02d}"
             
-            # Expenses for the period
-            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ?", (f"{period_str}-%",))
+            # Expenses for the period (excluding debt payments to keep P&L accurate)
+            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type != 'tesoreria'", (f"{period_str}-%",))
             total_expenses = cursor.fetchone()[0] or 0.0
             
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'fijo'", (f"{period_str}-%",))
@@ -528,14 +626,17 @@ class Database:
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'variable'", (f"{period_str}-%",))
             variable_expenses = cursor.fetchone()[0] or 0.0
             
+            cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'tesoreria'", (f"{period_str}-%",))
+            financial_expenses = cursor.fetchone()[0] or 0.0
+            
             # Income for the period
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{period_str}-%",))
             total_income = cursor.fetchone()[0] or 0.0
             
-            # Category Breakdown
+            # Category Breakdown (OPEX only)
             cursor.execute('''
                 SELECT category, SUM(amount) FROM expenses 
-                WHERE date LIKE ? 
+                WHERE date LIKE ? AND type != 'tesoreria'
                 GROUP BY category 
                 ORDER BY SUM(amount) DESC
             ''', (f"{period_str}-%",))
@@ -551,19 +652,23 @@ class Database:
             cursor.execute("SELECT SUM(amount) FROM general_debts WHERE category = 'Proveedor' AND status = 'pending'")
             prov_balance = cursor.fetchone()[0] or 0.0
             
+            cursor.execute("SELECT SUM(amount) FROM investments")
+            inv_balance = cursor.fetchone()[0] or 0.0
+
             return {
                 "total_expenses": total_expenses,
                 "fixed_expenses": fixed_expenses,
                 "variable_expenses": variable_expenses,
+                "financial_expenses": financial_expenses,
                 "total_income": total_income,
-                "balance": total_income - total_expenses,
                 "categories": categories,
                 "balances": {
                     "Préstamos": loan_balance,
                     "Cheques": check_balance,
                     "Tarjetas": card_balance,
                     "Proveedores": prov_balance
-                }
+                },
+                "investments_balance": inv_balance
             }
 
     def get_pure_accounting_stats(self, date_obj=None):
@@ -620,6 +725,20 @@ class Database:
                             ELSE 'Pagado' END as status
                 FROM general_debts
                 WHERE due_date LIKE ? AND status != 'paid'
+                UNION ALL
+                SELECT due_date as date, 'CHEQUE' as type, 'Cheque' as cat, bank || ' - ' || recipient as description, -amount as amount, id, 
+                       CASE WHEN status = 'pending' THEN 'Pendiente' 
+                            ELSE 'Pagado' END as status
+                FROM checks
+                WHERE due_date LIKE ? AND status != 'paid'
+                UNION ALL
+                SELECT i.due_date as date, 'PRÉSTAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id, 
+                       CASE WHEN i.status = 'pending' THEN 'Pendiente' 
+                            WHEN i.status = 'partial' THEN 'Parcial'
+                            ELSE 'Pagado' END as status
+                FROM installments i
+                JOIN loans l ON i.loan_id = l.id
+                WHERE i.due_date LIKE ? AND i.status != 'paid'
                 ORDER BY date DESC
-            ''', (period_str, period_str, period_str))
+            ''', (period_str, period_str, period_str, period_str, period_str))
             return cursor.fetchall()

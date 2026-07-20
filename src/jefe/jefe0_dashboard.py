@@ -33,6 +33,7 @@ JEFE_MODULES = [
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
     ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
     ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
+    ("personal",     "Personal y\nUsuarios",      "👥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
 ]
 # (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
 
@@ -131,6 +132,21 @@ class Jefe0Dashboard(QWidget):
             QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
+        
+        self.btn_perfiles = QPushButton("👥 Personal")
+        self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_perfiles.setFixedHeight(34)
+        self.btn_perfiles.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+        """)
+        self.btn_perfiles.clicked.connect(self._abrir_perfiles)
+        nav_lay.addWidget(self.btn_perfiles)
         
         try:
             from src.config import config
@@ -279,7 +295,9 @@ class Jefe0Dashboard(QWidget):
         cols = 2
         for idx, (m_id, title, icon, accent, bg_soft, text_dark, screen_idx, tab_idx) in enumerate(JEFE_MODULES):
             card = JefeCard(title, icon, accent, bg_soft, text_dark)
-            if tab_idx is not None:
+            if screen_idx == -1:
+                card.clicked.connect(self._abrir_perfiles)
+            elif tab_idx is not None:
                 card.clicked.connect(
                     lambda si=screen_idx, ti=tab_idx: (
                         self.request_screen.emit(si),
@@ -350,6 +368,17 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             nombre = "Jefe"
         self.lbl_greeting.setText(f"{greet}, {nombre} 👑")
+
+    def _abrir_perfiles(self):
+        try:
+            from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
+            from src.utils.qt_compat import qt_exec
+            dlg = DialogoPerfiles(self)
+            qt_exec(dlg)
+        except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error abriendo perfiles: {e}")
+            print(f"Error abriendo perfiles: {e}")
 
     def _toggle_theme(self):
         try:

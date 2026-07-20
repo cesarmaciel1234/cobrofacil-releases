@@ -54,9 +54,9 @@ class VistaReportesMixin:
             from src.creador_pdf_global.motor_pdf_reportes import generar_pdf_mensual_stats
             generar_pdf_mensual_stats(path, stats, self._mes, self._año, MESES[self._mes-1])
             
-            QMessageBox.information(self, "PDF Generado", f"Guardado en:\n{path}")
+            QMessageBox.information(self.window(), "PDF Generado", f"Guardado en:\n{path}")
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self.window(), "Error", str(e))
 
     def _export_csv_generic(self, rows, headers, filename):
         import csv
@@ -67,28 +67,28 @@ class VistaReportesMixin:
             w.writerow(headers)
             for r in (rows or []):
                 w.writerow(list(r))
-        QMessageBox.information(self, "Exportado", f"Guardado en:\n{path}")
+        QMessageBox.information(self.window(), "Exportado", f"Guardado en:\n{path}")
 
     def _export_gastos_csv(self):
         try:
             self._export_csv_generic(self._db.get_expenses(),
                                       ["ID", "Fecha", "Categoría", "Monto", "Descripción", "Tipo"],
                                       f"gastos_{self._mes:02d}_{self._año}.csv")
-        except Exception as e: QMessageBox.critical(self, "Error", str(e))
+        except Exception as e: QMessageBox.critical(self.window(), "Error", str(e))
 
     def _export_ingresos_csv(self):
         try:
             self._export_csv_generic(self._db.get_income(self._mes, self._año),
                                       ["ID", "Fecha", "Descripción", "Fuente", "Monto"],
                                       f"ingresos_{self._mes:02d}_{self._año}.csv")
-        except Exception as e: QMessageBox.critical(self, "Error", str(e))
+        except Exception as e: QMessageBox.critical(self.window(), "Error", str(e))
 
     def _export_prestamos_csv(self):
         try:
             self._export_csv_generic(self._db.get_installments(),
                                       ["ID", "LoanID", "N°", "Monto", "Vencimiento", "Estado", "PaidDate"],
                                       f"prestamos_{self._año}.csv")
-        except Exception as e: QMessageBox.critical(self, "Error", str(e))
+        except Exception as e: QMessageBox.critical(self.window(), "Error", str(e))
 
     # ─────────────────────────────────────────────────────────────────────────
     # BACKUP
@@ -103,6 +103,6 @@ class VistaReportesMixin:
                 "SQLite (*.db)")
             if not dest: return
             shutil.copy2(DB_PATH, dest)
-            QMessageBox.information(self, "✅ Backup", f"Guardado en:\n{dest}")
+            QMessageBox.information(self.window(), "✅ Backup", f"Guardado en:\n{dest}")
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self.window(), "Error", str(e))

@@ -34,6 +34,18 @@ class MotorCatalogo:
             self.logger.error(f"Error al obtener productos: {e}")
             return [], False
 
+    def obtener_producto_por_id(self, id_producto):
+        """Devuelve el diccionario de un producto buscado exactamente por su ID."""
+        try:
+            q = "SELECT p.*, d.iva AS depto_iva FROM productos p LEFT JOIN departamentos d ON UPPER(p.departamento) = UPPER(d.nombre) WHERE p.id = ?"
+            resultados = db_manager.execute_query(q, (id_producto,))
+            if resultados:
+                return resultados[0]
+            return None
+        except Exception as e:
+            self.logger.error(f"Error al obtener producto por id ({id_producto}): {e}")
+            return None
+
     def obtener_total_productos(self):
         """Devuelve el conteo total de productos."""
         try:

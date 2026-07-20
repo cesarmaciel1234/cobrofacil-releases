@@ -28,7 +28,7 @@ from src.carteleria.motor_carteleria.espia_worker import EspiaWorker
 from src.carteleria.motor_carteleria.window_manager import WindowManager
 from src.carteleria.motor_carteleria.layout_manager import LayoutManager
 from src.carteleria.motor_carteleria.network_manager import NetworkManager
-from src.carteleria.motor_carteleria.promo_manager import PromoManager
+
 
 
 class CarteleriaMain(QWidget):
@@ -52,8 +52,6 @@ class CarteleriaMain(QWidget):
         self.window_manager = WindowManager(self)
         self.layout_manager = LayoutManager(self)
         self.network_manager = NetworkManager(self)
-        self.promo_manager = PromoManager(self)
-
         
         # --- FONDO ---
         self.bg_label = QLabel(self)
@@ -90,7 +88,7 @@ class CarteleriaMain(QWidget):
         
         # ⏱️ TIMER ROTACIÓN PROMOCIONES
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.promo_manager.actualizar_pantallas_promocionales)
+        # self.timer.timeout.connect(self.promo_manager.actualizar_pantallas_promocionales) # Deprecated
         self.rotacion_ms = 16000 # Por defecto
         self.timer.start(self.rotacion_ms) 
         
@@ -194,8 +192,8 @@ class CarteleriaMain(QWidget):
 
     def _on_clima_actualizado(self, icon_name, text):
         self.clima_pilar = (icon_name, text)
-        if hasattr(self, 'info_negocio'):
-            self.info_negocio.set_clima(icon_name, text)
+        if hasattr(self, 'zona4_extra2'):
+            self.zona4_extra2.motor.set_clima((icon_name, text))
 
     def _abrir_configuracion(self):
         from PyQt6.QtWidgets import QInputDialog, QMessageBox
@@ -293,8 +291,8 @@ class CarteleriaMain(QWidget):
             current_hash = hashlib.md5(stable_str.encode()).hexdigest()
             if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
                 self.last_precios_hash = current_hash
-                if rows_precios:
-                    self.zona2_precios.set_items(self.promo_manager.agrupar(rows_precios))
+                # La grilla de precios ahora es 100% autonoma y lee de /api/carteleria/grilla
+                pass
                     
             # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
             rows_top10 = data.get("top10", {})

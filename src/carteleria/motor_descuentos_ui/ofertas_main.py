@@ -292,7 +292,8 @@ class Admin2Ofertas(QWidget):
             data['precio_oferta'],
             data.get('precio_oferta_relampago', 0),
             data.get('precio_oferta_promedio', 0),
-            data.get('limite_oferta_relampago', 0)
+            data.get('limite_oferta_relampago', 0),
+            precio_regular=data.get('precio_regular')
         )
         if ok:
             try:

@@ -141,7 +141,7 @@ class StockAreaChartWidget(QWidget):
                 x = padding_l + i * step
                 v = self.data_prev.get(key, {}).get('ventas', 0)
                 y = h - padding_b - (v / max_val) * chart_h
-                pts_prev.append(QPoint(int(x), int(y)))
+                pts_prev.append(QPointF(float(x), float(y)))
                 
             path_prev = QPainterPath()
             path_prev.moveTo(pts_prev[0])
@@ -149,8 +149,8 @@ class StockAreaChartWidget(QWidget):
                 # Bezier smoothing
                 p1 = pts_prev[i-1]
                 p2 = pts_prev[i]
-                c1 = QPoint(int((p1.x() + p2.x()) / 2), p1.y())
-                c2 = QPoint(int((p1.x() + p2.x()) / 2), p2.y())
+                c1 = QPointF(float((p1.x() + p2.x()) / 2), p1.y())
+                c2 = QPointF(float((p1.x() + p2.x()) / 2), p2.y())
                 path_prev.cubicTo(c1, c2, p2)
                 
             pen_prev = QPen(QColor("#94A3B8"), 3, Qt.DashLine)
@@ -163,15 +163,15 @@ class StockAreaChartWidget(QWidget):
         for i, key in enumerate(keys):
             x = padding_l + i * step
             y = h - padding_b - (self.data[key].get('ventas', 0) / max_val) * chart_h
-            pts_v.append(QPoint(int(x), int(y)))
+            pts_v.append(QPointF(float(x), float(y)))
             
         path_v = QPainterPath()
         path_v.moveTo(pts_v[0])
         for i in range(1, len(pts_v)):
             p1 = pts_v[i-1]
             p2 = pts_v[i]
-            c1 = QPoint(int((p1.x() + p2.x()) / 2), p1.y())
-            c2 = QPoint(int((p1.x() + p2.x()) / 2), p2.y())
+            c1 = QPointF(float((p1.x() + p2.x()) / 2), p1.y())
+            c2 = QPointF(float((p1.x() + p2.x()) / 2), p2.y())
             path_v.cubicTo(c1, c2, p2)
             
         fill_path = QPainterPath(path_v)
@@ -247,5 +247,5 @@ class StockAreaChartWidget(QWidget):
                 else:
                     painter.setPen(QColor("#94A3B8"))
                     painter.drawText(rect_diff, Qt.AlignCenter, "Sin cambios")
-
-
+        
+        painter.end()

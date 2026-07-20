@@ -659,6 +659,18 @@ class DatabaseManager:
             
             # 2. PRODUCTOS (Stock Industrial)
             cursor.execute("""
+                CREATE TABLE IF NOT EXISTS carteleria_global (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    departamento TEXT,
+                    nombre_producto TEXT,
+                    precio_normal REAL DEFAULT 0,
+                    precio_oferta REAL DEFAULT 0,
+                    regla_texto TEXT,
+                    ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS productos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT,

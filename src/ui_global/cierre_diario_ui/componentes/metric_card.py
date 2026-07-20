@@ -7,7 +7,7 @@ class MetricCard(QFrame):
         super().__init__(parent)
         self.setObjectName("MetricCard")
         self.color = color
-        self.setFixedHeight(100)
+        self.setFixedHeight(120)
         self.setStyleSheet(f"""
             QFrame#MetricCard {{
                 background: white; border: 1px solid #E2E8F0; border-radius: 16px;
@@ -18,8 +18,8 @@ class MetricCard(QFrame):
         # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
         
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(20, 10, 20, 10)
-        lay.setSpacing(15)
+        lay.setContentsMargins(20, 15, 20, 15)
+        lay.setSpacing(20)
         
         # Contenedor del ícono para darle un fondo suave
         icon_frame = QFrame()
@@ -35,14 +35,16 @@ class MetricCard(QFrame):
         lay.addWidget(icon_frame)
         
         v_lay = QVBoxLayout()
-        v_lay.setSpacing(2)
+        v_lay.setSpacing(8)
         v_lay.setAlignment(Qt.AlignVCenter)
         self.lbl_tit = QLabel(titulo.upper())
         self.lbl_tit.setObjectName("MetricTit")
+        self.lbl_tit.setStyleSheet("font-size: 15px; font-weight: bold; color: #475569; letter-spacing: 1px;")
 
         v_lay.addWidget(self.lbl_tit)
         
         self.lbl_val = QLabel("••••••")
+        self.lbl_val.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {self.color};")
 
         v_lay.addWidget(self.lbl_val)
         lay.addLayout(v_lay)

@@ -84,7 +84,7 @@ class _FiadoExpressBase(QDialog):
         self.monto_total = float(monto_total)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(560, 480)
+        self.setFixedSize(620, 680)
 
     @staticmethod
     def _hint_label(text: str) -> QLabel:

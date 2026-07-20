@@ -19,10 +19,10 @@ class MotorCierre:
             target_date = fecha_str if fecha_str else datetime.now().strftime("%Y-%m-%d")
             
             cajero_cond_ventas = ""
-            params_ventas = [target_date]
+            params_ventas = []
             
             cajero_cond_fondo = ""
-            params_fondo = [target_date]
+            params_fondo = []
             
             if cajero:
                 cajero_cond_ventas += " AND usuario = ?"
@@ -36,27 +36,27 @@ class MotorCierre:
                 cajero_cond_fondo += " AND caja_id = ?"
                 params_fondo.append(caja_id)
             
-            # Fondo del cajero o del día
+            # Fondo del cajero o caja abierta actualmente (sin filtro de fecha estricto para aperturas pendientes)
             fondo = float(db_manager.execute_scalar(
-                f"SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND date(fecha) = ? {cajero_cond_fondo} ORDER BY id DESC LIMIT 1",
+                f"SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' {cajero_cond_fondo} ORDER BY id DESC LIMIT 1",
                 tuple(params_fondo)
             ) or 0)
             
-            # Ventas Efectivo
+            # Ventas Efectivo pendientes de cierre
             v_efectivo = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago='Efectivo' AND date(fecha) = ? {cajero_cond_ventas}",
+                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago='Efectivo' {cajero_cond_ventas}",
                 tuple(params_ventas)
             ) or 0)
 
-            # Ventas Tarjeta
+            # Ventas Tarjeta pendientes de cierre
             v_tarjeta = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago LIKE '%Tarjeta%' AND date(fecha) = ? {cajero_cond_ventas}",
+                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago LIKE '%Tarjeta%' {cajero_cond_ventas}",
                 tuple(params_ventas)
             ) or 0)
 
-            # Transferencia / Fiado
+            # Transferencia / Fiado pendientes de cierre
             v_trans = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND (metodo_pago='Transferencia' OR metodo_pago='Fiado') AND date(fecha) = ? {cajero_cond_ventas}",
+                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND (metodo_pago='Transferencia' OR metodo_pago='Fiado') {cajero_cond_ventas}",
                 tuple(params_ventas)
             ) or 0)
 
@@ -79,3 +79,32 @@ class MotorCierre:
                 "fondo": 0.0, "v_efectivo": 0.0, "v_tarjeta": 0.0, "v_trans": 0.0,
                 "v_totales": 0.0, "v_caja_total": 0.0, "ganancia_estimada": 0.0
             }
+
+    @staticmethod
+    def cerrar_caja(username, caja_id, fisico, dif, esperado, t_total, modo):
+        try:
+            from datetime import datetime
+            fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            obs = f"Cierre {modo}. Esperado: {esperado:,.2f}. Dif: {dif:,.2f}. Total ventas: {t_total:,.2f}"
+            tipo_cierre = "CIERRE_TURNO" if modo == "cajero" else "CIERRE_Z"
+            
+            db_manager.execute_non_query(
+                "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (fecha, tipo_cierre, fisico, username, obs, caja_id)
+            )
+            
+            if modo == "dia":
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA'",
+                    ()
+                )
+            elif modo == "cajero":
+                db_manager.execute_non_query(
+                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ?",
+                    (username,)
+                )
+
+            return True
+        except Exception as e:
+            print(f"Error cerrando caja: {e}")
+            raise e

@@ -2,7 +2,7 @@ from src.base_de_datos.database import db_manager
 from src.config import config
 
 
-FIADO_EXPRESS_LIMITE_DEFAULT = 20000.0
+FIADO_EXPRESS_LIMITE_DEFAULT = 30000.0
 
 
 class ClienteRepository:
@@ -82,6 +82,48 @@ class ClienteRepository:
             return None, "error", "No se pudo crear el cliente Express"
 
         creado = ClienteRepository.buscar_por_dni(dni)
+        if not creado:
+            return None, "error", "Cliente creado pero no se pudo recuperar"
+        return creado, "creado", f"Cliente creado: {nombre}"
+
+    @staticmethod
+    def buscar_por_nombre(nombre: str):
+        """Busca cliente por nombre exacto."""
+        nombre = (nombre or "").strip()
+        if not nombre:
+            return None
+        rows = db_manager.execute_query(
+            "SELECT id, nombre, limite_credito, deuda_actual, dni, tipo_cliente "
+            "FROM clientes WHERE nombre = ?",
+            (nombre,),
+        )
+        return rows[0] if rows else None
+
+    @staticmethod
+    def verificar_y_crear_por_nombre(nombre: str):
+        """
+        Clientes Express: identifica por Nombre o crea perfil.
+        Retorna (cliente_dict | None, estado_str, mensaje_ui).
+        estado: 'identificado' | 'creado' | 'error'
+        """
+        nombre = (nombre or "").strip()
+        if not nombre or len(nombre) < 3:
+            return None, "error", "Nombre inválido (mínimo 3 letras)"
+
+        existente = ClienteRepository.buscar_por_nombre(nombre)
+        if existente:
+            return existente, "identificado", existente["nombre"]
+
+        limite = 50000.0  # Límite fijo de 50 mil para creación por nombre
+        ok = db_manager.execute_non_query(
+            "INSERT INTO clientes (nombre, telefono, limite_credito, deuda_actual, dni, tipo_cliente) "
+            "VALUES (?, ?, ?, 0, '', 'cliente_express')",
+            (nombre, None, limite),
+        )
+        if not ok:
+            return None, "error", "No se pudo crear el cliente"
+
+        creado = ClienteRepository.buscar_por_nombre(nombre)
         if not creado:
             return None, "error", "Cliente creado pero no se pudo recuperar"
         return creado, "creado", f"Cliente creado: {nombre}"

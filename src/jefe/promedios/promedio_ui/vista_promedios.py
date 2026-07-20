@@ -727,6 +727,7 @@ class VistaPromediosMixin:
             self._lbl_prom_totales_oferta.setText(f"Ofertas => Venta: ${t_venta_oferta:,.2f} | Ganancia: ${t_ganancia_oferta:,.2f}")
 
         self._prom_tabla.blockSignals(False)
+        self._guardar_estado_actual()
 
 
     def _prom_exportar_inventario(self):

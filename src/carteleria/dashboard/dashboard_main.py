@@ -97,6 +97,8 @@ class CarteleriaDashboard(QWidget):
     request_red_lan = pyqtSignal()
     request_toggle_theme = pyqtSignal()
 
+    request_proveedores = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.setup_ui()
@@ -203,6 +205,7 @@ class CarteleriaDashboard(QWidget):
         self.card_inv = CarteleriaCard("Inventario", "📦", "#FDF4FF", "#A21CAF", "Gestión local de productos y stock")
         self.card_ofe = CarteleriaCard("Ofertas", "🏷️", "#FFFBEB", "#D97706", "Crear promos y ofertas de TV")
         self.card_red = CarteleriaCard("Red LAN", "🌐", "#F3F4F6", "#374151", "Configurar Maestra o Esclava")
+        self.card_prov = CarteleriaCard("Proveedores", "🚚", "#E0F2FE", "#075985", "Compras y Stock")
 
         self.card_tv.clicked.connect(self._on_launch_tv)
         self.card_admin.clicked.connect(self._on_launch_admin)
@@ -210,6 +213,7 @@ class CarteleriaDashboard(QWidget):
         self.card_inv.clicked.connect(self._on_launch_inv)
         self.card_ofe.clicked.connect(self._on_launch_ofe)
         self.card_red.clicked.connect(self._on_launch_red)
+        self.card_prov.clicked.connect(self._on_launch_prov)
 
         grid.addWidget(self.card_tv, 0, 0)
         grid.addWidget(self.card_admin, 0, 1)
@@ -217,6 +221,7 @@ class CarteleriaDashboard(QWidget):
         grid.addWidget(self.card_inv, 1, 0)
         grid.addWidget(self.card_ofe, 1, 1)
         grid.addWidget(self.card_red, 1, 2)
+        grid.addWidget(self.card_prov, 2, 0)
         
         page_lay.addLayout(grid)
         page_lay.addStretch()
@@ -310,3 +315,7 @@ class CarteleriaDashboard(QWidget):
     def _on_launch_red(self):
         increment_stat("Red_LAN")
         self.request_red_lan.emit()
+
+    def _on_launch_prov(self):
+        increment_stat("Proveedores")
+        self.request_proveedores.emit()

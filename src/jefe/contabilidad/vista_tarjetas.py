@@ -75,10 +75,10 @@ class VistaTarjetasMixin:
             self._td_nombre.clear(); self._td_monto.clear()
             self._load_tarjetas()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _pagar_deuda(self, did, restante):
-        monto_str, ok = QInputDialog.getText(self, "Pagar Deuda",
+        monto_str, ok = QInputDialog.getText(self.window(), "Pagar Deuda",
                                               f"Monto a pagar (restante: $ {restante:,.2f}):",
                                               QLineEdit.Normal, f"{restante:.2f}")
         if ok and monto_str:
@@ -86,7 +86,7 @@ class VistaTarjetasMixin:
                 self._db.pay_general_debt(did, float(monto_str.replace(",", ".")))
                 self._load_tarjetas()
             except Exception as e:
-                QMessageBox.warning(self, "Error", str(e))
+                QMessageBox.warning(self.window(), "Error", str(e))
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 7 — INVERSIONES

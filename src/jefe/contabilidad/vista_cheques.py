@@ -73,10 +73,10 @@ class VistaChequesMixin:
                 w.clear()
             self._load_cheques()
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self.window(), "Error", str(e))
 
     def _pagar_cheque(self, cid, restante):
-        monto_str, ok = QInputDialog.getText(self, "Pagar Cheque",
+        monto_str, ok = QInputDialog.getText(self.window(), "Pagar Cheque",
                                               f"Monto a pagar (restante: $ {restante:,.2f}):",
                                               QLineEdit.Normal, f"{restante:.2f}")
         if ok and monto_str:
@@ -84,7 +84,7 @@ class VistaChequesMixin:
                 self._db.pay_check(cid, float(monto_str.replace(",", ".")))
                 self._load_cheques()
             except Exception as e:
-                QMessageBox.warning(self, "Error", str(e))
+                QMessageBox.warning(self.window(), "Error", str(e))
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 6 — TARJETAS / DEUDAS GENERALES
