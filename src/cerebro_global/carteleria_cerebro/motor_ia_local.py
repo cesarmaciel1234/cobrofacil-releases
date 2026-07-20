@@ -61,9 +61,6 @@ class MotorIALocal:
         except Exception as e:
             print(f"Error en obtener_relacionados: {e}")
             return ["Falda", "Chorizo", "Carbón"] # Fallback rústico
-        finally:
-            if hasattr(conn, 'close'):
-                conn.close()
                 
     @staticmethod
     def _obtener_top_general(limit=3, excluir=None):
@@ -101,9 +98,6 @@ class MotorIALocal:
             return resultados
         except:
             return ["Carbón", "Chorizo", "Morcilla"][:limit]
-        finally:
-            if hasattr(conn, 'close'):
-                conn.close()
 
     @staticmethod
     def generar_recomendacion_lobo(clima_tupla, datos_destacados):
@@ -168,9 +162,6 @@ class MotorIALocal:
                 else:
                     estrella_precio = float(res[0] or 0)
                     estrella_oferta = float(res[1] or 0)
-                    
-            if hasattr(conn, 'close'):
-                conn.close()
                 
             # Si encontramos datos en datos_destacados (preferimos sugerir cosas que están en la cartelería global)
             if datos_destacados and not res:
