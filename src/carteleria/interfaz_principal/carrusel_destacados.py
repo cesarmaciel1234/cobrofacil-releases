@@ -179,6 +179,13 @@ class CarruselDestacados(QFrame):
         for i, prod in enumerate(productos[:5]):
             nombre = prod[0]
             cantidad = 0.0
+            unidad_str = ""
+            is_kilos = False
+            if len(prod) >= 5:
+                unidad_raw = str(prod[4]).lower()
+                if 'kilo' in unidad_raw or unidad_raw == 'kg':
+                    is_kilos = True
+            
             if len(prod) >= 6:
                 cantidad = prod[5]
             
@@ -186,7 +193,13 @@ class CarruselDestacados(QFrame):
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
                 
-                texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} VENDIDOS!" if cantidad > 0 else "🔥 ¡SÚPER VENTAS!"
+                if cantidad > 0:
+                    if is_kilos:
+                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} KG VENDIDOS!"
+                    else:
+                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} U. VENDIDAS!"
+                else:
+                    texto_ventas = "🔥 ¡SÚPER VENTAS!"
                 
                 html += f"""
                 <div style='margin-bottom: 25px; margin-left: 5%;'>
@@ -200,7 +213,14 @@ class CarruselDestacados(QFrame):
                 </div>
                 """
             else:
-                texto_ventas = f"Más de {cantidad:g} vendidos" if cantidad > 0 else "Top Ventas"
+                if cantidad > 0:
+                    if is_kilos:
+                        texto_ventas = f"Más de {cantidad:g} KG vendidos"
+                    else:
+                        texto_ventas = f"Más de {cantidad:g} U. vendidas"
+                else:
+                    texto_ventas = "Top Ventas"
+                    
                 html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888;'>({texto_ventas})</span></div>"
         
         html += "</div>"
