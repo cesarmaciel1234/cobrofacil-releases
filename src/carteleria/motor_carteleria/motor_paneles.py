@@ -19,51 +19,73 @@ class MotorCarrusel(QThread):
             modos = ["hoy", "semana", "mes"]
             titulos = ["LO MÁS VENDIDO - HOY", "TOP DE LA SEMANA", "TOP DEL MES"]
             
-            modo_str = modos[self.modo_actual]
-            titulo_str = titulos[self.modo_actual]
-            
-            top_real = motor_ventas.get_top_ventas(limit=10, periodo=modo_str)
-            
-            # Buscar en carteleria_global los precios limpios
             prod_lista = []
-            for p in top_real:
-                nombre = p['nombre']
-                q = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) = LOWER(?)"
-                
-                rows = db_manager.execute_query(q, (nombre,))
-                if rows:
-                    row0 = rows[0]
-                    if isinstance(row0, dict):
-                        precio = float(row0.get('precio_normal') or 0)
-                        precio_of = float(row0.get('precio_oferta') or 0)
-                        regla = str(row0.get('regla_texto') or "")
-                    else:
-                        precio = float(row0[0] or 0)
-                        precio_of = float(row0[1] or 0)
-                        regla = str(row0[2] or "")
-                    
-                    if regla: unidad = "Kilos" if "Kilos" in regla else "Unidades"
-                    else: unidad = "Unidades"
-                    
-                    # Fetch real stock and unidad
-                    stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
-                    real_stock = 0.0
-                    if stock_rows:
-                        if isinstance(stock_rows[0], dict):
-                            real_stock = float(stock_rows[0].get('stock') or 0)
-                            if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
-                        else:
-                            real_stock = float(stock_rows[0][0] or 0)
-                            if stock_rows[0][1]: unidad = str(stock_rows[0][1])
-                    
-                    cantidad_vendida = float(p.get('cantidad', 0))
-                    prod_lista.append((nombre, precio, precio_of, real_stock, unidad, cantidad_vendida))
+            titulo_str = ""
             
-            self.modo_actual = (self.modo_actual + 1) % 3
+            # Intentar encontrar un modo que tenga datos (hasta 3 intentos)
+            for _ in range(3):
+                modo_str = modos[self.modo_actual]
+                titulo_str = titulos[self.modo_actual]
+                
+                top_real = motor_ventas.get_top_ventas(limit=10, periodo=modo_str)
+                
+                for p in top_real:
+                    nombre = p['nombre']
+                    q = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) = LOWER(?)"
+                    rows = db_manager.execute_query(q, (nombre,))
+                    if rows:
+                        row0 = rows[0]
+                        if isinstance(row0, dict):
+                            precio = float(row0.get('precio_normal') or 0)
+                            precio_of = float(row0.get('precio_oferta') or 0)
+                            regla = str(row0.get('regla_texto') or "")
+                        else:
+                            precio = float(row0[0] or 0)
+                            precio_of = float(row0[1] or 0)
+                            regla = str(row0[2] or "")
+                        
+                        if regla: unidad = "Kilos" if "Kilos" in regla else "Unidades"
+                        else: unidad = "Unidades"
+                        
+                        stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                        real_stock = 0.0
+                        if stock_rows:
+                            if isinstance(stock_rows[0], dict):
+                                real_stock = float(stock_rows[0].get('stock') or 0)
+                                if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
+                            else:
+                                real_stock = float(stock_rows[0][0] or 0)
+                                if stock_rows[0][1]: unidad = str(stock_rows[0][1])
+                        
+                        cantidad_vendida = float(p.get('cantidad', 0))
+                        prod_lista.append((nombre, precio, precio_of, real_stock, unidad, cantidad_vendida))
+                
+                self.modo_actual = (self.modo_actual + 1) % 3
+                if prod_lista:
+                    break # Encontramos datos, salimos del bucle
+            
+            # Fallback si no hay ventas en ningun periodo (ej. base de datos nueva)
+            if not prod_lista:
+                q_fall = "SELECT nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY precio_oferta DESC LIMIT 5"
+                rows_fall = db_manager.execute_query(q_fall)
+                for row in rows_fall:
+                    if isinstance(row, dict):
+                        nombre = row.get('nombre_producto')
+                        precio = float(row.get('precio_normal') or 0)
+                        precio_of = float(row.get('precio_oferta') or 0)
+                        regla = str(row.get('regla_texto') or "")
+                    else:
+                        nombre = row[0]
+                        precio = float(row[1] or 0)
+                        precio_of = float(row[2] or 0)
+                        regla = str(row[3] or "")
+                        
+                    unidad = "Kilos" if "Kilos" in regla else "Unidades"
+                    prod_lista.append((nombre, precio, precio_of, 99, unidad, 0))
+                titulo_str = "PRODUCTOS DESTACADOS"
+
             if prod_lista:
                 self.datos_listos.emit(prod_lista, titulo_str)
-            else:
-                self.datos_listos.emit([], "")
         except Exception as e:
             logger.error(f"MotorCarrusel Error: {e}")
             self.datos_listos.emit([], "")
