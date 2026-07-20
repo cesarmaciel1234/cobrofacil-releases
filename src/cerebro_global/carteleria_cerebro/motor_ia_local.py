@@ -127,7 +127,7 @@ class MotorIALocal:
             # 2. Plantillas dinámicas (sin depender de motor_ia de NLP)
             plantillas = [
                 "¡Salió {clima} en {localidad}! Los vecinos están llevando mucho {estrella}, ideal para hoy.",
-                "Para este momento de la {momento}, el Chef Lobo te recomienda llevar {estrella}.",
+                "Para este momento de la {momento}, te recomendamos llevar {estrella}.",
                 "¡Aprovechá la frescura de hoy! {estrella} es el corte más elegido de la semana."
             ]
             

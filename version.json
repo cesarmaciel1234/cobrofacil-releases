@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 23:41:05",
+  "build_date": "2026-07-19 23:54:34",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1686,9 +1686,9 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "d030d7283e26ee841abdd1b2254820f2",
+      "checksum": "4bfd8c96996f8988698c077333e63e32",
       "channel": "stable",
-      "size": 13034
+      "size": 13025
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
@@ -1956,9 +1956,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/motor_ia_local.py": {
       "version": "1.0.0",
-      "checksum": "ead2fbe06c41afec20e8a351deba20ae",
+      "checksum": "aac1f152f9f1a4f5f93149d1ab41d34e",
       "channel": "stable",
-      "size": 7849
+      "size": 7590
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
