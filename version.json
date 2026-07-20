@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 21:52:06",
+  "build_date": "2026-07-19 21:54:04",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1686,7 +1686,7 @@
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "75d7a9ac322a5a892c7f7fef0493b5d2",
+      "checksum": "febf88822aedb0245a6a40c18f170241",
       "channel": "stable",
       "size": 9274
     },
