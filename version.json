@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 23:00:12",
+  "build_date": "2026-07-19 23:07:22",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1704,9 +1704,9 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "4ff12ff0577ea01974a1af85be6b4c13",
+      "checksum": "53f67f0fe5f29f02689431ed047f2274",
       "channel": "stable",
-      "size": 7960
+      "size": 14404
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
@@ -1824,9 +1824,9 @@
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
-      "checksum": "1241f2febcf853b7d92c50cf29c17059",
+      "checksum": "46ac28056ab424765fe1e8f750638c1d",
       "channel": "stable",
-      "size": 3487
+      "size": 3942
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
