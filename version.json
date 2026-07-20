@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-20 00:31:00",
+  "build_date": "2026-07-20 00:34:29",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1566,9 +1566,9 @@
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "12d943c70af21caf4ffc281a2685146e",
+      "checksum": "86e38e7d9117873eb99a69545ab9bb2c",
       "channel": "stable",
-      "size": 7288
+      "size": 7321
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",

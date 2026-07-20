@@ -372,10 +372,12 @@ class Jefe0Dashboard(QWidget):
     def _abrir_perfiles(self):
         try:
             from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
-            from src.utils.qt_utils import qt_exec
+            from src.utils.qt_compat import qt_exec
             dlg = DialogoPerfiles(self)
             qt_exec(dlg)
         except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error abriendo perfiles: {e}")
             print(f"Error abriendo perfiles: {e}")
 
     def _toggle_theme(self):
