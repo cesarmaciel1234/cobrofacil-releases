@@ -101,6 +101,12 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.red)
         self.showNormal()
 
+    def lanzar_prov(self):
+        self.setCurrentWidget(self.prov)
+        if hasattr(self.prov, 'cargar_datos'):
+            self.prov.cargar_datos()
+        self.showNormal()
+
     def toggle_carteleria_theme(self):
         from src.utils.theme_manager import theme_manager
         theme_manager.toggle_theme()
@@ -175,7 +181,3 @@ if __name__ == "__main__":
     sys.exit(lanzar_app())
 
 
-    def lanzar_prov(self):
-        self.setCurrentWidget(self.prov)
-        if hasattr(self.prov, 'cargar_datos'):
-            self.prov.cargar_datos()
