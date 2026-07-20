@@ -1,3 +1,5 @@
+from PyQt6.QtWidgets import QSizePolicy
+
 class LayoutManager:
     def __init__(self, main_window):
         self.main = main_window
@@ -13,6 +15,13 @@ class LayoutManager:
         self.main.zona2_precios.hide()
         self.main.zona3_extra1.hide()
         self.main.zona4_extra2.hide()
+        
+        # Forzar políticas de tamaño para que siempre se dividan el ancho exactamente igual
+        policy = QSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
+        self.main.zona1_carrusel.setSizePolicy(policy)
+        self.main.zona2_precios.setSizePolicy(policy)
+        self.main.zona3_extra1.setSizePolicy(policy)
+        self.main.zona4_extra2.setSizePolicy(policy)
         
         for i in reversed(range(self.main.grid.count())): 
             w = self.main.grid.itemAt(i).widget()
