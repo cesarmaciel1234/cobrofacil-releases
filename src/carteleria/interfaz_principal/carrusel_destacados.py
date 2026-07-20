@@ -195,18 +195,24 @@ class CarruselDestacados(QFrame):
                 
                 if cantidad > 0:
                     if is_kilos:
-                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS!"
+                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 22px;'>+</span> DE {cantidad:g}KG VENDIDOS!"
                     else:
-                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}U. VENDIDAS!"
+                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 22px;'>+</span> DE {cantidad:g}U. VENDIDAS!"
                 else:
                     texto_ventas = "🔥 ¡SÚPER VENTAS!"
                 
                 html += f"""
                 <div style='margin-bottom: 25px; margin-left: 5%;'>
-                    <div style='margin-bottom: -5px;'>
-                        <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF;'>#{i+1}</span> 
-                        <span style='font-family: Arial; font-size: 22px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 2px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
-                    </div>
+                    <table cellpadding='0' cellspacing='0' style='margin-bottom: -5px;'>
+                        <tr>
+                            <td valign='middle'>
+                                <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
+                            </td>
+                            <td valign='middle'>
+                                <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
+                            </td>
+                        </tr>
+                    </table>
                     <div>
                         <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
                     </div>
