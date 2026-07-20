@@ -195,9 +195,9 @@ class CarruselDestacados(QFrame):
                 
                 if cantidad > 0:
                     if is_kilos:
-                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} KG VENDIDOS!"
+                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g}KG VENDIDOS!"
                     else:
-                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} U. VENDIDAS!"
+                        texto_ventas = f"🔥 ¡MÁS DE {cantidad:g}U. VENDIDAS!"
                 else:
                     texto_ventas = "🔥 ¡SÚPER VENTAS!"
                 
@@ -205,7 +205,7 @@ class CarruselDestacados(QFrame):
                 <div style='margin-bottom: 25px; margin-left: 5%;'>
                     <div style='margin-bottom: -5px;'>
                         <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF;'>#{i+1}</span> 
-                        <span style='font-family: Arial; font-size: 22px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 2px 8px; border-radius: 5px;'>{texto_ventas}</span>
+                        <span style='font-family: Arial; font-size: 22px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 2px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
                     </div>
                     <div>
                         <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
@@ -215,13 +215,13 @@ class CarruselDestacados(QFrame):
             else:
                 if cantidad > 0:
                     if is_kilos:
-                        texto_ventas = f"Más de {cantidad:g} KG vendidos"
+                        texto_ventas = f"Más de {cantidad:g}KG vendidos"
                     else:
-                        texto_ventas = f"Más de {cantidad:g} U. vendidas"
+                        texto_ventas = f"Más de {cantidad:g}U. vendidas"
                 else:
                     texto_ventas = "Top Ventas"
                     
-                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888;'>({texto_ventas})</span></div>"
+                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888; white-space: nowrap;'>({texto_ventas})</span></div>"
         
         html += "</div>"
         self.lbl_content.setText(html)
