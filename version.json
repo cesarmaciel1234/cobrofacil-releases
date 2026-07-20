@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 23:54:34",
+  "build_date": "2026-07-20 00:05:22",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1686,7 +1686,7 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "4bfd8c96996f8988698c077333e63e32",
+      "checksum": "39d23a4a77c4c310e9bec5526529154a",
       "channel": "stable",
       "size": 13025
     },
@@ -1704,15 +1704,15 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "3c808ad1e2b192047a35ec889741d533",
+      "checksum": "501a4107c430568d1b248990cf573e7e",
       "channel": "stable",
-      "size": 7845
+      "size": 10261
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "35d8eb62ce8f508b4849fab07e61a57c",
+      "checksum": "a3f8dc42b1a7ff2f1313a64c04c6a771",
       "channel": "stable",
-      "size": 12445
+      "size": 12270
     },
     "src/carteleria/interfaz_principal/__init__.py": {
       "version": "1.0.0",
@@ -1842,9 +1842,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "dc3fbc9eac254e507ce522eb5c8f6747",
+      "checksum": "01f4ad0f9cec562b64aeeab11da96f6a",
       "channel": "stable",
-      "size": 8093
+      "size": 9590
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1956,9 +1956,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/motor_ia_local.py": {
       "version": "1.0.0",
-      "checksum": "aac1f152f9f1a4f5f93149d1ab41d34e",
+      "checksum": "c42a7cc1004fa5404a9b286e199fadfe",
       "channel": "stable",
-      "size": 7590
+      "size": 7579
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
