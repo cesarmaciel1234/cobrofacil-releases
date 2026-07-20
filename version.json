@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 22:21:27",
+  "build_date": "2026-07-19 22:26:32",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1680,9 +1680,9 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "e7367b52945f3d3bdf908f668dd96354",
+      "checksum": "7d099772884474dbfd7b5eea29f0dc1b",
       "channel": "stable",
-      "size": 10573
+      "size": 10565
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
@@ -1698,15 +1698,15 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "d0fabc335842cdcb1d63f6c7237a3881",
+      "checksum": "ac73955991904ebda02c27fd668cde6a",
       "channel": "stable",
-      "size": 7064
+      "size": 7037
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "7998bf44ddee44885148992727ae6bf6",
+      "checksum": "56588a80b17089afc140e2bb42bee69a",
       "channel": "stable",
-      "size": 11422
+      "size": 11368
     },
     "src/carteleria/interfaz_principal/__init__.py": {
       "version": "1.0.0",
@@ -1836,9 +1836,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "559d75e5a2ad87038c2485ead30d76f3",
+      "checksum": "70d27275b5e4162d81669da5c348c2a6",
       "channel": "stable",
-      "size": 5777
+      "size": 7331
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",

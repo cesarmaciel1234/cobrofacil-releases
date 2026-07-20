@@ -122,16 +122,16 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 agrupados = {}
                 for r in rows:
                     if isinstance(r, dict):
-                        cat = str(r.get('departamento', ''))
-                        nombre = str(r.get('nombre_producto', ''))
-                        pn = float(r.get('precio_normal', 0))
-                        po = float(r.get('precio_oferta', 0))
+                        cat = str(r.get('departamento') or '')
+                        nombre = str(r.get('nombre_producto') or '')
+                        pn = float(r.get('precio_normal') or 0)
+                        po = float(r.get('precio_oferta') or 0)
                         rt = str(r.get('regla_texto') or '')
                     else:
-                        cat = str(r[0])
-                        nombre = str(r[1])
-                        pn = float(r[2])
-                        po = float(r[3])
+                        cat = str(r[0] or '')
+                        nombre = str(r[1] or '')
+                        pn = float(r[2] or 0)
+                        po = float(r[3] or 0)
                         rt = str(r[4] or '')
                     
                     if cat not in agrupados: agrupados[cat] = []
