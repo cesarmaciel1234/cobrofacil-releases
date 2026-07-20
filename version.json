@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 22:00:06",
+  "build_date": "2026-07-19 22:16:33",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1824,9 +1824,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "939e0ecfafd61f4c5f074ee2730dfb12",
+      "checksum": "110552577cab60185889b869b5f1b29a",
       "channel": "stable",
-      "size": 17113
+      "size": 17121
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",
@@ -1836,9 +1836,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "babd5f90403f9f327b8ed411329287d3",
+      "checksum": "296d9a79a81943982fd8882b58cc5a63",
       "channel": "stable",
-      "size": 5984
+      "size": 5997
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1908,9 +1908,9 @@
     },
     "src/central_red_global/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "640bce6f8a4828159a0d10720b515b4a",
+      "checksum": "1fee16a502e0674804cf05d1ab9dad3e",
       "channel": "stable",
-      "size": 15462
+      "size": 16018
     },
     "src/central_red_global/motor_red.py": {
       "version": "1.0.0",
@@ -2016,9 +2016,9 @@
     },
     "src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
       "version": "1.0.0",
-      "checksum": "60d8bfc9e094187bd99447a98255cd80",
+      "checksum": "918c42bd24dea072c32f5d600412e2f4",
       "channel": "stable",
-      "size": 4410
+      "size": 5289
     },
     "src/core/sincronizador.py": {
       "version": "1.0.0",

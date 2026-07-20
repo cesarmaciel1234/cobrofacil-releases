@@ -31,7 +31,9 @@ class MotorVentas:
                     (start_date,)
                 )
                 res = cursor.fetchone()
-                return res[0] if res else 0
+                if not res: return 0
+                if isinstance(res, dict): return int(list(res.values())[0])
+                return int(res[0])
             finally:
                 if hasattr(conn, 'close'):
                     conn.close()
@@ -63,7 +65,9 @@ class MotorVentas:
                     AND dv.nombre_producto = ?
                 """, (start_date, nombre_producto))
                 res = cursor.fetchone()
-                return float(res[0]) if res and res[0] else 0.0
+                if not res: return 0.0
+                val = list(res.values())[0] if isinstance(res, dict) else res[0]
+                return float(val) if val else 0.0
             finally:
                 if hasattr(conn, 'close'):
                     conn.close()
@@ -100,11 +104,21 @@ class MotorVentas:
                 rows = cursor.fetchall()
                 results = []
                 for row in rows:
-                    results.append({
-                        "nombre": row[0],
-                        "cantidad": float(row[1] or 0),
-                        "recaudacion": float(row[2] or 0)
-                    })
+                    if isinstance(row, dict):
+                        nombre = row.get("nombre_producto") or row.get("nombre") or list(row.values())[0]
+                        cantidad = row.get("total_cant") or row.get("cantidad") or list(row.values())[1]
+                        recaudacion = row.get("total_recaudacion") or row.get("recaudacion") or list(row.values())[2]
+                        results.append({
+                            "nombre": str(nombre),
+                            "cantidad": float(cantidad or 0),
+                            "recaudacion": float(recaudacion or 0)
+                        })
+                    else:
+                        results.append({
+                            "nombre": row[0],
+                            "cantidad": float(row[1] or 0),
+                            "recaudacion": float(row[2] or 0)
+                        })
                 return results
             finally:
                 if hasattr(conn, 'close'):

@@ -29,8 +29,6 @@ class MotorCarrusel(QThread):
             for p in top_real:
                 nombre = p['nombre']
                 q = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) = LOWER(?)"
-                if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                    q = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) = LOWER(%s)"
                 
                 rows = db_manager.execute_query(q, (nombre,))
                 if rows:
