@@ -71,21 +71,55 @@ class MotorCarrusel(QThread):
 class MotorCombos(QThread):
     combo_listo = pyqtSignal(str, list)
     destacada_lista = pyqtSignal(str, float, float, float, str)
+    promo_lista = pyqtSignal(str, float, list)
     
     def __init__(self, parent=None):
         super().__init__(parent)
         
     def run(self):
         try:
+            import random
+            import json
+            
+            eleccion = random.choice([0, 1, 2])
+            
             # Buscar productos en oferta aleatorios desde carteleria_global
             q = "SELECT nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE precio_oferta > 0 ORDER BY RANDOM() LIMIT 5"
             if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
                 q = q.replace("RANDOM()", "RAND()")
-                
             rows = db_manager.execute_query(q)
+            
+            if eleccion == 2:
+                # Intentar cargar una Promo Manual (Combo real)
+                q_promo = "SELECT nombre, precio_combo, productos_json FROM combos ORDER BY RANDOM() LIMIT 1"
+                if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                    q_promo = q_promo.replace("RANDOM()", "RAND()")
+                promo_rows = db_manager.execute_query(q_promo)
+                
+                if promo_rows:
+                    pr = promo_rows[0]
+                    if isinstance(pr, dict):
+                        p_nombre = str(pr.get('nombre', ''))
+                        p_precio = float(pr.get('precio_combo') or 0)
+                        p_json = str(pr.get('productos_json', '[]'))
+                    else:
+                        p_nombre = str(pr[0])
+                        p_precio = float(pr[1] or 0)
+                        p_json = str(pr[2] or '[]')
+                        
+                    try:
+                        p_list = json.loads(p_json)
+                        if p_list:
+                            self.promo_lista.emit(p_nombre, p_precio, p_list)
+                            return
+                    except:
+                        pass
+                # Si falla o no hay promos, cae a opcion 0 o 1
+                eleccion = random.choice([0, 1])
+
             if not rows: return
             
-            if random.choice([True, False]):
+            if eleccion == 0:
                 # Emitir Destacada
                 r = rows[0]
                 if isinstance(r, dict):

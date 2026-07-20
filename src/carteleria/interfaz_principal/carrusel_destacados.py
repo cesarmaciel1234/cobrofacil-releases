@@ -202,7 +202,7 @@ class CarruselDestacados(QFrame):
                     texto_ventas = "🔥 SÚPER VENTAS"
                 
                 html += f"""
-                <div style='margin-bottom: 25px; margin-left: 5%;'>
+                <div style='margin-bottom: 40px; margin-left: 5%;'>
                     <table cellpadding='0' cellspacing='0' style='margin-bottom: -5px;'>
                         <tr>
                             <td valign='middle'>
