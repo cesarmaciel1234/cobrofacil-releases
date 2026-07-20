@@ -34,9 +34,15 @@ class MotorCarrusel(QThread):
                 
                 rows = db_manager.execute_query(q, (nombre,))
                 if rows:
-                    precio = float(rows[0][0])
-                    precio_of = float(rows[0][1])
-                    regla = str(rows[0][2] or "")
+                    row0 = rows[0]
+                    if isinstance(row0, dict):
+                        precio = float(row0.get('precio_normal') or 0)
+                        precio_of = float(row0.get('precio_oferta') or 0)
+                        regla = str(row0.get('regla_texto') or "")
+                    else:
+                        precio = float(row0[0] or 0)
+                        precio_of = float(row0[1] or 0)
+                        regla = str(row0[2] or "")
                     
                     if regla: unidad = "Kilos" if "Kilos" in regla else "Unidades"
                     else: unidad = "Unidades"
@@ -72,12 +78,20 @@ class MotorCombos(QThread):
             if random.choice([True, False]):
                 # Emitir Destacada
                 r = rows[0]
-                unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
-                self.destacada_lista.emit(str(r[0]), float(r[1]), float(r[2]), 1.0, unidad)
+                if isinstance(r, dict):
+                    unidad = "Kilos" if "Kilos" in str(r.get('regla_texto') or "") else "Unidades"
+                    self.destacada_lista.emit(str(r.get('nombre_producto', '')), float(r.get('precio_normal') or 0), float(r.get('precio_oferta') or 0), 1.0, unidad)
+                else:
+                    unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
+                    self.destacada_lista.emit(str(r[0]), float(r[1]), float(r[2]), 1.0, unidad)
             else:
                 # Emitir Combo Simulado
-                nombres = [str(r[0]) for r in rows[:3]]
-                centro = str(rows[0][0])
+                if isinstance(rows[0], dict):
+                    nombres = [str(r.get('nombre_producto', '')) for r in rows[:3]]
+                    centro = str(rows[0].get('nombre_producto', ''))
+                else:
+                    nombres = [str(r[0]) for r in rows[:3]]
+                    centro = str(rows[0][0])
                 self.combo_listo.emit(centro, nombres)
         except Exception as e:
             logger.error(f"MotorCombos Error: {e}")
@@ -103,8 +117,12 @@ class MotorIAPanel(QThread):
             
             prod_lista = []
             for r in rows:
-                unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
-                prod_lista.append((str(r[0]), float(r[1]), float(r[2]), 0.0, unidad))
+                if isinstance(r, dict):
+                    unidad = "Kilos" if "Kilos" in str(r.get('regla_texto') or "") else "Unidades"
+                    prod_lista.append((str(r.get('nombre_producto', '')), float(r.get('precio_normal') or 0), float(r.get('precio_oferta') or 0), 0.0, unidad))
+                else:
+                    unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
+                    prod_lista.append((str(r[0]), float(r[1]), float(r[2]), 0.0, unidad))
                 
             msg, prod, precio, precio_oferta = IAMotorCore.generar_recomendacion(None, self.clima, prod_lista)
             self.ia_lista.emit(msg, prod, precio, precio_oferta, self.clima)

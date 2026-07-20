@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 11:30:37",
+  "build_date": "2026-07-19 21:21:27",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1851,12 +1851,6 @@
       "checksum": "59ef77420ce02f1f399fd6c046802704",
       "channel": "stable",
       "size": 3346
-    },
-    "src/carteleria/motor_carteleria/promo_manager.py": {
-      "version": "1.0.0",
-      "checksum": "6e806c1ed00b76a796616e6aea197633",
-      "channel": "stable",
-      "size": 11127
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
       "version": "1.0.0",

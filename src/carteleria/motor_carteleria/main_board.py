@@ -28,7 +28,7 @@ from src.carteleria.motor_carteleria.espia_worker import EspiaWorker
 from src.carteleria.motor_carteleria.window_manager import WindowManager
 from src.carteleria.motor_carteleria.layout_manager import LayoutManager
 from src.carteleria.motor_carteleria.network_manager import NetworkManager
-from src.carteleria.motor_carteleria.promo_manager import PromoManager
+
 
 
 class CarteleriaMain(QWidget):

@@ -50,12 +50,20 @@ class SincronizadorCarteleria:
             
             # 2. Formatear y preparar los datos
             for fila in filas:
-                departamento = str(fila[0])
-                nombre_producto = str(fila[1])
-                precio_normal = float(fila[2] or 0)
-                precio_oferta = float(fila[3] or 0)
-                cant_oferta = float(fila[4] or 0)
-                tipo_unidad = str(fila[5] or "").strip().lower()
+                if isinstance(fila, dict):
+                    departamento = str(fila.get('categoria', ''))
+                    nombre_producto = str(fila.get('nombre', ''))
+                    precio_normal = float(fila.get('precio') or 0)
+                    precio_oferta = float(fila.get('precio_oferta') or 0)
+                    cant_oferta = float(fila.get('cant_oferta') or 0)
+                    tipo_unidad = str(fila.get('tipo_unidad_oferta') or "").strip().lower()
+                else:
+                    departamento = str(fila[0])
+                    nombre_producto = str(fila[1])
+                    precio_normal = float(fila[2] or 0)
+                    precio_oferta = float(fila[3] or 0)
+                    cant_oferta = float(fila[4] or 0)
+                    tipo_unidad = str(fila[5] or "").strip().lower()
                 
                 regla_texto = ""
                 if cant_oferta > 0:
