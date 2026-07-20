@@ -123,7 +123,7 @@ def launch_app():
     # 2. Recargar motor de base de datos de manera FLUIDA (Splash no se congela)
     update_status("Inicializando base de datos...", 15)
     from src.base_de_datos.database import db_manager
-    from src.cerebro_global.sincronizador_carteleria import sincronizador_carteleria
+    from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
     sincronizador_carteleria.start()
     run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
     
