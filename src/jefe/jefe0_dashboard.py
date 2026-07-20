@@ -33,6 +33,7 @@ JEFE_MODULES = [
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
     ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
     ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
+    ("personal",     "Personal y\nUsuarios",      "👥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
 ]
 # (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
 
@@ -294,7 +295,9 @@ class Jefe0Dashboard(QWidget):
         cols = 2
         for idx, (m_id, title, icon, accent, bg_soft, text_dark, screen_idx, tab_idx) in enumerate(JEFE_MODULES):
             card = JefeCard(title, icon, accent, bg_soft, text_dark)
-            if tab_idx is not None:
+            if screen_idx == -1:
+                card.clicked.connect(self._abrir_perfiles)
+            elif tab_idx is not None:
                 card.clicked.connect(
                     lambda si=screen_idx, ti=tab_idx: (
                         self.request_screen.emit(si),
