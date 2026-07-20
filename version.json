@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 21:42:07",
+  "build_date": "2026-07-19 21:49:36",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -726,9 +726,9 @@
     },
     "src/admin/configuracion/configuracion_main.py": {
       "version": "1.0.0",
-      "checksum": "2f91df53a74da408edf5ca97aca288a1",
+      "checksum": "b4a91ba99644f432dbc7c90f00e802a4",
       "channel": "stable",
-      "size": 18806
+      "size": 18808
     },
     "src/admin/configuracion/__init__.py": {
       "version": "1.0.0",
@@ -777,12 +777,6 @@
       "checksum": "6b88db332c6cce4f6bcd3efa204cb79d",
       "channel": "stable",
       "size": 9019
-    },
-    "src/admin/configuracion/componentes/dialogo_cajeros.py": {
-      "version": "1.0.0",
-      "checksum": "4d88f4a7eb130fcfa7588fce79c5bdcf",
-      "channel": "stable",
-      "size": 10678
     },
     "src/admin/configuracion/componentes/dialogo_cajon.py": {
       "version": "1.0.0",
@@ -1842,9 +1836,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "3302875f7f3ede3b2fa519bdbbb41db5",
+      "checksum": "babd5f90403f9f327b8ed411329287d3",
       "channel": "stable",
-      "size": 5988
+      "size": 5984
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1936,12 +1930,6 @@
       "channel": "stable",
       "size": 0
     },
-    "src/cerebro_global/sincronizador_carteleria.py": {
-      "version": "1.0.0",
-      "checksum": "1b0f1fec94de5b520862d5977240563e",
-      "channel": "stable",
-      "size": 4775
-    },
     "src/cerebro_global/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
@@ -1959,6 +1947,12 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
+      "version": "1.0.0",
+      "checksum": "1b0f1fec94de5b520862d5977240563e",
+      "channel": "stable",
+      "size": 4775
     },
     "src/cerebro_global/cerebro_jefe/analitica_jefe.py": {
       "version": "1.0.0",
@@ -2001,6 +1995,12 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "src/cerebro_global/perfil_empleados_cerebro/gestor_perfiles.py": {
+      "version": "1.0.0",
+      "checksum": "0ccd262c1f9e9f1a1029dee516f106df",
+      "channel": "stable",
+      "size": 3370
     },
     "src/cerebro_global/proveedor/motor_proveedor.py": {
       "version": "1.0.0",
@@ -2148,9 +2148,9 @@
     },
     "src/jefe/jefe0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "9303cb1a3d6e451fd361397e29c034b2",
+      "checksum": "3570d65b611e4aa7342fa38c5e9553ee",
       "channel": "stable",
-      "size": 20605
+      "size": 21684
     },
     "src/jefe/theme_pro.py": {
       "version": "1.0.0",
@@ -2679,6 +2679,12 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "src/ui_global/perfil_empleados_ui/dialogo_perfiles.py": {
+      "version": "1.0.0",
+      "checksum": "cb0afada9ff6a560155f2f215d9abeb7",
+      "channel": "stable",
+      "size": 10111
     },
     "src/ui_global/proveedor/vista_proveedor.py": {
       "version": "1.0.0",

@@ -5,7 +5,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from src.logger import logger
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
-from src.carteleria.motor_carteleria.motor_ia import MotorIA as IAMotorCore
+from src.carteleria.ia_chef_lobo.motor_ia import MotorIA as IAMotorCore
 
 class MotorCarrusel(QThread):
     datos_listos = pyqtSignal(list, str)
