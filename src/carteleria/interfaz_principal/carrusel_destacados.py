@@ -195,11 +195,11 @@ class CarruselDestacados(QFrame):
                 
                 if cantidad > 0:
                     if is_kilos:
-                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 22px;'>+</span> DE {cantidad:g}KG VENDIDOS!"
+                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
                     else:
-                        texto_ventas = f"🔥 ¡<span style='color: #00A859; font-size: 22px;'>+</span> DE {cantidad:g}U. VENDIDAS!"
+                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}U. VENDIDAS"
                 else:
-                    texto_ventas = "🔥 ¡SÚPER VENTAS!"
+                    texto_ventas = "🔥 SÚPER VENTAS"
                 
                 html += f"""
                 <div style='margin-bottom: 25px; margin-left: 5%;'>
@@ -209,7 +209,7 @@ class CarruselDestacados(QFrame):
                                 <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
                             </td>
                             <td valign='middle'>
-                                <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
+                                <span style='font-family: Arial; font-size: 23px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
                             </td>
                         </tr>
                     </table>
