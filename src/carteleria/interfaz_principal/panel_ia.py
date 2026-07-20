@@ -147,6 +147,7 @@ class PanelIA(QFrame):
 
         if is_temu:
             html = f"<div align='center' style='padding: 10px;'>"
+            html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
             html += f"<span style='font-family: Arial; font-size: 26px; font-weight: bold; color: #000000;'>{mensaje_ia}</span><br><br><br>"
             html += f"<span style='font-family: Impact; font-size: 55px; color: #000000;'>{prod_nombre}</span><br><br>"
             if prod_precio_oferta > 0:
@@ -156,6 +157,7 @@ class PanelIA(QFrame):
                 html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.2f}</span></div>"
         else:
             html = f"<div style='padding: 10px; text-align: center;'>"
+            html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
             html += f"<span style='{t1}'>Hoy Recomendamos</span><br><br>"
             html += f"<span style='{t_msg}'>\"{mensaje_ia}\"</span><br><br><br>"
             html += f"<span style='{t_prod}'>{prod_nombre}</span><br><br>"
