@@ -163,15 +163,30 @@ class CarruselDestacados(QFrame):
         
         for i, prod in enumerate(productos[:5]):
             nombre = prod[0]
+            cantidad = 0.0
+            if len(prod) >= 6:
+                cantidad = prod[5]
+            
             if is_temu:
-                import random
-                desc_text = random.choice(["¡IDEAL ASADO!", "¡RECIÉN CORTADO!", "¡OFERTA MATADERO!", "¡SÚPER PRECIO!", "🔥 HOT 🔥"])
-                bg_color = random.choice(["#DC2626", "#00A859", "#FF9900", "#0055FF"]) # Mezcla fríos y calientes
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
-                html += f"<div style='margin-bottom: 25px; margin-left: 5%;'><span style='font-family: Impact; font-size: 38px; color: #0055FF;'>#{i+1}</span> <span style='font-family: Impact; font-size: 38px; color: #000000;'>{nombre}</span> <span style='font-family: Arial; font-size: 16px; font-weight: bold; color: #FFFFFF; background-color: {bg_color}; padding: 4px 8px; border-radius: 5px;'>&nbsp;{desc_text}&nbsp;</span></div>"
+                
+                texto_ventas = f"🔥 ¡MÁS DE {cantidad:g} VENDIDOS!" if cantidad > 0 else "🔥 ¡SÚPER VENTAS!"
+                
+                html += f"""
+                <div style='margin-bottom: 25px; margin-left: 5%;'>
+                    <div style='margin-bottom: -5px;'>
+                        <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF;'>#{i+1}</span> 
+                        <span style='font-family: Arial; font-size: 22px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 2px 8px; border-radius: 5px;'>{texto_ventas}</span>
+                    </div>
+                    <div>
+                        <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
+                    </div>
+                </div>
+                """
             else:
-                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span></div>"
+                texto_ventas = f"Más de {cantidad:g} vendidos" if cantidad > 0 else "Top Ventas"
+                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888;'>({texto_ventas})</span></div>"
         
         html += "</div>"
         self.lbl_content.setText(html)

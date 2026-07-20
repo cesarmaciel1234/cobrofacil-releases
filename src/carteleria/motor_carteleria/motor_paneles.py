@@ -56,7 +56,8 @@ class MotorCarrusel(QThread):
                             real_stock = float(stock_rows[0][0] or 0)
                             if stock_rows[0][1]: unidad = str(stock_rows[0][1])
                     
-                    prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
+                    cantidad_vendida = float(p.get('cantidad', 0))
+                    prod_lista.append((nombre, precio, precio_of, real_stock, unidad, cantidad_vendida))
             
             self.modo_actual = (self.modo_actual + 1) % 3
             if prod_lista:

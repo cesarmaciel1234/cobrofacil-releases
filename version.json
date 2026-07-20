@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 22:34:27",
+  "build_date": "2026-07-19 22:44:43",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1950,9 +1950,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "1b0f1fec94de5b520862d5977240563e",
+      "checksum": "34a805f012eca035edbd837b677a86fa",
       "channel": "stable",
-      "size": 4775
+      "size": 5348
     },
     "src/cerebro_global/cerebro_jefe/analitica_jefe.py": {
       "version": "1.0.0",
