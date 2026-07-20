@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 21:54:04",
+  "build_date": "2026-07-19 21:57:02",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1698,13 +1698,13 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "cd34078a196f4ed965bec2992b99c05c",
+      "checksum": "d0fabc335842cdcb1d63f6c7237a3881",
       "channel": "stable",
       "size": 7064
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "c069fcbd7d945b819c61a8d2c9457cbd",
+      "checksum": "7998bf44ddee44885148992727ae6bf6",
       "channel": "stable",
       "size": 11422
     },
