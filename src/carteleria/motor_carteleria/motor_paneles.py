@@ -5,7 +5,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from src.logger import logger
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
-from src.carteleria.ia_chef_lobo.motor_ia import MotorIA as IAMotorCore
+from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
 
 class MotorCarrusel(QThread):
     datos_listos = pyqtSignal(list, str)
@@ -113,11 +113,11 @@ class MotorCombos(QThread):
             else:
                 # Emitir Combo Simulado
                 if isinstance(rows[0], dict):
-                    nombres = [str(r.get('nombre_producto', '')) for r in rows[:3]]
                     centro = str(rows[0].get('nombre_producto', ''))
                 else:
-                    nombres = [str(r[0]) for r in rows[:3]]
                     centro = str(rows[0][0])
+                    
+                nombres = MotorIALocal.obtener_relacionados(centro, limit=3)
                 self.combo_listo.emit(centro, nombres)
         except Exception as e:
             logger.error(f"MotorCombos Error: {e}")
@@ -166,7 +166,7 @@ class MotorIAPanel(QThread):
                 
                 prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
                 
-            msg, prod, precio, precio_oferta = IAMotorCore.generar_recomendacion(None, self.clima, prod_lista)
+            msg, prod, precio, precio_oferta = MotorIALocal.generar_recomendacion_lobo(self.clima, prod_lista)
             self.ia_lista.emit(msg, prod, precio, precio_oferta, self.clima)
         except Exception as e:
             logger.error(f"MotorIAPanel Error: {e}")
