@@ -91,30 +91,30 @@ class MotorCombos(QThread):
             
             if eleccion == 2:
                 # Intentar cargar una Promo Manual (Combo real)
-                q_promo = "SELECT nombre, precio_combo, productos_json FROM combos ORDER BY RANDOM() LIMIT 1"
-                if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                    q_promo = q_promo.replace("RANDOM()", "RAND()")
-                promo_rows = db_manager.execute_query(q_promo)
-                
-                if promo_rows:
-                    pr = promo_rows[0]
-                    if isinstance(pr, dict):
-                        p_nombre = str(pr.get('nombre', ''))
-                        p_precio = float(pr.get('precio_combo') or 0)
-                        p_json = str(pr.get('productos_json', '[]'))
-                    else:
-                        p_nombre = str(pr[0])
-                        p_precio = float(pr[1] or 0)
-                        p_json = str(pr[2] or '[]')
-                        
-                    try:
+                try:
+                    q_promo = "SELECT nombre, precio_combo, productos_json FROM combos ORDER BY RANDOM() LIMIT 1"
+                    if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                        q_promo = q_promo.replace("RANDOM()", "RAND()")
+                    promo_rows = db_manager.execute_query(q_promo)
+                    
+                    if promo_rows:
+                        pr = promo_rows[0]
+                        if isinstance(pr, dict):
+                            p_nombre = str(pr.get('nombre', ''))
+                            p_precio = float(pr.get('precio_combo') or 0)
+                            p_json = str(pr.get('productos_json', '[]'))
+                        else:
+                            p_nombre = str(pr[0])
+                            p_precio = float(pr[1] or 0)
+                            p_json = str(pr[2] or '[]')
+                            
                         p_list = json.loads(p_json)
                         if p_list:
                             self.promo_lista.emit(p_nombre, p_precio, p_list)
                             return
-                    except:
-                        pass
-                # Si falla o no hay promos, cae a opcion 0 o 1
+                except:
+                    pass
+                # Si falla, no existe la tabla o no hay promos válidas, cae a opcion 0 o 1
                 eleccion = random.choice([0, 1])
 
             if not rows: return
