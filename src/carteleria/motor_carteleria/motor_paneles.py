@@ -97,11 +97,11 @@ class MotorCombos(QThread):
             logger.error(f"MotorCombos Error: {e}")
 
 class MotorIAPanel(QThread):
-    ia_lista = pyqtSignal(str, str, float, float, str)
+    ia_lista = pyqtSignal(str, str, float, float, tuple)
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.clima = "despejado"
+        self.clima = ("sol", "22°C Pilar")
         
     def set_clima(self, clima):
         self.clima = clima

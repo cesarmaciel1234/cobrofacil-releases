@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-19 21:58:25",
+  "build_date": "2026-07-19 22:00:06",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1824,9 +1824,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "dab68064bbc015aea1d9d89d6be6071f",
+      "checksum": "939e0ecfafd61f4c5f074ee2730dfb12",
       "channel": "stable",
-      "size": 17098
+      "size": 17113
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",

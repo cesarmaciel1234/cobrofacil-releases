@@ -192,8 +192,8 @@ class CarteleriaMain(QWidget):
 
     def _on_clima_actualizado(self, icon_name, text):
         self.clima_pilar = (icon_name, text)
-        if hasattr(self, 'info_negocio'):
-            self.info_negocio.set_clima(icon_name, text)
+        if hasattr(self, 'zona4_extra2'):
+            self.zona4_extra2.motor.set_clima((icon_name, text))
 
     def _abrir_configuracion(self):
         from PyQt6.QtWidgets import QInputDialog, QMessageBox

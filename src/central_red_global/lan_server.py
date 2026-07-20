@@ -121,9 +121,21 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 # Format to dictionary: {'ALMACEN': [('nombre', 100, 50, 'regla')], ...}
                 agrupados = {}
                 for r in rows:
-                    cat = str(r[0])
+                    if isinstance(r, dict):
+                        cat = str(r.get('departamento', ''))
+                        nombre = str(r.get('nombre_producto', ''))
+                        pn = float(r.get('precio_normal', 0))
+                        po = float(r.get('precio_oferta', 0))
+                        rt = str(r.get('regla_texto') or '')
+                    else:
+                        cat = str(r[0])
+                        nombre = str(r[1])
+                        pn = float(r[2])
+                        po = float(r[3])
+                        rt = str(r[4] or '')
+                    
                     if cat not in agrupados: agrupados[cat] = []
-                    agrupados[cat].append((str(r[1]), float(r[2]), float(r[3]), str(r[4] or '')))
+                    agrupados[cat].append((nombre, pn, po, rt))
                 
                 self._send_response(200, agrupados)
             except Exception as e:
