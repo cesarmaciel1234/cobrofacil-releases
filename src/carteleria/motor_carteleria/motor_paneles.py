@@ -45,12 +45,16 @@ class MotorCarrusel(QThread):
                     if regla: unidad = "Kilos" if "Kilos" in regla else "Unidades"
                     else: unidad = "Unidades"
                     
-                    # Fetch real stock
-                    stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                    # Fetch real stock and unidad
+                    stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
                     real_stock = 0.0
                     if stock_rows:
-                        if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
-                        else: real_stock = float(stock_rows[0][0] or 0)
+                        if isinstance(stock_rows[0], dict):
+                            real_stock = float(stock_rows[0].get('stock') or 0)
+                            if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
+                        else:
+                            real_stock = float(stock_rows[0][0] or 0)
+                            if stock_rows[0][1]: unidad = str(stock_rows[0][1])
                     
                     prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
             
@@ -94,11 +98,15 @@ class MotorCombos(QThread):
                     precio = float(r[1])
                     precio_of = float(r[2])
                     
-                stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
                 real_stock = 0.0
                 if stock_rows:
-                    if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
-                    else: real_stock = float(stock_rows[0][0] or 0)
+                    if isinstance(stock_rows[0], dict):
+                        real_stock = float(stock_rows[0].get('stock') or 0)
+                        if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
+                    else:
+                        real_stock = float(stock_rows[0][0] or 0)
+                        if stock_rows[0][1]: unidad = str(stock_rows[0][1])
                     
                 self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad)
             else:
@@ -145,11 +153,15 @@ class MotorIAPanel(QThread):
                     precio = float(r[1])
                     precio_of = float(r[2])
                     
-                stock_rows = db_manager.execute_query("SELECT stock FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
+                stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
                 real_stock = 0.0
                 if stock_rows:
-                    if isinstance(stock_rows[0], dict): real_stock = float(stock_rows[0].get('stock') or 0)
-                    else: real_stock = float(stock_rows[0][0] or 0)
+                    if isinstance(stock_rows[0], dict):
+                        real_stock = float(stock_rows[0].get('stock') or 0)
+                        if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
+                    else:
+                        real_stock = float(stock_rows[0][0] or 0)
+                        if stock_rows[0][1]: unidad = str(stock_rows[0][1])
                 
                 prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
                 

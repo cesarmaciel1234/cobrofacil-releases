@@ -51,11 +51,16 @@ class PanelCombos(QFrame):
 
         from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
         vistas = motor_ventas.get_personas_viendo("mes")
+        unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
         
         if precio_oferta > 0:
             if is_temu:
-                if stock > 0:
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
+                elif stock > 0:
                     stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
                     stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
                     

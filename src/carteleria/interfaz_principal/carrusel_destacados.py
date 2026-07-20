@@ -102,10 +102,12 @@ class CarruselDestacados(QFrame):
         
         if precio_oferta > 0:
             if is_temu:
-                if unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()} este mes!"
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
                 elif stock > 0:
                     stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
                     stock_str = f"¡Oferta Limitada!"
                     
@@ -114,8 +116,12 @@ class CarruselDestacados(QFrame):
                 html = f"<div style='padding: 15px;'><span style='{t1}'>OFERTA</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                if unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()} este mes!"
+                if unidades_vendidas > 0 and stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
+                elif stock > 0:
+                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
+                elif unidades_vendidas > 0:
+                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
                 else:
                     stock_str = "¡Súper recomendado!"
                 html = f"<div align='center' style='padding: 10px;'><span style='font-family: Impact; font-size: 24px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>PRODUCTO DESTACADO</span><br><br><span style='font-family: Impact; font-size: 40px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><font color='#FF9900'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 20px; font-weight: bold; color: #DC2626;'>({stock_str})</span><br><br><span style='font-family: Impact; font-size: 60px; color: #DC2626;'>${precio:,.0f}</span></div>"
