@@ -230,9 +230,9 @@ class CarruselDestacados(QFrame):
                     if is_hoy:
                         texto_ventas = "🔥 LO MÁS VENDIDO 🔥"
                     elif is_kilos:
-                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
+                        texto_ventas = "🔥 VENTAS MASIVAS"
                     else:
-                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}U. VENDIDAS"
+                        texto_ventas = "🔥 VENTAS MASIVAS"
                 else:
                     texto_ventas = "🔥 SÚPER VENTAS"
                 
@@ -280,9 +280,9 @@ class CarruselDestacados(QFrame):
                     if is_hoy:
                         texto_ventas = "🔥 Lo más vendido 🔥"
                     elif is_kilos:
-                        texto_ventas = f"Más de {cantidad:g}KG vendidos"
+                        texto_ventas = "🔥 Ventas masivas"
                     else:
-                        texto_ventas = f"Más de {cantidad:g}U. vendidas"
+                        texto_ventas = "🔥 Ventas masivas"
                 else:
                     texto_ventas = "Top Ventas"
                     
