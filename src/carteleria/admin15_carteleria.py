@@ -118,6 +118,7 @@ class CarteleriaConfigPanel(QWidget):
         
         root.addWidget(self.tabs)
 
+    def _load(self):
         # Determinar si es maestra o esclava
         from src.config import config
         self.master_ip = config.get("carteleria_master_ip", "")
