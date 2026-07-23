@@ -236,6 +236,26 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         else:
             self._send_response(404, {"status": "not_found"})
 
+    def do_POST(self):
+        if self.path == '/api/carteleria/config_update':
+            try:
+                import json
+                from src.config import config
+                
+                content_length = int(self.headers.get('Content-Length', 0))
+                post_data = self.rfile.read(content_length).decode('utf-8')
+                data = json.loads(post_data)
+                
+                for key, val in data.items():
+                    config.set(key, val)
+                
+                config.save()
+                self._send_response(200, {"status": "success"})
+            except Exception as e:
+                self._send_response(500, {"error": str(e)})
+        else:
+            self._send_response(404, {"status": "not_found"})
+
     def log_message(self, format, *args):
         pass
 
