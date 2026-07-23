@@ -78,9 +78,9 @@ class CarruselDestacados(QFrame):
     def _bailar(self):
         self.lobo_arriba = not self.lobo_arriba
         if self.lobo_arriba:
-            self.lbl_lobo.setStyleSheet("padding-top: 0px;")
+            self.lbl_lobo.setContentsMargins(0, 0, 0, 0)
         else:
-            self.lbl_lobo.setStyleSheet("padding-top: 20px;")
+            self.lbl_lobo.setContentsMargins(0, 20, 0, 0)
 
     def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
         self.footer_widget.hide()

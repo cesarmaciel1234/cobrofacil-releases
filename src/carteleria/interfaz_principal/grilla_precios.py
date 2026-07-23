@@ -22,7 +22,7 @@ class GrillaPrecios(QFrame):
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
         else:
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
-        apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
+            apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
@@ -161,13 +161,13 @@ class _AutoScrollList(QScrollArea):
                         row_lay.addWidget(lbl_p)
                     self.inner_layout.addWidget(row)
                 
-        self.timer.start(40) 
+        self.timer.start(50) 
 
     def _do_scroll(self):
         bar = self.verticalScrollBar()
         max_val = bar.maximum()
         if max_val == 0: return
-        self._scroll_pos += 1
+        self._scroll_pos += 2
         if self._scroll_pos > (max_val * 0.6):
             self._scroll_pos = 0
         bar.setValue(self._scroll_pos)
