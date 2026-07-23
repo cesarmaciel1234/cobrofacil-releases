@@ -58,9 +58,9 @@ class PanelCombos(QFrame):
         letra_chica = ""
         if regla_texto:
             if is_temu:
-                letra_chica = f"""<br><div style='margin-top: 10px; background-color: #000000; padding: 6px 18px; display: inline-block;'><span style='font-family: Arial; font-size: 22px; color: #FFFFFF; font-weight: bold;'>🛒 Oferta {regla_texto}+</span></div>"""
+                letra_chica = f"""<br><br><div style='margin-top: 30px;'><span style='font-family: Arial; font-size: 20px; color: #666666; font-weight: normal; font-style: italic;'>*Condiciones: Oferta válida {regla_texto.lower()} o más.</span></div>"""
             else:
-                letra_chica = f"""<br><br><span style='font-family: -apple-system; font-size: 18px; color: {C_THEME["text_muted"]}; font-style: italic; background: rgba(0,0,0,0.06); padding: 4px 14px; border-radius: 20px;'>🛒 Oferta {regla_texto}+</span>"""
+                letra_chica = f"""<br><br><div style='margin-top: 25px;'><span style='font-family: -apple-system; font-size: 18px; color: {C_THEME["text_muted"]}; font-style: italic;'>*Condiciones: Oferta válida {regla_texto.lower()} o más.</span></div>"""
         
         if precio_oferta > 0:
             if is_temu:
