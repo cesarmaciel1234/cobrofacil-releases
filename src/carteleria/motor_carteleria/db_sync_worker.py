@@ -27,12 +27,20 @@ class DbSyncWorker(QThread):
             data = None
             
             try:
-                # 1. Config
-                config_path = os.path.join(get_base_path(), "config.json")
+                # 1. Config (Intentar cargar desde DB Global primero)
+                db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+                rows_cfg = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
+                
                 cfg_data = {}
-                if os.path.exists(config_path):
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        cfg_data = json.load(f)
+                if rows_cfg:
+                    cfg_str = rows_cfg[0][0] if isinstance(rows_cfg[0], tuple) else rows_cfg[0].get("config_json")
+                    cfg_data = json.loads(cfg_str)
+                else:
+                    # Fallback a local config.json si no hay nada en DB
+                    config_path = os.path.join(get_base_path(), "config.json")
+                    if os.path.exists(config_path):
+                        with open(config_path, "r", encoding="utf-8") as f:
+                            cfg_data = json.load(f)
                 
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"

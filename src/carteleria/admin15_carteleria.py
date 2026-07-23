@@ -105,8 +105,39 @@ class CarteleriaConfigPanel(QWidget):
         root.addWidget(scroll_local)
 
     def _load(self):
-        # Determinar si es maestra o esclava
+        # 1. Cargar desde la base de datos global compartida (sin pasar por HTTP firewall)
+        from src.base_de_datos.database import db_manager
         from src.config import config
+        
+        try:
+            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
+            
+            if rows:
+                cfg_str = rows[0][0] if isinstance(rows[0], tuple) else rows[0].get("config_json")
+                cfg_data = json.loads(cfg_str)
+                
+                self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
+                th = cfg_data.get("carteleria_theme", "apple")
+                index = self.cmb_theme.findData(th)
+                if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                
+                self.panel_negocio.txt_name.setText(cfg_data.get("business_name", ""))
+                self.panel_negocio.txt_addr.setText(cfg_data.get("address", ""))
+                self.panel_negocio.txt_phone.setText(cfg_data.get("phone", ""))
+                self.panel_negocio.txt_cuit.setText(cfg_data.get("cuit", ""))
+                self.panel_negocio.txt_msg.setText(cfg_data.get("mensaje_despedida", ""))
+            else:
+                # Fallback a local
+                self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
+                th = config.get("carteleria_theme", "apple")
+                index = self.cmb_theme.findData(th)
+                if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                
+        except Exception as e:
+            print(f"Error al cargar config de DB: {e}")
+
+        # Determinar el modo para mostrar texto en el botón
         self.master_ip = config.get("carteleria_master_ip", "")
         self.is_master = False
         if not self.master_ip or self.master_ip in ("127.0.0.1", "localhost", "0.0.0.0"):
@@ -118,34 +149,7 @@ class CarteleriaConfigPanel(QWidget):
             pass
 
         if not self.is_master:
-            import urllib.request
-            try:
-                url = f"http://{self.master_ip}:8000/api/carteleria/data"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req, timeout=3.0) as response:
-                    data = json.loads(response.read().decode('utf-8'))
-                    cfg_data = data.get("config", {})
-                    
-                    self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
-                    th = cfg_data.get("carteleria_theme", "apple")
-                    index = self.cmb_theme.findData(th)
-                    if index >= 0: self.cmb_theme.setCurrentIndex(index)
-                    
-                    self.panel_negocio.txt_name.setText(cfg_data.get("business_name", ""))
-                    self.panel_negocio.txt_addr.setText(cfg_data.get("address", ""))
-                    self.panel_negocio.txt_phone.setText(cfg_data.get("phone", ""))
-                    self.panel_negocio.txt_cuit.setText(cfg_data.get("cuit", ""))
-                    self.panel_negocio.txt_msg.setText(cfg_data.get("mensaje_despedida", ""))
-                    
-                self.btn_save.setText("💾 Guardar Cambios en PC Maestra")
-            except Exception as e:
-                print(f"No se pudo obtener config de maestra: {e}")
-        else:
-            self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
-            th = config.get("carteleria_theme", "apple")
-            index = self.cmb_theme.findData(th)
-            if index >= 0:
-                self.cmb_theme.setCurrentIndex(index)
+            self.btn_save.setText("💾 Guardar Cambios Globales (Red)")
 
     def _save_all(self):
         # 1. Preparar datos a guardar
@@ -159,26 +163,22 @@ class CarteleriaConfigPanel(QWidget):
             "carteleria_theme": self.cmb_theme.currentData()
         }
 
-        # 2. Si es esclava, enviarlos a la maestra
-        if not self.is_master:
-            import urllib.request
-            try:
-                url = f"http://{self.master_ip}:8000/api/carteleria/config_update"
-                req = urllib.request.Request(url, data=json.dumps(datos_guardar).encode('utf-8'), headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req, timeout=5.0) as response:
-                    QMessageBox.information(self, "Guardado en Red", "Los datos se guardaron exitosamente en la PC Maestra.")
-            except Exception as e:
-                QMessageBox.critical(self, "Error de Red", f"No se pudo guardar en la PC Maestra.\nDetalle: {e}")
-                return
-        
-        # 3. Guardar localmente de todas formas (para mantener el config.json consistente)
+        # 2. Guardar en Base de Datos para que TODAS las PCs lo vean
+        from src.base_de_datos.database import db_manager
         from src.config import config
+        try:
+            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            json_str = json.dumps(datos_guardar)
+            db_manager.execute_query("REPLACE INTO carteleria_config (id, config_json) VALUES (1, ?)", (json_str,))
+            QMessageBox.information(self, "Guardado Exitoso", "Configuración guardada correctamente en la Base de Datos Global.\n\nTodas las pantallas se actualizarán automáticamente en los próximos segundos.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error de Red DB", f"No se pudo guardar la configuración global.\nDetalle: {e}")
+            return
+        
+        # 3. Guardar localmente de todas formas (para fallback)
         for k, v in datos_guardar.items():
             config.set(k, v)
         config.save()
-        
-        if self.is_master:
-            QMessageBox.information(self, "Guardado", "Configuración de cartelería guardada correctamente.")
 
 
 from PyQt6.QtWidgets import QStackedWidget
