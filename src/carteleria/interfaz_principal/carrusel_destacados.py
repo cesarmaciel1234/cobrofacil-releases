@@ -33,7 +33,13 @@ class CarruselDestacados(QFrame):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(15, 15, 15, 15)
         
-        # Etiqueta principal (Título y lista)
+        # Etiqueta para el título parpadeante
+        self.lbl_title = QLabel()
+        self.lbl_title.setAlignment(Qt.AlignCenter)
+        self.lbl_title.setStyleSheet("background: transparent; border: none;")
+        self.layout.addWidget(self.lbl_title)
+        
+        # Etiqueta principal (Lista)
         self.lbl_content = QLabel()
         self.lbl_content.setAlignment(Qt.AlignCenter)
         self.lbl_content.setWordWrap(True)
@@ -81,9 +87,27 @@ class CarruselDestacados(QFrame):
             self.lbl_lobo.setContentsMargins(0, 0, 0, 0)
         else:
             self.lbl_lobo.setContentsMargins(0, 20, 0, 0)
+            
+        if hasattr(self, '_current_titulo') and not self.lbl_title.isHidden():
+            if getattr(self, '_is_temu', False):
+                if getattr(self, '_is_hoy', False):
+                    # Rojo a Amarillo chillón
+                    c1, c2, tc1, tc2 = "#DC2626", "#FFFF00", "#FFFFFF", "#000000"
+                elif getattr(self, '_is_semana', False):
+                    # Morado a Verde flúor
+                    c1, c2, tc1, tc2 = "#8B5CF6", "#00FF00", "#FFFFFF", "#000000"
+                else:
+                    # Azul a Amarillo chillón
+                    c1, c2, tc1, tc2 = "#0055FF", "#FFFF00", "#FFFFFF", "#000000"
+                    
+                bg = c1 if self.lobo_arriba else c2
+                tc = tc1 if self.lobo_arriba else tc2
+                html_title = f"<div align='center' style='margin-bottom: 10px;'><span style='font-family: Impact; font-size: 40px; color: {tc}; background-color: {bg}; padding: 5px 15px;'>{self._current_titulo}</span></div>"
+                self.lbl_title.setText(html_title)
 
     def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
         self.footer_widget.hide()
+        self.lbl_title.hide()
         self.timer_baile.stop()
         self.lbl_content.setAlignment(Qt.AlignCenter)
         from src.carteleria.theme import get_active_theme_name
@@ -194,17 +218,21 @@ class CarruselDestacados(QFrame):
         is_hoy = "HOY" in titulo.upper() and not is_recomendados
         is_semana = "SEMANA" in titulo.upper() or "VOLUMEN" in titulo.upper()
         
-        html = f"<div style='padding: 10px; width: 100%;'>"
+        self._current_titulo = titulo
+        self._is_temu = is_temu
+        self._is_hoy = is_hoy
+        self._is_semana = is_semana
+        self.lbl_title.show()
+        
+        if not is_temu:
+            html_title = f"<div style='text-align: center; margin-bottom: 20px;'><span style='{t1}'>{titulo}</span></div>"
+            self.lbl_title.setText(html_title)
+            
+        # Forzar actualización inicial del título
         if is_temu:
-            bg_color = "#0055FF" # Azul por defecto (Mes)
-            if is_hoy:
-                bg_color = "#DC2626" # Rojo
-            elif is_semana:
-                bg_color = "#8B5CF6" # Morado
-                
-            html += f"<div align='center' style='margin-bottom: 20px;'><span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: {bg_color}; padding: 5px 15px;'>{titulo}</span></div>"
-        else:
-            html += f"<div style='text-align: center; margin-bottom: 40px;'><span style='{t1}'>{titulo}</span></div>"
+            self._bailar()
+        
+        html = f"<div style='padding: 10px; width: 100%;'>"
             
         import random
         promoted_idx = random.randint(0, min(4, len(productos) - 1)) if productos else -1
