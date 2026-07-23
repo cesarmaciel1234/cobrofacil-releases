@@ -204,7 +204,7 @@ class CarruselDestacados(QFrame):
                 
                 if cantidad > 0:
                     if is_hoy:
-                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> ELEGIDO {cantidad:g} VECES"
+                        texto_ventas = f"<span style='color: #00A859; font-size: 26px;'>+</span> ELEGIDO {cantidad:g} VECES"
                     elif is_kilos:
                         texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
                     else:
