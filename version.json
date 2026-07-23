@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-23 14:11:15",
+  "build_date": "2026-07-23 19:45:10",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -54,9 +54,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "a45b5a8341655f6827e95151bbac772a",
+      "checksum": "fa2adbe72c4632b06953dd94cf02eeea",
       "channel": "stable",
-      "size": 18472
+      "size": 18599
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -1560,9 +1560,9 @@
     },
     "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "5dd29046c310891abe4a7937b029d212",
+      "checksum": "f6089ab995fa1adc972587d385645875",
       "channel": "stable",
-      "size": 5168
+      "size": 8456
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
@@ -1572,9 +1572,9 @@
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
-      "checksum": "1bad4faf8ee5cd7d671c3c79d44c4cf4",
+      "checksum": "b43adb63e6de68185517e13e7271bec5",
       "channel": "stable",
-      "size": 2520
+      "size": 2518
     },
     "src/carteleria/__init__.py": {
       "version": "1.0.0",
@@ -1686,15 +1686,15 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "fef368cf4a72facdf6077d17af5ab000",
+      "checksum": "dc8884265f4724892cd9dc8467b14e53",
       "channel": "stable",
-      "size": 16849
+      "size": 18126
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "55e85de22f20c300fe0371889eedc5df",
+      "checksum": "49aed86ca88fe7f362d80561b600d13d",
       "channel": "stable",
-      "size": 10184
+      "size": 10188
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
@@ -1704,9 +1704,9 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "c89a8ebb696bb89239e7190daf65ec75",
+      "checksum": "7a9a9c4c4828b1ee99670fe79d999aa7",
       "channel": "stable",
-      "size": 11379
+      "size": 11182
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
@@ -1812,9 +1812,9 @@
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
       "version": "1.0.0",
-      "checksum": "6cfc04fe14ca1ab11ca334f44cfd2738",
+      "checksum": "14ff32aae0be2c5f1388ae7e2cff2fd7",
       "channel": "stable",
-      "size": 3150
+      "size": 5102
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
@@ -1842,9 +1842,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "c489996964b83362046052cf80bcccb4",
+      "checksum": "fa58fd8fcf2826c2d418b763875eb358",
       "channel": "stable",
-      "size": 12212
+      "size": 12460
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1914,9 +1914,9 @@
     },
     "src/central_red_global/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "fbe9e2ba8c159feb2d2475b1866c430e",
+      "checksum": "91248470fe35e61463c957b6d98e262a",
       "channel": "stable",
-      "size": 16048
+      "size": 16840
     },
     "src/central_red_global/motor_red.py": {
       "version": "1.0.0",
@@ -1956,9 +1956,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/motor_ia_local.py": {
       "version": "1.0.0",
-      "checksum": "07c0686bb5b5ecb6e504037f885fef98",
+      "checksum": "dd0b1ee71e3a57b0020b90cee0696653",
       "channel": "stable",
-      "size": 8108
+      "size": 7852
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
@@ -2028,9 +2028,9 @@
     },
     "src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
       "version": "1.0.0",
-      "checksum": "94fb16ff3438d8fc43c27838b670d84a",
+      "checksum": "1ca137b83e38dc23bbe8dc76d6beaaae",
       "channel": "stable",
-      "size": 6818
+      "size": 5903
     },
     "src/core/sincronizador.py": {
       "version": "1.0.0",
@@ -2142,9 +2142,9 @@
     },
     "src/inicio_y_perfiles/logica/auth_controller.py": {
       "version": "1.0.0",
-      "checksum": "8a17917bf764d65912a026f5d896ebe1",
+      "checksum": "aeb8a7f099033c13991cbb4a5411a5fe",
       "channel": "stable",
-      "size": 2517
+      "size": 3070
     },
     "src/inicio_y_perfiles/logica/caja_controller.py": {
       "version": "1.0.0",

@@ -88,9 +88,14 @@ class CarteleriaMain(QWidget):
         
         # ⏱️ TIMER ROTACIÓN PROMOCIONES
         self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.promo_manager.actualizar_pantallas_promocionales) # Deprecated
+        self.timer.timeout.connect(self._ciclo_inteligente)
         self.rotacion_ms = 16000 # Por defecto
         self.timer.start(self.rotacion_ms) 
+        
+        self.contador_rotacion = 0
+        self.frec_sos = 2
+        self.tiempo_sos_ms = 10000
+        self.estado_sos_activo = False
         
         from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
         from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
@@ -301,7 +306,31 @@ class CarteleriaMain(QWidget):
 
         except Exception as e:
             logger.warning(f"Error procesando datos de carteleria (API o Caché): {e}")
-                
+
+    def _ciclo_inteligente(self):
+        # Si estamos en la pantalla espía, no hacer nada automático
+        if self.stack.currentIndex() == 2:
+            return
+            
+        if self.estado_sos_activo:
+            # Si estábamos en SOS, volver a la normalidad
+            self.estado_sos_activo = False
+            self.layout_manager.fade_to_index(0)
+            # Restaurar el timer al tiempo normal de rotación de las grillas
+            self.timer.start(self.rotacion_ms)
+        else:
+            # Rotar las grillas normales
+            self.layout_manager.ciclar_layout()
+            self.contador_rotacion += 1
+            
+            # Verificar si toca Oferta Relámpago (SOS)
+            if hasattr(self, 'hay_oferta_sos') and self.hay_oferta_sos:
+                if self.contador_rotacion >= self.frec_sos:
+                    self.contador_rotacion = 0
+                    self.estado_sos_activo = True
+                    self.layout_manager.fade_to_index(1)
+                    # Cambiar el timer al tiempo de SOS
+                    self.timer.start(self.tiempo_sos_ms)
 
 
     def _guardar_sugerencia_activa(self, productos_sugeridos):

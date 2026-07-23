@@ -5,6 +5,9 @@ class LayoutManager:
         self.main = main_window
 
     def ciclar_layout(self):
+        if hasattr(self.main, 'estado_sos_activo') and self.main.estado_sos_activo:
+            return
+            
         self.main.layout_mode += 1
         if self.main.layout_mode > 4:
             self.main.layout_mode = 1
