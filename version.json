@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-23 12:07:54",
+  "build_date": "2026-07-23 12:18:37",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1686,9 +1686,9 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "3e903ccbf691d4eb0f1064bd7dd44db2",
+      "checksum": "edf55cecb4a53e4e8b7a174d64c9c398",
       "channel": "stable",
-      "size": 16761
+      "size": 16542
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",

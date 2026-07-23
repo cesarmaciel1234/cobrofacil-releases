@@ -190,9 +190,9 @@ class CarruselDestacados(QFrame):
         if is_temu:
             t_prod = f"font-family: 'Impact', sans-serif; font-size: 30px; font-weight: 700; color: #000000;"
 
-        is_recomendados = "RECOMENDADOS" in titulo.upper()
-        is_hoy = "HOY" in titulo.upper()
-        is_semana = "SEMANA" in titulo.upper()
+        is_recomendados = "RECOMENDADO" in titulo.upper()
+        is_hoy = "HOY" in titulo.upper() and not is_recomendados
+        is_semana = "SEMANA" in titulo.upper() or "VOLUMEN" in titulo.upper()
         
         html = f"<div style='padding: 10px; width: 100%;'>"
         if is_temu:
@@ -239,15 +239,15 @@ class CarruselDestacados(QFrame):
                 if is_recomendados:
                     if i == promoted_idx:
                         html += f"""
-                        <div style='margin-bottom: 30px; margin-left: 5%;'>
-                            <table cellpadding='5' cellspacing='0' style='background-color: #FFFF00;'>
+                        <div style='margin-bottom: 10px; margin-left: 5%;'>
+                            <table cellpadding='8' cellspacing='0' style='background-color: #FFFF00;'>
                                 <tr>
                                     <td>
                                         <span style='font-family: Impact; font-size: 46px; color: #DC2626; line-height: 1.0;'>• {nombre}</span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align='center'>
+                                    <td align='center' style='padding-top: 0px; padding-bottom: 8px;'>
                                         <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #000000;'>PRODUCTO PROMOCIONADO</span>
                                     </td>
                                 </tr>
@@ -256,10 +256,14 @@ class CarruselDestacados(QFrame):
                         """
                     else:
                         html += f"""
-                        <div style='margin-bottom: 30px; margin-left: 5%;'>
-                            <div>
-                                <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
-                            </div>
+                        <div style='margin-bottom: 10px; margin-left: 5%;'>
+                            <table cellpadding='8' cellspacing='0'>
+                                <tr>
+                                    <td>
+                                        <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                         """
                 else:
