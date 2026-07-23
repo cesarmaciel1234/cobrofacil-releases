@@ -23,20 +23,12 @@ class MotorVentas:
                 # "mes"
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            conn = db_manager.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND estado = 'COMPLETADA'",
-                    (start_date,)
-                )
-                res = cursor.fetchone()
-                if not res: return 0
-                if isinstance(res, dict): return int(list(res.values())[0])
-                return int(res[0])
-            finally:
-                if hasattr(conn, 'close'):
-                    conn.close()
+            query = "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND estado = 'COMPLETADA'"
+            rows = db_manager.execute_query(query, (start_date,))
+            if not rows: return 0
+            res = rows[0]
+            if isinstance(res, dict): return int(list(res.values())[0])
+            return int(res[0])
         except Exception as e:
             print(f"Error en get_personas_viendo: {e}")
             return 0
@@ -53,24 +45,18 @@ class MotorVentas:
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            conn = db_manager.get_connection()
-            try:
-                cursor = conn.cursor()
-                # Join with ventas to filter by date and state
-                cursor.execute("""
-                    SELECT SUM(dv.cantidad) 
-                    FROM detalles_ventas dv
-                    JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
-                    AND dv.nombre_producto = ?
-                """, (start_date, nombre_producto))
-                res = cursor.fetchone()
-                if not res: return 0.0
-                val = list(res.values())[0] if isinstance(res, dict) else res[0]
-                return float(val) if val else 0.0
-            finally:
-                if hasattr(conn, 'close'):
-                    conn.close()
+            query = """
+                SELECT SUM(dv.cantidad) 
+                FROM detalles_ventas dv
+                JOIN ventas v ON dv.id_venta = v.id
+                WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                AND dv.nombre_producto = ?
+            """
+            rows = db_manager.execute_query(query, (start_date, nombre_producto))
+            if not rows: return 0.0
+            res = rows[0]
+            val = list(res.values())[0] if isinstance(res, dict) else res[0]
+            return float(val) if val else 0.0
         except Exception as e:
             print(f"Error en get_unidades_vendidas: {e}")
             return 0.0

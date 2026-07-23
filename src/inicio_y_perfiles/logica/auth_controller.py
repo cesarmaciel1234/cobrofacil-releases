@@ -52,17 +52,17 @@ class AuthController:
     def create_initial_admin(self, admin_pass: str):
         """Crea el administrador inicial si la base de datos de usuarios está vacía."""
         pwd_hash = hashlib.sha256(admin_pass.encode()).hexdigest()
-        db_manager.execute_transaction([
-            ("INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
-             ("admin", pwd_hash, "admin"))
-        ])
+        db_manager.execute_non_query(
+            "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
+            ("admin", pwd_hash, "admin")
+        )
 
     def ensure_default_jefe(self):
         """Asegura que exista al menos un usuario con rol 'jefe'. Si no hay ninguno, crea 'jefe1' (pass: jefe1)."""
         res = db_manager.execute_query("SELECT COUNT(*) as count FROM usuarios WHERE rol = 'jefe'")
         if res and res[0]['count'] == 0:
             pwd_hash = hashlib.sha256("jefe1".encode()).hexdigest()
-            db_manager.execute_transaction([
-                ("INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
-                 ("jefe1", pwd_hash, "jefe"))
-            ])
+            db_manager.execute_non_query(
+                "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
+                ("jefe1", pwd_hash, "jefe")
+            )
