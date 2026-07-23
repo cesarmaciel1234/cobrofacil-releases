@@ -240,13 +240,18 @@ class CarruselDestacados(QFrame):
                     if i == promoted_idx:
                         html += f"""
                         <div style='margin-bottom: 30px; margin-left: 5%;'>
-                            <div>
-                                <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
-                            </div>
-                            <div style='margin-top: 5px;'>
-                                <span style='font-family: Arial; font-size: 14px; font-weight: 900; color: #000000; border: 2px solid #000000; padding: 1px 4px; border-radius: 3px; background-color: #FFFFFF; vertical-align: middle;'>Anuncio</span>
-                                <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 3px 8px; border-radius: 5px; margin-left: 5px; vertical-align: middle;'>🔥 Promocionado</span>
-                            </div>
+                            <table cellpadding='5' cellspacing='0' style='background-color: #FFFF00;'>
+                                <tr>
+                                    <td>
+                                        <span style='font-family: Impact; font-size: 46px; color: #DC2626; line-height: 1.0;'>• {nombre}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align='center'>
+                                        <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #000000;'>PRODUCTO PROMOCIONADO</span>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                         """
                     else:
@@ -288,7 +293,7 @@ class CarruselDestacados(QFrame):
                     
                 if is_recomendados:
                     if i == promoted_idx:
-                        html += f"<div style='margin-bottom: 18px; margin-left: 10%;'>• <span style='{t_prod}'>{nombre}</span> <span style='font-size: 14px; font-weight: bold; background-color: #EEE; color: #333; padding: 2px 6px; border: 1px solid #CCC; border-radius: 4px; margin-left: 10px;'>Anuncio</span> <span style='font-size: 16px; font-weight: bold; color: #FF4500;'>🔥 Sugerido</span></div>"
+                        html += f"<div style='margin-bottom: 18px; margin-left: 10%; display: inline-block; background-color: #FFFF00; padding: 5px;'><span style='color: #DC2626; font-size: 24px; font-weight: bold;'>• {nombre}</span><br><span style='color: #000000; font-size: 16px; font-weight: bold;'>PRODUCTO PROMOCIONADO</span></div><div style='clear: both;'></div>"
                     else:
                         html += f"<div style='margin-bottom: 18px; margin-left: 10%;'>• <span style='{t_prod}'>{nombre}</span></div>"
                 else:
