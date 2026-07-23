@@ -13,7 +13,6 @@ from PyQt6.QtGui import QCursor
 
 from src.utils.paths import get_resource_path
 from src.ui_components.panel_negocio import PanelDatosNegocio
-from src.carteleria.red_lan.red_lan_main import Admin6RedLan
 
 def _config_path():
     return get_resource_path(os.path.join("src", "config", "carteleria_config.json"))
@@ -47,17 +46,7 @@ class CarteleriaConfigPanel(QWidget):
         h.addStretch()
         root.addWidget(header)
 
-        # Tab Widget
-        self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabBar::tab { padding: 12px 24px; font-size: 15px; font-weight: bold; }
-            QTabBar::tab:selected { background: #881337; color: white; border-radius: 4px; }
-            QTabWidget::pane { border: none; padding-top: 10px; }
-        """)
-        
-        # --- TAB 1: LOCAL ---
-        self.tab_local = QWidget()
-        body_local = QVBoxLayout(self.tab_local)
+        body_local = QVBoxLayout()
         body_local.setContentsMargins(32, 24, 32, 24)
         body_local.setSpacing(16)
 
@@ -105,18 +94,15 @@ class CarteleriaConfigPanel(QWidget):
         body_local.addStretch()
 
         scroll_local = QScrollArea()
+        wrapper = QWidget()
+        wrapper.setLayout(body_local)
+        
+        scroll_local = QScrollArea()
         scroll_local.setWidgetResizable(True)
-        scroll_local.setWidget(self.tab_local)
+        scroll_local.setWidget(wrapper)
         scroll_local.setStyleSheet("QScrollArea { border: none; }")
         
-        # --- TAB 2: RED ---
-        self.tab_red = Admin6RedLan()
-        
-        # Add Tabs
-        self.tabs.addTab(scroll_local, "🏠 Configuración Local")
-        self.tabs.addTab(self.tab_red, "🌐 Configuración de Red")
-        
-        root.addWidget(self.tabs)
+        root.addWidget(scroll_local)
 
     def _load(self):
         # Determinar si es maestra o esclava
@@ -160,12 +146,6 @@ class CarteleriaConfigPanel(QWidget):
             index = self.cmb_theme.findData(th)
             if index >= 0:
                 self.cmb_theme.setCurrentIndex(index)
-
-        # Si es maestra abre Config Local, si es esclava abre Config Local (ya q muestra datos maestros)
-        if self.is_master:
-            self.tabs.setCurrentIndex(0)
-        else:
-            self.tabs.setCurrentIndex(0)
 
     def _save_all(self):
         # 1. Preparar datos a guardar
