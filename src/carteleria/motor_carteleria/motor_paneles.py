@@ -17,7 +17,7 @@ class MotorCarrusel(QThread):
     def run(self):
         try:
             modos = ["hoy", "semana", "mes"]
-            titulos = ["LOS MÁS ELEGIDOS HOY", "MÁS VOLUMEN", "RECOMENDADO HOY"]
+            titulos = ["LOS MÁS ELEGIDOS HOY", "CON MÁS VOLUMEN HOY", "RECOMENDADO HOY"]
             
             prod_lista = []
             titulo_str = ""
