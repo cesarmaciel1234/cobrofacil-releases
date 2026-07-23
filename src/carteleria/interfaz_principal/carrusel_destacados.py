@@ -204,7 +204,7 @@ class CarruselDestacados(QFrame):
                 
                 if cantidad > 0:
                     if is_hoy:
-                        texto_ventas = "🔥 LO MÁS VENDIDO AHORA"
+                        texto_ventas = "🔥 LO MÁS VENDIDO 🔥"
                     elif is_kilos:
                         texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
                     else:
@@ -244,7 +244,7 @@ class CarruselDestacados(QFrame):
             else:
                 if cantidad > 0:
                     if is_hoy:
-                        texto_ventas = "🔥 Lo más vendido ahora"
+                        texto_ventas = "🔥 Lo más vendido 🔥"
                     elif is_kilos:
                         texto_ventas = f"Más de {cantidad:g}KG vendidos"
                     else:
