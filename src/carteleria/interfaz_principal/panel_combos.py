@@ -38,7 +38,7 @@ class PanelCombos(QFrame):
         
         self.layout.addWidget(self.lbl_content)
 
-    def actualizar_destacada(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
+    def actualizar_destacada(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla_texto=""):
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
         
@@ -53,6 +53,14 @@ class PanelCombos(QFrame):
         from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
         vistas = motor_ventas.get_personas_viendo("mes")
         unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
+        
+        # Letra chica HTML
+        letra_chica = ""
+        if regla_texto:
+            if is_temu:
+                letra_chica = f"""<br><div style='margin-top: 10px; background-color: #000000; padding: 6px 18px; display: inline-block;'><span style='font-family: Arial; font-size: 22px; color: #FFFFFF; font-weight: bold;'>🛒 Oferta {regla_texto}+</span></div>"""
+            else:
+                letra_chica = f"""<br><br><span style='font-family: -apple-system; font-size: 18px; color: {C_THEME["text_muted"]}; font-style: italic; background: rgba(0,0,0,0.06); padding: 4px 14px; border-radius: 20px;'>🛒 Oferta {regla_texto}+</span>"""
         
         if precio_oferta > 0:
             if is_temu:
@@ -72,10 +80,11 @@ class PanelCombos(QFrame):
                     <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
                     <span style='font-family: Arial; font-size: 35px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
                     <span style='font-family: Impact; font-size: 80px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
+                    {letra_chica}
                 </div>
                 """
             else:
-                html = f"<div style='padding: 10px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
+                html = f"<div style='padding: 10px;'><span style='{t1}'>Oferta Destacada</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span>{letra_chica}</div>"
         else:
             if is_temu:
                 html = f"""

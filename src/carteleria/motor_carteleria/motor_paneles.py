@@ -92,7 +92,7 @@ class MotorCarrusel(QThread):
 
 class MotorCombos(QThread):
     combo_listo = pyqtSignal(str, list)
-    destacada_lista = pyqtSignal(str, float, float, float, str)
+    destacada_lista = pyqtSignal(str, float, float, float, str, str)  # nombre, precio, precio_of, stock, unidad, regla_texto
     promo_lista = pyqtSignal(str, float, list)
     
     def __init__(self, parent=None):
@@ -146,12 +146,14 @@ class MotorCombos(QThread):
                 r = rows[0]
                 if isinstance(r, dict):
                     nombre = str(r.get('nombre_producto', ''))
-                    unidad = "Kilos" if "Kilos" in str(r.get('regla_texto') or "") else "Unidades"
+                    regla_raw = str(r.get('regla_texto') or "")
+                    unidad = "Kilos" if "Kilos" in regla_raw else "Unidades"
                     precio = float(r.get('precio_normal') or 0)
                     precio_of = float(r.get('precio_oferta') or 0)
                 else:
                     nombre = str(r[0])
-                    unidad = "Kilos" if "Kilos" in str(r[3] or "") else "Unidades"
+                    regla_raw = str(r[3] or "")
+                    unidad = "Kilos" if "Kilos" in regla_raw else "Unidades"
                     precio = float(r[1])
                     precio_of = float(r[2])
                     
@@ -164,8 +166,14 @@ class MotorCombos(QThread):
                     else:
                         real_stock = float(stock_rows[0][0] or 0)
                         if stock_rows[0][1]: unidad = str(stock_rows[0][1])
+                
+                # Generar letra chica limpia desde regla_texto
+                import re as _re
+                regla_limpia = _re.sub(r'<[^>]+>', '', regla_raw).strip()
+                if not regla_limpia and precio_of > 0:
+                    regla_limpia = f"Comprando {unidad.lower()}"
                     
-                self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad)
+                self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad, regla_limpia)
             else:
                 # Emitir Combo Simulado
                 if isinstance(rows[0], dict):
