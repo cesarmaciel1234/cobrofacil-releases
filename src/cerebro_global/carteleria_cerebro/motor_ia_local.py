@@ -114,9 +114,9 @@ class MotorIALocal:
             estrella_precio = 0
             estrella_oferta = 0
             
-            top = MotorIALocal._obtener_top_general(limit=1)
+            top = MotorIALocal._obtener_top_general(limit=5)
             if top:
-                estrella = top[0]
+                estrella = random.choice(top)
             
             # 2. Plantillas dinámicas (sin depender de motor_ia de NLP)
             plantillas = [
