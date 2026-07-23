@@ -73,7 +73,14 @@ class PanelCombos(QFrame):
                 elif 0 < stock < 30:
                     stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = "🔥 ¡El más recomendado!"
+                    import random
+                    stock_str = random.choice([
+                        "🔥 ¡El más recomendado!",
+                        "⭐ ¡Favorito de todos!",
+                        "🔥 ¡Éxito de ventas!",
+                        "⭐ ¡Producto estrella!",
+                        "🔥 ¡Calidad premium!"
+                    ])
                     
                     
                 html = f"""
