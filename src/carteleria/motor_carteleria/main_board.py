@@ -319,8 +319,7 @@ class CarteleriaMain(QWidget):
             # Restaurar el timer al tiempo normal de rotación de las grillas
             self.timer.start(self.rotacion_ms)
         else:
-            # Rotar las grillas normales
-            self.layout_manager.ciclar_layout()
+            # No rotar las grillas automáticamente, solo incrementar contador para el SOS
             self.contador_rotacion += 1
             
             # Verificar si toca Oferta Relámpago (SOS)
