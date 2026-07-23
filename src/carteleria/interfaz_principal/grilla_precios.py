@@ -48,19 +48,11 @@ class _AutoScrollList(QScrollArea):
     """Componente interno que maneja el scroll y renderizado de ítems"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        from src.carteleria.motor_carteleria.motor_grilla import MotorGrilla
-        self.motor = MotorGrilla(self)
-        self.motor.datos_listos.connect(self.set_items)
-        
-        self.auto_refresh_timer = QTimer(self)
-        self.auto_refresh_timer.timeout.connect(self.motor.start)
-        self.auto_refresh_timer.start(30000) # 30 segundos
-        self.motor.start() # Carga inicial
         self.setWidgetResizable(True)
-        self.setFrameShape(QFrame.NoFrame)
+        self.setFrameShape(QFrame.Shape.NoFrame)
         self.setStyleSheet("background: transparent; border: none;")
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
         self.container = QWidget()
         self.container.setStyleSheet("background: transparent;")
@@ -75,6 +67,12 @@ class _AutoScrollList(QScrollArea):
         self.current_mode = 4
 
     def set_items(self, items_by_category):
+        # Evitar reconstruir la UI si los datos no cambiaron (previene congelamiento)
+        current_data_repr = str(items_by_category)
+        if getattr(self, '_last_data_repr', None) == current_data_repr:
+            return
+        self._last_data_repr = current_data_repr
+
         for i in reversed(range(self.inner_layout.count())):
             w = self.inner_layout.itemAt(i).widget()
             if w: w.deleteLater()
