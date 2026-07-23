@@ -26,8 +26,8 @@ THEME_TEMU = {
 }
 
 # Diccionario activo
-C_THEME = THEME_APPLE.copy()
-_ACTIVE_THEME_NAME = "apple"
+C_THEME = THEME_TEMU.copy()
+_ACTIVE_THEME_NAME = "temu"
 
 def set_theme(theme_name):
     global _ACTIVE_THEME_NAME
