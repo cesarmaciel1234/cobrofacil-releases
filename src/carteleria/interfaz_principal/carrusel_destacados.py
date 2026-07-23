@@ -190,11 +190,24 @@ class CarruselDestacados(QFrame):
         if is_temu:
             t_prod = f"font-family: 'Impact', sans-serif; font-size: 30px; font-weight: 700; color: #000000;"
 
+        is_recomendados = "RECOMENDADOS" in titulo.upper()
+        is_hoy = "HOY" in titulo.upper()
+        is_semana = "SEMANA" in titulo.upper()
+        
         html = f"<div style='padding: 10px; width: 100%;'>"
         if is_temu:
-            html += f"<div align='center' style='margin-bottom: 20px;'><span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #0055FF; padding: 5px 15px;'>{titulo}</span></div>"
+            bg_color = "#0055FF" # Azul por defecto (Mes)
+            if is_hoy:
+                bg_color = "#DC2626" # Rojo
+            elif is_semana:
+                bg_color = "#8B5CF6" # Morado
+                
+            html += f"<div align='center' style='margin-bottom: 20px;'><span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: {bg_color}; padding: 5px 15px;'>{titulo}</span></div>"
         else:
             html += f"<div style='text-align: center; margin-bottom: 40px;'><span style='{t1}'>{titulo}</span></div>"
+            
+        import random
+        promoted_idx = random.randint(0, min(4, len(productos) - 1)) if productos else -1
         
         for i, prod in enumerate(productos[:5]):
             nombre = prod[0]
@@ -208,9 +221,6 @@ class CarruselDestacados(QFrame):
             
             if len(prod) >= 6:
                 cantidad = prod[5]
-            
-            is_recomendados = "RECOMENDADOS" in titulo.upper()
-            is_hoy = "HOY" in titulo.upper()
             
             if is_temu:
                 nombre = nombre.upper()
@@ -227,16 +237,26 @@ class CarruselDestacados(QFrame):
                     texto_ventas = "🔥 SÚPER VENTAS"
                 
                 if is_recomendados:
-                    html += f"""
-                    <div style='margin-bottom: 30px; margin-left: 5%;'>
-                        <div>
-                            <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
+                    if i == promoted_idx:
+                        html += f"""
+                        <div style='margin-bottom: 30px; margin-left: 5%;'>
+                            <div>
+                                <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
+                            </div>
+                            <div style='margin-top: 5px;'>
+                                <span style='font-family: Arial; font-size: 14px; font-weight: 900; color: #000000; border: 2px solid #000000; padding: 1px 4px; border-radius: 3px; background-color: #FFFFFF; vertical-align: middle;'>Anuncio</span>
+                                <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 3px 8px; border-radius: 5px; margin-left: 5px; vertical-align: middle;'>🔥 Promocionado</span>
+                            </div>
                         </div>
-                        <div style='margin-top: 5px;'>
-                            <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 3px 8px; border-radius: 5px;'>{texto_ventas}</span>
+                        """
+                    else:
+                        html += f"""
+                        <div style='margin-bottom: 30px; margin-left: 5%;'>
+                            <div>
+                                <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
+                            </div>
                         </div>
-                    </div>
-                    """
+                        """
                 else:
                     html += f"""
                     <div style='margin-bottom: 40px; margin-left: 5%;'>
@@ -266,7 +286,13 @@ class CarruselDestacados(QFrame):
                 else:
                     texto_ventas = "Top Ventas"
                     
-                html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888; white-space: nowrap;'>({texto_ventas})</span></div>"
+                if is_recomendados:
+                    if i == promoted_idx:
+                        html += f"<div style='margin-bottom: 18px; margin-left: 10%;'>• <span style='{t_prod}'>{nombre}</span> <span style='font-size: 14px; font-weight: bold; background-color: #EEE; color: #333; padding: 2px 6px; border: 1px solid #CCC; border-radius: 4px; margin-left: 10px;'>Anuncio</span> <span style='font-size: 16px; font-weight: bold; color: #FF4500;'>🔥 Sugerido</span></div>"
+                    else:
+                        html += f"<div style='margin-bottom: 18px; margin-left: 10%;'>• <span style='{t_prod}'>{nombre}</span></div>"
+                else:
+                    html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888; white-space: nowrap;'>({texto_ventas})</span></div>"
         
         html += "</div>"
         self.lbl_content.setText(html)

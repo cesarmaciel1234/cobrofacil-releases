@@ -103,6 +103,17 @@ class MotorVentas:
                         ORDER BY total_cant DESC
                         LIMIT ?
                     """
+                elif modo == "clavos":
+                    # Productos menos vendidos (o con stock que no salen)
+                    query = """
+                        SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                        FROM detalles_ventas dv
+                        JOIN ventas v ON dv.id_venta = v.id
+                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                        GROUP BY dv.nombre_producto
+                        ORDER BY total_cant ASC
+                        LIMIT ?
+                    """
                 else:
                     query = """
                         SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
