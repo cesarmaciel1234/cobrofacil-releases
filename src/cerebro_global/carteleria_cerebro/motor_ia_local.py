@@ -34,11 +34,13 @@ class MotorIALocal:
                 
                 # Buscamos otros productos en esos mismos tickets, agrupados por frecuencia
                 query = f"""
-                    SELECT nombre_producto, COUNT(*) as frecuencia
-                    FROM detalles_ventas
-                    WHERE id_venta IN ({placeholders})
-                      AND LOWER(nombre_producto) != LOWER(?)
-                    GROUP BY nombre_producto
+                    SELECT dv.nombre_producto, COUNT(*) as frecuencia
+                    FROM detalles_ventas dv
+                    JOIN productos p ON LOWER(dv.nombre_producto) = LOWER(p.nombre)
+                    WHERE dv.id_venta IN ({placeholders})
+                      AND LOWER(dv.nombre_producto) != LOWER(?)
+                      AND LOWER(dv.nombre_producto) NOT LIKE '%articulo comun%'
+                    GROUP BY dv.nombre_producto
                     ORDER BY frecuencia DESC
                     LIMIT ?
                 """
@@ -71,9 +73,11 @@ class MotorIALocal:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT nombre_producto, SUM(cantidad) as total
-                FROM detalles_ventas
-                GROUP BY nombre_producto
+                SELECT dv.nombre_producto, SUM(dv.cantidad) as total
+                FROM detalles_ventas dv
+                JOIN productos p ON LOWER(dv.nombre_producto) = LOWER(p.nombre)
+                WHERE LOWER(dv.nombre_producto) NOT LIKE '%articulo comun%'
+                GROUP BY dv.nombre_producto
                 ORDER BY total DESC
             """)
             
