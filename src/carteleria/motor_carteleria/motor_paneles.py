@@ -17,7 +17,7 @@ class MotorCarrusel(QThread):
     def run(self):
         try:
             modos = ["hoy", "semana", "mes"]
-            titulos = ["LO MÁS VENDIDO - HOY", "TOP DE LA SEMANA", "TOP DEL MES"]
+            titulos = ["LOS MÁS ELEGIDOS HOY", "CON MÁS VOLUMEN DE VENTAS", "PRODUCTOS MÁS RECOMENDADOS"]
             
             prod_lista = []
             titulo_str = ""
@@ -27,7 +27,13 @@ class MotorCarrusel(QThread):
                 modo_str = modos[self.modo_actual]
                 titulo_str = titulos[self.modo_actual]
                 
-                top_real = motor_ventas.get_top_ventas(limit=10, periodo=modo_str)
+                # Si es hoy, usamos frecuencia (tickets). Si es semana/mes, usamos volumen (kilos).
+                # Excepto que la regla dice: Top hoy=tickets, Top semana=kilos, Top mes=recomendados.
+                # Recomendados (mes) lo podemos dejar con volumen o frecuencia, el usuario no especificó la métrica para mes,
+                # solo el título, pero sí dijo "top hoy... que tome datos de los ticket", y "semana... el kilo del dia eso ya tenemos".
+                modo_metrica = "frecuencia" if modo_str == "hoy" else "volumen"
+                
+                top_real = motor_ventas.get_top_ventas(limit=10, periodo=modo_str, modo=modo_metrica)
                 
                 for p in top_real:
                     nombre = p['nombre']

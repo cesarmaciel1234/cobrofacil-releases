@@ -76,9 +76,11 @@ class MotorVentas:
             return 0.0
 
     @staticmethod
-    def get_top_ventas(limit=5, periodo="mes"):
+    def get_top_ventas(limit=5, periodo="mes", modo="volumen"):
         """
-        Calcula el Top de productos más vendidos en cantidad.
+        Calcula el Top de productos más vendidos.
+        modo='volumen': Suma de cantidad (kilos/unidades)
+        modo='frecuencia': Cuenta en cuántos tickets apareció
         Retorna lista de diccionarios: [{'nombre': 'Lomo', 'cantidad': 120.5, 'recaudacion': 50000}]
         """
         try:
@@ -91,15 +93,28 @@ class MotorVentas:
             conn = db_manager.get_connection()
             try:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
-                    FROM detalles_ventas dv
-                    JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
-                    GROUP BY dv.nombre_producto
-                    ORDER BY total_cant DESC
-                    LIMIT ?
-                """, (start_date, limit))
+                if modo == "frecuencia":
+                    query = """
+                        SELECT dv.nombre_producto, COUNT(DISTINCT dv.id_venta) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                        FROM detalles_ventas dv
+                        JOIN ventas v ON dv.id_venta = v.id
+                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                        GROUP BY dv.nombre_producto
+                        ORDER BY total_cant DESC
+                        LIMIT ?
+                    """
+                else:
+                    query = """
+                        SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                        FROM detalles_ventas dv
+                        JOIN ventas v ON dv.id_venta = v.id
+                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                        GROUP BY dv.nombre_producto
+                        ORDER BY total_cant DESC
+                        LIMIT ?
+                    """
+                
+                cursor.execute(query, (start_date, limit))
                 
                 rows = cursor.fetchall()
                 results = []

@@ -195,38 +195,57 @@ class CarruselDestacados(QFrame):
             if len(prod) >= 6:
                 cantidad = prod[5]
             
+            is_recomendados = "RECOMENDADOS" in titulo.upper()
+            is_hoy = "HOY" in titulo.upper()
+            
             if is_temu:
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
                 
                 if cantidad > 0:
-                    if is_kilos:
+                    if is_hoy:
+                        texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> ELEGIDO {cantidad:g} VECES"
+                    elif is_kilos:
                         texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}KG VENDIDOS"
                     else:
                         texto_ventas = f"🔥 <span style='color: #00A859; font-size: 26px;'>+</span> DE {cantidad:g}U. VENDIDAS"
                 else:
                     texto_ventas = "🔥 SÚPER VENTAS"
                 
-                html += f"""
-                <div style='margin-bottom: 40px; margin-left: 5%;'>
-                    <table cellpadding='0' cellspacing='0' style='margin-bottom: -5px;'>
-                        <tr>
-                            <td valign='middle'>
-                                <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
-                            </td>
-                            <td valign='middle'>
-                                <span style='font-family: Arial; font-size: 23px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
-                            </td>
-                        </tr>
-                    </table>
-                    <div>
-                        <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
+                if is_recomendados:
+                    html += f"""
+                    <div style='margin-bottom: 30px; margin-left: 5%;'>
+                        <div>
+                            <span style='font-family: Impact; font-size: 46px; color: #0055FF; line-height: 1.0;'>• {nombre}</span>
+                        </div>
+                        <div style='margin-top: 5px;'>
+                            <span style='font-family: Arial; font-size: 20px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 3px 8px; border-radius: 5px;'>{texto_ventas}</span>
+                        </div>
                     </div>
-                </div>
-                """
+                    """
+                else:
+                    html += f"""
+                    <div style='margin-bottom: 40px; margin-left: 5%;'>
+                        <table cellpadding='0' cellspacing='0' style='margin-bottom: -5px;'>
+                            <tr>
+                                <td valign='middle'>
+                                    <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
+                                </td>
+                                <td valign='middle'>
+                                    <span style='font-family: Arial; font-size: 23px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
+                                </td>
+                            </tr>
+                        </table>
+                        <div>
+                            <span style='font-family: Impact; font-size: 46px; color: #000000; line-height: 1.0;'>{nombre}</span>
+                        </div>
+                    </div>
+                    """
             else:
                 if cantidad > 0:
-                    if is_kilos:
+                    if is_hoy:
+                        texto_ventas = f"Elegido {cantidad:g} veces"
+                    elif is_kilos:
                         texto_ventas = f"Más de {cantidad:g}KG vendidos"
                     else:
                         texto_ventas = f"Más de {cantidad:g}U. vendidas"
