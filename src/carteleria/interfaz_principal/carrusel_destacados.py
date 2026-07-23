@@ -111,7 +111,7 @@ class CarruselDestacados(QFrame):
                 elif 0 < stock < 30:
                     stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = "🔥 ¡Éxito de ventas!"
+                    stock_str = "🔥 ¡El más recomendado!"
                     
                     
                 html = f"""
@@ -136,7 +136,7 @@ class CarruselDestacados(QFrame):
                 elif 0 < stock < 30:
                     stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = "🔥 ¡Súper recomendado!"
+                    stock_str = "🔥 ¡El más recomendado!"
                     
                 html = f"""
                 <div align='center' style='padding: 20px;'>
