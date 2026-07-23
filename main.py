@@ -164,6 +164,9 @@ def launch_app():
 
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
+    from src.inicio_y_perfiles.logica.auth_controller import AuthController
+    AuthController().ensure_default_jefe()
+    
     from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
     from src.inicio_y_perfiles.login_pantalla import LoginPantalla
     from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
