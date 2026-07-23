@@ -18,41 +18,56 @@ class DbSyncWorker(QThread):
 
     def run(self):
         try:
-            # Buscar IP dinamicamente si no hay
-            master_ip = config.get("carteleria_master_ip", "")
-            es_local = False
-            if master_ip in ("127.0.0.1", "localhost", "0.0.0.0", ""): es_local = True
-            try:
-                if master_ip == socket.gethostbyname(socket.gethostname()): es_local = True
-            except: pass
-
-            if not master_ip:
-                engine = get_network_engine()
-                if engine and hasattr(engine, '_active_ips') and engine._active_ips:
-                    for rol, ip in engine._active_ips.items():
-                        if any(x in rol.upper() for x in ["CAJA", "CAJERO", "TERMINAL", "ADMIN", "JEFE"]):
-                            master_ip = ip
-                            break
-                    if not master_ip and engine._active_ips:
-                        master_ip = list(engine._active_ips.values())[0]
-
-            if not master_ip: master_ip = "127.0.0.1"
-            
-            try:
-                if master_ip == socket.gethostbyname(socket.gethostname()):
-                    master_ip = "127.0.0.1"
-            except:
-                pass
-
-            url = f"http://{master_ip}:8000/api/carteleria/data"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            import json
+            import os
+            from src.utils.paths import get_base_path
+            from src.base_de_datos.database import db_manager
             
             cache_path = os.path.join(get_base_path(), "carteleria_cache.json")
             data = None
             
             try:
-                with urllib.request.urlopen(req, timeout=3.0) as response:
-                    data = json.loads(response.read().decode('utf-8'))
+                # 1. Config
+                config_path = os.path.join(get_base_path(), "config.json")
+                cfg_data = {}
+                if os.path.exists(config_path):
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        cfg_data = json.load(f)
+                
+                is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+                rand_func = "RAND()" if is_mariadb else "RANDOM()"
+                
+                # 2. SOS
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                oferta_sos = db_manager.execute_query(sos_query)
+                
+                # 3. Precios
+                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
+                rows_precios = db_manager.execute_query(precios_query)
+                
+                # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
+                top_dict = {"hoy": [], "semana": [], "mes": []}
+                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
+                top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                top_dict["semana"] = top_dict["hoy"]
+                top_dict["mes"] = top_dict["hoy"]
+                
+                response_data = {
+                    "config": {
+                        "business_name": cfg_data.get("business_name", "Carnicería"),
+                        "phone": cfg_data.get("phone", "No disponible"),
+                        "carteleria_rotacion": cfg_data.get("carteleria_rotacion", 15),
+                        "carteleria_tiempo_sos": cfg_data.get("carteleria_tiempo_sos", 10),
+                        "carteleria_frec_sos": cfg_data.get("carteleria_frec_sos", 2),
+                        "mensaje_zocalo": cfg_data.get("mensaje_zocalo", "")
+                    },
+                    "sos": oferta_sos,
+                    "precios": rows_precios,
+                    "top10": top_dict
+                }
+                
+                data = response_data
+                
                 # Guardar caché
                 try:
                     with open(cache_path, "w", encoding="utf-8") as f:
@@ -60,8 +75,9 @@ class DbSyncWorker(QThread):
                 except Exception as e:
                     logger.warning(f"No se pudo guardar la caché de cartelería: {e}")
                 self.sync_finished.emit(data, "online")
+                
             except Exception as e_req:
-                logger.warning(f"API inaccesible ({e_req}), intentando leer caché offline...")
+                logger.warning(f"Error DB directa ({e_req}), intentando leer caché offline...")
                 try:
                     with open(cache_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
