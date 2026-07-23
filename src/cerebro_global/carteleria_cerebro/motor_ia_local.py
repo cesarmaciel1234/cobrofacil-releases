@@ -16,17 +16,10 @@ class MotorIALocal:
         Si no hay suficientes datos empíricos, hace un fallback inteligente.
         """
         try:
-            conn = db_manager.get_connection()
-            cursor = conn.cursor()
+            query1 = "SELECT id_venta FROM detalles_ventas WHERE LOWER(nombre_producto) = LOWER(?)"
+            ventas = db_manager.execute_query(query1, (producto_base,))
             
-            # Buscamos IDs de ventas donde se vendió el producto_base
-            cursor.execute("""
-                SELECT id_venta FROM detalles_ventas 
-                WHERE LOWER(nombre_producto) = LOWER(?)
-            """, (producto_base,))
-            
-            ventas = cursor.fetchall()
-            ids_ventas = [v[0] if not isinstance(v, dict) else v['id_venta'] for v in ventas]
+            ids_ventas = [v[0] if not isinstance(v, dict) else v['id_venta'] for v in ventas] if ventas else []
             
             if len(ids_ventas) >= 2:
                 # Si hay al menos 2 tickets con este producto, buscamos co-ocurrencias
@@ -46,10 +39,9 @@ class MotorIALocal:
                 """
                 
                 params = ids_ventas + [producto_base, limit]
-                cursor.execute(query, params)
-                relacionados = cursor.fetchall()
+                relacionados = db_manager.execute_query(query, params)
                 
-                nombres = [r[0] if not isinstance(r, dict) else r['nombre_producto'] for r in relacionados]
+                nombres = [r[0] if not isinstance(r, dict) else r['nombre_producto'] for r in relacionados] if relacionados else []
                 
                 # Rellenar si faltan
                 if len(nombres) < limit:
@@ -69,19 +61,17 @@ class MotorIALocal:
         if excluir is None:
             excluir = []
         try:
-            conn = db_manager.get_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
+            query = """
                 SELECT dv.nombre_producto, SUM(dv.cantidad) as total
                 FROM detalles_ventas dv
                 JOIN productos p ON LOWER(dv.nombre_producto) = LOWER(p.nombre)
                 WHERE LOWER(dv.nombre_producto) NOT LIKE '%articulo comun%'
                 GROUP BY dv.nombre_producto
                 ORDER BY total DESC
-            """)
-            
-            top_general = cursor.fetchall()
+            """
+            top_general = db_manager.execute_query(query)
+            if not top_general:
+                top_general = []
             resultados = []
             for item in top_general:
                 nombre = item[0] if not isinstance(item, dict) else item['nombre_producto']
@@ -155,10 +145,9 @@ class MotorIALocal:
             )
             
             # 3. Datos del producto para mostrar
-            conn = db_manager.get_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT precio, precio_oferta FROM productos WHERE LOWER(nombre) = LOWER(?)", (estrella,))
-            res = cursor.fetchone()
+            query2 = "SELECT precio, precio_oferta FROM productos WHERE LOWER(nombre) = LOWER(?)"
+            rows = db_manager.execute_query(query2, (estrella,))
+            res = rows[0] if rows else None
             if res:
                 if isinstance(res, dict):
                     estrella_precio = float(res.get('precio') or 0)
