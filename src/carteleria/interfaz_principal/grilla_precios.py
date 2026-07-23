@@ -110,14 +110,20 @@ class _AutoScrollList(QScrollArea):
                     
                     fs_n = 38 if self.current_mode == 1 else 26
                     lbl_n = QLabel(nombre)
-                    lbl_n.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_n}px; font-weight: 700; color: {C_THEME['text']}; background: transparent; border: none; }}")
+                    if get_active_theme_name() == "temu":
+                        lbl_n.setStyleSheet(f"QLabel {{ font-family: 'Impact', sans-serif; font-size: {fs_n}px; font-weight: 700; color: #000000; background: transparent; border: none; }}")
+                    else:
+                        lbl_n.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_n}px; font-weight: 700; color: {C_THEME['text']}; background: transparent; border: none; }}")
                     lbl_n.setWordWrap(True)
                     name_lay.addWidget(lbl_n)
                     
                     if regla:
                         fs_r = 26 if self.current_mode == 1 else 18
                         lbl_r = QLabel(regla)
-                        lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_r}px; font-weight: 600; background: transparent; border: none; }}")
+                        if get_active_theme_name() == "temu":
+                            lbl_r.setStyleSheet(f"QLabel {{ font-family: Arial; font-size: {fs_r}px; font-weight: bold; color: #DC2626; background: transparent; border: none; }}")
+                        else:
+                            lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_r}px; font-weight: 600; color: #666666; background: transparent; border: none; }}")
                         lbl_r.setWordWrap(True)
                         name_lay.addWidget(lbl_r)
                         
@@ -146,10 +152,14 @@ class _AutoScrollList(QScrollArea):
                         precios_lay.addWidget(lbl_p)
                         row_lay.addLayout(precios_lay)
                     else:
-                        fs_p = 48 if self.current_mode == 1 else 32
                         lbl_p = QLabel(f"${precio:,.0f}")
-                        lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_p}px; font-weight: 800; color: {C_THEME['accent']}; background: transparent; border: none; }}")
-                        lbl_p.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                        if get_active_theme_name() == "temu":
+                            fs_p = 52 if self.current_mode == 1 else 36
+                            lbl_p.setStyleSheet(f"QLabel {{ font-family: 'Impact', 'Segoe UI Black', sans-serif; font-size: {fs_p}px; font-weight: 900; color: #DC2626; background: transparent; border: none; }}")
+                        else:
+                            fs_p = 48 if self.current_mode == 1 else 32
+                            lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_p}px; font-weight: 800; color: {C_THEME['accent']}; background: transparent; border: none; }}")
+                        lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                         row_lay.addWidget(lbl_p)
                     self.inner_layout.addWidget(row)
                 
