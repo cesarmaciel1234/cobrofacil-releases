@@ -20,7 +20,7 @@ class MotorGrilla(QThread):
         
     def run(self):
         try:
-            from src.database.db_manager import db_manager
+            from src.base_de_datos.database import db_manager
             query = 'SELECT departamento, nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY departamento, nombre_producto'
             rows = db_manager.execute_query(query)
             
