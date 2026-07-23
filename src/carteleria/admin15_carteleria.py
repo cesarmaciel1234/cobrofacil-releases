@@ -131,11 +131,11 @@ class CarteleriaConfigPanel(QWidget):
                     index = self.cmb_theme.findData(th)
                     if index >= 0: self.cmb_theme.setCurrentIndex(index)
                     
-                    self.panel_negocio.txt_nombre.setText(cfg_data.get("business_name", ""))
-                    self.panel_negocio.txt_direccion.setText(cfg_data.get("address", ""))
-                    self.panel_negocio.txt_telefono.setText(cfg_data.get("phone", ""))
+                    self.panel_negocio.txt_name.setText(cfg_data.get("business_name", ""))
+                    self.panel_negocio.txt_addr.setText(cfg_data.get("address", ""))
+                    self.panel_negocio.txt_phone.setText(cfg_data.get("phone", ""))
                     self.panel_negocio.txt_cuit.setText(cfg_data.get("cuit", ""))
-                    self.panel_negocio.txt_despedida.setText(cfg_data.get("mensaje_despedida", ""))
+                    self.panel_negocio.txt_msg.setText(cfg_data.get("mensaje_despedida", ""))
                     
                 self.btn_save.setText("💾 Guardar Cambios en PC Maestra")
             except Exception as e:
@@ -150,11 +150,11 @@ class CarteleriaConfigPanel(QWidget):
     def _save_all(self):
         # 1. Preparar datos a guardar
         datos_guardar = {
-            "business_name": self.panel_negocio.txt_nombre.text().strip(),
-            "address": self.panel_negocio.txt_direccion.text().strip(),
-            "phone": self.panel_negocio.txt_telefono.text().strip(),
+            "business_name": self.panel_negocio.txt_name.text().strip(),
+            "address": self.panel_negocio.txt_addr.text().strip(),
+            "phone": self.panel_negocio.txt_phone.text().strip(),
             "cuit": self.panel_negocio.txt_cuit.text().strip(),
-            "mensaje_despedida": self.panel_negocio.txt_despedida.text().strip(),
+            "mensaje_despedida": self.panel_negocio.txt_msg.text().strip(),
             "mensaje_zocalo": self.txt_mensaje.toPlainText().strip(),
             "carteleria_theme": self.cmb_theme.currentData()
         }

@@ -90,65 +90,60 @@ class MotorVentas:
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            conn = db_manager.get_connection()
-            try:
-                cursor = conn.cursor()
-                if modo == "frecuencia":
-                    query = """
-                        SELECT dv.nombre_producto, COUNT(DISTINCT dv.id_venta) as total_cant, SUM(dv.subtotal) as total_recaudacion
-                        FROM detalles_ventas dv
-                        JOIN ventas v ON dv.id_venta = v.id
-                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
-                        GROUP BY dv.nombre_producto
-                        ORDER BY total_cant DESC
-                        LIMIT ?
-                    """
-                elif modo == "clavos":
-                    # Productos menos vendidos (o con stock que no salen)
-                    query = """
-                        SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
-                        FROM detalles_ventas dv
-                        JOIN ventas v ON dv.id_venta = v.id
-                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
-                        GROUP BY dv.nombre_producto
-                        ORDER BY total_cant ASC
-                        LIMIT ?
-                    """
+            if modo == "frecuencia":
+                query = """
+                    SELECT dv.nombre_producto, COUNT(DISTINCT dv.id_venta) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                    FROM detalles_ventas dv
+                    JOIN ventas v ON dv.id_venta = v.id
+                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    GROUP BY dv.nombre_producto
+                    ORDER BY total_cant DESC
+                    LIMIT ?
+                """
+            elif modo == "clavos":
+                # Productos menos vendidos (o con stock que no salen)
+                query = """
+                    SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                    FROM detalles_ventas dv
+                    JOIN ventas v ON dv.id_venta = v.id
+                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    GROUP BY dv.nombre_producto
+                    ORDER BY total_cant ASC
+                    LIMIT ?
+                """
+            else:
+                query = """
+                    SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
+                    FROM detalles_ventas dv
+                    JOIN ventas v ON dv.id_venta = v.id
+                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    GROUP BY dv.nombre_producto
+                    ORDER BY total_cant DESC
+                    LIMIT ?
+                """
+            
+            rows = db_manager.execute_query(query, (start_date, limit))
+            
+            results = []
+            if not rows: return results
+            
+            for row in rows:
+                if isinstance(row, dict):
+                    nombre = row.get("nombre_producto") or row.get("nombre") or list(row.values())[0]
+                    cantidad = row.get("total_cant") or row.get("cantidad") or list(row.values())[1]
+                    recaudacion = row.get("total_recaudacion") or row.get("recaudacion") or list(row.values())[2]
+                    results.append({
+                        "nombre": str(nombre),
+                        "cantidad": float(cantidad or 0),
+                        "recaudacion": float(recaudacion or 0)
+                    })
                 else:
-                    query = """
-                        SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
-                        FROM detalles_ventas dv
-                        JOIN ventas v ON dv.id_venta = v.id
-                        WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
-                        GROUP BY dv.nombre_producto
-                        ORDER BY total_cant DESC
-                        LIMIT ?
-                    """
-                
-                cursor.execute(query, (start_date, limit))
-                
-                rows = cursor.fetchall()
-                results = []
-                for row in rows:
-                    if isinstance(row, dict):
-                        nombre = row.get("nombre_producto") or row.get("nombre") or list(row.values())[0]
-                        cantidad = row.get("total_cant") or row.get("cantidad") or list(row.values())[1]
-                        recaudacion = row.get("total_recaudacion") or row.get("recaudacion") or list(row.values())[2]
-                        results.append({
-                            "nombre": str(nombre),
-                            "cantidad": float(cantidad or 0),
-                            "recaudacion": float(recaudacion or 0)
-                        })
-                    else:
-                        results.append({
-                            "nombre": row[0],
-                            "cantidad": float(row[1] or 0),
-                            "recaudacion": float(row[2] or 0)
-                        })
-                return results
-            finally:
-                if hasattr(conn, 'close'):
-                    conn.close()
+                    results.append({
+                        "nombre": row[0],
+                        "cantidad": float(row[1] or 0),
+                        "recaudacion": float(row[2] or 0)
+                    })
+            return results
         except Exception as e:
             print(f"Error en get_top_ventas: {e}")
             return []
