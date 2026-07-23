@@ -101,7 +101,7 @@ class MotorCarrusel(QThread):
 
 class MotorCombos(QThread):
     combo_listo = pyqtSignal(str, list)
-    destacada_lista = pyqtSignal(str, float, float, float, str, str)  # nombre, precio, precio_of, stock, unidad, regla_texto
+    destacada_lista = pyqtSignal(str, float, float, float, str, str, float, float)  # nombre, precio, precio_of, stock, unidad, regla_texto, vistas, unidades_vendidas
     promo_lista = pyqtSignal(str, float, list)
     
     def __init__(self, parent=None):
@@ -176,13 +176,15 @@ class MotorCombos(QThread):
                         real_stock = float(stock_rows[0][0] or 0)
                         if stock_rows[0][1]: unidad = str(stock_rows[0][1])
                 
-                # Generar letra chica limpia desde regla_texto
                 import re as _re
                 regla_limpia = _re.sub(r'<[^>]+>', '', regla_raw).strip()
                 if not regla_limpia and precio_of > 0:
                     regla_limpia = f"Comprando {unidad.lower()}"
                     
-                self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad, regla_limpia)
+                from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+                vistas = motor_ventas.get_personas_viendo("mes")
+                unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
+                self.destacada_lista.emit(nombre, precio, precio_of, real_stock, unidad, regla_limpia, vistas, unidades_vendidas)
             else:
                 # Emitir Combo Simulado
                 if isinstance(rows[0], dict):

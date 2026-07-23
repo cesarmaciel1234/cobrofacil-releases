@@ -38,7 +38,7 @@ class PanelCombos(QFrame):
         
         self.layout.addWidget(self.lbl_content)
 
-    def actualizar_destacada(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla_texto=""):
+    def actualizar_destacada(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla_texto="", vistas=0, unidades_vendidas=0):
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
         
@@ -49,10 +49,6 @@ class PanelCombos(QFrame):
         
         if is_temu:
             nombre = nombre.upper()
-
-        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
-        vistas = motor_ventas.get_personas_viendo("mes")
-        unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
         
         # Letra chica HTML
         letra_chica = ""
