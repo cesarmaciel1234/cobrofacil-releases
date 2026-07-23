@@ -64,14 +64,17 @@ class PanelCombos(QFrame):
         
         if precio_oferta > 0:
             if is_temu:
-                if unidades_vendidas > 0 and stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
-                elif stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
-                elif unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
+                # Textos de marketing estilo grandes marcas
+                if unidades_vendidas > 10:
+                    if 0 < stock < 30:
+                        stock_str = f"🔥 +{unidades_vendidas:g} vendidos | ⏳ ¡Últimos {stock:g}!"
+                    else:
+                        stock_str = f"🔥 +{unidades_vendidas:g} {unidad.lower()} vendidos"
+                elif 0 < stock < 30:
+                    stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
+                    stock_str = "🔥 ¡Éxito de ventas!"
+                    
                     
                 html = f"""
                 <div align='center' style='padding: 20px;'>

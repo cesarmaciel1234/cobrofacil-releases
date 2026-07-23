@@ -102,14 +102,17 @@ class CarruselDestacados(QFrame):
         
         if precio_oferta > 0:
             if is_temu:
-                if unidades_vendidas > 0 and stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
-                elif stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
-                elif unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
+                # Textos de marketing estilo grandes marcas
+                if unidades_vendidas > 10:
+                    if 0 < stock < 30:
+                        stock_str = f"🔥 +{unidades_vendidas:g} vendidos | ⏳ ¡Últimos {stock:g}!"
+                    else:
+                        stock_str = f"🔥 +{unidades_vendidas:g} {unidad.lower()} vendidos"
+                elif 0 < stock < 30:
+                    stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = f"¡Oferta Limitada!"
+                    stock_str = "🔥 ¡Éxito de ventas!"
+                    
                     
                 html = f"""
                 <div align='center' style='padding: 20px;'>
@@ -124,14 +127,17 @@ class CarruselDestacados(QFrame):
                 html = f"<div style='padding: 15px;'><span style='{t1}'>OFERTA</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
         else:
             if is_temu:
-                if unidades_vendidas > 0 and stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
-                elif stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
-                elif unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
+                # Textos de marketing estilo grandes marcas
+                if unidades_vendidas > 10:
+                    if 0 < stock < 30:
+                        stock_str = f"🔥 +{unidades_vendidas:g} vendidos | ⏳ ¡Últimos {stock:g}!"
+                    else:
+                        stock_str = f"🔥 +{unidades_vendidas:g} {unidad.lower()} vendidos"
+                elif 0 < stock < 30:
+                    stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
                 else:
-                    stock_str = "¡Súper recomendado!"
+                    stock_str = "🔥 ¡Súper recomendado!"
+                    
                 html = f"""
                 <div align='center' style='padding: 20px;'>
                     <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
