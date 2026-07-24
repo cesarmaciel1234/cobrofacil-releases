@@ -67,7 +67,11 @@ class BanderinVolador(QWidget):
         self.show()
 
         alto_ventana = self.parent_window.height()
-        y_pos = random.randint(100, alto_ventana - 200)
+        # Volar solo por arriba o por abajo para no tapar los precios centrales
+        if random.choice([True, False]):
+            y_pos = random.randint(20, 100) # Arriba
+        else:
+            y_pos = random.randint(alto_ventana - 150, alto_ventana - 80) # Abajo
 
         ancho_banner = self.width()
         ancho_ventana = self.parent_window.width()

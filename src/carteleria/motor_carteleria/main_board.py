@@ -93,7 +93,7 @@ class CarteleriaMain(QWidget):
         self.timer.start(self.rotacion_ms) 
         
         self.contador_rotacion = 0
-        self.frec_sos = 2
+        self.frec_sos = 1 # "Uno y uno": intercala 1 vez la grilla y 1 vez la Oferta Relámpago
         self.tiempo_sos_ms = 10000
         self.estado_sos_activo = False
         
