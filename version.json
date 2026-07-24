@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-24 00:22:34",
+  "build_date": "2026-07-24 00:31:37",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1728,9 +1728,9 @@
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "6c79c487c29cf584044497471fdd25a2",
+      "checksum": "25db5bc3c67d8d2b071d18211a5cf3cc",
       "channel": "stable",
-      "size": 4312
+      "size": 5273
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",

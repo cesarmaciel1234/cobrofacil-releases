@@ -35,7 +35,7 @@ class OfertaRelampago(QWidget):
                 border: 2px solid rgba(255, 60, 60, 0.5);
             }
         """)
-        apply_apple_shadow(self.card, blur=80, alpha=80, y_offset=0, color=(255, 30, 30))
+        apply_apple_shadow(self.card, blur=80, alpha=80, y_offset=0)
         
         card_lay = QVBoxLayout(self.card)
         card_lay.setContentsMargins(80, 80, 80, 80)
