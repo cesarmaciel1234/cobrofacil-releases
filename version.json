@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-24 00:59:40",
+  "build_date": "2026-07-24 01:05:33",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1722,9 +1722,9 @@
     },
     "src/carteleria/interfaz_relampagos/banderin.py": {
       "version": "1.0.0",
-      "checksum": "ec7276ab098711583c475d067d225e4f",
+      "checksum": "f1cfbf37b344e55f66428e99da5e4e75",
       "channel": "stable",
-      "size": 3426
+      "size": 3644
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
@@ -1830,9 +1830,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "1d391fc1a8dcf9de42d28ada33623c0c",
+      "checksum": "2135ec2f0efabf9c61540e22a7618a43",
       "channel": "stable",
-      "size": 18229
+      "size": 18299
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",

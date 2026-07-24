@@ -86,10 +86,10 @@ class CarteleriaMain(QWidget):
         
         self._build_ui()
         
-        # ⏱️ TIMER ROTACIÓN PROMOCIONES
+        # ⚙️ TIMER ROTACIÓN PROMOCIONES
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._ciclo_inteligente)
-        self.rotacion_ms = 32000 # Doble de retraso solicitado
+        self.rotacion_ms = 16000 # Retraso normal (16s) para que intercale rápido
         self.timer.start(self.rotacion_ms) 
         
         self.contador_rotacion = 0
