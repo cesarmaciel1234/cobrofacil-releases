@@ -23,22 +23,17 @@ class CarteleriaApp(QStackedWidget):
         self.setMinimumSize(1024, 768)
 
         self.dashboard = CarteleriaDashboard()
-        self.tv_main = CarteleriaMain()
-        self.admin = CarteleriaConfigPanel()
-        
-        # Nuevos módulos autónomos
-        self.inv = Admin1Inventario()
-        self.ofe = Admin2Ofertas()
-        self.red = Admin6RedLan()
-        self.prov = VistaProveedor()
-
         self.addWidget(self.dashboard)
-        self.addWidget(self.tv_main)
-        self.addWidget(self.admin)
-        self.addWidget(self.inv)
-        self.addWidget(self.ofe)
-        self.addWidget(self.red)
-        self.addWidget(self.prov)
+
+        # Variables para inicialización diferida (Lazy Loading)
+        self.tv_main = None
+        self.admin = None
+        self.inv = None
+        self.ofe = None
+        self.red = None
+        self.prov = None
+        
+        self.estilo_completo = ""  # Cacheamos el estilo para aplicarlo on-demand
 
         # Conectar Dashboard
         self.dashboard.request_launch_tv.connect(self.lanzar_tv)
@@ -50,13 +45,9 @@ class CarteleriaApp(QStackedWidget):
         self.dashboard.request_exit.connect(self.close)
         self.dashboard.request_toggle_theme.connect(self.toggle_carteleria_theme)
 
-        # Conectar Admin (Volver al dashboard)
-        self.admin.request_back.connect(self.volver_dashboard)
-        self.inv.request_dashboard.connect(self.volver_dashboard)
-        self.ofe.request_dashboard.connect(self.volver_dashboard)
-        self.red.request_dashboard.connect(self.volver_dashboard)
+        # Conectar Admin (Volver al dashboard) - Solo si existieran (se conectan en el lazy load)
         
-        # Conectar TV
+        # Conectar TV (Escape global)
         from PyQt6.QtGui import QShortcut, QKeySequence
         self.shortcut = QShortcut(QKeySequence("Esc"), self)
         self.shortcut.activated.connect(self.volver_dashboard)
@@ -71,8 +62,10 @@ class CarteleriaApp(QStackedWidget):
 
     def lanzar_tv(self):
         # Destruir la instancia actual y crear una nueva para aplicar cambios de tema
-        self.removeWidget(self.tv_main)
-        self.tv_main.deleteLater()
+        if self.tv_main:
+            self.removeWidget(self.tv_main)
+            self.tv_main.deleteLater()
+            
         from src.carteleria.motor_carteleria.main_board import CarteleriaMain
         self.tv_main = CarteleriaMain()
         self.addWidget(self.tv_main)
@@ -85,22 +78,54 @@ class CarteleriaApp(QStackedWidget):
         self.showFullScreen()
 
     def lanzar_admin(self):
+        if not self.admin:
+            from src.carteleria.admin15_carteleria import CarteleriaConfigPanel
+            self.admin = CarteleriaConfigPanel()
+            self.addWidget(self.admin)
+            self.admin.request_back.connect(self.volver_dashboard)
+            if self.estilo_completo: self.admin.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.admin)
         self.showNormal()
 
     def lanzar_inv(self):
+        if not self.inv:
+            from src.carteleria.inventario_ui.inventario_main import Admin1Inventario
+            self.inv = Admin1Inventario()
+            self.addWidget(self.inv)
+            self.inv.request_dashboard.connect(self.volver_dashboard)
+            if self.estilo_completo: self.inv.setStyleSheet(self.estilo_completo)
+            if hasattr(self.inv, "_apply_inventario_theme"): self.inv._apply_inventario_theme()
         self.setCurrentWidget(self.inv)
         self.showNormal()
 
     def lanzar_ofe(self):
+        if not self.ofe:
+            from src.carteleria.motor_descuentos_ui.ofertas_main import Admin2Ofertas
+            self.ofe = Admin2Ofertas()
+            self.addWidget(self.ofe)
+            self.ofe.request_dashboard.connect(self.volver_dashboard)
+            if self.estilo_completo: self.ofe.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.ofe)
         self.showNormal()
 
     def lanzar_red(self):
+        if not self.red:
+            from src.carteleria.red_lan.red_lan_main import Admin6RedLan
+            self.red = Admin6RedLan()
+            self.addWidget(self.red)
+            self.red.request_dashboard.connect(self.volver_dashboard)
+            if self.estilo_completo: self.red.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.red)
         self.showNormal()
 
     def lanzar_prov(self):
+        if not self.prov:
+            from src.ui_global.proveedor.vista_proveedor import VistaProveedor
+            self.prov = VistaProveedor()
+            self.addWidget(self.prov)
+            # Para proveedor, no hay señal back al dashboard estándar, usan su propio btn cerrar
+            if self.estilo_completo: self.prov.setStyleSheet(self.estilo_completo)
+        
         self.setCurrentWidget(self.prov)
         if hasattr(self.prov, 'cargar_datos'):
             self.prov.cargar_datos()
@@ -136,15 +161,17 @@ class CarteleriaApp(QStackedWidget):
                     estilo_base = f_base.read()
 
             estilo_completo = estilo_base + "\n" + estilo_tema
+            self.estilo_completo = estilo_completo
             
             self.dashboard.setStyleSheet(estilo_completo)
-            self.admin.setStyleSheet(estilo_completo)
-            self.inv.setStyleSheet(estilo_completo)
-            self.ofe.setStyleSheet(estilo_completo)
-            self.red.setStyleSheet(estilo_completo)
+            if self.admin: self.admin.setStyleSheet(estilo_completo)
+            if self.inv: self.inv.setStyleSheet(estilo_completo)
+            if self.ofe: self.ofe.setStyleSheet(estilo_completo)
+            if self.red: self.red.setStyleSheet(estilo_completo)
+            if self.prov: self.prov.setStyleSheet(estilo_completo)
             
             # Notificar al inventario para que actualice sus colores internos
-            if hasattr(self.inv, "_apply_inventario_theme"):
+            if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
                 self.inv._apply_inventario_theme()
                 
             # Notificar al dashboard principal
