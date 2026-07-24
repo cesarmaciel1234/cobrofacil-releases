@@ -1,7 +1,7 @@
 {
   "app_version": "7.6",
   "channel": "stable",
-  "build_date": "2026-07-24 00:33:30",
+  "build_date": "2026-07-24 00:46:28",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1566,9 +1566,9 @@
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "96ba83fcef626ba127cd17fce3d11f38",
+      "checksum": "dc61123848cf8c505f679c7d1ad95c97",
       "channel": "stable",
-      "size": 7253
+      "size": 8967
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -1728,9 +1728,9 @@
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "734e22d0761e1803f2bc306688807663",
+      "checksum": "5c68da07ed45ff101d571c327a237ff9",
       "channel": "stable",
-      "size": 5252
+      "size": 6173
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
@@ -1830,9 +1830,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "9ffe589b0b5bae33b8a36cfb85492f8b",
+      "checksum": "19562af279c667d8a02c4d2daccc290a",
       "channel": "stable",
-      "size": 18335
+      "size": 18213
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",

@@ -192,7 +192,7 @@ class MotorCombos(QThread):
                 else:
                     centro = str(rows[0][0])
                     
-                nombres = MotorIALocal.obtener_relacionados(centro, limit=3)
+                nombres = MotorIALocal.obtener_relacionados(centro, limit=1)
                 self.combo_listo.emit(centro, nombres)
         except Exception as e:
             logger.error(f"MotorCombos Error: {e}")

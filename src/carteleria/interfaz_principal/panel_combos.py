@@ -17,7 +17,7 @@ class PanelCombos(QFrame):
         
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.motor.start)
-        self.auto_refresh_timer.start(16000) # 16 segundos
+        self.auto_refresh_timer.start(32000) # Doble retraso (32 segundos)
         
         self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
