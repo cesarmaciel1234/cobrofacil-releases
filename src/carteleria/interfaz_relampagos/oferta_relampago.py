@@ -113,6 +113,21 @@ class OfertaRelampago(QWidget):
         shadow.setOffset(0, 0)
         self.lbl_sos_precio.setGraphicsEffect(shadow)
         
+        self.lbl_sos_condiciones = QLabel("")
+        self.lbl_sos_condiciones.setAlignment(Qt.AlignCenter)
+        self.lbl_sos_condiciones.setStyleSheet("""
+            QLabel {
+                font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+                font-size: 30px;
+                font-weight: 500;
+                font-style: italic;
+                color: rgba(255, 255, 255, 0.7);
+                background: transparent;
+                border: none;
+            }
+        """)
+        self.lbl_sos_condiciones.hide()
+        
         # Ensamblar Tarjeta
         card_lay.addLayout(wrap_badge)
         card_lay.addSpacing(40)
@@ -120,6 +135,8 @@ class OfertaRelampago(QWidget):
         card_lay.addSpacing(20)
         card_lay.addWidget(self.lbl_sos_precio_old)
         card_lay.addWidget(self.lbl_sos_precio)
+        card_lay.addSpacing(10)
+        card_lay.addWidget(self.lbl_sos_condiciones)
         
         # Centrar la tarjeta en la pantalla
         wrap_card = QHBoxLayout()
@@ -131,7 +148,7 @@ class OfertaRelampago(QWidget):
         lay_sos.addLayout(wrap_card)
         lay_sos.addStretch()
 
-    def actualizar(self, nombre, precio, precio_oferta=0):
+    def actualizar(self, nombre, precio, precio_oferta=0, cant_of=0, t_un=""):
         self.lbl_sos_producto.setText(nombre.upper())
         if precio_oferta > 0:
             self.lbl_sos_precio.setText(f"${precio_oferta:,.2f}")
@@ -140,3 +157,9 @@ class OfertaRelampago(QWidget):
         else:
             self.lbl_sos_precio.setText(f"${precio:,.2f}")
             self.lbl_sos_precio_old.hide()
+            
+        if cant_of > 0:
+            self.lbl_sos_condiciones.setText(f"*Condiciones: Oferta válida llevando {cant_of:g} {t_un.lower()} o más.")
+            self.lbl_sos_condiciones.show()
+        else:
+            self.lbl_sos_condiciones.hide()

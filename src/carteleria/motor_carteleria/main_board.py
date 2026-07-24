@@ -259,13 +259,13 @@ class CarteleriaMain(QWidget):
                     precio_oferta = min(validas) if validas else 0.0
                     
                     cant_of = float(r_sos.get('cant_oferta') or 0)
+                    t_un = ""
                     if cant_of > 0:
                         t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
                         if 'unidad' in t_un or t_un == 'u':
                             t_un = "Unidades"
                         else:
                             t_un = "Kilos"
-                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                 else:
                     nombre = r_sos[0] if r_sos[0] else ''
                     precio = float(r_sos[1] if r_sos[1] else 0.0)
@@ -273,16 +273,16 @@ class CarteleriaMain(QWidget):
                     validas = [x for x in ofertas if x > 0]
                     precio_oferta = min(validas) if validas else 0.0
                     
-                    cant_of = float(r_sos[5]) if len(r_sos) > 5 else 0.0
+                    cant_of = float(r_sos[5]) if len(r_sos) > 5 and r_sos[5] else 0.0
+                    t_un = ""
                     if cant_of > 0:
                         t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
                         if 'unidad' in t_un or t_un == 'u':
                             t_un = "Unidades"
                         else:
                             t_un = "Kilos"
-                        pass  # Deleted: nombre = f"{nombre} [Llevando {cant_of:g} {t_un.capitalize()}]"
                         
-                self.page_sos.actualizar(nombre, precio, precio_oferta)
+                self.page_sos.actualizar(nombre, precio, precio_oferta, cant_of, t_un)
                 self.hay_oferta_sos = True
             else:
                 self.hay_oferta_sos = False
