@@ -84,6 +84,9 @@ class CarteleriaMain(QWidget):
         self.zona3_extra1 = PanelCombos()
         self.zona4_extra2 = PanelIA()
         
+        from src.carteleria.motor_carteleria.promo_manager import PromoManager
+        self.promo_manager = PromoManager(self)
+        
         self._build_ui()
         
         # ⚙️ TIMER ROTACIÓN PROMOCIONES
@@ -93,9 +96,11 @@ class CarteleriaMain(QWidget):
         self.timer.start(self.rotacion_ms) 
         
         self.contador_rotacion = 0
-        self.frec_sos = 1 # "Uno y uno": intercala 1 vez la grilla y 1 vez la Oferta Relámpago
+        self.frec_sos = 3 # Intercalado equilibrado: 3 ciclos de grilla por 1 aparición de Oferta Relámpago
         self.tiempo_sos_ms = 10000
         self.estado_sos_activo = False
+        self.lista_ofertas_sos = []
+        self.indice_sos_actual = 0
         
         from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
         from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
@@ -245,45 +250,16 @@ class CarteleriaMain(QWidget):
                     self.timer.setInterval(self.rotacion_ms)
                     
             self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
-            self.frec_sos = cfg_data.get("carteleria_frec_sos", 2)
+            # Garantizar al menos 3 ciclos de rotación normal antes del SOS para que la pantalla no parezca trabada
+            self.frec_sos = max(3, cfg_data.get("carteleria_frec_sos", 3))
 
-            # 2. Oferta SOS
+            # 2. Ofertas SOS (Múltiples y rotativas)
             oferta_sos = data.get("sos", [])
-            if oferta_sos:
-                r_sos = oferta_sos[0]
-                if isinstance(r_sos, dict):
-                    nombre = r_sos.get('nombre') or ''
-                    precio = float(r_sos.get('precio') or 0.0)
-                    ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
-                    validas = [x for x in ofertas if x > 0]
-                    precio_oferta = min(validas) if validas else 0.0
-                    
-                    cant_of = float(r_sos.get('cant_oferta') or 0)
-                    t_un = ""
-                    if cant_of > 0:
-                        t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
-                        if 'unidad' in t_un or t_un == 'u':
-                            t_un = "Unidades"
-                        else:
-                            t_un = "Kilos"
-                else:
-                    nombre = r_sos[0] if r_sos[0] else ''
-                    precio = float(r_sos[1] if r_sos[1] else 0.0)
-                    ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
-                    validas = [x for x in ofertas if x > 0]
-                    precio_oferta = min(validas) if validas else 0.0
-                    
-                    cant_of = float(r_sos[5]) if len(r_sos) > 5 and r_sos[5] else 0.0
-                    t_un = ""
-                    if cant_of > 0:
-                        t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
-                        if 'unidad' in t_un or t_un == 'u':
-                            t_un = "Unidades"
-                        else:
-                            t_un = "Kilos"
-                        
-                self.page_sos.actualizar(nombre, precio, precio_oferta, cant_of, t_un)
+            self.lista_ofertas_sos = oferta_sos
+            if self.lista_ofertas_sos:
                 self.hay_oferta_sos = True
+                if self.stack.currentIndex() == 1:
+                    self._actualizar_datos_sos()
             else:
                 self.hay_oferta_sos = False
                 if self.stack.currentIndex() == 1:
@@ -296,8 +272,9 @@ class CarteleriaMain(QWidget):
             current_hash = hashlib.md5(stable_str.encode()).hexdigest()
             if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
                 self.last_precios_hash = current_hash
-                # La grilla de precios ahora es 100% autonoma y lee de /api/carteleria/grilla
-                pass
+                self._reconstruir_ui_con_datos(rows_precios)
+                from src.carteleria.inventario_ui.sincro_manager import sincro_manager
+                sincro_manager.procesar_y_enviar_cache(rows_precios)
                     
             # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
             rows_top10 = data.get("top10", {})
@@ -307,10 +284,48 @@ class CarteleriaMain(QWidget):
         except Exception as e:
             logger.warning(f"Error procesando datos de carteleria (API o Caché): {e}")
 
+    def _actualizar_datos_sos(self, rotar_indice=False):
+        if not hasattr(self, 'lista_ofertas_sos') or not self.lista_ofertas_sos:
+            return
+        if rotar_indice:
+            self.indice_sos_actual = (getattr(self, 'indice_sos_actual', 0) + 1) % len(self.lista_ofertas_sos)
+        idx = min(getattr(self, 'indice_sos_actual', 0), len(self.lista_ofertas_sos) - 1)
+        r_sos = self.lista_ofertas_sos[idx]
+        if isinstance(r_sos, dict):
+            nombre = r_sos.get('nombre') or ''
+            precio = float(r_sos.get('precio') or 0.0)
+            ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
+            validas = [x for x in ofertas if x > 0]
+            precio_oferta = min(validas) if validas else 0.0
+            
+            cant_of = float(r_sos.get('cant_oferta') or 0)
+            t_un = ""
+            if cant_of > 0:
+                t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
+                t_un = "Unidades" if ('unidad' in t_un or t_un == 'u') else "Kilos"
+        else:
+            nombre = r_sos[0] if r_sos[0] else ''
+            precio = float(r_sos[1] if r_sos[1] else 0.0)
+            ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
+            validas = [x for x in ofertas if x > 0]
+            precio_oferta = min(validas) if validas else 0.0
+            
+            cant_of = float(r_sos[5]) if len(r_sos) > 5 and r_sos[5] else 0.0
+            t_un = ""
+            if cant_of > 0:
+                t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
+                t_un = "Unidades" if ('unidad' in t_un or t_un == 'u') else "Kilos"
+                
+        self.page_sos.actualizar(nombre, precio, precio_oferta, cant_of, t_un)
+
     def _ciclo_inteligente(self):
         # Si estamos en la pantalla espía, no hacer nada automático
         if self.stack.currentIndex() == 2:
             return
+            
+        # Rotar e intercalar automáticamente entre Cartel de Combos/Promos y Chef Lobo
+        if hasattr(self, 'promo_manager'):
+            self.promo_manager.rotar()
             
         if self.estado_sos_activo:
             # Si estábamos en SOS, volver a la normalidad
@@ -327,6 +342,7 @@ class CarteleriaMain(QWidget):
                 if self.contador_rotacion >= self.frec_sos:
                     self.contador_rotacion = 0
                     self.estado_sos_activo = True
+                    self._actualizar_datos_sos(rotar_indice=True)
                     self.layout_manager.fade_to_index(1)
                     # Cambiar el timer al tiempo de SOS
                     self.timer.start(self.tiempo_sos_ms)

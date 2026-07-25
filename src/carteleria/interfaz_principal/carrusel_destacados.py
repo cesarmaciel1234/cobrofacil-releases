@@ -102,7 +102,14 @@ class CarruselDestacados(QFrame):
                     
                 bg = c1 if self.lobo_arriba else c2
                 tc = tc1 if self.lobo_arriba else tc2
-                html_title = f"<div align='center' style='margin-bottom: 10px;'><span style='font-family: Impact; font-size: 40px; color: {tc}; background-color: {bg}; padding: 5px 15px;'>{self._current_titulo}</span></div>"
+                longitud = len(str(self._current_titulo))
+                if longitud > 23:
+                    f_size = 26
+                elif longitud > 17:
+                    f_size = 32
+                else:
+                    f_size = 40
+                html_title = f"<div align='center' style='margin-bottom: 10px;'><span style='font-family: Impact; font-size: {f_size}px; color: {tc}; background-color: {bg}; padding: 5px 10px; border-radius: 6px;'>{self._current_titulo}</span></div>"
                 self.lbl_title.setText(html_title)
 
     def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
@@ -118,6 +125,7 @@ class CarruselDestacados(QFrame):
         t3 = f"font-family: -apple-system; font-size: 55px; font-weight: 900; color: {C_THEME['accent']};"
         t_old = f"font-family: -apple-system; font-size: 28px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
         
+        nombre = str(nombre).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
         if is_temu:
             nombre = nombre.upper()
 
@@ -200,11 +208,13 @@ class CarruselDestacados(QFrame):
         is_temu = get_active_theme_name() == "temu"
 
         self.lbl_content.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        longitud_tit = len(str(titulo))
         if is_temu:
-            t1 = f"font-family: 'Impact', sans-serif; font-size: 60px; font-weight: 900; color: #DC2626; background-color: #FFFF00;"
+            t1 = f"font-family: 'Impact', sans-serif; font-size: 40px; font-weight: 900; color: #DC2626; background-color: #FFFF00;"
             titulo = titulo.upper()
         else:
-            t1 = f"font-family: 'Segoe UI Black', -apple-system; font-size: 46px; font-weight: 900; color: #FF4500; letter-spacing: 2px;"
+            f_size_std = 28 if longitud_tit > 23 else (34 if longitud_tit > 17 else 42)
+            t1 = f"font-family: 'Segoe UI Black', -apple-system; font-size: {f_size_std}px; font-weight: 900; color: #FF4500; letter-spacing: 1px;"
             
         t_rank = f"font-family: -apple-system; font-size: 24px; font-weight: 900; color: {C_THEME['blue']};"
         if is_temu:
@@ -216,7 +226,7 @@ class CarruselDestacados(QFrame):
 
         is_recomendados = "RECOMENDADO" in titulo.upper()
         is_hoy = "HOY" in titulo.upper() and not is_recomendados
-        is_semana = "SEMANA" in titulo.upper() or "VOLUMEN" in titulo.upper()
+        is_semana = any(w in titulo.upper() for w in ["SEMANA", "VOLUMEN", "MEGA VENTAS", "CORTES TOP"])
         
         self._current_titulo = titulo
         self._is_temu = is_temu
@@ -238,7 +248,7 @@ class CarruselDestacados(QFrame):
         promoted_idx = random.randint(0, min(4, len(productos) - 1)) if productos else -1
         
         for i, prod in enumerate(productos[:5]):
-            nombre = prod[0]
+            nombre = str(prod[0]).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
             cantidad = 0.0
             unidad_str = ""
             is_kilos = False
@@ -249,20 +259,34 @@ class CarruselDestacados(QFrame):
             
             if len(prod) >= 6:
                 cantidad = prod[5]
+                
+            # ── COPYWRITING EJEMPLAR: VOLUMEN (KILOS VENDIDOS) VS FRECUENCIA (CANTIDAD DE TICKETS) ──
+            if any(w in titulo.upper() for w in ["MEGA VENTAS", "VOLUMEN", "KILOS", "CORTES TOP"]):
+                badger_texts_kilos = [
+                    "🏆 N°1 MEGA VENTAS 🔥",
+                    "🥩 TOP EN KILOS 🔥",
+                    "⚡ ALTO VOLUMEN 🔥",
+                    "💥 VENTAS MASIVAS 🔥",
+                    "🚀 TOP VOLUMEN HOY"
+                ]
+                texto_ventas = badger_texts_kilos[i % len(badger_texts_kilos)]
+            elif is_hoy or "ELEGIDOS" in titulo.upper() or "TICKETS" in titulo.upper():
+                badger_texts_elegidos = [
+                    "👑 N°1 EN TICKETS 🔥",
+                    "🔥 EL MÁS ELEGIDO",
+                    "⭐ TOP EN TICKETS 🔥",
+                    "🎯 FAVORITO CLIENTES",
+                    "💥 MÁS PEDIDO HOY 🔥"
+                ]
+                texto_ventas = badger_texts_elegidos[i % len(badger_texts_elegidos)]
+            elif cantidad > 0:
+                texto_ventas = "🔥 VENTAS MASIVAS"
+            else:
+                texto_ventas = "🔥 SÚPER VENTAS"
             
             if is_temu:
                 nombre = nombre.upper()
                 if len(nombre) > 20: nombre = nombre[:17] + "..."
-                
-                if cantidad > 0:
-                    if is_hoy:
-                        texto_ventas = "🔥 VENTAS MASIVAS 🔥"
-                    elif is_kilos:
-                        texto_ventas = "🔥 VENTAS MASIVAS"
-                    else:
-                        texto_ventas = "🔥 VENTAS MASIVAS"
-                else:
-                    texto_ventas = "🔥 SÚPER VENTAS"
                 
                 if is_recomendados:
                     if i == promoted_idx:
@@ -303,7 +327,7 @@ class CarruselDestacados(QFrame):
                                     <span style='font-family: Impact; font-size: 42px; color: #0055FF; text-shadow: 2px 2px 0px #FFFFFF; margin-right: 8px;'>#{i+1}</span>
                                 </td>
                                 <td valign='middle'>
-                                    <span style='font-family: Arial; font-size: 23px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 4px 8px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
+                                    <span style='font-family: Arial; font-size: 19px; font-weight: 900; color: #DC2626; background-color: #FFFF00; padding: 3px 6px; border-radius: 5px; white-space: nowrap;'>{texto_ventas}</span>
                                 </td>
                             </tr>
                         </table>
@@ -313,16 +337,6 @@ class CarruselDestacados(QFrame):
                     </div>
                     """
             else:
-                if cantidad > 0:
-                    if is_hoy:
-                        texto_ventas = "🔥 Ventas masivas 🔥"
-                    elif is_kilos:
-                        texto_ventas = "🔥 Ventas masivas"
-                    else:
-                        texto_ventas = "🔥 Ventas masivas"
-                else:
-                    texto_ventas = "Top Ventas"
-                    
                 if is_recomendados:
                     if i == promoted_idx:
                         html += f"<div style='margin-bottom: 18px; margin-left: 10%; display: inline-block; background-color: #FFFF00; padding: 5px;'><span style='color: #DC2626; font-size: 24px; font-weight: bold;'>• {nombre}</span><br><span style='color: #000000; font-size: 16px; font-weight: bold;'>PRODUCTO PROMOCIONADO</span></div><div style='clear: both;'></div>"

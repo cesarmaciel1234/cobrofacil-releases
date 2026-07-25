@@ -40,6 +40,8 @@ class MotorGrilla(QThread):
                         po = float(r[3] or 0)
                         rt = str(r[4] or '')
                     
+                    nombre = str(nombre).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
+                    
                     if cat not in agrupados: agrupados[cat] = []
                     agrupados[cat].append((nombre, pn, po, rt))
             

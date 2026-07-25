@@ -19,11 +19,13 @@ class MotorVentas:
             today = datetime.date.today()
             if periodo == "hoy":
                 start_date = today.strftime('%Y-%m-%d 00:00:00')
+            elif periodo == "semana":
+                start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
                 # "mes"
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
-            query = "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND estado = 'COMPLETADA'"
+            query = "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND COALESCE(estado, '') != 'CANCELADA'"
             rows = db_manager.execute_query(query, (start_date,))
             if not rows: return 0
             res = rows[0]
@@ -42,6 +44,8 @@ class MotorVentas:
             today = datetime.date.today()
             if periodo == "hoy":
                 start_date = today.strftime('%Y-%m-%d 00:00:00')
+            elif periodo == "semana":
+                start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
@@ -49,7 +53,7 @@ class MotorVentas:
                 SELECT SUM(dv.cantidad) 
                 FROM detalles_ventas dv
                 JOIN ventas v ON dv.id_venta = v.id
-                WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
                 AND dv.nombre_producto = ?
             """
             rows = db_manager.execute_query(query, (start_date, nombre_producto))
@@ -73,6 +77,8 @@ class MotorVentas:
             today = datetime.date.today()
             if periodo == "hoy":
                 start_date = today.strftime('%Y-%m-%d 00:00:00')
+            elif periodo == "semana":
+                start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
                 start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
                 
@@ -81,7 +87,7 @@ class MotorVentas:
                     SELECT dv.nombre_producto, COUNT(DISTINCT dv.id_venta) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant DESC
                     LIMIT ?
@@ -92,7 +98,7 @@ class MotorVentas:
                     SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant ASC
                     LIMIT ?
@@ -102,7 +108,7 @@ class MotorVentas:
                     SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND v.estado = 'COMPLETADA'
+                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant DESC
                     LIMIT ?

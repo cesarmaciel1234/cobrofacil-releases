@@ -13,48 +13,14 @@ class MotorIALocal:
         """
         Analiza el historial de ventas (tickets) para encontrar qué otros productos
         se compraron en los MISMOS TICKETS que el producto_base.
-        Si no hay suficientes datos empíricos, hace un fallback inteligente.
+        Utiliza el módulo modularizado de VentaCruzadaInteligente que garantiza siempre 3 productos exactos.
         """
         try:
-            query1 = "SELECT id_venta FROM detalles_ventas WHERE LOWER(nombre_producto) = LOWER(?)"
-            ventas = db_manager.execute_query(query1, (producto_base,))
-            
-            ids_ventas = [v[0] if not isinstance(v, dict) else v['id_venta'] for v in ventas] if ventas else []
-            
-            if len(ids_ventas) >= 2:
-                # Si hay al menos 2 tickets con este producto, buscamos co-ocurrencias
-                placeholders = ','.join(['?'] * len(ids_ventas))
-                
-                # Buscamos otros productos en esos mismos tickets, agrupados por frecuencia
-                query = f"""
-                    SELECT dv.nombre_producto, COUNT(*) as frecuencia
-                    FROM detalles_ventas dv
-                    JOIN productos p ON LOWER(dv.nombre_producto) = LOWER(p.nombre)
-                    WHERE dv.id_venta IN ({placeholders})
-                      AND LOWER(dv.nombre_producto) != LOWER(?)
-                      AND LOWER(dv.nombre_producto) NOT LIKE '%articulo comun%'
-                    GROUP BY dv.nombre_producto
-                    ORDER BY frecuencia DESC
-                    LIMIT ?
-                """
-                
-                params = ids_ventas + [producto_base, limit]
-                relacionados = db_manager.execute_query(query, params)
-                
-                nombres = [r[0] if not isinstance(r, dict) else r['nombre_producto'] for r in relacionados] if relacionados else []
-                
-                # Rellenar si faltan
-                if len(nombres) < limit:
-                    nombres.extend(MotorIALocal._obtener_top_general(limit - len(nombres), excluir=nombres + [producto_base]))
-                    
-                return nombres
-            else:
-                # Fallback: No hay datos suficientes para este producto, usar TOP Ventas global
-                return MotorIALocal._obtener_top_general(limit, excluir=[producto_base])
-                
+            from src.carteleria.motor_carteleria.modulos_ventas_hoy.venta_cruzada_inteligente import VentaCruzadaInteligente
+            return VentaCruzadaInteligente.obtener_relacionados_para_ticket(producto_base, limit)
         except Exception as e:
             print(f"Error en obtener_relacionados: {e}")
-            return ["Falda", "Chorizo", "Carbón"] # Fallback rústico
+            return ["Carbón Premium", "Chorizo Puro Cerdo", "Provoleta Especial"][:limit]
                 
     @staticmethod
     def _obtener_top_general(limit=3, excluir=None):

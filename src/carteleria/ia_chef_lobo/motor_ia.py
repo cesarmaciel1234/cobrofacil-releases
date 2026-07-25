@@ -158,6 +158,10 @@ class MotorIA:
                         precio = float(r[1] if r[1] else 0)
                         poferta = float(r[2] if len(r)>2 and r[2] else 0)
 
+            producto_sugerido = str(producto_sugerido).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
+            if not producto_sugerido or producto_sugerido.upper() in {"ARTICULO COMUN", "ARTÍCULO COMÚN", "ARTICULO LIBRE", "VENTA LIBRE", "COBRO RAPIDO", "VARIOS", "AJUSTE", "DIFERENCIA"}:
+                producto_sugerido = "Asado Especial"
+
             return mensaje, producto_sugerido, precio, poferta
             
         except Exception as e:

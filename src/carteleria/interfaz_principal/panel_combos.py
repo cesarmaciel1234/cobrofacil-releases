@@ -113,18 +113,21 @@ class PanelCombos(QFrame):
         t2 = f"font-family: -apple-system; font-size: 28px; font-weight: 800; color: {C_THEME['text']}; line-height: 1.2;"
         t3 = f"font-family: -apple-system; font-size: 22px; font-weight: 600; color: {C_THEME['text_muted']};"
 
+        base = str(base).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
         if is_temu:
             base = base.upper()
 
         if isinstance(relacionados, list):
             items_html = ""
             for item in relacionados:
+                item = str(item).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
                 if is_temu:
                     item = item.upper()
                     items_html += f"<div style='margin-top: 15px;'><span style='font-family: Impact; font-size: 35px; color: #0000FF;'>• {item}</span></div>"
                 else:
                     items_html += f"<div style='margin-top: 8px;'>• {item}</div>"
         else:
+            relacionados = str(relacionados).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
             if is_temu:
                 items_html = f"<div><span style='font-family: Impact; font-size: 35px; color: #0000FF;'>{relacionados.upper()}</span></div>"
             else:
@@ -171,7 +174,7 @@ class PanelCombos(QFrame):
         if is_temu:
             html = f"""
             <div align='center' style='padding: 20px;'>
-                <span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #00A859; padding: 10px 20px;'>?? PROMO ESPECIAL ??</span><br><br><br>
+                <span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #00A859; padding: 10px 20px;'>🔥 PROMO ESPECIAL 🔥</span><br><br><br>
                 <span style='font-family: Impact; font-size: 60px; color: #000000;'>{nombre_promo}</span><br><br><br>
                 {items_html}
                 <br><br><br>

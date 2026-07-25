@@ -13,6 +13,7 @@ class PanelIA(QFrame):
         from src.carteleria.motor_carteleria.motor_paneles import MotorIAPanel
         self.motor = MotorIAPanel(self)
         self.motor.ia_lista.connect(self.actualizar_ia)
+        self.motor.promo_lista.connect(self.actualizar_promo)
         
         self.auto_refresh_timer = QTimer(self)
         self.auto_refresh_timer.timeout.connect(self.motor.start)
@@ -117,7 +118,7 @@ class PanelIA(QFrame):
                 html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
         self.lbl_content.setText(html)
 
-    def actualizar_ia(self, mensaje_ia, prod_nombre, prod_precio, prod_precio_oferta, clima):
+    def actualizar_ia(self, mensaje_ia, prod_nombre, prod_precio, prod_precio_oferta, regla, clima):
         import os
         img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo.png")).replace("\\", "/")
         
@@ -133,6 +134,20 @@ class PanelIA(QFrame):
         
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
+
+        # Formateo elegante y comercial de la condición / regla
+        regla_html = ""
+        if regla and str(regla).strip():
+            r_str = str(regla).strip()
+            if r_str.lower().startswith("llevando"):
+                r_str = f"*Condiciones: Oferta válida {r_str.lower()} o más."
+            elif not r_str.lower().startswith("*condiciones"):
+                r_str = f"*Condiciones: {r_str}."
+            
+            if is_temu:
+                regla_html = f"<br><br><br><span style='font-family: Arial; font-size: 28px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
+            else:
+                regla_html = f"<br><br><span style='font-family: -apple-system, Arial; font-size: 24px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
 
         # --- Contenido Central ---
         t1 = f"font-family: -apple-system; font-size: 28px; font-weight: 800; color: {C_THEME['blue']}; letter-spacing: 1px; text-align: center;"
@@ -152,9 +167,9 @@ class PanelIA(QFrame):
             html += f"<span style='font-family: Impact; font-size: 55px; color: #000000;'>{prod_nombre}</span><br><br>"
             if prod_precio_oferta > 0:
                 html += f"<span style='font-family: Arial; font-size: 30px; color: #DC2626; text-decoration: line-through;'>${prod_precio:,.2f}</span><br>"
-                html += f"<span style='font-family: Impact; font-size: 70px; color: #DC2626; background-color: #FFFF00;'>${prod_precio_oferta:,.2f}</span></div>"
+                html += f"<span style='font-family: Impact; font-size: 70px; color: #DC2626; background-color: #FFFF00;'>${prod_precio_oferta:,.2f}</span>{regla_html}</div>"
             else:
-                html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.2f}</span></div>"
+                html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.2f}</span>{regla_html}</div>"
         else:
             html = f"<div style='padding: 10px; text-align: center;'>"
             html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
@@ -164,9 +179,9 @@ class PanelIA(QFrame):
             
             if prod_precio_oferta > 0:
                 html += f"<span style='{t_old}'>${prod_precio:,.2f}</span><br>"
-                html += f"<span style='{t_precio}'>${prod_precio_oferta:,.2f}</span></div>"
+                html += f"<span style='{t_precio}'>${prod_precio_oferta:,.2f}</span>{regla_html}</div>"
             else:
-                html += f"<br><span style='{t_precio}'>${prod_precio:,.2f}</span></div>"
+                html += f"<br><span style='{t_precio}'>${prod_precio:,.2f}</span>{regla_html}</div>"
         
         self.lbl_content.setText(html)
 
@@ -207,3 +222,51 @@ class PanelIA(QFrame):
             lay_card.addWidget(lbl_p)
             
             self.lay_complementos.addWidget(card)
+
+    def actualizar_promo(self, nombre_promo, precio_promo, lista_productos):
+        if hasattr(self, 'lbl_clima'):
+            self.lbl_clima.hide()
+            
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
+
+        if is_temu:
+            nombre_promo = nombre_promo.upper()
+            
+        items_html = ""
+        for item in lista_productos:
+            try:
+                it_nom = item.get('nombre', '')
+                it_cant = item.get('cantidad', 1)
+                
+                if is_temu:
+                    it_nom = it_nom.upper()
+                    items_html += f"<div style='margin-top: 15px;'><span style='font-family: Impact; font-size: 30px; color: #000000;'>+ {it_cant}x {it_nom}</span></div>"
+                else:
+                    items_html += f"<div style='margin-top: 8px;'>+ {it_cant}x {it_nom}</div>"
+            except:
+                pass
+
+        if is_temu:
+            html = f"""
+            <div align='center' style='padding: 20px;'>
+                <span style='font-family: Impact; font-size: 40px; color: #FFFFFF; background-color: #00A859; padding: 10px 20px;'>🔥 PROMO ESPECIAL 🔥</span><br><br><br>
+                <span style='font-family: Impact; font-size: 60px; color: #000000;'>{nombre_promo}</span><br><br><br>
+                {items_html}
+                <br><br><br>
+                <span style='font-family: Impact; font-size: 110px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_promo:,.2f}</span>
+            </div>
+            """
+        else:
+            t1 = f"font-family: -apple-system; font-size: 16px; font-weight: 700; color: #00A859; letter-spacing: 1px;"
+            t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: #333333; line-height: 1.2;"
+            t3 = f"font-family: -apple-system; font-size: 22px; font-weight: 600; color: #666666;"
+            t4 = f"font-family: -apple-system; font-size: 55px; font-weight: 900; color: #DC2626;"
+            
+            html = f"<div style='padding: 20px;'><span style='{t1}'>PROMO ESPECIAL</span><br><br><br>"
+            html += f"<span style='{t2}'>{nombre_promo}</span><br><br><br>"
+            html += f"<span style='{t3}'>{items_html}</span><br><br><br>"
+            html += f"<span style='{t4}'>${precio_promo:,.2f}</span></div>"
+        
+        self.lbl_content.setText(html)
+
