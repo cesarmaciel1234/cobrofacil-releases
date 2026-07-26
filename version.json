@@ -1,7 +1,7 @@
 {
   "app_version": "7.7",
   "channel": "stable",
-  "build_date": "2026-07-25 18:19:42",
+  "build_date": "2026-07-25 21:40:53",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "bf42f5a58ecb708d12b74d1d74daf2a4",
+      "checksum": "dfee2fcc02c34a8089d4a4382b1067b0",
       "channel": "stable",
-      "size": 570030
+      "size": 570031
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -234,9 +234,9 @@
     },
     "02_Soporte_y_Mantenimiento/patch_admin14.py": {
       "version": "1.0.0",
-      "checksum": "3f877f110df5f1491a902060fb54abe7",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
-      "size": 6134
+      "size": 0
     },
     "02_Soporte_y_Mantenimiento/rename_project.py": {
       "version": "1.0.0",
@@ -924,9 +924,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "ad11f585aa0f425167e5e2473cb5f73b",
+      "checksum": "d7fbcab62c27de3eeb8b25e7c4decd27",
       "channel": "stable",
-      "size": 63746
+      "size": 63501
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -1326,9 +1326,9 @@
     },
     "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "f6089ab995fa1adc972587d385645875",
+      "checksum": "53c751f58af50f1a20cd9d586cdf12a4",
       "channel": "stable",
-      "size": 8456
+      "size": 8653
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
@@ -1494,9 +1494,9 @@
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "5c68da07ed45ff101d571c327a237ff9",
+      "checksum": "433b27f65dec2144a97be12a96eca09e",
       "channel": "stable",
-      "size": 6173
+      "size": 6338
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
@@ -1578,9 +1578,9 @@
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
       "version": "1.0.0",
-      "checksum": "b9234ea6cd026d3f0a8dc75925f58c3e",
+      "checksum": "1a1da2af0bc1a382548e5a2fdfcf7672",
       "channel": "stable",
-      "size": 5420
+      "size": 5518
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
@@ -1620,9 +1620,9 @@
     },
     "src/carteleria/motor_carteleria/promo_manager.py": {
       "version": "1.0.0",
-      "checksum": "b6fe558aa9f40b71d0f7506a48cac308",
+      "checksum": "e38be4451c1fe02c7929f1bac0f96d89",
       "channel": "stable",
-      "size": 3621
+      "size": 3698
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
       "version": "1.0.0",
@@ -1638,45 +1638,45 @@
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/buscador_precios_y_stock.py": {
       "version": "1.0.0",
-      "checksum": "8f003b30575eccf441cec7ba2d74153a",
+      "checksum": "0eb1308466d45999a66358906422bafb",
       "channel": "stable",
-      "size": 5793
+      "size": 5899
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/mas_elegidos_hoy.py": {
       "version": "1.0.0",
-      "checksum": "8d2d6cd645314033b94ccdac7896768b",
+      "checksum": "b9456aaccc329a951c9336ef2186bdd5",
       "channel": "stable",
-      "size": 1854
+      "size": 1887
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/mas_volumen_hoy.py": {
       "version": "1.0.0",
-      "checksum": "709b95630d1e0b400d4524a57f4af8f4",
+      "checksum": "fa9f0c342b70b1f135b0797bc3edca59",
       "channel": "stable",
-      "size": 1835
+      "size": 1867
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/ofertas_y_destacados_hoy.py": {
       "version": "1.0.0",
-      "checksum": "7032aa609ff27f86156b2b58424cf782",
+      "checksum": "5978837e7af743038447f19b9f3c7d92",
       "channel": "stable",
-      "size": 3334
+      "size": 3391
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/recomendados_hoy.py": {
       "version": "1.0.0",
-      "checksum": "bef84f1141c452ae2cbd5b21b6ca8d32",
+      "checksum": "ad7eaddcdf6809b46c55e217522ee322",
       "channel": "stable",
-      "size": 2454
+      "size": 2495
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/venta_cruzada_inteligente.py": {
       "version": "1.0.0",
-      "checksum": "0343320c97d3747f1eec1a9a9009037b",
+      "checksum": "c0503f0e807c3d454ac6fb4b700aed8f",
       "channel": "stable",
-      "size": 7941
+      "size": 8077
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/__init__.py": {
       "version": "1.0.0",
-      "checksum": "2d1018fab1f02f1aa4d1e3c4c536800c",
+      "checksum": "afb1fd10a38114fe81533038741ec1e6",
       "channel": "stable",
-      "size": 1207
+      "size": 1228
     },
     "src/carteleria/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",

@@ -574,15 +574,16 @@ class DatabaseManager:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
         # Crear índice para optimizar búsqueda instantánea
-        try:
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_tipo_fecha ON movimientos_caja (tipo, fecha)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_usuario_fecha ON ventas (usuario, fecha)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)")
-        except Exception as e:
-            logger.warning(f"Error creando índices: {e}")
+        for q_idx in [
+            "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
+            "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
+            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
+        ]:
+            try:
+                cursor.execute(q_idx)
+            except Exception:
+                pass
             
         # Crear tablas para módulo de clientes
         try:
