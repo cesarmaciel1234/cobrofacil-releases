@@ -1,7 +1,7 @@
 {
   "app_version": "7.7",
   "channel": "stable",
-  "build_date": "2026-07-29 14:25:43",
+  "build_date": "2026-07-29 15:13:41",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1752,9 +1752,9 @@
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
-      "checksum": "73a2a00edab7d1cc7913e62473f76e20",
+      "checksum": "b1321aa0e8ed54c25e4e39f496f9ef8a",
       "channel": "stable",
-      "size": 2459
+      "size": 2548
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
