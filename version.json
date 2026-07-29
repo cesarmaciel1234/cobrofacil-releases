@@ -1,7 +1,7 @@
 {
   "app_version": "7.7",
   "channel": "stable",
-  "build_date": "2026-07-29 14:04:52",
+  "build_date": "2026-07-29 14:25:43",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1536,9 +1536,9 @@
     },
     "src/carteleria/utils_condiciones.py": {
       "version": "1.0.0",
-      "checksum": "1c06683a743fd8c59affa16300edd021",
+      "checksum": "7bc9ac66ca53a60c31cca2651d4ab0d5",
       "channel": "stable",
-      "size": 1676
+      "size": 1720
     },
     "src/carteleria/__init__.py": {
       "version": "1.0.0",
@@ -1650,15 +1650,15 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "65f64ec7222d603ddb588a43b610c67e",
+      "checksum": "3551b8c36a8b7957fa1cd124f2122bc5",
       "channel": "stable",
-      "size": 17260
+      "size": 17435
     },
     "src/carteleria/interfaz_principal/display_promo_tv.py": {
       "version": "1.0.0",
-      "checksum": "905d81ebe407c9b1f33386b52d59c09a",
+      "checksum": "09b87fbb7520b6830c2268e22b70c95e",
       "channel": "stable",
-      "size": 9496
+      "size": 9656
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
@@ -1680,15 +1680,15 @@
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "59a89e914b4ca4470d69467ce22f55b3",
+      "checksum": "bba512007dd7fbafb643e7b7cdc3128c",
       "channel": "stable",
-      "size": 13127
+      "size": 13169
     },
     "src/carteleria/interfaz_principal/tarjeta_producto.py": {
       "version": "1.0.0",
-      "checksum": "c562dd8afb432622ed978bd360f599e1",
+      "checksum": "df02dc121aa1dd9377edcbc105da418c",
       "channel": "stable",
-      "size": 9572
+      "size": 9843
     },
     "src/carteleria/interfaz_principal/__init__.py": {
       "version": "1.0.0",
@@ -1698,21 +1698,21 @@
     },
     "src/carteleria/interfaz_relampagos/banderin.py": {
       "version": "1.0.0",
-      "checksum": "f1cfbf37b344e55f66428e99da5e4e75",
+      "checksum": "65ddcd93bb526d434728b1cabc807486",
       "channel": "stable",
-      "size": 3644
+      "size": 3686
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "b843af5520071072ca5ae8304ac02465",
+      "checksum": "0c87bd2e9a879b0737e4382147673214",
       "channel": "stable",
-      "size": 6595
+      "size": 6647
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
-      "checksum": "03f4f0fc9b1dc86a595b1ff2c94bbc6f",
+      "checksum": "070795e5541d1e361864c5e469228e95",
       "channel": "stable",
-      "size": 4520
+      "size": 4718
     },
     "src/carteleria/interfaz_relampagos/__init__.py": {
       "version": "1.0.0",
@@ -1752,9 +1752,9 @@
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
-      "checksum": "af15a3c8158f69823a9acb0b17625e65",
+      "checksum": "73a2a00edab7d1cc7913e62473f76e20",
       "channel": "stable",
-      "size": 2351
+      "size": 2459
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
@@ -1776,15 +1776,15 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "824bddbc7d6818503616b2f2994f5308",
+      "checksum": "9354cc59d90e93f59300e61b1fb64c5e",
       "channel": "stable",
-      "size": 10773
+      "size": 9871
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
-      "checksum": "59ef77420ce02f1f399fd6c046802704",
+      "checksum": "5aa6eb25abdcddd0331adb7b07dd2351",
       "channel": "stable",
-      "size": 3346
+      "size": 3432
     },
     "src/carteleria/motor_carteleria/promo_manager.py": {
       "version": "1.0.0",
@@ -2376,9 +2376,9 @@
     },
     "src/motor_inventario/motor_departamentos.py": {
       "version": "1.0.0",
-      "checksum": "4775ad9e4331ae9c515704de4d84f7a1",
+      "checksum": "890ebd71c31cf7a1ee8611aae4b30017",
       "channel": "stable",
-      "size": 5319
+      "size": 5454
     },
     "src/motor_inventario/motor_importacion.py": {
       "version": "1.0.0",
