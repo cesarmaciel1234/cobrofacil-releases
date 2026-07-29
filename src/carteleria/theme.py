@@ -42,17 +42,8 @@ def get_active_theme_name():
 
 def apply_apple_shadow(widget, blur=30, alpha=30, y_offset=10):
     """Aplica una sombra suave y difuminada."""
-    # Para bajo recurso, bajamos el blur y el alpha si es temu
+    # En modo temu eliminamos las sombras laterales/sólidas para que los paneles luzcan limpios sin rayas de sombra
     if _ACTIVE_THEME_NAME == "temu":
-        blur = 0
-        alpha = 255 # Sombra sólida al estilo "brutalismo / neo-asian"
-        y_offset = 15
-        x_offset = 15
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(blur)
-        shadow.setColor(QColor(220, 38, 38, alpha)) # Sombra Roja Sólida
-        shadow.setOffset(x_offset, y_offset)
-        widget.setGraphicsEffect(shadow)
         return
         
     shadow = QGraphicsDropShadowEffect()

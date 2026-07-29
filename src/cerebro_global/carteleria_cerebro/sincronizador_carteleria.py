@@ -2,8 +2,16 @@ import time
 import datetime
 import threading
 import traceback
+import re
 from src.logger import logger
 from src.base_de_datos.database import db_manager
+
+def _limpiar_nombre(nombre):
+    nombre = str(nombre or "")
+    for tag in ["🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]", "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 "]:
+        nombre = nombre.replace(tag, "")
+    nombre = re.sub(r'^(?:oferta\s+de|oferta)\s+', '', nombre, flags=re.IGNORECASE).strip()
+    return nombre
 
 class SincronizadorCarteleria:
     """
@@ -52,7 +60,7 @@ class SincronizadorCarteleria:
             for fila in filas:
                 if isinstance(fila, dict):
                     departamento = str(fila.get('categoria', ''))
-                    nombre_producto = str(fila.get('nombre', ''))
+                    nombre_producto = _limpiar_nombre(fila.get('nombre', ''))
                     precio_normal = float(fila.get('precio') or 0)
                     precio_oferta = float(fila.get('precio_oferta') or 0)
                     cant_oferta = float(fila.get('cant_oferta') or 0)
@@ -60,7 +68,7 @@ class SincronizadorCarteleria:
                     prod_unidad = str(fila.get('unidad') or "").strip().lower()
                 else:
                     departamento = str(fila[0])
-                    nombre_producto = str(fila[1])
+                    nombre_producto = _limpiar_nombre(fila[1])
                     precio_normal = float(fila[2] or 0)
                     precio_oferta = float(fila[3] or 0)
                     cant_oferta = float(fila[4] or 0)
@@ -68,19 +76,22 @@ class SincronizadorCarteleria:
                     prod_unidad = str(fila[6] or "").strip().lower()
                 
                 regla_texto = ""
-                if cant_oferta > 0:
-                    if 'kilo' in prod_unidad or prod_unidad == 'kg':
-                        t_un = "Kilos"
-                    elif 'unidad' in prod_unidad or prod_unidad == 'u' or prod_unidad == 'un':
-                        t_un = "Unidades"
-                    else:
-                        # Fallback a tipo_unidad_oferta si la unidad del producto está vacía o es extraña
-                        if 'kilo' in tipo_unidad or tipo_unidad == 'kg':
-                            t_un = "Kilos"
+                if cant_oferta > 0.15:
+                    is_kilo = ('kilo' in prod_unidad or prod_unidad == 'kg' or 'kilo' in tipo_unidad or tipo_unidad == 'kg' or cant_oferta != int(cant_oferta))
+                    if is_kilo:
+                        if cant_oferta < 1:
+                            t_un_str = f"{int(round(cant_oferta * 1000))} gs"
+                        elif cant_oferta == 1:
+                            t_un_str = "1 Kilo"
                         else:
-                            t_un = "Unidades"
+                            t_un_str = f"{cant_oferta:g} Kilos"
+                    else:
+                        if cant_oferta == 1:
+                            t_un_str = "1 Unidad"
+                        else:
+                            t_un_str = f"{int(cant_oferta)} Unidades"
                     
-                    regla_texto = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{cant_oferta:g} {t_un}</span>"
+                    regla_texto = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{t_un_str}</span>"
                 
                 nuevos_datos.append((
                     departamento,

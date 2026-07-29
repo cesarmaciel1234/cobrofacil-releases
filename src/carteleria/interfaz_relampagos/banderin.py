@@ -28,6 +28,7 @@ class BanderinVolador(QWidget):
         
         # 2. La Cápsula de Texto
         self.lbl_texto = QLabel()
+        self.lbl_texto.setWordWrap(True)
         self.lbl_texto.setStyleSheet(f"background: rgba(255, 255, 255, 0.95); color: {C_THEME['text']}; font-family: -apple-system; font-size: 24px; font-weight: 600; border-radius: 30px; border: 1px solid rgba(0,0,0,0.05); padding: 15px 30px;")
         apply_apple_shadow(self.lbl_texto, blur=40, alpha=20, y_offset=15)
         

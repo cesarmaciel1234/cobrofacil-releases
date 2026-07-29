@@ -60,7 +60,12 @@ class MotorCombos(QThread):
             eleccion = random.choice([0, 1])
             
             # Buscar productos en oferta aleatorios desde carteleria_global
-            q = "SELECT nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE precio_oferta > 0 ORDER BY RANDOM() LIMIT 5"
+            q = """
+                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
+                FROM carteleria_global c
+                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                WHERE c.precio_oferta > 0 ORDER BY RANDOM() LIMIT 5
+            """
             if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
                 q = q.replace("RANDOM()", "RAND()")
             rows = db_manager.execute_query(q)
@@ -76,22 +81,16 @@ class MotorCombos(QThread):
                     unidad = "Kilos" if "Kilos" in regla_raw else "Unidades"
                     precio = float(r.get('precio_normal') or 0)
                     precio_of = float(r.get('precio_oferta') or 0)
+                    real_stock = float(r.get('stock') or 0)
+                    if r.get('unidad'): unidad = str(r.get('unidad'))
                 else:
                     nombre = str(r[0])
-                    regla_raw = str(r[3] or "")
-                    unidad = "Kilos" if "Kilos" in regla_raw else "Unidades"
                     precio = float(r[1])
                     precio_of = float(r[2])
-                    
-                stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
-                real_stock = 0.0
-                if stock_rows:
-                    if isinstance(stock_rows[0], dict):
-                        real_stock = float(stock_rows[0].get('stock') or 0)
-                        if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
-                    else:
-                        real_stock = float(stock_rows[0][0] or 0)
-                        if stock_rows[0][1]: unidad = str(stock_rows[0][1])
+                    regla_raw = str(r[3] or "")
+                    real_stock = float(r[4] or 0)
+                    unidad = "Kilos" if "Kilos" in regla_raw else "Unidades"
+                    if r[5]: unidad = str(r[5])
                 
                 import re as _re
                 regla_limpia = _re.sub(r'<[^>]+>', '', regla_raw).strip()
@@ -162,7 +161,12 @@ class MotorIAPanel(QThread):
                     pass
             
             # Si es turno 0 o si no había combos guardados, mostramos a Chef Lobo y su recomendación con clima
-            q = "SELECT nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY RANDOM() LIMIT 5"
+            q = """
+                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
+                FROM carteleria_global c
+                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                ORDER BY RANDOM() LIMIT 5
+            """
             if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
                 q = q.replace("RANDOM()", "RAND()")
                 
@@ -178,24 +182,18 @@ class MotorIAPanel(QThread):
                     unidad = "Kilos" if "Kilos" in regla_t else "Unidades"
                     precio = float(r.get('precio_normal') or 0)
                     precio_of = float(r.get('precio_oferta') or 0)
+                    real_stock = float(r.get('stock') or 0)
+                    if r.get('unidad'): unidad = str(r.get('unidad'))
                 else:
                     nombre = str(r[0])
-                    regla_t = str(r[3] or "").strip()
-                    unidad = "Kilos" if "Kilos" in regla_t else "Unidades"
                     precio = float(r[1])
                     precio_of = float(r[2])
+                    regla_t = str(r[3] or "").strip()
+                    real_stock = float(r[4] or 0)
+                    unidad = "Kilos" if "Kilos" in regla_t else "Unidades"
+                    if r[5]: unidad = str(r[5])
                     
                 reglas_map[nombre.lower()] = regla_t
-                stock_rows = db_manager.execute_query("SELECT stock, unidad FROM productos WHERE LOWER(nombre) = LOWER(?)", (nombre,))
-                real_stock = 0.0
-                if stock_rows:
-                    if isinstance(stock_rows[0], dict):
-                        real_stock = float(stock_rows[0].get('stock') or 0)
-                        if stock_rows[0].get('unidad'): unidad = str(stock_rows[0].get('unidad'))
-                    else:
-                        real_stock = float(stock_rows[0][0] or 0)
-                        if stock_rows[0][1]: unidad = str(stock_rows[0][1])
-                
                 prod_lista.append((nombre, precio, precio_of, real_stock, unidad))
                 
             msg, prod, precio, precio_oferta = MotorIALocal.generar_recomendacion_lobo(self.clima, prod_lista)

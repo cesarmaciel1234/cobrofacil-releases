@@ -37,7 +37,11 @@ def _unidad_oferta_producto(producto):
     return "unidades"
 
 def _condicion_venta_texto(producto, cant_oferta):
+    if not cant_oferta or cant_oferta <= 0.15:
+        return "Oferta Directa"
     if _unidad_oferta_producto(producto) == "kilos":
+        if 0 < cant_oferta < 1:
+            return f"Llevando {int(round(cant_oferta * 1000))} gs"
         return f"Llevando {cant_oferta:g} Kilos"
     cant = max(1, int(cant_oferta)) if cant_oferta else 1
     return f"Llevando {cant} Unidades"
@@ -333,10 +337,18 @@ class Admin2Ofertas(QWidget):
             
         t_u = "Kilos" if _unidad_oferta_producto(p) == "kilos" else "Unidades"
         if t_u.lower() == "kilos":
-            c_of_str = f"Llevando {cant_oferta:g} Kilos"
+            if 0.15 < cant_oferta < 1:
+                c_of_str = f"Llevando {int(round(cant_oferta * 1000))} gs"
+            elif cant_oferta <= 0.15:
+                c_of_str = "Oferta Directa"
+            else:
+                c_of_str = f"Llevando {cant_oferta:g} Kilos"
             es_kilos = True
         else:
-            c_of_str = f"Llevando {int(cant_oferta)} Unidades"
+            if cant_oferta <= 0.15:
+                c_of_str = "Oferta Directa"
+            else:
+                c_of_str = f"Llevando {int(cant_oferta)} Unidades"
             es_kilos = False
 
         dlg = QDialog(self)

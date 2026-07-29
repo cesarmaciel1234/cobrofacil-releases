@@ -15,18 +15,18 @@ class EspiaWorker(QThread):
 
     def run(self):
         import socket, json
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            sock.bind(('0.0.0.0', 37021))
-            sock.settimeout(2.0)
-        except Exception as e:
-            print(f"Error binding UDP port 37021: {e}")
-            return
-            
-        while self.running:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                data_bytes, addr = sock.recvfrom(4096)
+                sock.bind(('0.0.0.0', 37021))
+                sock.settimeout(2.0)
+            except Exception as e:
+                print(f"Error binding UDP port 37021: {e}")
+                return
+                
+            while self.running:
+                try:
+                    data_bytes, addr = sock.recvfrom(4096)
                 
                 data = json.loads(data_bytes.decode('utf-8'))
                 

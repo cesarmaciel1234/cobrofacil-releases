@@ -40,7 +40,14 @@ class MotorGrilla(QThread):
                         po = float(r[3] or 0)
                         rt = str(r[4] or '')
                     
+                    if any(bad in rt.lower() for bad in ["0.1", "0,1", "0.0", "0,0", "100 gs", "150 gs"]):
+                        rt = ""
+                    else:
+                        rt = rt.replace("0.5 Kilos", "500 gs").replace("0,5 Kilos", "500 gs").replace("0.25 Kilos", "250 gs").replace("0,25 Kilos", "250 gs")
+                    
                     nombre = str(nombre).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
+                    if not nombre:
+                        continue
                     
                     if cat not in agrupados: agrupados[cat] = []
                     agrupados[cat].append((nombre, pn, po, rt))

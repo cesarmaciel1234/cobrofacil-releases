@@ -69,12 +69,11 @@ class NetworkManager(QObject):
         try:
             import socket as _s
             msg = b"carteleria|HEARTBEAT|{}"
-            sock = _s.socket(_s.AF_INET, _s.SOCK_DGRAM)
-            sock.setsockopt(_s.SOL_SOCKET, _s.SO_REUSEADDR, 1)
-            sock.setsockopt(_s.SOL_SOCKET, _s.SO_BROADCAST, 1)
-            sock.sendto(msg, ('127.0.0.1', 38000))
-            sock.sendto(msg, ('255.255.255.255', 38000))
-            sock.close()
+            with _s.socket(_s.AF_INET, _s.SOCK_DGRAM) as sock:
+                sock.setsockopt(_s.SOL_SOCKET, _s.SO_REUSEADDR, 1)
+                sock.setsockopt(_s.SOL_SOCKET, _s.SO_BROADCAST, 1)
+                sock.sendto(msg, ('127.0.0.1', 38000))
+                sock.sendto(msg, ('255.255.255.255', 38000))
         except Exception:
             pass
 

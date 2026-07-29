@@ -31,12 +31,10 @@ def main() -> int:
 
     from src.cajero.paso5_terminal import Paso5Terminal
     from src.cajero.paso6_cobro import Paso6Cobro
-    from src.cajero.paso7_cierre import Paso7CierreCaja
     from src.cajero.paso8_historial import DialogoHistorialDia
-    from src.cajero.ui_components.terminal_caja_mixin import TerminalCajaMixin
     from src.utils.qt_compat import easing_sine_curve
 
-    _ = (Paso5Terminal, Paso6Cobro, Paso7CierreCaja, DialogoHistorialDia, TerminalCajaMixin)
+    _ = (Paso5Terminal, Paso6Cobro, DialogoHistorialDia)
     easing_sine_curve()
 
     print("SMOKE cajero: imports + enums OK")

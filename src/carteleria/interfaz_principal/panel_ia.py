@@ -22,11 +22,11 @@ class PanelIA(QFrame):
         self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":
-            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
         else:
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
-        apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
+            apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)
@@ -39,10 +39,16 @@ class PanelIA(QFrame):
         self.lbl_content.setStyleSheet("background: transparent; border: none;")
         self.layout.addWidget(self.lbl_content)
         
+        from src.carteleria.interfaz_principal.display_promo_tv import DisplayPromoTV
+        self.display_promo = DisplayPromoTV(parent=self)
+        self.display_promo.hide()
+        self.layout.addWidget(self.display_promo)
+        
         self.layout.addStretch(1)
 
         # Widget para el clima en la esquina superior derecha
         self.lbl_clima = QLabel(self)
+        self.lbl_clima.setWordWrap(True)
         self.lbl_clima.setStyleSheet("background: transparent;")
         self.lbl_clima.hide()
 
@@ -60,14 +66,12 @@ class PanelIA(QFrame):
         if not self.lbl_clima.isHidden():
             self.lbl_clima.move(self.width() - self.lbl_clima.width() - 30, 30)
 
-    def actualizar_recomendacion(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
+    def actualizar_recomendacion(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla=""):
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
-
-        t1 = f"font-family: -apple-system; font-size: 26px; font-weight: bold; color: {C_THEME['blue']};"
-        t2 = f"font-family: -apple-system; font-size: 32px; font-weight: 800; color: {C_THEME['text']};"
-        t3 = f"font-family: -apple-system; font-size: 45px; font-weight: 900; color: {C_THEME['accent']};"
-        t_old = f"font-family: -apple-system; font-size: 24px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
+        
+        self.lbl_content.hide()
+        self.display_promo.show()
 
         if is_temu:
             nombre = nombre.upper()
@@ -75,50 +79,36 @@ class PanelIA(QFrame):
         from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
         unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
         
-        if precio_oferta > 0:
-            if is_temu:
-                if unidades_vendidas > 0 and stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
-                elif stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
-                elif unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
-                else:
-                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
-                html = f"""
-                <div align='center' style='padding: 20px;'>
-                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
-                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
-                    <span style='font-family: Arial; font-size: 45px; color: #DC2626; text-decoration: line-through;'>${precio:,.2f}</span><br><br>
-                    <span style='font-family: Impact; font-size: 130px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.2f}</span>
-                </div>
-                """
-            else:
-                html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.2f}</span><br><span style='{t3}'>${precio_oferta:,.2f}</span></div>"
+        vendidos_int = int(round(unidades_vendidas))
+        stock_int = int(round(stock))
+        
+        if unidades_vendidas > 0 and stock > 0:
+            stock_str = f"¡Quedan {stock_int} | 🔥 +{vendidos_int} Vendidos!"
+        elif stock > 0:
+            stock_str = f"¡Quedan {stock_int} disponibles!"
+        elif unidades_vendidas > 0:
+            stock_str = f"¡Ya se vendieron +{vendidos_int}!"
         else:
-            if is_temu:
-                if unidades_vendidas > 0 and stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} | 🔥 {unidades_vendidas:g} Vendidos!"
-                elif stock > 0:
-                    stock_str = f"¡Quedan {stock:g} {unidad.capitalize()} disponibles!"
-                elif unidades_vendidas > 0:
-                    stock_str = f"¡Ya se vendieron {unidades_vendidas:g} {unidad.capitalize()}!"
-                else:
-                    stock_str = f"¡Más de 50 {unidad.capitalize()} vendidos!"
-                html = f"""
-                <div align='center' style='padding: 20px;'>
-                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>🔥 HOY TE RECOMENDAMOS 🔥</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
-                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 130px; color: #DC2626;'>${precio:,.2f}</span>
-                </div>
-                """
-            else:
-                html = f"<div style='padding: 15px; text-align: center;'><span style='{t1}'>Recomendación</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.2f}</span></div>"
-        self.lbl_content.setText(html)
+            stock_str = f"¡Más de 50 vendidos!"
+            
+        titulo = "🔥 HOY TE RECOMENDAMOS 🔥" if is_temu else "Recomendación"
+        bg_badge = "#0055FF"
+        
+        self.display_promo.actualizar(
+            titulo=titulo,
+            nombre=nombre,
+            marketing_str=stock_str,
+            precio=precio,
+            precio_oferta=precio_oferta,
+            regla=regla,
+            is_temu=is_temu,
+            bg_color_badge=bg_badge,
+            use_ribbon=False
+        )
 
     def actualizar_ia(self, mensaje_ia, prod_nombre, prod_precio, prod_precio_oferta, regla, clima):
+        self.display_promo.hide()
+        self.lbl_content.show()
         import os
         img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo.png")).replace("\\", "/")
         
@@ -136,16 +126,13 @@ class PanelIA(QFrame):
         is_temu = get_active_theme_name() == "temu"
 
         # Formateo elegante y comercial de la condición / regla
+        from src.carteleria.utils_condiciones import formatear_condicion_oferta
+        r_str = formatear_condicion_oferta(regla)
+        
         regla_html = ""
-        if regla and str(regla).strip():
-            r_str = str(regla).strip()
-            if r_str.lower().startswith("llevando"):
-                r_str = f"*Condiciones: Oferta válida {r_str.lower()} o más."
-            elif not r_str.lower().startswith("*condiciones"):
-                r_str = f"*Condiciones: {r_str}."
-            
+        if r_str:
             if is_temu:
-                regla_html = f"<br><br><br><span style='font-family: Arial; font-size: 28px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
+                regla_html = f"<br><br><br><span style='font-family: Arial; font-size: 26px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
             else:
                 regla_html = f"<br><br><span style='font-family: -apple-system, Arial; font-size: 24px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
 
@@ -166,10 +153,10 @@ class PanelIA(QFrame):
             html += f"<span style='font-family: Arial; font-size: 26px; font-weight: bold; color: #000000;'>{mensaje_ia}</span><br><br><br>"
             html += f"<span style='font-family: Impact; font-size: 55px; color: #000000;'>{prod_nombre}</span><br><br>"
             if prod_precio_oferta > 0:
-                html += f"<span style='font-family: Arial; font-size: 30px; color: #DC2626; text-decoration: line-through;'>${prod_precio:,.2f}</span><br>"
-                html += f"<span style='font-family: Impact; font-size: 70px; color: #DC2626; background-color: #FFFF00;'>${prod_precio_oferta:,.2f}</span>{regla_html}</div>"
+                html += f"<span style='font-family: Arial; font-size: 30px; color: #DC2626; text-decoration: line-through;'>${prod_precio:,.0f}</span><br>"
+                html += f"<span style='font-family: Impact; font-size: 70px; color: #DC2626; background-color: #FFFF00;'>${prod_precio_oferta:,.0f}</span>{regla_html}</div>"
             else:
-                html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.2f}</span>{regla_html}</div>"
+                html += f"<br><span style='font-family: Impact; font-size: 80px; color: #DC2626;'>${prod_precio:,.0f}</span>{regla_html}</div>"
         else:
             html = f"<div style='padding: 10px; text-align: center;'>"
             html += f"<div><img src='{img_path}' width='150' height='150'></div><br>"
@@ -178,10 +165,10 @@ class PanelIA(QFrame):
             html += f"<span style='{t_prod}'>{prod_nombre}</span><br><br>"
             
             if prod_precio_oferta > 0:
-                html += f"<span style='{t_old}'>${prod_precio:,.2f}</span><br>"
-                html += f"<span style='{t_precio}'>${prod_precio_oferta:,.2f}</span>{regla_html}</div>"
+                html += f"<span style='{t_old}'>${prod_precio:,.0f}</span><br>"
+                html += f"<span style='{t_precio}'>${prod_precio_oferta:,.0f}</span>{regla_html}</div>"
             else:
-                html += f"<br><span style='{t_precio}'>${prod_precio:,.2f}</span>{regla_html}</div>"
+                html += f"<br><span style='{t_precio}'>${prod_precio:,.0f}</span>{regla_html}</div>"
         
         self.lbl_content.setText(html)
 

@@ -15,11 +15,11 @@ class CarruselDestacados(QFrame):
         from src.carteleria.motor_carteleria.motor_paneles import MotorCarrusel
         
         if get_active_theme_name() == "temu":
-            # Estilo asiático: Bordes punteados de cupón / Naranja-Rojo brillante
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 6px dashed #FF5722;")
+            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
+            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
         else:
             self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
-        apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
+            apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.motor = MotorCarrusel(self)
         self.motor.datos_listos.connect(self.actualizar_top10_y_rotar)
@@ -33,18 +33,22 @@ class CarruselDestacados(QFrame):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(15, 15, 15, 15)
         
-        # Etiqueta para el título parpadeante
         self.lbl_title = QLabel()
-        self.lbl_title.setAlignment(Qt.AlignCenter)
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_title.setWordWrap(True)
         self.lbl_title.setStyleSheet("background: transparent; border: none;")
         self.layout.addWidget(self.lbl_title)
         
-        # Etiqueta principal (Lista)
         self.lbl_content = QLabel()
-        self.lbl_content.setAlignment(Qt.AlignCenter)
+        self.lbl_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_content.setWordWrap(True)
         self.lbl_content.setStyleSheet("background: transparent; border: none;")
         self.layout.addWidget(self.lbl_content, stretch=1)
+        
+        from src.carteleria.interfaz_principal.display_promo_tv import DisplayPromoTV
+        self.display_promo = DisplayPromoTV(parent=self)
+        self.display_promo.hide()
+        self.layout.addWidget(self.display_promo, stretch=1)
         
         # --- FOOTER CON LOBO BAILARÍN ---
         self.footer_widget = QWidget()
@@ -52,22 +56,23 @@ class CarruselDestacados(QFrame):
         self.footer_widget.setFixedHeight(120) # Fijamos el alto para evitar jitter en la ventana
         
         self.footer_layout = QHBoxLayout(self.footer_widget)
-        self.footer_layout.setAlignment(Qt.AlignCenter)
+        self.footer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.footer_layout.setContentsMargins(0, 0, 0, 0)
         
         self.lbl_lobo = QLabel()
         self.lbl_lobo.setFixedSize(100, 120) # Tamaño fijo para absorber el salto
         img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo.png"))
-        pix = QPixmap(img_path).scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        pix = QPixmap(img_path).scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.lbl_lobo.setPixmap(pix)
-        self.lbl_lobo.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self.lbl_lobo.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         
         # Texto en 3 líneas exactas
         texto_footer = "La gente hoy<br>elige estos cortes...<br>¿vos qué vas a cocinar?"
         self.lbl_footer_text = QLabel(texto_footer)
+        self.lbl_footer_text.setWordWrap(True)
         t_footer = f"font-family: -apple-system; font-size: 20px; font-weight: 600; color: {C_THEME['text_muted']}; font-style: italic;"
         self.lbl_footer_text.setStyleSheet(t_footer)
-        self.lbl_footer_text.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        self.lbl_footer_text.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
         
         self.footer_layout.addWidget(self.lbl_lobo)
         self.footer_layout.addSpacing(15)
@@ -112,19 +117,16 @@ class CarruselDestacados(QFrame):
                 html_title = f"<div align='center' style='margin-bottom: 10px;'><span style='font-family: Impact; font-size: {f_size}px; color: {tc}; background-color: {bg}; padding: 5px 10px; border-radius: 6px;'>{self._current_titulo}</span></div>"
                 self.lbl_title.setText(html_title)
 
-    def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos"):
+    def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla=""):
         self.footer_widget.hide()
         self.lbl_title.hide()
         self.timer_baile.stop()
-        self.lbl_content.setAlignment(Qt.AlignCenter)
+        self.lbl_content.hide()
+        self.display_promo.show()
+        
         from src.carteleria.theme import get_active_theme_name
         is_temu = get_active_theme_name() == "temu"
 
-        t1 = f"font-family: -apple-system; font-size: 30px; font-weight: bold; color: {C_THEME['blue']};"
-        t2 = f"font-family: -apple-system; font-size: 38px; font-weight: 800; color: {C_THEME['text']};"
-        t3 = f"font-family: -apple-system; font-size: 55px; font-weight: 900; color: {C_THEME['accent']};"
-        t_old = f"font-family: -apple-system; font-size: 28px; color: {C_THEME['text_muted']}; text-decoration: line-through;"
-        
         nombre = str(nombre).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
         if is_temu:
             nombre = nombre.upper()
@@ -133,70 +135,60 @@ class CarruselDestacados(QFrame):
         unidades_vendidas = motor_ventas.get_unidades_vendidas(nombre, "mes")
         
         if precio_oferta > 0:
-            if is_temu:
-                # Textos de marketing estilo grandes marcas
-                if unidades_vendidas > 10:
-                    if 0 < stock < 30:
-                        stock_str = f"🔥 +{unidades_vendidas:g} vendidos | ⏳ ¡Últimos {stock:g}!"
-                    else:
-                        stock_str = f"🔥 +{unidades_vendidas:g} {unidad.lower()} vendidos"
-                elif 0 < stock < 30:
-                    stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
+            titulo = "OFERTA RELÁMPAGO" if is_temu else "OFERTA"
+            bg_badge = "#DC2626"
+            if unidades_vendidas > 10:
+                vendidos_int = int(round(unidades_vendidas))
+                if 0 < stock < 30:
+                    stock_str = f"🔥 +{vendidos_int} vendidos | ⏳ ¡Últimos {int(stock)}!"
                 else:
-                    import random
-                    stock_str = random.choice([
-                        "🔥 ¡El más recomendado!",
-                        "⭐ ¡Favorito de todos!",
-                        "🔥 ¡Éxito de ventas!",
-                        "⭐ ¡Producto estrella!",
-                        "🔥 ¡Calidad premium!"
-                    ])
-                    
-                    
-                html = f"""
-                <div align='center' style='padding: 20px;'>
-                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #DC2626; padding: 10px 25px;'>OFERTA RELÁMPAGO</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
-                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #00A859;'>({stock_str})</span><br><br><br>
-                    <span style='font-family: Arial; font-size: 45px; color: #DC2626; text-decoration: line-through;'>${precio:,.0f}</span><br><br>
-                    <span style='font-family: Impact; font-size: 130px; color: #DC2626; background-color: #FFFF00; padding: 0 15px;'>${precio_oferta:,.0f}</span>
-                </div>
-                """
+                    stock_str = f"🔥 +{vendidos_int} vendidos"
+            elif 0 < stock < 30:
+                stock_str = f"⏳ ¡Últimos {int(stock)}!"
             else:
-                html = f"<div style='padding: 15px;'><span style='{t1}'>OFERTA</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><span style='{t_old}'>${precio:,.0f}</span><br><span style='{t3}'>${precio_oferta:,.0f}</span></div>"
+                import random
+                stock_str = random.choice([
+                    "🔥 ¡El más recomendado!",
+                    "⭐ ¡Favorito de todos!",
+                    "🔥 ¡Éxito de ventas!",
+                    "⭐ ¡Producto estrella!",
+                    "🔥 ¡Calidad premium!"
+                ])
         else:
-            if is_temu:
-                # Textos de marketing estilo grandes marcas
-                if unidades_vendidas > 10:
-                    if 0 < stock < 30:
-                        stock_str = f"🔥 +{unidades_vendidas:g} vendidos | ⏳ ¡Últimos {stock:g}!"
-                    else:
-                        stock_str = f"🔥 +{unidades_vendidas:g} {unidad.lower()} vendidos"
-                elif 0 < stock < 30:
-                    stock_str = f"⏳ ¡Últimos {stock:g} {unidad.lower()}!"
+            titulo = "PRODUCTO DESTACADO" if is_temu else "PRODUCTO DESTACADO"
+            bg_badge = "#0055FF"
+            if unidades_vendidas > 10:
+                vendidos_int = int(round(unidades_vendidas))
+                if 0 < stock < 30:
+                    stock_str = f"🔥 +{vendidos_int} vendidos | ⏳ ¡Últimos {int(stock)}!"
                 else:
-                    import random
-                    stock_str = random.choice([
-                        "🔥 ¡El más recomendado!",
-                        "⭐ ¡Favorito de todos!",
-                        "🔥 ¡Éxito de ventas!",
-                        "⭐ ¡Producto estrella!",
-                        "🔥 ¡Calidad premium!"
-                    ])
-                    
-                html = f"""
-                <div align='center' style='padding: 20px;'>
-                    <span style='font-family: Impact; font-size: 38px; color: #FFFFFF; background-color: #0055FF; padding: 10px 25px;'>PRODUCTO DESTACADO</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 75px; color: #000000; line-height: 1.1;'>{nombre}</span><br><br><br>
-                    <font color='#FF9900' size='7'>⭐⭐⭐⭐⭐</font> <span style='font-family: Arial; font-size: 32px; font-weight: bold; color: #DC2626;'>({stock_str})</span><br><br><br><br>
-                    <span style='font-family: Impact; font-size: 130px; color: #DC2626;'>${precio:,.0f}</span>
-                </div>
-                """
+                    stock_str = f"🔥 +{vendidos_int} vendidos"
+            elif 0 < stock < 30:
+                stock_str = f"⏳ ¡Últimos {int(stock)}!"
             else:
-                html = f"<div style='padding: 20px;'><span style='{t1}'>PRODUCTO DESTACADO</span><br><br><br><span style='{t2}'>{nombre}</span><br><br><br><span style='{t3}'>${precio:,.0f}</span></div>"
-        self.lbl_content.setText(html)
+                import random
+                stock_str = random.choice([
+                    "🔥 ¡El más recomendado!",
+                    "⭐ ¡Favorito de todos!",
+                    "🔥 ¡Éxito de ventas!",
+                    "⭐ ¡Producto estrella!",
+                    "🔥 ¡Calidad premium!"
+                ])
+                
+        self.display_promo.actualizar(
+            titulo=titulo,
+            nombre=nombre,
+            marketing_str=stock_str,
+            precio=precio,
+            precio_oferta=precio_oferta,
+            regla=regla,
+            is_temu=is_temu,
+            bg_color_badge=bg_badge
+        )
 
     def actualizar_top10_y_rotar(self, datos_top10, titulo=""):
+        self.display_promo.hide()
+        self.lbl_content.show()
         self.actualizar_top10(datos_top10, titulo)
 
     def actualizar_top10(self, productos, titulo="Top 10 Semanal"):

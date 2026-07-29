@@ -114,18 +114,29 @@ class MotorCatalogo:
         params_dict debe tener las claves coincidentes con la BD.
         """
         try:
+            params = dict(params_dict)
             if is_new:
-                cols = ", ".join(params_dict.keys())
-                placeholders = ", ".join(["?"] * len(params_dict))
+                # En MariaDB/SQLite, si id es None, vacío o 0, debemos eliminarlo del diccionario
+                # para que el motor autogenere el ID sin disparar error 167 (Out of range value).
+                if 'id' in params and (params['id'] is None or params['id'] == '' or params['id'] == 0):
+                    del params['id']
+                cols = ", ".join(params.keys())
+                placeholders = ", ".join(["?"] * len(params))
                 query = f"INSERT INTO productos ({cols}) VALUES ({placeholders})"
-                vals = tuple(params_dict.values())
-                db_manager.execute_non_query(query, vals)
+                vals = tuple(params.values())
+                exito = db_manager.execute_non_query(query, vals)
             else:
-                set_clause = ", ".join([f"{k} = ?" for k in params_dict.keys()])
+                if 'id' in params and (params['id'] is None or params['id'] == ''):
+                    del params['id']
+                set_clause = ", ".join([f"{k} = ?" for k in params.keys()])
                 query = f"UPDATE productos SET {set_clause} WHERE id = ?"
-                vals = tuple(list(params_dict.values()) + [prod_id])
-                db_manager.execute_non_query(query, vals)
-            return True, "Producto guardado correctamente."
+                vals = tuple(list(params.values()) + [prod_id])
+                exito = db_manager.execute_non_query(query, vals)
+                
+            if exito:
+                return True, "Producto guardado correctamente."
+            else:
+                return False, "Error en el motor de base de datos al guardar el producto."
         except Exception as e:
             return False, f"Error al guardar: {e}"
 

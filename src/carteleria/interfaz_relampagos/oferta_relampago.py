@@ -114,6 +114,7 @@ class OfertaRelampago(QWidget):
         self.lbl_sos_precio.setGraphicsEffect(shadow)
         
         self.lbl_sos_condiciones = QLabel("")
+        self.lbl_sos_condiciones.setWordWrap(True)
         self.lbl_sos_condiciones.setAlignment(Qt.AlignCenter)
         self.lbl_sos_condiciones.setStyleSheet("""
             QLabel {
@@ -151,15 +152,19 @@ class OfertaRelampago(QWidget):
     def actualizar(self, nombre, precio, precio_oferta=0, cant_of=0, t_un=""):
         self.lbl_sos_producto.setText(nombre.upper())
         if precio_oferta > 0:
-            self.lbl_sos_precio.setText(f"${precio_oferta:,.2f}")
-            self.lbl_sos_precio_old.setText(f"${precio:,.2f}")
+            self.lbl_sos_precio.setText(f"${precio_oferta:,.0f}")
+            self.lbl_sos_precio_old.setText(f"${precio:,.0f}")
             self.lbl_sos_precio_old.show()
         else:
-            self.lbl_sos_precio.setText(f"${precio:,.2f}")
+            self.lbl_sos_precio.setText(f"${precio:,.0f}")
             self.lbl_sos_precio_old.hide()
             
-        if cant_of > 0:
-            self.lbl_sos_condiciones.setText(f"*Condiciones: Oferta válida llevando {cant_of:g} {t_un.lower()} o más.")
+        if cant_of > 0.15:
+            if ('kilo' in t_un.lower() or 'kg' in t_un.lower()) and 0 < cant_of < 1:
+                cond_text = f"*Condiciones: Oferta válida llevando {int(round(cant_of * 1000))} gs o más."
+            else:
+                cond_text = f"*Condiciones: Oferta válida llevando {cant_of:g} {t_un.lower()} o más."
+            self.lbl_sos_condiciones.setText(cond_text)
             self.lbl_sos_condiciones.show()
         else:
             self.lbl_sos_condiciones.hide()

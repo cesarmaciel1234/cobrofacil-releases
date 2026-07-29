@@ -15,10 +15,10 @@ from PyQt6.QtGui import QColor, QFont, QBrush
 # Removed database direct import
 
 
-from src.carteleria.inventario_ui.componentes.dialogo_producto import DialogoProducto
-from src.carteleria.inventario_ui.componentes.panel_departamentos import PanelDepartamentos
-from src.carteleria.inventario_ui.componentes.panel_categorias import PanelCategorias
-from src.carteleria.inventario_ui.componentes.catalogo_productos import CatalogoProductos
+from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
+from src.ui_global.inventario_ui.componentes.panel_departamentos import PanelDepartamentos
+from src.ui_global.inventario_ui.componentes.panel_categorias import PanelCategorias
+from src.ui_global.inventario_ui.componentes.catalogo_productos import CatalogoProductos
 
 class Admin1Inventario(QWidget):
     request_dashboard = pyqtSignal()
@@ -377,4 +377,3 @@ class Admin1Inventario(QWidget):
                     QMessageBox.information(self, "Éxito", f"Se eliminaron {eliminados} productos correctamente.")
             else:
                 QMessageBox.warning(self, "Error", "No se pudo eliminar el/los producto(s) de la base de datos.")
-

@@ -43,11 +43,13 @@ class PantallaEspia(QFrame):
         
         # Título
         self.lbl_titulo = QLabel("🎉 ¡COMBO ACTIVADO! 🎉")
+        self.lbl_titulo.setWordWrap(True)
         self.lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_titulo.setStyleSheet("font-size: 60px; font-weight: 900; color: #FBBF24; letter-spacing: 2px;")
         
         # Nombre del Combo
         self.lbl_combo = QLabel("")
+        self.lbl_combo.setWordWrap(True)
         self.lbl_combo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_combo.setStyleSheet("font-size: 40px; font-weight: bold; color: white;")
         

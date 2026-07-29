@@ -5,11 +5,15 @@ except ImportError:
     from database import db_manager
 
 class MotorDepartamentos:
+    _tablas_inicializadas = False
+
     def __init__(self):
         self.logger = logging.getLogger("MotorDepartamentos")
-        # Asegurar que las tablas existan
-        self._inicializar_tablas()
-
+        # Asegurar que las tablas existan solo una vez por ciclo de vida
+        if not MotorDepartamentos._tablas_inicializadas:
+            self._inicializar_tablas()
+            MotorDepartamentos._tablas_inicializadas = True
+            
     def _inicializar_tablas(self):
         db_manager.execute_non_query('''
             CREATE TABLE IF NOT EXISTS departamentos (

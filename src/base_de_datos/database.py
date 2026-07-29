@@ -136,19 +136,20 @@ class DatabaseManager:
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
                         logger.info("Auto-forzando modo local. Se iniciará con base de datos local SQLite de forma transparente.")
                         self.is_master = True
-                        self.db_path = "sqlite:///" + os.path.join(self.base_dir, "punpro.db")
+                        self.db_path = os.path.join(base_app_path, "punpro.db")
+                        self.db_engine_type = "sqlite"
                         self.mariadb_engine = None
-                        self.sqlite_engine = SQLiteEngine(self.db_path.replace("sqlite:///", ""))
                         self._create_tables()
                         self._ensure_test_users()
                         # No levantamos error, simplemente sale y continua en modo local temporalmente
                         return
 
                 self.db_path = "mariadb://" + host
-                self._create_tables()
-                self._migrate_db()
-                self._ensure_test_users()
-                return  # Salir de _init_db porque SQLite ya no importa
+                if self.is_master:
+                    self._create_tables()
+                    self._migrate_db()
+                    self._ensure_test_users()
+                return  # Salir de _init_db porque en modo esclava no modificamos esquemas por red
 
             # --- FIN INTEGRACION MARIADB ---
 
@@ -404,15 +405,13 @@ class DatabaseManager:
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
-        engine = self.mariadb_engine if self.db_engine_type == "mariadb" else self.sqlite_engine
-        if not engine:
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "mariadb_engine", None):
             return False
         try:
             res = self.execute_scalar("SELECT 1")
             return res == 1
         except Exception:
             return False
-            raise
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
@@ -513,9 +512,12 @@ class DatabaseManager:
         # Sembrar departamentos por defecto si está vacía
         try:
             cursor.execute("SELECT COUNT(*) FROM departamentos")
-            if cursor.fetchone()[0] == 0:
+            res = cursor.fetchone()
+            count_val = list(res.values())[0] if isinstance(res, dict) else (res[0] if res else 0)
+            if count_val == 0:
                 deps = [("ALMACEN", 21.0), ("CARNICERIA", 10.5), ("VERDULERIA", 10.5), ("GENERAL", 21.0)]
-                cursor.executemany("INSERT INTO departamentos (nombre, iva) VALUES (?, ?)", deps)
+                query_dep = "INSERT INTO departamentos (nombre, iva) VALUES (%s, %s)" if getattr(self, "db_engine_type", "sqlite") == "mariadb" else "INSERT INTO departamentos (nombre, iva) VALUES (?, ?)"
+                cursor.executemany(query_dep, deps)
         except Exception as e:
             logger.warning(f"Error sembrando departamentos: {e}")
 

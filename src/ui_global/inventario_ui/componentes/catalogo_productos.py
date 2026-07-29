@@ -46,7 +46,8 @@ class CatalogoProductos(QWidget):
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 8, 12, 8)
         root.setSpacing(8)
-        self.setStyleSheet("background-color: #F8FAFC;")
+        root.setSpacing(8)
+        self.setObjectName("catalogoProductosMain")
 
         from src.config import config
         from src.shared.urgencia_stock_banner import UrgenciaStockBanner
@@ -56,7 +57,7 @@ class CatalogoProductos(QWidget):
 
         # ── Barra de filtros ─────────────────────────────
         fb = QFrame(); fb.setFixedHeight(60)
-        fb.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
+        fb.setObjectName("catalogoToolbar")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
         
         ico_search = QLabel("🔍")
@@ -112,39 +113,6 @@ class CatalogoProductos(QWidget):
         self.tabla.setAlternatingRowColors(False)
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setShowGrid(False)
-        self.tabla.setStyleSheet("""
-            QTableWidget {
-                background: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-                gridline-color: transparent;
-                outline: none;
-            }
-            QTableWidget::item {
-                padding: 8px 10px;
-                color: #0F172A;
-                border-bottom: 1px solid #F1F5F9;
-            }
-            QTableWidget::item:hover {
-                background-color: #F1F5F9;
-            }
-            QTableWidget::item:selected {
-                background-color: #EFF6FF;
-                color: #1D4ED8;
-                border-bottom: 2px solid #3B82F6;
-            }
-            QHeaderView::section {
-                background-color: #F8FAFC;
-                color: #64748B;
-                font-weight: 900;
-                padding: 12px 8px;
-                border: none;
-                border-bottom: 2px solid #E2E8F0;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-        """)
         self.tabla.setObjectName("catalogoTable")
         # 16 columnas: Check, Codigo, Desc(Stretch), Depto, IVA, Costo, Venta, C.Mayoreo, P.Mayoreo, Promo, Relampago, Promedio, Existencia, Min, Max, Tipo
         col_widths = [28, 80, -1, 100, 60, 75, 85, 90, 90, 110, 105, 105, 95, 85, 85, 90]
@@ -162,7 +130,7 @@ class CatalogoProductos(QWidget):
 
         # ── Footer ───────────────────────────────────────
         ft = QFrame(); ft.setFixedHeight(38)
-        ft.setStyleSheet("QFrame { background: #FFFFFF; border-top: 1px solid #E2E8F0; }")
+        ft.setObjectName("catalogoFooter")
         fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
         self.lbl_total   = QLabel("0 productos")
         self.lbl_stock0  = QLabel("")
@@ -452,14 +420,10 @@ class CatalogoProductos(QWidget):
             return
         id_p = item_id.text()
         # Usar el motor
-        buscar = f"{id_p}"
         from src.motor_inventario.motor_catalogo import MotorCatalogo
         motor = MotorCatalogo()
-        rows, _ = motor.obtener_productos(buscar, limite=1)
-        if not rows: return
-        r = rows[0]
-        # Verify it's actually the exact ID we want
-        if str(r['id']) != str(id_p): return
+        r = motor.obtener_producto_por_id(id_p)
+        if not r: return
         def get_val(col, default=0.0):
             try: 
                 return r[col] if r[col] is not None else default
@@ -484,7 +448,7 @@ class CatalogoProductos(QWidget):
             'departamento': r['departamento'] or '', 
             'categoria': r['categoria'] or 'GENERAL'
         }
-        from src.carteleria.inventario_ui.componentes.dialogo_producto import DialogoProducto
+        from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
             d = dlg.get_data()

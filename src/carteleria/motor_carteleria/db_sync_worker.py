@@ -60,6 +60,34 @@ class DbSyncWorker(QThread):
                 top_dict["semana"] = top_dict["hoy"]
                 top_dict["mes"] = top_dict["hoy"]
                 
+                def _to_serializable(rows):
+                    res = []
+                    if not rows: return res
+                    for r in rows:
+                        if isinstance(r, dict):
+                            res.append(dict(r))
+                        elif hasattr(r, "_mapping"):
+                            res.append(dict(r._mapping))
+                        elif hasattr(r, "keys") and callable(r.keys):
+                            try:
+                                res.append({k: r[k] for k in r.keys()})
+                            except Exception:
+                                res.append(list(r))
+                        elif isinstance(r, (list, tuple)):
+                            res.append(list(r))
+                        else:
+                            try:
+                                res.append(dict(r))
+                            except Exception:
+                                res.append(str(r))
+                    return res
+                
+                oferta_sos = _to_serializable(oferta_sos)
+                rows_precios = _to_serializable(rows_precios)
+                top_dict["hoy"] = _to_serializable(top_dict["hoy"])
+                top_dict["semana"] = top_dict["hoy"]
+                top_dict["mes"] = top_dict["hoy"]
+                
                 response_data = {
                     "config": {
                         "business_name": cfg_data.get("business_name", "Carnicería"),

@@ -31,7 +31,7 @@ def main() -> int:
 
     from src.main_window import MainWindow  # noqa: F401
     from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla  # noqa: F401
-    from src.cajero.chat_bot import ChatManualWidget  # noqa: F401
+    from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget  # noqa: F401
 
     app.processEvents()
     print("SMOKE main import: OK")

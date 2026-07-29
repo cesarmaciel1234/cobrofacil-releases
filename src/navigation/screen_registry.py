@@ -16,7 +16,7 @@ def build_screen_factories(main_window):
             "src.admin.dashboard.dashboard_main", fromlist=["Admin0Dashboard"]
         ).Admin0Dashboard(),
         Screen.INVENTARIO: lambda: _imp(
-            "src.admin.inventario_ui.inventario_main", fromlist=["Admin1Inventario"]
+            "src.ui_global.inventario_ui.inventario_main", fromlist=["Admin1Inventario"]
         ).Admin1Inventario(),
         Screen.OFERTAS: lambda: _imp(
             "src.admin.motor_descuentos_ui.ofertas_main", fromlist=["Admin2Ofertas"]

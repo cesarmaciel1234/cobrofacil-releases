@@ -79,8 +79,14 @@ class MariaDBEngine:
         self.password = password
         self.database = database
         self._local_connections = threading.local()
+        self._last_fail_time = 0
         
     def _create_connection(self):
+        # --- Circuit Breaker ---
+        # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
+        if time.time() - getattr(self, "_last_fail_time", 0) < 5:
+            raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
+            
         try:
             conn = pymysql.connect(
                 host=self.host,
@@ -91,6 +97,7 @@ class MariaDBEngine:
                 autocommit=False,
                 connect_timeout=2
             )
+            self._last_fail_time = 0
             return MariaDBConnectionWrapper(conn)
         except Exception as e:
             # Fallback a contraseña vacía por compatibilidad hacia atrás
@@ -105,6 +112,7 @@ class MariaDBEngine:
                         autocommit=False,
                         connect_timeout=2
                     )
+                    self._last_fail_time = 0
                     return MariaDBConnectionWrapper(conn)
                 except Exception:
                     pass
@@ -121,10 +129,12 @@ class MariaDBEngine:
                         autocommit=False,
                         connect_timeout=2
                     )
+                    self._last_fail_time = 0
                     return MariaDBConnectionWrapper(conn)
                 except Exception:
                     pass
                     
+            self._last_fail_time = time.time()
             logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
             raise
             

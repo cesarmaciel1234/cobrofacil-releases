@@ -15,15 +15,15 @@ class Mensaje(QFrame):
         tema = get_active_theme_name()
         if tema == "temu":
             self.setStyleSheet(f"background: {C_THEME.get('surface', '#FFFFFF')}; border-radius: 25px; border: 2px solid #F87171;")
-            color_texto = "#DC2626"
+            color_texto = "#000000" # Letras negras como cartel clásico
             apply_apple_shadow(self, blur=0, alpha=100, y_offset=6) # Sombra sólida temu
         else:
             self.setStyleSheet(f"background: {C_THEME.get('surface', '#FFFFFF')}; border-radius: 25px; border: 1px solid rgba(255,255,255,0.5);")
-            color_texto = C_THEME.get('text_muted', '#666666')
+            color_texto = "#000000"
             apply_apple_shadow(self, blur=20, alpha=15, y_offset=5)
             
         self.label = QLabel(self)
-        self.label.setStyleSheet(f"color: {color_texto}; font-family: -apple-system, sans-serif; font-size: 18px; font-weight: 500; background: transparent; border: none;")
+        self.label.setStyleSheet(f"color: {color_texto}; font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: 20px; font-weight: 800; background: transparent; border: none;")
         self.label.move(30, 0)
         self.label.setFixedHeight(50)
         self.label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -39,14 +39,6 @@ class Mensaje(QFrame):
 
     def actualizar_texto(self, nuevo_texto):
         self.texto_completo = nuevo_texto
-        # Agregamos espacios de respiro solo si es necesario animarlo (se comprueba después, pero no afecta al ancho real del label)
-        self.label.setText(self.texto_completo)
-        self.label.adjustSize()
-        self.text_width = self.label.width()
-        self.label.setFixedHeight(50)
-        
-        self.offset = 30
-        self.label.move(self.offset, 0)
         self._check_scroll()
 
     def resizeEvent(self, event):
@@ -55,20 +47,19 @@ class Mensaje(QFrame):
 
     def _check_scroll(self):
         w = self.width()
-        if w > 0 and self.text_width > (w - 60):
-            # Agregar espacios para separar el texto que vuelve a entrar
-            self.label.setText(self.texto_completo + "        •        " + self.texto_completo)
-            self.label.adjustSize()
-            self.text_width = self.label.width() // 2  # Ancho de un solo bloque
-            self.label.setFixedHeight(50)
-            if not self.timer.isActive():
-                self.timer.start(20) # Animación fluida (50 FPS aprox)
-        else:
-            self.label.setText(self.texto_completo)
-            self.label.adjustSize()
-            self.timer.stop()
-            self.offset = 30
-            self.label.move(self.offset, 0)
+        if w <= 0:
+            return
+        from src.carteleria.theme import get_active_theme_name
+        sep = "          ★          " if get_active_theme_name() == "temu" else "          •          "
+        bloque = self.texto_completo + sep
+        # Repetimos el bloque varias veces para asegurar una marquesina de rotación infinita sin cortes
+        texto_render = bloque * 4
+        self.label.setText(texto_render)
+        self.label.adjustSize()
+        self.text_width = self.label.width() // 4  # Ancho exacto de un ciclo de rotación
+        self.label.setFixedHeight(50)
+        if not self.timer.isActive():
+            self.timer.start(25) # Animación constante tipo cartel LED deslisante
 
     def _animar(self):
         self.offset -= 2

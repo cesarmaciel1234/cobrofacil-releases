@@ -6,15 +6,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 
 from src.utils.qt_compat import qt_exec
 
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QStackedWidget
 from src.carteleria.dashboard.dashboard_main import CarteleriaDashboard
-from src.carteleria.motor_carteleria.main_board import CarteleriaMain
-from src.carteleria.admin15_carteleria import CarteleriaConfigPanel
-from src.carteleria.inventario_ui.inventario_main import Admin1Inventario
-from src.carteleria.motor_descuentos_ui.ofertas_main import Admin2Ofertas
-from src.carteleria.red_lan.red_lan_main import Admin6RedLan
-from src.ui_global.proveedor.vista_proveedor import VistaProveedor
-from PyQt6.QtWidgets import QStackedWidget
 
 class CarteleriaApp(QStackedWidget):
     def __init__(self):
@@ -89,7 +82,7 @@ class CarteleriaApp(QStackedWidget):
 
     def lanzar_inv(self):
         if not self.inv:
-            from src.carteleria.inventario_ui.inventario_main import Admin1Inventario
+            from src.ui_global.inventario_ui.inventario_main import Admin1Inventario
             self.inv = Admin1Inventario()
             self.addWidget(self.inv)
             self.inv.request_dashboard.connect(self.volver_dashboard)

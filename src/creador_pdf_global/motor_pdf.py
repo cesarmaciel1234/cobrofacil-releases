@@ -1296,9 +1296,12 @@ class EtiquetaRenderer:
                         if is_oferta:
                             cant_of = float(p.get("cant_oferta") or 0)
                             tipo_u = str(p.get("tipo_unidad_oferta") or "Unidades").lower()
-                            if cant_of > 0:
+                            if cant_of > 0.15:
                                 if tipo_u == "kilos" or p.get("unidad", "").upper() == "KG":
-                                    condicion = f"LLEVANDO {cant_of:g} KG"
+                                    if 0 < cant_of < 1:
+                                        condicion = f"LLEVANDO {int(round(cant_of * 1000))} GS"
+                                    else:
+                                        condicion = f"LLEVANDO {cant_of:g} KG"
                                 else:
                                     condicion = f"LLEVANDO {int(cant_of)} UN"
                                     

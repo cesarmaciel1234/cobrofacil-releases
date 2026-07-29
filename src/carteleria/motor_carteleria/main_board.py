@@ -272,9 +272,8 @@ class CarteleriaMain(QWidget):
             current_hash = hashlib.md5(stable_str.encode()).hexdigest()
             if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
                 self.last_precios_hash = current_hash
-                self._reconstruir_ui_con_datos(rows_precios)
-                from src.carteleria.inventario_ui.sincro_manager import sincro_manager
-                sincro_manager.procesar_y_enviar_cache(rows_precios)
+                if hasattr(self, 'zona2_precios') and hasattr(self.zona2_precios, 'motor'):
+                    self.zona2_precios.motor.start()
                     
             # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
             rows_top10 = data.get("top10", {})
@@ -411,3 +410,26 @@ class CarteleriaMain(QWidget):
             if hasattr(self, 'timer_db'): self.timer_db.start(10000)
             
         QTimer.singleShot(6000, restaurar_estado)
+
+    def closeEvent(self, event):
+        threads = [
+            getattr(self, 'espia_worker', None),
+            getattr(self, 'db_worker', None),
+            getattr(self, 'clima_worker', None),
+            getattr(getattr(self, 'zona1_carrusel', None), 'motor', None),
+            getattr(getattr(self, 'zona2_precios', None), 'motor', None),
+            getattr(getattr(self, 'zona3_extra1', None), 'motor', None),
+            getattr(getattr(self, 'zona4_extra2', None), 'motor', None),
+        ]
+        for t in threads:
+            if t and hasattr(t, 'isRunning') and t.isRunning():
+                try:
+                    if hasattr(t, 'running'):
+                        t.running = False
+                    t.quit()
+                    if not t.wait(400):
+                        t.terminate()
+                        t.wait(100)
+                except Exception:
+                    pass
+        super().closeEvent(event)

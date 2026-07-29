@@ -1,6 +1,6 @@
 {
     "carteleria": 26,
-    "inventario": 39,
+    "inventario": 40,
     "etiquetas": 8,
     "clientes": 10,
     "red_lan": 19,
@@ -9,7 +9,7 @@
     "hardware": 6,
     "ofertas": 33,
     "proveedores": 11,
-    "cierre": 20,
+    "cierre": 21,
     "mercadopago": 3,
-    "auditoria": 9
+    "auditoria": 10
 }
