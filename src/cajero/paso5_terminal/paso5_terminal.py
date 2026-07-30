@@ -1282,7 +1282,7 @@ class Paso5Terminal(QWidget):
 
         # --- BUSQUEDA DE PRODUCTO ---
         # 1. Intentar búsqueda por ID exacto (Barcode completo) primero
-        res_direct = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ?", (txt,))
+        res_direct = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR codigo = ?", (txt, txt))
         if res_direct:
             p = res_direct[0]
             self.agregar_a_tabla(p, cantidad_multiplicador)
@@ -1318,7 +1318,7 @@ class Paso5Terminal(QWidget):
                 return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
-        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
+        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR codigo = ? OR nombre LIKE ?", (txt, txt, f"%{txt}%"))
 
         if res:
             p = res[0]

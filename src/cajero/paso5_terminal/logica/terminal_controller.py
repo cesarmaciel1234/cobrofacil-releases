@@ -11,18 +11,18 @@ class TerminalController:
         self.view = view
 
     def buscar_productos(self, txt):
-        """Busca productos por ID o aproximación de nombre. Retorna lista de diccionarios."""
+        """Busca productos por ID, Código o aproximación de nombre. Retorna lista de diccionarios."""
         res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5", 
-            (txt, f"%{txt}%")
+            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR codigo = ? OR nombre LIKE ? LIMIT 5", 
+            (txt, txt, f"%{txt}%")
         )
         return res if res else []
 
     def buscar_producto_exacto(self, txt):
-        """Busca un producto exactamente por su ID."""
+        """Busca un producto exactamente por su ID o Código."""
         res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ?", 
-            (txt,)
+            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR codigo = ?", 
+            (txt, txt)
         )
         return res[0] if res else None
 
