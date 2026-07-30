@@ -49,7 +49,12 @@ class PanelDepartamentos(QWidget):
         lbl = QLabel("DEPARTAMENTOS (CATEGORÍAS DE IMPUESTOS)")
         lbl.setStyleSheet("font-weight: 900;  font-size: 13px;")
         self.txt_buscar = QLineEdit(); self.txt_buscar.setPlaceholderText("🔍 Buscar depto o categoría...")
-        self.txt_buscar.textChanged.connect(lambda t: self._cargar(t))
+        # Debounce timer
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(lambda: self._cargar(self.txt_buscar.text()))
+        self.txt_buscar.textChanged.connect(lambda t: self.search_timer.start(400))
         self.tree = QTreeWidget()
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(["Depto / Categoría", "IVA (%)"])
