@@ -648,9 +648,9 @@
     },
     "src/admin/auditoria_inventario/auditoria_main.py": {
       "version": "1.0.0",
-      "checksum": "f72bc7ebcdac48300dac4396ad6194f0",
+      "checksum": "a132e63a4731fb026e6220a67395397a",
       "channel": "stable",
-      "size": 8064
+      "size": 8403
     },
     "src/admin/auditoria_inventario/__init__.py": {
       "version": "1.0.0",
@@ -672,9 +672,9 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "313295f4e5c92d95b2f695eac95b7762",
+      "checksum": "74d6af47e97c04c097617dcc1751bba6",
       "channel": "stable",
-      "size": 17449
+      "size": 17693
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",
@@ -900,9 +900,9 @@
     },
     "src/admin/etiquetas_panel_ui/etiquetas_panel_main.py": {
       "version": "1.0.0",
-      "checksum": "08675c8901c487ec5bbfc6783729cb81",
+      "checksum": "75e479a7edc95f25cc0070a2ea9be4d1",
       "channel": "stable",
-      "size": 23739
+      "size": 23984
     },
     "src/admin/etiquetas_panel_ui/__init__.py": {
       "version": "1.0.0",
@@ -948,9 +948,9 @@
     },
     "src/admin/mercadopago/mercadopago_main.py": {
       "version": "1.0.0",
-      "checksum": "6779bfc90636afdb0b1c85be2517715a",
+      "checksum": "5a6dde05bc59f63579c6f732d9cd539d",
       "channel": "stable",
-      "size": 36663
+      "size": 36896
     },
     "src/admin/mercadopago/__init__.py": {
       "version": "1.0.0",
@@ -1074,9 +1074,9 @@
     },
     "src/admin/ventas_digitales/ventas_digitales_main.py": {
       "version": "1.0.0",
-      "checksum": "56a32b189d75f81243642b8d75d46fa2",
+      "checksum": "55f8d88d5352364f3e9bdd691c6255ed",
       "channel": "stable",
-      "size": 31392
+      "size": 31625
     },
     "src/admin/ventas_digitales/__init__.py": {
       "version": "1.0.0",

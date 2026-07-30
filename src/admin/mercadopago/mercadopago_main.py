@@ -177,7 +177,12 @@ class Admin10MP(QWidget):
                 border: 1px solid #00B1EA;
             }
         """)
-        self.txt_buscar.textChanged.connect(self.aplicar_filtros)
+        # Debounce timer
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.aplicar_filtros)
+        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(400))
         
         from PyQt6.QtWidgets import QComboBox
         self.cmb_fecha = QComboBox()
