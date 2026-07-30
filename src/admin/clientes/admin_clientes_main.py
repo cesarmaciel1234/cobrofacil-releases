@@ -107,7 +107,12 @@ class AdminClientes(QWidget):
                 border: 1px solid {_CLI['accent']}; background: white;
             }}
         """)
-        self.txt_buscar.textChanged.connect(self.cargar_clientes)
+        # Debounce para la busqueda
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.cargar_clientes)
+        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(400))
         pt_lay.addWidget(self.txt_buscar)
         
         self.tabla = QTableWidget()

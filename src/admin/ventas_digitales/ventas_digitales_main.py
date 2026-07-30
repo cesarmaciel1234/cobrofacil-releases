@@ -418,7 +418,12 @@ class Admin14VentasDigitales(QWidget):
         self.txt_buscar.setStyleSheet(
             "padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;"
             "background:white; font-size:13px;")
-        self.txt_buscar.textChanged.connect(self.aplicar_filtros)
+        # Debounce timer
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.aplicar_filtros)
+        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(400))
 
         self.dt_desde = QDateEdit()
         self.dt_desde.setCalendarPopup(True)

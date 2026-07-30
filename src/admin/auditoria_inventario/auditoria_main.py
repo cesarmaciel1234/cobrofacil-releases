@@ -38,7 +38,14 @@ class AuditoriaMain(QWidget):
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("Buscar producto...")
         self.txt_buscar.setStyleSheet("padding: 8px; font-size: 14px; border: 1px solid #CBD5E1; border-radius: 4px;")
-        self.txt_buscar.textChanged.connect(self._filtrar)
+        
+        # Debounce timer para evitar congelamientos con escáner de código de barras
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(lambda: self._filtrar(self.txt_buscar.text()))
+        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(400))
+        
         filtro_lay.addWidget(QLabel("🔍 Buscar:"))
         filtro_lay.addWidget(self.txt_buscar)
         filtro_lay.addStretch()

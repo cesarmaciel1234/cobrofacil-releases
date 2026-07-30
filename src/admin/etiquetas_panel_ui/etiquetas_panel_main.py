@@ -109,7 +109,14 @@ class AdminEtiquetas(QWidget):
         self.txt_search = QLineEdit()
         self.txt_search.setPlaceholderText("🔍 ESCANEA CÓDIGO O ESCRIBE NOMBRE DE PRODUCTO PARA FILTRAR EN TIEMPO REAL...")
         self.txt_search.setStyleSheet("font-size: 15px; padding: 14px; font-weight: bold; border-radius: 8px;")
-        self.txt_search.textChanged.connect(self.cargar_productos)
+        
+        # Debounce timer
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.cargar_productos)
+        self.txt_search.textChanged.connect(lambda: self.search_timer.start(400))
+
         search_layout.addWidget(self.txt_search)
         main_layout.addLayout(search_layout)
 
