@@ -258,11 +258,11 @@ def launch_app():
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                # Lanzar la Cartelería en el mismo proceso (clave para el ejecutable)
-                from src.carteleria.carteleria import lanzar_app
+                from src.config import config
+                config.current_user = {"role": "carteleria", "nombre": "Cartelería"}
                 perfil_dlg.hide()
-                lanzar_app(app)
-                return 0
+                step = 4
+                continue
                 
             login_dlg = LoginPantalla(role_selected)
             if qt_exec(login_dlg):
