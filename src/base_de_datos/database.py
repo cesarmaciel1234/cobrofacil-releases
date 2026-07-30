@@ -943,12 +943,24 @@ class DatabaseManager:
             return None
 
     def get_connection(self):
-        """Returns a new connection to the database (SQLite o MariaDB)."""
+        """Returns a new connection to the database (SQLite o MariaDB).
+        Si MariaDB no está disponible y hay una BD local, hace fallback transparente a SQLite."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
-                logger.error(f"Error connecting to MariaDB database: {e}")
+                # Fallback silencioso a SQLite local si MariaDB está caído
+                local_db = getattr(self, "_local_db_path", None)
+                if not local_db:
+                    from src.utils.paths import get_base_path
+                    local_db = __import__("os").path.join(get_base_path(), "punpro.db")
+                try:
+                    import sqlite3 as _sqlite3
+                    conn = _sqlite3.connect(local_db, timeout=10.0)
+                    conn.row_factory = _sqlite3.Row
+                    return conn
+                except Exception:
+                    pass
                 raise
             
         try:

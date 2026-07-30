@@ -44,22 +44,32 @@ class SincronizadorCarteleria:
             
     def sincronizar_ahora(self):
         try:
+            # Verificar si la BD está operativa. Si es MariaDB y está caída, saltar silenciosamente.
+            engine_type = getattr(db_manager, "db_engine_type", "sqlite")
+            if engine_type == "mariadb" and getattr(db_manager, "mariadb_engine", None) is None:
+                return  # Estamos en modo local emergencia sin tablas de cartelería
+
             # 1. Leer inventario de productos
             query_productos = """
-                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
+                SELECT departamento, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
                 FROM productos 
                 WHERE precio > 0
             """
-            filas = db_manager.execute_query(query_productos)
+            try:
+                filas = db_manager.execute_query(query_productos)
+            except Exception:
+                return  # Falla silenciosa: la BD no está disponible en este ciclo
+                
             if not filas:
                 return
+
                 
             nuevos_datos = []
             
             # 2. Formatear y preparar los datos
             for fila in filas:
                 if isinstance(fila, dict):
-                    departamento = str(fila.get('categoria', ''))
+                    departamento = str(fila.get('departamento', ''))
                     nombre_producto = _limpiar_nombre(fila.get('nombre', ''))
                     precio_normal = float(fila.get('precio') or 0)
                     precio_oferta = float(fila.get('precio_oferta') or 0)
