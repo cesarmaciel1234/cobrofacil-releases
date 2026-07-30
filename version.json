@@ -1182,9 +1182,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "b8ac950acfcd137889b3d92320c681d1",
+      "checksum": "cb59b445be561f1221111ba7d2d8ba00",
       "channel": "stable",
-      "size": 110814
+      "size": 110851
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -1350,9 +1350,9 @@
     },
     "src/cajero/paso5_terminal/logica/terminal_controller.py": {
       "version": "1.0.0",
-      "checksum": "fa5426a4bae9ffbe68772219eb25cc09",
+      "checksum": "32265002f7ba60d55d633bfc37aaeb4b",
       "channel": "stable",
-      "size": 4132
+      "size": 4188
     },
     "src/cajero/paso5_terminal/logica/__init__.py": {
       "version": "1.0.0",
@@ -2142,9 +2142,9 @@
     },
     "src/jefe/jefe0_dashboard.py": {
       "version": "1.0.0",
-      "checksum": "8e5ded4a932dfaac471622a24ea1dc0d",
+      "checksum": "75604a0b5cf8e03741a235e2999a019f",
       "channel": "stable",
-      "size": 21986
+      "size": 22090
     },
     "src/jefe/theme_pro.py": {
       "version": "1.0.0",
