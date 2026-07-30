@@ -14,6 +14,28 @@ from PyQt6.QtGui import QColor, QFont, QBrush
 
 # Removed db_manager import
 
+class MotorBusquedaInventario(QThread):
+    busqueda_terminada = pyqtSignal(list, int)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.buscar = ""
+        self.depto = None
+        self._motor = None
+        
+    def setup(self, buscar, depto, motor):
+        self.buscar = buscar
+        self.depto = depto
+        self._motor = motor
+        
+    def run(self):
+        try:
+            if not self._motor: return
+            filas, _ = self._motor.obtener_productos(self.buscar, self.depto, limite=50000, offset=0)
+            sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
+            self.busqueda_terminada.emit(filas, sin_stock)
+        except Exception as e:
+            self.busqueda_terminada.emit([], 0)
 
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
@@ -37,6 +59,9 @@ class CatalogoProductos(QWidget):
         from src.motor_inventario.motor_importacion import MotorImportacion
         self.motor = MotorCatalogo()
         self.motor_imp = MotorImportacion()
+        
+        self.motor_busqueda = MotorBusquedaInventario(self)
+        self.motor_busqueda.busqueda_terminada.connect(self._on_busqueda_terminada)
         
         self._setup_ui()
         self._cargar_deptos()
@@ -66,12 +91,12 @@ class CatalogoProductos(QWidget):
         self.txt_buscar.setPlaceholderText("Buscar por nombre, código o ID...")
         self.txt_buscar.setMinimumWidth(350)
         
-        # Debounce timer para búsqueda rápida sin lag
+        # Debounce timer para búsqueda rápida sin lag (aumentado para código de barras)
         from PyQt6.QtCore import QTimer
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.cargar_datos)
-        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(300))
+        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(500))
 
         lbl_dep = QLabel("FILTRAR POR DEPARTAMENTO:")
         lbl_dep.setStyleSheet("font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
@@ -276,18 +301,23 @@ class CatalogoProductos(QWidget):
         buscar = self.txt_buscar.text().strip()
         depto  = self.cmb_depto.currentData()
 
-        # Usar el motor en lugar de llamadas SQL directas
-        # Le pedimos un límite altísimo para simular el comportamiento actual
-        self.all_rows, _ = self.motor.obtener_productos(buscar, depto, limite=50000, offset=0)
+        # Mostrar estado de carga
+        self.lbl_total.setText("🔄 Buscando productos... Por favor espera.")
+        self.lbl_stock0.setText("")
+        self.tabla.setRowCount(0)
+        
+        # Iniciar búsqueda en background (Cerebro Asíncrono)
+        self.motor_busqueda.setup(buscar, depto, self.motor)
+        self.motor_busqueda.start()
+
+    def _on_busqueda_terminada(self, filas, sin_stock):
+        self.all_rows = filas
         self._depto_color_map = {}
         self.loaded_count = 0
         self.tabla.setRowCount(0)
         
         # Cargar la primera página
         self._cargar_siguiente_pagina()
-
-        # Calcular stock crítico de forma rápida de la memoria sin trabar la UI
-        sin_stock = sum(1 for r in self.all_rows if (r['stock'] or 0.0) <= 0)
 
         n = len(self.all_rows)
         self.lbl_total.setText(f"📦 {n} PRODUCTOS EN INVENTARIO")
