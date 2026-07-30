@@ -570,9 +570,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "f2cb1e087eba9ebe5529f86398727c95",
+      "checksum": "574b4e2201798bd67f4065f39d16d427",
       "channel": "stable",
-      "size": 41050
+      "size": 41655
     },
     "src/__init__.py": {
       "version": "1.0.0",
