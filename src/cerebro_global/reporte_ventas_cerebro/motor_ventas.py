@@ -22,8 +22,8 @@ class MotorVentas:
             elif periodo == "semana":
                 start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
-                # "mes"
-                start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
+                # Ventana móvil de 30 días reales
+                start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
                 
             query = "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND COALESCE(estado, '') != 'CANCELADA'"
             rows = db_manager.execute_query(query, (start_date,))
@@ -47,7 +47,7 @@ class MotorVentas:
             elif periodo == "semana":
                 start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
-                start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
+                start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
                 
             query = """
                 SELECT SUM(dv.cantidad) 
@@ -80,7 +80,7 @@ class MotorVentas:
             elif periodo == "semana":
                 start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
-                start_date = today.replace(day=1).strftime('%Y-%m-%d 00:00:00')
+                start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
                 
             if modo == "frecuencia":
                 query = """
