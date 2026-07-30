@@ -77,19 +77,26 @@ class SincronizadorCarteleria:
                 
                 regla_texto = ""
                 if cant_oferta > 0:
+                    import math
+                    cant_display = cant_oferta
+                    if cant_display >= 1:
+                        frac = cant_display - math.floor(cant_display)
+                        if frac >= 0.8:
+                            cant_display = float(math.ceil(cant_display))
+
                     is_kilo = ('kilo' in prod_unidad or prod_unidad == 'kg' or 'kilo' in tipo_unidad or tipo_unidad == 'kg' or cant_oferta != int(cant_oferta))
                     if is_kilo:
-                        if cant_oferta < 1:
-                            t_un_str = f"{int(round(cant_oferta * 1000))} gs"
-                        elif cant_oferta == 1:
+                        if cant_display < 1:
+                            t_un_str = f"{int(round(cant_display * 1000))} gs"
+                        elif cant_display == 1:
                             t_un_str = "1 Kilo"
                         else:
-                            t_un_str = f"{cant_oferta:g} Kilos"
+                            t_un_str = f"{cant_display:g} Kilos"
                     else:
-                        if cant_oferta == 1:
+                        if cant_display == 1:
                             t_un_str = "1 Unidad"
                         else:
-                            t_un_str = f"{int(cant_oferta)} Unidades"
+                            t_un_str = f"{int(cant_display)} Unidades"
                     
                     regla_texto = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{t_un_str}</span>"
                 
