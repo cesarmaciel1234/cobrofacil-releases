@@ -1,7 +1,7 @@
 {
   "app_version": "7.8",
   "channel": "stable",
-  "build_date": "2026-07-30 16:15:09",
+  "build_date": "2026-07-30 19:09:47",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -178,7 +178,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00f1a.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",
@@ -394,6 +394,12 @@
       "channel": "stable",
       "size": 3586
     },
+    "scratch/schema.py": {
+      "version": "1.0.0",
+      "checksum": "15458efe552088bedf498cc9ba1869d9",
+      "channel": "stable",
+      "size": 209
+    },
     "scratch/search_and_diagnose.py": {
       "version": "1.0.0",
       "checksum": "61538c48e094ab633ff5e27708108fc2",
@@ -459,6 +465,12 @@
       "checksum": "e84ec1bd408620400fe47cee6f523067",
       "channel": "stable",
       "size": 2645
+    },
+    "scratch/test_insert.py": {
+      "version": "1.0.0",
+      "checksum": "f3f4f459671ccd03aad42d777b379308",
+      "channel": "stable",
+      "size": 638
     },
     "scratch/test_inventario_main.py": {
       "version": "1.0.0",
@@ -558,9 +570,9 @@
     },
     "src/config.py": {
       "version": "1.0.0",
-      "checksum": "dbec0a6b203cf8df5e4b879e76d1f787",
+      "checksum": "0881d392eea47ddce5470ab80930406d",
       "channel": "stable",
-      "size": 4636
+      "size": 4722
     },
     "src/logger.py": {
       "version": "1.0.0",
@@ -606,9 +618,9 @@
     },
     "src/admin/admin_importexport.py": {
       "version": "1.0.0",
-      "checksum": "3dfe57f1328d4fad60b473e80c82bd4d",
+      "checksum": "78cd194ac5df3bdb2b46ecfca5cc194c",
       "channel": "stable",
-      "size": 15313
+      "size": 15723
     },
     "src/admin/mp_explosion.py": {
       "version": "1.0.0",
@@ -648,9 +660,9 @@
     },
     "src/admin/auditoria_inventario/auditoria_main.py": {
       "version": "1.0.0",
-      "checksum": "a132e63a4731fb026e6220a67395397a",
+      "checksum": "756efedd65e6833bf244ff302f69441e",
       "channel": "stable",
-      "size": 8403
+      "size": 8690
     },
     "src/admin/auditoria_inventario/__init__.py": {
       "version": "1.0.0",
@@ -1530,9 +1542,9 @@
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
-      "checksum": "eb369f4119ad948cf33212c64f7c36d4",
+      "checksum": "d3dfc4208e0d0ae867937ff4df989667",
       "channel": "stable",
-      "size": 2190
+      "size": 3668
     },
     "src/carteleria/utils_condiciones.py": {
       "version": "1.0.0",
@@ -1656,9 +1668,9 @@
     },
     "src/carteleria/interfaz_principal/display_promo_tv.py": {
       "version": "1.0.0",
-      "checksum": "cf14e4313e9d4633d48015f119965ab3",
+      "checksum": "392e08d957175d7c797acb08e7159bf8",
       "channel": "stable",
-      "size": 9683
+      "size": 9648
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
@@ -1674,15 +1686,15 @@
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "b3af60a324f19ce791e5127f10168d09",
+      "checksum": "e864f229e741596df6ba3a640c3a259e",
       "channel": "stable",
-      "size": 9621
+      "size": 9798
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "891d6c499fc220731caf2c01c43eda78",
+      "checksum": "c8a1e8b6287d291f5d918c64009ab2b9",
       "channel": "stable",
-      "size": 13307
+      "size": 13484
     },
     "src/carteleria/interfaz_principal/tarjeta_producto.py": {
       "version": "1.0.0",
@@ -1698,15 +1710,15 @@
     },
     "src/carteleria/interfaz_relampagos/banderin.py": {
       "version": "1.0.0",
-      "checksum": "65ddcd93bb526d434728b1cabc807486",
+      "checksum": "3f1d36939e0f6cf8295b56c5b8bb2b05",
       "channel": "stable",
-      "size": 3686
+      "size": 3804
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "eb7bfbdd8bcd866b9ab6c2bf19fbe2c1",
+      "checksum": "5b0ffba1ea1c3c4b24dbb410cc582cc6",
       "channel": "stable",
-      "size": 6843
+      "size": 7120
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
@@ -1746,9 +1758,9 @@
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
       "version": "1.0.0",
-      "checksum": "080ea1bf1d5d9c0a5686963942df24c4",
+      "checksum": "fb4208e35aee80a45c2e682fe3aa70af",
       "channel": "stable",
-      "size": 6852
+      "size": 8320
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
@@ -1764,9 +1776,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "282eb06f7f001a2d62277b7ce9ba5a16",
+      "checksum": "212305d291bd7294a96e23e6dac9d9e8",
       "channel": "stable",
-      "size": 20114
+      "size": 20419
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",
@@ -1860,9 +1872,9 @@
     },
     "src/carteleria/motor_descuentos_ui/componentes/creador_promociones.py": {
       "version": "1.0.0",
-      "checksum": "1787eb683aeec5ebba55059cb9670b18",
+      "checksum": "79407f0cd294efb096e3a74d1dc1d166",
       "channel": "stable",
-      "size": 17221
+      "size": 16884
     },
     "src/carteleria/motor_descuentos_ui/componentes/dialogo_combos.py": {
       "version": "1.0.0",
@@ -1944,9 +1956,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "346757e42b7e3f8b6fa947eb84e74384",
+      "checksum": "c02ffc7c963702b79652c28301e22587",
       "channel": "stable",
-      "size": 5996
+      "size": 6316
     },
     "src/cerebro_global/cerebro_jefe/analitica_jefe.py": {
       "version": "1.0.0",
@@ -2010,9 +2022,9 @@
     },
     "src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
       "version": "1.0.0",
-      "checksum": "0166df8b10be834adc98e4eba48a67ae",
+      "checksum": "c576ada4df58da6096bfda03b3937db8",
       "channel": "stable",
-      "size": 6381
+      "size": 6460
     },
     "src/core/sincronizador.py": {
       "version": "1.0.0",
@@ -2676,9 +2688,9 @@
     },
     "src/ui_global/inventario_ui/inventario_main.py": {
       "version": "1.0.0",
-      "checksum": "ecc280879e63e3f1850722be071faa82",
+      "checksum": "913be790a8ee61ef9b70bd090d26db69",
       "channel": "stable",
-      "size": 16970
+      "size": 17001
     },
     "src/ui_global/inventario_ui/__init__.py": {
       "version": "1.0.0",
@@ -2688,9 +2700,9 @@
     },
     "src/ui_global/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "47ffae5f856efc599d012e02202d2f0c",
+      "checksum": "c5adecf7a090691c9288329da1f8c0b5",
       "channel": "stable",
-      "size": 28168
+      "size": 28232
     },
     "src/ui_global/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
