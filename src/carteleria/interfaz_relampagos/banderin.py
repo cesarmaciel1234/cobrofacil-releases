@@ -72,7 +72,8 @@ class BanderinVolador(QWidget):
         if random.choice([True, False]):
             y_pos = random.randint(20, 100) # Arriba
         else:
-            y_pos = random.randint(alto_ventana - 150, alto_ventana - 80) # Abajo
+            # Aseguramos que el banderín (aprox 200px alto) no tape el zócalo inferior (aprox 90px con márgenes)
+            y_pos = random.randint(alto_ventana - 350, alto_ventana - 300) # Abajo
 
         ancho_banner = self.width()
         ancho_ventana = self.parent_window.width()
