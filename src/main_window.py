@@ -545,6 +545,10 @@ class MainWindow(QMainWindow):
         if index == 22: # Carteleria Dashboard
             s.request_launch_tv.connect(lambda: self.switch_tab(21))
             s.request_admin_tv.connect(lambda: self.switch_tab(15))
+            if hasattr(s, 'request_inventario'): s.request_inventario.connect(lambda: self.switch_tab(2))
+            if hasattr(s, 'request_ofertas'): s.request_ofertas.connect(lambda: self.switch_tab(3))
+            if hasattr(s, 'request_red_lan'): s.request_red_lan.connect(lambda: self.switch_tab(6))
+            if hasattr(s, 'request_proveedores'): s.request_proveedores.connect(lambda: self.switch_tab(11))
             s.request_exit.connect(self._logout_to_selector)
 
         if hasattr(s, 'request_tab'):
@@ -566,8 +570,14 @@ class MainWindow(QMainWindow):
 
     def _handle_global_dashboard_return(self):
         from src.config import config
-        if config.current_user and config.current_user.get('role') == 'jefe':
-            self.switch_tab(19)
+        if config.current_user:
+            role = config.current_user.get('role', '').lower()
+            if role == 'jefe':
+                self.switch_tab(19)
+            elif role == 'carteleria':
+                self.switch_tab(22)
+            else:
+                self.switch_tab(0)
         else:
             self.switch_tab(0)
 
