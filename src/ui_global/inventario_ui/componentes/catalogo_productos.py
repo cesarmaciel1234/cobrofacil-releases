@@ -32,9 +32,10 @@ class MotorBusquedaInventario(QThread):
         try:
             if not self._motor: return
             filas, _ = self._motor.obtener_productos(self.buscar, self.depto, limite=50000, offset=0)
-            sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
+            sin_stock = sum(1 for r in filas if (dict(r).get('stock') or 0.0) <= 0)
             self.busqueda_terminada.emit(filas, sin_stock)
         except Exception as e:
+            print("Error MotorBusquedaInventario:", e)
             self.busqueda_terminada.emit([], 0)
 
 class CatalogoProductos(QWidget):
@@ -382,7 +383,7 @@ class CatalogoProductos(QWidget):
                 self.tabla.setItem(i, 0, chk)
 
                 vals = [
-                    (str(r['id']),       Qt.AlignRight),
+                    (str(dict(r).get('codigo') or '') or f"[{r['id']}]", Qt.AlignRight),
                     (r['nombre'] or '',  Qt.AlignLeft),
                     (dep,                Qt.AlignLeft),
                     (f"{depto_iva:.1f}%", Qt.AlignCenter),
@@ -494,7 +495,7 @@ class CatalogoProductos(QWidget):
                     if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
                 except: pass
             else:
-                QMessageBox.warning(self, "Error", "No se pudo actualizar el producto. Verifique los campos ingresados o si el código ya existe.")
+                QMessageBox.warning(self, "Error", f"No se pudo actualizar el producto.\n\nDetalle técnico:\n{msg}")
 
     def _exportar(self):
         from datetime import datetime

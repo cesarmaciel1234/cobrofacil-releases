@@ -324,7 +324,7 @@ class Admin1Inventario(QWidget):
                     if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
                 except: pass
             else:
-                QMessageBox.warning(self,"Error","No se pudo guardar.")
+                QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
 
     def _borrar_desde_catalogo(self, *args, **kwargs):
         # 1. Obtener todas las filas seleccionadas por checkbox

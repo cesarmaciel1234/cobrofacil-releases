@@ -91,10 +91,11 @@ class AuditoriaMain(QWidget):
             self.tabla.insertRow(i)
             # ["id", "codigo", "nombre", "departamento", "precio", "stock"]
             p_id = str(row['id'] if isinstance(row, dict) else row[0])
-            codigo = str(row['codigo'] if isinstance(row, dict) else row[1])
-            nombre = str(row['nombre'] if isinstance(row, dict) else row[2])
-            depto = str(row['departamento'] if isinstance(row, dict) else row[3])
-            stock = str(row['stock'] if isinstance(row, dict) else row[5])
+            raw_codigo = row['codigo'] if isinstance(row, dict) else row[1]
+            codigo = str(raw_codigo) if raw_codigo else f"[{p_id}]"
+            nombre = str(row['nombre'] if isinstance(row, dict) else row[2] or '')
+            depto = str(row['departamento'] if isinstance(row, dict) else row[3] or '')
+            stock = str(row['stock'] if isinstance(row, dict) else row[5] or '0')
             
             # Celdas solo lectura
             for col, val in enumerate([p_id, codigo, nombre, depto, stock]):
