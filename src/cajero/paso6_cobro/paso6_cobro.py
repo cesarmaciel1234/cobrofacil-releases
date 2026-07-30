@@ -796,25 +796,16 @@ class Paso6Cobro(QDialog):
                     self._intentos_insuficientes = getattr(self, '_intentos_insuficientes', 0) + 1
                     
                     if self._intentos_insuficientes >= 3:
-                        QMessageBox.warning(self, "ATENCIÓN", "Múltiples intentos fallidos. Regresando a la selección de pago.")
+                        QMessageBox.warning(self, "ATENCIÓN", "Múltiples intentos con monto insuficiente (3).\nRegresando a la selección de método de pago.")
                         self._intentos_insuficientes = 0
                         self.cancelar_metodo()
                     else:
-                        resp = QMessageBox.question(
+                        QMessageBox.warning(
                             self, "MONTO INSUFICIENTE", 
-                            f"Monto ingresado: ${p1_val:.2f}\nFalta cobrar: ${faltante:.2f}\n\n¿Desea completar la diferencia con otro método de pago (Pago Mixto)?",
-                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                            QMessageBox.StandardButton.No
+                            f"Monto ingresado: ${p1_val:,.2f}\nFaltan: ${faltante:,.2f} para cubrir el total de ${self.total_final:,.2f}."
                         )
-                        if resp == QMessageBox.StandardButton.Yes:
-                            self.set_metodo("Mixto")
-                            self.txt_otro.setText(f"{faltante:.2f}")
-                            self.txt_otro.setFocus()
-                            self.txt_otro.selectAll()
-                            self._intentos_insuficientes = 0
-                        else:
-                            self.txt_pago.setFocus()
-                            self.txt_pago.selectAll()
+                        self.txt_pago.setFocus()
+                        self.txt_pago.selectAll()
                 else:
                     QMessageBox.critical(self, "MONTO INSUFICIENTE", "Falta dinero para cubrir el total.")
             return None
