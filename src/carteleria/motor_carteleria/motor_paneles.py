@@ -95,7 +95,8 @@ class MotorCombos(QThread):
                 import re as _re
                 regla_limpia = _re.sub(r'<[^>]+>', '', regla_raw).strip()
                 if not regla_limpia and precio_of > 0:
-                    regla_limpia = f"Comprando {unidad.lower()}"
+                    un_text = "kilo" if "kilo" in unidad.lower() else ("unidad" if "unidad" in unidad.lower() else unidad.lower())
+                    regla_limpia = f"Llevando 1 {un_text}"
                     
                 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
                 vistas = motor_ventas.get_personas_viendo("mes")

@@ -145,7 +145,7 @@ class _AutoScrollList(QScrollArea):
                 lbl_cat.setWordWrap(True)
                 lbl_cat.setMinimumWidth(0)
                 from PyQt6.QtWidgets import QSizePolicy
-                lbl_cat.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Maximum)
+                lbl_cat.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.MinimumExpanding)
                 lbl_cat.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
                 self.inner_layout.addWidget(lbl_cat)
                 

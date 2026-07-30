@@ -131,10 +131,11 @@ class PanelIA(QFrame):
         
         regla_html = ""
         if r_str:
+            box_style = "border: 2px solid #68D391; background-color: #E6FFFA; padding: 12px 20px; border-radius: 12px; margin-top: 20px; display: inline-block;"
+            text_style = "color: #047857; font-weight: 800; font-size: 24px; font-family: -apple-system, Arial;"
             if is_temu:
-                regla_html = f"<br><br><br><span style='font-family: Arial; font-size: 26px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
-            else:
-                regla_html = f"<br><br><span style='font-family: -apple-system, Arial; font-size: 24px; font-weight: bold; font-style: italic; color: #2B6CB0;'>{r_str}</span>"
+                text_style = "color: #047857; font-weight: 800; font-size: 26px; font-family: Arial;"
+            regla_html = f"<br><br><div style='{box_style}'><span style='{text_style}'>🔥 {r_str} 🔥</span></div>"
 
         # --- Contenido Central ---
         t1 = f"font-family: -apple-system; font-size: 28px; font-weight: 800; color: {C_THEME['blue']}; letter-spacing: 1px; text-align: center;"

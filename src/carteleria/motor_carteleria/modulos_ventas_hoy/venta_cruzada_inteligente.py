@@ -61,6 +61,19 @@ class VentaCruzadaInteligente:
             
         nombres_procesados = {producto_base_limpio.lower(), str(producto_base).strip().lower()}
         
+        def es_muy_similar(nuevo, procesados):
+            nuevo_min = nuevo.lower()
+            for p in procesados:
+                # Si son idénticos o uno es el plural del otro (agregando 's' o 'es')
+                if nuevo_min == p or nuevo_min == p + "s" or nuevo_min == p + "es" or p == nuevo_min + "s" or p == nuevo_min + "es":
+                    return True
+                # Si una palabra clave principal está contenida (ej: "alita" y "alitas")
+                # Exigir un mínimo de 4 letras para no filtrar "pan" y "pancho" accidentalmente
+                if len(nuevo_min) > 4 and len(p) > 4:
+                    if nuevo_min in p or p in nuevo_min:
+                        return True
+            return False
+        
         try:
             # 1. Buscamos en qué tickets de venta apareció nuestro producto base
             q_ids = "SELECT id_venta FROM detalles_ventas WHERE LOWER(nombre_producto) = LOWER(?) OR LOWER(nombre_producto) LIKE LOWER(?)"
@@ -84,7 +97,7 @@ class VentaCruzadaInteligente:
                     for r in rows_cooc:
                         nom_raw = str(r[0] if not isinstance(r, dict) else r.get('nombre_producto', '')).strip()
                         valido, nom_limpio = VentaCruzadaInteligente.es_producto_valido(nom_raw)
-                        if valido and nom_limpio.lower() not in nombres_procesados:
+                        if valido and not es_muy_similar(nom_limpio, nombres_procesados):
                             nombres_resultado.append(nom_limpio)
                             nombres_procesados.add(nom_limpio.lower())
                             if len(nombres_resultado) >= limit:
@@ -98,7 +111,7 @@ class VentaCruzadaInteligente:
                 for t in top_ventas:
                     nom_raw = str(t['nombre'] if isinstance(t, dict) else t[0]).strip()
                     valido, nom_limpio = VentaCruzadaInteligente.es_producto_valido(nom_raw)
-                    if valido and nom_limpio.lower() not in nombres_procesados:
+                    if valido and not es_muy_similar(nom_limpio, nombres_procesados):
                         nombres_resultado.append(nom_limpio)
                         nombres_procesados.add(nom_limpio.lower())
                         if len(nombres_resultado) >= limit:
@@ -114,7 +127,7 @@ class VentaCruzadaInteligente:
                     for s in rows_stock:
                         nom_raw = str(s[0] if not isinstance(s, dict) else s.get('nombre', '')).strip()
                         valido, nom_limpio = VentaCruzadaInteligente.es_producto_valido(nom_raw)
-                        if valido and nom_limpio.lower() not in nombres_procesados:
+                        if valido and not es_muy_similar(nom_limpio, nombres_procesados):
                             nombres_resultado.append(nom_limpio)
                             nombres_procesados.add(nom_limpio.lower())
                             if len(nombres_resultado) >= limit:

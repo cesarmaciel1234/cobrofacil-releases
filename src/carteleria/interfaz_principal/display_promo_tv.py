@@ -29,7 +29,7 @@ class DisplayPromoTV(QFrame):
         self.lbl_producto = QLabel("")
         self.lbl_producto.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_producto.setWordWrap(True)
-        self.lbl_producto.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.lbl_producto.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
         
         # 3. Rating y Marketing (Sub-contenedor vertical para que las estrellas estén arriba y el texto abajo)
         self.marketing_container = QFrame()
@@ -99,7 +99,7 @@ class DisplayPromoTV(QFrame):
         # 2. Producto
         len_n = len(nombre.strip())
         max_word = max([len(w) for w in nombre.split()]) if nombre else 0
-        fs_n = 75 if (len_n < 16 and max_word < 9) else 55
+        fs_n = 65 if (len_n < 16 and max_word < 9) else 45
         self.lbl_producto.setText(nombre.upper())
         if is_temu:
             self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: Impact, 'Arial Black', sans-serif; font-size: {fs_n}px; color: #000000; line-height: 1.1; }}")
@@ -132,9 +132,9 @@ class DisplayPromoTV(QFrame):
             self.lbl_precio_new.setText(f"${precio:,.0f}")
 
         if is_temu:
-            self.lbl_precio_old.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 45px; color: #DC2626; text-decoration: line-through; }")
-            fs_p = 100 if es_precio_largo else 130
-            self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: Impact, 'Arial Black', sans-serif; font-size: {fs_p}px; color: #DC2626; background-color: #FFFF00; padding: 10px 25px; border-radius: 12px; }}")
+            self.lbl_precio_old.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 40px; color: #DC2626; text-decoration: line-through; }")
+            fs_p = 85 if es_precio_largo else 110
+            self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: Impact, 'Arial Black', sans-serif; font-size: {fs_p}px; color: #DC2626; background-color: #FFFF00; padding: 10px 25px; border-radius: 12px; margin-bottom: 10px; }}")
         else:
             self.lbl_precio_old.setStyleSheet("QLabel { font-family: -apple-system, sans-serif; font-size: 38px; color: #94A3B8; text-decoration: line-through; }")
             fs_p = 90 if es_precio_largo else 115
