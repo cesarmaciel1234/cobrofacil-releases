@@ -1374,9 +1374,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "43af1e67e2a120c2896b6d2c0cd689ec",
+      "checksum": "67ff67165ef9e622b13a56c341d9ba26",
       "channel": "stable",
-      "size": 51011
+      "size": 51693
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
