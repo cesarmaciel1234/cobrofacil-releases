@@ -63,6 +63,13 @@ class DialogoProducto(QDialog):
                 border: 2px solid #3B82F6;
             }
         """)
+        
+        self._barcode_timer = QTimer(self)
+        self._barcode_timer.setSingleShot(True)
+        self._barcode_timer.timeout.connect(self._verificar_codigo)
+        self.txt_codigo.textChanged.connect(lambda: self._barcode_timer.start(400))
+        self.txt_codigo.returnPressed.connect(self._verificar_codigo)
+        
         bar_lay.addWidget(lbl_bc)
         bar_lay.addWidget(self.txt_codigo)
         main_lay.addWidget(barcode_frame)
@@ -285,6 +292,81 @@ class DialogoProducto(QDialog):
             }}
         """)
         return inp
+
+    def _verificar_codigo(self):
+        if hasattr(self, '_barcode_timer'):
+            self._barcode_timer.stop()
+        cod = self.txt_codigo.text().strip()
+        if not cod: 
+            self._reset_barcode_style()
+            return
+            
+        # Prevenir recarga si ya estamos editando este mismo producto
+        if getattr(self, '_id', None) and getattr(self, '_last_loaded_codigo', None) == cod:
+            return
+
+        from src.motor_inventario.motor_catalogo import MotorCatalogo
+        motor = MotorCatalogo()
+        prod = motor.obtener_producto_por_codigo(cod)
+        
+        if prod:
+            # Producto encontrado: Auto-rellenar y pasar a modo Edición
+            self.setWindowTitle("📦 Editar Producto")
+            self._id = prod['id']
+            self._last_loaded_codigo = cod
+            self._cant_oferta = prod.get('cant_oferta', 0.0)
+            self._precio_oferta = prod.get('precio_oferta', 0.0)
+
+            self.txt_nombre.setText(prod.get('nombre', ''))
+            
+            idx_cat = self.cmb_cat.findText(prod.get('categoria', 'GENERAL') or 'GENERAL')
+            if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
+            
+            idx_dep = self.cmb_depto.findText(prod.get('departamento', '') or '')
+            if idx_dep >= 0: self.cmb_depto.setCurrentIndex(idx_dep)
+            
+            idx_uni = self.cmb_uni.findText(prod.get('unidad', 'UN') or 'UN')
+            if idx_uni >= 0: self.cmb_uni.setCurrentIndex(idx_uni)
+            
+            def fstr(v): return f"{v:.2f}" if v is not None else "0.00"
+            def istr(v): return str(int(v)) if v is not None and int(v) == v else fstr(v)
+            
+            self.txt_costo.setText(fstr(prod.get('costo')))
+            self.txt_precio.setText(fstr(prod.get('precio')))
+            self.txt_mayoreo.setText(fstr(prod.get('precio_mayoreo')))
+            self.txt_cant_mayoreo.setText(istr(prod.get('cant_mayoreo')))
+            
+            self.txt_stock.setText(istr(prod.get('stock')))
+            self.txt_min.setText(istr(prod.get('stock_minimo')))
+            self.txt_max.setText(istr(prod.get('stock_maximo')))
+            
+            # Feedback visual verde para indicar carga exitosa
+            self.txt_codigo.setStyleSheet("""
+                QLineEdit { 
+                    background: #F0FDF4; border: 2px solid #22C55E; border-radius: 8px; 
+                    padding: 15px; font-size: 24px; font-weight: 900;  
+                    font-family: 'Consolas', monospace; color: #166534;
+                }
+            """)
+        else:
+            # Producto nuevo
+            self._reset_barcode_style()
+            if not getattr(self, '_id', None):
+                self.setWindowTitle("📦 Nuevo Producto")
+            self._last_loaded_codigo = None
+
+    def _reset_barcode_style(self):
+        self.txt_codigo.setStyleSheet("""
+            QLineEdit { 
+                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px; 
+                padding: 15px; font-size: 24px; font-weight: 900;  
+                font-family: 'Consolas', monospace; color: #1E3A8A;
+            }
+            QLineEdit:focus {
+                background: white;
+                border: 2px solid #3B82F6;
+            }
+        """)
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
