@@ -1,7 +1,7 @@
 {
-  "app_version": "7.7",
+  "app_version": "7.8",
   "channel": "stable",
-  "build_date": "2026-07-30 15:07:17",
+  "build_date": "2026-07-30 16:15:09",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -2370,9 +2370,9 @@
     },
     "src/motor_inventario/motor_catalogo.py": {
       "version": "1.0.0",
-      "checksum": "4f3cb47baa1658f70ee8537364531eca",
+      "checksum": "9639cd6514cd61790950d521f3239267",
       "channel": "stable",
-      "size": 7342
+      "size": 8004
     },
     "src/motor_inventario/motor_departamentos.py": {
       "version": "1.0.0",
@@ -2688,15 +2688,15 @@
     },
     "src/ui_global/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "3ede11da11ffb9c1e549c2a53560559f",
+      "checksum": "47ffae5f856efc599d012e02202d2f0c",
       "channel": "stable",
-      "size": 27131
+      "size": 28168
     },
     "src/ui_global/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
-      "checksum": "19769baed18aa6d49df18fe6b4fa5bc1",
+      "checksum": "cc6dce6b3392a6727dc7caa57de69c04",
       "channel": "stable",
-      "size": 15605
+      "size": 19346
     },
     "src/ui_global/inventario_ui/componentes/panel_categorias.py": {
       "version": "1.0.0",
