@@ -785,17 +785,36 @@ class Paso6Cobro(QDialog):
             if self.current_metodo != "Mixto" and not p1_t.strip().replace('.', '', 1).isdigit():
                 QMessageBox.critical(self, "ERROR", "Monto inválido ingresado.")
             else:
-                # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
+                # Blindaje: Si falta dinero y no es mixto, confirmar antes de saltar
                 if self.current_metodo != "Mixto":
                     try:
                         p1_val = float(p1_t) if p1_t else 0.0
                     except ValueError:
                         p1_val = 0.0
-                    self.set_metodo("Mixto")
+                    
                     faltante = self.total_final - p1_val
-                    self.txt_otro.setText(f"{faltante:.2f}")
-                    self.txt_otro.setFocus()
-                    self.txt_otro.selectAll()
+                    self._intentos_insuficientes = getattr(self, '_intentos_insuficientes', 0) + 1
+                    
+                    if self._intentos_insuficientes >= 3:
+                        QMessageBox.warning(self, "ATENCIÓN", "Múltiples intentos fallidos. Regresando a la selección de pago.")
+                        self._intentos_insuficientes = 0
+                        self.cancelar_metodo()
+                    else:
+                        resp = QMessageBox.question(
+                            self, "MONTO INSUFICIENTE", 
+                            f"Monto ingresado: ${p1_val:.2f}\nFalta cobrar: ${faltante:.2f}\n\n¿Desea completar la diferencia con otro método de pago (Pago Mixto)?",
+                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                            QMessageBox.StandardButton.No
+                        )
+                        if resp == QMessageBox.StandardButton.Yes:
+                            self.set_metodo("Mixto")
+                            self.txt_otro.setText(f"{faltante:.2f}")
+                            self.txt_otro.setFocus()
+                            self.txt_otro.selectAll()
+                            self._intentos_insuficientes = 0
+                        else:
+                            self.txt_pago.setFocus()
+                            self.txt_pago.selectAll()
                 else:
                     QMessageBox.critical(self, "MONTO INSUFICIENTE", "Falta dinero para cubrir el total.")
             return None
