@@ -2706,9 +2706,9 @@
     },
     "src/ui_global/inventario_ui/componentes/panel_departamentos.py": {
       "version": "1.0.0",
-      "checksum": "97245c72fab328681eb5089692bc5211",
+      "checksum": "4c72a6066c818d2bca0ab719a44d4217",
       "channel": "stable",
-      "size": 8362
+      "size": 8616
     },
     "src/ui_global/inventario_ui/componentes/__init__.py": {
       "version": "1.0.0",
