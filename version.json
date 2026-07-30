@@ -1,7 +1,7 @@
 {
   "app_version": "7.7",
   "channel": "stable",
-  "build_date": "2026-07-29 15:13:41",
+  "build_date": "2026-07-30 15:07:17",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1656,15 +1656,15 @@
     },
     "src/carteleria/interfaz_principal/display_promo_tv.py": {
       "version": "1.0.0",
-      "checksum": "09b87fbb7520b6830c2268e22b70c95e",
+      "checksum": "cf14e4313e9d4633d48015f119965ab3",
       "channel": "stable",
-      "size": 9656
+      "size": 9683
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "bcd6873a269a83dae93ada4151a4f34b",
+      "checksum": "555e1fd2dfd23b7de93eea4673da484c",
       "channel": "stable",
-      "size": 8823
+      "size": 8832
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
@@ -1680,9 +1680,9 @@
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "bba512007dd7fbafb643e7b7cdc3128c",
+      "checksum": "891d6c499fc220731caf2c01c43eda78",
       "channel": "stable",
-      "size": 13169
+      "size": 13307
     },
     "src/carteleria/interfaz_principal/tarjeta_producto.py": {
       "version": "1.0.0",
@@ -1704,9 +1704,9 @@
     },
     "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
       "version": "1.0.0",
-      "checksum": "0c87bd2e9a879b0737e4382147673214",
+      "checksum": "eb7bfbdd8bcd866b9ab6c2bf19fbe2c1",
       "channel": "stable",
-      "size": 6647
+      "size": 6843
     },
     "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
       "version": "1.0.0",
@@ -1752,9 +1752,9 @@
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.0",
-      "checksum": "b1321aa0e8ed54c25e4e39f496f9ef8a",
+      "checksum": "71e94bde3d6ad3a6cbcb562fd0159c3c",
       "channel": "stable",
-      "size": 2548
+      "size": 2549
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
@@ -1776,9 +1776,9 @@
     },
     "src/carteleria/motor_carteleria/motor_paneles.py": {
       "version": "1.0.0",
-      "checksum": "9354cc59d90e93f59300e61b1fb64c5e",
+      "checksum": "c18638df9edb51d1e0727217b35d9d9e",
       "channel": "stable",
-      "size": 9871
+      "size": 9997
     },
     "src/carteleria/motor_carteleria/network_manager.py": {
       "version": "1.0.0",
@@ -1836,9 +1836,9 @@
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/venta_cruzada_inteligente.py": {
       "version": "1.0.0",
-      "checksum": "c0503f0e807c3d454ac6fb4b700aed8f",
+      "checksum": "6436d00e3247b7078a11af104c825d37",
       "channel": "stable",
-      "size": 8077
+      "size": 8846
     },
     "src/carteleria/motor_carteleria/modulos_ventas_hoy/__init__.py": {
       "version": "1.0.0",
@@ -1944,9 +1944,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "6c91d541a6ab78d4970271e03c6d4539",
+      "checksum": "346757e42b7e3f8b6fa947eb84e74384",
       "channel": "stable",
-      "size": 5999
+      "size": 5996
     },
     "src/cerebro_global/cerebro_jefe/analitica_jefe.py": {
       "version": "1.0.0",

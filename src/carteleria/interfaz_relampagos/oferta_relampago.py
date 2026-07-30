@@ -159,12 +159,18 @@ class OfertaRelampago(QWidget):
             self.lbl_sos_precio.setText(f"${precio:,.0f}")
             self.lbl_sos_precio_old.hide()
             
-        if cant_of > 0.15:
+        if cant_of > 0:
             if ('kilo' in t_un.lower() or 'kg' in t_un.lower()) and 0 < cant_of < 1:
-                cond_text = f"*Condiciones: Oferta válida llevando {int(round(cant_of * 1000))} gs o más."
+                cond_raw = f"Llevando {int(round(cant_of * 1000))} gs"
             else:
-                cond_text = f"*Condiciones: Oferta válida llevando {cant_of:g} {t_un.lower()} o más."
-            self.lbl_sos_condiciones.setText(cond_text)
-            self.lbl_sos_condiciones.show()
+                cond_raw = f"Llevando {cant_of:g} {t_un.lower()}"
+                
+            from src.carteleria.utils_condiciones import formatear_condicion_oferta
+            cond_text = formatear_condicion_oferta(cond_raw)
+            if cond_text:
+                self.lbl_sos_condiciones.setText(f"*{cond_text}*")
+                self.lbl_sos_condiciones.show()
+            else:
+                self.lbl_sos_condiciones.hide()
         else:
             self.lbl_sos_condiciones.hide()

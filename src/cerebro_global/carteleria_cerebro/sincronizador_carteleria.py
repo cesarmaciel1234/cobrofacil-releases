@@ -76,7 +76,7 @@ class SincronizadorCarteleria:
                     prod_unidad = str(fila[6] or "").strip().lower()
                 
                 regla_texto = ""
-                if cant_oferta > 0.15:
+                if cant_oferta > 0:
                     is_kilo = ('kilo' in prod_unidad or prod_unidad == 'kg' or 'kilo' in tipo_unidad or tipo_unidad == 'kg' or cant_oferta != int(cant_oferta))
                     if is_kilo:
                         if cant_oferta < 1:
