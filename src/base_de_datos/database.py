@@ -33,6 +33,10 @@ class DatabaseManager:
         return os.path.normpath(os.path.join(base_app_path, path))
 
     def _init_db(self):
+        if getattr(self, "_is_initialized", False):
+            return
+        self._is_initialized = True
+        
         # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
         import json
         import random
@@ -119,7 +123,12 @@ class DatabaseManager:
                             data, addr = sock_scan.recvfrom(1024)
                             info = json.loads(data.decode('utf-8'))
                             if info.get('mode') == 'MAESTRA':
-                                host = info.get('server_ip', addr[0])
+                                nueva_ip = info.get('server_ip', addr[0])
+                                if nueva_ip == host:
+                                    logger.info(f"Maestra auto-descubierta en {nueva_ip} pero su base de datos no responde. Abortando reintentos.")
+                                    sock_scan.close()
+                                    break
+                                host = nueva_ip
                                 logger.info(f"Maestra auto-descubierta en {host}. Reintentando...")
                                 sock_scan.close()
                                 
