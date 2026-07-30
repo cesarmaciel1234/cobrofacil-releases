@@ -750,6 +750,10 @@ class MainWindow(QMainWindow):
                 self._build_lazy_screen(19)
             self.switch_tab(19)
             QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("jefe"))
+        elif role == "carteleria":
+            if self.screens[22] is None:
+                self._build_lazy_screen(22)
+            self.switch_tab(22)
         else:
             if self.screens[0] is None:
                 self._build_lazy_screen(0)

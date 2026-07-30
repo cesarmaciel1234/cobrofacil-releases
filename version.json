@@ -54,9 +54,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "fa2adbe72c4632b06953dd94cf02eeea",
+      "checksum": "07b0cfc84406e083e32792fea519eb87",
       "channel": "stable",
-      "size": 18599
+      "size": 18572
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -570,9 +570,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "8dd28a5358745a13559ceeb0d8861cc0",
+      "checksum": "f2cb1e087eba9ebe5529f86398727c95",
       "channel": "stable",
-      "size": 40894
+      "size": 41050
     },
     "src/__init__.py": {
       "version": "1.0.0",
