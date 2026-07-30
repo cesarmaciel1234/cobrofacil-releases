@@ -128,18 +128,23 @@ class CarteleriaMain(QWidget):
         self.timer_vuelo.start(35000) 
         
         self.db_worker.start()
-        self.clima_worker.start()
-        
-        
         # 👀 OJO ESPÍA (WORKER EN BACKGROUND)
         from src.utils.paths import get_base_path
         from src.config import config
+        is_slave = bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False)
+        
+        # El clima solo lo consulta el maestro para no saturar APIs externas
+        if not is_slave:
+            self.clima_worker.start()
+        
         path_ls = os.path.join(get_base_path(), "live_scan.json")
         master_ip = config.get("carteleria_master_ip", "")
         self.espia_worker = EspiaWorker(master_ip, path_ls)
         self.espia_worker.combo_triggered.connect(self._on_combo_triggered)
         self.espia_worker.limpiar_solicitado.connect(self._on_espia_limpiar)
         self.espia_worker.refresh_requested.connect(self.db_worker.start)
+        
+        # Si es esclavo, el espía solo escucha la red pasivamente y no interfiere con DB
         self.espia_worker.start()
         
         self.ultimo_cambio_ia = __import__('time').time() - 16

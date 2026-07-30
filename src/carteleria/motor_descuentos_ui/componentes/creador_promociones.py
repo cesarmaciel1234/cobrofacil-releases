@@ -24,18 +24,8 @@ class CreadorPromociones(QWidget):
         
         self.panel = QFrame()
         self.panel.setObjectName("ControlCenter")
-        self.panel.setStyleSheet("""
-            QFrame#ControlCenter {
-                background-color: #FFFFFF;
-                border-left: 1px solid #E2E8F0;
-            }
-            QLabel { background: transparent; color: #334155; }
-            QDoubleSpinBox, QLineEdit {
-                background-color: #F8FAFC;
-                color: #0F172A;
-                border: 1px solid #CBD5E1;
-            }
-        """)
+        from src.carteleria.theme import apply_dashboard_theme
+        apply_dashboard_theme(self)
         lay_ctrl = QVBoxLayout(self.panel)
         lay_ctrl.setContentsMargins(20, 20, 20, 20)
         lay_ctrl.setSpacing(15)

@@ -15,11 +15,14 @@ class PanelCombos(QFrame):
         self.motor.destacada_lista.connect(self.actualizar_destacada)
         self.motor.promo_lista.connect(self.actualizar_promo)
         
-        self.auto_refresh_timer = QTimer(self)
-        self.auto_refresh_timer.timeout.connect(self.motor.start)
-        self.auto_refresh_timer.start(16000) # 16 segundos
+        from src.config import config
+        is_slave = bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False)
         
-        self.motor.start() # Carga inicial
+        if not is_slave:
+            self.auto_refresh_timer = QTimer(self)
+            self.auto_refresh_timer.timeout.connect(self.motor.start)
+            self.auto_refresh_timer.start(16000) # 16 segundos
+            self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":
             # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización

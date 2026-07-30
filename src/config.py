@@ -45,6 +45,8 @@ class Config:
         "github_error_report": True,
         "github_report_repo": "cesarmaciel1234/cobrofacil-releases",
         "github_report_token": "",
+        "carteleria_performance_mode": False,
+        "carteleria_is_slave": False,
     }
 
     _instance = None

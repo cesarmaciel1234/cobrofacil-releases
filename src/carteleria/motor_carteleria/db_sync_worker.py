@@ -26,6 +26,29 @@ class DbSyncWorker(QThread):
             cache_path = os.path.join(get_base_path(), "carteleria_cache.json")
             data = None
             
+            from src.config import config
+            is_slave = bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False)
+            master_ip = config.get("db_host", "") or config.get("carteleria_master_ip", "")
+            
+            if is_slave and master_ip:
+                # Descargar el caché directamente desde el maestro en la red para no bloquear la DB
+                try:
+                    import urllib.request
+                    url = f"http://{master_ip}:5000/carteleria_cache.json"
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, timeout=3) as response:
+                        if response.status == 200:
+                            data = json.loads(response.read().decode('utf-8'))
+                            # Sobrescribir cache local
+                            with open(cache_path, "w", encoding="utf-8") as f:
+                                json.dump(data, f, ensure_ascii=False)
+                            self.sync_finished.emit(data, "online")
+                            return # Termina el hilo aquí exitosamente
+                except Exception as e_net:
+                    logger.warning(f"Error descargando carteleria_cache del maestro: {e_net}")
+                    # Si falla, cae al except general que intentará leer la caché offline
+                    pass
+                    
             try:
                 # 1. Config (Intentar cargar desde DB Global primero)
                 db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")

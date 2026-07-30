@@ -43,7 +43,8 @@ def get_active_theme_name():
 def apply_apple_shadow(widget, blur=30, alpha=30, y_offset=10):
     """Aplica una sombra suave y difuminada."""
     # En modo temu eliminamos las sombras laterales/sólidas para que los paneles luzcan limpios sin rayas de sombra
-    if _ACTIVE_THEME_NAME == "temu":
+    from src.config import config
+    if _ACTIVE_THEME_NAME == "temu" or config.get("carteleria_performance_mode", False):
         return
         
     shadow = QGraphicsDropShadowEffect()
@@ -51,3 +52,42 @@ def apply_apple_shadow(widget, blur=30, alpha=30, y_offset=10):
     shadow.setColor(QColor(0, 0, 0, alpha))
     shadow.setOffset(0, y_offset)
     widget.setGraphicsEffect(shadow)
+
+def apply_dashboard_theme(widget):
+    """Aplica un tema global Apple Style / Tailwind a paneles administrativos (Master/Slave)."""
+    from src.config import config
+    perf_mode = config.get("carteleria_performance_mode", False)
+    
+    # CSS Base Premium Modular (Apple Style)
+    css = """
+        QScrollArea { border: none; background: #F8FAFC; }
+        QFrame#ControlCenter {
+            background-color: #FFFFFF;
+            border-left: 1px solid #E2E8F0;
+        }
+        QLabel { background: transparent; color: #334155; }
+        QDoubleSpinBox, QLineEdit {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 5px;
+            font-size: 13px;
+        }
+        QDoubleSpinBox:focus, QLineEdit:focus {
+            border: 1px solid #007AFF;
+            background-color: #FFFFFF;
+        }
+        QPushButton {
+            border-radius: 6px;
+            font-weight: 600;
+        }
+    """
+    widget.setStyleSheet(css)
+    
+    # Aplicar sombras solo si no está en modo rendimiento
+    if not perf_mode:
+        from PyQt6.QtWidgets import QFrame
+        for child in widget.findChildren(QFrame):
+            if child.objectName() == "ControlCenter":
+                apply_apple_shadow(child, blur=15, alpha=15, y_offset=0)
