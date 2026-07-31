@@ -70,11 +70,13 @@ def buscar_deudores(consulta: str) -> list:
                (SELECT MAX(cc.fecha) FROM cuenta_corriente cc
                 WHERE cc.cliente_id = c.id AND cc.tipo = 'CARGO') AS ultimo_cargo
         FROM clientes c
-        WHERE c.deuda_actual > 0.01
+        WHERE 1=1
     """
     params: list = []
 
-    if p["tipo"] == "dni":
+    if p["tipo"] == "todos":
+        base += " AND c.deuda_actual > 0.01"
+    elif p["tipo"] == "dni":
         v = p["valor"]
         base += " AND (c.dni = ? OR c.dni LIKE ? OR c.nombre LIKE ? OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)"
         params.extend([v, f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
@@ -106,6 +108,18 @@ def buscar_deudores(consulta: str) -> list:
 
     base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"
     rows = db_manager.execute_query(base, tuple(params)) or []
+
+    # Si no hay deudores con saldo > 0.01 y p["tipo"] es "todos", mostrar todos los clientes registrados
+    if p["tipo"] == "todos" and not rows:
+        base_fallback = """
+            SELECT c.id, c.nombre, c.dni, c.telefono, c.direccion,
+                   c.deuda_actual, c.limite_credito, c.tipo_cliente,
+                   (SELECT MAX(cc.fecha) FROM cuenta_corriente cc
+                    WHERE cc.cliente_id = c.id AND cc.tipo = 'CARGO') AS ultimo_cargo
+            FROM clientes c
+            ORDER BY c.nombre ASC LIMIT 50
+        """
+        rows = db_manager.execute_query(base_fallback) or []
     result = []
     for r in rows:
         row_dict = dict(r)
