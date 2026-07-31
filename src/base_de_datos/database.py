@@ -86,9 +86,13 @@ class DatabaseManager:
                 else:
                     # MODO ESCLAVO MARIADB
                     self.is_master = False
-                    logger.info(f"MariaDB configurado en modo ESCLAVO apuntando a {host}.")
-                    
                 self.mariadb_engine = MariaDBEngine(host=host)
+
+                try:
+                    from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                    AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
+                except Exception as e:
+                    logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
                 
                 # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
                 if not self.is_master:
