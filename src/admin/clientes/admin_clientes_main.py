@@ -68,6 +68,23 @@ class AdminClientes(QWidget):
         self.btn_nuevo.clicked.connect(self.nuevo_cliente)
         
         header_lay.addWidget(lbl_titulo)
+        header_lay.addSpacing(12)
+
+        from src.central_red_global.motor_red import MotorRed
+        motor_red = MotorRed()
+        st = motor_red.obtener_estado_red()
+        if st.get("is_master", True):
+            badge_txt = "🖥️ BD Maestra (Servidor)"
+            badge_css = "background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; font-size: 11px; font-weight: bold; border-radius: 8px; padding: 5px 12px;"
+        else:
+            host_ip = st.get("db_host", "LAN")
+            badge_txt = f"⚡ Sincronizado en Tiempo Real con Maestra ({host_ip})"
+            badge_css = "background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; font-size: 11px; font-weight: bold; border-radius: 8px; padding: 5px 12px;"
+
+        self.lbl_red_status = QLabel(badge_txt)
+        self.lbl_red_status.setStyleSheet(badge_css)
+        header_lay.addWidget(self.lbl_red_status)
+
         header_lay.addStretch()
         header_lay.addWidget(self.btn_nuevo)
         lay.addLayout(header_lay)
