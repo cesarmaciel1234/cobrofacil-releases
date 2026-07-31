@@ -1,7 +1,7 @@
 {
-  "app_version": "8.2",
+  "app_version": "8.3",
   "channel": "stable",
-  "build_date": "2026-07-31 18:18:22",
+  "build_date": "2026-07-31 18:26:37",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "522a7108323d9b3e002b55402f470c83",
+      "checksum": "7ba93ff68baa1f82e752d761672e3863",
       "channel": "stable",
-      "size": 629557
+      "size": 629558
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -828,9 +828,9 @@
     },
     "src/admin/red_lan/red_lan_main.py": {
       "version": "1.0.0",
-      "checksum": "41ec8a2789edd5c9cf2af70f4a36295d",
+      "checksum": "487fe3d47c8dbb5a068b0935b21bcb40",
       "channel": "stable",
-      "size": 18189
+      "size": 18227
     },
     "src/admin/red_lan/__init__.py": {
       "version": "1.0.0",
@@ -2406,9 +2406,9 @@
     },
     "src/ui_components/red_lan_panel.py": {
       "version": "1.0.0",
-      "checksum": "cb17597423cec039b4955b558b1f1d8b",
+      "checksum": "67c806320e761f13420af7061da16ce7",
       "channel": "stable",
-      "size": 20784
+      "size": 20822
     },
     "src/ui_components/tema_estilos.py": {
       "version": "1.0.0",

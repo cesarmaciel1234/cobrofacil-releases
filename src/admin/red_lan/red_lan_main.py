@@ -37,9 +37,9 @@ class Admin6RedLan(QWidget):
         btn_back = QPushButton("← Dashboard")
         btn_back.setCursor(QCursor(Qt.PointingHandCursor))
         btn_back.setStyleSheet(
-            "QPushButton { background: white; border: 1px solid #CBD5E1; "
-            "border-radius: 8px; padding: 8px 16px; font-weight: 600; }"
-            "QPushButton:hover { background: #F1F5F9; }"
+            "QPushButton { background: #2563EB; color: #FFFFFF; border: none; "
+            "border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 13px; }"
+            "QPushButton:hover { background: #1D4ED8; color: #FFFFFF; }"
         )
         btn_back.clicked.connect(self.request_dashboard.emit)
         h.addWidget(btn_back)
