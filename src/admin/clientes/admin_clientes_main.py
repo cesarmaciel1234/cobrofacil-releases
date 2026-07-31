@@ -23,7 +23,7 @@ class AdminClientes(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.db = DatabaseManager()
+        self.db = db_manager
         self.initUI()
         
     def initUI(self):

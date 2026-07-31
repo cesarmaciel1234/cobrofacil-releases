@@ -1,7 +1,7 @@
 {
-  "app_version": "9.0",
+  "app_version": "9.1",
   "channel": "stable",
-  "build_date": "2026-07-31 20:07:02",
+  "build_date": "2026-07-31 20:20:10",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "01c4007035e361a6ac90bee17a4e2718",
+      "checksum": "a02a66e2000df743b19fa9af87160f20",
       "channel": "stable",
-      "size": 629557
+      "size": 629558
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -438,9 +438,9 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "978dd6b853169de551b754ffee7b24d5",
+      "checksum": "3c2b1695430311426cd829cb227489c2",
       "channel": "stable",
-      "size": 20483
+      "size": 20476
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",
@@ -456,15 +456,15 @@
     },
     "src/admin/clientes/componentes/dialogo_editar_cliente.py": {
       "version": "1.0.0",
-      "checksum": "f6049a82784f0a4e2fc937e3279f6ba6",
+      "checksum": "41440e2a3bd5284e26e7e0e53d6d8ff9",
       "channel": "stable",
-      "size": 5694
+      "size": 5682
     },
     "src/admin/clientes/componentes/dialogo_historial_cliente.py": {
       "version": "1.0.0",
-      "checksum": "84d3cff3f93661c4ea304432566f5bbc",
+      "checksum": "44ec63d8dd94c99691df134aed6bc8d3",
       "channel": "stable",
-      "size": 9955
+      "size": 9943
     },
     "src/admin/clientes/componentes/dialogo_nuevo_cliente.py": {
       "version": "1.0.0",
@@ -474,9 +474,9 @@
     },
     "src/admin/clientes/componentes/dialogo_recalculo_fiado.py": {
       "version": "1.0.0",
-      "checksum": "28777582a5437cf31c2676294054786a",
+      "checksum": "cc37031fd4b1f25bad4d47bac1d31953",
       "channel": "stable",
-      "size": 7271
+      "size": 7259
     },
     "src/admin/clientes/componentes/metric_card.py": {
       "version": "1.0.0",

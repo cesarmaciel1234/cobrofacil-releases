@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
-from src.base_de_datos.database import DatabaseManager
+from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
 
 
@@ -17,7 +17,7 @@ class DialogoRecalculoFiado(QDialog):
         super().__init__(parent)
         self.cliente_id = cliente_id
         self.nombre = nombre
-        self.db = DatabaseManager()
+        self.db = db_manager
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setFixedSize(650, 500)
         self.setStyleSheet("background: white; border-radius: 15px; border: 2px solid #3B82F6;")
