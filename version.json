@@ -1,7 +1,7 @@
 {
-  "app_version": "8.5",
+  "app_version": "8.6",
   "channel": "stable",
-  "build_date": "2026-07-31 18:47:11",
+  "build_date": "2026-07-31 19:11:51",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "0935596af3c2898332472ce7d9e2dfe3",
+      "checksum": "aac60b6b72e47c193beba0a40f40f7f4",
       "channel": "stable",
       "size": 629558
     },
@@ -438,9 +438,9 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "313295f4e5c92d95b2f695eac95b7762",
+      "checksum": "6940d0ce2d1ae13d726bd5f0a053efca",
       "channel": "stable",
-      "size": 17449
+      "size": 17750
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",

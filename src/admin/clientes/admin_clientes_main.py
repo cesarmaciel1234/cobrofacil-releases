@@ -117,15 +117,17 @@ class AdminClientes(QWidget):
             "Días", "Recálculo", "Acciones",
         ])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeMode.Interactive)
+        self.tabla.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeMode.Interactive)
+        self.tabla.setColumnWidth(8, 135)
+        self.tabla.setColumnWidth(9, 175)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla.verticalHeader().setVisible(False)
-        self.tabla.verticalHeader().setDefaultSectionSize(58)
+        self.tabla.verticalHeader().setDefaultSectionSize(54)
         self.tabla.horizontalHeader().setMinimumHeight(46)
         self.tabla.setAlternatingRowColors(True)
         self.tabla.setStyleSheet(f"""
@@ -227,12 +229,13 @@ class AdminClientes(QWidget):
                     it_dias.setFont(QFont("Arial", 10, QFont.Bold))
                 self.tabla.setItem(i, 7, it_dias)
                 
-                btn_sim = QPushButton("Ver Actualizado")
-                btn_sim.setCursor(Qt.PointingHandCursor)
-                btn_sim.setMinimumHeight(36)
+                btn_sim = QPushButton("🔄 Recalcular")
+                btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn_sim.setFixedHeight(32)
                 if deuda > 0:
                     btn_sim.setStyleSheet(
-                        "font-weight: bold; border-radius: 8px; padding: 8px 14px; font-size: 12px;"
+                        "background-color: #F8FAFC; color: #2563EB; border: 1px solid #CBD5E1; "
+                        "font-weight: bold; border-radius: 6px; padding: 4px 10px; font-size: 12px;"
                     )
                     btn_sim.clicked.connect(
                         lambda ch, cid=c['id'], cnom=c['nombre']: self._abrir_recalculo(cid, cnom)
@@ -244,23 +247,23 @@ class AdminClientes(QWidget):
                 
                 acc_w = QWidget()
                 acc_lay = QHBoxLayout(acc_w)
-                acc_lay.setContentsMargins(8, 6, 8, 6)
-                acc_lay.setSpacing(8)
+                acc_lay.setContentsMargins(4, 2, 4, 2)
+                acc_lay.setSpacing(6)
 
                 btn_abonar = QPushButton("Abonar")
-                btn_abonar.setCursor(Qt.PointingHandCursor)
-                btn_abonar.setMinimumHeight(36)
-                btn_abonar.setMinimumWidth(72)
+                btn_abonar.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn_abonar.setFixedHeight(32)
+                btn_abonar.setMinimumWidth(68)
                 if deuda <= 0:
                     btn_abonar.setEnabled(False)
                     btn_abonar.setStyleSheet(
-                        "background-color: #94A3B8; color: white; border-radius: 8px; "
-                        "padding: 8px 14px; font-size: 12px; font-weight: bold;"
+                        "background-color: #94A3B8; color: white; border-radius: 6px; "
+                        "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
                     )
                 else:
                     btn_abonar.setStyleSheet(
-                        "background-color: #3b82f6; color: white; border-radius: 8px; "
-                        "padding: 8px 14px; font-size: 12px; font-weight: bold;"
+                        "background-color: #3B82F6; color: white; border-radius: 6px; "
+                        "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
                     )
                     btn_abonar.clicked.connect(
                         lambda ch, cid=c['id'], cnom=c['nombre'], cdeu=deuda: self.abonar_deuda_admin(cid, cnom, cdeu)
@@ -268,13 +271,13 @@ class AdminClientes(QWidget):
                 acc_lay.addWidget(btn_abonar)
 
                 btn_limite = QPushButton("Límite")
-                btn_limite.setCursor(Qt.PointingHandCursor)
-                btn_limite.setMinimumHeight(36)
-                btn_limite.setMinimumWidth(72)
+                btn_limite.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn_limite.setFixedHeight(32)
+                btn_limite.setMinimumWidth(68)
                 btn_limite.setToolTip("Ampliar cupo de fiado (Express o habitual)")
                 btn_limite.setStyleSheet(
-                    "background-color: #10B981; color: white; border-radius: 8px; "
-                    "padding: 8px 14px; font-size: 12px; font-weight: bold;"
+                    "background-color: #10B981; color: white; border-radius: 6px; "
+                    "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
                 )
                 btn_limite.clicked.connect(
                     lambda ch, cid=c['id'], cnom=c['nombre'], lim=limite: self.editar_limite_credito(cid, cnom, lim)
