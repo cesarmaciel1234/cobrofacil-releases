@@ -694,13 +694,9 @@ class MainWindow(QMainWindow):
             if hasattr(self.pantalla_ventas, 'refresh_terminal_data'):
                 self.pantalla_ventas.refresh_terminal_data()
         elif index == 21:
-            self._kiosk_mode = False
+            self._kiosk_mode = True
             self.btn_flotante.hide()
             
-            # --- MODO VENTANA NORMAL (PANTALLA SECUNDARIA) ---
-            # Removemos FramelessWindowHint para que tenga barra de titulo y se pueda mover
-            self.setWindowFlags(Qt.WindowType.Window)
-
             from src.utils.qt_compat import screen_count, screen_geometry_at
             if screen_count() > 1:
                 screen_rect = screen_geometry_at(1)
@@ -709,8 +705,7 @@ class MainWindow(QMainWindow):
             if screen_rect is not None:
                 self.setGeometry(screen_rect)
                 
-            self.showNormal()
-            self.show()
+            self.showFullScreen()
             
             if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
