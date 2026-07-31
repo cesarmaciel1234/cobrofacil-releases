@@ -169,6 +169,26 @@ class ProfileCard(QFrame):
         else:
             self._set_idle_style()
 
+    def set_launching_state(self):
+        self.inner.setStyleSheet("""
+            QFrame {
+                background: #EFF6FF;
+                border-radius: 22px;
+                border: 3px solid #2563EB;
+            }
+        """)
+        self.tag.setText("⏳ INICIANDO MÓDULO...")
+        self.tag.setStyleSheet("""
+            font-size: 8px; font-weight: 900; letter-spacing: 1px;
+            color: #1D4ED8; background: #DBEAFE;
+            border: none; border-radius: 6px; padding: 2px 8px;
+        """)
+        self.lbl_title.setText("🚀 ARRANCANDO...")
+        self.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #1E40AF; background: transparent; border: none;")
+        self.lbl_desc.setText("Inicializando subproceso...\nPor favor aguarde unos segundos")
+        self.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #2563EB; background: transparent; border: none;")
+        self.setCursor(Qt.CursorShape.WaitCursor)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
@@ -415,6 +435,22 @@ class PerfilPantalla(QDialog):
         self._lanzar_proceso_autonomo(rol)
 
     def _lanzar_proceso_autonomo(self, rol):
+        from PyQt6.QtWidgets import QApplication
+
+        buttons_map = {
+            "cajero": self.btn_cajero,
+            "admin": self.btn_admin,
+            "jefe": self.btn_jefe,
+            "carteleria": self.btn_carteleria
+        }
+
+        btn = buttons_map.get(rol)
+        if btn:
+            btn.set_launching_state()
+            app = QApplication.instance()
+            if app:
+                app.processEvents()
+
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         main_script = os.path.join(base_dir, "main.py")
 
@@ -426,8 +462,10 @@ class PerfilPantalla(QDialog):
         try:
             proc = subprocess.Popen(cmd)
             self._subprocesos[rol] = proc
-            QTimer.singleShot(800, self._apply_locked_profiles_ui)
+            QTimer.singleShot(1500, self._apply_locked_profiles_ui)
         except Exception as e:
+            if btn:
+                btn._set_idle_style()
             QMessageBox.critical(self, "Error al Lanzar", f"No se pudo iniciar el proceso autónomo para {rol}:\n{e}")
 
     # ── Arrastre de ventana con el mouse (Soporte multi-pantalla) ──────────────

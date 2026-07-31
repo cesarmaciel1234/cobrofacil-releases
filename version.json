@@ -1,7 +1,7 @@
 {
   "app_version": "8.0",
   "channel": "stable",
-  "build_date": "2026-07-31 15:25:11",
+  "build_date": "2026-07-31 15:44:09",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -2142,9 +2142,9 @@
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "c8730d1663d6b6e4a785d28b9d13f7f2",
+      "checksum": "bc9f9e3665e77795a63c4cebccd8d7ee",
       "channel": "stable",
-      "size": 18131
+      "size": 19595
     },
     "src/inicio_y_perfiles/__init__.py": {
       "version": "1.0.0",
