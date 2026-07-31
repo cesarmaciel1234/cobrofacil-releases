@@ -12,31 +12,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
 
-# Removed db_manager import
-
-class MotorBusquedaInventario(QThread):
-    busqueda_terminada = pyqtSignal(list, int)
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.buscar = ""
-        self.depto = None
-        self._motor = None
-        
-    def setup(self, buscar, depto, motor):
-        self.buscar = buscar
-        self.depto = depto
-        self._motor = motor
-        
-    def run(self):
-        try:
-            if not self._motor: return
-            filas, _ = self._motor.obtener_productos(self.buscar, self.depto, limite=50000, offset=0)
-            sin_stock = sum(1 for r in filas if (dict(r).get('stock') or 0.0) <= 0)
-            self.busqueda_terminada.emit(filas, sin_stock)
-        except Exception as e:
-            print("Error MotorBusquedaInventario:", e)
-            self.busqueda_terminada.emit([], 0)
+# Motor de búsqueda como módulo independiente
+from src.motor_inventario.buscador_inventario import BuscadorInventarioWorker as MotorBusquedaInventario
 
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
