@@ -1,7 +1,7 @@
 {
-  "app_version": "7.9",
+  "app_version": "7.10",
   "channel": "stable",
-  "build_date": "2026-07-30 19:32:14",
+  "build_date": "2026-07-30 23:19:02",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -1553,10 +1553,10 @@
       "size": 1720
     },
     "src/carteleria/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "0c6a2d2c6a0d4f42c5778490975aee01",
+      "version": "1.0.1",
+      "checksum": "26119968ad63453715391dbd4029acdf",
       "channel": "stable",
-      "size": 165
+      "size": 360
     },
     "src/carteleria/assets/download_icons.py": {
       "version": "1.0.0",
@@ -1763,10 +1763,10 @@
       "size": 8320
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
-      "version": "1.0.0",
-      "checksum": "71e94bde3d6ad3a6cbcb562fd0159c3c",
+      "version": "1.0.1",
+      "checksum": "04cb9dc9575cc35e02efe1978a719234",
       "channel": "stable",
-      "size": 2549
+      "size": 2630
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
