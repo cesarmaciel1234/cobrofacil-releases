@@ -189,6 +189,44 @@ class ProfileCard(QFrame):
         self.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #2563EB; background: transparent; border: none;")
         self.setCursor(Qt.CursorShape.WaitCursor)
 
+    def set_retry_state(self, count: int, max_count: int = 3):
+        self.inner.setStyleSheet("""
+            QFrame {
+                background: #FFFBEB;
+                border-radius: 22px;
+                border: 2.5px solid #F59E0B;
+            }
+        """)
+        self.tag.setText(f"🔄 RE-INTENTO AUTO ({count}/{max_count})")
+        self.tag.setStyleSheet("""
+            font-size: 8px; font-weight: 900; letter-spacing: 1px;
+            color: #B45309; background: #FEF3C7;
+            border: none; border-radius: 6px; padding: 2px 8px;
+        """)
+        self.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #B45309; background: transparent; border: none;")
+        self.lbl_desc.setText(f"Se detectó caída. Re-levantando subproceso ({count}/{max_count})...")
+        self.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #D97706; background: transparent; border: none;")
+        self.setCursor(Qt.CursorShape.WaitCursor)
+
+    def set_failed_state(self):
+        self.inner.setStyleSheet("""
+            QFrame {
+                background: #FEF2F2;
+                border-radius: 22px;
+                border: 2.5px solid #EF4444;
+            }
+        """)
+        self.tag.setText("⚠️ DETENIDO (3 CAÍDAS)")
+        self.tag.setStyleSheet("""
+            font-size: 8px; font-weight: 900; letter-spacing: 1px;
+            color: #B91C1C; background: #FEE2E2;
+            border: none; border-radius: 6px; padding: 2px 8px;
+        """)
+        self.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #B91C1C; background: transparent; border: none;")
+        self.lbl_desc.setText("Falló 3 veces seguidas. Pausado por seguridad.\nClic para reintentar manual")
+        self.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #DC2626; background: transparent; border: none;")
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.clicked.emit()
@@ -206,6 +244,8 @@ class PerfilPantalla(QDialog):
         super().__init__(parent)
         self.is_master_launcher = is_master_launcher
         self._subprocesos = {} # { "cajero": subprocess.Popen, ... }
+        self._reintentos = { "cajero": 0, "admin": 0, "jefe": 0, "carteleria": 0 }
+        self._max_reintentos = 3
         self.selected_index = 0
         self._roles_bloqueados = set()
 
@@ -368,9 +408,11 @@ class PerfilPantalla(QDialog):
             btn = buttons_map[rol]
             pid = PerfilLocker.get_locked_pid(rol)
             is_locked = PerfilLocker.check_is_locked(rol)
+            proc = self._subprocesos.get(rol)
 
             if is_locked and pid:
                 self._roles_bloqueados.add(i)
+                self._reintentos[rol] = 0
                 btn.inner.setStyleSheet("""
                     QFrame {
                         background: #F0FDF4;
@@ -388,7 +430,21 @@ class PerfilPantalla(QDialog):
                 btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para administrar / reiniciar")
                 btn.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #16A34A; background: transparent; border: none;")
             else:
-                btn._set_idle_style()
+                # Si el proceso fue iniciado previamente y se cerró/cayó
+                if proc is not None and proc.poll() is not None:
+                    retry_count = self._reintentos.get(rol, 0)
+                    if retry_count < self._max_reintentos:
+                        self._reintentos[rol] = retry_count + 1
+                        btn.set_retry_state(self._reintentos[rol], self._max_reintentos)
+                        # Re-lanzar de forma autónoma tras 1 segundo
+                        QTimer.singleShot(1000, lambda r=rol: self._lanzar_proceso_autonomo(r))
+                    else:
+                        btn.set_failed_state()
+                else:
+                    if self._reintentos.get(rol, 0) >= self._max_reintentos:
+                        btn.set_failed_state()
+                    else:
+                        btn._set_idle_style()
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
@@ -408,6 +464,9 @@ class PerfilPantalla(QDialog):
         from src.utils.candados import PerfilLocker
         pid = PerfilLocker.get_locked_pid(rol)
         is_locked = PerfilLocker.check_is_locked(rol)
+
+        # Al hacer clic manual, resetear el contador de reintentos
+        self._reintentos[rol] = 0
 
         if is_locked and pid:
             resp = QMessageBox.question(
