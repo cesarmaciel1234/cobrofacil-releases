@@ -1,7 +1,7 @@
 {
-  "app_version": "7.10",
+  "app_version": "7.9",
   "channel": "stable",
-  "build_date": "2026-07-31 00:16:47",
+  "build_date": "2026-07-31 00:21:25",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
