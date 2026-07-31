@@ -1,7 +1,7 @@
 {
-  "app_version": "7.12",
+  "app_version": "7.13",
   "channel": "stable",
-  "build_date": "2026-07-30 23:28:55",
+  "build_date": "2026-07-30 23:30:43",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -1763,10 +1763,10 @@
       "size": 1184
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
-      "version": "1.0.0",
-      "checksum": "fb4208e35aee80a45c2e682fe3aa70af",
+      "version": "1.0.1",
+      "checksum": "bdbaa02518fc07ec4095c7a33d856e3a",
       "channel": "stable",
-      "size": 8320
+      "size": 8383
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
       "version": "1.0.1",
@@ -2387,10 +2387,10 @@
       "size": 72
     },
     "src/motor_inventario/buscador_inventario.py": {
-      "version": "1.0.0",
-      "checksum": "a1001e3b43fff631e39e57fa7bb51329",
+      "version": "1.0.1",
+      "checksum": "3d89637b423e4bf33eaf1ea2341bea4d",
       "channel": "stable",
-      "size": 3687
+      "size": 3796
     },
     "src/motor_inventario/motor_catalogo.py": {
       "version": "1.0.0",

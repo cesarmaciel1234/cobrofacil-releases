@@ -30,7 +30,7 @@ class DbSyncWorker(QThread):
             is_slave = bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False)
             master_ip = config.get("db_host", "") or config.get("carteleria_master_ip", "")
             
-            if is_slave and master_ip:
+            if is_slave and master_ip and getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
                 # Descargar el caché directamente desde el maestro en la red para no bloquear la DB
                 try:
                     import urllib.request
@@ -45,7 +45,7 @@ class DbSyncWorker(QThread):
                             self.sync_finished.emit(data, "online")
                             return # Termina el hilo aquí exitosamente
                 except Exception as e_net:
-                    logger.warning(f"Error descargando carteleria_cache del maestro: {e_net}")
+                    logger.debug(f"Error descargando carteleria_cache del maestro: {e_net}")
                     # Si falla, cae al except general que intentará leer la caché offline
                     pass
                     
