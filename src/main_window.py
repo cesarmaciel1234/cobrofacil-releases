@@ -543,7 +543,7 @@ class MainWindow(QMainWindow):
                 s.request_dashboard.connect(lambda: self.switch_tab(22))
 
         if index == 22: # Carteleria Dashboard
-            s.request_launch_tv.connect(lambda: self.switch_tab(21))
+            s.request_launch_tv.connect(self._lanzar_tv_ventana_secundaria)
             s.request_admin_tv.connect(lambda: self.switch_tab(15))
             if hasattr(s, 'request_inventario'): s.request_inventario.connect(lambda: self.switch_tab(2))
             if hasattr(s, 'request_ofertas'): s.request_ofertas.connect(lambda: self.switch_tab(3))
@@ -657,7 +657,52 @@ class MainWindow(QMainWindow):
         self.raise_()
         self.activateWindow()
 
+    def _lanzar_tv_ventana_secundaria(self):
+        """
+        Lanza CarteleriaMain en una ventana SECUNDARIA independiente
+        (idealmente en el segundo monitor / TV del cliente).
+        La ventana principal del POS permanece intacta para el operador.
+        Presionando F11 o ESC desde la cartelería cierra solo esa ventana.
+        """
+        from PyQt6.QtWidgets import QMainWindow
+        from src.carteleria.motor_carteleria.main_board import CarteleriaMain
+        from src.utils.qt_compat import screen_count, screen_geometry_at
+
+        # Destruir instancia anterior si existe
+        if getattr(self, '_tv_window', None) is not None:
+            try:
+                self._tv_window.close()
+            except Exception:
+                pass
+
+        # Crear ventana secundaria
+        tv_win = QMainWindow()
+        tv_win.setWindowTitle("📺 Cartelería")
+        tv_board = CarteleriaMain()
+        tv_win.setCentralWidget(tv_board)
+
+        # Conectar señales de cierre
+        if hasattr(tv_board, 'request_screen'):
+            tv_board.request_screen.connect(lambda _: tv_win.close())
+
+        # Guardar referencia para evitar garbage collection
+        self._tv_window = tv_win
+        self._tv_board = tv_board
+
+        # Mover al segundo monitor si existe
+        if screen_count() > 1:
+            geo = screen_geometry_at(1)
+        else:
+            geo = screen_geometry_at(0)
+
+        if geo is not None:
+            tv_win.setGeometry(geo)
+
+        tv_win.show()
+        tv_win.showFullScreen()
+
     def switch_tab(self, index):
+
         """Navega a la pantalla indicada por su índice en el QStackedWidget.
 
         Guards de seguridad:

@@ -1,7 +1,7 @@
 {
-  "app_version": "7.11",
+  "app_version": "7.12",
   "channel": "stable",
-  "build_date": "2026-07-30 23:23:52",
+  "build_date": "2026-07-30 23:28:55",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -587,10 +587,10 @@
       "size": 1798
     },
     "src/main_window.py": {
-      "version": "1.0.0",
-      "checksum": "574b4e2201798bd67f4065f39d16d427",
+      "version": "1.0.1",
+      "checksum": "fcae0a0e56d2156493527f57eb6ac4bb",
       "channel": "stable",
-      "size": 41655
+      "size": 43242
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -2386,6 +2386,12 @@
       "channel": "stable",
       "size": 72
     },
+    "src/motor_inventario/buscador_inventario.py": {
+      "version": "1.0.0",
+      "checksum": "a1001e3b43fff631e39e57fa7bb51329",
+      "channel": "stable",
+      "size": 3687
+    },
     "src/motor_inventario/motor_catalogo.py": {
       "version": "1.0.0",
       "checksum": "9639cd6514cd61790950d521f3239267",
@@ -2706,9 +2712,9 @@
     },
     "src/ui_global/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "815bd1fc007db34711a6a45952c58a1e",
+      "checksum": "1bd7871c5532d21ff78ecca2cb2b652e",
       "channel": "stable",
-      "size": 29014
+      "size": 28280
     },
     "src/ui_global/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
@@ -3282,7 +3288,7 @@
     },
     "src/carteleria/dashboard/module_stats.json": {
       "version": "1.0.1",
-      "checksum": "cd8bd5dbecd20f6f8ecd93f662377bbe",
+      "checksum": "1cf5c302f407f4860aaee5160452734b",
       "channel": "stable",
       "size": 129
     },
