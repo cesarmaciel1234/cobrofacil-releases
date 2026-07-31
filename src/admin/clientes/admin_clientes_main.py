@@ -123,7 +123,7 @@ class AdminClientes(QWidget):
         self.tabla.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeMode.Interactive)
         self.tabla.horizontalHeader().setSectionResizeMode(9, QHeaderView.ResizeMode.Interactive)
         self.tabla.setColumnWidth(8, 135)
-        self.tabla.setColumnWidth(9, 175)
+        self.tabla.setColumnWidth(9, 240)
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla.verticalHeader().setVisible(False)
@@ -273,16 +273,30 @@ class AdminClientes(QWidget):
                 btn_limite = QPushButton("Límite")
                 btn_limite.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn_limite.setFixedHeight(32)
-                btn_limite.setMinimumWidth(68)
+                btn_limite.setMinimumWidth(62)
                 btn_limite.setToolTip("Ampliar cupo de fiado (Express o habitual)")
                 btn_limite.setStyleSheet(
                     "background-color: #10B981; color: white; border-radius: 6px; "
-                    "padding: 4px 10px; font-size: 12px; font-weight: bold; border: none;"
+                    "padding: 4px 8px; font-size: 12px; font-weight: bold; border: none;"
                 )
                 btn_limite.clicked.connect(
                     lambda ch, cid=c['id'], cnom=c['nombre'], lim=limite: self.editar_limite_credito(cid, cnom, lim)
                 )
                 acc_lay.addWidget(btn_limite)
+
+                btn_editar = QPushButton("✏️ Editar")
+                btn_editar.setCursor(Qt.CursorShape.PointingHandCursor)
+                btn_editar.setFixedHeight(32)
+                btn_editar.setMinimumWidth(68)
+                btn_editar.setToolTip("Editar nombre, DNI, teléfono, dirección y perfil")
+                btn_editar.setStyleSheet(
+                    "background-color: #F59E0B; color: white; border-radius: 6px; "
+                    "padding: 4px 8px; font-size: 12px; font-weight: bold; border: none;"
+                )
+                btn_editar.clicked.connect(
+                    lambda ch, cid=c['id']: self._abrir_editar_cliente(cid)
+                )
+                acc_lay.addWidget(btn_editar)
 
                 self.tabla.setCellWidget(i, 9, acc_w)
                 
@@ -308,6 +322,12 @@ class AdminClientes(QWidget):
     def _abrir_historial_cliente(self, cliente_id):
         dlg = DialogoHistorialCliente(cliente_id, self)
         qt_exec(dlg)
+        self.cargar_clientes()
+
+    def _abrir_editar_cliente(self, cliente_id):
+        dlg = DialogoEditarCliente(cliente_id, self)
+        if qt_exec(dlg):
+            self.cargar_clientes()
 
     def _abrir_recalculo(self, cliente_id, nombre):
         dlg = DialogoRecalculoFiado(cliente_id, nombre, self)
@@ -317,20 +337,39 @@ class AdminClientes(QWidget):
         dlg = DialogoNuevoCliente(self)
         if qt_exec(dlg):
             data = dlg.get_data()
-            if not data['nombre']:
+            nombre = (data.get('nombre') or '').strip()
+            if not nombre:
                 QMessageBox.warning(self, "Error", "El nombre es obligatorio.")
                 return
-            if data['dni']:
-                if ClienteRepository.buscar_por_dni(data['dni']):
-                    QMessageBox.warning(self, "Error", f"Ya existe un cliente con DNI {data['dni']}.")
+            dni = data.get('dni')
+
+            # Verificar si existe cliente por DNI o Nombre
+            existente_dni = ClienteRepository.buscar_por_dni(dni) if dni else None
+            existente_nombre = ClienteRepository.buscar_por_nombre(nombre)
+            existente = existente_dni or existente_nombre
+
+            if existente:
+                resp = QMessageBox.question(
+                    self,
+                    "Cliente Existente",
+                    f"Ya existe un cliente registrado como '{existente['nombre']}'.\n\n"
+                    f"¿Desea actualizar los datos de este cliente existente en lugar de duplicarlo?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if resp == QMessageBox.StandardButton.Yes:
+                    self.db.execute_non_query(
+                        "UPDATE clientes SET nombre = ?, telefono = ?, limite_credito = ?, dni = ? WHERE id = ?",
+                        (nombre, data['telefono'], data['limite_credito'], dni or existente.get('dni'), existente['id']),
+                    )
+                    self.cargar_clientes()
                     return
-            elif dlg.txt_dni.text().strip() and not data['dni']:
-                QMessageBox.warning(self, "Error", "DNI inválido (mínimo 7 dígitos).")
-                return
+                else:
+                    return
+
             self.db.execute_non_query(
                 "INSERT INTO clientes (nombre, telefono, limite_credito, dni, tipo_cliente) "
                 "VALUES (?, ?, ?, ?, 'regular')",
-                (data['nombre'], data['telefono'], data['limite_credito'], data['dni']),
+                (nombre, data['telefono'], data['limite_credito'], dni),
             )
             self.cargar_clientes()
 
