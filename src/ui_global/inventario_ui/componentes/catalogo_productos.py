@@ -342,88 +342,105 @@ class CatalogoProductos(QWidget):
                 return
                 
             inicio = self.loaded_count
-            fin = min(inicio + 50, len(self.all_rows))
+            fin = min(inicio + 100, len(self.all_rows))  # 100 filas por página (era 50)
+            
+            # ── Pre-calcular todo FUERA del bucle para máximo rendimiento ──
+            from src.utils.theme_manager import theme_manager
+            from src.config import config
+            tax_default = float(config.get("tax_percentage", 21.0))
+            
+            # Colores pre-resueltos una sola vez
+            c_texto      = QColor(theme_manager.get_color("texto_primario"))
+            c_oferta     = QColor(theme_manager.get_color("oferta"))
+            c_agotado    = QColor(theme_manager.get_color("stock_agotado"))
+            c_bajo       = QColor(theme_manager.get_color("stock_bajo"))
+            c_saludable  = QColor(theme_manager.get_color("stock_saludable"))
+            c_tipo       = QColor(theme_manager.get_color("tipo_producto"))
+            bg_agotado   = QColor(theme_manager.get_color("bg_stock_agotado"))
+            bg_bajo      = QColor(theme_manager.get_color("bg_stock_bajo"))
+            bg_impar     = theme_manager.get_color("bg_fila_impar")
+            font_bold    = QFont("Segoe UI", 9, QFont.Bold)
             
             self.tabla.blockSignals(True)
             self.tabla.setRowCount(fin)
             
             for i in range(inicio, fin):
                 r = self.all_rows[i]
-                dep   = r['departamento'] or ''
-                stock = r['stock'] or 0.0
-                uni   = (r['unidad'] or 'UN').upper()
+                # Convertir a dict UNA sola vez por fila
+                rd = dict(r) if not isinstance(r, dict) else r
+                
+                dep   = rd.get('departamento') or ''
+                stock = float(rd.get('stock') or 0.0)
+                uni   = (rd.get('unidad') or 'UN').upper()
                 tipo  = "KILO" if uni == 'KG' else "UNIDAD"
                 
-                depto_iva = None
-                try:
-                    depto_iva = r['depto_iva']
-                except (IndexError, KeyError, TypeError):
-                    pass
-                    
-                if depto_iva is None:
-                    from src.config import config
-                    depto_iva = float(config.get("tax_percentage", 21.0))
-                else:
-                    depto_iva = float(depto_iva)
+                depto_iva = rd.get('depto_iva')
+                depto_iva = float(depto_iva) if depto_iva is not None else tax_default
 
                 dep_key = (dep or "GENERAL").upper()
                 if dep_key not in self._depto_color_map:
                     idx = len(self._depto_color_map) % len(self.DEPTO_COLORS)
                     self._depto_color_map[dep_key] = self.DEPTO_COLORS[idx]
                 base_hex = self._depto_color_map[dep_key]
-                from src.utils.theme_manager import theme_manager
                 
                 if i % 2 == 1 and base_hex == "#FFFFFF":
-                    base_hex = theme_manager.get_color("bg_fila_impar")
+                    base_hex = bg_impar
                 row_bg = QColor(base_hex)
+
                 chk = QTableWidgetItem()
                 chk.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
                 chk.setCheckState(Qt.Unchecked)
                 chk.setBackground(row_bg)
                 self.tabla.setItem(i, 0, chk)
 
+                p_oferta    = float(rd.get('precio_oferta') or 0)
+                c_oferta_r  = float(rd.get('cant_oferta') or 0)
+                p_mayor     = float(rd.get('precio_mayoreo') or 0)
+                c_mayor     = float(rd.get('cant_mayoreo') or 0)
+                p_relamp    = float(rd.get('precio_oferta_relampago') or 0)
+                p_prom      = float(rd.get('precio_oferta_promedio') or 0)
+                
                 vals = [
-                    (str(dict(r).get('codigo') or '') or f"[{r['id']}]", Qt.AlignRight),
-                    (r['nombre'] or '',  Qt.AlignLeft),
-                    (dep,                Qt.AlignLeft),
-                    (f"{depto_iva:.1f}%", Qt.AlignCenter),
-                    (f"${r['costo']:.2f}", Qt.AlignRight),
-                    (f"${r['precio']:.2f}", Qt.AlignRight),
-                    (f"{r['cant_mayoreo']:g}" if dict(r).get('cant_mayoreo', 0) > 0 else "-", Qt.AlignCenter),
-                    (f"${r['precio_mayoreo']:.2f}" if dict(r).get('precio_mayoreo', 0) > 0 else "-", Qt.AlignRight),
-                    (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if dict(r).get('precio_oferta') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_relampago']:.2f}" if dict(r).get('precio_oferta_relampago') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_promedio']:.2f}" if dict(r).get('precio_oferta_promedio') else "-", Qt.AlignCenter),
-                    (f"{stock:.2f}",     Qt.AlignRight),
-                    (f"{r['stock_minimo'] or 0:.2f}", Qt.AlignCenter),
-                    (f"{r['stock_maximo'] or 0:.2f}", Qt.AlignCenter),
-                    (tipo,               Qt.AlignCenter),
+                    (str(rd.get('codigo') or '') or f"[{rd.get('id','')}]", Qt.AlignRight),
+                    (rd.get('nombre') or '',  Qt.AlignLeft),
+                    (dep,                     Qt.AlignLeft),
+                    (f"{depto_iva:.1f}%",     Qt.AlignCenter),
+                    (f"${float(rd.get('costo') or 0):.2f}",  Qt.AlignRight),
+                    (f"${float(rd.get('precio') or 0):.2f}", Qt.AlignRight),
+                    (f"{c_mayor:g}" if c_mayor > 0 else "-",         Qt.AlignCenter),
+                    (f"${p_mayor:.2f}" if p_mayor > 0 else "-",      Qt.AlignRight),
+                    (f"{c_oferta_r:g} x ${p_oferta:.2f}" if p_oferta else "-", Qt.AlignCenter),
+                    (f"${p_relamp:.2f}" if p_relamp else "-",         Qt.AlignCenter),
+                    (f"${p_prom:.2f}" if p_prom else "-",             Qt.AlignCenter),
+                    (f"{stock:.2f}",           Qt.AlignRight),
+                    (f"{float(rd.get('stock_minimo') or 0):.2f}", Qt.AlignCenter),
+                    (f"{float(rd.get('stock_maximo') or 0):.2f}", Qt.AlignCenter),
+                    (tipo,                     Qt.AlignCenter),
                 ]
 
                 for j, (v, align) in enumerate(vals, 1):
                     it = QTableWidgetItem(v)
                     it.setTextAlignment(Qt.AlignVCenter | align)
                     it.setBackground(row_bg)
-                    it.setForeground(QColor(theme_manager.get_color("texto_primario")))
+                    it.setForeground(c_texto)
 
-                    if j == 9 or j == 10:  # Resaltar si hay oferta
-                        if v != "-":
-                            it.setForeground(QColor(theme_manager.get_color("oferta")))
-                            it.setFont(QFont("Segoe UI", 9, QFont.Bold))
+                    if j in (9, 10) and v != "-":
+                        it.setForeground(c_oferta)
+                        it.setFont(font_bold)
 
-                    if j == 12: # Stock
+                    if j == 12:
                         if stock <= 0:
-                            it.setForeground(QColor(theme_manager.get_color("stock_agotado")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_agotado")))
+                            it.setForeground(c_agotado)
+                            it.setBackground(bg_agotado)
                         elif stock < 5:
-                            it.setForeground(QColor(theme_manager.get_color("stock_bajo")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_bajo")))
+                            it.setForeground(c_bajo)
+                            it.setBackground(bg_bajo)
                         else:
-                            it.setForeground(QColor(theme_manager.get_color("stock_saludable")))
+                            it.setForeground(c_saludable)
 
-                    if j == 15: # Tipo
-                        it.setForeground(QColor(theme_manager.get_color("tipo_producto")))
-                        it.setFont(QFont("Segoe UI", 9, QFont.Bold))
+                    if j == 15:
+                        it.setForeground(c_tipo)
+                        it.setFont(font_bold)
 
                     self.tabla.setItem(i, j, it)
                     
@@ -431,6 +448,7 @@ class CatalogoProductos(QWidget):
         finally:
             self.tabla.blockSignals(False)
             self._loading_page = False
+
 
     def _al_hacer_scroll(self, value):
         bar = self.tabla.verticalScrollBar()
