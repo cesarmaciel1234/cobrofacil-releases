@@ -1,11 +1,17 @@
 """
-perfil_pantalla.py — Selector de Perfil
+perfil_pantalla.py — Lanzador Maestro Autónomo de Perfiles
 Paleta: Warm-Cold 2026 — fondo marfil cálido, acentos mezclados cálido+frío,
 letras siempre bien marcadas y legibles.
+
+Lanzador Hub Central: Permite iniciar múltiples perfiles de forma autónoma
+en subprocesos independientes sin colisionar ni cerrarse entre sí.
 """
+import os
+import sys
+import subprocess
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                              QFrame, QGraphicsDropShadowEffect, QPushButton)
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent
+                              QFrame, QGraphicsDropShadowEffect, QPushButton, QMessageBox)
+from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent, QTimer
 from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
 
 # PyQt6 Enum compatibility aliases
@@ -62,6 +68,9 @@ class ProfileCard(QFrame):
         accent, bg_pill, tag_text, tag_fg = CARD_STYLE[role_key]
         self._accent  = accent
         self._bg_pill = bg_pill
+        self._tag_fg = tag_fg
+        self._original_title = title
+        self._original_desc = desc
         self.is_active = False
         r, g, b = self._hex(accent)
 
@@ -72,7 +81,6 @@ class ProfileCard(QFrame):
         # Marco interno
         self.inner = QFrame(self)
         self.inner.setGeometry(0, 0, 230, 215)
-        self._set_idle_style()
 
         # Layout interno
         lay = QVBoxLayout(self.inner)
@@ -80,10 +88,10 @@ class ProfileCard(QFrame):
         lay.setSpacing(0)
 
         # Tag pill
-        tag = QLabel(tag_text)
-        tag.setAlignment(Qt.AlignCenter)
-        tag.setFixedHeight(20)
-        tag.setStyleSheet(f"""
+        self.tag = QLabel(tag_text)
+        self.tag.setAlignment(Qt.AlignCenter)
+        self.tag.setFixedHeight(20)
+        self.tag.setStyleSheet(f"""
             font-size: 8px; font-weight: 900; letter-spacing: 2px;
             color: {tag_fg};
             background: {bg_pill};
@@ -92,22 +100,19 @@ class ProfileCard(QFrame):
             font-family: 'Segoe UI', sans-serif;
         """)
         tag_wrap = QHBoxLayout()
-        tag_wrap.addStretch(); tag_wrap.addWidget(tag); tag_wrap.addStretch()
+        tag_wrap.addStretch(); tag_wrap.addWidget(self.tag); tag_wrap.addStretch()
         lay.addLayout(tag_wrap)
         lay.addSpacing(10)
 
         # Ícono
         ico = QLabel(icon)
-        ico.setFixedSize(62, 62)
         ico.setAlignment(Qt.AlignCenter)
+        ico.setFixedHeight(50)
         ico.setStyleSheet(f"""
-            font-size: 30px;
-            background: {bg_pill};
-            border-radius: 18px; border: none;
+            font-size: 34px; background: {bg_pill};
+            border: none; border-radius: 14px;
         """)
-        ico_wrap = QHBoxLayout()
-        ico_wrap.addStretch(); ico_wrap.addWidget(ico); ico_wrap.addStretch()
-        lay.addLayout(ico_wrap)
+        lay.addWidget(ico)
         lay.addSpacing(12)
 
         # Título
@@ -115,9 +120,8 @@ class ProfileCard(QFrame):
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setStyleSheet(f"""
             font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
-            color: {WC['text']};
-            font-family: 'Segoe UI', 'Outfit', sans-serif;
-            background: transparent; border: none;
+            color: {WC['text']}; background: transparent; border: none;
+            font-family: 'Segoe UI', sans-serif;
         """)
         lay.addWidget(self.lbl_title)
         lay.addSpacing(4)
@@ -125,258 +129,183 @@ class ProfileCard(QFrame):
         # Descripción
         self.lbl_desc = QLabel(desc)
         self.lbl_desc.setAlignment(Qt.AlignCenter)
-        self.lbl_desc.setWordWrap(True)
         self.lbl_desc.setStyleSheet(f"""
-            font-size: 10px; font-weight: 600; color: {WC['text2']};
+            font-size: 10px; font-weight: 500;
+            color: {WC['text2']}; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
-            background: transparent; border: none;
         """)
         lay.addWidget(self.lbl_desc)
 
-    @staticmethod
-    def _hex(h):
-        h = h.lstrip('#')
+        self._set_idle_style()
+
+    def _hex(self, hex_str):
+        h = hex_str.lstrip('#')
         return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
     def _set_idle_style(self):
         self.inner.setStyleSheet(f"""
             QFrame {{
                 background: {WC['surface']};
-                border-radius: 16px;
-                border: 1px solid {WC['border']};
+                border-radius: 22px;
+                border: 2px solid {WC['border']};
             }}
         """)
-
-    def _set_hover_style(self):
-        r, g, b = self._hex(self._accent)
-        self.inner.setStyleSheet(f"""
-            QFrame {{
-                background: {WC['surface']};
-                border-radius: 16px;
-                border: 1px solid rgba({r},{g},{b},0.6);
-            }}
-        """)
-
-    def _set_active_style(self):
-        r, g, b = self._hex(self._accent)
-        self.inner.setStyleSheet(f"""
-            QFrame {{
-                background: rgba({r},{g},{b},0.04);
-                border-radius: 16px;
-                border: 2px solid rgba({r},{g},{b},0.9);
-            }}
-        """)
+        self.lbl_title.setText(self._original_title)
+        self.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: {WC['text']}; background: transparent; border: none;")
+        self.lbl_desc.setText(self._original_desc)
+        self.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 500; color: {WC['text2']}; background: transparent; border: none;")
 
     def set_active(self, active: bool):
         self.is_active = active
+        r, g, b = self._hex(self._accent)
         if active:
-            self._set_active_style()
+            self.inner.setStyleSheet(f"""
+                QFrame {{
+                    background: {WC['surface']};
+                    border-radius: 22px;
+                    border: 3px solid {self._accent};
+                }}
+            """)
         else:
             self._set_idle_style()
 
-    def enterEvent(self, event):
-        super().enterEvent(event)
-        if not self.is_active:
-            self._set_hover_style()
-
-    def leaveEvent(self, event):
-        super().leaveEvent(event)
-        if not self.is_active:
-            self._set_idle_style()
-
     def mousePressEvent(self, event):
-        self.clicked.emit()
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
 
 
 class PerfilPantalla(QDialog):
-    """PASO 2: SELECCIÓN DE PERFIL — Warm-Cold Premium 2026."""
     perfil_seleccionado = pyqtSignal(str)
 
-    # Orden visual: 0=cajero, 1=admin, 2=jefe
-    _ROLES  = ["cajero", "admin", "jefe", "carteleria"]
+    _ROLES = ["cajero", "admin", "jefe", "carteleria"]
 
-    def __init__(self, parent=None):
+    def __init__(self, is_master_launcher=True, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(1100, 490)
+        self.is_master_launcher = is_master_launcher
+        self._subprocesos = {} # { "cajero": subprocess.Popen, ... }
         self.selected_index = 0
+        self._roles_bloqueados = set()
+
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(1080, 480)
+        from src.utils.candados import MASTER_WINDOW_TITLE
+        self.setWindowTitle(MASTER_WINDOW_TITLE)
+
         self._setup_ui()
         self.update_selection_ui()
+
+        # En modo Lanzador Maestro, monitorear activamente el estado de los subprocesos
+        if self.is_master_launcher:
+            self._timer_monitor = QTimer(self)
+            self._timer_monitor.setInterval(1500)
+            self._timer_monitor.timeout.connect(self._check_locked_profiles)
+            self._timer_monitor.start()
+
         self._check_locked_profiles()
-        try:
-            from src.utils.qt_dpi import center_on_primary_screen
-            center_on_primary_screen(self)
-        except Exception:
-            pass
-        try:
-            from src.utils.bot_state import update_bot_state
-            update_bot_state("paso2")
-        except Exception:
-            pass
 
     def _setup_ui(self):
-        root = QVBoxLayout(self)
-        root.setContentsMargins(20, 20, 20, 20)
+        main_lay = QVBoxLayout(self)
+        main_lay.setContentsMargins(12, 12, 12, 12)
 
-        # ── Contenedor principal ──────────────────────────────────────────────
-        self.container = QFrame()
-        self.container.setObjectName("PerfilContainer")
-        self.container.setStyleSheet(f"""
-            QFrame#PerfilContainer {{
+        # Contenedor principal con borde redondeado y sombra doble
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
                 background: {WC['bg']};
                 border-radius: 28px;
-                border: none;
+                border: 1.5px solid {WC['border']};
             }}
         """)
-        outer_sh = QGraphicsDropShadowEffect(self)
-        outer_sh.setBlurRadius(20)
-        outer_sh.setColor(QColor(0, 0, 0, 30))
-        outer_sh.setOffset(0, 4)
-        self.container.setGraphicsEffect(outer_sh)
-        root.addWidget(self.container)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(36)
+        shadow.setColor(QColor(217, 119, 6, 25))
+        shadow.setOffset(0, 8)
+        card.setGraphicsEffect(shadow)
 
-        main_lay = QVBoxLayout(self.container)
-        main_lay.setContentsMargins(0, 0, 0, 0)
-        main_lay.setSpacing(0)
+        main_lay.addWidget(card)
 
-        # ── Franja superior decorativa (gradiente cálido→frío) ────────────────
-        stripe = QFrame()
-        stripe.setFixedHeight(5)
-        stripe.setStyleSheet("""
-            QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0.00 #D97706,
-                    stop:0.35 #EA580C,
-                    stop:0.65 #6366F1,
-                    stop:1.00 #0284C7);
-                border-radius: 0px;
-                border-top-left-radius: 28px;
-                border-top-right-radius: 28px;
-                border: none;
-            }
-        """)
-        main_lay.addWidget(stripe)
-
-        # ── Contenido ─────────────────────────────────────────────────────────
-        content = QVBoxLayout()
-        content.setContentsMargins(30, 16, 30, 32)
+        content = QVBoxLayout(card)
+        content.setContentsMargins(36, 20, 36, 24)
         content.setSpacing(0)
 
-        # ── Header con Badge y Cruz para Cerrar ('✕') ────────────────────────
-        header_lay = QHBoxLayout()
-        header_lay.setContentsMargins(0, 0, 0, 0)
-
-        # Spacer a la izquierda para contrapeso visual con el botón de cierre
-        spacer_left = QFrame()
-        spacer_left.setFixedSize(28, 28)
-        spacer_left.setStyleSheet("background: transparent; border: none;")
-        header_lay.addWidget(spacer_left)
-
-        header_lay.addStretch()
-
-        # Badge
-        badge = QLabel("⬡  IDENTIFICACIÓN DE ENTORNO  ⬡")
-        badge.setAlignment(Qt.AlignCenter)
-        badge.setStyleSheet("""
-            font-size: 9px; font-weight: 900; letter-spacing: 4px;
-            color: #D97706;
-            background: transparent; border: none;
+        # ── Barra Superior (Subtítulo y Botón Cerrar) ──────────────────────────
+        top_bar = QHBoxLayout()
+        sub = QLabel("✦  LANZADOR MAESTRO AUTÓNOMO DE ENTORNO  ✦")
+        sub.setAlignment(Qt.AlignLeft)
+        sub.setStyleSheet(f"""
+            font-size: 9px; font-weight: 800; letter-spacing: 3px;
+            color: #D97706; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
         """)
-        header_lay.addWidget(badge)
+        top_bar.addWidget(sub)
+        top_bar.addStretch()
 
-        header_lay.addStretch()
-
-        # Botón Cruz para cerrar
         btn_close = QPushButton("✕")
-        btn_close.setObjectName("BtnClosePerfil")
-        btn_close.setToolTip("Cerrar aplicación")
-        btn_close.setCursor(Qt.PointingHandCursor)
         btn_close.setFixedSize(28, 28)
-        btn_close.setStyleSheet(f"""
-            QPushButton#BtnClosePerfil {{
-                background: rgba(0, 0, 0, 0.04);
-                color: {WC['text2']};
-                border: none;
-                border-radius: 14px;
-                font-size: 14px;
-                font-weight: 900;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            QPushButton#BtnClosePerfil:hover {{
-                background: #FEE2E2;
-                color: #DC2626;
-            }}
-            QPushButton#BtnClosePerfil:pressed {{
-                background: #FCA5A5;
-                color: #991B1B;
-            }}
+        btn_close.setCursor(Qt.PointingHandCursor)
+        btn_close.setToolTip("Cerrar Lanzador Maestro")
+        btn_close.setStyleSheet("""
+            QPushButton {
+                background: #FEE2E2; color: #DC2626; border: 1px solid #FCA5A5;
+                border-radius: 14px; font-weight: 900; font-size: 13px;
+            }
+            QPushButton:hover { background: #DC2626; color: #FFFFFF; }
         """)
         btn_close.clicked.connect(self.reject)
-        header_lay.addWidget(btn_close)
+        top_bar.addWidget(btn_close)
 
-        content.addLayout(header_lay)
-        content.addSpacing(10)
-
-        # Título
-        title = QLabel("Bienvenido")
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet(f"""
-            font-size: 30px; font-weight: 900; letter-spacing: -1px;
-            color: {WC['text']};
-            font-family: 'Segoe UI', 'Outfit', sans-serif;
-            background: transparent; border: none;
-        """)
-        content.addWidget(title)
+        content.addLayout(top_bar)
         content.addSpacing(6)
 
-        # Subtítulo
-        subtitle = QLabel("Selecciona tu rol operativo para continuar")
+        # Título principal
+        title = QLabel("Bienvenido a CobroFacil PRO 2026")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet(f"""
+            font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+            color: {WC['text']}; background: transparent; border: none;
+            font-family: 'Segoe UI Black', 'Segoe UI', sans-serif;
+        """)
+        content.addWidget(title)
+        content.addSpacing(4)
+
+        subtitle = QLabel("Selecciona y ejecuta tus roles operativos de forma 100% independiente")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setStyleSheet(f"""
-            font-size: 12px; font-weight: 600; color: {WC['text2']};
+            font-size: 12px; font-weight: 500;
+            color: {WC['text2']}; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
-            background: transparent; border: none;
         """)
         content.addWidget(subtitle)
-        content.addSpacing(28)
+        content.addSpacing(22)
 
-        # ── Cards ─────────────────────────────────────────────────────────────
+        # ── Fila de 4 tarjetas ────────────────────────────────────────────────
         cards_lay = QHBoxLayout()
-        cards_lay.setSpacing(20)
+        cards_lay.setSpacing(16)
 
-        self.btn_cajero = ProfileCard(
-            "cajero", "🛒", "CAJERO / POS",
-            "Ventas rápidas · Cobro directo")
-        self.btn_cajero.clicked.connect(lambda: self._elegir("cajero"))
+        self.btn_cajero = ProfileCard("cajero", "🛒", "CAJERO / POS", "Ventas rápidas · Cobro directo")
+        self.btn_admin  = ProfileCard("admin",  "👔", "ADMINISTRADOR", "Gestión · Inventarios · Reportes")
+        self.btn_jefe   = ProfileCard("jefe",   "👑", "JEFE / DUEÑO",  "Control total · Reportes · Cierres")
+        self.btn_carteleria = ProfileCard("carteleria", "📺", "CARTELERÍA", "Pantalla Pública · Publicidad")
 
-        self.btn_admin = ProfileCard(
-            "admin", "👔", "ADMINISTRADOR",
-            "Gestión · Inventarios · Reportes")
-        self.btn_admin.clicked.connect(lambda: self._elegir("admin"))
+        self.btn_cajero.clicked.connect(lambda: self._select_and_choose(0))
+        self.btn_admin.clicked.connect(lambda: self._select_and_choose(1))
+        self.btn_jefe.clicked.connect(lambda: self._select_and_choose(2))
+        self.btn_carteleria.clicked.connect(lambda: self._select_and_choose(3))
 
-        self.btn_jefe = ProfileCard(
-            "jefe", "👑", "JEFE / DUEÑO",
-            "Control total · Reportes · Cierres")
-        self.btn_jefe.clicked.connect(lambda: self._elegir("jefe"))
-
-        self.btn_carteleria = ProfileCard(
-            "carteleria", "📺", "CARTELERÍA",
-            "Pantalla Pública · Publicidad")
-        self.btn_carteleria.clicked.connect(lambda: self._elegir("carteleria"))
-
-        cards_lay.addStretch()
         cards_lay.addWidget(self.btn_cajero)
         cards_lay.addWidget(self.btn_admin)
         cards_lay.addWidget(self.btn_jefe)
         cards_lay.addWidget(self.btn_carteleria)
-        cards_lay.addStretch()
-        content.addLayout(cards_lay)
-        content.addSpacing(22)
 
-        # Hint teclado
-        hint = QLabel("←  →  para navegar  ·  Enter para confirmar")
+        content.addLayout(cards_lay)
+        content.addSpacing(18)
+
+        # Ayuda de teclado
+        hint = QLabel("← → para navegar · Enter / Clic para lanzar perfil autónomo")
         hint.setAlignment(Qt.AlignCenter)
         hint.setStyleSheet(f"""
             font-size: 10px; font-weight: 600; color: {WC['text3']};
@@ -385,7 +314,12 @@ class PerfilPantalla(QDialog):
         """)
         content.addWidget(hint)
 
-        main_lay.addLayout(content)
+        main_lay.addWidget(card)
+
+    def _select_and_choose(self, idx: int):
+        self.selected_index = idx
+        self.update_selection_ui()
+        self._elegir(self._ROLES[idx])
 
     def update_selection_ui(self):
         self.btn_cajero.set_active(self.selected_index == 0)
@@ -402,7 +336,6 @@ class PerfilPantalla(QDialog):
     def _apply_locked_profiles_ui(self):
         from src.utils.candados import PerfilLocker
         
-        # Diccionario para mapear roles a sus botones respectivos
         buttons_map = {
             "cajero": self.btn_cajero,
             "admin": self.btn_admin,
@@ -410,38 +343,38 @@ class PerfilPantalla(QDialog):
             "carteleria": self.btn_carteleria
         }
         
-        # Bloquear visual y funcionalmente los botones de roles ya en uso
         self._roles_bloqueados = set()
         for i, rol in enumerate(self._ROLES):
-            if PerfilLocker.check_is_locked(rol):
+            btn = buttons_map[rol]
+            pid = PerfilLocker.get_locked_pid(rol)
+            is_locked = PerfilLocker.check_is_locked(rol)
+
+            if is_locked and pid:
                 self._roles_bloqueados.add(i)
-                btn = buttons_map[rol]
-                # Modificar el estilo para indicar bloqueo
-                btn.inner.setStyleSheet(f"""
-                    QFrame {{
-                        background: #F8FAFC;
+                btn.inner.setStyleSheet("""
+                    QFrame {
+                        background: #F0FDF4;
                         border-radius: 22px;
-                        border: 1px dashed #CBD5E1;
-                    }}
+                        border: 2.5px solid #16A34A;
+                    }
                 """)
-                btn.lbl_title.setText(btn.lbl_title.text() + " (EN USO)")
-                btn.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: #DC2626; background: transparent; border: none;")
-                btn.lbl_desc.setText("En ejecución. Clic para destrabar / cerrar instancia colgada.")
-                btn.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 600; color: #2563EB; background: transparent; border: none;")
-                btn.setCursor(Qt.PointingHandCursor)
-        
-        # Si el seleccionado por defecto está bloqueado, avanzamos al siguiente libre
-        if self.selected_index in self._roles_bloqueados and len(self._roles_bloqueados) < 4:
-            self.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Right, Qt.NoModifier))
+                btn.tag.setText("🟢 AUTÓNOMO EN EJECUCIÓN")
+                btn.tag.setStyleSheet("""
+                    font-size: 8px; font-weight: 900; letter-spacing: 1px;
+                    color: #15803D; background: #DCFCE7;
+                    border: none; border-radius: 6px; padding: 2px 8px;
+                """)
+                btn.lbl_title.setStyleSheet("font-size: 13px; font-weight: 900; color: #15803D; background: transparent; border: none;")
+                btn.lbl_desc.setText(f"🟢 ACTIVO (PID {pid})\nClic para administrar / reiniciar")
+                btn.lbl_desc.setStyleSheet("font-size: 10px; font-weight: 700; color: #16A34A; background: transparent; border: none;")
+            else:
+                btn._set_idle_style()
 
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
             delta = 1 if event.key() == Qt.Key_Right else -1
-            # Buscar el siguiente rol
             original_idx = self.selected_index
-            for _ in range(4):
-                self.selected_index = (self.selected_index + delta) % 4
-                break
+            self.selected_index = (self.selected_index + delta) % 4
             if original_idx != self.selected_index:
                 self.update_selection_ui()
             event.accept()
@@ -452,43 +385,61 @@ class PerfilPantalla(QDialog):
             super().keyPressEvent(event)
 
     def _elegir(self, rol):
-        if self._ROLES.index(rol) in getattr(self, '_roles_bloqueados', set()):
-            from PyQt6.QtWidgets import QMessageBox
-            from src.utils.candados import PerfilLocker
-            
-            pid = PerfilLocker.get_locked_pid(rol)
-            pid_txt = f" (PID {pid})" if pid else ""
-            
+        from src.utils.candados import PerfilLocker
+        pid = PerfilLocker.get_locked_pid(rol)
+        is_locked = PerfilLocker.check_is_locked(rol)
+
+        if is_locked and pid:
             resp = QMessageBox.question(
                 self,
-                "⚠️ Instancia en Ejecución Detectada",
-                f"El perfil '{rol.upper()}' ya figura abierto en este equipo{pid_txt}.\n\n"
-                "Si el sistema se cerró con un error o quedó colgado en el Administrador de Tareas, "
-                "¿deseas cerrar la instancia anterior y abrir este perfil ahora?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                "⚙️ Gestión de Instancia Autónoma",
+                f"El perfil '{rol.upper()}' ya se encuentra en ejecución (PID {pid}).\n\n"
+                "¿Qué acción deseas realizar?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Yes
             )
-            
+            # Yes = Reiniciar/Cerrar la instancia colgada y re-lanzar
+            # No = Cerrar la instancia colgada únicamente
+            # Cancel = No hacer nada
             if resp == QMessageBox.StandardButton.Yes:
                 PerfilLocker.force_unlock_and_kill(rol)
                 self._roles_bloqueados.discard(self._ROLES.index(rol))
-                self.perfil_seleccionado.emit(rol)
-                self.accept()
+                self._lanzar_proceso_autonomo(rol)
+            elif resp == QMessageBox.StandardButton.No:
+                PerfilLocker.force_unlock_and_kill(rol)
+                self._roles_bloqueados.discard(self._ROLES.index(rol))
+                self._apply_locked_profiles_ui()
             return
-            
-        self.perfil_seleccionado.emit(rol)
-        self.accept()
+
+        # Si no está en ejecución, lanzar proceso autónomo
+        self._lanzar_proceso_autonomo(rol)
+
+    def _lanzar_proceso_autonomo(self, rol):
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        main_script = os.path.join(base_dir, "main.py")
+
+        if getattr(sys, 'frozen', False):
+            cmd = [sys.executable, "--role", rol]
+        else:
+            cmd = [sys.executable, main_script, "--role", rol]
+
+        try:
+            proc = subprocess.Popen(cmd)
+            self._subprocesos[rol] = proc
+            QTimer.singleShot(800, self._apply_locked_profiles_ui)
+        except Exception as e:
+            QMessageBox.critical(self, "Error al Lanzar", f"No se pudo iniciar el proceso autónomo para {rol}:\n{e}")
 
     # ── Arrastre de ventana con el mouse (Soporte multi-pantalla) ──────────────
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.LeftButton:
             self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
         else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.MouseButton.LeftButton and getattr(self, '_drag_pos', None) is not None:
+        if event.buttons() == Qt.LeftButton and getattr(self, '_drag_pos', None) is not None:
             self.move(event.globalPosition().toPoint() - self._drag_pos)
             event.accept()
         else:
@@ -497,4 +448,3 @@ class PerfilPantalla(QDialog):
     def mouseReleaseEvent(self, event):
         self._drag_pos = None
         super().mouseReleaseEvent(event)
-

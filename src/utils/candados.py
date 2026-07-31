@@ -1,4 +1,4 @@
-"""Candados de perfil: evita dos sesiones del mismo rol en la misma PC y permite auto-recuperación."""
+"""Candados de perfil y control de instancia única del Lanzador Maestro."""
 
 import os
 import sys
@@ -8,6 +8,8 @@ import subprocess
 from src.utils.paths import get_base_path
 
 _LOCK_DIR = os.path.join(get_base_path(), "locks")
+MASTER_LOCK_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.lock")
+MASTER_WINDOW_TITLE = "CobroFacil PRO 2026 — Lanzador Maestro Central"
 
 
 def _lock_path(role: str) -> str:
@@ -54,6 +56,64 @@ def _purge_stale_lock(path: str, other_pid: int) -> None:
         return
     try:
         os.remove(path)
+    except OSError:
+        pass
+
+
+def focus_existing_master_launcher() -> bool:
+    """Encuentra y trae al frente la ventana del Lanzador Maestro ya activo."""
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            hwnd = user32.FindWindowW(None, MASTER_WINDOW_TITLE)
+            if hwnd:
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                user32.SetForegroundWindow(hwnd)
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def acquire_master_launcher_lock() -> bool:
+    """
+    Garantiza que SOLO exista 1 instancia del Lanzador Maestro.
+    Si se hace clic 10 veces en el ejecutable, trae al frente el Lanzador existente
+    y devuelve False para que el duplicado termine inmediatamente sin consumir memoria.
+    """
+    os.makedirs(_LOCK_DIR, exist_ok=True)
+    if os.path.exists(MASTER_LOCK_PATH):
+        try:
+            with open(MASTER_LOCK_PATH, "r", encoding="utf-8") as f:
+                other_pid = int(f.read().strip() or "0")
+        except Exception:
+            other_pid = 0
+
+        if other_pid > 0 and other_pid != os.getpid() and _pid_alive(other_pid):
+            focus_existing_master_launcher()
+            return False
+
+        try:
+            os.remove(MASTER_LOCK_PATH)
+        except OSError:
+            pass
+
+    try:
+        with open(MASTER_LOCK_PATH, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+        atexit.register(release_master_launcher_lock)
+        return True
+    except OSError:
+        return False
+
+
+def release_master_launcher_lock():
+    try:
+        if os.path.exists(MASTER_LOCK_PATH):
+            with open(MASTER_LOCK_PATH, "r", encoding="utf-8") as f:
+                if f.read().strip() == str(os.getpid()):
+                    os.remove(MASTER_LOCK_PATH)
     except OSError:
         pass
 

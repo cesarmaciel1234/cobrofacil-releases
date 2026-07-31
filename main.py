@@ -58,7 +58,7 @@ sys.excepthook = global_excepthook
 main_window = None
 app_exit_event = threading.Event()
 
-def launch_app():
+def launch_app(direct_role=None):
     global main_window
 
     try:
@@ -189,25 +189,6 @@ def launch_app():
     # Cerramos Splash y empezamos el flujo
     splash.finish(None)
 
-    # Auto-iniciar el bot burbuja asistente (retrasado 5s para que Qt esté estable)
-    def _launch_bot():
-        try:
-            # En .exe empaquetado no hay chat_bot_animado.py suelto; el widget in-process basta.
-            if getattr(sys, "frozen", False):
-                return
-            import subprocess
-            bot_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "cajero", "chat_bot_animado.py")
-            if os.path.exists(bot_script):
-                # Usar pythonw.exe para evitar el crash silencioso de QWebEngineView (Chromium) en Windows
-                pythonw_exe = sys.executable.replace("python.exe", "pythonw.exe")
-                if not os.path.exists(pythonw_exe):
-                    pythonw_exe = sys.executable  # Fallback
-                subprocess.Popen([pythonw_exe, bot_script])
-        except Exception as e:
-            print(f"Error auto-iniciando bot asistente: {e}")
-
-    # El bot asistente ahora permanece dormido por defecto y se despierta solo a demanda
-    # QTimer.singleShot(5000, _launch_bot)
     if not ok:
         QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
@@ -225,13 +206,21 @@ def launch_app():
             
     threading.Thread(target=check_and_send_weekly_report, daemon=True).start()
 
-    # --- FLUJO DE VENTANAS NORMAL ---
+    # --- MODO EJECUCIÓN DIRECTA DE PERFIL ---
+    if direct_role:
+        from src.utils.candados import PerfilLocker
+        if not PerfilLocker.lock_profile(direct_role):
+            QMessageBox.warning(None, "Error", f"El perfil '{direct_role}' ya está en uso.")
+            return 0
+        from src.central_red_global.network_engine import init_network_engine
+        init_network_engine(direct_role)
+        role_selected = direct_role
+        step = 2
+    else:
+        step = 1
+        role_selected = None
 
-
-    step = 1
-    role_selected = None
-
-    perfil_dlg = PerfilPantalla()
+    perfil_dlg = PerfilPantalla(is_master_launcher=True)
     def capture_role(role):
         nonlocal role_selected
         role_selected = role
@@ -240,18 +229,8 @@ def launch_app():
     while True:
         if step == 1:
             if qt_exec(perfil_dlg):
-                from src.utils.candados import PerfilLocker
-                if not PerfilLocker.lock_profile(role_selected):
-                    QMessageBox.warning(None, "Error", f"El perfil '{role_selected}' ya está en uso.")
-                    continue
-                
-                # Inicializar el Cerebro Conector UDP (NetworkEngine)
-                from src.central_red_global.network_engine import init_network_engine
-                init_network_engine(role_selected)
-                
-                perfil_dlg.hide()
-                app.processEvents()
-                step = 2
+                # En modo Lanzador Maestro, PerfilPantalla gestiona los subprocesos autónomos
+                return 0
             else:
                 perfil_dlg.hide()
                 app.processEvents()
@@ -464,8 +443,20 @@ if __name__ == "__main__":
     init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
+    import argparse
+    parser = argparse.ArgumentParser(description="CobroFacil PRO 2026 Master Launcher")
+    parser.add_argument("--role", "--profile", type=str, default=None, choices=["cajero", "admin", "jefe", "carteleria"], help="Ejecutar rol autónomo directamente")
+    parsed_args, _ = parser.parse_known_args()
+    target_role = parsed_args.role
+
+    # Si se intenta abrir el Lanzador Maestro y ya hay uno activo, traerlo al frente y salir (Máximo Rendimiento)
+    if not target_role:
+        from src.utils.candados import acquire_master_launcher_lock
+        if not acquire_master_launcher_lock():
+            sys.exit(0)
+
     while True:
-        exit_code = launch_app()
+        exit_code = launch_app(direct_role=target_role)
         if exit_code not in (99, 888):
             break
             

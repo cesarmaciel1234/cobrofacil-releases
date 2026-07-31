@@ -1,7 +1,7 @@
 {
   "app_version": "8.0",
   "channel": "stable",
-  "build_date": "2026-07-31 14:49:30",
+  "build_date": "2026-07-31 15:25:11",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -54,9 +54,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "fa2adbe72c4632b06953dd94cf02eeea",
+      "checksum": "a8da876407440c2ffdafca13127500e8",
       "channel": "stable",
-      "size": 18599
+      "size": 18183
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -2142,9 +2142,9 @@
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "374ff5a15de246da13da426e3252d277",
+      "checksum": "c8730d1663d6b6e4a785d28b9d13f7f2",
       "channel": "stable",
-      "size": 19812
+      "size": 18131
     },
     "src/inicio_y_perfiles/__init__.py": {
       "version": "1.0.0",
@@ -2820,9 +2820,9 @@
     },
     "src/utils/candados.py": {
       "version": "1.0.0",
-      "checksum": "d04f6efa713fe57f5eb1cdf87e30b03c",
+      "checksum": "f167b091d166958cd2be0dcd994af453",
       "channel": "stable",
-      "size": 5220
+      "size": 7201
     },
     "src/utils/db.py": {
       "version": "1.0.0",
