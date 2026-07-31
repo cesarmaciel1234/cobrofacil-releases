@@ -1,3 +1,4 @@
+# espia_worker.py — v7.8.1 — Receptor UDP de eventos de caja para Cartelería
 from PyQt6.QtCore import QThread, pyqtSignal
 
 class EspiaWorker(QThread):

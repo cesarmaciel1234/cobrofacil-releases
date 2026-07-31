@@ -1,7 +1,7 @@
 {
   "app_version": "7.10",
   "channel": "stable",
-  "build_date": "2026-07-31 00:27:20",
+  "build_date": "2026-07-31 09:34:39",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -1565,10 +1565,10 @@
       "size": 1720
     },
     "src/carteleria/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "0c6a2d2c6a0d4f42c5778490975aee01",
+      "version": "1.0.1",
+      "checksum": "bdbfea3e0a88fa737eba9ea689dc91ea",
       "channel": "stable",
-      "size": 165
+      "size": 282
     },
     "src/carteleria/assets/download_icons.py": {
       "version": "1.0.0",
@@ -1769,16 +1769,16 @@
       "size": 1184
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
-      "version": "1.0.1",
+      "version": "1.0.0",
       "checksum": "48584c53b32490145fd8ee5326cec108",
       "channel": "stable",
       "size": 8466
     },
     "src/carteleria/motor_carteleria/espia_worker.py": {
-      "version": "1.0.0",
-      "checksum": "71e94bde3d6ad3a6cbcb562fd0159c3c",
+      "version": "1.0.1",
+      "checksum": "378d0e22f04dad212281629d6b73335a",
       "channel": "stable",
-      "size": 2549
+      "size": 2632
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
@@ -3046,6 +3046,42 @@
       "channel": "stable",
       "size": 2170
     },
+    "_internal/src/assets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "_internal/src/assets/publicidad/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "_internal/src/carteleria/assets/download_icons.py": {
+      "version": "1.0.0",
+      "checksum": "405ade3656dfd52308015b9e176c1fd3",
+      "channel": "stable",
+      "size": 481
+    },
+    "_internal/src/carteleria/assets/remove_bg.py": {
+      "version": "1.0.0",
+      "checksum": "806c25c3e5e033b7cf9a9fb1f8fd1e13",
+      "channel": "stable",
+      "size": 879
+    },
+    "_internal/src/carteleria/assets/tint_blue.py": {
+      "version": "1.0.0",
+      "checksum": "9f04d4e1f9eb85647abd333b5a6fcd64",
+      "channel": "stable",
+      "size": 777
+    },
+    "_internal/src/carteleria/assets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
     "ia_doc_content.txt": {
       "version": "1.0.1",
       "checksum": "317306a29e1367a3fd132c917af884d8",
@@ -3288,7 +3324,7 @@
     },
     "src/carteleria/dashboard/module_stats.json": {
       "version": "1.0.1",
-      "checksum": "8a2a2f5a7b1ee541dec390c3bb680c68",
+      "checksum": "9b9b92edb8f4f7d2ebc86c6eaa583dc9",
       "channel": "stable",
       "size": 129
     },
