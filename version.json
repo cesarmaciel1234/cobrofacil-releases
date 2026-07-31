@@ -1,7 +1,7 @@
 {
-  "app_version": "7.14",
+  "app_version": "7.15",
   "channel": "stable",
-  "build_date": "2026-07-30 23:34:12",
+  "build_date": "2026-07-30 23:36:03",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -587,10 +587,10 @@
       "size": 1798
     },
     "src/main_window.py": {
-      "version": "1.0.2",
-      "checksum": "6d8236696030a1bcbc1d9fe485f35c91",
+      "version": "1.0.3",
+      "checksum": "6c4f6478fec212e70805451763327226",
       "channel": "stable",
-      "size": 43671
+      "size": 41657
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -1812,9 +1812,9 @@
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
       "version": "1.0.1",
-      "checksum": "784c23204a385548740578a910478109",
+      "checksum": "b329c6853264575802d3d1931415eb1c",
       "channel": "stable",
-      "size": 6512
+      "size": 6672
     },
     "src/carteleria/motor_carteleria/__init__.py": {
       "version": "1.0.0",
