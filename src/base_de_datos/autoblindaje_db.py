@@ -53,8 +53,54 @@ class AutoBlindajeDB:
             # 3. Rotación de respaldos antiguos (mantener últimos 30 días)
             cls.limpiar_backups_antiguos()
 
+            # 4. Sincronizar automáticamente en pendrives USB externos si están conectados
+            cls.sincronizar_con_pendrives_usb()
+
         except Exception as e:
             logger.error(f"Error en motor de autoblindaje DB: {e}")
+
+    @classmethod
+    def detectar_unidades_usb(cls):
+        """Detecta automáticamente pendrives o unidades externas USB conectadas a la PC."""
+        usb_drives = []
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                bitmask = ctypes.windll.kernel32.GetLogicalDrives()
+                for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                    if (bitmask >> (ord(letter) - 65)) & 1:
+                        drive_path = f"{letter}:\\"
+                        # DRIVE_REMOVABLE = 2 (Pendrive o disco extraíble)
+                        if ctypes.windll.kernel32.GetDriveTypeW(drive_path) == 2:
+                            usb_drives.append(drive_path)
+            except Exception:
+                pass
+        return usb_drives
+
+    @classmethod
+    def sincronizar_con_pendrives_usb(cls):
+        """Si hay un pendrive USB conectado, realiza una copia espejo atómica de los respaldos."""
+        usb_drives = cls.detectar_unidades_usb()
+        if not usb_drives:
+            return
+
+        local_dir, os_dir = cls.get_backup_directories()
+        backup_files = glob.glob(os.path.join(os_dir, "backup_diario_*.*"))
+        if not backup_files:
+            backup_files = glob.glob(os.path.join(local_dir, "backup_diario_*.*"))
+
+        for usb in usb_drives:
+            try:
+                usb_target_dir = os.path.join(usb, "CobroFacil_PRO_Backups")
+                os.makedirs(usb_target_dir, exist_ok=True)
+                for b_file in backup_files:
+                    fname = os.path.basename(b_file)
+                    dest_file = os.path.join(usb_target_dir, fname)
+                    if not os.path.exists(dest_file) or os.path.getsize(dest_file) != os.path.getsize(b_file):
+                        shutil.copy2(b_file, dest_file)
+                        logger.info(f"💾 Copia de respaldo bancaria sincronizada en pendrive USB ({dest_file})")
+            except Exception as e:
+                logger.warning(f"No se pudo escribir respaldo en pendrive {usb}: {e}")
 
     @classmethod
     def crear_backup_diario_si_corresponde(cls, engine_type: str, mariadb_host: str = "127.0.0.1"):
