@@ -129,28 +129,42 @@ class MotorCatalogo:
         """
         try:
             params = dict(params_dict)
-            if is_new:
-                # En MariaDB/SQLite, si id es None, vacío o 0, debemos eliminarlo del diccionario
-                # para que el motor autogenere el ID sin disparar error 167 (Out of range value).
-                if 'id' in params and (params['id'] is None or params['id'] == '' or params['id'] == 0):
-                    del params['id']
+
+            # Extraer y determinar ID del producto
+            actual_id = prod_id if prod_id is not None else params.get('id')
+            
+            # Si se especificó un ID válido, se trata de una actualización (UPDATE)
+            if actual_id is not None and str(actual_id).strip() != '' and str(actual_id).strip() != '0':
+                es_actualizacion = True
+                target_id = actual_id
+            else:
+                es_actualizacion = not is_new and prod_id is not None
+                target_id = prod_id
+
+            # 'id' NUNCA debe incluirse en la lista de campos SET ni en INSERT
+            if 'id' in params:
+                del params['id']
+
+            db_manager.last_error = None
+
+            if not es_actualizacion:
                 cols = ", ".join(params.keys())
                 placeholders = ", ".join(["?"] * len(params))
                 query = f"INSERT INTO productos ({cols}) VALUES ({placeholders})"
                 vals = tuple(params.values())
                 exito = db_manager.execute_non_query(query, vals)
             else:
-                if 'id' in params and (params['id'] is None or params['id'] == ''):
-                    del params['id']
                 set_clause = ", ".join([f"{k} = ?" for k in params.keys()])
                 query = f"UPDATE productos SET {set_clause} WHERE id = ?"
-                vals = tuple(list(params.values()) + [prod_id])
+                vals = tuple(list(params.values()) + [target_id])
                 exito = db_manager.execute_non_query(query, vals)
-                
+
             if exito:
                 return True, "Producto guardado correctamente."
             else:
-                return False, "Error en el motor de base de datos al guardar el producto."
+                err_detail = getattr(db_manager, 'last_error', None)
+                msg_error = f"Error en el motor de base de datos al guardar el producto.\n\nDetalle: {err_detail}" if err_detail else "Error en el motor de base de datos al guardar el producto."
+                return False, msg_error
         except Exception as e:
             return False, f"Error al guardar: {e}"
 

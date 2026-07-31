@@ -20,10 +20,15 @@ class MotorGrilla(QThread):
         
     def run(self):
         try:
+            if self.isInterruptionRequested():
+                return
             from src.base_de_datos.database import db_manager
             query = 'SELECT departamento, nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY departamento, nombre_producto'
             rows = db_manager.execute_query(query)
             
+            if self.isInterruptionRequested():
+                return
+
             agrupados = {}
             if rows:
                 for r in rows:
@@ -52,9 +57,15 @@ class MotorGrilla(QThread):
                     if cat not in agrupados: agrupados[cat] = []
                     agrupados[cat].append((nombre, pn, po, rt))
             
-            self.datos_listos.emit(agrupados)
-            
+            if not self.isInterruptionRequested():
+                self.datos_listos.emit(agrupados)
+        except RuntimeError:
+            # Captura suave si el objeto C++ de Qt fue destruido durante el cierre
+            pass
         except Exception as e:
             logger.error(f"MotorGrilla Error: {e}")
-            # Si falla, emitimos dict vacío
-            self.datos_listos.emit({})
+            try:
+                if not self.isInterruptionRequested():
+                    self.datos_listos.emit({})
+            except RuntimeError:
+                pass

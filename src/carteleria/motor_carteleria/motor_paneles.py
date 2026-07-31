@@ -36,13 +36,20 @@ class MotorCarrusel(QThread):
             # Rotar en orden al siguiente módulo para el próximo refresco en la pantalla
             self.modo_actual = (self.modo_actual + 1) % len(modulos_carteleria)
             
-            if prod_lista:
-                self.datos_listos.emit(prod_lista, titulo_str)
-            else:
-                self.datos_listos.emit([], "")
+            if not self.isInterruptionRequested():
+                if prod_lista:
+                    self.datos_listos.emit(prod_lista, titulo_str)
+                else:
+                    self.datos_listos.emit([], "")
+        except RuntimeError:
+            pass
         except Exception as e:
             logger.error(f"MotorCarrusel Error: {e}")
-            self.datos_listos.emit([], "")
+            try:
+                if not self.isInterruptionRequested():
+                    self.datos_listos.emit([], "")
+            except RuntimeError:
+                pass
 
 class MotorCombos(QThread):
     combo_listo = pyqtSignal(str, list)
@@ -112,7 +119,10 @@ class MotorCombos(QThread):
                     
                 from src.carteleria.motor_carteleria.modulos_ventas_hoy.venta_cruzada_inteligente import VentaCruzadaInteligente
                 nombres = VentaCruzadaInteligente.obtener_relacionados_para_ticket(centro, limit=3)
-                self.combo_listo.emit(centro, nombres)
+                if not self.isInterruptionRequested():
+                    self.combo_listo.emit(centro, nombres)
+        except RuntimeError:
+            pass
         except Exception as e:
             logger.error(f"MotorCombos Error: {e}")
 
@@ -130,6 +140,7 @@ class MotorIAPanel(QThread):
         
     def run(self):
         try:
+            if self.isInterruptionRequested(): return
             import random
             import json
             
@@ -155,7 +166,7 @@ class MotorIAPanel(QThread):
                             p_json = str(pr[2] or '[]')
                             
                         p_list = json.loads(p_json)
-                        if p_list:
+                        if p_list and not self.isInterruptionRequested():
                             self.promo_lista.emit(p_nombre, p_precio, p_list)
                             return
                 except:
@@ -172,7 +183,7 @@ class MotorIAPanel(QThread):
                 q = q.replace("RANDOM()", "RAND()")
                 
             rows = db_manager.execute_query(q)
-            if not rows: return
+            if not rows or self.isInterruptionRequested(): return
             
             prod_lista = []
             reglas_map = {}
@@ -199,6 +210,9 @@ class MotorIAPanel(QThread):
                 
             msg, prod, precio, precio_oferta = MotorIALocal.generar_recomendacion_lobo(self.clima, prod_lista)
             regla_enviada = reglas_map.get(str(prod).lower(), "")
-            self.ia_lista.emit(msg, prod, precio, precio_oferta, regla_enviada, self.clima)
+            if not self.isInterruptionRequested():
+                self.ia_lista.emit(msg, prod, precio, precio_oferta, regla_enviada, self.clima)
+        except RuntimeError:
+            pass
         except Exception as e:
             logger.error(f"MotorIAPanel Error: {e}")

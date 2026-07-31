@@ -119,6 +119,8 @@ class DialogoEsperaConexion(QDialog):
         """Lanza el worker de escaneo de subred en background."""
         if self.worker_busqueda and self.worker_busqueda.isRunning():
             self.worker_busqueda.stop()
+            self.worker_busqueda.requestInterruption()
+            self.worker_busqueda.wait(500)
 
         self.etiqueta_estado.setText("🔍 Escaneando red local...")
         self.worker_busqueda = BuscadorDeRed(self.mi_ip, self.engine)
@@ -157,12 +159,16 @@ class DialogoEsperaConexion(QDialog):
                 db_host = datos.get("db_host")
                 if db_host:
                     config.db_host = db_host
-                if self.worker_busqueda:
+                if self.worker_busqueda and self.worker_busqueda.isRunning():
                     self.worker_busqueda.stop()
+                    self.worker_busqueda.requestInterruption()
+                    self.worker_busqueda.wait(500)
                 self.timer_broadcast.stop()
                 self.accept()
 
     def closeEvent(self, event):
-        if self.worker_busqueda:
+        if self.worker_busqueda and self.worker_busqueda.isRunning():
             self.worker_busqueda.stop()
+            self.worker_busqueda.requestInterruption()
+            self.worker_busqueda.wait(500)
         super().closeEvent(event)

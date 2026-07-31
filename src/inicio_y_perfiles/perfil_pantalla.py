@@ -4,9 +4,32 @@ Paleta: Warm-Cold 2026 — fondo marfil cálido, acentos mezclados cálido+frío
 letras siempre bien marcadas y legibles.
 """
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                              QFrame, QGraphicsDropShadowEffect)
+                              QFrame, QGraphicsDropShadowEffect, QPushButton)
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent
 from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
+
+# PyQt6 Enum compatibility aliases
+if hasattr(Qt, 'AlignmentFlag'):
+    Qt.AlignCenter = Qt.AlignmentFlag.AlignCenter
+    Qt.AlignLeft = Qt.AlignmentFlag.AlignLeft
+    Qt.AlignRight = Qt.AlignmentFlag.AlignRight
+if hasattr(Qt, 'CursorShape'):
+    Qt.PointingHandCursor = Qt.CursorShape.PointingHandCursor
+    Qt.ForbiddenCursor = Qt.CursorShape.ForbiddenCursor
+if hasattr(Qt, 'WindowType'):
+    Qt.FramelessWindowHint = Qt.WindowType.FramelessWindowHint
+    Qt.Dialog = Qt.WindowType.Dialog
+if hasattr(Qt, 'WidgetAttribute'):
+    Qt.WA_TranslucentBackground = Qt.WidgetAttribute.WA_TranslucentBackground
+if hasattr(Qt, 'MouseButton'):
+    Qt.LeftButton = Qt.MouseButton.LeftButton
+if hasattr(Qt, 'Key'):
+    Qt.Key_Left = Qt.Key.Key_Left
+    Qt.Key_Right = Qt.Key.Key_Right
+    Qt.Key_Return = Qt.Key.Key_Return
+    Qt.Key_Enter = Qt.Key.Key_Enter
+if hasattr(Qt, 'KeyboardModifier'):
+    Qt.NoModifier = Qt.KeyboardModifier.NoModifier
 
 
 # ── Paleta global Warm-Cold ───────────────────────────────────────────────────
@@ -174,8 +197,8 @@ class PerfilPantalla(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setFixedSize(1100, 490)
         self.selected_index = 0
         self._setup_ui()
@@ -237,8 +260,20 @@ class PerfilPantalla(QDialog):
 
         # ── Contenido ─────────────────────────────────────────────────────────
         content = QVBoxLayout()
-        content.setContentsMargins(40, 28, 40, 32)
+        content.setContentsMargins(30, 16, 30, 32)
         content.setSpacing(0)
+
+        # ── Header con Badge y Cruz para Cerrar ('✕') ────────────────────────
+        header_lay = QHBoxLayout()
+        header_lay.setContentsMargins(0, 0, 0, 0)
+
+        # Spacer a la izquierda para contrapeso visual con el botón de cierre
+        spacer_left = QFrame()
+        spacer_left.setFixedSize(28, 28)
+        spacer_left.setStyleSheet("background: transparent; border: none;")
+        header_lay.addWidget(spacer_left)
+
+        header_lay.addStretch()
 
         # Badge
         badge = QLabel("⬡  IDENTIFICACIÓN DE ENTORNO  ⬡")
@@ -249,7 +284,39 @@ class PerfilPantalla(QDialog):
             background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
         """)
-        content.addWidget(badge)
+        header_lay.addWidget(badge)
+
+        header_lay.addStretch()
+
+        # Botón Cruz para cerrar
+        btn_close = QPushButton("✕")
+        btn_close.setObjectName("BtnClosePerfil")
+        btn_close.setToolTip("Cerrar aplicación")
+        btn_close.setCursor(Qt.PointingHandCursor)
+        btn_close.setFixedSize(28, 28)
+        btn_close.setStyleSheet(f"""
+            QPushButton#BtnClosePerfil {{
+                background: rgba(0, 0, 0, 0.04);
+                color: {WC['text2']};
+                border: none;
+                border-radius: 14px;
+                font-size: 14px;
+                font-weight: 900;
+                font-family: 'Segoe UI', sans-serif;
+            }}
+            QPushButton#BtnClosePerfil:hover {{
+                background: #FEE2E2;
+                color: #DC2626;
+            }}
+            QPushButton#BtnClosePerfil:pressed {{
+                background: #FCA5A5;
+                color: #991B1B;
+            }}
+        """)
+        btn_close.clicked.connect(self.reject)
+        header_lay.addWidget(btn_close)
+
+        content.addLayout(header_lay)
         content.addSpacing(10)
 
         # Título
@@ -358,10 +425,10 @@ class PerfilPantalla(QDialog):
                     }}
                 """)
                 btn.lbl_title.setText(btn.lbl_title.text() + " (EN USO)")
-                btn.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: #94A3B8; background: transparent; border: none;")
-                btn.lbl_desc.setText("Esta instancia ya se encuentra en ejecución en esta terminal.")
-                btn.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 600; color: #94A3B8; background: transparent; border: none;")
-                btn.setCursor(Qt.ForbiddenCursor)
+                btn.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: #DC2626; background: transparent; border: none;")
+                btn.lbl_desc.setText("En ejecución. Clic para destrabar / cerrar instancia colgada.")
+                btn.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 600; color: #2563EB; background: transparent; border: none;")
+                btn.setCursor(Qt.PointingHandCursor)
         
         # Si el seleccionado por defecto está bloqueado, avanzamos al siguiente libre
         if self.selected_index in self._roles_bloqueados and len(self._roles_bloqueados) < 4:
@@ -370,28 +437,64 @@ class PerfilPantalla(QDialog):
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Left, Qt.Key_Right):
             delta = 1 if event.key() == Qt.Key_Right else -1
-            # Buscar el siguiente rol no bloqueado
+            # Buscar el siguiente rol
             original_idx = self.selected_index
             for _ in range(4):
                 self.selected_index = (self.selected_index + delta) % 4
-                if self.selected_index not in getattr(self, '_roles_bloqueados', set()):
-                    break
+                break
             if original_idx != self.selected_index:
                 self.update_selection_ui()
             event.accept()
         elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            if self.selected_index not in getattr(self, '_roles_bloqueados', set()):
-                self._elegir(self._ROLES[self.selected_index])
+            self._elegir(self._ROLES[self.selected_index])
             event.accept()
         else:
             super().keyPressEvent(event)
 
     def _elegir(self, rol):
         if self._ROLES.index(rol) in getattr(self, '_roles_bloqueados', set()):
-            # Reproducir un sonido de alerta si intenta forzar el clic con el mouse
-            import winsound
-            winsound.Beep(800, 200)
+            from PyQt6.QtWidgets import QMessageBox
+            from src.utils.candados import PerfilLocker
+            
+            pid = PerfilLocker.get_locked_pid(rol)
+            pid_txt = f" (PID {pid})" if pid else ""
+            
+            resp = QMessageBox.question(
+                self,
+                "⚠️ Instancia en Ejecución Detectada",
+                f"El perfil '{rol.upper()}' ya figura abierto en este equipo{pid_txt}.\n\n"
+                "Si el sistema se cerró con un error o quedó colgado en el Administrador de Tareas, "
+                "¿deseas cerrar la instancia anterior y abrir este perfil ahora?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+            
+            if resp == QMessageBox.StandardButton.Yes:
+                PerfilLocker.force_unlock_and_kill(rol)
+                self._roles_bloqueados.discard(self._ROLES.index(rol))
+                self.perfil_seleccionado.emit(rol)
+                self.accept()
             return
             
         self.perfil_seleccionado.emit(rol)
         self.accept()
+
+    # ── Arrastre de ventana con el mouse (Soporte multi-pantalla) ──────────────
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MouseButton.LeftButton and getattr(self, '_drag_pos', None) is not None:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+        super().mouseReleaseEvent(event)
+

@@ -19,23 +19,51 @@ class MotorDepartamentos:
             CREATE TABLE IF NOT EXISTS departamentos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT UNIQUE NOT NULL,
-                iva REAL DEFAULT 0.0
+                iva REAL DEFAULT 0.0,
+                icono TEXT
             )
         ''')
+        try:
+            # Verificar si la columna icono ya existe (MariaDB vs SQLite)
+            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                cols = db_manager.execute_query("SHOW COLUMNS FROM departamentos") or []
+                col_names = [c.get('Field', '') if isinstance(c, dict) else c[0] for c in cols]
+            else:
+                cols = db_manager.execute_query("PRAGMA table_info(departamentos)") or []
+                col_names = [c.get('name', '') if isinstance(c, dict) else c[1] for c in cols]
+                
+            if "icono" not in col_names:
+                db_manager.execute_non_query("ALTER TABLE departamentos ADD COLUMN icono TEXT")
+        except Exception:
+            pass
+
         db_manager.execute_non_query('''
             CREATE TABLE IF NOT EXISTS categorias (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT UNIQUE NOT NULL
+                nombre TEXT UNIQUE NOT NULL,
+                icono TEXT
             )
         ''')
+        try:
+            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                cols_cat = db_manager.execute_query("SHOW COLUMNS FROM categorias") or []
+                cat_col_names = [c.get('Field', '') if isinstance(c, dict) else c[0] for c in cols_cat]
+            else:
+                cols_cat = db_manager.execute_query("PRAGMA table_info(categorias)") or []
+                cat_col_names = [c.get('name', '') if isinstance(c, dict) else c[1] for c in cols_cat]
+                
+            if "icono" not in cat_col_names:
+                db_manager.execute_non_query("ALTER TABLE categorias ADD COLUMN icono TEXT")
+        except Exception:
+            pass
+
         # Auto-poblar categorías desde productos si está vacío
         db_manager.execute_non_query("INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
 
-
     def obtener_departamentos(self):
-        """Devuelve una lista de diccionarios con los departamentos y su IVA."""
+        """Devuelve una lista de diccionarios con los departamentos, su IVA e ícono."""
         try:
-            return db_manager.execute_query("SELECT id, nombre, iva FROM departamentos ORDER BY nombre") or []
+            return db_manager.execute_query("SELECT id, nombre, iva, icono FROM departamentos ORDER BY nombre") or []
         except Exception as e:
             self.logger.error(f"Error al obtener departamentos: {e}")
             return []
@@ -50,18 +78,18 @@ class MotorDepartamentos:
         except:
             return 21.0
 
-    def guardar_departamento(self, nombre, iva, depto_id=None):
-        """Crea o actualiza un departamento."""
+    def guardar_departamento(self, nombre, iva, depto_id=None, icono=None):
+        """Crea o actualiza un departamento incluyendo su ícono opcional."""
         try:
             if depto_id:
                 db_manager.execute_non_query(
-                    "UPDATE departamentos SET nombre=?, iva=? WHERE id=?", 
-                    (nombre, iva, depto_id)
+                    "UPDATE departamentos SET nombre=?, iva=?, icono=? WHERE id=?", 
+                    (nombre, iva, icono, depto_id)
                 )
             else:
                 db_manager.execute_non_query(
-                    "INSERT INTO departamentos (nombre, iva) VALUES (?, ?)", 
-                    (nombre, iva)
+                    "INSERT INTO departamentos (nombre, iva, icono) VALUES (?, ?, ?)", 
+                    (nombre, iva, icono)
                 )
             return True, "Departamento guardado."
         except Exception as e:
@@ -80,18 +108,18 @@ class MotorDepartamentos:
     def obtener_categorias(self):
         """Devuelve una lista de categorías."""
         try:
-            return db_manager.execute_query("SELECT id, nombre FROM categorias ORDER BY nombre") or []
+            return db_manager.execute_query("SELECT id, nombre, icono FROM categorias ORDER BY nombre") or []
         except Exception as e:
             self.logger.error(f"Error al obtener categorías: {e}")
             return []
 
     def obtener_categorias_con_conteo(self):
-        """Devuelve categorías y la cantidad de productos en cada una."""
+        """Devuelve categorías, su ícono y la cantidad de productos en cada una."""
         query = '''
-            SELECT c.id, c.nombre, COUNT(p.id) as qty 
+            SELECT c.id, c.nombre, c.icono, COUNT(p.id) as qty 
             FROM categorias c 
             LEFT JOIN productos p ON UPPER(p.categoria) = UPPER(c.nombre) 
-            GROUP BY c.id, c.nombre 
+            GROUP BY c.id, c.nombre, c.icono 
             ORDER BY c.nombre
         '''
         try:
@@ -107,18 +135,18 @@ class MotorDepartamentos:
         except:
             return 0
 
-    def guardar_categoria(self, nombre, cat_id=None):
-        """Crea o actualiza una categoría."""
+    def guardar_categoria(self, nombre, cat_id=None, icono=None):
+        """Crea o actualiza una categoría incluyendo su ícono opcional."""
         try:
             if cat_id:
                 db_manager.execute_non_query(
-                    "UPDATE categorias SET nombre=? WHERE id=?", 
-                    (nombre, cat_id)
+                    "UPDATE categorias SET nombre=?, icono=? WHERE id=?", 
+                    (nombre, icono, cat_id)
                 )
             else:
                 db_manager.execute_non_query(
-                    "INSERT INTO categorias (nombre) VALUES (?)", 
-                    (nombre,)
+                    "INSERT INTO categorias (nombre, icono) VALUES (?, ?)", 
+                    (nombre, icono)
                 )
             return True, "Categoría guardada."
         except Exception as e:

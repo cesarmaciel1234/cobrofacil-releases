@@ -38,6 +38,32 @@ class Admin1Inventario(QWidget):
             self.catalogo._apply_catalogo_theme()
 
     def _setup_ui(self):
+        self.setStyleSheet("""
+            QWidget { font-family: 'Segoe UI', sans-serif; }
+            QPushButton {
+                background-color: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1;
+                border-radius: 8px; padding: 10px 18px; font-weight: bold; font-size: 13px;
+            }
+            QPushButton:hover { background-color: #E2E8F0; border-color: #94A3B8; }
+            QPushButton#blue, QPushButton[objectName="blue"] {
+                background-color: #2563EB; color: #FFFFFF; border: none;
+            }
+            QPushButton#blue:hover, QPushButton[objectName="blue"]:hover {
+                background-color: #1D4ED8;
+            }
+            QPushButton#danger, QPushButton[objectName="danger"] {
+                background-color: #DC2626; color: #FFFFFF; border: none;
+            }
+            QPushButton#danger:hover, QPushButton[objectName="danger"]:hover {
+                background-color: #B91C1C;
+            }
+            QPushButton#gray, QPushButton[objectName="gray"] {
+                background-color: #64748B; color: #FFFFFF; border: none;
+            }
+            QPushButton#gray:hover, QPushButton[objectName="gray"]:hover {
+                background-color: #475569;
+            }
+        """)
         root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
         # Header Elite Blue (Cajero Style unificado sin recuadro blanco)
@@ -315,7 +341,8 @@ class Admin1Inventario(QWidget):
         if qt_exec(dlg):
             d = dlg.get_data()
             from src.motor_inventario.motor_catalogo import MotorCatalogo
-            ok, msg = MotorCatalogo().guardar_producto(d, is_new=True)
+            is_new = not bool(d.get('id'))
+            ok, msg = MotorCatalogo().guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
             if ok:
                 self.catalogo._cargar_deptos(); self.catalogo.cargar_datos()
                 try:
@@ -324,7 +351,7 @@ class Admin1Inventario(QWidget):
                     if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
                 except: pass
             else:
-                QMessageBox.warning(self,"Error","No se pudo guardar.")
+                QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
 
     def _borrar_desde_catalogo(self, *args, **kwargs):
         # 1. Obtener todas las filas seleccionadas por checkbox

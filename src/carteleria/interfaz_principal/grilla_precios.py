@@ -1,6 +1,45 @@
+import os
 from PyQt6.QtWidgets import QScrollArea, QFrame, QVBoxLayout, QWidget, QLabel, QHBoxLayout
 from PyQt6.QtCore import Qt, QTimer
 from src.carteleria.theme import C_THEME, apply_apple_shadow
+
+def _resolver_icono_png(categoria_nombre):
+    cat_upper = str(categoria_nombre).upper().strip()
+    base_dir = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros")
+    
+    # 1. Buscar en BD si el departamento tiene ícono específico asignado
+    try:
+        from src.motor_inventario.motor_departamentos import MotorDepartamentos
+        deps = MotorDepartamentos().obtener_departamentos()
+        for d in deps:
+            if d.get('nombre', '').upper().strip() == cat_upper and d.get('icono'):
+                fpath = os.path.join(base_dir, d['icono'])
+                if os.path.exists(fpath):
+                    return fpath
+    except Exception:
+        pass
+
+    # 2. Buscar por mapeo automático de palabras clave
+    kw_map = [
+        (["CARNE", "VACUNO", "ASADO", "LOMO", "BIFE", "TERNERA", "ACHURA", "MONDONGO"], "carne.png"),
+        (["POLLO", "AVE", "PATA", "SUPREMA", "PECHUGA", "ALITA"], "pollo.png"),
+        (["CERDO", "BONDIOLA", "PECHITO", "CHUCHETO", "LECHON"], "cerdo.png"),
+        (["QUESO", "FIAMBRE", "LACTEO", "JAMON", "PROVOLETA", "EMBUTIDO", "CHORIZO", "MORCILLA", "SALCHICHA"], "fiambreria.png"),
+        (["PAN", "PANADERIA", "FACTURA", "BIZCOCHO", "TORTA"], "panaderia.png"),
+        (["VERDURA", "VERDULERIA", "FRUTA", "FRUTAL"], "verduleria.png"),
+        (["BEBIDA", "GASEOSA", "CERVEZA", "VINO", "AGUA", "JUGO"], "bebidas.png"),
+        (["LIMPIEZA", "JABON", "DETERGENTE", "LAVANDINA"], "limpieza.png"),
+        (["PESCADO", "MARISCO", "FILET"], "pescado.png"),
+        (["OFERTA", "PROMO", "COMBO", "DESTACADO", "RELAMPAGO"], "oferta.png"),
+        (["ALMACEN", "MERCADERIA", "ABARROTES"], "almacen.png")
+    ]
+    for kws, fname in kw_map:
+        if any(w in cat_upper for w in kws):
+            fpath = os.path.join(base_dir, fname)
+            if os.path.exists(fpath):
+                return fpath
+
+    return None
 
 class GrillaPrecios(QFrame):
     """
@@ -13,9 +52,9 @@ class GrillaPrecios(QFrame):
         self.motor.datos_listos.connect(self.set_items)
         
         self.auto_refresh_timer = QTimer(self)
-        self.auto_refresh_timer.timeout.connect(self.motor.start)
+        self.auto_refresh_timer.timeout.connect(self._refrescar_grilla)
         self.auto_refresh_timer.start(30000) # 30 segundos
-        self.motor.start() # Carga inicial
+        self._refrescar_grilla() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
         if get_active_theme_name() == "temu":
             # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
@@ -33,7 +72,28 @@ class GrillaPrecios(QFrame):
         self.layout.addWidget(self.scroll_area)
         
         self.last_items = {}
-        
+
+    def _refrescar_grilla(self):
+        if hasattr(self, 'motor') and self.motor and not self.motor.isRunning():
+            self.motor.start()
+
+    def closeEvent(self, event):
+        self.cleanup()
+        super().closeEvent(event)
+
+    def cleanup(self):
+        if hasattr(self, 'auto_refresh_timer') and self.auto_refresh_timer:
+            self.auto_refresh_timer.stop()
+        if hasattr(self, 'motor') and self.motor:
+            try:
+                self.motor.datos_listos.disconnect(self.set_items)
+            except Exception:
+                pass
+            if self.motor.isRunning():
+                self.motor.requestInterruption()
+                self.motor.quit()
+                self.motor.wait(500)
+
     def set_layout_mode(self, mode):
         self.scroll_area.current_mode = mode
         if self.last_items:
@@ -88,66 +148,13 @@ class _AutoScrollList(QScrollArea):
                 if not productos:
                     continue # Nunca dibujar categorías vacías (ej: 'ACHURAS' sin stock)
                 
-                # ── CATEGORÍA: ESTILO BANNER MULTINACIONAL CON ICONO ──
-                cat_upper = categoria.upper()
-                icono = "⭐"
-                if any(w in cat_upper for w in ["CARNE", "VACUNO", "ASADO", "LOMO", "BIFE", "NOVILLO", "TERNERA", "ACHURAS", "ACHURA", "MENUDENCIAS", "MONDONGO"]):
-                    icono = "🥩"
-                elif any(w in cat_upper for w in ["POLLO", "AVE", "PATA", "SUPREMA", "PECHUGA", "ALITA"]):
-                    icono = "🍗"
-                elif any(w in cat_upper for w in ["CERDO", "BONDIOLA", "PECHITO", "CHUCHETO", "LECHON"]):
-                    icono = "🥓"
-                elif any(w in cat_upper for w in ["CHORIZO", "MORCILLA", "EMBUTIDO", "SALCHICHA", "SALAME"]):
-                    icono = "🌭"
-                elif any(w in cat_upper for w in ["OFERTA", "PROMO", "COMBO", "DESTACADO", "RELAMPAGO"]):
-                    icono = "🔥"
-                elif any(w in cat_upper for w in ["QUESO", "FIAMBRE", "LACTEO", "JAMON", "PROVOLETA"]):
-                    icono = "🧀"
-
-                lbl_cat = QLabel(f"{icono} {cat_upper}")
+                # ── CATEGORÍA: BANNER MODULAR CON CÁPSULA DE ÍCONO Y TITULO RESPONSIVE ──
+                from src.carteleria.interfaz_principal.banner_categoria import BannerCategoria
                 from src.carteleria.theme import get_active_theme_name
                 is_temu = (get_active_theme_name() == "temu")
-                
-                if is_temu:
-                    fs_cat = 46 if self.current_mode == 1 else 36
-                    # Degradado Azul Zafiro Premium con borde luminoso
-                    lbl_cat.setStyleSheet(f"""
-                        QLabel {{ 
-                            font-family: 'Arial Black', 'Segoe UI Black', sans-serif; 
-                            font-size: {fs_cat}px; 
-                            font-weight: 900; 
-                            color: #FFFFFF; 
-                            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #002663, stop:0.5 #0045B5, stop:1 #002663); 
-                            border: 2px solid #3B82F6; 
-                            padding: 8px 14px; 
-                            border-radius: 14px; 
-                            margin-top: 16px; 
-                            margin-bottom: 6px; 
-                            letter-spacing: 1px; 
-                        }}
-                    """)
-                else:
-                    fs_cat = 42 if self.current_mode == 1 else 32
-                    lbl_cat.setStyleSheet(f"""
-                        QLabel {{ 
-                            font-family: -apple-system, 'Segoe UI'; 
-                            font-size: {fs_cat}px; 
-                            font-weight: 900; 
-                            color: #FFFFFF; 
-                            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:0.5 #2563EB, stop:1 #1E3A8A); 
-                            border: 1px solid #60A5FA; 
-                            padding: 8px 14px; 
-                            border-radius: 14px; 
-                            margin-top: 16px; 
-                            margin-bottom: 6px; 
-                        }}
-                    """)
-                lbl_cat.setWordWrap(True)
-                lbl_cat.setMinimumWidth(0)
-                from PyQt6.QtWidgets import QSizePolicy
-                lbl_cat.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.MinimumExpanding)
-                lbl_cat.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-                self.inner_layout.addWidget(lbl_cat)
+
+                banner = BannerCategoria(categoria, modo_tv=self.current_mode, is_temu=is_temu, parent=self.container)
+                self.inner_layout.addWidget(banner)
                 
                 # ── PRODUCTOS: TARJETAS MODULARES CON SUB-CONTENEDORES ESTRICTOS ──
                 from src.carteleria.interfaz_principal.tarjeta_producto import TarjetaProducto

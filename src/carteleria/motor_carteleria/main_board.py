@@ -431,10 +431,9 @@ class CarteleriaMain(QWidget):
                 try:
                     if hasattr(t, 'running'):
                         t.running = False
+                    t.requestInterruption()
                     t.quit()
-                    if not t.wait(400):
-                        t.terminate()
-                        t.wait(100)
+                    t.wait(300)
                 except Exception:
                     pass
         super().closeEvent(event)

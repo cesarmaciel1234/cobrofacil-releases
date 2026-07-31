@@ -4,6 +4,19 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButto
 from PyQt6.QtCore import Qt, QTimer, QEvent
 from PyQt6.QtGui import QColor
 import hashlib
+
+# PyQt6 Enum compatibility aliases
+if hasattr(Qt, 'AlignmentFlag'):
+    Qt.AlignCenter = Qt.AlignmentFlag.AlignCenter
+if hasattr(Qt, 'CursorShape'):
+    Qt.PointingHandCursor = Qt.CursorShape.PointingHandCursor
+if hasattr(Qt, 'WindowType'):
+    Qt.FramelessWindowHint = Qt.WindowType.FramelessWindowHint
+    Qt.Dialog = Qt.WindowType.Dialog
+if hasattr(Qt, 'WidgetAttribute'):
+    Qt.WA_TranslucentBackground = Qt.WidgetAttribute.WA_TranslucentBackground
+if hasattr(Qt, 'MouseButton'):
+    Qt.LeftButton = Qt.MouseButton.LeftButton
 from src.config import config
 from src.inicio_y_perfiles.logica.auth_controller import AuthController
 from src.base_de_datos.database import db_manager
@@ -28,8 +41,8 @@ class LoginPantalla(QDialog):
     def __init__(self, role, parent=None):
         super().__init__(parent)
         self.role = role
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setProperty("theme", "dark")
         self.setFixedSize(520, 750) # Ms alto para evitar que se aplaste
         self._setup_ui()
@@ -77,15 +90,47 @@ class LoginPantalla(QDialog):
         main_lay.setContentsMargins(0, 0, 0, 0)
         main_lay.setSpacing(0)
 
-        # ── Header (Integrado y transparente) ─────────────────────────────────
+        # ── Header (Integrado con Cruz para Cerrar) ───────────────────────────
         header_frame = QFrame()
         header_frame.setObjectName("LoginHeader")
-        header_lay = QVBoxLayout(header_frame)
-        header_lay.setContentsMargins(0, 24, 0, 8)
+        header_lay = QHBoxLayout(header_frame)
+        header_lay.setContentsMargins(16, 16, 16, 4)
+
+        spacer_left = QFrame()
+        spacer_left.setFixedSize(28, 28)
+        spacer_left.setStyleSheet("background: transparent; border: none;")
+        header_lay.addWidget(spacer_left)
+
+        header_lay.addStretch()
 
         header_lbl = QLabel(f"🔐  AUTENTICACIÓN: {role_label}")
         header_lbl.setObjectName("LoginHeaderLbl")
         header_lay.addWidget(header_lbl, alignment=Qt.AlignCenter)
+
+        header_lay.addStretch()
+
+        btn_close = QPushButton("✕")
+        btn_close.setObjectName("BtnCloseLogin")
+        btn_close.setToolTip("Cerrar")
+        btn_close.setCursor(Qt.PointingHandCursor)
+        btn_close.setFixedSize(28, 28)
+        btn_close.setStyleSheet("""
+            QPushButton#BtnCloseLogin {
+                background: rgba(0, 0, 0, 0.04);
+                color: #64748B;
+                border: none;
+                border-radius: 14px;
+                font-size: 14px;
+                font-weight: 900;
+            }
+            QPushButton#BtnCloseLogin:hover {
+                background: #FEE2E2;
+                color: #DC2626;
+            }
+        """)
+        btn_close.clicked.connect(self.reject)
+        header_lay.addWidget(btn_close)
+
         main_lay.addWidget(header_frame)
 
         # ── Contenido Principal ──────────────────────────────────────────────
@@ -205,3 +250,23 @@ class LoginPantalla(QDialog):
             update_bot_state("paso4")
         except: pass
         self.accept()
+
+    # ── Arrastre de ventana con el mouse (Soporte multi-pantalla) ──────────────
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.MouseButton.LeftButton and getattr(self, '_drag_pos', None) is not None:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+        super().mouseReleaseEvent(event)
+

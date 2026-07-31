@@ -26,6 +26,32 @@ class PanelDepartamentos(QWidget):
         self._cargar()
 
     def _setup_ui(self):
+        self.setStyleSheet("""
+            QWidget { font-family: 'Segoe UI', sans-serif; }
+            QPushButton {
+                background-color: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1;
+                border-radius: 8px; padding: 10px 18px; font-weight: bold; font-size: 13px;
+            }
+            QPushButton:hover { background-color: #E2E8F0; border-color: #94A3B8; }
+            QPushButton#blue, QPushButton[objectName="blue"] {
+                background-color: #2563EB; color: #FFFFFF; border: none;
+            }
+            QPushButton#blue:hover, QPushButton[objectName="blue"]:hover {
+                background-color: #1D4ED8;
+            }
+            QPushButton#danger, QPushButton[objectName="danger"] {
+                background-color: #DC2626; color: #FFFFFF; border: none;
+            }
+            QPushButton#danger:hover, QPushButton[objectName="danger"]:hover {
+                background-color: #B91C1C;
+            }
+            QPushButton#gray, QPushButton[objectName="gray"] {
+                background-color: #64748B; color: #FFFFFF; border: none;
+            }
+            QPushButton#gray:hover, QPushButton[objectName="gray"]:hover {
+                background-color: #475569;
+            }
+        """)
         root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
         # Toolbar contextual clara integrada (sin barra negra duplicada)
@@ -65,7 +91,8 @@ class PanelDepartamentos(QWidget):
         rl_main.setContentsMargins(20, 20, 20, 20)
         
         form_card = QFrame()
-        form_card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px;")
+        form_card.setObjectName("formCard")
+        form_card.setStyleSheet("QFrame#formCard { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }")
         
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(20)
@@ -89,6 +116,33 @@ class PanelDepartamentos(QWidget):
         lbl_iva.setStyleSheet("font-weight: bold; border: none;")
         self.txt_iva_dep = QLineEdit("21.0")
         self.txt_iva_dep.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; background: #F8FAFC; font-size: 14px; font-weight: bold;")
+
+        # ── Ícono de Rubro / Cartelería ────────────────────────────────────────
+        lbl_ico = QLabel("Ícono visual (Cartelería y POS):")
+        lbl_ico.setStyleSheet("font-weight: bold; border: none;")
+        
+        ico_lay = QHBoxLayout()
+        ico_lay.setSpacing(10)
+
+        self.lbl_preview_icono = QLabel("🖼️ Sin Ícono")
+        self.lbl_preview_icono.setFixedSize(50, 50)
+        self.lbl_preview_icono.setAlignment(Qt.AlignCenter)
+        self.lbl_preview_icono.setStyleSheet("background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 10px; font-size: 20px;")
+
+        self.btn_sel_icono = QPushButton("🎨 Seleccionar Ícono de Galería")
+        self.btn_sel_icono.setCursor(Qt.PointingHandCursor)
+        self.btn_sel_icono.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1;
+                border-radius: 8px; padding: 10px 16px; font-weight: bold; font-size: 13px;
+            }
+            QPushButton:hover { background: #E2E8F0; border-color: #2563EB; }
+        """)
+        self.btn_sel_icono.clicked.connect(self._abrir_galeria_iconos)
+
+        ico_lay.addWidget(self.lbl_preview_icono)
+        ico_lay.addWidget(self.btn_sel_icono)
+        ico_lay.addStretch()
         
         bx2 = QHBoxLayout()
         self.btn_guardar_dep = QPushButton("✔ Guardar Configuración")
@@ -106,6 +160,8 @@ class PanelDepartamentos(QWidget):
         rl.addWidget(self.txt_nombre_dep)
         rl.addWidget(lbl_iva)
         rl.addWidget(self.txt_iva_dep)
+        rl.addWidget(lbl_ico)
+        rl.addLayout(ico_lay)
         rl.addLayout(bx2)
         rl.addStretch()
         
@@ -113,6 +169,28 @@ class PanelDepartamentos(QWidget):
         sp.addWidget(right)
         sp.setSizes([350, 650])
         root.addWidget(sp)
+
+    def _abrir_galeria_iconos(self):
+        from src.ui_global.inventario_ui.componentes.dialogo_galeria_iconos import DialogoGaleriaIconos
+        dlg = DialogoGaleriaIconos(icono_actual=getattr(self, '_icono_seleccionado', None), parent=self)
+        if qt_exec(dlg):
+            sel = dlg.get_selected_icon()
+            if sel:
+                self._icono_seleccionado = sel
+                self._actualizar_preview_icono(sel)
+
+    def _actualizar_preview_icono(self, filename):
+        if filename:
+            import os
+            from PyQt6.QtGui import QPixmap
+            fpath = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros", filename)
+            if os.path.exists(fpath):
+                pm = QPixmap(fpath)
+                if not pm.isNull():
+                    self.lbl_preview_icono.setPixmap(pm.scaled(40, 40, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                    return
+        self.lbl_preview_icono.setText("🖼️")
+        self.lbl_preview_icono.setPixmap(QPixmap())
 
     def _cargar(self, filtro=''):
         from src.motor_inventario.motor_departamentos import MotorDepartamentos
@@ -128,6 +206,8 @@ class PanelDepartamentos(QWidget):
 
     def _iniciar_nuevo(self):
         self._modo_edicion = None
+        self._icono_seleccionado = None
+        self._actualizar_preview_icono(None)
         self.lbl_titulo_form.setText("NUEVO DEPARTAMENTO E IMPUESTOS")
         self.txt_nombre_dep.clear()
         self.txt_iva_dep.setText("21.0")
@@ -142,11 +222,15 @@ class PanelDepartamentos(QWidget):
             from src.motor_inventario.motor_departamentos import MotorDepartamentos
             rows = MotorDepartamentos().obtener_departamentos()
             val = "21.0"
+            ico = None
             for r in rows:
                 if r['id'] == id_dep:
                     val = f"{r['iva']:.1f}"
+                    ico = r.get('icono')
                     break
             self.txt_iva_dep.setText(val)
+            self._icono_seleccionado = ico
+            self._actualizar_preview_icono(ico)
         else:
             self._iniciar_nuevo()
 
@@ -161,7 +245,7 @@ class PanelDepartamentos(QWidget):
 
         from src.motor_inventario.motor_departamentos import MotorDepartamentos
         motor = MotorDepartamentos()
-        ok, msg = motor.guardar_departamento(nombre, iva_val, self._modo_edicion)
+        ok, msg = motor.guardar_departamento(nombre, iva_val, self._modo_edicion, getattr(self, '_icono_seleccionado', None))
         if ok:
             self._cargar(); self.departamentos_cambiados.emit(); self._iniciar_nuevo()
         else:

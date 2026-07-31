@@ -141,10 +141,18 @@ class DbSyncWorker(QThread):
                 try:
                     with open(cache_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
-                    self.sync_finished.emit(data, "offline")
+                    if not self.isInterruptionRequested():
+                        self.sync_finished.emit(data, "offline")
                 except Exception as e_cache:
                     logger.error(f"Fallo al leer caché offline: {e_cache}")
-                    self.sync_finished.emit({}, "error")
+                    if not self.isInterruptionRequested():
+                        self.sync_finished.emit({}, "error")
+        except RuntimeError:
+            pass
         except Exception as e:
             logger.warning(f"Error general en DbSyncWorker: {e}")
-            self.sync_finished.emit({}, "error")
+            try:
+                if not self.isInterruptionRequested():
+                    self.sync_finished.emit({}, "error")
+            except RuntimeError:
+                pass

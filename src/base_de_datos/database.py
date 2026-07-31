@@ -860,8 +860,26 @@ class DatabaseManager:
             
             conn.commit()
             conn.close()
+            self._ensure_table_columns_and_autoincrement()
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
+
+    def _ensure_table_columns_and_autoincrement(self):
+        """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        try:
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
+                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+                
+                # Verificar si el auto_increment actual está cerca o por encima del límite 32-bit (2147483647)
+                res = self.execute_query("SELECT MAX(id) as m FROM productos WHERE id < 2147483647")
+                if res and res[0].get('m') is not None:
+                    max_normal = res[0]['m']
+                    self.execute_non_query("UPDATE productos SET id = ? WHERE id >= 2147483647", (max_normal + 1,))
+                    new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+                    self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}")
+        except Exception as e:
+            logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""
@@ -1043,6 +1061,7 @@ class DatabaseManager:
             conn.commit()
             return True
         except Exception as e:
+            self.last_error = str(e)
             logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
             if conn:
                 try:

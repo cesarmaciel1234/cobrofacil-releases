@@ -484,7 +484,8 @@ class CatalogoProductos(QWidget):
             d = dlg.get_data()
             from src.motor_inventario.motor_catalogo import MotorCatalogo
             motor = MotorCatalogo()
-            ok, msg = motor.guardar_producto(d, is_new=False, prod_id=d['id'])
+            is_new = not bool(d.get('id'))
+            ok, msg = motor.guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
             if ok:
                 self.cargar_datos()
                 # Trigger cartelera
@@ -494,7 +495,7 @@ class CatalogoProductos(QWidget):
                     if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
                 except: pass
             else:
-                QMessageBox.warning(self, "Error", "No se pudo actualizar el producto. Verifique los campos ingresados o si el código ya existe.")
+                QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
 
     def _exportar(self):
         from datetime import datetime
