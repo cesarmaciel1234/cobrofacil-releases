@@ -677,9 +677,17 @@ class MainWindow(QMainWindow):
 
         # Crear ventana secundaria
         tv_win = QMainWindow()
+        tv_win._is_tv_window = True
         tv_win.setWindowTitle("📺 Cartelería")
         tv_board = CarteleriaMain()
         tv_win.setCentralWidget(tv_board)
+
+        # Atajos directos a nivel ventana secundaria
+        from PyQt6.QtGui import QShortcut, QKeySequence
+        sc_esc = QShortcut(QKeySequence("Esc"), tv_win)
+        sc_esc.activated.connect(tv_win.close)
+        sc_f11 = QShortcut(QKeySequence("F11"), tv_win)
+        sc_f11.activated.connect(lambda: tv_win.showNormal() if tv_win.isFullScreen() else tv_win.showFullScreen())
 
         # Conectar señales de cierre
         if hasattr(tv_board, 'request_screen'):

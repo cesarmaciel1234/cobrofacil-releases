@@ -10,27 +10,41 @@ class WindowManager:
         self.setup_shortcuts()
 
     def setup_shortcuts(self):
+        # Botón de emergencia ESC — Salir / Volver
+        self.shortcut_esc = QShortcut(QKeySequence("Esc"), self.main)
+        self.shortcut_esc.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self.shortcut_esc.activated.connect(self.esc_pressed)
+
         # Botón de emergencia F11 (Global para esta ventana)
-        self.shortcut_f11 = QShortcut(QKeySequence(Qt.Key_F11), self.main)
+        self.shortcut_f11 = QShortcut(QKeySequence("F11"), self.main)
+        self.shortcut_f11.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_f11.activated.connect(self.f11_pressed)
 
         # F10 — Selector de monitor / toggle fullscreen
-        self.shortcut_f10 = QShortcut(QKeySequence(Qt.Key_F10), self.main)
+        self.shortcut_f10 = QShortcut(QKeySequence("F10"), self.main)
+        self.shortcut_f10.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self.shortcut_f10.activated.connect(self.f10_pressed)
 
+    def esc_pressed(self):
+        self.f11_pressed()
+
     def f11_pressed(self):
+        top_window = self.main.window()
+        if top_window and top_window.isFullScreen():
+            top_window.showNormal()
+            
         # Intentar volver al dashboard a través de la señal
         try:
             if hasattr(self.main, "request_back"):
                 self.main.request_back.emit()
             elif hasattr(self.main, "request_screen"):
-                self.main.request_screen.emit(0)
-        except Exception: pass
-        
-        # Solo salir de pantalla completa, NO cerrar la aplicación entera
-        top_window = self.main.window()
-        if top_window and top_window.isFullScreen():
-            top_window.showNormal()
+                self.main.request_screen.emit(22)
+        except Exception:
+            pass
+
+        # Si es una ventana secundaria de TV, cerrarla al presionar ESC / F11
+        if top_window and getattr(top_window, "_is_tv_window", False):
+            top_window.close()
 
     def f10_pressed(self):
         """F10: Alterna entre pantalla completa y modo ventana."""
