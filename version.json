@@ -1,7 +1,7 @@
 {
-  "app_version": "7.13",
+  "app_version": "7.14",
   "channel": "stable",
-  "build_date": "2026-07-30 23:30:43",
+  "build_date": "2026-07-30 23:34:12",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -587,10 +587,10 @@
       "size": 1798
     },
     "src/main_window.py": {
-      "version": "1.0.1",
-      "checksum": "fcae0a0e56d2156493527f57eb6ac4bb",
+      "version": "1.0.2",
+      "checksum": "6d8236696030a1bcbc1d9fe485f35c91",
       "channel": "stable",
-      "size": 43242
+      "size": 43671
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -1811,10 +1811,10 @@
       "size": 3698
     },
     "src/carteleria/motor_carteleria/window_manager.py": {
-      "version": "1.0.0",
-      "checksum": "4a9219e86fd8e1e338d75b1a36cb38a7",
+      "version": "1.0.1",
+      "checksum": "784c23204a385548740578a910478109",
       "channel": "stable",
-      "size": 5926
+      "size": 6512
     },
     "src/carteleria/motor_carteleria/__init__.py": {
       "version": "1.0.0",
@@ -3288,7 +3288,7 @@
     },
     "src/carteleria/dashboard/module_stats.json": {
       "version": "1.0.1",
-      "checksum": "1cf5c302f407f4860aaee5160452734b",
+      "checksum": "2e50d962a2ee60dfa6606faeadd33417",
       "channel": "stable",
       "size": 129
     },
