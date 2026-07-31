@@ -32,6 +32,12 @@ set_share_opengl_contexts()
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
 
+import argparse
+from src.utils.candados import PerfilLocker, acquire_master_launcher_lock
+from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+from src.base_de_datos.motor_flash_transacciones import motor_flash
+from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
+
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:
         from src.logger import logger
@@ -443,7 +449,6 @@ if __name__ == "__main__":
     init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
-    import argparse
     parser = argparse.ArgumentParser(description="CobroFacil PRO 2026 Master Launcher")
     parser.add_argument("--role", "--profile", type=str, default=None, choices=["cajero", "admin", "jefe", "carteleria"], help="Ejecutar rol autónomo directamente")
     parsed_args, _ = parser.parse_known_args()
@@ -451,9 +456,11 @@ if __name__ == "__main__":
 
     # Si se intenta abrir el Lanzador Maestro y ya hay uno activo, traerlo al frente y salir (Máximo Rendimiento)
     if not target_role:
-        from src.utils.candados import acquire_master_launcher_lock
-        if not acquire_master_launcher_lock():
-            sys.exit(0)
+        try:
+            if not acquire_master_launcher_lock():
+                sys.exit(0)
+        except Exception as e:
+            print(f"Aviso al verificar candado maestro: {e}")
 
     while True:
         exit_code = launch_app(direct_role=target_role)

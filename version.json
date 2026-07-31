@@ -1,7 +1,7 @@
 {
-  "app_version": "8.1",
+  "app_version": "8.2",
   "channel": "stable",
-  "build_date": "2026-07-31 16:04:44",
+  "build_date": "2026-07-31 18:18:22",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -72,9 +72,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "a8da876407440c2ffdafca13127500e8",
+      "checksum": "b23b396b7f10cf094759443cc06888dc",
       "channel": "stable",
-      "size": 18183
+      "size": 18501
     },
     "PRECIO27_06.xlsx": {
       "version": "1.0.0",
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "b95b9e415da7b295c9dceb58b3a5ad6b",
+      "checksum": "522a7108323d9b3e002b55402f470c83",
       "channel": "stable",
-      "size": 97920
+      "size": 629557
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -882,9 +882,9 @@
     },
     "src/base_de_datos/autoblindaje_db.py": {
       "version": "1.0.0",
-      "checksum": "34b2cb4b42efc6fe3166a3bf71f14de5",
+      "checksum": "655f9f521f5775118f05f177c05d3a19",
       "channel": "stable",
-      "size": 14577
+      "size": 14921
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
@@ -894,9 +894,9 @@
     },
     "src/base_de_datos/motor_flash_transacciones.py": {
       "version": "1.0.0",
-      "checksum": "a0d016ea31c44c6b7fa947df0ae82901",
+      "checksum": "97076a69d565067fb46513c857dec04f",
       "channel": "stable",
-      "size": 5597
+      "size": 5726
     },
     "src/base_de_datos/offline_sync.py": {
       "version": "1.0.0",
@@ -1428,9 +1428,9 @@
     },
     "src/carteleria/interfaz_principal/banner_categoria.py": {
       "version": "1.0.0",
-      "checksum": "2863ce54919032c5c51a7dba48f0b08d",
+      "checksum": "d436147df8364523ef19ae10d0226b4d",
       "channel": "stable",
-      "size": 6760
+      "size": 6915
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
@@ -1896,9 +1896,9 @@
     },
     "src/inicio_y_perfiles/perfil_pantalla.py": {
       "version": "1.0.0",
-      "checksum": "e24796efe65d81a64bf070b0506a161e",
+      "checksum": "94db044e9ecf4b005bd299626241af4b",
       "channel": "stable",
-      "size": 22664
+      "size": 23211
     },
     "src/inicio_y_perfiles/__init__.py": {
       "version": "1.0.0",
@@ -2502,9 +2502,9 @@
     },
     "src/ui_global/inventario_ui/componentes/dialogo_galeria_iconos.py": {
       "version": "1.0.0",
-      "checksum": "2ef542bd6b8f54841b48e3954d5cb359",
+      "checksum": "5c49af4d7104bdfe6090c29d2aa61c42",
       "channel": "stable",
-      "size": 10085
+      "size": 10329
     },
     "src/ui_global/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
@@ -2598,9 +2598,9 @@
     },
     "src/utils/candados.py": {
       "version": "1.0.0",
-      "checksum": "f167b091d166958cd2be0dcd994af453",
+      "checksum": "1efe6fb25fb5dedb270d9c7d7fe8221d",
       "channel": "stable",
-      "size": 7201
+      "size": 7436
     },
     "src/utils/db.py": {
       "version": "1.0.0",
@@ -2814,9 +2814,9 @@
     },
     "tools/generar_iconos_base.py": {
       "version": "1.0.0",
-      "checksum": "f611565c7ab4455c62e554f9c1c21c5e",
+      "checksum": "5613e6a1bb8ee089f5901373db45053b",
       "channel": "stable",
-      "size": 1655
+      "size": 1704
     },
     "tools/pyqt6_audit.py": {
       "version": "1.0.0",

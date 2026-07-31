@@ -88,6 +88,11 @@ jobs:
             --collect-submodules "src.cajero" `
             --collect-submodules "src.carteleria" `
             --collect-submodules "src.services" `
+            --collect-submodules "src.utils" `
+            --collect-submodules "src.base_de_datos" `
+            --collect-submodules "src.inicio_y_perfiles" `
+            --collect-submodules "src.central_red_global" `
+            --collect-submodules "src.ui_global" `
             --add-data "src/ui_components/*.qss;src/ui_components/" `
             --add-data "src/assets/*;src/assets/" `
             --add-data "src/carteleria/assets/*;src/carteleria/assets/" `
