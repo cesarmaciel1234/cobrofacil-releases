@@ -1,7 +1,7 @@
 {
-  "app_version": "7.9",
+  "app_version": "7.10",
   "channel": "stable",
-  "build_date": "2026-07-31 00:10:38",
+  "build_date": "2026-07-31 00:16:47",
   "server_host": "CESAR",
   "modules": {
     "add_drain.py": {
@@ -3288,7 +3288,7 @@
     },
     "src/carteleria/dashboard/module_stats.json": {
       "version": "1.0.1",
-      "checksum": "13514646f61648e81e7de7cec3298beb",
+      "checksum": "8a2a2f5a7b1ee541dec390c3bb680c68",
       "channel": "stable",
       "size": 129
     },
