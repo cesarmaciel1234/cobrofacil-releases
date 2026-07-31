@@ -1,7 +1,7 @@
 {
-  "app_version": "8.4",
+  "app_version": "8.5",
   "channel": "stable",
-  "build_date": "2026-07-31 18:34:13",
+  "build_date": "2026-07-31 18:47:11",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "a3fd2a6a36a9c541ef5b391c3ac4bc8d",
+      "checksum": "0935596af3c2898332472ce7d9e2dfe3",
       "channel": "stable",
       "size": 629558
     },
@@ -468,9 +468,9 @@
     },
     "src/admin/clientes/componentes/dialogo_nuevo_cliente.py": {
       "version": "1.0.0",
-      "checksum": "bcd35b6105f9d0e9bcebc9db50194289",
+      "checksum": "8a7815c66d1351cabd613803764427f5",
       "channel": "stable",
-      "size": 3161
+      "size": 4334
     },
     "src/admin/clientes/componentes/dialogo_recalculo_fiado.py": {
       "version": "1.0.0",
