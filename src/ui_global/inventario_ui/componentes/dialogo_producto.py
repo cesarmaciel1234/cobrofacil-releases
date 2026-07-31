@@ -259,13 +259,33 @@ class DialogoProducto(QDialog):
                 background: #F1F5F9; 
                 border: 1px solid #CBD5E1; 
                 border-radius: 8px; 
-                padding: 10px; 
+                padding: 8px 12px; 
                 font-size: 14px;
                 color: #1E293B;
             }
             QComboBox:focus {
                 background: white;
                 border: 2px solid #3B82F6;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 24px;
+                border: none;
+                background: transparent;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border: none;
+            }
+            QComboBox QAbstractItemView {
+                background-color: white;
+                color: #1E293B;
+                selection-background-color: #3B82F6;
+                selection-color: white;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                outline: none;
             }
         """)
 

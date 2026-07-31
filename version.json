@@ -1,7 +1,7 @@
 {
-  "app_version": "8.3",
+  "app_version": "8.4",
   "channel": "stable",
-  "build_date": "2026-07-31 18:26:37",
+  "build_date": "2026-07-31 18:34:13",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "7ba93ff68baa1f82e752d761672e3863",
+      "checksum": "a3fd2a6a36a9c541ef5b391c3ac4bc8d",
       "channel": "stable",
       "size": 629558
     },
@@ -2508,9 +2508,9 @@
     },
     "src/ui_global/inventario_ui/componentes/dialogo_producto.py": {
       "version": "1.0.0",
-      "checksum": "cc6dce6b3392a6727dc7caa57de69c04",
+      "checksum": "6950a87907932e0228d89b870b10e8bc",
       "channel": "stable",
-      "size": 19346
+      "size": 20052
     },
     "src/ui_global/inventario_ui/componentes/panel_categorias.py": {
       "version": "1.0.0",
