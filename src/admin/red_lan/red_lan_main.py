@@ -12,6 +12,11 @@ from src.navigation.screen_indices import Screen
 from src.central_red_global.motor_red import MotorRed
 
 
+import socket
+import json
+import time
+import threading
+
 class Admin6RedLan(QWidget):
     request_dashboard = pyqtSignal()
     request_screen    = pyqtSignal(int)
@@ -246,7 +251,27 @@ class Admin6RedLan(QWidget):
         if ip_guardada and ip_guardada not in ("localhost", "127.0.0.1", ""):
             self.txt_ip_maestra.setText(ip_guardada)
         self.txt_ip_maestra.returnPressed.connect(self._convertir_esclava)
-        lay_e.addWidget(self.txt_ip_maestra)
+
+        scan_row = QHBoxLayout()
+        scan_row.setSpacing(8)
+        scan_row.addWidget(self.txt_ip_maestra, 1)
+
+        self.btn_scan_lan = QPushButton("🔍 Escanear Red")
+        self.btn_scan_lan.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_scan_lan.setStyleSheet(
+            "QPushButton { background: #0284C7; color: white; font-weight: bold; "
+            "padding: 8px 14px; border-radius: 8px; border: none; font-size: 12px; }"
+            "QPushButton:hover { background: #0369A1; }"
+            "QPushButton:disabled { background: #BAE6FD; color: #0284C7; }"
+        )
+        self.btn_scan_lan.clicked.connect(self._escanear_red_maestras)
+        scan_row.addWidget(self.btn_scan_lan)
+        lay_e.addLayout(scan_row)
+
+        self.lbl_scan_status = QLabel("")
+        self.lbl_scan_status.setWordWrap(True)
+        self.lbl_scan_status.setStyleSheet("font-size: 11px; font-weight: bold; border: none;")
+        lay_e.addWidget(self.lbl_scan_status)
 
         self.btn_hacer_esclava = QPushButton("🔗 Convertir en ESCLAVA")
         self.btn_hacer_esclava.setCursor(QCursor(Qt.PointingHandCursor))
@@ -372,3 +397,98 @@ class Admin6RedLan(QWidget):
     def _open_pin_esclava(self):
         from src.admin.configuracion.componentes.dialogo_pin_local import DialogoPINLocal
         qt_exec(DialogoPINLocal(self))
+
+    def _escanear_red_maestras(self):
+        """Escanea la red local por UDP Broadcast + TCP Sweep para encontrar PCs Maestras."""
+        self.btn_scan_lan.setEnabled(False)
+        self.btn_scan_lan.setText("🔍 Escaneando...")
+        self.lbl_scan_status.setText("⏳ Buscando PCs Maestras en la red local...")
+        self.lbl_scan_status.setStyleSheet("font-size: 11px; font-weight: bold; color: #0284C7; border: none;")
+        QApplication.processEvents()
+
+        def _task():
+            found = {}
+            # 1. UDP Discovery Broadcast (Puerto 37020)
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                sock.settimeout(1.5)
+                sock.sendto(b"PUNPRO_DISCOVER", ('255.255.255.255', 37020))
+                
+                t_end = time.time() + 1.5
+                while time.time() < t_end:
+                    try:
+                        data, addr = sock.recvfrom(1024)
+                        info = json.loads(data.decode('utf-8'))
+                        ip = info.get('server_ip') or addr[0]
+                        hostname = info.get('hostname', ip)
+                        found[ip] = f"{hostname} ({ip})"
+                    except Exception:
+                        break
+                sock.close()
+            except Exception:
+                pass
+
+            # 2. Fast Parallel TCP Port Scan (3306 / 8000) si UDP no encuentra nada
+            if not found:
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    s.connect(("8.8.8.8", 80))
+                    local_ip = s.getsockname()[0]
+                    s.close()
+                except Exception:
+                    try:
+                        local_ip = socket.gethostbyname(socket.gethostname())
+                    except Exception:
+                        local_ip = "192.168.1.1"
+
+                prefix = ".".join(local_ip.split(".")[:3])
+                threads = []
+
+                def check_host(ip):
+                    for port in (3306, 8000):
+                        try:
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            s.settimeout(0.3)
+                            res = s.connect_ex((ip, port))
+                            s.close()
+                            if res == 0:
+                                found[ip] = f"Servidor {ip}"
+                                break
+                        except Exception:
+                            pass
+
+                for host_id in range(1, 255):
+                    target = f"{prefix}.{host_id}"
+                    if target != local_ip:
+                        t = threading.Thread(target=check_host, args=(target,), daemon=True)
+                        threads.append(t)
+                        t.start()
+
+                for t in threads:
+                    t.join(timeout=0.04)
+
+            QTimer.singleShot(0, lambda: self._on_scan_finished(found))
+
+        threading.Thread(target=_task, daemon=True).start()
+
+    def _on_scan_finished(self, found: dict):
+        self.btn_scan_lan.setEnabled(True)
+        self.btn_scan_lan.setText("🔍 Escanear Red")
+        if not found:
+            self.lbl_scan_status.setText("⚠️ No se encontraron PCs Maestras en la red local. Ingrese la IP manualmente.")
+            self.lbl_scan_status.setStyleSheet("font-size: 11px; font-weight: bold; color: #DC2626; border: none;")
+        elif len(found) == 1:
+            ip = list(found.keys())[0]
+            name = found[ip]
+            self.txt_ip_maestra.setText(ip)
+            self.lbl_scan_status.setText(f"✅ PC Maestra detectada: {name}")
+            self.lbl_scan_status.setStyleSheet("font-size: 11px; font-weight: bold; color: #16A34A; border: none;")
+            self._actualizar_botones()
+        else:
+            first_ip = list(found.keys())[0]
+            self.txt_ip_maestra.setText(first_ip)
+            n_found = len(found)
+            self.lbl_scan_status.setText(f"✅ Se encontraron {n_found} PCs Maestras en la red (IP asignada: {first_ip})")
+            self.lbl_scan_status.setStyleSheet("font-size: 11px; font-weight: bold; color: #16A34A; border: none;")
+            self._actualizar_botones()

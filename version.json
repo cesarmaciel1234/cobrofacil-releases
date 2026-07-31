@@ -1,7 +1,7 @@
 {
-  "app_version": "8.8",
+  "app_version": "8.9",
   "channel": "stable",
-  "build_date": "2026-07-31 19:30:51",
+  "build_date": "2026-07-31 20:04:52",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "0ec9d156957254d23a71f4d282472f0f",
+      "checksum": "cfab655654fcaee35edbbe470a3d8b88",
       "channel": "stable",
-      "size": 629558
+      "size": 98301
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -438,9 +438,9 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "6940d0ce2d1ae13d726bd5f0a053efca",
+      "checksum": "f91fc972cd82a0db8ea825b38b055d8a",
       "channel": "stable",
-      "size": 17750
+      "size": 19573
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",
@@ -828,9 +828,9 @@
     },
     "src/admin/red_lan/red_lan_main.py": {
       "version": "1.0.0",
-      "checksum": "487fe3d47c8dbb5a068b0935b21bcb40",
+      "checksum": "7e44aa3c2083f040bdcdd457c611d99a",
       "channel": "stable",
-      "size": 18227
+      "size": 23693
     },
     "src/admin/red_lan/__init__.py": {
       "version": "1.0.0",
