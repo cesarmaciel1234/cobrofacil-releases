@@ -304,6 +304,16 @@ class PerfilPantalla(QDialog):
         top_bar.addWidget(sub)
         top_bar.addStretch()
 
+        # Smart Updater Badge Component
+        try:
+            from src.inicio_y_perfiles.smart_updater import SmartLauncherUpdater
+            self.smart_updater_badge = SmartLauncherUpdater(self)
+            top_bar.addWidget(self.smart_updater_badge)
+        except Exception as e:
+            print("Error cargando SmartLauncherUpdater:", e)
+
+        top_bar.addSpacing(10)
+
         btn_close = QPushButton("✕")
         btn_close.setFixedSize(28, 28)
         btn_close.setCursor(Qt.PointingHandCursor)
