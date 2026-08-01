@@ -8,6 +8,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.environ.setdefault("TPV_QT", "6")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 # Evitar segundo proceso Chromium en smoke
 sys.argv.extend(["--disable-gpu", "--disable-software-rasterizer"])

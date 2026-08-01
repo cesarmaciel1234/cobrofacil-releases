@@ -1,7 +1,7 @@
 {
-  "app_version": "10.5",
+  "app_version": "10.6",
   "channel": "stable",
-  "build_date": "2026-08-01 00:11:43",
+  "build_date": "2026-08-01 01:18:38",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,15 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "356588026210ad469df399007c4cd569",
+      "checksum": "5fcf2d2ca10970efe24653fa811d7c2e",
       "channel": "stable",
-      "size": 629745
+      "size": 629746
+    },
+    "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
+      "version": "1.0.0",
+      "checksum": "b88cb77e6240b1cdd24b4384e5deb998",
+      "channel": "stable",
+      "size": 1462
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -183,6 +189,12 @@
       "checksum": "7b74a204a77feb535ba1bf608cf209d7",
       "channel": "stable",
       "size": 1689
+    },
+    "01_Compiladores_y_Ejecutables/restaurar_backup.py": {
+      "version": "1.0.0",
+      "checksum": "95386c409240ebeaf5d9579e1ada7fe1",
+      "channel": "stable",
+      "size": 2511
     },
     "01_Compiladores_y_Ejecutables/run_pyinstaller.py": {
       "version": "1.0.0",
@@ -1446,9 +1458,9 @@
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "a778c1672b3d2dcfec2bc8fc019222d5",
+      "checksum": "c2427a2267f67d9e28311d77c0c3a489",
       "channel": "stable",
-      "size": 8501
+      "size": 8833
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
@@ -2748,9 +2760,9 @@
     },
     "tests/test_qt_compat.py": {
       "version": "1.0.0",
-      "checksum": "c224c81d525edb7faa68bd8130db29d3",
+      "checksum": "78ee9eb27d315092bc9129bddd794317",
       "channel": "stable",
-      "size": 2041
+      "size": 2154
     },
     "tests/stress/simulacion_viva.py": {
       "version": "1.0.0",
@@ -2838,9 +2850,9 @@
     },
     "tools/smoke_main_import.py": {
       "version": "1.0.0",
-      "checksum": "b9d8bb0ac586d589d974268bccc0b792",
+      "checksum": "7fcc9b5c2fb1cbf3f91b0412a77c0b3d",
       "channel": "stable",
-      "size": 1441
+      "size": 1496
     },
     "tools/smoke_pyqt6.py": {
       "version": "1.0.0",

@@ -140,8 +140,17 @@ class _AutoScrollList(QScrollArea):
         self._last_data_repr = current_data_repr
 
         for i in reversed(range(self.inner_layout.count())):
-            w = self.inner_layout.itemAt(i).widget()
-            if w: w.deleteLater()
+            item = self.inner_layout.itemAt(i)
+            if item is not None:
+                if item.widget():
+                    w = item.widget()
+                    self.inner_layout.removeWidget(w)
+                    w.setParent(None)
+                    w.deleteLater()
+                else:
+                    self.inner_layout.removeItem(item)
+                
+        self.container.adjustSize()
                 
         for _ in range(3): 
             for categoria, productos in items_by_category.items():

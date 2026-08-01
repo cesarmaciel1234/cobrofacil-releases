@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Forzar PyQt5 en CI/desarrollo salvo que se pruebe explícitamente Qt6
 os.environ.setdefault("TPV_QT", "6")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 class TestQtCompat(unittest.TestCase):
@@ -30,10 +31,11 @@ class TestQtCompat(unittest.TestCase):
 
     def test_qt_exec_dialog(self):
         from PyQt6.QtWidgets import QDialog
+        from PyQt6.QtCore import QTimer
 
         dlg = QDialog()
-        dlg.setResult(0)
-        self.assertEqual(qt_exec(dlg), 0)
+        QTimer.singleShot(10, dlg.accept)
+        self.assertEqual(qt_exec(dlg), 1)
 
     def test_screen_helpers(self):
         from src.utils.qt_compat import screen_count, screen_geometry_at
