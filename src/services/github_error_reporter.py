@@ -141,9 +141,10 @@ def _app_version() -> str:
     try:
         path = os.path.join(get_base_path(), "version.json")
         with open(path, encoding="utf-8") as f:
-            return str(json.load(f).get("version", "desconocida"))
+            v_data = json.load(f)
+            return str(v_data.get("app_version") or v_data.get("version", "10.3"))
     except (OSError, json.JSONDecodeError, TypeError):
-        return "desconocida"
+        return "10.3"
 
 
 def _build_body(entry: dict) -> str:

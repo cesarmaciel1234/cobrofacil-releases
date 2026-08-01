@@ -1,7 +1,7 @@
 {
-  "app_version": "10.3",
+  "app_version": "10.4",
   "channel": "stable",
-  "build_date": "2026-08-01 00:04:20",
+  "build_date": "2026-08-01 00:08:53",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "e79ce3c385767ebc60395265b875ff43",
+      "checksum": "15fab5869f0c8fa6f768d1127c9bc438",
       "channel": "stable",
       "size": 98489
     },
@@ -2262,9 +2262,9 @@
     },
     "src/services/github_error_reporter.py": {
       "version": "1.0.0",
-      "checksum": "7774162136debd4f4b9428323696df93",
+      "checksum": "551a3541f59ad0e16ead0f1b8a05c559",
       "channel": "stable",
-      "size": 9691
+      "size": 9735
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
