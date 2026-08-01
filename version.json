@@ -1,7 +1,7 @@
 {
   "app_version": "10.10",
   "channel": "stable",
-  "build_date": "2026-08-01 15:51:34",
+  "build_date": "2026-08-01 16:58:49",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -18,9 +18,9 @@
     },
     "check_db.py": {
       "version": "1.0.0",
-      "checksum": "e4f9ea29ffbfbf000c683d194cf6b4cd",
+      "checksum": "98a0177d471d6ad4f5067da22f81ab3d",
       "channel": "stable",
-      "size": 543
+      "size": 559
     },
     "debug_paso5.py": {
       "version": "1.0.0",
@@ -96,9 +96,9 @@
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
-      "checksum": "4543458d4fadbb152099a2cbc14873b3",
+      "checksum": "e20e8f438f0122441a71981d06a3b077",
       "channel": "stable",
-      "size": 2369
+      "size": 2438
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -684,9 +684,9 @@
     },
     "src/admin/auditoria_inventario/auditoria_main.py": {
       "version": "1.0.0",
-      "checksum": "97160df84d5b3a3c552209ab4bf991e4",
+      "checksum": "eac4a434419e2080741a7ef8d0ab0e38",
       "channel": "stable",
-      "size": 10892
+      "size": 11150
     },
     "src/admin/auditoria_inventario/__init__.py": {
       "version": "1.0.0",
@@ -1956,9 +1956,9 @@
     },
     "src/central_red_global/motor_red.py": {
       "version": "1.0.0",
-      "checksum": "bca77e8c0165cf5560104977a856a8e8",
+      "checksum": "7c1aaf51bb7d2ba4254fcd897777e397",
       "channel": "stable",
-      "size": 2681
+      "size": 2746
     },
     "src/central_red_global/network_engine.py": {
       "version": "1.0.0",
@@ -1980,9 +1980,9 @@
     },
     "src/cerebro_global/auditoria/motor_auditoria.py": {
       "version": "1.0.0",
-      "checksum": "70d10c90a445f81ef993d3bd7dbe80d4",
+      "checksum": "91474b685b9e6ee4240ef4ae6723706b",
       "channel": "stable",
-      "size": 3264
+      "size": 3351
     },
     "src/cerebro_global/auditoria/__init__.py": {
       "version": "1.0.0",
@@ -2556,9 +2556,9 @@
     },
     "src/services/inventario_service.py": {
       "version": "1.0.0",
-      "checksum": "b990009124e620b906b3634878fced49",
+      "checksum": "011e50652a3cf539e3be52ed8dcf3774",
       "channel": "stable",
-      "size": 2489
+      "size": 2546
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
@@ -2574,9 +2574,9 @@
     },
     "src/services/network_service.py": {
       "version": "1.0.0",
-      "checksum": "5e2eab57e0488fdcb02e13b626dd87d8",
+      "checksum": "702447813bf543570fd27b0212901ccf",
       "channel": "stable",
-      "size": 3327
+      "size": 3414
     },
     "src/services/onedrive_sync_daemon.py": {
       "version": "1.0.0",
@@ -2586,9 +2586,9 @@
     },
     "src/services/session_service.py": {
       "version": "1.0.0",
-      "checksum": "bc34b88fbd4da7949341375fe7d0c636",
+      "checksum": "4d81354ad5c9ec251156575c8ac71b5f",
       "channel": "stable",
-      "size": 894
+      "size": 919
     },
     "src/services/ventas_service.py": {
       "version": "1.0.0",
@@ -2700,9 +2700,9 @@
     },
     "src/ui_components/red_lan_panel.py": {
       "version": "1.0.0",
-      "checksum": "a85c948833402032f234ac2480d4820b",
+      "checksum": "7f84f27a9e48949531ab732f16d698b8",
       "channel": "stable",
-      "size": 19982
+      "size": 20401
     },
     "src/ui_components/tema_estilos.py": {
       "version": "1.0.0",
@@ -2778,9 +2778,9 @@
     },
     "src/ui_global/inventario_ui/inventario_main.py": {
       "version": "1.0.0",
-      "checksum": "c2e5b4925c35844917b1411ad78d0655",
+      "checksum": "0c32973a52d219901f676cc523af1ba5",
       "channel": "stable",
-      "size": 19604
+      "size": 20169
     },
     "src/ui_global/inventario_ui/__init__.py": {
       "version": "1.0.0",
@@ -2790,9 +2790,9 @@
     },
     "src/ui_global/inventario_ui/componentes/catalogo_productos.py": {
       "version": "1.0.0",
-      "checksum": "f0f04bfbfd3a7b0502a2e514f991d19b",
+      "checksum": "24f831a0e8b4592f94bbeae7aea1c57a",
       "channel": "stable",
-      "size": 15935
+      "size": 16312
     },
     "src/ui_global/inventario_ui/componentes/dialogo_galeria_iconos.py": {
       "version": "1.0.0",

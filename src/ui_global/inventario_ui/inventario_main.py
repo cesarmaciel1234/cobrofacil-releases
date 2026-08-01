@@ -31,7 +31,8 @@ class Admin1Inventario(QWidget):
     def showEvent(self, event):
         super().showEvent(event)
         self._apply_inventario_theme()
-        self.aplicar_permisos_perfil()
+        # Preservar el rol que ya fue asignado (puede venir forzado desde carteleria)
+        self.aplicar_permisos_perfil(self.user_role)
 
     def aplicar_permisos_perfil(self, rol: str = None):
         """Bloquea o desbloquea los botones de la barra de herramientas según el rol.
