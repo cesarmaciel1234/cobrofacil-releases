@@ -28,7 +28,7 @@ class PanelIA(QFrame):
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setContentsMargins(25, 25, 25, 25)
         
         self.layout.addStretch(1)
         
@@ -63,7 +63,7 @@ class PanelIA(QFrame):
         super().resizeEvent(event)
         # Posicionar el clima en la esquina superior derecha
         if not self.lbl_clima.isHidden():
-            self.lbl_clima.move(self.width() - self.lbl_clima.width() - 30, 30)
+            self.lbl_clima.move(self.width() - self.lbl_clima.width() - 40, 40)
 
     def actualizar_recomendacion(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla=""):
         from src.carteleria.theme import get_active_theme_name

@@ -64,7 +64,7 @@ class GrillaPrecios(QFrame):
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(8, 8, 8, 8) # Margen optimizado para evitar pérdida de espacio en pantallas estrechas
+        self.layout.setContentsMargins(20, 20, 20, 20) # Margen amplio para que el contenido no pise los bordes redondeados
         
         from PyQt6.QtWidgets import QSizePolicy
         self.scroll_area = _AutoScrollList()

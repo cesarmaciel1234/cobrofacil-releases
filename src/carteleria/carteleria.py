@@ -97,7 +97,7 @@ class CarteleriaApp(QStackedWidget):
         # La carteleria no tiene login → current_user es None → rol seria "cajero"
         # Forzamos admin para que los botones de edicion funcionen
         if hasattr(self.inv, "aplicar_permisos_perfil"):
-            self.inv.aplicar_permisos_perfil()
+            self.inv.aplicar_permisos_perfil("admin")
         if hasattr(self.inv, "catalogo") and hasattr(self.inv.catalogo, "aplicar_permisos_perfil"):
             self.inv.catalogo.aplicar_permisos_perfil("admin")
             

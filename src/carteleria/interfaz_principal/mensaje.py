@@ -22,9 +22,16 @@ class Mensaje(QFrame):
             color_texto = "#000000"
             apply_apple_shadow(self, blur=20, alpha=15, y_offset=5)
             
-        self.label = QLabel(self)
+        # Contenedor interno que actúa como "viewport" para recortar el texto y que no pise los bordes redondeados
+        from PyQt6.QtWidgets import QWidget
+        self.viewport = QWidget(self)
+        self.viewport.move(25, 0) # Margen izquierdo
+        self.viewport.setFixedHeight(50)
+        self.viewport.setStyleSheet("background: transparent;")
+        
+        self.label = QLabel(self.viewport)
         self.label.setStyleSheet(f"color: {color_texto}; font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: 20px; font-weight: 800; background: transparent; border: none;")
-        self.label.move(30, 0)
+        self.label.move(5, 0)
         self.label.setFixedHeight(50)
         self.label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
@@ -43,6 +50,7 @@ class Mensaje(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self.viewport.setFixedWidth(self.width() - 50) # 25px de margen a cada lado para no pisar bordes
         self._check_scroll()
 
     def _check_scroll(self):

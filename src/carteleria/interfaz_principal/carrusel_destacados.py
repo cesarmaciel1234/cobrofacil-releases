@@ -31,7 +31,7 @@ class CarruselDestacados(QFrame):
         self.motor.start() # Carga inicial
 
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(15, 15, 15, 15)
+        self.layout.setContentsMargins(25, 25, 25, 25)
         
         self.lbl_title = QLabel()
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)

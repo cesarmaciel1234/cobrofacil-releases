@@ -28,7 +28,7 @@ class PanelCombos(QFrame):
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setContentsMargins(25, 25, 25, 25)
         
         self.lbl_content = QLabel()
         self.lbl_content.setAlignment(Qt.AlignCenter)

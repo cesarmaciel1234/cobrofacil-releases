@@ -445,7 +445,9 @@ if __name__ == "__main__":
         pass
     
     # 1. Inicializar
-    app = QApplication(sys.argv)
+    app = QApplication.instance()
+    if not app:
+        app = QApplication(sys.argv)
     
     # --- APLICAR TEMA (QSS GLOBAL) ---
     try:
@@ -465,9 +467,10 @@ if __name__ == "__main__":
     from src.hardware.cash_drawer import reset_drawer_manager
     reset_drawer_manager()
 
-    start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
     from src.central_red_global.lan_server import init_lan_server
     init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
+    
+    start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
     start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
 
     parser = argparse.ArgumentParser(description="CobroFacil PRO 2026 Master Launcher")

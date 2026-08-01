@@ -241,6 +241,21 @@ def apply_pending_update_on_startup() -> bool:
     except Exception:
         logger = None
 
+    progress_dialog = None
+    try:
+        from PyQt6.QtWidgets import QApplication, QProgressDialog
+        from PyQt6.QtCore import Qt
+        app = QApplication.instance() or QApplication(sys.argv)
+        progress_dialog = QProgressDialog("Instalando actualización, por favor espere...\nNo cierre el programa.", None, 0, 0)
+        progress_dialog.setWindowTitle("CobroFacil PRO 2026 - Actualizando")
+        progress_dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
+        progress_dialog.setCancelButton(None)
+        progress_dialog.setMinimumDuration(0)
+        progress_dialog.show()
+        app.processEvents()
+    except Exception:
+        pass
+
     try:
         _stop_blocking_processes()
         time.sleep(2)
@@ -263,6 +278,15 @@ def apply_pending_update_on_startup() -> bool:
                 src = os.path.join(root, name)
                 dst = os.path.join(base, rel_root, name)
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
+                
+                if progress_dialog:
+                    try:
+                        from PyQt6.QtWidgets import QApplication
+                        app = QApplication.instance()
+                        if app:
+                            app.processEvents()
+                    except Exception:
+                        pass
                 
                 # En Windows no se puede sobrescribir un .exe o .dll en uso, 
                 # pero SI se puede renombrar.
@@ -323,6 +347,10 @@ def apply_pending_update_on_startup() -> bool:
         
         return True
     except Exception as exc:
+        try:
+            if 'progress_dialog' in locals() and progress_dialog:
+                progress_dialog.close()
+        except: pass
         if logger:
             logger.error(f"Error aplicando actualización silenciosa: {exc}")
         pending["ready"] = True
