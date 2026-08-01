@@ -1,7 +1,7 @@
 {
-  "app_version": "9.2",
+  "app_version": "9.3",
   "channel": "stable",
-  "build_date": "2026-07-31 21:00:07",
+  "build_date": "2026-07-31 21:29:45",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "6e3d9aa27b91e3a9573194b8a07f41bf",
+      "checksum": "00651172d696da2c384d229137e69c3e",
       "channel": "stable",
       "size": 629558
     },
@@ -2556,15 +2556,15 @@
     },
     "src/updater/github_updater.py": {
       "version": "1.0.0",
-      "checksum": "02f335e254794621aab0391a01128307",
+      "checksum": "2c5619e025bbf99cad4a1108fea20a29",
       "channel": "stable",
-      "size": 16933
+      "size": 17163
     },
     "src/updater/silent_auto_updater.py": {
       "version": "1.0.0",
-      "checksum": "9f9fa092310e0b3bed34bfc1d5f19736",
+      "checksum": "28273c840216c0ab282cccfe012c2270",
       "channel": "stable",
-      "size": 13580
+      "size": 13798
     },
     "src/updater/update_client.py": {
       "version": "1.0.0",

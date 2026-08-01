@@ -89,15 +89,23 @@ def read_remote_version() -> str:
         return ""
 
 
+def _clean_ver(v: str) -> tuple[int, ...]:
+    v_clean = str(v or "").strip().lstrip("vV")
+    parts = []
+    for p in v_clean.split("."):
+        try:
+            parts.append(int(p))
+        except ValueError:
+            parts.append(0)
+    return tuple(parts)
+
+
 def _version_newer(remote: str, local: str) -> bool:
     remote = (remote or "").strip()
     local = (local or "").strip()
     if not remote:
         return False
-    try:
-        return float(remote) > float(local)
-    except ValueError:
-        return remote > local
+    return _clean_ver(remote) > _clean_ver(local)
 
 
 def is_update_available() -> tuple[bool, str, str]:

@@ -38,6 +38,16 @@ def set_local_version(version_tag):
     except:
         pass
 
+def _clean_ver(v: str) -> tuple[int, ...]:
+    v_clean = str(v or "").strip().lstrip("vV")
+    parts = []
+    for p in v_clean.split("."):
+        try:
+            parts.append(int(p))
+        except ValueError:
+            parts.append(0)
+    return tuple(parts)
+
 def buscar_actualizacion_background(parent_widget=None):
     """ Busca actualizaciones en segundo plano al arrancar """
     def tarea():
@@ -54,8 +64,7 @@ def buscar_actualizacion_background(parent_widget=None):
             zip_url = data.get("zip_url", "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/CobroFacil_POS_Update.zip?alt=media")
             local_tag = get_local_version()
             
-            # Simple string comparison (e.g. v2026.2.1 > v2026.2.0)
-            if latest_tag and latest_tag > local_tag:
+            if latest_tag and _clean_ver(latest_tag) > _clean_ver(local_tag):
                 if zip_url and parent_widget and hasattr(parent_widget, "mostrar_alerta_actualizacion"):
                     invoke_method(parent_widget, "mostrar_alerta_actualizacion", latest_tag, zip_url)
         except Exception as e:
