@@ -99,17 +99,24 @@ def launch_app(direct_role=None):
     from src.utils.qt_dpi import apply_app_screen_adaptation
     apply_app_screen_adaptation(app)
     
+    is_direct = bool(direct_role)
+
     # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
-    from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
-    splash = CobroFacilSplash()
-    splash.show()
-    app.processEvents()
-    
-    def update_status(text, progress_val=None):
-        splash.update_status(text, progress_val)
+    if not is_direct:
+        from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
+        splash = CobroFacilSplash()
+        splash.show()
+        app.processEvents()
+        
+        def update_status(text, progress_val=None):
+            splash.update_status(text, progress_val)
+    else:
+        splash = None
+        def update_status(text, progress_val=None):
+            pass
 
     def run_heavy_task_fluid(task_func, timeout_sec=60):
-        """Ejecuta una función pesada en un hilo manteniendo el Splash fluido."""
+        """Ejecuta una función pesada en un hilo manteniendo la UI fluida."""
         import threading, time
         t = threading.Thread(target=task_func, daemon=True)
         t.start()
@@ -131,7 +138,10 @@ def launch_app(direct_role=None):
     from src.base_de_datos.database import db_manager
     from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
     sincronizador_carteleria.start()
-    run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
+    if is_direct:
+        db_manager._init_db()
+    else:
+        run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
     
     app.processEvents()
 
@@ -145,28 +155,33 @@ def launch_app(direct_role=None):
     # --- PASO 2: CARGAR HARDWARE ---
     update_status("Conectando periféricos industriales...", 45)
     from src.hardware.printer import printer_manager
-    # Hacer que la impresora también cargue de forma fluida si tarda en detectar
-    ok_ref = [False]
-    msg_ref = [""]
-    def _check_printer():
-        ok, msg = printer_manager.verificar_estado()
-        ok_ref[0] = ok
-        msg_ref[0] = msg
-    run_heavy_task_fluid(_check_printer, timeout_sec=5)
-    ok, msg = ok_ref[0], msg_ref[0]
+    ok = True
+    msg = ""
+    if not is_direct:
+        ok_ref = [False]
+        msg_ref = [""]
+        def _check_printer():
+            o, m = printer_manager.verificar_estado()
+            ok_ref[0] = o
+            msg_ref[0] = m
+        run_heavy_task_fluid(_check_printer, timeout_sec=3)
+        ok, msg = ok_ref[0], msg_ref[0]
+    else:
+        threading.Thread(target=printer_manager.verificar_estado, daemon=True).start()
 
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
     update_status("Verificando licencia de seguridad...", 60)
     from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
     
-    lic_active = [False]
-    run_heavy_task_fluid(lambda: lic_active.__setitem__(0, check_license_active()), timeout_sec=5)
-    
-    if not lic_active[0]:
-        splash.finish(None)
-        lic = LicenciaPantalla()
-        if not qt_exec(lic): sys.exit()
-        splash.show()
+    if not is_direct:
+        lic_active = [False]
+        run_heavy_task_fluid(lambda: lic_active.__setitem__(0, check_license_active()), timeout_sec=5)
+        
+        if not lic_active[0]:
+            if splash: splash.finish(None)
+            lic = LicenciaPantalla()
+            if not qt_exec(lic): sys.exit()
+            if splash: splash.show()
 
     # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
@@ -192,10 +207,14 @@ def launch_app(direct_role=None):
     except Exception as e:
         print("Error precargando WelcomeOverlay:", e)
     
-    # Cerramos Splash y empezamos el flujo
-    splash.finish(None)
+    # Cerramos Splash si existe y empezamos el flujo
+    if splash:
+        splash.finish(None)
 
-    if not ok:
+    if not is_direct and not ok:
+        QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
+            f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
+            "El sistema funcionará en modo simulación.")
         QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
             "El sistema funcionará en modo simulación.")
