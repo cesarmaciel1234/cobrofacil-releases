@@ -69,6 +69,11 @@ jobs:
           TPV_QT: "6"
         run: |
           python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" `
+            --exclude-module "PyQt5" `
+            --exclude-module "tkinter" `
+            --exclude-module "tcl" `
+            --exclude-module "_tkinter" `
+            --exclude-module "Tkinter" `
             --hidden-import "reportlab.graphics.barcode.code93" `
             --hidden-import "reportlab.graphics.barcode.code128" `
             --hidden-import "reportlab.graphics.barcode.code39" `
