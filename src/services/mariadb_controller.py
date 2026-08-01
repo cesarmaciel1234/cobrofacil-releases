@@ -78,10 +78,10 @@ class MariaDBController:
                 script_path = os.path.abspath(sys.argv[0])
                 
                 # Si estamos en python (.py), pasar el script como parámetro; si es exe compilado, sólo el flag
-                if not exe_path.endswith(".exe"):
-                    params = f'"{script_path}" --install-firewall'
-                else:
+                if getattr(sys, 'frozen', False):
                     params = "--install-firewall"
+                else:
+                    params = f'"{script_path}" --install-firewall'
                 
                 logger.info(f"Lanzando ShellExecuteW para elevacion. Exe: {exe_path}, Params: {params}")
                 # nShowCmd = 1 (SW_SHOWNORMAL) es VITAL para que Windows no bloquee el diálogo de consentimiento UAC

@@ -27,7 +27,7 @@
     "install_date": "2026-07-31T00:14:25.480617",
     "auto_virtual_keyboard": false,
     "facturacion_afip_global": false,
-    "db_engine": "mariadb",
+    "db_engine": "sqlite",
     "db_host": "localhost",
     "cierre_auto_hora": "00:00",
     "cierre_auto_activo": true,
