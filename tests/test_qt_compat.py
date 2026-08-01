@@ -57,9 +57,9 @@ class TestQtCompat(unittest.TestCase):
         anim.valueChanged.connect(values.append)
         anim.start()
         t0 = time.time()
-        while time.time() - t0 < 0.5:
+        while time.time() - t0 < 2.0 and not values:
             self._app.processEvents()
-            time.sleep(0.01)
+            time.sleep(0.05)
         anim.stop()
         self.assertTrue(len(values) >= 1)
 

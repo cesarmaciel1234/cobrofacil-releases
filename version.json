@@ -1,7 +1,7 @@
 {
   "app_version": "10.10",
   "channel": "stable",
-  "build_date": "2026-08-01 17:31:12",
+  "build_date": "2026-08-01 18:03:26",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -54,9 +54,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "f83b3493bdee7e003b6196f4a08b72f3",
+      "checksum": "fc2e4d4621a70146eef0730a6369715f",
       "channel": "stable",
-      "size": 19234
+      "size": 19290
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -1572,9 +1572,9 @@
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "9f82aadacb0765b031adc185186bf0ed",
+      "checksum": "2791bc336c0afc23e1c2f1cc5f4d2f81",
       "channel": "stable",
-      "size": 9132
+      "size": 9139
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -1704,7 +1704,7 @@
     },
     "src/carteleria/interfaz_principal/carrusel_destacados.py": {
       "version": "1.0.0",
-      "checksum": "3551b8c36a8b7957fa1cd124f2122bc5",
+      "checksum": "d45dc1ea0a806a977213621b2b072739",
       "channel": "stable",
       "size": 17435
     },
@@ -1716,25 +1716,25 @@
     },
     "src/carteleria/interfaz_principal/grilla_precios.py": {
       "version": "1.0.0",
-      "checksum": "d6bd8652e5b3f2cf2abb73b062bca191",
+      "checksum": "b9894e11f5c4655cd587a5ba7e29cdf6",
       "channel": "stable",
-      "size": 8866
+      "size": 8864
     },
     "src/carteleria/interfaz_principal/mensaje.py": {
       "version": "1.0.0",
-      "checksum": "8858ed9e87a9dc20482c561745198cb7",
+      "checksum": "19daa523f081d1af9b175355e178e89d",
       "channel": "stable",
-      "size": 3060
+      "size": 3546
     },
     "src/carteleria/interfaz_principal/panel_combos.py": {
       "version": "1.0.0",
-      "checksum": "67338766ac912cab941638ab8825e240",
+      "checksum": "9a9fbc4bdc0225288fbd3d6ed203e5b4",
       "channel": "stable",
       "size": 9611
     },
     "src/carteleria/interfaz_principal/panel_ia.py": {
       "version": "1.0.0",
-      "checksum": "4970e885f134003905021fa825a09a2b",
+      "checksum": "5cb8fc6b4ab7cccfa98fd0f47e8a61ce",
       "channel": "stable",
       "size": 13297
     },
@@ -2562,7 +2562,7 @@
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
-      "checksum": "3847002db5ddd5ef0d195cdab9ab0c66",
+      "checksum": "82fb10c14263d574049449183d28821a",
       "channel": "stable",
       "size": 17277
     },
@@ -2874,9 +2874,9 @@
     },
     "src/updater/silent_auto_updater.py": {
       "version": "1.0.0",
-      "checksum": "28273c840216c0ab282cccfe012c2270",
+      "checksum": "73187bea3beb39bef78dc80626e11e43",
       "channel": "stable",
-      "size": 13798
+      "size": 15047
     },
     "src/updater/update_client.py": {
       "version": "1.0.0",
