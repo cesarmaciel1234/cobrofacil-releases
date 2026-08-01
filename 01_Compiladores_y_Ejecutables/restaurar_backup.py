@@ -4,7 +4,8 @@ import subprocess
 import time
 import zipfile
 
-base_install = r"C:\Users\cesar\CobroFacil_POS_Install"
+# Obtener la ruta absoluta de la carpeta del propio script (hace el programa 100% portable)
+base_install = os.path.dirname(os.path.abspath(__file__))
 mysql_exe = os.path.join(base_install, "mariadb_server", "bin", "mysql.exe")
 mysqld_exe = os.path.join(base_install, "mariadb_server", "bin", "mysqld.exe")
 data_dir = os.path.join(base_install, "mariadb_server", "data")
