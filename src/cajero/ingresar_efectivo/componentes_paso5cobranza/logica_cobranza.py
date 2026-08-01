@@ -76,35 +76,11 @@ def buscar_deudores(consulta: str) -> list:
 
     if p["tipo"] == "todos":
         base += " AND c.deuda_actual > 0.01"
-    elif p["tipo"] == "dni":
-        v = p["valor"]
-        base += " AND (c.dni = ? OR c.dni LIKE ? OR c.nombre LIKE ? OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)"
-        params.extend([v, f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
-    elif p["tipo"] == "nombre":
-        v = p["valor"]
+    else:
+        v = str(p["valor"]).strip()
         base += (" AND (c.nombre LIKE ? OR COALESCE(c.dni, '') LIKE ?"
                  " OR COALESCE(c.telefono, '') LIKE ? OR COALESCE(c.direccion, '') LIKE ?)")
         params.extend([f"%{v}%", f"%{v}%", f"%{v}%", f"%{v}%"])
-    elif p["tipo"] == "monto":
-        m = float(p["valor"])
-        base += """
-            AND (
-                ABS(c.deuda_actual - ?) < 0.05
-                OR EXISTS (
-                    SELECT 1 FROM cuenta_corriente cc
-                    WHERE cc.cliente_id = c.id AND ABS(cc.monto - ?) < 0.05
-                )
-            )
-        """
-        params.extend([m, m])
-    elif p["tipo"] == "fecha":
-        base += """
-            AND EXISTS (
-                SELECT 1 FROM cuenta_corriente cc
-                WHERE cc.cliente_id = c.id AND DATE(cc.fecha) = ?
-            )
-        """
-        params.append(p["valor"])
 
     base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"
     rows = db_manager.execute_query(base, tuple(params)) or []

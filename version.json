@@ -1,7 +1,7 @@
 {
-  "app_version": "9.1",
+  "app_version": "9.2",
   "channel": "stable",
-  "build_date": "2026-07-31 20:20:10",
+  "build_date": "2026-07-31 21:00:07",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "a02a66e2000df743b19fa9af87160f20",
+      "checksum": "6e3d9aa27b91e3a9573194b8a07f41bf",
       "channel": "stable",
       "size": 629558
     },
@@ -960,9 +960,9 @@
     },
     "src/cajero/ingresar_efectivo/componentes_paso5cobranza/logica_cobranza.py": {
       "version": "1.0.0",
-      "checksum": "c12ff005c44a0c5789d18c1a518143ee",
+      "checksum": "dee044d0a23c1cd63fd4379906fb82e6",
       "channel": "stable",
-      "size": 4955
+      "size": 4032
     },
     "src/cajero/ingresar_efectivo/componentes_paso5cobranza/__init__.py": {
       "version": "1.0.0",
