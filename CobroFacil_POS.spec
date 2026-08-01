@@ -2,19 +2,16 @@
 from PyInstaller.utils.hooks import collect_submodules
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('src/ui_components/*.qss', 'src/ui_components/'), ('assets', 'assets'), ('src/carteleria/assets', 'src/carteleria/assets')]
+datas = [('src/ui_components/*.qss', 'src/ui_components')]
 binaries = []
 hiddenimports = ['reportlab.graphics.barcode.code93', 'reportlab.graphics.barcode.code128', 'reportlab.graphics.barcode.code39', 'reportlab.graphics.barcode.eanbc', 'lxml', 'html5lib', 'openpyxl', 'win32com', 'win32com.client', 'PyQt6.QtWebEngineWidgets', 'PyQt6.QtWebEngineCore']
 hiddenimports += collect_submodules('src.admin')
 hiddenimports += collect_submodules('src.jefe')
-hiddenimports += collect_submodules('src.cajero')
 hiddenimports += collect_submodules('src.carteleria')
 hiddenimports += collect_submodules('src.services')
 tmp_ret = collect_all('PyQt6.QtWebEngineCore')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('PyQt6.QtWebEngineWidgets')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('barcode')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
 
@@ -27,7 +24,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.QtWebEngineWidgets', 'PyQt5.QtWebEngineCore', 'PyQt5.QtNetwork'],
+    excludes=['PyQt5', 'tkinter', 'tcl', '_tkinter', 'Tkinter'],
     noarchive=False,
     optimize=0,
 )

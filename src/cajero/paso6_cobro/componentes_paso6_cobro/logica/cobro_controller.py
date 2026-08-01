@@ -183,8 +183,8 @@ class CobroController:
             if not id_v:
                 return False, "Error al guardar la venta en la base de datos."
                 
-            # Si fue fiado, actualizar la deuda
-            if metodo == "Fiado":
+            # Si fue fiado o clientes, actualizar la deuda
+            if metodo in ("Fiado", "Clientes"):
                 exito, cli_res = CobroController.procesar_fiado(cliente_id, total_final, id_v)
                 if not exito:
                     return False, cli_res

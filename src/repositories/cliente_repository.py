@@ -132,3 +132,33 @@ class ClienteRepository:
     def credito_disponible(cliente: dict) -> float:
         c_dict = dict(cliente) if hasattr(cliente, "keys") else cliente
         return float(c_dict.get("limite_credito", 0)) - float(c_dict.get("deuda_actual", 0))
+
+    @staticmethod
+    def registrar_abono(cliente_id: int, monto: float) -> tuple[bool, float, str]:
+        """
+        Registra un abono a la cuenta corriente del cliente.
+        Actualiza su deuda_actual y guarda el movimiento en cuenta_corriente.
+        Retorna (exito, nuevo_saldo, nombre_cliente).
+        """
+        cliente = ClienteRepository.obtener_por_id(cliente_id)
+        if not cliente:
+            return False, 0.0, ""
+        
+        deuda_actual = float(dict(cliente).get("deuda_actual") or 0.0)
+        nuevo_saldo = max(0.0, deuda_actual - monto)
+        nombre = dict(cliente).get("nombre", "")
+        
+        # Actualizar clientes
+        db_manager.execute_non_query(
+            "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+            (nuevo_saldo, cliente_id)
+        )
+        
+        # Registrar en cuenta_corriente
+        db_manager.execute_non_query(
+            "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
+            "VALUES (?, 'ABONO', ?, ?, ?)",
+            (cliente_id, monto, nuevo_saldo, 'Abono Fiado en Caja')
+        )
+        
+        return True, nuevo_saldo, nombre

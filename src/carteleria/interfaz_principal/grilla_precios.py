@@ -109,8 +109,8 @@ class _AutoScrollList(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
-        self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setStyleSheet("background: transparent; border: none;")
+        self.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        self.viewport().setStyleSheet("background: transparent;")
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
