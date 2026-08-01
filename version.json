@@ -1,7 +1,7 @@
 {
-  "app_version": "10.1",
+  "app_version": "10.2",
   "channel": "stable",
-  "build_date": "2026-07-31 23:50:12",
+  "build_date": "2026-08-01 00:00:42",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "d4bd603b1cf51f6cd35cd22b737308b3",
+      "checksum": "38ae773e0c90f43363ec9136428b1fee",
       "channel": "stable",
-      "size": 629559
+      "size": 98489
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -888,9 +888,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "98f2301c51dbbb9f2f6fecadaa6ed68a",
+      "checksum": "c202325d2b679ebcfb2a8c3dc69ea85c",
       "channel": "stable",
-      "size": 65308
+      "size": 65683
     },
     "src/base_de_datos/motor_flash_transacciones.py": {
       "version": "1.0.0",
@@ -1152,9 +1152,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "43af1e67e2a120c2896b6d2c0cd689ec",
+      "checksum": "72a641d8fa519d01402de990cc086967",
       "channel": "stable",
-      "size": 51011
+      "size": 51183
     },
     "src/cajero/paso6_cobro/__init__.py": {
       "version": "1.0.0",
@@ -1914,9 +1914,9 @@
     },
     "src/inicio_y_perfiles/logica/auth_controller.py": {
       "version": "1.0.0",
-      "checksum": "aeb8a7f099033c13991cbb4a5411a5fe",
+      "checksum": "3d9de1b48c438c0629ef3dc0bd8f2b01",
       "channel": "stable",
-      "size": 3070
+      "size": 2978
     },
     "src/inicio_y_perfiles/logica/caja_controller.py": {
       "version": "1.0.0",
@@ -2268,9 +2268,9 @@
     },
     "src/services/mariadb_controller.py": {
       "version": "1.0.0",
-      "checksum": "2550cc9c70e2c9d83e881e64711be347",
+      "checksum": "5ca77573acb67cb1afd5d194670783ed",
       "channel": "stable",
-      "size": 12964
+      "size": 13332
     },
     "src/services/mercadopago_instore.py": {
       "version": "1.0.0",

@@ -9,16 +9,15 @@ class AuthController:
         pass
 
     def get_users_by_role(self, role: str):
-        """Devuelve la lista de nombres de usuario que tienen un rol específico.
-        Si role es 'cajero_test', se usa como alias de 'cajero' pero permite buscar admin si está vacío."""
+        """Devuelve la lista de nombres de usuario que tienen un rol específico."""
         if role == "cajero_test":
             res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'cajero'")
             if not res:
                 res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = 'admin'")
-            return [r['username'] for r in res]
+            return [r['username'] for r in (res or [])]
         else:
             res = db_manager.execute_query("SELECT username FROM usuarios WHERE rol = ?", (role,))
-            return [r['username'] for r in res]
+            return [r['username'] for r in (res or [])]
 
     def authenticate(self, username: str, password_plain: str) -> dict:
         """Verifica las credenciales y devuelve el diccionario del usuario si es exitoso, None en caso contrario."""

@@ -216,9 +216,15 @@ class MariaDBController:
         
         sql_commands = (
             "CREATE DATABASE IF NOT EXISTS punpro_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '1234' WITH GRANT OPTION;"
-            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '1234' WITH GRANT OPTION;"
-            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '1234' WITH GRANT OPTION;"
+            "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '1234';"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;"
+            "ALTER USER 'root'@'%' IDENTIFIED BY '1234';"
+            "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '1234';"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
+            "ALTER USER 'root'@'localhost' IDENTIFIED BY '1234';"
+            "CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '1234';"
+            "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;"
+            "ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '1234';"
             "FLUSH PRIVILEGES;"
         )
         

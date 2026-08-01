@@ -621,6 +621,10 @@ class Paso6Cobro(QDialog):
         self.set_metodo("Fiado")
         self._abrir_fiado_express_original(rev)
 
+    def _abrir_fiado_express(self, revertir_a="Efectivo"):
+        """Abre el flujo de Fiado Express."""
+        return self._abrir_fiado_express_original(revertir_a)
+
     def _abrir_fiado_express_original(self, revertir_a="Efectivo"):
         """Fiado Express original."""
         from PyQt6.QtWidgets import QDialog

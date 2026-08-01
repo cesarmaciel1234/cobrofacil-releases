@@ -1039,7 +1039,7 @@ class DatabaseManager:
         )
         return query
 
-    def execute_query(self, query: str, params: tuple = ()) -> Optional[List[sqlite3.Row]]:
+    def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
         try:
@@ -1047,10 +1047,16 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(self._normalize_query(query), params)
             result = cursor.fetchall()
-            return result
+            return result if result is not None else []
         except Exception as e:
             logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            return None
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
+                try:
+                    logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
+                    self.reconectar_local()
+                except Exception:
+                    pass
+            return []
         finally:
             if conn:
                 conn.close()
