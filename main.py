@@ -279,6 +279,8 @@ def launch_app(direct_role=None):
             else:
                 login_dlg.hide()
                 app.processEvents()
+                if direct_role:
+                    return 0
                 step = 1
         elif step == 3:
             hizo_cierre, monto_c = verificar_y_realizar_autocierre()

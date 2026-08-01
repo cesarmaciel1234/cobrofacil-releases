@@ -1,7 +1,7 @@
 {
-  "app_version": "9.5",
+  "app_version": "9.6",
   "channel": "stable",
-  "build_date": "2026-07-31 21:43:01",
+  "build_date": "2026-07-31 21:53:00",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -72,9 +72,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "7f8582046d6aec776ce90f73665b87a8",
+      "checksum": "f1a3293937811eda45ef05cff31af781",
       "channel": "stable",
-      "size": 19165
+      "size": 19228
     },
     "PRECIO27_06.xlsx": {
       "version": "1.0.0",
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "50e4e83cc00ef8f9ab7a6f76f762016d",
+      "checksum": "25d5dfa1ae438ac9c1eef2f9a9d1c482",
       "channel": "stable",
       "size": 629558
     },
