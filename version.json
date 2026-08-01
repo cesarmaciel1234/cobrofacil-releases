@@ -1,7 +1,7 @@
 {
-  "app_version": "10.2",
+  "app_version": "10.3",
   "channel": "stable",
-  "build_date": "2026-08-01 00:00:42",
+  "build_date": "2026-08-01 00:04:20",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "38ae773e0c90f43363ec9136428b1fee",
+      "checksum": "e79ce3c385767ebc60395265b875ff43",
       "channel": "stable",
       "size": 98489
     },
@@ -888,9 +888,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "c202325d2b679ebcfb2a8c3dc69ea85c",
+      "checksum": "cad9c4f3ffa46f9dde2a35d4e2ffd0a9",
       "channel": "stable",
-      "size": 65683
+      "size": 65945
     },
     "src/base_de_datos/motor_flash_transacciones.py": {
       "version": "1.0.0",

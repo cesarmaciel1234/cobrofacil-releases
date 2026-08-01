@@ -123,16 +123,19 @@ class DatabaseManager:
                             data, addr = sock_scan.recvfrom(1024)
                             info = json.loads(data.decode('utf-8'))
                             if info.get('mode') == 'MAESTRA':
-                                host = info.get('server_ip', addr[0])
-                                logger.info(f"Maestra auto-descubierta en {host}. Reintentando...")
+                                discovered_host = info.get('server_ip', addr[0])
                                 sock_scan.close()
-                                
-                                # Actualizar la IP en memoria y config
-                                from src.config import config
-                                config.set("db_host", host)
-                                config.save()
-                                self.mariadb_engine = MariaDBEngine(host=host)
-                                continue  # Vuelve a intentar la conexión con la nueva IP
+                                if discovered_host and discovered_host != host:
+                                    logger.info(f"Nueva Maestra auto-descubierta en {discovered_host}. Reintentando...")
+                                    host = discovered_host
+                                    from src.config import config
+                                    config.set("db_host", host)
+                                    config.save()
+                                    self.mariadb_engine = MariaDBEngine(host=host)
+                                    continue
+                                else:
+                                    logger.warning(f"La Maestra descubierta ({discovered_host}) es la misma IP que falló. Omitiendo bucle.")
+                                    break
                             sock_scan.close()
                         except Exception as e:
                             logger.info(f"Auto-descubrimiento falló: {e}")
