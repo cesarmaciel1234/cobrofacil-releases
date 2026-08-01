@@ -13,33 +13,12 @@ from __future__ import annotations
 import os
 import sys
 
-_QT_PREF = os.environ.get("TPV_QT", "6").strip()
+from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: F401
 
-
-def _load_qt():
-    if _QT_PREF == "6":
-        try:
-            from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: F401
-            return 6, QtCore, QtGui, QtWidgets
-        except ImportError as exc:
-            raise ImportError(
-                "TPV_QT=6 pero PyQt6 no está instalado. "
-                "Ejecuta: pip install -r requirements-pyqt6.txt"
-            ) from exc
-    try:
-        from PyQt5 import QtCore, QtGui, QtWidgets  # noqa: F401
-        return 5, QtCore, QtGui, QtWidgets
-    except ImportError as exc:
-        raise ImportError(
-            "PyQt5 no está instalado. Ejecuta: pip install -r requirements.txt"
-        ) from exc
-
-
-QT_VERSION, QtCore, QtGui, QtWidgets = _load_qt()
+QT_VERSION = 6
 Qt = QtCore.Qt
-
-IS_QT6 = QT_VERSION >= 6
-QT_BINDING = "PyQt6" if IS_QT6 else "PyQt5"
+IS_QT6 = True
+QT_BINDING = "PyQt6"
 
 
 def _patch_qt_enums() -> None:
@@ -159,30 +138,20 @@ def qt_exec(obj, *args, **kwargs):
 
 def configure_qt_application_attributes() -> None:
     """Atributos de app antes del primer QApplication()."""
-    if IS_QT6:
-        if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
-            try:
-                policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-            except AttributeError:
-                policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-            QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(policy)
-        return
-
-    if hasattr(Qt, "AA_EnableHighDpiScaling"):
-        QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
-    if hasattr(Qt, "AA_UseHighDpiPixmaps"):
-        QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
+        try:
+            policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        except AttributeError:
+            policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(policy)
 
 
 def set_share_opengl_contexts() -> None:
     """Requerido por QtWebEngine antes de QApplication."""
     try:
-        if IS_QT6:
-            attr = Qt.ApplicationAttribute.AA_ShareOpenGLContexts
-        else:
-            attr = getattr(Qt, "AA_ShareOpenGLContexts", None)
+        attr = Qt.ApplicationAttribute.AA_ShareOpenGLContexts
         if attr is not None:
-            QCoreApplication.setAttribute(attr, True)
+            QtCore.QCoreApplication.setAttribute(attr, True)
     except Exception:
         pass
 
@@ -208,12 +177,9 @@ def invoke_method(obj, method_name: str, *args) -> bool:
 
 
 def create_webengine_page(parent, callback):
-    """Crea una QWebEnginePage que intercepta console.log de forma segura en PyQt5 y PyQt6."""
+    """Crea una QWebEnginePage que intercepta console.log de forma segura."""
     try:
-        if IS_QT6:
-            from PyQt6.QtWebEngineCore import QWebEnginePage
-        else:
-            from PyQt5.QtWebEngineWidgets import QWebEnginePage
+        from PyQt6.QtWebEngineCore import QWebEnginePage
     except ImportError:
         return None
 
@@ -223,18 +189,13 @@ def create_webengine_page(parent, callback):
     
     return HookedPage(parent)
 
-
 def webengine_page_transparent(page) -> None:
     """Fondo transparente del canvas WebEngine."""
     try:
         from PyQt6.QtGui import QColor
-
         page.setBackgroundColor(QColor(0, 0, 0, 0))
     except Exception:
-        try:
-            page.setBackgroundColor(Qt.transparent)
-        except Exception:
-            pass
+        pass
 
 
 def screen_count(app=None) -> int:
@@ -279,10 +240,9 @@ def easing_sine_curve():
 
 class VariantFloatAnimation(QObject):
     """
-  Animación de float compatible PyQt5/QPyQt6.
-  En PyQt5 usa QVariantAnimation; en PyQt6 usa QPropertyAnimation.
-  API compatible: setStartValue, setEndValue, setDuration, valueChanged,
-  finished, setEasingCurve, setLoopCount, start, stop.
+    Animación de float para PyQt6 (usa QPropertyAnimation).
+    API compatible: setStartValue, setEndValue, setDuration, valueChanged,
+    finished, setEasingCurve, setLoopCount, start, stop.
     """
 
     valueChanged = pyqtSignal(object)
@@ -296,7 +256,6 @@ class VariantFloatAnimation(QObject):
         self._start = 0.0
         self._end = 1.0
         self._anim = None
-        self._qt5_anim = None
 
     def setStartValue(self, value):
         self._start = float(value)
@@ -315,19 +274,6 @@ class VariantFloatAnimation(QObject):
 
     def start(self):
         self.stop()
-        if not IS_QT6:
-            from PyQt5.QtCore import QVariantAnimation
-
-            self._qt5_anim = QVariantAnimation(self)
-            self._qt5_anim.setStartValue(self._start)
-            self._qt5_anim.setEndValue(self._end)
-            self._qt5_anim.setDuration(self._duration)
-            self._qt5_anim.setEasingCurve(self._easing)
-            self._qt5_anim.setLoopCount(self._loop_count)
-            self._qt5_anim.valueChanged.connect(self.valueChanged.emit)
-            self._qt5_anim.finished.connect(self.finished.emit)
-            self._qt5_anim.start()
-            return
 
         holder = _FloatHolder(self._start, self.valueChanged.emit, parent=self)
         self._holder = holder
@@ -341,9 +287,6 @@ class VariantFloatAnimation(QObject):
         self._anim.start()
 
     def stop(self):
-        if self._qt5_anim is not None:
-            self._qt5_anim.stop()
-            self._qt5_anim = None
         if self._anim is not None:
             self._anim.stop()
             self._anim = None

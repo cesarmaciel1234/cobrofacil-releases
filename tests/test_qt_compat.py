@@ -6,8 +6,6 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Forzar PyQt5 en CI/desarrollo salvo que se pruebe explícitamente Qt6
-os.environ.setdefault("TPV_QT", "6")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
@@ -22,12 +20,8 @@ class TestQtCompat(unittest.TestCase):
 
         info = binding_info()
         self.assertIn("binding", info)
-        if os.environ.get("TPV_QT", "6") == "6":
-            self.assertTrue(IS_QT6)
-            self.assertEqual(QT_BINDING, "PyQt6")
-        else:
-            self.assertFalse(IS_QT6)
-            self.assertEqual(QT_BINDING, "PyQt5")
+        self.assertTrue(IS_QT6)
+        self.assertEqual(QT_BINDING, "PyQt6")
 
     def test_qt_exec_dialog(self):
         from PyQt6.QtWidgets import QDialog

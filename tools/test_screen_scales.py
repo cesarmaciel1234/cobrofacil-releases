@@ -51,7 +51,7 @@ def main():
     print("--- PANTALLA REAL (Qt) ---")
     configure_process_dpi()
     configure_qt_application_attributes()
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     info = screen_info(app)

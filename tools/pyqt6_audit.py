@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 
-SKIP_DIRS = {"__pycache__", ".git", "mariadb_server", "dist", "build", "temp_restore"}
+SKIP_DIRS = {"__pycache__", ".git", "mariadb_server", "dist", "build", "temp_restore", ".venv", "venv"}
 SKIP_FILES = {"qt_compat.py"}
 
 PATTERNS = {

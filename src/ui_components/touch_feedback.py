@@ -29,11 +29,7 @@ class TouchFeedbackManager(QObject):
             parent_app.setStyleSheet(current_style + glow_css)
 
     def eventFilter(self, obj, event):
-        # Compatibilidad PyQt5 / PyQt6
-        try:
-            EventType = QEvent.Type
-        except AttributeError:
-            EventType = QEvent
+        EventType = QEvent.Type
             
         # Capturar clics de ratón
         if event.type() == EventType.MouseButtonPress:
