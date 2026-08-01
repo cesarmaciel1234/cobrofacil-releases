@@ -547,14 +547,10 @@ class EtiquetaRenderer:
         c.setFillColor(white)
         c.rect(x, y, w, h, fill=1, stroke=0)
 
-        # Doble borde elegante "FUEGO" de alto impacto
+        # Borde único naranja (igual que la cartelería en pantalla)
         c.setStrokeColor(naranja_accent)
-        c.setLineWidth(3)
+        c.setLineWidth(4)
         c.roundRect(x + 20, y + 20, w - 40, h - 40, 16, fill=0, stroke=1)
-        
-        c.setStrokeColor(amarillo_accent)
-        c.setLineWidth(1.5)
-        c.roundRect(x + 24, y + 24, w - 48, h - 48, 14, fill=0, stroke=1)
 
         # Header Badge (Píldora Roja de Oferta con borde amarillo brillante)
         c.setFillColor(rojo_accent)
@@ -707,14 +703,10 @@ class EtiquetaRenderer:
         c.setFillColor(white)
         c.rect(x, y, w, h, fill=1, stroke=0)
 
-        # Borde elegante "FUEGO" de alto impacto
+        # Borde único naranja (igual que la cartelería en pantalla)
         c.setStrokeColor(naranja_accent)
-        c.setLineWidth(2.5)
+        c.setLineWidth(4)
         c.roundRect(x + 15, y + 15, w - 30, h - 30, 12, fill=0, stroke=1)
-        
-        c.setStrokeColor(amarillo_accent)
-        c.setLineWidth(1)
-        c.roundRect(x + 18, y + 18, w - 36, h - 36, 10, fill=0, stroke=1)
 
         # Header Badge (Píldora Roja de Oferta con borde amarillo)
         c.setFillColor(rojo_accent)

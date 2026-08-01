@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QFileDialog
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
+from src.services.inventario_service import InventarioService
+from src.services.session_service import SessionService
 from src.config import config
 
 from src.ui_global.inventario_ui.componentes.filtros_inventario import FiltrosInventario
@@ -18,17 +20,13 @@ class MotorBusquedaInventario(QThread):
         self.depto = None
         self._motor = None
         
-    def setup(self, buscar, depto, motor):
+    def setup(self, buscar, depto):
         self.buscar = buscar
         self.depto = depto
-        self._motor = motor
         
     def run(self):
         try:
-            if not self._motor: 
-                return
-            # El motor ya devuelve filas de tipo dict estandarizadas
-            filas, _ = self._motor.obtener_productos(self.buscar, self.depto, limite=50000, offset=0)
+            filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=50000)
             sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
             self.busqueda_terminada.emit(filas, sin_stock)
         except Exception as e:
@@ -42,13 +40,7 @@ class CatalogoProductos(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.all_rows = []
-        self.user_role = "admin" # Rol por defecto
-        
-        # Iniciar Motores
-        from src.motor_inventario.motor_catalogo import MotorCatalogo
-        from src.motor_inventario.motor_importacion import MotorImportacion
-        self.motor = MotorCatalogo()
-        self.motor_imp = MotorImportacion()
+        self.user_role = SessionService.obtener_rol_usuario()
         
         self.motor_busqueda = MotorBusquedaInventario(self)
         self.motor_busqueda.busqueda_terminada.connect(self._on_busqueda_terminada)
@@ -88,9 +80,11 @@ class CatalogoProductos(QWidget):
 
     def aplicar_permisos_perfil(self, rol=None):
         """Bloquea o desbloquea funciones segun el rol del perfil del usuario."""
+        from src.services.session_service import SessionService
         if rol is None:
-            rol = config.current_user.get("role", "cajero")
-        self.user_role = str(rol).lower()
+            self.user_role = SessionService.obtener_rol_usuario()
+        else:
+            self.user_role = str(rol).lower()
 
         # Si es cajero, no puede alterar el inventario (es de solo lectura)
         es_lectura_solamente = (self.user_role == "cajero")
@@ -184,7 +178,7 @@ class CatalogoProductos(QWidget):
         self.pie.lbl_stock0.setText("")
         self.tabla.setRowCount(0)
         
-        self.motor_busqueda.setup(buscar, depto, self.motor)
+        self.motor_busqueda.setup(buscar, depto)
         self.motor_busqueda.start()
 
     def _on_busqueda_terminada(self, filas, sin_stock):
@@ -196,7 +190,7 @@ class CatalogoProductos(QWidget):
         self.pie.actualizar_seleccion(cantidad)
 
     def _modificar_por_id(self, id_p):
-        r = self.motor.obtener_producto_por_id(id_p)
+        r = InventarioService.buscar_producto_por_id(id_p)
         if not r: 
             return
             
@@ -227,7 +221,7 @@ class CatalogoProductos(QWidget):
         if qt_exec(dlg):
             d = dlg.get_data()
             is_new = not bool(d.get('id'))
-            ok, msg = self.motor.guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
+            ok, msg = InventarioService.guardar_producto(d, es_nuevo=is_new, producto_id=d.get('id'))
             if ok:
                 self.cargar_datos()
                 try:
@@ -267,8 +261,7 @@ class CatalogoProductos(QWidget):
                 super().__init__()
                 self.path = path
             def run(self):
-                from src.admin.admin_importexport import exportar_excel
-                ok, msg = exportar_excel(self.path)
+                ok, msg = InventarioService.exportar_a_excel(self.path)
                 self.finished.emit(ok, msg)
                 
         self._btn_sender = self.sender()
@@ -303,8 +296,7 @@ class CatalogoProductos(QWidget):
         class WorkerPrecarga(QThread):
             finished = pyqtSignal(bool, str)
             def run(self):
-                from src.motor_inventario.motor_importacion import MotorImportacion
-                ok, msg = MotorImportacion().descargar_precarga()
+                ok, msg = InventarioService.descargar_productos_nube()
                 self.finished.emit(ok, msg)
 
         self._btn_sender_pre = self.sender()
@@ -340,7 +332,7 @@ class CatalogoProductos(QWidget):
         if respuesta != QMessageBox.StandardButton.Yes: 
             return
         
-        ok, msg = self.motor.unificar_duplicados()
+        ok, msg = InventarioService.unificar_duplicados()
         QMessageBox.information(self, "Unificación Completada", msg)
         self.filtros.txt_buscar.clear()
         self.cargar_datos()
@@ -362,8 +354,7 @@ class CatalogoProductos(QWidget):
                 super().__init__()
                 self.path = path
             def run(self):
-                from src.admin.admin_importexport import importar_excel
-                ok, msg = importar_excel(self.path)
+                ok, msg = InventarioService.importar_desde_excel(self.path)
                 self.finished.emit(ok, msg)
 
         self._btn_sender_imp = self.sender()

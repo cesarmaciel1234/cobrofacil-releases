@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
 from src.config import config
+from src.services.inventario_service import InventarioService
 
 from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
 from src.ui_global.inventario_ui.componentes.panel_departamentos import PanelDepartamentos
@@ -32,10 +33,15 @@ class Admin1Inventario(QWidget):
         self._apply_inventario_theme()
         self.aplicar_permisos_perfil()
 
-    def aplicar_permisos_perfil(self):
-        """Bloquea o desbloquea los botones de la barra de herramientas según el rol."""
-        rol = config.current_user.get("role", "cajero")
-        self.user_role = str(rol).lower()
+    def aplicar_permisos_perfil(self, rol: str = None):
+        """Bloquea o desbloquea los botones de la barra de herramientas según el rol.
+        Si se pasa 'rol', usa ese en lugar de leer la sesion activa (util para carteleria sin login).
+        """
+        from src.services.session_service import SessionService
+        if rol is not None:
+            self.user_role = str(rol).lower()
+        else:
+            self.user_role = SessionService.obtener_rol_usuario()
 
         # Si es cajero, es de solo lectura
         es_lectura = (self.user_role == "cajero")
@@ -387,9 +393,8 @@ class Admin1Inventario(QWidget):
         dlg = DialogoProducto(parent=self)
         if qt_exec(dlg):
             d = dlg.get_data()
-            from src.motor_inventario.motor_catalogo import MotorCatalogo
             is_new = not bool(d.get('id'))
-            ok, msg = MotorCatalogo().guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
+            ok, msg = InventarioService.guardar_producto(d, es_nuevo=is_new, producto_id=d.get('id'))
             if ok:
                 self.catalogo._cargar_deptos()
                 self.catalogo.cargar_datos()
@@ -443,10 +448,10 @@ class Admin1Inventario(QWidget):
             
         if QMessageBox.question(self, "Confirmar Eliminación", mensaje, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             eliminados = 0
-            from src.motor_inventario.motor_catalogo import MotorCatalogo
-            motor = MotorCatalogo()
             for id_p in ids_a_borrar:
-                ok, _ = motor.borrar_producto(id_p)
+                resultado = InventarioService.borrar_producto(id_p)
+                # borrar_producto puede retornar bool o (bool, str)
+                ok = resultado[0] if isinstance(resultado, tuple) else bool(resultado)
                 if ok:
                     eliminados += 1
                     

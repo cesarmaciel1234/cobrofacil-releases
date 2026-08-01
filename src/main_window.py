@@ -379,7 +379,7 @@ class MainWindow(QMainWindow):
             3:  lambda: __import__('src.admin.motor_descuentos_ui.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
-            6:  lambda: __import__('src.admin.red_lan.red_lan_main',    fromlist=['Admin6RedLan']).Admin6RedLan(),
+            6:  lambda: __import__('src.admin.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.cierre.cierre_main',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
             8:  lambda: __import__('src.admin.etiquetas_panel_ui.etiquetas_panel_main', fromlist=['AdminEtiquetas']).AdminEtiquetas(),
             9:  lambda: __import__('src.jefe.contabilidad.jefe_contabilidad',  fromlist=['JefeContabilidad']).JefeContabilidad(),

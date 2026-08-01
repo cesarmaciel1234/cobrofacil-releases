@@ -1,15 +1,17 @@
-"""Panel unificado dedicado a red LAN / multicaja. Compartido entre Admin y Cartelería."""
+"""Panel unificado dedicado a red LAN / multicaja. Compartido entre Admin y Cartelería.
+Nivel Alto: Interfaz gráfica desacoplada que se comunica con RedLanService.
+"""
 
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QScrollArea, QLineEdit, QMessageBox, QApplication,
+    QFrame, QScrollArea, QMessageBox, QApplication,
 )
-from PyQt6.QtCore import pyqtSignal, Qt, QTimer
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QCursor
 
 from src.navigation.screen_indices import Screen
-from src.central_red_global.motor_red import MotorRed
+from src.services.network_service import RedLanService
 
 
 class SharedRedLanPanel(QWidget):
@@ -58,16 +60,16 @@ class SharedRedLanPanel(QWidget):
         scroll.setStyleSheet("QScrollArea { background: #F1F5F9; border: none; }")
 
         body = QWidget()
-        lay = QVBoxLayout(body)
-        lay.setContentsMargins(32, 24, 32, 32)
-        lay.setSpacing(20)
+        self.body_layout = QVBoxLayout(body)
+        self.body_layout.setContentsMargins(32, 24, 32, 32)
+        self.body_layout.setSpacing(20)
 
         # ── Tarjeta Estado actual ─────────────────────────────────────────────
         self._card_estado = self._build_card_estado()
-        lay.addWidget(self._card_estado)
+        self.body_layout.addWidget(self._card_estado)
 
         # ── Tarjeta cambiar modo ──────────────────────────────────────────────
-        lay.addWidget(self._build_card_cambiar_modo())
+        self.body_layout.addWidget(self._build_card_cambiar_modo())
 
         # ── Botones de acciones secundarias ───────────────────────────────────
         if self.show_admin_buttons:
@@ -104,9 +106,9 @@ class SharedRedLanPanel(QWidget):
             btn_cfg.clicked.connect(lambda: self.request_screen.emit(Screen.CONFIGURACION))
             btn_row.addWidget(btn_cfg)
             btn_row.addStretch()
-            lay.addLayout(btn_row)
+            self.body_layout.addLayout(btn_row)
 
-        lay.addStretch()
+        self.body_layout.addStretch()
         scroll.setWidget(body)
         root.addWidget(scroll)
 
@@ -114,13 +116,12 @@ class SharedRedLanPanel(QWidget):
     # TARJETA ESTADO
     # ──────────────────────────────────────────────────────────────────────────
     def _build_card_estado(self) -> QFrame:
-        motor = MotorRed()
-        estado = motor.obtener_estado_red()
+        estado = RedLanService.obtener_estado_red()
         
-        is_master      = estado["is_master"]
+        is_master      = estado["es_maestra"]
         caja_id        = estado["caja_id"]
-        db_engine      = estado["db_engine"]
-        db_host        = estado["db_host"]
+        db_engine      = estado["motor_datos"]
+        local_ip       = estado["ip_local"]
         modo           = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
         color_modo     = "#065F46" if is_master else "#1E3A8A"
         bg_modo        = "#D1FAE5" if is_master else "#DBEAFE"
@@ -147,15 +148,6 @@ class SharedRedLanPanel(QWidget):
         row_modo.addWidget(self.lbl_modo_badge)
         row_modo.addStretch()
         lay.addLayout(row_modo)
-
-        import socket
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-        except:
-            local_ip = "127.0.0.1"
 
         # Detalles técnicos
         for line in (
@@ -255,8 +247,8 @@ class SharedRedLanPanel(QWidget):
         )
         
         # Precargar la IP guardada si ya era esclava
-        motor = MotorRed()
-        ip_guardada = motor.obtener_estado_red()["db_host"]
+        estado = RedLanService.obtener_estado_red()
+        ip_guardada = estado["ip_maestra_conectada"]
         if ip_guardada and ip_guardada not in ("localhost", "127.0.0.1", ""):
             self.combo_ip_maestra.setEditText(ip_guardada)
             
@@ -311,8 +303,8 @@ class SharedRedLanPanel(QWidget):
     # ──────────────────────────────────────────────────────────────────────────
     def _actualizar_botones(self):
         """Deshabilita el botón del modo ya activo."""
-        motor = MotorRed()
-        is_master = motor.obtener_estado_red()["is_master"]
+        estado = RedLanService.obtener_estado_red()
+        is_master = estado["es_maestra"]
         self.btn_hacer_maestra.setEnabled(not is_master)
         self.btn_hacer_esclava.setEnabled(is_master)
         if is_master:
@@ -338,8 +330,7 @@ class SharedRedLanPanel(QWidget):
         if resp != QMessageBox.StandardButton.Yes:
             return
 
-        motor = MotorRed()
-        ok, msg = motor.convertir_en_maestra()
+        ok, msg = RedLanService.cambiar_a_modo_maestra()
         if ok:
             self._refrescar_estado()
             QMessageBox.information(self, "Éxito", msg)
@@ -348,17 +339,17 @@ class SharedRedLanPanel(QWidget):
 
     def _scan_network(self):
         """Busca IPs vivas usando el motor de red."""
-        from src.central_red_global.network_engine import get_network_engine
-        engine = get_network_engine()
         self.combo_ip_maestra.clear()
-        found = 0
-        if engine and hasattr(engine, '_active_ips'):
-            for origen, ip in engine._active_ips.items():
-                if "admin" in origen.lower() or "caja" in origen.lower() or "maestra" in origen.lower():
-                    self.combo_ip_maestra.addItem(f"{ip} ({origen.split('|')[0]})", ip)
-                    found += 1
-        if found == 0:
-            QMessageBox.information(self, "Búsqueda", "No se detectaron otras PCs maestras en la red de forma automática. Podés escribir la IP manualmente.")
+        maestras = RedLanService.buscar_computadoras_maestras()
+        for m in maestras:
+            self.combo_ip_maestra.addItem(f"{m['ip']} ({m['nombre']})", m['ip'])
+            
+        if not maestras:
+            QMessageBox.information(
+                self, "Búsqueda", 
+                "No se detectaron otras PCs maestras en la red de forma automática. "
+                "Podés escribir la IP manualmente."
+            )
         else:
             self.combo_ip_maestra.showPopup()
 
@@ -369,9 +360,7 @@ class SharedRedLanPanel(QWidget):
             ip = self.combo_ip_maestra.itemData(idx)
         else:
             ip = self.combo_ip_maestra.currentText().strip()
-            if " (" in ip:
-                ip = ip.split(" (")[0]
-                
+            
         if not ip:
             QMessageBox.warning(self, "Falta la IP", "Ingresá la IP de la PC Maestra.")
             self.combo_ip_maestra.setFocus()
@@ -389,8 +378,7 @@ class SharedRedLanPanel(QWidget):
         if resp != QMessageBox.StandardButton.Yes:
             return
 
-        motor = MotorRed()
-        ok, msg = motor.convertir_en_esclava(ip)
+        ok, msg = RedLanService.cambiar_a_modo_esclava(ip)
         if ok:
             self._refrescar_estado()
             QMessageBox.information(self, "Conectado", msg)
@@ -400,9 +388,8 @@ class SharedRedLanPanel(QWidget):
 
     def _refrescar_estado(self):
         """Actualiza el badge de modo y los botones."""
-        motor = MotorRed()
-        estado = motor.obtener_estado_red()
-        is_master  = estado["is_master"]
+        estado = RedLanService.obtener_estado_red()
+        is_master  = estado["es_maestra"]
         modo       = "PC MAESTRA (servidor)" if is_master else "PC ESCLAVA (terminal LAN)"
         color_modo = "#065F46" if is_master else "#1E3A8A"
         bg_modo    = "#D1FAE5" if is_master else "#DBEAFE"
@@ -412,23 +399,12 @@ class SharedRedLanPanel(QWidget):
             f"background: {bg_modo}; border-radius: 8px; padding: 4px 12px; border: none;"
         )
         
-        # También actualizamos el primer recuadro "Detalles técnicos"
-        caja_id = estado["caja_id"]
-        db_engine = estado["db_engine"]
-        import socket
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-        except:
-            local_ip = "127.0.0.1"
-            
-        # Reconstruir textos
-        lay = self._card_estado.layout()
-        # Los indices 2, 3, 4 son las labels de motor, ip, y caja
-        # Vamos a hacerlo más simple, reconstruir todo el contenido (demasiado largo).
-        # En vez de eso, por ahora solo llamamos a _actualizar_botones
+        # Actualizar detalles técnicos reemplazando la widget vieja por una nueva
+        self.body_layout.removeWidget(self._card_estado)
+        self._card_estado.deleteLater()
+        self._card_estado = self._build_card_estado()
+        self.body_layout.insertWidget(0, self._card_estado)
+        
         self._actualizar_botones()
 
     # ──────────────────────────────────────────────────────────────────────────

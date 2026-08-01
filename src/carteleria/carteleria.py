@@ -81,13 +81,26 @@ class CarteleriaApp(QStackedWidget):
         self.showNormal()
 
     def lanzar_inv(self):
-        if not self.inv:
-            from src.ui_global.inventario_ui.inventario_main import Admin1Inventario
-            self.inv = Admin1Inventario()
-            self.addWidget(self.inv)
-            self.inv.request_dashboard.connect(self.volver_dashboard)
-            if self.estilo_completo: self.inv.setStyleSheet(self.estilo_completo)
-            if hasattr(self.inv, "_apply_inventario_theme"): self.inv._apply_inventario_theme()
+        # Siempre recrear para evitar quedar con estado roto cacheado
+        if self.inv:
+            self.removeWidget(self.inv)
+            self.inv.deleteLater()
+            self.inv = None
+            
+        from src.ui_global.inventario_ui.inventario_main import Admin1Inventario
+        self.inv = Admin1Inventario()
+        self.addWidget(self.inv)
+        self.inv.request_dashboard.connect(self.volver_dashboard)
+        if self.estilo_completo: self.inv.setStyleSheet(self.estilo_completo)
+        if hasattr(self.inv, "_apply_inventario_theme"): self.inv._apply_inventario_theme()
+        
+        # La carteleria no tiene login → current_user es None → rol seria "cajero"
+        # Forzamos admin para que los botones de edicion funcionen
+        if hasattr(self.inv, "aplicar_permisos_perfil"):
+            self.inv.aplicar_permisos_perfil()
+        if hasattr(self.inv, "catalogo") and hasattr(self.inv.catalogo, "aplicar_permisos_perfil"):
+            self.inv.catalogo.aplicar_permisos_perfil("admin")
+            
         self.setCurrentWidget(self.inv)
         self.showNormal()
 

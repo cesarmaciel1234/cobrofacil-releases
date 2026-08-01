@@ -156,8 +156,33 @@ class DatabaseManager:
                     self._create_tables()
                     self._migrate_db()
                     self._ensure_test_users()
-                return  # Salir de _init_db porque en modo esclava no modificamos esquemas por red
+                    
+                    # Migración transparente si MariaDB está vacía pero SQLite tiene datos
+                    try:
+                        conn = self.get_connection()
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT COUNT(*) as cnt FROM productos")
+                        row = cursor.fetchone()
+                        count_m = row['cnt'] if isinstance(row, dict) else row[0]
+                    except:
+                        count_m = 0
 
+                    if count_m == 0:
+                        import sqlite3
+                        sqlite_path = os.path.join(base_app_path, "punpro.db")
+                        if os.path.exists(sqlite_path):
+                            try:
+                                sq_c = sqlite3.connect(sqlite_path)
+                                sq_cur = sq_c.cursor()
+                                sq_cur.execute("SELECT COUNT(*) FROM productos")
+                                count_s = sq_cur.fetchone()[0]
+                                sq_c.close()
+                                if count_s > 0:
+                                    logger.info(f"Detectada base de datos MariaDB vacía. Migrando {count_s} productos desde SQLite...")
+                                    self.migrar_de_sqlite_a_mariadb()
+                            except Exception as ex_mig:
+                                logger.error(f"Fallo al validar migración: {ex_mig}")
+                return
             # --- FIN INTEGRACION MARIADB ---
 
             custom_path = str(config_data.get("db_path", "") or "").strip()
@@ -323,6 +348,69 @@ class DatabaseManager:
             self._migrate_db()
             
         self._ensure_test_users()
+
+    def migrar_de_sqlite_a_mariadb(self):
+        """Migra todos los datos de la base de datos local SQLite a la base de datos local MariaDB."""
+        import sqlite3
+        from src.utils.paths import get_base_path
+        base_app_path = get_base_path()
+        sqlite_path = os.path.join(base_app_path, "punpro.db")
+        if not os.path.exists(sqlite_path):
+            return False
+            
+        logger.info("⚡ Iniciando migración de SQLite a MariaDB para restaurar consistencia...")
+        try:
+            sq_conn = sqlite3.connect(sqlite_path)
+            sq_conn.row_factory = sqlite3.Row
+            sq_cur = sq_conn.cursor()
+            
+            # Obtener tablas de SQLite
+            sq_cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+            tables = [r['name'] for r in sq_cur.fetchall()]
+            
+            # Garantizar que las tablas existen en MariaDB antes de migrar
+            self.db_engine_type = "mariadb"
+            self._create_tables()
+            
+            m_conn = self.get_connection()
+            m_cur = m_conn.cursor()
+            
+            for table in tables:
+                try:
+                    sq_cur.execute(f"SELECT * FROM {table}")
+                    rows = sq_cur.fetchall()
+                    if not rows:
+                        continue
+                        
+                    # Obtener columnas
+                    columns = list(rows[0].keys())
+                    cols_str = ", ".join(columns)
+                    placeholders = ", ".join(["?"] * len(columns))
+                    
+                    # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
+                    try:
+                        m_cur.execute(f"TRUNCATE TABLE {table}")
+                    except:
+                        try:
+                            m_cur.execute(f"DELETE FROM {table}")
+                        except:
+                            pass
+                            
+                    # Insertar en lotes
+                    insert_query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
+                    data_lote = [[r[col] for col in columns] for r in rows]
+                    m_cur.executemany(insert_query, data_lote)
+                    m_conn.commit()
+                    logger.info(f"Migrados {len(rows)} registros de la tabla '{table}' a MariaDB.")
+                except Exception as ex_t:
+                    logger.warning(f"No se pudo migrar la tabla {table}: {ex_t}")
+                    
+            sq_conn.close()
+            logger.info("✅ Migración de SQLite a MariaDB completada con éxito.")
+            return True
+        except Exception as e:
+            logger.error(f"Error migrando datos SQLite a MariaDB: {e}")
+            return False
 
     def reload_config(self):
         """Re-initializes the database connection and configuration dynamically without restarting."""

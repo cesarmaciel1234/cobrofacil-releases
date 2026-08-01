@@ -35,6 +35,12 @@ class MotorRed:
 
     def convertir_en_esclava(self, ip_maestra):
         """Convierte la PC en esclava conectándose a la IP maestra."""
+        import re
+        if ip_maestra:
+            match = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', ip_maestra)
+            if match:
+                ip_maestra = match.group(0)
+                
         if not ip_maestra or ip_maestra.lower() in ("localhost", "127.0.0.1"):
             return False, "Debes ingresar una IP válida de red (ej: 192.168.0.100)."
             

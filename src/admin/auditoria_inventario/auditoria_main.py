@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QLineEdit
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.auditoria.motor_auditoria import MotorAuditoria
 from src.utils.theme_manager import theme_manager
