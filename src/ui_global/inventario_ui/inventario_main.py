@@ -1,19 +1,16 @@
+# inventario_main.py - Pantalla principal del Inventario.
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
-
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
-    QGraphicsDropShadowEffect
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
-
-# Removed database direct import
-
+from src.config import config
 
 from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
 from src.ui_global.inventario_ui.componentes.panel_departamentos import PanelDepartamentos
@@ -25,12 +22,36 @@ class Admin1Inventario(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.user_role = "admin" # Rol predeterminado
         self._setup_ui()
         self._apply_inventario_theme()
+        self.aplicar_permisos_perfil()
 
     def showEvent(self, event):
         super().showEvent(event)
         self._apply_inventario_theme()
+        self.aplicar_permisos_perfil()
+
+    def aplicar_permisos_perfil(self):
+        """Bloquea o desbloquea los botones de la barra de herramientas según el rol."""
+        rol = config.current_user.get("role", "cajero")
+        self.user_role = str(rol).lower()
+
+        # Si es cajero, es de solo lectura
+        es_lectura = (self.user_role == "cajero")
+
+        self.btn_nuevo.setEnabled(not es_lectura)
+        self.btn_modif.setEnabled(not es_lectura)
+        self.btn_eliminar.setEnabled(not es_lectura)
+        self.btn_importar.setEnabled(not es_lectura)
+        self.btn_precarga.setEnabled(not es_lectura)
+        self.btn_unificar.setEnabled(not es_lectura)
+        self.btn_categorias.setEnabled(not es_lectura)
+        self.btn_deptos.setEnabled(not es_lectura)
+
+        # Informar también al catálogo para sus bloqueos internos
+        if hasattr(self, "catalogo"):
+            self.catalogo.aplicar_permisos_perfil(self.user_role)
 
     def _apply_inventario_theme(self):
         """Aplica el tema dinámicamente según el theme_manager."""
@@ -64,11 +85,16 @@ class Admin1Inventario(QWidget):
                 background-color: #475569;
             }
         """)
-        root = QVBoxLayout(self); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        # Header Elite Blue (Cajero Style unificado sin recuadro blanco)
-        hdr = QFrame(); hdr.setObjectName("header"); hdr.setFixedHeight(85)
-        hl = QHBoxLayout(hdr); hl.setContentsMargins(25,0,25,0)
+        # Cabecera
+        hdr = QFrame()
+        hdr.setObjectName("header")
+        hdr.setFixedHeight(85)
+        hl = QHBoxLayout(hdr)
+        hl.setContentsMargins(25, 0, 25, 0)
         
         btn_back = QPushButton("🔙 VOLVER AL PANEL")
         btn_back.setCursor(Qt.PointingHandCursor)
@@ -85,27 +111,37 @@ class Admin1Inventario(QWidget):
         tit = QLabel("📦 GESTIÓN DE INVENTARIO <span style='color:#64748B;'>2026</span>")
         tit.setObjectName("titulo")
         tit.setStyleSheet("background: transparent;")
-        hl.addWidget(tit); hl.addStretch()
+        hl.addWidget(tit)
+        hl.addStretch()
         root.addWidget(hdr)
 
-        # Toolbar superior
-        self.toolbar = QFrame(); self.toolbar.setFixedHeight(70)
+        # Barra de herramientas principal (Toolbar)
+        self.toolbar = QFrame()
+        self.toolbar.setFixedHeight(70)
         self.toolbar.setObjectName("inventarioToolbar")
-        tl = QHBoxLayout(self.toolbar); tl.setContentsMargins(25,0,25,0); tl.setSpacing(12)
-        self.btn_nuevo    = QPushButton("➕ NUEVO PRODUCTO")
+        tl = QHBoxLayout(self.toolbar)
+        tl.setContentsMargins(25, 0, 25, 0)
+        tl.setSpacing(12)
+        
+        self.btn_nuevo = QPushButton("➕ NUEVO PRODUCTO")
         self.btn_nuevo.clicked.connect(self._nuevo)
-        self.btn_modif    = QPushButton("✏️ MODIFICAR")
+        
+        self.btn_modif = QPushButton("✏️ MODIFICAR")
         self.btn_modif.clicked.connect(lambda: self.catalogo._modificar_seleccionado())
+        
         self.btn_eliminar = QPushButton("🗑️ ELIMINAR")
         self.btn_eliminar.setObjectName("danger")
         self.btn_eliminar.clicked.connect(self._borrar_desde_catalogo)
         
         self.btn_importar = QPushButton("📥 IMPORTAR EXCEL")
         self.btn_importar.clicked.connect(lambda: self.catalogo._importar())
+        
         self.btn_exportar = QPushButton("📤 EXPORTAR EXCEL")
         self.btn_exportar.clicked.connect(lambda: self.catalogo._exportar())
+        
         self.btn_precarga = QPushButton("📦 PRECARGA NUBE")
         self.btn_precarga.clicked.connect(lambda: self.catalogo._descargar_precarga())
+        
         self.btn_unificar = QPushButton("🧹 UNIFICAR DUPLICADOS")
         self.btn_unificar.setObjectName("blue")
         self.btn_unificar.clicked.connect(lambda: self.catalogo._unificar_duplicados())
@@ -113,20 +149,25 @@ class Admin1Inventario(QWidget):
         self.btn_categorias = QPushButton("📁 DEPARTAMENTOS")
         self.btn_categorias.clicked.connect(self._mostrar_categorias)
         
-        self.btn_deptos   = QPushButton("⚖️ DEP. IMPUESTOS")
+        self.btn_deptos = QPushButton("⚖️ DEP. IMPUESTOS")
         self.btn_deptos.clicked.connect(self._mostrar_departamentos)
         
         self.btn_catalogo = QPushButton("📰 CATÁLOGO PDF")
         self.btn_catalogo.setObjectName("blue")
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
         
-        for b in [self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, self.btn_exportar, self.btn_precarga, self.btn_unificar, self.btn_categorias, self.btn_deptos, self.btn_catalogo]:
+        for b in [
+            self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, 
+            self.btn_exportar, self.btn_precarga, self.btn_unificar, 
+            self.btn_categorias, self.btn_deptos, self.btn_catalogo
+        ]:
             tl.addWidget(b)
+            
         tl.addStretch()
         root.addWidget(self.toolbar)
 
+        # Vista de paginas
         self.stack = QStackedWidget()
-
         self.catalogo = CatalogoProductos()
 
         self.panel_deptos = PanelDepartamentos()
@@ -139,43 +180,44 @@ class Admin1Inventario(QWidget):
         self.panel_categorias.categorias_cambiadas.connect(self.catalogo._cargar_deptos)
         self.panel_categorias.categorias_cambiadas.connect(self.catalogo.cargar_datos)
 
-        self.stack.addWidget(self.catalogo)         # 0
-        self.stack.addWidget(self.panel_deptos)     # 1
-        self.stack.addWidget(self.panel_categorias) # 2
+        self.stack.addWidget(self.catalogo)         # Index 0
+        self.stack.addWidget(self.panel_deptos)     # Index 1
+        self.stack.addWidget(self.panel_categorias) # Index 2
 
         self.stack.setCurrentIndex(0)
         root.addWidget(self.stack)
         
-        # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
-        from src.config import config
-        from PyQt6.QtCore import QTimer
+        # Sincronización en Tiempo Real
         db_path = config.get("db_path", "")
         if db_path and db_path != "":
             self.sync_timer = QTimer(self)
             self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
-            self.sync_timer.start(5000) # Cada 5 segundos
+            self.sync_timer.start(5000)
 
     def sincronizacion_silenciosa(self):
-        if not self.isVisible(): return
-        if self.stack.currentIndex() != 0: return
-        if self.catalogo.txt_buscar.hasFocus(): return
+        if not self.isVisible(): 
+            return
+        if self.stack.currentIndex() != 0: 
+            return
+        if self.catalogo.filtros.txt_buscar.hasFocus(): 
+            return
         
         bar = self.catalogo.tabla.verticalScrollBar()
         scroll_pos = bar.value() if bar else 0
-        target_count = self.catalogo.loaded_count # Cuántos registros ya cargó el usuario con scroll
+        target_count = self.catalogo.tabla.loaded_count
         
         self.cargar_datos()
         
-        # Forzar recarga de las páginas que ya tenía scrolleadas
+        # Mantener paginas cargadas al hacer scroll
         if target_count > 50:
-            while self.catalogo.loaded_count < target_count and self.catalogo.loaded_count < len(self.catalogo.all_rows):
-                self.catalogo._cargar_siguiente_pagina()
+            while self.catalogo.tabla.loaded_count < target_count and self.catalogo.tabla.loaded_count < len(self.catalogo.all_rows):
+                self.catalogo.tabla.cargar_siguiente_pagina()
         
         if bar:
             bar.setValue(scroll_pos)
 
     def _mostrar_departamentos(self, *args, **kwargs):
-        self.toolbar.setVisible(False) # Elimina los botones duplicados de la vista principal
+        self.toolbar.setVisible(False)
         self.stack.setCurrentIndex(1)
 
     def _mostrar_categorias(self, *args, **kwargs):
@@ -183,27 +225,32 @@ class Admin1Inventario(QWidget):
         self.stack.setCurrentIndex(2)
 
     def _volver_catalogo(self):
-        self.toolbar.setVisible(True)  # Restaura la botonera al regresar
+        self.toolbar.setVisible(True)
         self.stack.setCurrentIndex(0)
 
     def _dialogo_catalogo_pdf(self):
         visible_rows = []
         checked_rows = []
+        
+        # Buscar filas visibles y tildadas
         for i in range(self.catalogo.tabla.rowCount()):
             if not self.catalogo.tabla.isRowHidden(i):
-                it = self.catalogo.tabla.item(i, 0)
-                id_p = self.catalogo.tabla.item(i, 1).text()
+                item_chk = self.catalogo.tabla.item(i, 0)
+                item_id = self.catalogo.tabla.item(i, 1)
+                if not item_id:
+                    continue
+                id_p = item_id.text()
                 
-                # Find the row data
+                # Buscar datos originales
                 row_data = None
                 for r in self.catalogo.all_rows:
-                    if str(r['id']) == id_p:
+                    if str(r.get('id')) == id_p:
                         row_data = r
                         break
                         
                 if row_data:
                     visible_rows.append(row_data)
-                    if it and it.checkState() == Qt.Checked:
+                    if item_chk and item_chk.checkState() == Qt.CheckState.Checked:
                         checked_rows.append(row_data)
 
         total_filtered = len(visible_rows)
@@ -213,10 +260,9 @@ class Admin1Inventario(QWidget):
         dlg.setWindowTitle("Exportar Catálogo / Lista de Precios")
         dlg.setFixedSize(500, 420)
         dlg.setStyleSheet("""
-            QDialog { background: white;  font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton {  background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
-            QPushButton:hover {  }
-            QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;  background: white; }
+            QDialog { background: white; font-family: 'Segoe UI'; font-size: 13px; }
+            QPushButton { background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
+            QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; }
             QRadioButton { spacing: 8px; font-weight: bold; }
         """)
         lay = QVBoxLayout(dlg)
@@ -224,7 +270,7 @@ class Admin1Inventario(QWidget):
         lay.setSpacing(12)
         
         lbl_tit = QLabel("📰 CREAR CATÁLOGO DE PRECIOS (PDF)")
-        lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
+        lbl_tit.setStyleSheet("font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
         
         from PyQt6.QtWidgets import QFormLayout, QRadioButton, QSpinBox
@@ -237,8 +283,7 @@ class Admin1Inventario(QWidget):
         
         txt_negocio = QLineEdit("MINI-SÚPER ELITE")
         try:
-            from src.config import config as _cfg
-            nombre_neg = _cfg.get("business_name", "")
+            nombre_neg = config.get("business_name", "")
             if nombre_neg:
                 txt_negocio.setText(nombre_neg.upper())
         except:
@@ -277,7 +322,6 @@ class Admin1Inventario(QWidget):
         lay_limite.addStretch()
         lay.addLayout(lay_limite)
         
-        # Conectar cambios de radio button a spinbox
         def _update_spin():
             if rb_sel.isChecked():
                 spin_limite.setValue(len(checked_rows) if len(checked_rows) > 0 else 1)
@@ -307,14 +351,13 @@ class Admin1Inventario(QWidget):
                 
             lote_catalogo = []
             for p in productos_a_procesar:
-                # sqlite3.Row does not have .get() method, use bracket notation
-                depto = p['departamento'] if 'departamento' in p.keys() and p['departamento'] is not None else ''
-                uni = p['unidad'] if 'unidad' in p.keys() and p['unidad'] is not None else 'UN'
+                depto = p.get('departamento') or ''
+                uni = p.get('unidad') or 'UN'
                 
                 lote_catalogo.append({
-                    "id": str(p['id']),
-                    "nombre": p['nombre'],
-                    "precio": f"{p['precio']:.2f}" if p['precio'] is not None else "0.00",
+                    "id": str(p.get('id')),
+                    "nombre": p.get('nombre'),
+                    "precio": f"{p.get('precio', 0.0):.2f}" if p.get('precio') is not None else "0.00",
                     "departamento": depto,
                     "unidad": uni
                 })
@@ -337,6 +380,10 @@ class Admin1Inventario(QWidget):
         self.catalogo.cargar_datos()
 
     def _nuevo(self, *args, **kwargs):
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para crear productos.")
+            return
+
         dlg = DialogoProducto(parent=self)
         if qt_exec(dlg):
             d = dlg.get_data()
@@ -344,31 +391,38 @@ class Admin1Inventario(QWidget):
             is_new = not bool(d.get('id'))
             ok, msg = MotorCatalogo().guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
             if ok:
-                self.catalogo._cargar_deptos(); self.catalogo.cargar_datos()
+                self.catalogo._cargar_deptos()
+                self.catalogo.cargar_datos()
                 try:
                     from src.central_red_global.network_engine import get_network_engine
                     e = get_network_engine()
-                    if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
-                except: pass
+                    if e: 
+                        e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
+                except: 
+                    pass
             else:
                 QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
 
     def _borrar_desde_catalogo(self, *args, **kwargs):
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para eliminar productos.")
+            return
+
         # 1. Obtener todas las filas seleccionadas por checkbox
         filas_a_borrar = []
         for i in range(self.catalogo.tabla.rowCount()):
             chk = self.catalogo.tabla.item(i, 0)
-            if chk and chk.checkState() == Qt.Checked:
+            if chk and chk.checkState() == Qt.CheckState.Checked:
                 filas_a_borrar.append(i)
                 
-        # 2. Si no hay checkboxes marcados, usar las filas seleccionadas (multiselección)
+        # 2. Si no hay checkboxes marcados, usar las seleccionadas
         if not filas_a_borrar:
             for item in self.catalogo.tabla.selectedItems():
                 if item.row() not in filas_a_borrar:
                     filas_a_borrar.append(item.row())
                 
         if not filas_a_borrar:
-            QMessageBox.information(self, "Aviso", "Seleccioná al menos un producto (usando las casillas) para eliminar.")
+            QMessageBox.information(self, "Aviso", "Seleccioná al menos un producto (usando las casillas o seleccionando filas) para eliminar.")
             return
             
         nombres = []
@@ -387,12 +441,11 @@ class Admin1Inventario(QWidget):
         if len(ids_a_borrar) == 1:
             mensaje = f"¿Borrar producto: {nombres[0]}?"
             
-        if QMessageBox.question(self, "Confirmar Eliminación", mensaje, QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+        if QMessageBox.question(self, "Confirmar Eliminación", mensaje, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             eliminados = 0
             from src.motor_inventario.motor_catalogo import MotorCatalogo
             motor = MotorCatalogo()
             for id_p in ids_a_borrar:
-                # Borrar usando el motor
                 ok, _ = motor.borrar_producto(id_p)
                 if ok:
                     eliminados += 1

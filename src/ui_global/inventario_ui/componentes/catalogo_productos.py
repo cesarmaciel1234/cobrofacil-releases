@@ -1,18 +1,13 @@
+# catalogo_productos.py - Coordinador de catalogo de productos.
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QFileDialog
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
-from PyQt6.QtWidgets import (
+from src.config import config
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QPushButton, QAbstractItemView, QMessageBox, QDialog,
-    QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
-    QGraphicsDropShadowEffect
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
-from PyQt6.QtGui import QColor, QFont, QBrush
-
-# Removed db_manager import
+from src.ui_global.inventario_ui.componentes.filtros_inventario import FiltrosInventario
+from src.ui_global.inventario_ui.componentes.tabla_inventario import TablaInventario
+from src.ui_global.inventario_ui.componentes.pie_inventario import PieInventario
 
 class MotorBusquedaInventario(QThread):
     busqueda_terminada = pyqtSignal(list, int)
@@ -30,29 +25,24 @@ class MotorBusquedaInventario(QThread):
         
     def run(self):
         try:
-            if not self._motor: return
+            if not self._motor: 
+                return
+            # El motor ya devuelve filas de tipo dict estandarizadas
             filas, _ = self._motor.obtener_productos(self.buscar, self.depto, limite=50000, offset=0)
             sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
             self.busqueda_terminada.emit(filas, sin_stock)
         except Exception as e:
+            import logging
+            logging.getLogger("MotorBusquedaInventario").error(f"Error en busqueda: {e}")
             self.busqueda_terminada.emit([], 0)
 
 class CatalogoProductos(QWidget):
     volver = pyqtSignal()
 
-    HEADERS = ["", "Código", "Descripción del Producto", "Departamento", "IVA (%)",
-               "Costo", "P. Venta", "C. Mayoreo", "P. Mayoreo", "Regla Promo", "Of. Relámpago", "Of. Promedio", "Existencia",
-               "Inv. Mínimo", "Inv. Máximo", "Tipo de Venta"]
-
     def __init__(self, parent=None):
         super().__init__(parent)
-        
-        from src.utils.theme_manager import theme_manager
-        self.DEPTO_COLORS = theme_manager.get_depto_colors()
-
-        self._depto_color_map = {}
         self.all_rows = []
-        self.loaded_count = 0
+        self.user_role = "admin" # Rol por defecto
         
         # Iniciar Motores
         from src.motor_inventario.motor_catalogo import MotorCatalogo
@@ -66,114 +56,63 @@ class CatalogoProductos(QWidget):
         self._setup_ui()
         self._cargar_deptos()
         self.cargar_datos()
+        self.aplicar_permisos_perfil()
 
     def _setup_ui(self):
-        root = QVBoxLayout(self)
-        root.setContentsMargins(12, 8, 12, 8)
-        root.setSpacing(8)
-        root.setSpacing(8)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(8)
         self.setObjectName("catalogoProductosMain")
 
-        from src.config import config
         from src.shared.urgencia_stock_banner import UrgenciaStockBanner
-
         self._urgencia_banner = UrgenciaStockBanner(self)
-        root.addWidget(self._urgencia_banner)
+        layout.addWidget(self._urgencia_banner)
 
-        # ── Barra de filtros ─────────────────────────────
-        fb = QFrame(); fb.setFixedHeight(60)
-        fb.setObjectName("catalogoToolbar")
-        fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
-        
-        ico_search = QLabel("🔍")
-        ico_search.setStyleSheet(" font-size: 16px; background: transparent;")
-        self.txt_buscar = QLineEdit()
-        self.txt_buscar.setPlaceholderText("Buscar por nombre, código o ID...")
-        self.txt_buscar.setMinimumWidth(350)
-        
-        # Debounce timer para búsqueda rápida sin lag (aumentado para código de barras)
-        from PyQt6.QtCore import QTimer
-        self.search_timer = QTimer()
-        self.search_timer.setSingleShot(True)
-        self.search_timer.timeout.connect(self.cargar_datos)
-        self.txt_buscar.textChanged.connect(lambda: self.search_timer.start(500))
-
-        lbl_dep = QLabel("FILTRAR POR DEPARTAMENTO:")
-        lbl_dep.setStyleSheet("font-weight:800;font-size:10px;letter-spacing:1px; background: transparent;")
-        self.cmb_depto = QComboBox()
-        self.cmb_depto.setMinimumWidth(200)
-        self.cmb_depto.currentIndexChanged.connect(self.cargar_datos)
-
-        fl.addWidget(ico_search)
-        fl.addWidget(self.txt_buscar)
-        fl.addSpacing(15)
-        fl.addWidget(lbl_dep); fl.addWidget(self.cmb_depto)
-        fl.addSpacing(20)
-
-        self.chk_venta_sin_stock = QCheckBox("🚨 Urgencia: vender sin stock")
-        self.chk_venta_sin_stock.setToolTip(
-            "Solo para emergencias. El cajero podrá vender aunque no haya existencia "
-            "y se mostrará una alerta parpadeante mientras esté activo."
-        )
-        self.chk_venta_sin_stock.setStyleSheet(
-            "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
-            "border: 1px solid #FECACA; border-radius: 6px; background: #FFF7ED; }"
-            "QCheckBox::indicator { width: 18px; height: 18px; }"
-        )
-        self.chk_venta_sin_stock.setChecked(bool(config.get("opt_stock_negativo", False)))
-        self.chk_venta_sin_stock.toggled.connect(self._toggle_venta_sin_stock)
-        fl.addWidget(self.chk_venta_sin_stock)
-
-        fl.addStretch()
-        root.addWidget(fb)
+        # 1. Barra de filtros
+        self.filtros = FiltrosInventario(self)
+        self.filtros.filtros_cambiados.connect(self.cargar_datos)
+        self.filtros.urgencia_toggled.connect(self._toggle_venta_sin_stock)
+        layout.addWidget(self.filtros)
 
         self._sync_urgencia_banner()
 
-        # ── Tabla ────────────────────────────────────────
-        self.tabla = QTableWidget()
-        self.tabla.setColumnCount(len(self.HEADERS))
-        self.tabla.setHorizontalHeaderLabels(self.HEADERS)
-        self.tabla.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tabla.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tabla.setAlternatingRowColors(False)
-        self.tabla.verticalHeader().setVisible(False)
-        self.tabla.setShowGrid(False)
-        self.tabla.setObjectName("catalogoTable")
-        # 16 columnas: Check, Codigo, Desc(Stretch), Depto, IVA, Costo, Venta, C.Mayoreo, P.Mayoreo, Promo, Relampago, Promedio, Existencia, Min, Max, Tipo
-        col_widths = [28, 80, -1, 100, 60, 75, 85, 90, 90, 110, 105, 105, 95, 85, 85, 90]
-        hh = self.tabla.horizontalHeader()
-        for i, w in enumerate(col_widths):
-            if w == -1:
-                hh.setSectionResizeMode(i, QHeaderView.Stretch)
-            else:
-                hh.setSectionResizeMode(i, QHeaderView.Fixed)
-                self.tabla.setColumnWidth(i, w)
+        # 2. Tabla de productos
+        self.tabla = TablaInventario(self)
+        self.tabla.producto_doble_clic.connect(self._modificar_por_id)
+        self.tabla.seleccion_cambiada.connect(self._on_seleccion_cambiada)
+        layout.addWidget(self.tabla)
 
-        self.tabla.verticalHeader().setDefaultSectionSize(40)
-        self.tabla.doubleClicked.connect(self._modificar_seleccionado)
-        root.addWidget(self.tabla)
+        # 3. Pie informativo
+        self.pie = PieInventario(self)
+        layout.addWidget(self.pie)
 
-        # ── Footer ───────────────────────────────────────
-        ft = QFrame(); ft.setFixedHeight(38)
-        ft.setObjectName("catalogoFooter")
-        fl2 = QHBoxLayout(ft); fl2.setContentsMargins(12, 0, 12, 0)
-        self.lbl_total   = QLabel("0 productos")
-        self.lbl_stock0  = QLabel("")
-        self.lbl_sel     = QLabel("")
-        for lbl in [self.lbl_total, self.lbl_stock0, self.lbl_sel]:
-            lbl.setStyleSheet("font-size:11px; background: transparent;")
-        fl2.addWidget(self.lbl_total)
-        fl2.addSpacing(20); fl2.addWidget(self.lbl_stock0)
-        fl2.addStretch();   fl2.addWidget(self.lbl_sel)
-        root.addWidget(ft)
+    def aplicar_permisos_perfil(self, rol=None):
+        """Bloquea o desbloquea funciones segun el rol del perfil del usuario."""
+        if rol is None:
+            rol = config.current_user.get("role", "cajero")
+        self.user_role = str(rol).lower()
 
-        self.tabla.itemSelectionChanged.connect(self._actualizar_sel)
-        self.tabla.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
+        # Si es cajero, no puede alterar el inventario (es de solo lectura)
+        es_lectura_solamente = (self.user_role == "cajero")
+        
+        # Deshabilitar edicion por doble click si es cajero
+        if es_lectura_solamente:
+            try:
+                self.tabla.producto_doble_clic.disconnect(self._modificar_por_id)
+            except:
+                pass
+        else:
+            try:
+                self.tabla.producto_doble_clic.disconnect(self._modificar_por_id)
+            except:
+                pass
+            self.tabla.producto_doble_clic.connect(self._modificar_por_id)
+
+        # La casilla de urgencia de stock tampoco la puede cambiar un cajero
+        self.filtros.chk_urgencia.setEnabled(not es_lectura_solamente)
 
     def _apply_catalogo_theme(self):
-        from src.utils.theme_manager import theme_manager
-        
-        # Colors based on current theme
+        # Colores del tema activo
         is_dark = theme_manager.is_dark()
         bg = "#1E293B" if is_dark else "#FFFFFF"
         text = "#F8FAFC" if is_dark else "#0F172A"
@@ -186,60 +125,13 @@ class CatalogoProductos(QWidget):
         main_bg = "#0F172A" if is_dark else "#F8FAFC"
         
         self.setStyleSheet(f"background-color: {main_bg};")
-        
-        if hasattr(self, "tabla"):
-            self.tabla.setStyleSheet(f"""
-                QTableWidget {{
-                    background: {bg};
-                    border: 1px solid {border};
-                    border-radius: 12px;
-                    gridline-color: transparent;
-                    outline: none;
-                }}
-                QTableWidget::item {{
-                    padding: 8px 10px;
-                    color: {text};
-                    border-bottom: 1px solid {hover};
-                }}
-                QTableWidget::item:hover {{
-                    background-color: {hover};
-                }}
-                QTableWidget::item:selected {{
-                    background-color: {sel_bg};
-                    color: {sel_text};
-                    border-bottom: 2px solid #3B82F6;
-                }}
-                QHeaderView::section {{
-                    background-color: {header_bg};
-                    color: {header_text};
-                    font-weight: 900;
-                    padding: 12px 8px;
-                    border: none;
-                    border-bottom: 2px solid {border};
-                    font-size: 11px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }}
-            """)
-            
-        if hasattr(self, "txt_buscar"):
-            self.txt_buscar.setStyleSheet(f"""
-                QLineEdit {{ background: {bg}; color: {text}; border: 1px solid {border}; 
-                border-radius: 8px; padding: 10px 14px; font-size: 13px; }}
-                QLineEdit:focus {{ border: 2px solid #3B82F6; }}
-            """)
-            
-        if hasattr(self, "cmb_depto"):
-            self.cmb_depto.setStyleSheet(f"""
-                QComboBox {{ background: {bg}; color: {text}; border: 1px solid {border}; 
-                border-radius: 8px; padding: 8px 12px; }}
-                QComboBox:focus {{ border: 2px solid #3B82F6; }}
-            """)
+        self.filtros.aplicar_tema(bg, text, border)
+        self.tabla.aplicar_tema(bg, text, border, hover, sel_bg, sel_text, header_bg, header_text)
 
     def _sync_urgencia_banner(self):
-        activo = bool(self.chk_venta_sin_stock.isChecked())
+        activo = bool(self.filtros.chk_urgencia.isChecked())
         self._urgencia_banner.set_active(activo)
-        self.chk_venta_sin_stock.setStyleSheet(
+        self.filtros.chk_urgencia.setStyleSheet(
             "QCheckBox { font-weight: 800; color: #B91C1C; padding: 4px 8px; "
             "border: 2px solid #DC2626; border-radius: 6px; background: #FEE2E2; }"
             "QCheckBox::indicator { width: 18px; height: 18px; }"
@@ -250,8 +142,6 @@ class CatalogoProductos(QWidget):
         )
 
     def _toggle_venta_sin_stock(self, checked: bool):
-        from src.config import config
-
         if checked:
             r = QMessageBox.warning(
                 self,
@@ -260,13 +150,11 @@ class CatalogoProductos(QWidget):
                 "• El cajero podrá vender productos sin existencia.\n"
                 "• Habrá una alerta PARPADEANTE en inventario y en el terminal.\n\n"
                 "Desactivalo cuando termine la urgencia.",
-                QMessageBox.Ok | QMessageBox.Cancel,
-                QMessageBox.Cancel,
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel,
             )
-            if r != QMessageBox.Ok:
-                self.chk_venta_sin_stock.blockSignals(True)
-                self.chk_venta_sin_stock.setChecked(False)
-                self.chk_venta_sin_stock.blockSignals(False)
+            if r != QMessageBox.StandardButton.Ok:
+                self.filtros.set_chk_urgencia_state(False)
                 self._sync_urgencia_banner()
                 return
 
@@ -275,227 +163,94 @@ class CatalogoProductos(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        from src.config import config
-
-        self.chk_venta_sin_stock.blockSignals(True)
-        self.chk_venta_sin_stock.setChecked(bool(config.get("opt_stock_negativo", False)))
-        self.chk_venta_sin_stock.blockSignals(False)
+        self.filtros.set_chk_urgencia_state(bool(config.get("opt_stock_negativo", False)))
         self._sync_urgencia_banner()
+        self.aplicar_permisos_perfil()
 
     def _cargar_deptos(self):
-        self.cmb_depto.blockSignals(True)
-        self.cmb_depto.clear()
-        self.cmb_depto.addItem("— Todas las categorías —", None)
         try:
             from src.motor_inventario.motor_departamentos import MotorDepartamentos
-            md = MotorDepartamentos()
-            deps = md.obtener_categorias()
-            for r in deps:
-                dep = r['nombre']
-                if dep and dep.upper() != "GENERAL":
-                    self.cmb_depto.addItem(dep, dep)
-        except: pass
-        self.cmb_depto.blockSignals(False)
+            deps = MotorDepartamentos().obtener_categorias()
+            self.filtros.set_departamentos(deps)
+        except Exception as e:
+            import logging
+            logging.getLogger("CatalogoProductos").error(f"Error al cargar departamentos: {e}")
 
     def cargar_datos(self):
-        buscar = self.txt_buscar.text().strip()
-        depto  = self.cmb_depto.currentData()
+        buscar = self.filtros.obtener_texto_buscar()
+        depto = self.filtros.obtener_departamento_seleccionado()
 
-        # Mostrar estado de carga
-        self.lbl_total.setText("🔄 Buscando productos... Por favor espera.")
-        self.lbl_stock0.setText("")
+        self.pie.lbl_total.setText("🔄 Buscando productos... Por favor espera.")
+        self.pie.lbl_stock0.setText("")
         self.tabla.setRowCount(0)
         
-        # Iniciar búsqueda en background (Cerebro Asíncrono)
         self.motor_busqueda.setup(buscar, depto, self.motor)
         self.motor_busqueda.start()
 
     def _on_busqueda_terminada(self, filas, sin_stock):
         self.all_rows = filas
-        self._depto_color_map = {}
-        self.loaded_count = 0
-        self.tabla.setRowCount(0)
-        
-        # Cargar la primera página
-        self._cargar_siguiente_pagina()
+        self.tabla.set_datos(filas)
+        self.pie.actualizar_totales(len(filas), sin_stock)
 
-        n = len(self.all_rows)
-        self.lbl_total.setText(f"📦 {n} PRODUCTOS EN INVENTARIO")
-        self.lbl_total.setStyleSheet(" font-weight: 800; background: transparent;")
-        from src.utils.theme_manager import theme_manager
-        color_agotado = theme_manager.get_color("stock_agotado")
-        color_saludable = theme_manager.get_color("stock_saludable")
-        self.lbl_stock0.setText(
-            f"⚠️ Stock Crítico: {sin_stock}" if sin_stock else "✅ Stock Saludable"
-        )
-        self.lbl_stock0.setStyleSheet(
-            f"color:{color_agotado if sin_stock else color_saludable}; font-size:11px; font-weight:bold; background: transparent;"
-        )
+    def _on_seleccion_cambiada(self, cantidad):
+        self.pie.actualizar_seleccion(cantidad)
 
-    def _cargar_siguiente_pagina(self):
-        if getattr(self, '_loading_page', False):
+    def _modificar_por_id(self, id_p):
+        r = self.motor.obtener_producto_por_id(id_p)
+        if not r: 
             return
-        self._loading_page = True
-        try:
-            if self.loaded_count >= len(self.all_rows):
-                return
-                
-            inicio = self.loaded_count
-            fin = min(inicio + 50, len(self.all_rows))
             
-            self.tabla.blockSignals(True)
-            self.tabla.setRowCount(fin)
-            
-            for i in range(inicio, fin):
-                r = self.all_rows[i]
-                dep   = r['departamento'] or ''
-                stock = r['stock'] or 0.0
-                uni   = (r['unidad'] or 'UN').upper()
-                tipo  = "KILO" if uni == 'KG' else "UNIDAD"
-                
-                depto_iva = None
-                try:
-                    depto_iva = r['depto_iva']
-                except (IndexError, KeyError, TypeError):
-                    pass
-                    
-                if depto_iva is None:
-                    from src.config import config
-                    depto_iva = float(config.get("tax_percentage", 21.0))
-                else:
-                    depto_iva = float(depto_iva)
-
-                dep_key = (dep or "GENERAL").upper()
-                if dep_key not in self._depto_color_map:
-                    idx = len(self._depto_color_map) % len(self.DEPTO_COLORS)
-                    self._depto_color_map[dep_key] = self.DEPTO_COLORS[idx]
-                base_hex = self._depto_color_map[dep_key]
-                from src.utils.theme_manager import theme_manager
-                
-                if i % 2 == 1 and base_hex == "#FFFFFF":
-                    base_hex = theme_manager.get_color("bg_fila_impar")
-                row_bg = QColor(base_hex)
-                chk = QTableWidgetItem()
-                chk.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                chk.setCheckState(Qt.Unchecked)
-                chk.setBackground(row_bg)
-                self.tabla.setItem(i, 0, chk)
-
-                vals = [
-                    (str(r['id']),       Qt.AlignRight),
-                    (r['nombre'] or '',  Qt.AlignLeft),
-                    (dep,                Qt.AlignLeft),
-                    (f"{depto_iva:.1f}%", Qt.AlignCenter),
-                    (f"${r['costo']:.2f}", Qt.AlignRight),
-                    (f"${r['precio']:.2f}", Qt.AlignRight),
-                    (f"{r['cant_mayoreo']:g}" if dict(r).get('cant_mayoreo', 0) > 0 else "-", Qt.AlignCenter),
-                    (f"${r['precio_mayoreo']:.2f}" if dict(r).get('precio_mayoreo', 0) > 0 else "-", Qt.AlignRight),
-                    (f"{r['cant_oferta']:g} x ${r['precio_oferta']:.2f}" if dict(r).get('precio_oferta') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_relampago']:.2f}" if dict(r).get('precio_oferta_relampago') else "-", Qt.AlignCenter),
-                    (f"${r['precio_oferta_promedio']:.2f}" if dict(r).get('precio_oferta_promedio') else "-", Qt.AlignCenter),
-                    (f"{stock:.2f}",     Qt.AlignRight),
-                    (f"{r['stock_minimo'] or 0:.2f}", Qt.AlignCenter),
-                    (f"{r['stock_maximo'] or 0:.2f}", Qt.AlignCenter),
-                    (tipo,               Qt.AlignCenter),
-                ]
-
-                for j, (v, align) in enumerate(vals, 1):
-                    it = QTableWidgetItem(v)
-                    it.setTextAlignment(Qt.AlignVCenter | align)
-                    it.setBackground(row_bg)
-                    it.setForeground(QColor(theme_manager.get_color("texto_primario")))
-
-                    if j == 9 or j == 10:  # Resaltar si hay oferta
-                        if v != "-":
-                            it.setForeground(QColor(theme_manager.get_color("oferta")))
-                            it.setFont(QFont("Segoe UI", 9, QFont.Bold))
-
-                    if j == 12: # Stock
-                        if stock <= 0:
-                            it.setForeground(QColor(theme_manager.get_color("stock_agotado")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_agotado")))
-                        elif stock < 5:
-                            it.setForeground(QColor(theme_manager.get_color("stock_bajo")))
-                            it.setBackground(QColor(theme_manager.get_color("bg_stock_bajo")))
-                        else:
-                            it.setForeground(QColor(theme_manager.get_color("stock_saludable")))
-
-                    if j == 15: # Tipo
-                        it.setForeground(QColor(theme_manager.get_color("tipo_producto")))
-                        it.setFont(QFont("Segoe UI", 9, QFont.Bold))
-
-                    self.tabla.setItem(i, j, it)
-                    
-            self.loaded_count = fin
-        finally:
-            self.tabla.blockSignals(False)
-            self._loading_page = False
-
-    def _al_hacer_scroll(self, value):
-        bar = self.tabla.verticalScrollBar()
-        if bar.maximum() > 0 and value >= bar.maximum() - 15:
-            self._cargar_siguiente_pagina()
-
-    def _actualizar_sel(self):
-        sel = len(self.tabla.selectedItems()) // len(self.HEADERS)
-        self.lbl_sel.setText(f"Seleccionados: {sel}" if sel else "")
-
-    def _modificar_seleccionado(self, *args, **kwargs):
-        row = self.tabla.currentRow()
-        if row == -1:
-            QMessageBox.information(self, "Selección", "Seleccioná un producto primero.")
-            return
-        item_id = self.tabla.item(row, 1)
-        if not item_id:
-            return
-        id_p = item_id.text()
-        # Usar el motor
-        from src.motor_inventario.motor_catalogo import MotorCatalogo
-        motor = MotorCatalogo()
-        r = motor.obtener_producto_por_id(id_p)
-        if not r: return
         def get_val(col, default=0.0):
-            try: 
-                return r[col] if r[col] is not None else default
-            except: 
-                return default
+            return r.get(col) if r.get(col) is not None else default
 
         datos = {
-            'id': r['id'], 
-            'codigo': r['codigo'] or '', 
-            'nombre': r['nombre'] or '',
-            'precio': r['precio'] if r['precio'] is not None else 0.0, 
-            'precio_mayoreo': r['precio_mayoreo'] if r['precio_mayoreo'] is not None else 0.0,
-            'cant_mayoreo': r['cant_mayoreo'] if r['cant_mayoreo'] is not None else 0.0,
+            'id': r.get('id'), 
+            'codigo': r.get('codigo') or '', 
+            'nombre': r.get('nombre') or '',
+            'precio': get_val('precio', 0.0), 
+            'precio_mayoreo': get_val('precio_mayoreo', 0.0),
+            'cant_mayoreo': get_val('cant_mayoreo', 0.0),
             'cant_oferta': get_val('cant_oferta', 0.0), 
             'precio_oferta': get_val('precio_oferta', 0.0),
-            'costo': r['costo'] if r['costo'] is not None else 0.0, 
-            'stock': r['stock'] if r['stock'] is not None else 0.0,
-            'stock_minimo': r['stock_minimo'] if r['stock_minimo'] is not None else 0.0, 
-            'stock_maximo': r['stock_maximo'] if r['stock_maximo'] is not None else 0.0,
-            'unidad': r['unidad'] or 'UN', 
-            'es_pesable': r['es_pesable'] if r['es_pesable'] is not None else 0,
-            'departamento': r['departamento'] or '', 
-            'categoria': r['categoria'] or 'GENERAL'
+            'costo': get_val('costo', 0.0), 
+            'stock': get_val('stock', 0.0),
+            'stock_minimo': get_val('stock_minimo', 0.0), 
+            'stock_maximo': get_val('stock_maximo', 0.0),
+            'unidad': r.get('unidad') or 'UN', 
+            'es_pesable': get_val('es_pesable', 0),
+            'departamento': r.get('departamento') or '', 
+            'categoria': r.get('categoria') or 'GENERAL'
         }
+        
         from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
             d = dlg.get_data()
-            from src.motor_inventario.motor_catalogo import MotorCatalogo
-            motor = MotorCatalogo()
             is_new = not bool(d.get('id'))
-            ok, msg = motor.guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
+            ok, msg = self.motor.guardar_producto(d, is_new=is_new, prod_id=d.get('id'))
             if ok:
                 self.cargar_datos()
-                # Trigger cartelera
                 try:
                     from src.central_red_global.network_engine import get_network_engine
                     e = get_network_engine()
-                    if e: e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
-                except: pass
+                    if e: 
+                        e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
+                except: 
+                    pass
             else:
                 QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
+
+    def _modificar_seleccionado(self):
+        # Si el usuario es cajero, no permitir modificar
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para modificar productos.")
+            return
+
+        id_p = self.tabla.obtener_producto_id_seleccionado()
+        if id_p:
+            self._modificar_por_id(id_p)
+        else:
+            QMessageBox.information(self, "Selección", "Selecciona un producto primero.")
 
     def _exportar(self):
         from datetime import datetime
@@ -503,9 +258,9 @@ class CatalogoProductos(QWidget):
         filepath, _ = QFileDialog.getSaveFileName(
             self, "Exportar productos", nombre_def,
             "Excel (*.xlsx);;Todos los archivos (*)")
-        if not filepath: return
+        if not filepath: 
+            return
         
-        # Inyectar trabajador en segundo plano
         class WorkerExport(QThread):
             finished = pyqtSignal(bool, str)
             def __init__(self, path):
@@ -516,7 +271,7 @@ class CatalogoProductos(QWidget):
                 ok, msg = exportar_excel(self.path)
                 self.finished.emit(ok, msg)
                 
-        self._btn_sender = self.sender() # Identifica qué botón presiono
+        self._btn_sender = self.sender()
         if self._btn_sender:
             self._old_text = self._btn_sender.text()
             self._btn_sender.setText("⏳ CARGANDO...")
@@ -533,12 +288,17 @@ class CatalogoProductos(QWidget):
         self._worker_exp.start()
 
     def _descargar_precarga(self):
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para importar precargas.")
+            return
+
         respuesta = QMessageBox.question(
             self, "Precarga desde la Nube",
             "¿Deseas descargar y sumar ~12,800 productos precargados desde la nube a tu base de datos?\n(Esto tomará un par de segundos)",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes
         )
-        if respuesta != QMessageBox.Yes: return
+        if respuesta != QMessageBox.StandardButton.Yes: 
+            return
 
         class WorkerPrecarga(QThread):
             finished = pyqtSignal(bool, str)
@@ -561,33 +321,40 @@ class CatalogoProductos(QWidget):
             (QMessageBox.information if ok else QMessageBox.critical)(
                 self, "Precarga Nube" + (" completada" if ok else " fallida"), msg)
             if ok:
-                self.txt_buscar.clear()
+                self.filtros.txt_buscar.clear()
                 self.cargar_datos()
 
         self._worker_pre.finished.connect(on_fin_pre)
         self._worker_pre.start()
 
     def _unificar_duplicados(self):
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para modificar o unificar productos.")
+            return
+
         respuesta = QMessageBox.question(
             self, "Unificar Duplicados",
             "¿Deseas buscar y unificar automáticamente todos los productos repetidos (con el mismo código)?\n\nEl sistema acumulará el stock en el producto principal y eliminará las copias vacías o basura.\nEste proceso no se puede deshacer.",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No
         )
-        if respuesta != QMessageBox.Yes: return
+        if respuesta != QMessageBox.StandardButton.Yes: 
+            return
         
-        from src.motor_inventario.motor_catalogo import MotorCatalogo
-        motor = MotorCatalogo()
-        ok, msg = motor.unificar_duplicados()
-        
+        ok, msg = self.motor.unificar_duplicados()
         QMessageBox.information(self, "Unificación Completada", msg)
-        self.txt_buscar.clear()
+        self.filtros.txt_buscar.clear()
         self.cargar_datos()
 
     def _importar(self):
+        if self.user_role == "cajero":
+            QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para importar planillas Excel.")
+            return
+
         filepath, _ = QFileDialog.getOpenFileName(
             self, "Importar productos", "",
             "Excel (*.xlsx *.xls);;Todos los archivos (*)")
-        if not filepath: return
+        if not filepath: 
+            return
 
         class WorkerImport(QThread):
             finished = pyqtSignal(bool, str)
@@ -613,9 +380,7 @@ class CatalogoProductos(QWidget):
             (QMessageBox.information if ok else QMessageBox.critical)(
                 self, "Importación" + (" completada" if ok else " fallida"), msg)
             if ok:
-                self._cargar_deptos(); self.cargar_datos()
+                self._cargar_deptos()
+                self.cargar_datos()
         self._worker_imp.finished.connect(on_fin_imp)
         self._worker_imp.start()
-
-# ── Pantalla principal Inventario ─────────────────────────
-
