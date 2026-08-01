@@ -247,16 +247,11 @@ def screen_count(app=None) -> int:
 
 def screen_geometry_at(index: int = 0, app=None):
     """Geometría usable de un monitor (reemplaza QApplication.desktop())."""
-    from PyQt5.QtWidgets import QApplication as _QApp5
-    from PyQt5.QtGui import QGuiApplication as _QGui5
-
-    if IS_QT6:
-        from PyQt6.QtWidgets import QApplication as QApp6
-        from PyQt6.QtGui import QGuiApplication as QGui6
-
-        app = app or QApp6.instance() or QGui6.instance()
-    else:
-        app = app or _QApp5.instance() or _QGui5.instance()
+    if app is None:
+        try:
+            app = QtWidgets.QApplication.instance() or QtGui.QGuiApplication.instance()
+        except AttributeError:
+            app = None
 
     if app is None:
         return None
