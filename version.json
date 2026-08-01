@@ -1,7 +1,7 @@
 {
-  "app_version": "9.4",
+  "app_version": "9.5",
   "channel": "stable",
-  "build_date": "2026-07-31 21:39:19",
+  "build_date": "2026-07-31 21:43:01",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,7 +150,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "dce34730663bc94c5a230b4cbb5ed5f7",
+      "checksum": "50e4e83cc00ef8f9ab7a6f76f762016d",
       "channel": "stable",
       "size": 629558
     },
@@ -2598,9 +2598,9 @@
     },
     "src/utils/candados.py": {
       "version": "1.0.0",
-      "checksum": "1efe6fb25fb5dedb270d9c7d7fe8221d",
+      "checksum": "b5492834ba07b4171605efc04ee5d405",
       "channel": "stable",
-      "size": 7436
+      "size": 7392
     },
     "src/utils/db.py": {
       "version": "1.0.0",

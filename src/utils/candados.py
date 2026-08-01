@@ -18,7 +18,7 @@ def _lock_path(role: str) -> str:
 
 
 def _pid_alive(pid: int) -> bool:
-    """Comprueba si un PID sigue activo. En Windows no usa os.kill (falla en .exe)."""
+    """Comprueba si un PID sigue activo sin lanzar subprocesos lentos de Windows."""
     try:
         pid = int(pid)
     except (TypeError, ValueError):
@@ -26,20 +26,22 @@ def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
 
+    try:
+        import psutil
+        return psutil.pid_exists(pid)
+    except Exception:
+        pass
+
     if sys.platform == "win32":
         try:
-            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            result = subprocess.run(
-                ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
-                capture_output=True,
-                text=True,
-                creationflags=flags,
-                timeout=5,
-            )
-            output = f"{result.stdout or ''}{result.stderr or ''}"
-            if "No tasks are running" in output:
-                return False
-            return str(pid) in output
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            h_proc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            if h_proc:
+                kernel32.CloseHandle(h_proc)
+                return True
+            return False
         except Exception:
             return False
 
