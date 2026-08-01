@@ -1,7 +1,7 @@
 {
-  "app_version": "10.4",
+  "app_version": "10.5",
   "channel": "stable",
-  "build_date": "2026-08-01 00:08:53",
+  "build_date": "2026-08-01 00:11:43",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -150,9 +150,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "15fab5869f0c8fa6f768d1127c9bc438",
+      "checksum": "356588026210ad469df399007c4cd569",
       "channel": "stable",
-      "size": 98489
+      "size": 629745
     },
     "01_Compiladores_y_Ejecutables/empaquetar_para_firebase.py": {
       "version": "1.0.0",
@@ -438,9 +438,9 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "3c2b1695430311426cd829cb227489c2",
+      "checksum": "f00c1c19f2a91b016f0ed0366b3cf85c",
       "channel": "stable",
-      "size": 20476
+      "size": 20471
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",

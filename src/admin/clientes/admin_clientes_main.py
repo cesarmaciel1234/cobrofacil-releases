@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
-from src.base_de_datos.database import DatabaseManager
+from src.base_de_datos.database import db_manager
 from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
 
 
