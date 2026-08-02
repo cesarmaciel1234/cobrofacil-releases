@@ -183,11 +183,11 @@ class AutoBlindajeDB:
     def _backup_mariadb_physical(cls, target_local: str, target_os: str) -> bool:
         try:
             base_dir = get_base_path()
-            data_dir = os.path.join(base_dir, "mariadb_server", "data", "punpro_db")
+            data_dir = os.path.join(base_dir, "mariadb_server", "data")
             if not os.path.exists(data_dir):
                 return False
 
-            # Copiar estructura del directorio punpro_db
+            # Copiar estructura completa del directorio data (necesario para ibdata1 de InnoDB)
             zip_base_local = target_local.rsplit(".", 1)[0]
             zip_base_os = target_os.rsplit(".", 1)[0]
             
@@ -318,7 +318,16 @@ class AutoBlindajeDB:
                     return False
             elif latest_backup.endswith(".zip"):
                 try:
-                    data_dir = os.path.join(base_dir, "mariadb_server", "data", "punpro_db")
+                    data_dir = os.path.join(base_dir, "mariadb_server", "data")
+                    
+                    # Para restaurar InnoDB de forma segura, debemos borrar el data viejo completo primero
+                    if os.path.exists(data_dir):
+                        try:
+                            shutil.rmtree(data_dir)
+                        except Exception:
+                            pass
+                    os.makedirs(data_dir, exist_ok=True)
+                    
                     shutil.unpack_archive(latest_backup, data_dir)
                     logger.info("✅ Restauración MariaDB física (.zip) completada.")
                     return True
