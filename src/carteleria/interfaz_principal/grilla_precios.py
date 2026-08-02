@@ -152,36 +152,66 @@ class _AutoScrollList(QScrollArea):
                 
         self.container.adjustSize()
                 
-        for _ in range(3): 
+        self.blocks = []
+        # Añadimos 4 bloques para asegurar suficiente margen de scroll infinito
+        for _ in range(4): 
+            block = QWidget()
+            block.setStyleSheet("background: transparent;")
+            block_layout = QVBoxLayout(block)
+            block_layout.setContentsMargins(0, 0, 0, 0)
+            block_layout.setSpacing(10)
+            
             for categoria, productos in items_by_category.items():
                 if not productos:
-                    continue # Nunca dibujar categorías vacías (ej: 'ACHURAS' sin stock)
+                    continue # Nunca dibujar categorías vacías
                 
                 # ── CATEGORÍA: BANNER MODULAR CON CÁPSULA DE ÍCONO Y TITULO RESPONSIVE ──
                 from src.carteleria.interfaz_principal.banner_categoria import BannerCategoria
                 from src.carteleria.theme import get_active_theme_name
                 is_temu = (get_active_theme_name() == "temu")
 
-                banner = BannerCategoria(categoria, modo_tv=self.current_mode, is_temu=is_temu, parent=self.container)
-                self.inner_layout.addWidget(banner)
+                banner = BannerCategoria(categoria, modo_tv=self.current_mode, is_temu=is_temu, parent=block)
+                block_layout.addWidget(banner)
                 
                 # ── PRODUCTOS: TARJETAS MODULARES CON SUB-CONTENEDORES ESTRICTOS ──
                 from src.carteleria.interfaz_principal.tarjeta_producto import TarjetaProducto
                 for nombre, precio, precio_oferta, regla in productos:
                     if not nombre or not nombre.strip():
                         continue
-                    tarjeta = TarjetaProducto(nombre, precio, precio_oferta, regla, modo_tv=self.current_mode, parent=self.container)
-                    self.inner_layout.addWidget(tarjeta)
+                    tarjeta = TarjetaProducto(nombre, precio, precio_oferta, regla, modo_tv=self.current_mode, parent=block)
+                    block_layout.addWidget(tarjeta)
                     
-        # Resorte inferior para que, si hay pocos productos, se alineen limpiamente arriba en vez de estirarse
-        self.inner_layout.addStretch(1)
+            self.inner_layout.addWidget(block)
+            self.blocks.append(block)
+                    
+        # IMPORTANTE: Eliminamos el stretch inferior para que los bloques sean matemáticamente idénticos
+        # y no haya huecos vacíos en el bucle infinito.
+        
+        # Forzar recálculo para que height() devuelva el valor real
+        self.container.layout().update()
         self.timer.start(50)
 
     def _do_scroll(self):
         bar = self.verticalScrollBar()
         max_val = bar.maximum()
         if max_val == 0: return
+        
+        if not hasattr(self, 'blocks') or not self.blocks:
+            return
+            
+        # Distancia exacta entre el inicio del bloque 1 y el inicio del bloque 2
+        block_height = self.blocks[0].height() + self.inner_layout.spacing()
+        
+        # Freno de seguridad: si la lista es tan corta que todos los ítems caben en la pantalla
+        # detenemos el scroll para evitar parpadeos, ya que no es necesario navegar.
+        if block_height <= 0 or max_val < block_height:
+            return
+            
         self._scroll_pos += 2
-        if self._scroll_pos > (max_val * 0.6):
-            self._scroll_pos = 0
+        
+        # El salto infinito: Si hemos scrolleado la altura de un bloque entero, 
+        # retrocedemos matemáticamente al mismo píxel del bloque anterior. Es imperceptible.
+        if self._scroll_pos >= block_height:
+            self._scroll_pos -= block_height
+            
         bar.setValue(self._scroll_pos)
