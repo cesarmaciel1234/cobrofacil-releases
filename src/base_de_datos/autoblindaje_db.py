@@ -237,7 +237,11 @@ class AutoBlindajeDB:
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
-                if len(r) >= 4 and r[3] not in ("OK", "Table is already up to date"):
+                msg = r[3]
+                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
+                    if "doesn't exist" in msg:
+                        # Si las tablas no existen, es una instalación limpia, no es corrupción.
+                        continue
                     logger.warning(f"Resultado de verificación tabla: {r}")
                     return False
             return True
