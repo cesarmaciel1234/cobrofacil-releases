@@ -7,9 +7,9 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 
 # Removed db_manager import
-from src.motor_descuentos.motor_ofertas import MotorOfertas
-from src.carteleria.motor_descuentos_ui.componentes.tabla_ofertas import TablaOfertas
-from src.carteleria.motor_descuentos_ui.componentes.creador_promociones import CreadorPromociones
+from src.motor_descuentos.cerebro.motor_ofertas import MotorOfertas
+from src.motor_descuentos.moleculas.tabla_ofertas import TablaOfertas
+from src.motor_descuentos.moleculas.creador_promociones import CreadorPromociones
 
 def _parse_precio_texto(text, default=0.0):
     if text is None: return default
@@ -635,7 +635,7 @@ class Admin2Ofertas(QWidget):
                 QMessageBox.critical(self, "Error", f"Fallo al construir PDF de ofertas: {ex}")
 
     def _gestionar_combos(self):
-        from src.carteleria.motor_descuentos_ui.componentes.dialogo_combos import DialogoCombos
+        from src.motor_descuentos.moleculas.dialogo_combos import DialogoCombos
         dlg = DialogoCombos(self)
         dlg.exec()
 
