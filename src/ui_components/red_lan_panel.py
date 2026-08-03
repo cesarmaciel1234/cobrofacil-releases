@@ -383,7 +383,8 @@ class SharedRedLanPanel(QWidget):
             self._refrescar_estado()
             QMessageBox.information(self, "Conectado", msg)
         else:
-            QMessageBox.warning(self, "Atención", msg)
+            # No refrescar motor: el modo local no cambió (probe falló antes)
+            QMessageBox.warning(self, "Maestra no disponible", msg)
         self._actualizar_botones()
 
     def _refrescar_estado(self):

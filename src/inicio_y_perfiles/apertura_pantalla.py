@@ -73,7 +73,7 @@ class AperturaCajaPantalla(QDialog):
         self.txt_saldo.setStyleSheet("""
             QLineEdit {
                 background: #F8FAFC;
-                border: 1.5px solid #E2E8F0;
+                border: 2px solid #E2E8F0;
                 border-radius: 20px;
                 color: #10B981; 
                 font-size: 44px; 

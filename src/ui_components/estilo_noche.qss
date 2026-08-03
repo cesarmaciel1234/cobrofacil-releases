@@ -986,7 +986,7 @@ QDialog[theme="dark"] QLabel#LoginFieldLbl { color: #94A3B8; }
 
 
 QComboBox#LoginUserCb, QLineEdit#LoginPass {
-    background: #0F172A; border: 1.5px solid #334155;
+    background: #0F172A; border: 2px solid #334155;
 }
 
 QDialog[theme="dark"] QComboBox#LoginUserCb, QDialog[theme="dark"] QLineEdit#LoginPass {

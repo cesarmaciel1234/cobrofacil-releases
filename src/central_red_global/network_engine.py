@@ -17,6 +17,20 @@ PEER_TIMEOUT = 45
 _engine = None
 
 
+def _cpp_alive(obj) -> bool:
+    """True si el wrapper Qt aún apunta a un C++ válido."""
+    try:
+        from shiboken6 import isValid
+
+        return bool(isValid(obj))
+    except Exception:
+        try:
+            obj.objectName()
+            return True
+        except RuntimeError:
+            return False
+
+
 class NetworkEngine(QObject):
     message_received = pyqtSignal(str, str, object)
     heartbeat_received = pyqtSignal(str)
@@ -29,9 +43,15 @@ class NetworkEngine(QObject):
         self._stop = threading.Event()
         self._peers: dict[str, float] = {}
         self._active_ips: dict[str, str] = {}
-        self._listener = threading.Thread(target=self._listen_loop, daemon=True)
-        self._watcher = threading.Thread(target=self._watch_peers, daemon=True)
-        self._heartbeat = threading.Thread(target=self._heartbeat_loop, daemon=True)
+        self._listener = threading.Thread(
+            target=self._listen_loop, name="NetworkEngine-listen", daemon=True
+        )
+        self._watcher = threading.Thread(
+            target=self._watch_peers, name="NetworkEngine-watch", daemon=True
+        )
+        self._heartbeat = threading.Thread(
+            target=self._heartbeat_loop, name="NetworkEngine-heartbeat", daemon=True
+        )
 
     @staticmethod
     def _build_origen(role: str) -> str:
@@ -43,12 +63,32 @@ class NetworkEngine(QObject):
         self._listener.start()
         self._watcher.start()
         self._heartbeat.start()
+        # Latido inmediato: sin esto la red tarda HEARTBEAT_INTERVAL en detectar la Maestra
+        try:
+            self.broadcast("HEARTBEAT", {"role": self.role})
+        except Exception:
+            pass
         logger.info(f"NetworkEngine activo como {self._origen}")
 
     def stop(self):
+        """Señala parada y espera a los hilos (evita emit sobre QObject borrado)."""
         self._stop.set()
+        for t in (self._listener, self._watcher, self._heartbeat):
+            if t.is_alive() and t is not threading.current_thread():
+                t.join(timeout=2.0)
+
+    def _safe_emit(self, signal, *args):
+        if self._stop.is_set() or not _cpp_alive(self):
+            return
+        try:
+            signal.emit(*args)
+        except RuntimeError:
+            # App/Qt ya destruyó el C++; hilo daemon en apagado.
+            pass
 
     def broadcast(self, tipo: str, datos: dict | None = None):
+        if self._stop.is_set():
+            return
         payload = {
             "origen": self._origen,
             "tipo": tipo,
@@ -72,37 +112,42 @@ class NetworkEngine(QObject):
             sock.settimeout(1.0)
         except Exception as e:
             logger.warning(f"No se pudo abrir UDP Nexus {NEXUS_UDP_PORT}: {e}")
+            sock.close()
             return
 
-        while not self._stop.is_set():
+        try:
+            while not self._stop.is_set():
+                try:
+                    data, addr = sock.recvfrom(4096)
+                except socket.timeout:
+                    continue
+                except Exception:
+                    continue
+                try:
+                    payload = json.loads(data.decode("utf-8"))
+                except Exception:
+                    continue
+
+                origen = str(payload.get("origen", ""))
+                if not origen or origen == self._origen:
+                    continue
+
+                tipo = str(payload.get("tipo", "MENSAJE"))
+                datos = payload.get("datos") or {}
+                now = time.time()
+                self._peers[origen] = now
+                if addr:
+                    self._active_ips[origen] = addr[0]
+
+                if tipo == "HEARTBEAT":
+                    self._safe_emit(self.heartbeat_received, origen)
+                else:
+                    self._safe_emit(self.message_received, origen, tipo, datos)
+        finally:
             try:
-                data, _addr = sock.recvfrom(4096)
-            except socket.timeout:
-                continue
+                sock.close()
             except Exception:
-                continue
-            try:
-                payload = json.loads(data.decode("utf-8"))
-            except Exception:
-                continue
-
-            origen = str(payload.get("origen", ""))
-            if not origen or origen == self._origen:
-                continue
-
-            tipo = str(payload.get("tipo", "MENSAJE"))
-            datos = payload.get("datos") or {}
-            now = time.time()
-            self._peers[origen] = now
-            if _addr:
-                self._active_ips[origen] = _addr[0]
-
-            if tipo == "HEARTBEAT":
-                self.heartbeat_received.emit(origen)
-            else:
-                self.message_received.emit(origen, tipo, datos)
-
-        sock.close()
+                pass
 
     def _heartbeat_loop(self):
         while not self._stop.wait(HEARTBEAT_INTERVAL):
@@ -114,14 +159,13 @@ class NetworkEngine(QObject):
             for origen, last in list(self._peers.items()):
                 if now - last > PEER_TIMEOUT:
                     del self._peers[origen]
-                    if origen in self._active_ips:
-                        del self._active_ips[origen]
-                    self.connection_lost.emit(origen)
+                    self._active_ips.pop(origen, None)
+                    self._safe_emit(self.connection_lost, origen)
 
 
 def init_network_engine(role: str):
     global _engine
-    if _engine is not None:
+    if _engine is not None and _cpp_alive(_engine):
         return _engine
     _engine = NetworkEngine(role)
     _engine.start()
@@ -129,4 +173,19 @@ def init_network_engine(role: str):
 
 
 def get_network_engine():
+    if _engine is not None and not _cpp_alive(_engine):
+        return None
     return _engine
+
+
+def shutdown_network_engine():
+    """Detiene hilos UDP antes de que Qt destruya el QObject."""
+    global _engine
+    eng = _engine
+    _engine = None
+    if eng is None:
+        return
+    try:
+        eng.stop()
+    except Exception as e:
+        logger.debug(f"NetworkEngine shutdown: {e}")

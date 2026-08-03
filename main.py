@@ -76,6 +76,10 @@ def launch_app(direct_role=None):
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
+    if not getattr(app, "_network_engine_shutdown_hook", False):
+        from src.central_red_global.network_engine import shutdown_network_engine
+        app.aboutToQuit.connect(shutdown_network_engine)
+        app._network_engine_shutdown_hook = True
     
     # Tras reinicio 888: cerrar ventanas/diálogos que hayan quedado abiertos
     if main_window is not None:
@@ -133,16 +137,37 @@ def launch_app(direct_role=None):
     config._load_config()
     config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
     
-    # 2. Recargar motor de base de datos de manera FLUIDA (Splash no se congela)
-    update_status("Inicializando base de datos...", 15)
-    from src.base_de_datos.database import db_manager
-    from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
-    sincronizador_carteleria.start()
-    if is_direct:
-        db_manager._init_db()
+    # 2. BD en hilo: el import dispara _init_db; no bloquear el splash en el hilo UI
+    try:
+        from src.central_red_global.store_server import is_store_server_online
+        _store_up = (not is_direct) and is_store_server_online()
+    except Exception:
+        _store_up = False
+
+    if _store_up:
+        update_status("Conectando al Servidor de Tienda...", 18)
     else:
-        run_heavy_task_fluid(lambda: db_manager._init_db(), timeout_sec=45)
-    
+        update_status("Inicializando base de datos...", 15)
+
+    def _boot_db():
+        from src.base_de_datos.database import db_manager
+        db_manager._init_db()
+
+    if is_direct:
+        _boot_db()
+    else:
+        run_heavy_task_fluid(_boot_db, timeout_sec=45)
+
+    # Sync cartelería: en terminales sí; en lanzador solo si no hay Servidor dedicado
+    try:
+        from src.utils.candados import is_store_server_running
+        _sync_ok = is_direct or not is_store_server_running()
+    except Exception:
+        _sync_ok = True
+    if _sync_ok:
+        from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
+        sincronizador_carteleria.start()
+
     app.processEvents()
 
     # --- PASO 1: CARGAR RUTAS E ICONOS ---
@@ -309,6 +334,11 @@ def launch_app(direct_role=None):
                 main_window._welcome_overlay.raise_()
             
             result = qt_exec(app)
+            try:
+                from src.central_red_global.network_engine import shutdown_network_engine
+                shutdown_network_engine()
+            except Exception:
+                pass
             main_window.close()
             main_window = None
             return result
@@ -416,18 +446,67 @@ if __name__ == "__main__":
     import sys
     if "--install-firewall" in sys.argv:
         from src.tools.setup_firewall import install_firewall
-        install_firewall()
-        sys.exit(0)
+        ok = install_firewall()
+        sys.exit(0 if ok else 1)
+
+    parser = argparse.ArgumentParser(description="CobroFacil PRO 2026")
+    parser.add_argument(
+        "--role", "--profile", type=str, default=None,
+        choices=["cajero", "admin", "jefe", "carteleria"],
+        help="Ejecutar rol autónomo (terminal)",
+    )
+    parser.add_argument(
+        "--server", action="store_true",
+        help="Proceso Servidor de Tienda (MariaDB + LAN + presencia)",
+    )
+    parsed_args, _ = parser.parse_known_args()
+    target_role = parsed_args.role
+    is_store_server = bool(parsed_args.server)
+    is_terminal_role = bool(target_role)
 
     from src.logger import setup_logger
     setup_logger()
 
     try:
         import ctypes
-        if sys.platform == 'win32':
-            myappid = 'punpro.cobrofacil.pos.31'
+        if sys.platform == "win32":
+            myappid = "punpro.cobrofacil.pos.31"
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-            
+    except Exception:
+        pass
+
+    # ── MODO SERVIDOR DE TIENDA (proceso dedicado) ──────────────────────────
+    if is_store_server:
+        try:
+            from src.updater.silent_auto_updater import apply_pending_update_on_startup
+            apply_pending_update_on_startup()
+        except Exception:
+            pass
+
+        app = QApplication.instance() or QApplication(sys.argv)
+        if not getattr(app, "_network_engine_shutdown_hook", False):
+            from src.central_red_global.network_engine import shutdown_network_engine
+            app.aboutToQuit.connect(shutdown_network_engine)
+            app._network_engine_shutdown_hook = True
+
+        try:
+            from src.ui_components.tema_estilos import aplicar_tema
+            from src.config import config
+            tema = "estilo_dia.qss" if config.get("theme", "light") == "light" else "estilo_noche.qss"
+            aplicar_tema(app, tema)
+        except Exception:
+            pass
+
+        start_update_server()
+        start_update_discovery_server()
+
+        from src.central_red_global.store_server import run_store_server_app
+        code = run_store_server_app(app)
+        app_exit_event.set()
+        sys.exit(code if code is not None else 0)
+
+    # Actualizaciones en segundo plano (lanzador / terminales)
+    try:
         from src.updater.silent_auto_updater import (
             apply_pending_update_on_startup,
             start_background_update_service,
@@ -436,20 +515,15 @@ if __name__ == "__main__":
         start_background_update_service()
     except Exception:
         pass
-    
-    # Asegurar reglas de firewall de forma automática en el arranque
-    try:
-        from src.services.mariadb_controller import mariadb_controller
-        mariadb_controller._ensure_firewall()
-    except Exception as e:
-        pass
-    
-    # 1. Inicializar
+
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
-    
-    # --- APLICAR TEMA (QSS GLOBAL) ---
+    if not getattr(app, "_network_engine_shutdown_hook", False):
+        from src.central_red_global.network_engine import shutdown_network_engine
+        app.aboutToQuit.connect(shutdown_network_engine)
+        app._network_engine_shutdown_hook = True
+
     try:
         from src.ui_components.tema_estilos import aplicar_tema
         from src.config import config
@@ -458,50 +532,80 @@ if __name__ == "__main__":
         aplicar_tema(app, qss_filename)
     except Exception as e:
         print(f"No se pudo cargar el módulo de temas: {e}")
-    
-    # --- FEEDBACK TACTIL (MODULO INDEPENDIENTE) ---
+
     from src.ui_components.touch_feedback import TouchFeedbackManager
     touch_manager = TouchFeedbackManager(app)
-    
-    # 2. Inicializar el Hardware de forma segura
+
     from src.hardware.cash_drawer import reset_drawer_manager
     reset_drawer_manager()
 
-    from src.central_red_global.lan_server import init_lan_server
-    init_lan_server()               # Servidor LAN unificado (API HTTP y UDP Discovery)
-    
-    start_update_server()           # Servidor LAN de actualizaciones (solo en la PC maestra)
-    start_update_discovery_server() # Servidor de descubrimiento para actualizaciones LAN
+    from src.utils.candados import is_store_server_running
 
-    parser = argparse.ArgumentParser(description="CobroFacil PRO 2026 Master Launcher")
-    parser.add_argument("--role", "--profile", type=str, default=None, choices=["cajero", "admin", "jefe", "carteleria"], help="Ejecutar rol autónomo directamente")
-    parsed_args, _ = parser.parse_known_args()
-    target_role = parsed_args.role
-
-    # Si se intenta abrir el Lanzador Maestro y ya hay uno activo, traerlo al frente y salir (Máximo Rendimiento)
-    if not target_role:
+    # Terminales: no pelear por puertos LAN si el Servidor ya los tiene
+    if is_terminal_role:
+        if not is_store_server_running():
+            try:
+                from src.central_red_global.lan_server import init_lan_server
+                init_lan_server()
+            except Exception:
+                pass
+    else:
+        # Lanzador: asegura proceso Servidor (MariaDB + red), no los posee
         try:
             if not acquire_master_launcher_lock():
                 sys.exit(0)
         except Exception as e:
             print(f"Aviso al verificar candado maestro: {e}")
 
+        from src.config import config
+        from src.central_red_global.master_presence import es_pc_maestra_local
+
+        if config.get("auto_start_store_server", True) and es_pc_maestra_local():
+            try:
+                from src.central_red_global.store_server import (
+                    ensure_store_server_process,
+                    set_windows_autostart,
+                    is_windows_autostart_enabled,
+                )
+                print("[TIENDA] Asegurando Servidor de Tienda…")
+                ok_srv = ensure_store_server_process(timeout_sec=45.0)
+                if ok_srv and config.get("auto_start_store_server", True) and not is_windows_autostart_enabled():
+                    set_windows_autostart(True)
+                if not ok_srv:
+                    raise RuntimeError("spawn servidor falló")
+            except Exception as e:
+                print(f"Aviso Servidor de Tienda: {e}")
+                # Fallback: presencia en este proceso si el spawn falló
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+                    mariadb_controller._ensure_firewall()
+                    from src.central_red_global.lan_server import init_lan_server
+                    init_lan_server()
+                    from src.central_red_global.master_presence import ensure_master_lan_presence
+                    ensure_master_lan_presence()
+                    start_update_server()
+                    start_update_discovery_server()
+                except Exception as e2:
+                    print(f"Fallback presencia local: {e2}")
+
     while True:
         exit_code = launch_app(direct_role=target_role)
         if exit_code not in (99, 888):
             break
-            
-    try:
-        from src.services.mariadb_controller import mariadb_controller
-        mariadb_controller.stop_server()
-    except Exception as e:
-        print(f"Error al detener MariaDB: {e}")
-        
-    try:
-        from src.central_red_global.lan_server import stop_lan_server
-        stop_lan_server()
-    except Exception as e:
-        print(f"Error al detener LAN Server: {e}")
-        
+
+    # Solo el proceso --server apaga MariaDB/LAN. Lanzador y terminales no tumban la tienda.
+    if is_terminal_role and not is_store_server_running():
+        try:
+            from src.central_red_global.lan_server import stop_lan_server
+            stop_lan_server()
+        except Exception:
+            pass
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+            if getattr(mariadb_controller, "_process", None) is not None:
+                mariadb_controller.stop_server()
+        except Exception:
+            pass
+
     app_exit_event.set()
     sys.exit(exit_code)

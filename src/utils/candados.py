@@ -9,7 +9,9 @@ from src.utils.paths import get_base_path
 
 _LOCK_DIR = os.path.join(get_base_path(), "locks")
 MASTER_LOCK_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.lock")
+STORE_SERVER_LOCK_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.lock")
 MASTER_WINDOW_TITLE = "CobroFacil PRO 2026 — Lanzador Maestro Central"
+STORE_SERVER_WINDOW_TITLE = "CobroFacil PRO — Servidor de Tienda"
 
 
 def _lock_path(role: str) -> str:
@@ -118,6 +120,68 @@ def release_master_launcher_lock():
                     os.remove(MASTER_LOCK_PATH)
     except OSError:
         pass
+
+
+def get_store_server_pid() -> int | None:
+    """PID del proceso Servidor de Tienda, o None si no hay instancia viva."""
+    if not os.path.exists(STORE_SERVER_LOCK_PATH):
+        return None
+    try:
+        with open(STORE_SERVER_LOCK_PATH, "r", encoding="utf-8") as f:
+            pid = int(f.read().strip() or "0")
+    except Exception:
+        return None
+    if pid > 0 and _pid_alive(pid):
+        return pid
+    try:
+        os.remove(STORE_SERVER_LOCK_PATH)
+    except OSError:
+        pass
+    return None
+
+
+def is_store_server_running() -> bool:
+    return get_store_server_pid() is not None
+
+
+def acquire_store_server_lock() -> bool:
+    """Una sola instancia del Servidor de Tienda."""
+    os.makedirs(_LOCK_DIR, exist_ok=True)
+    other = get_store_server_pid()
+    if other is not None and other != os.getpid():
+        return False
+    try:
+        with open(STORE_SERVER_LOCK_PATH, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+        atexit.register(release_store_server_lock)
+        return True
+    except OSError:
+        return False
+
+
+def release_store_server_lock():
+    try:
+        if os.path.exists(STORE_SERVER_LOCK_PATH):
+            with open(STORE_SERVER_LOCK_PATH, "r", encoding="utf-8") as f:
+                if f.read().strip() == str(os.getpid()):
+                    os.remove(STORE_SERVER_LOCK_PATH)
+    except OSError:
+        pass
+
+
+def focus_existing_store_server() -> bool:
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            user32 = ctypes.windll.user32
+            hwnd = user32.FindWindowW(None, STORE_SERVER_WINDOW_TITLE)
+            if hwnd:
+                user32.ShowWindow(hwnd, 9)
+                user32.SetForegroundWindow(hwnd)
+                return True
+        except Exception:
+            pass
+    return False
 
 
 class PerfilLocker:

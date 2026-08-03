@@ -60,37 +60,31 @@ class MariaDBController:
         return True
 
     def _ensure_firewall(self):
-        """Checks if firewall rules exist, if not, prompts UAC to install them."""
+        """Asegura reglas LAN (3306/8000/37020…). Si faltan, pide UAC y espera resultado."""
         try:
-            import subprocess
-            import ctypes
-            import sys
-            # Check if rule exists
-            result = subprocess.run(
-                'netsh advfirewall firewall show rule name="TPV_CajaFacil_TCP_v3"',
-                shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            from src.tools.setup_firewall import elevate_and_install, rules_installed
+
+            if rules_installed():
+                logger.info("Firewall LAN: reglas TPV_CajaFacil_* OK.")
+                return True
+
+            logger.info(
+                "Reglas de Firewall LAN no encontradas. "
+                "Solicitando Administrador (UAC) para abrir puertos de la PC Maestra..."
             )
-            if result.returncode != 0:
-                logger.info("Reglas de Firewall no encontradas. Solicitando permisos de Administrador para auto-configurar...")
-                
-                import os
-                exe_path = os.path.abspath(sys.executable)
-                script_path = os.path.abspath(sys.argv[0])
-                
-                # Si estamos en python (.py), pasar el script como parámetro; si es exe compilado, sólo el flag
-                if getattr(sys, 'frozen', False):
-                    params = "--install-firewall"
-                else:
-                    params = f'"{script_path}" --install-firewall'
-                
-                logger.info(f"Lanzando ShellExecuteW para elevacion. Exe: {exe_path}, Params: {params}")
-                # nShowCmd = 1 (SW_SHOWNORMAL) es VITAL para que Windows no bloquee el diálogo de consentimiento UAC
-                ret = ctypes.windll.shell32.ShellExecuteW(
-                    None, "runas", exe_path, params, None, 1
+            ok = elevate_and_install(timeout_sec=25.0)
+            if ok:
+                logger.info("Firewall LAN configurado correctamente.")
+            else:
+                logger.error(
+                    "Firewall LAN NO configurado. La PC Maestra puede quedar "
+                    "invisible en la red (3306/UDP 37020 bloqueados). "
+                    "Ejecutá el .exe como Administrador una vez o ConfiguraFirewall."
                 )
-                logger.info(f"Resultado de ShellExecuteW UAC: {ret}")
+            return ok
         except Exception as e:
             logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
+            return False
 
     def start_server(self):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
@@ -151,17 +145,9 @@ class MariaDBController:
             # Evitamos que se abra una ventana de comandos en Windows usando CREATE_NO_WINDOW
             creationflags = 0x08000000  # CREATE_NO_WINDOW
             
-            # Intentar abrir el puerto 3306 en el Firewall de Windows
-            try:
-                subprocess.run(
-                    ["netsh", "advfirewall", "firewall", "add", "rule", "name=MariaDB Port 3306", "dir=in", "action=allow", "protocol=TCP", "localport=3306"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    creationflags=creationflags
-                )
-            except Exception:
-                pass
-            
+            # Firewall real (con UAC) — el netsh sin admin fallaba en silencio
+            self._ensure_firewall()
+
             self._process = subprocess.Popen(
                 [
                     mysqld_exe,

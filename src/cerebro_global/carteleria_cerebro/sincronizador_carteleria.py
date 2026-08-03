@@ -1,10 +1,11 @@
-import time
-import datetime
-import threading
-import traceback
+import math
 import re
-from src.logger import logger
+import threading
+import time
+
 from src.base_de_datos.database import db_manager
+from src.logger import logger
+
 
 def _limpiar_nombre(nombre):
     nombre = str(nombre or "")
@@ -12,6 +13,7 @@ def _limpiar_nombre(nombre):
         nombre = nombre.replace(tag, "")
     nombre = re.sub(r'^(?:oferta\s+de|oferta)\s+', '', nombre, flags=re.IGNORECASE).strip()
     return nombre
+
 
 class SincronizadorCarteleria:
     """
@@ -23,40 +25,38 @@ class SincronizadorCarteleria:
         self.intervalo = intervalo_segundos
         self.running = False
         self._thread = None
-        
+        self._fail_streak = 0
+
     def start(self):
         if not self.running:
             self.running = True
             self._thread = threading.Thread(target=self._run_loop, daemon=True)
             self._thread.start()
             logger.info("Sincronizador de Cartelería INICIADO.")
-            
+
     def stop(self):
         self.running = False
-        
+
     def _run_loop(self):
-        # Sincronización inicial rápida
         self.sincronizar_ahora()
-        
+
         while self.running:
             time.sleep(self.intervalo)
             self.sincronizar_ahora()
-            
+
     def sincronizar_ahora(self):
         try:
-            # 1. Leer inventario de productos
             query_productos = """
                 SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
-                FROM productos 
+                FROM productos
                 WHERE precio > 0
             """
             filas = db_manager.execute_query(query_productos)
             if not filas:
                 return
-                
+
             nuevos_datos = []
-            
-            # 2. Formatear y preparar los datos
+
             for fila in filas:
                 if isinstance(fila, dict):
                     departamento = str(fila.get('categoria', ''))
@@ -74,17 +74,20 @@ class SincronizadorCarteleria:
                     cant_oferta = float(fila[4] or 0)
                     tipo_unidad = str(fila[5] or "").strip().lower()
                     prod_unidad = str(fila[6] or "").strip().lower()
-                
+
                 regla_texto = ""
                 if cant_oferta > 0:
-                    import math
                     cant_display = cant_oferta
                     if cant_display >= 1:
                         frac = cant_display - math.floor(cant_display)
                         if frac >= 0.8:
                             cant_display = float(math.ceil(cant_display))
 
-                    is_kilo = ('kilo' in prod_unidad or prod_unidad == 'kg' or 'kilo' in tipo_unidad or tipo_unidad == 'kg' or cant_oferta != int(cant_oferta))
+                    is_kilo = (
+                        'kilo' in prod_unidad or prod_unidad == 'kg'
+                        or 'kilo' in tipo_unidad or tipo_unidad == 'kg'
+                        or cant_oferta != int(cant_oferta)
+                    )
                     if is_kilo:
                         if cant_display < 1:
                             t_un_str = f"{int(round(cant_display * 1000))} gs"
@@ -97,9 +100,12 @@ class SincronizadorCarteleria:
                             t_un_str = "1 Unidad"
                         else:
                             t_un_str = f"{int(cant_display)} Unidades"
-                    
-                    regla_texto = f"<span style='color: #00A859;'>Llevando</span> <span style='color: #DC2626;'>{t_un_str}</span>"
-                
+
+                    regla_texto = (
+                        f"<span style='color: #00A859;'>Llevando</span> "
+                        f"<span style='color: #DC2626;'>{t_un_str}</span>"
+                    )
+
                 nuevos_datos.append((
                     departamento,
                     nombre_producto,
@@ -107,40 +113,43 @@ class SincronizadorCarteleria:
                     precio_oferta,
                     regla_texto
                 ))
-            
-            # 3. Guardar en la tabla global limpiamente
-            is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-            
+
+            # Una sola transacción: no dejar la tabla vacía si falla el INSERT
             conn = db_manager.get_connection()
             try:
                 cursor = conn.cursor()
-                # Limpiar tabla vieja
                 cursor.execute("DELETE FROM carteleria_global")
-                
-                # Insertar tabla nueva
-                if is_mariadb:
-                    query_insert = """
-                        INSERT INTO carteleria_global 
-                        (departamento, nombre_producto, precio_normal, precio_oferta, regla_texto) 
-                        VALUES (%s, %s, %s, %s, %s)
+                insert_sql = db_manager._normalize_query(
                     """
-                else:
-                    query_insert = """
-                        INSERT INTO carteleria_global 
-                        (departamento, nombre_producto, precio_normal, precio_oferta, regla_texto) 
-                        VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO carteleria_global
+                    (departamento, nombre_producto, precio_normal, precio_oferta, regla_texto)
+                    VALUES (?, ?, ?, ?, ?)
                     """
-                    
-                cursor.executemany(query_insert, nuevos_datos)
+                )
+                cursor.executemany(insert_sql, nuevos_datos)
                 conn.commit()
-            except Exception as e_db:
-                logger.error(f"SincronizadorCarteleria DB Error: {e_db}")
+            except Exception:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                raise
             finally:
-                if hasattr(conn, 'close'):
+                try:
                     conn.close()
-                    
+                except Exception:
+                    pass
+
+            self._fail_streak = 0
+
         except Exception as e:
-            logger.error(f"SincronizadorCarteleria Loop Error: {e}\n{traceback.format_exc()}")
+            self._fail_streak += 1
+            # Evitar spamear traceback completo en caídas de red / maestra offline
+            if self._fail_streak <= 1 or self._fail_streak % 10 == 0:
+                logger.warning(
+                    f"SincronizadorCarteleria: sin sync ({self._fail_streak}x): {e}"
+                )
+
 
 # Instancia global (Singleton)
 sincronizador_carteleria = SincronizadorCarteleria(intervalo_segundos=30)

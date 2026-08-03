@@ -39,22 +39,67 @@ class RedLanService:
 
     @staticmethod
     def buscar_computadoras_maestras() -> list[dict]:
-        """Busca y devuelve una lista de PCs Maestras activas en la red local.
-        Retorna: [{'ip': '192.168.0.5', 'nombre': 'DESKTOP-XXX'}]
+        """Busca PCs maestras: heartbeats + radar UDP PUNPRO_DISCOVER.
+
+        Una entrada por IP. Retorna: [{'ip': '192.168.0.5', 'nombre': 'DESKTOP-XXX'}]
         """
+        import json
+        import time
+
+        por_ip: dict[str, str] = {}
         engine = get_network_engine()
-        maestras = []
-        if engine and hasattr(engine, '_active_ips'):
+        mi_host = ""
+        if engine:
+            mi_origen = getattr(engine, "_origen", "") or ""
+            mi_host = mi_origen.split("|")[0].lower() if mi_origen else ""
+
+        # 1) Presencia por heartbeats (NetworkEngine)
+        if engine and hasattr(engine, "_active_ips"):
+            roles_ok = {"admin", "jefe", "maestra", "server", "cajero"}
             for origen, ip in engine._active_ips.items():
-                origen_lower = origen.lower()
-                # Filtrar PCs que actúan como servidor/maestra/admin
-                if any(x in origen_lower for x in ("admin", "caja", "maestra", "server")):
-                    nombre_host = origen.split('|')[0]
-                    maestras.append({
-                        "ip": ip,
-                        "nombre": nombre_host
-                    })
-        return maestras
+                if not ip:
+                    continue
+                partes = str(origen).split("|")
+                nombre_host = partes[0] if partes else str(origen)
+                rol = partes[1].lower() if len(partes) > 1 else ""
+                if rol and rol not in roles_ok:
+                    continue
+                if not rol and "maestra" not in str(origen).lower():
+                    continue
+                if mi_host and nombre_host.lower() == mi_host:
+                    continue
+                if ip not in por_ip or rol in ("admin", "maestra"):
+                    por_ip[ip] = nombre_host
+
+        # 2) Radar UDP: responde el lanzador/maestro aunque no haya cajero
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.settimeout(1.2)
+            sock.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
+            t_end = time.time() + 1.2
+            while time.time() < t_end:
+                try:
+                    data, addr = sock.recvfrom(2048)
+                    info = json.loads(data.decode("utf-8"))
+                    if str(info.get("mode", "")).upper() != "MAESTRA":
+                        continue
+                    ip = info.get("server_ip") or addr[0]
+                    hostname = str(info.get("hostname") or ip)
+                    if mi_host and hostname.lower() == mi_host:
+                        continue
+                    # Preferir nombre del discovery si no había heartbeat
+                    if ip not in por_ip:
+                        por_ip[ip] = hostname
+                except socket.timeout:
+                    break
+                except Exception:
+                    break
+            sock.close()
+        except Exception as e:
+            logger.debug(f"Discovery UDP maestras: {e}")
+
+        return [{"ip": ip, "nombre": nombre} for ip, nombre in sorted(por_ip.items())]
 
     @staticmethod
     def probar_conexion_a_ip(ip: str, puerto: int = 3306) -> bool:

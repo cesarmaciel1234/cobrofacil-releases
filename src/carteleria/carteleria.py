@@ -87,7 +87,7 @@ class CarteleriaApp(QStackedWidget):
             self.inv.deleteLater()
             self.inv = None
             
-        from src.ui_global.inventario_ui.inventario_main import Admin1Inventario
+        from src.ui_global.inventario_ui.vistas.inventario_main import Admin1Inventario
         self.inv = Admin1Inventario()
         self.addWidget(self.inv)
         self.inv.request_dashboard.connect(self.volver_dashboard)

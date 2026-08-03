@@ -1,6 +1,7 @@
 from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
+import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
@@ -12,8 +13,32 @@ class DatabaseManager:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DatabaseManager, cls).__new__(cls)
+            # Si la maestra cae, nos quedamos en SQLite local hasta reconectar_mariadb()
+            cls._instance._forced_local_offline = False
             cls._instance._init_db()
         return cls._instance
+
+    def _attach_local_store_client(self) -> None:
+        """Conexión rápida al MariaDB del proceso --server (sin start_server ni backup)."""
+        from src.db_engines.mariadb_engine import MariaDBEngine
+
+        self.is_master = True
+        self.db_engine_type = "mariadb"
+        self.db_path = "mariadb://127.0.0.1"
+        self.mariadb_engine = MariaDBEngine(host="127.0.0.1")
+        conn = self.get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+            cur.fetchone()
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        logger.info(
+            "Conectado al Servidor de Tienda (cliente local — MariaDB ya en marcha)."
+        )
 
     def _normalize_db_path(self, path: str, base_app_path: str) -> str:
         """Normaliza rutas de base de datos con soporte para UNC, unidades mapeadas y variables de entorno."""
@@ -41,11 +66,34 @@ class DatabaseManager:
         from src.utils.paths import get_base_path
         base_app_path = get_base_path()
         config_path = os.path.join(base_app_path, "config.json")
+
+        # Lanzador / terminales: si --server ya tiene la tienda, no duplicar arranque ni backup
+        if "--server" not in sys.argv:
+            try:
+                from src.central_red_global.store_server import is_store_server_online
+                if is_store_server_online():
+                    self._attach_local_store_client()
+                    return
+            except Exception as e:
+                logger.debug(f"Attach Servidor de Tienda no disponible, init completo: {e}")
+
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
 
             self.db_engine_type = str(config_data.get("db_engine", "sqlite")).strip().lower()
+
+            # Sesión ya en fallback offline: no reintentar una maestra caída en cada _init_db()
+            if getattr(self, "_forced_local_offline", False):
+                self.is_master = True
+                self.db_engine_type = "sqlite"
+                self.mariadb_engine = None
+                db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
+                self.db_path = os.path.join(base_app_path, db_name)
+                logger.info("Modo local offline de sesión activo (SQLite). Se omite reintento a la Maestra.")
+                self._create_tables()
+                self._ensure_test_users()
+                return
             
             # --- INTEGRACION MARIADB ---
             if self.db_engine_type == "mariadb":
@@ -88,11 +136,20 @@ class DatabaseManager:
                     self.is_master = False
                 self.mariadb_engine = MariaDBEngine(host=host)
 
+                # Autoblindaje solo en el proceso dueño (--server o maestra sin servidor dedicado)
+                _skip_blindaje = False
                 try:
-                    from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-                    AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
-                except Exception as e:
-                    logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
+                    from src.utils.candados import is_store_server_running
+                    if is_store_server_running() and "--server" not in sys.argv:
+                        _skip_blindaje = True
+                except Exception:
+                    pass
+                if not _skip_blindaje:
+                    try:
+                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                        AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
+                    except Exception as e:
+                        logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
                 
                 # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
                 if not self.is_master:
@@ -143,7 +200,9 @@ class DatabaseManager:
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
                         logger.info("Auto-forzando modo local. Se iniciará con base de datos local SQLite de forma transparente.")
                         self.is_master = True
-                        self.db_path = os.path.join(base_app_path, "punpro.db")
+                        self._forced_local_offline = True
+                        db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
+                        self.db_path = os.path.join(base_app_path, db_name)
                         self.db_engine_type = "sqlite"
                         self.mariadb_engine = None
                         self._create_tables()
@@ -302,11 +361,11 @@ class DatabaseManager:
                 self._migrate_db()
         except sqlite3.OperationalError as e:
             import json
-            import sys
             from src.utils.paths import get_base_path
             from PyQt6.QtWidgets import QApplication, QMessageBox
             
             # Asegurar QApplication para poder mostrar la alerta bonita
+            # (sys ya importado a nivel de módulo — no reimportar aquí)
             if not QApplication.instance():
                 app = QApplication(sys.argv)
             else:
@@ -469,6 +528,7 @@ class DatabaseManager:
             self.db_path = local_path
             self.db_engine_type = "sqlite"
             self.is_master = True
+            self._forced_local_offline = True
 
             # Verificar/crear tablas en la BD local
             self._create_tables()
@@ -480,20 +540,29 @@ class DatabaseManager:
             raise
 
     def reconectar_mariadb(self, host: str):
-        """Conecta esta PC como ESCLAVA a un servidor MariaDB remoto. Sin reiniciar."""
+        """Conecta a MariaDB en `host`. Solo cambia el motor activo si el ping funciona."""
         try:
             from src.db_engines.mariadb_engine import MariaDBEngine
+            from src.config import config
 
-            # Cerrar BD SQLite si estaba abierta
+            engine = MariaDBEngine(host=host)
+            # Validar antes de pisar SQLite local / estado offline
+            test = engine.get_connection()
+            try:
+                test.close()
+            except Exception:
+                pass
+
             self.db_path = "mariadb://" + host
             self.db_engine_type = "mariadb"
-            
-            from src.config import config
-            self.is_master = config.get("is_master", host in ("localhost", "127.0.0.1"))
+            self._forced_local_offline = False
+            self.is_master = bool(
+                config.get("is_master", host in ("localhost", "127.0.0.1"))
+            )
+            self.mariadb_engine = engine
 
-            self.mariadb_engine = MariaDBEngine(host=host)
-
-            logger.info(f"[RED LAN] Reconectado como ESCLAVA a MariaDB en {host}")
+            rol = "MAESTRA" if self.is_master else "ESCLAVA"
+            logger.info(f"[RED LAN] Reconectado como {rol} a MariaDB en {host}")
         except Exception as e:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise

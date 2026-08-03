@@ -47,6 +47,7 @@ class Config:
         "github_report_token": "",
         "carteleria_performance_mode": False,
         "carteleria_is_slave": False,
+        "auto_start_store_server": True,
     }
 
     _instance = None

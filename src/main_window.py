@@ -375,7 +375,7 @@ class MainWindow(QMainWindow):
         self._screen_factories = {
             0:  lambda: __import__('src.admin.dashboard.dashboard_main',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
-            2:  lambda: __import__('src.ui_global.inventario_ui.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
+            2:  lambda: __import__('src.ui_global.inventario_ui.vistas.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.motor_descuentos.vistas.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),

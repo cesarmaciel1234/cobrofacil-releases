@@ -266,6 +266,7 @@ class PerfilPantalla(QDialog):
             self._timer_monitor.start()
 
         self._check_locked_profiles()
+        QTimer.singleShot(300, self._refresh_server_badge)
 
     def _setup_ui(self):
         main_lay = QVBoxLayout(self)
@@ -303,6 +304,26 @@ class PerfilPantalla(QDialog):
         """)
         top_bar.addWidget(sub)
         top_bar.addStretch()
+
+        # Badge Servidor de Tienda (proceso dedicado)
+        self.lbl_server_badge = QLabel("Servidor: …")
+        self.lbl_server_badge.setStyleSheet(
+            "font-size: 10px; font-weight: 800; color: #64748B; background: #F1F5F9; "
+            "border: 1px solid #E2E8F0; border-radius: 8px; padding: 4px 10px;"
+        )
+        self.lbl_server_badge.setCursor(Qt.PointingHandCursor)
+        self.lbl_server_badge.setToolTip("Clic: mostrar / asegurar Servidor de Tienda")
+        self.lbl_server_badge.mousePressEvent = lambda e: self._on_server_badge_click()
+        top_bar.addWidget(self.lbl_server_badge)
+        top_bar.addSpacing(6)
+
+        self.btn_autostart = QPushButton("Win: OFF")
+        self.btn_autostart.setFixedHeight(26)
+        self.btn_autostart.setCursor(Qt.PointingHandCursor)
+        self.btn_autostart.setToolTip("Arrancar Servidor de Tienda con Windows (tras corte de luz)")
+        self.btn_autostart.clicked.connect(self._toggle_windows_autostart)
+        top_bar.addWidget(self.btn_autostart)
+        top_bar.addSpacing(8)
 
         # Smart Updater Badge Component
         try:
@@ -397,9 +418,83 @@ class PerfilPantalla(QDialog):
         self.btn_jefe.set_active(self.selected_index == 2)
         self.btn_carteleria.set_active(self.selected_index == 3)
 
+    def _refresh_server_badge(self):
+        if not hasattr(self, "lbl_server_badge"):
+            return
+        try:
+            from src.central_red_global.store_server import (
+                is_store_server_online,
+                is_windows_autostart_enabled,
+            )
+            from src.utils.candados import get_store_server_pid
+
+            online = is_store_server_online()
+            pid = get_store_server_pid()
+            if online:
+                self.lbl_server_badge.setText(f"Servidor: ONLINE" + (f" · {pid}" if pid else ""))
+                self.lbl_server_badge.setStyleSheet(
+                    "font-size: 10px; font-weight: 800; color: #15803D; background: #DCFCE7; "
+                    "border: 1px solid #86EFAC; border-radius: 8px; padding: 4px 10px;"
+                )
+            else:
+                self.lbl_server_badge.setText("Servidor: OFFLINE")
+                self.lbl_server_badge.setStyleSheet(
+                    "font-size: 10px; font-weight: 800; color: #B91C1C; background: #FEE2E2; "
+                    "border: 1px solid #FECACA; border-radius: 8px; padding: 4px 10px;"
+                )
+            if hasattr(self, "btn_autostart"):
+                on = is_windows_autostart_enabled()
+                self.btn_autostart.setText("Win: ON" if on else "Win: OFF")
+                self.btn_autostart.setStyleSheet(
+                    "QPushButton { font-size: 10px; font-weight: 800; border-radius: 8px; "
+                    "padding: 4px 10px; border: 1px solid %s; background: %s; color: %s; }"
+                    % (
+                        ("#86EFAC", "#DCFCE7", "#15803D") if on else ("#E2E8F0", "#F8FAFC", "#64748B")
+                    )
+                )
+        except Exception:
+            self.lbl_server_badge.setText("Servidor: ?")
+
+    def _on_server_badge_click(self):
+        try:
+            from src.central_red_global.store_server import (
+                ensure_store_server_process,
+                is_store_server_online,
+            )
+            from src.utils.candados import focus_existing_store_server
+
+            if is_store_server_online():
+                focus_existing_store_server()
+            else:
+                self.lbl_server_badge.setText("Servidor: arrancando…")
+                ensure_store_server_process(timeout_sec=40.0)
+            self._refresh_server_badge()
+        except Exception as e:
+            QMessageBox.warning(self, "Servidor", f"No se pudo asegurar el servidor:\n{e}")
+
+    def _toggle_windows_autostart(self):
+        try:
+            from src.config import config
+            from src.central_red_global.store_server import (
+                is_windows_autostart_enabled,
+                set_windows_autostart,
+            )
+            new_state = not is_windows_autostart_enabled()
+            ok = set_windows_autostart(new_state)
+            config.set("auto_start_store_server", new_state)
+            if not ok and new_state:
+                QMessageBox.warning(
+                    self, "Windows",
+                    "No se pudo crear el acceso de inicio. Probá ejecutar como Administrador.",
+                )
+            self._refresh_server_badge()
+        except Exception as e:
+            QMessageBox.warning(self, "Windows", str(e))
+
     def _check_locked_profiles(self):
         try:
             self._apply_locked_profiles_ui()
+            self._refresh_server_badge()
         except Exception:
             self._roles_bloqueados = set()
 
