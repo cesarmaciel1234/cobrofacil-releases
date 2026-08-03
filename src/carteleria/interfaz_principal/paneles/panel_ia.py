@@ -38,7 +38,7 @@ class PanelIA(QFrame):
         self.lbl_content.setStyleSheet("background: transparent; border: none;")
         self.layout.addWidget(self.lbl_content)
         
-        from src.carteleria.interfaz_principal.display_promo_tv import DisplayPromoTV
+        from src.carteleria.interfaz_principal.vistas.display_promo_tv import DisplayPromoTV
         self.display_promo = DisplayPromoTV(parent=self)
         self.display_promo.hide()
         self.layout.addWidget(self.display_promo)

@@ -1318,7 +1318,7 @@ class Paso5Terminal(QWidget):
                 return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
-        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
+        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
 
         if res:
             p = res[0]

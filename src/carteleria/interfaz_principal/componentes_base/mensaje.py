@@ -25,12 +25,12 @@ class Mensaje(QFrame):
         # Contenedor interno que actúa como "viewport" para recortar el texto y que no pise los bordes redondeados
         from PyQt6.QtWidgets import QWidget
         self.viewport = QWidget(self)
-        self.viewport.move(25, 0) # Margen izquierdo
+        self.viewport.move(40, 0) # Margen izquierdo aumentado para evitar solapamiento con borde curvo
         self.viewport.setFixedHeight(50)
         self.viewport.setStyleSheet("background: transparent;")
         
         self.label = QLabel(self.viewport)
-        self.label.setStyleSheet(f"color: {color_texto}; font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: 20px; font-weight: 800; background: transparent; border: none;")
+        self.label.setStyleSheet(f"color: {color_texto}; font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: 15pt; font-weight: 800; background: transparent; border: none;")
         self.label.move(5, 0)
         self.label.setFixedHeight(50)
         self.label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -50,7 +50,7 @@ class Mensaje(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.viewport.setFixedWidth(self.width() - 50) # 25px de margen a cada lado para no pisar bordes
+        self.viewport.setFixedWidth(self.width() - 80) # 40px de margen a cada lado para no pisar bordes curvos
         self._check_scroll()
 
     def _check_scroll(self):

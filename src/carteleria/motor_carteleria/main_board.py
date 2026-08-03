@@ -10,11 +10,11 @@ from PyQt6.QtGui import QPixmap
 # Componentes modulares
 from src.carteleria.theme import C_THEME
 from src.carteleria.configuraciones.info_negocio import InfoNegocio
-from src.carteleria.interfaz_principal.mensaje import Mensaje
-from src.carteleria.interfaz_principal.carrusel_destacados import CarruselDestacados
-from src.carteleria.interfaz_principal.grilla_precios import GrillaPrecios
-from src.carteleria.interfaz_principal.panel_combos import PanelCombos
-from src.carteleria.interfaz_principal.panel_ia import PanelIA
+from src.carteleria.interfaz_principal.componentes_base.mensaje import Mensaje
+from src.carteleria.interfaz_principal.paneles.carrusel_destacados import CarruselDestacados
+from src.carteleria.interfaz_principal.paneles.grilla_precios import GrillaPrecios
+from src.carteleria.interfaz_principal.paneles.panel_combos import PanelCombos
+from src.carteleria.interfaz_principal.paneles.panel_ia import PanelIA
 from src.carteleria.interfaz_relampagos.pantalla_espia import PantallaEspia
 from src.carteleria.interfaz_relampagos.oferta_relampago import OfertaRelampago
 from src.carteleria.interfaz_relampagos.banderin import BanderinVolador

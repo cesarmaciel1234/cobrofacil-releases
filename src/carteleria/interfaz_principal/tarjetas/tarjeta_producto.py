@@ -106,21 +106,21 @@ class TarjetaProducto(QFrame):
         max_word_len = max([len(w) for w in self.nombre.split()]) if self.nombre else 0
         
         if len_n <= 9 and max_word_len <= 9 and not es_precio_largo:
-            fs_n = 38 if self.modo_tv == 1 else 27
+            fs_n = 28 if self.modo_tv == 1 else 20
         elif len_n <= 14 and max_word_len <= 10:
-            fs_n = 32 if self.modo_tv == 1 else 23
+            fs_n = 24 if self.modo_tv == 1 else 17
         elif max_word_len > 10:
-            fs_n = 22 if self.modo_tv == 1 else 17
+            fs_n = 16 if self.modo_tv == 1 else 13
         else:
-            fs_n = 26 if self.modo_tv == 1 else 19
+            fs_n = 19 if self.modo_tv == 1 else 14
             
         self.lbl_producto = QLabel(self.nombre)
         self.lbl_producto.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         if self.is_temu:
-            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: {fs_n}px; font-weight: 800; color: #1E293B; letter-spacing: 0.3px; padding: 2px 0px; }}")
+            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: {fs_n}pt; font-weight: 800; color: #1E293B; letter-spacing: 0.3px; padding: 2px 0px; }}")
         else:
-            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_n}px; font-weight: 800; color: {C_THEME['text']}; padding: 2px 0px; }}")
+            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI'; font-size: {fs_n}pt; font-weight: 800; color: {C_THEME['text']}; padding: 2px 0px; }}")
             
         self.lbl_producto.setWordWrap(True)
         self.lbl_producto.setMinimumWidth(0)
@@ -132,34 +132,34 @@ class TarjetaProducto(QFrame):
         es_precio_largo = len(p_str) >= 7
         
         if self.precio_oferta > 0:
-            fs_old = 22 if self.modo_tv == 1 else 16
+            fs_old = 16 if self.modo_tv == 1 else 12
             lbl_old = QLabel(f"<s>${self.precio:,.0f}</s>")
             lbl_old.setMinimumWidth(0)
-            lbl_old.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_old}px; font-weight: 700; color: #94A3B8; }}")
+            lbl_old.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_old}pt; font-weight: 700; color: #94A3B8; }}")
             lbl_old.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.precios_lay.addWidget(lbl_old, 0, Qt.AlignmentFlag.AlignRight)
             
             lbl_p = QLabel(f"${self.precio_oferta:,.0f}")
             lbl_p.setMinimumWidth(0)
             if self.is_temu:
-                fs_p = (34 if self.modo_tv == 1 else 24) if es_precio_largo else (38 if self.modo_tv == 1 else 27)
+                fs_p = (25 if self.modo_tv == 1 else 18) if es_precio_largo else (28 if self.modo_tv == 1 else 20)
                 pad_h = "4px 12px" if self.modo_tv == 1 else "3px 10px"
-                lbl_p.setStyleSheet(f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; font-size: {fs_p}px; font-weight: 900; color: #FFFF00; background-color: #DC2626; padding: {pad_h}; border-radius: 10px; }}")
+                lbl_p.setStyleSheet(f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; font-size: {fs_p}pt; font-weight: 900; color: #FFFF00; background-color: #DC2626; padding: {pad_h}; border-radius: 10px; }}")
             else:
-                fs_p = (32 if self.modo_tv == 1 else 23) if es_precio_largo else (36 if self.modo_tv == 1 else 26)
+                fs_p = (24 if self.modo_tv == 1 else 17) if es_precio_largo else (27 if self.modo_tv == 1 else 19)
                 pad_h = "4px 12px" if self.modo_tv == 1 else "3px 10px"
-                lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_p}px; font-weight: 900; color: #FFFFFF; background-color: {C_THEME['accent']}; padding: {pad_h}; border-radius: 10px; }}")
+                lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_p}pt; font-weight: 900; color: #FFFFFF; background-color: {C_THEME['accent']}; padding: {pad_h}; border-radius: 10px; }}")
             lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.precios_lay.addWidget(lbl_p, 0, Qt.AlignmentFlag.AlignRight)
         else:
             lbl_p = QLabel(f"${self.precio:,.0f}")
             lbl_p.setMinimumWidth(0)
             if self.is_temu:
-                fs_p = (36 if self.modo_tv == 1 else 26) if es_precio_largo else (42 if self.modo_tv == 1 else 30)
-                lbl_p.setStyleSheet(f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; font-size: {fs_p}px; font-weight: 900; color: #DC2626; }}")
+                fs_p = (27 if self.modo_tv == 1 else 19) if es_precio_largo else (31 if self.modo_tv == 1 else 22)
+                lbl_p.setStyleSheet(f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; font-size: {fs_p}pt; font-weight: 900; color: #DC2626; }}")
             else:
-                fs_p = (34 if self.modo_tv == 1 else 24) if es_precio_largo else (40 if self.modo_tv == 1 else 28)
-                lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_p}px; font-weight: 800; color: {C_THEME['accent']}; }}")
+                fs_p = (25 if self.modo_tv == 1 else 18) if es_precio_largo else (30 if self.modo_tv == 1 else 21)
+                lbl_p.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_p}pt; font-weight: 800; color: {C_THEME['accent']}; }}")
             lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.precios_lay.addWidget(lbl_p, 0, Qt.AlignmentFlag.AlignRight)
 
@@ -170,7 +170,7 @@ class TarjetaProducto(QFrame):
         if not regla_txt:
             return # Omitir cinta si no hay regla o es absurda
             
-        fs_r = 22 if self.modo_tv == 1 else 17
+        fs_r = 16 if self.modo_tv == 1 else 13
         lbl_r = QLabel(f"🔥 {regla_txt.strip()} 🔥")
         lbl_r.setMinimumWidth(0)
         lbl_r.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
@@ -178,9 +178,9 @@ class TarjetaProducto(QFrame):
         
         # Borde SÓLIDO premium, nunca punteado ni rayas
         if self.is_temu:
-            lbl_r.setStyleSheet(f"QLabel {{ font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: {fs_r}px; font-weight: 900; color: #15803D; background: #DCFCE7; border-radius: 8px; padding: 5px 10px; border: 1px solid #22C55E; }}")
+            lbl_r.setStyleSheet(f"QLabel {{ font-family: 'Segoe UI Black', 'Arial Black', sans-serif; font-size: {fs_r}pt; font-weight: 800; color: #FFFFFF; background-color: #E1251B; padding: 2px 4px; border-radius: 6px; letter-spacing: 0.5px; }}")
         else:
-            lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_r}px; font-weight: 800; color: #008C4A; background: #F1F8F5; border-radius: 8px; padding: 5px 10px; border: 1px solid #86EFAC; }}")
+            lbl_r.setStyleSheet(f"QLabel {{ font-family: -apple-system, 'Segoe UI', sans-serif; font-size: {fs_r}pt; font-weight: 800; color: #FFFFFF; background-color: #E11D48; padding: 2px 4px; border-radius: 6px; }}")
             
         lbl_r.setWordWrap(True)
         self.main_lay.addWidget(lbl_r)

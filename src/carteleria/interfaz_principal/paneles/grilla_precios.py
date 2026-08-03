@@ -166,7 +166,7 @@ class _AutoScrollList(QScrollArea):
                     continue # Nunca dibujar categorías vacías
                 
                 # ── CATEGORÍA: BANNER MODULAR CON CÁPSULA DE ÍCONO Y TITULO RESPONSIVE ──
-                from src.carteleria.interfaz_principal.banner_categoria import BannerCategoria
+                from src.carteleria.interfaz_principal.componentes_base.banner_categoria import BannerCategoria
                 from src.carteleria.theme import get_active_theme_name
                 is_temu = (get_active_theme_name() == "temu")
 
@@ -174,7 +174,7 @@ class _AutoScrollList(QScrollArea):
                 block_layout.addWidget(banner)
                 
                 # ── PRODUCTOS: TARJETAS MODULARES CON SUB-CONTENEDORES ESTRICTOS ──
-                from src.carteleria.interfaz_principal.tarjeta_producto import TarjetaProducto
+                from src.carteleria.interfaz_principal.tarjetas.tarjeta_producto import TarjetaProducto
                 for nombre, precio, precio_oferta, regla in productos:
                     if not nombre or not nombre.strip():
                         continue

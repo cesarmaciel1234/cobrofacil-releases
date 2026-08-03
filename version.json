@@ -1,7 +1,7 @@
 {
-  "app_version": "10.11",
+  "app_version": "10.12",
   "channel": "stable",
-  "build_date": "2026-08-01 18:03:26",
+  "build_date": "2026-08-03 14:58:00",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -190,7 +190,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00c3\u00b1a.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",

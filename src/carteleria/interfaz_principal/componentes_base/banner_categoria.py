@@ -105,16 +105,16 @@ class BannerCategoria(QFrame):
                 lbl_ico.setPixmap(pm.scaled(54, 54, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
             else:
                 lbl_ico.setText(self._obtener_emoji_fallback(cat_upper))
-                lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 36px;")
+                lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 27pt;")
         else:
             lbl_ico.setText(self._obtener_emoji_fallback(cat_upper))
-            lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 36px;")
+            lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 27pt;")
 
         ico_lay.addWidget(lbl_ico)
         layout.addWidget(contenedor_icono, 2) # 20% del ancho
 
         # ── Texto del Título con Auto-Escalado Responsive (80% Proporción de Ancho) ──
-        fs_cat = 46 if (self.is_temu and self.modo_tv == 1) else (36 if self.is_temu else (42 if self.modo_tv == 1 else 32))
+        fs_cat = 34 if (self.is_temu and self.modo_tv == 1) else (27 if self.is_temu else (31 if self.modo_tv == 1 else 24))
         
         # Ajuste dinámico de fuente para nombres muy largos
         if len(cat_upper) > 28:
@@ -129,7 +129,7 @@ class BannerCategoria(QFrame):
         lbl_txt.setStyleSheet(f"""
             QLabel {{
                 font-family: 'Arial Black', 'Segoe UI Black', sans-serif;
-                font-size: {fs_cat}px;
+                font-size: {fs_cat}pt;
                 font-weight: 900;
                 color: #FFFFFF;
                 border: none;
