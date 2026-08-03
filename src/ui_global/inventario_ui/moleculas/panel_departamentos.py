@@ -171,7 +171,7 @@ class PanelDepartamentos(QWidget):
         root.addWidget(sp)
 
     def _abrir_galeria_iconos(self):
-        from src.ui_global.inventario_ui.componentes.dialogo_galeria_iconos import DialogoGaleriaIconos
+        from src.ui_global.inventario_ui.moleculas.dialogo_galeria_iconos import DialogoGaleriaIconos
         dlg = DialogoGaleriaIconos(icono_actual=getattr(self, '_icono_seleccionado', None), parent=self)
         if qt_exec(dlg):
             sel = dlg.get_selected_icon()

@@ -1,7 +1,7 @@
 {
-  "app_version": "10.12",
+  "app_version": "10.13",
   "channel": "stable",
-  "build_date": "2026-08-03 14:58:00",
+  "build_date": "2026-08-03 15:09:00",
   "server_host": "cesar",
   "modules": {
     "add_drain.py": {
@@ -1006,35 +1006,11 @@
       "channel": "stable",
       "size": 0
     },
-    "src/admin/motor_descuentos_ui/ofertas_main.py": {
-      "version": "1.0.0",
-      "checksum": "0b1390fc07f64a4c365aa50fb1dc1c3b",
-      "channel": "stable",
-      "size": 31234
-    },
     "src/admin/motor_descuentos_ui/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "src/admin/motor_descuentos_ui/componentes/creador_promociones.py": {
-      "version": "1.0.0",
-      "checksum": "047549072b59dfd132e1e66e8b8b1b1c",
-      "channel": "stable",
-      "size": 17711
-    },
-    "src/admin/motor_descuentos_ui/componentes/dialogo_combos.py": {
-      "version": "1.0.0",
-      "checksum": "1e5294c8dd1fca1f1d86d30e123159ff",
-      "channel": "stable",
-      "size": 9629
-    },
-    "src/admin/motor_descuentos_ui/componentes/tabla_ofertas.py": {
-      "version": "1.0.0",
-      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
-      "channel": "stable",
-      "size": 5809
     },
     "src/admin/motor_descuentos_ui/componentes/__init__.py": {
       "version": "1.0.0",
@@ -1134,9 +1110,9 @@
     },
     "src/base_de_datos/autoblindaje_db.py": {
       "version": "1.0.0",
-      "checksum": "655f9f521f5775118f05f177c05d3a19",
+      "checksum": "f97cbeaad75075fe9fc57ad10eff744f",
       "channel": "stable",
-      "size": 14921
+      "size": 15563
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
@@ -1230,9 +1206,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "a5a5a28497cadf6ec962c841de3bcb8e",
+      "checksum": "7eb32e3d3c11a2144e72f5f3c448eec1",
       "channel": "stable",
-      "size": 110524
+      "size": 110554
     },
     "src/cajero/paso5_terminal/__init__.py": {
       "version": "1.0.0",
@@ -1696,55 +1672,79 @@
       "channel": "stable",
       "size": 0
     },
-    "src/carteleria/interfaz_principal/banner_categoria.py": {
+    "src/carteleria/interfaz_principal/__init__.py": {
       "version": "1.0.0",
-      "checksum": "d436147df8364523ef19ae10d0226b4d",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/carteleria/interfaz_principal/componentes_base/banner_categoria.py": {
+      "version": "1.0.0",
+      "checksum": "8c646c895b71ecef5b998f98aebf0a86",
       "channel": "stable",
       "size": 6915
     },
-    "src/carteleria/interfaz_principal/carrusel_destacados.py": {
+    "src/carteleria/interfaz_principal/componentes_base/mensaje.py": {
       "version": "1.0.0",
-      "checksum": "d45dc1ea0a806a977213621b2b072739",
+      "checksum": "b4f2b3b678b05fa758e2058ff4332437",
       "channel": "stable",
-      "size": 17435
+      "size": 3604
     },
-    "src/carteleria/interfaz_principal/display_promo_tv.py": {
+    "src/carteleria/interfaz_principal/componentes_base/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/carteleria/interfaz_principal/paneles/carrusel_destacados.py": {
+      "version": "1.0.0",
+      "checksum": "d8e1cf4fd592b862713ac98984bbd3fa",
+      "channel": "stable",
+      "size": 17442
+    },
+    "src/carteleria/interfaz_principal/paneles/grilla_precios.py": {
+      "version": "1.0.0",
+      "checksum": "5dfb37eb51168c8d1c2cb45864965440",
+      "channel": "stable",
+      "size": 10200
+    },
+    "src/carteleria/interfaz_principal/paneles/panel_combos.py": {
+      "version": "1.0.0",
+      "checksum": "b984a77544b43deda5f7dc775fb9ae3b",
+      "channel": "stable",
+      "size": 9618
+    },
+    "src/carteleria/interfaz_principal/paneles/panel_ia.py": {
+      "version": "1.0.0",
+      "checksum": "dd20e7f3eb555e51b7612efb21f7165f",
+      "channel": "stable",
+      "size": 13304
+    },
+    "src/carteleria/interfaz_principal/paneles/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/carteleria/interfaz_principal/tarjetas/tarjeta_producto.py": {
+      "version": "1.0.0",
+      "checksum": "5236f3082bd29a4982cc74cdf7080b97",
+      "channel": "stable",
+      "size": 9821
+    },
+    "src/carteleria/interfaz_principal/tarjetas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/carteleria/interfaz_principal/vistas/display_promo_tv.py": {
       "version": "1.0.0",
       "checksum": "392e08d957175d7c797acb08e7159bf8",
       "channel": "stable",
       "size": 9648
     },
-    "src/carteleria/interfaz_principal/grilla_precios.py": {
-      "version": "1.0.0",
-      "checksum": "b9894e11f5c4655cd587a5ba7e29cdf6",
-      "channel": "stable",
-      "size": 8864
-    },
-    "src/carteleria/interfaz_principal/mensaje.py": {
-      "version": "1.0.0",
-      "checksum": "19daa523f081d1af9b175355e178e89d",
-      "channel": "stable",
-      "size": 3546
-    },
-    "src/carteleria/interfaz_principal/panel_combos.py": {
-      "version": "1.0.0",
-      "checksum": "9a9fbc4bdc0225288fbd3d6ed203e5b4",
-      "channel": "stable",
-      "size": 9611
-    },
-    "src/carteleria/interfaz_principal/panel_ia.py": {
-      "version": "1.0.0",
-      "checksum": "5cb8fc6b4ab7cccfa98fd0f47e8a61ce",
-      "channel": "stable",
-      "size": 13297
-    },
-    "src/carteleria/interfaz_principal/tarjeta_producto.py": {
-      "version": "1.0.0",
-      "checksum": "df02dc121aa1dd9377edcbc105da418c",
-      "channel": "stable",
-      "size": 9843
-    },
-    "src/carteleria/interfaz_principal/__init__.py": {
+    "src/carteleria/interfaz_principal/vistas/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
@@ -1818,9 +1818,9 @@
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "6b59c6b0bb6baf726c0b9f34e2d4123f",
+      "checksum": "80801c16406278f25c9a7bf4dd6ba6e7",
       "channel": "stable",
-      "size": 20380
+      "size": 20429
     },
     "src/carteleria/motor_carteleria/motor_grilla.py": {
       "version": "1.0.0",
@@ -2410,23 +2410,65 @@
       "channel": "stable",
       "size": 0
     },
-    "src/motor_descuentos/motor_combos.py": {
-      "version": "1.0.0",
-      "checksum": "1203b3263c1195d6f057653650a2a508",
-      "channel": "stable",
-      "size": 2358
-    },
-    "src/motor_descuentos/motor_ofertas.py": {
-      "version": "1.0.0",
-      "checksum": "ff29e12115bdeeba5e67dc45bcfd08d5",
-      "channel": "stable",
-      "size": 5729
-    },
     "src/motor_descuentos/__init__.py": {
       "version": "1.0.0",
       "checksum": "e4301fb9b32152673c480d2f5faf24e5",
       "channel": "stable",
       "size": 72
+    },
+    "src/motor_descuentos/cerebro/motor_combos.py": {
+      "version": "1.0.0",
+      "checksum": "1203b3263c1195d6f057653650a2a508",
+      "channel": "stable",
+      "size": 2358
+    },
+    "src/motor_descuentos/cerebro/motor_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "ff29e12115bdeeba5e67dc45bcfd08d5",
+      "channel": "stable",
+      "size": 5729
+    },
+    "src/motor_descuentos/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/motor_descuentos/moleculas/creador_promociones.py": {
+      "version": "1.0.0",
+      "checksum": "047549072b59dfd132e1e66e8b8b1b1c",
+      "channel": "stable",
+      "size": 17711
+    },
+    "src/motor_descuentos/moleculas/dialogo_combos.py": {
+      "version": "1.0.0",
+      "checksum": "1e5294c8dd1fca1f1d86d30e123159ff",
+      "channel": "stable",
+      "size": 9629
+    },
+    "src/motor_descuentos/moleculas/tabla_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
+      "channel": "stable",
+      "size": 5809
+    },
+    "src/motor_descuentos/moleculas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/motor_descuentos/vistas/ofertas_main.py": {
+      "version": "1.0.0",
+      "checksum": "f924856edb680a936a4ff5adebc44640",
+      "channel": "stable",
+      "size": 31156
+    },
+    "src/motor_descuentos/vistas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
     },
     "src/motor_inventario/motor_catalogo.py": {
       "version": "1.0.0",
@@ -2718,9 +2760,9 @@
     },
     "src/ui_components/touch_feedback.py": {
       "version": "1.0.0",
-      "checksum": "bafcd44f79f703bdcc27d38a7ae05af5",
+      "checksum": "ea212fbd911f0a5699e31fab8b41be34",
       "channel": "stable",
-      "size": 5031
+      "size": 4909
     },
     "src/ui_components/virtual_keyboard.py": {
       "version": "1.0.0",
@@ -2946,9 +2988,9 @@
     },
     "src/utils/qt_compat.py": {
       "version": "1.0.0",
-      "checksum": "7cd23c078a5921bc83d112e1afaa67ee",
+      "checksum": "14997890b2723f8c350419179e6e671d",
       "channel": "stable",
-      "size": 11404
+      "size": 9049
     },
     "src/utils/qt_dpi.py": {
       "version": "1.0.0",
@@ -3042,9 +3084,9 @@
     },
     "tests/test_qt_compat.py": {
       "version": "1.0.0",
-      "checksum": "78ee9eb27d315092bc9129bddd794317",
+      "checksum": "b0493429f901bdab9f30a260c973428b",
       "channel": "stable",
-      "size": 2154
+      "size": 1896
     },
     "tests/stress/simulacion_viva.py": {
       "version": "1.0.0",
@@ -3120,9 +3162,9 @@
     },
     "tools/pyqt6_audit.py": {
       "version": "1.0.0",
-      "checksum": "48879f8c82bbe517b611e1f9bd146001",
+      "checksum": "313f454964e8b7c074309a4218fe59cf",
       "channel": "stable",
-      "size": 5149
+      "size": 5166
     },
     "tools/smoke_cajero.py": {
       "version": "1.0.0",
@@ -3150,7 +3192,7 @@
     },
     "tools/test_screen_scales.py": {
       "version": "1.0.0",
-      "checksum": "12834ca6124b4b4068fab55d16291c73",
+      "checksum": "c43b94fce8a999b4ea1534d97efe24b1",
       "channel": "stable",
       "size": 2170
     },

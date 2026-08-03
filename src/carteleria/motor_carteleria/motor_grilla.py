@@ -10,8 +10,8 @@ from src.central_red_global.network_engine import get_network_engine
 class MotorGrilla(QThread):
     """
     Motor independiente exclusivo para la Grilla de Precios.
-    Consulta el nuevo endpoint '/api/carteleria/grilla' que sirve datos limpios
-    formateados por el Sincronizador de Cartelería.
+    Consulta el endpoint '/api/carteleria/grilla' o usa el caché en memoria
+    para reducir la carga de DB en PCs de bajos recursos.
     """
     datos_listos = pyqtSignal(dict)
     
@@ -57,6 +57,13 @@ class MotorGrilla(QThread):
                     if cat not in agrupados: agrupados[cat] = []
                     agrupados[cat].append((nombre, pn, po, rt))
             
+            # Invalidar caché de productos para que el próximo acceso cargue datos frescos
+            try:
+                from src.cerebro_global.servicios.cache_productos import cache_productos
+                cache_productos.invalidar()
+            except Exception:
+                pass
+
             if not self.isInterruptionRequested():
                 self.datos_listos.emit(agrupados)
         except RuntimeError:

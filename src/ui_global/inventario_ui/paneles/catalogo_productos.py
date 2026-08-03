@@ -7,9 +7,9 @@ from src.services.inventario_service import InventarioService
 from src.services.session_service import SessionService
 from src.config import config
 
-from src.ui_global.inventario_ui.componentes.filtros_inventario import FiltrosInventario
-from src.ui_global.inventario_ui.componentes.tabla_inventario import TablaInventario
-from src.ui_global.inventario_ui.componentes.pie_inventario import PieInventario
+from src.ui_global.inventario_ui.moleculas.filtros_inventario import FiltrosInventario
+from src.ui_global.inventario_ui.paneles.tabla_inventario import TablaInventario
+from src.ui_global.inventario_ui.atomos.pie_inventario import PieInventario
 
 class MotorBusquedaInventario(QThread):
     busqueda_terminada = pyqtSignal(list, int)
@@ -216,7 +216,7 @@ class CatalogoProductos(QWidget):
             'categoria': r.get('categoria') or 'GENERAL'
         }
         
-        from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
+        from src.ui_global.inventario_ui.moleculas.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
             d = dlg.get_data()

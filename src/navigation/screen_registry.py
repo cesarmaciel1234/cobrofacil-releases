@@ -19,7 +19,7 @@ def build_screen_factories(main_window):
             "src.ui_global.inventario_ui.inventario_main", fromlist=["Admin1Inventario"]
         ).Admin1Inventario(),
         Screen.OFERTAS: lambda: _imp(
-            "src.admin.motor_descuentos_ui.ofertas_main", fromlist=["Admin2Ofertas"]
+            "src.motor_descuentos.vistas.ofertas_main", fromlist=["Admin2Ofertas"]
         ).Admin2Ofertas(),
         Screen.REPORTES: lambda: _imp(
             "src.jefe.reportes.admin_reportes.reportes_main", fromlist=["Admin3Reportes"]
@@ -28,7 +28,7 @@ def build_screen_factories(main_window):
             "src.admin.configuracion.configuracion_main", fromlist=["Admin5Configuracion"]
         ).Admin5Configuracion(),
         Screen.RED_LAN: lambda: _imp(
-            "src.admin.admin6_red_lan", fromlist=["Admin6RedLan"]
+            "src.admin.legacy.admin6_red_lan", fromlist=["Admin6RedLan"]
         ).Admin6RedLan(),
         Screen.CIERRE: lambda: _imp(
             "src.admin.cierre.cierre_main", fromlist=["Admin7Cierre"]

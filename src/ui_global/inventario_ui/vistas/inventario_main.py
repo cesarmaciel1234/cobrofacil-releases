@@ -13,10 +13,10 @@ from PyQt6.QtGui import QColor, QFont, QBrush
 from src.config import config
 from src.services.inventario_service import InventarioService
 
-from src.ui_global.inventario_ui.componentes.dialogo_producto import DialogoProducto
-from src.ui_global.inventario_ui.componentes.panel_departamentos import PanelDepartamentos
-from src.ui_global.inventario_ui.componentes.panel_categorias import PanelCategorias
-from src.ui_global.inventario_ui.componentes.catalogo_productos import CatalogoProductos
+from src.ui_global.inventario_ui.moleculas.dialogo_producto import DialogoProducto
+from src.ui_global.inventario_ui.moleculas.panel_departamentos import PanelDepartamentos
+from src.ui_global.inventario_ui.moleculas.panel_categorias import PanelCategorias
+from src.ui_global.inventario_ui.paneles.catalogo_productos import CatalogoProductos
 
 class Admin1Inventario(QWidget):
     request_dashboard = pyqtSignal()
