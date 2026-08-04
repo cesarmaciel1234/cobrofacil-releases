@@ -500,20 +500,36 @@ class MainWindow(QMainWindow):
         if factory is None:
             return  # Slot libre (_Dead) o índice desconocido
 
+        widget = None
         try:
             widget = factory()
         except Exception as e:
-            logger.exception("No se pudo abrir pantalla %s", index)
-            try:
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.critical(
-                    self,
-                    "Error al abrir módulo",
-                    f"No se pudo cargar la pantalla {index}:\n{e}",
-                )
-            except Exception:
-                pass
-            return
+            msg = str(e).lower()
+            # Update a medias: _ssl / DLL rotas → restaurar .old y reintentar 1 vez
+            if any(
+                k in msg
+                for k in ("_ssl", "dll load failed", "win32 válida", "win32 valida", "openssl")
+            ):
+                try:
+                    from src.updater.silent_auto_updater import heal_broken_binaries
+
+                    heal_broken_binaries(force_ssl=True)
+                    widget = factory()
+                except Exception as e2:
+                    e = e2
+                    widget = None
+            if widget is None:
+                logger.exception("No se pudo abrir pantalla %s", index)
+                try:
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.critical(
+                        self,
+                        "Error al abrir módulo",
+                        f"No se pudo cargar la pantalla {index}:\n{e}",
+                    )
+                except Exception:
+                    pass
+                return
 
         self.screens[index] = widget
 
@@ -682,10 +698,24 @@ class MainWindow(QMainWindow):
         if index in (12, 15, 16):
             index = 19 if role == 'jefe' else 0
 
-        hay_venta = self.pantalla_ventas.tabla.rowCount() > 0
+        # No forzar carga del cajero al abrir admin/jefe: si falló (DLL/_ssl),
+        # pantalla_ventas queda None y antes reventaba todo el hub.
+        term = self.screens[1] if len(self.screens) > 1 else None
+        hay_venta = False
+        if term is not None:
+            tabla = getattr(term, "tabla", None)
+            if tabla is not None:
+                try:
+                    hay_venta = tabla.rowCount() > 0
+                except Exception:
+                    hay_venta = False
         is_supervisor = getattr(self, '_supervisor_mode', False)
         
         if index == 1:
+            if self.screens[1] is None:
+                self._build_lazy_screen(1)
+            if self.screens[1] is None:
+                return
             self._supervisor_mode = False
             self.btn_flotante.hide()
             self._show_terminal_window()

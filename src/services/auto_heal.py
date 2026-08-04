@@ -322,16 +322,28 @@ def _heal_broken_update_install(blob: str) -> Optional[HealResult]:
         "cobrofacil_pos.exe",
         "actualización silenciosa",
         "applying.lock",
+        "dll load failed",
+        "_ssl",
+        "win32 válida",
+        "win32 valida",
+        "no es una aplicación win32",
+        "openssl",
     )
     if not any(k in blob for k in keys):
         return None
     try:
-        from src.updater.silent_auto_updater import heal_install_after_update, restore_old_backups
+        from src.updater.silent_auto_updater import (
+            heal_broken_binaries,
+            heal_install_after_update,
+            restore_old_backups,
+        )
 
-        n = restore_old_backups()
+        force_ssl = any(k in blob for k in ("_ssl", "dll load failed", "win32", "openssl"))
+        n = restore_old_backups(force_ssl=force_ssl)
+        bins = heal_broken_binaries(force_ssl=force_ssl)
         healed = heal_install_after_update()
-        if healed or n:
-            return HealResult(True, "restore_update_old", f"restored={n}")
+        if healed or n or bins:
+            return HealResult(True, "restore_update_old", f"restored={n} bins={bins}")
     except Exception as e:
         return HealResult(False, "restore_update_old", str(e))
     return None

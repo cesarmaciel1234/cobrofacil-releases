@@ -116,13 +116,50 @@ def _pos_exe_path(base: str | None = None) -> str:
     return os.path.join(root, "CobroFacil_POS.exe")
 
 
-def restore_old_backups(base: str | None = None) -> int:
-    """Si el apply dejó .exe/.dll.old y faltan los originales, los restaura."""
+def _pe_ok(path: str, min_size: int = 4096) -> bool:
+    """True si el archivo existe, tiene tamaño razonable y cabecera MZ (PE/Win32)."""
+    try:
+        if not os.path.isfile(path) or os.path.getsize(path) < min_size:
+            return False
+        with open(path, "rb") as f:
+            return f.read(2) == b"MZ"
+    except OSError:
+        return False
+
+
+def _is_ssl_binary_name(name: str) -> bool:
+    low = name.lower()
+    if low.endswith(".old"):
+        low = low[: -len(".old")]
+    base = os.path.basename(low)
+    return (
+        base.startswith("_ssl")
+        or base.startswith("libssl")
+        or base.startswith("libcrypto")
+        or base in ("ssl.py", "ssl.pyc")
+        or "libssl" in base
+        or "libcrypto" in base
+    )
+
+
+def _restore_one_old(old_path: str, dst: str) -> bool:
+    try:
+        os.replace(old_path, dst)
+        return True
+    except OSError:
+        try:
+            shutil.copy2(old_path, dst)
+            return True
+        except OSError:
+            return False
+
+
+def restore_old_backups(base: str | None = None, *, force_ssl: bool = False) -> int:
+    """Si el apply dejó .exe/.dll/.pyd.old y el destino falta o está corrupto, restaura."""
     root = base or get_base_path()
     restored = 0
     try:
         for dirpath, _, files in os.walk(root):
-            # No tocar staging / mariadb data
             rel = os.path.relpath(dirpath, root).replace("\\", "/")
             if rel.startswith("_update_cache") or rel.startswith("mariadb_server/data"):
                 continue
@@ -131,26 +168,58 @@ def restore_old_backups(base: str | None = None) -> int:
                     continue
                 old_path = os.path.join(dirpath, name)
                 dst = old_path[: -len(".old")]
-                need = (not os.path.isfile(dst)) or os.path.getsize(dst) < 4096
-                if not need:
-                    continue
-                try:
-                    os.replace(old_path, dst)
+                dst_name = os.path.basename(dst).lower()
+                is_bin = dst_name.endswith((".exe", ".dll", ".pyd"))
+                ssl_bin = _is_ssl_binary_name(dst_name)
+                missing = (not os.path.isfile(dst)) or os.path.getsize(dst) < 1
+
+                if force_ssl:
+                    # Emergencia SSL: volver binarios a la copia .old válida (evita mezcla rota)
+                    if not is_bin or not _pe_ok(old_path):
+                        continue
+                    need = True
+                elif missing:
+                    need = os.path.isfile(old_path)
+                elif is_bin and (not _pe_ok(dst)) and _pe_ok(old_path):
+                    need = True
+                elif ssl_bin and _pe_ok(old_path) and (not _pe_ok(dst)):
+                    need = True
+                else:
+                    need = False
+
+                if need and _restore_one_old(old_path, dst):
                     restored += 1
-                except OSError:
-                    try:
-                        shutil.copy2(old_path, dst)
-                        restored += 1
-                    except OSError:
-                        pass
     except Exception:
         pass
     return restored
 
 
+def heal_broken_binaries(*, force_ssl: bool = False, base: str | None = None) -> bool:
+    """
+    Restaura binarios rotos tras un update a medias.
+    force_ssl=True: restaura .dll/.pyd desde .old (caso '_ssl no es Win32 válida').
+    """
+    ssl_broken = force_ssl
+    if not ssl_broken:
+        try:
+            import _ssl  # noqa: F401
+        except Exception:
+            ssl_broken = True
+
+    n = restore_old_backups(base, force_ssl=ssl_broken)
+    if n:
+        try:
+            from src.logger import logger
+
+            logger.warning("heal_broken_binaries: restaurados %s archivos (.old)", n)
+        except Exception:
+            pass
+    return n > 0
+
+
 def heal_install_after_update() -> bool:
     """
-    Autocura al arrancar: candado applying huérfano + EXE perdido tras update a medias.
+    Autocura al arrancar: candado applying huérfano + EXE/DLL perdidos tras update a medias.
     Devuelve True si reparó algo.
     """
     fixed = False
@@ -180,19 +249,11 @@ def heal_install_after_update() -> bool:
         fixed = True
 
     exe = _pos_exe_path()
-    if (not os.path.isfile(exe) or os.path.getsize(exe) < 50_000) and os.path.isfile(exe + ".old"):
-        try:
-            os.replace(exe + ".old", exe)
+    if (not _pe_ok(exe, min_size=50_000)) and _pe_ok(exe + ".old", min_size=50_000):
+        if _restore_one_old(exe + ".old", exe):
             fixed = True
-        except OSError:
-            try:
-                shutil.copy2(exe + ".old", exe)
-                fixed = True
-            except OSError:
-                pass
 
-    n = restore_old_backups()
-    if n:
+    if heal_broken_binaries(force_ssl=False):
         fixed = True
     if fixed:
         try:
