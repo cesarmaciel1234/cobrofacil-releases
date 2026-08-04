@@ -51,17 +51,19 @@ jobs:
           fi
           echo "CURSOR_API_KEY presente (prefix ${CURSOR_API_KEY:0:6}…)"
 
+      # PAT classic (repo): GITHUB_TOKEN no puede crear PRs si el repo tiene
+      # desactivado "Allow GitHub Actions to create and approve pull requests".
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
 
       - name: Resolver Issue
         id: issue
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_N: ${{ inputs.issue_number }}
           ISSUE_N: ${{ github.event.issue.number }}
@@ -102,8 +104,8 @@ jobs:
       - name: Ejecutar auto-fix
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
           CURSOR_AGENT_MODEL: composer-2
         run: |
