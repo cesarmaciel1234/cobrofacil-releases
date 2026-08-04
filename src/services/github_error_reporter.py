@@ -230,7 +230,7 @@ def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str])
     for ctx in _ssl_contexts():
         try:
             with urllib.request.urlopen(req, timeout=25, context=ctx) as resp:
-                return 200 <= resp.status < 300
+                return True if 200 <= resp.status < 300 else False
         except urllib.error.HTTPError as e:
             last_err = e
             # Labels inexistentes: reintentar sin labels custom
@@ -242,12 +242,12 @@ def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str])
                     body,
                     [lb for lb in labels if lb in ("auto-report", "client-error")],
                 )
-            # 401/403: token inválido — no tiene sentido reintentar SSL
+            # 401/403: token inválido — señal especial para cortar el flush
             if e.code in (401, 403):
                 logging.getLogger("PunPro").warning(
                     "GitHub error report: HTTP %s (token o permisos)", e.code
                 )
-                return False
+                return "auth"
             break
         except Exception as e:
             last_err = e
@@ -392,9 +392,17 @@ def flush_pending_reports() -> int:
         title = f"[POS {entry.get('level', 'ERROR')}] {entry.get('hostname', '?')} — {str(entry.get('message', ''))[:80]}"
         body = _build_body(entry)
         labels = list(entry.get("labels") or ["auto-report", "client-error", "needs-auto-fix"])
-        if _post_issue(token, repo, title, body, labels):
+        result = _post_issue(token, repo, title, body, labels)
+        if result is True:
             _mark_sent(fp)
             sent += 1
+        elif result == "auth":
+            # Token sin permisos: no martillar la API con toda la cola
+            remaining.append(entry)
+            remaining.extend(
+                e for e in queue[queue.index(entry) + 1 :] if isinstance(e, dict)
+            )
+            break
         else:
             remaining.append(entry)
 
