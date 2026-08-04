@@ -1,0 +1,12 @@
+Issue #15 — auto-fix omitido (reporte no accionable)
+
+Título: [check] reporter ok
+Cuerpo: "Chequeo rapido. Cerrar."
+
+Este issue es un chequeo manual del reporter de errores a GitHub, no un fallo de producción:
+- El prefijo [check] y el texto "reporter ok" indican verificación intencional.
+- No hay traceback, stack trace ni mensaje de excepción.
+- Fingerprint desconocido / sin autofix-fp en el body.
+- El issue ya está cerrado; no requiere parche de código ni bump de versión.
+
+Acción: cerrar sin PR de auto-fix.
