@@ -2196,7 +2196,25 @@ class Paso5Terminal(QWidget):
             from src.config import config
             config.current_user = None
             QApplication.processEvents()
-            
+
+            # Flash de cierre: el rolling del día ya corrió en background; solo sella
+            try:
+                from src.ui_components.backup_flash import mostrar_flash_backup_dia
+                from src.base_de_datos.database import db_manager
+                engine = getattr(db_manager, "db_engine_type", "mariadb") or "mariadb"
+                host = "127.0.0.1"
+                try:
+                    host = getattr(getattr(db_manager, "mariadb_engine", None), "host", None) or host
+                except Exception:
+                    pass
+                mostrar_flash_backup_dia(self, engine, host)
+            except Exception:
+                try:
+                    from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                    AutoBlindajeDB.finalizar_backup_del_dia("mariadb", "127.0.0.1")
+                except Exception:
+                    pass
+
             # --- Auto-aplicar actualización tras corte de caja ---
             try:
                 from src.updater.silent_auto_updater import is_update_staged, apply_pending_update_on_startup

@@ -28,27 +28,36 @@ class DbSyncWorker(QThread):
             
             from src.config import config
             is_master_node = getattr(db_manager, "is_master", False) or getattr(db_manager, "mode", "") == "maestro"
-            is_slave = not is_master_node and (bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False))
-            master_ip = config.get("db_host", "") or config.get("carteleria_master_ip", "")
+            _host = str(config.get("db_host", "") or "").strip()
+            _host_l = _host.lower()
+            is_remote_host = bool(_host) and _host_l not in ("localhost", "127.0.0.1")
+            is_slave = (not is_master_node) and (
+                is_remote_host or bool(config.get("carteleria_is_slave", False))
+            )
+            master_ip = (_host if is_remote_host else "") or config.get("carteleria_master_ip", "")
             
             if is_slave and master_ip:
-                # Descargar el caché directamente desde el maestro en la red para no bloquear la DB
-                try:
-                    import urllib.request
-                    url = f"http://{master_ip}:8000/carteleria_cache.json"
-                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                    with urllib.request.urlopen(req, timeout=2) as response:
-                        if response.status == 200:
-                            data = json.loads(response.read().decode('utf-8'))
-                            # Sobrescribir cache local
-                            with open(cache_path, "w", encoding="utf-8") as f:
-                                json.dump(data, f, ensure_ascii=False)
-                            self.sync_finished.emit(data, "online")
-                            return # Termina el hilo aquí exitosamente
-                except Exception as e_net:
-                    logger.debug(f"Error descargando carteleria_cache del maestro: {e_net}")
-                    # Si falla, cae al except general que intentará leer la DB o caché offline
-                    pass
+                # Servidor de Tienda (sin cajero): /api/carteleria/data
+                # Compat vieja: /carteleria_cache.json
+                for url in (
+                    f"http://{master_ip}:8000/api/carteleria/data",
+                    f"http://{master_ip}:8000/carteleria_cache.json",
+                ):
+                    try:
+                        import urllib.request
+                        req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Carteleria"})
+                        with urllib.request.urlopen(req, timeout=3) as response:
+                            if response.status == 200:
+                                data = json.loads(response.read().decode("utf-8"))
+                                if isinstance(data, dict) and data.get("error"):
+                                    continue
+                                with open(cache_path, "w", encoding="utf-8") as f:
+                                    json.dump(data, f, ensure_ascii=False)
+                                self.sync_finished.emit(data, "online")
+                                return
+                    except Exception as e_net:
+                        logger.debug(f"Sync cartelería HTTP {url}: {e_net}")
+                # Si la API falla, sigue con MariaDB remota / caché local
                     
             try:
                 # 1. Config (Intentar cargar desde DB Global primero)

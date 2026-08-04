@@ -1,50 +1,67 @@
+"""Escaneo de subred buscando Servidor de Tienda (UDP discovery + API ping).
+
+Ya no envía CARTELERIA_WAITING_AUTH al cajero.
+"""
+
 from PyQt6.QtCore import QThread, pyqtSignal
 import socket
 import json
-from src.central_red_global.network_engine import get_network_engine, init_network_engine
+import urllib.request
 
-NEXUS_UDP_PORT = 37021
 
 class BuscadorDeRed(QThread):
-    """Hilo que escanea la subred y envía CARTELERIA_WAITING_AUTH a cada host."""
-    mensaje_estado = pyqtSignal(str)   # mensaje de estado para la UI
+    """Hilo: discovery UDP :37020 + ping HTTP :8000/api/ping en la /24."""
+    mensaje_estado = pyqtSignal(str)
+    maestra_encontrada = pyqtSignal(str, str)  # ip, hostname
 
-    def __init__(self, local_ip: str, engine):
+    def __init__(self, local_ip: str, engine=None):
         super().__init__()
         self.local_ip = local_ip
-        self.engine = engine
         self._stop = False
 
     def stop(self):
         self._stop = True
 
     def run(self):
-        """Envía UDP unicast a cada IP de la subred /24 además del broadcast."""
         try:
             partes = self.local_ip.rsplit(".", 1)
             if len(partes) != 2:
                 return
-            prefijo = partes[0]   # e.g. "192.168.0"
+            prefijo = partes[0]
 
-            self.mensaje_estado.emit(f"Escaneando red {prefijo}.0/24 ...")
+            self.mensaje_estado.emit(f"Escaneando Servidor de Tienda en {prefijo}.0/24 ...")
 
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.settimeout(0.05)
+            # 1) Discovery UDP oficial del Servidor de Tienda
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                sock.settimeout(1.2)
+                sock.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
+                sock.sendto(b"PUNPRO_DISCOVER", (f"{prefijo}.255", 37020))
+                t_end = __import__("time").time() + 1.2
+                while __import__("time").time() < t_end and not self._stop:
+                    try:
+                        data, addr = sock.recvfrom(2048)
+                        info = json.loads(data.decode("utf-8"))
+                        if str(info.get("mode", "")).upper() != "MAESTRA":
+                            continue
+                        ip = info.get("server_ip") or addr[0]
+                        hostname = str(info.get("hostname") or ip)
+                        if ip == self.local_ip:
+                            continue
+                        sock.close()
+                        self.mensaje_estado.emit(f"Encontrada: {hostname} ({ip})")
+                        self.maestra_encontrada.emit(ip, hostname)
+                        return
+                    except socket.timeout:
+                        break
+                    except Exception:
+                        break
+                sock.close()
+            except Exception:
+                pass
 
-            payload = json.dumps({
-                "origen": f"carteleria_scan|carteleria_slave|caja1",
-                "tipo": "CARTELERIA_WAITING_AUTH",
-                "datos": {"ip": self.local_ip},
-                "ts": __import__("time").time(),
-            }, ensure_ascii=False).encode("utf-8")
-
-            # Broadcast estándar
-            sock.sendto(payload, ("255.255.255.255", NEXUS_UDP_PORT))
-            # Broadcast de subred
-            sock.sendto(payload, (f"{prefijo}.255", NEXUS_UDP_PORT))
-
-            # Unicast a cada host de la /24 (evita el problema de NAT/VirtualBox)
+            # 2) Fallback: ping HTTP a cada host (API del Servidor)
             for i in range(1, 255):
                 if self._stop:
                     break
@@ -52,14 +69,25 @@ class BuscadorDeRed(QThread):
                 if ip == self.local_ip:
                     continue
                 try:
-                    sock.sendto(payload, (ip, NEXUS_UDP_PORT))
+                    req = urllib.request.Request(
+                        f"http://{ip}:8000/api/ping",
+                        headers={"User-Agent": "CobroFacil-Carteleria"},
+                    )
+                    with urllib.request.urlopen(req, timeout=0.25) as resp:
+                        if resp.status != 200:
+                            continue
+                        body = json.loads(resp.read().decode("utf-8"))
+                        if str(body.get("mode", "")).upper() == "ESCLAVA":
+                            continue
+                        hostname = str(body.get("hostname") or ip)
+                        self.mensaje_estado.emit(f"Encontrada: {hostname} ({ip})")
+                        self.maestra_encontrada.emit(ip, hostname)
+                        return
                 except Exception:
-                    pass
+                    continue
 
-            sock.close()
-            self.mensaje_estado.emit("Escaneo completado. Esperando respuesta...")
+            self.mensaje_estado.emit(
+                "Escaneo listo. No hay Servidor de Tienda visible (¿está el proceso --server?)."
+            )
         except Exception as e:
             self.mensaje_estado.emit(f"Error de escaneo: {e}")
-
-
-

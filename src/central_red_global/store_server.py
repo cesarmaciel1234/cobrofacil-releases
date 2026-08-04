@@ -259,6 +259,7 @@ def run_store_server_app(app) -> int:
             ensure_master_lan_presence()
         except Exception:
             pass
+        # El backup lo hace CerebroBackup en su propio hilo (no el watchdog)
         _refresh_status()
 
     def _shutdown_store():
@@ -272,6 +273,22 @@ def run_store_server_app(app) -> int:
         )
         if resp != QMessageBox.StandardButton.Yes:
             return
+        # Detener cerebro y sello final ANTES de apagar MariaDB
+        try:
+            from src.cerebro_global.backup_cerebro import cerebro_backup
+            cerebro_backup.tick_now(force_full=True)
+            cerebro_backup.stop()
+        except Exception:
+            pass
+        try:
+            from src.ui_components.backup_flash import mostrar_flash_backup_dia
+            mostrar_flash_backup_dia(win, "mariadb", "127.0.0.1")
+        except Exception:
+            try:
+                from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                AutoBlindajeDB.finalizar_backup_del_dia("mariadb", "127.0.0.1")
+            except Exception as e_bk:
+                logger.warning(f"Backup al apagar servidor: {e_bk}")
         try:
             from src.central_red_global.network_engine import shutdown_network_engine
             shutdown_network_engine()
@@ -328,6 +345,22 @@ def run_store_server_app(app) -> int:
             QSystemTrayIcon.MessageIcon.Information,
             4000,
         )
+
+    # Cerebro de backup 100% autónomo (cada 30 min; incremental si hay pocas ventas)
+    try:
+        from src.cerebro_global.backup_cerebro import cerebro_backup
+        cerebro_backup.start("mariadb", "127.0.0.1")
+    except Exception as e_cb:
+        logger.warning(f"No se pudo iniciar CerebroBackup: {e_cb}")
+
+    # Sync cartelería en el servidor (sin abrir cajero ni lanzador)
+    try:
+        from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import (
+            sincronizador_carteleria,
+        )
+        sincronizador_carteleria.start()
+    except Exception as e_sc:
+        logger.warning(f"No se pudo iniciar SincronizadorCarteleria: {e_sc}")
 
     logger.info("Servidor de Tienda en ejecución (proceso dedicado).")
     return qt_exec(app)

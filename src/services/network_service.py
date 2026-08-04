@@ -54,8 +54,9 @@ class RedLanService:
             mi_host = mi_origen.split("|")[0].lower() if mi_origen else ""
 
         # 1) Presencia por heartbeats (NetworkEngine)
+        # Incluye Servidor de Tienda (rol maestra/server) — no requiere cajero
         if engine and hasattr(engine, "_active_ips"):
-            roles_ok = {"admin", "jefe", "maestra", "server", "cajero"}
+            roles_ok = {"admin", "jefe", "maestra", "server", "store", "servidor", "cajero"}
             for origen, ip in engine._active_ips.items():
                 if not ip:
                     continue
@@ -68,7 +69,7 @@ class RedLanService:
                     continue
                 if mi_host and nombre_host.lower() == mi_host:
                     continue
-                if ip not in por_ip or rol in ("admin", "maestra"):
+                if ip not in por_ip or rol in ("admin", "maestra", "server", "store"):
                     por_ip[ip] = nombre_host
 
         # 2) Radar UDP: responde el lanzador/maestro aunque no haya cajero

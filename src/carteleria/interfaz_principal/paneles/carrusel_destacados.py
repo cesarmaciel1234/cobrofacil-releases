@@ -61,7 +61,8 @@ class CarruselDestacados(QFrame):
         
         self.lbl_lobo = QLabel()
         self.lbl_lobo.setFixedSize(100, 120) # Tamaño fijo para absorber el salto
-        img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo.png"))
+        from src.carteleria.assets_paths import carteleria_asset
+        img_path = carteleria_asset("chef_lobo.png")
         pix = QPixmap(img_path).scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.lbl_lobo.setPixmap(pix)
         self.lbl_lobo.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)

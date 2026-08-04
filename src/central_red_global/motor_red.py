@@ -56,6 +56,10 @@ class MotorRed:
             config.set("is_master", True)
             config.set("db_engine", "mariadb")
             config.set("db_host", "localhost")
+            try:
+                config.set("carteleria_is_slave", False)
+            except Exception:
+                pass
             db_manager.reconectar_mariadb("localhost")
             return True, "Configurado exitosamente como MAESTRA (Servidor MariaDB Local)."
         except Exception as e:
@@ -115,6 +119,13 @@ class MotorRed:
 
             if db_manager.is_connected():
                 _last_slave_fail_at.pop(ip_maestra, None)
+                # Cartelería esclava: apunta al Servidor de Tienda (no al cajero)
+                try:
+                    config.set("carteleria_master_ip", ip_maestra)
+                    config.set("carteleria_is_slave", True)
+                    config.save()
+                except Exception:
+                    pass
                 return True, f"Conexión exitosa a la Maestra en {ip_maestra}."
 
             # Puerto abierto pero auth/DB falló: volver al estado anterior

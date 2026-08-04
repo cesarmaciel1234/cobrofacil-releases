@@ -81,13 +81,27 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         })
                         return
                         
-                config.set("db_engine", "mariadb")
-                config.set("db_host", master_ip)
-                config.save()
-                self._send_response(200, {"status": "success", "message": f"Rol cambiado a ESCLAVA exitosamente. Conectando a {master_ip}."})
+                # Reconexión en caliente (sin matar el proceso). Cartelería y
+                # terminales deben seguir abiertos al pasar a ESCLAVA.
+                from src.central_red_global.motor_red import MotorRed
+                motor = MotorRed()
+                ok, msg = motor.convertir_en_esclava(master_ip)
+                if not ok:
+                    self._send_response(500, {"status": "error", "message": msg})
+                    return
+                self._send_response(200, {
+                    "status": "success",
+                    "message": f"Rol cambiado a ESCLAVA. {msg}",
+                })
+                # Solo reiniciar si no hay QApplication (proceso headless / --server)
                 from PyQt6.QtWidgets import QApplication
                 from PyQt6.QtCore import QTimer
-                QTimer.singleShot(1000, lambda: QApplication.instance().exit(888))
+                app = QApplication.instance()
+                if app is None:
+                    return
+                # Reinicio suave solo si el caller lo pide (compat). Por defecto no.
+                if data.get("restart", False):
+                    QTimer.singleShot(1000, lambda: app.exit(888))
             except Exception as e:
                 logger.error(f"Error procesando /api/set_master: {e}")
                 self._send_response(500, {"status": "error", "message": str(e)})
@@ -233,6 +247,10 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 self._send_response(200, response_data)
             except Exception as e:
                 self._send_response(500, {"error": str(e)})
+        elif self.path in ("/carteleria_cache.json", "/api/carteleria/cache"):
+            # Alias: cartelería esclava pedía el JSON plano (código viejo)
+            self.path = "/api/carteleria/data"
+            return self.do_GET()
         else:
             self._send_response(404, {"status": "not_found"})
 

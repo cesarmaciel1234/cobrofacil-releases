@@ -21,7 +21,8 @@ class BanderinVolador(QWidget):
         
         # 1. El Lobo Sentado
         self.lbl_lobo = QLabel()
-        img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo_volador.png"))
+        from src.carteleria.assets_paths import carteleria_asset
+        img_path = carteleria_asset("chef_lobo_volador.png")
         pix = QPixmap(img_path).scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.lbl_lobo.setPixmap(pix)
         self.lbl_lobo.setAlignment(Qt.AlignCenter)

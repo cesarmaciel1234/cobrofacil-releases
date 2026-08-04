@@ -38,8 +38,13 @@ class DialogoRespaldo(QDialog):
         lbl_tit.setStyleSheet("font-size: 22px; font-weight: bold;  border: none;")
         lay.addWidget(lbl_tit)
 
-        lbl_desc = QLabel("Guarda una copia segura de tu información (productos, ventas, clientes) o restaura una copia anterior para recuperar tu sistema.")
-        lbl_desc.setStyleSheet(" font-size: 13px; border: none;")
+        lbl_desc = QLabel(
+            "Guarda una copia segura o restaura una anterior.\n\n"
+            "Al restaurar una copia de AYER, el sistema COMPLEMENTA con las ventas "
+            "y el stock de HOY (no se pisan). El backup del día se actualiza solo "
+            "en segundo plano; al cerrar turno solo se sella el cierre."
+        )
+        lbl_desc.setStyleSheet("font-size: 13px; color: #334155; border: none;")
         lbl_desc.setWordWrap(True)
         lay.addWidget(lbl_desc)
 
@@ -122,30 +127,41 @@ class DialogoRespaldo(QDialog):
             QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta. Solo el administrador puede importar datos.")
             return
 
-        reply = QMessageBox.question(self, "Confirmar Restauración", "⚠️ ATENCIÓN: Esto reemplazará tu base de datos actual con la copia seleccionada. ¿Estás seguro?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            "Confirmar Restauración",
+            "RESTAURACIÓN CON COMPLEMENTO\n\n"
+            "Se restaurará la copia seleccionada y el sistema intentará "
+            "CONSERVAR las ventas / stock de HOY (merge: ayer + hoy, no se pisan).\n\n"
+            "También se guarda un snapshot pre_restore de emergencia.\n\n"
+            "¿Continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
         if reply != QMessageBox.StandardButton.Yes:
             return
 
         try:
-            if is_mariadb:
-                from src.services.mariadb_controller import MariaDBController
-                ctrl = MariaDBController()
-                server_dir, _, _, _ = ctrl._get_server_paths()
-                mysql_exe = os.path.join(server_dir, "bin", "mysql.exe")
-                
-                if not os.path.exists(mysql_exe):
-                    raise FileNotFoundError(f"No se encontró mysql en {mysql_exe}")
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+            engine = "mariadb" if is_mariadb else "sqlite"
+            host = "127.0.0.1"
+            try:
+                host = getattr(getattr(db_manager, "mariadb_engine", None), "host", None) or host
+            except Exception:
+                pass
 
-                cmd = [mysql_exe, "-u", "root", "--password=1234", "punpro_db"]
-                
-                with open(filepath, "r", encoding="utf-8") as f:
-                    subprocess.run(cmd, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-            else:
-                # SQLite restore
-                db_manager.close()
-                shutil.copy2(filepath, db_manager.db_path)
+            ok = AutoBlindajeDB.restaurar_archivo_con_merge(filepath, engine, host)
+            if not ok:
+                raise RuntimeError("El motor de restauración devolvió error. Revisá los logs.")
 
-            QMessageBox.information(self, "Éxito", "Restauración completada correctamente.\n\nPor favor, REINICIA EL PROGRAMA para aplicar los cambios.")
+            QMessageBox.information(
+                self,
+                "Éxito",
+                "Restauración completada.\n\n"
+                "Las ventas de hoy se reinyectaron sobre la copia restaurada "
+                "(complemento, no reemplazo ciego).\n\n"
+                "REINICIÁ EL PROGRAMA para aplicar los cambios.",
+            )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Ocurrió un error al restaurar:\n{e}")
 

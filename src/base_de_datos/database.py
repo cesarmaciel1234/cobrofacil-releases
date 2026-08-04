@@ -144,12 +144,20 @@ class DatabaseManager:
                         _skip_blindaje = True
                 except Exception:
                     pass
-                if not _skip_blindaje:
+                # Autoblindaje/cerebro solo en MAESTRA local. En ESCLAVA el host
+                # es remoto: no respaldar ni restaurar la BD de la maestra.
+                if not _skip_blindaje and self.is_master:
                     try:
                         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
                         AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
                     except Exception as e:
                         logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
+                    # Motor de backup autónomo (si no hay Servidor de Tienda dedicado)
+                    try:
+                        from src.cerebro_global.backup_cerebro import cerebro_backup
+                        cerebro_backup.start("mariadb", host)
+                    except Exception as e_cb:
+                        logger.warning(f"Aviso CerebroBackup: {e_cb}")
                 
                 # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
                 if not self.is_master:

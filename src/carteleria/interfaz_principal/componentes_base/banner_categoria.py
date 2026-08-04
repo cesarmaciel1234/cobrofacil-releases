@@ -10,7 +10,8 @@ def resolver_icono_png(categoria_nombre):
     Primero busca asignación específica en BD, luego mapeo automático local.
     """
     cat_upper = str(categoria_nombre).upper().strip()
-    base_dir = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros")
+    from src.carteleria.assets_paths import iconos_rubros_dir
+    base_dir = iconos_rubros_dir()
     
     # 1. BD departamental
     try:

@@ -98,9 +98,13 @@ jobs:
             --collect-submodules "src.inicio_y_perfiles" `
             --collect-submodules "src.central_red_global" `
             --collect-submodules "src.ui_global" `
-            --add-data "src/ui_components/*.qss;src/ui_components/" `
-            --add-data "src/assets/*;src/assets/" `
-            --add-data "src/carteleria/assets/*;src/carteleria/assets/" `
+            --add-data "src/ui_components;src/ui_components" `
+            --add-data "src/assets;src/assets" `
+            --add-data "src/carteleria/assets;src/carteleria/assets" `
+            --add-data "Catalogos/iconos_rubros;Catalogos/iconos_rubros" `
+            --add-data "src/styles.qss;src/" `
+            --add-data "src/styles_light.qss;src/" `
+            --add-data "src/icon.png;src/" `
             main.py
 
       - name: Copiar version.json al paquete instalable

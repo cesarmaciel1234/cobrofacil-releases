@@ -194,6 +194,16 @@ def lanzar_app(app=None):
     # Iniciar el motor de red centralizado para que este perfil pueda ser maestro/esclavo
     from src.central_red_global.lan_server import init_lan_server
     init_lan_server()
+
+    # Tras reinicio 888 (p. ej. paso a ESCLAVA), cerrar ventana previa si quedó colgada
+    prev = getattr(app, "_carteleria_window", None)
+    if prev is not None:
+        try:
+            prev.hide()
+            prev.close()
+        except Exception:
+            pass
+        app._carteleria_window = None
         
     window = CarteleriaApp()
     
@@ -203,11 +213,15 @@ def lanzar_app(app=None):
     window.show()
     # Guardamos referencia para que no sea destruida por el recolector de basura
     app._carteleria_window = window 
-    
-    if app and not getattr(app, '_is_running', False):
+
+    # Siempre poseer el event loop en este perfil (--role carteleria).
+    # Antes: si _is_running quedaba True tras exit(888), se devolvía la ventana
+    # sin qt_exec y main.py cerraba el proceso al instante.
+    try:
         app._is_running = True
         return qt_exec(app)
-    return window
+    finally:
+        app._is_running = False
 
 if __name__ == "__main__":
     sys.exit(lanzar_app())

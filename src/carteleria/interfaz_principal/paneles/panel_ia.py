@@ -108,12 +108,12 @@ class PanelIA(QFrame):
     def actualizar_ia(self, mensaje_ia, prod_nombre, prod_precio, prod_precio_oferta, regla, clima):
         self.display_promo.hide()
         self.lbl_content.show()
-        import os
-        img_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "chef_lobo.png")).replace("\\", "/")
+        from src.carteleria.assets_paths import carteleria_asset_url
+        img_path = carteleria_asset_url("chef_lobo.png")
         
         # --- Clima esquina superior derecha ---
         icon_name, texto_clima = clima
-        icon_clima_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", f"{icon_name}.png")).replace("\\", "/")
+        icon_clima_path = carteleria_asset_url(f"{icon_name}.png")
         
         t_clima_txt = f"font-family: -apple-system; font-size: 26px; font-weight: 800; color: {C_THEME['text_muted']};"
         self.lbl_clima.setText(f"<img src='{icon_clima_path}' width='60' height='60' style='vertical-align: middle; margin-right: 10px;'><span style='{t_clima_txt}'>{texto_clima}</span>")

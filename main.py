@@ -287,11 +287,11 @@ def launch_app(direct_role=None):
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                # Lanzar la Cartelería en el mismo proceso (clave para el ejecutable)
+                # Lanzar la Cartelería en el mismo proceso (clave para el ejecutable).
+                # Propagar el código de qt_exec: 888/99 deben reiniciar el loop externo.
                 from src.carteleria.carteleria import lanzar_app
                 perfil_dlg.hide()
-                lanzar_app(app)
-                return 0
+                return lanzar_app(app)
                 
             login_dlg = LoginPantalla(role_selected)
             if qt_exec(login_dlg):

@@ -4,42 +4,11 @@ from PyQt6.QtCore import Qt, QTimer
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 
 def _resolver_icono_png(categoria_nombre):
-    cat_upper = str(categoria_nombre).upper().strip()
-    base_dir = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros")
-    
-    # 1. Buscar en BD si el departamento tiene ícono específico asignado
-    try:
-        from src.motor_inventario.motor_departamentos import MotorDepartamentos
-        deps = MotorDepartamentos().obtener_departamentos()
-        for d in deps:
-            if d.get('nombre', '').upper().strip() == cat_upper and d.get('icono'):
-                fpath = os.path.join(base_dir, d['icono'])
-                if os.path.exists(fpath):
-                    return fpath
-    except Exception:
-        pass
-
-    # 2. Buscar por mapeo automático de palabras clave
-    kw_map = [
-        (["CARNE", "VACUNO", "ASADO", "LOMO", "BIFE", "TERNERA", "ACHURA", "MONDONGO"], "carne.png"),
-        (["POLLO", "AVE", "PATA", "SUPREMA", "PECHUGA", "ALITA"], "pollo.png"),
-        (["CERDO", "BONDIOLA", "PECHITO", "CHUCHETO", "LECHON"], "cerdo.png"),
-        (["QUESO", "FIAMBRE", "LACTEO", "JAMON", "PROVOLETA", "EMBUTIDO", "CHORIZO", "MORCILLA", "SALCHICHA"], "fiambreria.png"),
-        (["PAN", "PANADERIA", "FACTURA", "BIZCOCHO", "TORTA"], "panaderia.png"),
-        (["VERDURA", "VERDULERIA", "FRUTA", "FRUTAL"], "verduleria.png"),
-        (["BEBIDA", "GASEOSA", "CERVEZA", "VINO", "AGUA", "JUGO"], "bebidas.png"),
-        (["LIMPIEZA", "JABON", "DETERGENTE", "LAVANDINA"], "limpieza.png"),
-        (["PESCADO", "MARISCO", "FILET"], "pescado.png"),
-        (["OFERTA", "PROMO", "COMBO", "DESTACADO", "RELAMPAGO"], "oferta.png"),
-        (["ALMACEN", "MERCADERIA", "ABARROTES"], "almacen.png")
-    ]
-    for kws, fname in kw_map:
-        if any(w in cat_upper for w in kws):
-            fpath = os.path.join(base_dir, fname)
-            if os.path.exists(fpath):
-                return fpath
-
-    return None
+    # Misma resolución que BannerCategoria (dev + exe)
+    from src.carteleria.interfaz_principal.componentes_base.banner_categoria import (
+        resolver_icono_png,
+    )
+    return resolver_icono_png(categoria_nombre)
 
 class GrillaPrecios(QFrame):
     """

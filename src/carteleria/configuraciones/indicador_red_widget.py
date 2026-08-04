@@ -103,13 +103,34 @@ class IndicadorRedWidget(QWidget):
         self._red_timeout = 0
 
     def _tick_watchdog(self):
-        if self._red_estado == "online":
-            self._red_timeout += 5
-            if self._red_timeout > 30:
-                self.set_estado_red("lost", "Terminal desconectado")
+        if self._red_estado != "online":
+            return
+        self._red_timeout += 5
+        # 45s sin sync ni heartbeat de maestra/servidor
+        if self._red_timeout <= 45:
+            return
+        # Antes de marcar lost: ping al Servidor de Tienda (no depende del cajero)
+        try:
+            from src.config import config
+            host = str(config.get("db_host", "") or config.get("carteleria_master_ip", "") or "").strip()
+            if host and host.lower() not in ("localhost", "127.0.0.1"):
+                import urllib.request
+                url = f"http://{host}:8000/api/ping"
+                req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Carteleria"})
+                with urllib.request.urlopen(req, timeout=2) as resp:
+                    if resp.status == 200:
+                        self._red_timeout = 0
+                        return
+        except Exception:
+            pass
+        self.set_estado_red("lost", "Servidor de tienda desconectado")
 
     def set_estado_red(self, estado: str, txt: str = ""):
         self._red_estado = estado
+        # Sync HTTP/DB o heartbeat de maestra reinician el watchdog
+        # (antes solo el cajero lo hacía → a los 30s marcaba offline sin caja)
+        if estado == "online":
+            self._red_timeout = 0
         
         from src.central_red_global.motor_red import MotorRed
         import datetime
@@ -123,9 +144,9 @@ class IndicadorRedWidget(QWidget):
             final_txt = "PC Maestra - Base de datos local (Inventario en tiempo real)"
         else:
             if estado == "online":
-                final_txt = f"Esclava Modo Online (Conectada a {host}) - Inventario en tiempo real"
+                final_txt = f"Esclava Online → {host} (Servidor de Tienda)"
             else:
-                final_txt = f"Esclava Modo Offline (Caché de {host}) - Sincronizado: {ahora}"
+                final_txt = f"Esclava Offline (caché de {host}) — {ahora}"
 
         if estado == "online":
             self.lbl_red_dot.setText("🟢")

@@ -42,20 +42,39 @@ class NetworkManager(QObject):
                 pass
 
     def on_heartbeat_engine(self, origen: str):
-        """Llega un heartbeat de cualquier origen. Si es del cajero → punto verde."""
+        """Heartbeat de tienda: Servidor/Maestra basta (no hace falta cajero abierto)."""
         try:
             origen_lower = origen.lower()
-            if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
+            # Roles que mantienen la cartelería online como esclava
+            peers_ok = (
+                "cajero", "admin", "terminal", "jefe",
+                "maestra", "server", "store", "servidor",
+            )
+            if any(k in origen_lower for k in peers_ok):
                 self.main.info_negocio.on_heartbeat_terminal(origen)
         except RuntimeError:
             pass
 
     def on_connection_lost_engine(self, origen: str):
-        """Se perdió conexión con un nodo del terminal."""
+        """Nodo de red caído. No marcar offline si el sync a la maestra sigue OK."""
         try:
             origen_lower = origen.lower()
-            if any(k in origen_lower for k in ('cajero', 'admin', 'terminal')):
-                self.main.info_negocio.set_estado_red('lost', 'Terminal desconectado')
+            # Solo el cajero/terminal: no tumbar el punto verde si cae un peer menor
+            if any(k in origen_lower for k in ("maestra", "server", "store", "servidor")):
+                # Verificar si la API/DB de tienda sigue viva antes de marcar lost
+                try:
+                    from src.config import config
+                    from src.base_de_datos.database import db_manager
+                    host = str(config.get("db_host", "") or "").strip()
+                    if host and host.lower() not in ("localhost", "127.0.0.1"):
+                        if getattr(db_manager, "is_connected", lambda: False)():
+                            return
+                except Exception:
+                    pass
+                self.main.info_negocio.set_estado_red("lost", "Servidor de tienda desconectado")
+            elif any(k in origen_lower for k in ("cajero", "admin", "terminal")):
+                # Cajero cerrado ≠ esclava offline (el Servidor de Tienda alcanza)
+                pass
         except RuntimeError:
             pass
 

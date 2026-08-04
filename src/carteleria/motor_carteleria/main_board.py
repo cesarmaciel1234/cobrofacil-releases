@@ -131,7 +131,13 @@ class CarteleriaMain(QWidget):
         # 👀 OJO ESPÍA (WORKER EN BACKGROUND)
         from src.utils.paths import get_base_path
         from src.config import config
-        is_slave = bool(config.get("db_host", "")) or config.get("carteleria_is_slave", False)
+        from src.base_de_datos.database import db_manager
+        _host = str(config.get("db_host", "") or "").strip().lower()
+        is_slave = (
+            config.get("carteleria_is_slave", False)
+            or (not getattr(db_manager, "is_master", True))
+            or (_host and _host not in ("localhost", "127.0.0.1", ""))
+        )
         
         # El clima solo lo consulta el maestro para no saturar APIs externas
         if not is_slave:
@@ -214,14 +220,24 @@ class CarteleriaMain(QWidget):
         from PyQt6.QtWidgets import QInputDialog, QMessageBox
         from src.config import config
         
-        current_ip = config.get("carteleria_master_ip", "")
-        ip, ok = QInputDialog.getText(self, "Configuración de Cartelería", 
-                                      "Ingresa la IP de la Caja Maestra:\n(Deja en blanco si esta es la caja maestra)",
-                                      text=current_ip)
+        current_ip = config.get("carteleria_master_ip", "") or config.get("db_host", "")
+        ip, ok = QInputDialog.getText(
+            self,
+            "Configuración de Cartelería",
+            "IP del Servidor de Tienda (PC Maestra):\n"
+            "(Vacío = esta PC es maestra. No hace falta abrir el cajero.)",
+            text=current_ip if current_ip not in ("localhost", "127.0.0.1") else "",
+        )
         if ok:
-            config.set("carteleria_master_ip", ip.strip())
+            ip = ip.strip()
+            config.set("carteleria_master_ip", ip)
+            config.set("carteleria_is_slave", bool(ip))
             config.save()
-            QMessageBox.information(self, "Configuración", "Configuración guardada.\nRevisa que la IP sea correcta.")
+            QMessageBox.information(
+                self,
+                "Configuración",
+                "Guardado.\nEn la otra PC debe estar el Servidor de Tienda (sin cajero).",
+            )
 
     def _on_db_sync_finished(self, data, status):
         try:
