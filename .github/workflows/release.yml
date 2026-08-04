@@ -102,9 +102,6 @@ jobs:
             --add-data "src/assets;src/assets" `
             --add-data "src/carteleria/assets;src/carteleria/assets" `
             --add-data "Catalogos/iconos_rubros;Catalogos/iconos_rubros" `
-            --add-data "src/styles.qss;src/" `
-            --add-data "src/styles_light.qss;src/" `
-            --add-data "src/icon.png;src/" `
             main.py
 
       - name: Copiar version.json al paquete instalable

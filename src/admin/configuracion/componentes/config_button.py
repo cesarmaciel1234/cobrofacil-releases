@@ -1,86 +1,70 @@
-from src.utils.qt_compat import qt_exec
-from src.utils.theme_manager import theme_manager
-from PyQt6.QtWidgets import (
+"""Tile de configuración — premium liviano (solo QSS, sin sombras Qt)."""
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QScrollArea, QPushButton, QGridLayout, QSizePolicy,
-    QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-from PyQt6.QtGui import QCursor, QFont, QColor
-import os, shutil, datetime, glob
-from src.config import config
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QMessageBox
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QCursor, QFont
 
 
 class ConfigButton(QFrame):
     clicked = pyqtSignal()
-    
+
     def __init__(self, icon_emoji, text, parent=None):
         super().__init__(parent)
-        self.setFixedSize(110, 100)
-        self.setCursor(QCursor(Qt.PointingHandCursor))
-        
-        # Estilo tipo botón interactivo
+        self.setObjectName("ConfigTile")
+        self.setFixedSize(118, 108)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setStyleSheet("""
-            ConfigButton {
-                background-color: white;
+            QFrame#ConfigTile {
+                background-color: #FFFFFF;
                 border: 1px solid #E2E8F0;
                 border-radius: 12px;
             }
-            ConfigButton:hover {
-                background-color: #F8FAFC;
-                border: 1px solid #3B82F6;
+            QFrame#ConfigTile:hover {
+                background-color: #EFF6FF;
+                border: 1px solid #2563EB;
             }
         """)
-        
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(15)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        self.setGraphicsEffect(shadow)
-        
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 15, 5, 5)
-        layout.setSpacing(8)
-        
-        # Icono (Emoji)
+        layout.setContentsMargins(6, 14, 6, 8)
+        layout.setSpacing(6)
+
         self.lbl_icon = QLabel(icon_emoji)
-        self.lbl_icon.setAlignment(Qt.AlignCenter)
-        
-        # Optimizacion para emojis en Windows 10 bajo recurso
-        font = QFont("Segoe UI Emoji", 26) # Equivalente aprox a 32px
-        font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.PreferQuality)
+        self.lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        font = QFont("Segoe UI Emoji", 24)
+        font.setStyleStrategy(
+            QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.PreferQuality
+        )
         self.lbl_icon.setFont(font)
-        
         self.lbl_icon.setStyleSheet("background: transparent; border: none;")
         layout.addWidget(self.lbl_icon)
-        
-        # Texto
+
         self.lbl_text = QLabel(text)
-        self.lbl_text.setAlignment(Qt.AlignCenter)
+        self.lbl_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_text.setWordWrap(True)
-        self.lbl_text.setStyleSheet("font-size: 11px; font-weight: bold;  background: transparent; border: none;")
+        self.lbl_text.setStyleSheet(
+            "font-family: 'Segoe UI'; font-size: 11px; font-weight: 700; "
+            "color: #0F172A; background: transparent; border: none;"
+        )
         layout.addWidget(self.lbl_text)
-        
-        # Botón Ayuda (Absoluto)
-        self.btn_help = QPushButton("❓", self)
-        self.btn_help.setFixedSize(22, 22)
-        self.btn_help.move(85, 5)
-        self.btn_help.setStyleSheet("border: none; font-size: 12px; background: transparent;")
-        self.btn_help.setCursor(QCursor(Qt.PointingHandCursor))
+
+        self.btn_help = QPushButton("?", self)
+        self.btn_help.setFixedSize(20, 20)
+        self.btn_help.move(92, 6)
+        self.btn_help.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_help.setStyleSheet(
+            "QPushButton { border: none; font-size: 11px; font-weight: 700; "
+            "color: #94A3B8; background: transparent; }"
+            "QPushButton:hover { color: #2563EB; }"
+        )
         self.btn_help.clicked.connect(self._show_help)
-        
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
+        super().mousePressEvent(event)
 
     def _show_help(self):
-        from PyQt6.QtWidgets import QMessageBox
         explicaciones = {
             "Alertas de\nEfectivo": "Te avisa si hay mucho dinero en la caja para que lo guardes (evita robos).",
             "Opciones\nhabilitadas": "Activa o desactiva módulos clave como vender sin stock, fiar, imprimir solo, etc.",
@@ -103,9 +87,8 @@ class ConfigButton(QFrame):
             "Notificaciones\npor Correo": "Te manda un email al celular cada vez que cierran la caja.",
             "Respaldo": "Guarda una copia de seguridad en un pendrive para no perder nada.",
             "Licencia": "Mira tu plan actual o compra la versión completa.",
-            "Actualizaciones": "Descarga las últimas mejoras del programa gratis."
+            "Actualizaciones": "Descarga las últimas mejoras del programa gratis.",
         }
         texto = explicaciones.get(self.lbl_text.text(), "Configura esta opción del sistema.")
-        msg = f"ℹ️ {self.lbl_text.text().replace(chr(10), ' ')}\n\n{texto}"
-        QMessageBox.information(self, "Ayuda Rápida", msg)
-
+        msg = f"{self.lbl_text.text().replace(chr(10), ' ')}\n\n{texto}"
+        QMessageBox.information(self, "Ayuda rápida", msg)

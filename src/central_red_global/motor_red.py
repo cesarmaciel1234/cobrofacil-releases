@@ -1,6 +1,9 @@
 import logging
+import os
 import re
 import socket
+import subprocess
+import sys
 import time
 
 from src.config import config
@@ -50,14 +53,36 @@ class MotorRed:
         except Exception:
             return False
 
+    @staticmethod
+    def _detener_servidor_tienda_local():
+        """Apaga el proceso --server local al pasar a esclava (best-effort)."""
+        try:
+            from src.utils.candados import get_store_server_pid, release_store_server_lock
+            pid = get_store_server_pid()
+            if pid and pid != os.getpid():
+                if sys.platform == "win32":
+                    subprocess.run(
+                        ["taskkill", "/PID", str(pid), "/T", "/F"],
+                        capture_output=True,
+                        check=False,
+                    )
+                else:
+                    os.kill(pid, 15)
+            release_store_server_lock()
+        except Exception as e:
+            logging.getLogger(__name__).debug(f"No se pudo detener Servidor de Tienda: {e}")
+
     def convertir_en_maestra(self):
         """Convierte la PC en maestra (base de datos local MariaDB)."""
         try:
             config.set("is_master", True)
             config.set("db_engine", "mariadb")
             config.set("db_host", "localhost")
+            config.set("auto_start_store_server", True)
             try:
                 config.set("carteleria_is_slave", False)
+                config.data["preferred_master_ip"] = ""
+                config.save()
             except Exception:
                 pass
             db_manager.reconectar_mariadb("localhost")
@@ -119,13 +144,19 @@ class MotorRed:
 
             if db_manager.is_connected():
                 _last_slave_fail_at.pop(ip_maestra, None)
-                # Cartelería esclava: apunta al Servidor de Tienda (no al cajero)
+                # Persistir rol esclavo: sin esto, al reiniciar el Servidor local
+                # volvía a adjuntarse como maestra.
                 try:
                     config.set("carteleria_master_ip", ip_maestra)
                     config.set("carteleria_is_slave", True)
+                    config.set("auto_start_store_server", False)
+                    config.data["preferred_master_ip"] = ip_maestra
+                    config.data["is_master"] = False
+                    config.data["db_host"] = ip_maestra
                     config.save()
                 except Exception:
                     pass
+                self._detener_servidor_tienda_local()
                 return True, f"Conexión exitosa a la Maestra en {ip_maestra}."
 
             # Puerto abierto pero auth/DB falló: volver al estado anterior

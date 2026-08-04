@@ -57,6 +57,26 @@ class DatabaseManager:
 
         return os.path.normpath(os.path.join(base_app_path, path))
 
+    @staticmethod
+    def _leer_rol_red_desde_config(config_data: dict) -> tuple[bool, str]:
+        """(es_esclava, host_remoto). Respeta is_master / db_host / IPs preferidas."""
+        host = str(config_data.get("db_host", "") or "").strip()
+        host_l = host.lower()
+        remoto = host if host and host_l not in ("localhost", "127.0.0.1") else ""
+        if not remoto:
+            for key in ("preferred_master_ip", "carteleria_master_ip"):
+                cand = str(config_data.get(key, "") or "").strip()
+                if cand and cand.lower() not in ("localhost", "127.0.0.1"):
+                    remoto = cand
+                    break
+        if config_data.get("is_master") is False:
+            return True, remoto
+        if config_data.get("carteleria_is_slave") and remoto:
+            return True, remoto
+        if remoto:
+            return True, remoto
+        return False, host
+
     def _init_db(self):
         # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
         import json
@@ -67,8 +87,19 @@ class DatabaseManager:
         base_app_path = get_base_path()
         config_path = os.path.join(base_app_path, "config.json")
 
-        # Lanzador / terminales: si --server ya tiene la tienda, no duplicar arranque ni backup
-        if "--server" not in sys.argv:
+        config_data_early = {}
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config_data_early = json.load(f)
+            except Exception:
+                config_data_early = {}
+
+        es_esclava_cfg, host_esclava = self._leer_rol_red_desde_config(config_data_early)
+
+        # Lanzador / terminales: adjuntar Servidor local SOLO si esta PC es maestra.
+        # Si config pide ESCLAVA, nunca pisar con 127.0.0.1 (bug: al reiniciar volvía maestra).
+        if "--server" not in sys.argv and not es_esclava_cfg:
             try:
                 from src.central_red_global.store_server import is_store_server_online
                 if is_store_server_online():
@@ -76,6 +107,11 @@ class DatabaseManager:
                     return
             except Exception as e:
                 logger.debug(f"Attach Servidor de Tienda no disponible, init completo: {e}")
+        elif es_esclava_cfg:
+            logger.info(
+                f"Config ESCLAVA persistida (host={host_esclava or '?'}). "
+                "Se omite attach al Servidor de Tienda local."
+            )
 
         try:
             with open(config_path, "r", encoding="utf-8") as f:
@@ -85,7 +121,9 @@ class DatabaseManager:
 
             # Sesión ya en fallback offline: no reintentar una maestra caída en cada _init_db()
             if getattr(self, "_forced_local_offline", False):
-                self.is_master = True
+                # Mantener identidad esclava si la config lo pide (solo BD local temporal)
+                es_off, _ = self._leer_rol_red_desde_config(config_data)
+                self.is_master = not es_off
                 self.db_engine_type = "sqlite"
                 self.mariadb_engine = None
                 db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
@@ -100,10 +138,9 @@ class DatabaseManager:
                 from src.db_engines.mariadb_engine import MariaDBEngine
                 from src.services.mariadb_controller import mariadb_controller
                 
-                # Detectar IP y puerto para MariaDB
-                # Si custom_path tiene algo como \\192.168.1.5, extraeremos la IP. Si esta vacío, es Maestro local.
+                es_esclava, host_remoto = self._leer_rol_red_desde_config(config_data)
                 custom_ip = str(config_data.get("db_host", "")).strip()
-                if not custom_ip:
+                if not custom_ip and not es_esclava:
                     # Parsear la IP desde custom_path (vieja confiable SQLite compartida)
                     custom_path = str(config_data.get("db_path", "") or "").strip()
                     if custom_path.startswith("\\\\") or custom_path.startswith("//"):
@@ -112,28 +149,44 @@ class DatabaseManager:
                         if len(parts) > 2:
                             custom_ip = parts[2]
                 
-                # Fallback final a localhost
-                host = custom_ip if custom_ip else ""
-                
-                # Desactivado auto-descubrimiento en arranque para respetar inicio como maestra por defecto.
-                
-                if not host:
-                    host = "127.0.0.1"
-                
-                import socket
-                is_loopback = False
-                if host in ("localhost", "127.0.0.1", socket.gethostname().lower()):
-                    is_loopback = True
-                
-                if is_loopback or not custom_ip and host == "127.0.0.1":
-                    # MODO MAESTRO MARIADB
-                    self.is_master = True
-                    host = "127.0.0.1"
-                    logger.info("MariaDB configurado en modo MAESTRO. Arrancando Auto-Servidor...")
-                    mariadb_controller.start_server()
-                else:
-                    # MODO ESCLAVO MARIADB
+                if es_esclava:
+                    host = host_remoto or custom_ip
+                    if not host or host.lower() in ("localhost", "127.0.0.1"):
+                        logger.error(
+                            "Config ESCLAVA sin IP de maestra válida. "
+                            "Quedá offline local sin promover a maestra."
+                        )
+                        self.is_master = False
+                        self._forced_local_offline = True
+                        db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
+                        self.db_path = os.path.join(base_app_path, db_name)
+                        self.db_engine_type = "sqlite"
+                        self.mariadb_engine = None
+                        self._create_tables()
+                        self._ensure_test_users()
+                        return
+                    # Restaurar db_host si solo estaba en preferred_*
+                    if str(config_data.get("db_host", "") or "").strip().lower() in (
+                        "", "localhost", "127.0.0.1"
+                    ):
+                        try:
+                            from src.config import config as _cfg
+                            _cfg.set("db_host", host)
+                            _cfg.set("is_master", False)
+                        except Exception:
+                            pass
                     self.is_master = False
+                    logger.info(f"MariaDB modo ESCLAVA → {host}")
+                else:
+                    host = custom_ip if custom_ip else "127.0.0.1"
+                    import socket
+                    if host in ("localhost", "127.0.0.1", socket.gethostname().lower()) or not custom_ip:
+                        self.is_master = True
+                        host = "127.0.0.1"
+                        logger.info("MariaDB configurado en modo MAESTRO. Arrancando Auto-Servidor...")
+                        mariadb_controller.start_server()
+                    else:
+                        self.is_master = False
                 self.mariadb_engine = MariaDBEngine(host=host)
 
                 # Autoblindaje solo en el proceso dueño (--server o maestra sin servidor dedicado)
@@ -190,11 +243,25 @@ class DatabaseManager:
                             if info.get('mode') == 'MAESTRA':
                                 discovered_host = info.get('server_ip', addr[0])
                                 sock_scan.close()
+                                # No adoptar la propia IP (servidor local zombie)
+                                try:
+                                    s_self = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                                    s_self.connect(("8.8.8.8", 80))
+                                    mi_ip = s_self.getsockname()[0]
+                                    s_self.close()
+                                except Exception:
+                                    mi_ip = ""
+                                if discovered_host and discovered_host in (mi_ip, "127.0.0.1", "localhost"):
+                                    logger.warning(
+                                        f"Discovery devolvió esta misma PC ({discovered_host}); se ignora."
+                                    )
+                                    break
                                 if discovered_host and discovered_host != host:
                                     logger.info(f"Nueva Maestra auto-descubierta en {discovered_host}. Reintentando...")
                                     host = discovered_host
                                     from src.config import config
                                     config.set("db_host", host)
+                                    config.set("is_master", False)
                                     config.save()
                                     self.mariadb_engine = MariaDBEngine(host=host)
                                     continue
@@ -206,8 +273,11 @@ class DatabaseManager:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
-                        logger.info("Auto-forzando modo local. Se iniciará con base de datos local SQLite de forma transparente.")
-                        self.is_master = True
+                        logger.info(
+                            "Esclava offline temporal (SQLite local). "
+                            "Se conserva is_master=false en config para el próximo arranque."
+                        )
+                        self.is_master = False
                         self._forced_local_offline = True
                         db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
                         self.db_path = os.path.join(base_app_path, db_name)
@@ -215,7 +285,6 @@ class DatabaseManager:
                         self.mariadb_engine = None
                         self._create_tables()
                         self._ensure_test_users()
-                        # No levantamos error, simplemente sale y continua en modo local temporalmente
                         return
 
                 self.db_path = "mariadb://" + host

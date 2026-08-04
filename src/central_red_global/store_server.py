@@ -208,7 +208,7 @@ def run_store_server_app(app) -> int:
     lay.addLayout(row)
 
     tray = None
-    icon_path = get_resource_path(os.path.join("src", "icon.png"))
+    icon_path = get_resource_path(os.path.join("src", "assets", "pos_icon.png"))
     app_icon = QIcon(icon_path) if os.path.exists(icon_path) else QIcon()
 
     if QSystemTrayIcon.isSystemTrayAvailable():

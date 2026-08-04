@@ -1,55 +1,55 @@
-from src.utils.qt_compat import qt_exec
-from src.utils.theme_manager import theme_manager
-from PyQt6.QtWidgets import (
+"""Sección de configuración — card liviana sin sombras."""
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
-    QScrollArea, QPushButton, QGridLayout, QSizePolicy,
-    QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
-)
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
-from PyQt6.QtGui import QCursor, QFont, QColor
-import os, shutil, datetime, glob
-from src.config import config
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame, QGridLayout
+from PyQt6.QtCore import Qt
 from src.admin.configuracion.componentes.config_button import ConfigButton
 
 
 class ConfigCategory(QWidget):
     def __init__(self, title, items, callback=None, parent=None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
-        
-        # Título de Categoría
-        lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-size: 16px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
-        layout.addWidget(lbl_title)
-        
-        # Grid para los botones
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        card = QFrame()
+        card.setObjectName("ConfigCategoryCard")
+        card.setStyleSheet("""
+            QFrame#ConfigCategoryCard {
+                background-color: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 12px;
+            }
+        """)
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(18, 14, 18, 16)
+        lay.setSpacing(12)
+
+        lbl_title = QLabel(title.upper())
+        lbl_title.setStyleSheet(
+            "font-family: 'Segoe UI'; font-size: 12px; font-weight: 800; "
+            "color: #64748B; letter-spacing: 1px; background: transparent; border: none;"
+        )
+        lay.addWidget(lbl_title)
+
         grid = QGridLayout()
         grid.setSpacing(10)
-        grid.setAlignment(Qt.AlignLeft)
-        
+        grid.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
         row, col = 0, 0
-        max_cols = 7 # Máximo 7 botones por fila
-        
+        max_cols = 7
+
         for icon, text in items:
             btn = ConfigButton(icon, text)
             if callback:
-                btn.clicked.connect(lambda t=text: callback(t))
+                btn.clicked.connect(lambda checked=False, t=text: callback(t))
             grid.addWidget(btn, row, col)
             col += 1
             if col >= max_cols:
                 col = 0
                 row += 1
-                
-        layout.addLayout(grid)
-        layout.addSpacing(20)
 
-
-
+        lay.addLayout(grid)
+        root.addWidget(card)
+        root.addSpacing(14)

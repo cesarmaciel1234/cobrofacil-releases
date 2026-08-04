@@ -23,6 +23,11 @@ def es_pc_maestra_local() -> bool:
             return False
         if config.get("is_master") is False:
             return False
+        if config.get("carteleria_is_slave"):
+            return False
+        pref = str(config.get("preferred_master_ip", "") or "").strip().lower()
+        if pref and pref not in ("localhost", "127.0.0.1") and config.get("is_master") is False:
+            return False
         return True
     except Exception as e:
         logger.debug(f"master_presence: no se pudo evaluar rol maestra: {e}")

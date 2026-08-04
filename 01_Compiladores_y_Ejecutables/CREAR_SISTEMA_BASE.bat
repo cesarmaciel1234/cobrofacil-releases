@@ -30,13 +30,10 @@ echo Ensamblando el ejecutable principal...
   --hidden-import "reportlab.graphics.barcode.usps4s" ^
   --hidden-import "reportlab.graphics.barcode.widgets" ^
   --hidden-import "reportlab.graphics.barcode.common" ^
-  --add-data "src/styles.qss;src/" ^
-  --add-data "src/styles_light.qss;src/" ^
   --add-data "src/ui_components;src/ui_components" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "Catalogos/iconos_rubros;Catalogos/iconos_rubros" ^
-  --add-data "src/icon.png;src/" ^
   main.py
 
 echo ========================================================
