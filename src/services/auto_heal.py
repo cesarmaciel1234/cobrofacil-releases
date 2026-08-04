@@ -1,5 +1,5 @@
 """
-Autocura runtime (capa enterprise #2).
+POS auto-heal testprobe. Autocura runtime (capa enterprise #2).
 
 Solo acciones seguras y acotadas: candados zombie, cache de update corrupta,
 reintento de MariaDB. No parchea código ni toca cobros/cajero.
