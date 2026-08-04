@@ -1,0 +1,8 @@
+Issue #3: [ci] token-check (cerrar)
+
+Not actionable — CI noise, not a POS production bug.
+
+The title and body match the automated secret validation in
+.github/workflows/release.yml ("Configurar y validar reporte automático de errores").
+That step creates a GitHub issue to verify COBROFACIL_ERROR_REPORT_TOKEN, then closes it
+on success. If auto-close failed or the issue was reopened, close it manually; no code fix.
