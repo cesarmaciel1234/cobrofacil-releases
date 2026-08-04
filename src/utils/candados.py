@@ -80,6 +80,39 @@ def focus_existing_master_launcher() -> bool:
     return False
 
 
+def _is_our_process(pid: int) -> bool:
+    """True si el PID pertenece a CobroFacil / python del POS (evita falsos positivos por reuso de PID)."""
+    try:
+        import psutil
+        name = (psutil.Process(pid).name() or "").lower()
+        return name in ("cobrofacil_pos.exe", "python.exe", "pythonw.exe")
+    except Exception:
+        pass
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            from ctypes import wintypes
+            kernel32 = ctypes.windll.kernel32
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            h = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, int(pid))
+            if not h:
+                return False
+            try:
+                buf = ctypes.create_unicode_buffer(260)
+                size = wintypes.DWORD(260)
+                # QueryFullProcessImageNameW
+                QueryFullProcessImageNameW = kernel32.QueryFullProcessImageNameW
+                if QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
+                    path = (buf.value or "").lower()
+                    base = os.path.basename(path)
+                    return base in ("cobrofacil_pos.exe", "python.exe", "pythonw.exe")
+            finally:
+                kernel32.CloseHandle(h)
+        except Exception:
+            pass
+    return _pid_alive(pid)
+
+
 def acquire_master_launcher_lock() -> bool:
     """
     Garantiza que SOLO exista 1 instancia del Lanzador Maestro.
@@ -94,9 +127,28 @@ def acquire_master_launcher_lock() -> bool:
         except Exception:
             other_pid = 0
 
-        if other_pid > 0 and other_pid != os.getpid() and _pid_alive(other_pid):
-            focus_existing_master_launcher()
-            return False
+        if other_pid > 0 and other_pid != os.getpid() and _pid_alive(other_pid) and _is_our_process(other_pid):
+            if focus_existing_master_launcher():
+                return False
+            # PID vivo pero sin ventana del lanzador → proceso fantasma (cierre a medias / hang DB).
+            # Liberamos el candado matando ese PID para que pueda reabrirse.
+            if sys.platform == "win32":
+                try:
+                    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                    subprocess.run(
+                        ["taskkill", "/F", "/PID", str(other_pid)],
+                        creationflags=flags,
+                        timeout=5,
+                        capture_output=True,
+                    )
+                except Exception:
+                    pass
+            else:
+                try:
+                    import signal
+                    os.kill(other_pid, signal.SIGKILL)
+                except Exception:
+                    pass
 
         try:
             os.remove(MASTER_LOCK_PATH)

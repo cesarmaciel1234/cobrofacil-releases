@@ -45,7 +45,14 @@ class AutoBlindajeDB:
                 logger.warning("⚠️ Se detectaron inconsistencias en la base de datos. Ejecutando protocolo de auto-reparación...")
                 if not cls.auto_reparar_o_restaurar(engine_type, mariadb_host):
                     logger.error("🚨 Inconsistencia severa. Restaurando último respaldo diario blindado...")
-                    cls.restaurar_ultimo_backup_valido(engine_type)
+                    restored = cls.restaurar_ultimo_backup_valido(engine_type)
+                    if not restored and engine_type == "mariadb":
+                        # Evita que los perfiles queden en bucle infinito de restore fallido
+                        logger.error(
+                            "🚨 Sin respaldo usable: recreando tablas críticas vacías "
+                            "para permitir que el perfil abra."
+                        )
+                        cls._recrear_tablas_criticas_mariadb(mariadb_host)
 
             # 2. Generar Backup Diario si no se ha hecho hoy
             cls.crear_backup_diario_si_corresponde(engine_type, mariadb_host)
@@ -250,13 +257,126 @@ class AutoBlindajeDB:
             return True
 
     @classmethod
+    def _recrear_tablas_criticas_mariadb(cls, host: str = "127.0.0.1") -> bool:
+        """Recrea tablas críticas vacías cuando no hay respaldo usable (último recurso)."""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=3306, user="root", password="1234",
+                database="punpro_db", connect_timeout=5, autocommit=True,
+            )
+            cur = conn.cursor()
+            cur.execute("SET FOREIGN_KEY_CHECKS=0")
+            for table in ("ventas", "clientes", "detalles_ventas", "detalle_ventas", "configuracion"):
+                try:
+                    cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                except Exception:
+                    pass
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS configuracion (
+                    clave VARCHAR(100) PRIMARY KEY,
+                    valor TEXT
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS ventas (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    total DOUBLE NULL,
+                    pago_con DOUBLE NULL,
+                    cambio DOUBLE NULL,
+                    pago_efectivo DOUBLE DEFAULT 0,
+                    pago_otro DOUBLE DEFAULT 0,
+                    usuario VARCHAR(100) NULL,
+                    estado VARCHAR(50) DEFAULT 'COMPLETADA',
+                    metodo_pago VARCHAR(50) DEFAULT 'Efectivo',
+                    caja_id INT DEFAULT 1,
+                    descuento DOUBLE DEFAULT 0,
+                    recargo DOUBLE DEFAULT 0,
+                    cliente_nombre VARCHAR(200) NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS clientes (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    nombre VARCHAR(200) NOT NULL,
+                    telefono VARCHAR(50) NULL,
+                    email VARCHAR(100) NULL,
+                    saldo_fiado DOUBLE DEFAULT 0,
+                    dni VARCHAR(50) NULL,
+                    tipo_cliente VARCHAR(50) NULL,
+                    direccion TEXT NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS detalles_ventas (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    id_venta INT NULL,
+                    id_producto VARCHAR(100) NULL,
+                    nombre_producto TEXT NULL,
+                    cantidad DOUBLE NULL,
+                    precio_unitario DOUBLE NULL,
+                    subtotal DOUBLE NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            conn.close()
+            logger.info("✅ Tablas críticas recreadas (vacías).")
+            return True
+        except Exception as e:
+            logger.error(f"No se pudieron recrear tablas críticas: {e}")
+            return False
+
+    @classmethod
+    def _mariadb_needs_drop_recreate(cls, host: str = "127.0.0.1") -> bool:
+        """True si MariaDB pide DROP/recreate (REPAIR QUICK cuelga o no sirve)."""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=3306, user="root", password="1234",
+                database="punpro_db", connect_timeout=3,
+            )
+            cursor = conn.cursor()
+            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
+            rows = cursor.fetchall()
+            conn.close()
+            for r in rows:
+                msg = " ".join(str(x) for x in r).lower()
+                if "drop the table and recreate" in msg or "corrupt" in msg:
+                    return True
+        except Exception:
+            pass
+        return False
+
+    @classmethod
     def auto_reparar_o_restaurar(cls, engine_type: str, host: str = "127.0.0.1") -> bool:
         """Intenta auto-reparar la base de datos dañada."""
         logger.info("🛠️ Intentando auto-reparación de base de datos...")
         if engine_type == "mariadb":
+            # InnoDB "Please drop the table and recreate" no se arregla con REPAIR QUICK
+            # y puede trabar el arranque varios minutos (parece que "no abre").
+            if cls._mariadb_needs_drop_recreate(host):
+                logger.error(
+                    "🚨 Corrupción InnoDB severa (ventas/clientes). "
+                    "Se omite REPAIR y se pasa a restaurar respaldo diario."
+                )
+                return False
             try:
                 import pymysql
-                conn = pymysql.connect(host=host, port=3306, user="root", password="1234", database="punpro_db")
+                conn = pymysql.connect(
+                    host=host, port=3306, user="root", password="1234",
+                    database="punpro_db", connect_timeout=5,
+                )
                 cursor = conn.cursor()
                 cursor.execute("REPAIR TABLE productos, ventas, departamentos, categorias QUICK;")
                 conn.close()
@@ -276,15 +396,42 @@ class AutoBlindajeDB:
                 return False
 
     @classmethod
+    def _list_usable_backups(cls) -> list:
+        """Lista respaldos candidatos, descartando vacíos/cuarentenados/corruptos conocidos."""
+        local_dir, os_dir = cls.get_backup_directories()
+        candidates = []
+        for directory in (os_dir, local_dir):
+            candidates.extend(glob.glob(os.path.join(directory, "backup_diario_*.*")))
+        usable = []
+        for path in sorted(set(candidates), reverse=True):
+            name = os.path.basename(path).lower()
+            if ".bad_" in name or name.endswith(".bad_corrupt") or name.endswith(".bad_empty"):
+                continue
+            try:
+                size = os.path.getsize(path)
+            except OSError:
+                continue
+            # SQL vacío (~1KB) o zip demasiado chico no sirven y re-corrompen la tienda
+            if path.lower().endswith(".sql") and size < 5000:
+                logger.warning(f"Respaldo SQL descartado (vacío/insuficiente): {path}")
+                continue
+            if path.lower().endswith(".zip") and size < 50000:
+                logger.warning(f"Respaldo ZIP descartado (demasiado pequeño): {path}")
+                continue
+            usable.append(path)
+        # Preferir SQL con datos sobre ZIP físicos (menos riesgo de reintroducir InnoDB roto)
+        usable.sort(
+            key=lambda p: (
+                0 if p.lower().endswith(".sql") else 1,
+                -os.path.getmtime(p),
+            )
+        )
+        return usable
+
+    @classmethod
     def restaurar_ultimo_backup_valido(cls, engine_type: str) -> bool:
         """Restaura el último backup diario válido guardado en el SO."""
-        local_dir, os_dir = cls.get_backup_directories()
-        pattern = os.path.join(os_dir, "backup_diario_*.*")
-        backups = sorted(glob.glob(pattern), reverse=True)
-
-        if not backups:
-            pattern_local = os.path.join(local_dir, "backup_diario_*.*")
-            backups = sorted(glob.glob(pattern_local), reverse=True)
+        backups = cls._list_usable_backups()
 
         if not backups:
             logger.error("No se encontraron respaldos previos para restaurar.")
@@ -323,17 +470,38 @@ class AutoBlindajeDB:
             elif latest_backup.endswith(".zip"):
                 try:
                     data_dir = os.path.join(base_dir, "mariadb_server", "data")
-                    
-                    # Para restaurar InnoDB de forma segura, debemos borrar el data viejo completo primero
+
+                    # mysqld debe estar apagado: si no, rmtree/unpack fallan o corrompen más
+                    try:
+                        from src.services.mariadb_controller import mariadb_controller
+                        mariadb_controller.stop_server()
+                    except Exception:
+                        pass
+                    if sys.platform == "win32":
+                        try:
+                            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                            subprocess.run(
+                                ["taskkill", "/F", "/IM", "mysqld.exe"],
+                                creationflags=flags, timeout=8, capture_output=True,
+                            )
+                        except Exception:
+                            pass
+                        time.sleep(1.5)
+
                     if os.path.exists(data_dir):
                         try:
                             shutil.rmtree(data_dir)
                         except Exception:
                             pass
                     os.makedirs(data_dir, exist_ok=True)
-                    
+
                     shutil.unpack_archive(latest_backup, data_dir)
                     logger.info("✅ Restauración MariaDB física (.zip) completada.")
+                    try:
+                        from src.services.mariadb_controller import mariadb_controller
+                        mariadb_controller.start_server()
+                    except Exception as e_start:
+                        logger.warning(f"MariaDB no auto-reinició tras restore: {e_start}")
                     return True
                 except Exception as e:
                     logger.error(f"Error descomprimiendo backup MariaDB: {e}")
