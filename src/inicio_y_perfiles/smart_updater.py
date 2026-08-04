@@ -130,8 +130,16 @@ class SmartLauncherUpdater(QFrame):
         self.lbl_status.setText(f"⏳ Descargando versión v{self.remote_ver} desde GitHub...")
 
         def _download_task():
-            def prog_cb(pct, msg):
-                self.signals.download_progress.emit(pct, msg)
+            # silent_auto_updater llama progress_callback(msg: str) — un solo arg.
+            def prog_cb(msg):
+                pct = 0
+                text = str(msg or "")
+                # Extrae "42%" si el motor manda "Descargando actualización... 42%"
+                for token in text.replace("%", " % ").split():
+                    if token.isdigit():
+                        pct = max(0, min(100, int(token)))
+                        break
+                self.signals.download_progress.emit(pct, text)
 
             ok = download_and_stage_update(progress_callback=prog_cb)
             self.signals.download_complete.emit(ok, "Actualización lista." if ok else "Falló la descarga.")

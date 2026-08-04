@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QSpinBox, QDoubleSpinBox, QInputDialog
 )
 from PyQt6.QtCore import Qt
-from src.motor_descuentos.motor_combos import MotorCombos
+from src.motor_descuentos.cerebro.motor_combos import MotorCombos
 
 class DialogoCombos(QDialog):
     def __init__(self, parent=None):

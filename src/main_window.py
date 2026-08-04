@@ -500,7 +500,21 @@ class MainWindow(QMainWindow):
         if factory is None:
             return  # Slot libre (_Dead) o índice desconocido
 
-        widget = factory()
+        try:
+            widget = factory()
+        except Exception as e:
+            logger.exception("No se pudo abrir pantalla %s", index)
+            try:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.critical(
+                    self,
+                    "Error al abrir módulo",
+                    f"No se pudo cargar la pantalla {index}:\n{e}",
+                )
+            except Exception:
+                pass
+            return
+
         self.screens[index] = widget
 
         # Reemplazar placeholder en el QStackedWidget sin cambiar el índice

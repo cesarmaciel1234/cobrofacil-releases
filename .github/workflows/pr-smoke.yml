@@ -1,0 +1,48 @@
+# Smoke CI para PRs (gate del auto-merge de auto-fix).
+name: PR Smoke
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compilar módulos críticos
+        env:
+          TPV_QT: "6"
+        run: |
+          python -m compileall -q src/services/auto_heal.py \
+            src/services/github_error_reporter.py \
+            src/updater/silent_auto_updater.py \
+            src/updater/github_updater.py \
+            main.py \
+            scripts/ci/auto_fix_from_issue.py
+
+      - name: Import smoke (sin GUI)
+        env:
+          TPV_QT: "6"
+          QT_QPA_PLATFORM: "offscreen"
+        run: |
+          pip install -q PyQt6 || true
+          python - <<'PY'
+          import ast, pathlib
+          for p in [
+              "src/services/auto_heal.py",
+              "src/services/github_error_reporter.py",
+              "scripts/ci/auto_fix_from_issue.py",
+          ]:
+              ast.parse(pathlib.Path(p).read_text(encoding="utf-8"))
+              print("OK", p)
+          PY

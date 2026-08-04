@@ -1,0 +1,112 @@
+# =============================================================================
+# Auto-fix enterprise: Issue (auto-report) → Cursor Agent → PR
+# =============================================================================
+# Secrets requeridos (Settings → Secrets and variables → Actions):
+#   CURSOR_API_KEY  — API key de Cursor (dashboard Cursor → API Keys).
+#                     El usuario de esa key debe tener GitHub conectado al repo.
+#   COBROFACIL_ERROR_REPORT_TOKEN — ya usado para CREAR issues desde el EXE;
+#                     este workflow usa GITHUB_TOKEN (+ permisos abajo) para PRs.
+#
+# Flujo:
+#   1) Cliente POS reporta ERROR → Issue labels: auto-report, client-error, needs-auto-fix
+#   2) Este workflow lanza Cursor Agent en el checkout y abre PR label auto-fix
+#   3) "PR Smoke" valida; auto-merge squash a main → release.yml publica ZIP
+# =============================================================================
+
+name: Auto-fix from Issue
+
+on:
+  issues:
+    types: [opened, labeled, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Número de Issue a arreglar"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  autofix:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue &&
+       (contains(join(github.event.issue.labels.*.name, ','), 'auto-report') ||
+        contains(join(github.event.issue.labels.*.name, ','), 'needs-auto-fix') ||
+        contains(join(github.event.issue.labels.*.name, ','), 'client-error')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Verificar CURSOR_API_KEY
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [ -z "$CURSOR_API_KEY" ]; then
+            echo "Falta secret CURSOR_API_KEY. Crear en Settings → Secrets → Actions."
+            exit 1
+          fi
+          echo "CURSOR_API_KEY presente (prefix ${CURSOR_API_KEY:0:6}…)"
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolver Issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_N: ${{ inputs.issue_number }}
+          ISSUE_N: ${{ github.event.issue.number }}
+        run: |
+          set -e
+          mkdir -p /tmp/autofix
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            N="$DISPATCH_N"
+            gh api "repos/${{ github.repository }}/issues/$N" > /tmp/autofix/issue.json
+          else
+            N="$ISSUE_N"
+            gh api "repos/${{ github.repository }}/issues/$N" > /tmp/autofix/issue.json
+          fi
+          jq -r .title /tmp/autofix/issue.json > /tmp/autofix/title.txt
+          jq -r .body /tmp/autofix/issue.json > /tmp/autofix/body.txt
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar git
+        run: |
+          git config user.name "cobrofacil-autofix[bot]"
+          git config user.email "cobrofacil-autofix[bot]@users.noreply.github.com"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          command -v agent || ls -la "$HOME/.cursor/bin" || true
+
+      - name: pip cursor-sdk (fallback)
+        run: pip install cursor-sdk || true
+
+      - name: Ejecutar auto-fix
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          CURSOR_AGENT_MODEL: composer-2
+        run: |
+          export ISSUE_TITLE="$(cat /tmp/autofix/title.txt)"
+          export ISSUE_BODY="$(cat /tmp/autofix/body.txt)"
+          python scripts/ci/auto_fix_from_issue.py

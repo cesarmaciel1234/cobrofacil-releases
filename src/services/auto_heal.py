@@ -1,0 +1,263 @@
+"""
+Autocura runtime (capa enterprise #2).
+
+Solo acciones seguras y acotadas: candados zombie, cache de update corrupta,
+reintento de MariaDB. No parchea código ni toca cobros/cajero.
+"""
+from __future__ import annotations
+
+import logging
+import os
+import re
+import shutil
+import threading
+import time
+import traceback
+from dataclasses import dataclass
+from typing import Optional
+
+from src.utils.paths import get_base_path
+
+_log = logging.getLogger("PunPro.auto_heal")
+
+_MAX_HEALS_PER_HOUR = 8
+_STATE_FILE = "auto_heal_state.json"
+_lock = threading.Lock()
+
+
+@dataclass
+class HealResult:
+    healed: bool
+    action: str = ""
+    detail: str = ""
+
+
+def _state_path() -> str:
+    path = os.path.join(get_base_path(), "logs")
+    os.makedirs(path, exist_ok=True)
+    return os.path.join(path, _STATE_FILE)
+
+
+def _load_state() -> dict:
+    import json
+
+    try:
+        with open(_state_path(), encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError, ValueError):
+        return {}
+
+
+def _save_state(state: dict) -> None:
+    import json
+
+    try:
+        with open(_state_path(), "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+    except OSError:
+        pass
+
+
+def _rate_limit_ok() -> bool:
+    now = time.time()
+    with _lock:
+        state = _load_state()
+        stamps = [float(x) for x in state.get("heals", []) if isinstance(x, (int, float, str))]
+        stamps = [t for t in stamps if now - float(t) < 3600]
+        if len(stamps) >= _MAX_HEALS_PER_HOUR:
+            return False
+        return True
+
+
+def _record_heal(action: str) -> None:
+    now = time.time()
+    with _lock:
+        state = _load_state()
+        stamps = [float(x) for x in state.get("heals", []) if isinstance(x, (int, float, str))]
+        stamps = [t for t in stamps if now - float(t) < 3600]
+        stamps.append(now)
+        state["heals"] = stamps
+        state["last_action"] = action
+        state["last_ts"] = now
+        _save_state(state)
+
+
+def _blob(message: str = "", tb_text: str = "", exc: BaseException | None = None) -> str:
+    parts = [str(message or "")]
+    if tb_text:
+        parts.append(tb_text)
+    if exc is not None:
+        parts.append(f"{type(exc).__name__}: {exc}")
+        parts.append("".join(traceback.format_exception(type(exc), exc, exc.__traceback__)))
+    return "\n".join(parts).lower()
+
+
+def _purge_stale_lock_file(path: str) -> bool:
+    if not os.path.isfile(path):
+        return False
+    try:
+        with open(path, encoding="utf-8") as f:
+            pid = int((f.read() or "0").strip() or "0")
+    except Exception:
+        try:
+            os.remove(path)
+            return True
+        except OSError:
+            return False
+    try:
+        from src.utils.candados import _pid_alive
+    except Exception:
+        _pid_alive = None
+    if _pid_alive is not None and pid > 0 and _pid_alive(pid):
+        return False
+    try:
+        os.remove(path)
+        return True
+    except OSError:
+        return False
+
+
+def _heal_stale_locks(blob: str) -> Optional[HealResult]:
+    keywords = ("lock", "candado", "lanzador_maestro", "servidor_tienda", "already running", "otra instancia")
+    if not any(k in blob for k in keywords):
+        return None
+    from src.utils.candados import MASTER_LOCK_PATH, STORE_SERVER_LOCK_PATH, _LOCK_DIR
+
+    removed = []
+    for path in (MASTER_LOCK_PATH, STORE_SERVER_LOCK_PATH):
+        if _purge_stale_lock_file(path):
+            removed.append(os.path.basename(path))
+    try:
+        for name in os.listdir(_LOCK_DIR):
+            if name.startswith("perfil_") and name.endswith(".lock"):
+                p = os.path.join(_LOCK_DIR, name)
+                if _purge_stale_lock_file(p):
+                    removed.append(name)
+    except OSError:
+        pass
+    if not removed:
+        return None
+    return HealResult(True, "purge_stale_locks", ",".join(removed))
+
+
+def _heal_update_cache(blob: str) -> Optional[HealResult]:
+    keywords = (
+        "permissionerror",
+        "_update_cache",
+        "badzipfile",
+        "archivo dañado",
+        "no space",
+        "errno 28",
+        "staging",
+    )
+    if not any(k in blob for k in keywords):
+        return None
+    cache = os.path.join(get_base_path(), "_update_cache")
+    if not os.path.isdir(cache):
+        return None
+    try:
+        shutil.rmtree(cache, ignore_errors=True)
+        os.makedirs(cache, exist_ok=True)
+        return HealResult(True, "clear_update_cache", cache)
+    except Exception as e:
+        return HealResult(False, "clear_update_cache", str(e))
+
+
+def _heal_mariadb(blob: str) -> Optional[HealResult]:
+    keywords = (
+        "mariadb",
+        "mysql",
+        "2003",
+        "2002",
+        "2013",
+        "can't connect",
+        "connection refused",
+        "lost connection",
+        "operationalerror",
+        "timeout",
+        "mysqld",
+    )
+    if not any(k in blob for k in keywords):
+        return None
+    try:
+        from src.base_de_datos.database import db_manager
+        from src.config import config
+    except Exception as e:
+        return HealResult(False, "reconnect_mariadb", f"import: {e}")
+
+    host = ""
+    try:
+        host = (config.get("db_host") or "").strip()
+        if not host:
+            path = str(getattr(db_manager, "db_path", "") or "")
+            if path.startswith("mariadb://"):
+                host = path.split("://", 1)[-1].split("/")[0] or "127.0.0.1"
+        if not host:
+            host = "127.0.0.1"
+    except Exception:
+        host = "127.0.0.1"
+
+    try:
+        # Master local: intentar levantar mysqld portable
+        if getattr(db_manager, "is_master", True) and host in ("127.0.0.1", "localhost"):
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                mariadb_controller.start_server()
+            except Exception:
+                pass
+        if hasattr(db_manager, "reconectar_mariadb"):
+            ok = db_manager.reconectar_mariadb(host)
+            if ok is False:
+                db_manager.reload_config()
+            return HealResult(True, "reconnect_mariadb", host)
+        db_manager.reload_config()
+        return HealResult(True, "reload_db_config", host)
+    except Exception as e:
+        return HealResult(False, "reconnect_mariadb", str(e))
+
+
+def _heal_port_busy(blob: str) -> Optional[HealResult]:
+    if not re.search(r"(address already in use|10048|eaddrinuse|puerto.*ocupado)", blob):
+        return None
+    # Solo limpiamos discovery/update locks; no matamos procesos ajenos.
+    detail = []
+    try:
+        from src.utils.candados import STORE_SERVER_LOCK_PATH
+
+        if _purge_stale_lock_file(STORE_SERVER_LOCK_PATH):
+            detail.append("servidor_tienda.lock")
+    except Exception:
+        pass
+    if detail:
+        return HealResult(True, "port_busy_stale_lock", ",".join(detail))
+    return None
+
+
+def try_auto_heal(
+    message: str = "",
+    *,
+    exc: BaseException | None = None,
+    traceback_text: str = "",
+) -> HealResult:
+    """Intenta curar un error recuperable. Rate-limited."""
+    if not _rate_limit_ok():
+        return HealResult(False, "rate_limited", "max heals/hora")
+
+    blob = _blob(message, traceback_text, exc)
+    if not blob.strip():
+        return HealResult(False, "", "empty")
+
+    for healer in (_heal_stale_locks, _heal_update_cache, _heal_mariadb, _heal_port_busy):
+        try:
+            result = healer(blob)
+        except Exception as e:
+            _log.debug("healer %s falló: %s", healer.__name__, e)
+            continue
+        if result and result.healed:
+            _record_heal(result.action)
+            _log.warning("AUTO_HEAL ok action=%s detail=%s", result.action, result.detail)
+            return result
+
+    return HealResult(False, "", "no_match")

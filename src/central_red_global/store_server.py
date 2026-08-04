@@ -161,15 +161,6 @@ def run_store_server_app(app) -> int:
     except Exception as e:
         logger.warning(f"Presencia maestra: {e}")
 
-    # Updater LAN (si el main no lo arrancó aún, el caller lo puede haber hecho)
-    try:
-        from src.updater.update_server import iniciar_servidor
-        from src.base_de_datos.database import db_manager as _db
-        if getattr(_db, "is_master", False):
-            iniciar_servidor()
-    except Exception:
-        pass
-
     # --- Ventana / bandeja ---
     win = QWidget()
     win.setWindowTitle(STORE_SERVER_WINDOW_TITLE)

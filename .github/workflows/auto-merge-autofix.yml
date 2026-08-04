@@ -1,0 +1,75 @@
+# =============================================================================
+# Auto-merge PRs label auto-fix cuando PR Smoke está verde.
+# Tras el squash-merge a main, release.yml publica el ZIP (version.json ya bumpeado
+# por el agente en el PR).
+#
+# Secrets: usa GITHUB_TOKEN. CURSOR_API_KEY no es necesario aquí.
+# =============================================================================
+
+name: Auto-merge autofix
+
+on:
+  workflow_run:
+    workflows: ["PR Smoke"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
+jobs:
+  merge:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolver PR asociado
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          PRS=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/pull_requests" \
+            --jq '.[].number' || true)
+          if [ -z "$PRS" ]; then
+            # Fallback: buscar PR open del head SHA
+            SHA="${{ github.event.workflow_run.head_sha }}"
+            PRS=$(gh pr list --repo "${{ github.repository }}" --state open --json number,headRefOid,labels \
+              --jq ".[] | select(.headRefOid==\"$SHA\") | .number")
+          fi
+          N=$(echo "$PRS" | head -n1)
+          if [ -z "$N" ]; then
+            echo "No PR linked; skip"
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+          LABELS=$(gh pr view "$N" --repo "${{ github.repository }}" --json labels --jq '.labels[].name' | tr '\n' ',')
+          echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+          if echo "$LABELS" | grep -q "auto-fix"; then
+            echo "is_autofix=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_autofix=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Squash merge
+        if: steps.pr.outputs.skip != '1' && steps.pr.outputs.is_autofix == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          N="${{ steps.pr.outputs.number }}"
+          gh pr merge "$N" --repo "${{ github.repository }}" --squash --delete-branch \
+            --subject "fix(auto): merge PR #$N (CI verde)"
+          BODY=$(gh pr view "$N" --repo "${{ github.repository }}" --json body --jq .body)
+          ISSUE=$(echo "$BODY" | grep -oE 'Closes #[0-9]+' | head -n1 | tr -dc '0-9' || true)
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --repo "${{ github.repository }}" \
+              --body "Auto-fix mergeado (PR #$N). Release se dispara desde main."
+            gh issue edit "$ISSUE" --repo "${{ github.repository }}" \
+              --remove-label "needs-auto-fix" || true
+          fi

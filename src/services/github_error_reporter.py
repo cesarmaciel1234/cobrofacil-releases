@@ -5,6 +5,11 @@ Token (uno de estos):
   - Variable de entorno COBROFACIL_GITHUB_TOKEN
   - config.json → github_report_token
   - error_report.json en la carpeta de instalación (inyectado en CI)
+
+Labels:
+  - auto-report, client-error (siempre)
+  - needs-auto-fix (si no fue curado en runtime)
+  - auto-healed (solo log local; no se abre issue si healed)
 """
 
 from __future__ import annotations
@@ -110,7 +115,6 @@ def _recently_sent(fp: str) -> bool:
 def _mark_sent(fp: str) -> None:
     state = _load_json(_state_path(), {})
     state[fp] = datetime.now(timezone.utc).isoformat()
-    # Mantener solo los últimos 200 hashes
     if len(state) > 200:
         for key in list(state.keys())[:-200]:
             state.pop(key, None)
@@ -156,6 +160,7 @@ def _build_body(entry: dict) -> str:
         f"- **Versión:** {entry.get('version', '')}",
         f"- **Origen:** {entry.get('source', '')}",
         f"- **Nivel:** {entry.get('level', 'ERROR')}",
+        f"- **Fingerprint:** `{entry.get('fp', '')}`",
         "",
         "### Mensaje",
         "```",
@@ -167,16 +172,18 @@ def _build_body(entry: dict) -> str:
     log_tail = entry.get("log_tail") or _tail_log_file()
     if log_tail:
         parts.extend(["", "### Últimas líneas del log", "```", log_tail[-4000:], "```"])
+    # Marcador estable para dedup del workflow auto-fix
+    parts.extend(["", f"<!-- autofix-fp:{entry.get('fp', '')} -->"])
     body = "\n".join(parts)
     return body[:_MAX_BODY]
 
 
-def _post_issue(token: str, repo: str, title: str, body: str) -> bool:
+def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str]) -> bool:
     url = f"https://api.github.com/repos/{repo}/issues"
     payload = {
         "title": title[:200],
         "body": body,
-        "labels": ["auto-report", "client-error"],
+        "labels": labels,
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -193,7 +200,16 @@ def _post_issue(token: str, repo: str, title: str, body: str) -> bool:
     try:
         with urllib.request.urlopen(req, timeout=25) as resp:
             return 200 <= resp.status < 300
-    except urllib.error.HTTPError:
+    except urllib.error.HTTPError as e:
+        # Labels inexistentes: reintentar sin labels custom
+        if e.code == 422 and "needs-auto-fix" in labels:
+            return _post_issue(
+                token,
+                repo,
+                title,
+                body,
+                [lb for lb in labels if lb in ("auto-report", "client-error")],
+            )
         return False
     except Exception:
         return False
@@ -235,8 +251,12 @@ def queue_error_report(
     source: str = "app",
     exc_info=None,
     log_tail: str | None = None,
+    skip_heal: bool = False,
 ) -> None:
-    """Encola un error para envío a GitHub (no bloquea la UI)."""
+    """Encola un error para envío a GitHub (no bloquea la UI).
+
+    Primero intenta autocura local; si se curó, no abre Issue.
+    """
     enabled, token, _repo = _report_settings()
     if not enabled:
         return
@@ -246,11 +266,28 @@ def queue_error_report(
         return
 
     tb_text = ""
+    exc_obj = None
     if exc_info:
         if exc_info is True:
             exc_info = None
         if isinstance(exc_info, tuple) and exc_info[0] is not None:
             tb_text = "".join(traceback.format_exception(*exc_info))
+            exc_obj = exc_info[1]
+
+    if not skip_heal:
+        try:
+            from src.services.auto_heal import try_auto_heal
+
+            heal = try_auto_heal(msg, exc=exc_obj, traceback_text=tb_text)
+            if heal.healed:
+                logging.getLogger("PunPro").warning(
+                    "Error curado en runtime (%s): %s — no se reporta a GitHub",
+                    heal.action,
+                    msg[:200],
+                )
+                return
+        except Exception:
+            pass
 
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -262,6 +299,7 @@ def queue_error_report(
         "traceback": tb_text,
         "log_tail": log_tail,
         "fp": _fingerprint(msg, source),
+        "labels": ["auto-report", "client-error", "needs-auto-fix"],
     }
     _enqueue(entry)
 
@@ -291,7 +329,8 @@ def flush_pending_reports() -> int:
 
         title = f"[POS {entry.get('level', 'ERROR')}] {entry.get('hostname', '?')} — {str(entry.get('message', ''))[:80]}"
         body = _build_body(entry)
-        if _post_issue(token, repo, title, body):
+        labels = list(entry.get("labels") or ["auto-report", "client-error", "needs-auto-fix"])
+        if _post_issue(token, repo, title, body, labels):
             _mark_sent(fp)
             sent += 1
         else:
@@ -308,6 +347,9 @@ class GitHubReportHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord) -> None:
         if record.levelno < logging.ERROR:
+            return
+        # Evitar bucle si el propio heal/reporter loguea WARNING/ERROR
+        if record.name.startswith("PunPro.auto_heal"):
             return
         try:
             msg = self.format(record)

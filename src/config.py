@@ -26,7 +26,6 @@ class Config:
         "db_path": "",
         "db_name": "punpro.db",
         "server_password": "1234",
-        "update_server_ip": "",
         "update_auth_token": "1234",
         "shared_folder_name": "tpv pro 2026",
         "local_pin": "1234",

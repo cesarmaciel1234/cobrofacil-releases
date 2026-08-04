@@ -64,6 +64,32 @@ jobs:
       # 4. Compilar main.py → dist/CobroFacil_POS/CobroFacil_POS.exe
       #    (--onedir: carpeta con el .exe y librerías; mismo criterio que Compilar_Todo.bat)
       # -----------------------------------------------------------------------
+      - name: Verificar datos PyInstaller (--add-data)
+        shell: pwsh
+        run: |
+          # Solo rutas que existen en el repo y se pasan a --add-data.
+          # NO exigir src/styles.qss ni src/icon.png: no están en el árbol fuente.
+          $required = @(
+            'src/ui_components',
+            'src/assets',
+            'src/assets/pos_icon.png',
+            'src/carteleria/assets',
+            'Catalogos/iconos_rubros'
+          )
+          $missing = @()
+          foreach ($p in $required) {
+            if (-not (Test-Path $p)) {
+              Write-Host "FALTA: $p"
+              $missing += $p
+            } else {
+              Write-Host "OK: $p"
+            }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Error "Archivos requeridos faltantes: $($missing -join ', ')"
+            exit 1
+          }
+
       - name: Compilar ejecutable con PyInstaller
         env:
           TPV_QT: "6"

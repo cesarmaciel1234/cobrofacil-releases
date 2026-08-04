@@ -41,9 +41,29 @@ from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
 def global_excepthook(exc_type, exc_value, exc_traceback):
     try:
         from src.logger import logger
+        try:
+            from src.services.auto_heal import try_auto_heal
+            heal = try_auto_heal(
+                f"{exc_type.__name__}: {exc_value}",
+                exc=exc_value,
+                traceback_text="".join(traceback.format_exception(exc_type, exc_value, exc_traceback)),
+            )
+            if heal.healed:
+                logger.warning(
+                    "Excepción curada en runtime (%s): %s",
+                    heal.action,
+                    exc_value,
+                )
+                with open("crash.log", "w", encoding="utf-8") as f:
+                    traceback.print_exception(exc_type, exc_value, exc_traceback, file=f)
+                sys.__excepthook__(exc_type, exc_value, exc_traceback)
+                return
+        except Exception:
+            pass
         logger.error("Excepción global no capturada:", exc_info=(exc_type, exc_value, exc_traceback))
         with open("crash.log", "w", encoding="utf-8") as f:
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=f)
+        # El handler GitHubReportHandler encola el ERROR; refuerzo CRITICAL explícito.
         try:
             from src.services.github_error_reporter import queue_error_report
             queue_error_report(
@@ -51,10 +71,12 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
                 level="CRITICAL",
                 source="global_excepthook",
                 exc_info=(exc_type, exc_value, exc_traceback),
+                skip_heal=True,
             )
         except Exception:
             pass
-    except: pass
+    except Exception:
+        pass
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 sys.excepthook = global_excepthook
 
@@ -344,104 +366,6 @@ def launch_app(direct_role=None):
             return result
 
 
-_update_service_running = False
-
-def start_update_server():
-    """
-    Monitorea la configuración y mantiene el servidor de actualizaciones activo
-    solamente si esta PC es la maestra local.
-    """
-    def manager_loop():
-        global _update_service_running
-        try:
-            from src.updater.update_server import iniciar_servidor, detener_servidor
-            from src.base_de_datos.database import db_manager
-        except Exception as e:
-            logging.debug(f"[UPDATER] No se pudo importar el servicio de actualizaciones: {e}")
-            return
-
-        while not app_exit_event.is_set():
-            try:
-                is_master = getattr(db_manager, 'is_master', False)
-                db_path = getattr(db_manager, 'db_path', "") or ""
-                db_valido = db_path.startswith("mariadb://") or db_path.startswith("mysql://") or os.path.exists(db_path)
-                if is_master and db_path and db_valido:
-                    if not _update_service_running:
-                        if iniciar_servidor():
-                            _update_service_running = True
-                else:
-                    if _update_service_running:
-                        detener_servidor()
-                        _update_service_running = False
-            except Exception as e:
-                logging.debug(f"[UPDATER] Service manager error: {e}")
-            app_exit_event.wait(5)
-
-    thread = threading.Thread(target=manager_loop, daemon=True)
-    thread.start()
-    return thread
-
-
-def start_update_discovery_server():
-    """Responde a las consultas de actualización LAN para clientes."""
-    def server_loop():
-        import socket
-        import json
-        import logging
-        try:
-            from src.base_de_datos.database import db_manager
-        except ImportError:
-            return
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            sock.bind(('', 38002))
-            sock.settimeout(2.0)
-        except Exception as e:
-            logging.error(f"UDP Update Discovery Bind Error: {e}")
-            return
-
-        while not app_exit_event.is_set():
-            try:
-                data, addr = sock.recvfrom(1024)
-                if data == b"PUNPRO_UPDATE_DISCOVER":
-                    if not getattr(db_manager, 'is_master', False):
-                        continue
-                    if not _update_service_running:
-                        continue
-
-                    server_ip = None
-                    try:
-                        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        probe.connect(addr)
-                        server_ip = probe.getsockname()[0]
-                        probe.close()
-                    except:
-                        pass
-
-                    if not server_ip:
-                        try:
-                            server_ip = socket.gethostbyname(socket.gethostname())
-                        except:
-                            server_ip = addr[0]
-
-                    if server_ip == "127.0.0.1":
-                        server_ip = addr[0]
-
-                    response = {"update_server": True, "server_ip": server_ip}
-                    sock.sendto(json.dumps(response).encode('utf-8'), addr)
-                    print(f"[UPDATER] Responded discovery to {addr[0]} with server_ip={server_ip}")
-            except socket.timeout:
-                continue
-            except Exception:
-                pass
-
-    thread = threading.Thread(target=server_loop, daemon=True)
-    thread.start()
-    return thread
-
 if __name__ == "__main__":
     import sys
     if "--install-firewall" in sys.argv:
@@ -496,9 +420,6 @@ if __name__ == "__main__":
             aplicar_tema(app, tema)
         except Exception:
             pass
-
-        start_update_server()
-        start_update_discovery_server()
 
         from src.central_red_global.store_server import run_store_server_app
         code = run_store_server_app(app)
@@ -583,8 +504,6 @@ if __name__ == "__main__":
                     init_lan_server()
                     from src.central_red_global.master_presence import ensure_master_lan_presence
                     ensure_master_lan_presence()
-                    start_update_server()
-                    start_update_discovery_server()
                 except Exception as e2:
                     print(f"Fallback presencia local: {e2}")
 

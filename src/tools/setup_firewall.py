@@ -5,8 +5,8 @@ import subprocess
 import sys
 import time
 
-TCP_PORTS = "3306,8000,38001"
-UDP_PORTS = "37020,38002,8000"
+TCP_PORTS = "3306,8000"
+UDP_PORTS = "37020,8000"
 
 # Reglas mínimas que deben existir (entrada). Sin ellas la PC Maestra queda aislada.
 REQUIRED_IN_RULES = (

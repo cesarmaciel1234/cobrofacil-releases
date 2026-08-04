@@ -448,6 +448,5 @@ try:
             self.progreso.emit(100, "Listo.")
             self.terminado.emit(res)
 
-    FirebaseUpdateWorker = SilentUpdateWorker
 except ImportError:
-    FirebaseUpdateWorker = None
+    SilentUpdateWorker = None

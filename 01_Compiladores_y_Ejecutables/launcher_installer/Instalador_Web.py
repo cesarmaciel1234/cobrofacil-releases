@@ -591,7 +591,7 @@ class InstallWorker(QThread):
         return ""
 
     def _extract_zip(self, zip_path, install_dir):
-        """Extrae el release. Solo usa contraseña si el ZIP está cifrado (Firebase)."""
+        """Extrae el release. Solo usa contraseña si el ZIP está cifrado."""
         errors = []
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:

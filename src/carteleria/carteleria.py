@@ -106,11 +106,21 @@ class CarteleriaApp(QStackedWidget):
 
     def lanzar_ofe(self):
         if not self.ofe:
-            from src.carteleria.motor_descuentos_ui.ofertas_main import Admin2Ofertas
-            self.ofe = Admin2Ofertas()
+            try:
+                from src.motor_descuentos.vistas.ofertas_main import Admin2Ofertas
+                self.ofe = Admin2Ofertas()
+            except Exception as e:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.critical(
+                    self,
+                    "Motor de Promociones",
+                    f"No se pudo abrir el módulo:\n{e}",
+                )
+                return
             self.addWidget(self.ofe)
             self.ofe.request_dashboard.connect(self.volver_dashboard)
-            if self.estilo_completo: self.ofe.setStyleSheet(self.estilo_completo)
+            if self.estilo_completo:
+                self.ofe.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.ofe)
         self.showNormal()
 
