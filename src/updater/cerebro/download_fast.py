@@ -56,6 +56,8 @@ def download_release_zip(
     url: str,
     dest_path: str,
     progress_callback=None,
+    *,
+    force_single: bool = False,
 ) -> None:
     """
     Descarga a dest_path. Usa Range paralelo si el CDN lo permite;
@@ -85,7 +87,8 @@ def download_release_zip(
         accept_ranges = str(head.headers.get("Accept-Ranges") or "").lower()
 
     use_parallel = (
-        total >= MIN_PARALLEL_BYTES
+        not force_single
+        and total >= MIN_PARALLEL_BYTES
         and "bytes" in accept_ranges
     )
 
@@ -263,3 +266,9 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
             os.remove(part_path)
     except OSError:
         pass
+
+    actual = os.path.getsize(dest_path)
+    if actual != size:
+        raise RuntimeError(
+            f"Descarga incompleta: {actual} bytes recibidos, esperados {size}"
+        )
