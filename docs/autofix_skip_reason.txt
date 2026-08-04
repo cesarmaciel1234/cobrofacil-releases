@@ -1,0 +1,11 @@
+Issue #22 — skip auto-fix (not a production bug)
+
+Title: [ci] token-check (cerrar)
+Body: Validacion automatica del secret. Se puede cerrar.
+
+This issue is created intentionally by the release workflow
+(.github/workflows/release.yml, step "Configurar y validar reporte automático de errores")
+to verify that COBROFACIL_ERROR_REPORT_TOKEN can create GitHub issues via the API.
+The workflow normally closes it immediately after creation.
+
+No application code change is required. Close the issue manually if it stayed open.
