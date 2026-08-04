@@ -96,7 +96,8 @@ def end_apply_guard() -> None:
         pass
 
 
-def is_apply_guard_active(max_age_sec: float = 900.0) -> bool:
+def is_apply_guard_active(max_age_sec: float = 180.0) -> bool:
+    """Candado corto: si quedó huérfano tras un crash, no bloquea el arranque 15 min."""
     path = _apply_guard_path()
     if not os.path.isfile(path):
         return False
@@ -108,6 +109,129 @@ def is_apply_guard_active(max_age_sec: float = 900.0) -> bool:
     except OSError:
         return False
     return True
+
+
+def _pos_exe_path(base: str | None = None) -> str:
+    root = base or get_base_path()
+    return os.path.join(root, "CobroFacil_POS.exe")
+
+
+def restore_old_backups(base: str | None = None) -> int:
+    """Si el apply dejó .exe/.dll.old y faltan los originales, los restaura."""
+    root = base or get_base_path()
+    restored = 0
+    try:
+        for dirpath, _, files in os.walk(root):
+            # No tocar staging / mariadb data
+            rel = os.path.relpath(dirpath, root).replace("\\", "/")
+            if rel.startswith("_update_cache") or rel.startswith("mariadb_server/data"):
+                continue
+            for name in files:
+                if not name.endswith(".old"):
+                    continue
+                old_path = os.path.join(dirpath, name)
+                dst = old_path[: -len(".old")]
+                need = (not os.path.isfile(dst)) or os.path.getsize(dst) < 4096
+                if not need:
+                    continue
+                try:
+                    os.replace(old_path, dst)
+                    restored += 1
+                except OSError:
+                    try:
+                        shutil.copy2(old_path, dst)
+                        restored += 1
+                    except OSError:
+                        pass
+    except Exception:
+        pass
+    return restored
+
+
+def heal_install_after_update() -> bool:
+    """
+    Autocura al arrancar: candado applying huérfano + EXE perdido tras update a medias.
+    Devuelve True si reparó algo.
+    """
+    fixed = False
+    # Si otro proceso está aplicando de verdad, no tocar .old ni el EXE.
+    try:
+        if is_apply_guard_active(max_age_sec=90.0):
+            try:
+                with open(_apply_guard_path(), encoding="utf-8") as f:
+                    pid_txt = (f.readline() or "").strip()
+                pid = int(pid_txt or "0")
+            except Exception:
+                pid = 0
+            alive = False
+            if pid > 0:
+                try:
+                    from src.utils.candados import _pid_alive
+
+                    alive = bool(_pid_alive(pid))
+                except Exception:
+                    alive = False
+            if alive:
+                return False
+            end_apply_guard()
+            fixed = True
+    except Exception:
+        end_apply_guard()
+        fixed = True
+
+    exe = _pos_exe_path()
+    if (not os.path.isfile(exe) or os.path.getsize(exe) < 50_000) and os.path.isfile(exe + ".old"):
+        try:
+            os.replace(exe + ".old", exe)
+            fixed = True
+        except OSError:
+            try:
+                shutil.copy2(exe + ".old", exe)
+                fixed = True
+            except OSError:
+                pass
+
+    n = restore_old_backups()
+    if n:
+        fixed = True
+    if fixed:
+        try:
+            from src.logger import logger
+
+            logger.warning("heal_install_after_update: instalación reparada tras update.")
+        except Exception:
+            pass
+    return fixed
+
+
+def _spawn_detached_hub() -> None:
+    """Relaunch limpio del hub (sin --server/--role) con cwd correcto."""
+    import subprocess
+
+    exe = sys.executable if getattr(sys, "frozen", False) else sys.executable
+    base = get_base_path()
+    if getattr(sys, "frozen", False):
+        cmd = [exe]
+    else:
+        main_py = os.path.join(base, "main.py")
+        cmd = [exe, main_py]
+    flags = 0
+    if sys.platform == "win32":
+        flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+        flags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+        flags |= getattr(subprocess, "CREATE_NO_WINDOW", 0)  # queremos ventana del hub
+        # CREATE_NO_WINDOW ocultaría el hub — no usar
+        flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+        flags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+    subprocess.Popen(
+        cmd,
+        cwd=base,
+        close_fds=True,
+        creationflags=flags,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+    )
 
 
 _last_remote_error: str = ""
@@ -559,15 +683,17 @@ def apply_pending_update_on_startup() -> bool:
         if logger:
             logger.info("Actualización silenciosa aplicada correctamente. Reiniciando proceso...")
 
-        import subprocess
-        if getattr(sys, "frozen", False):
-            subprocess.Popen([sys.executable] + sys.argv[1:])
-        else:
-            subprocess.Popen([sys.executable] + sys.argv)
+        _spawn_detached_hub()
+        time.sleep(0.5)
         os._exit(0)
 
         return True
     except Exception as exc:
+        try:
+            restore_old_backups()
+            heal_install_after_update()
+        except Exception:
+            pass
         end_apply_guard()
         try:
             if "progress_dialog" in locals() and progress_dialog:
@@ -609,48 +735,77 @@ def exit_and_relaunch_for_update() -> None:
 
     exe = sys.executable
     pid = os.getpid()
+    workdir = get_base_path()
 
     if sys.platform == "win32" and getattr(sys, "frozen", False):
         bat = os.path.join(tempfile.gettempdir(), f"cobrofacil_relaunch_{pid}.bat")
-        # Escapar comillas en ruta
+        log = os.path.join(tempfile.gettempdir(), "cobrofacil_relaunch.log")
         exe_q = exe.replace('"', "")
+        wd_q = workdir.replace('"', "")
+        log_q = log.replace('"', "")
         with open(bat, "w", encoding="utf-8", newline="\r\n") as f:
             f.write(
                 f"""@echo off
+setlocal EnableExtensions
 set PID={pid}
+set EXE={exe_q}
+set WD={wd_q}
+set LOG={log_q}
+echo relaunch start %DATE% %TIME%>>"%LOG%"
 :wait
 tasklist /FI "PID eq %PID%" 2>NUL | find "%PID%" >NUL
 if not errorlevel 1 (
   ping -n 2 127.0.0.1 >NUL
   goto wait
 )
-rem Servidor/autostart no debe quedar vivo bloqueando el update
+echo pid gone>>"%LOG%"
 taskkill /F /IM CobroFacil_POS.exe >NUL 2>&1
 taskkill /F /IM mysqld.exe >NUL 2>&1
 ping -n 3 127.0.0.1 >NUL
-start "" "{exe_q}"
-del "%~f0"
+cd /d "%WD%"
+set N=0
+:try_start
+set /a N+=1
+echo try %N% start>>"%LOG%"
+start "CobroFacil" /D "%WD%" "%EXE%"
+ping -n 4 127.0.0.1 >NUL
+tasklist /FI "IMAGENAME eq CobroFacil_POS.exe" 2>NUL | find /I "CobroFacil_POS.exe" >NUL
+if not errorlevel 1 (
+  echo started ok>>"%LOG%"
+  goto done
+)
+if %N% LSS 4 (
+  ping -n 3 127.0.0.1 >NUL
+  goto try_start
+)
+echo FAILED to start>>"%LOG%"
+:done
+del "%~f0" >NUL 2>&1
 """
             )
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | 0x00000008
         subprocess.Popen(
             ["cmd.exe", "/c", bat],
+            cwd=workdir,
             creationflags=flags,
             close_fds=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
     else:
-        # Dev / no frozen: relanzar cuando este proceso termine
         if sys.platform == "win32":
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | 0x00000008
             subprocess.Popen(
-                ["cmd.exe", "/c", f"ping -n 3 127.0.0.1 >NUL & start \"\" \"{exe}\" {' '.join(sys.argv[1:])}"],
+                [
+                    "cmd.exe",
+                    "/c",
+                    f'ping -n 3 127.0.0.1 >NUL & cd /d "{workdir}" & start "CobroFacil" /D "{workdir}" "{exe}"',
+                ],
                 creationflags=flags,
                 close_fds=True,
             )
         else:
-            subprocess.Popen([exe] + sys.argv[1:])
+            subprocess.Popen([exe], cwd=workdir)
 
     os._exit(0)
 

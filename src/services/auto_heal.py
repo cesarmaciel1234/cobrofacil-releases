@@ -311,6 +311,32 @@ def _heal_ssl_github(blob: str) -> Optional[HealResult]:
     return HealResult(True, "ssl_relax", ",".join(detail))
 
 
+def _heal_broken_update_install(blob: str) -> Optional[HealResult]:
+    keys = (
+        "permission denied",
+        "permissionerror",
+        "winerror 5",
+        "winerror 32",
+        "archivo en uso",
+        "apply_error",
+        "cobrofacil_pos.exe",
+        "actualización silenciosa",
+        "applying.lock",
+    )
+    if not any(k in blob for k in keys):
+        return None
+    try:
+        from src.updater.silent_auto_updater import heal_install_after_update, restore_old_backups
+
+        n = restore_old_backups()
+        healed = heal_install_after_update()
+        if healed or n:
+            return HealResult(True, "restore_update_old", f"restored={n}")
+    except Exception as e:
+        return HealResult(False, "restore_update_old", str(e))
+    return None
+
+
 def try_auto_heal(
     message: str = "",
     *,
@@ -327,6 +353,7 @@ def try_auto_heal(
 
     for healer in (
         _heal_stale_locks,
+        _heal_broken_update_install,
         _heal_ssl_github,
         _heal_update_cache,
         _heal_mariadb,

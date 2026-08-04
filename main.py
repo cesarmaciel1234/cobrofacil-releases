@@ -393,6 +393,14 @@ if __name__ == "__main__":
     is_updater_daemon = bool(getattr(parsed_args, "updater", False))
     is_terminal_role = bool(target_role)
 
+    # Antes que nada: si un update a medias dejó el EXE/.lock rotos, reparar
+    try:
+        from src.updater.silent_auto_updater import heal_install_after_update
+
+        heal_install_after_update()
+    except Exception:
+        pass
+
     from src.logger import setup_logger
     setup_logger()
 
@@ -419,7 +427,9 @@ if __name__ == "__main__":
         # Durante un update el autostart no debe reabrir el .exe ni aplicar el paquete
         try:
             from src.updater.silent_auto_updater import is_apply_guard_active
-            if is_apply_guard_active():
+
+            # Candado corto (3 min). Si quedó huérfano, heal ya lo limpió.
+            if is_apply_guard_active(max_age_sec=120.0):
                 sys.exit(0)
         except Exception:
             pass
