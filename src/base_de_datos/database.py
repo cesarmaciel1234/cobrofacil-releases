@@ -641,6 +641,22 @@ class DatabaseManager:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
 
+            host = str(host or "").strip()
+            host_l = host.lower()
+            if host_l in ("localhost", "127.0.0.1", "::1", ""):
+                cfg_data = getattr(config, "data", None) or {}
+                es_clava, host_remoto = self._leer_rol_red_desde_config(cfg_data)
+                if es_clava and host_remoto:
+                    logger.info(
+                        f"[RED LAN] Esclava: redirigiendo localhost → {host_remoto}"
+                    )
+                    host = host_remoto
+                elif es_clava:
+                    logger.warning(
+                        "[RED LAN] Esclava: omitiendo reconexión a MariaDB local."
+                    )
+                    return
+
             engine = MariaDBEngine(host=host)
             # Validar antes de pisar SQLite local / estado offline
             test = engine.get_connection()

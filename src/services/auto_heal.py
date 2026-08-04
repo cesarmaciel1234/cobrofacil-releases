@@ -212,6 +212,29 @@ def _is_loopback_host(host: str) -> bool:
     return (not h) or h in ("localhost", "127.0.0.1", "::1")
 
 
+def _slave_role_from_config(config, db_manager) -> bool:
+    """True si esta terminal debe usar maestra remota (no MariaDB local)."""
+    try:
+        from src.base_de_datos.database import DatabaseManager
+
+        data = getattr(config, "data", None) or {}
+        es_clava, _ = DatabaseManager._leer_rol_red_desde_config(data)
+        if es_clava:
+            return True
+    except Exception:
+        pass
+    try:
+        if config.get("is_master") is False:
+            return True
+        if config.get("carteleria_is_slave"):
+            return True
+        if getattr(db_manager, "is_master", True) is False:
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def _remote_master_candidates(config) -> list[str]:
     """IPs de maestra conocidas (sin localhost)."""
     out: list[str] = []
@@ -269,15 +292,10 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
         return HealResult(False, "reconnect_mariadb", f"import: {e}")
 
     remotes = _remote_master_candidates(config)
-    try:
-        slave_intent = (
-            config.get("is_master") is False
-            or bool(config.get("carteleria_is_slave"))
-            or bool(str(config.get("preferred_master_ip") or "").strip())
-            or getattr(db_manager, "is_master", True) is False
-        )
-    except Exception:
-        slave_intent = False
+    slave_intent = _slave_role_from_config(config, db_manager)
+    if not slave_intent and remotes:
+        # db_host remoto sin is_master persistido (arranque temprano / config vieja)
+        slave_intent = True
 
     def _persist_slave(host: str) -> None:
         try:
@@ -327,7 +345,7 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             "maestra_inalcanzable:" + ",".join(remotes),
         )
 
-    # 2) Maestra local (localhost caído)
+    # 2) Maestra local (localhost caído) — nunca en terminal esclava
     host = ""
     try:
         host = (config.get("db_host") or "").strip()
@@ -340,7 +358,7 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     except Exception:
         host = "127.0.0.1"
 
-    if _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob:
+    if not slave_intent and _is_loopback_host(host):
         try:
             from src.services.mariadb_controller import mariadb_controller
 
