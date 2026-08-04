@@ -9,6 +9,7 @@ python-escpos
 pywin32
 openpyxl
 python-barcode
+reportlab
 pillow
 matplotlib
 requests
