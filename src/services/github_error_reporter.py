@@ -178,6 +178,35 @@ def _build_body(entry: dict) -> str:
     return body[:_MAX_BODY]
 
 
+def _ssl_contexts():
+    """Primero CA normal / certifi; si falla (Windows limpio), sin verificar."""
+    import ssl
+
+    contexts = []
+    try:
+        import certifi
+
+        contexts.append(ssl.create_default_context(cafile=certifi.where()))
+    except Exception:
+        contexts.append(ssl.create_default_context())
+    try:
+        from src.services.auto_heal import is_ssl_relax_enabled
+
+        force_insecure = bool(is_ssl_relax_enabled())
+    except Exception:
+        force_insecure = False
+    if force_insecure:
+        insecure = ssl.create_default_context()
+        insecure.check_hostname = False
+        insecure.verify_mode = ssl.CERT_NONE
+        return [insecure]
+    insecure = ssl.create_default_context()
+    insecure.check_hostname = False
+    insecure.verify_mode = ssl.CERT_NONE
+    contexts.append(insecure)
+    return contexts
+
+
 def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str]) -> bool:
     url = f"https://api.github.com/repos/{repo}/issues"
     payload = {
@@ -197,22 +226,37 @@ def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str])
             "User-Agent": "CobroFacil-POS-ErrorReporter",
         },
     )
-    try:
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            return 200 <= resp.status < 300
-    except urllib.error.HTTPError as e:
-        # Labels inexistentes: reintentar sin labels custom
-        if e.code == 422 and "needs-auto-fix" in labels:
-            return _post_issue(
-                token,
-                repo,
-                title,
-                body,
-                [lb for lb in labels if lb in ("auto-report", "client-error")],
-            )
-        return False
-    except Exception:
-        return False
+    last_err = None
+    for ctx in _ssl_contexts():
+        try:
+            with urllib.request.urlopen(req, timeout=25, context=ctx) as resp:
+                return 200 <= resp.status < 300
+        except urllib.error.HTTPError as e:
+            last_err = e
+            # Labels inexistentes: reintentar sin labels custom
+            if e.code == 422 and "needs-auto-fix" in labels:
+                return _post_issue(
+                    token,
+                    repo,
+                    title,
+                    body,
+                    [lb for lb in labels if lb in ("auto-report", "client-error")],
+                )
+            # 401/403: token inválido — no tiene sentido reintentar SSL
+            if e.code in (401, 403):
+                logging.getLogger("PunPro").warning(
+                    "GitHub error report: HTTP %s (token o permisos)", e.code
+                )
+                return False
+            break
+        except Exception as e:
+            last_err = e
+            continue
+    if last_err is not None:
+        logging.getLogger("PunPro").warning(
+            "GitHub error report: no se pudo publicar issue (%s)", type(last_err).__name__
+        )
+    return False
 
 
 def _enqueue(entry: dict) -> None:
@@ -305,12 +349,30 @@ def queue_error_report(
 
     if token:
         _schedule_flush()
+    else:
+        # Cola crece pero nunca sale: sin error_report.json / secret en el .exe
+        logging.getLogger("PunPro").warning(
+            "GitHub error report: error encolado pero NO hay token "
+            "(falta error_report.json o secret COBROFACIL_ERROR_REPORT_TOKEN en el release)."
+        )
 
 
 def flush_pending_reports() -> int:
     """Envía la cola pendiente. Devuelve cantidad enviada."""
     enabled, token, repo = _report_settings()
-    if not enabled or not token:
+    if not enabled:
+        return 0
+    if not token:
+        try:
+            queue = _load_json(_queue_path(), [])
+            n = len(queue) if isinstance(queue, list) else 0
+        except Exception:
+            n = 0
+        if n:
+            logging.getLogger("PunPro").warning(
+                "GitHub error report: %s errores en cola local sin token — no llegan a GitHub.",
+                n,
+            )
         return 0
 
     with _lock:

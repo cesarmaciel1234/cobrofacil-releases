@@ -526,8 +526,25 @@ def _save_pending(data: dict) -> None:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def _should_preserve(rel_path: str) -> bool:
+def _error_report_has_token(install_root: str) -> bool:
+    """True si ya hay un token usable; si está vacío/roto, el update debe traer el del ZIP."""
+    path = os.path.join(install_root, "error_report.json")
+    if not os.path.isfile(path):
+        return False
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return bool(str((data or {}).get("token", "") or "").strip())
+    except Exception:
+        return False
+
+
+def _should_preserve(rel_path: str, install_root: str | None = None) -> bool:
     rel = rel_path.replace("\\", "/").lstrip("./")
+    # Si error_report.json quedó vacío (release sin secret), no bloquear el token nuevo.
+    if rel == "error_report.json":
+        root = install_root or get_base_path()
+        return _error_report_has_token(root)
     for prefix in PRESERVE_PREFIXES:
         if rel == prefix.rstrip("/") or rel.startswith(prefix):
             return True
@@ -688,7 +705,7 @@ def apply_pending_update_on_startup() -> bool:
 
             for name in files:
                 rel = os.path.join(rel_root, name).replace("\\", "/")
-                if _should_preserve(rel):
+                if _should_preserve(rel, install_root=base):
                     continue
                 src = os.path.join(root, name)
                 dst = os.path.join(base, rel_root, name)

@@ -141,11 +141,16 @@ jobs:
         env:
           REPORT_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:REPORT_TOKEN)) {
+            Write-Error "Falta secret COBROFACIL_ERROR_REPORT_TOKEN: sin eso los .exe no suben errores a GitHub."
+            exit 1
+          }
           $cfg = @{
             token = $env:REPORT_TOKEN
             repo  = "cesarmaciel1234/cobrofacil-releases"
           } | ConvertTo-Json -Compress
           Set-Content -Path "dist/CobroFacil_POS/error_report.json" -Value $cfg -Encoding utf8
+          Write-Host "error_report.json escrito (token ok, len=$($env:REPORT_TOKEN.Length))"
 
       - name: Empaquetar release (.zip)
         run: python 01_Compiladores_y_Ejecutables/package_release_zip.py
