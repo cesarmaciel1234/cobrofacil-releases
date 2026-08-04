@@ -1,0 +1,7 @@
+Issue #2 — [diag] classic PAT ok
+
+No actionable bug. The report confirms a successful GitHub classic PAT
+validation ("Token classic validado. Se puede cerrar."). It is diagnostic
+noise from token/CI health checks, not a client error or traceback.
+
+Action: close the issue manually; no code or version bump required.
