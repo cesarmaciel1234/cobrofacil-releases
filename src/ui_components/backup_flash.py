@@ -72,6 +72,13 @@ def mostrar_flash_backup_dia(parent=None, engine_type: str = "mariadb", host: st
             result["ok"] = bool(
                 AutoBlindajeDB.finalizar_backup_del_dia(engine_type, host)
             )
+            # Sello zip del diario externo (AppData), independiente del mysqldump
+            try:
+                from src.base_de_datos.diario_ventas_externo import sellar_dia
+
+                sellar_dia()
+            except Exception:
+                pass
         except Exception:
             result["ok"] = False
         bar.setRange(0, 100)

@@ -212,38 +212,39 @@ class DatabaseManager:
                     except Exception as e_cb:
                         logger.warning(f"Aviso CerebroBackup: {e_cb}")
                 
-                # --- NUEVA LÓGICA DE FALLBACK OFFLINE ---
+                # --- FALLBACK OFFLINE (esclava sin maestra) ---
+                # Antes: un break mal puesto dejaba db_path en MariaDB remota y el
+                # arranque se colgaba minutos con timeouts a 192.168.0.x.
                 if not self.is_master:
-                    # Bucle de reintento
-                    while True:
-                        try:
-                            import socket
-                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            sock.settimeout(1.5)
-                            result = sock.connect_ex((host, 3306))
-                            sock.close()
-                            if result == 0:
-                                conn = self.mariadb_engine.get_connection()
-                                conn._conn.ping()
-                                logger.info("Conexión recuperada a la PC Maestra.")
-                                break
-                        except:
-                            pass
-                            
-                        # AUTO-DESCUBRIMIENTO: Si falla la conexión, buscar maestra en la red
+                    import socket
+                    import json as _json
+
+                    master_ok = False
+                    try:
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(1.5)
+                        result = sock.connect_ex((host, 3306))
+                        sock.close()
+                        if result == 0:
+                            conn = self.mariadb_engine.get_connection()
+                            conn._conn.ping()
+                            logger.info("Conexión OK a la PC Maestra.")
+                            master_ok = True
+                    except Exception:
+                        master_ok = False
+
+                    if not master_ok:
                         logger.info("Intentando auto-descubrir maestra en la red...")
-                        import socket, json
                         try:
                             sock_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                             sock_scan.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                             sock_scan.settimeout(2.0)
-                            sock_scan.sendto(b"PUNPRO_DISCOVER", ('255.255.255.255', 37020))
+                            sock_scan.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
                             data, addr = sock_scan.recvfrom(1024)
-                            info = json.loads(data.decode('utf-8'))
-                            if info.get('mode') == 'MAESTRA':
-                                discovered_host = info.get('server_ip', addr[0])
-                                sock_scan.close()
-                                # No adoptar la propia IP (servidor local zombie)
+                            sock_scan.close()
+                            info = _json.loads(data.decode("utf-8"))
+                            if info.get("mode") == "MAESTRA":
+                                discovered_host = info.get("server_ip", addr[0])
                                 try:
                                     s_self = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                                     s_self.connect(("8.8.8.8", 80))
@@ -251,27 +252,32 @@ class DatabaseManager:
                                     s_self.close()
                                 except Exception:
                                     mi_ip = ""
-                                if discovered_host and discovered_host in (mi_ip, "127.0.0.1", "localhost"):
-                                    logger.warning(
-                                        f"Discovery devolvió esta misma PC ({discovered_host}); se ignora."
+                                if discovered_host and discovered_host not in (
+                                    mi_ip, "127.0.0.1", "localhost", host,
+                                ):
+                                    logger.info(
+                                        f"Nueva Maestra auto-descubierta en {discovered_host}."
                                     )
-                                    break
-                                if discovered_host and discovered_host != host:
-                                    logger.info(f"Nueva Maestra auto-descubierta en {discovered_host}. Reintentando...")
                                     host = discovered_host
                                     from src.config import config
                                     config.set("db_host", host)
                                     config.set("is_master", False)
                                     config.save()
                                     self.mariadb_engine = MariaDBEngine(host=host)
-                                    continue
+                                    try:
+                                        conn = self.mariadb_engine.get_connection()
+                                        conn._conn.ping()
+                                        master_ok = True
+                                    except Exception:
+                                        master_ok = False
                                 else:
-                                    logger.warning(f"La Maestra descubierta ({discovered_host}) es la misma IP que falló. Omitiendo bucle.")
-                                    break
-                            sock_scan.close()
+                                    logger.warning(
+                                        f"Discovery no usable ({discovered_host}); offline local."
+                                    )
                         except Exception as e:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
+                    if not master_ok:
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
                         logger.info(
                             "Esclava offline temporal (SQLite local). "
@@ -285,6 +291,12 @@ class DatabaseManager:
                         self.mariadb_engine = None
                         self._create_tables()
                         self._ensure_test_users()
+                        try:
+                            from src.base_de_datos.diario_ventas_externo import schedule_hidratar_faltantes
+
+                            schedule_hidratar_faltantes()
+                        except Exception:
+                            pass
                         return
 
                 self.db_path = "mariadb://" + host
@@ -318,6 +330,13 @@ class DatabaseManager:
                                     self.migrar_de_sqlite_a_mariadb()
                             except Exception as ex_mig:
                                 logger.error(f"Fallo al validar migración: {ex_mig}")
+                # Diario externo: reinyectar tickets faltantes (maestra o esclava online)
+                try:
+                    from src.base_de_datos.diario_ventas_externo import schedule_hidratar_faltantes
+
+                    schedule_hidratar_faltantes()
+                except Exception:
+                    pass
                 return
             # --- FIN INTEGRACION MARIADB ---
 

@@ -29,6 +29,7 @@ JEFE_MODULES = [
     ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
     ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
     ("corte_caja",   "Corte y\nCierre Global",    "💵", "#34D399", "#ECFDF5", "#047857", 7,  None),
+    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "🌐", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
     ("contabilidad", "Contabilidad\nERP",         "💹", "#F59E0B", "#FEF3C7", "#92400E", 9,  None),
     ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
     ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),

@@ -304,9 +304,16 @@ def run_store_server_app(app) -> int:
             return
         # Detener cerebro y sello final ANTES de apagar MariaDB
         try:
-            from src.cerebro_global.backup_cerebro import cerebro_backup
-            cerebro_backup.tick_now(force_full=True)
-            cerebro_backup.stop()
+            from src.cerebro_global.backup_cerebro.motor_backup import cerebro_backup as _cb
+
+            try:
+                _cb.tick_now(force_full=True)
+            except Exception:
+                pass
+            try:
+                _cb.stop()
+            except Exception:
+                pass
         except Exception:
             pass
         try:

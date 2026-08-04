@@ -658,6 +658,15 @@ class InstallWorker(QThread):
 
                 total_files = len(zip_ref.namelist())
                 for i, name in enumerate(zip_ref.namelist(), start=1):
+                    # No pisar DB viva / datadir MariaDB en updates sobre instalación existente
+                    rel = str(name or "").replace("\\", "/").lstrip("./")
+                    base_name = rel.rsplit("/", 1)[-1].lower()
+                    if (
+                        rel.startswith("mariadb_server/data/")
+                        or "/mariadb_server/data/" in f"/{rel}"
+                        or base_name.endswith(".db")
+                    ):
+                        continue
                     try:
                         zip_ref.extract(name, install_dir)
                     except Exception as exc:

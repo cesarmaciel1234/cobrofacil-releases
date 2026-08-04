@@ -78,6 +78,13 @@ class CerebroBackup:
                 daemon=True,
             )
             self._thread.start()
+            # Nube local: worker que drena cola de cobros → AppData (fuera del install)
+            try:
+                from src.base_de_datos.diario_ventas_externo import start_motor_nube_local
+
+                start_motor_nube_local()
+            except Exception:
+                pass
             logger.info(
                 f"🧠 CerebroBackup AUTÓNOMO iniciado "
                 f"(cada {self.INTERVAL_SEC // 60} min, host={self._host})"
@@ -150,6 +157,14 @@ class CerebroBackup:
 
     def _tick(self, force_full: bool = False) -> str:
         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+        # Drenar cola de nube local (cobros encolados → diario AppData)
+        try:
+            from src.base_de_datos.diario_ventas_externo import drenar_cola
+
+            drenar_cola(max_items=500)
+        except Exception:
+            pass
 
         self._tick_count += 1
         state = self._load_state()

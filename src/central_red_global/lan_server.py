@@ -40,6 +40,12 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 id_venta = db_manager.guardar_venta_completa(venta_data, items)
                 
                 if id_venta and id_venta != 9999999:
+                    try:
+                        from src.base_de_datos.diario_ventas_externo import encolar_venta
+
+                        encolar_venta(id_venta, venta_data or {}, items or [])
+                    except Exception:
+                        pass
                     self._send_response(200, {"status": "success", "id_venta": id_venta})
                 else:
                     self._send_response(500, {"status": "error", "message": "Failed to save to database."})

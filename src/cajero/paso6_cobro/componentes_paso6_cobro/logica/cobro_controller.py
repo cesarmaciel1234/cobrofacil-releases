@@ -203,6 +203,14 @@ class CobroController:
                 recargo, 
                 force_fiscal
             )
+
+            # Nube local: solo encola (hilo worker persiste fuera del install)
+            try:
+                from src.base_de_datos.diario_ventas_externo import encolar_venta
+
+                encolar_venta(id_v, resultado_venta, items_carrito)
+            except Exception:
+                pass
             
             return True, None
             

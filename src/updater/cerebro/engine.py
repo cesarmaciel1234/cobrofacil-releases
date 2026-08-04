@@ -35,6 +35,9 @@ PRESERVE_PREFIXES = (
     "locks/",
     "mariadb_server/data/",
     "_update_cache/",
+    "backups/",
+    "punpro.db",
+    "data/",
 )
 
 _bg_started = False

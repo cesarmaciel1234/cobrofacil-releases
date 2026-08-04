@@ -96,6 +96,13 @@ class AutoBlindajeDB:
             cls.crear_backup_diario_si_corresponde(engine_type, mariadb_host, force=False)
             cls.limpiar_backups_antiguos()
             cls.sincronizar_con_pendrives_usb()
+            # Lazy: reinyectar tickets faltantes desde AppData (anti-wipe)
+            try:
+                from src.base_de_datos.diario_ventas_externo import schedule_hidratar_faltantes
+
+                schedule_hidratar_faltantes()
+            except Exception:
+                pass
 
         except Exception as e:
             logger.error(f"Error en motor de autoblindaje DB: {e}")
@@ -256,6 +263,12 @@ class AutoBlindajeDB:
         ok_daily = cls.crear_backup_diario_si_corresponde(
             engine_type, mariadb_host, force=True
         )
+        try:
+            from src.base_de_datos.diario_ventas_externo import sellar_dia
+
+            sellar_dia()
+        except Exception:
+            pass
         stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
         local_dir, os_dir = cls.get_backup_directories()
         ext = "sql" if engine_type == "mariadb" else "db"
