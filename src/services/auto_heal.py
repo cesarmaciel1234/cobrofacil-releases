@@ -262,6 +262,9 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     if not any(k in blob for k in keywords):
         if not ("timeout" in blob and any(k in blob for k in ("mariadb", "mysql", "3306", "localhost"))):
             return None
+    # Evitar bucle: logger.error en reconectar_* dispara auto_heal → reconectar_* otra vez
+    if "reconectar_mariadb" in blob or "reconectar_local" in blob:
+        return None
     try:
         from src.base_de_datos.database import db_manager
         from src.config import config

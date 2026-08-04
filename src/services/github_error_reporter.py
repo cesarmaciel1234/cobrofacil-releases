@@ -373,6 +373,11 @@ def queue_error_report(
             exc_obj = exc_info[1]
 
     if not skip_heal:
+        low = msg.lower()
+        if "reconectar_mariadb" in low or "reconectar_local" in low:
+            skip_heal = True
+
+    if not skip_heal:
         try:
             from src.services.auto_heal import try_auto_heal
 

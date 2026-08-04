@@ -637,6 +637,9 @@ class DatabaseManager:
 
     def reconectar_mariadb(self, host: str):
         """Conecta a MariaDB en `host`. Solo cambia el motor activo si el ping funciona."""
+        if getattr(self, "_reconnecting_mariadb", False):
+            raise RuntimeError("reconectar_mariadb: reentrada bloqueada")
+        self._reconnecting_mariadb = True
         try:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
@@ -662,6 +665,8 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
+        finally:
+            self._reconnecting_mariadb = False
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
