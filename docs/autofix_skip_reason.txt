@@ -1,0 +1,10 @@
+Issue #14: [ci] token-check (cerrar)
+
+Not actionable — CI noise, not a production bug.
+
+The release workflow (.github/workflows/release.yml) creates this issue on purpose to
+validate that COBROFACIL_ERROR_REPORT_TOKEN can call the GitHub Issues API. The body
+("Validacion automatica del secret. Se puede cerrar.") means the check succeeded and
+the issue should be closed; no application code change is required.
+
+Fingerprint: unknown (expected for token-check issues).
