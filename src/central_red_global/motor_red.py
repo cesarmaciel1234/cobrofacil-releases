@@ -75,6 +75,18 @@ class MotorRed:
     def convertir_en_maestra(self):
         """Convierte la PC en maestra (base de datos local MariaDB)."""
         try:
+            if not self._probe_mariadb("127.0.0.1"):
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+                    mariadb_controller.start_server()
+                except Exception:
+                    pass
+                if not self._probe_mariadb("127.0.0.1", timeout=3.0):
+                    return (
+                        False,
+                        "No hay MariaDB en este equipo (puerto 3306 cerrado).\n"
+                        "Iniciá el Servidor de Tienda o instalá MariaDB antes de ser MAESTRA.",
+                    )
             config.set("is_master", True)
             config.set("db_engine", "mariadb")
             config.set("db_host", "localhost")

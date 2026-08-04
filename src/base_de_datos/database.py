@@ -641,6 +641,28 @@ class DatabaseManager:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
 
+            host = str(host or "").strip()
+            host_l = host.lower()
+            if host_l in ("localhost", "127.0.0.1", "::1", ""):
+                es_esclava = (
+                    config.get("is_master") is False
+                    or bool(config.get("carteleria_is_slave"))
+                )
+                if es_esclava:
+                    for key in ("db_host", "preferred_master_ip", "carteleria_master_ip"):
+                        remote = str(config.get(key) or "").strip()
+                        remote_l = remote.lower()
+                        if remote and remote_l not in ("localhost", "127.0.0.1", "::1"):
+                            logger.info(
+                                f"[RED LAN] localhost omitido en ESCLAVA; reconectando a {remote}"
+                            )
+                            host = remote
+                            break
+                    else:
+                        raise RuntimeError(
+                            "ESCLAVA sin MariaDB local: configure la IP de la PC Maestra"
+                        )
+
             engine = MariaDBEngine(host=host)
             # Validar antes de pisar SQLite local / estado offline
             test = engine.get_connection()

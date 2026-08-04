@@ -295,13 +295,6 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     def _try_connect(host: str, *, as_slave: bool) -> tuple[bool, str]:
         if as_slave:
             _persist_slave(host)
-        else:
-            try:
-                config.set("is_master", True)
-                config.set("db_host", host if not _is_loopback_host(host) else "localhost")
-                config.set("db_engine", "mariadb")
-            except Exception:
-                pass
         try:
             db_manager.reconectar_mariadb(host)
         except Exception as e:
@@ -311,6 +304,13 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
                 return False, "sin_respuesta_select"
         except Exception as e:
             return False, str(e)
+        if not as_slave:
+            try:
+                config.set("is_master", True)
+                config.set("db_host", host if not _is_loopback_host(host) else "localhost")
+                config.set("db_engine", "mariadb")
+            except Exception:
+                pass
         return True, host
 
     # 1) Rol esclavo / maestra remota conocida
@@ -327,6 +327,9 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             "maestra_inalcanzable:" + ",".join(remotes),
         )
 
+    if slave_intent and not remotes:
+        return HealResult(False, "reconnect_slave", "sin_ip_maestra_en_config")
+
     # 2) Maestra local (localhost caído)
     host = ""
     try:
@@ -340,7 +343,16 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     except Exception:
         host = "127.0.0.1"
 
-    if _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob:
+    wants_local_heal = (
+        not slave_intent
+        and not remotes
+        and (
+            _is_loopback_host(host)
+            or "localhost" in blob
+            or "127.0.0.1" in blob
+        )
+    )
+    if wants_local_heal:
         try:
             from src.services.mariadb_controller import mariadb_controller
 
