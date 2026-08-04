@@ -3,6 +3,38 @@ import threading
 import time
 from src.logger import logger
 
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _is_loopback_host(host: str) -> bool:
+    return (host or "").strip().lower() in _LOOPBACK_HOSTS
+
+
+def _remote_master_from_config() -> str:
+    try:
+        from src.config import config
+
+        for key in ("preferred_master_ip", "db_host", "carteleria_master_ip"):
+            remote = str(config.get(key) or "").strip()
+            if remote and not _is_loopback_host(remote):
+                return remote
+    except Exception:
+        pass
+    return ""
+
+
+def _is_slave_config() -> bool:
+    try:
+        from src.config import config
+
+        return (
+            config.get("is_master") is False
+            or bool(config.get("carteleria_is_slave"))
+            or bool(str(config.get("preferred_master_ip") or "").strip())
+        )
+    except Exception:
+        return False
+
 class MariaDBCursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
@@ -96,9 +128,20 @@ class MariaDBEngine:
         self._local_connections = threading.local()
         self._last_fail_time = 0
 
+    def _target_host(self, host=None) -> str:
+        """En PCs esclavas con maestra remota, no insistir en loopback."""
+        requested = (host if host is not None else self.host or "").strip()
+        if not _is_loopback_host(requested):
+            return requested
+        if _is_slave_config():
+            remote = _remote_master_from_config()
+            if remote:
+                return remote
+        return requested
+
     def _connect_kwargs(self, host=None, password=None):
         return dict(
-            host=host if host is not None else self.host,
+            host=self._target_host(host),
             port=self.port,
             user=self.user,
             password=password if password is not None else self.password,
@@ -129,8 +172,10 @@ class MariaDBEngine:
                 except Exception:
                     pass
                     
-            # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
-            if self.host == "127.0.0.1":
+            # Fallback 2: alias localhost solo en maestra local (en esclava es ruido)
+            if self.host == "127.0.0.1" and not (
+                _is_slave_config() and _remote_master_from_config()
+            ):
                 try:
                     conn = pymysql.connect(**self._connect_kwargs(host="localhost"))
                     self._last_fail_time = 0
@@ -139,7 +184,8 @@ class MariaDBEngine:
                     pass
                     
             self._last_fail_time = time.time()
-            logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
+            target = self._target_host()
+            logger.error(f"Fallo al conectar a MariaDB en {target}:{self.port} - {e}")
             raise
             
     def get_connection(self):

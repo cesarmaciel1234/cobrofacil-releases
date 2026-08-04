@@ -327,6 +327,10 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             "maestra_inalcanzable:" + ",".join(remotes),
         )
 
+    # PC esclava sin IP remota: no reintentar localhost ni promover a maestra
+    if slave_intent:
+        return HealResult(False, "reconnect_slave", "sin_reintento_localhost_en_esclava")
+
     # 2) Maestra local (localhost caído)
     host = ""
     try:
