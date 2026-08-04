@@ -11,6 +11,9 @@ USER_AGENT = "CobroFacil-SilentUpdater/2026"
 CHUNK = 1024 * 1024  # 1 MiB
 PARALLEL = 6
 MIN_PARALLEL_BYTES = 12 * 1024 * 1024  # solo si > 12 MB
+CONNECT_TIMEOUT = 45
+READ_TIMEOUT = 300  # ZIP ~300 MB en enlaces lentos (LATAM)
+REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
 
 def _verify_ssl() -> bool:
@@ -66,7 +69,9 @@ def download_release_zip(
     session = _session()
 
     try:
-        head = session.head(url, allow_redirects=True, timeout=45, verify=verify)
+        head = session.head(
+            url, allow_redirects=True, timeout=REQUEST_TIMEOUT, verify=verify
+        )
         head.raise_for_status()
     except Exception:
         # Algunos CDNs no permiten HEAD; seguir con GET
@@ -87,20 +92,32 @@ def download_release_zip(
     if use_parallel:
         try:
             _download_parallel(
-                session, final_url, dest_path, part_path, total, verify, progress_callback
+                final_url, dest_path, part_path, total, verify, progress_callback
             )
             return
         except Exception as exc:
             _emit(progress_callback, f"Paralelo falló, modo único: {exc}", 0)
-            try:
-                if os.path.isfile(part_path):
-                    os.remove(part_path)
-            except OSError:
-                pass
+            _cleanup_partial_download(dest_path, part_path)
 
     _download_single(
         session, final_url, dest_path, part_path, total, verify, progress_callback
     )
+
+
+def _cleanup_partial_download(dest_path: str, part_path: str) -> None:
+    for path in (dest_path, part_path):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    for i in range(PARALLEL + 1):
+        p = f"{part_path}.{i}"
+        try:
+            if os.path.isfile(p):
+                os.remove(p)
+        except OSError:
+            pass
 
 
 def _download_single(session, url, dest_path, part_path, total_hint, verify, cb) -> None:
@@ -117,7 +134,7 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
         _emit(cb, f"Reanudando descarga… {done / (1024*1024):.0f} MB", 1)
 
     with session.get(
-        url, headers=headers, stream=True, timeout=180, verify=verify
+        url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT, verify=verify
     ) as resp:
         if resp.status_code == 416:
             # Ya completo
@@ -164,7 +181,7 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
     os.replace(part_path, dest_path)
 
 
-def _download_parallel(session, url, dest_path, part_path, total, verify, cb) -> None:
+def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
     n = PARALLEL
     # Limpiar restos
     for i in range(n):
@@ -192,8 +209,9 @@ def _download_parallel(session, url, dest_path, part_path, total, verify, cb) ->
 
         path = f"{part_path}.{idx}"
         headers = {"Range": f"bytes={start}-{end}"}
-        with session.get(
-            url, headers=headers, stream=True, timeout=180, verify=verify
+        # Session por hilo: requests.Session no es thread-safe.
+        with _session().get(
+            url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT, verify=verify
         ) as resp:
             if resp.status_code not in (200, 206):
                 raise RuntimeError(f"Range HTTP {resp.status_code}")
