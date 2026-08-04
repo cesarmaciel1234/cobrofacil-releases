@@ -32,6 +32,17 @@ def _session():
     return s
 
 
+def _assert_download_size(path: str, expected: int) -> None:
+    if expected <= 0:
+        return
+    try:
+        actual = os.path.getsize(path)
+    except OSError as exc:
+        raise RuntimeError(f"No se pudo verificar tamaño de descarga: {exc}") from exc
+    if actual != expected:
+        raise RuntimeError(f"Descarga incompleta: {actual} / {expected} bytes")
+
+
 def _emit(cb: Callable | None, msg: str, pct: int | None = None) -> None:
     if not cb:
         return
@@ -161,6 +172,7 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     mb = done / (1024 * 1024)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
 
+    _assert_download_size(part_path, total if total > 0 else 0)
     os.replace(part_path, dest_path)
 
 
@@ -245,3 +257,5 @@ def _download_parallel(session, url, dest_path, part_path, total, verify, cb) ->
             os.remove(part_path)
     except OSError:
         pass
+
+    _assert_download_size(dest_path, size)
