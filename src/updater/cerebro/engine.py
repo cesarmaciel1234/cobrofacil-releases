@@ -18,6 +18,7 @@ import time
 import urllib.error
 import urllib.request
 import zipfile
+import zlib
 from datetime import datetime, timezone
 
 from src.utils.paths import get_base_path
@@ -443,18 +444,49 @@ def _mark_pending_ready(local_ver: str = "", remote_ver: str = "") -> None:
     _save_pending(pending)
 
 
+def _is_corrupt_zip_error(exc: Exception) -> bool:
+    if isinstance(exc, (zipfile.BadZipFile, zlib.error)):
+        return True
+    msg = str(exc).lower()
+    return any(
+        k in msg
+        for k in (
+            "decompressing",
+            "badzipfile",
+            "archivo dañado",
+            "no es un zip",
+            "invalid literal",
+            "zip incompleto",
+            "parte ",
+            "incompleta",
+        )
+    )
+
+
+def _verify_release_zip_integrity(zip_path: str) -> None:
+    with open(zip_path, "rb") as fh:
+        if fh.read(2) != b"PK":
+            raise RuntimeError(
+                "El archivo descargado no es un ZIP válido (¿HTML de error de GitHub?)"
+            )
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        bad = zf.testzip()
+        if bad:
+            raise zipfile.BadZipFile(f"archivo dañado: {bad}")
+        names = zf.namelist()
+        if not any(
+            n.replace("\\", "/").endswith("CobroFacil_POS.exe") for n in names
+        ):
+            raise RuntimeError("El ZIP no contiene CobroFacil_POS.exe")
+
+
 def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
     """Extrae ZIP local a staging y marca pending.ready."""
     staging = _staging_dir()
-    with open(zip_path, "rb") as fh:
-        magic = fh.read(4)
-    if magic[:2] != b"PK":
-        raise RuntimeError("El archivo descargado no es un ZIP válido (¿HTML de error de GitHub?)")
+    _verify_release_zip_integrity(zip_path)
 
     with zipfile.ZipFile(zip_path, "r") as zf:
         names = zf.namelist()
-        if not any(n.replace("\\", "/").endswith("CobroFacil_POS.exe") for n in names):
-            raise RuntimeError("El ZIP no contiene CobroFacil_POS.exe")
 
         if os.path.isdir(staging):
             shutil.rmtree(staging, ignore_errors=True)
@@ -462,7 +494,11 @@ def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
 
         total_files = max(len(names), 1)
         for i, name in enumerate(names):
-            zf.extract(name, staging)
+            try:
+                zf.extract(name, staging)
+            except (zipfile.BadZipFile, zlib.error) as exc:
+                shutil.rmtree(staging, ignore_errors=True)
+                raise zipfile.BadZipFile(f"archivo dañado: {name}") from exc
             if i % 40 == 0 or i + 1 == total_files:
                 pct = 96 + int(3 * (i + 1) / total_files)
                 _emit_progress(
@@ -508,7 +544,9 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
-    except Exception:
+    except Exception as exc:
+        if _is_corrupt_zip_error(exc):
+            _purge_corrupt_update_zip()
         return False
 
 
@@ -524,6 +562,31 @@ def _load_pending() -> dict:
 def _save_pending(data: dict) -> None:
     with open(_pending_path(), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def _purge_corrupt_update_zip() -> None:
+    """Quita ZIP/partes dañados para no reintentar siempre el mismo blob corrupto."""
+    zip_path = _zip_path()
+    for path in (zip_path, zip_path + ".part"):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    for i in range(8):
+        part = f"{zip_path}.part.{i}"
+        try:
+            if os.path.isfile(part):
+                os.remove(part)
+        except OSError:
+            pass
+    staging = _staging_dir()
+    if os.path.isdir(staging):
+        shutil.rmtree(staging, ignore_errors=True)
+    pending = _load_pending()
+    pending["ready"] = False
+    pending.pop("zip_sha256", None)
+    _save_pending(pending)
 
 
 def _should_preserve(rel_path: str, install_root: str | None = None) -> bool:
@@ -586,14 +649,35 @@ def download_and_stage_update(progress_callback=None) -> bool:
 
         from src.updater.cerebro.download_fast import download_release_zip
 
-        download_release_zip(
-            download_url,
-            zip_path,
-            progress_callback=progress_callback,
-        )
+        last_exc = None
+        for attempt in range(2):
+            force_single = attempt > 0
+            try:
+                if force_single:
+                    _purge_corrupt_update_zip()
+                    _emit_progress(
+                        progress_callback,
+                        "Reintentando descarga en modo seguro…",
+                        0,
+                    )
+                download_release_zip(
+                    download_url,
+                    zip_path,
+                    progress_callback=progress_callback,
+                    force_single=force_single,
+                )
+                _emit_progress(progress_callback, "Verificando ZIP...", 96)
+                _verify_release_zip_integrity(zip_path)
+                _extract_release_zip(zip_path, progress_callback=progress_callback)
+                break
+            except Exception as exc:
+                last_exc = exc
+                if attempt == 0 and _is_corrupt_zip_error(exc):
+                    continue
+                raise last_exc from exc
+        else:
+            raise last_exc or RuntimeError("Descarga de actualización fallida")
 
-        _emit_progress(progress_callback, "Verificando ZIP...", 96)
-        _extract_release_zip(zip_path, progress_callback=progress_callback)
         # Asegurar versiones del intento actual
         _mark_pending_ready(local_ver, remote_ver or read_remote_version())
         _emit_progress(progress_callback, "Actualización lista para reiniciar.", 100)

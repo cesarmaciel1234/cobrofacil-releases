@@ -53,6 +53,8 @@ def download_release_zip(
     url: str,
     dest_path: str,
     progress_callback=None,
+    *,
+    force_single: bool = False,
 ) -> None:
     """
     Descarga a dest_path. Usa Range paralelo si el CDN lo permite;
@@ -80,23 +82,20 @@ def download_release_zip(
         accept_ranges = str(head.headers.get("Accept-Ranges") or "").lower()
 
     use_parallel = (
-        total >= MIN_PARALLEL_BYTES
+        not force_single
+        and total >= MIN_PARALLEL_BYTES
         and "bytes" in accept_ranges
     )
 
     if use_parallel:
         try:
             _download_parallel(
-                session, final_url, dest_path, part_path, total, verify, progress_callback
+                final_url, dest_path, part_path, total, verify, progress_callback
             )
             return
         except Exception as exc:
             _emit(progress_callback, f"Paralelo falló, modo único: {exc}", 0)
-            try:
-                if os.path.isfile(part_path):
-                    os.remove(part_path)
-            except OSError:
-                pass
+            _cleanup_partial_download(dest_path, part_path)
 
     _download_single(
         session, final_url, dest_path, part_path, total, verify, progress_callback
@@ -161,10 +160,38 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     mb = done / (1024 * 1024)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
 
+    if total > 0:
+        _assert_download_size(part_path, total)
     os.replace(part_path, dest_path)
 
 
-def _download_parallel(session, url, dest_path, part_path, total, verify, cb) -> None:
+def _cleanup_partial_download(dest_path: str, part_path: str) -> None:
+    for path in (dest_path, part_path):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    for i in range(PARALLEL + 1):
+        p = f"{part_path}.{i}"
+        try:
+            if os.path.isfile(p):
+                os.remove(p)
+        except OSError:
+            pass
+
+
+def _assert_download_size(path: str, expected: int) -> None:
+    if expected <= 0:
+        return
+    actual = os.path.getsize(path)
+    if actual != expected:
+        raise RuntimeError(
+            f"ZIP incompleto: {actual} bytes (esperado {expected})"
+        )
+
+
+def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
     n = PARALLEL
     # Limpiar restos
     for i in range(n):
@@ -192,7 +219,9 @@ def _download_parallel(session, url, dest_path, part_path, total, verify, cb) ->
 
         path = f"{part_path}.{idx}"
         headers = {"Range": f"bytes={start}-{end}"}
-        with session.get(
+        expected = end - start + 1
+        # Session por hilo: requests.Session no es thread-safe.
+        with _session().get(
             url, headers=headers, stream=True, timeout=180, verify=verify
         ) as resp:
             if resp.status_code not in (200, 206):
@@ -214,6 +243,11 @@ def _download_parallel(session, url, dest_path, part_path, total, verify, cb) ->
                                 f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
                                 pct,
                             )
+        actual = os.path.getsize(path)
+        if actual != expected:
+            raise RuntimeError(
+                f"Parte {idx} incompleta: {actual} bytes (esperado {expected})"
+            )
         return path
 
     _emit(cb, f"Descarga rápida ({n} conexiones)…", 1)
@@ -240,6 +274,7 @@ def _download_parallel(session, url, dest_path, part_path, total, verify, cb) ->
             except OSError:
                 pass
 
+    _assert_download_size(dest_path, total)
     try:
         if os.path.isfile(part_path):
             os.remove(part_path)
