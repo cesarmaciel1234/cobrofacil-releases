@@ -207,55 +207,109 @@ def _ssl_contexts():
     return contexts
 
 
-def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str]) -> bool:
-    url = f"https://api.github.com/repos/{repo}/issues"
+def _http_json(
+    method: str,
+    url: str,
+    token: str,
+    payload: dict | None = None,
+    *,
+    timeout: int = 25,
+) -> tuple[int, bytes]:
+    """(status, body). status 0 = error de red/SSL."""
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "CobroFacil-POS-ErrorReporter",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    last_err: Exception | None = None
+    for ctx in _ssl_contexts():
+        try:
+            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+                return int(resp.status), resp.read()
+        except urllib.error.HTTPError as e:
+            return int(e.code), e.read()
+        except Exception as e:
+            last_err = e
+            continue
+    logging.getLogger("PunPro").warning(
+        "GitHub error report: red/SSL (%s)", type(last_err).__name__ if last_err else "?"
+    )
+    return 0, b""
+
+
+def _post_via_dispatch(token: str, repo: str, title: str, body: str, labels: list[str]) -> bool | str:
+    """Fallback: Actions crea el Issue con GITHUB_TOKEN (workflow pos-client-error)."""
+    # client_payload tiene límite práctico; recortar body
+    payload = {
+        "event_type": "pos-client-error",
+        "client_payload": {
+            "title": title[:200],
+            "body": body[:65000],
+            "labels": labels[:10],
+        },
+    }
+    status, raw = _http_json(
+        "POST",
+        f"https://api.github.com/repos/{repo}/dispatches",
+        token,
+        payload,
+    )
+    if status in (204, 200):
+        return True
+    if status in (401, 403):
+        logging.getLogger("PunPro").warning(
+            "GitHub error report: dispatch HTTP %s (hace falta Contents:write o PAT classic repo)",
+            status,
+        )
+        return "auth"
+    logging.getLogger("PunPro").warning(
+        "GitHub error report: dispatch HTTP %s %s",
+        status,
+        raw[:200].decode("utf-8", errors="replace"),
+    )
+    return False
+
+
+def _post_issue(token: str, repo: str, title: str, body: str, labels: list[str]) -> bool | str:
+    """True OK · False reintentable · 'auth' token/permisos (cortar flush)."""
     payload = {
         "title": title[:200],
         "body": body,
         "labels": labels,
     }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json",
-            "User-Agent": "CobroFacil-POS-ErrorReporter",
-        },
+    status, raw = _http_json(
+        "POST",
+        f"https://api.github.com/repos/{repo}/issues",
+        token,
+        payload,
     )
-    last_err = None
-    for ctx in _ssl_contexts():
-        try:
-            with urllib.request.urlopen(req, timeout=25, context=ctx) as resp:
-                return True if 200 <= resp.status < 300 else False
-        except urllib.error.HTTPError as e:
-            last_err = e
-            # Labels inexistentes: reintentar sin labels custom
-            if e.code == 422 and "needs-auto-fix" in labels:
-                return _post_issue(
-                    token,
-                    repo,
-                    title,
-                    body,
-                    [lb for lb in labels if lb in ("auto-report", "client-error")],
-                )
-            # 401/403: token inválido — señal especial para cortar el flush
-            if e.code in (401, 403):
-                logging.getLogger("PunPro").warning(
-                    "GitHub error report: HTTP %s (token o permisos)", e.code
-                )
-                return "auth"
-            break
-        except Exception as e:
-            last_err = e
-            continue
-    if last_err is not None:
-        logging.getLogger("PunPro").warning(
-            "GitHub error report: no se pudo publicar issue (%s)", type(last_err).__name__
+    if 200 <= status < 300:
+        return True
+    # Labels inexistentes
+    if status == 422 and "needs-auto-fix" in labels:
+        return _post_issue(
+            token,
+            repo,
+            title,
+            body,
+            [lb for lb in labels if lb in ("auto-report", "client-error")],
         )
+    if status in (401, 403):
+        logging.getLogger("PunPro").warning(
+            "GitHub error report: issues HTTP %s — probando repository_dispatch",
+            status,
+        )
+        return _post_via_dispatch(token, repo, title, body, labels)
+    logging.getLogger("PunPro").warning(
+        "GitHub error report: issues HTTP %s %s",
+        status,
+        raw[:200].decode("utf-8", errors="replace"),
+    )
     return False
 
 

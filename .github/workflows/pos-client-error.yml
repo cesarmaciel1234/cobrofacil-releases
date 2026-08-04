@@ -1,0 +1,51 @@
+# Crea Issues desde el POS cuando el cliente manda repository_dispatch.
+# El EXE usa el PAT solo para disparar el evento; GITHUB_TOKEN abre el Issue
+# (así un fine-grained sin Issues:write igual puede reportar si tiene Contents:write).
+name: POS client error
+
+on:
+  repository_dispatch:
+    types: [pos-client-error]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  open-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear Issue auto-report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const p = context.payload.client_payload || {};
+            const title = String(p.title || '[POS] error sin título').slice(0, 200);
+            const body = String(p.body || '_sin cuerpo_');
+            const labels = Array.isArray(p.labels) && p.labels.length
+              ? p.labels
+              : ['auto-report', 'client-error', 'needs-auto-fix'];
+            try {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels,
+              });
+              core.info(`Issue #${issue.data.number} ${issue.data.html_url}`);
+            } catch (e) {
+              // Labels inexistentes → reintentar sin labels custom
+              if (String(e).includes('422') || (e.status === 422)) {
+                const issue = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels: ['auto-report', 'client-error'].filter(Boolean),
+                });
+                core.info(`Issue #${issue.data.number} (sin labels extra)`);
+                return;
+              }
+              throw e;
+            }

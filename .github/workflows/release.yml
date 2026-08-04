@@ -136,21 +136,79 @@ jobs:
       - name: Preparar MariaDB portable
         run: python 01_Compiladores_y_Ejecutables/prepare_mariadb_release.py
 
-      - name: Configurar reporte automático de errores
+      - name: Configurar y validar reporte automático de errores
         shell: pwsh
         env:
           REPORT_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:REPORT_TOKEN)) {
-            Write-Error "Falta secret COBROFACIL_ERROR_REPORT_TOKEN: sin eso los .exe no suben errores a GitHub."
+            Write-Error "Falta secret COBROFACIL_ERROR_REPORT_TOKEN."
             exit 1
           }
-          $cfg = @{
-            token = $env:REPORT_TOKEN
-            repo  = "cesarmaciel1234/cobrofacil-releases"
-          } | ConvertTo-Json -Compress
-          Set-Content -Path "dist/CobroFacil_POS/error_report.json" -Value $cfg -Encoding utf8
-          Write-Host "error_report.json escrito (token ok, len=$($env:REPORT_TOKEN.Length))"
+          @'
+          import json, os, urllib.request, urllib.error, sys
+          tok = os.environ["REPORT_TOKEN"].strip()
+          repo = "cesarmaciel1234/cobrofacil-releases"
+          path = "dist/CobroFacil_POS/error_report.json"
+          with open(path, "w", encoding="utf-8") as f:
+              json.dump({"token": tok, "repo": repo}, f, ensure_ascii=False)
+          print(f"error_report.json ok len={len(tok)}")
+
+          def post(url, payload):
+              data = json.dumps(payload).encode()
+              req = urllib.request.Request(
+                  url, data=data, method="POST",
+                  headers={
+                      "Authorization": f"Bearer {tok}",
+                      "Accept": "application/vnd.github+json",
+                      "Content-Type": "application/json",
+                      "User-Agent": "CobroFacil-release-check",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      return r.status, r.read()
+              except urllib.error.HTTPError as e:
+                  return e.code, e.read()
+
+          st, body = post(
+              f"https://api.github.com/repos/{repo}/issues",
+              {
+                  "title": "[ci] token-check (cerrar)",
+                  "body": "Validacion automatica del secret. Se puede cerrar.",
+                  "labels": ["auto-report"],
+              },
+          )
+          if 200 <= st < 300:
+              issue = json.loads(body.decode())
+              num = issue.get("number")
+              print(f"token OK via issues API #{num}")
+              if num:
+                  post(f"https://api.github.com/repos/{repo}/issues/{num}", {"state": "closed"})
+              sys.exit(0)
+          print("issues API", st, body[:300])
+          st2, body2 = post(
+              f"https://api.github.com/repos/{repo}/dispatches",
+              {
+                  "event_type": "pos-client-error",
+                  "client_payload": {
+                      "title": "[ci] token-check dispatch",
+                      "body": "Validacion via repository_dispatch.",
+                      "labels": ["auto-report"],
+                  },
+              },
+          )
+          if st2 in (204, 200):
+              print("token OK via repository_dispatch")
+              sys.exit(0)
+          print("dispatch", st2, body2[:300])
+          sys.exit(
+              "Secret COBROFACIL_ERROR_REPORT_TOKEN sin permiso. "
+              "PAT classic scope repo, o fine-grained Issues:write (+ Contents:write para dispatch)."
+          )
+          '@ | Set-Content -Path _check_report_token.py -Encoding utf8
+          python _check_report_token.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Empaquetar release (.zip)
         run: python 01_Compiladores_y_Ejecutables/package_release_zip.py
