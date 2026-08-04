@@ -2,8 +2,12 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import threading
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+
+# Evita bucle ERROR → auto_heal → reconectar_mariadb → ERROR (recursion depth)
+_reconectar_mariadb_guard = threading.local()
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -637,6 +641,9 @@ class DatabaseManager:
 
     def reconectar_mariadb(self, host: str):
         """Conecta a MariaDB en `host`. Solo cambia el motor activo si el ping funciona."""
+        if getattr(_reconectar_mariadb_guard, "busy", False):
+            raise RuntimeError("reconectar_mariadb: llamada reentrante bloqueada")
+        _reconectar_mariadb_guard.busy = True
         try:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
@@ -662,6 +669,8 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
+        finally:
+            _reconectar_mariadb_guard.busy = False
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""

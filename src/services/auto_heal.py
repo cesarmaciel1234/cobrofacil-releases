@@ -245,6 +245,10 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     - Maestra local → levantar mysqld portable y verificar.
     - Si localhost falla pero hay IP maestra guardada → failover a esclava.
     """
+    # Ya falló dentro de reconectar_*: no reintentar (evita recursion depth).
+    if "reconectar_mariadb" in blob or "reconectar_local" in blob:
+        return None
+
     keywords = (
         "mariadb",
         "mysql",

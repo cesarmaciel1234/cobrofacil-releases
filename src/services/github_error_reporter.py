@@ -372,6 +372,13 @@ def queue_error_report(
             tb_text = "".join(traceback.format_exception(*exc_info))
             exc_obj = exc_info[1]
 
+    # Errores ya emitidos por reconectar_* no deben disparar auto_heal de MariaDB
+    # (bucle: ERROR log → try_auto_heal → reconectar_mariadb → ERROR log → …).
+    if not skip_heal:
+        lower = msg.lower()
+        if "reconectar_mariadb" in lower or "reconectar_local" in lower:
+            skip_heal = True
+
     if not skip_heal:
         try:
             from src.services.auto_heal import try_auto_heal
