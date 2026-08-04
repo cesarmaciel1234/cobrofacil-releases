@@ -1,4 +1,4 @@
-Issue #22 is not a production bug.
+Issue #27 is not a production bug.
 
 Title "[ci] token-check (cerrar)" and body "Validacion automatica del secret. Se puede cerrar."
 are created by the release workflow (.github/workflows/release.yml) to verify that
