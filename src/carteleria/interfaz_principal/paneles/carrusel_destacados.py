@@ -51,19 +51,23 @@ class CarruselDestacados(QFrame):
         self.layout.addWidget(self.display_promo, stretch=1)
         
         # --- FOOTER CON LOBO BAILARÍN ---
+        from src.carteleria.escala_tv import load_pixmap_scaled, scaled_px
+
         self.footer_widget = QWidget()
         self.footer_widget.setStyleSheet("background: transparent;")
-        self.footer_widget.setFixedHeight(120) # Fijamos el alto para evitar jitter en la ventana
+        fh = scaled_px(120, self)
+        self.footer_widget.setFixedHeight(fh)
         
         self.footer_layout = QHBoxLayout(self.footer_widget)
         self.footer_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.footer_layout.setContentsMargins(0, 0, 0, 0)
         
         self.lbl_lobo = QLabel()
-        self.lbl_lobo.setFixedSize(100, 120) # Tamaño fijo para absorber el salto
+        lw, lh = scaled_px(100, self), scaled_px(120, self)
+        self.lbl_lobo.setFixedSize(lw, lh)
         from src.carteleria.assets_paths import carteleria_asset
         img_path = carteleria_asset("chef_lobo.png")
-        pix = QPixmap(img_path).scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        pix = load_pixmap_scaled(img_path, 100, 100, widget=self)
         self.lbl_lobo.setPixmap(pix)
         self.lbl_lobo.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         

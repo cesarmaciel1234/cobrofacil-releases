@@ -1,6 +1,7 @@
 import os
-from PyQt6.QtWidgets import QScrollArea, QFrame, QVBoxLayout, QWidget, QLabel, QHBoxLayout
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QScrollArea, QFrame, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QApplication
+from PyQt6.QtCore import Qt, QTimer, QSize, QRectF
+from PyQt6.QtGui import QPainterPath, QRegion
 from src.carteleria.theme import C_THEME, apply_apple_shadow
 
 def _resolver_icono_png(categoria_nombre):
@@ -25,15 +26,28 @@ class GrillaPrecios(QFrame):
         self.auto_refresh_timer.start(30000) # 30 segundos
         self._refrescar_grilla() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
-        if get_active_theme_name() == "temu":
+        self._theme_name = get_active_theme_name()
+        self._corner_radius = 20 if self._theme_name == "temu" else 24
+        if self._theme_name == "temu":
             # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
+            self.setStyleSheet(
+                f"background: {C_THEME['surface']}; border-radius: {self._corner_radius}px; "
+                f"border: 4px solid #FF5722;"
+            )
         else:
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+            self.setStyleSheet(
+                f"background: {C_THEME['surface']}; border-radius: {self._corner_radius}px; "
+                f"border: 1px solid rgba(255,255,255,0.4);"
+            )
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
+
+        # Sin esto Qt pinta el scroll FUERA del border-radius (ensucia el hueco hacia el zócalo)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setAutoFillBackground(True)
         
         self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(20, 20, 20, 20) # Margen amplio para que el contenido no pise los bordes redondeados
+        # Márgenes internos: el scroll no llega al borde naranja ni se vierte abajo
+        self.layout.setContentsMargins(16, 16, 16, 16)
         
         from PyQt6.QtWidgets import QSizePolicy
         self.scroll_area = _AutoScrollList()
@@ -41,6 +55,28 @@ class GrillaPrecios(QFrame):
         self.layout.addWidget(self.scroll_area)
         
         self.last_items = {}
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._clip_to_rounded_rect()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._clip_to_rounded_rect()
+
+    def _clip_to_rounded_rect(self):
+        """Recorta hijos al rectángulo redondeado (evita overflow hacia el Mensaje)."""
+        if self.width() <= 0 or self.height() <= 0:
+            return
+        path = QPainterPath()
+        # -1 px: no dibujar encima del borde de 4px
+        inset = 2.0
+        path.addRoundedRect(
+            QRectF(inset, inset, self.width() - 2 * inset, self.height() - 2 * inset),
+            float(self._corner_radius),
+            float(self._corner_radius),
+        )
+        self.setMask(QRegion(path.toFillPolygon().toPolygon()))
 
     def _refrescar_grilla(self):
         if hasattr(self, 'motor') and self.motor and not self.motor.isRunning():
@@ -78,28 +114,67 @@ class _AutoScrollList(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
-        self.setStyleSheet("QScrollArea { background: transparent; border: none; }")
-        self.viewport().setStyleSheet("background: transparent;")
+        # Fondo opaco: evita “fantasma” de filas viejas al hacer scroll / rebuild
+        self.setStyleSheet(
+            "QScrollArea { background: #FFFFFF; border: none; }"
+        )
+        self.viewport().setAutoFillBackground(True)
+        self.viewport().setStyleSheet("background: #FFFFFF;")
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
         self.container = QWidget()
-        self.container.setStyleSheet("background: transparent;")
+        self.container.setAutoFillBackground(True)
+        self.container.setStyleSheet("background: #FFFFFF;")
         
-        # ¡BLINDAJE DEFINITIVO CONTRA RECORTE HORIZONTAL!
-        # Sobreescribimos minimumSizeHint para que el ancho mínimo sea 0 y Qt NUNCA extienda el contenedor más allá del viewport
-        from PyQt6.QtCore import QSize
-        self.container.minimumSizeHint = lambda: QSize(0, self.container.layout().minimumSize().height() if self.container.layout() else 0)
+        # Ancho mínimo 0 (no forzar expansión horizontal); alto = layout real
+        self.container.minimumSizeHint = lambda: QSize(
+            0,
+            self.container.layout().minimumSize().height() if self.container.layout() else 0,
+        )
         
         self.inner_layout = QVBoxLayout(self.container)
-        self.inner_layout.setContentsMargins(2, 4, 2, 4) # Márgenes internos compactos
-        self.inner_layout.setSpacing(10)
+        # Más aire abajo: la última tarjeta no pisa el borde naranja / zócalo
+        self.inner_layout.setContentsMargins(2, 4, 2, 12)
+        self.inner_layout.setSpacing(12)
         self.setWidget(self.container)
         
         self._scroll_pos = 0
+        self._block_height = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._do_scroll)
         self.current_mode = 4
+        self.blocks = []
+
+    def _clear_layout(self, layout):
+        """Borra widgets de inmediato (deleteLater deja pintura sucia al scrollear)."""
+        while layout.count():
+            item = layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.hide()
+                w.setParent(None)
+                w.deleteLater()
+            elif item.layout() is not None:
+                self._clear_layout(item.layout())
+
+    def _measure_block_height(self) -> int:
+        if not self.blocks:
+            return 0
+        b0 = self.blocks[0]
+        # Preferir tamaño de layout (estable) sobre height() a medio pintar
+        h = 0
+        lay = b0.layout()
+        if lay is not None:
+            h = max(lay.sizeHint().height(), lay.minimumSize().height())
+        h = max(h, b0.sizeHint().height(), b0.height())
+        if len(self.blocks) >= 2:
+            # Distancia real entre bloques gemelos (más fiable para el loop)
+            y0 = self.blocks[0].y()
+            y1 = self.blocks[1].y()
+            if y1 > y0:
+                return y1 - y0
+        return h + self.inner_layout.spacing()
 
     def set_items(self, items_by_category):
         # Evitar reconstruir la UI si los datos no cambiaron (previene congelamiento)
@@ -108,33 +183,31 @@ class _AutoScrollList(QScrollArea):
             return
         self._last_data_repr = current_data_repr
 
-        for i in reversed(range(self.inner_layout.count())):
-            item = self.inner_layout.itemAt(i)
-            if item is not None:
-                if item.widget():
-                    w = item.widget()
-                    self.inner_layout.removeWidget(w)
-                    w.setParent(None)
-                    w.deleteLater()
-                else:
-                    self.inner_layout.removeItem(item)
-                
-        self.container.adjustSize()
-                
+        self.timer.stop()
+        self._scroll_pos = 0
+        self._block_height = 0
+        bar = self.verticalScrollBar()
+        bar.setValue(0)
+
+        self._clear_layout(self.inner_layout)
+        app = QApplication.instance()
+        if app:
+            app.processEvents()
+
         self.blocks = []
-        # Añadimos 4 bloques para asegurar suficiente margen de scroll infinito
-        for _ in range(4): 
+        # 3 bloques idénticos bastan para loop infinito sin tanto peso de paint
+        for _ in range(3):
             block = QWidget()
-            block.setStyleSheet("background: transparent;")
+            block.setAutoFillBackground(True)
+            block.setStyleSheet("background: #FFFFFF;")
             block_layout = QVBoxLayout(block)
-            block_layout.setContentsMargins(0, 0, 0, 0)
-            block_layout.setSpacing(10)
+            block_layout.setContentsMargins(0, 0, 0, 8)
+            block_layout.setSpacing(12)
             
             for categoria, productos in items_by_category.items():
                 if not productos:
-                    continue # Nunca dibujar categorías vacías
+                    continue
                 
-                # ── CATEGORÍA: BANNER MODULAR CON CÁPSULA DE ÍCONO Y TITULO RESPONSIVE ──
                 from src.carteleria.interfaz_principal.componentes_base.banner_categoria import BannerCategoria
                 from src.carteleria.theme import get_active_theme_name
                 is_temu = (get_active_theme_name() == "temu")
@@ -142,45 +215,49 @@ class _AutoScrollList(QScrollArea):
                 banner = BannerCategoria(categoria, modo_tv=self.current_mode, is_temu=is_temu, parent=block)
                 block_layout.addWidget(banner)
                 
-                # ── PRODUCTOS: TARJETAS MODULARES CON SUB-CONTENEDORES ESTRICTOS ──
                 from src.carteleria.interfaz_principal.tarjetas.tarjeta_producto import TarjetaProducto
                 for nombre, precio, precio_oferta, regla in productos:
                     if not nombre or not nombre.strip():
                         continue
-                    tarjeta = TarjetaProducto(nombre, precio, precio_oferta, regla, modo_tv=self.current_mode, parent=block)
+                    tarjeta = TarjetaProducto(
+                        nombre, precio, precio_oferta, regla,
+                        modo_tv=self.current_mode, parent=block,
+                    )
                     block_layout.addWidget(tarjeta)
                     
             self.inner_layout.addWidget(block)
             self.blocks.append(block)
-                    
-        # IMPORTANTE: Eliminamos el stretch inferior para que los bloques sean matemáticamente idénticos
-        # y no haya huecos vacíos en el bucle infinito.
-        
-        # Forzar recálculo para que height() devuelva el valor real
-        self.container.layout().update()
+
+        self.container.adjustSize()
+        self.container.updateGeometry()
+        if app:
+            app.processEvents()
+        self._block_height = self._measure_block_height()
+        self.viewport().update()
         self.timer.start(50)
 
     def _do_scroll(self):
         bar = self.verticalScrollBar()
         max_val = bar.maximum()
-        if max_val == 0: return
-        
-        if not hasattr(self, 'blocks') or not self.blocks:
+        if max_val <= 0:
             return
-            
-        # Distancia exacta entre el inicio del bloque 1 y el inicio del bloque 2
-        block_height = self.blocks[0].height() + self.inner_layout.spacing()
         
-        # Freno de seguridad: si la lista es tan corta que todos los ítems caben en la pantalla
-        # detenemos el scroll para evitar parpadeos, ya que no es necesario navegar.
-        if block_height <= 0 or max_val < block_height:
+        if not self.blocks:
+            return
+
+        block_height = self._block_height or self._measure_block_height()
+        if block_height <= 0:
+            return
+        self._block_height = block_height
+
+        # Lista corta: no scrollear (evita saltos / solapes)
+        if max_val < block_height:
             return
             
         self._scroll_pos += 2
         
-        # El salto infinito: Si hemos scrolleado la altura de un bloque entero, 
-        # retrocedemos matemáticamente al mismo píxel del bloque anterior. Es imperceptible.
-        if self._scroll_pos >= block_height:
+        # Loop infinito alineado a la altura real del bloque
+        while self._scroll_pos >= block_height:
             self._scroll_pos -= block_height
             
-        bar.setValue(self._scroll_pos)
+        bar.setValue(int(self._scroll_pos))

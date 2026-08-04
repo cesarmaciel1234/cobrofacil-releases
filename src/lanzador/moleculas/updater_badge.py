@@ -21,6 +21,7 @@ from src.updater.silent_auto_updater import (
 
 class SmartUpdaterSignal(QObject):
     update_found = pyqtSignal(str, str)  # remote_ver, local_ver
+    check_unreachable = pyqtSignal()  # no se pudo leer version remota
     download_progress = pyqtSignal(int, str)  # pct, msg
     download_complete = pyqtSignal(bool, str)  # success, msg
 
@@ -91,6 +92,7 @@ class SmartLauncherUpdater(QFrame):
 
     def _connect_signals(self):
         self.signals.update_found.connect(self._on_update_found)
+        self.signals.check_unreachable.connect(self._on_check_unreachable)
         self.signals.download_progress.connect(self._on_download_progress)
         self.signals.download_complete.connect(self._on_download_complete)
 
@@ -123,11 +125,59 @@ class SmartLauncherUpdater(QFrame):
                 avail, local, remote = is_update_available()
                 if avail and remote:
                     self.signals.update_found.emit(remote, local)
+                    return
+                if not remote:
+                    # SSL/red: auto_heal puede activar ssl_relax y conviene un reintento
+                    try:
+                        from src.updater.silent_auto_updater import peek_last_remote_error
+                        from src.services.auto_heal import try_auto_heal
+
+                        err = peek_last_remote_error() or ""
+                        if err:
+                            heal = try_auto_heal(err)
+                            if heal.healed:
+                                avail2, local2, remote2 = is_update_available()
+                                if avail2 and remote2:
+                                    self.signals.update_found.emit(remote2, local2)
+                                    return
+                                if remote2:
+                                    return  # al día tras curar SSL
+                    except Exception:
+                        pass
+                    self.signals.check_unreachable.emit()
             except Exception:
-                pass
+                self.signals.check_unreachable.emit()
 
         import threading
         threading.Thread(target=_check, daemon=True).start()
+
+    def _on_check_unreachable(self):
+        if self.is_downloading or is_update_staged():
+            return
+        self.lbl_status.setText(f"v{self.local_ver}  ·  Sin red GitHub  ⚠")
+        self.lbl_status.setStyleSheet(
+            "font-size: 11px; font-weight: 700; color: #9A3412; border: none; background: transparent;"
+        )
+        self.setStyleSheet("""
+            QFrame {
+                background: #FFF7ED;
+                border: 1px solid #FDBA74;
+                border-radius: 10px;
+                padding: 2px 8px;
+            }
+        """)
+        self.btn_action.setText("↻ Reintentar")
+        try:
+            self.btn_action.clicked.disconnect()
+        except Exception:
+            pass
+        self.btn_action.clicked.connect(self.check_for_updates_async)
+        self.btn_action.setEnabled(True)
+        self.btn_action.show()
+        self.setToolTip(
+            "No se pudo consultar GitHub (red o certificado SSL).\n"
+            "En VirtualBox / Windows nuevo es frecuente. Reintentá o reinstalá."
+        )
 
     def _on_update_found(self, remote: str, local: str):
         self.remote_ver = remote

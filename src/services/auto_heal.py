@@ -22,7 +22,33 @@ _log = logging.getLogger("PunPro.auto_heal")
 
 _MAX_HEALS_PER_HOUR = 8
 _STATE_FILE = "auto_heal_state.json"
+_SSL_RELAX_FLAG = "ssl_relax.flag"
 _lock = threading.Lock()
+
+
+def ssl_relax_flag_path() -> str:
+    path = os.path.join(get_base_path(), "logs")
+    os.makedirs(path, exist_ok=True)
+    return os.path.join(path, _SSL_RELAX_FLAG)
+
+
+def is_ssl_relax_enabled() -> bool:
+    """True si auto_heal activó HTTPS sin verificar CA (Windows/VM sin raíces)."""
+    try:
+        return os.path.isfile(ssl_relax_flag_path())
+    except OSError:
+        return False
+
+
+def enable_ssl_relax(reason: str = "") -> str:
+    path = ssl_relax_flag_path()
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write((reason or "ssl_relax").strip()[:500] + "\n")
+            f.write(f"ts={time.time()}\n")
+    except OSError:
+        pass
+    return path
 
 
 @dataclass
@@ -235,6 +261,56 @@ def _heal_port_busy(blob: str) -> Optional[HealResult]:
     return None
 
 
+def _heal_ssl_github(blob: str) -> Optional[HealResult]:
+    """Activa HTTPS relajado + limpia error de descarga para reintentar el update."""
+    ssl_hits = (
+        "certificate_verify_failed",
+        "certificate verify failed",
+        "sslcertverificationerror",
+        "unable to get local issuer certificate",
+        "ssl: certificate",
+        "sslerror",
+        "ssl eof",
+        "[ssl:",
+    )
+    if not any(k in blob for k in ssl_hits):
+        # "certificate"/"ssl" genérico solo si es tráfico de update/GitHub
+        if not (("certificate" in blob or "ssl" in blob) and any(
+            k in blob for k in ("github", "updater", "urlopen", "urllib", "cobrofacil-releases", "https")
+        )):
+            return None
+
+    already = is_ssl_relax_enabled()
+    path = enable_ssl_relax(blob[:200])
+    detail = [path]
+
+    # Quitar progreso en error para que el badge/daemon reintenten
+    try:
+        from src.updater.cerebro.ipc import clear_download_progress
+
+        clear_download_progress()
+        detail.append("progress_cleared")
+    except Exception:
+        pass
+
+    try:
+        from src.updater.cerebro.engine import _load_pending, _save_pending
+
+        pending = _load_pending() or {}
+        if pending.get("last_error"):
+            pending.pop("last_error", None)
+            pending.pop("last_error_at", None)
+            _save_pending(pending)
+            detail.append("pending_error_cleared")
+    except Exception:
+        pass
+
+    if already:
+        # Flag ya existía: igual limpiamos errores para un reintento
+        return HealResult(True, "ssl_relax_retry", ",".join(detail))
+    return HealResult(True, "ssl_relax", ",".join(detail))
+
+
 def try_auto_heal(
     message: str = "",
     *,
@@ -249,7 +325,13 @@ def try_auto_heal(
     if not blob.strip():
         return HealResult(False, "", "empty")
 
-    for healer in (_heal_stale_locks, _heal_update_cache, _heal_mariadb, _heal_port_busy):
+    for healer in (
+        _heal_stale_locks,
+        _heal_ssl_github,
+        _heal_update_cache,
+        _heal_mariadb,
+        _heal_port_busy,
+    ):
         try:
             result = healer(blob)
         except Exception as e:

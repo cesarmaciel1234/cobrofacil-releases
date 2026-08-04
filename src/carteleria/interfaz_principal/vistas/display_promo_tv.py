@@ -113,9 +113,17 @@ class DisplayPromoTV(QFrame):
             self.lbl_estrellas.setStyleSheet("QLabel { font-size: 34px; color: #FF9900; background: transparent; border: none; }")
             self.lbl_marketing.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; color: #00A859; background: transparent; border: none; }")
         else:
-            self.marketing_container.setStyleSheet(f"#marketing_container {{ background-color: {C_THEME['bg_card']}; border: 1px solid {C_THEME['border']}; border-radius: 12px; padding: 8px; }}")
+            bg_card = C_THEME.get("bg_card") or C_THEME.get("surface") or "#FFFFFF"
+            border = C_THEME.get("border") or "#E2E8F0"
+            self.marketing_container.setStyleSheet(
+                f"#marketing_container {{ background-color: {bg_card}; border: 1px solid {border}; "
+                f"border-radius: 12px; padding: 8px; }}"
+            )
             self.lbl_estrellas.setStyleSheet("QLabel { font-size: 30px; color: #F59E0B; background: transparent; border: none; }")
-            self.lbl_marketing.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: 20px; font-weight: 700; color: {C_THEME['accent']}; background: transparent; border: none; }}")
+            self.lbl_marketing.setStyleSheet(
+                f"QLabel {{ font-family: -apple-system, sans-serif; font-size: 20px; font-weight: 700; "
+                f"color: {C_THEME.get('accent', '#FF3B30')}; background: transparent; border: none; }}"
+            )
 
 
         # 4. Precios

@@ -55,7 +55,8 @@ class CarteleriaMain(QWidget):
         
         # --- FONDO ---
         self.bg_label = QLabel(self)
-        self.bg_label.setScaledContents(True)
+        self.bg_label.setScaledContents(False)  # Escalamos nosotros (4K nítido)
+        self._bg_image_path = None
         from src.utils.paths import get_resource_path
         
         if get_active_theme_name() == "temu":
@@ -69,7 +70,8 @@ class CarteleriaMain(QWidget):
         else:
             img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
             if os.path.exists(img_path):
-                self.bg_label.setPixmap(QPixmap(img_path))
+                self._bg_image_path = img_path
+                self._refresh_background_pixmap()
             else:
                 self.setStyleSheet(f"#CarteleriaMain {{ background-color: {C_THEME['bg']}; }}")
 
@@ -172,7 +174,25 @@ class CarteleriaMain(QWidget):
 
     def resizeEvent(self, event):
         self.bg_label.resize(self.size())
+        self._refresh_background_pixmap()
         super().resizeEvent(event)
+
+    def _refresh_background_pixmap(self):
+        """Fondo a resolución de pantalla (cadenas / 4K) sin setScaledContents borroso."""
+        path = getattr(self, "_bg_image_path", None)
+        if not path or not hasattr(self, "bg_label"):
+            return
+        try:
+            from src.carteleria.escala_tv import load_pixmap_for_size
+            sz = self.size()
+            if sz.width() < 2 or sz.height() < 2:
+                return
+            self.bg_label.setPixmap(load_pixmap_for_size(path, sz, widget=self))
+        except Exception:
+            try:
+                self.bg_label.setPixmap(QPixmap(path))
+            except Exception:
+                pass
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -185,6 +205,8 @@ class CarteleriaMain(QWidget):
         self.page_normal.setStyleSheet("background: transparent;")
         lay_normal = QVBoxLayout(self.page_normal)
         lay_normal.setContentsMargins(40, 40, 40, 40)
+        # Separación clara grilla ↔ zócalo (evita que el scroll “salga” al hueco naranja)
+        lay_normal.setSpacing(18)
         
         lay_normal.addWidget(self.info_negocio)
         

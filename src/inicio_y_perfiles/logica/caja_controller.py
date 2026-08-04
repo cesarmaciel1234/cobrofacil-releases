@@ -14,21 +14,22 @@ class CajaController:
         fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         c_id = config.get("caja_id", 1)
         
-        # Verificar si la caja ya está abierta para no duplicar la apertura
+        # Último movimiento relevante: tras CIERRE_TURNO / Z / AUTO → nueva APERTURA
         mov = db_manager.execute_query(
-            "SELECT id, tipo FROM movimientos_caja WHERE caja_id = ? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO') ORDER BY id DESC LIMIT 1",
-            (c_id,)
+            "SELECT id, tipo FROM movimientos_caja WHERE caja_id = ? AND tipo IN "
+            "('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'CIERRE_TURNO') ORDER BY id DESC LIMIT 1",
+            (c_id,),
         )
         if mov and mov[0]["tipo"] == "APERTURA":
-            # Si ya está abierta, actualizamos la última apertura para evitar duplicados en auditoría
+            # Caja ya abierta (reinicio/crash): actualizar fondo, no duplicar
             last_id = mov[0]["id"]
             db_manager.execute_non_query(
                 "UPDATE movimientos_caja SET fecha = ?, monto = ?, usuario = ?, observaciones = 'Reapertura por reinicio/crash' WHERE id = ?",
-                (fecha, monto, usuario, last_id)
+                (fecha, monto, usuario, last_id),
             )
         else:
             db_manager.execute_non_query(
                 "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, 'APERTURA', ?, ?, 'Inicio', ?)",
-                (fecha, monto, usuario, c_id)
+                (fecha, monto, usuario, c_id),
             )
         return True

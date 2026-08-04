@@ -110,14 +110,68 @@ def is_apply_guard_active(max_age_sec: float = 900.0) -> bool:
     return True
 
 
-def _ssl_context() -> ssl.SSLContext:
-    ctx = ssl.create_default_context()
-    return ctx
+_last_remote_error: str = ""
+
+
+def peek_last_remote_error() -> str:
+    return _last_remote_error or ""
+
+
+def _ssl_relax_active() -> bool:
+    try:
+        from src.services.auto_heal import is_ssl_relax_enabled
+
+        return bool(is_ssl_relax_enabled())
+    except Exception:
+        return False
+
+
+def _ssl_context(secure: bool = True) -> ssl.SSLContext:
+    """En Windows limpio / VirtualBox a veces fallan las CA raíz."""
+    if secure and _ssl_relax_active():
+        secure = False
+    if not secure:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
+def _urlopen(req, timeout: float = 20):
+    """urlopen con reintento si CERTIFICATE_VERIFY_FAILED (mismo truco que el instalador)."""
+    prefer_insecure = _ssl_relax_active()
+    try:
+        return urllib.request.urlopen(
+            req, timeout=timeout, context=_ssl_context(not prefer_insecure)
+        )
+    except Exception as exc:
+        err = str(exc).upper()
+        if "CERTIFICATE" in err or "SSL" in err:
+            try:
+                from src.logger import logger
+
+                logger.warning(f"Updater SSL verify falló, reintento sin CA: {exc}")
+            except Exception:
+                pass
+            try:
+                from src.services.auto_heal import try_auto_heal
+
+                try_auto_heal(f"updater ssl: {exc}", exc=exc)
+            except Exception:
+                pass
+            return urllib.request.urlopen(req, timeout=timeout, context=_ssl_context(False))
+        raise
 
 
 def _http_get_json(url: str, timeout: int = 20) -> dict:
     req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-SilentUpdater/2026"})
-    with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as resp:
+    with _urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -134,10 +188,19 @@ def read_local_version() -> str:
 
 
 def read_remote_version() -> str:
+    global _last_remote_error
     try:
         data = _http_get_json(REMOTE_VERSION_URL)
+        _last_remote_error = ""
         return str(data.get("app_version", "0"))
-    except Exception:
+    except Exception as exc:
+        _last_remote_error = f"{type(exc).__name__}: {exc}"
+        try:
+            from src.services.auto_heal import try_auto_heal
+
+            try_auto_heal(f"updater remote version: {exc}", exc=exc)
+        except Exception:
+            pass
         return ""
 
 
@@ -335,9 +398,7 @@ def download_and_stage_update(progress_callback=None) -> bool:
             headers={"User-Agent": "CobroFacil-SilentUpdater/2026"},
         )
         # timeout = silencio entre lecturas; 300MB en red lenta necesita margen
-        with urllib.request.urlopen(req, timeout=120, context=_ssl_context()) as resp, open(
-            zip_path, "wb"
-        ) as out:
+        with _urlopen(req, timeout=120) as resp, open(zip_path, "wb") as out:
             total = int(resp.headers.get("Content-Length") or 0)
             done = 0
             last_pct = -1

@@ -201,9 +201,14 @@ def lanzar_app(app=None):
     if app is None:
         app = QApplication(sys.argv)
         
-    # Iniciar el motor de red centralizado para que este perfil pueda ser maestro/esclavo
-    from src.central_red_global.lan_server import init_lan_server
-    init_lan_server()
+    # LAN solo si no hay Servidor de Tienda (él ya tiene :8000 / UDP :37020)
+    try:
+        from src.utils.candados import is_store_server_running
+        if not is_store_server_running():
+            from src.central_red_global.lan_server import init_lan_server
+            init_lan_server()
+    except Exception:
+        pass
 
     # Tras reinicio 888 (p. ej. paso a ESCLAVA), cerrar ventana previa si quedó colgada
     prev = getattr(app, "_carteleria_window", None)

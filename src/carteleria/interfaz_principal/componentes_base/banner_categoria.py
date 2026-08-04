@@ -101,15 +101,21 @@ class BannerCategoria(QFrame):
         lbl_ico.setStyleSheet("border: none; background: transparent;")
 
         if ico_path and os.path.exists(ico_path):
-            pm = QPixmap(ico_path)
+            from src.carteleria.escala_tv import load_pixmap_scaled, scaled_px
+            pm = load_pixmap_scaled(ico_path, 54, 54, widget=self)
             if not pm.isNull():
-                lbl_ico.setPixmap(pm.scaled(54, 54, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+                side = scaled_px(54, self)
+                lbl_ico.setFixedSize(side, side)
+                lbl_ico.setPixmap(pm)
             else:
+                fs = max(27, int(27 * (scaled_px(54, self) / 54)))
                 lbl_ico.setText(self._obtener_emoji_fallback(cat_upper))
-                lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 27pt;")
+                lbl_ico.setStyleSheet(f"border: none; background: transparent; font-size: {fs}pt;")
         else:
+            from src.carteleria.escala_tv import scaled_px
+            fs = max(27, int(27 * (scaled_px(54, self) / 54)))
             lbl_ico.setText(self._obtener_emoji_fallback(cat_upper))
-            lbl_ico.setStyleSheet("border: none; background: transparent; font-size: 27pt;")
+            lbl_ico.setStyleSheet(f"border: none; background: transparent; font-size: {fs}pt;")
 
         ico_lay.addWidget(lbl_ico)
         layout.addWidget(contenedor_icono, 2) # 20% del ancho

@@ -2,6 +2,7 @@
 
 import os
 import sys
+import time
 import atexit
 import subprocess
 
@@ -10,6 +11,7 @@ from src.utils.paths import get_base_path
 _LOCK_DIR = os.path.join(get_base_path(), "locks")
 MASTER_LOCK_PATH = os.path.join(_LOCK_DIR, "lanzador_maestro.lock")
 STORE_SERVER_LOCK_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.lock")
+STORE_SERVER_SPAWN_PATH = os.path.join(_LOCK_DIR, "servidor_tienda.spawning")
 MASTER_WINDOW_TITLE = "CobroFacil PRO 2026 — Lanzador Maestro Central"
 STORE_SERVER_WINDOW_TITLE = "CobroFacil PRO — Servidor de Tienda"
 
@@ -193,21 +195,97 @@ def get_store_server_pid() -> int | None:
 
 
 def is_store_server_running() -> bool:
-    return get_store_server_pid() is not None
+    if get_store_server_pid() is not None:
+        return True
+    # Lock huérfano/roto pero hay un --server vivo → sanar y reportar ONLINE
+    return heal_store_server_lock_from_process() is not None
+
+
+def list_store_server_pids() -> list[int]:
+    """PIDs reales con --server (aunque el .lock esté roto o vacío)."""
+    found: list[int] = []
+    me = os.getpid()
+    try:
+        import psutil
+
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                pid = int(proc.info.get("pid") or 0)
+                if pid <= 0 or pid == me:
+                    continue
+                cmd = proc.info.get("cmdline") or []
+                if any(str(c).strip().lower() == "--server" for c in cmd):
+                    found.append(pid)
+                    continue
+                joined = " ".join(str(c) for c in cmd).lower()
+                if " --server" in f" {joined}" or joined.endswith("--server"):
+                    found.append(pid)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return found
+
+
+def heal_store_server_lock_from_process() -> int | None:
+    """Si hay un --server vivo sin lock válido, reescribe el candado."""
+    pids = list_store_server_pids()
+    if not pids:
+        return None
+    pid = pids[0]
+    try:
+        os.makedirs(_LOCK_DIR, exist_ok=True)
+        with open(STORE_SERVER_LOCK_PATH, "w", encoding="utf-8") as f:
+            f.write(str(pid))
+    except OSError:
+        pass
+    return pid
 
 
 def acquire_store_server_lock() -> bool:
-    """Una sola instancia del Servidor de Tienda."""
+    """Una sola instancia del Servidor de Tienda (creación atómica del lock)."""
     os.makedirs(_LOCK_DIR, exist_ok=True)
     other = get_store_server_pid()
     if other is not None and other != os.getpid():
         return False
+
+    # Otro --server ya corriendo (carrera launcher + autostart)
+    orphans = [p for p in list_store_server_pids() if p != os.getpid()]
+    if orphans:
+        heal_store_server_lock_from_process()
+        return False
+
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
     try:
-        with open(STORE_SERVER_LOCK_PATH, "w", encoding="utf-8") as f:
+        fd = os.open(STORE_SERVER_LOCK_PATH, flags)
+    except FileExistsError:
+        # Lock huérfano: si el PID murió, limpiar y reintentar una vez
+        if get_store_server_pid() is not None:
+            return False
+        try:
+            if os.path.exists(STORE_SERVER_LOCK_PATH):
+                os.remove(STORE_SERVER_LOCK_PATH)
+        except OSError:
+            pass
+        try:
+            fd = os.open(STORE_SERVER_LOCK_PATH, flags)
+        except FileExistsError:
+            return False
+        except OSError:
+            return False
+    except OSError:
+        return False
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(str(os.getpid()))
         atexit.register(release_store_server_lock)
         return True
     except OSError:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
         return False
 
 
@@ -217,6 +295,38 @@ def release_store_server_lock():
             with open(STORE_SERVER_LOCK_PATH, "r", encoding="utf-8") as f:
                 if f.read().strip() == str(os.getpid()):
                     os.remove(STORE_SERVER_LOCK_PATH)
+    except OSError:
+        pass
+
+
+def try_acquire_store_server_spawn_guard(ttl_sec: float = 60.0) -> bool:
+    """Evita que dos hubs hagan Popen(--server) a la vez."""
+    os.makedirs(_LOCK_DIR, exist_ok=True)
+    try:
+        if os.path.exists(STORE_SERVER_SPAWN_PATH):
+            age = time.time() - os.path.getmtime(STORE_SERVER_SPAWN_PATH)
+            if age < ttl_sec:
+                return False
+            try:
+                os.remove(STORE_SERVER_SPAWN_PATH)
+            except OSError:
+                return False
+        fd = os.open(STORE_SERVER_SPAWN_PATH, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(str(os.getpid()))
+        return True
+    except FileExistsError:
+        return False
+    except OSError:
+        return False
+
+
+def release_store_server_spawn_guard() -> None:
+    try:
+        if os.path.exists(STORE_SERVER_SPAWN_PATH):
+            with open(STORE_SERVER_SPAWN_PATH, "r", encoding="utf-8") as f:
+                if f.read().strip() == str(os.getpid()):
+                    os.remove(STORE_SERVER_SPAWN_PATH)
     except OSError:
         pass
 

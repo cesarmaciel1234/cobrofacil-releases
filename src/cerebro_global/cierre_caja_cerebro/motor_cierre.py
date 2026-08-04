@@ -1,110 +1,65 @@
-from datetime import datetime
+"""Fachada pública del cerebro de cierre (compat con imports existentes)."""
 
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
+from __future__ import annotations
+
+from src.cerebro_global.cierre_caja_cerebro.procesos.cierre import cerrar_caja as _cerrar_caja
+from src.cerebro_global.cierre_caja_cerebro.procesos.modos import normalizar_modo
+from src.cerebro_global.cierre_caja_cerebro.procesos.historial_cortes import (
+    listar_cortes_del_dia as _listar_cortes_del_dia,
+    resumen_cortes_por_cajero as _resumen_cortes_por_cajero,
+)
+from src.cerebro_global.cierre_caja_cerebro.procesos.multi_caja import (
+    listar_caja_ids,
+    resumen_multi_caja,
+)
+from src.cerebro_global.cierre_caja_cerebro.procesos.totales import obtener_datos_cierre
+
 
 class MotorCierre:
     """
     Cerebro Global para el Cierre de Caja.
-    Centraliza las consultas de la base de datos y la lógica de cálculo
-    para que cualquier módulo (Admin, Jefe, Cajero) reciba los mismos datos
-    y tenga las mismas reglas (ej: ganancia estimada).
+    Delega en procesos/ (totales, esperado, cierre, modos, multi_caja).
     """
 
     @staticmethod
     def obtener_datos_cierre_diario(fecha_str=None, cajero=None, caja_id=None):
-        try:
-            target_date = fecha_str if fecha_str else datetime.now().strftime("%Y-%m-%d")
-            
-            cajero_cond_ventas = ""
-            params_ventas = []
-            
-            cajero_cond_fondo = ""
-            params_fondo = []
-            
-            if cajero:
-                cajero_cond_ventas += " AND usuario = ?"
-                params_ventas.append(cajero)
-                cajero_cond_fondo += " AND usuario = ?"
-                params_fondo.append(cajero)
-                
-            if caja_id:
-                cajero_cond_ventas += " AND caja_id = ?"
-                params_ventas.append(caja_id)
-                cajero_cond_fondo += " AND caja_id = ?"
-                params_fondo.append(caja_id)
-            
-            # Fondo del cajero o caja abierta actualmente (sin filtro de fecha estricto para aperturas pendientes)
-            fondo = float(db_manager.execute_scalar(
-                f"SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' {cajero_cond_fondo} ORDER BY id DESC LIMIT 1",
-                tuple(params_fondo)
-            ) or 0)
-            
-            # Ventas Efectivo pendientes de cierre
-            v_efectivo = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago='Efectivo' {cajero_cond_ventas}",
-                tuple(params_ventas)
-            ) or 0)
+        # Sin caja_id en modo supervisión → consolidado multi-caja (no arqueable)
+        if caja_id is None and cajero is None:
+            return resumen_multi_caja(fecha_str=fecha_str)
+        return obtener_datos_cierre(
+            fecha_str=fecha_str,
+            cajero=cajero,
+            caja_id=caja_id,
+        )
 
-            # Ventas Tarjeta pendientes de cierre
-            v_tarjeta = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND metodo_pago LIKE '%Tarjeta%' {cajero_cond_ventas}",
-                tuple(params_ventas)
-            ) or 0)
+    @staticmethod
+    def resumen_tienda(fecha_str=None):
+        return resumen_multi_caja(fecha_str=fecha_str)
 
-            # Transferencia / Fiado pendientes de cierre
-            v_trans = float(db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas WHERE estado='COMPLETADA' AND (metodo_pago='Transferencia' OR metodo_pago='Fiado') {cajero_cond_ventas}",
-                tuple(params_ventas)
-            ) or 0)
+    @staticmethod
+    def listar_cajas():
+        return listar_caja_ids()
 
-            v_totales = v_efectivo + v_tarjeta + v_trans
-            v_caja_total = fondo + v_efectivo
-            ganancia_estimada = v_totales * 0.30 # Placeholder demo 30%
+    @staticmethod
+    def listar_cortes_del_dia(fecha_str=None, caja_id=None, cajero=None):
+        return _listar_cortes_del_dia(fecha_str=fecha_str, caja_id=caja_id, cajero=cajero)
 
-            return {
-                "fondo": fondo,
-                "v_efectivo": v_efectivo,
-                "v_tarjeta": v_tarjeta,
-                "v_trans": v_trans,
-                "v_totales": v_totales,
-                "v_caja_total": v_caja_total,
-                "ganancia_estimada": ganancia_estimada
-            }
-        except Exception as e:
-            print(f"Error en MotorCierre: {e}")
-            return {
-                "fondo": 0.0, "v_efectivo": 0.0, "v_tarjeta": 0.0, "v_trans": 0.0,
-                "v_totales": 0.0, "v_caja_total": 0.0, "ganancia_estimada": 0.0
-            }
+    @staticmethod
+    def resumen_cortes_por_cajero(fecha_str=None, caja_id=None):
+        return _resumen_cortes_por_cajero(fecha_str=fecha_str, caja_id=caja_id)
 
     @staticmethod
     def cerrar_caja(username, caja_id, fisico, dif, esperado, t_total, modo):
-        try:
-            from datetime import datetime
-            fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            obs = f"Cierre {modo}. Esperado: {esperado:,.2f}. Dif: {dif:,.2f}. Total ventas: {t_total:,.2f}"
-            tipo_cierre = "CIERRE_TURNO" if modo == "cajero" else "CIERRE_Z"
-            
-            db_manager.execute_non_query(
-                "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, ?, ?, ?, ?, ?)",
-                (fecha, tipo_cierre, fisico, username, obs, caja_id)
+        if caja_id is None:
+            raise ValueError(
+                "Debés elegir una caja concreta. En cadenas el arqueo es por terminal, no global."
             )
-            
-            if modo == "dia":
-                db_manager.execute_non_query(
-                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA'",
-                    ()
-                )
-            elif modo == "cajero":
-                db_manager.execute_non_query(
-                    "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ?",
-                    (username,)
-                )
-
-            return True
-        except Exception as e:
-            print(f"Error cerrando caja: {e}")
-            raise e
+        return _cerrar_caja(
+            username=username,
+            caja_id=caja_id,
+            fisico=fisico,
+            dif=dif,
+            esperado=esperado,
+            t_total=t_total,
+            modo=normalizar_modo(modo),
+        )

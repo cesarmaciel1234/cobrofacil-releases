@@ -19,11 +19,14 @@ class BanderinVolador(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(-20) # Para que el lobo se superponga un poco
         
-        # 1. El Lobo Sentado
+        # 1. El Lobo Sentado (escala 4K / HiDPI sin romper FHD)
         self.lbl_lobo = QLabel()
         from src.carteleria.assets_paths import carteleria_asset
+        from src.carteleria.escala_tv import load_pixmap_scaled, scaled_px
         img_path = carteleria_asset("chef_lobo_volador.png")
-        pix = QPixmap(img_path).scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        side = scaled_px(120, self)
+        pix = load_pixmap_scaled(img_path, 120, 120, widget=self)
+        self.lbl_lobo.setFixedSize(side, side)
         self.lbl_lobo.setPixmap(pix)
         self.lbl_lobo.setAlignment(Qt.AlignCenter)
         

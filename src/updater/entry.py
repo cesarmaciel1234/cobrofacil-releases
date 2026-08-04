@@ -98,6 +98,12 @@ def run_updater_daemon() -> int:
                 write_download_progress(0, f"Error: {exc}", "error")
             except Exception:
                 pass
+            try:
+                from src.services.auto_heal import try_auto_heal
+
+                try_auto_heal(f"[UPDATER] {exc}", exc=exc)
+            except Exception:
+                pass
             if logger:
                 try:
                     logger.error(f"[UPDATER] Error aislado (proceso sigue): {exc}")

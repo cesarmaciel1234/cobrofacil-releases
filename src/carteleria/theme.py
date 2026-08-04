@@ -5,6 +5,8 @@ from PyQt6.QtGui import QColor
 THEME_APPLE = {
     "bg": "#F5F5F7",          # Fallback claro
     "surface": "rgba(255, 255, 255, 0.85)", # Frosted Glass
+    "bg_card": "#FFFFFF",
+    "border": "rgba(0, 0, 0, 0.08)",
     "accent": "#FF3B30",      # iOS Red para precios
     "text": "#1D1D1F",        # Apple Dark Gray
     "text_muted": "#86868B",  # Apple Light Gray
@@ -17,6 +19,8 @@ THEME_APPLE = {
 THEME_TEMU = {
     "bg": "#FFFF00",          # Fondo general amarillo chillón "terrible"
     "surface": "#FFFFFF",     # Paneles blancos para que las ofertas rojas y negras exploten
+    "bg_card": "#FFFFFF",
+    "border": "#E1251B",
     "accent": "#DC2626",      # Rojo puro
     "text": "#000000",        # Texto principal negro intenso
     "text_muted": "#DC2626",  # Textos secundarios en rojo

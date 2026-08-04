@@ -1,75 +1,81 @@
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSizePolicy
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor
+
 
 class PanelArqueo(QFrame):
     enter_pressed = pyqtSignal()
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("PanelArq")
-        
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMinimumHeight(280)
+
         self.esperado = 0.0
-        
-        # Sombra de elevación para el panel derecho
-        # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
-        
+
         pa_lay = QVBoxLayout(self)
-        pa_lay.setContentsMargins(30, 30, 30, 30)
-        pa_lay.setSpacing(20)
-        
+        pa_lay.setContentsMargins(24, 20, 24, 20)
+        pa_lay.setSpacing(12)
+
         lbl_esp_tit = QLabel("EFECTIVO ESPERADO")
         lbl_esp_tit.setObjectName("PanelArqTitEsp")
-        lbl_esp_tit.setAlignment(Qt.AlignCenter)
+        lbl_esp_tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         pa_lay.addWidget(lbl_esp_tit)
-        
+
         self.lbl_esp = QLabel("••••••")
-        self.lbl_esp.setAlignment(Qt.AlignCenter)
+        self.lbl_esp.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_esp.setObjectName("PanelArqValEsp")
+        self.lbl_esp.setMinimumHeight(72)
+        self.lbl_esp.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         pa_lay.addWidget(self.lbl_esp)
-        
-        pa_lay.addSpacing(10)
+
         lbl_fisico_tit = QLabel("INGRESA EL FÍSICO CONTADO ($)")
         lbl_fisico_tit.setObjectName("PanelArqTitFis")
-        lbl_fisico_tit.setAlignment(Qt.AlignCenter)
+        lbl_fisico_tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         pa_lay.addWidget(lbl_fisico_tit)
-        
+
         self.txt_fisico = QLineEdit("0.00")
-        self.txt_fisico.setAlignment(Qt.AlignCenter)
+        self.txt_fisico.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_fisico.setObjectName("PanelArqValFis")
+        self.txt_fisico.setMinimumHeight(56)
         self.txt_fisico.textChanged.connect(self._update_diff)
         pa_lay.addWidget(self.txt_fisico)
-        
+
         self.frame_dif = QFrame()
-        self.frame_dif.setFixedHeight(90)
+        self.frame_dif.setMinimumHeight(64)
         self.frame_dif.setObjectName("FrameDif")
         fd_lay = QHBoxLayout(self.frame_dif)
-        
+        fd_lay.setContentsMargins(16, 10, 16, 10)
+
         lbl_dif_tit = QLabel("DIFERENCIA:")
         lbl_dif_tit.setObjectName("FrameDifTit")
         fd_lay.addWidget(lbl_dif_tit)
-        
+
         self.lbl_dif = QLabel("--")
-        self.lbl_dif.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbl_dif.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.lbl_dif.setObjectName("FrameDifVal")
-        fd_lay.addWidget(self.lbl_dif)
+        self.lbl_dif.setWordWrap(True)
+        fd_lay.addWidget(self.lbl_dif, 1)
         pa_lay.addWidget(self.frame_dif)
-        
+        pa_lay.addStretch(1)
+
         self._sos_timer = QTimer(self)
         self._sos_timer.timeout.connect(self._blink_sos)
-        
+
     def get_fisico_y_dif(self):
         try:
             from src.utils.parser import parse_float_regional
+
             fisico = parse_float_regional(self.txt_fisico.text())
             dif = fisico - self.esperado
             return fisico, dif
-        except:
+        except Exception:
             return 0.0, -self.esperado
 
     def _update_diff(self):
         try:
             from src.utils.parser import parse_float_regional
+
             fisico = parse_float_regional(self.txt_fisico.text())
             dif = fisico - self.esperado
             if dif >= 0:
@@ -82,15 +88,15 @@ class PanelArqueo(QFrame):
                 self.frame_dif.setProperty("estado", "faltante")
                 if not self._sos_timer.isActive():
                     self._sos_timer.start(400)
-                
+
             self.frame_dif.style().unpolish(self.frame_dif)
             self.frame_dif.style().polish(self.frame_dif)
             self.lbl_dif.style().unpolish(self.lbl_dif)
             self.lbl_dif.style().polish(self.lbl_dif)
-        except: pass
+        except Exception:
+            pass
 
     def _blink_sos(self):
-        # Blink handled by state "sos" vs "faltante"
         if self._sos_timer.remainingTime() % 800 < 400:
             self.frame_dif.setProperty("estado", "sos")
         else:
@@ -100,7 +106,7 @@ class PanelArqueo(QFrame):
 
     def focus_fisico(self):
         self.txt_fisico.setFocus()
-        
+
     def has_focus_fisico(self):
         return self.txt_fisico.hasFocus()
 

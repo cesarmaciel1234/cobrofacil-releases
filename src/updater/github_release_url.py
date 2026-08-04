@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import ssl
 import urllib.error
 import urllib.request
 
@@ -18,6 +19,50 @@ def _pick_asset_url(release: dict) -> str | None:
     return None
 
 
+def _ssl_relax_active() -> bool:
+    try:
+        from src.services.auto_heal import is_ssl_relax_enabled
+
+        return bool(is_ssl_relax_enabled())
+    except Exception:
+        return False
+
+
+def _ssl_context(secure: bool = True) -> ssl.SSLContext:
+    if secure and _ssl_relax_active():
+        secure = False
+    if not secure:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
+def _urlopen(req, timeout: float = 30):
+    prefer_insecure = _ssl_relax_active()
+    try:
+        return urllib.request.urlopen(
+            req, timeout=timeout, context=_ssl_context(not prefer_insecure)
+        )
+    except Exception as exc:
+        err = str(exc).upper()
+        if "CERTIFICATE" in err or "SSL" in err:
+            try:
+                from src.services.auto_heal import try_auto_heal
+
+                try_auto_heal(f"release url ssl: {exc}", exc=exc)
+            except Exception:
+                pass
+            return urllib.request.urlopen(req, timeout=timeout, context=_ssl_context(False))
+        raise
+
+
 def _fetch_json(url: str, timeout: int = 30) -> dict | list | None:
     req = urllib.request.Request(
         url,
@@ -26,7 +71,7 @@ def _fetch_json(url: str, timeout: int = 30) -> dict | list | None:
             "Accept": "application/vnd.github+json",
         },
     )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    with _urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 

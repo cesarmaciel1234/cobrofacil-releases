@@ -7,48 +7,46 @@ class MetricCard(QFrame):
         super().__init__(parent)
         self.setObjectName("MetricCard")
         self.color = color
-        self.setFixedHeight(120)
+        self.setMinimumHeight(88)
+        self.setMaximumHeight(110)
         self.setStyleSheet(f"""
             QFrame#MetricCard {{
-                background: white; border: 1px solid #E2E8F0; border-radius: 16px;
+                background: white; border: 1px solid #E2E8F0; border-radius: 14px;
             }}
         """)
-        
-        # Sombra premium
-        # Se elimina QGraphicsDropShadowEffect para mejorar rendimiento.
-        
+
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(20, 15, 20, 15)
-        lay.setSpacing(20)
-        
-        # Contenedor del ícono para darle un fondo suave
+        lay.setContentsMargins(16, 10, 16, 10)
+        lay.setSpacing(14)
+
         icon_frame = QFrame()
         icon_frame.setObjectName("MetricIconFrame")
-        icon_frame.setFixedSize(50, 50)
+        icon_frame.setFixedSize(42, 42)
 
         i_lay = QVBoxLayout(icon_frame)
         i_lay.setContentsMargins(0, 0, 0, 0)
         icon_lbl = QLabel(icon)
-        icon_lbl.setAlignment(Qt.AlignCenter)
+        icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         i_lay.addWidget(icon_lbl)
         lay.addWidget(icon_frame)
-        
+
         v_lay = QVBoxLayout()
-        v_lay.setSpacing(8)
-        v_lay.setAlignment(Qt.AlignVCenter)
+        v_lay.setSpacing(4)
+        v_lay.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         self.lbl_tit = QLabel(titulo.upper())
         self.lbl_tit.setObjectName("MetricTit")
-        self.lbl_tit.setStyleSheet("font-size: 15px; font-weight: bold; color: #475569; letter-spacing: 1px;")
+        self.lbl_tit.setStyleSheet(
+            "font-size: 12px; font-weight: bold; color: #475569; letter-spacing: 0.5px;"
+        )
 
         v_lay.addWidget(self.lbl_tit)
-        
+
         self.lbl_val = QLabel("••••••")
-        self.lbl_val.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {self.color};")
+        self.lbl_val.setStyleSheet(f"font-size: 22px; font-weight: 900; color: {self.color};")
 
         v_lay.addWidget(self.lbl_val)
-        lay.addLayout(v_lay)
-        lay.addStretch()
+        lay.addLayout(v_lay, 1)
 
     def revelar(self, valor, formato=True):
 
