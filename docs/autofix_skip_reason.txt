@@ -1,0 +1,8 @@
+Issue #22 is not a production bug.
+
+Title "[ci] token-check (cerrar)" and body "Validacion automatica del secret. Se puede cerrar."
+are created by the release workflow (.github/workflows/release.yml) to verify that
+COBROFACIL_ERROR_REPORT_TOKEN can call the GitHub Issues API. The issue is closed
+immediately after creation when the token check succeeds.
+
+No code change or version bump is required. Close this issue as CI noise.
