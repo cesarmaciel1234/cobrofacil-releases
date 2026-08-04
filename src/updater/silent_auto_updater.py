@@ -38,6 +38,25 @@ PRESERVE_PREFIXES = (
 
 _bg_started = False
 _bg_lock = threading.Lock()
+_download_lock = threading.Lock()
+
+
+def _emit_progress(progress_callback, msg: str, pct: int | None = None) -> None:
+    """Soporta callback(msg) o callback(pct, msg)."""
+    if not progress_callback:
+        return
+    try:
+        if pct is None:
+            progress_callback(msg)
+        else:
+            progress_callback(int(pct), msg)
+    except TypeError:
+        try:
+            progress_callback(msg)
+        except Exception:
+            pass
+    except Exception:
+        pass
 
 
 def _cache_dir() -> str:
@@ -150,47 +169,107 @@ def _sha256_file(path: str) -> str:
 
 
 def download_and_stage_update(progress_callback=None) -> bool:
-    """Descarga el ZIP del release y lo deja listo en _update_cache/staging."""
+    """Descarga el ZIP del release (~300MB) y lo deja listo en _update_cache/staging.
+
+    Serializa descargas (badge + hilo BG) para no duplicar el ZIP.
+    """
+    # Si ya está lista, no re-descargar
+    if is_update_staged():
+        _emit_progress(progress_callback, "Actualización ya descargada.", 100)
+        return True
+
     available, local_ver, remote_ver = is_update_available()
     if not available:
         return is_update_staged()
 
-    def emit(msg: str):
-        if progress_callback:
-            progress_callback(msg)
-
-    emit("Descargando actualización en segundo plano...")
-    zip_path = _zip_path()
-    staging = _staging_dir()
-    download_url = release_zip_url_or_fallback()
+    # Esperar si otra descarga está en curso (no lanzar 2 × 300MB)
+    if not _download_lock.acquire(blocking=False):
+        _emit_progress(progress_callback, "Esperando descarga en curso...", 0)
+        with _download_lock:
+            ok = is_update_staged()
+            _emit_progress(
+                progress_callback,
+                "Actualización lista." if ok else "La otra descarga no terminó.",
+                100 if ok else 0,
+            )
+            return ok
 
     try:
-        req = urllib.request.Request(download_url, headers={"User-Agent": "CobroFacil-SilentUpdater/2026"})
-        with urllib.request.urlopen(req, timeout=300, context=_ssl_context()) as resp, open(zip_path, "wb") as out:
+        if is_update_staged():
+            _emit_progress(progress_callback, "Actualización ya descargada.", 100)
+            return True
+
+        zip_path = _zip_path()
+        staging = _staging_dir()
+        download_url = release_zip_url_or_fallback()
+        _emit_progress(
+            progress_callback,
+            "Descargando paquete (~300 MB). Puede tardar varios minutos...",
+            0,
+        )
+
+        req = urllib.request.Request(
+            download_url,
+            headers={"User-Agent": "CobroFacil-SilentUpdater/2026"},
+        )
+        # timeout = silencio entre lecturas; 300MB en red lenta necesita margen
+        with urllib.request.urlopen(req, timeout=120, context=_ssl_context()) as resp, open(
+            zip_path, "wb"
+        ) as out:
             total = int(resp.headers.get("Content-Length") or 0)
             done = 0
+            last_pct = -1
+            last_emit = 0
             while True:
                 chunk = resp.read(1024 * 256)
                 if not chunk:
                     break
                 out.write(chunk)
                 done += len(chunk)
-                if total and progress_callback and done % (1024 * 1024) < len(chunk):
-                    pct = int(done * 100 / total)
-                    progress_callback(f"Descargando actualización... {pct}%")
+                mb = done / (1024 * 1024)
+                if total > 0:
+                    pct = min(95, int(done * 95 / total))
+                    if pct != last_pct and (pct - last_pct >= 1 or done - last_emit >= 512 * 1024):
+                        last_pct = pct
+                        last_emit = done
+                        total_mb = total / (1024 * 1024)
+                        _emit_progress(
+                            progress_callback,
+                            f"Descargando... {mb:.0f}/{total_mb:.0f} MB ({pct}%)",
+                            pct,
+                        )
+                elif done - last_emit >= 2 * 1024 * 1024:
+                    last_emit = done
+                    _emit_progress(
+                        progress_callback,
+                        f"Descargando... {mb:.0f} MB",
+                        min(90, int(mb)),
+                    )
 
+        _emit_progress(progress_callback, "Verificando ZIP...", 96)
         with zipfile.ZipFile(zip_path, "r") as zf:
-            bad = zf.testzip()
-            if bad:
-                raise zipfile.BadZipFile(f"archivo dañado: {bad}")
+            # No usar testzip() completo: en un ZIP de ~300MB congela la UI minutos
+            names = zf.namelist()
+            if not any(n.replace("\\", "/").endswith("CobroFacil_POS.exe") for n in names):
+                raise RuntimeError("El ZIP no contiene CobroFacil_POS.exe")
+
             if os.path.isdir(staging):
                 shutil.rmtree(staging, ignore_errors=True)
             os.makedirs(staging, exist_ok=True)
-            emit("Extrayendo paquete de actualización...")
-            zf.extractall(staging)
+
+            total_files = max(len(names), 1)
+            for i, name in enumerate(names):
+                zf.extract(name, staging)
+                if i % 40 == 0 or i + 1 == total_files:
+                    pct = 96 + int(3 * (i + 1) / total_files)
+                    _emit_progress(
+                        progress_callback,
+                        f"Extrayendo... {i + 1}/{total_files}",
+                        min(99, pct),
+                    )
 
         if not _find_pos_exe(staging):
-            raise RuntimeError("El ZIP no contiene CobroFacil_POS.exe")
+            raise RuntimeError("Tras extraer no se encontró CobroFacil_POS.exe")
 
         _save_pending(
             {
@@ -201,11 +280,12 @@ def download_and_stage_update(progress_callback=None) -> bool:
                 "zip_sha256": _sha256_file(zip_path),
             }
         )
-        emit("Actualización lista para el próximo reinicio.")
+        _emit_progress(progress_callback, "Actualización lista para reiniciar.", 100)
         return True
     except Exception as exc:
         try:
             from src.logger import logger
+
             logger.error(f"Error descargando actualización silenciosa: {exc}")
         except Exception:
             pass
@@ -214,8 +294,10 @@ def download_and_stage_update(progress_callback=None) -> bool:
         pending["last_error"] = str(exc)
         pending["last_error_at"] = datetime.now(timezone.utc).isoformat()
         _save_pending(pending)
+        _emit_progress(progress_callback, f"Error: {exc}", 0)
         return False
-
+    finally:
+        _download_lock.release()
 
 def _find_pos_exe(root: str) -> str:
     for dirpath, _, files in os.walk(root):
@@ -437,14 +519,19 @@ try:
                 self.terminado.emit(res)
                 return
 
-            def _cb(msg):
-                self.progreso.emit(50, msg)
+            def _cb(pct_or_msg, msg=None):
+                if msg is None:
+                    self.progreso.emit(50, str(pct_or_msg))
+                else:
+                    self.progreso.emit(int(pct_or_msg), str(msg))
 
             if download_and_stage_update(progress_callback=_cb):
                 res.actualizados = ["CobroFacil_POS_Release.zip"]
                 res.necesita_reinicio = True
             else:
-                res.errores.append("No se pudo descargar la actualización.")
+                pending = _load_pending()
+                err = pending.get("last_error") or "No se pudo descargar la actualización."
+                res.errores.append(str(err))
             self.progreso.emit(100, "Listo.")
             self.terminado.emit(res)
 

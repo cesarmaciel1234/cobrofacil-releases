@@ -117,7 +117,9 @@ class SmartLauncherUpdater(QFrame):
             self,
             "🚀 Actualización Inteligente",
             f"Se encontró la versión v{self.remote_ver} en GitHub.\n\n"
-            "¿Descargar e instalar la actualización ahora en segundo plano?",
+            "El paquete pesa ~300 MB (incluye el sistema completo).\n"
+            "En Wi‑Fi lenta puede tardar varios minutos; vas a ver el progreso en MB.\n\n"
+            "¿Descargar ahora en segundo plano?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.Yes
         )
@@ -126,29 +128,40 @@ class SmartLauncherUpdater(QFrame):
 
         self.is_downloading = True
         self.btn_action.setEnabled(False)
-        self.btn_action.setText("⏳ Descargando...")
-        self.lbl_status.setText(f"⏳ Descargando versión v{self.remote_ver} desde GitHub...")
+        self.btn_action.setText("⏳ 0%")
+        self.lbl_status.setText(f"⏳ Descargando v{self.remote_ver} (~300 MB)...")
 
         def _download_task():
-            # silent_auto_updater llama progress_callback(msg: str) — un solo arg.
-            def prog_cb(msg):
-                pct = 0
-                text = str(msg or "")
-                # Extrae "42%" si el motor manda "Descargando actualización... 42%"
-                for token in text.replace("%", " % ").split():
-                    if token.isdigit():
-                        pct = max(0, min(100, int(token)))
-                        break
-                self.signals.download_progress.emit(pct, text)
+            def prog_cb(pct_or_msg, msg=None):
+                if msg is None:
+                    text = str(pct_or_msg or "")
+                    pct = 0
+                    for token in text.replace("%", " % ").split():
+                        if token.isdigit():
+                            pct = max(0, min(100, int(token)))
+                            break
+                    self.signals.download_progress.emit(pct, text)
+                else:
+                    self.signals.download_progress.emit(int(pct_or_msg), str(msg))
 
             ok = download_and_stage_update(progress_callback=prog_cb)
-            self.signals.download_complete.emit(ok, "Actualización lista." if ok else "Falló la descarga.")
+            err = ""
+            if not ok:
+                try:
+                    from src.updater.silent_auto_updater import _load_pending
+                    err = str((_load_pending() or {}).get("last_error") or "")
+                except Exception:
+                    err = ""
+            self.signals.download_complete.emit(
+                ok,
+                "Actualización lista." if ok else (err or "Falló la descarga."),
+            )
 
         threading.Thread(target=_download_task, daemon=True).start()
 
     def _on_download_progress(self, pct: int, msg: str):
         self.btn_action.setText(f"⏳ {pct}%")
-        self.lbl_status.setText(f"⏳ Descargando v{self.remote_ver}: {pct}%")
+        self.lbl_status.setText(msg or f"⏳ Descargando v{self.remote_ver}: {pct}%")
 
     def _on_download_complete(self, success: bool, msg: str):
         self.is_downloading = False
