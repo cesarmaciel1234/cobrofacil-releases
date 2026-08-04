@@ -443,6 +443,68 @@ def _mark_pending_ready(local_ver: str = "", remote_ver: str = "") -> None:
     _save_pending(pending)
 
 
+def _format_update_error(exc: BaseException) -> str:
+    """TimeoutError y similares suelen tener str() vacío; incluir tipo y errno."""
+    msg = str(exc).strip()
+    if msg:
+        return msg
+    name = type(exc).__name__
+    args = getattr(exc, "args", ())
+    if args:
+        return f"{name}: {args!r}"
+    errno = getattr(exc, "errno", None)
+    if errno is not None:
+        return f"{name} (errno {errno})"
+    winerror = getattr(exc, "winerror", None)
+    if winerror is not None:
+        return f"{name} (WinError {winerror})"
+    return name
+
+
+def _is_transient_download_error(exc: BaseException) -> bool:
+    if isinstance(exc, (TimeoutError, ConnectionError)):
+        return True
+    if isinstance(exc, OSError) and getattr(exc, "errno", None) in (
+        10060,
+        10061,
+        11001,
+        11002,
+    ):
+        return True
+    try:
+        import requests
+
+        if isinstance(
+            exc,
+            (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ChunkedEncodingError,
+            ),
+        ):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _purge_partial_download_files() -> None:
+    zip_path = _zip_path()
+    for path in (zip_path, zip_path + ".part"):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    for i in range(8):
+        part = f"{zip_path}.part.{i}"
+        try:
+            if os.path.isfile(part):
+                os.remove(part)
+        except OSError:
+            pass
+
+
 def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
     """Extrae ZIP local a staging y marca pending.ready."""
     staging = _staging_dir()
@@ -586,23 +648,43 @@ def download_and_stage_update(progress_callback=None) -> bool:
 
         from src.updater.cerebro.download_fast import download_release_zip
 
-        download_release_zip(
-            download_url,
-            zip_path,
-            progress_callback=progress_callback,
-        )
-
-        _emit_progress(progress_callback, "Verificando ZIP...", 96)
-        _extract_release_zip(zip_path, progress_callback=progress_callback)
+        last_exc = None
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                if attempt > 0:
+                    _purge_partial_download_files()
+                    _emit_progress(
+                        progress_callback,
+                        f"Reintentando descarga ({attempt + 1}/{max_attempts})…",
+                        0,
+                    )
+                    time.sleep(5 * attempt)
+                download_release_zip(
+                    download_url,
+                    zip_path,
+                    progress_callback=progress_callback,
+                )
+                _emit_progress(progress_callback, "Verificando ZIP...", 96)
+                _extract_release_zip(zip_path, progress_callback=progress_callback)
+                break
+            except Exception as exc:
+                last_exc = exc
+                if attempt < max_attempts - 1 and _is_transient_download_error(exc):
+                    continue
+                raise last_exc from exc
+        else:
+            raise last_exc or RuntimeError("Descarga de actualización fallida")
         # Asegurar versiones del intento actual
         _mark_pending_ready(local_ver, remote_ver or read_remote_version())
         _emit_progress(progress_callback, "Actualización lista para reiniciar.", 100)
         return True
     except Exception as exc:
+        err_text = _format_update_error(exc)
         try:
             from src.logger import logger
 
-            logger.error(f"Error descargando actualización silenciosa: {exc}")
+            logger.error(f"Error descargando actualización silenciosa: {err_text}")
         except Exception:
             pass
         # No borrar un staging/ZIP bueno: una re-descarga fallida no debe forzar bucle
@@ -611,10 +693,10 @@ def download_and_stage_update(progress_callback=None) -> bool:
             return True
         pending = _load_pending()
         pending["ready"] = False
-        pending["last_error"] = str(exc)
+        pending["last_error"] = err_text
         pending["last_error_at"] = datetime.now(timezone.utc).isoformat()
         _save_pending(pending)
-        _emit_progress(progress_callback, f"Error: {exc}", 0)
+        _emit_progress(progress_callback, f"Error: {err_text}", 0)
         return False
     finally:
         _download_lock.release()
