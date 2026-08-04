@@ -6,10 +6,13 @@ import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QScrollArea, QGridLayout,
-    QFileDialog, QMessageBox, QSizePolicy
+    QFileDialog, QMessageBox, QSizePolicy, QProgressBar, QDialog,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize
+from PyQt6.QtCore import (
+    Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize, QThread,
+)
 from PyQt6.QtGui import QColor, QFont
+from src.utils.qt_compat import qt_exec
 
 try:
     from src.base_de_datos.database import db_manager
@@ -105,7 +108,7 @@ class Jefe0Dashboard(QWidget):
         nav_lay.addWidget(self.lbl_clock)
         nav_lay.addSpacing(8)
 
-        self.btn_portabilidad = QPushButton("☁️ Mudar Base (OneDrive / USB)")
+        self.btn_portabilidad = QPushButton("Copiar nodo (USB / OneDrive)")
         self.btn_portabilidad.setCursor(Qt.PointingHandCursor)
         self.btn_portabilidad.setFixedHeight(34)
         self.btn_portabilidad.setStyleSheet("""
@@ -117,8 +120,9 @@ class Jefe0Dashboard(QWidget):
             }
             QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
         """)
-        self.btn_portabilidad.clicked.connect(self._mudar_base_datos_jefe)
+        self.btn_portabilidad.clicked.connect(self._on_nodo_portable)
         nav_lay.addWidget(self.btn_portabilidad)
+        QTimer.singleShot(0, self._refresh_nodo_button)
 
         self.btn_tema = QPushButton("🌙 Noche")
         self.btn_tema.setCursor(Qt.PointingHandCursor)
@@ -421,41 +425,189 @@ class Jefe0Dashboard(QWidget):
     def cargar_datos(self):
         self._tick()
 
-    def _mudar_base_datos_jefe(self):
-        msg = ("El sistema copiará la Base de Datos Contable a la carpeta que elijas "
-               "(ej. OneDrive, pendrive) y desde ahora leerá y escribirá allí para "
-               "mantenerla sincronizada.\n\n¿Deseas continuar?")
-        if QMessageBox.question(self, "Portabilidad a la Nube", msg, QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
-            return
-
-        carpeta = QFileDialog.getExistingDirectory(self, "Seleccionar carpeta destino para contabilidad_jefe.db")
-        if not carpeta:
-            return
-
-        import os, shutil
-        from src.utils.paths import get_base_path
-        
-        db_actual = config.get("jefe_db_path", "")
-        if not db_actual or not os.path.exists(db_actual):
-            db_actual = os.path.join(get_base_path(), "data", "contabilidad_jefe.db")
-            
-        if not os.path.exists(db_actual):
-            QMessageBox.warning(self, "Error", "No se encontró la base de datos actual para copiar.")
-            return
-            
-        destino = os.path.join(carpeta, "contabilidad_jefe.db")
-        
-        # Evitar copiar sobre sí misma
-        if os.path.abspath(db_actual) == os.path.abspath(destino):
-            QMessageBox.information(self, "Aviso", "La base ya se encuentra en esa carpeta.")
-            return
-
+    def _refresh_nodo_button(self):
         try:
-            shutil.copy2(db_actual, destino)
-            config.set("jefe_db_path", destino)
-            QMessageBox.information(self, "Portabilidad Exitosa", 
-                                    f"Base copiada y vinculada a:\n{destino}\n\n"
-                                    "La app se reiniciará para aplicar los cambios.")
-            self.request_logout.emit() # Forzamos salir para recargar
+            from src.jefe.nodo_portable import estado_nodo
+
+            if estado_nodo() == "ready":
+                self.btn_portabilidad.setText("Sincronizar nodo")
+            else:
+                self.btn_portabilidad.setText("Copiar nodo (USB / OneDrive)")
+        except Exception:
+            self.btn_portabilidad.setText("Copiar nodo (USB / OneDrive)")
+
+    def _on_nodo_portable(self):
+        """Nodo multi-dispositivo: copiar 100% / sincronizar faltantes / promover si cae el negocio."""
+        from src.jefe.nodo_portable import estado_nodo
+
+        ready = estado_nodo() == "ready"
+        master_down = False
+        try:
+            from src.base_de_datos.database import db_manager
+
+            master_down = bool(getattr(db_manager, "_forced_local_offline", False))
+        except Exception:
+            pass
+
+        if ready:
+            box = QMessageBox(self)
+            box.setWindowTitle("Nodo portable")
+            box.setIcon(QMessageBox.Icon.Question)
+            box.setText(
+                "Ya tenés un nodo en USB/OneDrive.\n\n"
+                "• Sincronizar: solo carga datos faltantes desde la maestra / diario.\n"
+                "• Promover: usá este nodo si la PC del negocio cayó.\n"
+                "• Copiar de nuevo: elige otra carpeta y hace copia completa 0–100%."
+            )
+            btn_sync = box.addButton("Sincronizar", QMessageBox.ButtonRole.AcceptRole)
+            btn_promo = box.addButton("Promover nodo", QMessageBox.ButtonRole.ActionRole)
+            btn_full = box.addButton("Copiar de nuevo…", QMessageBox.ButtonRole.ActionRole)
+            box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+            if not master_down:
+                # Promover sigue disponible siempre (contingencia)
+                pass
+            qt_exec(box)
+            clicked = box.clickedButton()
+            if clicked == btn_sync:
+                self._run_nodo_job("sync")
+            elif clicked == btn_promo:
+                self._promover_nodo_ui()
+            elif clicked == btn_full:
+                self._run_nodo_job("full")
+            return
+
+        msg = (
+            "Se creará un NODO portable (carpeta CobroFacil_Nodo) en USB u OneDrive:\n"
+            "• Contabilidad del jefe\n"
+            "• Espejo del negocio (ventas, productos, clientes…)\n\n"
+            "Mostrará progreso hasta 100%. Después este botón pasará a «Sincronizar».\n"
+            "Conectate antes como Esclava (Servidor LAN) para copiar la DB de la maestra.\n\n"
+            "¿Continuar?"
+        )
+        if QMessageBox.question(
+            self, "Copiar nodo", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        self._run_nodo_job("full")
+
+    def _promover_nodo_ui(self):
+        from src.jefe.nodo_portable import promover_nodo, get_nodo_path
+
+        path = get_nodo_path()
+        if QMessageBox.question(
+            self,
+            "Promover nodo",
+            f"¿Usar el nodo como base local?\n\n{path}\n\n"
+            "Sirve si la PC del negocio está caída. Se importarán tickets faltantes.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            root = promover_nodo()
+            QMessageBox.information(
+                self,
+                "Nodo promovido",
+                f"Nodo activo:\n{root}\n\n"
+                "Contabilidad y datos del negocio apuntan al pendrive/carpeta.\n"
+                "Reiniciá el perfil para aplicar del todo.",
+            )
+            self._refresh_nodo_button()
+            self.request_logout.emit()
         except Exception as e:
-            QMessageBox.critical(self, "Error al copiar", f"No se pudo copiar el archivo.\n{e}")
+            QMessageBox.critical(self, "Error al promover", str(e))
+
+    def _run_nodo_job(self, mode: str):
+        """mode: 'full' | 'sync'. Muestra progreso 0–100% en hilo aparte."""
+        dest = None
+        if mode == "full":
+            dest = QFileDialog.getExistingDirectory(
+                self, "Elegir carpeta USB / OneDrive para el nodo"
+            )
+            if not dest:
+                return
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Nodo portable")
+        dlg.setFixedSize(460, 160)
+        lay = QVBoxLayout(dlg)
+        lay.setContentsMargins(24, 20, 24, 20)
+        title = QLabel("Copiando nodo…" if mode == "full" else "Sincronizando faltantes…")
+        title.setStyleSheet("font-size: 15px; font-weight: 800; color: #0F172A;")
+        lay.addWidget(title)
+        subtitle = QLabel("Preparando…")
+        subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
+        subtitle.setWordWrap(True)
+        lay.addWidget(subtitle)
+        bar = QProgressBar()
+        bar.setRange(0, 100)
+        bar.setValue(0)
+        bar.setFixedHeight(12)
+        bar.setStyleSheet(
+            "QProgressBar { background:#E2E8F0; border:none; border-radius:6px; }"
+            "QProgressBar::chunk { background:#0284C7; border-radius:6px; }"
+        )
+        lay.addWidget(bar)
+
+        class _Worker(QThread):
+            progress = pyqtSignal(int, str)
+            finished_ok = pyqtSignal(object)
+            failed = pyqtSignal(str)
+
+            def __init__(self, mode, dest):
+                super().__init__()
+                self._mode = mode
+                self._dest = dest
+
+            def run(self):
+                try:
+                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes
+
+                    def cb(pct, msg):
+                        self.progress.emit(pct, msg)
+
+                    if self._mode == "full":
+                        root = copiar_nodo_completo(self._dest, progress_cb=cb)
+                        self.finished_ok.emit({"mode": "full", "root": root})
+                    else:
+                        stats = sincronizar_faltantes(progress_cb=cb)
+                        self.finished_ok.emit({"mode": "sync", "stats": stats})
+                except Exception as e:
+                    self.failed.emit(str(e))
+
+        worker = _Worker(mode, dest)
+
+        def on_prog(pct, msg):
+            bar.setValue(pct)
+            subtitle.setText(msg)
+            title.setText(f"{pct}%")
+
+        def on_ok(payload):
+            bar.setValue(100)
+            self._refresh_nodo_button()
+            dlg.accept()
+            if payload.get("mode") == "full":
+                QMessageBox.information(
+                    self,
+                    "Nodo listo",
+                    f"Copia al 100%.\n\n{payload.get('root')}\n\n"
+                    "La próxima vez este botón será «Sincronizar nodo».",
+                )
+            else:
+                stats = payload.get("stats") or {}
+                detail = ", ".join(f"{k}:{v}" for k, v in stats.items() if v)
+                QMessageBox.information(
+                    self,
+                    "Sincronizado",
+                    "Solo se cargaron datos faltantes.\n\n" + (detail or "Sin cambios nuevos."),
+                )
+
+        def on_fail(err):
+            dlg.reject()
+            QMessageBox.critical(self, "Error de nodo", err)
+
+        worker.progress.connect(on_prog)
+        worker.finished_ok.connect(on_ok)
+        worker.failed.connect(on_fail)
+        worker.start()
+        qt_exec(dlg)
+        worker.wait(120000)

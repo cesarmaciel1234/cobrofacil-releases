@@ -430,10 +430,20 @@ class MainWindow(QMainWindow):
 
     def _pregwarm_screens_for_role(self, role: str):
         """Instancia módulos frecuentes en idle para que la 1ª navegación no congele."""
+        # En esclava / offline el prewarm martilla MariaDB y congela Admin
+        try:
+            from src.base_de_datos.database import db_manager
+
+            if not getattr(db_manager, "is_master", True) or getattr(
+                db_manager, "_forced_local_offline", False
+            ):
+                return
+        except Exception:
+            pass
         if role == "admin":
-            warm = (2, 3, 5, 7, 10, 11)
+            warm = (2, 7, 10)  # menos pantallas: evita freeze en PCs lentas
         elif role == "jefe":
-            warm = (9, 20, 18)
+            warm = (9, 20)
         else:
             return
         for idx in warm:
@@ -793,12 +803,13 @@ class MainWindow(QMainWindow):
             if self.screens[19] is None:
                 self._build_lazy_screen(19)
             self.switch_tab(19)
-            QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("jefe"))
+            QTimer.singleShot(2500, lambda: self._pregwarm_screens_for_role("jefe"))
         else:
             if self.screens[0] is None:
                 self._build_lazy_screen(0)
             self.switch_tab(0)
-            QTimer.singleShot(400, lambda: self._pregwarm_screens_for_role("admin"))
+            # Más tarde: no competir con el primer paint del dashboard
+            QTimer.singleShot(2500, lambda: self._pregwarm_screens_for_role("admin"))
 
     def _on_jefe_request_tab(self, tab_index: int):
         """El jefe pide un tab específico del ERP contable (ej: 3 = Proveedores)."""

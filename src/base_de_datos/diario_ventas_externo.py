@@ -519,11 +519,9 @@ def start_motor_nube_local() -> None:
         _worker_started = False
 
 
-def schedule_hidratar_faltantes(max_archivos: int = 500) -> None:
-    """Arranca worker + hydrate lazy una vez por proceso."""
+def schedule_hidratar_faltantes(max_archivos: int = 80) -> None:
+    """Arranca worker + hydrate lazy. Nunca bloquea el hilo de UI (Admin/Jefe)."""
     global _hydrate_started
-    start_motor_nube_local()
-    drenar_cola(max_items=500)
     with _lock:
         if _hydrate_started:
             return
@@ -531,6 +529,10 @@ def schedule_hidratar_faltantes(max_archivos: int = 500) -> None:
 
     def _run():
         try:
+            # Pequeña demora: dejar que Admin pinte el dashboard primero
+            time.sleep(2.0)
+            start_motor_nube_local()
+            drenar_cola(max_items=200)
             hidratar_faltantes(max_archivos=max_archivos)
         except Exception:
             pass
@@ -539,4 +541,4 @@ def schedule_hidratar_faltantes(max_archivos: int = 500) -> None:
         t = threading.Thread(target=_run, name="diario-ventas-hydrate", daemon=True)
         t.start()
     except Exception:
-        _run()
+        pass
