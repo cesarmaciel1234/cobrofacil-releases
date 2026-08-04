@@ -10,10 +10,7 @@ name: Build y Release Windows
 on:
   push:
     branches:
-      - main
-      - backup-pre-v4.8-restore
-      - feature/carteleria-remote-pairing
-      - rompiendo_sin_miedo
+      - main   # Solo main: un camino adelante, sin releases desde ramas viejas
   workflow_dispatch:   # Permite lanzar el build desde GitHub → Actions → Run workflow
 
 permissions:
