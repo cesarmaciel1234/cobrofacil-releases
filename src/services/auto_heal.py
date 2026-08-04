@@ -314,18 +314,20 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
         return True, host
 
     # 1) Rol esclavo / maestra remota conocida
-    if slave_intent and remotes:
-        for remote in remotes:
-            if not _probe_tcp(remote):
-                continue
-            ok, detail = _try_connect(remote, as_slave=True)
-            if ok:
-                return HealResult(True, "reconnect_slave", detail)
-        return HealResult(
-            False,
-            "reconnect_slave",
-            "maestra_inalcanzable:" + ",".join(remotes),
-        )
+    if slave_intent:
+        if remotes:
+            for remote in remotes:
+                if not _probe_tcp(remote):
+                    continue
+                ok, detail = _try_connect(remote, as_slave=True)
+                if ok:
+                    return HealResult(True, "reconnect_slave", detail)
+            return HealResult(
+                False,
+                "reconnect_slave",
+                "maestra_inalcanzable:" + ",".join(remotes),
+            )
+        return HealResult(False, "reconnect_slave", "esclava_sin_ip_maestra")
 
     # 2) Maestra local (localhost caído)
     host = ""
@@ -340,7 +342,18 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     except Exception:
         host = "127.0.0.1"
 
-    if _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob:
+    # No usar "localhost" del mensaje interno de pymysql como señal de cura local
+    # si db_host apunta a una maestra remota (PC esclava).
+    try:
+        from src.central_red_global.master_presence import es_pc_maestra_local
+
+        es_maestra_local = es_pc_maestra_local()
+    except Exception:
+        es_maestra_local = not remotes
+
+    if es_maestra_local and (
+        _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob
+    ):
         try:
             from src.services.mariadb_controller import mariadb_controller
 

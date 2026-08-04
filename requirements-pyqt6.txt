@@ -17,5 +17,6 @@ comtypes
 pypiwin32
 pyserial
 pymysql
+reportlab
 xlrd
 numpy
