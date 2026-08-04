@@ -461,7 +461,16 @@ def _format_update_error(exc: BaseException) -> str:
     return name
 
 
+def _is_corrupt_zip_error(exc: BaseException) -> bool:
+    if isinstance(exc, zipfile.BadZipFile):
+        return True
+    msg = str(exc).lower()
+    return "bad crc" in msg or "crc-32" in msg or "archivo dañado" in msg
+
+
 def _is_transient_download_error(exc: BaseException) -> bool:
+    if _is_corrupt_zip_error(exc):
+        return True
     if isinstance(exc, (TimeoutError, ConnectionError)):
         return True
     if isinstance(exc, OSError) and getattr(exc, "errno", None) in (
@@ -503,6 +512,9 @@ def _purge_partial_download_files() -> None:
                 os.remove(part)
         except OSError:
             pass
+    staging = _staging_dir()
+    if os.path.isdir(staging):
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
@@ -514,6 +526,10 @@ def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
         raise RuntimeError("El archivo descargado no es un ZIP válido (¿HTML de error de GitHub?)")
 
     with zipfile.ZipFile(zip_path, "r") as zf:
+        bad = zf.testzip()
+        if bad:
+            raise zipfile.BadZipFile(f"archivo dañado: {bad}")
+
         names = zf.namelist()
         if not any(n.replace("\\", "/").endswith("CobroFacil_POS.exe") for n in names):
             raise RuntimeError("El ZIP no contiene CobroFacil_POS.exe")
@@ -570,7 +586,9 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
-    except Exception:
+    except Exception as exc:
+        if _is_corrupt_zip_error(exc):
+            _purge_partial_download_files()
         return False
 
 

@@ -140,6 +140,12 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
             # Ya completo
             if os.path.isfile(part_path):
                 os.replace(part_path, dest_path)
+                if total_hint > 0:
+                    actual = os.path.getsize(dest_path)
+                    if actual != total_hint:
+                        raise RuntimeError(
+                            f"Descarga incompleta: {actual}/{total_hint} bytes"
+                        )
             return
         resp.raise_for_status()
         # Si pedimos Range y el server ignora, reiniciar
@@ -179,6 +185,10 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
 
     os.replace(part_path, dest_path)
+    if total > 0:
+        actual = os.path.getsize(dest_path)
+        if actual != total:
+            raise RuntimeError(f"Descarga incompleta: {actual}/{total} bytes")
 
 
 def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
@@ -232,6 +242,12 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
                                 f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
                                 pct,
                             )
+        expected_len = end - start + 1
+        actual_len = os.path.getsize(path)
+        if actual_len != expected_len:
+            raise RuntimeError(
+                f"Parte {idx} incompleta: {actual_len}/{expected_len} bytes"
+            )
         return path
 
     _emit(cb, f"Descarga rápida ({n} conexiones)…", 1)
@@ -263,3 +279,9 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
             os.remove(part_path)
     except OSError:
         pass
+
+    final_size = os.path.getsize(dest_path)
+    if final_size != total:
+        raise RuntimeError(
+            f"ZIP ensamblado incompleto: {final_size}/{total} bytes"
+        )

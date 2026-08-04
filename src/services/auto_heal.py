@@ -188,6 +188,8 @@ def _heal_update_cache(blob: str) -> Optional[HealResult]:
         "badzipfile",
         "archivo dañado",
         "zip corrupto",
+        "bad crc",
+        "crc-32",
         "no space",
         "errno 28",
         "disk quota",
