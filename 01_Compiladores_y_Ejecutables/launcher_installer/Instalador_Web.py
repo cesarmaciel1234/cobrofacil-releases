@@ -16,12 +16,68 @@ if sys.platform == "win32":
 
 import time
 import zipfile
+import ssl
 import urllib.request
 import urllib.error
 import subprocess
 import glob
 import shutil
 import stat
+
+
+def _ssl_context(secure: bool = True) -> ssl.SSLContext:
+    """Contexto SSL: certifi si existe; en VMs viejas se puede pedir insecure."""
+    if not secure:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
+
+
+def _urlopen(req, timeout: float = 30):
+    """urlopen con reintento si la VM no tiene CA raíz (CERTIFICATE_VERIFY_FAILED)."""
+    try:
+        return urllib.request.urlopen(req, timeout=timeout, context=_ssl_context(True))
+    except Exception as exc:
+        err = str(exc).upper()
+        if "CERTIFICATE" in err or "SSL" in err:
+            try:
+                log_fn = globals().get("_log_installer_error")
+                if callable(log_fn):
+                    log_fn(f"SSL verify falló, reintento sin verificar CA: {exc}")
+            except Exception:
+                pass
+            return urllib.request.urlopen(req, timeout=timeout, context=_ssl_context(False))
+        raise
+
+
+def _download_url_to_file(url: str, dest: str, reporthook=None) -> None:
+    """Descarga HTTPS resistente a SSL roto en VirtualBox / Windows limpio."""
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "CobroFacil-Installer/2026"},
+    )
+    with _urlopen(req, timeout=120) as resp, open(dest, "wb") as out:
+        total = int(resp.headers.get("Content-Length") or 0)
+        block_size = 1024 * 256
+        block_num = 0
+        while True:
+            chunk = resp.read(block_size)
+            if not chunk:
+                break
+            out.write(chunk)
+            block_num += 1
+            if reporthook:
+                try:
+                    reporthook(block_num, block_size, total)
+                except Exception:
+                    pass
 
 try:
     import win32com.client
@@ -290,7 +346,7 @@ def _resolve_release_zip_url():
     for api_url in (f"{api_base}/latest", f"{api_base}?per_page=10"):
         try:
             req = urllib.request.Request(api_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            with _urlopen(req, timeout=30) as resp:
                 data = _json.loads(resp.read().decode("utf-8"))
             if isinstance(data, list):
                 for release in data:
@@ -373,7 +429,7 @@ def _report_installer_failure_to_github(message: str):
                 "User-Agent": "CobroFacil-Installer-ErrorReporter",
             },
         )
-        urllib.request.urlopen(req, timeout=20)
+        _urlopen(req, timeout=20)
     except Exception as exc:
         _log_installer_error(f"github report falló: {exc}")
 
@@ -493,10 +549,7 @@ class InstallWorker(QThread):
                             self.progress_update.emit(percent, f"Descargando paquete principal... {int((percent-10)*2)}%")
 
                 try:
-                    opener = urllib.request.build_opener()
-                    opener.addheaders = [("User-Agent", "CobroFacil-Installer/2026")]
-                    urllib.request.install_opener(opener)
-                    urllib.request.urlretrieve(download_url, zip_to_extract, reporthook=report)
+                    _download_url_to_file(download_url, zip_to_extract, reporthook=report)
                 except urllib.error.HTTPError as exc:
                     if exc.code == 404:
                         self.finished.emit(

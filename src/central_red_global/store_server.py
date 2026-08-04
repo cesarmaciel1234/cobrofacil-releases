@@ -43,6 +43,14 @@ def _build_server_command() -> list[str]:
 def ensure_store_server_process(timeout_sec: float = 45.0) -> bool:
     """Si no hay servidor, lo lanza y espera MariaDB o el candado vivo."""
     try:
+        from src.updater.silent_auto_updater import is_apply_guard_active
+        if is_apply_guard_active():
+            logger.info("ensure_store_server: update en curso — no se lanza Servidor.")
+            return False
+    except Exception:
+        pass
+
+    try:
         from src.central_red_global.master_presence import es_pc_maestra_local
         if not es_pc_maestra_local():
             logger.info("ensure_store_server: PC esclava — no se lanza Servidor de Tienda.")

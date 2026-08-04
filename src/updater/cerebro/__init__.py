@@ -1,9 +1,4 @@
-"""
-Compat shim: la lógica vive en src.updater.cerebro.*
-
-Mantener imports antiguos:
-  from src.updater.silent_auto_updater import download_and_stage_update, ...
-"""
+"""Cerebro del actualizador: descarga, apply, relaunch, guardas, IPC."""
 
 from src.updater.cerebro.engine import (
     REMOTE_VERSION_URL,
@@ -24,15 +19,7 @@ from src.updater.cerebro.engine import (
     SilentUpdateWorker,
     _load_pending,
     _save_pending,
-    _emit_progress,
-    _cache_dir,
-    _pending_path,
-    _staging_dir,
-    _zip_path,
-    _stop_blocking_processes,
 )
-
-# Preferir proceso --updater autónomo (fallback hilo si el spawn falla)
 from src.updater.cerebro.background_service import start_background_update_service
 
 from src.updater.cerebro.ipc import (

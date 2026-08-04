@@ -383,9 +383,14 @@ if __name__ == "__main__":
         "--server", action="store_true",
         help="Proceso Servidor de Tienda (MariaDB + LAN + presencia)",
     )
+    parser.add_argument(
+        "--updater", action="store_true",
+        help="Proceso actualizador autónomo (solo descarga/stage; no UI de venta)",
+    )
     parsed_args, _ = parser.parse_known_args()
     target_role = parsed_args.role
     is_store_server = bool(parsed_args.server)
+    is_updater_daemon = bool(getattr(parsed_args, "updater", False))
     is_terminal_role = bool(target_role)
 
     from src.logger import setup_logger
@@ -399,11 +404,23 @@ if __name__ == "__main__":
     except Exception:
         pass
 
+    # ── MODO ACTUALIZADOR AUTÓNOMO (proceso dedicado, aislamiento de fallos) ──
+    if is_updater_daemon:
+        try:
+            from src.updater.entry import run_updater_daemon
+            code = run_updater_daemon()
+            sys.exit(code if code is not None else 0)
+        except Exception:
+            # Nunca tumbar otros procesos: salir en silencio
+            sys.exit(0)
+
     # ── MODO SERVIDOR DE TIENDA (proceso dedicado) ──────────────────────────
     if is_store_server:
+        # Durante un update el autostart no debe reabrir el .exe ni aplicar el paquete
         try:
-            from src.updater.silent_auto_updater import apply_pending_update_on_startup
-            apply_pending_update_on_startup()
+            from src.updater.silent_auto_updater import is_apply_guard_active
+            if is_apply_guard_active():
+                sys.exit(0)
         except Exception:
             pass
 
@@ -426,17 +443,6 @@ if __name__ == "__main__":
         app_exit_event.set()
         sys.exit(code if code is not None else 0)
 
-    # Actualizaciones en segundo plano (lanzador / terminales)
-    try:
-        from src.updater.silent_auto_updater import (
-            apply_pending_update_on_startup,
-            start_background_update_service,
-        )
-        apply_pending_update_on_startup()
-        start_background_update_service()
-    except Exception:
-        pass
-
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
@@ -444,6 +450,34 @@ if __name__ == "__main__":
         from src.central_red_global.network_engine import shutdown_network_engine
         app.aboutToQuit.connect(shutdown_network_engine)
         app._network_engine_shutdown_hook = True
+
+    # Aplicar update ANTES de levantar servidor/perfiles (ellos bloquean el .exe)
+    try:
+        from src.updater.silent_auto_updater import (
+            apply_pending_update_on_startup,
+            end_apply_guard,
+        )
+        apply_pending_update_on_startup()
+    except Exception:
+        pass
+    finally:
+        # Nunca dejar applying.lock: si queda, el Servidor no vuelve a encender
+        try:
+            from src.updater.silent_auto_updater import end_apply_guard
+            end_apply_guard()
+        except Exception:
+            pass
+
+    # Actualizador autónomo en proceso aparte (después del apply; no tumba el hub)
+    try:
+        from src.lanzador.entry import bootstrap_master_services
+        bootstrap_master_services()
+    except Exception:
+        try:
+            from src.updater.silent_auto_updater import start_background_update_service
+            start_background_update_service()
+        except Exception:
+            pass
 
     try:
         from src.ui_components.tema_estilos import aplicar_tema
@@ -489,11 +523,18 @@ if __name__ == "__main__":
                     is_windows_autostart_enabled,
                 )
                 print("[TIENDA] Asegurando Servidor de Tienda…")
-                ok_srv = ensure_store_server_process(timeout_sec=45.0)
+                ok_srv = False
+                # Tras un update mysqld/exe pueden tardar: reintentar
+                for attempt in range(1, 4):
+                    ok_srv = ensure_store_server_process(timeout_sec=35.0)
+                    if ok_srv:
+                        break
+                    print(f"[TIENDA] Intento {attempt}/3 falló — reintentando…")
+                    time.sleep(2.0)
                 if ok_srv and config.get("auto_start_store_server", True) and not is_windows_autostart_enabled():
                     set_windows_autostart(True)
                 if not ok_srv:
-                    raise RuntimeError("spawn servidor falló")
+                    raise RuntimeError("spawn servidor falló tras 3 intentos")
             except Exception as e:
                 print(f"Aviso Servidor de Tienda: {e}")
                 # Fallback: presencia en este proceso si el spawn falló
@@ -509,7 +550,11 @@ if __name__ == "__main__":
 
     while True:
         exit_code = launch_app(direct_role=target_role)
-        if exit_code not in (99, 888):
+        if exit_code == 888:
+            # Salir del todo y reabrir: el .exe en uso no se puede sobrescribir en el mismo proceso
+            from src.updater.silent_auto_updater import exit_and_relaunch_for_update
+            exit_and_relaunch_for_update()
+        if exit_code != 99:
             break
 
     # Solo el proceso --server apaga MariaDB/LAN. Lanzador y terminales no tumban la tienda.
