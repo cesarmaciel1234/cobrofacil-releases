@@ -619,6 +619,14 @@ def download_and_stage_update(progress_callback=None) -> bool:
 
 def apply_pending_update_on_startup() -> bool:
     """Aplica la actualización pendiente antes de iniciar la UI (estilo PWA)."""
+    # Pedido explícito de reinicio-para-aplicar
+    apply_flag = os.path.join(_cache_dir(), "apply_now.flag")
+    try:
+        if os.path.isfile(apply_flag):
+            os.remove(apply_flag)
+    except OSError:
+        pass
+
     if not ensure_staging_ready():
         # Por si quedó applying.lock de un reinicio 888 sin paquete usable
         end_apply_guard()
@@ -628,6 +636,13 @@ def apply_pending_update_on_startup() -> bool:
     if not pending.get("ready"):
         end_apply_guard()
         return False
+    # Reintento tras apply_error anterior
+    if pending.get("apply_error"):
+        try:
+            pending.pop("apply_error", None)
+            _save_pending(pending)
+        except Exception:
+            pass
 
     staging = _staging_dir()
     if not _find_pos_exe(staging):
@@ -788,6 +803,14 @@ def exit_and_relaunch_for_update() -> None:
     import tempfile
 
     begin_apply_guard()
+    # Marca explícita: el próximo arranque DEBE aplicar (si el bat arranca el exe)
+    try:
+        flag = os.path.join(_cache_dir(), "apply_now.flag")
+        with open(flag, "w", encoding="utf-8") as f:
+            f.write(f"pid={os.getpid()}\n")
+            f.write(f"ts={time.time()}\n")
+    except Exception:
+        pass
     prepare_update_restart()
     try:
         from src.utils.candados import release_master_launcher_lock, release_store_server_lock
@@ -823,22 +846,24 @@ if not errorlevel 1 (
   goto wait
 )
 echo pid gone>>"%LOG%"
+rem Solo POS: no matar mysqld aqui (deja la DB del negocio; apply lo detiene si hace falta)
 taskkill /F /IM CobroFacil_POS.exe >NUL 2>&1
-taskkill /F /IM mysqld.exe >NUL 2>&1
 ping -n 3 127.0.0.1 >NUL
 cd /d "%WD%"
+if not exist "%WD%\_update_cache" mkdir "%WD%\_update_cache" >NUL 2>&1
+echo apply>>"%WD%\_update_cache\apply_now.flag"
 set N=0
 :try_start
 set /a N+=1
 echo try %N% start>>"%LOG%"
 start "CobroFacil" /D "%WD%" "%EXE%"
-ping -n 4 127.0.0.1 >NUL
+ping -n 5 127.0.0.1 >NUL
 tasklist /FI "IMAGENAME eq CobroFacil_POS.exe" 2>NUL | find /I "CobroFacil_POS.exe" >NUL
 if not errorlevel 1 (
   echo started ok>>"%LOG%"
   goto done
 )
-if %N% LSS 4 (
+if %N% LSS 6 (
   ping -n 3 127.0.0.1 >NUL
   goto try_start
 )

@@ -354,9 +354,15 @@ class SmartLauncherUpdater(QFrame):
         except Exception:
             pass
 
-        app = QApplication.instance()
-        if app:
-            app.exit(888)
-        else:
+        # Siempre relaunch por bat: app.exit(888) a veces no vuelve al loop
+        # (perfil autónomo / frozen) y el programa "se cierra y no actualiza".
+        try:
             from src.updater.silent_auto_updater import exit_and_relaunch_for_update
+
             exit_and_relaunch_for_update()
+        except Exception:
+            app = QApplication.instance()
+            if app:
+                app.exit(888)
+            else:
+                raise

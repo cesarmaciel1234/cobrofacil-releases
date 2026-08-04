@@ -167,18 +167,35 @@ def _heal_stale_locks(blob: str) -> Optional[HealResult]:
     return HealResult(True, "purge_stale_locks", ",".join(removed))
 
 
+def _update_apply_in_progress() -> bool:
+    """True si hay apply en curso o paquete listo: NO borrar _update_cache."""
+    try:
+        from src.updater.silent_auto_updater import is_apply_guard_active, is_update_staged
+
+        if is_apply_guard_active(max_age_sec=600.0):
+            return True
+        if is_update_staged():
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def _heal_update_cache(blob: str) -> Optional[HealResult]:
+    # Nunca borrar el paquete por un PermissionError a medias: eso dejaba
+    # "se cierra y nunca actualiza" (staging borrado antes de aplicar).
     keywords = (
-        "permissionerror",
-        "_update_cache",
         "badzipfile",
         "archivo dañado",
+        "zip corrupto",
         "no space",
         "errno 28",
-        "staging",
+        "disk quota",
     )
     if not any(k in blob for k in keywords):
         return None
+    if _update_apply_in_progress():
+        return HealResult(False, "clear_update_cache", "skipped_apply_in_progress")
     cache = os.path.join(get_base_path(), "_update_cache")
     if not os.path.isdir(cache):
         return None
@@ -331,6 +348,9 @@ def _heal_broken_update_install(blob: str) -> Optional[HealResult]:
     )
     if not any(k in blob for k in keys):
         return None
+    # Durante apply: no restaurar .old ni tocar binarios (rompe el update a medias)
+    if _update_apply_in_progress() and "dll load failed" not in blob and "_ssl" not in blob:
+        return HealResult(False, "restore_update_old", "skipped_apply_in_progress")
     try:
         from src.updater.silent_auto_updater import (
             heal_broken_binaries,
