@@ -1,0 +1,247 @@
+"""Descarga rápida del ZIP de release (buffer grande + paralelismo por Range)."""
+
+from __future__ import annotations
+
+import os
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Callable
+
+USER_AGENT = "CobroFacil-SilentUpdater/2026"
+CHUNK = 1024 * 1024  # 1 MiB
+PARALLEL = 6
+MIN_PARALLEL_BYTES = 12 * 1024 * 1024  # solo si > 12 MB
+
+
+def _verify_ssl() -> bool:
+    try:
+        from src.services.auto_heal import is_ssl_relax_enabled
+
+        return not bool(is_ssl_relax_enabled())
+    except Exception:
+        return True
+
+
+def _session():
+    import requests
+
+    s = requests.Session()
+    s.headers.update({"User-Agent": USER_AGENT})
+    # Keep-Alive reutiliza TCP (mucho más rápido en LATAM → GitHub)
+    s.headers.update({"Connection": "keep-alive", "Accept-Encoding": "identity"})
+    return s
+
+
+def _emit(cb: Callable | None, msg: str, pct: int | None = None) -> None:
+    if not cb:
+        return
+    try:
+        if pct is None:
+            cb(msg)
+        else:
+            cb(int(pct), msg)
+    except TypeError:
+        try:
+            cb(msg)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
+def download_release_zip(
+    url: str,
+    dest_path: str,
+    progress_callback=None,
+) -> None:
+    """
+    Descarga a dest_path. Usa Range paralelo si el CDN lo permite;
+    si no, stream único con chunks de 1 MB + reanudación .part.
+    """
+    import requests
+
+    os.makedirs(os.path.dirname(dest_path) or ".", exist_ok=True)
+    part_path = dest_path + ".part"
+    verify = _verify_ssl()
+    session = _session()
+
+    try:
+        head = session.head(url, allow_redirects=True, timeout=45, verify=verify)
+        head.raise_for_status()
+    except Exception:
+        # Algunos CDNs no permiten HEAD; seguir con GET
+        head = None
+
+    final_url = (head.url if head is not None else url) or url
+    total = 0
+    accept_ranges = ""
+    if head is not None:
+        total = int(head.headers.get("Content-Length") or 0)
+        accept_ranges = str(head.headers.get("Accept-Ranges") or "").lower()
+
+    use_parallel = (
+        total >= MIN_PARALLEL_BYTES
+        and "bytes" in accept_ranges
+    )
+
+    if use_parallel:
+        try:
+            _download_parallel(
+                session, final_url, dest_path, part_path, total, verify, progress_callback
+            )
+            return
+        except Exception as exc:
+            _emit(progress_callback, f"Paralelo falló, modo único: {exc}", 0)
+            try:
+                if os.path.isfile(part_path):
+                    os.remove(part_path)
+            except OSError:
+                pass
+
+    _download_single(
+        session, final_url, dest_path, part_path, total, verify, progress_callback
+    )
+
+
+def _download_single(session, url, dest_path, part_path, total_hint, verify, cb) -> None:
+    import requests
+
+    existing = os.path.getsize(part_path) if os.path.isfile(part_path) else 0
+    headers = {}
+    mode = "wb"
+    done = 0
+    if existing > 0 and (total_hint <= 0 or existing < total_hint):
+        headers["Range"] = f"bytes={existing}-"
+        mode = "ab"
+        done = existing
+        _emit(cb, f"Reanudando descarga… {done / (1024*1024):.0f} MB", 1)
+
+    with session.get(
+        url, headers=headers, stream=True, timeout=180, verify=verify
+    ) as resp:
+        if resp.status_code == 416:
+            # Ya completo
+            if os.path.isfile(part_path):
+                os.replace(part_path, dest_path)
+            return
+        resp.raise_for_status()
+        # Si pedimos Range y el server ignora, reiniciar
+        if existing > 0 and resp.status_code == 200:
+            mode = "wb"
+            done = 0
+            existing = 0
+
+        total = total_hint
+        cl = resp.headers.get("Content-Length")
+        if cl and resp.status_code == 206:
+            total = existing + int(cl)
+        elif cl and resp.status_code == 200:
+            total = int(cl)
+
+        last_pct = -1
+        last_emit = done
+        with open(part_path, mode) as out:
+            for chunk in resp.iter_content(chunk_size=CHUNK):
+                if not chunk:
+                    continue
+                out.write(chunk)
+                done += len(chunk)
+                if total > 0:
+                    pct = min(95, int(done * 95 / total))
+                    if pct != last_pct and (
+                        pct - last_pct >= 2 or done - last_emit >= 2 * CHUNK
+                    ):
+                        last_pct = pct
+                        last_emit = done
+                        mb = done / (1024 * 1024)
+                        total_mb = total / (1024 * 1024)
+                        _emit(cb, f"Descargando… {mb:.0f}/{total_mb:.0f} MB ({pct}%)", pct)
+                elif done - last_emit >= 2 * CHUNK:
+                    last_emit = done
+                    mb = done / (1024 * 1024)
+                    _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
+
+    os.replace(part_path, dest_path)
+
+
+def _download_parallel(session, url, dest_path, part_path, total, verify, cb) -> None:
+    n = PARALLEL
+    # Limpiar restos
+    for i in range(n):
+        p = f"{part_path}.{i}"
+        try:
+            if os.path.isfile(p):
+                os.remove(p)
+        except OSError:
+            pass
+
+    size = total
+    part_size = size // n
+    ranges = []
+    for i in range(n):
+        start = i * part_size
+        end = size - 1 if i == n - 1 else (start + part_size - 1)
+        ranges.append((i, start, end))
+
+    done_lock = threading.Lock()
+    done = [0]
+    last_pct = [-1]
+
+    def worker(idx: int, start: int, end: int) -> str:
+        import requests
+
+        path = f"{part_path}.{idx}"
+        headers = {"Range": f"bytes={start}-{end}"}
+        with session.get(
+            url, headers=headers, stream=True, timeout=180, verify=verify
+        ) as resp:
+            if resp.status_code not in (200, 206):
+                raise RuntimeError(f"Range HTTP {resp.status_code}")
+            with open(path, "wb") as out:
+                for chunk in resp.iter_content(chunk_size=CHUNK):
+                    if not chunk:
+                        continue
+                    out.write(chunk)
+                    with done_lock:
+                        done[0] += len(chunk)
+                        pct = min(95, int(done[0] * 95 / size))
+                        if pct - last_pct[0] >= 2:
+                            last_pct[0] = pct
+                            mb = done[0] / (1024 * 1024)
+                            total_mb = size / (1024 * 1024)
+                            _emit(
+                                cb,
+                                f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
+                                pct,
+                            )
+        return path
+
+    _emit(cb, f"Descarga rápida ({n} conexiones)…", 1)
+    paths = [None] * n
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        futs = {pool.submit(worker, i, s, e): i for i, s, e in ranges}
+        for fut in as_completed(futs):
+            idx = futs[fut]
+            paths[idx] = fut.result()
+
+    # Ensamblar
+    _emit(cb, "Uniendo partes…", 96)
+    with open(dest_path, "wb") as out:
+        for i in range(n):
+            p = paths[i] or f"{part_path}.{i}"
+            with open(p, "rb") as inp:
+                while True:
+                    block = inp.read(CHUNK)
+                    if not block:
+                        break
+                    out.write(block)
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+    try:
+        if os.path.isfile(part_path):
+            os.remove(part_path)
+    except OSError:
+        pass

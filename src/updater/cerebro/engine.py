@@ -389,45 +389,17 @@ def download_and_stage_update(progress_callback=None) -> bool:
         download_url = release_zip_url_or_fallback()
         _emit_progress(
             progress_callback,
-            "Descargando paquete (~300 MB). Puede tardar varios minutos...",
+            "Descarga rápida del paquete (~300 MB)…",
             0,
         )
 
-        req = urllib.request.Request(
+        from src.updater.cerebro.download_fast import download_release_zip
+
+        download_release_zip(
             download_url,
-            headers={"User-Agent": "CobroFacil-SilentUpdater/2026"},
+            zip_path,
+            progress_callback=progress_callback,
         )
-        # timeout = silencio entre lecturas; 300MB en red lenta necesita margen
-        with _urlopen(req, timeout=120) as resp, open(zip_path, "wb") as out:
-            total = int(resp.headers.get("Content-Length") or 0)
-            done = 0
-            last_pct = -1
-            last_emit = 0
-            while True:
-                chunk = resp.read(1024 * 256)
-                if not chunk:
-                    break
-                out.write(chunk)
-                done += len(chunk)
-                mb = done / (1024 * 1024)
-                if total > 0:
-                    pct = min(95, int(done * 95 / total))
-                    if pct != last_pct and (pct - last_pct >= 1 or done - last_emit >= 512 * 1024):
-                        last_pct = pct
-                        last_emit = done
-                        total_mb = total / (1024 * 1024)
-                        _emit_progress(
-                            progress_callback,
-                            f"Descargando... {mb:.0f}/{total_mb:.0f} MB ({pct}%)",
-                            pct,
-                        )
-                elif done - last_emit >= 2 * 1024 * 1024:
-                    last_emit = done
-                    _emit_progress(
-                        progress_callback,
-                        f"Descargando... {mb:.0f} MB",
-                        min(90, int(mb)),
-                    )
 
         _emit_progress(progress_callback, "Verificando ZIP...", 96)
         _extract_release_zip(zip_path, progress_callback=progress_callback)
