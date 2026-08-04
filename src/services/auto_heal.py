@@ -207,7 +207,44 @@ def _heal_update_cache(blob: str) -> Optional[HealResult]:
         return HealResult(False, "clear_update_cache", str(e))
 
 
+def _is_loopback_host(host: str) -> bool:
+    h = (host or "").strip().lower()
+    return (not h) or h in ("localhost", "127.0.0.1", "::1")
+
+
+def _remote_master_candidates(config) -> list[str]:
+    """IPs de maestra conocidas (sin localhost)."""
+    out: list[str] = []
+    for key in ("preferred_master_ip", "db_host", "carteleria_master_ip"):
+        try:
+            val = str(config.get(key) or "").strip()
+        except Exception:
+            val = ""
+        if val and not _is_loopback_host(val) and val not in out:
+            out.append(val)
+    return out
+
+
+def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
+    import socket
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        ok = sock.connect_ex((host, port)) == 0
+        sock.close()
+        return ok
+    except Exception:
+        return False
+
+
 def _heal_mariadb(blob: str) -> Optional[HealResult]:
+    """Cura conexiones MariaDB. Solo healed=True si la BD responde de verdad.
+
+    - Esclava / IP maestra conocida → reconectar a la IP remota (no insistir en localhost).
+    - Maestra local → levantar mysqld portable y verificar.
+    - Si localhost falla pero hay IP maestra guardada → failover a esclava.
+    """
     keywords = (
         "mariadb",
         "mysql",
@@ -218,17 +255,79 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
         "connection refused",
         "lost connection",
         "operationalerror",
-        "timeout",
         "mysqld",
+        "circuit breaker: mariadb",
     )
+    # "timeout" solo si el mensaje parece de BD (evita curar timeouts de red ajenos)
     if not any(k in blob for k in keywords):
-        return None
+        if not ("timeout" in blob and any(k in blob for k in ("mariadb", "mysql", "3306", "localhost"))):
+            return None
     try:
         from src.base_de_datos.database import db_manager
         from src.config import config
     except Exception as e:
         return HealResult(False, "reconnect_mariadb", f"import: {e}")
 
+    remotes = _remote_master_candidates(config)
+    try:
+        slave_intent = (
+            config.get("is_master") is False
+            or bool(config.get("carteleria_is_slave"))
+            or bool(str(config.get("preferred_master_ip") or "").strip())
+            or getattr(db_manager, "is_master", True) is False
+        )
+    except Exception:
+        slave_intent = False
+
+    def _persist_slave(host: str) -> None:
+        try:
+            config.set("is_master", False)
+            config.set("db_host", host)
+            config.set("db_engine", "mariadb")
+            config.set("carteleria_master_ip", host)
+            config.set("carteleria_is_slave", True)
+            config.set("auto_start_store_server", False)
+            config.data["preferred_master_ip"] = host
+            config.save()
+        except Exception:
+            pass
+
+    def _try_connect(host: str, *, as_slave: bool) -> tuple[bool, str]:
+        if as_slave:
+            _persist_slave(host)
+        else:
+            try:
+                config.set("is_master", True)
+                config.set("db_host", host if not _is_loopback_host(host) else "localhost")
+                config.set("db_engine", "mariadb")
+            except Exception:
+                pass
+        try:
+            db_manager.reconectar_mariadb(host)
+        except Exception as e:
+            return False, str(e)
+        try:
+            if hasattr(db_manager, "is_connected") and not db_manager.is_connected():
+                return False, "sin_respuesta_select"
+        except Exception as e:
+            return False, str(e)
+        return True, host
+
+    # 1) Rol esclavo / maestra remota conocida
+    if slave_intent and remotes:
+        for remote in remotes:
+            if not _probe_tcp(remote):
+                continue
+            ok, detail = _try_connect(remote, as_slave=True)
+            if ok:
+                return HealResult(True, "reconnect_slave", detail)
+        return HealResult(
+            False,
+            "reconnect_slave",
+            "maestra_inalcanzable:" + ",".join(remotes),
+        )
+
+    # 2) Maestra local (localhost caído)
     host = ""
     try:
         host = (config.get("db_host") or "").strip()
@@ -241,24 +340,35 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     except Exception:
         host = "127.0.0.1"
 
-    try:
-        # Master local: intentar levantar mysqld portable
-        if getattr(db_manager, "is_master", True) and host in ("127.0.0.1", "localhost"):
-            try:
-                from src.services.mariadb_controller import mariadb_controller
+    if _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob:
+        try:
+            from src.services.mariadb_controller import mariadb_controller
 
-                mariadb_controller.start_server()
-            except Exception:
-                pass
-        if hasattr(db_manager, "reconectar_mariadb"):
-            ok = db_manager.reconectar_mariadb(host)
-            if ok is False:
-                db_manager.reload_config()
-            return HealResult(True, "reconnect_mariadb", host)
-        db_manager.reload_config()
-        return HealResult(True, "reload_db_config", host)
-    except Exception as e:
-        return HealResult(False, "reconnect_mariadb", str(e))
+            mariadb_controller.start_server()
+        except Exception as e:
+            _log.debug("start_server en heal: %s", e)
+
+        ok, detail = _try_connect("127.0.0.1", as_slave=False)
+        if ok:
+            return HealResult(True, "reconnect_local_mariadb", detail)
+
+        # Failover: hay IP de maestra en config (PC de programación / esclava mal marcada)
+        for remote in remotes:
+            if not _probe_tcp(remote):
+                continue
+            ok, detail = _try_connect(remote, as_slave=True)
+            if ok:
+                return HealResult(True, "failover_to_slave", detail)
+
+        return HealResult(False, "reconnect_local_mariadb", f"mysqld_down:{detail}")
+
+    # 3) Host remoto explícito en db_host
+    if not _probe_tcp(host):
+        return HealResult(False, "reconnect_mariadb", f"host_cerrado:{host}")
+    ok, detail = _try_connect(host, as_slave=slave_intent or not _is_loopback_host(host))
+    if ok:
+        return HealResult(True, "reconnect_mariadb", detail)
+    return HealResult(False, "reconnect_mariadb", detail)
 
 
 def _heal_port_busy(blob: str) -> Optional[HealResult]:
