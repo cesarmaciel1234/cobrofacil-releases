@@ -370,11 +370,11 @@ def apply_pending_update_on_startup() -> bool:
                     except Exception:
                         pass
                 
-                # En Windows no se puede sobrescribir un .exe o .dll en uso, 
-                # pero SI se puede renombrar.
+                # Windows: no se puede sobrescribir .exe/.dll en uso, pero sí renombrar.
                 try:
                     if os.path.exists(dst):
-                        if dst.lower().endswith('.exe') or dst.lower().endswith('.dll') or dst.lower().endswith('.pyd'):
+                        low = dst.lower()
+                        if low.endswith((".exe", ".dll", ".pyd")):
                             old_path = dst + ".old"
                             if os.path.exists(old_path):
                                 try:
@@ -382,20 +382,23 @@ def apply_pending_update_on_startup() -> bool:
                                 except OSError:
                                     pass
                             try:
-                                os.rename(dst, old_path)
+                                os.replace(dst, old_path)
                             except OSError:
                                 pass
-                        os.chmod(dst, 0o666)
+                        elif os.path.isfile(dst):
+                            try:
+                                os.chmod(dst, 0o666)
+                            except OSError:
+                                pass
                 except OSError:
                     pass
-                
+
                 try:
                     shutil.copy2(src, dst)
                 except Exception as e:
                     if logger:
                         logger.error(f"Fallo copiando {src} a {dst}: {e}")
                     raise
-
         remote_ver = pending.get("remote_version") or read_remote_version()
         if remote_ver:
             version_path = _local_version_file()
