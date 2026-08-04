@@ -1,0 +1,13 @@
+Issue #20: [ci] token-check (cerrar)
+
+Not actionable — CI noise, not a production defect.
+
+This issue is created automatically by the release workflow
+(.github/workflows/release.yml) to validate the COBROFACIL_ERROR_REPORT_TOKEN
+secret. The title and body state explicitly that it is a secret validation check
+and can be closed ("Validacion automatica del secret. Se puede cerrar.").
+
+On success the workflow closes the issue immediately; if auto-fix runs before
+close, or close fails, the issue may remain open without indicating any app bug.
+
+No code change or version bump is required. Close the issue manually if still open.
