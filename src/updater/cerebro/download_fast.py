@@ -118,6 +118,13 @@ def _verify_downloaded_zip(dest_path: str) -> None:
             raise zipfile.BadZipFile(f"Bad CRC-32 for file '{bad}'")
 
 
+def _verify_zip_crc(path: str) -> None:
+    with zipfile.ZipFile(path, "r") as zf:
+        bad = zf.testzip()
+        if bad:
+            raise zipfile.BadZipFile(f"Bad CRC-32 for file '{bad}'")
+
+
 def _cleanup_partial_download(dest_path: str, part_path: str) -> None:
     for path in (dest_path, part_path):
         try:
@@ -193,6 +200,7 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
 
     os.replace(part_path, dest_path)
+    _verify_zip_crc(dest_path)
 
 
 def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
@@ -283,3 +291,4 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
         raise RuntimeError(
             f"Descarga incompleta: {actual} bytes recibidos, esperados {size}"
         )
+    _verify_zip_crc(dest_path)
