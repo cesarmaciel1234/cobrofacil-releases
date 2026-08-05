@@ -2,6 +2,8 @@ import random
 
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+from src.cerebro_global.servicios.cache_productos import cache_productos
+from src.utils.text_db import safe_mariadb_text
 
 class VentaCruzadaInteligente:
     """
@@ -15,6 +17,55 @@ class VentaCruzadaInteligente:
     completa inteligentemente con clásicos infaltables de parrilla para que SIEMPRE muestre exactamente 3 recomendaciones.
     """
     
+    _NOMBRES_IGNORADOS = frozenset({
+        "ARTICULO COMUN", "ARTÍCULO COMÚN", "ARTICULO LIBRE", "ARTÍCULO LIBRE",
+        "VENTA LIBRE", "VARIOS", "COBRO RAPIDO", "COBRO RÁPIDO",
+        "DIFERENCIA", "AJUSTE", "ENVASADO", "TICKET", "SUBTOTAL",
+    })
+    _cartel_names_cache = None
+
+    @staticmethod
+    def _limpiar_nombre(nombre):
+        return safe_mariadb_text(str(nombre or "").strip())
+
+    @classmethod
+    def _nombres_carteleria(cls):
+        if cls._cartel_names_cache is None:
+            names = set()
+            try:
+                rows = db_manager.execute_query(
+                    "SELECT nombre_producto FROM carteleria_global"
+                ) or []
+                for row in rows:
+                    if isinstance(row, dict):
+                        nom = VentaCruzadaInteligente._limpiar_nombre(row.get("nombre_producto"))
+                    else:
+                        nom = VentaCruzadaInteligente._limpiar_nombre(row[0] if row else "")
+                    if nom:
+                        names.add(nom.lower())
+            except Exception:
+                pass
+            cls._cartel_names_cache = names
+        return cls._cartel_names_cache
+
+    @classmethod
+    def _existe_en_catalogo(cls, nom_limpio):
+        key = nom_limpio.lower()
+        for row in cache_productos.obtener_todos():
+            if isinstance(row, dict):
+                nom = cls._limpiar_nombre(row.get("nombre"))
+            else:
+                nom = cls._limpiar_nombre(row[1] if len(row) > 1 else "")
+            if not nom:
+                continue
+            nom_key = nom.lower()
+            if nom_key == key or key in nom_key or nom_key in key:
+                return True
+        for nom_key in cls._nombres_carteleria():
+            if nom_key == key or key in nom_key or nom_key in key:
+                return True
+        return False
+    
     @staticmethod
     def es_producto_valido(nombre):
         """
@@ -24,25 +75,14 @@ class VentaCruzadaInteligente:
         """
         if not nombre:
             return False, ""
-        nom_limpio = str(nombre).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()
+        nom_limpio = VentaCruzadaInteligente._limpiar_nombre(nombre)
         
-        nombres_ignorados = {
-            "ARTICULO COMUN", "ARTÍCULO COMÚN", "ARTICULO LIBRE", "ARTÍCULO LIBRE", 
-            "VENTA LIBRE", "VARIOS", "COBRO RAPIDO", "COBRO RÁPIDO", 
-            "DIFERENCIA", "AJUSTE", "ENVASADO", "TICKET", "SUBTOTAL"
-        }
-        if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
+        if not nom_limpio or nom_limpio.upper() in VentaCruzadaInteligente._NOMBRES_IGNORADOS:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en catálogo en memoria (evita TRIM/LOWER por producto → timeout 2013)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_p:
-                return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_c:
+            if VentaCruzadaInteligente._existe_en_catalogo(nom_limpio):
                 return True, nom_limpio
         except Exception:
             pass

@@ -8,8 +8,24 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from src.config import config
 from src.utils.paths import get_base_path
 from src.central_red_global.network_engine import get_network_engine
+from src.cerebro_global.servicios.cache_productos import cache_productos
 
 logger = logging.getLogger("Carteleria_Autonoma")
+
+_NOMBRES_EXCLUIDOS = ("articulo comun", "venta libre")
+
+
+def _productos_carteleria_desde_cache():
+    """Catálogo filtrado en memoria (evita full-scan SQL → timeout 2013 en MariaDB)."""
+    rows = []
+    for p in cache_productos.obtener_todos():
+        nombre = str(p.get("nombre") or "").lower()
+        if any(x in nombre for x in _NOMBRES_EXCLUIDOS):
+            continue
+        if float(p.get("precio") or 0) <= 0:
+            continue
+        rows.append(p)
+    return rows
 
 class DbSyncWorker(QThread):
     sync_finished = pyqtSignal(dict, str) # data, status (online/offline/error)
@@ -78,20 +94,29 @@ class DbSyncWorker(QThread):
                 
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 
-                # 2. SOS (sin ORDER BY RAND: timeout en MariaDB con inventario grande)
-                sos_query = (
-                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
-                    "cant_oferta, tipo_unidad_oferta, stock FROM productos "
-                    "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
-                    "AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' "
-                    "ORDER BY precio_oferta_relampago DESC LIMIT 50"
+                # 2. SOS desde caché en memoria (sin ORDER BY RAND ni full-scan SQL)
+                catalogo = _productos_carteleria_desde_cache()
+                sos_rows = [
+                    p for p in catalogo
+                    if float(p.get("precio_oferta_relampago") or 0) > 0
+                    and (
+                        float(p.get("precio") or 0) > 0
+                        or float(p.get("precio_oferta") or 0) > 0
+                        or float(p.get("precio_oferta_relampago") or 0) > 0
+                    )
+                ]
+                sos_rows.sort(
+                    key=lambda p: float(p.get("precio_oferta_relampago") or 0),
+                    reverse=True,
                 )
-                sos_rows = db_manager.execute_query(sos_query)
+                sos_rows = sos_rows[:50]
                 oferta_sos = random.sample(sos_rows, min(10, len(sos_rows))) if sos_rows else []
                 
-                # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
-                rows_precios = db_manager.execute_query(precios_query)
+                # 3. Precios desde caché (sin SELECT masivo con LOWER/ORDER BY categoria)
+                rows_precios = sorted(
+                    catalogo,
+                    key=lambda p: str(p.get("categoria") or ""),
+                )
                 
                 # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
                 if is_mariadb:
@@ -145,7 +170,12 @@ class DbSyncWorker(QThread):
                     "ORDER BY nombre LIMIT 50"
                 )
                 if not top_dict["hoy"]:
-                    fb_rows = db_manager.execute_query(fallback_q)
+                    fb_rows = [
+                        p for p in catalogo
+                        if float(p.get("precio") or 0) > 0
+                    ][:50]
+                    if not fb_rows:
+                        fb_rows = db_manager.execute_query(fallback_q)
                     top_dict["hoy"] = random.sample(fb_rows, min(10, len(fb_rows))) if fb_rows else []
                 if not top_dict["semana"]:
                     top_dict["semana"] = top_dict["hoy"]

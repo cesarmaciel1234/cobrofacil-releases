@@ -701,10 +701,27 @@ class DatabaseManager:
 
     def _nombre_producto_para_db(self, nombre):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
-        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+        if (
+            getattr(self, "db_engine_type", "sqlite") == "mariadb"
+            or getattr(self, "mariadb_engine", None) is not None
+        ):
             from src.db_engines.mariadb_engine import mariadb_safe_text
             return mariadb_safe_text(nombre)
         return nombre or ""
+
+    def _sanitize_venta_items_for_mariadb(self, venta_data, items):
+        """Quita emojis/4-byte UTF-8 antes de INSERT en MariaDB (evita error 1366)."""
+        if not isinstance(venta_data, dict):
+            return
+        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
+            venta_data.get("cliente_nombre", "")
+        )
+        for it in items or []:
+            if not isinstance(it, dict):
+                continue
+            safe = self._nombre_producto_para_db(self._item_nombre(it))
+            it["nombre"] = safe
+            it["nombre_producto"] = safe
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -1916,13 +1933,18 @@ class DatabaseManager:
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
         import time
 
-        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
-        max_attempts = 3 if is_mariadb else 1
+        engine = getattr(self, "mariadb_engine", None)
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb" or engine is not None
+        if not is_mariadb:
+            return False
+
+        self._sanitize_venta_items_for_mariadb(venta_data, items)
+        max_attempts = 3
 
         for attempt in range(max_attempts):
             conn = None
             try:
-                conn = self.get_connection()
+                conn = engine.get_connection() if engine is not None else self.get_connection()
                 cursor = conn.cursor()
 
                 from datetime import datetime
@@ -1963,14 +1985,7 @@ class DatabaseManager:
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
                 if attempt < max_attempts - 1 and (transient_err or encoding_err):
                     if encoding_err:
-                        for it in items:
-                            if isinstance(it, dict):
-                                safe = self._nombre_producto_para_db(self._item_nombre(it))
-                                it["nombre"] = safe
-                                it["nombre_producto"] = safe
-                        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
-                            venta_data.get("cliente_nombre", "")
-                        )
+                        self._sanitize_venta_items_for_mariadb(venta_data, items)
                     logger.warning(
                         "sync_venta_to_master reintento %s/%s tras %s: %s",
                         attempt + 1,

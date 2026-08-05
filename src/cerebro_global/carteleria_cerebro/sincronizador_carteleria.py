@@ -4,6 +4,7 @@ import threading
 import time
 
 from src.base_de_datos.database import db_manager
+from src.cerebro_global.servicios.cache_productos import cache_productos
 from src.logger import logger
 
 
@@ -46,12 +47,10 @@ class SincronizadorCarteleria:
 
     def sincronizar_ahora(self):
         try:
-            query_productos = """
-                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
-                FROM productos
-                WHERE precio > 0
-            """
-            filas = db_manager.execute_query(query_productos)
+            filas = [
+                p for p in cache_productos.obtener_todos()
+                if float(p.get("precio") or 0) > 0
+            ]
             if not filas:
                 return
 
@@ -59,7 +58,7 @@ class SincronizadorCarteleria:
 
             for fila in filas:
                 if isinstance(fila, dict):
-                    departamento = str(fila.get('categoria', ''))
+                    departamento = str(fila.get('categoria', '') or fila.get('departamento', ''))
                     nombre_producto = _limpiar_nombre(fila.get('nombre', ''))
                     precio_normal = float(fila.get('precio') or 0)
                     precio_oferta = float(fila.get('precio_oferta') or 0)
