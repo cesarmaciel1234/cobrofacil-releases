@@ -726,7 +726,10 @@ class DatabaseManager:
         err = str(exc).lower()
         return any(
             token in err
-            for token in ("2013", "2006", "timed out", "timeout", "lost connection")
+            for token in (
+                "2003", "2002", "2013", "2006",
+                "timed out", "timeout", "lost connection", "can't connect",
+            )
         )
 
     def _reset_mariadb_thread_connection(self) -> None:
