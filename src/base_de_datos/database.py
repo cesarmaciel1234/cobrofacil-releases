@@ -4,6 +4,7 @@ import os
 import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+from src.utils.text_safe import sanitize_mariadb_text
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -1130,6 +1131,13 @@ class DatabaseManager:
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                for table in ("detalles_ventas", "detalle_ventas"):
+                    try:
+                        self.execute_non_query(
+                            f"ALTER TABLE {table} CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                        )
+                    except Exception:
+                        pass
                 # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
                 self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
                 
@@ -1464,7 +1472,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], sanitize_mariadb_text(it['nombre']), it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1513,7 +1521,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), sanitize_mariadb_text(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))

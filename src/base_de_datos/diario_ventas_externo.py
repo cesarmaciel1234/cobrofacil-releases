@@ -28,6 +28,8 @@ import zipfile
 from datetime import datetime, timedelta
 from typing import Any, Iterable
 
+from src.utils.text_safe import sanitize_mariadb_text
+
 _lock = threading.Lock()
 _hydrate_started = False
 _worker_started = False
@@ -408,7 +410,7 @@ def _insertar_faltante(payload: dict) -> bool:
                         (
                             new_id,
                             it.get("id"),
-                            it.get("nombre") or "",
+                            sanitize_mariadb_text(it.get("nombre") or ""),
                             it.get("cant") or 0,
                             it.get("precio") or 0,
                             it.get("subtotal") or 0,
@@ -425,7 +427,7 @@ def _insertar_faltante(payload: dict) -> bool:
                             (
                                 new_id,
                                 it.get("id"),
-                                it.get("nombre") or "",
+                                sanitize_mariadb_text(it.get("nombre") or ""),
                                 it.get("cant") or 0,
                                 it.get("precio") or 0,
                                 it.get("subtotal") or 0,
