@@ -43,7 +43,7 @@ class CacheProductos:
         try:
             from src.base_de_datos.database import db_manager
             rows = db_manager.execute_query(
-                "SELECT id, nombre, precio, costo, stock, cant_oferta, precio_oferta, "
+                "SELECT id, nombre, precio, costo, stock, cant_oferta, precio_oferta, tipo_unidad_oferta, "
                 "cant_mayoreo, precio_mayoreo, precio_oferta_relampago, precio_oferta_promedio, "
                 "departamento, categoria, unidad, es_pesable, codigo "
                 "FROM productos ORDER BY departamento, nombre"

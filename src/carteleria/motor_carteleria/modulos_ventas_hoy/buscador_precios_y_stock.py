@@ -1,4 +1,6 @@
 from src.base_de_datos.database import db_manager
+from src.cerebro_global.servicios.cache_productos import cache_productos
+
 
 class BuscadorDePreciosYStock:
     """
@@ -8,7 +10,24 @@ class BuscadorDePreciosYStock:
     ¡Busca tanto en las promociones (carteleria_global) como en la tabla general (productos) 
     para que NINGÚN producto vendido hoy se quede afuera del cartel!
     """
-    
+
+    @staticmethod
+    def _buscar_producto_en_cache(nombre: str):
+        """Evita N+1 queries LIKE a MariaDB (timeout 2013 con inventario grande)."""
+        nombre_norm = nombre.strip().lower()
+        if not nombre_norm:
+            return None
+        productos = cache_productos.obtener_todos()
+        for row in productos:
+            pn = str(row.get("nombre") or "").strip().lower()
+            if pn == nombre_norm:
+                return row
+        for row in productos:
+            pn = str(row.get("nombre") or "").strip().lower()
+            if nombre_norm in pn or pn in nombre_norm:
+                return row
+        return None
+
     @staticmethod
     def armar_lista_para_pantalla(productos_vendidos_hoy):
         """
@@ -68,15 +87,9 @@ class BuscadorDePreciosYStock:
                     unidad = "Kilos"
                 encontro_datos = True
 
-            # b) Buscamos en la tabla general de inventario 'productos'
-            q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
-            rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
-            if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
-                rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
-                
-            if rows_prod:
-                row_p = rows_prod[0]
+            # b) Buscamos en inventario vía caché en memoria (sin LIKE por producto a MariaDB)
+            row_p = BuscadorDePreciosYStock._buscar_producto_en_cache(nombre)
+            if row_p:
                 if isinstance(row_p, dict):
                     if not encontro_datos:
                         precio_normal = float(row_p.get('precio') or 0)

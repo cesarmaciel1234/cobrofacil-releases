@@ -8,6 +8,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from src.config import config
 from src.utils.paths import get_base_path
 from src.central_red_global.network_engine import get_network_engine
+from src.cerebro_global.servicios.cache_productos import cache_productos
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
@@ -89,9 +90,21 @@ class DbSyncWorker(QThread):
                 sos_rows = db_manager.execute_query(sos_query)
                 oferta_sos = random.sample(sos_rows, min(10, len(sos_rows))) if sos_rows else []
                 
-                # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
-                rows_precios = db_manager.execute_query(precios_query)
+                # 3. Precios (desde caché en memoria: evita ORDER BY categoria en MariaDB bajo carga)
+                _precios_cols = (
+                    "categoria", "nombre", "precio", "precio_oferta", "precio_oferta_relampago",
+                    "precio_oferta_promedio", "cant_oferta", "tipo_unidad_oferta", "stock",
+                )
+                rows_precios = []
+                for r in cache_productos.obtener_todos():
+                    nom = str(r.get("nombre") or "")
+                    if float(r.get("precio") or 0) <= 0:
+                        continue
+                    nl = nom.lower()
+                    if "articulo comun" in nl or "venta libre" in nl:
+                        continue
+                    rows_precios.append({c: r.get(c) for c in _precios_cols})
+                rows_precios.sort(key=lambda x: str(x.get("categoria") or ""))
                 
                 # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
                 if is_mariadb:
