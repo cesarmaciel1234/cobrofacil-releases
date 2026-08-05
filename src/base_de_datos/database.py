@@ -693,6 +693,12 @@ class DatabaseManager:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
 
+    def _item_nombre(self, item):
+        """Nombre de línea de venta (cajero usa 'nombre'; cola offline puede usar 'nombre_producto')."""
+        if not isinstance(item, dict):
+            return ""
+        return item.get("nombre") or item.get("nombre_producto") or ""
+
     def _nombre_producto_para_db(self, nombre):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
@@ -1876,7 +1882,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], self._nombre_producto_para_db(it.get('nombre', '')), it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], self._nombre_producto_para_db(self._item_nombre(it)), it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1925,7 +1931,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
