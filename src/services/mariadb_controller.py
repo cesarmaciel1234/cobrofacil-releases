@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import threading
 import time
 from src.logger import logger
@@ -94,6 +95,33 @@ class MariaDBController:
             time.sleep(0.5)
         return False
 
+    def _foreign_mariadb_active(self):
+        """Otro proceso (--server) posee o está levantando mysqld; no taskkill."""
+        if self._process is not None and self._process.poll() is None:
+            return False
+        if self._is_port_open():
+            return True
+        try:
+            from src.utils.candados import is_store_server_running
+
+            if is_store_server_running() and "--server" not in sys.argv:
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _startup_wait_budget(self, _start_attempt=0):
+        """Segundos de espera; post-update / InnoDB recovery puede tardar >60s."""
+        base = 90.0 if _start_attempt == 0 else 75.0
+        try:
+            from src.updater.silent_auto_updater import is_apply_guard_active
+
+            if is_apply_guard_active(max_age_sec=300.0):
+                return max(base, 120.0)
+        except Exception:
+            pass
+        return base
+
     def _ensure_firewall(self):
         """Asegura reglas LAN (3306/8000/37020…). Si faltan, pide UAC y espera resultado."""
         try:
@@ -143,13 +171,24 @@ class MariaDBController:
             return True
 
         # Puerto abierto pero sin handshake: otro proceso (p.ej. --server) está arrancando
-        if self._is_port_open():
-            logger.info("Puerto 3306 ocupado — esperando a que MariaDB termine de iniciar...")
-            if self._wait_mariadb_ready(45.0):
+        if self._foreign_mariadb_active():
+            logger.info("MariaDB/Servidor de Tienda en arranque — esperando handshake...")
+            wait_budget = self._startup_wait_budget(_start_attempt)
+            if self._wait_mariadb_ready(wait_budget):
                 logger.info("MariaDB respondió tras espera (proceso ajeno o arranque lento).")
                 self._initialized = True
                 self._create_punpro_db()
                 return True
+            if self._wait_mariadb_ready(60.0):
+                logger.info("MariaDB respondió tras espera extendida (recovery InnoDB).")
+                self._initialized = True
+                self._create_punpro_db()
+                return True
+            logger.error(
+                "MariaDB no respondió mientras otro proceso arrancaba el motor. "
+                "Abortando inicializacion."
+            )
+            return False
 
         if not self._init_database_if_needed():
             return False
@@ -158,9 +197,25 @@ class MariaDBController:
         
         logger.info("Arrancando servidor MariaDB Portable en puerto 3306...")
         try:
-            # Asegurar que no hay un mysqld.exe zombie colgando del puerto 3306
-            subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(1.5)
+            # Solo matar zombies si nadie más está levantando mysqld (evita carrera con --server)
+            if not self._foreign_mariadb_active():
+                subprocess.run(
+                    ["taskkill", "/F", "/IM", "mysqld.exe"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                time.sleep(1.5)
+            else:
+                logger.info("Otro arranque de MariaDB detectado — omitiendo taskkill.")
+                if self._wait_mariadb_ready(self._startup_wait_budget(_start_attempt)):
+                    self._initialized = True
+                    self._create_punpro_db()
+                    return True
+                logger.error(
+                    "MariaDB no respondió mientras otro proceso arrancaba el motor. "
+                    "Abortando inicializacion."
+                )
+                return False
             
             # Iniciamos mysqld apuntando a nuestro datadir
             # Evitamos que se abra una ventana de comandos en Windows usando CREATE_NO_WINDOW
@@ -189,8 +244,8 @@ class MariaDBController:
                 logger.error("El proceso mysqld.exe se cerro inesperadamente tras iniciar.")
                 return False
                 
-            # Esperar handshake MySQL (post-update / InnoDB recovery puede tardar >20s en PCs lentas)
-            wait_sec = 60.0 if _start_attempt == 0 else 45.0
+            # Esperar handshake MySQL (post-update / InnoDB recovery puede tardar >60s en PCs lentas)
+            wait_sec = self._startup_wait_budget(_start_attempt)
             t0 = time.time()
             connected = self._wait_mariadb_ready(wait_sec)
             if connected:
