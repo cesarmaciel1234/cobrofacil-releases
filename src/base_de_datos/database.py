@@ -755,6 +755,41 @@ class DatabaseManager:
             except Exception:
                 pass
 
+    def _try_heal_mariadb_ghost_tables(self) -> bool:
+        """Un intento por sesión: reparar tablas huérfanas MariaDB (error 1932)."""
+        if getattr(self, "_ghost_heal_attempted", False):
+            return False
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        if not getattr(self, "is_master", True):
+            return False
+        host = getattr(getattr(self, "mariadb_engine", None), "host", None) or "127.0.0.1"
+        if str(host).strip().lower() not in ("127.0.0.1", "localhost", ""):
+            return False
+        self._ghost_heal_attempted = True
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            logger.warning("Tablas huérfanas MariaDB (1932); ejecutando auto-reparación...")
+            if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
+                return True
+            if AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                "mariadb",
+                allow_older_than_today=True,
+                merge_today=True,
+                mariadb_host=host,
+            ):
+                return True
+            if AutoBlindajeDB._recrear_tablas_criticas_mariadb(host):
+                try:
+                    self._migrate_db()
+                except Exception as migrate_err:
+                    logger.warning(f"Migración tras recrear tablas críticas: {migrate_err}")
+                return True
+        except Exception as e:
+            logger.warning(f"Auto-reparación tablas huérfanas: {e}")
+        return False
+
     def _prepare_mariadb_table_for_import(self, cursor, table: str) -> None:
         """TRUNCATE/DELETE previo a import SQLite→MariaDB; repara ghost configuracion (1932)."""
         if table == "configuracion" and getattr(self, "db_engine_type", "sqlite") == "mariadb":
@@ -1713,6 +1748,15 @@ class DatabaseManager:
                 result = cursor.fetchall()
                 return result if result is not None else []
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_heal_mariadb_ghost_tables()
+                ):
+                    self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+                    time.sleep(1.0)
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
@@ -1725,7 +1769,9 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                if is_mariadb and self._is_transient_mariadb_error(e):
+                if is_mariadb and (
+                    self._is_transient_mariadb_error(e) or self._is_mariadb_ghost_table_error(e)
+                ):
                     logger.warning(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 else:
                     logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
@@ -1828,6 +1874,15 @@ class DatabaseManager:
                         return row[0]
                 return None
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_heal_mariadb_ghost_tables()
+                ):
+                    self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+                    time.sleep(1.0)
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
@@ -1840,7 +1895,9 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                if is_mariadb and self._is_transient_mariadb_error(e):
+                if is_mariadb and (
+                    self._is_transient_mariadb_error(e) or self._is_mariadb_ghost_table_error(e)
+                ):
                     logger.warning(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 else:
                     logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")

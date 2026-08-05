@@ -351,9 +351,43 @@ class MariaDBController:
                 database="punpro_db",
                 connect_timeout=0.5
             )
-            conn.close()
-            logger.info("Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK).")
-            return
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT 1 FROM productos LIMIT 1")
+            except Exception as probe_err:
+                err_l = str(probe_err).lower()
+                if "1932" in err_l or "exist in engine" in err_l:
+                    logger.warning(
+                        "punpro_db conecta pero tablas huérfanas (1932); "
+                        "intentando auto-reparación..."
+                    )
+                    try:
+                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+                        if (
+                            AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", "127.0.0.1")
+                            or AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                                "mariadb",
+                                allow_older_than_today=True,
+                                merge_today=True,
+                                mariadb_host="127.0.0.1",
+                            )
+                        ):
+                            return
+                    except Exception as heal_err:
+                        logger.warning(f"Auto-reparación 1932 en arranque: {heal_err}")
+                else:
+                    logger.info(
+                        "Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK)."
+                    )
+                    return
+            else:
+                logger.info(
+                    "Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK)."
+                )
+                return
+            finally:
+                conn.close()
         except Exception:
             pass
 

@@ -743,12 +743,26 @@ class AutoBlindajeDB:
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
-                msg = r[3]
-                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
-                        continue
-                    logger.warning(f"Resultado de verificación tabla: {r}")
+                msg = str(r[3] if len(r) >= 4 else r).lower()
+                if msg in ("ok", "table is already up to date"):
+                    continue
+                # 1932: metadatos sin archivos InnoDB — no confundir con tabla inexistente (1146)
+                if "1932" in msg or "exist in engine" in msg:
+                    logger.warning(f"Tabla huérfana en CHECK TABLE: {r}")
                     return False
+                if "doesn't exist" in msg and "exist in engine" not in msg:
+                    continue
+                logger.warning(f"Resultado de verificación tabla: {r}")
+                return False
+            for table in ("productos", "ventas", "carteleria_global"):
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    err = str(e).lower()
+                    if "1932" in err or "exist in engine" in err:
+                        logger.warning(f"Tabla {table} huérfana (1932) al verificar integridad")
+                        conn.close()
+                        return False
             return True
         except Exception:
             return True
