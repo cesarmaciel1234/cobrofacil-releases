@@ -72,7 +72,7 @@ class BuscadorDePreciosYStock:
             q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
             rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
             if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
+                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 5"
                 rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
                 
             if rows_prod:
