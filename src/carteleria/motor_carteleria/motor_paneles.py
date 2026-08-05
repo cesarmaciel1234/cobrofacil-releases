@@ -70,8 +70,9 @@ class MotorCombos(QThread):
             q = """
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                LEFT JOIN productos p ON c.nombre_producto = p.nombre
                 WHERE c.precio_oferta > 0
+                LIMIT 100
             """
             rows = db_manager.execute_query(q)
             if rows:
@@ -177,7 +178,8 @@ class MotorIAPanel(QThread):
             q = """
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                LEFT JOIN productos p ON c.nombre_producto = p.nombre
+                LIMIT 100
             """
             rows = db_manager.execute_query(q)
             if rows:

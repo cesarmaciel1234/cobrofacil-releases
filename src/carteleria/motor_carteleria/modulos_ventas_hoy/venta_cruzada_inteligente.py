@@ -34,13 +34,13 @@ class VentaCruzadaInteligente:
         if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en base de datos (sin LOWER/TRIM: collation case-insensitive + índice)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
+            q_p = "SELECT 1 FROM productos WHERE nombre = ? OR nombre LIKE ? LIMIT 1"
             rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
             if rows_p:
                 return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
+            q_c = "SELECT 1 FROM carteleria_global WHERE nombre_producto = ? OR nombre_producto LIKE ? LIMIT 1"
             rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
             if rows_c:
                 return True, nom_limpio

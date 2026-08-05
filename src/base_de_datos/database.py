@@ -1020,6 +1020,8 @@ class DatabaseManager:
         # Crear índice para optimizar búsqueda instantánea (opcional; no bloquear arranque)
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+            "CREATE INDEX IF NOT EXISTS idx_productos_relampago ON productos (precio_oferta_relampago)",
+            "CREATE INDEX IF NOT EXISTS idx_carteleria_nombre ON carteleria_global (nombre_producto(100))",
             "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
@@ -1719,7 +1721,8 @@ class DatabaseManager:
                         pass
                 return []
             finally:
-                if conn:
+                # MariaDB: mantener conexión thread-local; cerrar solo SQLite
+                if conn and not is_mariadb:
                     conn.close()
         return []
 
@@ -1758,7 +1761,7 @@ class DatabaseManager:
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
-                if conn:
+                if conn and not is_mariadb:
                     conn.close()
         return False
 
@@ -1818,7 +1821,7 @@ class DatabaseManager:
                 logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
-                if conn:
+                if conn and not is_mariadb:
                     conn.close()
         return None
     def guardar_venta_completa(self, venta_data, items):
@@ -1966,7 +1969,7 @@ class DatabaseManager:
                 logger.warning(f"Fallo en sync_venta_to_master: {e}")
                 return False
             finally:
-                if conn:
+                if conn and not is_mariadb:
                     conn.close()
         return False
 
