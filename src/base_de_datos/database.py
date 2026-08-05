@@ -4,6 +4,7 @@ import os
 import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+from src.utils.text_encoding import mariadb_safe_text
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -1130,6 +1131,14 @@ class DatabaseManager:
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                # detalles_ventas.nombre_producto: tiendas viejas usan utf8 (3 bytes) y fallan con emojis (🔥 ofertas)
+                try:
+                    self.execute_non_query(
+                        "ALTER TABLE detalles_ventas MODIFY COLUMN nombre_producto "
+                        "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                    )
+                except Exception:
+                    pass
                 # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
                 self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
                 
@@ -1461,10 +1470,11 @@ class DatabaseManager:
             
             # 2. Insertar Detalles y Actualizar Stock
             for it in items:
+                nombre = mariadb_safe_text(it.get('nombre', '')) if getattr(self, "db_engine_type", "sqlite") == "mariadb" else it.get('nombre', '')
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], nombre, it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1510,10 +1520,11 @@ class DatabaseManager:
             id_venta = cursor.lastrowid
             
             for it in items:
+                nombre = mariadb_safe_text(it.get('nombre', ''))
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), nombre, it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
