@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import http.client
 import os
 import threading
@@ -102,6 +103,8 @@ def download_release_zip(
     progress_callback=None,
     *,
     force_single: bool = False,
+    expected_sha256: str | None = None,
+    expected_size: int = 0,
 ) -> None:
     """
     Descarga a dest_path. Usa Range paralelo si el CDN lo permite;
@@ -187,7 +190,11 @@ def _download_release_zip_once(
             _download_parallel(
                 final_url, dest_path, part_path, total, verify, progress_callback
             )
-            _verify_downloaded_zip(dest_path)
+            _verify_downloaded_zip(
+                dest_path,
+                expected_sha256=expected_sha256,
+                expected_size=expected_size,
+            )
             return
         except Exception as exc:
             if _is_zip_integrity_error(exc):
@@ -198,11 +205,43 @@ def _download_release_zip_once(
     _download_single(
         session, final_url, dest_path, part_path, total, verify, progress_callback
     )
-    _verify_downloaded_zip(dest_path)
+    _verify_downloaded_zip(
+        dest_path,
+        expected_sha256=expected_sha256,
+        expected_size=expected_size,
+    )
 
 
-def _verify_downloaded_zip(dest_path: str) -> None:
-    """Falla rápido si el ZIP local está truncado o con CRC inválido."""
+def _sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _verify_downloaded_zip(
+    dest_path: str,
+    *,
+    expected_sha256: str | None = None,
+    expected_size: int = 0,
+) -> None:
+    """Falla rápido si el ZIP local está truncado, corrupto o no coincide con GitHub."""
+    actual_size = os.path.getsize(dest_path)
+    if expected_size > 0 and actual_size != expected_size:
+        raise zipfile.BadZipFile(
+            f"Tamaño incorrecto: {actual_size} bytes, esperados {expected_size}"
+        )
+
+    sha256 = (expected_sha256 or "").strip().lower()
+    if sha256:
+        actual = _sha256_file(dest_path)
+        if actual != sha256:
+            raise zipfile.BadZipFile(
+                f"SHA-256 no coincide (descarga corrupta): {actual[:12]}… != {sha256[:12]}…"
+            )
+        return
+
     with zipfile.ZipFile(dest_path, "r") as zf:
         bad = zf.testzip()
         if bad:

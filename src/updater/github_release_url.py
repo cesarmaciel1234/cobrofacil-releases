@@ -12,11 +12,27 @@ RELEASE_ZIP_NAME = "CobroFacil_POS_Release.zip"
 USER_AGENT = "CobroFacil-ReleaseResolver/2026"
 
 
-def _pick_asset_url(release: dict) -> str | None:
+def _pick_release_asset(release: dict) -> dict | None:
     for asset in release.get("assets") or []:
         if asset.get("name") == RELEASE_ZIP_NAME:
-            return str(asset.get("browser_download_url") or "").strip() or None
+            url = str(asset.get("browser_download_url") or "").strip()
+            if not url:
+                return None
+            digest = str(asset.get("digest") or "").strip()
+            sha256 = ""
+            if digest.lower().startswith("sha256:"):
+                sha256 = digest.split(":", 1)[1].strip().lower()
+            try:
+                size = int(asset.get("size") or 0)
+            except (TypeError, ValueError):
+                size = 0
+            return {"url": url, "sha256": sha256, "size": size}
     return None
+
+
+def _pick_asset_url(release: dict) -> str | None:
+    asset = _pick_release_asset(release)
+    return asset.get("url") if asset else None
 
 
 def _ssl_relax_active() -> bool:
@@ -75,18 +91,18 @@ def _fetch_json(url: str, timeout: int = 30) -> dict | list | None:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def resolve_release_zip_url(timeout: int = 30) -> str | None:
+def resolve_release_zip_asset(timeout: int = 30) -> dict | None:
     """
-    Devuelve browser_download_url del asset CobroFacil_POS_Release.zip
+    Devuelve url, sha256 y size del asset CobroFacil_POS_Release.zip
     del release más reciente, o None si no hay release publicado.
     """
     base = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
     try:
         latest = _fetch_json(f"{base}/latest", timeout=timeout)
         if isinstance(latest, dict):
-            url = _pick_asset_url(latest)
-            if url:
-                return url
+            asset = _pick_release_asset(latest)
+            if asset:
+                return asset
     except urllib.error.HTTPError as exc:
         if exc.code not in (404, 403):
             raise
@@ -97,13 +113,19 @@ def resolve_release_zip_url(timeout: int = 30) -> str | None:
         releases = _fetch_json(f"{base}?per_page=10", timeout=timeout)
         if isinstance(releases, list):
             for release in releases:
-                url = _pick_asset_url(release)
-                if url:
-                    return url
+                asset = _pick_release_asset(release)
+                if asset:
+                    return asset
     except Exception:
         pass
 
     return None
+
+
+def resolve_release_zip_url(timeout: int = 30) -> str | None:
+    """Devuelve browser_download_url del ZIP del release más reciente."""
+    asset = resolve_release_zip_asset(timeout=timeout)
+    return asset.get("url") if asset else None
 
 
 def release_zip_url_or_fallback() -> str:
