@@ -7,6 +7,66 @@ from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
 
+
+def _muestra_carteleria_con_stock(where_sql="", params=(), sample_size=5):
+    """Cartelería sin JOIN LOWER(productos): escanea todo el inventario y dispara error 2013."""
+    from src.cerebro_global.servicios.cache_productos import cache_productos
+
+    prod_by_name = {}
+    for row in cache_productos.obtener_todos():
+        if isinstance(row, dict):
+            nom = str(row.get("nombre", "")).strip().lower()
+        else:
+            nom = str(row[1] if len(row) > 1 else "").strip().lower()
+        if nom:
+            prod_by_name.setdefault(nom, row)
+
+    where = f" WHERE {where_sql}" if where_sql else ""
+    rows = db_manager.execute_query(
+        f"SELECT nombre_producto, precio_normal, precio_oferta, regla_texto "
+        f"FROM carteleria_global{where} LIMIT 50",
+        params,
+    )
+    if not rows:
+        return []
+    picked = random.sample(list(rows), min(sample_size, len(rows)))
+    enriched = []
+    for r in picked:
+        if isinstance(r, dict):
+            nombre = str(r.get("nombre_producto", ""))
+            precio = float(r.get("precio_normal") or 0)
+            precio_of = float(r.get("precio_oferta") or 0)
+            regla_raw = str(r.get("regla_texto") or "")
+        else:
+            nombre = str(r[0])
+            precio = float(r[1])
+            precio_of = float(r[2])
+            regla_raw = str(r[3] or "")
+        stock, unidad = 0.0, "Unidades"
+        if nombre:
+            key = nombre.strip().lower()
+            prod_row = prod_by_name.get(key)
+            if prod_row is None:
+                for k, v in prod_by_name.items():
+                    if key in k or k in key:
+                        prod_row = v
+                        break
+            if prod_row:
+                try:
+                    if isinstance(prod_row, dict):
+                        stock = float(prod_row.get("stock") or 0)
+                        u = prod_row.get("unidad")
+                    else:
+                        stock = float(prod_row["stock"] or 0)
+                        u = prod_row["unidad"]
+                    if u:
+                        unidad = str(u)
+                except (TypeError, KeyError, IndexError):
+                    pass
+        enriched.append((nombre, precio, precio_of, regla_raw, stock, unidad))
+    return enriched
+
+
 class MotorCarrusel(QThread):
     datos_listos = pyqtSignal(list, str)
     
@@ -66,16 +126,8 @@ class MotorCombos(QThread):
             
             eleccion = random.choice([0, 1])
             
-            # Buscar productos en oferta desde carteleria_global (sin ORDER BY RAND: timeout en MariaDB)
-            q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-                WHERE c.precio_oferta > 0
-            """
-            rows = db_manager.execute_query(q)
-            if rows:
-                rows = random.sample(list(rows), min(5, len(rows)))
+            # Sin JOIN LOWER(productos): timeout en MariaDB con inventario grande (issue #318)
+            rows = _muestra_carteleria_con_stock("precio_oferta > 0", sample_size=5)
             
             if not rows: return
             
@@ -174,14 +226,7 @@ class MotorIAPanel(QThread):
                     pass
             
             # Si es turno 0 o si no había combos guardados, mostramos a Chef Lobo y su recomendación con clima
-            q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-            """
-            rows = db_manager.execute_query(q)
-            if rows:
-                rows = random.sample(list(rows), min(5, len(rows)))
+            rows = _muestra_carteleria_con_stock(sample_size=5)
             if not rows or self.isInterruptionRequested(): return
             
             prod_lista = []

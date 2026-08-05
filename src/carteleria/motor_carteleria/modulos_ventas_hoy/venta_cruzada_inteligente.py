@@ -1,7 +1,31 @@
 import random
+import time
 
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+from src.cerebro_global.servicios.cache_productos import cache_productos
+
+_cartel_nombres_cache = None
+_cartel_nombres_ts = 0.0
+
+
+def _nombres_carteleria_en_memoria():
+    """Nombres de carteleria_global en caché (evita TRIM/LOWER por producto → timeout 2013)."""
+    global _cartel_nombres_cache, _cartel_nombres_ts
+    if _cartel_nombres_cache is not None and (time.time() - _cartel_nombres_ts) < 60:
+        return _cartel_nombres_cache
+    nombres = set()
+    try:
+        rows = db_manager.execute_query("SELECT nombre_producto FROM carteleria_global LIMIT 5000") or []
+        for row in rows:
+            nom = str(row.get("nombre_producto") if isinstance(row, dict) else row[0]).strip().lower()
+            if nom:
+                nombres.add(nom)
+    except Exception:
+        pass
+    _cartel_nombres_cache = nombres
+    _cartel_nombres_ts = time.time()
+    return nombres
 
 class VentaCruzadaInteligente:
     """
@@ -34,16 +58,19 @@ class VentaCruzadaInteligente:
         if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en catálogo en memoria (evita TRIM/LOWER por producto → timeout 2013)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_p:
-                return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_c:
-                return True, nom_limpio
+            key = nom_limpio.lower()
+            for row in cache_productos.obtener_todos():
+                if isinstance(row, dict):
+                    nom = str(row.get("nombre", "")).strip().lower()
+                else:
+                    nom = str(row[1] if len(row) > 1 else "").strip().lower()
+                if nom == key or (len(key) > 3 and (key in nom or nom in key)):
+                    return True, nom_limpio
+            for nom in _nombres_carteleria_en_memoria():
+                if nom == key or (len(key) > 3 and (key in nom or nom in key)):
+                    return True, nom_limpio
         except Exception:
             pass
             
