@@ -292,6 +292,8 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
         "operationalerror",
         "mysqld",
         "circuit breaker: mariadb",
+        "maestra inalcanzable",
+        "fallo de conexión a la maestra",
     )
     # "timeout" solo si el mensaje parece de BD (evita curar timeouts de red ajenos)
     if not any(k in blob for k in keywords):

@@ -218,20 +218,25 @@ class DatabaseManager:
                 if not self.is_master:
                     import socket
                     import json as _json
+                    import time as _time
 
                     master_ok = False
-                    try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.settimeout(1.5)
-                        result = sock.connect_ex((host, 3306))
-                        sock.close()
-                        if result == 0:
-                            conn = self.mariadb_engine.get_connection()
-                            conn._conn.ping()
-                            logger.info("Conexión OK a la PC Maestra.")
-                            master_ok = True
-                    except Exception:
-                        master_ok = False
+                    for _attempt in range(3):
+                        try:
+                            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            sock.settimeout(1.5)
+                            result = sock.connect_ex((host, 3306))
+                            sock.close()
+                            if result == 0:
+                                conn = self.mariadb_engine.get_connection()
+                                conn._conn.ping()
+                                logger.info("Conexión OK a la PC Maestra.")
+                                master_ok = True
+                                break
+                        except Exception:
+                            pass
+                        if _attempt < 2:
+                            _time.sleep(1.5)
 
                     if not master_ok:
                         logger.info("Intentando auto-descubrir maestra en la red...")
@@ -278,9 +283,10 @@ class DatabaseManager:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
                     if not master_ok:
-                        logger.error(f"Fallo de conexión a la Maestra en {host}")
+                        logger.warning(
+                            f"Maestra inalcanzable en {host}; esclava en modo offline temporal (SQLite local)."
+                        )
                         logger.info(
-                            "Esclava offline temporal (SQLite local). "
                             "Se conserva is_master=false en config para el próximo arranque."
                         )
                         self.is_master = False
