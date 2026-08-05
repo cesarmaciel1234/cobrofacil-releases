@@ -2,6 +2,7 @@ import pymysql
 import threading
 import time
 from src.logger import logger
+from src.utils.text_db import sanitize_mariadb_params
 
 class MariaDBCursorWrapper:
     def __init__(self, cursor):
@@ -25,7 +26,7 @@ class MariaDBCursorWrapper:
         try:
             mq = self._translate_query(query)
             if params:
-                return self._cursor.execute(mq, params)
+                return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
             logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
@@ -33,7 +34,7 @@ class MariaDBCursorWrapper:
 
     def executemany(self, query, params_list):
         mq = self._translate_query(query)
-        return self._cursor.executemany(mq, params_list)
+        return self._cursor.executemany(mq, sanitize_mariadb_params(params_list))
 
     def fetchone(self):
         return self._cursor.fetchone()
