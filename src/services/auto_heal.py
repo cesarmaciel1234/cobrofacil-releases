@@ -273,6 +273,42 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
     return HealResult(False, "repair_mariadb_corrupt", "no_recovery")
 
 
+def _heal_mariadb_ghost_tables(blob: str) -> Optional[HealResult]:
+    """Repara tablas InnoDB huérfanas (error 1932) y restaura desde respaldo si hace falta."""
+    if not any(
+        k in blob
+        for k in ("1932", "doesn't exist in engine", "does not exist in engine")
+    ):
+        return None
+    if not any(
+        k in blob
+        for k in ("mariadb", "punpro_db", "productos", "movimientos_caja", "carteleria")
+    ):
+        return None
+    try:
+        from src.base_de_datos.database import db_manager
+        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+        from src.config import config
+
+        if str(config.get("db_engine") or "").lower() != "mariadb":
+            return None
+        host = str(config.get("db_host") or "127.0.0.1").strip() or "127.0.0.1"
+        db_manager._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+        db_manager._create_tables()
+        if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
+            return HealResult(True, "repair_mariadb_ghost", host)
+        if AutoBlindajeDB.restaurar_ultimo_backup_valido(
+            "mariadb",
+            allow_older_than_today=True,
+            merge_today=True,
+            mariadb_host=host,
+        ):
+            return HealResult(True, "restore_mariadb_ghost", host)
+    except Exception as e:
+        return HealResult(False, "repair_mariadb_ghost", str(e))
+    return HealResult(False, "repair_mariadb_ghost", "no_recovery")
+
+
 def _heal_mariadb(blob: str) -> Optional[HealResult]:
     """Cura conexiones MariaDB. Solo healed=True si la BD responde de verdad.
 
@@ -561,6 +597,7 @@ def try_auto_heal(
         _heal_ssl_github,
         _heal_update_cache,
         _heal_mariadb_corrupt_table,
+        _heal_mariadb_ghost_tables,
         _heal_mariadb,
         _heal_port_busy,
     ):

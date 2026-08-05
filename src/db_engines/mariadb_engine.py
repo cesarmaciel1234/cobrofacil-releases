@@ -13,8 +13,9 @@ def mariadb_safe_text(value, max_len=None):
     return text
 
 class MariaDBCursorWrapper:
-    def __init__(self, cursor):
+    def __init__(self, cursor, engine=None):
         self._cursor = cursor
+        self._engine = engine
 
     def _translate_query(self, query):
         # Tipos de datos
@@ -39,14 +40,22 @@ class MariaDBCursorWrapper:
         except Exception as e:
             err_msg = str(e).lower()
             q_up = query.lstrip().upper()
+            ghost = (
+                "1932" in err_msg
+                or "doesn't exist in engine" in err_msg
+                or "does not exist in engine" in err_msg
+            )
+            # MariaDB responde: no mantener circuit breaker por fallos de conexión previos.
+            if ghost and self._engine is not None:
+                try:
+                    self._engine._last_fail_time = 0
+                except Exception:
+                    pass
             # Índices opcionales en migración: el caller los ignora; no reportar como ERROR.
             if q_up.startswith("CREATE INDEX IF NOT EXISTS"):
                 logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
-            elif (
-                ("1932" in err_msg or "doesn't exist in engine" in err_msg or "does not exist in engine" in err_msg)
-                and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
-            ):
-                logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif ghost:
+                logger.warning(f"Tabla huérfana en MariaDB (1932): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -79,7 +88,7 @@ class MariaDBConnectionWrapper:
     def cursor(self):
         # DictCursor emula sqlite3.Row mejor que un cursor normal
         c = self._conn.cursor(pymysql.cursors.DictCursor)
-        return MariaDBCursorWrapper(c)
+        return MariaDBCursorWrapper(c, engine=self._engine)
 
     def commit(self):
         self._conn.commit()

@@ -755,6 +755,41 @@ class DatabaseManager:
             except Exception:
                 pass
 
+    @staticmethod
+    def _extract_table_from_query(query: str) -> str | None:
+        import re
+
+        m = re.search(
+            r"\b(?:FROM|INTO|UPDATE|JOIN|TABLE)\s+`?(\w+)`?",
+            query,
+            re.IGNORECASE,
+        )
+        return m.group(1).lower() if m else None
+
+    def _try_repair_ghost_table_for_query(self, query: str) -> bool:
+        """Repara metadatos huérfanos (1932) y recrea la tabla antes de reintentar."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        table = self._extract_table_from_query(query)
+        if not table:
+            return False
+        conn = None
+        try:
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+            conn = self.get_connection()
+            cur = conn.cursor()
+            self._repair_mariadb_ghost_table(cur, table)
+            conn.commit()
+            self._create_tables()
+            logger.warning("Tabla %s reparada tras error 1932; reintentando consulta", table)
+            return True
+        except Exception as ex:
+            logger.warning("No se pudo reparar tabla huérfana %s: %s", table, ex)
+            return False
+        finally:
+            if conn:
+                conn.close()
+
     def _prepare_mariadb_table_for_import(self, cursor, table: str) -> None:
         """TRUNCATE/DELETE previo a import SQLite→MariaDB; repara ghost configuracion (1932)."""
         if table == "configuracion" and getattr(self, "db_engine_type", "sqlite") == "mariadb":
@@ -1713,6 +1748,14 @@ class DatabaseManager:
                 result = cursor.fetchall()
                 return result if result is not None else []
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_repair_ghost_table_for_query(query)
+                ):
+                    time.sleep(0.3)
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
@@ -1725,7 +1768,9 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                if is_mariadb and self._is_transient_mariadb_error(e):
+                if is_mariadb and (
+                    self._is_transient_mariadb_error(e) or self._is_mariadb_ghost_table_error(e)
+                ):
                     logger.warning(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 else:
                     logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
@@ -1763,6 +1808,14 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_repair_ghost_table_for_query(query)
+                ):
+                    time.sleep(0.3)
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
@@ -1775,7 +1828,9 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                if is_mariadb and self._is_transient_mariadb_error(e):
+                if is_mariadb and (
+                    self._is_transient_mariadb_error(e) or self._is_mariadb_ghost_table_error(e)
+                ):
                     logger.warning(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 else:
                     logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
@@ -1828,6 +1883,14 @@ class DatabaseManager:
                         return row[0]
                 return None
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_repair_ghost_table_for_query(query)
+                ):
+                    time.sleep(0.3)
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
@@ -1840,7 +1903,9 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                if is_mariadb and self._is_transient_mariadb_error(e):
+                if is_mariadb and (
+                    self._is_transient_mariadb_error(e) or self._is_mariadb_ghost_table_error(e)
+                ):
                     logger.warning(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 else:
                     logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
