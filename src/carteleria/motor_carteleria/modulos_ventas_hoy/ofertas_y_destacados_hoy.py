@@ -1,3 +1,5 @@
+import random
+
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.carteleria.motor_carteleria.modulos_ventas_hoy.buscador_precios_y_stock import BuscadorDePreciosYStock
@@ -25,10 +27,10 @@ class ModuloOfertasYDestacadosHoy:
                 
         # 2. Si hay pocas ofertas en carteleria_global, buscamos en la tabla principal 'productos'
         if len(nombres_encontrados) < limit:
-            q_prod = "SELECT nombre FROM productos WHERE precio_oferta > 0 ORDER BY RANDOM() LIMIT ?"
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                q_prod = q_prod.replace("RANDOM()", "RAND()")
-            rows_p = db_manager.execute_query(q_prod, (limit * 2,))
+            q_prod = "SELECT nombre FROM productos WHERE precio_oferta > 0 LIMIT ?"
+            rows_p = db_manager.execute_query(q_prod, (min(limit * 20, 200),))
+            if rows_p:
+                rows_p = random.sample(list(rows_p), min(limit * 2, len(rows_p)))
             if rows_p:
                 for r in rows_p:
                     nom = r['nombre'] if isinstance(r, dict) else r[0]

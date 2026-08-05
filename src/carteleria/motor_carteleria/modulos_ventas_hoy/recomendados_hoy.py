@@ -1,3 +1,5 @@
+import random
+
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.carteleria.motor_carteleria.modulos_ventas_hoy.buscador_precios_y_stock import BuscadorDePreciosYStock
@@ -22,12 +24,11 @@ class ModuloRecomendadoHoy:
         if len(lista_pantalla) < 5:
             nombres_ya_puestos = {item[0].lower() for item in lista_pantalla}
             
-            # Consultar productos en stock de la base general o carteleria para sugerir hoy
-            q_sugerencias = "SELECT nombre FROM productos WHERE stock > 0 ORDER BY RANDOM() LIMIT ?"
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                q_sugerencias = q_sugerencias.replace("RANDOM()", "RAND()")
-                
-            rows_sug = db_manager.execute_query(q_sugerencias, (limit * 2,))
+            # Consultar productos en stock (sin ORDER BY RAND: timeout en MariaDB)
+            q_sugerencias = "SELECT nombre FROM productos WHERE stock > 0 LIMIT ?"
+            rows_sug = db_manager.execute_query(q_sugerencias, (min(limit * 20, 200),))
+            if rows_sug:
+                rows_sug = random.sample(list(rows_sug), min(limit * 2, len(rows_sug)))
             lista_nombres_sug = [{'nombre': r['nombre'] if isinstance(r, dict) else r[0], 'cantidad': 5.0} for r in rows_sug] if rows_sug else []
             
             sugerencias_armadas = BuscadorDePreciosYStock.armar_lista_para_pantalla(lista_nombres_sug)
