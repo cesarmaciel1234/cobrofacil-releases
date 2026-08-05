@@ -51,7 +51,7 @@ class BuscadorDePreciosYStock:
             q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?))"
             rows_cartel = db_manager.execute_query(q_cartel, (nombre.strip(),))
             if not rows_cartel:
-                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?)"
+                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?) LIMIT 5"
                 rows_cartel = db_manager.execute_query(q_cartel, (f"%{nombre.strip()}%",))
                 
             if rows_cartel:
@@ -72,7 +72,7 @@ class BuscadorDePreciosYStock:
             q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
             rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
             if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
+                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 5"
                 rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
                 
             if rows_prod:
