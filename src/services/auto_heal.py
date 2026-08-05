@@ -455,6 +455,10 @@ def _heal_broken_update_install(blob: str) -> Optional[HealResult]:
         "win32 valida",
         "no es una aplicación win32",
         "openssl",
+        "embedded pkg archive",
+        "pkg archive",
+        "pyinstaller",
+        "could not load",
     )
     if not any(k in blob for k in keys):
         return None

@@ -136,8 +136,12 @@ jobs:
             --add-data "Catalogos/iconos_rubros;Catalogos/iconos_rubros" `
             main.py
 
-      - name: Copiar version.json al paquete instalable
-        run: Copy-Item version.json dist/CobroFacil_POS/version.json
+      - name: Copiar version.json y launcher autónomo
+        shell: pwsh
+        run: |
+          Copy-Item version.json dist/CobroFacil_POS/version.json
+          Copy-Item CobroFacil_Start.bat dist/CobroFacil_POS/CobroFacil_Start.bat -Force
+          Write-Host "Launcher CobroFacil_Start.bat incluido en el paquete"
 
       # -----------------------------------------------------------------------
       # 4b. MariaDB portable + ZIP del release (POS + mariadb_server)

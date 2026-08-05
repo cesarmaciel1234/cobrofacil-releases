@@ -119,6 +119,10 @@ def _pos_exe_path(base: str | None = None) -> str:
     return os.path.join(root, "CobroFacil_POS.exe")
 
 
+# Cookie PyInstaller (bootloader) cerca del final del EXE
+_PYINSTALLER_COOKIE = b"MEI\x0e\x0b\n\x0b\x0e"
+
+
 def _pe_ok(path: str, min_size: int = 4096) -> bool:
     """True si el archivo existe, tiene tamaño razonable y cabecera MZ (PE/Win32)."""
     try:
@@ -128,6 +132,47 @@ def _pe_ok(path: str, min_size: int = 4096) -> bool:
             return f.read(2) == b"MZ"
     except OSError:
         return False
+
+
+def _pyinstaller_pkg_ok(path: str, min_size: int = 50_000) -> bool:
+    """Detecta EXE PyInstaller con PKG embebido intacto (evita 'Could not load PKG archive')."""
+    if not _pe_ok(path, min_size=min_size):
+        return False
+    try:
+        size = os.path.getsize(path)
+        with open(path, "rb") as f:
+            f.seek(max(0, size - 8192))
+            tail = f.read()
+        # Cookie oficial o rastro MEI típico del bootloader
+        return _PYINSTALLER_COOKIE in tail or b"MEI" in tail
+    except OSError:
+        return False
+
+
+def _exe_integrity_ok(path: str) -> bool:
+    """Integridad del hub: PE + PKG PyInstaller."""
+    return _pyinstaller_pkg_ok(path, min_size=50_000)
+
+
+def _should_restore_exe_from_old(exe: str, old: str) -> bool:
+    """True si el EXE actual está peor que el .old (corrupto / más chico / sin PKG)."""
+    if not _pe_ok(old, min_size=50_000):
+        return False
+    if not os.path.isfile(exe):
+        return True
+    try:
+        cur_sz = os.path.getsize(exe)
+        old_sz = os.path.getsize(old)
+    except OSError:
+        return True
+    if not _exe_integrity_ok(exe) and _exe_integrity_ok(old):
+        return True
+    # Update a medias: el nuevo quedó truncado respecto al .old
+    if cur_sz + 40_000 < old_sz and _exe_integrity_ok(old):
+        return True
+    if not _pe_ok(exe, min_size=50_000) and _pe_ok(old, min_size=50_000):
+        return True
+    return False
 
 
 def _is_ssl_binary_name(name: str) -> bool:
@@ -252,9 +297,39 @@ def heal_install_after_update() -> bool:
         fixed = True
 
     exe = _pos_exe_path()
-    if (not _pe_ok(exe, min_size=50_000)) and _pe_ok(exe + ".old", min_size=50_000):
-        if _restore_one_old(exe + ".old", exe):
+    old = exe + ".old"
+    if _should_restore_exe_from_old(exe, old):
+        # Conservar el roto por si hay que diagnosticar, luego restaurar .old
+        try:
+            broken = exe + ".broken"
+            if os.path.isfile(exe):
+                try:
+                    if os.path.isfile(broken):
+                        os.remove(broken)
+                except OSError:
+                    pass
+                try:
+                    shutil.copy2(exe, broken)
+                except OSError:
+                    pass
+        except Exception:
+            pass
+        try:
+            shutil.copy2(old, exe)
+            ok_restored = _exe_integrity_ok(exe) or _pe_ok(exe, min_size=50_000)
+        except OSError:
+            ok_restored = _restore_one_old(old, exe)
+        if ok_restored:
             fixed = True
+            try:
+                from src.logger import logger
+
+                logger.warning(
+                    "heal_install_after_update: CobroFacil_POS.exe restaurado desde .old "
+                    "(PKG/PE corrupto o truncado)."
+                )
+            except Exception:
+                pass
 
     if heal_broken_binaries(force_ssl=False):
         fixed = True
@@ -837,6 +912,26 @@ def apply_pending_update_on_startup() -> bool:
                     if logger:
                         logger.error(f"Fallo copiando {src} a {dst}: {e}")
                     raise
+        # Verificar hub tras copiar: si el PKG quedó roto, rollback al .old (sin borrarlo) y fallar
+        hub = _pos_exe_path(base)
+        hub_old = hub + ".old"
+        if not _exe_integrity_ok(hub):
+            rolled = False
+            if _pe_ok(hub_old, min_size=50_000):
+                try:
+                    shutil.copy2(hub_old, hub)
+                    rolled = _exe_integrity_ok(hub)
+                except OSError:
+                    rolled = False
+            if rolled:
+                raise RuntimeError(
+                    "EXE post-update sin PKG PyInstaller válido; restaurado .old. "
+                    "Reintentar descarga del release."
+                )
+            raise RuntimeError(
+                "EXE post-update corrupto (PKG PyInstaller) y no hay .old usable."
+            )
+
         remote_ver = pending.get("remote_version") or read_remote_version()
         if remote_ver:
             version_path = _local_version_file()
