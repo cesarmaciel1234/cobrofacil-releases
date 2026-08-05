@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import socket
 import urllib.request
 import logging
@@ -76,22 +77,80 @@ class DbSyncWorker(QThread):
                             cfg_data = json.load(f)
                 
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
                 
-                # 2. SOS (Soporta múltiples ofertas relámpago rotativas)
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                oferta_sos = db_manager.execute_query(sos_query)
+                # 2. SOS (sin ORDER BY RAND: timeout en MariaDB con inventario grande)
+                sos_query = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock FROM productos "
+                    "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
+                    "AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    "ORDER BY precio_oferta_relampago DESC LIMIT 50"
+                )
+                sos_rows = db_manager.execute_query(sos_query)
+                oferta_sos = random.sample(sos_rows, min(10, len(sos_rows))) if sos_rows else []
                 
                 # 3. Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
                 rows_precios = db_manager.execute_query(precios_query)
                 
-                # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
+                # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
+                if is_mariadb:
+                    cond_hoy = "DATE(v.fecha) = CURDATE()"
+                    cond_semana = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+                    cond_mes = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+                    join_cond = (
+                        "CONVERT(dv.id_producto USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(p.codigo USING utf8mb4) COLLATE utf8mb4_unicode_ci "
+                        "OR CONVERT(dv.id_producto USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(CAST(p.id AS CHAR) USING utf8mb4) COLLATE utf8mb4_unicode_ci"
+                    )
+                else:
+                    cond_hoy = "date(v.fecha) = date('now', 'localtime')"
+                    cond_semana = "date(v.fecha) >= date('now', '-7 days', 'localtime')"
+                    cond_mes = "date(v.fecha) >= date('now', '-30 days', 'localtime')"
+                    join_cond = "dv.id_producto = p.codigo OR dv.id_producto = CAST(p.id AS TEXT)"
+
+                def get_top_query(cond_date):
+                    return f"""
+                        SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago,
+                               p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
+                        FROM detalles_ventas dv
+                        JOIN ventas v ON dv.id_venta = v.id
+                        JOIN productos p ON {join_cond}
+                        WHERE {cond_date} AND p.precio > 0
+                        AND LOWER(p.nombre) NOT LIKE '%articulo comun%' AND LOWER(p.nombre) NOT LIKE '%venta libre%'
+                        GROUP BY p.id, p.codigo, p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago,
+                                 p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
+                        ORDER BY SUM(dv.cantidad) DESC
+                        LIMIT 10
+                    """
+
                 top_dict = {"hoy": [], "semana": [], "mes": []}
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                top_dict["hoy"] = db_manager.execute_query(fallback_q)
-                top_dict["semana"] = top_dict["hoy"]
-                top_dict["mes"] = top_dict["hoy"]
+                try:
+                    q_hoy = get_top_query(cond_hoy)
+                    q_sem = get_top_query(cond_semana)
+                    q_mes = get_top_query(cond_mes)
+                    if not is_mariadb:
+                        q_hoy = q_hoy.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)")
+                        q_sem = q_sem.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)")
+                        q_mes = q_mes.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)")
+                    top_dict["hoy"] = db_manager.execute_query(q_hoy)
+                    top_dict["semana"] = db_manager.execute_query(q_sem)
+                    top_dict["mes"] = db_manager.execute_query(q_mes)
+                except Exception:
+                    pass
+
+                fallback_q = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos "
+                    "WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    "ORDER BY nombre LIMIT 50"
+                )
+                if not top_dict["hoy"]:
+                    fb_rows = db_manager.execute_query(fallback_q)
+                    top_dict["hoy"] = random.sample(fb_rows, min(10, len(fb_rows))) if fb_rows else []
+                if not top_dict["semana"]:
+                    top_dict["semana"] = top_dict["hoy"]
+                if not top_dict["mes"]:
+                    top_dict["mes"] = top_dict["hoy"]
                 
                 def _to_serializable(rows):
                     res = []
