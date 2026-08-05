@@ -59,6 +59,41 @@ class MariaDBController:
                 
         return True
 
+    def _is_port_open(self, host="127.0.0.1", port=3306, timeout=0.5):
+        import socket
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(timeout)
+            ok = s.connect_ex((host, port)) == 0
+            s.close()
+            return ok
+        except Exception:
+            return False
+
+    def _try_pymysql(self, password="1234", timeout=2):
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password=password,
+                connect_timeout=timeout,
+            )
+            conn.close()
+            return True
+        except Exception:
+            return False
+
+    def _wait_mariadb_ready(self, max_sec=60.0):
+        """Espera socket + handshake MySQL (más fiable que solo el puerto TCP)."""
+        deadline = time.time() + max_sec
+        while time.time() < deadline:
+            if self._try_pymysql("1234", 1) or self._try_pymysql("", 1):
+                return True
+            time.sleep(0.5)
+        return False
+
     def _ensure_firewall(self):
         """Asegura reglas LAN (3306/8000/37020…). Si faltan, pide UAC y espera resultado."""
         try:
@@ -86,7 +121,7 @@ class MariaDBController:
             logger.error(f"Fallo al intentar auto-configurar firewall: {e}")
             return False
 
-    def start_server(self):
+    def start_server(self, _start_attempt=0):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
         self._ensure_firewall()
         
@@ -95,41 +130,26 @@ class MariaDBController:
             return True
 
         # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
-        try:
-            import pymysql
-            # Intentar conexión rápida con la contraseña '1234'
-            conn = pymysql.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="1234",
-                connect_timeout=2
-            )
-            conn.close()
+        if self._try_pymysql("1234", 2):
             logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (con contraseña).")
             self._initialized = True
             self._create_punpro_db()
             return True
-        except Exception:
-            pass
 
-        try:
-            import pymysql
-            # Intentar conexión rápida sin contraseña
-            conn = pymysql.connect(
-                host="127.0.0.1",
-                port=3306,
-                user="root",
-                password="",
-                connect_timeout=2
-            )
-            conn.close()
+        if self._try_pymysql("", 2):
             logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (sin contraseña).")
             self._initialized = True
             self._create_punpro_db()
             return True
-        except Exception:
-            pass
+
+        # Puerto abierto pero sin handshake: otro proceso (p.ej. --server) está arrancando
+        if self._is_port_open():
+            logger.info("Puerto 3306 ocupado — esperando a que MariaDB termine de iniciar...")
+            if self._wait_mariadb_ready(45.0):
+                logger.info("MariaDB respondió tras espera (proceso ajeno o arranque lento).")
+                self._initialized = True
+                self._create_punpro_db()
+                return True
 
         if not self._init_database_if_needed():
             return False
@@ -140,6 +160,7 @@ class MariaDBController:
         try:
             # Asegurar que no hay un mysqld.exe zombie colgando del puerto 3306
             subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(1.5)
             
             # Iniciamos mysqld apuntando a nuestro datadir
             # Evitamos que se abra una ventana de comandos en Windows usando CREATE_NO_WINDOW
@@ -168,30 +189,31 @@ class MariaDBController:
                 logger.error("El proceso mysqld.exe se cerro inesperadamente tras iniciar.")
                 return False
                 
-            # Esperar a que el puerto 3306 este listo usando un polling inteligente
-            import time
-            import socket
-            
-            max_retries = 40 # 20 segundos máximo para evitar bloqueos (en PCs lentas MariaDB tarda en iniciar)
-            connected = False
-            for i in range(max_retries):
-                try:
-                    # Mantenemos viva la animación (el event loop corre en main)
-                    pass
-                    
-                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    s.settimeout(0.5)
-                    result = s.connect_ex(("127.0.0.1", 3306))
-                    s.close()
-                    if result == 0:
-                        logger.info(f"MariaDB listo despues de {i*0.5} segundos.")
-                        connected = True
-                        break
-                except:
-                    pass
-                time.sleep(0.5)
+            # Esperar handshake MySQL (post-update / InnoDB recovery puede tardar >20s en PCs lentas)
+            wait_sec = 60.0 if _start_attempt == 0 else 45.0
+            t0 = time.time()
+            connected = self._wait_mariadb_ready(wait_sec)
+            if connected:
+                logger.info(f"MariaDB listo despues de {time.time() - t0:.1f} segundos.")
             
             if not connected:
+                if _start_attempt < 1:
+                    logger.warning(
+                        "MariaDB no respondio a tiempo — reintentando arranque una vez mas..."
+                    )
+                    try:
+                        if self._process and self._process.poll() is None:
+                            self._process.kill()
+                    except Exception:
+                        pass
+                    self._process = None
+                    subprocess.run(
+                        ["taskkill", "/F", "/IM", "mysqld.exe"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    time.sleep(2.0)
+                    return self.start_server(_start_attempt=_start_attempt + 1)
                 logger.error("MariaDB no abrio el puerto a tiempo. Abortando inicializacion.")
                 # Autoreparación por corrupción de InnoDB / Tablespace
                 err_file = None
