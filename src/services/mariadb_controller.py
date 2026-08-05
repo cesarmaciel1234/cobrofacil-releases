@@ -409,6 +409,16 @@ class MariaDBController:
             logger.info(
                 "punpro_db conecta pero el esquema requiere recreación (ghost 1932 o InnoDB en recuperación)."
             )
+            try:
+                from src.base_de_datos.database import db_manager
+
+                if getattr(db_manager, "db_engine_type", "") == "mariadb":
+                    db_manager._create_tables()
+                    db_manager._migrate_db()
+                    logger.info("Esquema punpro_db recreado tras reparación ghost 1932.")
+                    return
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932 en punpro_db: {ex}")
         except Exception:
             pass
 
