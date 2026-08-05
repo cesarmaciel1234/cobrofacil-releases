@@ -758,10 +758,102 @@ class DatabaseManager:
                 return m.group(1)
         return None
 
+    @staticmethod
+    def _mariadb_tables_to_probe() -> tuple:
+        """Tablas críticas + esquema completo a verificar ante error InnoDB 1932."""
+        return (
+            "ventas",
+            "movimientos_caja",
+            "carteleria_global",
+            "detalles_ventas",
+            "productos",
+            "clientes",
+            "configuracion",
+            "departamentos",
+            "categorias",
+            "usuarios",
+            "gastos",
+            "terminales_activos",
+            "sistema_estado",
+            "cuenta_corriente",
+            "romaneos",
+            "romaneo_items",
+            "historial_promedios",
+            "combos",
+            "mp_transferencias_usadas",
+        )
+
+    def _drop_mariadb_ghost_tables(self) -> list:
+        """DROP metadatos huérfanos (1932). CREATE IF NOT EXISTS no repara sin esto."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return []
+        conn = None
+        ghosts: list = []
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            tables = set(self._mariadb_tables_to_probe())
+            try:
+                cursor.execute(
+                    "SELECT TABLE_NAME FROM information_schema.TABLES "
+                    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'"
+                )
+                for row in cursor.fetchall():
+                    name = row.get("TABLE_NAME") if isinstance(row, dict) else row[0]
+                    if name:
+                        tables.add(name)
+            except Exception:
+                pass
+            for table in sorted(tables):
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        ghosts.append(table)
+            for table in ghosts:
+                try:
+                    cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                    logger.warning(
+                        "Tabla huérfana %s (1932) en punpro_db; metadatos eliminados.",
+                        table,
+                    )
+                except Exception:
+                    pass
+            if ghosts:
+                conn.commit()
+            return ghosts
+        except Exception as ex:
+            logger.warning("Detección de tablas huérfanas MariaDB: %s", ex)
+            return []
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+    def _repair_all_mariadb_ghost_tables(self) -> bool:
+        """DROP todas las tablas huérfanas (1932) y recrea el esquema."""
+        ghosts = self._drop_mariadb_ghost_tables()
+        if not ghosts:
+            return False
+        logger.warning(
+            "MariaDB ghost 1932: %d tablas reparadas; recreando esquema...",
+            len(ghosts),
+        )
+        try:
+            self._create_tables()
+            self._migrate_db()
+        except Exception as ex:
+            logger.warning("Recrear esquema tras ghost 1932: %s", ex)
+        return True
+
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
-        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        """Repara tablas huérfanas (1932); varias tablas pueden fallar en el mismo turno."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return False
+        if self._repair_all_mariadb_ghost_tables():
+            return True
         table = self._table_name_from_query(query)
         if not table:
             return False
@@ -771,12 +863,10 @@ class DatabaseManager:
             cursor = conn.cursor()
             self._repair_mariadb_ghost_table(cursor, table)
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
-                try:
-                    self._create_tables()
-                except Exception as ex:
-                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            try:
+                self._create_tables()
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             return True
         except Exception as ex:
             logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
@@ -1179,6 +1269,14 @@ class DatabaseManager:
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
         try:
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                dropped = self._drop_mariadb_ghost_tables()
+                if dropped:
+                    logger.warning(
+                        "Pre-creación: %d tablas huérfanas (1932) eliminadas: %s",
+                        len(dropped),
+                        ", ".join(dropped),
+                    )
             conn = self.get_connection()
             cursor = conn.cursor()
             
