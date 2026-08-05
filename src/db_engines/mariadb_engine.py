@@ -149,8 +149,37 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in (
+                "2003", "2002", "2013", "2006",
+                "timed out", "timeout", "can't connect",
+                "gone away", "lost connection", "connectionreset",
+            )
         )
+
+    def _can_reach_mariadb(self) -> bool:
+        """Comprueba si MariaDB acepta conexiones (evita circuit breaker tras reinicio)."""
+        if not self._is_remote_host(self.host):
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                if mariadb_controller.is_starting():
+                    return True
+                return (
+                    mariadb_controller._try_pymysql("1234", 1)
+                    or mariadb_controller._try_pymysql("", 1)
+                )
+            except Exception:
+                return False
+        try:
+            import socket
+
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            ok = s.connect_ex((self.host, self.port)) == 0
+            s.close()
+            return ok
+        except Exception:
+            return False
 
     def _try_connect(self, **kwargs):
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
@@ -225,6 +254,10 @@ class MariaDBEngine:
             except Exception:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
+        # Tras reinicio de mysqld el cooldown puede bloquear hilos aunque el servidor ya responda.
+        if in_cooldown and self._can_reach_mariadb():
+            self._last_fail_time = 0
+            in_cooldown = False
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
@@ -308,5 +341,8 @@ class MariaDBEngine:
                     return conn
             except Exception:
                 self._local_connections.conn = None
+                # Conexión stale (2006 gone away): permitir reconexión si mysqld ya responde
+                if self._can_reach_mariadb():
+                    self._last_fail_time = 0
         self._local_connections.conn = self._create_connection()
         return self._local_connections.conn
