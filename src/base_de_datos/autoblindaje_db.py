@@ -739,7 +739,7 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
-            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias;")
+            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
@@ -873,7 +873,7 @@ class AutoBlindajeDB:
                     database="punpro_db", connect_timeout=5,
                 )
                 cursor = conn.cursor()
-                cursor.execute("REPAIR TABLE productos, ventas, departamentos, categorias QUICK;")
+                cursor.execute("REPAIR TABLE productos, ventas, departamentos, categorias, clientes QUICK;")
                 conn.close()
                 return cls._check_mariadb_integrity(host)
             except Exception:
