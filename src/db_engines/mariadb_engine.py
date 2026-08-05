@@ -47,6 +47,11 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif any(
+                token in err_msg
+                for token in ("2006", "2013", "lost connection", "gone away", "server has gone away")
+            ):
+                logger.warning(f"Error SQL transitorio MariaDB: {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -149,8 +154,26 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in (
+                "2003", "2002", "2013", "2006",
+                "timed out", "timeout", "can't connect",
+                "lost connection", "gone away",
+            )
         )
+
+    def _probe_local_mariadb_ready(self) -> bool:
+        """Handshake rápido: MariaDB puede estar listo aunque el circuit breaker siga en cooldown."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            return (
+                mariadb_controller._try_pymysql("1234", 1)
+                or mariadb_controller._try_pymysql("", 1)
+            )
+        except Exception:
+            return False
 
     def _try_connect(self, **kwargs):
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
@@ -212,7 +235,8 @@ class MariaDBEngine:
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         local = not self._is_remote_host(self.host)
         if local:
-            self._wait_local_mariadb_if_starting()
+            if self._wait_local_mariadb_if_starting():
+                self._last_fail_time = 0
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if local:
             try:
@@ -225,6 +249,9 @@ class MariaDBEngine:
             except Exception:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
+        if in_cooldown and local and self._probe_local_mariadb_ready():
+            self._last_fail_time = 0
+            in_cooldown = False
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
