@@ -1133,12 +1133,62 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
 
+    def _productos_id_is_bigint(self) -> bool:
+        """True si productos.id ya es BIGINT (evita ALTER TABLE repetido en cada arranque)."""
+        try:
+            row = self.execute_query(
+                """
+                SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'id'
+                LIMIT 1
+                """
+            )
+            if not row:
+                return False
+            data_type = row[0].get("DATA_TYPE") if isinstance(row[0], dict) else row[0][0]
+            return str(data_type or "").lower() == "bigint"
+        except Exception:
+            return False
+
+    def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
+        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
+        conn = None
+        try:
+            engine = getattr(self, "mariadb_engine", None)
+            if not engine:
+                return False
+            conn = engine.get_ddl_connection()
+            cursor = conn.cursor()
+            cursor.execute(self._normalize_query(query), params)
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"DDL execution error: {e} | Query: {query}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+            return False
+        finally:
+            if conn:
+                conn.close()
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+            if (
+                getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                and getattr(self, "is_master", False)
+            ):
+                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
+                if not self._productos_id_is_bigint():
+                    logger.info(
+                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
+                    )
+                    self._execute_mariadb_ddl(
+                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                    )
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
@@ -1165,7 +1215,7 @@ class DatabaseManager:
                     new_max = int(
                         self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
                     )
-                    self.execute_non_query(
+                    self._execute_mariadb_ddl(
                         f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
                     )
         except Exception as e:
