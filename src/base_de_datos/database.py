@@ -1026,6 +1026,7 @@ class DatabaseManager:
         # Crear índice para optimizar búsqueda instantánea (opcional; no bloquear arranque)
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+            "CREATE INDEX IF NOT EXISTS idx_productos_precio_categoria ON productos (precio, categoria(50))",
             "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
