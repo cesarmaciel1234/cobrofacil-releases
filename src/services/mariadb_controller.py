@@ -357,6 +357,12 @@ class MariaDBController:
                 "detalles_ventas",
                 "productos",
                 "configuracion",
+                "clientes",
+                "gastos",
+                "usuarios",
+                "terminales_activos",
+                "departamentos",
+                "categorias",
             ):
                 try:
                     cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")

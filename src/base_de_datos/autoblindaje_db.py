@@ -739,18 +739,49 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
+            for table in (
+                "productos",
+                "ventas",
+                "movimientos_caja",
+                "clientes",
+                "configuracion",
+                "terminales_activos",
+            ):
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    err = str(e).lower()
+                    if (
+                        "1932" in err
+                        or "doesn't exist in engine" in err
+                        or "does not exist in engine" in err
+                    ):
+                        logger.warning(
+                            "Tabla %s huérfana en MariaDB (1932) detectada en verificación.",
+                            table,
+                        )
+                        conn.close()
+                        return False
             cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
                 msg = r[3]
                 if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
-                        continue
+                    msg_l = str(msg).lower()
+                    if "doesn't exist" in msg_l or "does not exist in engine" in msg_l:
+                        return False
                     logger.warning(f"Resultado de verificación tabla: {r}")
                     return False
             return True
-        except Exception:
+        except Exception as e:
+            err = str(e).lower()
+            if (
+                "1932" in err
+                or "doesn't exist in engine" in err
+                or "does not exist in engine" in err
+            ):
+                return False
             return True
 
     @classmethod

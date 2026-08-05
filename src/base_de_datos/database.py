@@ -770,6 +770,9 @@ class DatabaseManager:
         "clientes",
         "gastos",
         "usuarios",
+        "terminales_activos",
+        "departamentos",
+        "categorias",
     )
 
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
@@ -1216,7 +1219,13 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
+            # CREATE IF NOT EXISTS no repara metadatos huérfanos (error 1932)
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                if dropped:
+                    conn.commit()
+
             # 1. USUARIOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
