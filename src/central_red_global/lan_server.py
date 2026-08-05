@@ -3,6 +3,7 @@ import threading
 import socket
 import os
 import hashlib
+import random
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
 from src.base_de_datos.database import db_manager
@@ -173,11 +174,16 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         cfg_data = json.load(f)
                         
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
                 
-                # SOS
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                # SOS (sin ORDER BY RAND: timeout en MariaDB con inventario grande)
+                sos_query = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock FROM productos "
+                    "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0)"
+                )
                 oferta_sos = db_manager.execute_query(sos_query)
+                if oferta_sos:
+                    oferta_sos = [random.choice(list(oferta_sos))]
                 
                 # Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
@@ -231,9 +237,16 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     # Fallback si las tablas no están listas o hay un error de JOIN
                     pass
                 
-                # Si el real falló o está vacío por falta de ventas, rellenar con aleatorios
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
-                if not top_dict["hoy"]: top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                # Si el real falló o está vacío por falta de ventas, rellenar con aleatorios (sin ORDER BY RAND)
+                fallback_q = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0"
+                )
+                fallback_rows = db_manager.execute_query(fallback_q)
+                if fallback_rows:
+                    fallback_rows = random.sample(list(fallback_rows), min(10, len(fallback_rows)))
+                if not top_dict["hoy"]:
+                    top_dict["hoy"] = fallback_rows
                 if not top_dict["semana"]: top_dict["semana"] = top_dict["hoy"]
                 if not top_dict["mes"]: top_dict["mes"] = top_dict["hoy"]
 

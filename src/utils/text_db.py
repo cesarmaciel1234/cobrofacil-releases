@@ -1,10 +1,5 @@
 """Helpers for text values stored in MariaDB (legacy utf8 / utf8mb3 columns)."""
 
-import re
-
-# Supplementary-plane characters (4-byte UTF-8) break utf8mb3 columns (MySQL error 1366).
-_SUPPLEMENTARY_CHARS = re.compile(r"[\U00010000-\U0010ffff]")
-
 
 def safe_mariadb_text(value):
     """Return text safe for MariaDB utf8/utf8mb3 columns; strips emojis and other 4-byte chars."""
@@ -12,7 +7,8 @@ def safe_mariadb_text(value):
         return value
     if not isinstance(value, str):
         value = str(value)
-    return _SUPPLEMENTARY_CHARS.sub("", value)
+    # Fuera del BMP (p. ej. 🔥 U+1F525) → UTF-8 de 4 bytes → error 1366 en columnas utf8 legacy.
+    return "".join(ch for ch in value if ord(ch) <= 0xFFFF)
 
 
 def sanitize_mariadb_params(params):
