@@ -764,7 +764,15 @@ class AutoBlindajeDB:
             )
             cur = conn.cursor()
             cur.execute("SET FOREIGN_KEY_CHECKS=0")
-            for table in ("ventas", "clientes", "detalles_ventas", "detalle_ventas", "configuracion"):
+            for table in (
+                "ventas",
+                "clientes",
+                "detalles_ventas",
+                "detalle_ventas",
+                "movimientos_caja",
+                "carteleria_global",
+                "configuracion",
+            ):
                 try:
                     cur.execute(f"DROP TABLE IF EXISTS `{table}`")
                 except Exception:
@@ -826,6 +834,34 @@ class AutoBlindajeDB:
                     cantidad DOUBLE NULL,
                     precio_unitario DOUBLE NULL,
                     subtotal DOUBLE NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS movimientos_caja (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    tipo VARCHAR(50) NULL,
+                    monto DOUBLE NULL,
+                    usuario TEXT NULL,
+                    observaciones TEXT NULL,
+                    caja_id INT DEFAULT 1,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS carteleria_global (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    departamento TEXT NULL,
+                    nombre_producto TEXT NULL,
+                    precio_normal DOUBLE DEFAULT 0,
+                    precio_oferta DOUBLE DEFAULT 0,
+                    regla_texto TEXT NULL,
+                    ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """

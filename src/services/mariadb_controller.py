@@ -349,13 +349,20 @@ class MariaDBController:
             )
             cur = conn.cursor()
             ghosts = []
-            for table in (
-                "ventas",
-                "movimientos_caja",
-                "carteleria_global",
-                "detalles_ventas",
-                "productos",
-            ):
+            tables = []
+            try:
+                cur.execute("SHOW TABLES")
+                for row in cur.fetchall():
+                    tables.append(row[0] if not isinstance(row, dict) else next(iter(row.values())))
+            except Exception:
+                tables = [
+                    "ventas",
+                    "movimientos_caja",
+                    "carteleria_global",
+                    "detalles_ventas",
+                    "productos",
+                ]
+            for table in tables:
                 try:
                     cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
                 except Exception as e:

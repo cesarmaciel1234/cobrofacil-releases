@@ -759,27 +759,27 @@ class DatabaseManager:
         return None
 
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
-        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        """DROP metadatos huérfanos (1932) en lote y recrea esquema completo."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return False
-        table = self._table_name_from_query(query)
-        if not table:
             return False
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            dropped = self._drop_all_mariadb_ghost_tables(cursor)
+            table = self._table_name_from_query(query)
+            if table:
+                self._repair_mariadb_ghost_table(cursor, table)
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
+            if dropped or table:
                 try:
                     self._create_tables()
+                    self._migrate_db()
                 except Exception as ex:
                     logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             return True
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            logger.warning(f"No se pudo reparar tablas huérfanas MariaDB (1932): {ex}")
             return False
         finally:
             if conn:
@@ -882,6 +882,40 @@ class DatabaseManager:
                 cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
             else:
                 raise
+
+    def _drop_all_mariadb_ghost_tables(self, cursor) -> bool:
+        """DROP metadatos huérfanos (1932) en todas las tablas de punpro_db."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        tables = []
+        try:
+            cursor.execute("SHOW TABLES")
+            for row in cursor.fetchall():
+                if isinstance(row, dict):
+                    tables.append(next(iter(row.values())))
+                elif row:
+                    tables.append(row[0])
+        except Exception as ex:
+            logger.warning(f"No se pudo listar tablas MariaDB para reparar 1932: {ex}")
+            return False
+
+        dropped_any = False
+        for table in tables:
+            try:
+                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+            except Exception as e:
+                if not self._is_mariadb_ghost_table_error(e):
+                    continue
+                logger.warning(
+                    "Tabla %s huérfana en MariaDB (1932); eliminando metadatos...",
+                    table,
+                )
+                try:
+                    cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                    dropped_any = True
+                except Exception as drop_ex:
+                    logger.warning(f"No se pudo eliminar tabla huérfana {table}: {drop_ex}")
+        return dropped_any
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
