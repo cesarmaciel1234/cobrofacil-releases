@@ -83,14 +83,14 @@ class DbSyncWorker(QThread):
                     "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
                     "cant_oferta, tipo_unidad_oferta, stock FROM productos "
                     "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
-                    "AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    "AND nombre NOT LIKE '%articulo comun%' AND nombre NOT LIKE '%venta libre%' "
                     "ORDER BY precio_oferta_relampago DESC LIMIT 50"
                 )
                 sos_rows = db_manager.execute_query(sos_query)
                 oferta_sos = random.sample(sos_rows, min(10, len(sos_rows))) if sos_rows else []
                 
                 # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
+                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND nombre NOT LIKE '%articulo comun%' AND nombre NOT LIKE '%venta libre%' ORDER BY categoria"
                 rows_precios = db_manager.execute_query(precios_query)
                 
                 # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
@@ -116,7 +116,7 @@ class DbSyncWorker(QThread):
                         JOIN ventas v ON dv.id_venta = v.id
                         JOIN productos p ON {join_cond}
                         WHERE {cond_date} AND p.precio > 0
-                        AND LOWER(p.nombre) NOT LIKE '%articulo comun%' AND LOWER(p.nombre) NOT LIKE '%venta libre%'
+                        AND p.nombre NOT LIKE '%articulo comun%' AND p.nombre NOT LIKE '%venta libre%'
                         GROUP BY p.id, p.codigo, p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago,
                                  p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
                         ORDER BY SUM(dv.cantidad) DESC
@@ -141,7 +141,7 @@ class DbSyncWorker(QThread):
                 fallback_q = (
                     "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
                     "cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos "
-                    "WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    "WHERE precio > 0 AND nombre NOT LIKE '%articulo comun%' AND nombre NOT LIKE '%venta libre%' "
                     "ORDER BY nombre LIMIT 50"
                 )
                 if not top_dict["hoy"]:
