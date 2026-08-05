@@ -526,6 +526,7 @@ class DatabaseManager:
             # Garantizar que las tablas existen en MariaDB antes de migrar
             self.db_engine_type = "mariadb"
             self._create_tables()
+            self._migrate_db()
             
             m_conn = self.get_connection()
             m_cur = m_conn.cursor()
@@ -543,13 +544,7 @@ class DatabaseManager:
                     placeholders = ", ".join(["?"] * len(columns))
                     
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
-                    try:
-                        m_cur.execute(f"TRUNCATE TABLE {table}")
-                    except:
-                        try:
-                            m_cur.execute(f"DELETE FROM {table}")
-                        except:
-                            pass
+                    self._safe_clear_table_for_migration(m_cur, table)
                             
                     # Insertar en lotes
                     insert_query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
@@ -724,6 +719,37 @@ class DatabaseManager:
                 _create(False)
             else:
                 raise
+
+    def _safe_clear_table_for_migration(self, cursor, table: str) -> None:
+        """Vacía una tabla en MariaDB antes de migrar; repara metadatos huérfanos (1932)."""
+        if table == "configuracion":
+            try:
+                self._ensure_configuracion_table(cursor)
+            except Exception as e:
+                logger.warning(
+                    f"No se pudo asegurar tabla configuracion antes de migración: {e}"
+                )
+
+        try:
+            cursor.execute(f"TRUNCATE TABLE {table}")
+            return
+        except Exception as e:
+            is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+            if is_mariadb and self._is_mariadb_ghost_table_error(e):
+                logger.warning(
+                    f"Tabla {table} huérfana en MariaDB (1932); recreando antes de migrar..."
+                )
+                try:
+                    cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                except Exception:
+                    pass
+                if table == "configuracion":
+                    self._ensure_configuracion_table(cursor)
+                return
+            try:
+                cursor.execute(f"DELETE FROM {table}")
+            except Exception:
+                pass
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
