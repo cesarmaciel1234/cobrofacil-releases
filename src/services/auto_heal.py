@@ -238,6 +238,41 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
         return False
 
 
+def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
+    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877)."""
+    if not any(k in blob for k in ("1877", "corrupt", "drop the table and recreate")):
+        return None
+    if not any(k in blob for k in ("clientes", "punpro_db", "mariadb", "check table", "repair table")):
+        return None
+    try:
+        from src.config import config
+        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+        if config.get("is_master") is False or str(config.get("db_engine") or "").lower() != "mariadb":
+            return None
+        host = str(config.get("db_host") or "127.0.0.1").strip() or "127.0.0.1"
+        if host.lower() not in ("127.0.0.1", "localhost", ""):
+            return None
+    except Exception as e:
+        return HealResult(False, "repair_mariadb_corrupt", f"import: {e}")
+
+    try:
+        if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
+            return HealResult(True, "repair_mariadb_corrupt", host)
+        if AutoBlindajeDB.restaurar_ultimo_backup_valido(
+            "mariadb",
+            allow_older_than_today=True,
+            merge_today=True,
+            mariadb_host=host,
+        ):
+            return HealResult(True, "restore_mariadb_backup", host)
+        if AutoBlindajeDB._recrear_tablas_criticas_mariadb(host):
+            return HealResult(True, "recreate_critical_tables", host)
+    except Exception as e:
+        return HealResult(False, "repair_mariadb_corrupt", str(e))
+    return HealResult(False, "repair_mariadb_corrupt", "no_recovery")
+
+
 def _heal_mariadb(blob: str) -> Optional[HealResult]:
     """Cura conexiones MariaDB. Solo healed=True si la BD responde de verdad.
 
@@ -517,6 +552,7 @@ def try_auto_heal(
         _heal_broken_update_install,
         _heal_ssl_github,
         _heal_update_cache,
+        _heal_mariadb_corrupt_table,
         _heal_mariadb,
         _heal_port_busy,
     ):
