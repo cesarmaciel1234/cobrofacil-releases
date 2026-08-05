@@ -820,6 +820,21 @@ class DatabaseManager:
 
         # Asegurar columna 'iva' en tabla departamentos si ya existía sin ella
         add_column_if_not_exists('departamentos', 'iva', 'REAL DEFAULT 21.0')
+        add_column_if_not_exists('departamentos', 'icono', 'TEXT')
+
+        # Crear tabla categorias si no existe (migración; antes solo en MotorDepartamentos)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla categorias en migración: {e}")
+
+        add_column_if_not_exists('categorias', 'icono', 'TEXT')
 
         # Sembrar departamentos por defecto si está vacía
         try:
@@ -1095,6 +1110,15 @@ class DatabaseManager:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT UNIQUE NOT NULL,
                     iva REAL DEFAULT 21.0
+                )
+            """)
+
+            # 6b. CATEGORIAS (departamentos de producto; antes solo en MotorDepartamentos)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
                 )
             """)
             
