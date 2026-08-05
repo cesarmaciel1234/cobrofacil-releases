@@ -1831,6 +1831,8 @@ class DatabaseManager:
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
+        from src.db_engines.mariadb_engine import mariadb_safe_text
+
         conn = None
         try:
             conn = self.get_connection()
@@ -1857,7 +1859,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), mariadb_safe_text(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))

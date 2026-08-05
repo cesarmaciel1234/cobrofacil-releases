@@ -7,6 +7,17 @@ from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
 
+
+def _sample_rows(rows, limit):
+    """Elige filas al azar sin ORDER BY RAND() (lento y provoca timeout 2013 en MariaDB)."""
+    if not rows:
+        return []
+    pool = list(rows)
+    if len(pool) <= limit:
+        return pool
+    return random.sample(pool, limit)
+
+
 class MotorCarrusel(QThread):
     datos_listos = pyqtSignal(list, str)
     
@@ -66,16 +77,14 @@ class MotorCombos(QThread):
             
             eleccion = random.choice([0, 1])
             
-            # Buscar productos en oferta aleatorios desde carteleria_global
+            # Buscar productos en oferta desde carteleria_global (sin RAND() en SQL: timeout en MariaDB)
             q = """
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
                 LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-                WHERE c.precio_oferta > 0 ORDER BY RANDOM() LIMIT 5
+                WHERE c.precio_oferta > 0 LIMIT 30
             """
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                q = q.replace("RANDOM()", "RAND()")
-            rows = db_manager.execute_query(q)
+            rows = _sample_rows(db_manager.execute_query(q), 5)
             
             if not rows: return
             
@@ -149,13 +158,12 @@ class MotorIAPanel(QThread):
             # Si el turno es 1, intentamos mostrar PROMO ESPECIAL en la 4ta pantalla con Chef Lobo
             if self.turno_ia == 1:
                 try:
-                    q_promo = "SELECT nombre, precio_combo, productos_json FROM combos ORDER BY RANDOM() LIMIT 1"
-                    if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                        q_promo = q_promo.replace("RANDOM()", "RAND()")
-                    promo_rows = db_manager.execute_query(q_promo)
+                    promo_rows = db_manager.execute_query(
+                        "SELECT nombre, precio_combo, productos_json FROM combos LIMIT 20"
+                    )
                     
                     if promo_rows:
-                        pr = promo_rows[0]
+                        pr = random.choice(promo_rows)
                         if isinstance(pr, dict):
                             p_nombre = str(pr.get('nombre', ''))
                             p_precio = float(pr.get('precio_combo') or 0)
@@ -177,12 +185,9 @@ class MotorIAPanel(QThread):
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
                 LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-                ORDER BY RANDOM() LIMIT 5
+                LIMIT 30
             """
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                q = q.replace("RANDOM()", "RAND()")
-                
-            rows = db_manager.execute_query(q)
+            rows = _sample_rows(db_manager.execute_query(q), 5)
             if not rows or self.isInterruptionRequested(): return
             
             prod_lista = []
