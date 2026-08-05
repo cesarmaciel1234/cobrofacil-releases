@@ -1190,9 +1190,14 @@ class DatabaseManager:
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
                     )
                 
-                # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
+                # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
+                # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
+                # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
+                _INT32_OVERFLOW_MIN = 2147483647
+                _BARCODE_ID_MIN = 10_000_000_000
                 overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                    "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
+                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
                 )
                 if overflow:
                     max_normal = int(
@@ -1215,9 +1220,16 @@ class DatabaseManager:
                     new_max = int(
                         self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
                     )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+                    next_ai = new_max + 1
+                    if next_ai < _BARCODE_ID_MIN:
+                        self._execute_mariadb_ddl(
+                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                        )
+                    else:
+                        logger.info(
+                            "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
+                            new_max,
+                        )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
