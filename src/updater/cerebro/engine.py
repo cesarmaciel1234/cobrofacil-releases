@@ -540,7 +540,13 @@ def _format_update_error(exc: BaseException) -> str:
 def _is_transient_download_error(exc: BaseException) -> bool:
     if isinstance(
         exc,
-        (TimeoutError, ConnectionError, zipfile.BadZipFile, http.client.IncompleteRead),
+        (
+            TimeoutError,
+            ConnectionError,
+            EOFError,
+            zipfile.BadZipFile,
+            http.client.IncompleteRead,
+        ),
     ):
         return True
     msg = str(exc).lower()

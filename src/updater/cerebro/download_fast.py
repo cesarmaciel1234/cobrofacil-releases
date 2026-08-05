@@ -30,7 +30,7 @@ def _is_zip_integrity_error(exc: BaseException) -> bool:
 def _is_transient_stream_error(exc: BaseException) -> bool:
     if isinstance(
         exc,
-        (TimeoutError, ConnectionError, http.client.IncompleteRead),
+        (TimeoutError, ConnectionError, EOFError, http.client.IncompleteRead),
     ):
         return True
     msg = str(exc).lower()
