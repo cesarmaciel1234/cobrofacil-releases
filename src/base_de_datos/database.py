@@ -665,6 +665,13 @@ class DatabaseManager:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
 
+    def _nombre_producto_para_db(self, nombre):
+        """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            from src.db_engines.mariadb_engine import mariadb_safe_text
+            return mariadb_safe_text(nombre)
+        return nombre or ""
+
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "mariadb_engine", None):
@@ -1485,7 +1492,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], self._nombre_producto_para_db(it.get('nombre', '')), it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1534,7 +1541,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
