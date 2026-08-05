@@ -1047,6 +1047,8 @@ class DatabaseManager:
             """)
         except Exception as e:
             logger.warning(f"Error creando tablas de clientes: {e}")
+
+        self._ensure_clientes_fiado_columns(cursor)
             
         try:
             conn.commit()
@@ -1347,6 +1349,65 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    def _ensure_clientes_fiado_columns(self, cursor=None) -> None:
+        """Asegura limite_credito/deuda_actual en clientes (legacy MariaDB sin esas columnas)."""
+        try:
+            engine = getattr(self, "db_engine_type", "sqlite")
+            if engine == "mariadb":
+                if not getattr(self, "is_master", False):
+                    return
+                own_conn = cursor is None
+                if own_conn:
+                    conn = self.get_connection()
+                    cursor = conn.cursor()
+                try:
+                    cursor.execute("SHOW COLUMNS FROM clientes")
+                    rows = cursor.fetchall()
+                except Exception:
+                    if own_conn:
+                        conn.close()
+                    return
+                if rows and isinstance(rows[0], dict):
+                    cols = [row.get("Field") or row.get("field") for row in rows]
+                else:
+                    cols = [col[0] for col in rows]
+                if "limite_credito" not in cols:
+                    self._execute_mariadb_ddl(
+                        "ALTER TABLE clientes ADD COLUMN limite_credito DOUBLE DEFAULT 0"
+                    )
+                if "deuda_actual" not in cols:
+                    self._execute_mariadb_ddl(
+                        "ALTER TABLE clientes ADD COLUMN deuda_actual DOUBLE DEFAULT 0"
+                    )
+                if "saldo_fiado" in cols and "deuda_actual" in cols:
+                    self.execute_non_query(
+                        "UPDATE clientes SET deuda_actual = saldo_fiado "
+                        "WHERE saldo_fiado > 0 AND (deuda_actual IS NULL OR deuda_actual = 0)"
+                    )
+                if own_conn:
+                    conn.close()
+                return
+
+            own_conn = cursor is None
+            if own_conn:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(clientes)")
+            cols = [col[1] for col in cursor.fetchall()]
+            if "limite_credito" not in cols:
+                cursor.execute(
+                    "ALTER TABLE clientes ADD COLUMN limite_credito REAL DEFAULT 0"
+                )
+            if "deuda_actual" not in cols:
+                cursor.execute(
+                    "ALTER TABLE clientes ADD COLUMN deuda_actual REAL DEFAULT 0"
+                )
+            if own_conn:
+                conn.commit()
+                conn.close()
+        except Exception as e:
+            logger.warning(f"_ensure_clientes_fiado_columns: {e}")
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
@@ -1587,7 +1648,27 @@ class DatabaseManager:
             result = cursor.fetchall()
             return result if result is not None else []
         except Exception as e:
-            logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
+            err = str(e).lower()
+            if (
+                getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                and getattr(self, "is_master", False)
+                and ("1054" in err or "unknown column" in err)
+                and ("limite_credito" in err or "deuda_actual" in err)
+            ):
+                try:
+                    self._ensure_clientes_fiado_columns()
+                    conn = self.get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute(self._normalize_query(query), params)
+                    result = cursor.fetchall()
+                    return result if result is not None else []
+                except Exception as retry_err:
+                    logger.error(
+                        f"Query execution error (tras migrar clientes): {retry_err} | "
+                        f"Query: {query} | Params: {params}"
+                    )
+            else:
+                logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
             if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
                 try:
                     logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
