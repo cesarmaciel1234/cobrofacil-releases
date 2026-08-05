@@ -722,7 +722,7 @@ class DatabaseManager:
     def _is_mariadb_ghost_table_error(exc: BaseException) -> bool:
         """MariaDB 1932: metadatos de tabla sin archivos InnoDB (CREATE IF NOT EXISTS no repara)."""
         args = getattr(exc, "args", None)
-        if args and args[0] == 1932:
+        if args and str(args[0]) == "1932":
             return True
         msg = str(exc).lower()
         return (
@@ -885,6 +885,26 @@ class DatabaseManager:
         """Error 1366: emojis/4-byte UTF-8 en columnas utf8mb3; reintentar tras sanitizar."""
         err = str(exc).lower()
         return "1366" in err or "incorrect string value" in err
+
+    def _mariadb_recently_unreachable(self) -> bool:
+        """True si MariaDB local falló recientemente o está arrancando (evita consultas en cascada)."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            return False
+        import time
+
+        if time.time() - getattr(engine, "_last_fail_time", 0) < 5:
+            return True
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            if mariadb_controller.is_starting():
+                return True
+        except Exception:
+            pass
+        return False
 
     def _reset_mariadb_thread_connection(self, clear_circuit_breaker: bool = False) -> None:
         engine = getattr(self, "mariadb_engine", None)
@@ -2229,6 +2249,19 @@ class DatabaseManager:
         sumando el fondo de apertura, las ventas en efectivo (completadas o cerradas)
         desde la apertura, más los ingresos manuales, y restando los retiros.
         """
+        if self._mariadb_recently_unreachable():
+            logger.warning("get_efectivo_en_caja: MariaDB no disponible; devolviendo 0.0")
+            return 0.0
+        try:
+            return self._get_efectivo_en_caja_impl(caja_id)
+        except Exception as e:
+            if self._is_transient_mariadb_error(e):
+                logger.warning("get_efectivo_en_caja: error transitorio MariaDB (%s); devolviendo 0.0", e)
+            else:
+                logger.warning("get_efectivo_en_caja: %s; devolviendo 0.0", e)
+            return 0.0
+
+    def _get_efectivo_en_caja_impl(self, caja_id: int = 1) -> float:
         # 1. Encontrar el último movimiento de apertura para esta caja
         query_apertura = """
             SELECT fecha, monto 
@@ -2238,6 +2271,11 @@ class DatabaseManager:
         """
         aperturas = self.execute_query(query_apertura, (caja_id,))
         if not aperturas:
+            if self._mariadb_recently_unreachable():
+                logger.warning(
+                    "get_efectivo_en_caja: sin apertura y MariaDB no disponible; devolviendo 0.0"
+                )
+                return 0.0
             # Si no hay apertura registrada para esta caja, hacemos fallback histórico para esta caja
             query_ventas = "SELECT SUM(pago_efectivo - cambio) FROM ventas WHERE caja_id = ? AND estado IN ('COMPLETADA', 'COMPLETADO')"
             query_retiros = "SELECT SUM(monto) FROM movimientos_caja WHERE caja_id = ? AND tipo='RETIRO'"
