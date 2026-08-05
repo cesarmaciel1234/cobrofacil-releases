@@ -92,7 +92,18 @@ class DbSyncWorker(QThread):
                 # 3. Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND nombre NOT LIKE '%articulo comun%' AND nombre NOT LIKE '%venta libre%' ORDER BY categoria"
                 rows_precios = db_manager.execute_query(precios_query)
-                
+                if not rows_precios and os.path.exists(cache_path):
+                    try:
+                        with open(cache_path, "r", encoding="utf-8") as f:
+                            cached = json.load(f)
+                        rows_precios = cached.get("precios") or []
+                        if rows_precios:
+                            logger.warning(
+                                "Sync precios: usando caché local tras timeout/error MariaDB"
+                            )
+                    except Exception:
+                        pass
+
                 # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
                 if is_mariadb:
                     cond_hoy = "DATE(v.fecha) = CURDATE()"
