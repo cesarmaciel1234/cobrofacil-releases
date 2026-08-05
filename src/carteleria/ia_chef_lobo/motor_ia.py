@@ -144,9 +144,8 @@ class MotorIA:
                     precio = p[1]
                     poferta = p[2]
             elif db:
-                is_mariadb = getattr(db, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                res_random = db.execute_query(f"SELECT nombre, precio, precio_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 1")
+                res_all = db.execute_query("SELECT nombre, precio, precio_oferta FROM productos WHERE precio > 0")
+                res_random = [random.choice(list(res_all))] if res_all else []
                 if res_random:
                     r = res_random[0]
                     if isinstance(r, dict):
