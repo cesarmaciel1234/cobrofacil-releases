@@ -837,6 +837,39 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
+        # MariaDB legacy: columnas utf8 (3 bytes) rechazan emojis en nombre_producto, etc.
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            for table in (
+                "detalles_ventas",
+                "detalle_ventas",
+                "productos",
+                "ventas",
+                "clientes",
+            ):
+                try:
+                    cursor.execute(
+                        "SELECT CCSA.character_set_name "
+                        "FROM information_schema.TABLES T "
+                        "JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY CCSA "
+                        "ON CCSA.collation_name = T.table_collation "
+                        "WHERE T.table_schema = DATABASE() AND T.table_name = %s LIMIT 1",
+                        (table,),
+                    )
+                    row = cursor.fetchone()
+                    charset = (
+                        (row.get("character_set_name") if isinstance(row, dict) else row[0])
+                        if row
+                        else None
+                    )
+                    if charset and str(charset).lower() == "utf8mb4":
+                        continue
+                    cursor.execute(
+                        f"ALTER TABLE {table} CONVERT TO CHARACTER SET utf8mb4 "
+                        "COLLATE utf8mb4_unicode_ci"
+                    )
+                except Exception:
+                    pass
+
         # Crear índice para optimizar búsqueda instantánea
         for q_idx in [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",

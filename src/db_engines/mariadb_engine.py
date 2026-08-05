@@ -3,6 +3,26 @@ import threading
 import time
 from src.logger import logger
 
+
+def mariadb_safe_str(value):
+    """Quita caracteres fuera del BMP (emojis) que rompen columnas utf8/latin1 legacy."""
+    if not isinstance(value, str):
+        return value
+    return "".join(c for c in value if ord(c) <= 0xFFFF)
+
+
+def _sanitize_params(params):
+    if params is None:
+        return None
+    if isinstance(params, (list, tuple)):
+        return type(params)(
+            mariadb_safe_str(p) if isinstance(p, str) else p for p in params
+        )
+    if isinstance(params, dict):
+        return {k: mariadb_safe_str(v) if isinstance(v, str) else v for k, v in params.items()}
+    return mariadb_safe_str(params) if isinstance(params, str) else params
+
+
 class MariaDBCursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
@@ -25,7 +45,7 @@ class MariaDBCursorWrapper:
         try:
             mq = self._translate_query(query)
             if params:
-                return self._cursor.execute(mq, params)
+                return self._cursor.execute(mq, _sanitize_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
             logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
@@ -33,7 +53,7 @@ class MariaDBCursorWrapper:
 
     def executemany(self, query, params_list):
         mq = self._translate_query(query)
-        return self._cursor.executemany(mq, params_list)
+        return self._cursor.executemany(mq, [_sanitize_params(p) for p in params_list])
 
     def fetchone(self):
         return self._cursor.fetchone()
@@ -104,6 +124,7 @@ class MariaDBEngine:
             password=password if password is not None else self.password,
             database=self.database,
             autocommit=False,
+            charset="utf8mb4",
             connect_timeout=self.CONNECT_TIMEOUT,
             read_timeout=self.IO_TIMEOUT,
             write_timeout=self.IO_TIMEOUT,
