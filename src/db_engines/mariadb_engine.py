@@ -226,6 +226,19 @@ class MariaDBEngine:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
         if in_cooldown:
+            # mysqld puede estar en handshake tras watchdog/start_server (puerto abierto, sin SELECT aún)
+            if local:
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+
+                    if mariadb_controller.is_starting() or mariadb_controller._is_port_open():
+                        remaining = max(0.0, 5.0 - (time.time() - getattr(self, "_last_fail_time", 0)))
+                        wait_sec = min(12.0, max(remaining, 2.0))
+                        if mariadb_controller.wait_until_ready(wait_sec):
+                            in_cooldown = False
+                except Exception:
+                    pass
+        if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
         remote = self._is_remote_host(self.host)
