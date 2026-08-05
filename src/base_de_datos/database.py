@@ -682,6 +682,49 @@ class DatabaseManager:
         except Exception:
             return False
 
+    @staticmethod
+    def _is_mariadb_ghost_table_error(exc: BaseException) -> bool:
+        """MariaDB 1932: metadatos de tabla sin archivos InnoDB (CREATE IF NOT EXISTS no repara)."""
+        msg = str(exc).lower()
+        return (
+            "1932" in msg
+            or "doesn't exist in engine" in msg
+            or "does not exist in engine" in msg
+        )
+
+    def _ensure_configuracion_table(self, cursor) -> None:
+        """Crea tabla configuracion; en MariaDB repara metadatos huérfanos (error 1932)."""
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        cols = """
+            clave VARCHAR(100) PRIMARY KEY,
+            valor TEXT
+        """
+        engine = (
+            " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            if is_mariadb
+            else ""
+        )
+
+        def _create(if_not_exists: bool) -> None:
+            clause = "IF NOT EXISTS " if if_not_exists else ""
+            cursor.execute(
+                f"CREATE TABLE {clause}configuracion ({cols}){engine}"
+            )
+
+        try:
+            _create(True)
+            if is_mariadb:
+                cursor.execute("SELECT 1 FROM configuracion LIMIT 1")
+        except Exception as e:
+            if is_mariadb and self._is_mariadb_ghost_table_error(e):
+                logger.warning(
+                    "Tabla configuracion huérfana en MariaDB (1932); recreando..."
+                )
+                cursor.execute("DROP TABLE IF EXISTS configuracion")
+                _create(False)
+            else:
+                raise
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -812,12 +855,7 @@ class DatabaseManager:
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'configuracion' ──
         # Módulos legacy pueden consultar SELECT/INSERT aquí. La poblamos desde config.json.
         try:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS configuracion (
-                    clave VARCHAR(100) PRIMARY KEY,
-                    valor TEXT
-                )
-            """)
+            self._ensure_configuracion_table(cursor)
             # Sincronizar claves básicas desde config.json al iniciar
             import json
             from src.utils.paths import get_base_path
