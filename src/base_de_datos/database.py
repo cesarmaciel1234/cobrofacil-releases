@@ -1133,13 +1133,27 @@ class DatabaseManager:
                 # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
                 self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
                 
-                # Verificar si el auto_increment actual está cerca o por encima del límite 32-bit (2147483647)
-                res = self.execute_query("SELECT MAX(id) as m FROM productos WHERE id < 2147483647")
-                if res and res[0].get('m') is not None:
-                    max_normal = res[0]['m']
-                    self.execute_non_query("UPDATE productos SET id = ? WHERE id >= 2147483647", (max_normal + 1,))
-                    new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}")
+                # Reasignar productos cuyo id desbordó el límite signed 32-bit (evita PK duplicada)
+                overflow_rows = self.execute_query(
+                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                )
+                if overflow_rows:
+                    for row in overflow_rows:
+                        old_id = row["id"] if isinstance(row, dict) else row[0]
+                        self.execute_non_query(
+                            "UPDATE productos SET id = ? WHERE id = ?", (-old_id, old_id)
+                        )
+                    next_id = self.execute_scalar(
+                        "SELECT MAX(id) FROM productos WHERE id >= 0 AND id < 2147483647"
+                    ) or 0
+                    for row in overflow_rows:
+                        old_id = row["id"] if isinstance(row, dict) else row[0]
+                        next_id += 1
+                        self.execute_non_query(
+                            "UPDATE productos SET id = ? WHERE id = ?", (next_id, -old_id)
+                        )
+                    new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or next_id
+                    self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {int(new_max) + 1}")
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
