@@ -238,25 +238,28 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
         return False
 
 
-def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
-    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877)."""
-    if not any(k in blob for k in ("1877", "corrupt", "drop the table and recreate")):
-        return None
-    if not any(k in blob for k in ("clientes", "punpro_db", "mariadb", "check table", "repair table")):
-        return None
+def _local_mariadb_corrupt_heal_allowed() -> tuple[bool, str]:
+    """True si esta PC debe intentar reparar MariaDB local (maestra en loopback)."""
     try:
         from src.config import config
+
+        if str(config.get("db_engine") or "").lower() != "mariadb":
+            return False, ""
+        if config.get("is_master") is False:
+            return False, ""
+        host = str(config.get("db_host") or "127.0.0.1").strip() or "127.0.0.1"
+        if not _is_loopback_host(host):
+            return False, ""
+        return True, host
+    except Exception:
+        return False, ""
+
+
+def _run_local_mariadb_corrupt_recovery(host: str) -> HealResult:
+    """REPAIR / restaurar respaldo / recrear tablas críticas en MariaDB local."""
+    try:
         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
 
-        if config.get("is_master") is False or str(config.get("db_engine") or "").lower() != "mariadb":
-            return None
-        host = str(config.get("db_host") or "127.0.0.1").strip() or "127.0.0.1"
-        if host.lower() not in ("127.0.0.1", "localhost", ""):
-            return None
-    except Exception as e:
-        return HealResult(False, "repair_mariadb_corrupt", f"import: {e}")
-
-    try:
         if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
             return HealResult(True, "repair_mariadb_corrupt", host)
         if AutoBlindajeDB.restaurar_ultimo_backup_valido(
@@ -271,6 +274,37 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
     except Exception as e:
         return HealResult(False, "repair_mariadb_corrupt", str(e))
     return HealResult(False, "repair_mariadb_corrupt", "no_recovery")
+
+
+def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
+    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (1877 / 1932)."""
+    corrupt_keys = (
+        "1877",
+        "1932",
+        "corrupt",
+        "drop the table and recreate",
+        "doesn't exist in engine",
+        "does not exist in engine",
+    )
+    if not any(k in blob for k in corrupt_keys):
+        return None
+    table_keys = (
+        "clientes",
+        "productos",
+        "punpro_db",
+        "mariadb",
+        "movimientos_caja",
+        "carteleria_global",
+        "combos",
+        "check table",
+        "repair table",
+    )
+    if not any(k in blob for k in table_keys):
+        return None
+    allowed, host = _local_mariadb_corrupt_heal_allowed()
+    if not allowed:
+        return None
+    return _run_local_mariadb_corrupt_recovery(host)
 
 
 def _heal_mariadb(blob: str) -> Optional[HealResult]:
@@ -417,6 +451,15 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             ok, detail = _try_connect(remote, as_slave=True)
             if ok:
                 return HealResult(True, "failover_to_slave", detail)
+
+        # Tablas huérfanas (1932) pueden dejar mysqld sin responder a SELECT
+        allowed, corrupt_host = _local_mariadb_corrupt_heal_allowed()
+        if allowed:
+            recover = _run_local_mariadb_corrupt_recovery(corrupt_host)
+            if recover.healed:
+                ok, detail = _try_connect("127.0.0.1", as_slave=False)
+                if ok:
+                    return HealResult(True, recover.action, detail)
 
         return HealResult(False, "reconnect_local_mariadb", f"mysqld_down:{detail}")
 

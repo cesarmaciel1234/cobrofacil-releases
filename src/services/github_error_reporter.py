@@ -376,7 +376,11 @@ def queue_error_report(
         try:
             from src.services.auto_heal import try_auto_heal
 
-            heal = try_auto_heal(msg, exc=exc_obj, traceback_text=tb_text)
+            heal_tail = log_tail if log_tail is not None else _tail_log_file()
+            heal_context = tb_text
+            if heal_tail:
+                heal_context = f"{heal_context}\n{heal_tail}" if heal_context else heal_tail
+            heal = try_auto_heal(msg, exc=exc_obj, traceback_text=heal_context)
             if heal.healed:
                 logging.getLogger("PunPro").warning(
                     "Error curado en runtime (%s): %s — no se reporta a GitHub",
