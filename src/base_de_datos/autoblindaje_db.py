@@ -29,6 +29,22 @@ class AutoBlindajeDB:
         "detalle_ventas",
         "movimientos_caja",
     )
+    # Tablas que suelen quedar huérfanas (MariaDB 1932) tras corrupción InnoDB
+    MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "carteleria_config",
+        "detalles_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+        "gastos",
+        "usuarios",
+        "terminales_activos",
+        "departamentos",
+        "categorias",
+    )
 
     @classmethod
     def get_backup_directories(cls):
@@ -730,8 +746,71 @@ class AutoBlindajeDB:
         except Exception:
             return False
 
+    @staticmethod
+    def _is_mariadb_ghost_table_error(exc: Exception) -> bool:
+        args = getattr(exc, "args", None)
+        if args and args[0] == 1932:
+            return True
+        msg = str(exc).lower()
+        return (
+            "1932" in msg
+            or "doesn't exist in engine" in msg
+            or "does not exist in engine" in msg
+        )
+
+    @classmethod
+    def _repair_mariadb_ghost_tables(cls, host: str = "127.0.0.1") -> list:
+        """Elimina metadatos huérfanos (1932). Devuelve nombres de tablas reparadas."""
+        dropped = []
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=3306, user="root", password="1234",
+                database="punpro_db", connect_timeout=3,
+            )
+            cur = conn.cursor()
+            try:
+                cur.execute("SET FOREIGN_KEY_CHECKS=0")
+            except Exception:
+                pass
+            for table in cls.MARIADB_GHOST_PROBE_TABLES:
+                try:
+                    cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if cls._is_mariadb_ghost_table_error(e):
+                        try:
+                            cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                            dropped.append(table)
+                            logger.warning(
+                                "Tabla %s huérfana en MariaDB (1932); metadatos eliminados.",
+                                table,
+                            )
+                        except Exception as drop_ex:
+                            logger.warning(
+                                "No se pudo eliminar metadatos huérfanos de %s: %s",
+                                table,
+                                drop_ex,
+                            )
+            try:
+                cur.execute("SET FOREIGN_KEY_CHECKS=1")
+            except Exception:
+                pass
+            if dropped:
+                conn.commit()
+            conn.close()
+        except Exception as ex:
+            logger.warning("Reparación ghost 1932 en autoblindaje: %s", ex)
+        return dropped
+
     @classmethod
     def _check_mariadb_integrity(cls, host: str) -> bool:
+        dropped = cls._repair_mariadb_ghost_tables(host)
+        if dropped:
+            logger.warning(
+                "Integridad MariaDB: tablas huérfanas (1932) detectadas: %s",
+                ", ".join(dropped),
+            )
+            return False
         try:
             import pymysql
             conn = pymysql.connect(
@@ -743,19 +822,35 @@ class AutoBlindajeDB:
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
-                msg = r[3]
-                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
-                        continue
-                    logger.warning(f"Resultado de verificación tabla: {r}")
+                msg = str(r[3] if len(r) >= 4 else "").lower()
+                if msg in ("ok", "table is already up to date"):
+                    continue
+                if cls._is_mariadb_ghost_table_error(Exception(msg)):
                     return False
+                if "doesn't exist" in msg and "in engine" not in msg:
+                    continue
+                logger.warning(f"Resultado de verificación tabla: {r}")
+                return False
             return True
-        except Exception:
+        except Exception as e:
+            if cls._is_mariadb_ghost_table_error(e):
+                return False
             return True
 
     @classmethod
     def _recrear_tablas_criticas_mariadb(cls, host: str = "127.0.0.1") -> bool:
         """Recrea tablas críticas vacías cuando no hay respaldo usable (último recurso)."""
+        cls._repair_mariadb_ghost_tables(host)
+        try:
+            from src.base_de_datos.database import db_manager
+
+            if getattr(db_manager, "db_engine_type", "") == "mariadb":
+                db_manager._create_tables()
+                db_manager._migrate_db()
+                logger.info("✅ Esquema MariaDB recreado vía DatabaseManager.")
+                return True
+        except Exception as ex:
+            logger.warning("Recrear esquema completo falló; tablas mínimas: %s", ex)
         try:
             import pymysql
             conn = pymysql.connect(
@@ -847,15 +942,28 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
+            for table in cls.MARIADB_GHOST_PROBE_TABLES:
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if cls._is_mariadb_ghost_table_error(e):
+                        conn.close()
+                        return True
             cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
                 msg = " ".join(str(x) for x in r).lower()
-                if "drop the table and recreate" in msg or "corrupt" in msg:
+                if (
+                    "drop the table and recreate" in msg
+                    or "corrupt" in msg
+                    or "1932" in msg
+                    or "doesn't exist in engine" in msg
+                ):
                     return True
-        except Exception:
-            pass
+        except Exception as e:
+            if cls._is_mariadb_ghost_table_error(e):
+                return True
         return False
 
     @classmethod
@@ -863,6 +971,21 @@ class AutoBlindajeDB:
         """Intenta auto-reparar la base de datos dañada."""
         logger.info("🛠️ Intentando auto-reparación de base de datos...")
         if engine_type == "mariadb":
+            dropped = cls._repair_mariadb_ghost_tables(host)
+            if dropped:
+                logger.warning(
+                    "Tablas huérfanas (1932) reparadas: %s. Recreando esquema...",
+                    ", ".join(dropped),
+                )
+                try:
+                    from src.base_de_datos.database import db_manager
+
+                    db_manager._create_tables()
+                    db_manager._migrate_db()
+                    if cls._check_mariadb_integrity(host):
+                        return True
+                except Exception as ex:
+                    logger.warning("Recrear esquema tras ghost 1932: %s", ex)
             if cls._mariadb_needs_drop_recreate(host):
                 logger.error(
                     "🚨 Corrupción InnoDB severa (ventas/clientes). "
