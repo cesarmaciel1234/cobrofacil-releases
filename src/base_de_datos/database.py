@@ -855,6 +855,27 @@ class DatabaseManager:
         add_column_if_not_exists('clientes', 'dni', 'TEXT')
         add_column_if_not_exists('clientes', 'tipo_cliente', "TEXT DEFAULT 'regular'")
         add_column_if_not_exists('clientes', 'direccion', 'TEXT')
+        add_column_if_not_exists('clientes', 'telefono', 'TEXT')
+        add_column_if_not_exists('clientes', 'limite_credito', 'REAL DEFAULT 0')
+        add_column_if_not_exists('clientes', 'deuda_actual', 'REAL DEFAULT 0')
+        add_column_if_not_exists('clientes', 'fecha_registro', 'DATETIME DEFAULT CURRENT_TIMESTAMP')
+
+        # MariaDB legacy: autoblindaje creó saldo_fiado en lugar de deuda_actual
+        try:
+            if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
+                cursor.execute('SHOW COLUMNS FROM clientes')
+                rows = cursor.fetchall()
+                if rows and isinstance(rows[0], dict):
+                    _cli_cols = [row.get('Field') or row.get('field') for row in rows]
+                else:
+                    _cli_cols = [col[0] for col in rows]
+                if 'saldo_fiado' in _cli_cols and 'deuda_actual' in _cli_cols:
+                    cursor.execute(
+                        'UPDATE clientes SET deuda_actual = saldo_fiado '
+                        'WHERE saldo_fiado > 0 AND (deuda_actual IS NULL OR deuda_actual = 0)'
+                    )
+        except Exception as e:
+            logger.warning(f'Migración saldo_fiado → deuda_actual en clientes: {e}')
         
         # Crear tabla departamentos si no existe (migración)
         try:
