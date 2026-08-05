@@ -403,6 +403,18 @@ class MariaDBController:
         except Exception:
             return False
 
+    def _ensure_punpro_schema_after_ghost(self) -> None:
+        """Recrea esquema tras eliminar metadatos huérfanos (1932) al arrancar mysqld."""
+        try:
+            from src.base_de_datos.database import DatabaseManager
+
+            inst = DatabaseManager._instance
+            if inst is not None and getattr(inst, "db_engine_type", None) == "mariadb":
+                inst._create_tables()
+                inst._migrate_db()
+        except Exception as ex:
+            logger.warning("Recrear esquema punpro_db tras ghost 1932: %s", ex)
+
     def _create_punpro_db(self):
         """Crea la base de datos principal si no existe en el motor local recién iniciado."""
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
@@ -426,6 +438,7 @@ class MariaDBController:
             logger.info(
                 "punpro_db conecta pero el esquema requiere recreación (ghost 1932 o InnoDB en recuperación)."
             )
+            self._ensure_punpro_schema_after_ghost()
         except Exception:
             pass
 
