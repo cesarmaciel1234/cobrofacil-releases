@@ -30,6 +30,14 @@ class MariaDBCursorWrapper:
                        r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
         return query
 
+    @staticmethod
+    def _is_transient_error(exc: BaseException) -> bool:
+        err = str(exc).lower()
+        return any(
+            token in err
+            for token in ("2003", "2002", "2013", "2006", "10054", "timed out", "timeout", "lost connection")
+        )
+
     def execute(self, query, params=None):
         try:
             mq = self._translate_query(query)
@@ -47,6 +55,8 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif self._is_transient_error(e):
+                logger.warning(f"Error transitorio MariaDB (reintento posible): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -149,7 +159,7 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in ("2003", "2002", "2013", "10054", "timed out", "timeout", "can't connect", "lost connection")
         )
 
     def _try_connect(self, **kwargs):

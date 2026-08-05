@@ -46,12 +46,12 @@ class SincronizadorCarteleria:
 
     def sincronizar_ahora(self):
         try:
-            query_productos = """
-                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
-                FROM productos
-                WHERE precio > 0
-            """
-            filas = db_manager.execute_query(query_productos)
+            from src.cerebro_global.servicios.cache_productos import cache_productos
+
+            filas = [
+                row for row in (cache_productos.obtener_todos() or [])
+                if float((row.get("precio") if isinstance(row, dict) else row[2]) or 0) > 0
+            ]
             if not filas:
                 return
 
