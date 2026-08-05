@@ -1,4 +1,4 @@
-Issues like #27, #30, #33, #35, #40, #45, #46, #51, #54, #60, #65, #72, #74, #80, #82, #86, #91, #99, #104, and #106 are not production bugs.
+Issues like #27, #30, #33, #35, #40, #45, #46, #51, #54, #60, #65, #72, #74, #80, #82, #86, #91, #99, #104, #106, and #111 are not production bugs.
 
 Title "[ci] token-check (cerrar)" and body "Validacion automatica del secret. Se puede cerrar."
 are created by the release workflow (.github/workflows/release.yml) to verify that
