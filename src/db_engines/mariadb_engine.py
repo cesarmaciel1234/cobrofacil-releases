@@ -156,10 +156,27 @@ class MariaDBEngine:
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
         return MariaDBConnectionWrapper(conn, engine=self)
 
+    def _probe_local_mariadb_ready(self) -> bool:
+        """Comprueba si MariaDB local acepta conexiones (sin rate limit)."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            return (
+                mariadb_controller._try_pymysql("1234", 1)
+                or mariadb_controller._try_pymysql("", 1)
+            )
+        except Exception:
+            return False
+
     def _maybe_start_local_mariadb(self) -> bool:
         """Arranca mysqld portable en maestra local si el puerto no responde (rate-limited)."""
         if self._is_remote_host(self.host):
             return False
+        if self._probe_local_mariadb_ready():
+            self._last_fail_time = 0
+            return True
         try:
             from src.central_red_global.master_presence import es_pc_maestra_local
 
@@ -174,9 +191,6 @@ class MariaDBEngine:
         try:
             from src.services.mariadb_controller import mariadb_controller
 
-            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
-                self._last_fail_time = 0
-                return True
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
