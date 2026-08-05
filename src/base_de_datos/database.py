@@ -812,6 +812,24 @@ class DatabaseManager:
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'configuracion' ──
         # Módulos legacy pueden consultar SELECT/INSERT aquí. La poblamos desde config.json.
         try:
+            # MariaDB 1932: metadata existe pero el .ibd de InnoDB no — CREATE IF NOT EXISTS no repara.
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                try:
+                    cursor.execute("CHECK TABLE configuracion")
+                    for _row in cursor.fetchall():
+                        _msg = " ".join(
+                            str(_x) for _x in (
+                                _row.values() if isinstance(_row, dict) else _row
+                            )
+                        ).lower()
+                        if "doesn't exist in engine" in _msg or "1932" in _msg:
+                            logger.warning(
+                                "Tabla configuracion huérfana en MariaDB (error 1932); recreando."
+                            )
+                            cursor.execute("DROP TABLE IF EXISTS configuracion")
+                            break
+                except Exception:
+                    pass
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS configuracion (
                     clave VARCHAR(100) PRIMARY KEY,
