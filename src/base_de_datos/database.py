@@ -278,7 +278,10 @@ class DatabaseManager:
                             logger.info(f"Auto-descubrimiento falló: {e}")
 
                     if not master_ok:
-                        logger.error(f"Fallo de conexión a la Maestra en {host}")
+                        logger.warning(
+                            f"Maestra inalcanzable en {host}; "
+                            "continuando en modo offline local (SQLite)."
+                        )
                         logger.info(
                             "Esclava offline temporal (SQLite local). "
                             "Se conserva is_master=false en config para el próximo arranque."
