@@ -24,7 +24,7 @@ def safe_mariadb_text(value):
     text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
     text = _SUPPLEMENTARY_CHARS.sub("", text)
     text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
-    return text
+    return text.strip()
 
 
 def sanitize_mariadb_params(params):

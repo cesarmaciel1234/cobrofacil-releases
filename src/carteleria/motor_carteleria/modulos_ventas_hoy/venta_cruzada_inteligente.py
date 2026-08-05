@@ -34,14 +34,26 @@ class VentaCruzadaInteligente:
         if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en base de datos (sin TRIM en SQL: evita full scan y timeout 2013)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
+            q_p = "SELECT 1 FROM productos WHERE nombre = ? LIMIT 1"
+            rows_p = db_manager.execute_query(q_p, (nom_limpio,))
+            if not rows_p:
+                q_p = "SELECT 1 FROM productos WHERE LOWER(nombre) = LOWER(?) LIMIT 1"
+                rows_p = db_manager.execute_query(q_p, (nom_limpio,))
+            if not rows_p:
+                q_p = "SELECT 1 FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 1"
+                rows_p = db_manager.execute_query(q_p, (f"%{nom_limpio}%",))
             if rows_p:
                 return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
+            q_c = "SELECT 1 FROM carteleria_global WHERE nombre_producto = ? LIMIT 1"
+            rows_c = db_manager.execute_query(q_c, (nom_limpio,))
+            if not rows_c:
+                q_c = "SELECT 1 FROM carteleria_global WHERE LOWER(nombre_producto) = LOWER(?) LIMIT 1"
+                rows_c = db_manager.execute_query(q_c, (nom_limpio,))
+            if not rows_c:
+                q_c = "SELECT 1 FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?) LIMIT 1"
+                rows_c = db_manager.execute_query(q_c, (f"%{nom_limpio}%",))
             if rows_c:
                 return True, nom_limpio
         except Exception:

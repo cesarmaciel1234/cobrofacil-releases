@@ -27,6 +27,18 @@ class OfflineSync:
     def guardar_venta_offline(self, venta_data, items):
         """Guarda la venta en el JSON local cuando la LAN falla."""
         try:
+            from src.utils.text_db import safe_mariadb_text
+
+            venta_data = dict(venta_data)
+            venta_data["cliente_nombre"] = safe_mariadb_text(venta_data.get("cliente_nombre", ""))
+            items_sanitized = []
+            for it in items:
+                it_copy = dict(it) if isinstance(it, dict) else {}
+                nombre = safe_mariadb_text(it_copy.get("nombre") or it_copy.get("nombre_producto") or "")
+                it_copy["nombre"] = nombre
+                it_copy["nombre_producto"] = nombre
+                items_sanitized.append(it_copy)
+            items = items_sanitized
             with open(self.queue_file, "r", encoding="utf-8") as f:
                 queue = json.load(f)
             

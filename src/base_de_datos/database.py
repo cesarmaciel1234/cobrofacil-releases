@@ -726,6 +726,21 @@ class DatabaseManager:
             or "does not exist in engine" in msg
         )
 
+    def _sanitize_offline_venta_record(self, venta_data, items):
+        """Normaliza textos de venta offline para columnas MariaDB utf8."""
+        venta_copy = dict(venta_data)
+        venta_copy["cliente_nombre"] = self._nombre_producto_para_db(
+            venta_data.get("cliente_nombre", "")
+        )
+        items_copy = []
+        for it in items:
+            it_copy = dict(it) if isinstance(it, dict) else {}
+            nombre = self._nombre_producto_para_db(self._item_nombre(it))
+            it_copy["nombre"] = nombre
+            it_copy["nombre_producto"] = nombre
+            items_copy.append(it_copy)
+        return venta_copy, items_copy
+
     @staticmethod
     def _is_transient_mariadb_error(exc: BaseException) -> bool:
         """Errores de red/conexión MariaDB que suelen resolverse con reconexión y reintento."""
@@ -1912,6 +1927,7 @@ class DatabaseManager:
 
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
         max_attempts = 3 if is_mariadb else 1
+        venta_data, items = self._sanitize_offline_venta_record(venta_data, items)
 
         for attempt in range(max_attempts):
             conn = None
