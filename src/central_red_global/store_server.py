@@ -343,7 +343,9 @@ def run_store_server_app(app) -> int:
         release_store_server_lock()
         if tray:
             tray.hide()
-        QApplication.instance().quit(0)
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
 
     def _on_close(event):
         # Cerrar ventana = ocultar; apagar solo con botón / menú
