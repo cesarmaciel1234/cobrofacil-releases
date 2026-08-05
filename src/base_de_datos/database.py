@@ -526,31 +526,31 @@ class DatabaseManager:
             # Garantizar que las tablas existen en MariaDB antes de migrar
             self.db_engine_type = "mariadb"
             self._create_tables()
-            
+            self._migrate_db()
+
             m_conn = self.get_connection()
             m_cur = m_conn.cursor()
-            
+
             for table in tables:
                 try:
+                    # Esquema legacy (clave/valor); se puebla desde config.json en _migrate_db
+                    if table == "configuracion":
+                        self._ensure_configuracion_table(m_cur)
+                        continue
+
                     sq_cur.execute(f"SELECT * FROM {table}")
                     rows = sq_cur.fetchall()
                     if not rows:
                         continue
-                        
+
                     # Obtener columnas
                     columns = list(rows[0].keys())
                     cols_str = ", ".join(columns)
                     placeholders = ", ".join(["?"] * len(columns))
-                    
+
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
-                    try:
-                        m_cur.execute(f"TRUNCATE TABLE {table}")
-                    except:
-                        try:
-                            m_cur.execute(f"DELETE FROM {table}")
-                        except:
-                            pass
-                            
+                    self._clear_mariadb_table_before_migration(m_cur, table)
+
                     # Insertar en lotes
                     insert_query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
                     data_lote = [[r[col] for col in columns] for r in rows]
@@ -720,10 +720,32 @@ class DatabaseManager:
                 logger.warning(
                     "Tabla configuracion huérfana en MariaDB (1932); recreando..."
                 )
-                cursor.execute("DROP TABLE IF EXISTS configuracion")
+                for drop_sql in (
+                    "DROP TABLE IF EXISTS configuracion",
+                    "DROP TABLE configuracion",
+                ):
+                    try:
+                        cursor.execute(drop_sql)
+                        break
+                    except Exception as drop_err:
+                        if not self._is_mariadb_ghost_table_error(drop_err):
+                            logger.warning(f"DROP configuracion: {drop_err}")
                 _create(False)
             else:
                 raise
+
+    def _clear_mariadb_table_before_migration(self, cursor, table: str) -> None:
+        """Vacía una tabla en MariaDB antes de migrar; repara metadatos huérfanos (1932)."""
+        if table == "configuracion":
+            self._ensure_configuracion_table(cursor)
+            return
+        try:
+            cursor.execute(f"TRUNCATE TABLE `{table}`")
+        except Exception:
+            try:
+                cursor.execute(f"DELETE FROM `{table}`")
+            except Exception:
+                pass
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
