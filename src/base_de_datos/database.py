@@ -800,6 +800,33 @@ class DatabaseManager:
                         )
         return dropped
 
+    def _mariadb_finalize_ghost_tables(self, cursor) -> bool:
+        """Tras CREATE IF NOT EXISTS: tablas que siguen huérfanas (1932) requieren DROP y segundo pase."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        any_dropped = False
+        for table in self.MARIADB_GHOST_PROBE_TABLES:
+            try:
+                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+            except Exception as e:
+                err = str(e).lower()
+                if self._is_mariadb_ghost_table_error(e) or (
+                    "1146" in err and "doesn't exist" in err
+                ):
+                    try:
+                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        any_dropped = True
+                        logger.warning(
+                            "Tabla %s inválida (1932/ausente) tras CREATE IF NOT EXISTS; "
+                            "metadatos eliminados para segundo pase.",
+                            table,
+                        )
+                    except Exception as drop_ex:
+                        logger.warning(
+                            "No se pudo forzar DROP de %s: %s", table, drop_ex
+                        )
+        return any_dropped
+
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
@@ -1457,6 +1484,18 @@ class DatabaseManager:
                 )
             """)
             
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                if self._mariadb_finalize_ghost_tables(cursor):
+                    conn.commit()
+                    conn.close()
+                    if not getattr(self, "_ghost_schema_retry", False):
+                        self._ghost_schema_retry = True
+                        try:
+                            self._create_tables()
+                        finally:
+                            self._ghost_schema_retry = False
+                    return
+
             conn.commit()
             conn.close()
             self._ensure_table_columns_and_autoincrement()

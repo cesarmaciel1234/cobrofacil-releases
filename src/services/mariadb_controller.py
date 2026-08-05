@@ -361,6 +361,8 @@ class MariaDBController:
                 "gastos",
                 "usuarios",
                 "terminales_activos",
+                "departamentos",
+                "categorias",
             ):
                 try:
                     cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
@@ -409,6 +411,16 @@ class MariaDBController:
             logger.info(
                 "punpro_db conecta pero el esquema requiere recreación (ghost 1932 o InnoDB en recuperación)."
             )
+            try:
+                from src.base_de_datos.database import DatabaseManager
+
+                inst = DatabaseManager._instance
+                if inst is not None and getattr(inst, "mariadb_engine", None):
+                    inst._create_tables()
+                    logger.info("Esquema punpro_db recreado tras reparación ghost 1932.")
+                    return
+            except Exception as ex:
+                logger.warning("Recrear esquema punpro_db tras ghost 1932: %s", ex)
         except Exception:
             pass
 
