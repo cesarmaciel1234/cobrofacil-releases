@@ -585,13 +585,14 @@ def _is_transient_download_error(exc: BaseException) -> bool:
 
 
 def _prepare_download_retry() -> None:
-    """Limpia artefactos de un intento fallido pero conserva .part para reanudar."""
+    """Limpia ZIP y fragmentos tras un intento fallido (no reanudar .part corrupto)."""
     zip_path = _zip_path()
-    try:
-        if os.path.isfile(zip_path):
-            os.remove(zip_path)
-    except OSError:
-        pass
+    for path in (zip_path, zip_path + ".part"):
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
     for i in range(8):
         shard = f"{zip_path}.part.{i}"
         try:
