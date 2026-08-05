@@ -1217,7 +1217,11 @@ class DatabaseManager:
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
-                logger.error(f"Error connecting to MariaDB database: {e}")
+                es_esclava = not getattr(self, "is_master", True)
+                if es_esclava and self._is_mariadb_unreachable(e):
+                    logger.warning(f"MariaDB esclava inalcanzable: {e}")
+                else:
+                    logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
         try:
@@ -1295,6 +1299,35 @@ class DatabaseManager:
         )
         return query
 
+    @staticmethod
+    def _is_mariadb_unreachable(exc: BaseException) -> bool:
+        msg = str(exc or "").lower()
+        return any(
+            k in msg
+            for k in (
+                "2003",
+                "2002",
+                "2013",
+                "can't connect",
+                "timed out",
+                "lost connection",
+                "circuit breaker",
+            )
+        )
+
+    def _fallback_esclava_a_local(self, query: str, params: tuple) -> List[sqlite3.Row]:
+        """Esclava sin Maestra: SQLite local y un reintento de la consulta."""
+        logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
+        self.reconectar_local()
+        conn = self.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(self._normalize_query(query), params)
+            result = cursor.fetchall()
+            return result if result is not None else []
+        finally:
+            conn.close()
+
     def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
@@ -1305,13 +1338,21 @@ class DatabaseManager:
             result = cursor.fetchall()
             return result if result is not None else []
         except Exception as e:
-            logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
+            es_esclava = (
+                getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                and not getattr(self, "is_master", True)
+            )
+            if es_esclava and self._is_mariadb_unreachable(e):
                 try:
-                    logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                    self.reconectar_local()
-                except Exception:
-                    pass
+                    return self._fallback_esclava_a_local(query, params)
+                except Exception as e2:
+                    logger.warning(
+                        "[RED LAN] Consulta en BD local tras caída de Maestra falló: %s | Query: %s",
+                        e2,
+                        query,
+                    )
+                    return []
+            logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
             return []
         finally:
             if conn:

@@ -139,7 +139,10 @@ class MariaDBEngine:
                     pass
                     
             self._last_fail_time = time.time()
-            logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
+            if self.host not in ("127.0.0.1", "localhost", "::1"):
+                logger.warning(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
+            else:
+                logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
             raise
             
     def get_connection(self):
