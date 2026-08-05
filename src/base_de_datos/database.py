@@ -2,8 +2,13 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import threading
+import time
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+
+_mariadb_ghost_heal_lock = threading.Lock()
+_mariadb_ghost_heal_last = 0.0
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -834,6 +839,67 @@ class DatabaseManager:
             else:
                 raise
 
+    @staticmethod
+    def _extract_mariadb_tables_from_query(query: str) -> List[str]:
+        """Nombres de tabla referenciados en SQL (para reparar 1932 en runtime)."""
+        import re
+
+        skip = frozenset(
+            ("select", "where", "and", "or", "set", "values", "on", "as", "by", "limit")
+        )
+        tables: List[str] = []
+        for pattern in (
+            r"\bFROM\s+`?(\w+)`?",
+            r"\bJOIN\s+`?(\w+)`?",
+            r"\bINTO\s+`?(\w+)`?",
+            r"\bUPDATE\s+`?(\w+)`?",
+        ):
+            for match in re.finditer(pattern, query, re.IGNORECASE):
+                name = match.group(1).lower()
+                if name not in skip and name not in tables:
+                    tables.append(name)
+        return tables
+
+    def _try_heal_mariadb_ghost_tables(self, query: str) -> bool:
+        """Drop + recrea tablas huérfanas (1932) tras arranque lento o metadatos InnoDB rotos."""
+        global _mariadb_ghost_heal_last
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        tables = self._extract_mariadb_tables_from_query(query)
+        if not tables:
+            return False
+        with _mariadb_ghost_heal_lock:
+            now = time.time()
+            if now - _mariadb_ghost_heal_last < 15.0:
+                return False
+            conn = None
+            try:
+                engine = getattr(self, "mariadb_engine", None)
+                if not engine:
+                    return False
+                conn = engine.get_ddl_connection()
+                cursor = conn.cursor()
+                for table in tables:
+                    self._repair_mariadb_ghost_table(cursor, table)
+                conn.commit()
+                self._create_tables()
+                self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+                _mariadb_ghost_heal_last = now
+                logger.warning(
+                    "Esquema MariaDB reparado tras error 1932 (tablas: %s)",
+                    ", ".join(tables),
+                )
+                return True
+            except Exception as ex:
+                logger.warning("No se pudo reparar tablas huérfanas MariaDB: %s", ex)
+                return False
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -1597,6 +1663,15 @@ class DatabaseManager:
         """Returns a new connection to the database (SQLite o MariaDB)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
             try:
+                engine = getattr(self, "mariadb_engine", None)
+                if engine and not engine._is_remote_host(engine.host):
+                    from src.services.mariadb_controller import mariadb_controller
+
+                    if mariadb_controller.is_starting():
+                        mariadb_controller.wait_until_ready(30.0)
+            except Exception:
+                pass
+            try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
                 if not getattr(self, "is_master", True):
@@ -1713,6 +1788,20 @@ class DatabaseManager:
                 result = cursor.fetchall()
                 return result if result is not None else []
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_heal_mariadb_ghost_tables(query)
+                ):
+                    logger.warning(
+                        "Query reintento %s/%s tras reparar tablas huérfanas (1932): %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
@@ -1763,6 +1852,20 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_heal_mariadb_ghost_tables(query)
+                ):
+                    logger.warning(
+                        "Non-query reintento %s/%s tras reparar tablas huérfanas (1932): %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
@@ -1828,6 +1931,20 @@ class DatabaseManager:
                         return row[0]
                 return None
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                    and self._try_heal_mariadb_ghost_tables(query)
+                ):
+                    logger.warning(
+                        "Query reintento %s/%s tras reparar tablas huérfanas (1932): %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
