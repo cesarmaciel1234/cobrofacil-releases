@@ -24,8 +24,9 @@ def mariadb_safe_text(value, max_len=None):
     return text
 
 class MariaDBCursorWrapper:
-    def __init__(self, cursor):
+    def __init__(self, cursor, engine=None):
         self._cursor = cursor
+        self._engine = engine
 
     def _translate_query(self, query):
         # Tipos de datos
@@ -58,6 +59,13 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif "2013" in err_msg or "lost connection" in err_msg:
+                if self._engine is not None:
+                    try:
+                        self._engine.reset_thread_connection()
+                    except Exception:
+                        pass
+                logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -90,7 +98,7 @@ class MariaDBConnectionWrapper:
     def cursor(self):
         # DictCursor emula sqlite3.Row mejor que un cursor normal
         c = self._conn.cursor(pymysql.cursors.DictCursor)
-        return MariaDBCursorWrapper(c)
+        return MariaDBCursorWrapper(c, engine=self._engine)
 
     def commit(self):
         self._conn.commit()
@@ -117,8 +125,8 @@ class MariaDBEngine:
     # Timeouts cortos en remoto: host caído no debe congelar la UI de esclava
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT_REMOTE = 3
-    # Local: inventario grande + cartelería pueden superar 3s (error 2013)
-    IO_TIMEOUT_LOCAL = 15
+    # Local: inventario grande + cartelería pueden superar 15s bajo carga (error 2013)
+    IO_TIMEOUT_LOCAL = 20
     # ALTER TABLE en inventario grande puede tardar varios minutos
     DDL_TIMEOUT = 600
     
