@@ -764,7 +764,15 @@ class AutoBlindajeDB:
             )
             cur = conn.cursor()
             cur.execute("SET FOREIGN_KEY_CHECKS=0")
-            for table in ("ventas", "clientes", "detalles_ventas", "detalle_ventas", "configuracion"):
+            for table in (
+                "ventas",
+                "clientes",
+                "detalles_ventas",
+                "detalle_ventas",
+                "configuracion",
+                "productos",
+                "movimientos_caja",
+            ):
                 try:
                     cur.execute(f"DROP TABLE IF EXISTS `{table}`")
                 except Exception:
@@ -826,6 +834,44 @@ class AutoBlindajeDB:
                     cantidad DOUBLE NULL,
                     precio_unitario DOUBLE NULL,
                     subtotal DOUBLE NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS productos (
+                    id BIGINT NOT NULL AUTO_INCREMENT,
+                    nombre VARCHAR(255) NULL,
+                    precio DOUBLE NULL,
+                    stock DOUBLE DEFAULT 0,
+                    categoria VARCHAR(100) DEFAULT 'GENERAL',
+                    unidad VARCHAR(50) DEFAULT 'UN',
+                    costo DOUBLE DEFAULT 0,
+                    cant_mayoreo DOUBLE DEFAULT 0,
+                    precio_mayoreo DOUBLE DEFAULT 0,
+                    stock_minimo DOUBLE DEFAULT 0,
+                    stock_maximo DOUBLE DEFAULT 0,
+                    codigo VARCHAR(100) NULL,
+                    departamento VARCHAR(100) NULL,
+                    es_pesable TINYINT DEFAULT 0,
+                    cant_oferta DOUBLE DEFAULT 0,
+                    precio_oferta DOUBLE DEFAULT 0,
+                    tipo_unidad_oferta VARCHAR(50) DEFAULT 'Unidades',
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS movimientos_caja (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    tipo VARCHAR(50) NULL,
+                    monto DOUBLE NULL,
+                    usuario VARCHAR(100) NULL,
+                    observaciones TEXT NULL,
+                    caja_id INT DEFAULT 1,
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """

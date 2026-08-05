@@ -951,6 +951,68 @@ class DatabaseManager:
                 except Exception:
                     pass
 
+    def _ensure_mariadb_table_ddl(self, cursor, table_name: str, create_sql: str) -> None:
+        """CREATE IF NOT EXISTS + verificación; IF NOT EXISTS no repara ghost 1932."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            cursor.execute(create_sql)
+            return
+        import re
+
+        cursor.execute(create_sql)
+        try:
+            cursor.execute(f"SELECT 1 FROM `{table_name}` LIMIT 1")
+            return
+        except Exception as e:
+            if not self._is_mariadb_ghost_table_error(e):
+                raise
+        logger.warning(
+            "Tabla %s sigue huérfana tras CREATE IF NOT EXISTS (1932); DROP+CREATE...",
+            table_name,
+        )
+        try:
+            cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+        except Exception:
+            pass
+        cursor.execute(f"DROP TABLE IF EXISTS `{table_name}`")
+        forced = re.sub(
+            r"CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS",
+            "CREATE TABLE",
+            create_sql,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        cursor.execute(forced)
+        cursor.execute(f"SELECT 1 FROM `{table_name}` LIMIT 1")
+
+    def _escalate_mariadb_ghost_repair(self) -> bool:
+        """Último recurso local tras ghost 1932: restaurar respaldo o recrear tablas críticas."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        if not getattr(self, "is_master", True):
+            return False
+        host = getattr(getattr(self, "mariadb_engine", None), "host", None) or "127.0.0.1"
+        if str(host).strip().lower() not in ("127.0.0.1", "localhost", ""):
+            return False
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            if AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                "mariadb",
+                allow_older_than_today=True,
+                merge_today=True,
+                mariadb_host=host,
+            ):
+                self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+                self._create_tables()
+                return True
+            if AutoBlindajeDB._recrear_tablas_criticas_mariadb(host):
+                self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+                self._create_tables()
+                return True
+        except Exception as ex:
+            logger.warning("Escalado ghost 1932 falló: %s", ex)
+        return False
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -1291,7 +1353,10 @@ class DatabaseManager:
                 )
             """)
             
-            cursor.execute("""
+            self._ensure_mariadb_table_ddl(
+                cursor,
+                "productos",
+                """
                 CREATE TABLE IF NOT EXISTS productos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT,
@@ -1311,10 +1376,14 @@ class DatabaseManager:
                     precio_oferta REAL DEFAULT 0,
                     tipo_unidad_oferta TEXT DEFAULT 'Unidades'
                 )
-            """)
-            
+                """,
+            )
+
             # 3. VENTAS (Cabecera)
-            cursor.execute("""
+            self._ensure_mariadb_table_ddl(
+                cursor,
+                "ventas",
+                """
                 CREATE TABLE IF NOT EXISTS ventas (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1330,7 +1399,8 @@ class DatabaseManager:
                     descuento REAL DEFAULT 0,
                     recargo REAL DEFAULT 0
                 )
-            """)
+                """,
+            )
             
             # 4. DETALLES VENTAS (Items)
             cursor.execute("""
@@ -1378,7 +1448,10 @@ class DatabaseManager:
             """)
             
             # 7. MOVIMIENTOS CAJA
-            cursor.execute("""
+            self._ensure_mariadb_table_ddl(
+                cursor,
+                "movimientos_caja",
+                """
                 CREATE TABLE IF NOT EXISTS movimientos_caja (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1388,7 +1461,8 @@ class DatabaseManager:
                     observaciones TEXT,
                     caja_id INTEGER DEFAULT 1
                 )
-            """)
+                """,
+            )
             
             # 8. TERMINALES ACTIVOS (Para conteo en red)
             cursor.execute("""
@@ -1843,6 +1917,8 @@ class DatabaseManager:
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
                     if ghost_err:
                         self._repair_ghost_tables_from_query(query)
+                        if attempt >= 1:
+                            self._escalate_mariadb_ghost_repair()
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
@@ -1897,6 +1973,8 @@ class DatabaseManager:
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
                     if ghost_err:
                         self._repair_ghost_tables_from_query(query)
+                        if attempt >= 1:
+                            self._escalate_mariadb_ghost_repair()
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
@@ -1966,6 +2044,8 @@ class DatabaseManager:
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
                     if ghost_err:
                         self._repair_ghost_tables_from_query(query)
+                        if attempt >= 1:
+                            self._escalate_mariadb_ghost_repair()
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
                         attempt + 1,

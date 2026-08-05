@@ -397,11 +397,26 @@ class MariaDBController:
                     pass
                 conn.commit()
                 conn.close()
+                self._recreate_punpro_schema_after_ghost()
                 return False
             conn.close()
             return True
         except Exception:
             return False
+
+    def _recreate_punpro_schema_after_ghost(self) -> None:
+        """Tras DROP de metadatos huérfanos (1932), recrear esquema antes de consultas."""
+        try:
+            from src.base_de_datos.database import db_manager
+
+            if getattr(db_manager, "db_engine_type", "sqlite") != "mariadb":
+                return
+            if hasattr(db_manager, "_reset_mariadb_thread_connection"):
+                db_manager._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+            db_manager._create_tables()
+            logger.info("Esquema punpro_db recreado tras reparación ghost 1932.")
+        except Exception as ex:
+            logger.warning("No se pudo recrear esquema tras ghost 1932: %s", ex)
 
     def _create_punpro_db(self):
         """Crea la base de datos principal si no existe en el motor local recién iniciado."""
