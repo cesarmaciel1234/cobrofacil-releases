@@ -780,6 +780,11 @@ class DatabaseManager:
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
         """Detecta y elimina metadatos huérfanos (1932) en tablas críticas."""
         dropped = []
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            try:
+                cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+            except Exception:
+                pass
         for table in self.MARIADB_GHOST_PROBE_TABLES:
             try:
                 cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
@@ -808,13 +813,17 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
             table = self._table_name_from_query(query)
+            if table:
+                self._repair_mariadb_ghost_table(cursor, table)
+            dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
             if table and table not in dropped:
                 self._repair_mariadb_ghost_table(cursor, table)
             conn.commit()
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
             try:
                 self._create_tables()
+                self._migrate_db()
             except Exception as ex:
                 logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             return True

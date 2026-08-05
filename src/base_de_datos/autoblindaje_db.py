@@ -758,79 +758,41 @@ class AutoBlindajeDB:
         """Recrea tablas críticas vacías cuando no hay respaldo usable (último recurso)."""
         try:
             import pymysql
+            from src.base_de_datos.database import DatabaseManager
+
             conn = pymysql.connect(
                 host=host, port=3306, user="root", password="1234",
-                database="punpro_db", connect_timeout=5, autocommit=True,
+                database="punpro_db", connect_timeout=5, autocommit=False,
             )
             cur = conn.cursor()
             cur.execute("SET FOREIGN_KEY_CHECKS=0")
-            for table in ("ventas", "clientes", "detalles_ventas", "detalle_ventas", "configuracion"):
+            for table in DatabaseManager.MARIADB_GHOST_PROBE_TABLES:
                 try:
-                    cur.execute(f"DROP TABLE IF EXISTS `{table}`")
-                except Exception:
-                    pass
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS configuracion (
-                    clave VARCHAR(100) PRIMARY KEY,
-                    valor TEXT
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS ventas (
-                    id INT NOT NULL AUTO_INCREMENT,
-                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    total DOUBLE NULL,
-                    pago_con DOUBLE NULL,
-                    cambio DOUBLE NULL,
-                    pago_efectivo DOUBLE DEFAULT 0,
-                    pago_otro DOUBLE DEFAULT 0,
-                    usuario VARCHAR(100) NULL,
-                    estado VARCHAR(50) DEFAULT 'COMPLETADA',
-                    metodo_pago VARCHAR(50) DEFAULT 'Efectivo',
-                    caja_id INT DEFAULT 1,
-                    descuento DOUBLE DEFAULT 0,
-                    recargo DOUBLE DEFAULT 0,
-                    cliente_nombre VARCHAR(200) NULL,
-                    PRIMARY KEY (id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS clientes (
-                    id INT NOT NULL AUTO_INCREMENT,
-                    nombre VARCHAR(200) NOT NULL,
-                    telefono VARCHAR(50) NULL,
-                    email VARCHAR(100) NULL,
-                    limite_credito DOUBLE DEFAULT 0,
-                    deuda_actual DOUBLE DEFAULT 0,
-                    saldo_fiado DOUBLE DEFAULT 0,
-                    dni VARCHAR(50) NULL,
-                    tipo_cliente VARCHAR(50) NULL,
-                    direccion TEXT NULL,
-                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS detalles_ventas (
-                    id INT NOT NULL AUTO_INCREMENT,
-                    id_venta INT NULL,
-                    id_producto VARCHAR(100) NULL,
-                    nombre_producto TEXT NULL,
-                    cantidad DOUBLE NULL,
-                    precio_unitario DOUBLE NULL,
-                    subtotal DOUBLE NULL,
-                    PRIMARY KEY (id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
+                    cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    err = str(e).lower()
+                    if (
+                        "1932" in err
+                        or "doesn't exist in engine" in err
+                        or "does not exist in engine" in err
+                    ):
+                        try:
+                            cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        except Exception:
+                            pass
+            conn.commit()
             conn.close()
+
+            db = DatabaseManager()
+            if getattr(db, "db_engine_type", "sqlite") != "mariadb":
+                db.db_engine_type = "mariadb"
+                db.is_master = True
+            if not getattr(db, "mariadb_engine", None):
+                from src.db_engines.mariadb_engine import MariaDBEngine
+                db.mariadb_engine = MariaDBEngine(host=host)
+            db._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+            db._create_tables()
+            db._migrate_db()
             logger.info("✅ Tablas críticas recreadas (vacías).")
             return True
         except Exception as e:
