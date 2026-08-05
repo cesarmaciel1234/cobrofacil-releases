@@ -305,6 +305,7 @@ class DatabaseManager:
                 self.db_path = "mariadb://" + host
                 if self.is_master:
                     self._create_tables()
+                    self._ensure_mariadb_tables_healthy()
                     self._migrate_db()
                     self._ensure_test_users()
                     
@@ -553,7 +554,8 @@ class DatabaseManager:
                     placeholders = ", ".join(["?"] * len(columns))
                     
                     # Reparar tablas huérfanas (1932) antes de limpiar — CREATE IF NOT EXISTS no basta
-                    self._repair_mariadb_ghost_table(m_cur, table)
+                    if self._repair_mariadb_ghost_table(m_cur, table):
+                        self._create_tables()
 
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
                     self._prepare_mariadb_table_for_import(m_cur, table)
@@ -815,13 +817,16 @@ class DatabaseManager:
             else:
                 raise
 
-    def _repair_mariadb_ghost_table(self, cursor, table: str) -> None:
+    def _repair_mariadb_ghost_table(self, cursor, table: str) -> bool:
         """Repara metadatos huérfanos (MariaDB 1932) antes de TRUNCATE/DELETE en migración."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return
+            return False
         if table == "configuracion":
             self._ensure_configuracion_table(cursor)
-            return
+            return False
+        if table == "carteleria_config":
+            self._ensure_carteleria_config_table(cursor)
+            return False
         try:
             cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
         except Exception as e:
@@ -831,8 +836,100 @@ class DatabaseManager:
                     table,
                 )
                 cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                return True
+            raise
+        return False
+
+    def _ensure_carteleria_config_table(self, cursor) -> None:
+        """Crea carteleria_config; en MariaDB repara metadatos huérfanos (error 1932)."""
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        engine = (
+            " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            if is_mariadb
+            else ""
+        )
+
+        def _create(if_not_exists: bool) -> None:
+            clause = "IF NOT EXISTS " if if_not_exists else ""
+            cursor.execute(
+                f"CREATE TABLE {clause}carteleria_config "
+                f"(id INT PRIMARY KEY, config_json TEXT){engine}"
+            )
+
+        try:
+            _create(True)
+            if is_mariadb:
+                cursor.execute("SELECT 1 FROM carteleria_config LIMIT 1")
+        except Exception as e:
+            if is_mariadb and self._is_mariadb_ghost_table_error(e):
+                logger.warning(
+                    "Tabla carteleria_config huérfana en MariaDB (1932); recreando..."
+                )
+                cursor.execute("DROP TABLE IF EXISTS carteleria_config")
+                _create(False)
             else:
                 raise
+
+    def _ensure_mariadb_tables_healthy(self) -> bool:
+        """Detecta tablas huérfanas (MariaDB 1932), elimina metadatos rotos y recrea esquema."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+
+        repaired = False
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SHOW TABLES")
+            rows = cursor.fetchall()
+            tables = []
+            for row in rows:
+                if isinstance(row, dict):
+                    tables.append(next(iter(row.values())))
+                elif row:
+                    tables.append(row[0])
+
+            for table in tables:
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        logger.warning(
+                            "Tabla %s huérfana en MariaDB (1932); eliminando metadatos...",
+                            table,
+                        )
+                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        repaired = True
+                    else:
+                        raise
+            if repaired:
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Verificación de tablas MariaDB: {e}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+        finally:
+            if conn:
+                conn.close()
+
+        if repaired:
+            logger.info(
+                "Recreando esquema MariaDB tras reparar tablas huérfanas (1932)..."
+            )
+            self._create_tables()
+            try:
+                conn = self.get_connection()
+                cur = conn.cursor()
+                self._ensure_configuracion_table(cur)
+                self._ensure_carteleria_config_table(cur)
+                conn.commit()
+                conn.close()
+            except Exception as ex:
+                logger.warning(f"Post-reparación tablas auxiliares: {ex}")
+        return repaired
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
@@ -1713,6 +1810,16 @@ class DatabaseManager:
                 result = cursor.fetchall()
                 return result if result is not None else []
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                ):
+                    logger.warning(
+                        "Query falló por tabla huérfana (1932); reparando esquema..."
+                    )
+                    if self._ensure_mariadb_tables_healthy():
+                        continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
@@ -1763,6 +1870,16 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                ):
+                    logger.warning(
+                        "Non-query falló por tabla huérfana (1932); reparando esquema..."
+                    )
+                    if self._ensure_mariadb_tables_healthy():
+                        continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
@@ -1828,6 +1945,16 @@ class DatabaseManager:
                         return row[0]
                 return None
             except Exception as e:
+                if (
+                    attempt < max_attempts - 1
+                    and is_mariadb
+                    and self._is_mariadb_ghost_table_error(e)
+                ):
+                    logger.warning(
+                        "Scalar falló por tabla huérfana (1932); reparando esquema..."
+                    )
+                    if self._ensure_mariadb_tables_healthy():
+                        continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
