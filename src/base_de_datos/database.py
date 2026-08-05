@@ -2,6 +2,7 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import threading
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
@@ -15,6 +16,7 @@ class DatabaseManager:
             cls._instance = super(DatabaseManager, cls).__new__(cls)
             # Si la maestra cae, nos quedamos en SQLite local hasta reconectar_mariadb()
             cls._instance._forced_local_offline = False
+            cls._instance._ghost_repair_lock = threading.Lock()
             cls._instance._init_db()
         return cls._instance
 
@@ -41,6 +43,7 @@ class DatabaseManager:
         )
         self._create_tables()
         self._migrate_db()
+        self._ensure_mariadb_schema_healthy()
 
     def _normalize_db_path(self, path: str, base_app_path: str) -> str:
         """Normaliza rutas de base de datos con soporte para UNC, unidades mapeadas y variables de entorno."""
@@ -308,6 +311,7 @@ class DatabaseManager:
                 if self.is_master:
                     self._create_tables()
                     self._migrate_db()
+                    self._ensure_mariadb_schema_healthy()
                     self._ensure_test_users()
                     
                     # Migración transparente si MariaDB está vacía pero SQLite tiene datos
@@ -820,29 +824,58 @@ class DatabaseManager:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return False
-        conn = None
+        lock = getattr(self, "_ghost_repair_lock", None)
+        if lock is None:
+            lock = threading.Lock()
+            self._ghost_repair_lock = lock
+        with lock:
+            conn = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                table = self._table_name_from_query(query)
+                if table and table not in dropped:
+                    self._repair_mariadb_ghost_table(cursor, table)
+                conn.commit()
+                try:
+                    self._create_tables()
+                except Exception as ex:
+                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+                return True
+            except Exception as ex:
+                logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
+                return False
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
+    def _ensure_mariadb_schema_healthy(self) -> None:
+        """Tras arranque: detecta tablas huérfanas (1932) y recrea esquema si hace falta."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
-            table = self._table_name_from_query(query)
-            if table and table not in dropped:
-                self._repair_mariadb_ghost_table(cursor, table)
-            conn.commit()
-            try:
-                self._create_tables()
-            except Exception as ex:
-                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
-            return True
-        except Exception as ex:
-            logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
-            return False
-        finally:
-            if conn:
+            if dropped:
+                conn.commit()
+                logger.warning(
+                    "Esquema MariaDB con tablas huérfanas (1932) reparadas: %s",
+                    ", ".join(dropped),
+                )
                 try:
                     conn.close()
                 except Exception:
                     pass
+                self._create_tables()
+            else:
+                conn.close()
+        except Exception as ex:
+            logger.warning("Validación esquema MariaDB: %s", ex)
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1244,8 +1277,9 @@ class DatabaseManager:
         import threading
         threading.Thread(target=trigger_sync, daemon=True).start()
 
-    def _create_tables(self):
+    def _create_tables(self, _ghost_retry: bool = False):
         """Crea todas las tablas necesarias si no existen."""
+        conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
@@ -1489,6 +1523,32 @@ class DatabaseManager:
             conn.close()
             self._ensure_table_columns_and_autoincrement()
         except Exception as e:
+            is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+            if (
+                not _ghost_retry
+                and is_mariadb
+                and self._is_mariadb_ghost_table_error(e)
+            ):
+                logger.warning(
+                    "Ghost 1932 en _create_tables; reparando metadatos y reintentando: %s",
+                    e,
+                )
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                try:
+                    conn2 = self.get_connection()
+                    cur2 = conn2.cursor()
+                    dropped = self._probe_and_repair_mariadb_ghost_tables(cur2)
+                    if dropped:
+                        conn2.commit()
+                    conn2.close()
+                    self._create_tables(_ghost_retry=True)
+                except Exception as ex:
+                    logger.error(f"Error en _create_tables tras reparación ghost: {ex}")
+                return
             logger.error(f"Error en _create_tables: {e}")
 
     def _productos_id_is_bigint(self) -> bool:
