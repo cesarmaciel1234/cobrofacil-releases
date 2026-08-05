@@ -149,8 +149,26 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in (
+                "2003", "2002", "2013", "2006",
+                "timed out", "timeout", "can't connect",
+                "gone away", "connectionreset", "lost connection",
+            )
         )
+
+    def _local_mariadb_responds(self) -> bool:
+        """Probe rápido: MariaDB local acepta handshake (sin arrancar mysqld)."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            return (
+                mariadb_controller._try_pymysql("1234", 1)
+                or mariadb_controller._try_pymysql("", 1)
+            )
+        except Exception:
+            return False
 
     def _try_connect(self, **kwargs):
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
@@ -187,8 +205,13 @@ class MariaDBEngine:
                     self._last_fail_time = 0
                     return True
                 return False
+            if self._local_mariadb_responds():
+                self._last_fail_time = 0
+                return True
         except Exception:
-            pass
+            if self._local_mariadb_responds():
+                self._last_fail_time = 0
+                return True
         now = time.time()
         if now - getattr(self, "_last_start_attempt", 0) < 5:
             return False
@@ -196,9 +219,6 @@ class MariaDBEngine:
         try:
             from src.services.mariadb_controller import mariadb_controller
 
-            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
-                self._last_fail_time = 0
-                return True
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
@@ -215,6 +235,9 @@ class MariaDBEngine:
             self._wait_local_mariadb_if_starting()
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if local:
+            if in_cooldown and self._local_mariadb_responds():
+                self._last_fail_time = 0
+                in_cooldown = False
             try:
                 from src.services.mariadb_controller import mariadb_controller
 
