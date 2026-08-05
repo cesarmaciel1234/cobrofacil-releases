@@ -828,6 +828,33 @@ class DatabaseManager:
                 except Exception:
                     pass
 
+    def _ensure_mariadb_ghost_tables_repaired(self) -> None:
+        """Elimina metadatos huérfanos (1932) antes de CREATE IF NOT EXISTS."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+            if dropped:
+                conn.commit()
+                logger.warning(
+                    "MariaDB: %d tabla(s) huérfana(s) reparada(s) antes de crear esquema: %s",
+                    len(dropped),
+                    ", ".join(dropped),
+                )
+        except Exception as ex:
+            logger.warning(
+                "No se pudo reparar tablas huérfanas antes de crear esquema: %s", ex
+            )
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
         """Error 1366: emojis/4-byte UTF-8 en columnas utf8mb3; reintentar tras sanitizar."""
@@ -1219,6 +1246,7 @@ class DatabaseManager:
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
         try:
+            self._ensure_mariadb_ghost_tables_repaired()
             conn = self.get_connection()
             cursor = conn.cursor()
 
