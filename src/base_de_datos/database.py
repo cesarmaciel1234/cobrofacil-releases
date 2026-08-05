@@ -758,28 +758,63 @@ class DatabaseManager:
                 return m.group(1)
         return None
 
+    # Tablas que suelen quedar huérfanas (MariaDB 1932) tras corrupción InnoDB
+    MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "carteleria_config",
+        "detalles_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+        "gastos",
+        "usuarios",
+    )
+
+    def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
+        """Detecta y elimina metadatos huérfanos (1932) en tablas críticas."""
+        dropped = []
+        for table in self.MARIADB_GHOST_PROBE_TABLES:
+            try:
+                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+            except Exception as e:
+                if self._is_mariadb_ghost_table_error(e):
+                    try:
+                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        dropped.append(table)
+                        logger.warning(
+                            "Tabla %s huérfana en MariaDB (1932); metadatos eliminados.",
+                            table,
+                        )
+                    except Exception as drop_ex:
+                        logger.warning(
+                            "No se pudo eliminar metadatos huérfanos de %s: %s",
+                            table,
+                            drop_ex,
+                        )
+        return dropped
+
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return False
-        table = self._table_name_from_query(query)
-        if not table:
             return False
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+            table = self._table_name_from_query(query)
+            if table and table not in dropped:
+                self._repair_mariadb_ghost_table(cursor, table)
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
-                try:
-                    self._create_tables()
-                except Exception as ex:
-                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            try:
+                self._create_tables()
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             return True
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
             return False
         finally:
             if conn:
