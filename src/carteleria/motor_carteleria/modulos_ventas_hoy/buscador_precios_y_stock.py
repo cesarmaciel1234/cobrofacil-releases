@@ -47,11 +47,14 @@ class BuscadorDePreciosYStock:
             encontro_datos = False
             
             # PASO 2 DE VERIFICACIÓN: Comprobar que el producto EXISTE genuinamente en el Inventario o Promociones.
-            # a) Intentamos leer de 'carteleria_global'
-            q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?))"
+            # a) Intentamos leer de 'carteleria_global' (match exacto indexado antes que TRIM/LOWER)
+            q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE nombre_producto = ? LIMIT 1"
             rows_cartel = db_manager.execute_query(q_cartel, (nombre.strip(),))
             if not rows_cartel:
-                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?)"
+                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) LIMIT 1"
+                rows_cartel = db_manager.execute_query(q_cartel, (nombre.strip(),))
+            if not rows_cartel:
+                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?) LIMIT 1"
                 rows_cartel = db_manager.execute_query(q_cartel, (f"%{nombre.strip()}%",))
                 
             if rows_cartel:
@@ -68,11 +71,14 @@ class BuscadorDePreciosYStock:
                     unidad = "Kilos"
                 encontro_datos = True
 
-            # b) Buscamos en la tabla general de inventario 'productos'
-            q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
+            # b) Buscamos en la tabla general de inventario 'productos' (match exacto indexado primero)
+            q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE nombre = ? LIMIT 1"
             rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
             if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
+                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) LIMIT 1"
+                rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
+            if not rows_prod:
+                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 1"
                 rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
                 
             if rows_prod:
