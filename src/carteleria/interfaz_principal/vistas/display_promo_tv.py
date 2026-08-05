@@ -104,7 +104,7 @@ class DisplayPromoTV(QFrame):
         if is_temu:
             self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: Impact, 'Arial Black', sans-serif; font-size: {fs_n}px; color: #000000; line-height: 1.1; }}")
         else:
-            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: {fs_n-10}px; font-weight: 900; color: {C_THEME['text']}; }}")
+            self.lbl_producto.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: {fs_n-10}px; font-weight: 900; color: {C_THEME.get('text', '#1D1D1F')}; }}")
 
         # 3. Rating y Marketing
         self.lbl_marketing.setText(f"({marketing_str})")
@@ -146,7 +146,7 @@ class DisplayPromoTV(QFrame):
         else:
             self.lbl_precio_old.setStyleSheet("QLabel { font-family: -apple-system, sans-serif; font-size: 38px; color: #94A3B8; text-decoration: line-through; }")
             fs_p = 90 if es_precio_largo else 115
-            self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: {fs_p}px; font-weight: 900; color: #FFFFFF; background-color: {C_THEME['accent']}; padding: 10px 25px; border-radius: 12px; }}")
+            self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: {fs_p}px; font-weight: 900; color: #FFFFFF; background-color: {C_THEME.get('accent', '#FF3B30')}; padding: 10px 25px; border-radius: 12px; }}")
 
         # 5. Cinta Condiciones
         if regla_txt:
@@ -163,6 +163,6 @@ class DisplayPromoTV(QFrame):
                 if is_temu:
                     self.lbl_cinta.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 20px; color: #666666; font-weight: normal; font-style: italic; margin-top: 15px; }")
                 else:
-                    self.lbl_cinta.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: 18px; color: {C_THEME['text_muted']}; font-style: italic; margin-top: 15px; }}")
+                    self.lbl_cinta.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: 18px; color: {C_THEME.get('text_muted', '#86868B')}; font-style: italic; margin-top: 15px; }}")
         else:
             self.lbl_cinta.hide()
