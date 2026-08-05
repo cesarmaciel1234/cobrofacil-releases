@@ -2128,11 +2128,16 @@ class DatabaseManager:
         pass
 
     def get_terminales_activos_count(self) -> int:
-        """ Devuelve el número de terminales con actividad en los últimos 2 minutos. """
-        from datetime import datetime, timedelta
-        limite = (datetime.now() - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
-        res = self.execute_scalar("SELECT COUNT(*) FROM terminales_activos WHERE last_seen >= ?", (limite,))
-        return int(res) if res is not None else 1
+        """Terminales activos por UDP Nexus (registrar_heartbeat ya no escribe en MariaDB)."""
+        try:
+            from src.central_red_global.network_engine import get_network_engine
+
+            eng = get_network_engine()
+            if eng is not None:
+                return int(eng.count_active_terminals())
+        except Exception:
+            pass
+        return 1
 
 # Singleton instance for easy access
 db_manager = DatabaseManager()
