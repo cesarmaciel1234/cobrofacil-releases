@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import http.client
 import os
 import threading
+import time
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
@@ -15,6 +17,40 @@ MIN_PARALLEL_BYTES = 12 * 1024 * 1024  # solo si > 12 MB
 CONNECT_TIMEOUT = 45
 READ_TIMEOUT = 300  # ZIP ~300 MB en enlaces lentos (LATAM)
 REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
+STREAM_RETRIES = 3
+
+
+def _is_transient_stream_error(exc: BaseException) -> bool:
+    if isinstance(
+        exc,
+        (TimeoutError, ConnectionError, http.client.IncompleteRead),
+    ):
+        return True
+    msg = str(exc).lower()
+    if "incomplet" in msg or "connection broken" in msg:
+        return True
+    try:
+        import requests
+
+        if isinstance(
+            exc,
+            (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ChunkedEncodingError,
+            ),
+        ):
+            return True
+    except Exception:
+        pass
+    try:
+        from urllib3.exceptions import ProtocolError
+
+        if isinstance(exc, ProtocolError):
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def _verify_ssl() -> bool:
@@ -135,6 +171,29 @@ def _cleanup_partial_download(dest_path: str, part_path: str) -> None:
 
 
 def _download_single(session, url, dest_path, part_path, total_hint, verify, cb) -> None:
+    last_exc: BaseException | None = None
+    for attempt in range(STREAM_RETRIES):
+        try:
+            _download_single_stream(
+                session, url, dest_path, part_path, total_hint, verify, cb
+            )
+            return
+        except Exception as exc:
+            last_exc = exc
+            if attempt < STREAM_RETRIES - 1 and _is_transient_stream_error(exc):
+                _emit(
+                    cb,
+                    f"Conexión interrumpida, reanudando ({attempt + 2}/{STREAM_RETRIES})…",
+                    1,
+                )
+                time.sleep(3 * (attempt + 1))
+                continue
+            raise
+    if last_exc is not None:
+        raise last_exc
+
+
+def _download_single_stream(session, url, dest_path, part_path, total_hint, verify, cb) -> None:
     import requests
 
     existing = os.path.getsize(part_path) if os.path.isfile(part_path) else 0
@@ -223,30 +282,60 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
 
         path = f"{part_path}.{idx}"
         headers = {"Range": f"bytes={start}-{end}"}
-        # Session por hilo: requests.Session no es thread-safe.
-        with _session().get(
-            url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT, verify=verify
-        ) as resp:
-            if resp.status_code not in (200, 206):
-                raise RuntimeError(f"Range HTTP {resp.status_code}")
-            with open(path, "wb") as out:
-                for chunk in resp.iter_content(chunk_size=CHUNK):
-                    if not chunk:
-                        continue
-                    out.write(chunk)
+        expected = end - start + 1
+        last_exc: BaseException | None = None
+        for attempt in range(STREAM_RETRIES):
+            try:
+                if attempt > 0:
+                    try:
+                        if os.path.isfile(path):
+                            os.remove(path)
+                    except OSError:
+                        pass
+                # Session por hilo: requests.Session no es thread-safe.
+                with _session().get(
+                    url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT, verify=verify
+                ) as resp:
+                    if resp.status_code not in (200, 206):
+                        raise RuntimeError(f"Range HTTP {resp.status_code}")
+                    with open(path, "wb") as out:
+                        for chunk in resp.iter_content(chunk_size=CHUNK):
+                            if not chunk:
+                                continue
+                            out.write(chunk)
+                            with done_lock:
+                                done[0] += len(chunk)
+                                pct = min(95, int(done[0] * 95 / size))
+                                if pct - last_pct[0] >= 2:
+                                    last_pct[0] = pct
+                                    mb = done[0] / (1024 * 1024)
+                                    total_mb = size / (1024 * 1024)
+                                    _emit(
+                                        cb,
+                                        f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
+                                        pct,
+                                    )
+                actual = os.path.getsize(path) if os.path.isfile(path) else 0
+                if actual != expected:
+                    raise RuntimeError(
+                        f"Shard incompleto: {actual} bytes recibidos, esperados {expected}"
+                    )
+                return path
+            except Exception as exc:
+                last_exc = exc
+                if attempt < STREAM_RETRIES - 1 and _is_transient_stream_error(exc):
                     with done_lock:
-                        done[0] += len(chunk)
-                        pct = min(95, int(done[0] * 95 / size))
-                        if pct - last_pct[0] >= 2:
-                            last_pct[0] = pct
-                            mb = done[0] / (1024 * 1024)
-                            total_mb = size / (1024 * 1024)
-                            _emit(
-                                cb,
-                                f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
-                                pct,
-                            )
-        return path
+                        try:
+                            partial = os.path.getsize(path) if os.path.isfile(path) else 0
+                            done[0] = max(0, done[0] - partial)
+                        except OSError:
+                            pass
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                raise
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("Shard download failed")
 
     _emit(cb, f"Descarga rápida ({n} conexiones)…", 1)
     paths = [None] * n
