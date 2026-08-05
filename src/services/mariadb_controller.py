@@ -335,6 +335,51 @@ class MariaDBController:
             logger.error(f"Fallo al iniciar MariaDB: {e}")
             return False
 
+    def _probe_punpro_schema(self, password="1234", timeout=2):
+        """True si punpro_db responde; False si tablas huérfanas (1932)."""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password=password,
+                database="punpro_db",
+                connect_timeout=timeout,
+            )
+            cur = conn.cursor()
+            ghosts = []
+            for table in (
+                "ventas",
+                "movimientos_caja",
+                "carteleria_global",
+                "detalles_ventas",
+                "productos",
+            ):
+                try:
+                    cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    err = str(e).lower()
+                    if "1932" in err or "doesn't exist in engine" in err or "does not exist in engine" in err:
+                        ghosts.append(table)
+            if ghosts:
+                for table in ghosts:
+                    try:
+                        cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        logger.warning(
+                            "Tabla huérfana %s (1932) en punpro_db; metadatos eliminados.",
+                            table,
+                        )
+                    except Exception:
+                        pass
+                conn.commit()
+                conn.close()
+                return False
+            conn.close()
+            return True
+        except Exception:
+            return False
+
     def _create_punpro_db(self):
         """Crea la base de datos principal si no existe en el motor local recién iniciado."""
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
@@ -352,8 +397,12 @@ class MariaDBController:
                 connect_timeout=0.5
             )
             conn.close()
-            logger.info("Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK).")
-            return
+            if self._probe_punpro_schema("1234", 2):
+                logger.info("Base de datos punpro_db ya está garantizada en MariaDB local (conexión rápida OK).")
+                return
+            logger.info(
+                "punpro_db conecta pero el esquema requiere recreación (ghost 1932 o InnoDB en recuperación)."
+            )
         except Exception:
             pass
 

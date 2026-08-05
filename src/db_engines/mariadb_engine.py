@@ -228,6 +228,18 @@ class MariaDBEngine:
         local = not self._is_remote_host(self.host)
         if local and self._wait_local_mariadb_if_starting():
             self._last_fail_time = 0
+        if local:
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                if not mariadb_controller._try_pymysql(self.password, 1):
+                    if mariadb_controller._is_port_open():
+                        logger.info(
+                            "Puerto 3306 abierto sin handshake — esperando MariaDB/InnoDB..."
+                        )
+                        mariadb_controller.wait_until_ready(45.0)
+            except Exception:
+                pass
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if local:
             try:

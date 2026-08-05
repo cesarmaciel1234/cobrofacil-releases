@@ -730,6 +730,8 @@ class DatabaseManager:
     def _is_transient_mariadb_error(exc: BaseException) -> bool:
         """Errores de red/conexión MariaDB que suelen resolverse con reconexión y reintento."""
         err = str(exc).lower()
+        if DatabaseManager._is_mariadb_ghost_table_error(exc):
+            return True
         return any(
             token in err
             for token in (
@@ -738,6 +740,53 @@ class DatabaseManager:
                 "circuit breaker",
             )
         )
+
+    @staticmethod
+    def _table_name_from_query(query: str) -> Optional[str]:
+        """Primer nombre de tabla en SELECT/INSERT/UPDATE (para reparar ghost 1932)."""
+        import re
+
+        q = str(query or "").strip()
+        for pat in (
+            r"\bFROM\s+`?(\w+)`?",
+            r"\bJOIN\s+`?(\w+)`?",
+            r"\bINTO\s+`?(\w+)`?",
+            r"\bUPDATE\s+`?(\w+)`?",
+        ):
+            m = re.search(pat, q, re.IGNORECASE)
+            if m:
+                return m.group(1)
+        return None
+
+    def _repair_ghost_tables_from_query(self, query: str) -> bool:
+        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        table = self._table_name_from_query(query)
+        if not table:
+            return False
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            self._repair_mariadb_ghost_table(cursor, table)
+            conn.commit()
+            if not getattr(self, "_ghost_schema_rebuilt", False):
+                self._ghost_schema_rebuilt = True
+                try:
+                    self._create_tables()
+                except Exception as ex:
+                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            return True
+        except Exception as ex:
+            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            return False
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1713,7 +1762,11 @@ class DatabaseManager:
                 result = cursor.fetchall()
                 return result if result is not None else []
             except Exception as e:
-                if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
@@ -1763,7 +1816,11 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
-                if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
@@ -1828,7 +1885,11 @@ class DatabaseManager:
                         return row[0]
                 return None
             except Exception as e:
-                if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
@@ -1982,8 +2043,13 @@ class DatabaseManager:
                     except Exception:
                         pass
                 encoding_err = is_mariadb and self._is_mariadb_encoding_error(e)
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
-                if attempt < max_attempts - 1 and (transient_err or encoding_err):
+                if attempt < max_attempts - 1 and (transient_err or encoding_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(
+                            "INSERT INTO ventas (total) VALUES (?)"
+                        )
                     if encoding_err:
                         for it in items:
                             if isinstance(it, dict):
