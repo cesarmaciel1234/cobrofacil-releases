@@ -1617,6 +1617,17 @@ class DatabaseManager:
             logger.error(f"Error connecting to database: {e}")
             raise
 
+    def _release_query_connection(self, conn) -> None:
+        """Cierra SQLite; MariaDB se reutiliza por hilo (evita tormenta de reconexiones / error 2013)."""
+        if conn is None:
+            return
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            return
+        try:
+            conn.close()
+        except Exception:
+            pass
+
     def upsert_product(self, product_id: Optional[int], data: dict) -> bool:
         """Insert a new product or update an existing one.
 
@@ -1719,8 +1730,7 @@ class DatabaseManager:
                         pass
                 return []
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
@@ -1758,8 +1768,7 @@ class DatabaseManager:
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return False
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
@@ -1780,8 +1789,7 @@ class DatabaseManager:
                     pass
             return False
         finally:
-            if conn:
-                conn.close()
+            self._release_query_connection(conn)
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
@@ -1818,8 +1826,7 @@ class DatabaseManager:
                 logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return None
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
@@ -1904,7 +1911,7 @@ class DatabaseManager:
                 logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
                 return None
         finally:
-            if conn: conn.close()
+            self._release_query_connection(conn)
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
@@ -1966,8 +1973,7 @@ class DatabaseManager:
                 logger.warning(f"Fallo en sync_venta_to_master: {e}")
                 return False
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return False
 
     def get_efectivo_en_caja(self, caja_id: int = 1) -> float:
@@ -2080,7 +2086,7 @@ class DatabaseManager:
             logger.error(f"Error transaccional al cancelar venta {id_venta}: {e}")
             return False
         finally:
-            if conn: conn.close()
+            self._release_query_connection(conn)
 
 
     def registrar_heartbeat(self, caja_id, hostname):
