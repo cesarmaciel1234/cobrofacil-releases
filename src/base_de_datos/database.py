@@ -673,6 +673,42 @@ class DatabaseManager:
         except Exception:
             return False
 
+    def _is_mariadb_slave(self) -> bool:
+        return (
+            getattr(self, "db_engine_type", "sqlite") == "mariadb"
+            and not getattr(self, "is_master", True)
+        )
+
+    def _is_mariadb_transient_error(self, exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return any(
+            k in msg
+            for k in (
+                "2003",
+                "2002",
+                "2013",
+                "can't connect",
+                "timed out",
+                "lost connection",
+                "circuit breaker",
+                "connection refused",
+            )
+        )
+
+    def _failover_slave_to_local(self) -> bool:
+        """Esclava sin Maestra: cambia a SQLite local para seguir operando."""
+        if not self._is_mariadb_slave():
+            return False
+        try:
+            logger.warning(
+                "[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite..."
+            )
+            self.reconectar_local()
+            return True
+        except Exception as e:
+            logger.error(f"[RED LAN] Error en reconectar_local: {e}")
+            return False
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -1217,6 +1253,9 @@ class DatabaseManager:
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
+                if self._is_mariadb_slave() and self._is_mariadb_transient_error(e):
+                    if self._failover_slave_to_local():
+                        return self.get_connection()
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
@@ -1305,13 +1344,32 @@ class DatabaseManager:
             result = cursor.fetchall()
             return result if result is not None else []
         except Exception as e:
+            if self._is_mariadb_slave() and self._is_mariadb_transient_error(e):
+                if self._failover_slave_to_local():
+                    conn_retry = None
+                    try:
+                        conn_retry = self.get_connection()
+                        cursor = conn_retry.cursor()
+                        cursor.execute(self._normalize_query(query), params)
+                        result = cursor.fetchall()
+                        logger.warning(
+                            "[RED LAN] Consulta ejecutada en BD local tras caída de Maestra."
+                        )
+                        return result if result is not None else []
+                    except Exception as retry_e:
+                        logger.warning(
+                            f"[RED LAN] Consulta falló tras failover local: {retry_e}"
+                        )
+                        return []
+                    finally:
+                        if conn_retry:
+                            try:
+                                conn_retry.close()
+                            except Exception:
+                                pass
+                logger.warning(f"[RED LAN] Maestra inalcanzable (consulta): {e}")
+                return []
             logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
-                try:
-                    logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                    self.reconectar_local()
-                except Exception:
-                    pass
             return []
         finally:
             if conn:

@@ -321,6 +321,13 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             ok, detail = _try_connect(remote, as_slave=True)
             if ok:
                 return HealResult(True, "reconnect_slave", detail)
+        # Maestra apagada o fuera de red: failover a SQLite local (cobro offline)
+        try:
+            db_manager.reconectar_local()
+            if hasattr(db_manager, "is_connected") and db_manager.is_connected():
+                return HealResult(True, "failover_slave_local", "sqlite_offline")
+        except Exception as e:
+            return HealResult(False, "failover_slave_local", str(e))
         return HealResult(
             False,
             "reconnect_slave",
