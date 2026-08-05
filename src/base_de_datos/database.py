@@ -1163,6 +1163,8 @@ class DatabaseManager:
                     and (
                         "corrupt" in err
                         or "1877" in err
+                        or "1932" in err
+                        or "doesn't exist in engine" in err
                         or "drop the table and recreate" in err
                     )
                 )
