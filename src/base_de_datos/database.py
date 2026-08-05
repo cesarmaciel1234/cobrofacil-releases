@@ -542,6 +542,9 @@ class DatabaseManager:
                     cols_str = ", ".join(columns)
                     placeholders = ", ".join(["?"] * len(columns))
                     
+                    # Reparar tablas huérfanas (1932) antes de limpiar — CREATE IF NOT EXISTS no basta
+                    self._repair_mariadb_ghost_table(m_cur, table)
+
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
                     try:
                         m_cur.execute(f"TRUNCATE TABLE {table}")
@@ -722,6 +725,25 @@ class DatabaseManager:
                 )
                 cursor.execute("DROP TABLE IF EXISTS configuracion")
                 _create(False)
+            else:
+                raise
+
+    def _repair_mariadb_ghost_table(self, cursor, table: str) -> None:
+        """Repara metadatos huérfanos (MariaDB 1932) antes de TRUNCATE/DELETE en migración."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        if table == "configuracion":
+            self._ensure_configuracion_table(cursor)
+            return
+        try:
+            cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+        except Exception as e:
+            if self._is_mariadb_ghost_table_error(e):
+                logger.warning(
+                    "Tabla %s huérfana en MariaDB (1932); eliminando metadatos...",
+                    table,
+                )
+                cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
             else:
                 raise
 
