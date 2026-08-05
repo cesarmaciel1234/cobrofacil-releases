@@ -882,17 +882,58 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
-        # Crear índice para optimizar búsqueda instantánea
-        for q_idx in [
+        # Crear índice para optimizar búsqueda instantánea (opcional; no bloquear arranque)
+        index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
             "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
-        ]:
+            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
+        ]
+        corruption_recovered = False
+        for q_idx in index_queries:
             try:
                 cursor.execute(q_idx)
-            except Exception:
-                pass
+            except Exception as e:
+                err = str(e).lower()
+                is_corrupt = (
+                    getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                    and getattr(self, "is_master", False)
+                    and (
+                        "corrupt" in err
+                        or "1877" in err
+                        or "drop the table and recreate" in err
+                    )
+                )
+                if is_corrupt and not corruption_recovered:
+                    corruption_recovered = True
+                    try:
+                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+                        host = getattr(
+                            getattr(self, "mariadb_engine", None), "host", None
+                        ) or "127.0.0.1"
+                        logger.warning(
+                            "Corrupción detectada al crear índices; ejecutando auto-reparación..."
+                        )
+                        healed = AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host)
+                        if not healed:
+                            healed = AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                                "mariadb",
+                                allow_older_than_today=True,
+                                merge_today=True,
+                                mariadb_host=host,
+                            )
+                        if healed:
+                            try:
+                                cursor.execute(q_idx)
+                                continue
+                            except Exception:
+                                pass
+                    except Exception as heal_err:
+                        logger.warning(
+                            f"Auto-reparación tras corrupción de índices: {heal_err}"
+                        )
+                logger.warning(f"No se pudo crear índice opcional: {e}")
             
         # Crear tablas para módulo de clientes
         try:
