@@ -2,6 +2,7 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import time
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
@@ -1150,29 +1151,63 @@ class DatabaseManager:
         except Exception:
             return False
 
-    def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
-        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
-        conn = None
+    def _get_productos_autoincrement(self) -> int:
+        """Valor actual de AUTO_INCREMENT en productos (0 si no disponible)."""
         try:
-            engine = getattr(self, "mariadb_engine", None)
-            if not engine:
-                return False
-            conn = engine.get_ddl_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"DDL execution error: {e} | Query: {query}")
-            if conn:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
+            val = self.execute_scalar(
+                """
+                SELECT AUTO_INCREMENT FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos'
+                LIMIT 1
+                """
+            )
+            return int(val) if val else 0
+        except Exception:
+            return 0
+
+    def _execute_mariadb_ddl(self, query: str, params: tuple = (), retries: int = 2) -> bool:
+        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
             return False
-        finally:
-            if conn:
-                conn.close()
+        for attempt in range(retries + 1):
+            conn = None
+            try:
+                conn = engine.get_ddl_connection()
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                conn.commit()
+                return True
+            except Exception as e:
+                logger.error(f"DDL execution error: {e} | Query: {query}")
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                err = str(e).lower()
+                if attempt < retries and any(
+                    t in err for t in ("2013", "lost connection", "timed out")
+                ):
+                    time.sleep(1.0)
+                    continue
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
+
+    def _sync_productos_autoincrement(self, target: int = None) -> None:
+        """Alinea AUTO_INCREMENT con MAX(id)+1; omite ALTER si ya está al día."""
+        if target is None:
+            new_max = int(self.execute_scalar("SELECT MAX(id) FROM productos") or 0)
+            target = new_max + 1
+        if target <= 1:
+            return
+        current = self._get_productos_autoincrement()
+        if current >= target:
+            return
+        self._execute_mariadb_ddl(f"ALTER TABLE productos AUTO_INCREMENT = {target}")
 
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
@@ -1182,42 +1217,44 @@ class DatabaseManager:
                 and getattr(self, "is_master", False)
             ):
                 # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
+                was_bigint = self._productos_id_is_bigint()
+                if not was_bigint:
                     logger.info(
                         "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
                     )
                     self._execute_mariadb_ddl(
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
                     )
-                
-                # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
-                overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
-                )
-                if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
+
+                    # Tras INT→BIGINT: reasignar IDs heredados del límite 32-bit (no códigos de barras).
+                    overflow = self.execute_query(
+                        "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
                     )
-                    next_id = max_normal + 1
-                    for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
-                        while self.execute_scalar(
-                            "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
-                        ):
-                            next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
+                    if overflow:
+                        max_normal = int(
+                            self.execute_scalar(
+                                "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                            ) or 0
                         )
-                        next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+                        next_id = max_normal + 1
+                        for row in overflow:
+                            old_id = row["id"] if isinstance(row, dict) else row[0]
+                            while self.execute_scalar(
+                                "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
+                            ):
+                                next_id += 1
+                            self.execute_non_query(
+                                "UPDATE productos SET id = ? WHERE id = ?",
+                                (next_id, old_id),
+                            )
+                            next_id += 1
+                        new_max = int(
+                            self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+                        )
+                        self._sync_productos_autoincrement(new_max + 1)
+                else:
+                    # BIGINT ya activo: IDs de barras (>2^31) son válidos; no reasignar en cada arranque.
+                    self._sync_productos_autoincrement()
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
