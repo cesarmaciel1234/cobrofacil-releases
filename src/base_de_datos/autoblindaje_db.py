@@ -754,6 +754,73 @@ class AutoBlindajeDB:
             return True
 
     @classmethod
+    def _mariadb_table_is_corrupt(cls, host: str, table: str) -> bool:
+        """True si CHECK TABLE reporta corrupción InnoDB (p. ej. error 1877)."""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=3306, user="root", password="1234",
+                database="punpro_db", connect_timeout=3,
+            )
+            cursor = conn.cursor()
+            cursor.execute(f"CHECK TABLE `{table}`")
+            rows = cursor.fetchall()
+            conn.close()
+            for r in rows:
+                msg = " ".join(str(x) for x in r).lower()
+                if "drop the table and recreate" in msg or "corrupt" in msg:
+                    return True
+        except Exception:
+            pass
+        return False
+
+    @classmethod
+    def _recrear_tabla_clientes_mariadb(cls, host: str = "127.0.0.1") -> bool:
+        """Recrea solo clientes cuando SHOW COLUMNS falla por corrupción InnoDB."""
+        try:
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=3306, user="root", password="1234",
+                database="punpro_db", connect_timeout=5, autocommit=True,
+            )
+            cur = conn.cursor()
+            cur.execute("SET FOREIGN_KEY_CHECKS=0")
+            cur.execute("DROP TABLE IF EXISTS `clientes`")
+            cur.execute(
+                """
+                CREATE TABLE clientes (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    nombre VARCHAR(200) NOT NULL,
+                    telefono VARCHAR(50) NULL,
+                    limite_credito DOUBLE DEFAULT 0,
+                    deuda_actual DOUBLE DEFAULT 0,
+                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    dni VARCHAR(50) NULL,
+                    tipo_cliente VARCHAR(50) NULL DEFAULT 'regular',
+                    direccion TEXT NULL,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute("SET FOREIGN_KEY_CHECKS=1")
+            conn.close()
+            logger.warning("Tabla clientes recreada tras corrupción InnoDB (1877).")
+            return True
+        except Exception as e:
+            logger.error(f"No se pudo recrear tabla clientes: {e}")
+            return False
+
+    @classmethod
+    def sanear_tabla_mariadb_si_corrupta(cls, host: str, table: str) -> bool:
+        """Pre-flight antes de introspección de esquema (evita error 1877 en SHOW COLUMNS)."""
+        if not cls._mariadb_table_is_corrupt(host, table):
+            return False
+        logger.warning(f"Tabla {table} corrupta; intentando sanear antes de migración...")
+        if table == "clientes":
+            return cls._recrear_tabla_clientes_mariadb(host)
+        return False
+
+    @classmethod
     def _recrear_tablas_criticas_mariadb(cls, host: str = "127.0.0.1") -> bool:
         """Recrea tablas críticas vacías cuando no hay respaldo usable (último recurso)."""
         try:
@@ -804,10 +871,11 @@ class AutoBlindajeDB:
                     id INT NOT NULL AUTO_INCREMENT,
                     nombre VARCHAR(200) NOT NULL,
                     telefono VARCHAR(50) NULL,
-                    email VARCHAR(100) NULL,
-                    saldo_fiado DOUBLE DEFAULT 0,
+                    limite_credito DOUBLE DEFAULT 0,
+                    deuda_actual DOUBLE DEFAULT 0,
+                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                     dni VARCHAR(50) NULL,
-                    tipo_cliente VARCHAR(50) NULL,
+                    tipo_cliente VARCHAR(50) NULL DEFAULT 'regular',
                     direccion TEXT NULL,
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
