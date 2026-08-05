@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import threading
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
@@ -33,6 +34,14 @@ def _session():
     # Keep-Alive reutiliza TCP (mucho más rápido en LATAM → GitHub)
     s.headers.update({"Connection": "keep-alive", "Accept-Encoding": "identity"})
     return s
+
+
+def _verify_zip_or_raise(zip_path: str) -> None:
+    """Falla rápido si el ZIP descargado tiene CRC inválido (p. ej. ensamblaje paralelo)."""
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        bad = zf.testzip()
+        if bad:
+            raise zipfile.BadZipFile(f"Bad CRC-32 for file '{bad}'")
 
 
 def _emit(cb: Callable | None, msg: str, pct: int | None = None) -> None:
@@ -182,6 +191,7 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
 
     os.replace(part_path, dest_path)
+    _verify_zip_or_raise(dest_path)
 
 
 def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
@@ -272,3 +282,4 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
         raise RuntimeError(
             f"Descarga incompleta: {actual} bytes recibidos, esperados {size}"
         )
+    _verify_zip_or_raise(dest_path)

@@ -570,7 +570,8 @@ def _is_transient_download_error(exc: BaseException) -> bool:
     return False
 
 
-def _purge_partial_download_files() -> None:
+def _discard_cached_release_zip() -> None:
+    """Elimina ZIP en caché y partes (.part / .part.N) sin tocar staging."""
     zip_path = _zip_path()
     for path in (zip_path, zip_path + ".part"):
         try:
@@ -585,6 +586,10 @@ def _purge_partial_download_files() -> None:
                 os.remove(part)
         except OSError:
             pass
+
+
+def _purge_partial_download_files() -> None:
+    _discard_cached_release_zip()
     staging = _staging_dir()
     if os.path.isdir(staging):
         shutil.rmtree(staging, ignore_errors=True)
@@ -659,7 +664,10 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
-    except Exception:
+    except Exception as exc:
+        # ZIP en caché corrupto (p. ej. CRC tras descarga paralela): forzar re-descarga
+        if isinstance(exc, zipfile.BadZipFile) or "crc" in str(exc).lower():
+            _discard_cached_release_zip()
         return False
 
 
@@ -728,6 +736,9 @@ def download_and_stage_update(progress_callback=None) -> bool:
             return True
 
         zip_path = _zip_path()
+        if os.path.isfile(zip_path) and not is_update_staged():
+            # Caché previa no sirve para staging: no reutilizar ZIP posiblemente corrupto
+            _discard_cached_release_zip()
         download_url = release_zip_url_or_fallback()
         _emit_progress(
             progress_callback,
@@ -742,7 +753,6 @@ def download_and_stage_update(progress_callback=None) -> bool:
         for attempt in range(max_attempts):
             try:
                 if attempt > 0:
-                    _purge_partial_download_files()
                     _emit_progress(
                         progress_callback,
                         f"Reintentando descarga ({attempt + 1}/{max_attempts})…",
@@ -761,6 +771,7 @@ def download_and_stage_update(progress_callback=None) -> bool:
             except Exception as exc:
                 last_exc = exc
                 if attempt < max_attempts - 1 and _is_transient_download_error(exc):
+                    _purge_partial_download_files()
                     continue
                 raise last_exc from exc
         else:
