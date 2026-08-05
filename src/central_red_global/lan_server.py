@@ -6,6 +6,7 @@ import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
 from src.base_de_datos.database import db_manager
+from src.cerebro_global.servicios.cache_productos import cache_productos
 from src.config import config
 
 API_PORT = 8000
@@ -175,19 +176,12 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 import random
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 
-                # SOS (sin ORDER BY RAND: timeout en MariaDB con inventario grande)
-                sos_query = (
-                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
-                    "cant_oferta, tipo_unidad_oferta, stock FROM productos "
-                    "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
-                    "ORDER BY precio_oferta_relampago DESC LIMIT 50"
-                )
-                sos_rows = db_manager.execute_query(sos_query)
+                # SOS (desde caché: evita full-scan concurrente → timeout 2013 en MariaDB)
+                sos_rows = cache_productos.obtener_ofertas_relampago(50)
                 oferta_sos = random.sample(sos_rows, min(1, len(sos_rows))) if sos_rows else []
                 
-                # Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
-                rows_precios = db_manager.execute_query(precios_query)
+                # Precios (desde caché compartido)
+                rows_precios = cache_productos.obtener_filas_sync_precios()
                 
                 # Top Ventas Reales (Hoy, Semana, Mes)
                 if is_mariadb:
@@ -237,15 +231,9 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     # Fallback si las tablas no están listas o hay un error de JOIN
                     pass
                 
-                # Si el real falló o está vacío, muestreo en Python (sin ORDER BY RAND en SQL)
-                fallback_q = (
-                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
-                    "cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos "
-                    "WHERE precio > 0 ORDER BY nombre LIMIT 50"
-                )
+                fallback_rows = cache_productos.obtener_filas_fallback_top(50)
                 if not top_dict["hoy"]:
-                    fb_rows = db_manager.execute_query(fallback_q)
-                    top_dict["hoy"] = random.sample(fb_rows, min(10, len(fb_rows))) if fb_rows else []
+                    top_dict["hoy"] = random.sample(fallback_rows, min(10, len(fallback_rows))) if fallback_rows else []
                 if not top_dict["semana"]:
                     top_dict["semana"] = top_dict["hoy"]
                 if not top_dict["mes"]:

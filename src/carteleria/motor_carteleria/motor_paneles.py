@@ -4,6 +4,7 @@ import traceback
 from PyQt6.QtCore import QThread, pyqtSignal
 from src.logger import logger
 from src.base_de_datos.database import db_manager
+from src.cerebro_global.servicios.cache_productos import cache_productos
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
 
@@ -58,6 +59,38 @@ class MotorCombos(QThread):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+
+    @staticmethod
+    def _enriquecer_carteleria_desde_cache(rows_cartel, prod_by_name):
+        """Evita JOIN LOWER(productos) que dispara timeout 2013 en inventarios grandes."""
+        rows = []
+        for r in rows_cartel or []:
+            if isinstance(r, dict):
+                nombre = str(r.get('nombre_producto', ''))
+                row = {
+                    'nombre_producto': nombre,
+                    'precio_normal': r.get('precio_normal'),
+                    'precio_oferta': r.get('precio_oferta'),
+                    'regla_texto': r.get('regla_texto'),
+                    'stock': 0.0,
+                    'unidad': '',
+                }
+            else:
+                nombre = str(r[0])
+                row = {
+                    'nombre_producto': nombre,
+                    'precio_normal': r[1],
+                    'precio_oferta': r[2],
+                    'regla_texto': r[3],
+                    'stock': 0.0,
+                    'unidad': '',
+                }
+            prod = prod_by_name.get(nombre.strip().lower())
+            if prod:
+                row['stock'] = float(prod.get('stock') or 0)
+                row['unidad'] = str(prod.get('unidad') or '')
+            rows.append(row)
+        return rows
         
     def run(self):
         try:
@@ -66,14 +99,15 @@ class MotorCombos(QThread):
             
             eleccion = random.choice([0, 1])
             
-            # Buscar productos en oferta desde carteleria_global (sin ORDER BY RAND: timeout en MariaDB)
+            # Buscar productos en oferta desde carteleria_global (stock/unidad desde caché, sin JOIN)
             q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-                WHERE c.precio_oferta > 0
+                SELECT nombre_producto, precio_normal, precio_oferta, regla_texto
+                FROM carteleria_global
+                WHERE precio_oferta > 0
             """
-            rows = db_manager.execute_query(q)
+            rows_cartel = db_manager.execute_query(q)
+            prod_by_name = cache_productos.obtener_indice_nombre()
+            rows = self._enriquecer_carteleria_desde_cache(rows_cartel, prod_by_name)
             if rows:
                 rows = random.sample(list(rows), min(5, len(rows)))
             
@@ -175,11 +209,12 @@ class MotorIAPanel(QThread):
             
             # Si es turno 0 o si no había combos guardados, mostramos a Chef Lobo y su recomendación con clima
             q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                SELECT nombre_producto, precio_normal, precio_oferta, regla_texto
+                FROM carteleria_global
             """
-            rows = db_manager.execute_query(q)
+            rows_cartel = db_manager.execute_query(q)
+            prod_by_name = cache_productos.obtener_indice_nombre()
+            rows = MotorCombos._enriquecer_carteleria_desde_cache(rows_cartel, prod_by_name)
             if rows:
                 rows = random.sample(list(rows), min(5, len(rows)))
             if not rows or self.isInterruptionRequested(): return

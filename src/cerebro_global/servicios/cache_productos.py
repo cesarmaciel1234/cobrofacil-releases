@@ -20,6 +20,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_NOMBRES_CARTELERIA_EXCLUIDOS = ("articulo comun", "artículo común", "venta libre")
+
+
+def _nombre_excluido_carteleria(nombre) -> bool:
+    n = str(nombre or "").strip().lower()
+    return any(x in n for x in _NOMBRES_CARTELERIA_EXCLUIDOS)
+
 
 class CacheProductos:
     """
@@ -30,6 +37,7 @@ class CacheProductos:
     def __init__(self, ttl_segundos: int = 30):
         self._datos: list = []
         self._indice_id: dict = {}
+        self._indice_nombre: dict = {}
         self._ultimo_refresh: float = 0.0
         self._ttl = ttl_segundos
         self._lock = threading.Lock()
@@ -45,11 +53,16 @@ class CacheProductos:
             rows = db_manager.execute_query(
                 "SELECT id, nombre, precio, costo, stock, cant_oferta, precio_oferta, "
                 "cant_mayoreo, precio_mayoreo, precio_oferta_relampago, precio_oferta_promedio, "
-                "departamento, categoria, unidad, es_pesable, codigo "
+                "departamento, categoria, unidad, es_pesable, codigo, tipo_unidad_oferta "
                 "FROM productos ORDER BY departamento, nombre"
             ) or []
             self._datos = rows
             self._indice_id = {str(r['id']): r for r in rows}
+            self._indice_nombre = {}
+            for r in rows:
+                nom = str(r.get('nombre') or '').strip().lower()
+                if nom:
+                    self._indice_nombre.setdefault(nom, r)
             self._ultimo_refresh = time.time()
             self._valido = True
             logger.debug(f"[CacheProductos] Recargados {len(rows)} productos en memoria.")
@@ -85,10 +98,56 @@ class CacheProductos:
         return [p for p in self.obtener_todos()
                 if float(p.get('cant_mayoreo') or 0) > 0 and float(p.get('precio_mayoreo') or 0) > 0]
 
+    def obtener_indice_nombre(self) -> dict:
+        """Índice nombre.lower() → fila de producto (evita JOIN LOWER en MariaDB)."""
+        with self._lock:
+            if self._necesita_refresh():
+                self._cargar_desde_db()
+            return self._indice_nombre
+
+    def obtener_filas_sync_precios(self) -> list:
+        """Catálogo con precio>0 para sync cartelería (sin escanear productos en cada hilo)."""
+        filas = []
+        for p in self.obtener_todos():
+            if float(p.get('precio') or 0) <= 0:
+                continue
+            if _nombre_excluido_carteleria(p.get('nombre')):
+                continue
+            filas.append(p)
+        filas.sort(key=lambda r: str(r.get('categoria') or ''))
+        return filas
+
+    def obtener_ofertas_relampago(self, limit: int = 50) -> list:
+        """Productos SOS ordenados por precio_oferta_relampago (sin query pesada concurrente)."""
+        cand = []
+        for p in self.obtener_todos():
+            rel = float(p.get('precio_oferta_relampago') or 0)
+            if rel <= 0:
+                continue
+            precio = float(p.get('precio') or 0)
+            precio_of = float(p.get('precio_oferta') or 0)
+            if precio <= 0 and precio_of <= 0:
+                continue
+            if _nombre_excluido_carteleria(p.get('nombre')):
+                continue
+            cand.append(p)
+        cand.sort(key=lambda r: float(r.get('precio_oferta_relampago') or 0), reverse=True)
+        return cand[:limit]
+
+    def obtener_filas_fallback_top(self, limit: int = 50) -> list:
+        """Fallback top ventas: precio>0 ordenado por nombre (muestreo en Python)."""
+        cand = [
+            p for p in self.obtener_todos()
+            if float(p.get('precio') or 0) > 0 and not _nombre_excluido_carteleria(p.get('nombre'))
+        ]
+        cand.sort(key=lambda r: str(r.get('nombre') or '').lower())
+        return cand[:limit]
+
     def invalidar(self):
         """Fuerza recarga en el próximo acceso (llamar después de editar un producto)."""
         with self._lock:
             self._valido = False
+            self._indice_nombre = {}
         logger.debug("[CacheProductos] Caché invalidado.")
 
     def actualizar_producto(self, id_producto, nuevos_datos: dict):
