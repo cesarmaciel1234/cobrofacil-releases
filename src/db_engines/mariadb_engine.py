@@ -43,10 +43,11 @@ class MariaDBCursorWrapper:
             if q_up.startswith("CREATE INDEX IF NOT EXISTS"):
                 logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
             elif (
-                ("1932" in err_msg or "doesn't exist in engine" in err_msg or "does not exist in engine" in err_msg)
-                and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
+                "1932" in err_msg
+                or "doesn't exist in engine" in err_msg
+                or "does not exist in engine" in err_msg
             ):
-                logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+                logger.warning(f"Tabla huérfana en MariaDB (1932): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise

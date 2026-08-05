@@ -7,7 +7,20 @@ from src.logger import logger
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
-    
+
+    # Tablas que suelen quedar huérfanas (MariaDB 1932) tras apagones o InnoDB corrupto.
+    _MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "carteleria_config",
+        "detalles_ventas",
+        "detalle_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+    )
+
     _instance = None
     
     def __new__(cls):
@@ -304,6 +317,7 @@ class DatabaseManager:
 
                 self.db_path = "mariadb://" + host
                 if self.is_master:
+                    self._sweep_mariadb_ghost_tables()
                     self._create_tables()
                     self._migrate_db()
                     self._ensure_test_users()
@@ -758,35 +772,42 @@ class DatabaseManager:
                 return m.group(1)
         return None
 
-    def _repair_ghost_tables_from_query(self, query: str) -> bool:
-        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+    def _sweep_mariadb_ghost_tables(self) -> int:
+        """Elimina metadatos huérfanos (1932) en tablas críticas. Devuelve cuántas se repararon."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return False
-        table = self._table_name_from_query(query)
-        if not table:
-            return False
+            return 0
         conn = None
+        repaired = 0
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            for table in self._MARIADB_GHOST_PROBE_TABLES:
+                if self._repair_mariadb_ghost_table(cursor, table):
+                    repaired += 1
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
-                try:
-                    self._create_tables()
-                except Exception as ex:
-                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
-            return True
+            return repaired
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
-            return False
+            logger.warning(f"Barrido ghost 1932 en MariaDB falló: {ex}")
+            return repaired
         finally:
             if conn:
                 try:
                     conn.close()
                 except Exception:
                     pass
+
+    def _repair_ghost_tables_from_query(self, query: str) -> bool:
+        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        repaired = self._sweep_mariadb_ghost_tables()
+        if repaired > 0 or not getattr(self, "_ghost_schema_rebuilt", False):
+            self._ghost_schema_rebuilt = True
+            try:
+                self._create_tables()
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+        return True
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -831,6 +852,39 @@ class DatabaseManager:
                     except Exception:
                         pass
 
+    def _ensure_carteleria_config_table(self, cursor) -> None:
+        """Crea carteleria_config; en MariaDB repara metadatos huérfanos (error 1932)."""
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        cols = """
+            id INT PRIMARY KEY,
+            config_json TEXT
+        """
+        engine = (
+            " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            if is_mariadb
+            else ""
+        )
+
+        def _create(if_not_exists: bool) -> None:
+            clause = "IF NOT EXISTS " if if_not_exists else ""
+            cursor.execute(
+                f"CREATE TABLE {clause}carteleria_config ({cols}){engine}"
+            )
+
+        try:
+            _create(True)
+            if is_mariadb:
+                cursor.execute("SELECT 1 FROM carteleria_config LIMIT 1")
+        except Exception as e:
+            if is_mariadb and self._is_mariadb_ghost_table_error(e):
+                logger.warning(
+                    "Tabla carteleria_config huérfana en MariaDB (1932); recreando..."
+                )
+                cursor.execute("DROP TABLE IF EXISTS carteleria_config")
+                _create(False)
+            else:
+                raise
+
     def _ensure_configuracion_table(self, cursor) -> None:
         """Crea tabla configuracion; en MariaDB repara metadatos huérfanos (error 1932)."""
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
@@ -864,13 +918,22 @@ class DatabaseManager:
             else:
                 raise
 
-    def _repair_mariadb_ghost_table(self, cursor, table: str) -> None:
-        """Repara metadatos huérfanos (MariaDB 1932) antes de TRUNCATE/DELETE en migración."""
+    def _repair_mariadb_ghost_table(self, cursor, table: str) -> bool:
+        """Repara metadatos huérfanos (MariaDB 1932). True si se eliminó/recreó metadatos."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return
+            return False
         if table == "configuracion":
-            self._ensure_configuracion_table(cursor)
-            return
+            try:
+                self._ensure_configuracion_table(cursor)
+            except Exception:
+                return True
+            return False
+        if table == "carteleria_config":
+            try:
+                self._ensure_carteleria_config_table(cursor)
+            except Exception:
+                return True
+            return False
         try:
             cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
         except Exception as e:
@@ -880,8 +943,10 @@ class DatabaseManager:
                     table,
                 )
                 cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
-            else:
-                raise
+                return True
+            # Tabla inexistente (no ghost): ignorar en barrido.
+            return False
+        return False
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
@@ -1214,7 +1279,8 @@ class DatabaseManager:
                     ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+            self._ensure_carteleria_config_table(cursor)
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS productos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
