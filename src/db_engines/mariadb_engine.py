@@ -117,6 +117,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # SELECT en carteleria / inventario grande puede superar 3s bajo carga concurrente
+    QUERY_READ_TIMEOUT = 20
     # ALTER TABLE en inventario grande puede tardar varios minutos
     DDL_TIMEOUT = 600
     
@@ -159,7 +161,17 @@ class MariaDBEngine:
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
         return MariaDBConnectionWrapper(conn, engine=self)
 
-    def _create_connection(self):
+    def drop_thread_connection(self) -> None:
+        """Descarta la conexión del hilo actual (p. ej. tras error 2013 / lost connection)."""
+        try:
+            conn = getattr(self._local_connections, "conn", None)
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+        self._local_connections.conn = None
+
+    def _create_connection(self, read_timeout=None, write_timeout=None):
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         if time.time() - getattr(self, "_last_fail_time", 0) < 5:
@@ -168,10 +180,15 @@ class MariaDBEngine:
         remote = self._is_remote_host(self.host)
         attempts = 3 if remote else 1
         last_exc = None
+        connect_kw = {}
+        if read_timeout is not None:
+            connect_kw["read_timeout"] = read_timeout
+        if write_timeout is not None:
+            connect_kw["write_timeout"] = write_timeout
 
         for attempt in range(attempts):
             try:
-                wrapper = self._try_connect()
+                wrapper = self._try_connect(**connect_kw)
                 self._last_fail_time = 0
                 return wrapper
             except Exception as e:
@@ -179,7 +196,7 @@ class MariaDBEngine:
                 # Fallback a contraseña vacía por compatibilidad hacia atrás
                 if self.password != "":
                     try:
-                        wrapper = self._try_connect(password="")
+                        wrapper = self._try_connect(password="", **connect_kw)
                         self._last_fail_time = 0
                         return wrapper
                     except Exception:
@@ -188,7 +205,7 @@ class MariaDBEngine:
                 # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
                 if self.host == "127.0.0.1":
                     try:
-                        wrapper = self._try_connect(host="localhost")
+                        wrapper = self._try_connect(host="localhost", **connect_kw)
                         self._last_fail_time = 0
                         return wrapper
                     except Exception:
@@ -220,18 +237,23 @@ class MariaDBEngine:
         conn = pymysql.connect(**kwargs)
         return MariaDBConnectionWrapper(conn, engine=None)
 
-    def get_connection(self):
-        conn = getattr(self._local_connections, "conn", None)
-        if conn is not None:
-            try:
-                raw = conn._conn
-                if not getattr(raw, "open", False):
+    def get_connection(self, read_timeout=None, write_timeout=None):
+        custom_timeouts = read_timeout is not None or write_timeout is not None
+        if not custom_timeouts:
+            conn = getattr(self._local_connections, "conn", None)
+            if conn is not None:
+                try:
+                    raw = conn._conn
+                    if not getattr(raw, "open", False):
+                        self._local_connections.conn = None
+                    else:
+                        # Nunca reconnect=True sin timeout: colgaba minutos en red rota
+                        raw.ping(reconnect=False)
+                        return conn
+                except Exception:
                     self._local_connections.conn = None
-                else:
-                    # Nunca reconnect=True sin timeout: colgaba minutos en red rota
-                    raw.ping(reconnect=False)
-                    return conn
-            except Exception:
-                self._local_connections.conn = None
-        self._local_connections.conn = self._create_connection()
+        self._local_connections.conn = self._create_connection(
+            read_timeout=read_timeout,
+            write_timeout=write_timeout,
+        )
         return self._local_connections.conn

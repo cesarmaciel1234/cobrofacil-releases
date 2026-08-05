@@ -1557,11 +1557,14 @@ class DatabaseManager:
             logger.error(f"Error obteniendo latido: {e}")
             return None
 
-    def get_connection(self):
+    def get_connection(self, read_timeout=None, write_timeout=None):
         """Returns a new connection to the database (SQLite o MariaDB)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
             try:
-                return self.mariadb_engine.get_connection()
+                return self.mariadb_engine.get_connection(
+                    read_timeout=read_timeout,
+                    write_timeout=write_timeout,
+                )
             except Exception as e:
                 if not getattr(self, "is_master", True):
                     try:
@@ -1658,49 +1661,113 @@ class DatabaseManager:
         )
         return query
 
+    @staticmethod
+    def _is_transient_mariadb_error(exc: BaseException) -> bool:
+        err = str(exc).lower()
+        return any(
+            token in err
+            for token in (
+                "2013",
+                "2006",
+                "lost connection",
+                "gone away",
+                "timed out",
+                "timeout",
+            )
+        )
+
+    def _mariadb_query_attempts(self) -> int:
+        return 3 if getattr(self, "db_engine_type", "sqlite") == "mariadb" else 1
+
+    def _drop_mariadb_thread_connection(self) -> None:
+        engine = getattr(self, "mariadb_engine", None)
+        if engine:
+            try:
+                engine.drop_thread_connection()
+            except Exception:
+                pass
+
     def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            result = cursor.fetchall()
-            return result if result is not None else []
-        except Exception as e:
-            logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
-                try:
-                    logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                    self.reconectar_local()
-                except Exception:
-                    pass
-            return []
-        finally:
-            if conn:
-                conn.close()
+        import time
+        from src.db_engines.mariadb_engine import MariaDBEngine
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        read_timeout = MariaDBEngine.QUERY_READ_TIMEOUT if is_mariadb else None
+        max_attempts = self._mariadb_query_attempts()
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection(read_timeout=read_timeout)
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                result = cursor.fetchall()
+                return result if result is not None else []
+            except Exception as e:
+                if is_mariadb:
+                    self._drop_mariadb_thread_connection()
+                if attempt < max_attempts - 1 and self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "Query reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
+                if is_mariadb and not getattr(self, "is_master", True):
+                    try:
+                        logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
+                        self.reconectar_local()
+                    except Exception:
+                        pass
+                return []
+            finally:
+                if conn:
+                    conn.close()
+        return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
         """Executes a non-query (INSERT, UPDATE, DELETE) and commits changes."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            conn.commit()
-            return True
-        except Exception as e:
-            self.last_error = str(e)
-            logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
-            if conn:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
-            return False
-        finally:
-            if conn:
-                conn.close()
+        import time
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        max_attempts = self._mariadb_query_attempts()
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                conn.commit()
+                return True
+            except Exception as e:
+                self.last_error = str(e)
+                if is_mariadb:
+                    self._drop_mariadb_thread_connection()
+                if attempt < max_attempts - 1 and self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "Non-query reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
         """Executes a bulk non-query operation using executemany and commits changes."""
@@ -1725,25 +1792,45 @@ class DatabaseManager:
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            row = cursor.fetchone()
-            if row:
-                if isinstance(row, dict):
-                    vals = list(row.values())
-                    return vals[0] if len(vals) > 0 else None
-                else:
-                    return row[0]
-            return None
-        except Exception as e:
-            logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
-            return None
-        finally:
-            if conn:
-                conn.close()
+        import time
+        from src.db_engines.mariadb_engine import MariaDBEngine
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        read_timeout = MariaDBEngine.QUERY_READ_TIMEOUT if is_mariadb else None
+        max_attempts = self._mariadb_query_attempts()
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection(read_timeout=read_timeout)
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                row = cursor.fetchone()
+                if row:
+                    if isinstance(row, dict):
+                        vals = list(row.values())
+                        return vals[0] if len(vals) > 0 else None
+                    else:
+                        return row[0]
+                return None
+            except Exception as e:
+                if is_mariadb:
+                    self._drop_mariadb_thread_connection()
+                if attempt < max_attempts - 1 and self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "Scalar reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
+                return None
+            finally:
+                if conn:
+                    conn.close()
+        return None
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
         
