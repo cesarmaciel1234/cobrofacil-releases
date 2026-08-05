@@ -5,6 +5,9 @@ import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
+# IDs de producto >= este valor (p. ej. códigos de barras como PK) no deben usarse en ALTER AUTO_INCREMENT.
+_MARIADB_INT32_ID_CEILING = 2147483647
+
 class DatabaseManager:
     """Professional management of SQLite database operations."""
     
@@ -1192,12 +1195,14 @@ class DatabaseManager:
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                    "SELECT id FROM productos WHERE id >= ? ORDER BY id",
+                    (_MARIADB_INT32_ID_CEILING,),
                 )
                 if overflow:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                            "SELECT MAX(id) FROM productos WHERE id < ?",
+                            (_MARIADB_INT32_ID_CEILING,),
                         ) or 0
                     )
                     next_id = max_normal + 1
@@ -1207,17 +1212,31 @@ class DatabaseManager:
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        self.execute_non_query(
+                        if not self.execute_non_query(
                             "UPDATE productos SET id = ? WHERE id = ?",
                             (next_id, old_id),
-                        )
+                        ):
+                            logger.warning(
+                                "No se pudo remapear producto id=%s a id=%s", old_id, next_id
+                            )
                         next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+                    remaining = int(
+                        self.execute_scalar(
+                            "SELECT COUNT(*) FROM productos WHERE id >= ?",
+                            (_MARIADB_INT32_ID_CEILING,),
+                        ) or 0
                     )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+                    if remaining:
+                        logger.warning(
+                            "Quedan %s productos con id >= %s; se omite ALTER AUTO_INCREMENT "
+                            "(evita timeout con valores tipo código de barras)",
+                            remaining,
+                            _MARIADB_INT32_ID_CEILING,
+                        )
+                    elif next_id < _MARIADB_INT32_ID_CEILING:
+                        self._execute_mariadb_ddl(
+                            f"ALTER TABLE productos AUTO_INCREMENT = {next_id}"
+                        )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
