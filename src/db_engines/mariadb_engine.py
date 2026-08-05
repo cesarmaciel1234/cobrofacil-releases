@@ -16,6 +16,17 @@ class MariaDBCursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
 
+    @staticmethod
+    def _is_transient_sql_error(exc: BaseException) -> bool:
+        err = str(exc).lower()
+        return any(
+            token in err
+            for token in (
+                "2003", "2002", "2013", "2006", "10054",
+                "timed out", "timeout", "lost connection", "can't connect",
+            )
+        )
+
     def _translate_query(self, query):
         # Tipos de datos
         query = query.replace("AUTOINCREMENT", "AUTO_INCREMENT")
@@ -47,6 +58,9 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif self._is_transient_sql_error(e):
+                # La capa DatabaseManager reintenta; evitar ERROR duplicado en reportes automáticos
+                logger.warning(f"Error transitorio MariaDB: {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -105,7 +119,8 @@ class MariaDBEngine:
 
     # Timeouts cortos en remoto: host caído no debe congelar la UI de esclava
     CONNECT_TIMEOUT = 2
-    IO_TIMEOUT_REMOTE = 3
+    # Esclava/cartelería: consultas a productos en LAN pueden superar 3s (error 2013)
+    IO_TIMEOUT_REMOTE = 12
     # Local: inventario grande + cartelería pueden superar 3s (error 2013)
     IO_TIMEOUT_LOCAL = 15
     # ALTER TABLE en inventario grande puede tardar varios minutos
@@ -126,9 +141,10 @@ class MariaDBEngine:
         return self.IO_TIMEOUT_REMOTE if self._is_remote_host(h) else self.IO_TIMEOUT_LOCAL
 
     def _connect_kwargs(self, host=None, password=None, read_timeout=None, write_timeout=None):
-        io_timeout = self._default_io_timeout(host)
-        return dict(
-            host=host if host is not None else self.host,
+        h = host if host is not None else self.host
+        io_timeout = self._default_io_timeout(h)
+        kwargs = dict(
+            host=h,
             port=self.port,
             user=self.user,
             password=password if password is not None else self.password,
@@ -139,6 +155,11 @@ class MariaDBEngine:
             read_timeout=read_timeout if read_timeout is not None else io_timeout,
             write_timeout=write_timeout if write_timeout is not None else io_timeout,
         )
+        if read_timeout is None and write_timeout is None and self._is_remote_host(h):
+            kwargs["init_command"] = (
+                "SET SESSION net_read_timeout=60, net_write_timeout=60"
+            )
+        return kwargs
 
     @staticmethod
     def _is_remote_host(host: str) -> bool:

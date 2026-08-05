@@ -733,7 +733,7 @@ class DatabaseManager:
         return any(
             token in err
             for token in (
-                "2003", "2002", "2013", "2006",
+                "2003", "2002", "2013", "2006", "10054",
                 "timed out", "timeout", "lost connection", "can't connect",
             )
         )
