@@ -38,15 +38,18 @@ class MariaDBCursorWrapper:
             return self._cursor.execute(mq)
         except Exception as e:
             err_msg = str(e).lower()
+            args = getattr(e, "args", None)
+            is_ghost = (
+                (args and args[0] == 1932)
+                or "1932" in err_msg
+                or "doesn't exist in engine" in err_msg
+                or "does not exist in engine" in err_msg
+            )
             q_up = query.lstrip().upper()
             # Índices opcionales en migración: el caller los ignora; no reportar como ERROR.
             if q_up.startswith("CREATE INDEX IF NOT EXISTS"):
                 logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
-            elif (
-                "1932" in err_msg
-                or "doesn't exist in engine" in err_msg
-                or "does not exist in engine" in err_msg
-            ):
+            elif is_ghost:
                 logger.warning(f"Tabla huérfana en MariaDB (1932): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
