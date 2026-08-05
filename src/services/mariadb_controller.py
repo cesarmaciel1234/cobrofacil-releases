@@ -349,7 +349,7 @@ class MariaDBController:
             )
             cur = conn.cursor()
             ghosts = []
-            for table in (
+            probe_tables = (
                 "ventas",
                 "movimientos_caja",
                 "carteleria_global",
@@ -361,14 +361,27 @@ class MariaDBController:
                 "gastos",
                 "usuarios",
                 "terminales_activos",
-            ):
+                "departamentos",
+                "categorias",
+            )
+            for table in probe_tables:
                 try:
                     cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
                 except Exception as e:
                     err = str(e).lower()
-                    if "1932" in err or "doesn't exist in engine" in err or "does not exist in engine" in err:
+                    args = getattr(e, "args", None)
+                    if (
+                        (args and args[0] == 1932)
+                        or "1932" in err
+                        or "doesn't exist in engine" in err
+                        or "does not exist in engine" in err
+                    ):
                         ghosts.append(table)
             if ghosts:
+                try:
+                    cur.execute("SET FOREIGN_KEY_CHECKS=0")
+                except Exception:
+                    pass
                 for table in ghosts:
                     try:
                         cur.execute(f"DROP TABLE IF EXISTS `{table}`")
@@ -378,6 +391,10 @@ class MariaDBController:
                         )
                     except Exception:
                         pass
+                try:
+                    cur.execute("SET FOREIGN_KEY_CHECKS=1")
+                except Exception:
+                    pass
                 conn.commit()
                 conn.close()
                 return False
