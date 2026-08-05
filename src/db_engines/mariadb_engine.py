@@ -225,6 +225,16 @@ class MariaDBEngine:
             except Exception:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
+        if in_cooldown and local:
+            # Si mysqld ya respondió, no bloquear el resto de hilos (p. ej. cartelería tras timeout).
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
+                    in_cooldown = False
+                    self._last_fail_time = 0
+            except Exception:
+                pass
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 

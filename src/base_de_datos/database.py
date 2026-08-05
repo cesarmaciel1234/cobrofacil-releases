@@ -735,6 +735,7 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker",
             )
         )
 
@@ -1613,7 +1614,10 @@ class DatabaseManager:
                             f"(fallback local falló: {fallback_err})"
                         )
                         raise
-                logger.error(f"Error connecting to MariaDB database: {e}")
+                if self._is_transient_mariadb_error(e):
+                    logger.warning("MariaDB no disponible (transitorio): %s", e)
+                else:
+                    logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
         try:
@@ -1717,7 +1721,15 @@ class DatabaseManager:
                     self._reset_mariadb_thread_connection()
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
+                if self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "Query omitida (MariaDB transitorio): %s | Query: %s | Params: %s",
+                        e,
+                        query,
+                        params,
+                    )
+                else:
+                    logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 if is_mariadb and not getattr(self, "is_master", True):
                     try:
                         logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
@@ -1762,7 +1774,15 @@ class DatabaseManager:
                     self._reset_mariadb_thread_connection()
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
+                if self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "Non-query omitida (MariaDB transitorio): %s | Query: %s | Params: %s",
+                        e,
+                        query,
+                        params,
+                    )
+                else:
+                    logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
                 if conn:
