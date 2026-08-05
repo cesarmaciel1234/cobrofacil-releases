@@ -1133,12 +1133,35 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
 
+    def _productos_id_is_bigint(self) -> bool:
+        """True si productos.id ya es BIGINT (evita ALTER pesado en cada arranque)."""
+        try:
+            col_type = self.execute_scalar(
+                "SELECT DATA_TYPE FROM information_schema.COLUMNS "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'id'"
+            )
+            return col_type and str(col_type).lower() == "bigint"
+        except Exception:
+            return False
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+                # Convertir id a BIGINT solo si hace falta (ALTER en tablas grandes + timeout 3s → error 2013)
+                if not self._productos_id_is_bigint():
+                    engine = getattr(self, "mariadb_engine", None)
+                    upgraded = (
+                        engine.execute_ddl(
+                            "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                        )
+                        if engine and hasattr(engine, "execute_ddl")
+                        else self.execute_non_query(
+                            "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                        )
+                    )
+                    if not upgraded:
+                        return
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
