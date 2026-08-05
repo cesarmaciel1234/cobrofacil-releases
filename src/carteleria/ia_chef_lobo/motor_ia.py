@@ -144,9 +144,11 @@ class MotorIA:
                     precio = p[1]
                     poferta = p[2]
             elif db:
-                is_mariadb = getattr(db, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                res_random = db.execute_query(f"SELECT nombre, precio, precio_oferta FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 1")
+                # Sin ORDER BY RAND en SQL: timeout en MariaDB con inventario grande
+                res_rows = db.execute_query(
+                    "SELECT nombre, precio, precio_oferta FROM productos WHERE precio > 0 ORDER BY nombre LIMIT 50"
+                )
+                res_random = [random.choice(list(res_rows))] if res_rows else []
                 if res_random:
                     r = res_random[0]
                     if isinstance(r, dict):
