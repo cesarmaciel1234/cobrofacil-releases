@@ -13,8 +13,17 @@ class MariaDBController:
         if cls._instance is None:
             cls._instance = super(MariaDBController, cls).__new__(cls)
             cls._instance._process = None
+            cls._instance._starting = False
             cls._initialized = False
         return cls._instance
+
+    def is_starting(self) -> bool:
+        """True mientras start_server() está arrancando mysqld (otros hilos deben esperar)."""
+        return bool(getattr(self, "_starting", False))
+
+    def wait_until_ready(self, max_sec: float = 60.0) -> bool:
+        """Espera handshake MySQL (socket + pymysql); útil durante arranque concurrente."""
+        return self._wait_mariadb_ready(max_sec)
 
     def _get_base_dir(self):
         from src.utils.paths import get_base_path
@@ -141,6 +150,15 @@ class MariaDBController:
 
     def start_server(self, _start_attempt=0):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
+        if _start_attempt == 0:
+            self._starting = True
+        try:
+            return self._start_server_impl(_start_attempt)
+        finally:
+            if _start_attempt == 0:
+                self._starting = False
+
+    def _start_server_impl(self, _start_attempt=0):
         self._ensure_firewall()
         
         if self._process is not None and self._process.poll() is None:
@@ -251,7 +269,7 @@ class MariaDBController:
                         stderr=subprocess.DEVNULL,
                     )
                     time.sleep(2.0)
-                    return self.start_server(_start_attempt=_start_attempt + 1)
+                    return self._start_server_impl(_start_attempt=_start_attempt + 1)
                 logger.error("MariaDB no abrio el puerto a tiempo. Abortando inicializacion.")
                 # Autoreparación por corrupción de InnoDB / Tablespace
                 err_file = None
@@ -301,7 +319,7 @@ class MariaDBController:
                             except:
                                 pass
                             logger.info("Reintentando iniciar MariaDB después de auto-reparación...")
-                            return self.start_server()
+                            return self._start_server_impl()
                     except Exception as ex:
                         logger.error(f"Error durante auto-reparacion de base de datos: {ex}")
                 return False
