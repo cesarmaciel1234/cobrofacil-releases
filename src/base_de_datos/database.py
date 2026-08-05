@@ -1347,32 +1347,70 @@ class DatabaseManager:
         except Exception:
             return False
 
-    def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
-        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
-        conn = None
-        try:
-            engine = getattr(self, "mariadb_engine", None)
-            if not engine:
-                return False
-            conn = engine.get_ddl_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"DDL execution error: {e} | Query: {query}")
-            if conn:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
+    def _execute_mariadb_ddl(self, query: str, params: tuple = (), max_attempts: int = 3) -> bool:
+        """DDL/DML pesadas con timeouts largos (ALTER/UPDATE masivos no deben usar IO_TIMEOUT de 3s)."""
+        import time
+
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            self.last_error = "no mariadb_engine"
             return False
-        finally:
-            if conn:
-                conn.close()
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = engine.get_ddl_connection()
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                conn.commit()
+                self.last_error = ""
+                return True
+            except Exception as e:
+                self.last_error = str(e)
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                err = str(e).lower()
+                transient = any(
+                    token in err
+                    for token in ("2013", "timed out", "timeout", "lost connection")
+                )
+                if attempt < max_attempts - 1 and transient:
+                    logger.warning(
+                        "DDL reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                logger.error(f"DDL execution error: {e} | Query: {query}")
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
+
+    def _reassign_overflow_producto_id(self, old_id, new_id) -> bool:
+        """Reasigna un id de producto desbordado y actualiza referencias en detalles_ventas."""
+        old_key = str(old_id)
+        new_key = str(new_id)
+        if not self._execute_mariadb_ddl(
+            "UPDATE detalles_ventas SET id_producto = ? WHERE id_producto = ? OR id_producto = ?",
+            (new_key, old_id, old_key),
+        ):
+            return False
+        return self._execute_mariadb_ddl(
+            "UPDATE productos SET id = ? WHERE id = ?",
+            (new_id, old_id),
+        )
 
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        import time
+
         try:
             if (
                 getattr(self, "db_engine_type", "sqlite") == "mariadb"
@@ -1380,13 +1418,26 @@ class DatabaseManager:
             ):
                 # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
                 if not self._productos_id_is_bigint():
+                    now = time.time()
+                    last_fail = float(getattr(self, "_productos_bigint_ddl_fail_at", 0) or 0)
+                    if now - last_fail < 600:
+                        logger.warning(
+                            "Omitiendo reintento ALTER productos.id a BIGINT (cooldown tras fallo reciente)."
+                        )
+                        return
                     logger.info(
                         "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
                     )
-                    self._execute_mariadb_ddl(
+                    if not self._execute_mariadb_ddl(
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
-                    )
-                
+                    ):
+                        self._productos_bigint_ddl_fail_at = now
+                        return
+                    self._productos_bigint_ddl_fail_at = 0
+
+                if not self._productos_id_is_bigint():
+                    return
+
                 # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
                 # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
                 # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
@@ -1409,13 +1460,19 @@ class DatabaseManager:
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
-                        )
+                        if not self._reassign_overflow_producto_id(old_id, next_id):
+                            logger.warning(
+                                "No se pudo reasignar producto id=%s → %s",
+                                old_id,
+                                next_id,
+                            )
                         next_id += 1
                     new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+                        self.execute_scalar(
+                            "SELECT MAX(id) FROM productos WHERE id < ?",
+                            (_BARCODE_ID_MIN,),
+                        )
+                        or max_normal
                     )
                     next_ai = new_max + 1
                     if next_ai < _BARCODE_ID_MIN:
