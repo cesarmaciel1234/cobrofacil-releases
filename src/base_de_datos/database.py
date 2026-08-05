@@ -692,6 +692,69 @@ class DatabaseManager:
             or "does not exist in engine" in msg
         )
 
+    @staticmethod
+    def _is_mariadb_corrupt_table_error(exc: BaseException) -> bool:
+        """MariaDB 1877: tabla InnoDB corrupta (pide DROP y recrear)."""
+        msg = str(exc).lower()
+        return (
+            "1877" in msg
+            or ("corrupt" in msg and "drop the table" in msg)
+        )
+
+    def _repair_mariadb_if_corrupt(self) -> None:
+        """Re-ejecuta el protocolo de autoblindaje si CHECK TABLE detecta corrupción."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            host = getattr(getattr(self, "mariadb_engine", None), "host", "127.0.0.1")
+            if AutoBlindajeDB._check_mariadb_integrity(host):
+                return
+            logger.warning(
+                "Corrupción MariaDB detectada antes de índices; "
+                "ejecutando protocolo de auto-reparación..."
+            )
+            if not AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
+                restored = AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                    "mariadb",
+                    allow_older_than_today=True,
+                    merge_today=True,
+                    mariadb_host=host,
+                )
+                if not restored:
+                    AutoBlindajeDB._recrear_tablas_criticas_mariadb(host)
+        except Exception as ex:
+            logger.warning(f"Auto-reparación MariaDB falló: {ex}")
+
+    def _ensure_performance_indexes(self, cursor) -> None:
+        """Crea índices de rendimiento; en MariaDB repara ventas corruptas (1877) antes."""
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
+            "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
+            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
+        ]
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        if is_mariadb:
+            self._repair_mariadb_if_corrupt()
+
+        for q_idx in indexes:
+            try:
+                if is_mariadb:
+                    cursor.execute(q_idx, quiet=True)
+                else:
+                    cursor.execute(q_idx)
+            except Exception as e:
+                if is_mariadb and self._is_mariadb_corrupt_table_error(e):
+                    self._repair_mariadb_if_corrupt()
+                    try:
+                        cursor.execute(q_idx, quiet=True)
+                    except Exception:
+                        pass
+                elif not is_mariadb:
+                    pass
+
     def _ensure_configuracion_table(self, cursor) -> None:
         """Crea tabla configuracion; en MariaDB repara metadatos huérfanos (error 1932)."""
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
@@ -883,16 +946,7 @@ class DatabaseManager:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
         # Crear índice para optimizar búsqueda instantánea
-        for q_idx in [
-            "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
-        ]:
-            try:
-                cursor.execute(q_idx)
-            except Exception:
-                pass
+        self._ensure_performance_indexes(cursor)
             
         # Crear tablas para módulo de clientes
         try:

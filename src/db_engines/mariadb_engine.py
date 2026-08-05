@@ -41,14 +41,17 @@ class MariaDBCursorWrapper:
                        r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
         return query
 
-    def execute(self, query, params=None):
+    def execute(self, query, params=None, quiet=False):
         try:
             mq = self._translate_query(query)
             if params:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
-            logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
+            if quiet:
+                logger.warning(f"MariaDB best-effort omitido: {e} | Q: {query}")
+            else:
+                logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
 
     def executemany(self, query, params_list):
