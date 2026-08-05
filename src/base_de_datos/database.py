@@ -5,6 +5,10 @@ import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
+# IDs de producto por encima de este valor suelen ser códigos de barras usados como PK.
+_PRODUCTOS_ID_SANE_MAX = 1_000_000_000
+
+
 class DatabaseManager:
     """Professional management of SQLite database operations."""
     
@@ -1181,6 +1185,7 @@ class DatabaseManager:
                 getattr(self, "db_engine_type", "sqlite") == "mariadb"
                 and getattr(self, "is_master", False)
             ):
+                sane_max = _PRODUCTOS_ID_SANE_MAX
                 # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
                 if not self._productos_id_is_bigint():
                     logger.info(
@@ -1189,17 +1194,20 @@ class DatabaseManager:
                     self._execute_mariadb_ddl(
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
                     )
-                
-                # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
+
+                # Reasignar IDs tipo código de barra (>= umbral) para no inflar AUTO_INCREMENT
                 overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                    "SELECT id FROM productos WHERE id >= ? ORDER BY id",
+                    (sane_max,),
+                )
+                max_normal = int(
+                    self.execute_scalar(
+                        "SELECT MAX(id) FROM productos WHERE id < ?",
+                        (sane_max,),
+                    )
+                    or 0
                 )
                 if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
-                    )
                     next_id = max_normal + 1
                     for row in overflow:
                         old_id = row["id"] if isinstance(row, dict) else row[0]
@@ -1207,16 +1215,46 @@ class DatabaseManager:
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        self.execute_non_query(
+                        if self.execute_non_query(
                             "UPDATE productos SET id = ? WHERE id = ?",
                             (next_id, old_id),
-                        )
+                        ):
+                            self.execute_non_query(
+                                "UPDATE detalles_ventas SET id_producto = ? WHERE id_producto = ?",
+                                (str(next_id), str(old_id)),
+                            )
+                        else:
+                            logger.warning(
+                                "No se pudo reasignar producto id=%s; se omitirá en AUTO_INCREMENT",
+                                old_id,
+                            )
                         next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+                    max_normal = int(
+                        self.execute_scalar(
+                            "SELECT MAX(id) FROM productos WHERE id < ?",
+                            (sane_max,),
+                        )
+                        or max_normal
                     )
+
+                new_max = max_normal
+                auto_inc = new_max + 1
+                if auto_inc >= sane_max:
+                    auto_inc = max(max_normal, 0) + 1
+
+                current_ai = int(
+                    self.execute_scalar(
+                        """
+                        SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES
+                        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos'
+                        LIMIT 1
+                        """
+                    )
+                    or 0
+                )
+                if overflow or current_ai >= sane_max:
                     self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
+                        f"ALTER TABLE productos AUTO_INCREMENT = {auto_inc}"
                     )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
