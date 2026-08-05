@@ -167,16 +167,20 @@ class MariaDBEngine:
                 return False
         except Exception:
             pass
-        now = time.time()
-        if now - getattr(self, "_last_start_attempt", 0) < 20:
-            return False
-        self._last_start_attempt = now
         try:
             from src.services.mariadb_controller import mariadb_controller
 
+            # Siempre verificar handshake: si mysqld ya respondió, salir del cooldown
+            # (el rate-limit de 20s solo aplica al arranque start_server).
             if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
                 self._last_fail_time = 0
                 return True
+
+            now = time.time()
+            if now - getattr(self, "_last_start_attempt", 0) < 20:
+                return False
+            self._last_start_attempt = now
+
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
