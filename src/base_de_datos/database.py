@@ -1151,7 +1151,7 @@ class DatabaseManager:
             return False
 
     def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
-        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
+        """DDL/DML pesadas con timeouts largos (ALTER/UPDATE masivos no deben usar IO_TIMEOUT de 3s)."""
         conn = None
         try:
             engine = getattr(self, "mariadb_engine", None)
@@ -1174,6 +1174,22 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    _PRODUCTO_ID_OVERFLOW_THRESHOLD = 2147483647
+
+    def _reassign_overflow_producto_id(self, old_id, new_id) -> bool:
+        """Reasigna un id de producto desbordado (códigos de barras usados como PK) y sus referencias."""
+        old_key = str(old_id)
+        new_key = str(new_id)
+        if not self._execute_mariadb_ddl(
+            "UPDATE detalles_ventas SET id_producto = ? WHERE id_producto = ? OR id_producto = ?",
+            (new_key, old_id, old_key),
+        ):
+            return False
+        return self._execute_mariadb_ddl(
+            "UPDATE productos SET id = ? WHERE id = ?",
+            (new_id, old_id),
+        )
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
@@ -1181,6 +1197,7 @@ class DatabaseManager:
                 getattr(self, "db_engine_type", "sqlite") == "mariadb"
                 and getattr(self, "is_master", False)
             ):
+                overflow_threshold = self._PRODUCTO_ID_OVERFLOW_THRESHOLD
                 # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
                 if not self._productos_id_is_bigint():
                     logger.info(
@@ -1192,12 +1209,12 @@ class DatabaseManager:
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                    f"SELECT id FROM productos WHERE id >= {overflow_threshold} ORDER BY id"
                 )
                 if overflow:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                            f"SELECT MAX(id) FROM productos WHERE id < {overflow_threshold}"
                         ) or 0
                     )
                     next_id = max_normal + 1
@@ -1207,17 +1224,23 @@ class DatabaseManager:
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
-                        )
+                        if not self._reassign_overflow_producto_id(old_id, next_id):
+                            logger.warning(
+                                f"No se pudo reasignar producto id={old_id} → {next_id}"
+                            )
                         next_id += 1
                     new_max = int(
                         self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
                     )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+                    if new_max >= overflow_threshold:
+                        logger.warning(
+                            f"IDs de producto desbordados persisten (max={new_max}); "
+                            "omitido ALTER AUTO_INCREMENT para evitar timeout."
+                        )
+                    else:
+                        self._execute_mariadb_ddl(
+                            f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
+                        )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
