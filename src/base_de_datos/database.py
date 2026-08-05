@@ -805,19 +805,21 @@ class DatabaseManager:
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return False
         conn = None
+        dropped_any = False
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+            dropped_any = bool(dropped)
             table = self._table_name_from_query(query)
             if table and table not in dropped:
-                self._repair_mariadb_ghost_table(cursor, table)
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        self._repair_mariadb_ghost_table(cursor, table)
+                        dropped_any = True
             conn.commit()
-            try:
-                self._create_tables()
-            except Exception as ex:
-                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
-            return True
         except Exception as ex:
             logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
             return False
@@ -827,6 +829,14 @@ class DatabaseManager:
                     conn.close()
                 except Exception:
                     pass
+        self._reset_mariadb_thread_connection()
+        try:
+            self._create_tables()
+            if dropped_any:
+                self._migrate_db()
+        except Exception as ex:
+            logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+        return True
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1136,6 +1146,9 @@ class DatabaseManager:
                         "corrupt" in err
                         or "1877" in err
                         or "drop the table and recreate" in err
+                        or "1932" in err
+                        or "doesn't exist in engine" in err
+                        or "does not exist in engine" in err
                     )
                 )
                 if is_corrupt and not corruption_recovered:

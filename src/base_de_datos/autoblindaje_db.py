@@ -753,6 +753,67 @@ class AutoBlindajeDB:
         except Exception:
             return True
 
+    _MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "carteleria_config",
+        "detalles_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+        "gastos",
+        "usuarios",
+        "terminales_activos",
+        "departamentos",
+        "categorias",
+    )
+
+    @classmethod
+    def _is_mariadb_ghost_error(cls, exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return (
+            "1932" in msg
+            or "doesn't exist in engine" in msg
+            or "does not exist in engine" in msg
+        )
+
+    @classmethod
+    def _drop_mariadb_ghost_tables(cls, host: str = "127.0.0.1") -> list:
+        """Elimina metadatos huérfanos (error 1932) antes de REPAIR o recreación de esquema."""
+        dropped = []
+        try:
+            import pymysql
+
+            conn = pymysql.connect(
+                host=host,
+                port=3306,
+                user="root",
+                password="1234",
+                database="punpro_db",
+                connect_timeout=5,
+                autocommit=True,
+            )
+            cur = conn.cursor()
+            for table in cls._MARIADB_GHOST_PROBE_TABLES:
+                try:
+                    cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if cls._is_mariadb_ghost_error(e):
+                        try:
+                            cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                            dropped.append(table)
+                            logger.warning(
+                                "Tabla huérfana %s (1932) eliminada en auto-reparación.",
+                                table,
+                            )
+                        except Exception:
+                            pass
+            conn.close()
+        except Exception as e:
+            logger.warning(f"No se pudo sondear tablas huérfanas MariaDB: {e}")
+        return dropped
+
     @classmethod
     def _recrear_tablas_criticas_mariadb(cls, host: str = "127.0.0.1") -> bool:
         """Recrea tablas críticas vacías cuando no hay respaldo usable (último recurso)."""
@@ -764,7 +825,16 @@ class AutoBlindajeDB:
             )
             cur = conn.cursor()
             cur.execute("SET FOREIGN_KEY_CHECKS=0")
-            for table in ("ventas", "clientes", "detalles_ventas", "detalle_ventas", "configuracion"):
+            for table in (
+                "ventas",
+                "clientes",
+                "detalles_ventas",
+                "detalle_ventas",
+                "configuracion",
+                "movimientos_caja",
+                "productos",
+                "terminales_activos",
+            ):
                 try:
                     cur.execute(f"DROP TABLE IF EXISTS `{table}`")
                 except Exception:
@@ -830,6 +900,54 @@ class AutoBlindajeDB:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS movimientos_caja (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    tipo VARCHAR(50) NULL,
+                    monto DOUBLE NULL,
+                    usuario TEXT NULL,
+                    observaciones TEXT NULL,
+                    caja_id INT DEFAULT 1,
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS productos (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    nombre TEXT NULL,
+                    precio DOUBLE NULL,
+                    stock DOUBLE DEFAULT 0,
+                    categoria VARCHAR(100) DEFAULT 'GENERAL',
+                    unidad VARCHAR(20) DEFAULT 'UN',
+                    costo DOUBLE DEFAULT 0,
+                    cant_mayoreo DOUBLE DEFAULT 0,
+                    precio_mayoreo DOUBLE DEFAULT 0,
+                    stock_minimo DOUBLE DEFAULT 0,
+                    stock_maximo DOUBLE DEFAULT 0,
+                    codigo TEXT NULL,
+                    departamento TEXT NULL,
+                    es_pesable INT DEFAULT 0,
+                    cant_oferta DOUBLE DEFAULT 0,
+                    precio_oferta DOUBLE DEFAULT 0,
+                    tipo_unidad_oferta VARCHAR(50) DEFAULT 'Unidades',
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS terminales_activos (
+                    caja_id INT NOT NULL,
+                    hostname TEXT NULL,
+                    last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (caja_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
             conn.close()
             logger.info("✅ Tablas críticas recreadas (vacías).")
             return True
@@ -863,6 +981,22 @@ class AutoBlindajeDB:
         """Intenta auto-reparar la base de datos dañada."""
         logger.info("🛠️ Intentando auto-reparación de base de datos...")
         if engine_type == "mariadb":
+            ghosts_dropped = cls._drop_mariadb_ghost_tables(host)
+            if ghosts_dropped:
+                logger.warning(
+                    "Tablas huérfanas (1932) detectadas: %s; recreando esquema.",
+                    ", ".join(ghosts_dropped),
+                )
+                try:
+                    from src.base_de_datos.database import db_manager
+
+                    if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                        db_manager._create_tables()
+                        db_manager._migrate_db()
+                        if cls._check_mariadb_integrity(host):
+                            return True
+                except Exception as ex:
+                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             if cls._mariadb_needs_drop_recreate(host):
                 logger.error(
                     "🚨 Corrupción InnoDB severa (ventas/clientes). "
