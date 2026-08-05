@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE sobre tablas grandes puede superar IO_TIMEOUT (error 2013).
+    DDL_IO_TIMEOUT = 300
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -116,7 +118,8 @@ class MariaDBEngine:
         self._local_connections = threading.local()
         self._last_fail_time = 0
 
-    def _connect_kwargs(self, host=None, password=None):
+    def _connect_kwargs(self, host=None, password=None, io_timeout=None):
+        timeout = self.IO_TIMEOUT if io_timeout is None else io_timeout
         return dict(
             host=host if host is not None else self.host,
             port=self.port,
@@ -126,8 +129,8 @@ class MariaDBEngine:
             charset="utf8mb4",
             autocommit=False,
             connect_timeout=self.CONNECT_TIMEOUT,
-            read_timeout=self.IO_TIMEOUT,
-            write_timeout=self.IO_TIMEOUT,
+            read_timeout=timeout,
+            write_timeout=timeout,
         )
 
     @staticmethod
@@ -194,6 +197,38 @@ class MariaDBEngine:
             logger.error(msg)
         raise last_exc
             
+    def execute_ddl(self, query: str, params=None, max_attempts: int = 2) -> bool:
+        """Ejecuta DDL con timeouts extendidos y reintento ante 2013 (lost connection)."""
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                raw = pymysql.connect(
+                    **self._connect_kwargs(io_timeout=self.DDL_IO_TIMEOUT)
+                )
+                conn = MariaDBConnectionWrapper(raw, engine=None)
+                cursor = conn.cursor()
+                if params:
+                    cursor.execute(query, params)
+                else:
+                    cursor.execute(query)
+                conn.commit()
+                return True
+            except Exception as e:
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                if attempt < max_attempts - 1 and self._is_transient_connect_error(e):
+                    time.sleep(2)
+                    continue
+                logger.error(f"DDL error MariaDB: {e} | Q: {query}")
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
+
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
         if conn is not None:

@@ -1137,8 +1137,23 @@ class DatabaseManager:
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+                col_type = self.execute_scalar(
+                    "SELECT DATA_TYPE FROM information_schema.COLUMNS "
+                    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'id'"
+                )
+                if col_type and str(col_type).lower() != "bigint":
+                    engine = getattr(self, "mariadb_engine", None)
+                    ddl_ok = (
+                        engine.execute_ddl(
+                            "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                        )
+                        if engine and hasattr(engine, "execute_ddl")
+                        else self.execute_non_query(
+                            "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                        )
+                    )
+                    if not ddl_ok:
+                        return
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
