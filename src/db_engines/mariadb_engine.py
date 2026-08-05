@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE en tablas grandes puede superar IO_TIMEOUT; conexión DDL aparte
+    DDL_TIMEOUT = 300
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -209,3 +211,31 @@ class MariaDBEngine:
                 self._local_connections.conn = None
         self._local_connections.conn = self._create_connection()
         return self._local_connections.conn
+
+    def execute_ddl(self, query: str, max_attempts: int = 3) -> bool:
+        """Ejecuta DDL (ALTER TABLE, etc.) con timeouts largos y reintentos ante 2013."""
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                kwargs = self._connect_kwargs()
+                kwargs["read_timeout"] = self.DDL_TIMEOUT
+                kwargs["write_timeout"] = self.DDL_TIMEOUT
+                raw = pymysql.connect(**kwargs)
+                conn = MariaDBConnectionWrapper(raw, engine=None)
+                cursor = conn.cursor()
+                cursor.execute(query)
+                conn.commit()
+                return True
+            except Exception as e:
+                if attempt < max_attempts - 1 and self._is_transient_connect_error(e):
+                    logger.warning(
+                        f"DDL reintento {attempt + 1}/{max_attempts}: {e} | Q: {query}"
+                    )
+                    time.sleep(1.0)
+                    continue
+                logger.error(f"Error SQL MariaDB (DDL): {e} | Q: {query}")
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
