@@ -529,7 +529,14 @@ class DatabaseManager:
             
             m_conn = self.get_connection()
             m_cur = m_conn.cursor()
-            
+            try:
+                self._ensure_configuracion_table(m_cur)
+                m_conn.commit()
+            except Exception as ex_cfg:
+                logger.warning(
+                    f"No se pudo asegurar tabla configuracion pre-migración: {ex_cfg}"
+                )
+
             for table in tables:
                 try:
                     sq_cur.execute(f"SELECT * FROM {table}")
@@ -546,14 +553,8 @@ class DatabaseManager:
                     self._repair_mariadb_ghost_table(m_cur, table)
 
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
-                    try:
-                        m_cur.execute(f"TRUNCATE TABLE {table}")
-                    except:
-                        try:
-                            m_cur.execute(f"DELETE FROM {table}")
-                        except:
-                            pass
-                            
+                    self._prepare_mariadb_table_for_import(m_cur, table)
+
                     # Insertar en lotes
                     insert_query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
                     data_lote = [[r[col] for col in columns] for r in rows]
@@ -694,6 +695,33 @@ class DatabaseManager:
             or "doesn't exist in engine" in msg
             or "does not exist in engine" in msg
         )
+
+    def _prepare_mariadb_table_for_import(self, cursor, table: str) -> None:
+        """TRUNCATE/DELETE previo a import SQLite→MariaDB; repara ghost configuracion (1932)."""
+        if table == "configuracion" and getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            try:
+                self._ensure_configuracion_table(cursor)
+            except Exception:
+                pass
+
+        try:
+            cursor.execute(f"TRUNCATE TABLE {table}")
+            return
+        except Exception as e_trunc:
+            if table == "configuracion" and self._is_mariadb_ghost_table_error(e_trunc):
+                try:
+                    self._ensure_configuracion_table(cursor)
+                except Exception:
+                    pass
+                return
+            try:
+                cursor.execute(f"DELETE FROM {table}")
+            except Exception as e_del:
+                if table == "configuracion" and self._is_mariadb_ghost_table_error(e_del):
+                    try:
+                        self._ensure_configuracion_table(cursor)
+                    except Exception:
+                        pass
 
     def _ensure_configuracion_table(self, cursor) -> None:
         """Crea tabla configuracion; en MariaDB repara metadatos huérfanos (error 1932)."""
