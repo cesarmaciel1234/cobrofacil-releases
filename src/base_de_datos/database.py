@@ -191,6 +191,12 @@ class DatabaseManager:
                         self.is_master = False
                 self.mariadb_engine = MariaDBEngine(host=host)
 
+                # Esquema antes de autoblindaje: start_server() puede haber eliminado metadatos 1932
+                if self.is_master:
+                    self.db_path = "mariadb://" + host
+                    self._create_tables()
+                    self._migrate_db()
+
                 # Autoblindaje solo en el proceso dueño (--server o maestra sin servidor dedicado)
                 _skip_blindaje = False
                 try:
@@ -306,8 +312,6 @@ class DatabaseManager:
 
                 self.db_path = "mariadb://" + host
                 if self.is_master:
-                    self._create_tables()
-                    self._migrate_db()
                     self._ensure_test_users()
                     
                     # Migración transparente si MariaDB está vacía pero SQLite tiene datos
