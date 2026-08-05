@@ -66,12 +66,13 @@ class MotorCombos(QThread):
             
             eleccion = random.choice([0, 1])
             
-            # Buscar productos en oferta desde carteleria_global (sin ORDER BY RAND: timeout en MariaDB)
+            # Sin ORDER BY RAND ni full-scan: LIMIT acota el JOIN antes del muestreo en Python
             q = """
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
                 LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
                 WHERE c.precio_oferta > 0
+                LIMIT 50
             """
             rows = db_manager.execute_query(q)
             if rows:
@@ -150,7 +151,7 @@ class MotorIAPanel(QThread):
             if self.turno_ia == 1:
                 try:
                     promo_rows = db_manager.execute_query(
-                        "SELECT nombre, precio_combo, productos_json FROM combos"
+                        "SELECT nombre, precio_combo, productos_json FROM combos LIMIT 20"
                     )
                     if promo_rows:
                         promo_rows = [random.choice(list(promo_rows))]
@@ -178,6 +179,7 @@ class MotorIAPanel(QThread):
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
                 LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                LIMIT 50
             """
             rows = db_manager.execute_query(q)
             if rows:
