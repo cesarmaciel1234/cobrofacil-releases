@@ -103,6 +103,16 @@ class MariaDBController:
             time.sleep(0.5)
         return False
 
+    def is_local_server_booting(self) -> bool:
+        """True si mysqld arranca o recupera InnoDB: proceso/puerto vivo sin handshake."""
+        if self._try_pymysql("1234", 1) or self._try_pymysql("", 1):
+            return False
+        if self.is_starting():
+            return True
+        if self._process is not None and self._process.poll() is None:
+            return True
+        return self._is_port_open()
+
     def _recent_silent_update(self, within_sec=300.0):
         """True si hubo actualización silenciosa reciente (InnoDB recovery puede tardar)."""
         try:

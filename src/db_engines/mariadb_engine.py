@@ -156,12 +156,34 @@ class MariaDBEngine:
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
         return MariaDBConnectionWrapper(conn, engine=self)
 
+    def _probe_local_mariadb_reachable(self) -> bool:
+        """Handshake rápido sin rate-limit: si mysqld ya responde, limpia el circuit breaker."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
+                self._last_fail_time = 0
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _local_mariadb_booting(self) -> bool:
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            return mariadb_controller.is_starting() or mariadb_controller.is_local_server_booting()
+        except Exception:
+            return False
+
     def _wait_local_mariadb_if_starting(self, max_sec: float = 45.0) -> bool:
         """Si el watchdog/otro hilo está arrancando mysqld, esperar antes de fallar."""
         try:
             from src.services.mariadb_controller import mariadb_controller
 
-            if mariadb_controller.is_starting():
+            if mariadb_controller.is_starting() or mariadb_controller.is_local_server_booting():
                 logger.info("MariaDB en arranque — esperando handshake antes de conectar...")
                 return mariadb_controller.wait_until_ready(max_sec)
         except Exception:
@@ -199,6 +221,12 @@ class MariaDBEngine:
             if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
                 self._last_fail_time = 0
                 return True
+            if mariadb_controller.is_local_server_booting():
+                logger.info("MariaDB local arrancando — esperando handshake...")
+                if mariadb_controller.wait_until_ready(20.0):
+                    self._last_fail_time = 0
+                    return True
+                return False
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
@@ -211,25 +239,30 @@ class MariaDBEngine:
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         local = not self._is_remote_host(self.host)
+        booting = False
         if local:
             self._wait_local_mariadb_if_starting()
+            booting = self._local_mariadb_booting()
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if local:
             try:
-                from src.services.mariadb_controller import mariadb_controller
-
-                if mariadb_controller.is_starting():
+                if self._probe_local_mariadb_reachable():
+                    in_cooldown = False
+                    booting = False
+                elif booting:
                     in_cooldown = False
                 elif self._maybe_start_local_mariadb():
                     in_cooldown = False
+                    booting = False
             except Exception:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
+                    booting = False
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
         remote = self._is_remote_host(self.host)
-        attempts = 3
+        attempts = 3 if remote else (6 if booting else 3)
         last_exc = None
 
         for attempt in range(attempts):
@@ -257,14 +290,17 @@ class MariaDBEngine:
                     except Exception:
                         pass
 
-                if attempt < attempts - 1 and self._is_transient_connect_error(e):
+                retryable = self._is_transient_connect_error(e) and (remote or booting or local)
+                if attempt < attempts - 1 and retryable:
                     if local:
                         self._wait_local_mariadb_if_starting(15.0)
-                    time.sleep(0.4 if remote else 1.0 * (attempt + 1))
+                        booting = self._local_mariadb_booting() or booting
+                    time.sleep(1.5 * (attempt + 1) if booting else (0.4 if remote else 1.0 * (attempt + 1)))
                     continue
                 break
 
-        self._last_fail_time = time.time()
+        if not booting and not self._local_mariadb_booting():
+            self._last_fail_time = time.time()
         msg = f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {last_exc}"
         if self._is_transient_connect_error(last_exc):
             logger.warning(msg)
