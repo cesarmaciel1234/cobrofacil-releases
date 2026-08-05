@@ -321,6 +321,21 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             ok, detail = _try_connect(remote, as_slave=True)
             if ok:
                 return HealResult(True, "reconnect_slave", detail)
+        # Maestra caída: esclava sigue operando en SQLite local (no abrir Issue)
+        if slave_intent:
+            try:
+                db_manager.reconectar_local()
+                return HealResult(
+                    True,
+                    "offline_local_slave",
+                    "maestra_inalcanzable:" + ",".join(remotes),
+                )
+            except Exception as e:
+                return HealResult(
+                    False,
+                    "reconnect_slave",
+                    f"maestra_inalcanzable:{','.join(remotes)};offline:{e}",
+                )
         return HealResult(
             False,
             "reconnect_slave",
