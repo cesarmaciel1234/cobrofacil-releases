@@ -8,6 +8,7 @@ Motor del actualizador (cerebro).
 from __future__ import annotations
 
 import hashlib
+import http.client
 import json
 import os
 import shutil
@@ -537,12 +538,18 @@ def _format_update_error(exc: BaseException) -> str:
 
 
 def _is_transient_download_error(exc: BaseException) -> bool:
-    if isinstance(exc, (TimeoutError, ConnectionError, zipfile.BadZipFile)):
+    if isinstance(
+        exc,
+        (TimeoutError, ConnectionError, zipfile.BadZipFile, http.client.IncompleteRead),
+    ):
         return True
     msg = str(exc).lower()
     if (
         "crc" in msg
         or "incompleta" in msg
+        or "incomplet" in msg
+        or "incomplete" in msg
+        or "connection broken" in msg
         or ("zip" in msg and ("corrupt" in msg or "dañad" in msg))
     ):
         return True
@@ -567,7 +574,31 @@ def _is_transient_download_error(exc: BaseException) -> bool:
             return True
     except Exception:
         pass
+    try:
+        from urllib3.exceptions import ProtocolError
+
+        if isinstance(exc, ProtocolError):
+            return True
+    except Exception:
+        pass
     return False
+
+
+def _prepare_download_retry() -> None:
+    """Limpia artefactos de un intento fallido pero conserva .part para reanudar."""
+    zip_path = _zip_path()
+    try:
+        if os.path.isfile(zip_path):
+            os.remove(zip_path)
+    except OSError:
+        pass
+    for i in range(8):
+        shard = f"{zip_path}.part.{i}"
+        try:
+            if os.path.isfile(shard):
+                os.remove(shard)
+        except OSError:
+            pass
 
 
 def _purge_partial_download_files() -> None:
@@ -744,7 +775,7 @@ def download_and_stage_update(progress_callback=None) -> bool:
         for attempt in range(max_attempts):
             try:
                 if attempt > 0:
-                    _purge_partial_download_files()
+                    _prepare_download_retry()
                     _emit_progress(
                         progress_callback,
                         f"Reintentando descarga ({attempt + 1}/{max_attempts})…",
