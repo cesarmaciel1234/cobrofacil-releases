@@ -114,9 +114,11 @@ class MariaDBConnectionWrapper:
 class MariaDBEngine:
     """Adaptador de base de datos para MariaDB que emula la API de SQLite3"""
 
-    # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
+    # Timeouts cortos en remoto: host caído no debe congelar la UI.
+    # En maestra local, lecturas de cartelería/inventario necesitan más margen.
     CONNECT_TIMEOUT = 2
-    IO_TIMEOUT = 3
+    IO_TIMEOUT_REMOTE = 3
+    IO_TIMEOUT_LOCAL = 15
     # ALTER TABLE en inventario grande puede tardar varios minutos
     DDL_TIMEOUT = 600
     
@@ -129,7 +131,13 @@ class MariaDBEngine:
         self._local_connections = threading.local()
         self._last_fail_time = 0
 
+    def _io_timeout(self, host=None):
+        h = host if host is not None else self.host
+        return self.IO_TIMEOUT_REMOTE if self._is_remote_host(h) else self.IO_TIMEOUT_LOCAL
+
     def _connect_kwargs(self, host=None, password=None, read_timeout=None, write_timeout=None):
+        io_to = read_timeout if read_timeout is not None else self._io_timeout(host)
+        wo_to = write_timeout if write_timeout is not None else self._io_timeout(host)
         return dict(
             host=host if host is not None else self.host,
             port=self.port,
@@ -139,8 +147,8 @@ class MariaDBEngine:
             charset="utf8mb4",
             autocommit=False,
             connect_timeout=self.CONNECT_TIMEOUT,
-            read_timeout=read_timeout if read_timeout is not None else self.IO_TIMEOUT,
-            write_timeout=write_timeout if write_timeout is not None else self.IO_TIMEOUT,
+            read_timeout=io_to,
+            write_timeout=wo_to,
         )
 
     @staticmethod
@@ -235,3 +243,13 @@ class MariaDBEngine:
                 self._local_connections.conn = None
         self._local_connections.conn = self._create_connection()
         return self._local_connections.conn
+
+    def invalidate_connection(self):
+        """Descarta la conexión del hilo actual tras error 2013 / timeout."""
+        try:
+            conn = getattr(self._local_connections, "conn", None)
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+        self._local_connections.conn = None
