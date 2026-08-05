@@ -2,8 +2,14 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import time
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+
+# IDs de producto en zona de desborde signed INT32 (no confundir con códigos de barras/EAN).
+_PRODUCTO_ID_OVERFLOW_MIN = 2147483647
+_PRODUCTO_BARCODE_ID_MIN = 10_000_000_000
+
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -1347,29 +1353,95 @@ class DatabaseManager:
         except Exception:
             return False
 
-    def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
-        """DDL con timeouts largos (ALTER TABLE no debe usar IO_TIMEOUT de 3s)."""
-        conn = None
-        try:
-            engine = getattr(self, "mariadb_engine", None)
-            if not engine:
-                return False
-            conn = engine.get_ddl_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"DDL execution error: {e} | Query: {query}")
-            if conn:
+    def _execute_mariadb_ddl(self, query: str, params: tuple = (), *, attempts: int = 3) -> bool:
+        """DDL/DML pesadas con timeouts largos (ALTER/UPDATE masivos no deben usar IO_TIMEOUT de 3s)."""
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            return False
+        last_exc = None
+        for attempt in range(attempts):
+            conn = None
+            try:
+                conn = engine.get_ddl_connection()
+                cursor = conn.cursor()
                 try:
-                    conn.rollback()
+                    cursor.execute("SET SESSION lock_wait_timeout = 600")
+                    cursor.execute("SET SESSION innodb_lock_wait_timeout = 600")
                 except Exception:
                     pass
+                cursor.execute(self._normalize_query(query), params)
+                conn.commit()
+                return True
+            except Exception as e:
+                last_exc = e
+                err = str(e).lower()
+                transient = any(
+                    token in err
+                    for token in ("2013", "2006", "lost connection", "gone away", "timed out")
+                )
+                if attempt < attempts - 1 and transient:
+                    logger.warning(
+                        "DDL reintento %s/%s tras error transitorio: %s | Query: %s",
+                        attempt + 2,
+                        attempts,
+                        e,
+                        query[:160],
+                    )
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                logger.error(f"DDL execution error: {e} | Query: {query}")
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        if last_exc is not None:
+            logger.error(f"DDL execution error: {last_exc} | Query: {query}")
+        return False
+
+    def _reassign_overflow_producto_id(self, old_id, new_id) -> bool:
+        """Reasigna un id de producto desbordado y actualiza referencias en detalles_ventas."""
+        old_key = str(old_id)
+        new_key = str(new_id)
+        if not self._execute_mariadb_ddl(
+            "UPDATE detalles_ventas SET id_producto = ? WHERE id_producto = ? OR id_producto = ?",
+            (new_key, old_id, old_key),
+        ):
             return False
-        finally:
-            if conn:
-                conn.close()
+        return self._execute_mariadb_ddl(
+            "UPDATE productos SET id = ? WHERE id = ?",
+            (new_id, old_id),
+        )
+
+    def _detalles_ventas_nombre_is_utf8mb4(self) -> bool:
+        """True si detalles_ventas.nombre_producto ya acepta emojis (utf8mb4)."""
+        try:
+            row = self.execute_query(
+                """
+                SELECT CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'detalles_ventas'
+                  AND COLUMN_NAME = 'nombre_producto'
+                LIMIT 1
+                """
+            )
+            if not row:
+                return True
+            charset = row[0].get("CHARACTER_SET_NAME") if isinstance(row[0], dict) else row[0][0]
+            return str(charset or "").lower() == "utf8mb4"
+        except Exception:
+            return True
+
+    def _ensure_detalles_ventas_nombre_utf8mb4(self) -> None:
+        """Evita error 1366 al sincronizar ventas offline con emojis en nombre_producto."""
+        if not self._detalles_ventas_nombre_is_utf8mb4():
+            self._execute_mariadb_ddl(
+                "ALTER TABLE detalles_ventas MODIFY nombre_producto TEXT "
+                "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            )
 
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
@@ -1378,29 +1450,18 @@ class DatabaseManager:
                 getattr(self, "db_engine_type", "sqlite") == "mariadb"
                 and getattr(self, "is_master", False)
             ):
-                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
-                    logger.info(
-                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
-                    )
-                    self._execute_mariadb_ddl(
-                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
-                    )
-                
-                # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
-                # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
-                # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
-                _INT32_OVERFLOW_MIN = 2147483647
-                _BARCODE_ID_MIN = 10_000_000_000
+                # 1) Reasignar overflow INT32 antes del ALTER: reduce AUTO_INCREMENT gigante y timeouts 2013.
                 overflow = self.execute_query(
                     "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
-                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+                    (_PRODUCTO_ID_OVERFLOW_MIN, _PRODUCTO_BARCODE_ID_MIN),
                 )
                 if overflow:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
+                            "SELECT MAX(id) FROM productos WHERE id < ?",
+                            (_PRODUCTO_ID_OVERFLOW_MIN,),
+                        )
+                        or 0
                     )
                     next_id = max_normal + 1
                     for row in overflow:
@@ -1409,24 +1470,42 @@ class DatabaseManager:
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
-                        )
+                        if not self._reassign_overflow_producto_id(old_id, next_id):
+                            logger.warning(
+                                "No se pudo reasignar producto id=%s → %s", old_id, next_id
+                            )
                         next_id += 1
                     new_max = int(
                         self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
                     )
                     next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
+                    if next_ai < _PRODUCTO_BARCODE_ID_MIN and new_max < _PRODUCTO_ID_OVERFLOW_MIN:
                         self._execute_mariadb_ddl(
                             f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                        )
+                    elif new_max >= _PRODUCTO_ID_OVERFLOW_MIN:
+                        logger.warning(
+                            "IDs de producto desbordados persisten (max=%s); "
+                            "omitido ALTER AUTO_INCREMENT para evitar timeout.",
+                            new_max,
                         )
                     else:
                         logger.info(
                             "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
                             new_max,
                         )
+
+                # 2) Migrar esquema a BIGINT tras sanear IDs (solo maestra; esclavas no ALTER remotos).
+                if not self._productos_id_is_bigint():
+                    logger.info(
+                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
+                    )
+                    self._execute_mariadb_ddl(
+                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                    )
+
+                # 3) Columnas de texto legacy utf8 → utf8mb4 (evita 1366 en sync offline).
+                self._ensure_detalles_ventas_nombre_utf8mb4()
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 

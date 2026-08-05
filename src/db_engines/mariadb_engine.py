@@ -118,7 +118,7 @@ class MariaDBEngine:
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
     # ALTER TABLE en inventario grande puede tardar varios minutos
-    DDL_TIMEOUT = 300
+    DDL_TIMEOUT = 600
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
