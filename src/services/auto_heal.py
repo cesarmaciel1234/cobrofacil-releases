@@ -254,6 +254,7 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
         k in blob
         for k in (
             "clientes",
+            "productos",
             "punpro_db",
             "mariadb",
             "check table",
@@ -262,6 +263,7 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
             "movimientos_caja",
             "detalles_ventas",
             "ventas",
+            "terminales_activos",
         )
     ):
         return None

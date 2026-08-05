@@ -739,16 +739,30 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
-            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
-            rows = cursor.fetchall()
+            for table in (
+                "productos",
+                "ventas",
+                "movimientos_caja",
+                "configuracion",
+                "clientes",
+                "terminales_activos",
+            ):
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    err = str(e).lower()
+                    if (
+                        "1932" in err
+                        or "doesn't exist in engine" in err
+                        or "does not exist in engine" in err
+                    ):
+                        logger.warning(
+                            "Tabla %s huérfana (1932) en verificación de integridad MariaDB.",
+                            table,
+                        )
+                        conn.close()
+                        return False
             conn.close()
-            for r in rows:
-                msg = r[3]
-                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
-                        continue
-                    logger.warning(f"Resultado de verificación tabla: {r}")
-                    return False
             return True
         except Exception:
             return True

@@ -770,6 +770,7 @@ class DatabaseManager:
         "clientes",
         "gastos",
         "usuarios",
+        "terminales_activos",
     )
 
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
@@ -1216,6 +1217,15 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+
+            # MariaDB 1932: metadatos sin archivos InnoDB — CREATE IF NOT EXISTS no repara
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                if dropped:
+                    try:
+                        conn.commit()
+                    except Exception:
+                        pass
             
             # 1. USUARIOS
             cursor.execute("""
