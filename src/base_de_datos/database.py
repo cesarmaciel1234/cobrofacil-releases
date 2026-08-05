@@ -745,11 +745,13 @@ class DatabaseManager:
         err = str(exc).lower()
         return "1366" in err or "incorrect string value" in err
 
-    def _reset_mariadb_thread_connection(self) -> None:
+    def _reset_mariadb_thread_connection(self, clear_circuit_breaker: bool = False) -> None:
         engine = getattr(self, "mariadb_engine", None)
         if engine:
             try:
                 engine.reset_thread_connection()
+                if clear_circuit_breaker:
+                    engine._last_fail_time = 0
             except Exception:
                 pass
 
@@ -1718,7 +1720,9 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):
@@ -1766,7 +1770,9 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):
@@ -1829,7 +1835,9 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):
