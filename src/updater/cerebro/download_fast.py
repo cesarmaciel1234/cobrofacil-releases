@@ -21,35 +21,40 @@ STREAM_RETRIES = 3
 
 
 def _is_transient_stream_error(exc: BaseException) -> bool:
-    if isinstance(
-        exc,
-        (TimeoutError, ConnectionError, http.client.IncompleteRead),
-    ):
-        return True
-    msg = str(exc).lower()
-    if "incomplet" in msg or "connection broken" in msg:
-        return True
-    try:
-        import requests
-
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
         if isinstance(
-            exc,
-            (
-                requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError,
-                requests.exceptions.ChunkedEncodingError,
-            ),
+            current,
+            (TimeoutError, ConnectionError, http.client.IncompleteRead),
         ):
             return True
-    except Exception:
-        pass
-    try:
-        from urllib3.exceptions import ProtocolError
-
-        if isinstance(exc, ProtocolError):
+        msg = str(current).lower()
+        if "incomplet" in msg or "connection broken" in msg:
             return True
-    except Exception:
-        pass
+        try:
+            import requests
+
+            if isinstance(
+                current,
+                (
+                    requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.ChunkedEncodingError,
+                ),
+            ):
+                return True
+        except Exception:
+            pass
+        try:
+            from urllib3.exceptions import ProtocolError
+
+            if isinstance(current, ProtocolError):
+                return True
+        except Exception:
+            pass
+        current = current.__cause__ or current.__context__
     return False
 
 
@@ -172,10 +177,11 @@ def _cleanup_partial_download(dest_path: str, part_path: str) -> None:
 
 def _download_single(session, url, dest_path, part_path, total_hint, verify, cb) -> None:
     last_exc: BaseException | None = None
+    active_session = session
     for attempt in range(STREAM_RETRIES):
         try:
             _download_single_stream(
-                session, url, dest_path, part_path, total_hint, verify, cb
+                active_session, url, dest_path, part_path, total_hint, verify, cb
             )
             return
         except Exception as exc:
@@ -186,6 +192,11 @@ def _download_single(session, url, dest_path, part_path, total_hint, verify, cb)
                     f"Conexión interrumpida, reanudando ({attempt + 2}/{STREAM_RETRIES})…",
                     1,
                 )
+                try:
+                    active_session.close()
+                except Exception:
+                    pass
+                active_session = _session()
                 time.sleep(3 * (attempt + 1))
                 continue
             raise
@@ -250,6 +261,11 @@ def _download_single_stream(session, url, dest_path, part_path, total_hint, veri
                     last_emit = done
                     mb = done / (1024 * 1024)
                     _emit(cb, f"Descargando… {mb:.0f} MB", min(90, int(mb)))
+
+    if total > 0 and done < total:
+        raise RuntimeError(
+            f"Descarga incompleta: {done} bytes recibidos, esperados {total}"
+        )
 
     os.replace(part_path, dest_path)
 

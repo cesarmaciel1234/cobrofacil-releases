@@ -8,7 +8,6 @@ Motor del actualizador (cerebro).
 from __future__ import annotations
 
 import hashlib
-import http.client
 import json
 import os
 import shutil
@@ -538,20 +537,14 @@ def _format_update_error(exc: BaseException) -> str:
 
 
 def _is_transient_download_error(exc: BaseException) -> bool:
-    if isinstance(
-        exc,
-        (TimeoutError, ConnectionError, zipfile.BadZipFile, http.client.IncompleteRead),
-    ):
+    from src.updater.cerebro.download_fast import _is_transient_stream_error
+
+    if _is_transient_stream_error(exc):
+        return True
+    if isinstance(exc, zipfile.BadZipFile):
         return True
     msg = str(exc).lower()
-    if (
-        "crc" in msg
-        or "incompleta" in msg
-        or "incomplet" in msg
-        or "incomplete" in msg
-        or "connection broken" in msg
-        or ("zip" in msg and ("corrupt" in msg or "dañad" in msg))
-    ):
+    if "crc" in msg or ("zip" in msg and ("corrupt" in msg or "dañad" in msg)):
         return True
     if isinstance(exc, OSError) and getattr(exc, "errno", None) in (
         10060,
@@ -560,27 +553,6 @@ def _is_transient_download_error(exc: BaseException) -> bool:
         11002,
     ):
         return True
-    try:
-        import requests
-
-        if isinstance(
-            exc,
-            (
-                requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError,
-                requests.exceptions.ChunkedEncodingError,
-            ),
-        ):
-            return True
-    except Exception:
-        pass
-    try:
-        from urllib3.exceptions import ProtocolError
-
-        if isinstance(exc, ProtocolError):
-            return True
-    except Exception:
-        pass
     return False
 
 
