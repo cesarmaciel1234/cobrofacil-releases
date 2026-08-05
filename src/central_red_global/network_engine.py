@@ -162,6 +162,14 @@ class NetworkEngine(QObject):
                     self._active_ips.pop(origen, None)
                     self._safe_emit(self.connection_lost, origen)
 
+    def count_active_terminals(self) -> int:
+        """Terminales vistos por UDP recientemente, incluyendo esta máquina."""
+        now = time.time()
+        active = sum(
+            1 for last in list(self._peers.values()) if now - last <= PEER_TIMEOUT
+        )
+        return max(1, active + 1)
+
 
 def init_network_engine(role: str):
     global _engine
