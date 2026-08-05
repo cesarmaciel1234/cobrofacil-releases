@@ -108,39 +108,70 @@ class MariaDBEngine:
             read_timeout=self.IO_TIMEOUT,
             write_timeout=self.IO_TIMEOUT,
         )
-        
+
+    @staticmethod
+    def _is_remote_host(host: str) -> bool:
+        return str(host or "").strip().lower() not in ("127.0.0.1", "localhost", "")
+
+    @staticmethod
+    def _is_transient_connect_error(exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return any(
+            token in msg
+            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+        )
+
+    def _try_connect(self, **kwargs):
+        conn = pymysql.connect(**self._connect_kwargs(**kwargs))
+        return MariaDBConnectionWrapper(conn, engine=self)
+
     def _create_connection(self):
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         if time.time() - getattr(self, "_last_fail_time", 0) < 5:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
-            
-        try:
-            conn = pymysql.connect(**self._connect_kwargs())
-            self._last_fail_time = 0
-            return MariaDBConnectionWrapper(conn, engine=self)
-        except Exception as e:
-            # Fallback a contraseña vacía por compatibilidad hacia atrás
-            if self.password != "":
-                try:
-                    conn = pymysql.connect(**self._connect_kwargs(password=""))
-                    self._last_fail_time = 0
-                    return MariaDBConnectionWrapper(conn, engine=self)
-                except Exception:
-                    pass
-                    
-            # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
-            if self.host == "127.0.0.1":
-                try:
-                    conn = pymysql.connect(**self._connect_kwargs(host="localhost"))
-                    self._last_fail_time = 0
-                    return MariaDBConnectionWrapper(conn, engine=self)
-                except Exception:
-                    pass
-                    
-            self._last_fail_time = time.time()
-            logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
-            raise
+
+        remote = self._is_remote_host(self.host)
+        attempts = 3 if remote else 1
+        last_exc = None
+
+        for attempt in range(attempts):
+            try:
+                wrapper = self._try_connect()
+                self._last_fail_time = 0
+                return wrapper
+            except Exception as e:
+                last_exc = e
+                # Fallback a contraseña vacía por compatibilidad hacia atrás
+                if self.password != "":
+                    try:
+                        wrapper = self._try_connect(password="")
+                        self._last_fail_time = 0
+                        return wrapper
+                    except Exception:
+                        pass
+
+                # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
+                if self.host == "127.0.0.1":
+                    try:
+                        wrapper = self._try_connect(host="localhost")
+                        self._last_fail_time = 0
+                        return wrapper
+                    except Exception:
+                        pass
+
+                if attempt < attempts - 1 and remote and self._is_transient_connect_error(e):
+                    time.sleep(0.4)
+                    continue
+                break
+
+        self._last_fail_time = time.time()
+        msg = f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {last_exc}"
+        if remote and self._is_transient_connect_error(last_exc):
+            logger.warning(msg)
+        else:
+            logger.error(msg)
+        raise last_exc
             
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)

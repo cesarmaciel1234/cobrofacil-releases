@@ -602,8 +602,9 @@ class DatabaseManager:
             base_path = get_base_path()
             cfg_path = os.path.join(base_path, "config.json")
 
-            # Leer db_name desde config
+            # Leer db_name y rol de red desde config
             db_name = "punpro.db"
+            cfg_data = {}
             try:
                 with open(cfg_path, "r", encoding="utf-8") as f:
                     cfg_data = json.load(f)
@@ -623,7 +624,8 @@ class DatabaseManager:
 
             self.db_path = local_path
             self.db_engine_type = "sqlite"
-            self.is_master = True
+            es_esclava, _ = self._leer_rol_red_desde_config(cfg_data)
+            self.is_master = not es_esclava
             self._forced_local_offline = True
 
             # Verificar/crear tablas en la BD local
@@ -1217,6 +1219,23 @@ class DatabaseManager:
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
+                if not getattr(self, "is_master", True):
+                    try:
+                        logger.warning(
+                            "[RED LAN] Caída de conexión a Maestra (%s). "
+                            "Transicionando a BD local SQLite...",
+                            e,
+                        )
+                        self.reconectar_local()
+                        conn = sqlite3.connect(self.db_path, timeout=30.0)
+                        conn.row_factory = sqlite3.Row
+                        return conn
+                    except Exception as fallback_err:
+                        logger.error(
+                            f"Error connecting to MariaDB database: {e} "
+                            f"(fallback local falló: {fallback_err})"
+                        )
+                        raise
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
