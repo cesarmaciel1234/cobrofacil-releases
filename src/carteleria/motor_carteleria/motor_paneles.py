@@ -178,6 +178,7 @@ class MotorIAPanel(QThread):
                 SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
                 FROM carteleria_global c
                 LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
+                LIMIT 150
             """
             rows = db_manager.execute_query(q)
             if rows:

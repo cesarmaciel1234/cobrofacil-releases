@@ -14,6 +14,43 @@ class VentaCruzadaInteligente:
     Rechaza cobros en negro o ítems genéricos no inventariados (ej: 'Artículo Común'), y si hay poquitos tickets,
     completa inteligentemente con clásicos infaltables de parrilla para que SIEMPRE muestre exactamente 3 recomendaciones.
     """
+
+    _valido_cache = {}
+
+    @staticmethod
+    def _existe_en_catalogo(nom_limpio):
+        key = nom_limpio.lower()
+        if key in VentaCruzadaInteligente._valido_cache:
+            return VentaCruzadaInteligente._valido_cache[key]
+
+        encontrado = False
+        q_exact = "SELECT 1 FROM productos WHERE nombre = ? LIMIT 1"
+        if db_manager.execute_query(q_exact, (nom_limpio,)):
+            encontrado = True
+        elif db_manager.execute_query(
+            "SELECT 1 FROM productos WHERE LOWER(nombre) = ? LIMIT 1", (key,)
+        ):
+            encontrado = True
+        elif db_manager.execute_query(
+            "SELECT 1 FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 1", (f"%{nom_limpio}%",)
+        ):
+            encontrado = True
+        elif db_manager.execute_query(
+            "SELECT 1 FROM carteleria_global WHERE nombre_producto = ? LIMIT 1", (nom_limpio,)
+        ):
+            encontrado = True
+        elif db_manager.execute_query(
+            "SELECT 1 FROM carteleria_global WHERE LOWER(nombre_producto) = ? LIMIT 1", (key,)
+        ):
+            encontrado = True
+        elif db_manager.execute_query(
+            "SELECT 1 FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?) LIMIT 1",
+            (f"%{nom_limpio}%",),
+        ):
+            encontrado = True
+
+        VentaCruzadaInteligente._valido_cache[key] = encontrado
+        return encontrado
     
     @staticmethod
     def es_producto_valido(nombre):
@@ -36,13 +73,7 @@ class VentaCruzadaInteligente:
             
         # Validar existencia en base de datos
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_p:
-                return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_c:
+            if VentaCruzadaInteligente._existe_en_catalogo(nom_limpio):
                 return True, nom_limpio
         except Exception:
             pass

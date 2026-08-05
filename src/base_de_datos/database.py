@@ -699,12 +699,19 @@ class DatabaseManager:
             return ""
         return item.get("nombre") or item.get("nombre_producto") or ""
 
-    def _nombre_producto_para_db(self, nombre):
+    def _nombre_producto_para_db(self, nombre, ascii_only=False):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
+            from src.db_engines.mariadb_engine import mariadb_ascii_text, mariadb_safe_text
+            if ascii_only:
+                return mariadb_ascii_text(nombre)
             return mariadb_safe_text(nombre)
         return nombre or ""
+
+    @staticmethod
+    def _is_charset_mariadb_error(exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        return "1366" in msg or "incorrect string value" in msg
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -1911,7 +1918,8 @@ class DatabaseManager:
         import time
 
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
-        max_attempts = 3 if is_mariadb else 1
+        max_attempts = 4 if is_mariadb else 1
+        ascii_fallback = False
 
         for attempt in range(max_attempts):
             conn = None
@@ -1922,6 +1930,7 @@ class DatabaseManager:
                 from datetime import datetime
                 fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 c_id = venta_data.get('caja_id', 1)
+                nombre_db = lambda value: self._nombre_producto_para_db(value, ascii_only=ascii_fallback)
 
                 cursor.execute("""
                     INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
@@ -1932,7 +1941,7 @@ class DatabaseManager:
                     venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                     venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                     venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                    self._nombre_producto_para_db(venta_data.get('cliente_nombre', ''))
+                    nombre_db(venta_data.get('cliente_nombre', ''))
                 ))
                 id_venta = cursor.lastrowid
 
@@ -1940,7 +1949,7 @@ class DatabaseManager:
                     cursor.execute("""
                         INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                    """, (id_venta, it.get('id', ''), nombre_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
 
                     if it.get('id') and str(it['id']).strip() not in ('000', ''):
                         cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
@@ -1953,6 +1962,10 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
+                if is_mariadb and not ascii_fallback and self._is_charset_mariadb_error(e):
+                    ascii_fallback = True
+                    logger.warning("sync_venta_to_master: reintento con nombres ASCII tras error 1366")
+                    continue
                 if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(
                         "sync_venta_to_master reintento %s/%s tras error transitorio: %s",

@@ -8,6 +8,53 @@ class BuscadorDePreciosYStock:
     ¡Busca tanto en las promociones (carteleria_global) como en la tabla general (productos) 
     para que NINGÚN producto vendido hoy se quede afuera del cartel!
     """
+
+    _cartel_cache = {}
+    _producto_cache = {}
+
+    @classmethod
+    def _buscar_cartel(cls, nombre):
+        nombre = str(nombre or "").strip()
+        if not nombre:
+            return None
+        key = nombre.lower()
+        if key in cls._cartel_cache:
+            return cls._cartel_cache[key]
+
+        q_exact = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE nombre_producto = ? LIMIT 1"
+        rows = db_manager.execute_query(q_exact, (nombre,))
+        if not rows:
+            q_lower = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) = ? LIMIT 1"
+            rows = db_manager.execute_query(q_lower, (key,))
+        if not rows:
+            q_like = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?) LIMIT 1"
+            rows = db_manager.execute_query(q_like, (f"%{nombre}%",))
+
+        row = rows[0] if rows else None
+        cls._cartel_cache[key] = row
+        return row
+
+    @classmethod
+    def _buscar_producto(cls, nombre):
+        nombre = str(nombre or "").strip()
+        if not nombre:
+            return None
+        key = nombre.lower()
+        if key in cls._producto_cache:
+            return cls._producto_cache[key]
+
+        q_exact = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE nombre = ? LIMIT 1"
+        rows = db_manager.execute_query(q_exact, (nombre,))
+        if not rows:
+            q_lower = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) = ? LIMIT 1"
+            rows = db_manager.execute_query(q_lower, (key,))
+        if not rows:
+            q_like = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?) LIMIT 1"
+            rows = db_manager.execute_query(q_like, (f"%{nombre}%",))
+
+        row = rows[0] if rows else None
+        cls._producto_cache[key] = row
+        return row
     
     @staticmethod
     def armar_lista_para_pantalla(productos_vendidos_hoy):
@@ -47,15 +94,8 @@ class BuscadorDePreciosYStock:
             encontro_datos = False
             
             # PASO 2 DE VERIFICACIÓN: Comprobar que el producto EXISTE genuinamente en el Inventario o Promociones.
-            # a) Intentamos leer de 'carteleria_global'
-            q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?))"
-            rows_cartel = db_manager.execute_query(q_cartel, (nombre.strip(),))
-            if not rows_cartel:
-                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?)"
-                rows_cartel = db_manager.execute_query(q_cartel, (f"%{nombre.strip()}%",))
-                
-            if rows_cartel:
-                row = rows_cartel[0]
+            row = BuscadorDePreciosYStock._buscar_cartel(nombre)
+            if row:
                 if isinstance(row, dict):
                     precio_normal = float(row.get('precio_normal') or 0)
                     precio_oferta = float(row.get('precio_oferta') or 0)
@@ -68,15 +108,8 @@ class BuscadorDePreciosYStock:
                     unidad = "Kilos"
                 encontro_datos = True
 
-            # b) Buscamos en la tabla general de inventario 'productos'
-            q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
-            rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
-            if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
-                rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
-                
-            if rows_prod:
-                row_p = rows_prod[0]
+            row_p = BuscadorDePreciosYStock._buscar_producto(nombre)
+            if row_p:
                 if isinstance(row_p, dict):
                     if not encontro_datos:
                         precio_normal = float(row_p.get('precio') or 0)

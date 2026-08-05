@@ -24,7 +24,15 @@ def safe_mariadb_text(value):
     text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
     text = _SUPPLEMENTARY_CHARS.sub("", text)
     text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
-    return text
+    return text.strip()
+
+
+def ascii_safe_mariadb_text(value):
+    """Fallback for utf8mb3 columns when emojis/accents still trigger MySQL error 1366."""
+    text = safe_mariadb_text(value)
+    if text is None:
+        return text
+    return text.encode("ascii", "ignore").decode("ascii").strip()
 
 
 def sanitize_mariadb_params(params):
