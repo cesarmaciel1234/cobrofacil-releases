@@ -816,6 +816,57 @@ class DatabaseManager:
                     pass
         return dropped
 
+    def _restore_mariadb_after_ghost_drop(self, dropped: list) -> None:
+        """Rehidrata MariaDB tras eliminar metadatos huérfanos (1932)."""
+        if not dropped or getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        if not getattr(self, "is_master", True):
+            return
+        host = "127.0.0.1"
+        engine = getattr(self, "mariadb_engine", None)
+        if engine:
+            host = str(getattr(engine, "host", "127.0.0.1") or "127.0.0.1").strip()
+        if host.lower() not in ("127.0.0.1", "localhost", ""):
+            return
+
+        from src.utils.paths import get_base_path
+        import os
+        import sqlite3
+
+        sqlite_path = os.path.join(get_base_path(), "punpro.db")
+        try:
+            if os.path.exists(sqlite_path):
+                sq = sqlite3.connect(sqlite_path)
+                cur = sq.cursor()
+                cur.execute("SELECT COUNT(*) FROM productos")
+                count = int(cur.fetchone()[0] or 0)
+                sq.close()
+                if count > 0:
+                    logger.warning(
+                        "Rehidratar MariaDB desde SQLite tras ghost 1932 (%s tablas).",
+                        len(dropped),
+                    )
+                    self.migrar_de_sqlite_a_mariadb()
+                    return
+        except Exception as ex:
+            logger.warning(f"SQLite→MariaDB post-ghost falló: {ex}")
+
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            logger.warning(
+                "Restaurar respaldo tras ghost 1932 (%s tablas).",
+                len(dropped),
+            )
+            AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                "mariadb",
+                allow_older_than_today=True,
+                merge_today=True,
+                mariadb_host=host,
+            )
+        except Exception as ex:
+            logger.warning(f"Restore post-ghost falló: {ex}")
+
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
@@ -833,6 +884,8 @@ class DatabaseManager:
                 self._create_tables()
             except Exception as ex:
                 logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            if dropped:
+                self._restore_mariadb_after_ghost_drop(dropped)
             return True
         except Exception as ex:
             logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")

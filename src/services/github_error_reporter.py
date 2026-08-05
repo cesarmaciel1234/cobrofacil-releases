@@ -363,6 +363,13 @@ def queue_error_report(
     if not msg:
         return
 
+    msg_lower = msg.lower()
+    is_ghost_1932 = (
+        "1932" in msg_lower
+        or "doesn't exist in engine" in msg_lower
+        or "does not exist in engine" in msg_lower
+    )
+
     tb_text = ""
     exc_obj = None
     if exc_info:
@@ -386,6 +393,13 @@ def queue_error_report(
                 return
         except Exception:
             pass
+
+    if is_ghost_1932:
+        logging.getLogger("PunPro").warning(
+            "Error MariaDB ghost 1932 — no se reporta a GitHub: %s",
+            msg[:200],
+        )
+        return
 
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
