@@ -167,6 +167,15 @@ class MariaDBEngine:
                 return False
         except Exception:
             pass
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            # Siempre comprobar si ya responde (p. ej. otro hilo acaba de start_server)
+            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
+                self._last_fail_time = 0
+                return True
+        except Exception:
+            pass
         now = time.time()
         if now - getattr(self, "_last_start_attempt", 0) < 20:
             return False
@@ -174,9 +183,6 @@ class MariaDBEngine:
         try:
             from src.services.mariadb_controller import mariadb_controller
 
-            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
-                self._last_fail_time = 0
-                return True
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
@@ -189,14 +195,16 @@ class MariaDBEngine:
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
+        recovering_local = False
         if not self._is_remote_host(self.host):
             if self._maybe_start_local_mariadb():
                 in_cooldown = False
+                recovering_local = True
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
         remote = self._is_remote_host(self.host)
-        attempts = 3 if remote else 1
+        attempts = 3 if remote or recovering_local else 1
         last_exc = None
 
         for attempt in range(attempts):
@@ -224,8 +232,8 @@ class MariaDBEngine:
                     except Exception:
                         pass
 
-                if attempt < attempts - 1 and remote and self._is_transient_connect_error(e):
-                    time.sleep(0.4)
+                if attempt < attempts - 1 and (remote or recovering_local) and self._is_transient_connect_error(e):
+                    time.sleep(0.8 if recovering_local else 0.4)
                     continue
                 break
 

@@ -735,6 +735,7 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker",
             )
         )
 
@@ -1715,7 +1716,8 @@ class DatabaseManager:
                         e,
                     )
                     self._reset_mariadb_thread_connection()
-                    time.sleep(1.0 * (attempt + 1))
+                    delay = 5.5 if "circuit breaker" in str(e).lower() else 1.0 * (attempt + 1)
+                    time.sleep(delay)
                     continue
                 logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 if is_mariadb and not getattr(self, "is_master", True):
@@ -1760,7 +1762,8 @@ class DatabaseManager:
                         e,
                     )
                     self._reset_mariadb_thread_connection()
-                    time.sleep(1.0 * (attempt + 1))
+                    delay = 5.5 if "circuit breaker" in str(e).lower() else 1.0 * (attempt + 1)
+                    time.sleep(delay)
                     continue
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
