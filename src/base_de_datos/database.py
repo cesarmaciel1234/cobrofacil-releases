@@ -5,6 +5,10 @@ import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
+# IDs >= 1e9 son códigos EAN usados como PK; no deben reasignarse ni fijar AUTO_INCREMENT.
+_PRODUCTOS_BARCODE_ID_MIN = 1_000_000_000
+_INT32_MAX_ID = 2_147_483_647
+
 class DatabaseManager:
     """Professional management of SQLite database operations."""
     
@@ -1190,14 +1194,15 @@ class DatabaseManager:
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
                     )
                 
-                # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
+                # Reasignar solo IDs de auto-increment desbordados (INT32), no códigos EAN de barras.
                 overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                    f"SELECT id FROM productos WHERE id >= {_INT32_MAX_ID} "
+                    f"AND id < {_PRODUCTOS_BARCODE_ID_MIN} ORDER BY id"
                 )
                 if overflow:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                            f"SELECT MAX(id) FROM productos WHERE id < {_INT32_MAX_ID}"
                         ) or 0
                     )
                     next_id = max_normal + 1
@@ -1212,12 +1217,33 @@ class DatabaseManager:
                             (next_id, old_id),
                         )
                         next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+
+                # AUTO_INCREMENT solo desde IDs secuenciales; evitar valores EAN que provocan timeout.
+                new_max = int(
+                    self.execute_scalar(
+                        f"SELECT MAX(id) FROM productos WHERE id < {_PRODUCTOS_BARCODE_ID_MIN}"
+                    ) or 0
+                )
+                next_ai = new_max + 1
+                if 0 < next_ai < _PRODUCTOS_BARCODE_ID_MIN:
+                    try:
+                        row = self.execute_query(
+                            """
+                            SELECT AUTO_INCREMENT FROM information_schema.TABLES
+                            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos'
+                            LIMIT 1
+                            """
+                        )
+                        current_ai = 0
+                        if row:
+                            raw = row[0].get("AUTO_INCREMENT") if isinstance(row[0], dict) else row[0][0]
+                            current_ai = int(raw or 0)
+                    except Exception:
+                        current_ai = 0
+                    if overflow or current_ai >= _PRODUCTOS_BARCODE_ID_MIN:
+                        self._execute_mariadb_ddl(
+                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                        )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
