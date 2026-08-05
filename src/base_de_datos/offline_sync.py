@@ -3,9 +3,23 @@ import os
 import threading
 import time
 from src.utils.paths import get_base_path
+from src.utils.text_db import safe_mariadb_text
 import logging
 
 logger = logging.getLogger("PunPro")
+
+def _sanitize_offline_items(items):
+    """Normaliza nombres de producto para columnas MariaDB utf8 legacy."""
+    sanitized = []
+    for it in items:
+        if isinstance(it, dict):
+            row = dict(it)
+            if "nombre" in row:
+                row["nombre"] = safe_mariadb_text(row.get("nombre", ""))
+            sanitized.append(row)
+        else:
+            sanitized.append(it)
+    return sanitized
 
 class OfflineSync:
     def __init__(self):
@@ -32,7 +46,7 @@ class OfflineSync:
             
             queue.append({
                 "venta_data": venta_data,
-                "items": items,
+                "items": _sanitize_offline_items(items),
                 "timestamp": time.time()
             })
             
@@ -56,6 +70,7 @@ class OfflineSync:
         logger.info(f"Sincronizando {len(queue)} ventas offline pendientes...")
         exitosas = []
         for i, record in enumerate(queue):
+            record["items"] = _sanitize_offline_items(record.get("items") or [])
             if db_manager.sync_venta_to_master(record["venta_data"], record["items"]):
                 exitosas.append(i)
             else:
@@ -127,7 +142,7 @@ class OfflineSync:
             exitosas = []
             for i, record in enumerate(queue):
                 venta = record["venta_data"]
-                items = record["items"]
+                items = _sanitize_offline_items(record.get("items") or [])
                 
                 # Intentar sincronizar usando la abstracción de base de datos
                 success = db_manager.sync_venta_to_master(venta, items)
