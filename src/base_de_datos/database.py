@@ -2,6 +2,8 @@ from src.utils.qt_compat import qt_exec
 import sqlite3
 import os
 import sys
+import threading
+import time
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
@@ -9,12 +11,14 @@ class DatabaseManager:
     """Professional management of SQLite database operations."""
     
     _instance = None
+    _productos_schema_lock = threading.Lock()
     
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DatabaseManager, cls).__new__(cls)
             # Si la maestra cae, nos quedamos en SQLite local hasta reconectar_mariadb()
             cls._instance._forced_local_offline = False
+            cls._instance._productos_bigint_alter_until = 0.0
             cls._instance._init_db()
         return cls._instance
 
@@ -1371,64 +1375,110 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    def _next_free_producto_id(self, start_id: int, barcode_id_min: int) -> int:
+        """Primer id libre en productos >= start_id (excluye rango de códigos de barras)."""
+        next_id = int(start_id)
+        while next_id < barcode_id_min:
+            existing = self.execute_scalar(
+                "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
+            )
+            if existing is None:
+                return next_id
+            next_id += 1
+        raise ValueError("No hay ids disponibles para reasignar productos con overflow INT32")
+
+    def _reassign_producto_overflow_id(self, old_id, new_id: int) -> int:
+        """Reasigna PK de producto; reintenta con otro id si hay duplicado (1062)."""
+        barcode_id_min = 10_000_000_000
+        candidate = int(new_id)
+        for _ in range(32):
+            if self.execute_non_query(
+                "UPDATE productos SET id = ? WHERE id = ?",
+                (candidate, old_id),
+            ):
+                self.execute_non_query(
+                    "UPDATE detalles_ventas SET id_producto = ? "
+                    "WHERE id_producto IN (?, ?)",
+                    (str(candidate), str(old_id), old_id),
+                )
+                return candidate
+            err = str(getattr(self, "last_error", "") or "").lower()
+            if "1062" not in err and "duplicate" not in err:
+                break
+            candidate = self._next_free_producto_id(candidate + 1, barcode_id_min)
+        return 0
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        if (
+            getattr(self, "db_engine_type", "sqlite") != "mariadb"
+            or not getattr(self, "is_master", False)
+        ):
+            return
+
+        if not self._productos_schema_lock.acquire(blocking=False):
+            return
+
         try:
-            if (
-                getattr(self, "db_engine_type", "sqlite") == "mariadb"
-                and getattr(self, "is_master", False)
-            ):
-                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
+            # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
+            if not self._productos_id_is_bigint():
+                now = time.time()
+                if now >= getattr(self, "_productos_bigint_alter_until", 0.0):
                     logger.info(
                         "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
                     )
-                    self._execute_mariadb_ddl(
+                    if not self._execute_mariadb_ddl(
                         "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                    ):
+                        # Evitar tormenta de ALTER/reconnect si la tabla es grande (error 2013)
+                        self._productos_bigint_alter_until = now + 3600
+
+            # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
+            # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
+            # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
+            _INT32_OVERFLOW_MIN = 2147483647
+            _BARCODE_ID_MIN = 10_000_000_000
+            overflow = self.execute_query(
+                "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
+                (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+            )
+            if not overflow:
+                return
+
+            max_normal = int(
+                self.execute_scalar(
+                    "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                ) or 0
+            )
+            next_id = max_normal + 1
+            for row in overflow:
+                old_id = row["id"] if isinstance(row, dict) else row[0]
+                next_id = self._next_free_producto_id(next_id, _BARCODE_ID_MIN)
+                assigned = self._reassign_producto_overflow_id(old_id, next_id)
+                if not assigned:
+                    logger.warning(
+                        "No se pudo reasignar producto con id overflow %s", old_id
                     )
-                
-                # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
-                # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
-                # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
-                _INT32_OVERFLOW_MIN = 2147483647
-                _BARCODE_ID_MIN = 10_000_000_000
-                overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
-                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+                    continue
+                next_id = assigned + 1
+
+            new_max = int(
+                self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+            )
+            next_ai = new_max + 1
+            if next_ai < _BARCODE_ID_MIN:
+                self._execute_mariadb_ddl(
+                    f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
                 )
-                if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
-                    )
-                    next_id = max_normal + 1
-                    for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
-                        while self.execute_scalar(
-                            "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
-                        ):
-                            next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
-                        )
-                        next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    )
-                    next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
-                        self._execute_mariadb_ddl(
-                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
-                        )
-                    else:
-                        logger.info(
-                            "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
-                            new_max,
-                        )
+            else:
+                logger.info(
+                    "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
+                    new_max,
+                )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
+        finally:
+            self._productos_schema_lock.release()
 
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""
