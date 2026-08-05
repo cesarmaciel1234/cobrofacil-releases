@@ -765,11 +765,22 @@ class DatabaseManager:
         "carteleria_global",
         "carteleria_config",
         "detalles_ventas",
+        "detalle_ventas",
         "productos",
         "configuracion",
         "clientes",
         "gastos",
         "usuarios",
+        "terminales_activos",
+        "departamentos",
+        "categorias",
+        "sistema_estado",
+        "cuenta_corriente",
+        "romaneos",
+        "romaneo_items",
+        "historial_promedios",
+        "combos",
+        "mp_transferencias_usadas",
     )
 
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
@@ -1216,7 +1227,17 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
+            # MariaDB 1932: metadatos sin archivos InnoDB — CREATE IF NOT EXISTS no repara.
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                if dropped:
+                    conn.commit()
+                    logger.warning(
+                        "Esquema MariaDB: metadatos huérfanos eliminados en arranque: %s",
+                        ", ".join(dropped),
+                    )
+
             # 1. USUARIOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (

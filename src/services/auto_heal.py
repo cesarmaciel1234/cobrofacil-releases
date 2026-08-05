@@ -262,6 +262,8 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
             "movimientos_caja",
             "detalles_ventas",
             "ventas",
+            "productos",
+            "terminales_activos",
         )
     ):
         return None
@@ -278,6 +280,16 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
         return HealResult(False, "repair_mariadb_corrupt", f"import: {e}")
 
     try:
+        try:
+            from src.base_de_datos.database import db_manager
+
+            if getattr(db_manager, "db_engine_type", "") == "mariadb":
+                if db_manager._repair_ghost_tables_from_query(
+                    "SELECT 1 FROM productos LIMIT 1"
+                ) and db_manager.is_connected():
+                    return HealResult(True, "repair_ghost_1932", host)
+        except Exception:
+            pass
         if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
             return HealResult(True, "repair_mariadb_corrupt", host)
         if AutoBlindajeDB.restaurar_ultimo_backup_valido(
