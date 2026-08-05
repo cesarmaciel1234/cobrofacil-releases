@@ -738,6 +738,12 @@ class DatabaseManager:
             )
         )
 
+    @staticmethod
+    def _is_mariadb_encoding_error(exc: BaseException) -> bool:
+        """Error 1366: emojis/4-byte UTF-8 en columnas utf8mb3; reintentar tras sanitizar."""
+        err = str(exc).lower()
+        return "1366" in err or "incorrect string value" in err
+
     def _reset_mariadb_thread_connection(self) -> None:
         engine = getattr(self, "mariadb_engine", None)
         if engine:
@@ -1953,11 +1959,23 @@ class DatabaseManager:
                         conn.rollback()
                     except Exception:
                         pass
-                if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
+                encoding_err = is_mariadb and self._is_mariadb_encoding_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if attempt < max_attempts - 1 and (transient_err or encoding_err):
+                    if encoding_err:
+                        for it in items:
+                            if isinstance(it, dict):
+                                safe = self._nombre_producto_para_db(self._item_nombre(it))
+                                it["nombre"] = safe
+                                it["nombre_producto"] = safe
+                        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
+                            venta_data.get("cliente_nombre", "")
+                        )
                     logger.warning(
-                        "sync_venta_to_master reintento %s/%s tras error transitorio: %s",
+                        "sync_venta_to_master reintento %s/%s tras %s: %s",
                         attempt + 1,
                         max_attempts,
+                        "error de encoding" if encoding_err else "error transitorio",
                         e,
                     )
                     self._reset_mariadb_thread_connection()
