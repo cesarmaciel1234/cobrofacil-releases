@@ -73,7 +73,35 @@ class MotorRed:
             logging.getLogger(__name__).debug(f"No se pudo detener Servidor de Tienda: {e}")
 
     def convertir_en_maestra(self):
-        """Convierte la PC en maestra (base de datos local MariaDB)."""
+        """Convierte la PC en maestra (base de datos local MariaDB).
+
+        Importante: prueba TCP *antes* de cambiar config/motor, igual que en
+        convertir_en_esclava. Terminales ESCLAVA/cartelería sin mysqld local
+        no deben quedar con db_host=localhost ni disparar ERROR a GitHub.
+        """
+        if not self._probe_mariadb("127.0.0.1"):
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                mariadb_controller.start_server()
+            except Exception:
+                pass
+            if not self._probe_mariadb("127.0.0.1"):
+                return (
+                    False,
+                    "No hay MariaDB en esta PC (puerto 3306 cerrado).\n\n"
+                    "Esta terminal opera como ESCLAVA y no tiene servidor local.\n"
+                    "Para ser MAESTRA necesitás MariaDB instalado y en marcha aquí.",
+                )
+
+        prev_master = getattr(db_manager, "is_master", True)
+        prev_engine = getattr(db_manager, "db_engine_type", "sqlite")
+        prev_host = config.get("db_host", "") or "localhost"
+        prev_cfg_engine = config.get("db_engine", "sqlite")
+        prev_cfg_master = config.get("is_master", True)
+        prev_cart_slave = config.get("carteleria_is_slave", False)
+        prev_pref = str(config.data.get("preferred_master_ip", "") or "")
+
         try:
             config.set("is_master", True)
             config.set("db_engine", "mariadb")
@@ -86,9 +114,46 @@ class MotorRed:
             except Exception:
                 pass
             db_manager.reconectar_mariadb("localhost")
-            return True, "Configurado exitosamente como MAESTRA (Servidor MariaDB Local)."
+            if db_manager.is_connected():
+                return True, "Configurado exitosamente como MAESTRA (Servidor MariaDB Local)."
+
+            config.set("is_master", prev_cfg_master)
+            config.set("db_engine", prev_cfg_engine)
+            config.set("db_host", prev_host)
+            config.set("carteleria_is_slave", prev_cart_slave)
+            config.data["preferred_master_ip"] = prev_pref
+            try:
+                config.save()
+            except Exception:
+                pass
+            if prev_engine == "mariadb" and prev_host not in ("", "localhost", "127.0.0.1"):
+                db_manager.reconectar_mariadb(prev_host)
+            elif prev_master and prev_engine != "mariadb":
+                db_manager.reconectar_local()
+            return (
+                False,
+                "El puerto 3306 responde pero no se pudo usar la base local.\n"
+                "Se mantuvo el modo anterior.",
+            )
         except Exception as e:
             self.logger.error(f"Error convirtiendo a maestra: {e}")
+            try:
+                config.set("is_master", prev_cfg_master)
+                config.set("db_engine", prev_cfg_engine)
+                config.set("db_host", prev_host)
+                config.set("carteleria_is_slave", prev_cart_slave)
+                config.data["preferred_master_ip"] = prev_pref
+                config.save()
+                if not prev_cfg_master and prev_engine == "mariadb" and prev_host not in (
+                    "",
+                    "localhost",
+                    "127.0.0.1",
+                ):
+                    db_manager.reconectar_mariadb(prev_host)
+                elif prev_master and prev_engine != "mariadb":
+                    db_manager.reconectar_local()
+            except Exception:
+                pass
             return False, f"Error: {e}"
 
     def convertir_en_esclava(self, ip_maestra):

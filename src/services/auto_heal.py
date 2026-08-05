@@ -309,6 +309,7 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             config.get("is_master") is False
             or bool(config.get("carteleria_is_slave"))
             or bool(str(config.get("preferred_master_ip") or "").strip())
+            or bool(str(config.get("carteleria_master_ip") or "").strip())
             or getattr(db_manager, "is_master", True) is False
         )
     except Exception:
