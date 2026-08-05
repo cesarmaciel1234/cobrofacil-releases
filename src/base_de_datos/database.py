@@ -707,6 +707,15 @@ class DatabaseManager:
         def add_column_if_not_exists(table, col_name, col_type):
             try:
                 if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
+                    try:
+                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                        host = (
+                            getattr(self.mariadb_engine, "host", "127.0.0.1")
+                            if self.mariadb_engine else "127.0.0.1"
+                        )
+                        AutoBlindajeDB.sanear_tabla_mariadb_si_corrupta(host, table)
+                    except Exception:
+                        pass
                     cursor.execute(f"SHOW COLUMNS FROM {table}")
                     rows = cursor.fetchall()
                     if rows and isinstance(rows[0], dict):
