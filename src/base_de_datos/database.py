@@ -39,6 +39,8 @@ class DatabaseManager:
         logger.info(
             "Conectado al Servidor de Tienda (cliente local — MariaDB ya en marcha)."
         )
+        self._create_tables()
+        self._migrate_db()
 
     def _normalize_db_path(self, path: str, base_app_path: str) -> str:
         """Normaliza rutas de base de datos con soporte para UNC, unidades mapeadas y variables de entorno."""
@@ -770,6 +772,9 @@ class DatabaseManager:
         "clientes",
         "gastos",
         "usuarios",
+        "terminales_activos",
+        "departamentos",
+        "categorias",
     )
 
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
@@ -1216,7 +1221,15 @@ class DatabaseManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                try:
+                    dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                    if dropped:
+                        conn.commit()
+                except Exception as ex:
+                    logger.warning("Reparación ghost 1932 pre-esquema: %s", ex)
+
             # 1. USUARIOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
