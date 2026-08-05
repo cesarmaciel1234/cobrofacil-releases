@@ -47,6 +47,8 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif MariaDBEngine._is_transient_sql_error(e):
+                logger.warning(f"Error SQL MariaDB (transitorio): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
@@ -149,8 +151,16 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in (
+                "2003", "2002", "2013", "2006",
+                "gone away", "lost connection", "connectionreset",
+                "timed out", "timeout", "can't connect",
+            )
         )
+
+    @staticmethod
+    def _is_transient_sql_error(exc: BaseException) -> bool:
+        return MariaDBEngine._is_transient_connect_error(exc)
 
     def _try_connect(self, **kwargs):
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
@@ -163,7 +173,24 @@ class MariaDBEngine:
 
             if mariadb_controller.is_starting():
                 logger.info("MariaDB en arranque — esperando handshake antes de conectar...")
-                return mariadb_controller.wait_until_ready(max_sec)
+                ready = mariadb_controller.wait_until_ready(max_sec)
+                if ready:
+                    self._last_fail_time = 0
+                return ready
+        except Exception:
+            pass
+        return False
+
+    def _clear_cooldown_if_local_ready(self) -> bool:
+        """Si el circuit breaker sigue activo pero MariaDB local ya responde, permitir reconexión."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
+                self._last_fail_time = 0
+                return True
         except Exception:
             pass
         return False
@@ -226,7 +253,8 @@ class MariaDBEngine:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
         if in_cooldown:
-            raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
+            if not (local and self._clear_cooldown_if_local_ready()):
+                raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
         remote = self._is_remote_host(self.host)
         attempts = 3
@@ -294,6 +322,8 @@ class MariaDBEngine:
             except Exception:
                 pass
         self._local_connections.conn = None
+        # Permitir reconexión inmediata tras error transitorio (p. ej. 2006 gone away).
+        self._last_fail_time = 0
 
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
