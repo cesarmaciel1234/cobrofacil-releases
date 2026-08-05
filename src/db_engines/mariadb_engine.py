@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE en tablas grandes puede tardar; conexión DDL aparte (no thread-local)
+    DDL_IO_TIMEOUT = 120
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -194,6 +196,17 @@ class MariaDBEngine:
             logger.error(msg)
         raise last_exc
             
+    def get_ddl_connection(self):
+        """Conexión de un solo uso con timeout largo para migraciones DDL (ALTER TABLE)."""
+        conn = pymysql.connect(
+            **{
+                **self._connect_kwargs(),
+                "read_timeout": self.DDL_IO_TIMEOUT,
+                "write_timeout": self.DDL_IO_TIMEOUT,
+            }
+        )
+        return MariaDBConnectionWrapper(conn, engine=None)
+
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
         if conn is not None:
