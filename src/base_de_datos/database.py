@@ -1133,12 +1133,30 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
 
+    def _productos_id_is_bigint(self) -> bool:
+        """True si productos.id ya es BIGINT (evita ALTER repetido en cada arranque)."""
+        cols = self.execute_query("SHOW COLUMNS FROM productos LIKE 'id'")
+        if not cols:
+            return False
+        row = cols[0]
+        col_type = (row.get("Type") if isinstance(row, dict) else row[1] or "").lower()
+        return "bigint" in col_type
+
+    def _mariadb_execute_ddl(self, query: str, params: tuple = ()) -> bool:
+        engine = getattr(self, "mariadb_engine", None)
+        if engine and hasattr(engine, "execute_ddl"):
+            return engine.execute_ddl(query, params)
+        return self.execute_non_query(query, params)
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
                 # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+                if not self._productos_id_is_bigint():
+                    self._mariadb_execute_ddl(
+                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                    )
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(

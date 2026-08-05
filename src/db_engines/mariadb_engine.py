@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE en tablas grandes puede tardar; no usar IO_TIMEOUT de consultas normales
+    DDL_IO_TIMEOUT = 120
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -194,6 +196,37 @@ class MariaDBEngine:
             logger.error(msg)
         raise last_exc
             
+    def execute_ddl(self, query: str, params=None) -> bool:
+        """Ejecuta DDL (ALTER, etc.) con timeouts largos; evita error 2013 en tablas grandes."""
+        kw = self._connect_kwargs()
+        kw["read_timeout"] = self.DDL_IO_TIMEOUT
+        kw["write_timeout"] = self.DDL_IO_TIMEOUT
+        last_exc = None
+        for attempt in range(2):
+            raw = None
+            try:
+                raw = pymysql.connect(**kw)
+                wrapper = MariaDBCursorWrapper(raw.cursor(pymysql.cursors.DictCursor))
+                wrapper.execute(query, params)
+                raw.commit()
+                return True
+            except Exception as e:
+                last_exc = e
+                if attempt == 0 and self._is_transient_connect_error(e):
+                    time.sleep(0.5)
+                    continue
+                logger.error(f"Error SQL MariaDB DDL: {e} | Q: {query}")
+                return False
+            finally:
+                if raw is not None:
+                    try:
+                        raw.close()
+                    except Exception:
+                        pass
+        if last_exc is not None:
+            logger.error(f"Error SQL MariaDB DDL: {last_exc} | Q: {query}")
+        return False
+
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
         if conn is not None:
