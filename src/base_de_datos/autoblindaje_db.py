@@ -61,12 +61,41 @@ class AutoBlindajeDB:
         return None
 
     @classmethod
+    def _integrity_check_transient(cls, msg: str) -> bool:
+        """True si CHECK TABLE falló por arranque/lock transitorio (reintentar)."""
+        blob = str(msg or "").lower()
+        return any(
+            k in blob
+            for k in (
+                "locked",
+                "lock wait",
+                "deadlock",
+                "starting up",
+                "not ready",
+                "server has gone away",
+                "lost connection",
+            )
+        )
+
+    @classmethod
     def verificar_y_respaldar_diario(cls, engine_type: str = "sqlite", mariadb_host: str = "127.0.0.1"):
         """
         Verifica la integridad de la base de datos y genera el respaldo diario si no existe para hoy.
         Se ejecuta automáticamente al iniciar el dueño de la BD (maestra / --server).
         """
         try:
+            try:
+                from src.updater.silent_auto_updater import is_apply_guard_active
+
+                if is_apply_guard_active():
+                    logger.info(
+                        "Autoblindaje omitido: actualización silenciosa en curso "
+                        "(evita falsos positivos de integridad)."
+                    )
+                    return
+            except Exception:
+                pass
+
             saludable = cls.verificar_integridad(engine_type, mariadb_host)
             if not saludable:
                 logger.warning(
@@ -74,7 +103,7 @@ class AutoBlindajeDB:
                     "Ejecutando protocolo de auto-reparación..."
                 )
                 if not cls.auto_reparar_o_restaurar(engine_type, mariadb_host):
-                    logger.error(
+                    logger.warning(
                         "🚨 Inconsistencia severa. Intentando restaurar respaldo de HOY "
                         "(nunca un día anterior sin confirmación manual)..."
                     )
@@ -85,12 +114,20 @@ class AutoBlindajeDB:
                         merge_today=True,
                         mariadb_host=mariadb_host,
                     )
-                    if not restored and engine_type == "mariadb":
+                    if restored:
+                        logger.info(
+                            "✅ Base de datos recuperada desde respaldo tras inconsistencia severa."
+                        )
+                    elif engine_type == "mariadb":
                         logger.error(
                             "🚨 Sin respaldo usable: recreando tablas críticas vacías "
                             "para permitir que el perfil abra."
                         )
                         cls._recrear_tablas_criticas_mariadb(mariadb_host)
+                    else:
+                        logger.error(
+                            "🚨 Inconsistencia severa: no se pudo restaurar respaldo usable."
+                        )
 
             # Primer sello del día; el ritmo cada 30 min lo lleva CerebroBackup
             cls.crear_backup_diario_si_corresponde(engine_type, mariadb_host, force=False)
@@ -710,7 +747,21 @@ class AutoBlindajeDB:
         """Verifica la integridad bancaria de las tablas críticas."""
         if engine_type == "sqlite":
             return cls._check_sqlite_integrity()
-        return cls._check_mariadb_integrity(host)
+        # Tras reinicio/update MariaDB puede tardar; reintentar antes de restaurar.
+        for attempt in range(3):
+            result = cls._check_mariadb_integrity(host)
+            if result is True:
+                return True
+            if result is False:
+                if attempt < 2:
+                    time.sleep(1.5)
+                    continue
+                return False
+            # Transitorio (locks/arranque): reintentar; si persiste, no forzar restore.
+            if attempt < 2:
+                time.sleep(1.5)
+                continue
+        return True
 
     @classmethod
     def _check_sqlite_integrity(cls) -> bool:
@@ -731,7 +782,8 @@ class AutoBlindajeDB:
             return False
 
     @classmethod
-    def _check_mariadb_integrity(cls, host: str) -> bool:
+    def _check_mariadb_integrity(cls, host: str) -> bool | None:
+        """True=sana, False=corrupción, None=transitorio (reintentar)."""
         try:
             import pymysql
             conn = pymysql.connect(
@@ -745,12 +797,21 @@ class AutoBlindajeDB:
             for r in rows:
                 msg = r[3]
                 if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
+                    msg_l = str(msg).lower()
+                    if cls._integrity_check_transient(msg):
+                        return None
+                    if "doesn't exist" in msg_l or "does not exist" in msg_l:
+                        # Instalación limpia vs metadatos huérfanos InnoDB (1932).
+                        if "in engine" in msg_l or "1932" in msg_l:
+                            logger.warning(f"Tabla huérfana en verificación de integridad: {r}")
+                            return False
                         continue
                     logger.warning(f"Resultado de verificación tabla: {r}")
                     return False
             return True
-        except Exception:
+        except Exception as exc:
+            if cls._integrity_check_transient(str(exc)):
+                return None
             return True
 
     @classmethod
@@ -875,7 +936,8 @@ class AutoBlindajeDB:
                 cursor = conn.cursor()
                 cursor.execute("REPAIR TABLE productos, ventas, departamentos, categorias, clientes QUICK;")
                 conn.close()
-                return cls._check_mariadb_integrity(host)
+                result = cls._check_mariadb_integrity(host)
+                return result is True
             except Exception:
                 return False
         try:
