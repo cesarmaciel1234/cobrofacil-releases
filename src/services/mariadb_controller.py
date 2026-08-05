@@ -94,6 +94,24 @@ class MariaDBController:
             time.sleep(0.5)
         return False
 
+    def _recent_silent_update(self, within_sec=300.0):
+        """True si hubo actualización silenciosa reciente (InnoDB recovery puede tardar)."""
+        try:
+            import json
+            from datetime import datetime, timezone
+
+            vpath = os.path.join(self._get_base_dir(), "version.json")
+            with open(vpath, encoding="utf-8") as f:
+                raw = json.load(f).get("last_silent_update")
+            if not raw:
+                return False
+            ts = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            return (datetime.now(timezone.utc) - ts).total_seconds() < within_sec
+        except Exception:
+            return False
+
     def _ensure_firewall(self):
         """Asegura reglas LAN (3306/8000/37020…). Si faltan, pide UAC y espera resultado."""
         try:
@@ -143,13 +161,30 @@ class MariaDBController:
             return True
 
         # Puerto abierto pero sin handshake: otro proceso (p.ej. --server) está arrancando
+        post_update = self._recent_silent_update()
         if self._is_port_open():
             logger.info("Puerto 3306 ocupado — esperando a que MariaDB termine de iniciar...")
-            if self._wait_mariadb_ready(45.0):
+            occupied_wait = 120.0 if post_update else 90.0
+            if self._wait_mariadb_ready(occupied_wait):
                 logger.info("MariaDB respondió tras espera (proceso ajeno o arranque lento).")
                 self._initialized = True
                 self._create_punpro_db()
                 return True
+            if self._is_port_open():
+                logger.warning(
+                    "MariaDB aún no responde con puerto 3306 abierto "
+                    "(posible recuperación InnoDB post-actualización)..."
+                )
+                if self._wait_mariadb_ready(60.0):
+                    logger.info("MariaDB respondió tras espera extendida.")
+                    self._initialized = True
+                    self._create_punpro_db()
+                    return True
+                logger.error(
+                    "MariaDB no completó el handshake con el puerto ocupado. "
+                    "Abortando (no se matará el proceso en recuperación)."
+                )
+                return False
 
         if not self._init_database_if_needed():
             return False
@@ -189,15 +224,18 @@ class MariaDBController:
                 logger.error("El proceso mysqld.exe se cerro inesperadamente tras iniciar.")
                 return False
                 
-            # Esperar handshake MySQL (post-update / InnoDB recovery puede tardar >20s en PCs lentas)
-            wait_sec = 60.0 if _start_attempt == 0 else 45.0
+            # Esperar handshake MySQL (post-update / InnoDB recovery puede tardar >60s en PCs lentas)
+            if post_update:
+                wait_sec = 90.0 if _start_attempt == 0 else 60.0
+            else:
+                wait_sec = 60.0 if _start_attempt == 0 else 45.0
             t0 = time.time()
             connected = self._wait_mariadb_ready(wait_sec)
             if connected:
                 logger.info(f"MariaDB listo despues de {time.time() - t0:.1f} segundos.")
             
             if not connected:
-                if _start_attempt < 1:
+                if _start_attempt < 2:
                     logger.warning(
                         "MariaDB no respondio a tiempo — reintentando arranque una vez mas..."
                     )
