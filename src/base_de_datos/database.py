@@ -831,6 +831,7 @@ class DatabaseManager:
             conn.commit()
             try:
                 self._create_tables()
+                self._migrate_db()
             except Exception as ex:
                 logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
