@@ -730,6 +730,41 @@ class AutoBlindajeDB:
         except Exception:
             return False
 
+    @staticmethod
+    def _is_mariadb_ghost_table_error(exc: BaseException) -> bool:
+        """MariaDB 1932: metadatos de tabla sin archivos InnoDB."""
+        args = getattr(exc, "args", None)
+        if args and args[0] == 1932:
+            return True
+        msg = str(exc).lower()
+        return (
+            "1932" in msg
+            or "doesn't exist in engine" in msg
+            or "does not exist in engine" in msg
+        )
+
+    @classmethod
+    def _probe_mariadb_ghost_tables(cls, cursor) -> list:
+        """Devuelve tablas con metadatos huérfanos (error 1932)."""
+        ghosts = []
+        probe_tables = (
+            "productos",
+            "ventas",
+            "movimientos_caja",
+            "detalles_ventas",
+            "clientes",
+            "departamentos",
+            "categorias",
+            "configuracion",
+        )
+        for table in probe_tables:
+            try:
+                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+            except Exception as e:
+                if cls._is_mariadb_ghost_table_error(e):
+                    ghosts.append(table)
+        return ghosts
+
     @classmethod
     def _check_mariadb_integrity(cls, host: str) -> bool:
         try:
@@ -739,16 +774,29 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
+            ghosts = cls._probe_mariadb_ghost_tables(cursor)
+            if ghosts:
+                logger.warning(
+                    "Tablas huérfanas MariaDB (1932) en verificación: %s",
+                    ", ".join(ghosts),
+                )
+                conn.close()
+                return False
             cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
-                msg = r[3]
-                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
-                        continue
-                    logger.warning(f"Resultado de verificación tabla: {r}")
+                msg = str(r[3] if len(r) >= 4 else r).lower()
+                if msg in ("ok", "table is already up to date"):
+                    continue
+                if cls._is_mariadb_ghost_table_error(Exception(msg)):
                     return False
+                if "drop the table and recreate" in msg or "corrupt" in msg:
+                    return False
+                if "doesn't exist" in msg and "in engine" not in msg:
+                    continue
+                logger.warning(f"Resultado de verificación tabla: {r}")
+                return False
             return True
         except Exception:
             return True
@@ -847,12 +895,19 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
+            if cls._probe_mariadb_ghost_tables(cursor):
+                conn.close()
+                return True
             cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
                 msg = " ".join(str(x) for x in r).lower()
-                if "drop the table and recreate" in msg or "corrupt" in msg:
+                if (
+                    "drop the table and recreate" in msg
+                    or "corrupt" in msg
+                    or cls._is_mariadb_ghost_table_error(Exception(msg))
+                ):
                     return True
         except Exception:
             pass
