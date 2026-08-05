@@ -805,10 +805,13 @@ class AutoBlindajeDB:
                     nombre VARCHAR(200) NOT NULL,
                     telefono VARCHAR(50) NULL,
                     email VARCHAR(100) NULL,
+                    limite_credito DOUBLE DEFAULT 0,
+                    deuda_actual DOUBLE DEFAULT 0,
                     saldo_fiado DOUBLE DEFAULT 0,
                     dni VARCHAR(50) NULL,
                     tipo_cliente VARCHAR(50) NULL,
                     direccion TEXT NULL,
+                    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
                     PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
