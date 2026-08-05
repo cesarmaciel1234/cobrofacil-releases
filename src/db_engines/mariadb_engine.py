@@ -48,9 +48,16 @@ class MariaDBCursorWrapper:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
+            err_msg = str(e).lower()
+            q_up = query.lstrip().upper()
             # Índices opcionales en migración: el caller los ignora; no reportar como ERROR.
-            if query.lstrip().upper().startswith("CREATE INDEX IF NOT EXISTS"):
+            if q_up.startswith("CREATE INDEX IF NOT EXISTS"):
                 logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
+            elif (
+                ("1932" in err_msg or "doesn't exist in engine" in err_msg or "does not exist in engine" in err_msg)
+                and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
+            ):
+                logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
