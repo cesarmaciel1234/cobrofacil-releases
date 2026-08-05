@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 
 from src.utils.paths import get_base_path
 
-from src.updater.github_release_url import release_zip_url_or_fallback
+from src.updater.github_release_url import release_zip_url_or_fallback, resolve_release_zip_asset
 REMOTE_VERSION_URL = (
     "https://raw.githubusercontent.com/cesarmaciel1234/cobrofacil-releases/main/version.json"
 )
@@ -537,6 +537,19 @@ def _format_update_error(exc: BaseException) -> str:
     return name
 
 
+def _is_zip_integrity_error(exc: BaseException) -> bool:
+    if isinstance(exc, zipfile.BadZipFile):
+        return True
+    msg = str(exc).lower()
+    return (
+        "crc" in msg
+        or "sha-256" in msg
+        or "sha256" in msg
+        or "tamaño incorrecto" in msg
+        or ("zip" in msg and ("corrupt" in msg or "dañad" in msg))
+    )
+
+
 def _is_transient_download_error(exc: BaseException) -> bool:
     if isinstance(
         exc,
@@ -546,6 +559,9 @@ def _is_transient_download_error(exc: BaseException) -> bool:
     msg = str(exc).lower()
     if (
         "crc" in msg
+        or "sha-256" in msg
+        or "sha256" in msg
+        or "tamaño incorrecto" in msg
         or "incompleta" in msg
         or "incomplet" in msg
         or "incomplete" in msg
@@ -761,7 +777,13 @@ def download_and_stage_update(progress_callback=None) -> bool:
             return True
 
         zip_path = _zip_path()
-        download_url = release_zip_url_or_fallback()
+        asset = resolve_release_zip_asset() or {}
+        download_url = asset.get("url") or release_zip_url_or_fallback()
+        expected_sha256 = str(asset.get("sha256") or "").strip().lower()
+        try:
+            expected_size = int(asset.get("size") or 0)
+        except (TypeError, ValueError):
+            expected_size = 0
         _emit_progress(
             progress_callback,
             "Descarga rápida del paquete (~300 MB)…",
@@ -775,7 +797,10 @@ def download_and_stage_update(progress_callback=None) -> bool:
         for attempt in range(max_attempts):
             try:
                 if attempt > 0:
-                    _prepare_download_retry()
+                    if last_exc and _is_zip_integrity_error(last_exc):
+                        _purge_partial_download_files()
+                    else:
+                        _prepare_download_retry()
                     _emit_progress(
                         progress_callback,
                         f"Reintentando descarga ({attempt + 1}/{max_attempts})…",
@@ -787,6 +812,8 @@ def download_and_stage_update(progress_callback=None) -> bool:
                     zip_path,
                     progress_callback=progress_callback,
                     force_single=(attempt > 0),
+                    expected_sha256=expected_sha256 or None,
+                    expected_size=expected_size,
                 )
                 _emit_progress(progress_callback, "Verificando ZIP...", 96)
                 _extract_release_zip(zip_path, progress_callback=progress_callback)
