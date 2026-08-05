@@ -239,10 +239,31 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
 
 
 def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
-    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877)."""
-    if not any(k in blob for k in ("1877", "corrupt", "drop the table and recreate")):
+    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877 / ghost 1932)."""
+    ghost_1932 = (
+        "1932" in blob
+        or "doesn't exist in engine" in blob
+        or "does not exist in engine" in blob
+    )
+    classic_corrupt = any(
+        k in blob for k in ("1877", "corrupt", "drop the table and recreate")
+    )
+    if not ghost_1932 and not classic_corrupt:
         return None
-    if not any(k in blob for k in ("clientes", "punpro_db", "mariadb", "check table", "repair table")):
+    if not any(
+        k in blob
+        for k in (
+            "clientes",
+            "punpro_db",
+            "mariadb",
+            "check table",
+            "repair table",
+            "carteleria_global",
+            "movimientos_caja",
+            "detalles_ventas",
+            "ventas",
+        )
+    ):
         return None
     try:
         from src.config import config
