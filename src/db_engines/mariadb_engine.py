@@ -118,7 +118,7 @@ class MariaDBEngine:
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
     # ALTER TABLE en inventario grande puede tardar varios minutos
-    DDL_TIMEOUT = 300
+    DDL_TIMEOUT = 600
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -209,12 +209,15 @@ class MariaDBEngine:
             
     def get_ddl_connection(self):
         """Conexión con timeouts largos para migraciones de esquema (ALTER TABLE)."""
-        conn = pymysql.connect(
-            **self._connect_kwargs(
-                read_timeout=self.DDL_TIMEOUT,
-                write_timeout=self.DDL_TIMEOUT,
-            )
+        kwargs = self._connect_kwargs(
+            read_timeout=self.DDL_TIMEOUT,
+            write_timeout=self.DDL_TIMEOUT,
         )
+        kwargs["init_command"] = (
+            "SET SESSION wait_timeout=28800, "
+            "net_read_timeout=600, net_write_timeout=600, lock_wait_timeout=120"
+        )
+        conn = pymysql.connect(**kwargs)
         return MariaDBConnectionWrapper(conn, engine=None)
 
     def get_connection(self):
