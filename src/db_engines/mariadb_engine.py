@@ -105,9 +105,9 @@ class MariaDBEngine:
 
     # Timeouts cortos en remoto: host caído no debe congelar la UI de esclava
     CONNECT_TIMEOUT = 2
-    IO_TIMEOUT_REMOTE = 3
-    # Local: inventario grande + cartelería pueden superar 3s (error 2013)
-    IO_TIMEOUT_LOCAL = 15
+    IO_TIMEOUT_REMOTE = 8
+    # Local: inventario grande + cartelería pueden superar 15s (error 2013)
+    IO_TIMEOUT_LOCAL = 30
     # ALTER TABLE en inventario grande puede tardar varios minutos
     DDL_TIMEOUT = 600
     
