@@ -8,6 +8,46 @@ class BuscadorDePreciosYStock:
     ¡Busca tanto en las promociones (carteleria_global) como en la tabla general (productos) 
     para que NINGÚN producto vendido hoy se quede afuera del cartel!
     """
+
+    @staticmethod
+    def _lookup_carteleria(nombre: str):
+        """Búsqueda index-friendly: exacta → LIKE → TRIM/LOWER como último recurso."""
+        nombre = nombre.strip()
+        rows = db_manager.execute_query(
+            "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE nombre_producto = ?",
+            (nombre,),
+        )
+        if not rows:
+            rows = db_manager.execute_query(
+                "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE nombre_producto LIKE ?",
+                (f"%{nombre}%",),
+            )
+        if not rows:
+            rows = db_manager.execute_query(
+                "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?))",
+                (nombre,),
+            )
+        return rows
+
+    @staticmethod
+    def _lookup_producto(nombre: str):
+        """Búsqueda index-friendly: exacta → LIKE → TRIM/LOWER como último recurso."""
+        nombre = nombre.strip()
+        rows = db_manager.execute_query(
+            "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE nombre = ?",
+            (nombre,),
+        )
+        if not rows:
+            rows = db_manager.execute_query(
+                "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE nombre LIKE ?",
+                (f"%{nombre}%",),
+            )
+        if not rows:
+            rows = db_manager.execute_query(
+                "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))",
+                (nombre,),
+            )
+        return rows
     
     @staticmethod
     def armar_lista_para_pantalla(productos_vendidos_hoy):
@@ -48,11 +88,7 @@ class BuscadorDePreciosYStock:
             
             # PASO 2 DE VERIFICACIÓN: Comprobar que el producto EXISTE genuinamente en el Inventario o Promociones.
             # a) Intentamos leer de 'carteleria_global'
-            q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?))"
-            rows_cartel = db_manager.execute_query(q_cartel, (nombre.strip(),))
-            if not rows_cartel:
-                q_cartel = "SELECT precio_normal, precio_oferta, regla_texto FROM carteleria_global WHERE LOWER(nombre_producto) LIKE LOWER(?)"
-                rows_cartel = db_manager.execute_query(q_cartel, (f"%{nombre.strip()}%",))
+            rows_cartel = BuscadorDePreciosYStock._lookup_carteleria(nombre)
                 
             if rows_cartel:
                 row = rows_cartel[0]
@@ -69,11 +105,7 @@ class BuscadorDePreciosYStock:
                 encontro_datos = True
 
             # b) Buscamos en la tabla general de inventario 'productos'
-            q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
-            rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
-            if not rows_prod:
-                q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
-                rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
+            rows_prod = BuscadorDePreciosYStock._lookup_producto(nombre)
                 
             if rows_prod:
                 row_p = rows_prod[0]

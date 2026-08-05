@@ -746,6 +746,14 @@ class DatabaseManager:
             except Exception:
                 pass
 
+    def _release_db_connection(self, conn) -> None:
+        """Cierra solo conexiones SQLite; MariaDB reutiliza pool por hilo."""
+        if conn and getattr(self, "db_engine_type", "sqlite") == "sqlite":
+            try:
+                conn.close()
+            except Exception:
+                pass
+
     def _prepare_mariadb_table_for_import(self, cursor, table: str) -> None:
         """TRUNCATE/DELETE previo a import SQLite→MariaDB; repara ghost configuracion (1932)."""
         if table == "configuracion" and getattr(self, "db_engine_type", "sqlite") == "mariadb":
@@ -1020,6 +1028,7 @@ class DatabaseManager:
         # Crear índice para optimizar búsqueda instantánea (opcional; no bloquear arranque)
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
+            "CREATE INDEX IF NOT EXISTS idx_carteleria_nombre ON carteleria_global (nombre_producto(100))",
             "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
@@ -1719,8 +1728,7 @@ class DatabaseManager:
                         pass
                 return []
             finally:
-                if conn:
-                    conn.close()
+                self._release_db_connection(conn)
         return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
@@ -1758,8 +1766,7 @@ class DatabaseManager:
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
-                if conn:
-                    conn.close()
+                self._release_db_connection(conn)
         return False
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
@@ -1780,8 +1787,7 @@ class DatabaseManager:
                     pass
             return False
         finally:
-            if conn:
-                conn.close()
+            self._release_db_connection(conn)
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
@@ -1818,8 +1824,7 @@ class DatabaseManager:
                 logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
-                if conn:
-                    conn.close()
+                self._release_db_connection(conn)
         return None
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
