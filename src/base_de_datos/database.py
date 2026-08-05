@@ -735,6 +735,7 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker",
             )
         )
 
@@ -1613,9 +1614,13 @@ class DatabaseManager:
                             f"(fallback local falló: {fallback_err})"
                         )
                         raise
-                logger.error(f"Error connecting to MariaDB database: {e}")
+                err_msg = str(e).lower()
+                if "circuit breaker" in err_msg:
+                    logger.warning(f"MariaDB circuit breaker (cooldown): {e}")
+                else:
+                    logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
-            
+
         try:
             conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row  # Allow access by column name

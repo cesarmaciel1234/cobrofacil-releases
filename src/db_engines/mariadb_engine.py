@@ -156,6 +156,20 @@ class MariaDBEngine:
         conn = pymysql.connect(**self._connect_kwargs(**kwargs))
         return MariaDBConnectionWrapper(conn, engine=self)
 
+    def _check_local_mariadb_responding(self) -> bool:
+        """Handshake rápido sin arrancar mysqld (nunca rate-limited)."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
+                self._last_fail_time = 0
+                return True
+        except Exception:
+            pass
+        return False
+
     def _maybe_start_local_mariadb(self) -> bool:
         """Arranca mysqld portable en maestra local si el puerto no responde (rate-limited)."""
         if self._is_remote_host(self.host):
@@ -167,6 +181,8 @@ class MariaDBEngine:
                 return False
         except Exception:
             pass
+        if self._check_local_mariadb_responding():
+            return True
         now = time.time()
         if now - getattr(self, "_last_start_attempt", 0) < 20:
             return False
@@ -174,9 +190,6 @@ class MariaDBEngine:
         try:
             from src.services.mariadb_controller import mariadb_controller
 
-            if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
-                self._last_fail_time = 0
-                return True
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
@@ -189,14 +202,18 @@ class MariaDBEngine:
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
-        if not self._is_remote_host(self.host):
-            if self._maybe_start_local_mariadb():
+        local = not self._is_remote_host(self.host)
+        if local:
+            # Siempre verificar si mysqld ya responde (sin rate limit de start_server)
+            if self._check_local_mariadb_responding():
+                in_cooldown = False
+            elif not in_cooldown and self._maybe_start_local_mariadb():
                 in_cooldown = False
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
         remote = self._is_remote_host(self.host)
-        attempts = 3 if remote else 1
+        attempts = 3 if remote else 2
         last_exc = None
 
         for attempt in range(attempts):
@@ -224,7 +241,7 @@ class MariaDBEngine:
                     except Exception:
                         pass
 
-                if attempt < attempts - 1 and remote and self._is_transient_connect_error(e):
+                if attempt < attempts - 1 and self._is_transient_connect_error(e):
                     time.sleep(0.4)
                     continue
                 break
