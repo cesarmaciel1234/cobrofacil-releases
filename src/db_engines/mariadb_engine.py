@@ -48,7 +48,11 @@ class MariaDBCursorWrapper:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
-            logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
+            # Índices opcionales en migración: el caller los ignora; no reportar como ERROR.
+            if query.lstrip().upper().startswith("CREATE INDEX IF NOT EXISTS"):
+                logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
+            else:
+                logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
 
     def executemany(self, query, params_list):
