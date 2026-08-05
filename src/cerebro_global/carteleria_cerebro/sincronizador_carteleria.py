@@ -41,7 +41,11 @@ class SincronizadorCarteleria:
         self.sincronizar_ahora()
 
         while self.running:
-            time.sleep(self.intervalo)
+            # Tras timeouts MariaDB (2013), espaciar sync para no saturar la BD local.
+            delay = self.intervalo
+            if self._fail_streak > 0:
+                delay = min(self.intervalo * (2 ** min(self._fail_streak, 4)), 300)
+            time.sleep(delay)
             self.sincronizar_ahora()
 
     def sincronizar_ahora(self):

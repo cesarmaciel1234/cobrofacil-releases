@@ -71,7 +71,7 @@ class BuscadorDePreciosYStock:
             # b) Buscamos en la tabla general de inventario 'productos'
             q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?))"
             rows_prod = db_manager.execute_query(q_prod, (nombre.strip(),))
-            if not rows_prod:
+            if not rows_prod and len(nombre.strip()) >= 3:
                 q_prod = "SELECT precio, precio_oferta, stock, unidad FROM productos WHERE LOWER(nombre) LIKE LOWER(?)"
                 rows_prod = db_manager.execute_query(q_prod, (f"%{nombre.strip()}%",))
                 
