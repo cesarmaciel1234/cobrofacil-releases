@@ -1397,36 +1397,103 @@ class DatabaseManager:
                     (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
                 )
                 if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
-                    )
-                    next_id = max_normal + 1
+                    # Fase 1: ids negativos temporales (evita PK duplicada al remapear varios overflow).
+                    staging = []
                     for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
-                        while self.execute_scalar(
-                            "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
-                        ):
-                            next_id += 1
-                        self.execute_non_query(
+                        old_id = int(row["id"] if isinstance(row, dict) else row[0])
+                        temp_id = -old_id
+                        if self.execute_non_query(
                             "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
+                            (temp_id, old_id),
+                        ):
+                            staging.append((old_id, temp_id))
+                        else:
+                            logger.warning(
+                                "No se pudo mover producto id=%s a id temporal %s",
+                                old_id,
+                                temp_id,
+                            )
+
+                    if staging:
+                        max_normal = int(
+                            self.execute_scalar(
+                                "SELECT MAX(id) FROM productos WHERE id >= 0 AND id < ?",
+                                (_INT32_OVERFLOW_MIN,),
+                            )
+                            or 0
                         )
-                        next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    )
-                    next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
-                        self._execute_mariadb_ddl(
-                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                        next_id = max_normal + 1
+                        for old_id, temp_id in staging:
+                            while self.execute_scalar(
+                                "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
+                            ):
+                                next_id += 1
+                            if next_id >= _INT32_OVERFLOW_MIN:
+                                logger.warning(
+                                    "Sin id libre bajo %s para remapear producto (ex id=%s)",
+                                    _INT32_OVERFLOW_MIN,
+                                    old_id,
+                                )
+                                break
+                            for _ in range(32):
+                                if self.execute_non_query(
+                                    "UPDATE productos SET id = ? WHERE id = ?",
+                                    (next_id, temp_id),
+                                ):
+                                    next_id += 1
+                                    break
+                                err = str(getattr(self, "last_error", "") or "")
+                                if "1062" in err or "duplicate" in err.lower():
+                                    next_id += 1
+                                    while self.execute_scalar(
+                                        "SELECT id FROM productos WHERE id = ? LIMIT 1",
+                                        (next_id,),
+                                    ):
+                                        next_id += 1
+                                    continue
+                                logger.warning(
+                                    "No se pudo remapear producto (ex id=%s) a id=%s: %s",
+                                    old_id,
+                                    next_id,
+                                    err,
+                                )
+                                break
+
+                        remaining = int(
+                            self.execute_scalar(
+                                "SELECT COUNT(*) FROM productos WHERE id >= ? AND id < ?",
+                                (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+                            )
+                            or 0
                         )
-                    else:
-                        logger.info(
-                            "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
-                            new_max,
+                        neg_remaining = int(
+                            self.execute_scalar("SELECT COUNT(*) FROM productos WHERE id < 0") or 0
                         )
+                        if remaining or neg_remaining:
+                            logger.warning(
+                                "Quedan productos sin remapear (overflow=%s, staging negativo=%s); "
+                                "se omite ALTER AUTO_INCREMENT.",
+                                remaining,
+                                neg_remaining,
+                            )
+                        else:
+                            new_max = int(
+                                self.execute_scalar(
+                                    "SELECT MAX(id) FROM productos WHERE id >= 0 AND id < ?",
+                                    (_BARCODE_ID_MIN,),
+                                )
+                                or max_normal
+                            )
+                            next_ai = new_max + 1
+                            if next_ai < _BARCODE_ID_MIN:
+                                self._execute_mariadb_ddl(
+                                    f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                                )
+                            else:
+                                logger.info(
+                                    "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
+                                    new_max,
+                                )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
