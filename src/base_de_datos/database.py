@@ -5,6 +5,11 @@ import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
 
+# IDs >= INT32 max pueden ser autoincrement desbordado; >= 10^10 suelen ser códigos de barras/EAN.
+_PRODUCTO_INT32_CEILING = 2147483647
+_PRODUCTO_BARCODE_ID_MIN = 10_000_000_000
+
+
 class DatabaseManager:
     """Professional management of SQLite database operations."""
     
@@ -1349,7 +1354,18 @@ class DatabaseManager:
 
     def _execute_mariadb_ddl(self, query: str, params: tuple = (), max_attempts: int = 3) -> bool:
         """DDL/DML pesadas con timeouts largos (ALTER/UPDATE masivos no deben usar IO_TIMEOUT de 3s)."""
+        import re
         import time
+
+        m = re.search(r"AUTO_INCREMENT\s*=\s*(\d+)", query, re.I)
+        if m:
+            ai_val = int(m.group(1))
+            if ai_val >= _PRODUCTO_BARCODE_ID_MIN:
+                logger.warning(
+                    "Omitiendo ALTER AUTO_INCREMENT en productos (valor %s parece código de barras).",
+                    ai_val,
+                )
+                return False
 
         engine = getattr(self, "mariadb_engine", None)
         if not engine:
@@ -1438,20 +1454,23 @@ class DatabaseManager:
                 if not self._productos_id_is_bigint():
                     return
 
+                if getattr(self, "_productos_overflow_maint_done", False):
+                    return
+
                 # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
                 # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
                 # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
-                _INT32_OVERFLOW_MIN = 2147483647
-                _BARCODE_ID_MIN = 10_000_000_000
                 overflow = self.execute_query(
                     "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
-                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+                    (_PRODUCTO_INT32_CEILING, _PRODUCTO_BARCODE_ID_MIN),
                 )
                 if overflow:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
+                            "SELECT MAX(id) FROM productos WHERE id < ?",
+                            (_PRODUCTO_INT32_CEILING,),
+                        )
+                        or 0
                     )
                     next_id = max_normal + 1
                     for row in overflow:
@@ -1470,12 +1489,12 @@ class DatabaseManager:
                     new_max = int(
                         self.execute_scalar(
                             "SELECT MAX(id) FROM productos WHERE id < ?",
-                            (_BARCODE_ID_MIN,),
+                            (_PRODUCTO_BARCODE_ID_MIN,),
                         )
                         or max_normal
                     )
                     next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
+                    if next_ai < _PRODUCTO_BARCODE_ID_MIN:
                         self._execute_mariadb_ddl(
                             f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
                         )
@@ -1484,6 +1503,7 @@ class DatabaseManager:
                             "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
                             new_max,
                         )
+                self._productos_overflow_maint_done = True
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
