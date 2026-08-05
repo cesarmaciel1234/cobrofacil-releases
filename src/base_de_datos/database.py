@@ -1133,12 +1133,61 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
 
+    def _execute_mariadb_ddl(self, query: str, params: tuple = ()) -> bool:
+        """Ejecuta DDL en MariaDB con timeout extendido (ALTER TABLE puede tardar >3s)."""
+        conn = None
+        try:
+            conn = self.mariadb_engine.get_ddl_connection()
+            cursor = conn.cursor()
+            cursor.execute(self._normalize_query(query), params)
+            conn.commit()
+            return True
+        except Exception as e:
+            self.last_error = str(e)
+            logger.error(f"DDL execution error: {e} | Query: {query} | Params: {params}")
+            if conn:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+            return False
+        finally:
+            if conn:
+                conn.close()
+
+    def _productos_id_needs_bigint_migration(self) -> bool:
+        """True si productos.id aún no es BIGINT (evita ALTER repetido en cada arranque)."""
+        col_type = self.execute_scalar(
+            "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'id'"
+        )
+        if not col_type:
+            return True
+        return "bigint" not in str(col_type).lower()
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+                if self._productos_id_needs_bigint_migration():
+                    ddl_ok = False
+                    for attempt in range(2):
+                        if self._execute_mariadb_ddl(
+                            "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+                        ):
+                            ddl_ok = True
+                            break
+                        err = str(getattr(self, "last_error", "") or "").lower()
+                        if attempt == 0 and any(
+                            token in err for token in ("2013", "timed out", "timeout", "lost connection")
+                        ):
+                            logger.warning(
+                                "ALTER productos.id a BIGINT agotó timeout; reintentando con conexión DDL..."
+                            )
+                            continue
+                        break
+                    if not ddl_ok:
+                        return
                 
                 # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
                 overflow = self.execute_query(
@@ -1165,7 +1214,7 @@ class DatabaseManager:
                     new_max = int(
                         self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
                     )
-                    self.execute_non_query(
+                    self._execute_mariadb_ddl(
                         f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
                     )
         except Exception as e:

@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE sobre tablas grandes puede superar IO_TIMEOUT en el maestro local
+    DDL_IO_TIMEOUT = 120
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -116,7 +118,8 @@ class MariaDBEngine:
         self._local_connections = threading.local()
         self._last_fail_time = 0
 
-    def _connect_kwargs(self, host=None, password=None):
+    def _connect_kwargs(self, host=None, password=None, io_timeout=None):
+        io_limit = self.IO_TIMEOUT if io_timeout is None else io_timeout
         return dict(
             host=host if host is not None else self.host,
             port=self.port,
@@ -126,8 +129,8 @@ class MariaDBEngine:
             charset="utf8mb4",
             autocommit=False,
             connect_timeout=self.CONNECT_TIMEOUT,
-            read_timeout=self.IO_TIMEOUT,
-            write_timeout=self.IO_TIMEOUT,
+            read_timeout=io_limit,
+            write_timeout=io_limit,
         )
 
     @staticmethod
@@ -143,8 +146,13 @@ class MariaDBEngine:
         )
 
     def _try_connect(self, **kwargs):
-        conn = pymysql.connect(**self._connect_kwargs(**kwargs))
+        io_timeout = kwargs.pop("io_timeout", None)
+        conn = pymysql.connect(**self._connect_kwargs(io_timeout=io_timeout, **kwargs))
         return MariaDBConnectionWrapper(conn, engine=self)
+
+    def get_ddl_connection(self):
+        """Conexión puntual con timeout largo para DDL (no usa el pool thread-local)."""
+        return self._try_connect(io_timeout=self.DDL_IO_TIMEOUT)
 
     def _create_connection(self):
         # --- Circuit Breaker ---
