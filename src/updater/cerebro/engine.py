@@ -81,6 +81,85 @@ def _zip_path() -> str:
     return os.path.join(_cache_dir(), "CobroFacil_POS_Release.zip")
 
 
+def _download_file_lock_path() -> str:
+    return os.path.join(get_base_path(), "locks", "update_download.lock")
+
+
+def _read_download_file_lock_pid() -> int | None:
+    path = _download_file_lock_path()
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            pid = int((f.read() or "").strip() or "0")
+    except (OSError, ValueError):
+        return None
+    return pid if pid > 0 else None
+
+
+def _purge_stale_download_file_lock() -> None:
+    pid = _read_download_file_lock_pid()
+    if pid is None:
+        return
+    try:
+        from src.utils.candados import _pid_alive
+
+        if not _pid_alive(pid):
+            os.remove(_download_file_lock_path())
+    except OSError:
+        pass
+
+
+def _acquire_download_file_lock(*, blocking: bool = True, timeout_sec: float = 7200.0) -> bool:
+    """Serializa descargas entre hub, daemon --updater e hilos locales (evita ZIP corrupto)."""
+    os.makedirs(os.path.dirname(_download_file_lock_path()), exist_ok=True)
+    me = os.getpid()
+    deadline = time.time() + max(1.0, timeout_sec) if blocking else time.time()
+    while True:
+        _purge_stale_download_file_lock()
+        other = _read_download_file_lock_pid()
+        if other is not None and other != me:
+            if not blocking:
+                return False
+            if time.time() >= deadline:
+                return False
+            time.sleep(2.0)
+            continue
+        flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+        try:
+            fd = os.open(_download_file_lock_path(), flags)
+        except FileExistsError:
+            if not blocking:
+                return False
+            if time.time() >= deadline:
+                return False
+            time.sleep(2.0)
+            continue
+        except OSError:
+            return False
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(str(me))
+            return True
+        except OSError:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            return False
+
+
+def _release_download_file_lock() -> None:
+    path = _download_file_lock_path()
+    try:
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as f:
+                if f.read().strip() == str(os.getpid()):
+                    os.remove(path)
+    except OSError:
+        pass
+
+
 def _apply_guard_path() -> str:
     return os.path.join(_cache_dir(), "applying.lock")
 
@@ -659,7 +738,9 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
-    except Exception:
+    except Exception as exc:
+        if _is_transient_download_error(exc):
+            _purge_partial_download_files()
         return False
 
 
@@ -710,17 +791,15 @@ def download_and_stage_update(progress_callback=None) -> bool:
     if not available:
         return ensure_staging_ready(progress_callback)
 
-    # Esperar si otra descarga está en curso (no lanzar 2 × 300MB)
+    # Candado inter-proceso: hub + daemon --updater no deben escribir el mismo ZIP a la vez.
+    if not _acquire_download_file_lock(blocking=False):
+        _emit_progress(progress_callback, "Esperando descarga en curso...", 0)
+        if not _acquire_download_file_lock(blocking=True, timeout_sec=7200.0):
+            return ensure_staging_ready(progress_callback)
+
     if not _download_lock.acquire(blocking=False):
         _emit_progress(progress_callback, "Esperando descarga en curso...", 0)
-        with _download_lock:
-            ok = ensure_staging_ready(progress_callback)
-            _emit_progress(
-                progress_callback,
-                "Actualización lista." if ok else "La otra descarga no terminó.",
-                100 if ok else 0,
-            )
-            return ok
+        _download_lock.acquire()
 
     try:
         if ensure_staging_ready(progress_callback):
@@ -741,14 +820,6 @@ def download_and_stage_update(progress_callback=None) -> bool:
         max_attempts = 3
         for attempt in range(max_attempts):
             try:
-                if attempt > 0:
-                    _purge_partial_download_files()
-                    _emit_progress(
-                        progress_callback,
-                        f"Reintentando descarga ({attempt + 1}/{max_attempts})…",
-                        0,
-                    )
-                    time.sleep(5 * attempt)
                 download_release_zip(
                     download_url,
                     zip_path,
@@ -761,6 +832,13 @@ def download_and_stage_update(progress_callback=None) -> bool:
             except Exception as exc:
                 last_exc = exc
                 if attempt < max_attempts - 1 and _is_transient_download_error(exc):
+                    _purge_partial_download_files()
+                    _emit_progress(
+                        progress_callback,
+                        f"Reintentando descarga ({attempt + 2}/{max_attempts})…",
+                        0,
+                    )
+                    time.sleep(5 * (attempt + 1))
                     continue
                 raise last_exc from exc
         else:
@@ -790,6 +868,7 @@ def download_and_stage_update(progress_callback=None) -> bool:
         return False
     finally:
         _download_lock.release()
+        _release_download_file_lock()
 
 
 def apply_pending_update_on_startup() -> bool:
