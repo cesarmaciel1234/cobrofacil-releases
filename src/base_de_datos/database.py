@@ -758,28 +758,49 @@ class DatabaseManager:
                 return m.group(1)
         return None
 
-    def _repair_ghost_tables_from_query(self, query: str) -> bool:
-        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+    _MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "detalles_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+    )
+
+    def _repair_all_mariadb_ghost_tables(self, query: str = "") -> bool:
+        """DROP metadatos huérfanos (1932) en tablas críticas y recrea esquema."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return False
-        table = self._table_name_from_query(query)
-        if not table:
-            return False
         conn = None
+        repaired = False
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            tables = set(self._MARIADB_GHOST_PROBE_TABLES)
+            extra = self._table_name_from_query(query)
+            if extra:
+                tables.add(extra)
+            for table in tables:
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        logger.warning(
+                            "Tabla %s huérfana en MariaDB (1932); eliminando metadatos...",
+                            table,
+                        )
+                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        repaired = True
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
+            if repaired:
                 try:
                     self._create_tables()
                 except Exception as ex:
                     logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
-            return True
+            return repaired
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            logger.warning(f"No se pudieron reparar tablas huérfanas MariaDB: {ex}")
             return False
         finally:
             if conn:
@@ -787,6 +808,10 @@ class DatabaseManager:
                     conn.close()
                 except Exception:
                     pass
+
+    def _repair_ghost_tables_from_query(self, query: str) -> bool:
+        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        return self._repair_all_mariadb_ghost_tables(query)
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
