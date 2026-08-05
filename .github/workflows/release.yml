@@ -18,6 +18,15 @@ permissions:
 
 jobs:
   build-and-release:
+    # Evitar re-release por merges spam / commits de bot con [skip ci]
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'push' &&
+        !contains(github.event.head_commit.message, '[skip ci]') &&
+        !contains(github.event.head_commit.message, '[ci skip]') &&
+        !contains(github.event.head_commit.message, 'token-check')
+      )
     runs-on: windows-latest
 
     steps:
@@ -171,12 +180,13 @@ jobs:
               except urllib.error.HTTPError as e:
                   return e.code, e.read()
 
+          # NO usar label auto-report ni pos-client-error: eso disparaba auto-fix → PR → release (bucle).
+          # Validar escritura sin labels; cerrar al instante.
           st, body = post(
               f"https://api.github.com/repos/{repo}/issues",
               {
                   "title": "[ci] token-check (cerrar)",
-                  "body": "Validacion automatica del secret. Se puede cerrar.",
-                  "labels": ["auto-report"],
+                  "body": "Validacion interna del secret. No es un bug de cliente.",
               },
           )
           if 200 <= st < 300:
@@ -187,19 +197,13 @@ jobs:
                   post(f"https://api.github.com/repos/{repo}/issues/{num}", {"state": "closed"})
               sys.exit(0)
           print("issues API", st, body[:300])
+          # Dispatch silencioso (sin workflow que abra Issues)
           st2, body2 = post(
               f"https://api.github.com/repos/{repo}/dispatches",
-              {
-                  "event_type": "pos-client-error",
-                  "client_payload": {
-                      "title": "[ci] token-check dispatch",
-                      "body": "Validacion via repository_dispatch.",
-                      "labels": ["auto-report"],
-                  },
-              },
+              {"event_type": "ci-token-check", "client_payload": {"ok": True}},
           )
           if st2 in (204, 200):
-              print("token OK via repository_dispatch")
+              print("token OK via repository_dispatch (ci-token-check)")
               sys.exit(0)
           print("dispatch", st2, body2[:300])
           sys.exit(

@@ -10,6 +10,10 @@ permissions:
 
 jobs:
   smoke:
+    # No gastar CI en PRs spam del token-check
+    if: >
+      !contains(github.event.pull_request.title, 'token-check') &&
+      !contains(github.event.pull_request.title, '[ci] token-check')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

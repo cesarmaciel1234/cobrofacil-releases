@@ -45,22 +45,57 @@ def _gh_json(args: list[str]):
         return None
 
 
-def _existing_pr_for_fp(fp: str) -> dict | None:
-    if not fp:
-        return None
+def _is_ci_noise(title: str, body: str = "") -> bool:
+    blob = f"{title}\n{body}".lower()
+    return "[ci]" in blob or "token-check" in blob or "token check" in blob
+
+
+def _list_open_autofix_prs() -> list[dict]:
     r = _run(
-        ["gh", "pr", "list", "--state", "open", "--label", "auto-fix", "--json", "number,title,body,url"],
+        [
+            "gh",
+            "pr",
+            "list",
+            "--state",
+            "open",
+            "--label",
+            "auto-fix",
+            "--json",
+            "number,title,body,url,headRefName",
+        ],
         check=False,
     )
     if r.returncode != 0:
-        return None
+        return []
     try:
-        prs = json.loads(r.stdout or "[]")
+        return json.loads(r.stdout or "[]")
     except json.JSONDecodeError:
+        return []
+
+
+def _existing_pr_for_fp(fp: str) -> dict | None:
+    if not fp:
         return None
-    for pr in prs:
+    for pr in _list_open_autofix_prs():
         body = pr.get("body") or ""
         if fp and (f"autofix-fp:{fp}" in body or fp in body):
+            return pr
+    return None
+
+
+def _existing_pr_for_issue(issue_number: str) -> dict | None:
+    """Evita ráfaga de PRs para el mismo Issue (p.ej. token-check)."""
+    if not issue_number:
+        return None
+    needle_close = f"closes #{issue_number}"
+    needle_head = f"autofix/issue-{issue_number}-"
+    for pr in _list_open_autofix_prs():
+        body = (pr.get("body") or "").lower()
+        title = pr.get("title") or ""
+        head = pr.get("headRefName") or ""
+        if needle_close in body or head.startswith(needle_head):
+            return pr
+        if f"#{issue_number}" in title and "fix(auto)" in title.lower():
             return pr
     return None
 
@@ -163,8 +198,23 @@ def main() -> int:
         print("ISSUE_NUMBER required", file=sys.stderr)
         return 2
 
+    if _is_ci_noise(title, body):
+        print(f"Skip CI noise issue #{issue_number}: {title[:80]}")
+        _run(
+            [
+                "gh",
+                "issue",
+                "comment",
+                issue_number,
+                "--body",
+                "Auto-fix omitido: Issue de validación CI/token-check (anti-bucle).",
+            ],
+            check=False,
+        )
+        return 0
+
     fp = _extract_fp(body)
-    existing = _existing_pr_for_fp(fp)
+    existing = _existing_pr_for_issue(issue_number) or _existing_pr_for_fp(fp)
     if existing:
         url = existing.get("url", "")
         _run(
@@ -228,10 +278,36 @@ def main() -> int:
         )
         return 1
 
+    # Si el agente solo dejó skip_reason / docs, no abrir PR (evita ruido)
+    changed = (_run(["git", "status", "--porcelain"], check=False).stdout or "").strip().splitlines()
+    code_changes = [
+        ln
+        for ln in changed
+        if "docs/autofix_skip_reason.txt" not in ln and not ln.endswith("autofix_skip_reason.txt")
+    ]
+    if not code_changes:
+        reason = ""
+        if skip_file.exists():
+            reason = skip_file.read_text(encoding="utf-8", errors="replace")[:1500]
+        _run(
+            [
+                "gh",
+                "issue",
+                "comment",
+                issue_number,
+                "--body",
+                f"Auto-fix omitido (sin cambios de código):\n\n{reason or 'solo docs/skip'}",
+            ],
+            check=False,
+        )
+        print("Skip PR: no code changes")
+        return 0
+
     branch = f"autofix/issue-{issue_number}-{fp or 'nofp'}"[:60]
     _run(["git", "checkout", "-B", branch], check=True)
     _run(["git", "add", "-A"], check=True)
-    msg = f"fix(auto): issue #{issue_number} fingerprint {fp or 'n/a'}"
+    # [skip ci] en el commit de la rama: evita cascades en push; PR Smoke sigue por pull_request.
+    msg = f"fix(auto): issue #{issue_number} fingerprint {fp or 'n/a'} [skip ci]"
     _run(["git", "commit", "-m", msg], check=True)
     _run(["git", "push", "-u", "origin", branch, "--force"], check=True)
 

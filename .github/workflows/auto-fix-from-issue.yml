@@ -32,12 +32,19 @@ permissions:
 
 jobs:
   autofix:
+    # Ignorar checks de CI / token-check (provocaban bucle infinito de PRs).
     if: >
       github.event_name == 'workflow_dispatch' ||
-      (github.event.issue &&
-       (contains(join(github.event.issue.labels.*.name, ','), 'auto-report') ||
-        contains(join(github.event.issue.labels.*.name, ','), 'needs-auto-fix') ||
-        contains(join(github.event.issue.labels.*.name, ','), 'client-error')))
+      (
+        github.event.issue &&
+        !contains(github.event.issue.title, '[ci]') &&
+        !contains(github.event.issue.title, 'token-check') &&
+        (
+          contains(join(github.event.issue.labels.*.name, ','), 'auto-report') ||
+          contains(join(github.event.issue.labels.*.name, ','), 'needs-auto-fix') ||
+          contains(join(github.event.issue.labels.*.name, ','), 'client-error')
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

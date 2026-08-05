@@ -59,10 +59,17 @@ jobs:
       - name: Squash merge
         if: steps.pr.outputs.skip != '1' && steps.pr.outputs.is_autofix == '1'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.COBROFACIL_ERROR_REPORT_TOKEN }}
         run: |
           set -e
           N="${{ steps.pr.outputs.number }}"
+          TITLE=$(gh pr view "$N" --repo "${{ github.repository }}" --json title --jq .title)
+          if echo "$TITLE" | grep -qiE 'token-check|\[ci\]'; then
+            echo "Skip merge: PR de ruido CI ($TITLE)"
+            gh pr close "$N" --repo "${{ github.repository }}" --comment "Cerrado: ruido token-check (anti-bucle)." || true
+            exit 0
+          fi
+          # Sin [skip ci]: un fix real debe disparar release.yml en main.
           gh pr merge "$N" --repo "${{ github.repository }}" --squash --delete-branch \
             --subject "fix(auto): merge PR #$N (CI verde)"
           BODY=$(gh pr view "$N" --repo "${{ github.repository }}" --json body --jq .body)
