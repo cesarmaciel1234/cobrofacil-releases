@@ -239,18 +239,34 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
 
 
 def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
-    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877)."""
+    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. ventas/clientes 1877)."""
     if not any(k in blob for k in ("1877", "corrupt", "drop the table and recreate")):
         return None
-    if not any(k in blob for k in ("clientes", "punpro_db", "mariadb", "check table", "repair table")):
+    if not any(
+        k in blob
+        for k in ("ventas", "clientes", "punpro_db", "mariadb", "check table", "repair table")
+    ):
         return None
     try:
         from src.config import config
         from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+        from src.base_de_datos.database import db_manager
 
-        if config.get("is_master") is False or str(config.get("db_engine") or "").lower() != "mariadb":
+        using_mariadb = (
+            str(config.get("db_engine") or "").lower() == "mariadb"
+            or getattr(db_manager, "db_engine_type", "") == "mariadb"
+        )
+        is_slave = (
+            config.get("is_master") is False
+            or getattr(db_manager, "is_master", True) is False
+        )
+        if not using_mariadb or is_slave:
             return None
-        host = str(config.get("db_host") or "127.0.0.1").strip() or "127.0.0.1"
+        host = str(
+            config.get("db_host")
+            or getattr(getattr(db_manager, "mariadb_engine", None), "host", None)
+            or "127.0.0.1"
+        ).strip() or "127.0.0.1"
         if host.lower() not in ("127.0.0.1", "localhost", ""):
             return None
     except Exception as e:

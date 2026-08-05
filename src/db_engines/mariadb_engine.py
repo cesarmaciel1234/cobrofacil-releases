@@ -23,6 +23,16 @@ def mariadb_safe_text(value, max_len=None):
         text = text[:max_len]
     return text
 
+def _is_best_effort_migration_query(query: str) -> bool:
+    """Consultas opcionales en migración: el caller las ignora si fallan."""
+    q = (query or "").lstrip().upper()
+    if q.startswith("CREATE INDEX IF NOT EXISTS"):
+        return True
+    if q.startswith("UPDATE VENTAS SET ESTADO =") and " WHERE ESTADO = " in q:
+        return True
+    return False
+
+
 class MariaDBCursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
@@ -48,9 +58,9 @@ class MariaDBCursorWrapper:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
-            # Índices opcionales en migración: el caller los ignora; no reportar como ERROR.
-            if query.lstrip().upper().startswith("CREATE INDEX IF NOT EXISTS"):
-                logger.warning(f"Índice opcional omitido en MariaDB: {e} | Q: {query}")
+            # Migraciones best-effort: el caller las ignora; no reportar como ERROR a GitHub.
+            if _is_best_effort_migration_query(query):
+                logger.warning(f"Migración opcional omitida en MariaDB: {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise

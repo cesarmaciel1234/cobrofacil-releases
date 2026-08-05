@@ -692,6 +692,47 @@ class DatabaseManager:
             or "does not exist in engine" in msg
         )
 
+    @staticmethod
+    def _is_mariadb_corrupt_table_error(exc: BaseException) -> bool:
+        """MariaDB 1877: tabla InnoDB corrupta (p. ej. ventas/clientes)."""
+        msg = str(exc).lower()
+        return (
+            "1877" in msg
+            or "corrupt" in msg
+            or "drop the table and recreate" in msg
+        )
+
+    def _try_heal_mariadb_corruption(self, cursor, retry_query: str | None = None) -> bool:
+        """Repara corrupción InnoDB local (maestra) y opcionalmente reintenta una query."""
+        if (
+            getattr(self, "db_engine_type", "sqlite") != "mariadb"
+            or not getattr(self, "is_master", False)
+        ):
+            return False
+        host = getattr(getattr(self, "mariadb_engine", None), "host", None) or "127.0.0.1"
+        if str(host).strip().lower() not in ("127.0.0.1", "localhost", ""):
+            return False
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            logger.warning("Corrupción MariaDB detectada; ejecutando auto-reparación...")
+            healed = AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host)
+            if not healed:
+                healed = AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                    "mariadb",
+                    allow_older_than_today=True,
+                    merge_today=True,
+                    mariadb_host=host,
+                )
+            if not healed:
+                healed = AutoBlindajeDB._recrear_tablas_criticas_mariadb(host)
+            if healed and retry_query:
+                cursor.execute(retry_query)
+            return bool(healed)
+        except Exception as heal_err:
+            logger.warning(f"Auto-reparación MariaDB: {heal_err}")
+            return False
+
     def _ensure_configuracion_table(self, cursor) -> None:
         """Crea tabla configuracion; en MariaDB repara metadatos huérfanos (error 1932)."""
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
@@ -738,13 +779,25 @@ class DatabaseManager:
                 cursor.execute("PRAGMA temp_store=MEMORY;")
             except: pass
 
-        # Estandarizar estados de ventas existentes
-        try:
-            cursor.execute("UPDATE ventas SET estado = 'COMPLETADA' WHERE estado = 'COMPLETADO'")
-            cursor.execute("UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'")
-            cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'")
-        except Exception:
-            pass
+        # Estandarizar estados de ventas existentes (best-effort; corrupción → auto-reparación)
+        _estado_migrations = (
+            "UPDATE ventas SET estado = 'COMPLETADA' WHERE estado = 'COMPLETADO'",
+            "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'CERRADO'",
+            "UPDATE ventas SET estado = 'CANCELADA' WHERE estado = 'CANCELADO'",
+        )
+        corruption_recovered_estados = False
+        for _estado_sql in _estado_migrations:
+            try:
+                cursor.execute(_estado_sql)
+            except Exception as e:
+                if (
+                    self._is_mariadb_corrupt_table_error(e)
+                    and not corruption_recovered_estados
+                ):
+                    corruption_recovered_estados = True
+                    if self._try_heal_mariadb_corruption(cursor, _estado_sql):
+                        continue
+                logger.warning(f"Migración estado ventas omitida: {e}")
 
         
         def add_column_if_not_exists(table, col_name, col_type):
@@ -908,45 +961,10 @@ class DatabaseManager:
             try:
                 cursor.execute(q_idx)
             except Exception as e:
-                err = str(e).lower()
-                is_corrupt = (
-                    getattr(self, "db_engine_type", "sqlite") == "mariadb"
-                    and getattr(self, "is_master", False)
-                    and (
-                        "corrupt" in err
-                        or "1877" in err
-                        or "drop the table and recreate" in err
-                    )
-                )
-                if is_corrupt and not corruption_recovered:
+                if self._is_mariadb_corrupt_table_error(e) and not corruption_recovered:
                     corruption_recovered = True
-                    try:
-                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-
-                        host = getattr(
-                            getattr(self, "mariadb_engine", None), "host", None
-                        ) or "127.0.0.1"
-                        logger.warning(
-                            "Corrupción detectada al crear índices; ejecutando auto-reparación..."
-                        )
-                        healed = AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host)
-                        if not healed:
-                            healed = AutoBlindajeDB.restaurar_ultimo_backup_valido(
-                                "mariadb",
-                                allow_older_than_today=True,
-                                merge_today=True,
-                                mariadb_host=host,
-                            )
-                        if healed:
-                            try:
-                                cursor.execute(q_idx)
-                                continue
-                            except Exception:
-                                pass
-                    except Exception as heal_err:
-                        logger.warning(
-                            f"Auto-reparación tras corrupción de índices: {heal_err}"
-                        )
+                    if self._try_heal_mariadb_corruption(cursor, q_idx):
+                        continue
                 logger.warning(f"No se pudo crear índice opcional: {e}")
             
         # Crear tablas para módulo de clientes
