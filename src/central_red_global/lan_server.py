@@ -188,7 +188,10 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     cond_hoy = "DATE(v.fecha) = CURDATE()"
                     cond_semana = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
                     cond_mes = "v.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
-                    join_cond = "dv.id_producto COLLATE utf8mb4_unicode_ci = p.codigo COLLATE utf8mb4_unicode_ci OR dv.id_producto COLLATE utf8mb4_unicode_ci = CAST(p.id AS CHAR) COLLATE utf8mb4_unicode_ci"
+                    join_cond = (
+                        "CONVERT(dv.id_producto USING utf8mb4) = CONVERT(p.codigo USING utf8mb4) "
+                        "OR CONVERT(dv.id_producto USING utf8mb4) = CONVERT(CAST(p.id AS CHAR) USING utf8mb4)"
+                    )
                 else:
                     cond_hoy = "date(v.fecha) = date('now', 'localtime')"
                     cond_semana = "date(v.fecha) >= date('now', '-7 days', 'localtime')"
