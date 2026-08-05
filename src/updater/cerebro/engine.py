@@ -590,6 +590,20 @@ def _purge_partial_download_files() -> None:
         shutil.rmtree(staging, ignore_errors=True)
 
 
+def _cached_zip_crc_ok(zip_path: str) -> bool:
+    """False si el ZIP local está truncado o falla CRC (descarga incompleta/corrupta)."""
+    try:
+        if not os.path.isfile(zip_path) or os.path.getsize(zip_path) < 1_000_000:
+            return False
+        with open(zip_path, "rb") as fh:
+            if fh.read(2) != b"PK":
+                return False
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            return zf.testzip() is None
+    except (OSError, zipfile.BadZipFile):
+        return False
+
+
 def _extract_release_zip(zip_path: str, progress_callback=None) -> bool:
     """Extrae ZIP local a staging y marca pending.ready."""
     staging = _staging_dir()
@@ -656,10 +670,15 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     zip_path = _zip_path()
     if not os.path.isfile(zip_path) or os.path.getsize(zip_path) < 1_000_000:
         return False
+    if not _cached_zip_crc_ok(zip_path):
+        _purge_partial_download_files()
+        return False
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
     except Exception:
+        if not is_update_staged():
+            _purge_partial_download_files()
         return False
 
 
@@ -777,6 +796,9 @@ def download_and_stage_update(progress_callback=None) -> bool:
             logger.error(f"Error descargando actualización silenciosa: {err_text}")
         except Exception:
             pass
+        # ZIP corrupto en caché (p. ej. Bad CRC-32): purgar para forzar re-descarga limpia.
+        if not is_update_staged() and _is_transient_download_error(exc):
+            _purge_partial_download_files()
         # No borrar un staging/ZIP bueno: una re-descarga fallida no debe forzar bucle
         if ensure_staging_ready():
             _emit_progress(progress_callback, "Actualización ya descargada.", 100)

@@ -211,12 +211,18 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
         import requests
 
         path = f"{part_path}.{idx}"
+        expected_bytes = end - start + 1
         headers = {"Range": f"bytes={start}-{end}"}
         # Session por hilo: requests.Session no es thread-safe.
         with _session().get(
             url, headers=headers, stream=True, timeout=REQUEST_TIMEOUT, verify=verify
         ) as resp:
-            if resp.status_code not in (200, 206):
+            # HTTP 200 con Range pedido = CDN/proxy ignoró el rango → ZIP corrupto al ensamblar.
+            if resp.status_code == 206:
+                pass
+            elif resp.status_code == 200:
+                raise RuntimeError(f"Range ignorado (HTTP 200 en parte {idx})")
+            else:
                 raise RuntimeError(f"Range HTTP {resp.status_code}")
             with open(path, "wb") as out:
                 for chunk in resp.iter_content(chunk_size=CHUNK):
@@ -235,6 +241,11 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
                                 f"Descarga rápida… {mb:.0f}/{total_mb:.0f} MB ({pct}%) · {n} hilos",
                                 pct,
                             )
+        actual_part = os.path.getsize(path)
+        if actual_part != expected_bytes:
+            raise RuntimeError(
+                f"Parte {idx} incompleta: {actual_part} bytes, esperados {expected_bytes}"
+            )
         return path
 
     _emit(cb, f"Descarga rápida ({n} conexiones)…", 1)
