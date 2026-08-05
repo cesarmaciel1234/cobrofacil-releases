@@ -239,8 +239,8 @@ def _probe_tcp(host: str, port: int = 3306, timeout: float = 1.2) -> bool:
 
 
 def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
-    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877)."""
-    if not any(k in blob for k in ("1877", "corrupt", "drop the table and recreate")):
+    """REPAIR / restaurar respaldo si una tabla MariaDB local está corrupta (p. ej. clientes 1877 / 1932)."""
+    if not any(k in blob for k in ("1877", "1932", "corrupt", "drop the table and recreate", "doesn't exist in engine", "does not exist in engine")):
         return None
     if not any(k in blob for k in ("clientes", "punpro_db", "mariadb", "check table", "repair table")):
         return None
@@ -259,6 +259,9 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
     try:
         if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
             return HealResult(True, "repair_mariadb_corrupt", host)
+        from src.base_de_datos.database import db_manager
+        if db_manager._probe_and_repair_mariadb_ghost_tables():
+            return HealResult(True, "repair_mariadb_ghost_tables", host)
         if AutoBlindajeDB.restaurar_ultimo_backup_valido(
             "mariadb",
             allow_older_than_today=True,
