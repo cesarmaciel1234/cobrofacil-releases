@@ -231,7 +231,7 @@ class MariaDBEngine:
 
         self._last_fail_time = time.time()
         msg = f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {last_exc}"
-        if remote and self._is_transient_connect_error(last_exc):
+        if self._is_transient_connect_error(last_exc):
             logger.warning(msg)
         else:
             logger.error(msg)

@@ -735,8 +735,35 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker: mariadb",
             )
         )
+
+    def _mariadb_host_is_local(self) -> bool:
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            return False
+        host = str(getattr(engine, "host", "") or "").strip().lower()
+        return host in ("127.0.0.1", "localhost", "::1", "")
+
+    def _should_fallback_local_sqlite(self) -> bool:
+        """Esclava remota o maestra local: SQLite temporal si MariaDB no responde."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        return not getattr(self, "is_master", True) or self._mariadb_host_is_local()
+
+    def _try_fallback_local_sqlite(self, exc: BaseException):
+        """Transiciona a SQLite local y devuelve una conexión lista."""
+        role = "maestra local" if getattr(self, "is_master", True) else "esclava"
+        logger.warning(
+            "[BD] MariaDB no disponible (%s). Transicionando a SQLite local (%s)...",
+            exc,
+            role,
+        )
+        self.reconectar_local()
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
+        conn.row_factory = sqlite3.Row
+        return conn
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1596,17 +1623,9 @@ class DatabaseManager:
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
-                if not getattr(self, "is_master", True):
+                if self._should_fallback_local_sqlite():
                     try:
-                        logger.warning(
-                            "[RED LAN] Caída de conexión a Maestra (%s). "
-                            "Transicionando a BD local SQLite...",
-                            e,
-                        )
-                        self.reconectar_local()
-                        conn = sqlite3.connect(self.db_path, timeout=30.0)
-                        conn.row_factory = sqlite3.Row
-                        return conn
+                        return self._try_fallback_local_sqlite(e)
                     except Exception as fallback_err:
                         logger.error(
                             f"Error connecting to MariaDB database: {e} "
@@ -1718,10 +1737,9 @@ class DatabaseManager:
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-                if is_mariadb and not getattr(self, "is_master", True):
+                if is_mariadb and self._should_fallback_local_sqlite():
                     try:
-                        logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                        self.reconectar_local()
+                        self._try_fallback_local_sqlite(e)
                     except Exception:
                         pass
                 return []

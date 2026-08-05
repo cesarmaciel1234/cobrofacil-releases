@@ -418,7 +418,16 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             if ok:
                 return HealResult(True, "failover_to_slave", detail)
 
-        return HealResult(False, "reconnect_local_mariadb", f"mysqld_down:{detail}")
+        # Maestra local sin mysqld: seguir operando en SQLite (como esclava offline)
+        try:
+            db_manager.reconectar_local()
+            return HealResult(True, "offline_local_master", f"mysqld_down:{detail}")
+        except Exception as e:
+            return HealResult(
+                False,
+                "reconnect_local_mariadb",
+                f"mysqld_down:{detail};offline:{e}",
+            )
 
     # 3) Host remoto explícito en db_host
     if not _probe_tcp(host):
