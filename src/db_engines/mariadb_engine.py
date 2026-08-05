@@ -149,7 +149,7 @@ class MariaDBEngine:
         msg = str(exc).lower()
         return any(
             token in msg
-            for token in ("2003", "2002", "2013", "timed out", "timeout", "can't connect")
+            for token in ("2003", "2002", "2006", "2013", "gone away", "timed out", "timeout", "can't connect")
         )
 
     def _try_connect(self, **kwargs):
@@ -164,6 +164,21 @@ class MariaDBEngine:
             if mariadb_controller.is_starting():
                 logger.info("MariaDB en arranque — esperando handshake antes de conectar...")
                 return mariadb_controller.wait_until_ready(max_sec)
+        except Exception:
+            pass
+        return False
+
+    def _probe_local_mariadb_ready(self) -> bool:
+        """Handshake rápido: si MariaDB ya responde, no mantener el circuit breaker."""
+        if self._is_remote_host(self.host):
+            return False
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            if mariadb_controller._try_pymysql(self.password, 1):
+                return True
+            if self.password != "" and mariadb_controller._try_pymysql("", 1):
+                return True
         except Exception:
             pass
         return False
@@ -211,8 +226,8 @@ class MariaDBEngine:
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         local = not self._is_remote_host(self.host)
-        if local:
-            self._wait_local_mariadb_if_starting()
+        if local and self._wait_local_mariadb_if_starting():
+            self._last_fail_time = 0
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if local:
             try:
@@ -225,6 +240,9 @@ class MariaDBEngine:
             except Exception:
                 if self._maybe_start_local_mariadb():
                     in_cooldown = False
+            if in_cooldown and self._probe_local_mariadb_ready():
+                self._last_fail_time = 0
+                in_cooldown = False
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
