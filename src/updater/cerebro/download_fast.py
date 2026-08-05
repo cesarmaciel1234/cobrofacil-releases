@@ -18,6 +18,13 @@ CONNECT_TIMEOUT = 45
 READ_TIMEOUT = 300  # ZIP ~300 MB en enlaces lentos (LATAM)
 REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 STREAM_RETRIES = 3
+ZIP_CRC_RETRIES = 3
+
+
+def _is_zip_integrity_error(exc: BaseException) -> bool:
+    if isinstance(exc, zipfile.BadZipFile):
+        return True
+    return "crc" in str(exc).lower()
 
 
 def _is_transient_stream_error(exc: BaseException) -> bool:
@@ -123,6 +130,52 @@ def download_release_zip(
         total = int(head.headers.get("Content-Length") or 0)
         accept_ranges = str(head.headers.get("Accept-Ranges") or "").lower()
 
+    last_crc_exc: BaseException | None = None
+    for crc_attempt in range(ZIP_CRC_RETRIES):
+        single_only = force_single or crc_attempt > 0
+        try:
+            _download_release_zip_once(
+                session,
+                final_url,
+                dest_path,
+                part_path,
+                total,
+                accept_ranges,
+                verify,
+                progress_callback,
+                force_single=single_only,
+            )
+            return
+        except Exception as exc:
+            if not _is_zip_integrity_error(exc):
+                raise
+            last_crc_exc = exc
+            _cleanup_partial_download(dest_path, part_path)
+            if crc_attempt < ZIP_CRC_RETRIES - 1:
+                _emit(
+                    progress_callback,
+                    f"ZIP dañado, reintentando descarga ({crc_attempt + 2}/{ZIP_CRC_RETRIES})…",
+                    0,
+                )
+                time.sleep(3 * (crc_attempt + 1))
+                continue
+            raise
+    if last_crc_exc is not None:
+        raise last_crc_exc
+
+
+def _download_release_zip_once(
+    session,
+    final_url: str,
+    dest_path: str,
+    part_path: str,
+    total: int,
+    accept_ranges: str,
+    verify: bool,
+    progress_callback,
+    *,
+    force_single: bool,
+) -> None:
     use_parallel = (
         not force_single
         and total >= MIN_PARALLEL_BYTES
@@ -137,6 +190,8 @@ def download_release_zip(
             _verify_downloaded_zip(dest_path)
             return
         except Exception as exc:
+            if _is_zip_integrity_error(exc):
+                raise
             _emit(progress_callback, f"Paralelo falló, modo único: {exc}", 0)
             _cleanup_partial_download(dest_path, part_path)
 
