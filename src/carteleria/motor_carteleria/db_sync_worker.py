@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import socket
 import urllib.request
 import logging
@@ -75,12 +76,15 @@ class DbSyncWorker(QThread):
                         with open(config_path, "r", encoding="utf-8") as f:
                             cfg_data = json.load(f)
                 
-                is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                
-                # 2. SOS (Soporta múltiples ofertas relámpago rotativas)
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                oferta_sos = db_manager.execute_query(sos_query)
+                # 2. SOS (Soporta múltiples ofertas relámpago rotativas; sin ORDER BY RAND: timeout MariaDB 2013)
+                sos_pool_q = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock FROM productos "
+                    "WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
+                    "AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' LIMIT 200"
+                )
+                sos_pool = db_manager.execute_query(sos_pool_q) or []
+                oferta_sos = random.sample(list(sos_pool), min(10, len(sos_pool))) if sos_pool else []
                 
                 # 3. Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
@@ -88,8 +92,14 @@ class DbSyncWorker(QThread):
                 
                 # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
                 top_dict = {"hoy": [], "semana": [], "mes": []}
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                fallback_pool_q = (
+                    "SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    "cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos "
+                    "WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                    "AND LOWER(nombre) NOT LIKE '%venta libre%' LIMIT 200"
+                )
+                fallback_pool = db_manager.execute_query(fallback_pool_q) or []
+                top_dict["hoy"] = random.sample(list(fallback_pool), min(10, len(fallback_pool))) if fallback_pool else []
                 top_dict["semana"] = top_dict["hoy"]
                 top_dict["mes"] = top_dict["hoy"]
                 
