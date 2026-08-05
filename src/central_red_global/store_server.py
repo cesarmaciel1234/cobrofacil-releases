@@ -150,6 +150,23 @@ def is_store_server_online() -> bool:
     return True
 
 
+def _exit_store_app() -> None:
+    """Cierra el proceso del servidor de tienda (PyQt6: quit() no acepta código de salida)."""
+    from PyQt6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        sys.exit(0)
+        return
+    try:
+        app.exit(0)
+    except Exception:
+        try:
+            app.quit()
+        except Exception:
+            sys.exit(0)
+
+
 def run_store_server_app(app) -> int:
     """UI mínima + servicios. `app` es QApplication ya creado."""
     from PyQt6.QtCore import QTimer, Qt
@@ -343,7 +360,7 @@ def run_store_server_app(app) -> int:
         release_store_server_lock()
         if tray:
             tray.hide()
-        QApplication.instance().quit(0)
+        _exit_store_app()
 
     def _on_close(event):
         # Cerrar ventana = ocultar; apagar solo con botón / menú
