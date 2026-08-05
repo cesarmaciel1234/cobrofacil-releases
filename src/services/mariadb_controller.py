@@ -397,6 +397,15 @@ class MariaDBController:
                     pass
                 conn.commit()
                 conn.close()
+                try:
+                    from src.base_de_datos.database import db_manager
+
+                    if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+                        db_manager._create_tables()
+                except Exception as ex:
+                    logger.warning(
+                        "Recrear esquema tras ghost 1932 en punpro_db: %s", ex
+                    )
                 return False
             conn.close()
             return True

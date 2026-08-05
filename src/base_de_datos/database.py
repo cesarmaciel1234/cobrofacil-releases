@@ -816,26 +816,18 @@ class DatabaseManager:
                     pass
         return dropped
 
-    def _repair_ghost_tables_from_query(self, query: str) -> bool:
-        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
-        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return False
+    def _verify_mariadb_tables_readable(self, tables: list) -> bool:
+        """True si cada tabla responde a SELECT 1 (no ghost 1932)."""
+        if not tables:
+            return True
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
-            table = self._table_name_from_query(query)
-            if table and table not in dropped:
-                self._repair_mariadb_ghost_table(cursor, table)
-            conn.commit()
-            try:
-                self._create_tables()
-            except Exception as ex:
-                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            for table in tables:
+                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
             return True
-        except Exception as ex:
-            logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
+        except Exception:
             return False
         finally:
             if conn:
@@ -843,6 +835,84 @@ class DatabaseManager:
                     conn.close()
                 except Exception:
                     pass
+            self._reset_mariadb_thread_connection()
+
+    def _heal_mariadb_after_ghost_drop(self) -> bool:
+        """Restaura respaldo o recrea tablas críticas si DROP+CREATE no alcanza."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        if not getattr(self, "is_master", False):
+            return False
+        host = getattr(getattr(self, "mariadb_engine", None), "host", None) or "127.0.0.1"
+        if str(host).strip().lower() not in ("127.0.0.1", "localhost", ""):
+            return False
+        try:
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            if AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                "mariadb",
+                allow_older_than_today=True,
+                merge_today=True,
+                mariadb_host=host,
+            ):
+                return True
+            return AutoBlindajeDB._recrear_tablas_criticas_mariadb(host)
+        except Exception as ex:
+            logger.warning("Heal tras ghost 1932: %s", ex)
+            return False
+
+    def _repair_ghost_tables_from_query(self, query: str) -> bool:
+        """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        import threading
+
+        lock = getattr(self, "_mariadb_ghost_repair_lock", None)
+        if lock is None:
+            lock = threading.Lock()
+            self._mariadb_ghost_repair_lock = lock
+
+        with lock:
+            conn = None
+            table = self._table_name_from_query(query)
+            dropped = []
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                dropped = self._probe_and_repair_mariadb_ghost_tables(cursor)
+                if table and table not in dropped:
+                    self._repair_mariadb_ghost_table(cursor, table)
+                conn.commit()
+            except Exception as ex:
+                logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
+                return False
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                self._reset_mariadb_thread_connection()
+
+            check_tables = list(dict.fromkeys(dropped + ([table] if table else [])))
+            if not check_tables:
+                return True
+
+            try:
+                self._create_tables()
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+
+            if self._verify_mariadb_tables_readable(check_tables):
+                return True
+
+            logger.warning(
+                "Tablas %s siguen ilegibles tras recrear esquema; intentando restaurar respaldo...",
+                check_tables,
+            )
+            if self._heal_mariadb_after_ghost_drop():
+                return self._verify_mariadb_tables_readable(check_tables)
+            return False
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1164,6 +1234,7 @@ class DatabaseManager:
                         "corrupt" in err
                         or "1877" in err
                         or "drop the table and recreate" in err
+                        or self._is_mariadb_ghost_table_error(e)
                     )
                 )
                 if is_corrupt and not corruption_recovered:
