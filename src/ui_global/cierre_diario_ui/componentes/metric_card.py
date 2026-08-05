@@ -48,20 +48,52 @@ class MetricCard(QFrame):
         v_lay.addWidget(self.lbl_val)
         lay.addLayout(v_lay, 1)
 
+        self._anim_timer = QTimer(self)
+        self._anim_timer.setInterval(30)
+        self._anim_timer.setSingleShot(True)
+        self._anim_timer.timeout.connect(self._anim_tick)
+
     def revelar(self, valor, formato=True):
 
         self._animar(valor, formato)
 
+    def _lbl_alive(self):
+        try:
+            from shiboken6 import isValid
+            return bool(isValid(self.lbl_val))
+        except Exception:
+            try:
+                self.lbl_val.objectName()
+                return True
+            except RuntimeError:
+                return False
+
     def _animar(self, final, formato):
-        steps = 15
+        self._anim_final = final
+        self._anim_formato = formato
+        self._anim_steps = 15
         self._curr_step = 0
-        def tick():
-            self._curr_step += 1
-            v = final * (self._curr_step / steps)
-            if formato: self.lbl_val.setText(f"$ {v:,.2f}")
-            else: self.lbl_val.setText(f"{int(v)}")
-            if self._curr_step < steps: QTimer.singleShot(30, tick)
-            else: 
-                if formato: self.lbl_val.setText(f"$ {final:,.2f}")
-                else: self.lbl_val.setText(f"{int(final)}")
-        tick()
+        self._anim_timer.stop()
+        self._anim_tick()
+
+    def _anim_tick(self):
+        if not self._lbl_alive():
+            self._anim_timer.stop()
+            return
+        steps = self._anim_steps
+        final = self._anim_final
+        formato = self._anim_formato
+        self._curr_step += 1
+        v = final * (self._curr_step / steps)
+        if formato:
+            self.lbl_val.setText(f"$ {v:,.2f}")
+        else:
+            self.lbl_val.setText(f"{int(v)}")
+        if self._curr_step >= steps:
+            self._anim_timer.stop()
+            if formato:
+                self.lbl_val.setText(f"$ {final:,.2f}")
+            else:
+                self.lbl_val.setText(f"{int(final)}")
+        else:
+            self._anim_timer.start()
