@@ -4,6 +4,7 @@ import os
 import sys
 from typing import List, Tuple, Any, Optional
 from src.logger import logger
+from src.db_engines.mariadb_engine import sanitize_mariadb_text
 
 class DatabaseManager:
     """Professional management of SQLite database operations."""
@@ -884,6 +885,23 @@ class DatabaseManager:
         finally:
             conn.close()
 
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            try:
+                mig_conn = self.get_connection()
+                mig_cur = mig_conn.cursor()
+                for tbl in ("detalles_ventas", "detalle_ventas"):
+                    try:
+                        mig_cur.execute(
+                            f"ALTER TABLE {tbl} MODIFY nombre_producto TEXT "
+                            "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                        )
+                    except Exception:
+                        pass
+                mig_conn.commit()
+                mig_conn.close()
+            except Exception as e:
+                logger.warning(f"Migración utf8mb4 nombre_producto: {e}")
+
         def trigger_sync():
             import time
             time.sleep(2)
@@ -1400,6 +1418,12 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
+
+    def _nombre_producto_para_db(self, nombre):
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            return sanitize_mariadb_text(nombre)
+        return nombre or ""
+
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
         
@@ -1464,7 +1488,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], self._nombre_producto_para_db(it['nombre']), it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1513,7 +1537,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))

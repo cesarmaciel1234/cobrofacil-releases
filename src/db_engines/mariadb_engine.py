@@ -1,7 +1,23 @@
+import re
 import pymysql
 import threading
 import time
 from src.logger import logger
+
+_MARIADB_TEXT_PREFIXES = (
+    "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
+    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ", "🏷️ ",
+)
+_SUPPLEMENTARY_PLANE = re.compile(r"[\U00010000-\U0010ffff]")
+
+
+def sanitize_mariadb_text(value):
+    """Strip emoji/prefixes that legacy utf8 MariaDB columns reject (error 1366)."""
+    text = str(value or "")
+    for tag in _MARIADB_TEXT_PREFIXES:
+        text = text.replace(tag, "")
+    text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
+    return _SUPPLEMENTARY_PLANE.sub("", text)
 
 class MariaDBCursorWrapper:
     def __init__(self, cursor):
@@ -103,6 +119,7 @@ class MariaDBEngine:
             user=self.user,
             password=password if password is not None else self.password,
             database=self.database,
+            charset="utf8mb4",
             autocommit=False,
             connect_timeout=self.CONNECT_TIMEOUT,
             read_timeout=self.IO_TIMEOUT,
