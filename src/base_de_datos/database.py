@@ -735,6 +735,7 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker",
             )
         )
 
@@ -744,11 +745,13 @@ class DatabaseManager:
         err = str(exc).lower()
         return "1366" in err or "incorrect string value" in err
 
-    def _reset_mariadb_thread_connection(self) -> None:
+    def _reset_mariadb_thread_connection(self, clear_circuit_breaker: bool = False) -> None:
         engine = getattr(self, "mariadb_engine", None)
         if engine:
             try:
                 engine.reset_thread_connection()
+                if clear_circuit_breaker:
+                    engine._last_fail_time = 0
             except Exception:
                 pass
 
@@ -1613,7 +1616,10 @@ class DatabaseManager:
                             f"(fallback local falló: {fallback_err})"
                         )
                         raise
-                logger.error(f"Error connecting to MariaDB database: {e}")
+                if self._is_transient_mariadb_error(e):
+                    logger.warning(f"Error connecting to MariaDB database: {e}")
+                else:
+                    logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
         try:
@@ -1714,10 +1720,15 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
+                if is_mariadb and self._is_transient_mariadb_error(e):
+                    logger.warning(f"Query execution error: {e} | Query: {query} | Params: {params}")
+                else:
+                    logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 if is_mariadb and not getattr(self, "is_master", True):
                     try:
                         logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
@@ -1759,10 +1770,15 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
+                if is_mariadb and self._is_transient_mariadb_error(e):
+                    logger.warning(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
+                else:
+                    logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
                 if conn:
@@ -1819,10 +1835,15 @@ class DatabaseManager:
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection()
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
                     time.sleep(1.0 * (attempt + 1))
                     continue
-                logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
+                if is_mariadb and self._is_transient_mariadb_error(e):
+                    logger.warning(f"Scalar query error: {e} | Query: {query} | Params: {params}")
+                else:
+                    logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
                 if conn:
