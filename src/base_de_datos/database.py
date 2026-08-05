@@ -1925,7 +1925,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre') or it.get('nombre_producto', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))

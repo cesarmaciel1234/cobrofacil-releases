@@ -3,6 +3,7 @@ import json
 import socket
 import urllib.request
 import logging
+import random
 from PyQt6.QtCore import QThread, pyqtSignal
 from src.config import config
 from src.utils.paths import get_base_path
@@ -75,21 +76,60 @@ class DbSyncWorker(QThread):
                         with open(config_path, "r", encoding="utf-8") as f:
                             cfg_data = json.load(f)
                 
-                is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                
+                exclude_commun = (
+                    "LOWER(nombre) NOT LIKE '%articulo comun%' "
+                    "AND LOWER(nombre) NOT LIKE '%venta libre%'"
+                )
+
+                def _sample_productos(where_clause, columns, limit=10):
+                    """Muestra aleatoria sin ORDER BY RAND() (evita timeout MariaDB 2013)."""
+                    count = db_manager.execute_scalar(
+                        f"SELECT COUNT(*) FROM productos WHERE {where_clause}"
+                    )
+                    try:
+                        total = int(count or 0)
+                    except (TypeError, ValueError):
+                        total = 0
+                    if total <= 0:
+                        return []
+                    if total <= limit:
+                        return db_manager.execute_query(
+                            f"SELECT {columns} FROM productos WHERE {where_clause} ORDER BY id"
+                        ) or []
+                    offset = random.randint(0, total - limit)
+                    return db_manager.execute_query(
+                        f"SELECT {columns} FROM productos WHERE {where_clause} "
+                        f"ORDER BY id LIMIT ? OFFSET ?",
+                        (limit, offset),
+                    ) or []
+
                 # 2. SOS (Soporta múltiples ofertas relámpago rotativas)
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                oferta_sos = db_manager.execute_query(sos_query)
+                sos_where = (
+                    "precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 "
+                    "OR precio_oferta_relampago > 0) AND " + exclude_commun
+                )
+                sos_cols = (
+                    "nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock"
+                )
+                oferta_sos = _sample_productos(sos_where, sos_cols, 10)
                 
                 # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
+                precios_query = (
+                    "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos "
+                    f"WHERE precio > 0 AND {exclude_commun} ORDER BY categoria"
+                )
                 rows_precios = db_manager.execute_query(precios_query)
                 
                 # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
                 top_dict = {"hoy": [], "semana": [], "mes": []}
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                fallback_where = f"precio > 0 AND {exclude_commun}"
+                fallback_cols = (
+                    "nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable"
+                )
+                top_dict["hoy"] = _sample_productos(fallback_where, fallback_cols, 10)
                 top_dict["semana"] = top_dict["hoy"]
                 top_dict["mes"] = top_dict["hoy"]
                 
