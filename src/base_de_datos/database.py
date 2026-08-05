@@ -650,6 +650,27 @@ class DatabaseManager:
             from src.db_engines.mariadb_engine import MariaDBEngine
             from src.config import config
 
+            host = str(host or "").strip()
+            host_l = host.lower()
+            if host_l in ("localhost", "127.0.0.1", "::1", ""):
+                try:
+                    from src.central_red_global.master_presence import es_pc_maestra_local
+
+                    if not es_pc_maestra_local():
+                        for key in ("db_host", "preferred_master_ip", "carteleria_master_ip"):
+                            remote = str(config.get(key, "") or "").strip()
+                            if remote and remote.lower() not in ("localhost", "127.0.0.1", "::1"):
+                                host = remote
+                                break
+                        else:
+                            raise Exception(
+                                "ESCLAVA: no se intenta MariaDB local; configure IP de la Maestra."
+                            )
+                except Exception as e:
+                    if "ESCLAVA:" in str(e):
+                        raise
+                    pass
+
             engine = MariaDBEngine(host=host)
             # Validar antes de pisar SQLite local / estado offline
             test = engine.get_connection()
