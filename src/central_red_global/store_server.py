@@ -291,7 +291,7 @@ def run_store_server_app(app) -> int:
         # El backup lo hace CerebroBackup en su propio hilo (no el watchdog)
         _refresh_status()
 
-    def _shutdown_store():
+    def _shutdown_store(_checked=False):
         resp = QMessageBox.question(
             win,
             "Apagar servidor de tienda",
@@ -312,6 +312,17 @@ def run_store_server_app(app) -> int:
                 pass
             try:
                 _cb.stop()
+            except TypeError as e_stop:
+                # PyQt6: quit() no acepta args; si .stop estuviera mal enlazado, forzar Event.
+                if "quit" in str(e_stop).lower():
+                    try:
+                        with _cb._lock:
+                            _cb._stop.set()
+                            _cb._started = False
+                    except Exception:
+                        pass
+                else:
+                    raise
             except Exception:
                 pass
         except Exception:
@@ -343,7 +354,15 @@ def run_store_server_app(app) -> int:
         release_store_server_lock()
         if tray:
             tray.hide()
-        QApplication.instance().quit(0)
+        app = QApplication.instance()
+        if app:
+            try:
+                app.quit()
+            except TypeError:
+                try:
+                    app.exit(0)
+                except Exception:
+                    pass
 
     def _on_close(event):
         # Cerrar ventana = ocultar; apagar solo con botón / menú
@@ -362,9 +381,9 @@ def run_store_server_app(app) -> int:
 
     win.closeEvent = _on_close  # type: ignore[method-assign]
     btn_hide.clicked.connect(win.hide)
-    btn_stop.clicked.connect(_shutdown_store)
+    btn_stop.clicked.connect(lambda *_: _shutdown_store())
     if getattr(win, "_tray_quit_action", None) is not None:
-        win._tray_quit_action.triggered.connect(_shutdown_store)
+        win._tray_quit_action.triggered.connect(lambda *_: _shutdown_store())
 
     timer = QTimer(win)
     timer.timeout.connect(_watchdog)
