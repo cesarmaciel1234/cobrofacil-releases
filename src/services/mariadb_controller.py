@@ -14,7 +14,24 @@ class MariaDBController:
             cls._instance = super(MariaDBController, cls).__new__(cls)
             cls._instance._process = None
             cls._initialized = False
+            cls._instance._start_lock = threading.Lock()
+            cls._instance._starting = False
         return cls._instance
+
+    def is_starting(self) -> bool:
+        with self._start_lock:
+            return self._starting
+
+    def wait_for_ready(self, timeout: float = 90.0) -> bool:
+        """Espera handshake MySQL (p. ej. mientras otro hilo ejecuta start_server)."""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if self._try_pymysql("1234", 1) or self._try_pymysql("", 1):
+                return True
+            if not self.is_starting() and not self._is_port_open():
+                return False
+            time.sleep(0.5)
+        return self._try_pymysql("1234", 2) or self._try_pymysql("", 2)
 
     def _get_base_dir(self):
         from src.utils.paths import get_base_path
@@ -147,6 +164,10 @@ class MariaDBController:
             logger.info("MariaDB ya está corriendo en este proceso.")
             return True
 
+        with self._start_lock:
+            if self._starting:
+                return self.wait_for_ready(90.0)
+
         # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
         if self._try_pymysql("1234", 2):
             logger.info("Servidor MariaDB ya está activo y respondiendo en el puerto 3306 (con contraseña).")
@@ -188,6 +209,12 @@ class MariaDBController:
 
         if not self._init_database_if_needed():
             return False
+
+        if _start_attempt == 0:
+            with self._start_lock:
+                if self._starting:
+                    return self.wait_for_ready(90.0)
+                self._starting = True
 
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
         
@@ -316,6 +343,10 @@ class MariaDBController:
         except Exception as e:
             logger.error(f"Fallo al iniciar MariaDB: {e}")
             return False
+        finally:
+            if _start_attempt == 0:
+                with self._start_lock:
+                    self._starting = False
 
     def _create_punpro_db(self):
         """Crea la base de datos principal si no existe en el motor local recién iniciado."""

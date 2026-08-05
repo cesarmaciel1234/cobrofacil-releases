@@ -177,6 +177,11 @@ class MariaDBEngine:
             if mariadb_controller._try_pymysql("1234", 1) or mariadb_controller._try_pymysql("", 1):
                 self._last_fail_time = 0
                 return True
+            if mariadb_controller.is_starting():
+                if mariadb_controller.wait_for_ready(90.0):
+                    self._last_fail_time = 0
+                    return True
+                return False
             logger.warning("MariaDB local no responde — intentando start_server()")
             if mariadb_controller.start_server():
                 self._last_fail_time = 0
@@ -190,6 +195,15 @@ class MariaDBEngine:
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         in_cooldown = time.time() - getattr(self, "_last_fail_time", 0) < 5
         if not self._is_remote_host(self.host):
+            try:
+                from src.services.mariadb_controller import mariadb_controller
+
+                if mariadb_controller.is_starting():
+                    if mariadb_controller.wait_for_ready(90.0):
+                        in_cooldown = False
+                        self._last_fail_time = 0
+            except Exception:
+                pass
             if self._maybe_start_local_mariadb():
                 in_cooldown = False
         if in_cooldown:

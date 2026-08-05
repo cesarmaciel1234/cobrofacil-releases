@@ -26,6 +26,17 @@ from src.utils.candados import (
 )
 
 
+def _mariadb_responsive(timeout: float = 1.0) -> bool:
+    try:
+        from src.services.mariadb_controller import mariadb_controller
+        return (
+            mariadb_controller._try_pymysql("1234", timeout)
+            or mariadb_controller._try_pymysql("", timeout)
+        )
+    except Exception:
+        return False
+
+
 def _mariadb_port_open(host: str = "127.0.0.1", port: int = 3306, timeout: float = 0.8) -> bool:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -266,7 +277,7 @@ def run_store_server_app(app) -> int:
         win._tray_quit_action = None
 
     def _refresh_status():
-        online = _mariadb_port_open() if _needs_mariadb() else True
+        online = (_mariadb_responsive(1.0) if _needs_mariadb() else True)
         pid = get_store_server_pid() or os.getpid()
         if online:
             status.setText(f"ONLINE — PID {pid}\nLa tienda es visible en la red (sin cajero).")
@@ -276,11 +287,15 @@ def run_store_server_app(app) -> int:
             status.setStyleSheet("font-size: 13px; font-weight: 700; color: #C2410C;")
 
     def _watchdog():
-        if _needs_mariadb() and not _mariadb_port_open():
-            logger.warning("Watchdog Servidor: MariaDB caída — reintentando start_server()")
+        if _needs_mariadb():
             try:
                 from src.services.mariadb_controller import mariadb_controller
-                mariadb_controller.start_server()
+                if mariadb_controller.is_starting():
+                    mariadb_controller.wait_for_ready(10.0)
+                elif not _mariadb_responsive(1.0):
+                    if not mariadb_controller.is_starting():
+                        logger.warning("Watchdog Servidor: MariaDB caída — reintentando start_server()")
+                        mariadb_controller.start_server()
             except Exception as e:
                 logger.error(f"Watchdog MariaDB: {e}")
         try:

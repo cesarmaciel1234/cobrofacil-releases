@@ -735,6 +735,7 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "circuit breaker",
             )
         )
 
