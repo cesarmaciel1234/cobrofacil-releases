@@ -4,6 +4,10 @@ import re
 
 # Supplementary-plane characters (4-byte UTF-8) break utf8mb3 columns (MySQL error 1366).
 _SUPPLEMENTARY_CHARS = re.compile(r"[\U00010000-\U0010ffff]")
+_OFFER_NAME_TAGS = (
+    "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
+    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ",
+)
 
 
 def safe_mariadb_text(value):
@@ -12,7 +16,12 @@ def safe_mariadb_text(value):
         return value
     if not isinstance(value, str):
         value = str(value)
-    return _SUPPLEMENTARY_CHARS.sub("", value)
+    text = value
+    for tag in _OFFER_NAME_TAGS:
+        text = text.replace(tag, "")
+    text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
+    text = _SUPPLEMENTARY_CHARS.sub("", text)
+    return "".join(ch for ch in text if ord(ch) <= 0xFFFF)
 
 
 def sanitize_mariadb_params(params):

@@ -3,22 +3,14 @@ import pymysql
 import threading
 import time
 from src.logger import logger
-from src.utils.text_db import sanitize_mariadb_params
-
-# Prefijos con emoji en nombres de oferta (incompatible con columnas utf8 legacy de MariaDB).
-_OFFER_NAME_TAGS = (
-    "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
-    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ",
-)
+from src.utils.text_db import sanitize_mariadb_params, safe_mariadb_text
 
 
 def mariadb_safe_text(value, max_len=None):
     """Texto seguro para columnas MariaDB utf8 (3-byte): sin emojis ni prefijos de oferta."""
-    text = str(value or "")
-    for tag in _OFFER_NAME_TAGS:
-        text = text.replace(tag, "")
-    text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
-    text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
+    text = safe_mariadb_text(value) if value is not None else ""
+    if text is None:
+        text = ""
     if max_len is not None:
         text = text[:max_len]
     return text
@@ -117,8 +109,8 @@ class MariaDBEngine:
     # Timeouts cortos en remoto: host caído no debe congelar la UI de esclava
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT_REMOTE = 3
-    # Local: inventario grande + cartelería pueden superar 3s (error 2013)
-    IO_TIMEOUT_LOCAL = 15
+    # Local: inventario grande + cartelería pueden superar 15s bajo carga (error 2013)
+    IO_TIMEOUT_LOCAL = 30
     # ALTER TABLE en inventario grande puede tardar varios minutos
     DDL_TIMEOUT = 600
     
@@ -138,7 +130,7 @@ class MariaDBEngine:
 
     def _connect_kwargs(self, host=None, password=None, read_timeout=None, write_timeout=None):
         io_timeout = self._default_io_timeout(host)
-        return dict(
+        kwargs = dict(
             host=host if host is not None else self.host,
             port=self.port,
             user=self.user,
@@ -150,6 +142,12 @@ class MariaDBEngine:
             read_timeout=read_timeout if read_timeout is not None else io_timeout,
             write_timeout=write_timeout if write_timeout is not None else io_timeout,
         )
+        if read_timeout is None and write_timeout is None:
+            kwargs["init_command"] = (
+                f"SET SESSION net_read_timeout={io_timeout}, "
+                f"net_write_timeout={io_timeout}"
+            )
+        return kwargs
 
     @staticmethod
     def _is_remote_host(host: str) -> bool:

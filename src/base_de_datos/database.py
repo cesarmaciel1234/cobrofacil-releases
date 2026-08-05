@@ -701,10 +701,16 @@ class DatabaseManager:
 
     def _nombre_producto_para_db(self, nombre):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
-        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
-            return mariadb_safe_text(nombre)
-        return nombre or ""
+        from src.db_engines.mariadb_engine import mariadb_safe_text
+        return mariadb_safe_text(nombre)
+
+    def _release_connection(self, conn) -> None:
+        """Cierra solo conexiones SQLite; MariaDB usa pool por hilo."""
+        if conn and getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -1719,8 +1725,7 @@ class DatabaseManager:
                         pass
                 return []
             finally:
-                if conn:
-                    conn.close()
+                self._release_connection(conn)
         return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
@@ -1758,8 +1763,7 @@ class DatabaseManager:
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
-                if conn:
-                    conn.close()
+                self._release_connection(conn)
         return False
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
@@ -1780,8 +1784,7 @@ class DatabaseManager:
                     pass
             return False
         finally:
-            if conn:
-                conn.close()
+            self._release_connection(conn)
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
@@ -1818,8 +1821,7 @@ class DatabaseManager:
                 logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
-                if conn:
-                    conn.close()
+                self._release_connection(conn)
         return None
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
@@ -1904,49 +1906,70 @@ class DatabaseManager:
                 logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
                 return None
         finally:
-            if conn: conn.close()
+            self._release_connection(conn)
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            
-            from datetime import datetime
-            fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            c_id = venta_data.get('caja_id', 1)
-            
-            cursor.execute("""
-                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
-                                   usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
-                venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
-                venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
-                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
-            ))
-            id_venta = cursor.lastrowid
-            
-            for it in items:
+        import time
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        max_attempts = 3 if is_mariadb else 1
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+
+                from datetime import datetime
+                fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                c_id = venta_data.get('caja_id', 1)
+
                 cursor.execute("""
-                    INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
-                
-                if it.get('id') and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
-            
-            conn.commit()
-            return True
-        except Exception as e:
-            if conn: conn.rollback()
-            logger.warning(f"Fallo en sync_venta_to_master: {e}")
-            return False
-        finally:
-            if conn: conn.close()
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                                       usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
+                    venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
+                    venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
+                    venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
+                    venta_data.get('cliente_nombre', '')
+                ))
+                id_venta = cursor.lastrowid
+
+                for it in items:
+                    cursor.execute("""
+                        INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+
+                    if it.get('id') and str(it['id']).strip() not in ('000', ''):
+                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
+
+                conn.commit()
+                return True
+            except Exception as e:
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                if attempt < max_attempts - 1 and is_mariadb and self._is_transient_mariadb_error(e):
+                    logger.warning(
+                        "sync_venta_to_master reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    self._reset_mariadb_thread_connection()
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                logger.warning(f"Fallo en sync_venta_to_master: {e}")
+                return False
+            finally:
+                self._release_connection(conn)
+        return False
 
     def get_efectivo_en_caja(self, caja_id: int = 1) -> float:
         """
