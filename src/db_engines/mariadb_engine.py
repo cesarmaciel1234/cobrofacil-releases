@@ -1,24 +1,13 @@
-import re
 import pymysql
 import threading
 import time
 from src.logger import logger
-from src.utils.text_db import sanitize_mariadb_params
-
-# Prefijos con emoji en nombres de oferta (incompatible con columnas utf8 legacy de MariaDB).
-_OFFER_NAME_TAGS = (
-    "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
-    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ",
-)
+from src.utils.text_db import sanitize_mariadb_params, safe_mariadb_text
 
 
 def mariadb_safe_text(value, max_len=None):
     """Texto seguro para columnas MariaDB utf8 (3-byte): sin emojis ni prefijos de oferta."""
-    text = str(value or "")
-    for tag in _OFFER_NAME_TAGS:
-        text = text.replace(tag, "")
-    text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
-    text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
+    text = safe_mariadb_text(value)
     if max_len is not None:
         text = text[:max_len]
     return text
