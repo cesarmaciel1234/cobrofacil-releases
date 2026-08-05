@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import threading
+import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
@@ -97,6 +98,7 @@ def download_release_zip(
             _download_parallel(
                 final_url, dest_path, part_path, total, verify, progress_callback
             )
+            _verify_downloaded_zip(dest_path)
             return
         except Exception as exc:
             _emit(progress_callback, f"Paralelo falló, modo único: {exc}", 0)
@@ -105,6 +107,15 @@ def download_release_zip(
     _download_single(
         session, final_url, dest_path, part_path, total, verify, progress_callback
     )
+    _verify_downloaded_zip(dest_path)
+
+
+def _verify_downloaded_zip(dest_path: str) -> None:
+    """Falla rápido si el ZIP local está truncado o con CRC inválido."""
+    with zipfile.ZipFile(dest_path, "r") as zf:
+        bad = zf.testzip()
+        if bad:
+            raise zipfile.BadZipFile(f"Bad CRC-32 for file '{bad}'")
 
 
 def _cleanup_partial_download(dest_path: str, part_path: str) -> None:

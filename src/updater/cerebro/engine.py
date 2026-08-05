@@ -659,7 +659,9 @@ def ensure_staging_ready(progress_callback=None) -> bool:
     try:
         _emit_progress(progress_callback, "Reconstruyendo paquete desde caché...", 96)
         return _extract_release_zip(zip_path, progress_callback=progress_callback)
-    except Exception:
+    except Exception as exc:
+        if _is_transient_download_error(exc):
+            _purge_partial_download_files()
         return False
 
 
@@ -781,6 +783,8 @@ def download_and_stage_update(progress_callback=None) -> bool:
         if ensure_staging_ready():
             _emit_progress(progress_callback, "Actualización ya descargada.", 100)
             return True
+        if _is_transient_download_error(exc):
+            _purge_partial_download_files()
         pending = _load_pending()
         pending["ready"] = False
         pending["last_error"] = err_text
