@@ -7,6 +7,20 @@ import logging
 
 logger = logging.getLogger("PunPro")
 
+
+def _sanitize_offline_items(items):
+    """Quita emojis/prefijos de oferta en nombres antes de persistir o sincronizar."""
+    from src.db_engines.mariadb_engine import mariadb_safe_text
+
+    clean = []
+    for it in items or []:
+        row = dict(it)
+        raw = row.get("nombre") or row.get("nombre_producto") or ""
+        row["nombre"] = mariadb_safe_text(raw)
+        clean.append(row)
+    return clean
+
+
 class OfflineSync:
     def __init__(self):
         self.base_path = get_base_path()
@@ -32,7 +46,7 @@ class OfflineSync:
             
             queue.append({
                 "venta_data": venta_data,
-                "items": items,
+                "items": _sanitize_offline_items(items),
                 "timestamp": time.time()
             })
             
@@ -56,7 +70,9 @@ class OfflineSync:
         logger.info(f"Sincronizando {len(queue)} ventas offline pendientes...")
         exitosas = []
         for i, record in enumerate(queue):
-            if db_manager.sync_venta_to_master(record["venta_data"], record["items"]):
+            if db_manager.sync_venta_to_master(
+                record["venta_data"], _sanitize_offline_items(record.get("items"))
+            ):
                 exitosas.append(i)
             else:
                 break
@@ -127,7 +143,7 @@ class OfflineSync:
             exitosas = []
             for i, record in enumerate(queue):
                 venta = record["venta_data"]
-                items = record["items"]
+                items = _sanitize_offline_items(record.get("items"))
                 
                 # Intentar sincronizar usando la abstracción de base de datos
                 success = db_manager.sync_venta_to_master(venta, items)

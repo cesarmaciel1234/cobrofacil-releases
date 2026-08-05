@@ -693,12 +693,16 @@ class DatabaseManager:
             logger.error(f"[RED LAN] Error en reconectar_mariadb: {e}")
             raise
 
+    @staticmethod
+    def _item_nombre_raw(item) -> str:
+        if not item:
+            return ""
+        return str(item.get("nombre") or item.get("nombre_producto") or "")
+
     def _nombre_producto_para_db(self, nombre):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
-        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
-            return mariadb_safe_text(nombre)
-        return nombre or ""
+        from src.db_engines.mariadb_engine import mariadb_safe_text
+        return mariadb_safe_text(nombre or "")
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -1660,25 +1664,44 @@ class DatabaseManager:
 
     def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
-            result = cursor.fetchall()
-            return result if result is not None else []
-        except Exception as e:
-            logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
-                try:
-                    logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                    self.reconectar_local()
-                except Exception:
-                    pass
-            return []
-        finally:
-            if conn:
-                conn.close()
+        import time
+
+        max_attempts = 2 if getattr(self, "db_engine_type", "sqlite") == "mariadb" else 1
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                cursor.execute(self._normalize_query(query), params)
+                result = cursor.fetchall()
+                return result if result is not None else []
+            except Exception as e:
+                err = str(e).lower()
+                transient = any(
+                    token in err
+                    for token in ("2013", "timed out", "timeout", "lost connection")
+                )
+                if attempt < max_attempts - 1 and transient:
+                    logger.warning(
+                        "Query reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
+                if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
+                    try:
+                        logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
+                        self.reconectar_local()
+                    except Exception:
+                        pass
+                return []
+            finally:
+                if conn:
+                    conn.close()
+        return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
         """Executes a non-query (INSERT, UPDATE, DELETE) and commits changes."""
@@ -1808,7 +1831,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], self._nombre_producto_para_db(it.get('nombre', '')), it['cant'], it['precio'], it['subtotal']))
+                """, (id_venta, it['id'], self._nombre_producto_para_db(self._item_nombre_raw(it)), it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
@@ -1831,9 +1854,12 @@ class DatabaseManager:
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            return False
         conn = None
         try:
-            conn = self.get_connection()
+            conn = engine.get_connection()
             cursor = conn.cursor()
             
             from datetime import datetime
@@ -1857,7 +1883,7 @@ class DatabaseManager:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(it.get('nombre', '')), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre_raw(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
