@@ -1129,17 +1129,43 @@ class DatabaseManager:
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
-                
-                # Verificar si el auto_increment actual está cerca o por encima del límite 32-bit (2147483647)
-                res = self.execute_query("SELECT MAX(id) as m FROM productos WHERE id < 2147483647")
-                if res and res[0].get('m') is not None:
-                    max_normal = res[0]['m']
-                    self.execute_non_query("UPDATE productos SET id = ? WHERE id >= 2147483647", (max_normal + 1,))
-                    new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}")
+            if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+                return
+            # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
+            self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
+
+            overflow = self.execute_query(
+                "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+            )
+            if not overflow:
+                return
+
+            next_id = self.execute_scalar(
+                "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+            ) or 0
+
+            for row in overflow:
+                old_id = row["id"]
+                next_id += 1
+                while self.execute_scalar(
+                    "SELECT 1 FROM productos WHERE id = ? LIMIT 1", (next_id,)
+                ):
+                    next_id += 1
+                old_s, new_s = str(old_id), str(next_id)
+                for tbl in ("detalles_ventas", "detalle_ventas"):
+                    try:
+                        self.execute_non_query(
+                            f"UPDATE {tbl} SET id_producto = ? WHERE id_producto IN (?, ?)",
+                            (new_s, old_s, old_id),
+                        )
+                    except Exception:
+                        pass
+                self.execute_non_query(
+                    "UPDATE productos SET id = ? WHERE id = ?", (next_id, old_id)
+                )
+
+            new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or next_id
+            self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {int(new_max) + 1}")
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
