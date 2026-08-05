@@ -1,7 +1,7 @@
 {
-  "app_version": "10.14.25",
+  "app_version": "10.14.26",
   "channel": "stable",
-  "build_date": "2026-08-04 21:35:00",
+  "build_date": "2026-08-05 19:38:04",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1320,9 +1320,9 @@
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
-      "checksum": "d3dfc4208e0d0ae867937ff4df989667",
+      "checksum": "23f4276ebd04d27518b7d36f0187c911",
       "channel": "stable",
-      "size": 3668
+      "size": 4108
     },
     "src/carteleria/utils_condiciones.py": {
       "version": "1.0.0",
@@ -1506,9 +1506,9 @@
     },
     "src/carteleria/interfaz_principal/vistas/display_promo_tv.py": {
       "version": "1.0.0",
-      "checksum": "392e08d957175d7c797acb08e7159bf8",
+      "checksum": "0603ae7fa4042ec6508f3540e3545ece",
       "channel": "stable",
-      "size": 9648
+      "size": 9721
     },
     "src/carteleria/interfaz_principal/vistas/__init__.py": {
       "version": "1.0.0",

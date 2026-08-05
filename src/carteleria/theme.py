@@ -29,9 +29,24 @@ THEME_TEMU = {
     "blue": "#FF0000",        # En este tema el azul es rojo
 }
 
+# Claves usadas por vistas (display_promo_tv, etc.) que pueden faltar en instalaciones antiguas.
+_THEME_REQUIRED_DEFAULTS = {
+    "bg_card": "#FFFFFF",
+    "border": "rgba(0, 0, 0, 0.08)",
+}
+
+
+def _ensure_required_theme_keys():
+    for key, default in _THEME_REQUIRED_DEFAULTS.items():
+        if key not in C_THEME:
+            C_THEME[key] = default
+
+
 # Diccionario activo
 C_THEME = THEME_TEMU.copy()
 _ACTIVE_THEME_NAME = "temu"
+_ensure_required_theme_keys()
+
 
 def set_theme(theme_name):
     global _ACTIVE_THEME_NAME
@@ -40,6 +55,7 @@ def set_theme(theme_name):
         C_THEME.update(THEME_TEMU)
     else:
         C_THEME.update(THEME_APPLE)
+    _ensure_required_theme_keys()
 
 def get_active_theme_name():
     return _ACTIVE_THEME_NAME
