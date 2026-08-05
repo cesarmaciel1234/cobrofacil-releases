@@ -1678,6 +1678,37 @@ class DatabaseManager:
         )
         return query
 
+    def query_productos_random(
+        self,
+        columns: str,
+        where_sql: str,
+        params: tuple = (),
+        limit: int = 10,
+    ) -> List[sqlite3.Row]:
+        """Muestra aleatoria de productos sin ORDER BY RAND() (evita timeout 2013 en inventarios grandes)."""
+        import random
+
+        id_rows = self.execute_query(
+            f"SELECT id FROM productos WHERE {where_sql}",
+            params,
+        )
+        if not id_rows:
+            return []
+
+        ids = [
+            row["id"] if isinstance(row, dict) else row[0]
+            for row in id_rows
+        ]
+        sample = random.sample(ids, min(limit, len(ids)))
+        if not sample:
+            return []
+
+        placeholders = ",".join("?" * len(sample))
+        return self.execute_query(
+            f"SELECT {columns} FROM productos WHERE id IN ({placeholders})",
+            tuple(sample),
+        )
+
     def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
         import time

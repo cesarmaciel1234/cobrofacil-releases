@@ -173,11 +173,21 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         cfg_data = json.load(f)
                         
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-                rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                
+                _cols_sos = (
+                    "nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock"
+                )
+                _cols_top = (
+                    "nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable"
+                )
+
                 # SOS
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
-                oferta_sos = db_manager.execute_query(sos_query)
+                oferta_sos = db_manager.query_productos_random(
+                    _cols_sos,
+                    "precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0)",
+                    limit=1,
+                )
                 
                 # Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
@@ -232,8 +242,12 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     pass
                 
                 # Si el real falló o está vacío por falta de ventas, rellenar con aleatorios
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
-                if not top_dict["hoy"]: top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                if not top_dict["hoy"]:
+                    top_dict["hoy"] = db_manager.query_productos_random(
+                        _cols_top,
+                        "precio > 0",
+                        limit=10,
+                    )
                 if not top_dict["semana"]: top_dict["semana"] = top_dict["hoy"]
                 if not top_dict["mes"]: top_dict["mes"] = top_dict["hoy"]
 
