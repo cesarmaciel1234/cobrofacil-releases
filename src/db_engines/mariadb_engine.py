@@ -47,6 +47,9 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif MariaDBEngine._is_transient_connect_error(e):
+                # execute_query reintenta; evitar ERROR duplicado en logs
+                pass
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
