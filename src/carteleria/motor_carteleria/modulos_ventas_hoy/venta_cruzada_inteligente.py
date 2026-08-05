@@ -1,7 +1,48 @@
 import random
+import time
 
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+from src.cerebro_global.servicios.cache_productos import cache_productos
+
+_CARTEL_NOMBRES = None
+_CARTEL_NOMBRES_TS = 0.0
+
+
+def _nombres_carteleria():
+    """Nombres en carteleria_global (una lectura por lote, sin TRIM/LOWER por producto)."""
+    global _CARTEL_NOMBRES, _CARTEL_NOMBRES_TS
+    now = time.time()
+    if _CARTEL_NOMBRES is not None and (now - _CARTEL_NOMBRES_TS) < 30:
+        return _CARTEL_NOMBRES
+    nombres = set()
+    try:
+        rows = db_manager.execute_query(
+            "SELECT nombre_producto FROM carteleria_global LIMIT 500"
+        ) or []
+        for row in rows:
+            nom = row.get("nombre_producto") if isinstance(row, dict) else row[0]
+            k = str(nom or "").strip().lower()
+            if k:
+                nombres.add(k)
+    except Exception:
+        pass
+    _CARTEL_NOMBRES = nombres
+    _CARTEL_NOMBRES_TS = now
+    return nombres
+
+
+def _existe_en_catalogo(nom_limpio):
+    key = nom_limpio.lower()
+    for p in cache_productos.obtener_todos():
+        pn = str(p.get("nombre") or "").strip().lower()
+        if pn == key or key in pn or pn in key:
+            return True
+    for cn in _nombres_carteleria():
+        if cn == key or key in cn or cn in key:
+            return True
+    return False
+
 
 class VentaCruzadaInteligente:
     """
@@ -34,15 +75,9 @@ class VentaCruzadaInteligente:
         if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en catálogo (caché en memoria; evita TRIM/LOWER → timeout 2013)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_p:
-                return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_c:
+            if _existe_en_catalogo(nom_limpio):
                 return True, nom_limpio
         except Exception:
             pass

@@ -45,7 +45,7 @@ class CacheProductos:
             rows = db_manager.execute_query(
                 "SELECT id, nombre, precio, costo, stock, cant_oferta, precio_oferta, "
                 "cant_mayoreo, precio_mayoreo, precio_oferta_relampago, precio_oferta_promedio, "
-                "departamento, categoria, unidad, es_pesable, codigo "
+                "departamento, categoria, unidad, es_pesable, codigo, tipo_unidad_oferta "
                 "FROM productos ORDER BY departamento, nombre"
             ) or []
             self._datos = rows

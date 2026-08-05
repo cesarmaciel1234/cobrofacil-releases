@@ -6,6 +6,55 @@ from src.logger import logger
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 from src.cerebro_global.carteleria_cerebro.motor_ia_local import MotorIALocal
+from src.cerebro_global.servicios.cache_productos import cache_productos
+
+
+def _indice_stock_unidad():
+    """Stock/unidad por nombre sin JOIN LOWER(productos) — evita timeout 2013 en MariaDB."""
+    idx = {}
+    for p in cache_productos.obtener_todos():
+        k = str(p.get("nombre") or "").strip().lower()
+        if k:
+            idx[k] = (float(p.get("stock") or 0), str(p.get("unidad") or ""))
+    return idx
+
+
+def _enriquecer_filas_carteleria(rows, idx_stock):
+    """Convierte filas de carteleria_global a tuplas con stock/unidad desde caché."""
+    enriched = []
+    for r in rows:
+        if isinstance(r, dict):
+            nombre = str(r.get("nombre_producto", ""))
+            precio = float(r.get("precio_normal") or 0)
+            precio_of = float(r.get("precio_oferta") or 0)
+            regla = str(r.get("regla_texto") or "")
+        else:
+            nombre = str(r[0])
+            precio = float(r[1] or 0)
+            precio_of = float(r[2] or 0)
+            regla = str(r[3] or "")
+        stock, unidad = idx_stock.get(nombre.strip().lower(), (0.0, ""))
+        enriched.append((nombre, precio, precio_of, regla, stock, unidad))
+    return enriched
+
+
+def _muestra_carteleria(where_sql="", params=(), pool_limit=40, sample_limit=5):
+    """Muestra aleatoria sin ORDER BY RAND() ni JOIN productos (timeout MariaDB 2013)."""
+    q = (
+        "SELECT nombre_producto, precio_normal, precio_oferta, regla_texto "
+        "FROM carteleria_global "
+    )
+    if where_sql:
+        q += f"WHERE {where_sql} "
+    q += "ORDER BY precio_oferta DESC LIMIT ?"
+    rows = db_manager.execute_query(q, params + (pool_limit,)) or []
+    if not rows:
+        return []
+    enriched = _enriquecer_filas_carteleria(rows, _indice_stock_unidad())
+    if len(enriched) <= sample_limit:
+        return enriched
+    return random.sample(enriched, sample_limit)
+
 
 class MotorCarrusel(QThread):
     datos_listos = pyqtSignal(list, str)
@@ -66,16 +115,8 @@ class MotorCombos(QThread):
             
             eleccion = random.choice([0, 1])
             
-            # Buscar productos en oferta desde carteleria_global (sin ORDER BY RAND: timeout en MariaDB)
-            q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-                WHERE c.precio_oferta > 0
-            """
-            rows = db_manager.execute_query(q)
-            if rows:
-                rows = random.sample(list(rows), min(5, len(rows)))
+            # Buscar productos en oferta (sin RAND/JOIN LOWER: timeout 2013 en MariaDB)
+            rows = _muestra_carteleria("precio_oferta > 0", (), 40, 5)
             
             if not rows: return
             
@@ -174,14 +215,7 @@ class MotorIAPanel(QThread):
                     pass
             
             # Si es turno 0 o si no había combos guardados, mostramos a Chef Lobo y su recomendación con clima
-            q = """
-                SELECT c.nombre_producto, c.precio_normal, c.precio_oferta, c.regla_texto, p.stock, p.unidad 
-                FROM carteleria_global c
-                LEFT JOIN productos p ON LOWER(c.nombre_producto) = LOWER(p.nombre)
-            """
-            rows = db_manager.execute_query(q)
-            if rows:
-                rows = random.sample(list(rows), min(5, len(rows)))
+            rows = _muestra_carteleria("", (), 40, 5)
             if not rows or self.isInterruptionRequested(): return
             
             prod_lista = []

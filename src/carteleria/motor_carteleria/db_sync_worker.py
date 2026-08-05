@@ -8,6 +8,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 from src.config import config
 from src.utils.paths import get_base_path
 from src.central_red_global.network_engine import get_network_engine
+from src.cerebro_global.servicios.cache_productos import cache_productos
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
@@ -89,9 +90,16 @@ class DbSyncWorker(QThread):
                 sos_rows = db_manager.execute_query(sos_query)
                 oferta_sos = random.sample(sos_rows, min(10, len(sos_rows))) if sos_rows else []
                 
-                # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
-                rows_precios = db_manager.execute_query(precios_query)
+                # 3. Precios (desde caché: evita ORDER BY categoria sobre toda la tabla → timeout 2013)
+                rows_precios = sorted(
+                    (
+                        p for p in cache_productos.obtener_todos()
+                        if float(p.get("precio") or 0) > 0
+                        and "articulo comun" not in str(p.get("nombre") or "").lower()
+                        and "venta libre" not in str(p.get("nombre") or "").lower()
+                    ),
+                    key=lambda p: str(p.get("categoria") or ""),
+                )
                 
                 # Top Ventas reales (Hoy, Semana, Mes); fallback sin RAND en SQL
                 if is_mariadb:
