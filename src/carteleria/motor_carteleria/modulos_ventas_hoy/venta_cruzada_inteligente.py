@@ -1,3 +1,5 @@
+import random
+
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
 
@@ -119,10 +121,11 @@ class VentaCruzadaInteligente:
                             
             # 4. Si la base de datos es súper nueva o aún faltan para completar el número exacto, completamos con el catálogo en stock
             if len(nombres_resultado) < limit:
-                q_stock = "SELECT nombre FROM productos WHERE stock > 0 ORDER BY RANDOM() LIMIT ?"
-                if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
-                    q_stock = q_stock.replace("RANDOM()", "RAND()")
-                rows_stock = db_manager.execute_query(q_stock, (limit * 4,))
+                fetch_limit = limit * 4
+                q_stock = "SELECT nombre FROM productos WHERE stock > 0 ORDER BY nombre LIMIT ?"
+                rows_stock = db_manager.execute_query(q_stock, (fetch_limit,))
+                if rows_stock:
+                    rows_stock = random.sample(list(rows_stock), min(fetch_limit, len(rows_stock)))
                 if rows_stock:
                     for s in rows_stock:
                         nom_raw = str(s[0] if not isinstance(s, dict) else s.get('nombre', '')).strip()
