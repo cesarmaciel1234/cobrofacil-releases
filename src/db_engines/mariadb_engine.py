@@ -209,7 +209,8 @@ class MariaDBEngine:
         except Exception:
             pass
         now = time.time()
-        if now - getattr(self, "_last_start_attempt", 0) < 5:
+        in_cooldown = now - getattr(self, "_last_fail_time", 0) < 5
+        if not in_cooldown and now - getattr(self, "_last_start_attempt", 0) < 5:
             return False
         self._last_start_attempt = now
         try:
@@ -259,6 +260,16 @@ class MariaDBEngine:
             if in_cooldown and self._probe_local_mariadb_ready():
                 self._last_fail_time = 0
                 in_cooldown = False
+            if in_cooldown:
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+
+                    if mariadb_controller._is_port_open() or mariadb_controller.is_starting():
+                        if mariadb_controller.wait_until_ready(8.0):
+                            self._last_fail_time = 0
+                            in_cooldown = False
+                except Exception:
+                    pass
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 

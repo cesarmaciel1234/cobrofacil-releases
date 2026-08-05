@@ -162,8 +162,19 @@ class MariaDBController:
         self._ensure_firewall()
         
         if self._process is not None and self._process.poll() is None:
-            logger.info("MariaDB ya está corriendo en este proceso.")
-            return True
+            if self._try_pymysql("1234", 2) or self._try_pymysql("", 2):
+                logger.info("MariaDB ya está corriendo en este proceso.")
+                self._initialized = True
+                self._create_punpro_db()
+                return True
+            logger.warning(
+                "Proceso mysqld local sin handshake — reiniciando arranque..."
+            )
+            try:
+                self._process.kill()
+            except Exception:
+                pass
+            self._process = None
 
         # Verificar si ya hay un servidor MariaDB local escuchando y respondiendo
         if self._try_pymysql("1234", 2):

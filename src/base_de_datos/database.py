@@ -2222,12 +2222,33 @@ class DatabaseManager:
                     conn.close()
         return False
 
+    def _mariadb_recently_unreachable(self) -> bool:
+        """True si MariaDB local falló hace poco (evita cascada de scalars en cooldown)."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            return False
+        import time
+
+        if time.time() - getattr(engine, "_last_fail_time", 0) < 5:
+            return True
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            return mariadb_controller.is_starting()
+        except Exception:
+            return False
+
     def get_efectivo_en_caja(self, caja_id: int = 1) -> float:
         """
         Calcula el efectivo neto en caja para el turno activo de una caja específica,
         sumando el fondo de apertura, las ventas en efectivo (completadas o cerradas)
         desde la apertura, más los ingresos manuales, y restando los retiros.
         """
+        if self._mariadb_recently_unreachable():
+            return 0.0
+
         # 1. Encontrar el último movimiento de apertura para esta caja
         query_apertura = """
             SELECT fecha, monto 
@@ -2237,6 +2258,8 @@ class DatabaseManager:
         """
         aperturas = self.execute_query(query_apertura, (caja_id,))
         if not aperturas:
+            if self._mariadb_recently_unreachable():
+                return 0.0
             # Si no hay apertura registrada para esta caja, hacemos fallback histórico para esta caja
             query_ventas = "SELECT SUM(pago_efectivo - cambio) FROM ventas WHERE caja_id = ? AND estado IN ('COMPLETADA', 'COMPLETADO')"
             query_retiros = "SELECT SUM(monto) FROM movimientos_caja WHERE caja_id = ? AND tipo='RETIRO'"
