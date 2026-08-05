@@ -321,6 +321,12 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             ok, detail = _try_connect(remote, as_slave=True)
             if ok:
                 return HealResult(True, "reconnect_slave", detail)
+        try:
+            db_manager.reconectar_local()
+            if hasattr(db_manager, "is_connected") and db_manager.is_connected():
+                return HealResult(True, "fallback_local_sqlite", ",".join(remotes))
+        except Exception:
+            pass
         return HealResult(
             False,
             "reconnect_slave",
