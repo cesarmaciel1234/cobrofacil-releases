@@ -348,34 +348,42 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
             return False, str(e)
         return True, host
 
-    # 1) Rol esclavo / maestra remota conocida
-    if slave_intent and remotes:
-        for remote in remotes:
-            if not _probe_tcp(remote):
-                continue
-            ok, detail = _try_connect(remote, as_slave=True)
-            if ok:
-                return HealResult(True, "reconnect_slave", detail)
-        # Maestra caída: esclava sigue operando en SQLite local (no abrir Issue)
-        if slave_intent:
+    # 1) Rol esclavo / maestra remota conocida (nunca insistir en localhost)
+    if slave_intent:
+        all_remotes = list(remotes)
+        for key in ("carteleria_master_ip", "preferred_master_ip"):
+            try:
+                val = str(config.get(key) or "").strip()
+            except Exception:
+                val = ""
+            if val and not _is_loopback_host(val) and val not in all_remotes:
+                all_remotes.append(val)
+        if all_remotes:
+            for remote in all_remotes:
+                if not _probe_tcp(remote):
+                    continue
+                ok, detail = _try_connect(remote, as_slave=True)
+                if ok:
+                    return HealResult(True, "reconnect_slave", detail)
+            # Maestra caída: esclava sigue operando en SQLite local (no abrir Issue)
             try:
                 db_manager.reconectar_local()
                 return HealResult(
                     True,
                     "offline_local_slave",
-                    "maestra_inalcanzable:" + ",".join(remotes),
+                    "maestra_inalcanzable:" + ",".join(all_remotes),
                 )
             except Exception as e:
                 return HealResult(
                     False,
                     "reconnect_slave",
-                    f"maestra_inalcanzable:{','.join(remotes)};offline:{e}",
+                    f"maestra_inalcanzable:{','.join(all_remotes)};offline:{e}",
                 )
-        return HealResult(
-            False,
-            "reconnect_slave",
-            "maestra_inalcanzable:" + ",".join(remotes),
-        )
+        try:
+            db_manager.reconectar_local()
+            return HealResult(True, "offline_local_slave", "esclava_sin_ip_maestra")
+        except Exception as e:
+            return HealResult(False, "reconnect_slave", f"esclava_sin_ip_maestra:{e}")
 
     # 2) Maestra local (localhost caído)
     host = ""
@@ -390,7 +398,18 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     except Exception:
         host = "127.0.0.1"
 
-    if _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob:
+    # No usar "localhost" del mensaje interno de pymysql como señal de cura local
+    # si esta PC opera como esclava (db_host / carteleria apuntan a otra máquina).
+    try:
+        from src.central_red_global.master_presence import es_pc_maestra_local
+
+        es_maestra_local = es_pc_maestra_local()
+    except Exception:
+        es_maestra_local = not remotes
+
+    if es_maestra_local and (
+        _is_loopback_host(host) or "localhost" in blob or "127.0.0.1" in blob
+    ):
         try:
             from src.services.mariadb_controller import mariadb_controller
 
