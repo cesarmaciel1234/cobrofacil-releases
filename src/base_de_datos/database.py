@@ -833,6 +833,7 @@ class DatabaseManager:
                 self._create_tables()
             except Exception as ex:
                 logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
             return True
         except Exception as ex:
             logger.warning(f"No se pudo reparar tablas huérfanas (1932): {ex}")
@@ -843,6 +844,40 @@ class DatabaseManager:
                     conn.close()
                 except Exception:
                     pass
+
+    def _escalate_mariadb_ghost_failure(self, query: str) -> None:
+        """Último recurso: autoblindaje / respaldo si persisten tablas huérfanas (1932)."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        if not getattr(self, "is_master", False):
+            return
+        host = getattr(getattr(self, "mariadb_engine", None), "host", None) or "127.0.0.1"
+        if str(host).lower() not in ("127.0.0.1", "localhost", ""):
+            return
+        if getattr(self, "_ghost_escalated", False):
+            return
+        self._ghost_escalated = True
+        logger.warning("Persisten errores ghost 1932; escalando a autoblindaje...")
+        try:
+            self._repair_ghost_tables_from_query(query)
+            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+            healed = AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host)
+            if not healed:
+                healed = AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                    "mariadb",
+                    allow_older_than_today=True,
+                    merge_today=True,
+                    mariadb_host=host,
+                )
+            if not healed:
+                healed = AutoBlindajeDB._recrear_tablas_criticas_mariadb(host)
+            if healed:
+                self._create_tables()
+                self._migrate_db()
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+        except Exception as ex:
+            logger.warning("Escalación ghost 1932 falló: %s", ex)
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1164,6 +1199,7 @@ class DatabaseManager:
                         "corrupt" in err
                         or "1877" in err
                         or "drop the table and recreate" in err
+                        or self._is_mariadb_ghost_table_error(e)
                     )
                 )
                 if is_corrupt and not corruption_recovered:
@@ -1854,6 +1890,8 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
+                if ghost_err:
+                    self._escalate_mariadb_ghost_failure(query)
                 if is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(f"Query execution error: {e} | Query: {query} | Params: {params}")
                 else:
@@ -1908,6 +1946,8 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
+                if ghost_err:
+                    self._escalate_mariadb_ghost_failure(query)
                 if is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 else:
@@ -1920,24 +1960,52 @@ class DatabaseManager:
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
         """Executes a bulk non-query operation using executemany and commits changes."""
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            cursor.executemany(self._normalize_query(query), params_list)
-            conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"Execute_many error: {e} | Query: {query}")
-            if conn:
-                try:
-                    conn.rollback()
-                except Exception:
-                    pass
-            return False
-        finally:
-            if conn:
-                conn.close()
+        import time
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        max_attempts = 3 if is_mariadb else 1
+
+        for attempt in range(max_attempts):
+            conn = None
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                cursor.executemany(self._normalize_query(query), params_list)
+                conn.commit()
+                return True
+            except Exception as e:
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(query)
+                    logger.warning(
+                        "Execute_many reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    self._reset_mariadb_thread_connection(
+                        clear_circuit_breaker="circuit breaker" in str(e).lower()
+                    )
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                if ghost_err:
+                    self._escalate_mariadb_ghost_failure(query)
+                if is_mariadb and self._is_transient_mariadb_error(e):
+                    logger.warning(f"Execute_many error: {e} | Query: {query}")
+                else:
+                    logger.error(f"Execute_many error: {e} | Query: {query}")
+                return False
+            finally:
+                if conn:
+                    conn.close()
+        return False
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
@@ -1977,6 +2045,8 @@ class DatabaseManager:
                     )
                     time.sleep(1.0 * (attempt + 1))
                     continue
+                if ghost_err:
+                    self._escalate_mariadb_ghost_failure(query)
                 if is_mariadb and self._is_transient_mariadb_error(e):
                     logger.warning(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 else:
