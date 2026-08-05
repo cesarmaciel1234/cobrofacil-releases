@@ -845,12 +845,40 @@ class DatabaseManager:
             logger.warning(f"Error creando tabla configuracion (compat): {e}")
 
         # Crear índice para optimizar búsqueda instantánea
-        for q_idx in [
+        idx_queries = [
             "CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre(100))",
             "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha)",
             "CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_caja (fecha)",
-            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)"
-        ]:
+            "CREATE INDEX IF NOT EXISTS idx_ventas_estado ON ventas (estado)",
+        ]
+        if (
+            getattr(self, "db_engine_type", "sqlite") == "mariadb"
+            and getattr(self, "is_master", False)
+        ):
+            try:
+                from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+
+                host = getattr(getattr(self, "mariadb_engine", None), "host", "127.0.0.1")
+                if not AutoBlindajeDB.verificar_integridad("mariadb", host):
+                    logger.warning(
+                        "Tablas corruptas detectadas antes de índices; ejecutando autoblindaje..."
+                    )
+                    if not AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
+                        AutoBlindajeDB.restaurar_ultimo_backup_valido(
+                            "mariadb",
+                            allow_older_than_today=True,
+                            merge_today=True,
+                            mariadb_host=host,
+                        )
+                    if not AutoBlindajeDB.verificar_integridad("mariadb", host):
+                        logger.warning(
+                            "Omitiendo creación de índices: tablas aún corruptas tras autoblindaje."
+                        )
+                        idx_queries = []
+            except Exception as e:
+                logger.warning(f"No se pudo verificar tablas antes de índices: {e}")
+
+        for q_idx in idx_queries:
             try:
                 cursor.execute(q_idx)
             except Exception:

@@ -12,6 +12,22 @@ _OFFER_NAME_TAGS = (
 )
 
 
+def _is_table_corruption_error(exc: BaseException) -> bool:
+    msg = str(exc).lower()
+    errno = getattr(exc, "args", (None,))[0]
+    return (
+        errno == 1877
+        or "1877" in msg
+        or "corrupt" in msg
+        or "drop the table and recreate" in msg
+    )
+
+
+def _is_optional_schema_ddl(query: str) -> bool:
+    q = query.strip().upper()
+    return q.startswith("CREATE INDEX IF NOT EXISTS")
+
+
 def mariadb_safe_text(value, max_len=None):
     """Texto seguro para columnas MariaDB utf8 (3-byte): sin emojis ni prefijos de oferta."""
     text = str(value or "")
@@ -48,7 +64,14 @@ class MariaDBCursorWrapper:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
-            logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
+            if _is_table_corruption_error(e) and _is_optional_schema_ddl(query):
+                logger.warning(
+                    "Tabla MariaDB dañada; omitiendo DDL opcional: %s | Q: %s",
+                    e,
+                    query,
+                )
+            else:
+                logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
 
     def executemany(self, query, params_list):
