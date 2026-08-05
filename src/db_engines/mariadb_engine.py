@@ -41,6 +41,17 @@ class MariaDBCursorWrapper:
                        r'CAST(\1 AS CHAR)', query, flags=re.IGNORECASE)
         return query
 
+    @staticmethod
+    def _is_table_corruption_error(exc: BaseException) -> bool:
+        msg = str(exc).lower()
+        code = exc.args[0] if getattr(exc, "args", None) else None
+        try:
+            if int(code) == 1877:
+                return True
+        except (TypeError, ValueError):
+            pass
+        return "corrupt" in msg or "drop the table and recreate" in msg
+
     def execute(self, query, params=None):
         try:
             mq = self._translate_query(query)
@@ -48,7 +59,10 @@ class MariaDBCursorWrapper:
                 return self._cursor.execute(mq, sanitize_mariadb_params(params))
             return self._cursor.execute(mq)
         except Exception as e:
-            logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
+            if self._is_table_corruption_error(e):
+                logger.warning(f"Tabla MariaDB corrupta (auto-reparación): {e} | Q: {query}")
+            else:
+                logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise
 
     def executemany(self, query, params_list):

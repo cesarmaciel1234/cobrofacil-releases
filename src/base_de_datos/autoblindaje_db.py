@@ -730,6 +730,33 @@ class AutoBlindajeDB:
         except Exception:
             return False
 
+    @staticmethod
+    def is_corruption_error(exc: BaseException) -> bool:
+        """True si MariaDB reporta tabla InnoDB corrupta (p. ej. errno 1877)."""
+        msg = str(exc).lower()
+        code = exc.args[0] if getattr(exc, "args", None) else None
+        try:
+            if int(code) == 1877:
+                return True
+        except (TypeError, ValueError):
+            pass
+        return "corrupt" in msg or "drop the table and recreate" in msg
+
+    @classmethod
+    def recuperar_severa_mariadb(cls, host: str = "127.0.0.1") -> bool:
+        """REPAIR → restore con merge → recrear tablas críticas si la corrupción persiste."""
+        if cls.auto_reparar_o_restaurar("mariadb", host):
+            return cls.verificar_integridad("mariadb", host)
+        restored = cls.restaurar_ultimo_backup_valido(
+            "mariadb",
+            allow_older_than_today=True,
+            merge_today=True,
+            mariadb_host=host,
+        )
+        if restored:
+            return cls.verificar_integridad("mariadb", host)
+        return cls._recrear_tablas_criticas_mariadb(host)
+
     @classmethod
     def _check_mariadb_integrity(cls, host: str) -> bool:
         try:
@@ -739,18 +766,31 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
-            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias;")
+            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
             rows = cursor.fetchall()
-            conn.close()
             for r in rows:
-                msg = r[3]
-                if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
+                msg = " ".join(str(x) for x in r[3:]).lower() if len(r) >= 4 else str(r).lower()
+                if msg not in ("ok", "table is already up to date"):
                     if "doesn't exist" in msg:
                         continue
                     logger.warning(f"Resultado de verificación tabla: {r}")
+                    conn.close()
                     return False
+            # CHECK TABLE a veces no marca 1877; SHOW COLUMNS sí falla en ventas corrupta.
+            for table in ("ventas", "clientes"):
+                try:
+                    cursor.execute(f"SHOW COLUMNS FROM `{table}`")
+                    cursor.fetchall()
+                except Exception as probe_exc:
+                    if cls.is_corruption_error(probe_exc):
+                        logger.warning(f"Probe de integridad falló en {table}: {probe_exc}")
+                        conn.close()
+                        return False
+            conn.close()
             return True
-        except Exception:
+        except Exception as e:
+            if cls.is_corruption_error(e):
+                return False
             return True
 
     @classmethod

@@ -704,7 +704,7 @@ class DatabaseManager:
             pass
 
         
-        def add_column_if_not_exists(table, col_name, col_type):
+        def add_column_if_not_exists(table, col_name, col_type, _retry=True):
             try:
                 if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
                     cursor.execute(f"SHOW COLUMNS FROM {table}")
@@ -720,6 +720,23 @@ class DatabaseManager:
                 if col_name not in columns:
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
             except Exception as e:
+                if (
+                    _retry
+                    and getattr(self, 'db_engine_type', 'sqlite') == 'mariadb'
+                ):
+                    try:
+                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
+                        if AutoBlindajeDB.is_corruption_error(e):
+                            host = getattr(self.mariadb_engine, 'host', '127.0.0.1') if self.mariadb_engine else '127.0.0.1'
+                            logger.warning(
+                                f"Corrupción en {table} durante migración; "
+                                "ejecutando protocolo de recuperación..."
+                            )
+                            if AutoBlindajeDB.recuperar_severa_mariadb(host):
+                                add_column_if_not_exists(table, col_name, col_type, _retry=False)
+                                return
+                    except Exception as heal_exc:
+                        logger.warning(f"Auto-recuperación de {table} falló: {heal_exc}")
                 logger.warning(f"Error migrando columna {col_name} en tabla {table}: {e}")
 
         # Columnas industriales necesarias
