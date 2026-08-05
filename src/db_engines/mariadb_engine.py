@@ -40,7 +40,7 @@ class MariaDBCursorWrapper:
             err_msg = str(e).lower()
             args = getattr(e, "args", None)
             is_ghost = (
-                (args and args[0] == 1932)
+                (args and str(args[0]) == "1932")
                 or "1932" in err_msg
                 or "doesn't exist in engine" in err_msg
                 or "does not exist in engine" in err_msg
@@ -259,6 +259,18 @@ class MariaDBEngine:
             if in_cooldown and self._probe_local_mariadb_ready():
                 self._last_fail_time = 0
                 in_cooldown = False
+            if in_cooldown and self._wait_local_mariadb_if_starting(10.0):
+                self._last_fail_time = 0
+                in_cooldown = False
+            elif in_cooldown:
+                try:
+                    from src.services.mariadb_controller import mariadb_controller
+
+                    if mariadb_controller._is_port_open() and mariadb_controller.wait_until_ready(10.0):
+                        self._last_fail_time = 0
+                        in_cooldown = False
+                except Exception:
+                    pass
         if in_cooldown:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
 
