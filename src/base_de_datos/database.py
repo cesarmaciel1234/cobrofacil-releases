@@ -721,6 +721,9 @@ class DatabaseManager:
     @staticmethod
     def _is_mariadb_ghost_table_error(exc: BaseException) -> bool:
         """MariaDB 1932: metadatos de tabla sin archivos InnoDB (CREATE IF NOT EXISTS no repara)."""
+        args = getattr(exc, "args", None)
+        if args and args[0] == 1932:
+            return True
         msg = str(exc).lower()
         return (
             "1932" in msg
@@ -780,24 +783,37 @@ class DatabaseManager:
     def _probe_and_repair_mariadb_ghost_tables(self, cursor) -> list:
         """Detecta y elimina metadatos huérfanos (1932) en tablas críticas."""
         dropped = []
-        for table in self.MARIADB_GHOST_PROBE_TABLES:
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        if is_mariadb:
             try:
-                cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
-            except Exception as e:
-                if self._is_mariadb_ghost_table_error(e):
-                    try:
-                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
-                        dropped.append(table)
-                        logger.warning(
-                            "Tabla %s huérfana en MariaDB (1932); metadatos eliminados.",
-                            table,
-                        )
-                    except Exception as drop_ex:
-                        logger.warning(
-                            "No se pudo eliminar metadatos huérfanos de %s: %s",
-                            table,
-                            drop_ex,
-                        )
+                cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+            except Exception:
+                pass
+        try:
+            for table in self.MARIADB_GHOST_PROBE_TABLES:
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        try:
+                            cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                            dropped.append(table)
+                            logger.warning(
+                                "Tabla %s huérfana en MariaDB (1932); metadatos eliminados.",
+                                table,
+                            )
+                        except Exception as drop_ex:
+                            logger.warning(
+                                "No se pudo eliminar metadatos huérfanos de %s: %s",
+                                table,
+                                drop_ex,
+                            )
+        finally:
+            if is_mariadb:
+                try:
+                    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+                except Exception:
+                    pass
         return dropped
 
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
@@ -911,6 +927,12 @@ class DatabaseManager:
         if table == "configuracion":
             self._ensure_configuracion_table(cursor)
             return
+        fk_disabled = False
+        try:
+            cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+            fk_disabled = True
+        except Exception:
+            pass
         try:
             cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
         except Exception as e:
@@ -922,6 +944,12 @@ class DatabaseManager:
                 cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
             else:
                 raise
+        finally:
+            if fk_disabled:
+                try:
+                    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+                except Exception:
+                    pass
 
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
