@@ -1211,12 +1211,49 @@ class DatabaseManager:
             logger.error(f"Error obteniendo latido: {e}")
             return None
 
+    def _activar_fallback_esclava_local(self):
+        """Esclava sin maestra: SQLite local temporal conservando is_master=false."""
+        if getattr(self, "_forced_local_offline", False):
+            return
+        from src.utils.paths import get_base_path
+        import json
+
+        base_path = get_base_path()
+        db_name = "punpro.db"
+        try:
+            cfg_path = os.path.join(base_path, "config.json")
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg_data = json.load(f)
+            db_name = cfg_data.get("db_name", "punpro.db") or "punpro.db"
+        except Exception:
+            pass
+
+        self.mariadb_engine = None
+        self.db_path = os.path.join(base_path, db_name)
+        self.db_engine_type = "sqlite"
+        self.is_master = False
+        self._forced_local_offline = True
+        self._create_tables()
+
     def get_connection(self):
         """Returns a new connection to the database (SQLite o MariaDB)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
+                # Esclava: timeout/red transitoria → SQLite local sin reportar ERROR
+                if not getattr(self, "is_master", True):
+                    try:
+                        logger.warning(
+                            "[RED LAN] Maestra inalcanzable (%s). Fallback SQLite local.",
+                            e,
+                        )
+                        self._activar_fallback_esclava_local()
+                        conn = sqlite3.connect(self.db_path, timeout=30.0)
+                        conn.row_factory = sqlite3.Row
+                        return conn
+                    except Exception:
+                        pass
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
             
