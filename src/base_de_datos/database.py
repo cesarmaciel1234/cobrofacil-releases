@@ -833,6 +833,36 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error sembrando departamentos: {e}")
 
+        # Crear tabla categorias si no existe (rubros / departamentos de mercadería)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla categorias en migración: {e}")
+
+        add_column_if_not_exists('categorias', 'icono', 'TEXT')
+
+        try:
+            cursor.execute("SELECT COUNT(*) FROM categorias")
+            res = cursor.fetchone()
+            count_val = list(res.values())[0] if isinstance(res, dict) else (res[0] if res else 0)
+            if count_val == 0:
+                seed_cat = (
+                    "INSERT IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos "
+                    "WHERE categoria IS NOT NULL AND categoria != ''"
+                    if getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                    else "INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos "
+                    "WHERE categoria IS NOT NULL AND categoria != ''"
+                )
+                cursor.execute(seed_cat)
+        except Exception as e:
+            logger.warning(f"Error sembrando categorias: {e}")
+
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'detalle_ventas' (alias de 'detalles_ventas') ──
         # Algunos módulos usan el nombre sin la 's' final. Creamos la tabla con ese nombre
         # como copia de estructura, y un trigger que redirige INSERT/DELETE a la tabla real.

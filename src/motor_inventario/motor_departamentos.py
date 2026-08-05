@@ -5,16 +5,18 @@ except ImportError:
     from database import db_manager
 
 class MotorDepartamentos:
-    _tablas_inicializadas = False
+    _semilla_aplicada_engine = None
 
     def __init__(self):
         self.logger = logging.getLogger("MotorDepartamentos")
-        # Asegurar que las tablas existan solo una vez por ciclo de vida
-        if not MotorDepartamentos._tablas_inicializadas:
-            self._inicializar_tablas()
-            MotorDepartamentos._tablas_inicializadas = True
-            
-    def _inicializar_tablas(self):
+        # CREATE IF NOT EXISTS es idempotente; evita 1146 si el flag one-shot saltó la migración.
+        self._crear_tablas()
+        engine_key = getattr(db_manager, "db_engine_type", "sqlite")
+        if MotorDepartamentos._semilla_aplicada_engine != engine_key:
+            self._sembrar_categorias_desde_productos()
+            MotorDepartamentos._semilla_aplicada_engine = engine_key
+
+    def _crear_tablas(self):
         db_manager.execute_non_query('''
             CREATE TABLE IF NOT EXISTS departamentos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,8 +59,11 @@ class MotorDepartamentos:
         except Exception:
             pass
 
-        # Auto-poblar categorías desde productos si está vacío
-        db_manager.execute_non_query("INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
+    def _sembrar_categorias_desde_productos(self):
+        db_manager.execute_non_query(
+            "INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos "
+            "WHERE categoria IS NOT NULL AND categoria != ''"
+        )
 
     def obtener_departamentos(self):
         """Devuelve una lista de diccionarios con los departamentos, su IVA e ícono."""
