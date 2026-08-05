@@ -4,6 +4,7 @@ import threading
 import time
 
 from src.base_de_datos.database import db_manager
+from src.cerebro_global.servicios.cache_productos import cache_productos
 from src.logger import logger
 
 
@@ -46,12 +47,11 @@ class SincronizadorCarteleria:
 
     def sincronizar_ahora(self):
         try:
-            query_productos = """
-                SELECT categoria, nombre, precio, precio_oferta, cant_oferta, tipo_unidad_oferta, unidad
-                FROM productos
-                WHERE precio > 0
-            """
-            filas = db_manager.execute_query(query_productos)
+            # Catálogo en memoria: evita SELECT masivo a productos cada 30s (timeout 2013 en MariaDB)
+            filas = [
+                row for row in cache_productos.obtener_todos()
+                if float(row.get("precio") or 0) > 0
+            ]
             if not filas:
                 return
 

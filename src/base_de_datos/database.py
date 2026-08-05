@@ -735,8 +735,20 @@ class DatabaseManager:
             for token in (
                 "2003", "2002", "2013", "2006",
                 "timed out", "timeout", "lost connection", "can't connect",
+                "10054", "forzado", "interrup",
             )
         )
+
+    def _release_query_connection(self, conn) -> None:
+        """Cierra conexiones SQLite; MariaDB conserva el pool por hilo (evita tormenta de reconexiones)."""
+        if conn is None:
+            return
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            return
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1725,8 +1737,7 @@ class DatabaseManager:
                         pass
                 return []
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return []
 
     def execute_non_query(self, query: str, params: tuple = ()) -> bool:
@@ -1764,8 +1775,7 @@ class DatabaseManager:
                 logger.error(f"Non-query execution error: {e} | Query: {query} | Params: {params}")
                 return False
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return False
 
     def execute_many(self, query: str, params_list: List[tuple]) -> bool:
@@ -1786,8 +1796,7 @@ class DatabaseManager:
                     pass
             return False
         finally:
-            if conn:
-                conn.close()
+            self._release_query_connection(conn)
 
     def execute_scalar(self, query: str, params: tuple = ()) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
@@ -1824,8 +1833,7 @@ class DatabaseManager:
                 logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
                 return None
             finally:
-                if conn:
-                    conn.close()
+                self._release_query_connection(conn)
         return None
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """

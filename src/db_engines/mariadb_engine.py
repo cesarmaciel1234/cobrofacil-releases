@@ -47,6 +47,11 @@ class MariaDBCursorWrapper:
                 and (q_up.startswith("DELETE FROM") or q_up.startswith("TRUNCATE TABLE"))
             ):
                 logger.warning(f"Tabla huérfana en MariaDB (1932) al limpiar: {e} | Q: {query}")
+            elif any(
+                token in err_msg
+                for token in ("2013", "2006", "timed out", "timeout", "lost connection", "10054", "forzado")
+            ):
+                logger.warning(f"Error SQL MariaDB (transitorio): {e} | Q: {query}")
             else:
                 logger.error(f"Error SQL MariaDB: {e} | Q: {query}")
             raise

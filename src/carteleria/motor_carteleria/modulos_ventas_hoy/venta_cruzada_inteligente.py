@@ -2,6 +2,7 @@ import random
 
 from src.base_de_datos.database import db_manager
 from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import motor_ventas
+from src.cerebro_global.servicios.cache_productos import cache_productos
 
 class VentaCruzadaInteligente:
     """
@@ -34,16 +35,22 @@ class VentaCruzadaInteligente:
         if not nom_limpio or nom_limpio.upper() in nombres_ignorados:
             return False, nom_limpio
             
-        # Validar existencia en base de datos
+        # Validar existencia en caché (evita TRIM/LOWER por producto → timeout 2013 en MariaDB)
         try:
-            q_p = "SELECT 1 FROM productos WHERE TRIM(LOWER(nombre)) = TRIM(LOWER(?)) OR LOWER(nombre) LIKE LOWER(?)"
-            rows_p = db_manager.execute_query(q_p, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_p:
-                return True, nom_limpio
-            q_c = "SELECT 1 FROM carteleria_global WHERE TRIM(LOWER(nombre_producto)) = TRIM(LOWER(?)) OR LOWER(nombre_producto) LIKE LOWER(?)"
-            rows_c = db_manager.execute_query(q_c, (nom_limpio, f"%{nom_limpio}%"))
-            if rows_c:
-                return True, nom_limpio
+            key = nom_limpio.lower()
+            for row in cache_productos.obtener_todos():
+                nom_db = str(row.get("nombre") or "").strip().lower()
+                if nom_db == key or key in nom_db or nom_db in key:
+                    return True, nom_limpio
+            rows_cartel = db_manager.execute_query(
+                "SELECT nombre_producto FROM carteleria_global"
+            ) or []
+            for row in rows_cartel:
+                nom_c = str(
+                    row.get("nombre_producto") if isinstance(row, dict) else row[0]
+                ).strip().lower()
+                if nom_c == key or key in nom_c or nom_c in key:
+                    return True, nom_limpio
         except Exception:
             pass
             
@@ -121,14 +128,17 @@ class VentaCruzadaInteligente:
                             
             # 4. Si la base de datos es súper nueva o aún faltan para completar el número exacto, completamos con el catálogo en stock
             if len(nombres_resultado) < limit:
-                # Sin ORDER BY RAND: timeout en MariaDB con inventario grande
-                q_stock = "SELECT nombre FROM productos WHERE stock > 0 ORDER BY nombre LIMIT ?"
-                rows_stock = db_manager.execute_query(q_stock, (limit * 8,))
+                stock_rows = [
+                    row for row in cache_productos.obtener_todos()
+                    if float(row.get("stock") or 0) > 0
+                ]
+                stock_rows.sort(key=lambda r: str(r.get("nombre") or "").lower())
+                rows_stock = stock_rows[: limit * 8]
                 if rows_stock:
                     rows_stock = random.sample(list(rows_stock), min(limit * 4, len(rows_stock)))
                 if rows_stock:
                     for s in rows_stock:
-                        nom_raw = str(s[0] if not isinstance(s, dict) else s.get('nombre', '')).strip()
+                        nom_raw = str(s.get("nombre") if isinstance(s, dict) else s[0]).strip()
                         valido, nom_limpio = VentaCruzadaInteligente.es_producto_valido(nom_raw)
                         if valido and not es_muy_similar(nom_limpio, nombres_procesados):
                             nombres_resultado.append(nom_limpio)
