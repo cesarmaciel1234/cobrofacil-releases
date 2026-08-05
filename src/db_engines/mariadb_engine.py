@@ -106,6 +106,8 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
+    # ALTER TABLE en inventario grande puede tardar varios minutos
+    DDL_TIMEOUT = 300
     
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
@@ -116,7 +118,7 @@ class MariaDBEngine:
         self._local_connections = threading.local()
         self._last_fail_time = 0
 
-    def _connect_kwargs(self, host=None, password=None):
+    def _connect_kwargs(self, host=None, password=None, read_timeout=None, write_timeout=None):
         return dict(
             host=host if host is not None else self.host,
             port=self.port,
@@ -126,8 +128,8 @@ class MariaDBEngine:
             charset="utf8mb4",
             autocommit=False,
             connect_timeout=self.CONNECT_TIMEOUT,
-            read_timeout=self.IO_TIMEOUT,
-            write_timeout=self.IO_TIMEOUT,
+            read_timeout=read_timeout if read_timeout is not None else self.IO_TIMEOUT,
+            write_timeout=write_timeout if write_timeout is not None else self.IO_TIMEOUT,
         )
 
     @staticmethod
@@ -194,6 +196,16 @@ class MariaDBEngine:
             logger.error(msg)
         raise last_exc
             
+    def get_ddl_connection(self):
+        """Conexión con timeouts largos para migraciones de esquema (ALTER TABLE)."""
+        conn = pymysql.connect(
+            **self._connect_kwargs(
+                read_timeout=self.DDL_TIMEOUT,
+                write_timeout=self.DDL_TIMEOUT,
+            )
+        )
+        return MariaDBConnectionWrapper(conn, engine=None)
+
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
         if conn is not None:
