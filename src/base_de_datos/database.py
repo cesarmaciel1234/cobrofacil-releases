@@ -1178,46 +1178,55 @@ class DatabaseManager:
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
         try:
             if (
-                getattr(self, "db_engine_type", "sqlite") == "mariadb"
-                and getattr(self, "is_master", False)
+                getattr(self, "db_engine_type", "sqlite") != "mariadb"
+                or not getattr(self, "is_master", False)
             ):
-                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
-                    logger.info(
-                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
-                    )
-                    self._execute_mariadb_ddl(
-                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
-                    )
-                
-                # Reasignar IDs desbordados (>= límite 32-bit) uno a uno para evitar colisión PRIMARY KEY
-                overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+                return
+
+            # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
+            if self._productos_id_is_bigint():
+                # Con BIGINT, IDs >= 2^31 son PLU/códigos de barras válidos (import masivo).
+                # No reasignar ni ALTER AUTO_INCREMENT en cada arranque (evita timeout 2013).
+                return
+
+            logger.info(
+                "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
+            )
+            if not self._execute_mariadb_ddl(
+                "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+            ):
+                return
+
+            # Tras migración INT→BIGINT: reasignar solo IDs corruptos del límite 32-bit
+            overflow = self.execute_query(
+                "SELECT id FROM productos WHERE id >= 2147483647 ORDER BY id"
+            )
+            if not overflow:
+                return
+
+            max_normal = int(
+                self.execute_scalar(
+                    "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+                ) or 0
+            )
+            next_id = max_normal + 1
+            for row in overflow:
+                old_id = row["id"] if isinstance(row, dict) else row[0]
+                while self.execute_scalar(
+                    "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
+                ):
+                    next_id += 1
+                self.execute_non_query(
+                    "UPDATE productos SET id = ? WHERE id = ?",
+                    (next_id, old_id),
                 )
-                if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
-                    )
-                    next_id = max_normal + 1
-                    for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
-                        while self.execute_scalar(
-                            "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
-                        ):
-                            next_id += 1
-                        self.execute_non_query(
-                            "UPDATE productos SET id = ? WHERE id = ?",
-                            (next_id, old_id),
-                        )
-                        next_id += 1
-                    new_max = int(
-                        self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    )
-                    self._execute_mariadb_ddl(
-                        f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
-                    )
+                next_id += 1
+            new_max = int(
+                self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
+            )
+            self._execute_mariadb_ddl(
+                f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}"
+            )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
