@@ -833,6 +833,20 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error sembrando departamentos: {e}")
 
+        # Crear tabla categorias si no existe (migración)
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla categorias en migración: {e}")
+
+        add_column_if_not_exists('categorias', 'icono', 'TEXT')
+
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'detalle_ventas' (alias de 'detalles_ventas') ──
         # Algunos módulos usan el nombre sin la 's' final. Creamos la tabla con ese nombre
         # como copia de estructura, y un trigger que redirige INSERT/DELETE a la tabla real.
@@ -1095,6 +1109,15 @@ class DatabaseManager:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT UNIQUE NOT NULL,
                     iva REAL DEFAULT 21.0
+                )
+            """)
+
+            # 6b. CATEGORIAS (departamentos de inventario; requerida antes de migración SQLite→MariaDB)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
                 )
             """)
             
