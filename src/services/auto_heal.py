@@ -245,10 +245,24 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
         or "doesn't exist in engine" in blob
         or "does not exist in engine" in blob
     )
+    circuit_ghost = (
+        "circuit breaker" in blob
+        and any(
+            t in blob
+            for t in (
+                "carteleria_global",
+                "productos",
+                "movimientos_caja",
+                "ventas",
+                "detalles_ventas",
+                "clientes",
+            )
+        )
+    )
     classic_corrupt = any(
         k in blob for k in ("1877", "corrupt", "drop the table and recreate")
     )
-    if not ghost_1932 and not classic_corrupt:
+    if not ghost_1932 and not classic_corrupt and not circuit_ghost:
         return None
     if not any(
         k in blob
@@ -278,6 +292,8 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
         return HealResult(False, "repair_mariadb_corrupt", f"import: {e}")
 
     try:
+        if AutoBlindajeDB._repair_mariadb_ghost_tables(host):
+            return HealResult(True, "repair_mariadb_ghost", host)
         if AutoBlindajeDB.auto_reparar_o_restaurar("mariadb", host):
             return HealResult(True, "repair_mariadb_corrupt", host)
         if AutoBlindajeDB.restaurar_ultimo_backup_valido(

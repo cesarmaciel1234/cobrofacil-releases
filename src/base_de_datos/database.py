@@ -742,34 +742,48 @@ class DatabaseManager:
         )
 
     @staticmethod
-    def _table_name_from_query(query: str) -> Optional[str]:
-        """Primer nombre de tabla en SELECT/INSERT/UPDATE (para reparar ghost 1932)."""
+    def _table_names_from_query(query: str) -> List[str]:
+        """Nombres de tabla en SELECT/INSERT/UPDATE (para reparar ghost 1932 en JOINs)."""
         import re
 
         q = str(query or "").strip()
+        names: List[str] = []
+        seen = set()
         for pat in (
             r"\bFROM\s+`?(\w+)`?",
             r"\bJOIN\s+`?(\w+)`?",
             r"\bINTO\s+`?(\w+)`?",
             r"\bUPDATE\s+`?(\w+)`?",
         ):
-            m = re.search(pat, q, re.IGNORECASE)
-            if m:
-                return m.group(1)
-        return None
+            for m in re.finditer(pat, q, re.IGNORECASE):
+                table = m.group(1)
+                key = table.lower()
+                if key not in seen:
+                    seen.add(key)
+                    names.append(table)
+        return names
+
+    @staticmethod
+    def _table_name_from_query(query: str) -> Optional[str]:
+        tables = DatabaseManager._table_names_from_query(query)
+        return tables[0] if tables else None
 
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return False
-        table = self._table_name_from_query(query)
-        if not table:
+        tables = self._table_names_from_query(query)
+        if not tables:
             return False
+        engine = getattr(self, "mariadb_engine", None)
+        if engine:
+            engine._last_fail_time = 0
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            for table in tables:
+                self._repair_mariadb_ghost_table(cursor, table)
             conn.commit()
             if not getattr(self, "_ghost_schema_rebuilt", False):
                 self._ghost_schema_rebuilt = True
@@ -779,7 +793,7 @@ class DatabaseManager:
                     logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
             return True
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            logger.warning(f"No se pudo reparar tablas huérfanas {tables}: {ex}")
             return False
         finally:
             if conn:
@@ -787,6 +801,21 @@ class DatabaseManager:
                     conn.close()
                 except Exception:
                     pass
+
+    def _prepare_mariadb_retry(self, exc: BaseException, query: str = "") -> None:
+        """Limpia circuit breaker y repara tablas ghost antes de reintentar."""
+        err = str(exc).lower()
+        cb = "circuit breaker" in err
+        if cb:
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=True)
+            if query:
+                self._repair_ghost_tables_from_query(query)
+        elif self._is_mariadb_ghost_table_error(exc):
+            if query:
+                self._repair_ghost_tables_from_query(query)
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=False)
+        else:
+            self._reset_mariadb_thread_connection(clear_circuit_breaker=cb)
 
     @staticmethod
     def _is_mariadb_encoding_error(exc: BaseException) -> bool:
@@ -1765,17 +1794,13 @@ class DatabaseManager:
                 ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
-                    if ghost_err:
-                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection(
-                        clear_circuit_breaker="circuit breaker" in str(e).lower()
-                    )
+                    self._prepare_mariadb_retry(e, query)
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):
@@ -1819,17 +1844,13 @@ class DatabaseManager:
                 ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
-                    if ghost_err:
-                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Non-query reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection(
-                        clear_circuit_breaker="circuit breaker" in str(e).lower()
-                    )
+                    self._prepare_mariadb_retry(e, query)
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):
@@ -1888,17 +1909,13 @@ class DatabaseManager:
                 ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
                 if attempt < max_attempts - 1 and (transient_err or ghost_err):
-                    if ghost_err:
-                        self._repair_ghost_tables_from_query(query)
                     logger.warning(
                         "Scalar reintento %s/%s tras error transitorio: %s",
                         attempt + 1,
                         max_attempts,
                         e,
                     )
-                    self._reset_mariadb_thread_connection(
-                        clear_circuit_breaker="circuit breaker" in str(e).lower()
-                    )
+                    self._prepare_mariadb_retry(e, query)
                     time.sleep(1.0 * (attempt + 1))
                     continue
                 if is_mariadb and self._is_transient_mariadb_error(e):

@@ -29,6 +29,17 @@ class AutoBlindajeDB:
         "detalle_ventas",
         "movimientos_caja",
     )
+    MARIADB_CRITICAL_TABLES = (
+        "productos",
+        "ventas",
+        "departamentos",
+        "categorias",
+        "clientes",
+        "carteleria_global",
+        "movimientos_caja",
+        "detalles_ventas",
+        "configuracion",
+    )
 
     @classmethod
     def get_backup_directories(cls):
@@ -731,6 +742,57 @@ class AutoBlindajeDB:
             return False
 
     @classmethod
+    def _is_mariadb_ghost_table_msg(cls, msg: str) -> bool:
+        low = str(msg or "").lower()
+        return (
+            "1932" in low
+            or "doesn't exist in engine" in low
+            or "does not exist in engine" in low
+        )
+
+    @classmethod
+    def _repair_mariadb_ghost_tables(cls, host: str = "127.0.0.1") -> bool:
+        """DROP metadatos huérfanos (1932) y recrea esquema mínimo."""
+        repaired = False
+        try:
+            import pymysql
+
+            conn = pymysql.connect(
+                host=host,
+                port=3306,
+                user="root",
+                password="1234",
+                database="punpro_db",
+                connect_timeout=5,
+                autocommit=True,
+            )
+            cur = conn.cursor()
+            for table in cls.MARIADB_CRITICAL_TABLES:
+                try:
+                    cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if cls._is_mariadb_ghost_table_msg(str(e)):
+                        logger.warning(
+                            "Tabla %s huérfana en MariaDB (1932); eliminando metadatos...",
+                            table,
+                        )
+                        cur.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        repaired = True
+            conn.close()
+        except Exception as e:
+            logger.warning("Reparación ghost MariaDB: %s", e)
+            return False
+        if repaired:
+            try:
+                from src.base_de_datos.database import db_manager
+
+                db_manager._create_tables()
+                db_manager._migrate_db()
+            except Exception as e:
+                logger.warning("Recrear esquema tras ghost MariaDB: %s", e)
+        return repaired
+
+    @classmethod
     def _check_mariadb_integrity(cls, host: str) -> bool:
         try:
             import pymysql
@@ -739,13 +801,18 @@ class AutoBlindajeDB:
                 database="punpro_db", connect_timeout=3,
             )
             cursor = conn.cursor()
-            cursor.execute("CHECK TABLE productos, ventas, departamentos, categorias, clientes;")
+            tables = ", ".join(cls.MARIADB_CRITICAL_TABLES[:5])
+            cursor.execute(f"CHECK TABLE {tables};")
             rows = cursor.fetchall()
             conn.close()
             for r in rows:
-                msg = r[3]
+                msg = r[3] if len(r) >= 4 else r
+                msg_s = str(msg)
+                if cls._is_mariadb_ghost_table_msg(msg_s):
+                    logger.warning(f"Tabla ghost detectada en CHECK: {r}")
+                    return False
                 if len(r) >= 4 and msg not in ("OK", "Table is already up to date"):
-                    if "doesn't exist" in msg:
+                    if "doesn't exist" in msg_s.lower():
                         continue
                     logger.warning(f"Resultado de verificación tabla: {r}")
                     return False
@@ -863,6 +930,8 @@ class AutoBlindajeDB:
         """Intenta auto-reparar la base de datos dañada."""
         logger.info("🛠️ Intentando auto-reparación de base de datos...")
         if engine_type == "mariadb":
+            if cls._repair_mariadb_ghost_tables(host):
+                return cls._check_mariadb_integrity(host)
             if cls._mariadb_needs_drop_recreate(host):
                 logger.error(
                     "🚨 Corrupción InnoDB severa (ventas/clientes). "
