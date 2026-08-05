@@ -280,6 +280,10 @@ def _heal_mariadb(blob: str) -> Optional[HealResult]:
     - Maestra local → levantar mysqld portable y verificar.
     - Si localhost falla pero hay IP maestra guardada → failover a esclava.
     """
+    # No reiniciar MariaDB por timeouts de migración DDL (ALTER TABLE largo en productos).
+    if "alter table" in blob and "productos" in blob:
+        return None
+
     keywords = (
         "mariadb",
         "mysql",
