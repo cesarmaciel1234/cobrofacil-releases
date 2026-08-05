@@ -349,13 +349,9 @@ class MariaDBController:
             )
             cur = conn.cursor()
             ghosts = []
-            for table in (
-                "ventas",
-                "movimientos_caja",
-                "carteleria_global",
-                "detalles_ventas",
-                "productos",
-            ):
+            from src.base_de_datos.database import DatabaseManager
+
+            for table in DatabaseManager._MARIADB_GHOST_PROBE_TABLES:
                 try:
                     cur.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
                 except Exception as e:

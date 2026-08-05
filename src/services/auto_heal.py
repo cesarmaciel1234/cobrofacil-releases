@@ -261,6 +261,7 @@ def _heal_mariadb_corrupt_table(blob: str) -> Optional[HealResult]:
             "carteleria_global",
             "movimientos_caja",
             "detalles_ventas",
+            "productos",
             "ventas",
         )
     ):

@@ -716,6 +716,19 @@ class DatabaseManager:
         except Exception:
             return False
 
+    # Tablas que suelen quedar huérfanas (1932) tras corte de luz / InnoDB en recuperación.
+    _MARIADB_GHOST_PROBE_TABLES = (
+        "ventas",
+        "movimientos_caja",
+        "carteleria_global",
+        "detalles_ventas",
+        "productos",
+        "configuracion",
+        "clientes",
+        "departamentos",
+        "categorias",
+    )
+
     @staticmethod
     def _is_mariadb_ghost_table_error(exc: BaseException) -> bool:
         """MariaDB 1932: metadatos de tabla sin archivos InnoDB (CREATE IF NOT EXISTS no repara)."""
@@ -758,28 +771,61 @@ class DatabaseManager:
                 return m.group(1)
         return None
 
+    def _drop_all_mariadb_ghost_tables(self, cursor=None) -> int:
+        """Elimina metadatos huérfanos (1932) de tablas críticas. Retorna cuántas se dropearon."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return 0
+        own_conn = cursor is None
+        conn = None
+        dropped = 0
+        try:
+            if own_conn:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+            for table in self._MARIADB_GHOST_PROBE_TABLES:
+                try:
+                    cursor.execute(f"SELECT 1 FROM `{table}` LIMIT 1")
+                except Exception as e:
+                    if self._is_mariadb_ghost_table_error(e):
+                        logger.warning(
+                            "Tabla huérfana %s (1932) en punpro_db; metadatos eliminados.",
+                            table,
+                        )
+                        cursor.execute(f"DROP TABLE IF EXISTS `{table}`")
+                        dropped += 1
+            if own_conn and conn:
+                conn.commit()
+            return dropped
+        except Exception as ex:
+            logger.warning(f"No se pudo barrer tablas huérfanas MariaDB: {ex}")
+            return dropped
+        finally:
+            if own_conn and conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
     def _repair_ghost_tables_from_query(self, query: str) -> bool:
         """DROP metadatos huérfanos (1932) y recrea esquema mínimo si hace falta."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return False
-        table = self._table_name_from_query(query)
-        if not table:
             return False
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            self._repair_mariadb_ghost_table(cursor, table)
+            table = self._table_name_from_query(query)
+            if table and table not in self._MARIADB_GHOST_PROBE_TABLES:
+                self._repair_mariadb_ghost_table(cursor, table)
+            dropped = self._drop_all_mariadb_ghost_tables(cursor)
             conn.commit()
-            if not getattr(self, "_ghost_schema_rebuilt", False):
-                self._ghost_schema_rebuilt = True
-                try:
-                    self._create_tables()
-                except Exception as ex:
-                    logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
-            return True
+            try:
+                self._create_tables()
+            except Exception as ex:
+                logger.warning(f"Recrear esquema tras ghost 1932: {ex}")
+            return dropped > 0 or bool(table)
         except Exception as ex:
-            logger.warning(f"No se pudo reparar tabla huérfana {table}: {ex}")
+            logger.warning(f"No se pudo reparar tablas huérfanas: {ex}")
             return False
         finally:
             if conn:
@@ -1179,6 +1225,8 @@ class DatabaseManager:
     def _create_tables(self):
         """Crea todas las tablas necesarias si no existen."""
         try:
+            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+                self._drop_all_mariadb_ghost_tables()
             conn = self.get_connection()
             cursor = conn.cursor()
             
