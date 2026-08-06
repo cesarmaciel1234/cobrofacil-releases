@@ -23,12 +23,16 @@ class DisplayPromoTV(QFrame):
         self.lbl_titulo = QLabel("")
         self.lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_titulo.setWordWrap(True)
+        self.lbl_titulo.setAutoFillBackground(True)
+        self.lbl_titulo.setStyleSheet("background-color: transparent;")
         self.lbl_titulo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         
         # 2. Nombre del Producto (Escala y wrap automático)
         self.lbl_producto = QLabel("")
         self.lbl_producto.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_producto.setWordWrap(True)
+        self.lbl_producto.setAutoFillBackground(True)
+        self.lbl_producto.setStyleSheet("background-color: #FFFFFF;")
         self.lbl_producto.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
         
         # 3. Rating y Marketing (Sub-contenedor vertical para que el texto no se corte)
@@ -40,9 +44,14 @@ class DisplayPromoTV(QFrame):
         self.marketing_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_estrellas = QLabel("⭐⭐⭐⭐⭐")
         self.lbl_estrellas.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_estrellas.setAutoFillBackground(True)
+        self.lbl_estrellas.setStyleSheet("background-color: #FFFFFF;")
+        
         self.lbl_marketing = QLabel("")
         self.lbl_marketing.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_marketing.setWordWrap(True)
+        self.lbl_marketing.setAutoFillBackground(True)
+        self.lbl_marketing.setStyleSheet("background-color: #FFFFFF;")
         self.lbl_marketing.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
         self.marketing_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         self.marketing_lay.addWidget(self.lbl_estrellas)
@@ -51,13 +60,20 @@ class DisplayPromoTV(QFrame):
         # 4. Contenedor de Precios
         self.lbl_precio_old = QLabel("")
         self.lbl_precio_old.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_precio_old.setAutoFillBackground(True)
+        self.lbl_precio_old.setStyleSheet("background-color: #FFFFFF;")
+        
         self.lbl_precio_new = QLabel("")
         self.lbl_precio_new.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_precio_new.setAutoFillBackground(True)
+        self.lbl_precio_new.setStyleSheet("background-color: #FFFFFF;")
         
         # 5. Contenedor Cinta Condiciones (Ribbon inferio)
         self.lbl_cinta = QLabel("")
         self.lbl_cinta.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_cinta.setWordWrap(True)
+        self.lbl_cinta.setAutoFillBackground(True)
+        self.lbl_cinta.setStyleSheet("background-color: #FFFFFF;")
         self.lbl_cinta.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         
         # Agregar al Layout Principal con resortes para mantener todo centrado como bloque
@@ -138,6 +154,15 @@ class DisplayPromoTV(QFrame):
         else:
             self.lbl_precio_old.hide()
             self.lbl_precio_new.setText(f"${precio:,.0f}")
+
+        # Forced repaint for all labels to clear old text buffer on some drivers
+        self.lbl_titulo.repaint()
+        self.lbl_producto.repaint()
+        self.lbl_marketing.repaint()
+        self.lbl_precio_old.repaint()
+        self.lbl_precio_new.repaint()
+        self.lbl_cinta.repaint()
+        self.repaint()
 
         if is_temu:
             self.lbl_precio_old.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 40px; color: #DC2626; text-decoration: line-through; }")

@@ -42,13 +42,15 @@ class CarruselDestacados(QFrame):
         self.lbl_title = QLabel()
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_title.setWordWrap(True)
-        self.lbl_title.setStyleSheet("background: transparent; border: none;")
+        self.lbl_title.setAutoFillBackground(True)
+        self.lbl_title.setStyleSheet("background-color: #FFFFFF; border: none;")
         self.layout.addWidget(self.lbl_title)
         
         self.lbl_content = QLabel()
         self.lbl_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_content.setWordWrap(True)
-        self.lbl_content.setStyleSheet("background: transparent; border: none;")
+        self.lbl_content.setAutoFillBackground(True)
+        self.lbl_content.setStyleSheet("background-color: #FFFFFF; border: none;")
         self.layout.addWidget(self.lbl_content, stretch=1)
         
         from src.carteleria.interfaz_principal.vistas.display_promo_tv import DisplayPromoTV
@@ -127,6 +129,7 @@ class CarruselDestacados(QFrame):
                     f_size = 40
                 html_title = f"<div align='center' style='margin-bottom: 10px;'><span style='font-family: Impact; font-size: {f_size}px; color: {tc}; background-color: {bg}; padding: 5px 10px; border-radius: 6px;'>{self._current_titulo}</span></div>"
                 self.lbl_title.setText(html_title)
+                self.lbl_title.repaint()
 
     def actualizar_especial(self, nombre, precio, precio_oferta=0, stock=0, unidad="Kilos", regla=""):
         self.footer_widget.hide()
@@ -240,6 +243,7 @@ class CarruselDestacados(QFrame):
         if not is_temu:
             html_title = f"<div style='text-align: center; margin-bottom: 20px;'><span style='{t1}'>{titulo}</span></div>"
             self.lbl_title.setText(html_title)
+            self.lbl_title.repaint()
             
         # Forzar actualización inicial del título
         if is_temu:
@@ -349,5 +353,6 @@ class CarruselDestacados(QFrame):
                     html += f"<div style='margin-bottom: 18px; margin-left: 10%;'><span style='{t_rank}'>#{i+1}</span> <span style='{t_prod}'>{nombre}</span> <span style='font-size: 16px; color: #888; white-space: nowrap;'>({texto_ventas})</span></div>"
         
         html += "</div>"
+        
         self.lbl_content.setText(html)
-
+        self.lbl_content.repaint()

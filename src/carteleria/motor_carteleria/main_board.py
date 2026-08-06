@@ -61,11 +61,11 @@ class CarteleriaMain(QWidget):
         
         if get_active_theme_name() == "temu":
             # Fondo vibrante para Temu (Gradiente Radial/Lineal de Amarillo a Naranja)
-            self.setStyleSheet("""
-                #CarteleriaMain {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                stop:0 #FFFF00, stop:1 #FF6600);
-                }
+            # FIX: Aplicarlo en bg_label para forzar el repintado opaco y evitar que deje estela (trailing)
+            self.bg_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.bg_label.setAutoFillBackground(True)
+            self.bg_label.setStyleSheet("""
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FFFF00, stop:1 #FF6600);
             """)
         else:
             img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
@@ -73,7 +73,9 @@ class CarteleriaMain(QWidget):
                 self._bg_image_path = img_path
                 self._refresh_background_pixmap()
             else:
-                self.setStyleSheet(f"#CarteleriaMain {{ background-color: {C_THEME['bg']}; }}")
+                self.bg_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+                self.bg_label.setAutoFillBackground(True)
+                self.bg_label.setStyleSheet(f"background-color: {C_THEME['bg']};")
 
         # --- INSTANCIAR ZONAS MODULARES ---
         self.info_negocio = InfoNegocio()
