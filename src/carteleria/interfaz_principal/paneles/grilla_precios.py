@@ -73,18 +73,9 @@ class GrillaPrecios(QFrame):
         self._clip_to_rounded_rect()
 
     def _clip_to_rounded_rect(self):
-        """Recorta hijos al rectángulo redondeado (evita overflow hacia el Mensaje)."""
-        if self.width() <= 0 or self.height() <= 0:
-            return
-        path = QPainterPath()
-        # -1 px: no dibujar encima del borde de 4px
-        inset = 2.0
-        path.addRoundedRect(
-            QRectF(inset, inset, self.width() - 2 * inset, self.height() - 2 * inset),
-            float(self._corner_radius),
-            float(self._corner_radius),
-        )
-        self.setMask(QRegion(path.toFillPolygon().toPolygon()))
+        """Recorta hijos al rectángulo redondeado. En TVs 4K, setMask rompe el clipping de QScrollArea,
+        así que dependemos de los márgenes del layout (16px) que ya evitan que pise el borde redondeado."""
+        pass
 
     def _refrescar_grilla(self):
         if hasattr(self, 'motor') and self.motor and not self.motor.isRunning():
