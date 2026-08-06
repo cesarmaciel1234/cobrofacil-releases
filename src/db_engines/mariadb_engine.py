@@ -2,12 +2,20 @@ import pymysql
 import threading
 import time
 from src.logger import logger
-from src.utils.text_db import sanitize_mariadb_params, safe_mariadb_text
+from src.utils.text_db import sanitize_mariadb_params, safe_mariadb_text, ascii_safe_mariadb_text
 
 
 def mariadb_safe_text(value, max_len=None):
     """Texto seguro para columnas MariaDB utf8 (3-byte): sin emojis ni prefijos de oferta."""
     text = safe_mariadb_text(value)
+    if max_len is not None:
+        text = text[:max_len]
+    return text
+
+
+def mariadb_ascii_text(value, max_len=None):
+    """Fallback ASCII para columnas legacy utf8mb3 que rechazan acentos/emojis (error 1366)."""
+    text = ascii_safe_mariadb_text(value)
     if max_len is not None:
         text = text[:max_len]
     return text

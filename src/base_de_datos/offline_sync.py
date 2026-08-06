@@ -27,6 +27,9 @@ class OfflineSync:
     def guardar_venta_offline(self, venta_data, items):
         """Guarda la venta en el JSON local cuando la LAN falla."""
         try:
+            from src.base_de_datos.database import db_manager
+            db_manager._sanitize_venta_items_nombres(items)
+            db_manager._sanitize_venta_data_nombres(venta_data)
             with open(self.queue_file, "r", encoding="utf-8") as f:
                 queue = json.load(f)
             
