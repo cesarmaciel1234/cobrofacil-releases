@@ -560,10 +560,19 @@ if __name__ == "__main__":
 
     while True:
         exit_code = launch_app(direct_role=target_role)
+        # 889 = aplicar update (cierra todo + relaunch oculto)
+        # 888 = reinicio suave del hub (logout / medianoche / LAN) — sin CMD ni matar mysqld
+        if exit_code == 889:
+            from src.updater.silent_auto_updater import (
+                exit_and_relaunch_for_update,
+                is_update_staged,
+            )
+            if is_update_staged():
+                exit_and_relaunch_for_update()
+            # Si no hay paquete, caer a reinicio suave
+            continue
         if exit_code == 888:
-            # Salir del todo y reabrir: el .exe en uso no se puede sobrescribir en el mismo proceso
-            from src.updater.silent_auto_updater import exit_and_relaunch_for_update
-            exit_and_relaunch_for_update()
+            continue
         if exit_code != 99:
             break
 

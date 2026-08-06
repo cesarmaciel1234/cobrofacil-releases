@@ -354,8 +354,7 @@ class SmartLauncherUpdater(QFrame):
         except Exception:
             pass
 
-        # Siempre relaunch por bat: app.exit(888) a veces no vuelve al loop
-        # (perfil autónomo / frozen) y el programa "se cierra y no actualiza".
+        # Relaunch oculto (PowerShell Hidden). Fallback: 889 al loop de main.
         try:
             from src.updater.silent_auto_updater import exit_and_relaunch_for_update
 
@@ -363,6 +362,6 @@ class SmartLauncherUpdater(QFrame):
         except Exception:
             app = QApplication.instance()
             if app:
-                app.exit(888)
+                app.exit(889)
             else:
                 raise

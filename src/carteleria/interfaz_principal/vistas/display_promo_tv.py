@@ -129,7 +129,7 @@ class DisplayPromoTV(QFrame):
         # 4. Precios
         p_val = precio_oferta if precio_oferta > 0 else precio
         p_str = f"${p_val:,.0f}"
-        es_precio_largo = len(p_str) >= 7
+        len_p = len(p_str)
         
         if precio_oferta > 0:
             self.lbl_precio_old.setText(f"<s>${precio:,.0f}</s>")
@@ -141,11 +141,17 @@ class DisplayPromoTV(QFrame):
 
         if is_temu:
             self.lbl_precio_old.setStyleSheet("QLabel { font-family: Arial, sans-serif; font-size: 40px; color: #DC2626; text-decoration: line-through; }")
-            fs_p = 85 if es_precio_largo else 110
+            if len_p >= 8: fs_p = 55
+            elif len_p == 7: fs_p = 70
+            elif len_p == 6: fs_p = 85
+            else: fs_p = 95
             self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: Impact, 'Arial Black', sans-serif; font-size: {fs_p}px; color: #DC2626; background-color: #FFFF00; padding: 10px 25px; border-radius: 12px; margin-bottom: 10px; }}")
         else:
             self.lbl_precio_old.setStyleSheet("QLabel { font-family: -apple-system, sans-serif; font-size: 38px; color: #94A3B8; text-decoration: line-through; }")
-            fs_p = 90 if es_precio_largo else 115
+            if len_p >= 8: fs_p = 60
+            elif len_p == 7: fs_p = 75
+            elif len_p == 6: fs_p = 90
+            else: fs_p = 100
             self.lbl_precio_new.setStyleSheet(f"QLabel {{ font-family: -apple-system, sans-serif; font-size: {fs_p}px; font-weight: 900; color: #FFFFFF; background-color: {C_THEME['accent']}; padding: 10px 25px; border-radius: 12px; }}")
 
         # 5. Cinta Condiciones

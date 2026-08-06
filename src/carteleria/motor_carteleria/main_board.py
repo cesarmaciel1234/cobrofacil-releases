@@ -91,43 +91,31 @@ class CarteleriaMain(QWidget):
         
         self._build_ui()
         
-        # ⚙️ TIMER ROTACIÓN PROMOCIONES
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._ciclo_inteligente)
-        self.rotacion_ms = 16000 # Retraso normal (16s) para que intercale rápido
-        self.timer.start(self.rotacion_ms) 
+        # ⚙️ RELOJ MAESTRO GLOBAL (El "Engranaje")
+        self.ticks_maestro = 0
+        self.pausar_rotacion = False
         
         self.contador_rotacion = 0
-        self.frec_sos = 3 # Intercalado equilibrado: 3 ciclos de grilla por 1 aparición de Oferta Relámpago
-        self.tiempo_sos_ms = 10000
+        self.frec_sos = 3 # Intercalado equilibrado
         self.estado_sos_activo = False
         self.lista_ofertas_sos = []
         self.indice_sos_actual = 0
+        self.rotacion_ms = 16000
+        self.tiempo_sos_ms = 10000
         
         from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
         from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
 
         self.db_worker = DbSyncWorker(self)
         self.db_worker.sync_finished.connect(self._on_db_sync_finished)
-        self.timer_db = QTimer(self)
-        self.timer_db.timeout.connect(self.db_worker.start)
-        self.timer_db.start(10000)
 
         self.clima_pilar = ("sol", "22°C Pilar")
         self.clima_worker = ClimaWorker(self)
         self.clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
-        self.timer_clima = QTimer(self)
-        self.timer_clima.timeout.connect(self.clima_worker.start)
-        self.timer_clima.start(3600000)
-
-        self.timer_vuelo = QTimer(self)
         
-        def intentar_lanzar_banderin():
-            if self.stack.currentIndex() < 2:  # Solo lanzar en pantallas normales (0 o 1)
-                self.banderin.lanzar(self.datos_destacados)
-                
-        self.timer_vuelo.timeout.connect(intentar_lanzar_banderin)
-        self.timer_vuelo.start(35000) 
+        self.reloj_maestro = QTimer(self)
+        self.reloj_maestro.timeout.connect(self._tick_reloj_maestro)
+        self.reloj_maestro.start(1000) # Tick de 1 segundo exacto
         
         self.db_worker.start()
         # 👀 OJO ESPÍA (WORKER EN BACKGROUND)
@@ -158,11 +146,6 @@ class CarteleriaMain(QWidget):
         self.ultimo_cambio_ia = __import__('time').time() - 16
 
         # ── HEARTBEAT HACIA EL TERMINAL ─────────────────────────────────────
-        # La cartelería emite un latido UDP cada 10s con rol "carteleria" para
-        # que el terminal actualice su indicador ⚫ → 🟢.
-        self.timer_heartbeat = QTimer(self)
-        self.timer_heartbeat.timeout.connect(self.network_manager.emitir_heartbeat)
-        self.timer_heartbeat.start(10000)   # cada 10 segundos
         QTimer.singleShot(500, self.network_manager.emitir_heartbeat)  # primer latido a los 0.5s
 
         # ── ESCUCHAR HEARTBEATS DEL TERMINAL ────────────────────────────────
@@ -171,6 +154,32 @@ class CarteleriaMain(QWidget):
         QTimer.singleShot(800, self.network_manager.conectar_engine_indicador)
 
         
+
+    def _tick_reloj_maestro(self):
+        self.ticks_maestro += 1
+        
+        # Tareas periódicas ininterrumpibles
+        if self.ticks_maestro % 10 == 0:
+            if hasattr(self, 'network_manager'):
+                self.network_manager.emitir_heartbeat()
+            if hasattr(self, 'db_worker') and not self.db_worker.isRunning():
+                self.db_worker.start()
+                
+        if self.ticks_maestro % 3600 == 0:
+            if hasattr(self, 'clima_worker') and not self.clima_worker.isRunning():
+                self.clima_worker.start()
+                
+        if getattr(self, 'pausar_rotacion', False):
+            return
+            
+        # Lógica de rotación visual sincronizada
+        rot_actual_s = (self.tiempo_sos_ms if self.estado_sos_activo else self.rotacion_ms) // 1000
+        if self.ticks_maestro % max(1, rot_actual_s) == 0:
+            self._ciclo_inteligente()
+            
+        if self.ticks_maestro % 35 == 0:
+            if self.stack.currentIndex() < 2 and hasattr(self, 'banderin'):
+                self.banderin.lanzar(getattr(self, 'datos_destacados', []))
 
     def resizeEvent(self, event):
         self.bg_label.resize(self.size())
@@ -289,8 +298,6 @@ class CarteleriaMain(QWidget):
             nueva_rotacion = cfg_data.get("carteleria_rotacion", 15) * 1000
             if hasattr(self, 'rotacion_ms') and nueva_rotacion != self.rotacion_ms:
                 self.rotacion_ms = nueva_rotacion
-                if self.timer.isActive() and self.stack.currentIndex() == 0:
-                    self.timer.setInterval(self.rotacion_ms)
                     
             self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
             # Garantizar al menos 3 ciclos de rotación normal antes del SOS para que la pantalla no parezca trabada
@@ -373,8 +380,7 @@ class CarteleriaMain(QWidget):
             # Si estábamos en SOS, volver a la normalidad
             self.estado_sos_activo = False
             self.layout_manager.fade_to_index(0)
-            # Restaurar el timer al tiempo normal de rotación de las grillas
-            self.timer.start(self.rotacion_ms)
+            # El Reloj Maestro ajustará el ciclo automáticamente usando rotacion_ms
         else:
             # No rotar las grillas automáticamente, solo incrementar contador para el SOS
             self.contador_rotacion += 1
@@ -386,8 +392,7 @@ class CarteleriaMain(QWidget):
                     self.estado_sos_activo = True
                     self._actualizar_datos_sos(rotar_indice=True)
                     self.layout_manager.fade_to_index(1)
-                    # Cambiar el timer al tiempo de SOS
-                    self.timer.start(self.tiempo_sos_ms)
+                    # El Reloj Maestro ajustará el ciclo usando tiempo_sos_ms
 
 
     def _guardar_sugerencia_activa(self, productos_sugeridos):
@@ -422,8 +427,7 @@ class CarteleriaMain(QWidget):
             self.ultimo_cambio_ia = time.time() - 16
             if self.stack.currentIndex() == 2:
                 self.layout_manager.fade_to_index(0)
-                if hasattr(self, 'timer'): self.timer.start(self.rotacion_ms if hasattr(self, 'rotacion_ms') else 15000)
-                if hasattr(self, 'timer_db'): self.timer_db.start(10000)
+                self.pausar_rotacion = False
 
         if tiempo_abierto < 2.0:
             QTimer.singleShot(2500, forzar_cierre)
@@ -434,8 +438,7 @@ class CarteleriaMain(QWidget):
         import time
         self._espia_ui_log(f"COMBO TRIGGERED. Ahorro: {ahorro}")
         self.ultimo_cambio_ia = time.time()
-        if hasattr(self, 'timer') and self.timer.isActive(): self.timer.stop()
-        if hasattr(self, 'timer_db') and self.timer_db.isActive(): self.timer_db.stop()
+        self.pausar_rotacion = True
         
         try:
             self.page_espia.play_combo(nombre_combo, precio_original, precio_final, ahorro)
@@ -449,8 +452,7 @@ class CarteleriaMain(QWidget):
         def restaurar_estado():
             self._espia_ui_log("Restaurando estado tras 6s")
             self.layout_manager.fade_to_index(0)
-            if hasattr(self, 'timer'): self.timer.start(self.rotacion_ms if hasattr(self, 'rotacion_ms') else 15000)
-            if hasattr(self, 'timer_db'): self.timer_db.start(10000)
+            self.pausar_rotacion = False
             
         QTimer.singleShot(6000, restaurar_estado)
 

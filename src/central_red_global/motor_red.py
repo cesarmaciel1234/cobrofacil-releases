@@ -72,9 +72,103 @@ class MotorRed:
         except Exception as e:
             logging.getLogger(__name__).debug(f"No se pudo detener Servidor de Tienda: {e}")
 
-    def convertir_en_maestra(self):
-        """Convierte la PC en maestra (base de datos local MariaDB)."""
+    def _intentar_arrancar_mariadb_local(self) -> bool:
+        """Best-effort: levanta mysqld portable y espera el puerto 3306."""
         try:
+            from src.services.mariadb_controller import mariadb_controller
+
+            mariadb_controller.start_server()
+        except Exception as e:
+            self.logger.warning(f"No se pudo arrancar MariaDB local: {e}")
+        # Poll corto: start_server ya espera, pero re-chequeamos
+        for _ in range(10):
+            if self._probe_mariadb("127.0.0.1", timeout=1.0):
+                return True
+            time.sleep(0.5)
+        return self._probe_mariadb("127.0.0.1", timeout=1.0)
+
+    def convertir_en_maestra(self):
+        """Convierte la PC en maestra (MariaDB local). No pisa el rol si localhost no responde."""
+        # Cartelería/caja esclava: no forzar MAESTRA (congela arrancando mysqld)
+        try:
+            if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
+                preferred = str(
+                    config.get("preferred_master_ip")
+                    or config.get("carteleria_master_ip")
+                    or config.get("db_host")
+                    or ""
+                ).strip()
+                if preferred and preferred.lower() not in ("localhost", "127.0.0.1"):
+                    return (
+                        False,
+                        "Esta PC está configurada como ESCLAVA.\n\n"
+                        f"Seguí conectada a la Maestra ({preferred}).\n"
+                        "No uses 'Convertir en MAESTRA' en cartelería/caja esclava:\n"
+                        "congela la app al intentar levantar MariaDB local.",
+                    )
+        except Exception:
+            pass
+
+        # Snapshot para revertir si falla (p.ej. cartelería/esclava sin mysqld)
+        prev_master = getattr(db_manager, "is_master", True)
+        prev_engine = getattr(db_manager, "db_engine_type", "sqlite")
+        prev_host = (config.get("db_host") or "").strip() or "localhost"
+        prev_cfg_engine = config.get("db_engine", "sqlite")
+        prev_cfg_master = config.get("is_master", True)
+        prev_slave = bool(config.get("carteleria_is_slave"))
+        prev_preferred = str(config.get("preferred_master_ip") or config.data.get("preferred_master_ip") or "").strip()
+        prev_carteleria_ip = str(config.get("carteleria_master_ip") or "").strip()
+        prev_auto_store = config.get("auto_start_store_server", True)
+
+        def _rollback(msg_extra: str = ""):
+            try:
+                config.set("is_master", prev_cfg_master)
+                config.set("db_engine", prev_cfg_engine)
+                config.set("db_host", prev_host)
+                config.set("carteleria_is_slave", prev_slave)
+                config.set("auto_start_store_server", prev_auto_store)
+                if prev_preferred:
+                    config.data["preferred_master_ip"] = prev_preferred
+                if prev_carteleria_ip:
+                    config.set("carteleria_master_ip", prev_carteleria_ip)
+                config.save()
+            except Exception:
+                pass
+            try:
+                if prev_engine == "mariadb" and prev_host not in ("", "localhost", "127.0.0.1"):
+                    db_manager.reconectar_mariadb(prev_host)
+                elif prev_engine == "mariadb" and self._probe_mariadb("127.0.0.1"):
+                    db_manager.reconectar_mariadb("localhost")
+                else:
+                    db_manager.reconectar_local()
+            except Exception as e:
+                self.logger.error(f"Rollback tras fallar maestra: {e}")
+            return False, msg_extra
+
+        try:
+            # 1) Puerto local antes de tocar config
+            if not self._probe_mariadb("127.0.0.1"):
+                self.logger.info("MariaDB local no responde; intentando arrancar mysqld portable...")
+                if not self._intentar_arrancar_mariadb_local():
+                    hint_slave = ""
+                    remote = prev_preferred or prev_carteleria_ip or (
+                        prev_host if prev_host not in ("", "localhost", "127.0.0.1") else ""
+                    )
+                    if remote:
+                        hint_slave = (
+                            f"\n\nEsta PC seguía como esclava de {remote}. "
+                            "Volvé a 'Convertir en ESCLAVA' con esa IP si hace falta."
+                        )
+                    return (
+                        False,
+                        "No hay MariaDB en esta PC (localhost:3306).\n\n"
+                        "Para ser MAESTRA necesitás el Servidor de Tienda / MariaDB "
+                        "instalado y corriendo aquí.\n"
+                        "En una cartelería o caja esclava no uses 'Convertir en MAESTRA'."
+                        + hint_slave,
+                    )
+
+            # 2) Recién ahora persistir rol maestra
             config.set("is_master", True)
             config.set("db_engine", "mariadb")
             config.set("db_host", "localhost")
@@ -85,11 +179,20 @@ class MotorRed:
                 config.save()
             except Exception:
                 pass
+
             db_manager.reconectar_mariadb("localhost")
+            if not db_manager.is_connected():
+                return _rollback(
+                    "MariaDB local abrió el puerto pero no responde consultas.\n"
+                    "Se mantuvo el modo anterior."
+                )
+
             return True, "Configurado exitosamente como MAESTRA (Servidor MariaDB Local)."
         except Exception as e:
             self.logger.error(f"Error convirtiendo a maestra: {e}")
-            return False, f"Error: {e}"
+            return _rollback(
+                f"No se pudo activar MAESTRA local:\n{e}\n\nSe restauró el modo anterior."
+            )
 
     def convertir_en_esclava(self, ip_maestra):
         """Convierte la PC en esclava conectándose a la IP maestra.

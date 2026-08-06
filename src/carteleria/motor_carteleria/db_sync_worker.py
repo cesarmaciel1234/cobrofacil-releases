@@ -77,19 +77,50 @@ class DbSyncWorker(QThread):
                 
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
+
+                def _q(sql):
+                    """Query con fallback si faltan columnas de oferta (SQLite viejo)."""
+                    db_manager.last_error = ""
+                    rows = db_manager.execute_query(sql)
+                    err = str(getattr(db_manager, "last_error", "") or "").lower()
+                    if rows is not None and "no such column" not in err:
+                        return list(rows) if rows else []
+                    # Schema viejo / offline
+                    if "precio_oferta_relampago > 0" in sql:
+                        return []
+                    simple = (
+                        "SELECT categoria, nombre, precio, precio_oferta, stock "
+                        "FROM productos WHERE precio > 0 "
+                        "AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                        "AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                        "ORDER BY categoria"
+                    )
+                    if "es_pesable" in sql or "LIMIT" in sql.upper():
+                        simple = (
+                            f"SELECT nombre, precio, precio_oferta, stock, es_pesable "
+                            f"FROM productos WHERE precio > 0 "
+                            f"AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                            f"AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                            f"ORDER BY {rand_func} LIMIT 10"
+                        )
+                    db_manager.last_error = ""
+                    try:
+                        return list(db_manager.execute_query(simple) or [])
+                    except Exception:
+                        return []
                 
                 # 2. SOS (Soporta múltiples ofertas relámpago rotativas)
                 sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                oferta_sos = db_manager.execute_query(sos_query)
+                oferta_sos = _q(sos_query)
                 
                 # 3. Precios
                 precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
-                rows_precios = db_manager.execute_query(precios_query)
+                rows_precios = _q(precios_query)
                 
                 # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
                 top_dict = {"hoy": [], "semana": [], "mes": []}
                 fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                top_dict["hoy"] = db_manager.execute_query(fallback_q)
+                top_dict["hoy"] = _q(fallback_q)
                 top_dict["semana"] = top_dict["hoy"]
                 top_dict["mes"] = top_dict["hoy"]
                 

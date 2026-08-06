@@ -481,24 +481,18 @@ class NexusExtremeControl(QWidget):
             return
 
         # Calcular si hay descuadre en la caja seleccionada
+        # Misma semántica que cierre: fondo + (pago_efectivo − vuelto) + ingresos − retiros
         total_efectivo = 0.0
         fondo_inicial = 0.0
         esperado = 0.0
         diferencia = monto_fisico
         try:
-            hoy = datetime.now().strftime("%Y-%m-%d")
-            total_efectivo = db_manager.execute_scalar(
-                "SELECT SUM(total) FROM ventas WHERE fecha LIKE ? AND metodo_pago = 'Efectivo' AND caja_id = ?",
-                (f"{hoy}%", caja_num)
-            ) or 0.0
-            
-            # Ajustar por el fondo inicial
+            esperado = float(db_manager.get_efectivo_en_caja(caja_num) or 0.0)
             fondo_inicial = float(db_manager.execute_scalar(
                 "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
                 (caja_num,)
             ) or 0.0)
-            
-            esperado = total_efectivo + fondo_inicial
+            total_efectivo = max(0.0, esperado - fondo_inicial)
             diferencia = monto_fisico - esperado
             
             if diferencia < 0:
@@ -649,14 +643,26 @@ class NexusExtremeControl(QWidget):
                 filtro_caja_sql = " AND caja_id = ?"
                 params_totales.append(caja_num)
 
+            # Ventas efectivo neto (bruto − vuelto), alineado con cierre de caja
             total_efectivo = db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas"
-                f" WHERE DATE(fecha) = ? AND metodo_pago = 'Efectivo'{filtro_caja_sql}",
+                f"""SELECT SUM(
+                    CASE
+                        WHEN metodo_pago IN ('Efectivo', 'Mixto')
+                             OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
+                        THEN COALESCE(pago_efectivo, 0)
+                             - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
+                        ELSE 0
+                    END
+                ) FROM ventas
+                WHERE DATE(fecha) = ? AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')
+                {filtro_caja_sql}""",
                 tuple(params_totales)
             ) or 0.0
             total_digital = db_manager.execute_scalar(
                 f"SELECT SUM(total) FROM ventas"
-                f" WHERE DATE(fecha) = ? AND metodo_pago != 'Efectivo'{filtro_caja_sql}",
+                f" WHERE DATE(fecha) = ? AND metodo_pago NOT IN ('Efectivo', 'Mixto')"
+                f" AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')"
+                f"{filtro_caja_sql}",
                 tuple(params_totales)
             ) or 0.0
 
@@ -670,8 +676,9 @@ class NexusExtremeControl(QWidget):
                 self.panel_cen.lbl_efectivo.val_label.setText(str_efectivo)
                 self.panel_cen.lbl_digital.val_label.setText(str_digital)
                 
-                # Obtener fondo de apertura para la caja seleccionada
+                # Esperado = misma cadena que get_efectivo_en_caja / panel de cierre
                 fondo_inicial = 0.0
+                esperado_live = float(total_efectivo or 0)
                 if self.current_caja_filter != "todas":
                     import re
                     num_match = re.search(r'\d+', str(self.current_caja_filter))
@@ -680,15 +687,17 @@ class NexusExtremeControl(QWidget):
                         "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
                         (caja_num,)
                     ) or 0.0)
+                    esperado_live = float(db_manager.get_efectivo_en_caja(caja_num) or 0.0)
                 else:
                     # Sumar fondos de todas las terminales activas hoy
                     fondo_inicial = float(db_manager.execute_scalar(
                         "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='APERTURA' AND DATE(fecha) = ?",
                         (hoy,)
                     ) or 0.0)
+                    esperado_live = float(fondo_inicial or 0) + float(total_efectivo or 0)
                 
                 self.panel_cen.lbl_fondo.val_label.setText(f"$ {int(fondo_inicial):,}")
-                self.panel_cen.lbl_live_esperado.setText(f"$ {int(total_efectivo + fondo_inicial):,}")
+                self.panel_cen.lbl_live_esperado.setText(f"$ {int(esperado_live):,}")
 
             # 2. Buscar ventas nuevas desde la última consulta
             query_nuevas = (

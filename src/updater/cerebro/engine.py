@@ -792,25 +792,42 @@ def download_and_stage_update(progress_callback=None) -> bool:
         _download_lock.release()
 
 
+# 888 = reinicio suave del hub (logout, medianoche, LAN). NO matar mysqld ni bat.
+# 889 = reinicio duro para aplicar update (libera el .exe y relanza oculto).
+EXIT_SOFT_RESTART = 888
+EXIT_APPLY_RELAUNCH = 889
+
+
 def apply_pending_update_on_startup() -> bool:
     """Aplica la actualización pendiente antes de iniciar la UI (estilo PWA)."""
-    # Pedido explícito de reinicio-para-aplicar
+    # Pedido explícito del relaunch: forzar apply si hay staging
     apply_flag = os.path.join(_cache_dir(), "apply_now.flag")
+    force_apply = os.path.isfile(apply_flag)
     try:
-        if os.path.isfile(apply_flag):
+        if force_apply:
             os.remove(apply_flag)
     except OSError:
         pass
 
     if not ensure_staging_ready():
-        # Por si quedó applying.lock de un reinicio 888 sin paquete usable
+        # Por si quedó applying.lock de un reinicio sin paquete usable
         end_apply_guard()
         return False
 
     pending = _load_pending()
     if not pending.get("ready"):
-        end_apply_guard()
-        return False
+        if force_apply:
+            try:
+                _mark_pending_ready(
+                    pending.get("local_version") or read_local_version(),
+                    pending.get("remote_version") or read_remote_version(),
+                )
+                pending = _load_pending()
+            except Exception:
+                pass
+        if not pending.get("ready"):
+            end_apply_guard()
+            return False
     # Reintento tras apply_error anterior
     if pending.get("apply_error"):
         try:
@@ -985,20 +1002,70 @@ def apply_pending_update_on_startup() -> bool:
 def prepare_update_restart() -> None:
     """Cierra perfiles autónomos / otras instancias que bloquean el .exe."""
     _stop_blocking_processes()
-    time.sleep(1.5)
+    time.sleep(0.6)
+
+
+def _hidden_popen(cmd: list, cwd: str | None = None) -> None:
+    """Lanza proceso sin consola visible (novato-safe)."""
+    import subprocess
+
+    flags = 0
+    si = None
+    if sys.platform == "win32":
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = 0
+    subprocess.Popen(
+        cmd,
+        cwd=cwd or get_base_path(),
+        creationflags=flags,
+        startupinfo=si,
+        close_fds=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+    )
 
 
 def exit_and_relaunch_for_update() -> None:
     """
-    Cierra este proceso por completo y reabre el POS cuando el PID ya murió.
+    Cierra este proceso y reabre el POS cuando el PID ya murió (sin CMD a la vista).
     Así Windows libera CobroFacil_POS.exe / DLLs y apply_pending puede copiar.
     No retorna.
     """
-    import subprocess
     import tempfile
 
+    # Aviso breve: el usuario no debe hacer clic en nada
+    try:
+        from PyQt6.QtWidgets import QApplication, QProgressDialog
+        from PyQt6.QtCore import Qt
+
+        app = QApplication.instance()
+        if app:
+            tip = QProgressDialog(
+                "Actualizando CobroFacil…\n"
+                "El sistema se cierra y vuelve solo.\n"
+                "No abras el ejecutable a mano.",
+                None,
+                0,
+                0,
+            )
+            tip.setWindowTitle("CobroFacil — Actualizando")
+            tip.setWindowFlags(
+                Qt.WindowType.WindowStaysOnTopHint
+                | Qt.WindowType.Tool
+                | Qt.WindowType.CustomizeWindowHint
+                | Qt.WindowType.WindowTitleHint
+            )
+            tip.setCancelButton(None)
+            tip.setMinimumDuration(0)
+            tip.show()
+            app.processEvents()
+    except Exception:
+        pass
+
     begin_apply_guard()
-    # Marca explícita: el próximo arranque DEBE aplicar (si el bat arranca el exe)
     try:
         flag = os.path.join(_cache_dir(), "apply_now.flag")
         with open(flag, "w", encoding="utf-8") as f:
@@ -1019,77 +1086,126 @@ def exit_and_relaunch_for_update() -> None:
     pid = os.getpid()
     workdir = get_base_path()
 
-    if sys.platform == "win32" and getattr(sys, "frozen", False):
-        bat = os.path.join(tempfile.gettempdir(), f"cobrofacil_relaunch_{pid}.bat")
+    if sys.platform == "win32":
         log = os.path.join(tempfile.gettempdir(), "cobrofacil_relaunch.log")
-        exe_q = exe.replace('"', "")
-        wd_q = workdir.replace('"', "")
-        log_q = log.replace('"', "")
-        with open(bat, "w", encoding="utf-8", newline="\r\n") as f:
-            f.write(
-                f"""@echo off
-setlocal EnableExtensions
-set PID={pid}
-set EXE={exe_q}
-set WD={wd_q}
-set LOG={log_q}
-echo relaunch start %DATE% %TIME%>>"%LOG%"
-:wait
-tasklist /FI "PID eq %PID%" 2>NUL | find "%PID%" >NUL
-if not errorlevel 1 (
-  ping -n 2 127.0.0.1 >NUL
-  goto wait
-)
-echo pid gone>>"%LOG%"
-rem Solo POS: no matar mysqld aqui (deja la DB del negocio; apply lo detiene si hace falta)
-taskkill /F /IM CobroFacil_POS.exe >NUL 2>&1
-ping -n 3 127.0.0.1 >NUL
-cd /d "%WD%"
-if not exist "%WD%\_update_cache" mkdir "%WD%\_update_cache" >NUL 2>&1
-echo apply>>"%WD%\_update_cache\apply_now.flag"
-set N=0
-:try_start
-set /a N+=1
-echo try %N% start>>"%LOG%"
-start "CobroFacil" /D "%WD%" "%EXE%"
-ping -n 5 127.0.0.1 >NUL
-tasklist /FI "IMAGENAME eq CobroFacil_POS.exe" 2>NUL | find /I "CobroFacil_POS.exe" >NUL
-if not errorlevel 1 (
-  echo started ok>>"%LOG%"
-  goto done
-)
-if %N% LSS 6 (
-  ping -n 3 127.0.0.1 >NUL
-  goto try_start
-)
-echo FAILED to start>>"%LOG%"
-:done
-del "%~f0" >NUL 2>&1
-"""
-            )
-        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | 0x00000008
-        subprocess.Popen(
-            ["cmd.exe", "/c", bat],
-            cwd=workdir,
-            creationflags=flags,
-            close_fds=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    else:
-        if sys.platform == "win32":
-            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) | 0x00000008
-            subprocess.Popen(
-                [
-                    "cmd.exe",
-                    "/c",
-                    f'ping -n 3 127.0.0.1 >NUL & cd /d "{workdir}" & start "CobroFacil" /D "{workdir}" "{exe}"',
-                ],
-                creationflags=flags,
-                close_fds=True,
-            )
+        ps1 = os.path.join(tempfile.gettempdir(), f"cobrofacil_relaunch_{pid}.ps1")
+        exe_q = exe.replace("'", "''")
+        wd_q = workdir.replace("'", "''")
+        log_q = log.replace("'", "''")
+        if getattr(sys, "frozen", False):
+            start_ps = "Start-Process -FilePath $exe -WorkingDirectory $wd"
+            alive_ps = "Get-Process -Name 'CobroFacil_POS' -ErrorAction SilentlyContinue"
         else:
-            subprocess.Popen([exe], cwd=workdir)
+            main_py = os.path.join(workdir, "main.py").replace("'", "''")
+            start_ps = (
+                f"Start-Process -FilePath $exe -WorkingDirectory $wd "
+                f"-ArgumentList @('{main_py}')"
+            )
+            alive_ps = (
+                "Get-Process -Name 'CobroFacil_POS','python','pythonw' "
+                "-ErrorAction SilentlyContinue"
+            )
+        # Un solo PowerShell oculto: sin cmd, sin find, con heal .old y auto-start
+        ps_body = f"""$ErrorActionPreference = 'SilentlyContinue'
+$waitPid = {pid}
+$exe = '{exe_q}'
+$wd = '{wd_q}'
+$log = '{log_q}'
+function Log($m) {{ Add-Content -Path $log -Value ("{{0}} {{1}}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $m) }}
+Log 'relaunch start'
+for ($i = 0; $i -lt 120; $i++) {{
+  if (-not (Get-Process -Id $waitPid -ErrorAction SilentlyContinue)) {{ break }}
+  Start-Sleep -Milliseconds 500
+}}
+Log 'pid gone'
+Get-Process -Name 'CobroFacil_POS' -ErrorAction SilentlyContinue | Where-Object {{ $_.Id -ne $waitPid }} | Stop-Process -Force
+Start-Sleep -Seconds 2
+if (-not (Test-Path (Join-Path $wd '_update_cache'))) {{ New-Item -ItemType Directory -Path (Join-Path $wd '_update_cache') | Out-Null }}
+Set-Content -Path (Join-Path $wd '_update_cache\\apply_now.flag') -Value 'apply' -Encoding UTF8
+function Test-ExeOk([string]$p) {{
+  if (-not (Test-Path $p)) {{ return $false }}
+  $s = (Get-Item $p).Length
+  if ($s -lt 50000) {{ return $false }}
+  try {{
+    $fs = [IO.File]::OpenRead($p)
+    $b = New-Object byte[] 2
+    [void]$fs.Read($b, 0, 2)
+    $fs.Seek([Math]::Max(0, $s - 8192), 'Begin') | Out-Null
+    $t = New-Object byte[] 8192
+    $n = $fs.Read($t, 0, 8192)
+    $fs.Close()
+    $tail = [Text.Encoding]::ASCII.GetString($t, 0, $n)
+    return ($b[0] -eq 77 -and $b[1] -eq 90 -and $tail.Contains('MEI'))
+  }} catch {{ return $false }}
+}}
+$hub = Join-Path $wd 'CobroFacil_POS.exe'
+$old = Join-Path $wd 'CobroFacil_POS.exe.old'
+if ((Test-Path $old) -and -not (Test-ExeOk $hub)) {{
+  Copy-Item -Force $old $hub
+  Log 'healed exe from .old'
+}}
+$started = $false
+for ($n = 1; $n -le 6; $n++) {{
+  Log ("try start " + $n)
+  if (Test-Path $exe) {{
+    {start_ps}
+  }} elseif (Test-Path $hub) {{
+    Start-Process -FilePath $hub -WorkingDirectory $wd
+  }}
+  Start-Sleep -Seconds 4
+  if ({alive_ps}) {{
+    $started = $true
+    Log 'started ok'
+    break
+  }}
+  Start-Sleep -Seconds 2
+}}
+if (-not $started) {{
+  $startBat = Join-Path $wd 'CobroFacil_Start.bat'
+  if (Test-Path $startBat) {{
+    Log 'fallback CobroFacil_Start.bat'
+    Start-Process -FilePath $startBat -WorkingDirectory $wd -WindowStyle Hidden
+  }} else {{
+    Log 'FAILED to start'
+  }}
+}}
+Remove-Item -Force -ErrorAction SilentlyContinue -LiteralPath $MyInvocation.MyCommand.Path
+"""
+        try:
+            with open(ps1, "w", encoding="utf-8", newline="\n") as f:
+                f.write(ps_body)
+            _hidden_popen(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    ps1,
+                ],
+                cwd=workdir,
+            )
+        except Exception:
+            # Último recurso: arranque directo diferido (dev)
+            _hidden_popen(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    f"Start-Sleep -Seconds 2; Start-Process -FilePath '{exe_q}' -WorkingDirectory '{wd_q}'",
+                ],
+                cwd=workdir,
+            )
+    else:
+        import subprocess
+
+        subprocess.Popen([exe], cwd=workdir)
 
     os._exit(0)
 
@@ -1099,7 +1215,27 @@ def _stop_blocking_processes():
     import subprocess
 
     me = os.getpid()
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if sys.platform == "win32" else 0
+    si = None
+    if sys.platform == "win32":
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = 0
+
+    def _run_silent(args: list) -> None:
+        try:
+            subprocess.run(
+                args,
+                creationflags=flags,
+                startupinfo=si,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                timeout=8,
+                shell=False,
+            )
+        except Exception:
+            pass
 
     # 1) Perfiles autónomos (cajero/admin/jefe/carteleria) + servidor de tienda
     try:
@@ -1113,14 +1249,7 @@ def _stop_blocking_processes():
         spid = get_store_server_pid()
         if spid and int(spid) != me:
             if sys.platform == "win32":
-                subprocess.run(
-                    ["taskkill", "/F", "/PID", str(spid)],
-                    creationflags=flags,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=8,
-                )
-        # El release normal solo borra si somos dueños del PID; tras taskkill forzamos
+                _run_silent(["taskkill", "/F", "/PID", str(spid)])
         try:
             from src.utils.candados import STORE_SERVER_LOCK_PATH, get_store_server_pid
 
@@ -1152,21 +1281,13 @@ def _stop_blocking_processes():
                 except Exception:
                     pass
         except Exception:
-            subprocess.run(
-                f'taskkill /F /IM CobroFacil_POS.exe /FI "PID ne {me}"',
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+            _run_silent(
+                ["taskkill", "/F", "/IM", "CobroFacil_POS.exe", "/FI", f"PID ne {me}"]
             )
 
     # 3) mysqld a veces deja handles sobre la carpeta de instalación
     if sys.platform == "win32":
-        subprocess.run(
-            "taskkill /f /im mysqld.exe",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        _run_silent(["taskkill", "/F", "/IM", "mysqld.exe"])
 
 
 def _background_loop():

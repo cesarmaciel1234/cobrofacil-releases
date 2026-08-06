@@ -83,10 +83,18 @@ def obtener_datos_cierre(
             v_cond += " AND caja_id = ?"
             v_params.append(caja_id)
 
-        # Efectivo neto (Efectivo + parte efectivo de Mixto)
+        # Efectivo neto en cajón: bruto recibido − vuelto (solo Efectivo/Mixto)
         v_efectivo = float(
             db.execute_scalar(
-                f"SELECT SUM(COALESCE(pago_efectivo, 0) - COALESCE(cambio, 0)) FROM ventas WHERE {v_cond}",
+                f"""SELECT SUM(
+                    CASE
+                        WHEN metodo_pago IN ('Efectivo', 'Mixto')
+                             OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
+                        THEN COALESCE(pago_efectivo, 0)
+                             - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
+                        ELSE 0
+                    END
+                ) FROM ventas WHERE {v_cond}""",
                 tuple(v_params),
             )
             or 0.0

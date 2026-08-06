@@ -20,11 +20,17 @@ class PanelCombos(QFrame):
         self.auto_refresh_timer.start(16000) # 16 segundos
         self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
+        self.setObjectName("PanelCombos")
         if get_active_theme_name() == "temu":
-            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
+            self.setStyleSheet(
+                f"QFrame#PanelCombos {{ background: {C_THEME['surface']}; "
+                f"border-radius: 20px; border: 4px solid #FF5722; }}"
+            )
         else:
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+            self.setStyleSheet(
+                f"QFrame#PanelCombos {{ background: {C_THEME['surface']}; "
+                f"border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); }}"
+            )
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)

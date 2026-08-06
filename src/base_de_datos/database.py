@@ -290,6 +290,12 @@ class DatabaseManager:
                         self.db_engine_type = "sqlite"
                         self.mariadb_engine = None
                         self._create_tables()
+                        # Sin migrate faltan columnas (precio_oferta_relampago, etc.)
+                        # y la TV de cartelería se rompe / parece congelada.
+                        try:
+                            self._migrate_db()
+                        except Exception as mig_e:
+                            logger.warning(f"Migrate SQLite offline: {mig_e}")
                         self._ensure_test_users()
                         try:
                             from src.base_de_datos.diario_ventas_externo import schedule_hidratar_faltantes
@@ -623,7 +629,14 @@ class DatabaseManager:
 
             self.db_path = local_path
             self.db_engine_type = "sqlite"
-            self.is_master = True
+            # Si era esclava, no pasar a "maestra" solo por caer a SQLite offline
+            try:
+                from src.config import config as _cfg
+                self.is_master = bool(_cfg.get("is_master", True)) and not bool(
+                    _cfg.get("carteleria_is_slave")
+                )
+            except Exception:
+                self.is_master = True
             self._forced_local_offline = True
 
             # Verificar/crear tablas en la BD local
@@ -1299,12 +1312,14 @@ class DatabaseManager:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
         try:
+            self.last_error = ""
             conn = self.get_connection()
             cursor = conn.cursor()
             cursor.execute(self._normalize_query(query), params)
             result = cursor.fetchall()
             return result if result is not None else []
         except Exception as e:
+            self.last_error = str(e)
             logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
             if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
                 try:
@@ -1524,7 +1539,20 @@ class DatabaseManager:
         aperturas = self.execute_query(query_apertura, (caja_id,))
         if not aperturas:
             # Si no hay apertura registrada para esta caja, hacemos fallback histórico para esta caja
-            query_ventas = "SELECT SUM(pago_efectivo - cambio) FROM ventas WHERE caja_id = ? AND estado IN ('COMPLETADA', 'COMPLETADO')"
+            # Solo Efectivo/Mixto mueven cajón; vuelto (cambio>0) se resta del bruto recibido
+            query_ventas = """
+                SELECT SUM(
+                    CASE
+                        WHEN metodo_pago IN ('Efectivo', 'Mixto')
+                             OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
+                        THEN COALESCE(pago_efectivo, 0)
+                             - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
+                        ELSE 0
+                    END
+                )
+                FROM ventas
+                WHERE caja_id = ? AND estado IN ('COMPLETADA', 'COMPLETADO')
+            """
             query_retiros = "SELECT SUM(monto) FROM movimientos_caja WHERE caja_id = ? AND tipo='RETIRO'"
             v = self.execute_scalar(query_ventas, (caja_id,)) or 0.0
             r = self.execute_scalar(query_retiros, (caja_id,)) or 0.0
@@ -1533,9 +1561,17 @@ class DatabaseManager:
         apertura_fecha = aperturas[0]['fecha']
         fondo_apertura = float(aperturas[0]['monto'] or 0.0)
         
-        # 2. Sumar ventas en efectivo realizadas en este turno (desde la apertura_fecha)
+        # 2. Efectivo neto del turno: bruto recibido − vuelto (solo medios que mueven cajón)
         query_ventas = """
-            SELECT SUM(pago_efectivo - cambio) 
+            SELECT SUM(
+                CASE
+                    WHEN metodo_pago IN ('Efectivo', 'Mixto')
+                         OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
+                    THEN COALESCE(pago_efectivo, 0)
+                         - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
+                    ELSE 0
+                END
+            )
             FROM ventas 
             WHERE caja_id = ? 
               AND fecha >= ? 
@@ -1567,17 +1603,17 @@ class DatabaseManager:
 
     def cancelar_venta_transaccional(self, id_venta: int, username: str) -> bool:
         """
-        Cancela una venta de forma transaccional, devolviendo el stock de los productos
-        (excepto el artículo común '000') e insertando un movimiento de caja.
+        Cancela una venta de forma transaccional y devuelve stock
+        (excepto el artículo común '000'). El esperado de caja se corrige solo
+        al excluir la venta CANCELADA del SUM (sin RETIRO duplicado).
         """
-        from datetime import datetime
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
             
             # 1. Obtener la venta y verificar su estado
-            cursor.execute("SELECT estado, caja_id, total, metodo_pago, pago_efectivo, cambio FROM ventas WHERE id = ?", (id_venta,))
+            cursor.execute("SELECT estado FROM ventas WHERE id = ?", (id_venta,))
             venta = cursor.fetchone()
             if not venta:
                 logger.error(f"Venta {id_venta} no encontrada para cancelar.")
@@ -1596,21 +1632,9 @@ class DatabaseManager:
                 if prod_id and str(prod_id).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ? OR codigo = ?", (det['cantidad'], prod_id, prod_id))
             
-            # 3. Cambiar estado de la venta
+            # 3. Marcar CANCELADA (queda fuera del esperado; no generar RETIRO extra)
             cursor.execute("UPDATE ventas SET estado = 'CANCELADA' WHERE id = ?", (id_venta,))
-            
-            # 4. Registrar movimiento de caja negativo si fue en efectivo
-            caja_id = venta['caja_id']
-            metodo = venta['metodo_pago']
-            if 'EFECTIVO' in str(metodo).upper():
-                neto_efectivo = float(venta['pago_efectivo'] or 0) - float(venta['cambio'] or 0)
-                if neto_efectivo > 0:
-                    fecha_mov = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    cursor.execute(
-                        "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, 'RETIRO', ?, ?, ?, ?)",
-                        (fecha_mov, neto_efectivo, username, f"Cancelación Venta #{id_venta}", caja_id)
-                    )
-            
+
             conn.commit()
             return True
         except Exception as e:

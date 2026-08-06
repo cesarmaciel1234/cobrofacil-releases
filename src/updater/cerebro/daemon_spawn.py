@@ -113,14 +113,19 @@ def ensure_updater_process() -> bool:
     cmd = _build_updater_command()
     try:
         flags = 0
+        si = None
         if sys.platform == "win32":
-            flags = getattr(subprocess, "DETACHED_PROCESS", 0x00000008)
+            # No mezclar DETACHED_PROCESS con CREATE_NO_WINDOW (MSDN lo ignora)
+            flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
             flags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
-            flags |= getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0
         subprocess.Popen(
             cmd,
             cwd=get_base_path(),
             creationflags=flags,
+            startupinfo=si,
             close_fds=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

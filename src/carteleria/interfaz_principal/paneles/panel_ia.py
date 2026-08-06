@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 from src.carteleria.theme import C_THEME, apply_apple_shadow
+from src.carteleria.assets_paths import carteleria_asset_url
 
 class PanelIA(QFrame):
     """
@@ -20,11 +21,17 @@ class PanelIA(QFrame):
         self.auto_refresh_timer.start(16000) # 16 segundos
         self.motor.start() # Carga inicial
         from src.carteleria.theme import get_active_theme_name
+        self.setObjectName("PanelIA")
         if get_active_theme_name() == "temu":
-            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
+            self.setStyleSheet(
+                f"QFrame#PanelIA {{ background: {C_THEME['surface']}; "
+                f"border-radius: 20px; border: 4px solid #FF5722; }}"
+            )
         else:
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+            self.setStyleSheet(
+                f"QFrame#PanelIA {{ background: {C_THEME['surface']}; "
+                f"border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); }}"
+            )
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.layout = QVBoxLayout(self)
@@ -110,7 +117,6 @@ class PanelIA(QFrame):
         self.lbl_content.show()
         from src.carteleria.assets_paths import carteleria_asset_url
         img_path = carteleria_asset_url("chef_lobo.png")
-        
         # --- Clima esquina superior derecha ---
         icon_name, texto_clima = clima
         icon_clima_path = carteleria_asset_url(f"{icon_name}.png")
@@ -163,6 +169,7 @@ class PanelIA(QFrame):
             html += f"<span style='{t1}'>Hoy Recomendamos</span><br><br>"
             html += f"<span style='{t_msg}'>\"{mensaje_ia}\"</span><br><br><br>"
             html += f"<span style='{t_prod}'>{prod_nombre}</span><br><br>"
+
             
             if prod_precio_oferta > 0:
                 html += f"<span style='{t_old}'>${prod_precio:,.0f}</span><br>"

@@ -829,7 +829,7 @@ class MainWindow(QMainWindow):
         """Cierra la sesión activa y relanza el selector de perfiles.
 
         Comportamiento:
-          - Admin  → logout() en Admin0Dashboard emite exit(888).
+          - Admin  → logout() en Admin0Dashboard emite exit(888) (reinicio suave).
             Este método es llamado ADICIONALMENTE si Admin0Dashboard tiene
             request_logout (doble cobertura — no rompe nada).
           - Jefe   → Jefe0Dashboard.request_logout → este método → exit(99).

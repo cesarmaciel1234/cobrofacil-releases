@@ -2215,14 +2215,15 @@ class Paso5Terminal(QWidget):
                 except Exception:
                     pass
 
-            # --- Auto-aplicar actualización tras corte de caja ---
+            # Update pendiente: relaunch duro (889). Nunca apply con el .exe aún en uso.
             try:
-                from src.updater.silent_auto_updater import is_update_staged, apply_pending_update_on_startup
+                from src.updater.silent_auto_updater import is_update_staged
                 if is_update_staged():
-                    apply_pending_update_on_startup()
+                    QApplication.exit(889)
+                    return
             except Exception:
                 pass
-                
+
             QApplication.exit(888)
         else:
             QTimer.singleShot(50, self.txt_scan.setFocus)

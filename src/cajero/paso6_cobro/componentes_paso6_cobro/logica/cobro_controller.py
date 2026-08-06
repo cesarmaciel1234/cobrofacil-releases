@@ -60,15 +60,22 @@ class CobroController:
             estado_venta = 'TRANSF_PENDIENTE'
             nombre_cliente_guardar = nombre_pendiente
 
-        pago_efectivo = p1 if metodo_pago in ["Efectivo", "Mixto"] else 0
-        pago_otro = p2 if metodo_pago == "Mixto" else (p1 if metodo_pago != "Efectivo" else 0)
+        # Efectivo/Mixto: p1 = efectivo (+USD) recibido (bruto). El vuelto sale del cajón.
+        # Otros medios: no mueven efectivo → cambio de arqueo = 0 (evita bajar monto esperado).
+        es_caja = metodo_pago in ("Efectivo", "Mixto")
+        pago_efectivo = float(p1 or 0) if es_caja else 0.0
+        pago_otro = float(p2 or 0) if metodo_pago == "Mixto" else (
+            float(p1 or 0) if metodo_pago != "Efectivo" else 0.0
+        )
+        overpay = (float(p1 or 0) + float(p2 or 0)) - float(total_final or 0)
+        cambio = max(0.0, overpay) if es_caja else 0.0
 
         descuento_total = monto_descuento + descuentaso_oferta
 
         resultado_venta = {
             'total': total_final,
-            'pago_con': p1 + p2,
-            'cambio': (p1 + p2) - total_final,
+            'pago_con': float(p1 or 0) + float(p2 or 0),
+            'cambio': cambio,
             'pago_efectivo': pago_efectivo,
             'pago_otro': pago_otro,
             'usuario': cajero_actual,

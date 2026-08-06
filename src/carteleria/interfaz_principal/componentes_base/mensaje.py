@@ -68,9 +68,7 @@ class Mensaje(QFrame):
         self.offset = 30
         self.text_width = 0
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._animar)
-
+        self.anim = None
         self.actualizar_texto(texto_inicial)
 
     def actualizar_texto(self, nuevo_texto):
@@ -79,8 +77,8 @@ class Mensaje(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # Márgenes laterales: el texto no toca el borde curvo
-        m = 36
+        # Márgenes laterales reducidos para evitar el corte abrupto del texto
+        m = 12
         self.viewport.setGeometry(m, 0, max(0, self.width() - 2 * m), self._h)
         self._clip_rounded()
         self._check_scroll()
@@ -109,11 +107,19 @@ class Mensaje(QFrame):
         self.label.adjustSize()
         self.text_width = max(1, self.label.width() // 4)
         self.label.setFixedHeight(self._h)
-        if not self.timer.isActive():
-            self.timer.start(25)
-
-    def _animar(self):
-        self.offset -= 2
-        if self.offset <= -self.text_width:
-            self.offset += self.text_width
-        self.label.move(int(self.offset), 0)
+        
+        if self.anim:
+            self.anim.stop()
+            
+        from PyQt6.QtCore import QPropertyAnimation, QPoint
+        self.anim = QPropertyAnimation(self.label, b"pos")
+        
+        # 80 píxeles por segundo (equivalente a 2px / 25ms del viejo timer)
+        duracion_ms = int((self.text_width / 80.0) * 1000)
+        if duracion_ms < 100: duracion_ms = 1000
+        
+        self.anim.setDuration(duracion_ms)
+        self.anim.setStartValue(QPoint(0, 0))
+        self.anim.setEndValue(QPoint(-self.text_width, 0))
+        self.anim.setLoopCount(-1) # Loop infinito transparente
+        self.anim.start()

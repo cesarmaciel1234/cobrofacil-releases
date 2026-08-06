@@ -308,27 +308,52 @@ class Admin6RedLan(QWidget):
     # ACCIONES
     # ──────────────────────────────────────────────────────────────────────────
     def _actualizar_botones(self):
-        """Deshabilita el botón del modo ya activo."""
+        """Deshabilita el botón del modo ya activo / bloquea MAESTRA en esclavas."""
         motor = MotorRed()
         is_master = motor.obtener_estado_red()["is_master"]
-        self.btn_hacer_maestra.setEnabled(not is_master)
-        self.btn_hacer_esclava.setEnabled(is_master)
-        if not is_master:
+        es_esclava_fija = False
+        try:
+            from src.config import config
+            es_esclava_fija = bool(config.get("carteleria_is_slave")) or (
+                config.get("is_master") is False
+            )
+        except Exception:
+            es_esclava_fija = not is_master
+
+        if is_master and not es_esclava_fija:
+            self.btn_hacer_maestra.setEnabled(False)
             self.btn_hacer_maestra.setText("✅ MAESTRA  (activo)")
-        else:
-            self.btn_hacer_maestra.setText("✅ Convertir en MAESTRA")
-        if is_master:
-            self.btn_hacer_esclava.setText("🔗 ESCLAVA  (inactivo)")
-        else:
+            self.btn_hacer_esclava.setEnabled(True)
             self.btn_hacer_esclava.setText("🔗 Convertir en ESCLAVA")
+        else:
+            self.btn_hacer_maestra.setEnabled(False)
+            self.btn_hacer_maestra.setText("🚫 Solo en PC servidor")
+            self.btn_hacer_esclava.setEnabled(True)
+            self.btn_hacer_esclava.setText("🔗 Reconectar ESCLAVA")
 
     def _convertir_maestra(self):
-        """Pasa esta PC a modo MAESTRA (BD local SQLite)."""
+        """Pasa esta PC a modo MAESTRA (solo PC servidor)."""
+        try:
+            from src.config import config
+            if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
+                QMessageBox.information(
+                    self,
+                    "Esta PC es ESCLAVA",
+                    "Esta cartelería/caja debe seguir como ESCLAVA.\n\n"
+                    "Usá «Reconectar ESCLAVA» con la IP de la Maestra.\n"
+                    "«Convertir en MAESTRA» solo se usa en la PC servidor.",
+                )
+                self._actualizar_botones()
+                return
+        except Exception:
+            pass
+
         resp = QMessageBox.question(
             self, "Cambiar a MAESTRA",
             "¿Convertir esta PC en MAESTRA?\n\n"
-            "Se usará la base de datos LOCAL (SQLite).\n"
-            "Si había ventas sin sincronizar con la Maestra anterior, pueden perderse.",
+            "Requiere MariaDB / Servidor de Tienda CORRIENDO en ESTA PC "
+            "(localhost:3306).\n\n"
+            "Si falla, se mantiene el modo actual.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -341,7 +366,8 @@ class Admin6RedLan(QWidget):
             QMessageBox.information(self, "Éxito", msg)
             self._refrescar_estado()
         else:
-            QMessageBox.warning(self, "Error", msg)
+            QMessageBox.information(self, "No se pudo", msg)
+        self._actualizar_botones()
 
     def _convertir_esclava(self):
         """Pasa esta PC a modo ESCLAVA conectándose a la IP indicada."""

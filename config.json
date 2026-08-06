@@ -19,7 +19,6 @@
     "db_path": "",
     "db_name": "AQVGI.db",
     "server_password": "1234",
-    "update_server_ip": "",
     "update_auth_token": "1234",
     "shared_folder_name": "tpv pro 2026",
     "local_pin": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
@@ -39,7 +38,9 @@
     "github_report_repo": "cesarmaciel1234/cobrofacil-releases",
     "github_report_token": "",
     "carteleria_performance_mode": false,
-    "carteleria_is_slave": false,
+    "carteleria_is_slave": true,
+    "auto_start_store_server": false,
+    "update_server_ip": "",
     "pantalla_tactil": "auto",
     "business_cuit": "CUIT: 00-00000000-0",
     "business_iibb": "",
@@ -84,7 +85,7 @@
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
     "last_weekly_report_sent": "2026-W32",
-    "carteleria_master_ip": "192.168.0.53",
+    "carteleria_master_ip": "192.168.0.5",
     "clover_ip": "",
     "clover_port": "1234",
     "license_key": "",
@@ -98,5 +99,6 @@
     "mensaje_zocalo": "",
     "carteleria_theme": "temu",
     "cuit": "CUIT: 00-00000000-0",
-    "mensaje_despedida": "Gracias por su compra!"
+    "mensaje_despedida": "Gracias por su compra!",
+    "preferred_master_ip": "192.168.0.5"
 }

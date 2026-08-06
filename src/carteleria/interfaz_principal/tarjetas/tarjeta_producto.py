@@ -34,17 +34,20 @@ class TarjetaProducto(QFrame):
         
         # Calcular alturas mínimas equilibradas para asegurar visibilidad en TV
         len_n = len(self.nombre)
-        es_nombre_largo = (len_n > 14)
         tiene_oferta = self.precio_oferta and float(self.precio_oferta) > 0
         
+        # Permitir hasta 3 líneas sin achicar la fuente
+        es_2_lineas = (len_n > 14 and len_n <= 28)
+        es_3_lineas = (len_n > 28)
+        
         if self.modo_tv == 1:
-            base_h = 118
-            extra_h_largo = 28 if es_nombre_largo else 0
+            base_h = 100
+            extra_h_largo = 32 if es_2_lineas else (64 if es_3_lineas else 0)
             extra_h_regla = 34 if self.regla else 0
             extra_h_oferta = 22 if tiene_oferta else 0
         else:
-            base_h = 98
-            extra_h_largo = 22 if es_nombre_largo else 0
+            base_h = 85
+            extra_h_largo = 24 if es_2_lineas else (48 if es_3_lineas else 0)
             extra_h_regla = 28 if self.regla else 0
             extra_h_oferta = 16 if tiene_oferta else 0
             
@@ -97,9 +100,9 @@ class TarjetaProducto(QFrame):
         self.top_lay.setSpacing(14) # Espacio de respiración entre producto y precio
         self.top_lay.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
-        # 1. Sub-contenedor Izquierdo: PRODUCTO
+        # 1. Sub-contenedor Izquierdo: PRODUCTO (60%)
         self._build_contenedor_producto()
-        self.top_lay.addWidget(self.lbl_producto, stretch=1)
+        self.top_lay.addWidget(self.lbl_producto, stretch=6)
         
         # 2. Sub-contenedor Derecho: PRECIOS
         self.precios_container = QWidget()
@@ -116,27 +119,15 @@ class TarjetaProducto(QFrame):
         self._build_contenedor_precios()
         self.precios_lay.addStretch(1)
         
-        self.top_lay.addWidget(self.precios_container, stretch=0)
+        self.top_lay.addWidget(self.precios_container, stretch=4)
         self.main_lay.addWidget(self.top_container, stretch=1)
         
         # 3. Sub-contenedor Inferior: CINTA PROMOCIONAL (Si aplica)
         self._build_contenedor_cinta()
 
     def _build_contenedor_producto(self):
-        len_n = len(self.nombre)
-        p_val = self.precio_oferta if self.precio_oferta > 0 else self.precio
-        p_str = f"${p_val:,.0f}"
-        es_precio_largo = len(p_str) >= 7
-        max_word_len = max([len(w) for w in self.nombre.split()]) if self.nombre else 0
-        
-        if len_n <= 9 and max_word_len <= 9 and not es_precio_largo:
-            fs_n = 28 if self.modo_tv == 1 else 20
-        elif len_n <= 14 and max_word_len <= 10:
-            fs_n = 24 if self.modo_tv == 1 else 17
-        elif max_word_len > 10:
-            fs_n = 16 if self.modo_tv == 1 else 13
-        else:
-            fs_n = 19 if self.modo_tv == 1 else 14
+        # Fuente grande siempre para forzar wrap en lugar de achicarse
+        fs_n = 28 if self.modo_tv == 1 else 20
             
         self.lbl_producto = QLabel(self.nombre)
         self.lbl_producto.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
@@ -156,7 +147,8 @@ class TarjetaProducto(QFrame):
 
         self.lbl_producto.setWordWrap(True)
         self.lbl_producto.setMinimumWidth(0)
-        self.lbl_producto.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        # MinimumExpanding permite que crezca verticalmente sin aplastarse
+        self.lbl_producto.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.MinimumExpanding)
 
     def _build_contenedor_precios(self):
         p_val = self.precio_oferta if self.precio_oferta > 0 else self.precio
@@ -164,7 +156,7 @@ class TarjetaProducto(QFrame):
         es_precio_largo = len(p_str) >= 7
 
         if self.precio_oferta > 0:
-            fs_old = 16 if self.modo_tv == 1 else 12
+            fs_old = 18 if self.modo_tv == 1 else 14
             lbl_old = QLabel(f"<s>${self.precio:,.0f}</s>")
             lbl_old.setMinimumWidth(0)
             lbl_old.setStyleSheet(
@@ -178,7 +170,7 @@ class TarjetaProducto(QFrame):
             lbl_p.setMinimumWidth(0)
             lbl_p.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
             if self.is_temu:
-                fs_p = (22 if self.modo_tv == 1 else 16) if es_precio_largo else (24 if self.modo_tv == 1 else 18)
+                fs_p = (24 if self.modo_tv == 1 else 18) if es_precio_largo else (26 if self.modo_tv == 1 else 20)
                 pad_h = "3px 10px" if self.modo_tv == 1 else "2px 8px"
                 lbl_p.setStyleSheet(
                     f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; "
@@ -186,7 +178,7 @@ class TarjetaProducto(QFrame):
                     f"background-color: #DC2626; padding: {pad_h}; border-radius: 10px; }}"
                 )
             else:
-                fs_p = (20 if self.modo_tv == 1 else 15) if es_precio_largo else (23 if self.modo_tv == 1 else 17)
+                fs_p = (22 if self.modo_tv == 1 else 17) if es_precio_largo else (25 if self.modo_tv == 1 else 19)
                 pad_h = "3px 10px" if self.modo_tv == 1 else "2px 8px"
                 lbl_p.setStyleSheet(
                     f"QLabel {{ font-family: 'Segoe UI', sans-serif; font-size: {fs_p}px; "
@@ -200,13 +192,13 @@ class TarjetaProducto(QFrame):
             lbl_p.setMinimumWidth(0)
             lbl_p.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
             if self.is_temu:
-                fs_p = (24 if self.modo_tv == 1 else 17) if es_precio_largo else (28 if self.modo_tv == 1 else 20)
+                fs_p = (26 if self.modo_tv == 1 else 19) if es_precio_largo else (30 if self.modo_tv == 1 else 22)
                 lbl_p.setStyleSheet(
                     f"QLabel {{ font-family: 'Arial Black', 'Segoe UI Black', sans-serif; "
                     f"font-size: {fs_p}px; font-weight: 900; color: #DC2626; }}"
                 )
             else:
-                fs_p = (22 if self.modo_tv == 1 else 16) if es_precio_largo else (26 if self.modo_tv == 1 else 19)
+                fs_p = (24 if self.modo_tv == 1 else 18) if es_precio_largo else (28 if self.modo_tv == 1 else 21)
                 lbl_p.setStyleSheet(
                     f"QLabel {{ font-family: 'Segoe UI', sans-serif; font-size: {fs_p}px; "
                     f"font-weight: 800; color: {C_THEME['accent']}; }}"
