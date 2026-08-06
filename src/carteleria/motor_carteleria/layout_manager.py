@@ -36,7 +36,7 @@ class LayoutManager:
         self.main.grid.setRowStretch(1, 0)
             
         total_width = self.main.width()
-        is_multimonitor = total_width > 2000 or self.main.layout_mode == 4
+        is_multimonitor = total_width > 5000 or self.main.layout_mode == 4
         
         if hasattr(self.main.zona2_precios, 'set_layout_mode'):
             # Arquitectura 4 TVs / Multimonitor: Cada layout representa una pantalla TV completa.
