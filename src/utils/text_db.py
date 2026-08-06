@@ -8,7 +8,8 @@ _SUPPLEMENTARY_CHARS = re.compile(r"[\U00010000-\U0010ffff]")
 # Prefijos con emoji en nombres de oferta (incompatible con columnas utf8 legacy de MariaDB).
 _OFFER_NAME_TAGS = (
     "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
-    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ",
+    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🎁 [COMBO] ", "🎁 [COMBO]",
+    "🏷️ [ETIQUETA] ", "🏷️ ", "🔥 ", "📦 ", "🎁 ", "🌟 ",
 )
 
 
@@ -24,7 +25,15 @@ def safe_mariadb_text(value):
     text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
     text = _SUPPLEMENTARY_CHARS.sub("", text)
     text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
-    return text
+    return text.strip()
+
+
+def ascii_mariadb_text(value):
+    """Último recurso para columnas utf8 legacy: solo ASCII imprimible."""
+    text = safe_mariadb_text(value)
+    if text is None:
+        return text
+    return "".join(ch for ch in str(text) if 32 <= ord(ch) < 127).strip()
 
 
 def sanitize_mariadb_params(params):
@@ -33,6 +42,11 @@ def sanitize_mariadb_params(params):
         return None
     if isinstance(params, (list, tuple)):
         return type(params)(sanitize_mariadb_params(v) for v in params)
-    if isinstance(params, str):
+    if isinstance(params, (str, bytes, bytearray)):
+        if isinstance(params, (bytes, bytearray)):
+            try:
+                params = params.decode("utf-8", errors="ignore")
+            except Exception:
+                return params
         return safe_mariadb_text(params)
     return params

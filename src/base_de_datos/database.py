@@ -701,12 +701,24 @@ class DatabaseManager:
             return ""
         return item.get("nombre") or item.get("nombre_producto") or ""
 
-    def _nombre_producto_para_db(self, nombre):
+    def _nombre_producto_para_db(self, nombre, ascii_only=False):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
-        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
-            return mariadb_safe_text(nombre)
-        return nombre or ""
+        from src.db_engines.mariadb_engine import mariadb_ascii_text, mariadb_safe_text
+        if ascii_only:
+            return mariadb_ascii_text(nombre)
+        return mariadb_safe_text(nombre)
+
+    def _sanitize_sync_venta_texts(self, venta_data, items, ascii_only=False):
+        """Sanitiza nombres de línea y cliente antes de insertar en MariaDB."""
+        for it in items:
+            if isinstance(it, dict):
+                safe = self._nombre_producto_para_db(self._item_nombre(it), ascii_only=ascii_only)
+                it["nombre"] = safe
+                it["nombre_producto"] = safe
+        if isinstance(venta_data, dict):
+            venta_data["cliente_nombre"] = self._nombre_producto_para_db(
+                venta_data.get("cliente_nombre", ""), ascii_only=ascii_only
+            )
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -2131,7 +2143,7 @@ class DatabaseManager:
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                 venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
+                self._nombre_producto_para_db(venta_data.get('cliente_nombre', ''))
             ))
             
             id_venta = cursor.lastrowid
@@ -2167,7 +2179,9 @@ class DatabaseManager:
         import time
 
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
-        max_attempts = 3 if is_mariadb else 1
+        max_attempts = 4 if is_mariadb else 1
+        ascii_fallback = False
+        self._sanitize_sync_venta_texts(venta_data, items)
 
         for attempt in range(max_attempts):
             conn = None
@@ -2178,6 +2192,9 @@ class DatabaseManager:
                 from datetime import datetime
                 fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 c_id = venta_data.get('caja_id', 1)
+                nombre_db = lambda value: self._nombre_producto_para_db(
+                    value, ascii_only=ascii_fallback
+                )
 
                 cursor.execute("""
                     INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
@@ -2188,7 +2205,7 @@ class DatabaseManager:
                     venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                     venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                     venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                    self._nombre_producto_para_db(venta_data.get('cliente_nombre', ''))
+                    nombre_db(venta_data.get('cliente_nombre', ''))
                 ))
                 id_venta = cursor.lastrowid
 
@@ -2196,7 +2213,7 @@ class DatabaseManager:
                     cursor.execute("""
                         INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                    """, (id_venta, it.get('id', ''), nombre_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
 
                     if it.get('id') and str(it['id']).strip() not in ('000', ''):
                         cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
@@ -2212,25 +2229,21 @@ class DatabaseManager:
                 encoding_err = is_mariadb and self._is_mariadb_encoding_error(e)
                 ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
-                if attempt < max_attempts - 1 and (transient_err or encoding_err or ghost_err):
+                if is_mariadb and encoding_err and not ascii_fallback:
+                    ascii_fallback = True
+                    self._sanitize_sync_venta_texts(venta_data, items, ascii_only=True)
+                    logger.warning("sync_venta_to_master: reintento con nombres ASCII tras error 1366")
+                    continue
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
                     if ghost_err:
                         self._repair_ghost_tables_from_query(
                             "INSERT INTO ventas (total) VALUES (?)"
-                        )
-                    if encoding_err:
-                        for it in items:
-                            if isinstance(it, dict):
-                                safe = self._nombre_producto_para_db(self._item_nombre(it))
-                                it["nombre"] = safe
-                                it["nombre_producto"] = safe
-                        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
-                            venta_data.get("cliente_nombre", "")
                         )
                     logger.warning(
                         "sync_venta_to_master reintento %s/%s tras %s: %s",
                         attempt + 1,
                         max_attempts,
-                        "error de encoding" if encoding_err else "error transitorio",
+                        "error transitorio",
                         e,
                     )
                     self._reset_mariadb_thread_connection()
