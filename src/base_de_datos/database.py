@@ -9,6 +9,7 @@ class DatabaseManager:
     """Professional management of SQLite database operations."""
     
     _instance = None
+    _productos_migration_lock = None
     
     def __new__(cls):
         if cls._instance is None:
@@ -1568,7 +1569,17 @@ class DatabaseManager:
             
             conn.commit()
             conn.close()
-            self._ensure_table_columns_and_autoincrement()
+            if (
+                getattr(self, "db_engine_type", "sqlite") == "mariadb"
+                and getattr(self, "is_master", False)
+            ):
+                import threading
+
+                threading.Thread(
+                    target=self._ensure_table_columns_and_autoincrement,
+                    daemon=True,
+                    name="productos-bigint-migration",
+                ).start()
         except Exception as e:
             logger.error(f"Error en _create_tables: {e}")
 
@@ -1651,83 +1662,139 @@ class DatabaseManager:
 
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        import threading
         import time
 
+        if (
+            getattr(self, "db_engine_type", "sqlite") != "mariadb"
+            or not getattr(self, "is_master", False)
+        ):
+            return
+
+        lock = DatabaseManager._productos_migration_lock
+        if lock is None:
+            DatabaseManager._productos_migration_lock = threading.Lock()
+            lock = DatabaseManager._productos_migration_lock
+        if not lock.acquire(blocking=False):
+            logger.info("Migración productos.id ya en curso; omitiendo.")
+            return
+
         try:
-            if (
-                getattr(self, "db_engine_type", "sqlite") == "mariadb"
-                and getattr(self, "is_master", False)
-            ):
-                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
-                    now = time.time()
-                    last_fail = float(getattr(self, "_productos_bigint_ddl_fail_at", 0) or 0)
-                    if now - last_fail < 600:
-                        logger.warning(
-                            "Omitiendo reintento ALTER productos.id a BIGINT (cooldown tras fallo reciente)."
-                        )
-                        return
-                    logger.info(
-                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
+            # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
+            if not self._productos_id_is_bigint():
+                now = time.time()
+                last_fail = float(getattr(self, "_productos_bigint_ddl_fail_at", 0) or 0)
+                if now - last_fail < 600:
+                    logger.warning(
+                        "Omitiendo reintento ALTER productos.id a BIGINT (cooldown tras fallo reciente)."
                     )
-                    if not self._execute_mariadb_ddl(
-                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
-                    ):
-                        self._productos_bigint_ddl_fail_at = now
-                        return
-                    self._productos_bigint_ddl_fail_at = 0
-
-                if not self._productos_id_is_bigint():
                     return
-
-                # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
-                # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
-                # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
-                _INT32_OVERFLOW_MIN = 2147483647
-                _BARCODE_ID_MIN = 10_000_000_000
-                overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
-                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+                logger.info(
+                    "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
                 )
-                if overflow:
+                if not self._execute_mariadb_ddl(
+                    "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT",
+                    max_attempts=5,
+                ):
+                    self._productos_bigint_ddl_fail_at = now
+                    return
+                self._productos_bigint_ddl_fail_at = 0
+
+            if not self._productos_id_is_bigint():
+                return
+
+            # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
+            # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
+            # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
+            _INT32_OVERFLOW_MIN = 2147483647
+            _BARCODE_ID_MIN = 10_000_000_000
+            overflow = self.execute_query(
+                "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
+                (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+            )
+            if overflow:
+                # Fase 1: ids negativos temporales (evita PK duplicada al remapear varios overflow).
+                staging = []
+                for row in overflow:
+                    old_id = int(row["id"] if isinstance(row, dict) else row[0])
+                    temp_id = -old_id
+                    if self._reassign_overflow_producto_id(old_id, temp_id):
+                        staging.append((old_id, temp_id))
+                    else:
+                        logger.warning(
+                            "No se pudo mover producto id=%s a id temporal %s",
+                            old_id,
+                            temp_id,
+                        )
+
+                if staging:
                     max_normal = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
+                            "SELECT MAX(id) FROM productos WHERE id >= 0 AND id < ?",
+                            (_INT32_OVERFLOW_MIN,),
+                        )
+                        or 0
                     )
                     next_id = max_normal + 1
-                    for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
+                    for old_id, temp_id in staging:
                         while self.execute_scalar(
                             "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
                         ):
                             next_id += 1
-                        if not self._reassign_overflow_producto_id(old_id, next_id):
+                        if next_id >= _INT32_OVERFLOW_MIN:
                             logger.warning(
-                                "No se pudo reasignar producto id=%s → %s",
+                                "Sin id libre bajo %s para remapear producto (ex id=%s)",
+                                _INT32_OVERFLOW_MIN,
+                                old_id,
+                            )
+                            break
+                        if not self._reassign_overflow_producto_id(temp_id, next_id):
+                            logger.warning(
+                                "No se pudo remapear producto (ex id=%s) a id=%s",
                                 old_id,
                                 next_id,
                             )
                         next_id += 1
-                    new_max = int(
+
+                    remaining = int(
                         self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < ?",
-                            (_BARCODE_ID_MIN,),
+                            "SELECT COUNT(*) FROM productos WHERE id >= ? AND id < ?",
+                            (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
                         )
-                        or max_normal
+                        or 0
                     )
-                    next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
-                        self._execute_mariadb_ddl(
-                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                    neg_remaining = int(
+                        self.execute_scalar("SELECT COUNT(*) FROM productos WHERE id < 0") or 0
+                    )
+                    if remaining or neg_remaining:
+                        logger.warning(
+                            "Quedan productos sin remapear (overflow=%s, staging negativo=%s); "
+                            "se omite ALTER AUTO_INCREMENT.",
+                            remaining,
+                            neg_remaining,
                         )
                     else:
-                        logger.info(
-                            "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
-                            new_max,
+                        new_max = int(
+                            self.execute_scalar(
+                                "SELECT MAX(id) FROM productos WHERE id >= 0 AND id < ?",
+                                (_BARCODE_ID_MIN,),
+                            )
+                            or max_normal
                         )
+                        next_ai = new_max + 1
+                        if next_ai < _BARCODE_ID_MIN:
+                            self._execute_mariadb_ddl(
+                                f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+                            )
+                        else:
+                            logger.info(
+                                "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
+                                new_max,
+                            )
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
+        finally:
+            lock.release()
 
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""
