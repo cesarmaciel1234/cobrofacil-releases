@@ -397,7 +397,9 @@ def _insertar_faltante(payload: dict) -> bool:
                 )
                 new_id = cur.lastrowid
 
+            from src.utils.text_db import safe_mariadb_text
             for it in items:
+                nombre_linea = safe_mariadb_text(it.get("nombre") or it.get("nombre_producto") or "")
                 try:
                     cur.execute(
                         """
@@ -408,7 +410,7 @@ def _insertar_faltante(payload: dict) -> bool:
                         (
                             new_id,
                             it.get("id"),
-                            it.get("nombre") or "",
+                            nombre_linea,
                             it.get("cant") or 0,
                             it.get("precio") or 0,
                             it.get("subtotal") or 0,
@@ -425,7 +427,7 @@ def _insertar_faltante(payload: dict) -> bool:
                             (
                                 new_id,
                                 it.get("id"),
-                                it.get("nombre") or "",
+                                nombre_linea,
                                 it.get("cant") or 0,
                                 it.get("precio") or 0,
                                 it.get("subtotal") or 0,

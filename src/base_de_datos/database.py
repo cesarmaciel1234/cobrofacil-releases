@@ -704,9 +704,14 @@ class DatabaseManager:
     def _nombre_producto_para_db(self, nombre):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
-            return mariadb_safe_text(nombre)
+            from src.utils.text_db import safe_mariadb_text
+            return safe_mariadb_text(nombre)
         return nombre or ""
+
+    def _sanitize_venta_payload_for_mariadb(self, venta_data, items):
+        """Quita emojis/UTF-8 de 4 bytes de líneas de venta antes de insertar en MariaDB."""
+        from src.utils.text_db import sanitize_venta_payload
+        sanitize_venta_payload(venta_data, items)
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -885,6 +890,51 @@ class DatabaseManager:
         """Error 1366: emojis/4-byte UTF-8 en columnas utf8mb3; reintentar tras sanitizar."""
         err = str(exc).lower()
         return "1366" in err or "incorrect string value" in err
+
+    def _upgrade_mariadb_utf8mb4_text_tables(self) -> None:
+        """Convierte tablas legacy utf8 (3-byte) a utf8mb4 para aceptar emojis en nombres."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        conn = None
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            for table in (
+                "detalles_ventas",
+                "detalle_ventas",
+                "productos",
+                "ventas",
+                "clientes",
+            ):
+                try:
+                    cursor.execute(
+                        "SELECT CCSA.character_set_name "
+                        "FROM information_schema.TABLES T "
+                        "JOIN information_schema.COLLATION_CHARACTER_SET_APPLICABILITY CCSA "
+                        "ON CCSA.collation_name = T.table_collation "
+                        "WHERE T.table_schema = DATABASE() AND T.table_name = %s LIMIT 1",
+                        (table,),
+                    )
+                    row = cursor.fetchone()
+                    charset = (
+                        (row.get("character_set_name") if isinstance(row, dict) else row[0])
+                        if row
+                        else None
+                    )
+                    if charset and str(charset).lower() == "utf8mb4":
+                        continue
+                    cursor.execute(
+                        f"ALTER TABLE `{table}` CONVERT TO CHARACTER SET utf8mb4 "
+                        "COLLATE utf8mb4_unicode_ci"
+                    )
+                except Exception:
+                    pass
+            conn.commit()
+        except Exception as ex:
+            logger.debug("Migración utf8mb4 omitida: %s", ex)
+        finally:
+            if conn:
+                conn.close()
 
     def _mariadb_recently_unreachable(self) -> bool:
         """True si MariaDB local falló recientemente o está arrancando (evita consultas en cascada)."""
@@ -1288,6 +1338,9 @@ class DatabaseManager:
             logger.error(f"Error haciendo commit en _migrate_db: {e}")
         finally:
             conn.close()
+
+        if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            self._upgrade_mariadb_utf8mb4_text_tables()
 
         def trigger_sync():
             import time
@@ -2131,7 +2184,7 @@ class DatabaseManager:
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                 venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
+                self._nombre_producto_para_db(venta_data.get('cliente_nombre', ''))
             ))
             
             id_venta = cursor.lastrowid
@@ -2168,6 +2221,9 @@ class DatabaseManager:
 
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
         max_attempts = 3 if is_mariadb else 1
+
+        if is_mariadb:
+            self._sanitize_venta_payload_for_mariadb(venta_data, items)
 
         for attempt in range(max_attempts):
             conn = None
@@ -2218,14 +2274,7 @@ class DatabaseManager:
                             "INSERT INTO ventas (total) VALUES (?)"
                         )
                     if encoding_err:
-                        for it in items:
-                            if isinstance(it, dict):
-                                safe = self._nombre_producto_para_db(self._item_nombre(it))
-                                it["nombre"] = safe
-                                it["nombre_producto"] = safe
-                        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
-                            venta_data.get("cliente_nombre", "")
-                        )
+                        self._sanitize_venta_payload_for_mariadb(venta_data, items)
                     logger.warning(
                         "sync_venta_to_master reintento %s/%s tras %s: %s",
                         attempt + 1,
