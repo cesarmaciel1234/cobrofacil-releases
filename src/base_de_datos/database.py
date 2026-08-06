@@ -701,12 +701,36 @@ class DatabaseManager:
             return ""
         return item.get("nombre") or item.get("nombre_producto") or ""
 
-    def _nombre_producto_para_db(self, nombre):
+    def _nombre_producto_para_db(self, nombre, ascii_only=False):
         """Normaliza nombre de producto para MariaDB (columnas utf8 sin emojis 4-byte)."""
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-            from src.db_engines.mariadb_engine import mariadb_safe_text
+            from src.db_engines.mariadb_engine import mariadb_ascii_text, mariadb_safe_text
+            if ascii_only:
+                return mariadb_ascii_text(nombre)
             return mariadb_safe_text(nombre)
         return nombre or ""
+
+    def _sanitize_venta_items_nombres(self, items, ascii_only=False):
+        """Sanitiza nombres en líneas de venta (cola offline / sync MariaDB)."""
+        from src.db_engines.mariadb_engine import mariadb_ascii_text, mariadb_safe_text
+
+        for it in items or []:
+            if not isinstance(it, dict):
+                continue
+            raw = self._item_nombre(it)
+            safe = mariadb_ascii_text(raw) if ascii_only else mariadb_safe_text(raw)
+            it["nombre"] = safe
+            it["nombre_producto"] = safe
+
+    def _sanitize_venta_data_nombres(self, venta_data, ascii_only=False):
+        from src.db_engines.mariadb_engine import mariadb_ascii_text, mariadb_safe_text
+
+        if not isinstance(venta_data, dict):
+            return
+        raw = venta_data.get("cliente_nombre", "")
+        venta_data["cliente_nombre"] = (
+            mariadb_ascii_text(raw) if ascii_only else mariadb_safe_text(raw)
+        )
 
     def is_connected(self) -> bool:
         """Devuelve True si el motor actual está instanciado y puede ejecutar una consulta simple."""
@@ -2111,63 +2135,99 @@ class DatabaseManager:
                     logger.error(f"Fallo crítico offline tras error API: {ex}")
                     return None
 
-        conn = None
-        try:
-            conn = self.get_connection()
-            cursor = conn.cursor()
-            
-            # Generar la hora local real en Python en lugar de usar CURRENT_TIMESTAMP de SQLite (que es UTC)
-            from datetime import datetime
-            fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            # 1. Insertar Cabecera
-            from src.config import config
-            c_id = config.get("caja_id", 1)
-            cursor.execute("""
-                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
-                venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
-                venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
-                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
-            ))
-            
-            id_venta = cursor.lastrowid
-            
-            # 2. Insertar Detalles y Actualizar Stock
-            for it in items:
-                cursor.execute("""
-                    INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (id_venta, it['id'], self._nombre_producto_para_db(self._item_nombre(it)), it['cant'], it['precio'], it['subtotal']))
-                
-                if it['id'] and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
-            
-            conn.commit()
-            return id_venta
-        except Exception as e:
-            if conn: conn.rollback()
-            # Derivar al Buffer Offline si falla la conexión a la base de datos de red
-            logger.warning(f"Fallo de red detectado al guardar venta. Guardando offline: {e}")
+        import time
+
+        is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
+        max_attempts = 4 if is_mariadb else 1
+        ascii_fallback = False
+
+        for attempt in range(max_attempts):
+            conn = None
             try:
-                from src.base_de_datos.offline_sync import offline_sync_manager
-                offline_sync_manager.guardar_venta_offline(venta_data, items)
-                return 9999999 # Retornar un ID falso para simular éxito en la UI
-            except Exception as ex:
-                logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
-                return None
-        finally:
-            if conn: conn.close()
+                conn = self.get_connection()
+                cursor = conn.cursor()
+
+                from datetime import datetime
+                fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                from src.config import config
+                c_id = config.get("caja_id", 1)
+                nombre_db = lambda value: self._nombre_producto_para_db(value, ascii_only=ascii_fallback)
+
+                cursor.execute("""
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
+                    venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
+                    venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
+                    venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
+                    nombre_db(venta_data.get('cliente_nombre', ''))
+                ))
+
+                id_venta = cursor.lastrowid
+
+                for it in items:
+                    cursor.execute("""
+                        INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (id_venta, it['id'], nombre_db(self._item_nombre(it)), it['cant'], it['precio'], it['subtotal']))
+
+                    if it['id'] and str(it['id']).strip() not in ('000', ''):
+                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
+
+                conn.commit()
+                return id_venta
+            except Exception as e:
+                if conn:
+                    conn.rollback()
+                encoding_err = is_mariadb and self._is_mariadb_encoding_error(e)
+                ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
+                transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if encoding_err and not ascii_fallback:
+                    ascii_fallback = True
+                    self._sanitize_venta_items_nombres(items, ascii_only=True)
+                    self._sanitize_venta_data_nombres(venta_data, ascii_only=True)
+                    logger.warning("guardar_venta_completa: reintento ASCII tras error 1366")
+                    self._reset_mariadb_thread_connection()
+                    continue
+                if attempt < max_attempts - 1 and (transient_err or ghost_err):
+                    if ghost_err:
+                        self._repair_ghost_tables_from_query(
+                            "INSERT INTO ventas (total) VALUES (?)"
+                        )
+                    logger.warning(
+                        "guardar_venta_completa reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    self._reset_mariadb_thread_connection()
+                    time.sleep(1.0 * (attempt + 1))
+                    continue
+                break
+            finally:
+                if conn:
+                    conn.close()
+
+        logger.warning("Fallo al guardar venta. Guardando offline.")
+        try:
+            from src.base_de_datos.offline_sync import offline_sync_manager
+            self._sanitize_venta_items_nombres(items)
+            self._sanitize_venta_data_nombres(venta_data)
+            offline_sync_manager.guardar_venta_offline(venta_data, items)
+            return 9999999
+        except Exception as ex:
+            logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
+            return None
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
         import time
 
         is_mariadb = getattr(self, "db_engine_type", "sqlite") == "mariadb"
-        max_attempts = 3 if is_mariadb else 1
+        max_attempts = 4 if is_mariadb else 1
+        ascii_fallback = False
 
         for attempt in range(max_attempts):
             conn = None
@@ -2178,6 +2238,7 @@ class DatabaseManager:
                 from datetime import datetime
                 fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 c_id = venta_data.get('caja_id', 1)
+                nombre_db = lambda value: self._nombre_producto_para_db(value, ascii_only=ascii_fallback)
 
                 cursor.execute("""
                     INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
@@ -2188,7 +2249,7 @@ class DatabaseManager:
                     venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                     venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                     venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                    self._nombre_producto_para_db(venta_data.get('cliente_nombre', ''))
+                    nombre_db(venta_data.get('cliente_nombre', ''))
                 ))
                 id_venta = cursor.lastrowid
 
@@ -2196,7 +2257,7 @@ class DatabaseManager:
                     cursor.execute("""
                         INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                         VALUES (?, ?, ?, ?, ?, ?)
-                    """, (id_venta, it.get('id', ''), self._nombre_producto_para_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
+                    """, (id_venta, it.get('id', ''), nombre_db(self._item_nombre(it)), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
 
                     if it.get('id') and str(it['id']).strip() not in ('000', ''):
                         cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
@@ -2212,20 +2273,21 @@ class DatabaseManager:
                 encoding_err = is_mariadb and self._is_mariadb_encoding_error(e)
                 ghost_err = is_mariadb and self._is_mariadb_ghost_table_error(e)
                 transient_err = is_mariadb and self._is_transient_mariadb_error(e)
+                if encoding_err and not ascii_fallback:
+                    ascii_fallback = True
+                    self._sanitize_venta_items_nombres(items, ascii_only=True)
+                    self._sanitize_venta_data_nombres(venta_data, ascii_only=True)
+                    logger.warning("sync_venta_to_master: reintento ASCII tras error 1366")
+                    self._reset_mariadb_thread_connection()
+                    continue
                 if attempt < max_attempts - 1 and (transient_err or encoding_err or ghost_err):
                     if ghost_err:
                         self._repair_ghost_tables_from_query(
                             "INSERT INTO ventas (total) VALUES (?)"
                         )
-                    if encoding_err:
-                        for it in items:
-                            if isinstance(it, dict):
-                                safe = self._nombre_producto_para_db(self._item_nombre(it))
-                                it["nombre"] = safe
-                                it["nombre_producto"] = safe
-                        venta_data["cliente_nombre"] = self._nombre_producto_para_db(
-                            venta_data.get("cliente_nombre", "")
-                        )
+                    if encoding_err and not ascii_fallback:
+                        self._sanitize_venta_items_nombres(items)
+                        self._sanitize_venta_data_nombres(venta_data)
                     logger.warning(
                         "sync_venta_to_master reintento %s/%s tras %s: %s",
                         attempt + 1,

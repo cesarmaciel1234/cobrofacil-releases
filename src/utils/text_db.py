@@ -8,8 +8,15 @@ _SUPPLEMENTARY_CHARS = re.compile(r"[\U00010000-\U0010ffff]")
 # Prefijos con emoji en nombres de oferta (incompatible con columnas utf8 legacy de MariaDB).
 _OFFER_NAME_TAGS = (
     "🔥 [OFERTA] ", "🔥 [OFERTA]", "[OFERTA] ", "[OFERTA]",
-    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🌟 ",
+    "📦 [MAYOREO] ", "📦 [MAYOREO]", "🎁 [COMBO] ", "🎁 [COMBO]",
+    "[COMBO] ", "[COMBO]", "🏷️ ", "🌟 ",
 )
+
+
+def _strip_utf8_4byte_chars(text: str) -> str:
+    """Remove code points that require 4-byte UTF-8 (invalid in utf8mb3 columns)."""
+    text = _SUPPLEMENTARY_CHARS.sub("", text)
+    return "".join(ch for ch in text if len(ch.encode("utf-8")) <= 3)
 
 
 def safe_mariadb_text(value):
@@ -22,9 +29,15 @@ def safe_mariadb_text(value):
     for tag in _OFFER_NAME_TAGS:
         text = text.replace(tag, "")
     text = re.sub(r"^(?:oferta\s+de|oferta)\s+", "", text, flags=re.IGNORECASE).strip()
-    text = _SUPPLEMENTARY_CHARS.sub("", text)
-    text = "".join(ch for ch in text if ord(ch) <= 0xFFFF)
-    return text
+    return _strip_utf8_4byte_chars(text).strip()
+
+
+def ascii_safe_mariadb_text(value):
+    """Fallback for utf8mb3 columns when emojis/accents still trigger MySQL error 1366."""
+    text = safe_mariadb_text(value)
+    if text is None:
+        return text
+    return text.encode("ascii", "ignore").decode("ascii").strip()
 
 
 def sanitize_mariadb_params(params):
