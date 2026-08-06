@@ -550,9 +550,18 @@ def _is_transient_download_error(exc: BaseException) -> bool:
         or "incomplet" in msg
         or "incomplete" in msg
         or "connection broken" in msg
+        or "decompress" in msg
+        or "invalid block type" in msg
         or ("zip" in msg and ("corrupt" in msg or "dañad" in msg))
     ):
         return True
+    try:
+        import zlib
+
+        if isinstance(exc, zlib.error):
+            return True
+    except Exception:
+        pass
     if isinstance(exc, OSError) and getattr(exc, "errno", None) in (
         10060,
         10061,

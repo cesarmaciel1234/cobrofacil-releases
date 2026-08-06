@@ -24,7 +24,19 @@ ZIP_CRC_RETRIES = 3
 def _is_zip_integrity_error(exc: BaseException) -> bool:
     if isinstance(exc, zipfile.BadZipFile):
         return True
-    return "crc" in str(exc).lower()
+    try:
+        import zlib
+
+        if isinstance(exc, zlib.error):
+            return True
+    except Exception:
+        pass
+    msg = str(exc).lower()
+    return (
+        "crc" in msg
+        or "decompress" in msg
+        or "invalid block type" in msg
+    )
 
 
 def _is_transient_stream_error(exc: BaseException) -> bool:
@@ -34,8 +46,20 @@ def _is_transient_stream_error(exc: BaseException) -> bool:
     ):
         return True
     msg = str(exc).lower()
-    if "incomplet" in msg or "connection broken" in msg:
+    if (
+        "incomplet" in msg
+        or "connection broken" in msg
+        or "decompress" in msg
+        or "invalid block type" in msg
+    ):
         return True
+    try:
+        import zlib
+
+        if isinstance(exc, zlib.error):
+            return True
+    except Exception:
+        pass
     try:
         import requests
 
@@ -270,6 +294,11 @@ def _download_single_stream(session, url, dest_path, part_path, total_hint, veri
                 os.replace(part_path, dest_path)
             return
         resp.raise_for_status()
+        # Evitar que requests descomprima gzip corrupto del CDN (zlib error -3).
+        try:
+            resp.raw.decode_content = False
+        except Exception:
+            pass
         # Si pedimos Range y el server ignora, reiniciar
         if existing > 0 and resp.status_code == 200:
             mode = "wb"
@@ -353,6 +382,10 @@ def _download_parallel(url, dest_path, part_path, total, verify, cb) -> None:
                 ) as resp:
                     if resp.status_code not in (200, 206):
                         raise RuntimeError(f"Range HTTP {resp.status_code}")
+                    try:
+                        resp.raw.decode_content = False
+                    except Exception:
+                        pass
                     with open(path, "wb") as out:
                         for chunk in resp.iter_content(chunk_size=CHUNK):
                             if not chunk:
