@@ -14,11 +14,17 @@ class CarruselDestacados(QFrame):
         from PyQt6.QtCore import QTimer
         from src.carteleria.motor_carteleria.motor_paneles import MotorCarrusel
         
+        self.setObjectName("CarruselDestacados")
         if get_active_theme_name() == "temu":
-            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 20px; border: 4px solid #FF5722;")
+            self.setStyleSheet(
+                f"QFrame#CarruselDestacados {{ background: {C_THEME['surface']}; "
+                f"border-radius: 20px; border: 4px solid #FF5722; }}"
+            )
         else:
-            self.setStyleSheet(f"background: {C_THEME['surface']}; border-radius: 24px; border: 1px solid rgba(255,255,255,0.4);")
+            self.setStyleSheet(
+                f"QFrame#CarruselDestacados {{ background: {C_THEME['surface']}; "
+                f"border-radius: 24px; border: 1px solid rgba(255,255,255,0.4); }}"
+            )
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
         
         self.motor = MotorCarrusel(self)
@@ -241,8 +247,8 @@ class CarruselDestacados(QFrame):
         
         html = f"<div style='padding: 10px; width: 100%;'>"
             
-        import random
-        promoted_idx = random.randint(0, min(4, len(productos) - 1)) if productos else -1
+        from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+        productos, promoted_idx = motor_publicidad.inyectar_en_top10(productos)
         
         for i, prod in enumerate(productos[:5]):
             nombre = str(prod[0]).replace("🔥 [OFERTA] ", "").replace("🔥 [OFERTA]", "").replace("[OFERTA] ", "").replace("[OFERTA]", "").replace("📦 [MAYOREO] ", "").replace("📦 [MAYOREO]", "").replace("🌟 ", "").strip()

@@ -159,6 +159,12 @@ class Admin2Ofertas(QWidget):
         self.btn_combos.clicked.connect(self._gestionar_combos)
         fl.addWidget(self.btn_combos)
         
+        self.btn_publicidad = QPushButton("⭐ GESTIONAR PUBLICIDAD")
+        self.btn_publicidad.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_publicidad.setStyleSheet("background-color: #FACC15; color: #000; font-weight: bold;")
+        self.btn_publicidad.clicked.connect(self._gestionar_publicidad)
+        fl.addWidget(self.btn_publicidad)
+        
         fl.addStretch()
         root.addWidget(fb)
 
@@ -636,4 +642,9 @@ class Admin2Ofertas(QWidget):
     def _gestionar_combos(self):
         from src.motor_descuentos.moleculas.dialogo_combos import DialogoCombos
         dlg = DialogoCombos(self)
+        dlg.exec()
+
+    def _gestionar_publicidad(self):
+        from src.motor_descuentos.vistas.dialog_gestor_publicidad import DialogGestorPublicidad
+        dlg = DialogGestorPublicidad(self)
         dlg.exec()

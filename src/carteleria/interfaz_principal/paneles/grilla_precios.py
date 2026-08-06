@@ -28,16 +28,24 @@ class GrillaPrecios(QFrame):
         from src.carteleria.theme import get_active_theme_name
         self._theme_name = get_active_theme_name()
         self._corner_radius = 20 if self._theme_name == "temu" else 24
+        # Selector por objectName: sin esto el borde naranja se hereda a los
+        # 3 bloques del scroll y parecen "contenedores marcados" vacíos.
+        self.setObjectName("GrillaPrecios")
         if self._theme_name == "temu":
-            # Estilo asiático: Borde sólido Naranja brillante sin defectos de renderización
             self.setStyleSheet(
-                f"background: {C_THEME['surface']}; border-radius: {self._corner_radius}px; "
-                f"border: 4px solid #FF5722;"
+                f"QFrame#GrillaPrecios {{"
+                f" background: {C_THEME['surface']};"
+                f" border-radius: {self._corner_radius}px;"
+                f" border: 4px solid #FF5722;"
+                f"}}"
             )
         else:
             self.setStyleSheet(
-                f"background: {C_THEME['surface']}; border-radius: {self._corner_radius}px; "
-                f"border: 1px solid rgba(255,255,255,0.4);"
+                f"QFrame#GrillaPrecios {{"
+                f" background: {C_THEME['surface']};"
+                f" border-radius: {self._corner_radius}px;"
+                f" border: 1px solid rgba(255,255,255,0.4);"
+                f"}}"
             )
             apply_apple_shadow(self, blur=40, alpha=20, y_offset=15)
 
@@ -183,78 +191,174 @@ class _AutoScrollList(QScrollArea):
             return
         self._last_data_repr = current_data_repr
 
-        self.timer.stop()
+        try:
+            self.timer.stop()
+        except Exception:
+            pass
         self._scroll_pos = 0
         self._block_height = 0
-        bar = self.verticalScrollBar()
-        bar.setValue(0)
+        try:
+            self.verticalScrollBar().setValue(0)
+        except Exception:
+            pass
 
         self._clear_layout(self.inner_layout)
-        app = QApplication.instance()
-        if app:
-            app.processEvents()
+        # No processEvents aquí: reentra set_items y congela la TV
 
         self.blocks = []
-        # 3 bloques idénticos bastan para loop infinito sin tanto peso de paint
-        for _ in range(3):
-            block = QWidget()
-            block.setAutoFillBackground(True)
-            block.setStyleSheet("background: #FFFFFF;")
-            block_layout = QVBoxLayout(block)
-            block_layout.setContentsMargins(0, 0, 0, 8)
-            block_layout.setSpacing(12)
+        items_by_category = items_by_category or {}
+        tiene_productos = any(bool(p) for p in items_by_category.values())
+        if not tiene_productos:
+            # Sin datos: no crear los 3 bloques vacíos (parecen cajas marcadas)
+            try:
+                self.viewport().update()
+            except Exception:
+                pass
+            return
+
+        try:
+            from src.carteleria.interfaz_principal.componentes_base.banner_categoria import (
+                BannerCategoria,
+            )
+            from src.carteleria.interfaz_principal.tarjetas.tarjeta_producto import (
+                TarjetaProducto,
+            )
+            from src.carteleria.theme import get_active_theme_name
+
+            is_temu = get_active_theme_name() == "temu"
             
-            for categoria, productos in items_by_category.items():
-                if not productos:
-                    continue
-                
-                from src.carteleria.interfaz_principal.componentes_base.banner_categoria import BannerCategoria
-                from src.carteleria.theme import get_active_theme_name
-                is_temu = (get_active_theme_name() == "temu")
+            from src.carteleria.interfaz_principal.tarjetas.tarjeta_publicidad import TarjetaPublicidad
+            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+            import random
+            motor_publicidad.cargar_configuracion() # Sincronizar con Gestor solo 1 vez
 
-                banner = BannerCategoria(categoria, modo_tv=self.current_mode, is_temu=is_temu, parent=block)
-                block_layout.addWidget(banner)
+            # 3 bloques idénticos bastan para loop infinito
+            for _ in range(3):
+                block = QWidget()
+                block.setObjectName("GrillaScrollBlock")
+                block.setAutoFillBackground(True)
+                block.setStyleSheet(
+                    "QWidget#GrillaScrollBlock { background: #FFFFFF; border: none; }"
+                )
+                block_layout = QVBoxLayout(block)
+                block_layout.setContentsMargins(0, 0, 0, 8)
+                block_layout.setSpacing(12)
+                self.inner_layout.addWidget(block)
+                self.blocks.append((block, block_layout))
                 
-                from src.carteleria.interfaz_principal.tarjetas.tarjeta_producto import TarjetaProducto
-                for nombre, precio, precio_oferta, regla in productos:
-                    if not nombre or not nombre.strip():
-                        continue
-                    tarjeta = TarjetaProducto(
-                        nombre, precio, precio_oferta, regla,
-                        modo_tv=self.current_mode, parent=block,
-                    )
-                    block_layout.addWidget(tarjeta)
+            # Crear pool de anuncios
+            pool_ads = []
+            for cat, prods in items_by_category.items():
+                for p in prods:
+                    if motor_publicidad.is_promocionado(p[0]):
+                        pool_ads.append(p)
+            
+            # Construir Plan de Orquestación (Tareas a pintar)
+            self._render_queue = []
+            for block, block_layout in self.blocks:
+                for categoria, productos in items_by_category.items():
+                    if not productos: continue
                     
-            self.inner_layout.addWidget(block)
-            self.blocks.append(block)
+                    # Tarea: Añadir Banner
+                    self._render_queue.append((block, block_layout, 'banner', categoria, None))
+                    
+                    cat_card_count = 0
+                    ad_injected_in_cat = False
+                    
+                    for prod in productos:
+                        if not prod[0] or not str(prod[0]).strip(): continue
+                        self._render_queue.append((block, block_layout, 'product', None, prod))
+                        cat_card_count += 1
+                        
+                        if cat_card_count % 4 == 0 and pool_ads:
+                            ad = random.choice(pool_ads)
+                            self._render_queue.append((block, block_layout, 'ad', None, ad))
+                            ad_injected_in_cat = True
+                            
+                    if not ad_injected_in_cat and pool_ads:
+                        ad = random.choice(pool_ads)
+                        self._render_queue.append((block, block_layout, 'ad', None, ad))
+                        
+            # Iniciar Orquestador
+            self._process_render_queue()
+            
+        except Exception as e:
+            try:
+                from src.logger import logger
+                logger.error(f"GrillaPrecios set_items: {e}")
+            except Exception:
+                pass
+            self.blocks = []
 
-        self.container.adjustSize()
-        self.container.updateGeometry()
-        if app:
-            app.processEvents()
-        self._block_height = self._measure_block_height()
-        self.viewport().update()
-        self.timer.start(50)
+    def _process_render_queue(self):
+        """El Orquestador: Pinta un chunk de tarjetas y cede el control para no congelar la UI"""
+        if not hasattr(self, '_render_queue') or not self._render_queue:
+            # Terminado de pintar
+            # Extraer solo los QWidget block para self.blocks (ya que guardamos tuplas)
+            if self.blocks and isinstance(self.blocks[0], tuple):
+                self.blocks = [b[0] for b in self.blocks]
+            
+            self.container.adjustSize()
+            self.container.updateGeometry()
+            self._block_height = self._measure_block_height()
+            self.viewport().update()
+            self.timer.start(16)
+            return
+            
+        from src.carteleria.interfaz_principal.componentes_base.banner_categoria import BannerCategoria
+        from src.carteleria.interfaz_principal.tarjetas.tarjeta_producto import TarjetaProducto
+        from src.carteleria.interfaz_principal.tarjetas.tarjeta_publicidad import TarjetaPublicidad
+        from src.carteleria.theme import get_active_theme_name
+        is_temu = get_active_theme_name() == "temu"
 
+        chunk_size = 15 # Número de tarjetas a pintar por "pincelada"
+        for _ in range(min(chunk_size, len(self._render_queue))):
+            block, block_layout, task_type, cat, prod = self._render_queue.pop(0)
+            
+            if task_type == 'banner':
+                banner = BannerCategoria(cat, modo_tv=self.current_mode, is_temu=is_temu, parent=block)
+                block_layout.addWidget(banner)
+            elif task_type == 'product':
+                tarjeta = TarjetaProducto(prod[0], prod[1], prod[2], prod[3], modo_tv=self.current_mode, parent=block)
+                block_layout.addWidget(tarjeta)
+            elif task_type == 'ad':
+                tarjeta_ad = TarjetaPublicidad(prod[0], prod[1], prod[2], prod[3], modo_tv=self.current_mode, parent=block)
+                block_layout.addWidget(tarjeta_ad)
+                
+        # Agendar la siguiente pincelada en el Event Loop
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(16, self._process_render_queue)
     def _do_scroll(self):
         bar = self.verticalScrollBar()
         max_val = bar.maximum()
         if max_val <= 0:
             return
         
-        if not self.blocks:
+        if not self.blocks or len(self.blocks) < 2:
             return
 
-        block_height = self._block_height or self._measure_block_height()
+        # Calcular la altura del bloque en tiempo real.
+        # Esto soluciona los saltos si las tarjetas de producto
+        # crecen dinámicamente por tener nombres largos en múltiples líneas.
+        y0 = self.blocks[0].y()
+        y1 = self.blocks[1].y()
+        
+        if y1 > y0:
+            block_height = y1 - y0
+        else:
+            block_height = self._block_height or self._measure_block_height()
+            
         if block_height <= 0:
             return
+            
         self._block_height = block_height
 
         # Lista corta: no scrollear (evita saltos / solapes)
         if max_val < block_height:
             return
             
-        self._scroll_pos += 2
+        # Velocidad ajustada para 60fps (aprox 1px cada 16ms = ~60px/s)
+        self._scroll_pos += 1.0
         
         # Loop infinito alineado a la altura real del bloque
         while self._scroll_pos >= block_height:
