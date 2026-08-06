@@ -1589,6 +1589,108 @@ class DatabaseManager:
         except Exception:
             return False
 
+    def _productos_bigint_cooldown_path(self) -> str:
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+        folder = os.path.join(base, "CobroFacil_PRO", "state")
+        os.makedirs(folder, exist_ok=True)
+        return os.path.join(folder, "productos_bigint_ddl_fail_at.txt")
+
+    def _read_productos_bigint_cooldown(self) -> float:
+        try:
+            with open(self._productos_bigint_cooldown_path(), encoding="utf-8") as f:
+                return float((f.read() or "").strip() or 0)
+        except (OSError, ValueError):
+            return float(getattr(self, "_productos_bigint_ddl_fail_at", 0) or 0)
+
+    def _write_productos_bigint_cooldown(self, ts: float) -> None:
+        self._productos_bigint_ddl_fail_at = ts
+        path = self._productos_bigint_cooldown_path()
+        try:
+            if ts <= 0:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
+            else:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(str(ts))
+        except OSError:
+            pass
+
+    def _migrate_productos_id_to_bigint_locked(self) -> bool:
+        """ALTER productos.id → BIGINT bajo GET_LOCK (serializa server + cliente en el mismo PC)."""
+        import time
+
+        engine = getattr(self, "mariadb_engine", None)
+        if not engine:
+            self.last_error = "no mariadb_engine"
+            return False
+
+        lock_name = "cobrofacil_productos_bigint_migrate"
+        ddl_query = "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
+        max_attempts = 3
+
+        for attempt in range(max_attempts):
+            conn = None
+            got_lock = False
+            try:
+                conn = engine.get_ddl_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT GET_LOCK(%s, %s)", (lock_name, 0))
+                row = cursor.fetchone()
+                got = (
+                    row[0]
+                    if row and not isinstance(row, dict)
+                    else (list(row.values())[0] if row else 0)
+                )
+                if got != 1:
+                    logger.info(
+                        "Migración productos.id a BIGINT en curso por otro proceso; omitiendo."
+                    )
+                    return False
+                got_lock = True
+                if self._productos_id_is_bigint():
+                    return True
+                logger.info(
+                    "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
+                )
+                cursor.execute(ddl_query)
+                conn.commit()
+                self.last_error = ""
+                return True
+            except Exception as e:
+                self.last_error = str(e)
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                err = str(e).lower()
+                transient = any(
+                    token in err
+                    for token in ("2013", "timed out", "timeout", "lost connection")
+                )
+                if attempt < max_attempts - 1 and transient:
+                    logger.warning(
+                        "ALTER BIGINT reintento %s/%s tras error transitorio: %s",
+                        attempt + 1,
+                        max_attempts,
+                        e,
+                    )
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                logger.error(f"DDL execution error: {e} | Query: {ddl_query}")
+                return False
+            finally:
+                if conn:
+                    if got_lock:
+                        try:
+                            conn.cursor().execute("SELECT RELEASE_LOCK(%s)", (lock_name,))
+                        except Exception:
+                            pass
+                    conn.close()
+        return False
+
     def _execute_mariadb_ddl(self, query: str, params: tuple = (), max_attempts: int = 3) -> bool:
         """DDL/DML pesadas con timeouts largos (ALTER/UPDATE masivos no deben usar IO_TIMEOUT de 3s)."""
         import time
@@ -1649,8 +1751,58 @@ class DatabaseManager:
             (new_id, old_id),
         )
 
+    def _reassign_productos_overflow_ids(self):
+        """Reasigna IDs de autoincrement desbordado (INT32), no códigos de barras/EAN."""
+        # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
+        # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
+        _INT32_OVERFLOW_MIN = 2147483647
+        _BARCODE_ID_MIN = 10_000_000_000
+        overflow = self.execute_query(
+            "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
+            (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
+        )
+        if not overflow:
+            return
+        max_normal = int(
+            self.execute_scalar(
+                "SELECT MAX(id) FROM productos WHERE id < 2147483647"
+            ) or 0
+        )
+        next_id = max_normal + 1
+        for row in overflow:
+            old_id = row["id"] if isinstance(row, dict) else row[0]
+            while self.execute_scalar(
+                "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
+            ):
+                next_id += 1
+            if not self._reassign_overflow_producto_id(old_id, next_id):
+                logger.warning(
+                    "No se pudo reasignar producto id=%s → %s",
+                    old_id,
+                    next_id,
+                )
+            next_id += 1
+        new_max = int(
+            self.execute_scalar(
+                "SELECT MAX(id) FROM productos WHERE id < ?",
+                (_BARCODE_ID_MIN,),
+            )
+            or max_normal
+        )
+        next_ai = new_max + 1
+        if next_ai < _BARCODE_ID_MIN:
+            self._execute_mariadb_ddl(
+                f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
+            )
+        else:
+            logger.info(
+                "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
+                new_max,
+            )
+
     def _ensure_table_columns_and_autoincrement(self):
         """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        import threading
         import time
 
         try:
@@ -1658,74 +1810,43 @@ class DatabaseManager:
                 getattr(self, "db_engine_type", "sqlite") == "mariadb"
                 and getattr(self, "is_master", False)
             ):
-                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos
-                if not self._productos_id_is_bigint():
-                    now = time.time()
-                    last_fail = float(getattr(self, "_productos_bigint_ddl_fail_at", 0) or 0)
-                    if now - last_fail < 600:
-                        logger.warning(
-                            "Omitiendo reintento ALTER productos.id a BIGINT (cooldown tras fallo reciente)."
-                        )
-                        return
-                    logger.info(
-                        "Migrando productos.id a BIGINT (puede tardar en inventarios grandes)..."
-                    )
-                    if not self._execute_mariadb_ddl(
-                        "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT"
-                    ):
-                        self._productos_bigint_ddl_fail_at = now
-                        return
-                    self._productos_bigint_ddl_fail_at = 0
-
-                if not self._productos_id_is_bigint():
+                if self._productos_id_is_bigint():
+                    self._reassign_productos_overflow_ids()
                     return
 
-                # Reasignar solo IDs de autoincrement desbordado (INT32), no códigos de barras/EAN.
-                # EAN-13 y UPC numéricos suelen ser >= 10^11; tratarlos como overflow rompe PKs y
-                # dispara ALTER TABLE AUTO_INCREMENT gigante que agota el timeout (error 2013).
-                _INT32_OVERFLOW_MIN = 2147483647
-                _BARCODE_ID_MIN = 10_000_000_000
-                overflow = self.execute_query(
-                    "SELECT id FROM productos WHERE id >= ? AND id < ? ORDER BY id",
-                    (_INT32_OVERFLOW_MIN, _BARCODE_ID_MIN),
-                )
-                if overflow:
-                    max_normal = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < 2147483647"
-                        ) or 0
+                # Solo migrar esquema en la maestra; esclavas no deben ALTER remotos.
+                # Diferir ALTER: server + cliente arrancan a la vez y compiten por el mismo mysqld.
+                now = time.time()
+                if now - self._read_productos_bigint_cooldown() < 600:
+                    logger.warning(
+                        "Omitiendo reintento ALTER productos.id a BIGINT (cooldown tras fallo reciente)."
                     )
-                    next_id = max_normal + 1
-                    for row in overflow:
-                        old_id = row["id"] if isinstance(row, dict) else row[0]
-                        while self.execute_scalar(
-                            "SELECT id FROM productos WHERE id = ? LIMIT 1", (next_id,)
-                        ):
-                            next_id += 1
-                        if not self._reassign_overflow_producto_id(old_id, next_id):
-                            logger.warning(
-                                "No se pudo reasignar producto id=%s → %s",
-                                old_id,
-                                next_id,
-                            )
-                        next_id += 1
-                    new_max = int(
-                        self.execute_scalar(
-                            "SELECT MAX(id) FROM productos WHERE id < ?",
-                            (_BARCODE_ID_MIN,),
+                    return
+
+                if getattr(self, "_productos_bigint_migrate_scheduled", False):
+                    return
+                self._productos_bigint_migrate_scheduled = True
+
+                def _worker():
+                    time.sleep(5.0)
+                    try:
+                        if self._productos_id_is_bigint():
+                            self._reassign_productos_overflow_ids()
+                            return
+                        if not self._migrate_productos_id_to_bigint_locked():
+                            self._write_productos_bigint_cooldown(time.time())
+                            return
+                        self._write_productos_bigint_cooldown(0)
+                        if self._productos_id_is_bigint():
+                            self._reassign_productos_overflow_ids()
+                    except Exception as ex:
+                        logger.error(
+                            "Error en migración productos BIGINT en segundo plano: %s", ex
                         )
-                        or max_normal
-                    )
-                    next_ai = new_max + 1
-                    if next_ai < _BARCODE_ID_MIN:
-                        self._execute_mariadb_ddl(
-                            f"ALTER TABLE productos AUTO_INCREMENT = {next_ai}"
-                        )
-                    else:
-                        logger.info(
-                            "Omitiendo AUTO_INCREMENT en productos: MAX(id)=%s parece código de barras.",
-                            new_max,
-                        )
+
+                threading.Thread(
+                    target=_worker, name="productos-bigint-migrate", daemon=True
+                ).start()
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
 
