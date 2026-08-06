@@ -58,7 +58,7 @@ class GrillaPrecios(QFrame):
         self.layout.setContentsMargins(16, 16, 16, 16)
         
         from PyQt6.QtWidgets import QSizePolicy
-        self.scroll_area = _AutoScrollList()
+        self.scroll_area = _AutoScrollList(self)
         self.scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.layout.addWidget(self.scroll_area)
         
@@ -130,20 +130,27 @@ class _AutoScrollList(QScrollArea):
         self.container.minimumSizeHint = lambda: QSize(
             0,
             self.container.layout().minimumSize().height() if self.container.layout() else 0,
-        )
-        
         self.inner_layout = QVBoxLayout(self.container)
-        # Más aire abajo: la última tarjeta no pisa el borde naranja / zócalo
+        # Más aire abajo: la última tarjeta no pisa el borde
         self.inner_layout.setContentsMargins(2, 4, 2, 12)
         self.inner_layout.setSpacing(12)
-        self.setWidget(self.container)
         
         self._scroll_pos = 0
         self._block_height = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._do_scroll)
-        self.current_mode = 4
         self.blocks = []
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_container_size()
+
+    def _update_container_size(self):
+        if hasattr(self, 'container'):
+            self.container.setFixedWidth(self.width())
+            # Forzamos que se ajuste al alto de su contenido para que .move(y) sea suave
+            if self.container.layout():
+                self.container.setFixedHeight(self.container.layout().sizeHint().height())
 
     def _clear_layout(self, layout):
         """Borra widgets de inmediato (deleteLater deja pintura sucia al scrollear)."""
@@ -169,8 +176,10 @@ class _AutoScrollList(QScrollArea):
         h = max(h, b0.sizeHint().height(), b0.height())
         if len(self.blocks) >= 2:
             # Distancia real entre bloques gemelos (más fiable para el loop)
-            y0 = self.blocks[0].y()
-            y1 = self.blocks[1].y()
+            b0 = self.blocks[0]
+            b1 = self.blocks[1]
+            y0 = b0.y()
+            y1 = b1.y()
             if y1 > y0:
                 return y1 - y0
         return h + self.inner_layout.spacing()
@@ -188,23 +197,14 @@ class _AutoScrollList(QScrollArea):
             pass
         self._scroll_pos = 0
         self._block_height = 0
-        try:
-            self.verticalScrollBar().setValue(0)
-        except Exception:
-            pass
+        self.container.move(0, 0)
 
         self._clear_layout(self.inner_layout)
-        # No processEvents aquí: reentra set_items y congela la TV
 
         self.blocks = []
         items_by_category = items_by_category or {}
         tiene_productos = any(bool(p) for p in items_by_category.values())
         if not tiene_productos:
-            # Sin datos: no crear los 3 bloques vacíos (parecen cajas marcadas)
-            try:
-                self.viewport().update()
-            except Exception:
-                pass
             return
 
         try:
@@ -235,7 +235,7 @@ class _AutoScrollList(QScrollArea):
                 block_layout.setContentsMargins(0, 0, 0, 8)
                 block_layout.setSpacing(12)
                 self.inner_layout.addWidget(block)
-                self.blocks.append((block, block_layout))
+                self.blocks.append(block)
                 
             # Crear pool de anuncios
             pool_ads = []
@@ -246,7 +246,8 @@ class _AutoScrollList(QScrollArea):
             
             # Construir Plan de Orquestación (Tareas a pintar)
             self._render_queue = []
-            for block, block_layout in self.blocks:
+            for block in self.blocks:
+                block_layout = block.layout()
                 for categoria, productos in items_by_category.items():
                     if not productos: continue
                     
@@ -284,15 +285,8 @@ class _AutoScrollList(QScrollArea):
     def _process_render_queue(self):
         """El Orquestador: Pinta un chunk de tarjetas y cede el control para no congelar la UI"""
         if not hasattr(self, '_render_queue') or not self._render_queue:
-            # Terminado de pintar
-            # Extraer solo los QWidget block para self.blocks (ya que guardamos tuplas)
-            if self.blocks and isinstance(self.blocks[0], tuple):
-                self.blocks = [b[0] for b in self.blocks]
-            
-            self.container.adjustSize()
-            self.container.updateGeometry()
+            self._update_container_size()
             self._block_height = self._measure_block_height()
-            self.viewport().update()
             self.timer.start(16)
             return
             
@@ -319,40 +313,62 @@ class _AutoScrollList(QScrollArea):
         # Agendar la siguiente pincelada en el Event Loop
         from PyQt6.QtCore import QTimer
         QTimer.singleShot(16, self._process_render_queue)
+
     def _do_scroll(self):
-        bar = self.verticalScrollBar()
-        max_val = bar.maximum()
-        if max_val <= 0:
-            return
-        
-        if not self.blocks or len(self.blocks) < 2:
+        if len(self.blocks) < 2:
             return
 
-        # Calcular la altura del bloque en tiempo real.
-        # Esto soluciona los saltos si las tarjetas de producto
-        # crecen dinámicamente por tener nombres largos en múltiples líneas.
-        y0 = self.blocks[0].y()
-        y1 = self.blocks[1].y()
+        b0_w = self.blocks[0]
+        b1_w = self.blocks[1]
+        
+        y0 = b0_w.y()
+        y1 = b1_w.y()
         
         if y1 > y0:
             block_height = y1 - y0
         else:
-            block_height = self._block_height or self._measure_block_height()
-            
+            block_height = getattr(self, '_block_height', b0_w.height() + self.scroll_area.inner_layout.spacing())
+
         if block_height <= 0:
             return
-            
+
         self._block_height = block_height
 
-        # Lista corta: no scrollear (evita saltos / solapes)
-        if max_val < block_height:
-            return
-            
-        # Velocidad ajustada para 60fps (aprox 1px cada 16ms = ~60px/s)
+        # Velocidad ajustada para 60fps
         self._scroll_pos += 1.0
         
         # Loop infinito alineado a la altura real del bloque
         while self._scroll_pos >= block_height:
             self._scroll_pos -= block_height
             
-        bar.setValue(int(self._scroll_pos))
+        self.scroll_area.container.move(0, int(-self._scroll_pos))
+
+class _AutoScrollList(QWidget):
+    """Componente nativo que maneja el scroll (reemplaza QScrollArea para evitar clipping glitches en TVs)"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.current_mode = 3
+        # El contenedor principal actúa como clipping (viewport)
+        self.setStyleSheet("QWidget#AutoScrollList { background: transparent; }")
+        self.setObjectName("AutoScrollList")
+        
+        # El contenedor interno que se mueve
+        self.container = QWidget(self)
+        self.container.setAutoFillBackground(True)
+        self.container.setStyleSheet("background: #FFFFFF;")
+        
+        self.inner_layout = QVBoxLayout(self.container)
+        # Más aire abajo: la última tarjeta no pisa el borde
+        self.inner_layout.setContentsMargins(2, 4, 2, 12)
+        self.inner_layout.setSpacing(12)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_container_size()
+
+    def _update_container_size(self):
+        if hasattr(self, 'container'):
+            self.container.setFixedWidth(self.width())
+            # Forzamos que se ajuste al alto de su contenido para que .move(y) sea suave
+            if self.container.layout():
+                self.container.setFixedHeight(self.container.layout().sizeHint().height())
