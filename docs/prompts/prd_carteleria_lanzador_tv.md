@@ -7,6 +7,8 @@
 
 **Último lanzamiento (intención de producto):** inyección de publicidad + estabilidad TV/4K (DPI, clipping, freeze, arranque), no un rediseño greenfield.
 
+**Complemento 2 pantallas:** ver `docs/prompts/prd_carteleria_2_pantallas.md` (PC+TV físico y layout modo 2).
+
 ---
 
 ## 1. Objetivo
