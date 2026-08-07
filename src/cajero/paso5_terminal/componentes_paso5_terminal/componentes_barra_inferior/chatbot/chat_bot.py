@@ -11,9 +11,16 @@ if BASE_DIR not in sys.path:
 
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
-from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEnginePage
-from src.utils.qt_compat import create_webengine_page, webengine_page_transparent
+try:
+    from PyQt6.QtWebEngineWidgets import QWebEngineView
+    from PyQt6.QtWebEngineCore import QWebEnginePage
+    from src.utils.qt_compat import create_webengine_page, webengine_page_transparent
+    _WEBENGINE_AVAILABLE = True
+except ImportError as e:
+    QWebEngineView = QWidget
+    QWebEnginePage = object
+    _WEBENGINE_AVAILABLE = False
+    print(f"Advertencia: No se pudo cargar QtWebEngineWidgets ({e}). El chatbot estará deshabilitado.")
 
 # ─── Rutas ──────────────────────────────────────────────────────────────────
 _DIR       = os.path.dirname(os.path.abspath(__file__))
@@ -558,14 +565,22 @@ class ChatManualWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setStyleSheet("background: transparent;")
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
 
+        if not _WEBENGINE_AVAILABLE:
+            from PyQt6.QtWidgets import QLabel
+            self.web = QLabel("Chatbot no disponible (Falta QtWebEngine)")
+            self.web.setStyleSheet("color: white; background: red; padding: 10px; border-radius: 5px;")
+            self.web.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lay.addWidget(self.web)
+            return
+
         self.web = QWebEngineView()
-        self.web.setAttribute(Qt.WA_TranslucentBackground)
+        self.web.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.web.setStyleSheet("background: transparent;")
         page = self._make_page()
         webengine_page_transparent(page)
@@ -574,6 +589,7 @@ class ChatManualWidget(QWidget):
         lay.addWidget(self.web)
 
     def _make_page(self):
+        if not _WEBENGINE_AVAILABLE: return None
         page = create_webengine_page(self.web, self._on_js_message)
         return page
 
@@ -596,6 +612,8 @@ class ChatManualWidget(QWidget):
             self.cerrar_chat()
 
     def _js(self, code: str):
+        if not _WEBENGINE_AVAILABLE or not self.web or not self.web.page():
+            return
         self.web.page().runJavaScript(code)
 
     # ── Tutor ────────────────────────────────────────────────────────────────
