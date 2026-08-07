@@ -108,21 +108,15 @@ class GrillaPrecios(QFrame):
         self.scroll_area.set_items(items_by_category)
 
 
-class _AutoScrollList(QScrollArea):
+class _AutoScrollList(QWidget):
     """Componente interno que maneja el scroll y renderizado de ítems"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWidgetResizable(True)
-        # Fondo opaco: evita “fantasma” de filas viejas al hacer scroll / rebuild
-        self.setStyleSheet(
-            "QScrollArea { background: #FFFFFF; border: none; }"
-        )
-        self.viewport().setAutoFillBackground(True)
-        self.viewport().setStyleSheet("background: #FFFFFF;")
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.current_mode = 3
+        self.setAutoFillBackground(True)
+        self.setStyleSheet("QWidget { background: #FFFFFF; border: none; }")
         
-        self.container = QWidget()
+        self.container = QWidget(self)
         self.container.setAutoFillBackground(True)
         self.container.setStyleSheet("background: #FFFFFF;")
         
@@ -342,34 +336,4 @@ class _AutoScrollList(QScrollArea):
         while self._scroll_pos >= block_height:
             self._scroll_pos -= block_height
             
-        self.scroll_area.container.move(0, int(-self._scroll_pos))
-
-class _AutoScrollList(QWidget):
-    """Componente nativo que maneja el scroll (reemplaza QScrollArea para evitar clipping glitches en TVs)"""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.current_mode = 3
-        # El contenedor principal actúa como clipping (viewport)
-        self.setStyleSheet("QWidget#AutoScrollList { background: transparent; }")
-        self.setObjectName("AutoScrollList")
-        
-        # El contenedor interno que se mueve
-        self.container = QWidget(self)
-        self.container.setAutoFillBackground(True)
-        self.container.setStyleSheet("background: #FFFFFF;")
-        
-        self.inner_layout = QVBoxLayout(self.container)
-        # Más aire abajo: la última tarjeta no pisa el borde
-        self.inner_layout.setContentsMargins(2, 4, 2, 12)
-        self.inner_layout.setSpacing(12)
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._update_container_size()
-
-    def _update_container_size(self):
-        if hasattr(self, 'container'):
-            self.container.setFixedWidth(self.width())
-            # Forzamos que se ajuste al alto de su contenido para que .move(y) sea suave
-            if self.container.layout():
-                self.container.setFixedHeight(self.container.layout().sizeHint().height())
+        self.container.move(0, int(-self._scroll_pos))
