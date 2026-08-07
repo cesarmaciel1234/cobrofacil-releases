@@ -129,7 +129,8 @@ class _AutoScrollList(QScrollArea):
         # Ancho mínimo 0 (no forzar expansión horizontal); alto = layout real
         self.container.minimumSizeHint = lambda: QSize(
             0,
-            self.container.layout().minimumSize().height() if self.container.layout() else 0,
+            self.container.layout().minimumSize().height() if self.container.layout() else 0
+        )
         self.inner_layout = QVBoxLayout(self.container)
         # Más aire abajo: la última tarjeta no pisa el borde
         self.inner_layout.setContentsMargins(2, 4, 2, 12)
