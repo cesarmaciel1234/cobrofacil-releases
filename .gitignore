@@ -94,6 +94,10 @@ locks/
 
 # ─── Runtime / estado en vivo ─────────────────────────────────────────────
 .cursor/
+# Pero versionar la configuración del entorno de Cloud Agents.
+!.cursor/
+!.cursor/environment.json
+!.cursor/install.sh
 last_ai_gen.json
 live_scan.json
 sugerencia_activa.json
