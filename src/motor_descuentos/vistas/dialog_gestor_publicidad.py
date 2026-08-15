@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QListWidget, QListWidgetItem, QMessageBox
 )
 from PyQt6.QtCore import Qt
-from src.carteleria.el_cerebro.las_manos.elegir_publicidad import motor_publicidad
+from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 from src.motor_descuentos.cerebro.motor_ofertas import MotorOfertas
 import random
 

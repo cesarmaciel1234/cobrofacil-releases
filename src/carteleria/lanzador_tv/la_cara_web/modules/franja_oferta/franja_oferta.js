@@ -1,6 +1,14 @@
 /* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
 
-import { descuentoPct, esOferta, formatMoney, precioVigente, unidadProducto, escapeHtml, textoValidezOferta } from "../shared/plata_y_texto.js";
+import {
+    cantMinimaOferta,
+    descuentoPct,
+    esOferta,
+    escapeHtml,
+    formatMoney,
+    precioVigente,
+    unidadProducto,
+} from "../shared/plata_y_texto.js";
 
 export function renderFranjaOferta(hero, productos, els) {
     const track = document.getElementById("carouselTrack");
@@ -22,63 +30,144 @@ export function renderFranjaOferta(hero, productos, els) {
     iniciarCarrusel(track);
 }
 
+function nombreClave(item) {
+    return String(item?.nombre || "").toLowerCase().trim();
+}
+
+function siguienteAd(ads, adIndex, evitar) {
+    const evitarClave = nombreClave(evitar);
+    for (let k = 0; k < ads.length; k += 1) {
+        const ad = ads[(adIndex + k) % ads.length];
+        if (nombreClave(ad) !== evitarClave) {
+            return { ad, next: adIndex + k + 1 };
+        }
+    }
+    return { ad: ads[adIndex % ads.length], next: adIndex + 1 };
+}
+
 function inyectarPublicidad(ofertas, productos) {
     const ads = (productos || []).filter((item) => item.es_publicidad);
     if (!ads.length) return ofertas;
     const out = [];
     let adIndex = 0;
+    let inyectadas = 0;
     ofertas.forEach((item, i) => {
         out.push(item);
         if ((i + 1) % 4 === 0) {
-            out.push({ ...ads[adIndex % ads.length], es_publicidad: true, slot_ad: true });
-            adIndex += 1;
+            const { ad, next } = siguienteAd(ads, adIndex, item);
+            out.push({ ...ad, es_publicidad: true, slot_ad: true });
+            adIndex = next;
+            inyectadas += 1;
         }
     });
+    if (inyectadas === 0 && ofertas.length) {
+        const { ad } = siguienteAd(ads, 0, ofertas[ofertas.length - 1]);
+        out.push({ ...ad, es_publicidad: true, slot_ad: true });
+    }
     return out;
 }
 
 function crearTarjetaPublicidad(producto) {
+    return htmlDealCard(producto, { ad: true });
+}
+
+function crearTarjetaOferta(producto) {
+    return htmlDealCard(producto, { ad: false });
+}
+
+function htmlDealCard(producto, { ad }) {
     const vigente = precioVigente(producto);
+    const enOferta = esOferta(producto);
+    const pct = descuentoPct(producto.precio, vigente);
+    const unidad = unidadProducto(producto);
+    const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
+    const nombre = String(producto.nombre || "Destacado");
+    const letra = (nombre.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/) || ["•"])[0].toUpperCase();
+    const esAd = Boolean(ad || producto.slot_ad);
+    const vendidos = Number(producto.veces || producto.cantidad || producto.vendidos || 0);
+    const stock = Number(producto.stock || 0);
+    const min = cantMinimaOferta(producto);
+    const proof = stock > 0 && stock <= 8
+        ? `Últimos ${Math.round(stock)}`
+        : (vendidos > 0
+            ? `${Math.round(vendidos)} vendidos`
+            : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
+    const kicker = esAd ? "Publicidad" : (enOferta ? "Oferta relámpago" : "Precio especial");
+    const offLabel = pct ? `-${pct}%` : (esAd ? "HOT" : "NEW");
+    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
+    const clave = claveTimer(producto, esAd);
     return `
-        <article class="tv-card oferta-card is-ad">
-            <div class="tv-card__top">
-                <h3 class="tv-card__name">${escapeHtml(producto.nombre || "Destacado")}</h3>
-                <span class="tv-card__off is-ad">PUBLICIDAD</span>
+        <article class="tv-card oferta-card is-deal${enOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}">
+            <div class="deal-stage" data-tone="${escapeHtml(tonoDepto(producto))}">
+                <span class="deal-stage__letter">${escapeHtml(letra)}</span>
+                <span class="deal-stage__off">${escapeHtml(offLabel)}</span>
+                <span class="deal-stage__bolt" aria-hidden="true">⚡</span>
             </div>
-            <div class="tv-card__pay">
-                <div class="tv-card__now-row">
-                    <strong class="tv-card__now">${vigente > 0 ? formatMoney(vigente) : "DESTACADO"}</strong>
-                    <span class="tv-card__unit">CASA</span>
+            <div class="deal-copy">
+                <p class="deal-kicker">${escapeHtml(kicker)}</p>
+                <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
+                <div class="deal-price-row">
+                    ${vigente > 0
+                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>`
+                        : `<strong class="tv-card__now">DESTACADO</strong>`}
+                    ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
+                </div>
+                ${ahorro > 0 ? `<p class="deal-save">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                <div class="deal-foot">
+                    <span class="tv-card__timer">
+                        <span class="tv-card__timer-icon" aria-hidden="true">⏰</span>
+                        <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
+                    </span>
+                    <span class="deal-proof${stock > 0 && stock <= 8 ? " is-low" : ""}">${escapeHtml(proof)}</span>
                 </div>
             </div>
         </article>
     `;
 }
 
-function crearTarjetaOferta(producto) {
-    const vigente = precioVigente(producto);
-    const enOferta = esOferta(producto);
-    const pct = descuentoPct(producto.precio, vigente);
-    const validez = textoValidezOferta(producto);
-    const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
-    const unidad = unidadProducto(producto);
-    return `
-        <article class="tv-card oferta-card${enOferta ? " is-flash" : ""}">
-            <div class="tv-card__top">
-                <h3 class="tv-card__name">${escapeHtml(producto.nombre)}</h3>
-                ${pct ? `<span class="tv-card__off">-${pct}%</span>` : ""}
-            </div>
-            <div class="tv-card__pay">
-                ${enOferta ? `<div class="tv-card__was-row"><s class="tv-card__was">${formatMoney(producto.precio)}</s>${validez ? `<span class="tv-card__rule">${escapeHtml(validez)}</span>` : ""}</div>` : ""}
-                <div class="tv-card__now-row">
-                    <strong class="tv-card__now">${formatMoney(vigente)}</strong>
-                    ${ahorro > 0
-                        ? `<span class="tv-card__save"><span class="tv-card__save-label">AHORRÁS</span><strong class="tv-card__save-amt">${formatMoney(ahorro)} x ${unidad}</strong></span>`
-                        : `<span class="tv-card__unit">POR ${unidad.toUpperCase()}</span>`}
-                </div>
-            </div>
-        </article>
-    `;
+function tonoDepto(item) {
+    const d = `${item?.departamento || ""} ${item?.categoria || ""} ${item?.nombre || ""}`.toLowerCase();
+    if (/ave|pollo|pavo|gallina/.test(d)) return "aves";
+    if (/cerdo|bondiola|chorizo|lech[oó]n|jam[oó]n/.test(d)) return "cerdo";
+    if (/almac[eé]n|fideo|aceite|arroz|bebida|l[aá]cteo/.test(d)) return "almacen";
+    return "carnes";
+}
+
+const DURACIONES_MIN = [5, 10, 15, 30];
+const cronometros = new Map();
+
+function claveTimer(producto, ad) {
+    return `${producto?.id || producto?.nombre || "x"}:${ad ? "ad" : "of"}`;
+}
+
+function minutosAlAzar() {
+    return DURACIONES_MIN[Math.floor(Math.random() * DURACIONES_MIN.length)];
+}
+
+function segundosDeTarjeta(key) {
+    const now = Date.now();
+    let t = cronometros.get(key);
+    if (!t || t.endsAt <= now) {
+        const totalMs = minutosAlAzar() * 60 * 1000;
+        const yaCorrio = Math.floor(Math.random() * totalMs * 0.35);
+        t = { endsAt: now + totalMs - yaCorrio };
+        cronometros.set(key, t);
+    }
+    return Math.max(1, Math.round((t.endsAt - now) / 1000));
+}
+
+function formatMmSs(total) {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function tickCronometros(track) {
+    track.querySelectorAll("[data-deal-timer]").forEach((el) => {
+        const secs = segundosDeTarjeta(el.dataset.dealTimer);
+        el.textContent = formatMmSs(secs);
+        el.closest(".tv-card__timer")?.classList.toggle("is-urgent", secs < 60);
+    });
 }
 
 function iniciarCarrusel(track) {
@@ -89,10 +178,15 @@ function iniciarCarrusel(track) {
 
     function animate() {
         position -= speed;
-        const trackWidth = track.scrollWidth / 2;
-        if (trackWidth > 0 && Math.abs(position) >= trackWidth) position = 0;
+        const loopWidth = track.scrollWidth / 2;
+        if (loopWidth > 0 && Math.abs(position) >= loopWidth) position = 0;
         track.style.transform = `translateX(${position}px)`;
         requestAnimationFrame(animate);
+    }
+
+    if (track.dataset.timer !== "1") {
+        track.dataset.timer = "1";
+        setInterval(() => tickCronometros(track), 1000);
     }
 
     requestAnimationFrame(animate);

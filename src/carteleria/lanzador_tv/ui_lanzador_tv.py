@@ -371,6 +371,14 @@ class CarteleriaMainTV(QWidget):
         self.lbl_status.setText("● TV detenida. Los datos siguen en caché.")
         self.lbl_status.setStyleSheet("color: #FCD34D;")
 
+    def on_tv_control(self, action):
+        """F10/F11/Esc desde el navegador o el gancho global (hilo HTTP)."""
+        action = str(action or "").strip().lower()
+        if action in ("stop", "f11", "esc"):
+            QTimer.singleShot(0, self.detener_carteleria)
+        elif action in ("monitor", "f10"):
+            QTimer.singleShot(0, self._toggle_fullscreen)
+
     def detener_carteleria(self):
         """Entrada pública para cerrar la emisión desde otros módulos."""
         if self._iniciado:
@@ -410,6 +418,10 @@ class CarteleriaMainTV(QWidget):
                 self._window_manager.f10_pressed()
             event.accept()
         elif event.key() == Qt.Key.Key_F11:
+            if hasattr(self, '_window_manager'):
+                self._window_manager.f11_pressed()
+            event.accept()
+        elif event.key() == Qt.Key.Key_Escape:
             if hasattr(self, '_window_manager'):
                 self._window_manager.f11_pressed()
             event.accept()

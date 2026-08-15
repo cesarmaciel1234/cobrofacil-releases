@@ -108,10 +108,21 @@ async function fetchState() {
     }
 }
 
+function setupTvKeys() {
+    window.addEventListener("keydown", (event) => {
+        if (event.key !== "F10" && event.key !== "F11" && event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        const action = event.key === "F10" ? "monitor" : "stop";
+        fetch(`/api/control?action=${action}`, { cache: "no-store" }).catch(() => {});
+    }, true);
+}
+
 function init() {
     document.body.setAttribute("data-theme", state.currentTheme);
     actualizarReloj(els);
     setInterval(() => actualizarReloj(els), 1000);
+    setupTvKeys();
     fetchState();
     setInterval(fetchState, REFRESH_INTERVAL);
 }

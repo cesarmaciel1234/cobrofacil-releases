@@ -13,53 +13,12 @@ import json
 import time
 
 from src.utils.paths import get_resource_path
+from src.carteleria.lanzador_tv.navegador_kiosk import TeclasTv, buscar_navegador, flags_pantalla_completa
 from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
 from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
 from src.carteleria.motor_carteleria.estado_tv import armar_paneles
 
 logger = logging.getLogger("LanzadorDirectoTV")
-
-
-class GlobalHotkeyListener(threading.Thread):
-    """Hilo para escuchar teclas globales F10/F11/ESC (Windows)."""
-    
-    def __init__(self, callback_f10, callback_f11, callback_esc):
-        super().__init__(daemon=True)
-        self.callback_f10 = callback_f10
-        self.callback_f11 = callback_f11
-        self.callback_esc = callback_esc
-        self.running = False
-        
-    def run(self):
-        """Escucha teclas globales usando pynput si está disponible."""
-        self.running = True
-        try:
-            from pynput import keyboard
-            logger.info("HotkeyListener iniciado con pynput (F10: monitor, F11/ESC: salir)")
-            
-            def on_press(key):
-                try:
-                    if key == keyboard.Key.f10:
-                        self.callback_f10()
-                    elif key == keyboard.Key.f11:
-                        self.callback_f11()
-                    elif key == keyboard.Key.esc:
-                        self.callback_esc()
-                except Exception:
-                    pass
-            
-            listener = keyboard.Listener(on_press=on_press)
-            listener.start()
-            
-            while self.running:
-                time.sleep(0.1)
-                
-            listener.stop()
-            
-        except ImportError:
-            logger.warning("pynput no disponible, hotkeys globales desactivados (usa teclas en navegador)")
-        except Exception as e:
-            logger.warning(f"Error en HotkeyListener: {e}")
 
 
 class LanzadorDirectoTV:
@@ -187,7 +146,7 @@ class LanzadorDirectoTV:
         try:
             # Detener hotkeys
             if self._hotkey_listener:
-                self._hotkey_listener.running = False
+                self._hotkey_listener.stop()
                 self._hotkey_listener = None
             
             self._cerrar_navegador()
@@ -251,19 +210,34 @@ class LanzadorDirectoTV:
     def _iniciar_hotkeys(self):
         """Inicia hotkeys globales F10/F11/ESC."""
         try:
-            self._hotkey_listener = GlobalHotkeyListener(
-                callback_f10=self._handle_f10,
-                callback_f11=self._handle_f11,
-                callback_esc=self._handle_esc
+            if self._hotkey_listener:
+                return
+            self._hotkey_listener = TeclasTv(
+                on_f10=self._handle_f10,
+                on_f11=self._handle_f11,
+                on_esc=self._handle_esc,
             )
             self._hotkey_listener.start()
         except Exception as e:
             logger.warning(f"Error iniciando hotkeys: {e}")
+
+    def on_tv_control(self, action):
+        action = str(action or "").strip().lower()
+        if action in ("stop", "f11", "esc"):
+            self.detener()
+        elif action in ("monitor", "f10"):
+            self._handle_f10()
     
     def _handle_f10(self):
         """Maneja F10: cambiar monitor."""
         logger.info("F10 presionado - cambiando monitor")
-        self.screen_index = (self.screen_index or 0) + 1
+        try:
+            from PyQt6.QtWidgets import QApplication
+            app = QApplication.instance()
+            n = len(app.screens()) if app else 1
+        except Exception:
+            n = 1
+        self.screen_index = ((self.screen_index or 0) + 1) % max(n, 1)
         self._lanzar_navegador()
     
     def _handle_f11(self):
@@ -453,54 +427,33 @@ class LanzadorDirectoTV:
         return " • ".join(mensajes_base)
     
     def _lanzar_navegador(self):
-        """Lanza chromium en modo kiosk."""
+        """Abre Chrome o Edge a pantalla completa."""
         try:
             self._cerrar_navegador()
             url = f"http://127.0.0.1:{self.httpd.server_address[1]}/"
-            sistema = platform.system()
-            
             x, y, w, h = self._geometria_tv()
-            flags = [
-                f"--user-data-dir={self._kiosk_profile}",
-                "--no-first-run",
-                "--no-default-browser-check",
-                "--disable-features=Translate,InfiniteSessionRestore",
-                "--disable-session-crashed-bubble",
-                "--disable-infobars",
-                "--disable-restore-session-state",
-                "--noerrdialogs",
-                "--kiosk",
-                "--start-fullscreen",
-                f"--window-position={x},{y}",
-                f"--window-size={w},{h}",
-                url,
-            ]
-            
+            flags = flags_pantalla_completa(url, self._kiosk_profile, x, y, w, h)
+            navegador = buscar_navegador()
+            sistema = platform.system()
             if sistema == "Windows":
-                navegador = self._buscar_chrome_windows()
                 if navegador:
                     self.browser_process = subprocess.Popen([navegador] + flags)
                 else:
+                    logger.warning("No hay Chrome ni Edge; abro el navegador por defecto")
                     os.startfile(url)
             elif sistema == "Darwin":
                 self.browser_process = subprocess.Popen(
-                    ["open", "-a", "Google Chrome", "--args"] + flags
+                    ["open", "-a", navegador or "Google Chrome", "--args"] + flags
                 )
             else:
-                for binario in ("google-chrome", "chromium-browser", "chromium", "microsoft-edge"):
-                    try:
-                        self.browser_process = subprocess.Popen([binario] + flags)
-                        break
-                    except FileNotFoundError:
-                        continue
-                if self.browser_process is None:
+                if navegador:
+                    self.browser_process = subprocess.Popen([navegador] + flags)
+                else:
                     subprocess.Popen(["xdg-open", url])
-            
-            logger.info(f"Navegador kiosk lanzado en {url}")
-            
+            logger.info("TV en %s con %s", url, navegador or "navegador por defecto")
         except Exception as e:
             logger.error(f"Error lanzando navegador: {e}")
-    
+
     def _cerrar_navegador(self):
         """Cierra el navegador kiosk."""
         if not self.browser_process:
@@ -543,20 +496,6 @@ class LanzadorDirectoTV:
         except Exception:
             return 0, 0, 1920, 1080
     
-    def _buscar_chrome_windows(self):
-        """Busca Chrome/Edge en Windows."""
-        candidatos = [
-            os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
-            os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
-        ]
-        for path in candidatos:
-            if path and os.path.exists(path):
-                return path
-        return None
-
 
 # Instancia global singleton
 _lanzador_directo = None

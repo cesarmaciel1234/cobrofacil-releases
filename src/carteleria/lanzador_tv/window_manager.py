@@ -14,6 +14,9 @@ class WindowManager:
         self.shortcut_f11 = QShortcut(QKeySequence(Qt.Key_F11), self.main)
         self.shortcut_f11.activated.connect(self.f11_pressed)
 
+        self.shortcut_esc = QShortcut(QKeySequence(Qt.Key_Escape), self.main)
+        self.shortcut_esc.activated.connect(self.f11_pressed)
+
         # F10 — Selector de monitor / toggle fullscreen
         self.shortcut_f10 = QShortcut(QKeySequence(Qt.Key_F10), self.main)
         self.shortcut_f10.activated.connect(self.f10_pressed)

@@ -18,6 +18,11 @@ import logging
 import tempfile
 
 from src.utils.paths import get_resource_path
+from src.carteleria.lanzador_tv.navegador_kiosk import (
+    TeclasTv,
+    buscar_navegador,
+    flags_pantalla_completa,
+)
 
 logger = logging.getLogger("CerebroLanzadorTV")
 
@@ -43,6 +48,12 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return
         return super().do_GET()
 
+    def do_POST(self):
+        if self.path.startswith("/api/control"):
+            self.handle_api()
+            return
+        self.send_error(404)
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
@@ -66,7 +77,34 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             self._write_json({"precios": precios})
             return
 
+        if self.path.startswith("/api/control"):
+            self._handle_control()
+            return
+
         self._write_json({"error": "Not found"}, status=404)
+
+    def _handle_control(self):
+        from urllib.parse import parse_qs, urlparse
+
+        action = ""
+        parsed = urlparse(self.path)
+        action = (parse_qs(parsed.query).get("action") or [""])[0].strip().lower()
+        if not action and self.command == "POST":
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+                raw = self.rfile.read(length) if length else b""
+                action = str(json.loads(raw.decode("utf-8") or "{}").get("action") or "").strip().lower()
+            except Exception:
+                action = ""
+        mw = self.main_window
+        if mw and hasattr(mw, "on_tv_control"):
+            mw.on_tv_control(action)
+        elif mw and hasattr(mw, "_cerebro") and mw._cerebro:
+            if action in ("stop", "f11", "esc"):
+                mw._cerebro.detener()
+            elif action in ("monitor", "f10"):
+                mw._cerebro.reubicar((getattr(mw._cerebro, "screen_index", 0) or 0) + 1)
+        self._write_json({"ok": True, "action": action})
 
     def _write_json(self, payload, status=200):
         body = json.dumps(payload, ensure_ascii=False, default=_json_default).encode("utf-8")
@@ -124,6 +162,7 @@ class ServidorCuello:
             os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
         )
         self._kiosk_profile = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
+        self._teclas = None
 
     def iniciar(self, screen_index=None):
         try:
@@ -147,6 +186,7 @@ class ServidorCuello:
                 logger.info("Servidor HTTP iniciado en http://%s:%s", self.host, self.port)
 
             self._lanzar_navegador()
+            self._iniciar_teclas()
             return True
         except Exception as exc:
             logger.error("Error iniciando servidor: %s", exc)
@@ -159,6 +199,7 @@ class ServidorCuello:
 
     def detener(self):
         try:
+            self._detener_teclas()
             self._cerrar_navegador()
             if self.httpd:
                 self.httpd.shutdown()
@@ -170,6 +211,43 @@ class ServidorCuello:
             logger.info("Servidor HTTP y navegador detenidos")
         except Exception as exc:
             logger.error("Error deteniendo servidor: %s", exc)
+
+    def _iniciar_teclas(self):
+        if self._teclas:
+            return
+        self._teclas = TeclasTv(
+            on_f10=self._tecla_f10,
+            on_f11=self._tecla_salir,
+            on_esc=self._tecla_salir,
+        )
+        self._teclas.start()
+
+    def _detener_teclas(self):
+        if not self._teclas:
+            return
+        self._teclas.stop()
+        self._teclas = None
+
+    def _tecla_f10(self):
+        mw = self.main_window
+        if mw and hasattr(mw, "on_tv_control"):
+            mw.on_tv_control("monitor")
+            return
+        try:
+            from PyQt6.QtWidgets import QApplication
+            app = QApplication.instance()
+            n = len(app.screens()) if app else 1
+        except Exception:
+            n = 1
+        self.screen_index = ((self.screen_index or 0) + 1) % max(n, 1)
+        self.reubicar(self.screen_index)
+
+    def _tecla_salir(self):
+        mw = self.main_window
+        if mw and hasattr(mw, "on_tv_control"):
+            mw.on_tv_control("stop")
+            return
+        self.detener()
 
     def _cerrar_navegador(self):
         if not self.browser_process:
@@ -213,66 +291,32 @@ class ServidorCuello:
 
     def _flags_kiosk(self, url):
         x, y, w, h = self._geometria_tv()
-        os.makedirs(self._kiosk_profile, exist_ok=True)
-        return [
-            f"--user-data-dir={self._kiosk_profile}",
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--disable-features=Translate,InfiniteSessionRestore",
-            "--disable-session-crashed-bubble",
-            "--disable-infobars",
-            "--disable-restore-session-state",
-            "--noerrdialogs",
-            "--kiosk",
-            "--start-fullscreen",
-            f"--window-position={x},{y}",
-            f"--window-size={w},{h}",
-            url,
-        ]
-
-    def _buscar_chrome_windows(self):
-        candidatos = [
-            os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
-            os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
-            os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
-        ]
-        for path in candidatos:
-            if path and os.path.exists(path):
-                return path
-        return None
+        return flags_pantalla_completa(url, self._kiosk_profile, x, y, w, h)
 
     def _lanzar_navegador(self):
         try:
             self._cerrar_navegador()
             url = f"http://{self.host}:{self.port}/"
             sistema = platform.system()
+            flags = self._flags_kiosk(url)
+            navegador = buscar_navegador()
 
             if sistema == "Windows":
-                navegador = self._buscar_chrome_windows()
                 if navegador:
-                    self.browser_process = subprocess.Popen(
-                        [navegador] + self._flags_kiosk(url)
-                    )
+                    self.browser_process = subprocess.Popen([navegador] + flags)
                 else:
+                    logger.warning("No hay Chrome ni Edge; abro el navegador por defecto")
                     os.startfile(url)
             elif sistema == "Darwin":
                 self.browser_process = subprocess.Popen(
-                    ["open", "-a", "Google Chrome", "--args"] + self._flags_kiosk(url)
+                    ["open", "-a", navegador or "Google Chrome", "--args"] + flags
                 )
             else:
-                for binario in ("google-chrome", "chromium-browser", "chromium", "microsoft-edge"):
-                    try:
-                        self.browser_process = subprocess.Popen(
-                            [binario] + self._flags_kiosk(url)
-                        )
-                        break
-                    except FileNotFoundError:
-                        continue
-                if self.browser_process is None:
+                if navegador:
+                    self.browser_process = subprocess.Popen([navegador] + flags)
+                else:
                     subprocess.Popen(["xdg-open", url])
 
-            logger.info("Navegador kiosk en %s", url)
+            logger.info("TV en %s con %s", url, navegador or "navegador por defecto")
         except Exception as exc:
             logger.error("Error lanzando navegador: %s", exc)

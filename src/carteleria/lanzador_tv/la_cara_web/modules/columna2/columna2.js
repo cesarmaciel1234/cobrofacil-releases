@@ -33,6 +33,21 @@ function htmlDepartamento(nombre) {
     return `<div class="price-dept">${escapeHtml(nombre)}</div>`;
 }
 
+function nombreClave(item) {
+    return String(item?.nombre || "").toLowerCase().trim();
+}
+
+function siguienteAd(ads, adIndex, evitar) {
+    const evitarClave = nombreClave(evitar);
+    for (let k = 0; k < ads.length; k += 1) {
+        const ad = ads[(adIndex + k) % ads.length];
+        if (nombreClave(ad) !== evitarClave) {
+            return { ad, next: adIndex + k + 1 };
+        }
+    }
+    return { ad: ads[adIndex % ads.length], next: adIndex + 1 };
+}
+
 function armarCiclo(productos) {
     const ads = productos.filter((item) => item.es_publicidad);
     let adIndex = 0;
@@ -47,8 +62,9 @@ function armarCiclo(productos) {
             partes.push(htmlFilaPrecio(item, ranking, depto));
             enBloque += 1;
             if (enBloque % 4 === 0 && ads.length) {
-                partes.push(htmlTarjetaPublicidad(ads[adIndex % ads.length]));
-                adIndex += 1;
+                const { ad, next } = siguienteAd(ads, adIndex, item);
+                partes.push(htmlTarjetaPublicidad(ad));
+                adIndex = next;
             }
         }
     }

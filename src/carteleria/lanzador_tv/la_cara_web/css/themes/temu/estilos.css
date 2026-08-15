@@ -111,12 +111,13 @@ body {
 }
 
 .oferta-card .tv-card__name {
-    font-size: clamp(0.95rem, 1.5vw, 1.25rem);
-    margin-bottom: 4px;
+    font-size: clamp(0.95rem, 1.45vw, 1.25rem);
+    margin-bottom: 0;
 }
 
 .oferta-card .tv-card__now {
-    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-size: clamp(1.35rem, 2.2vw, 1.95rem);
+    color: #FF6A00;
 }
 
 .oferta-card .tv-card__now-row {
@@ -131,6 +132,10 @@ body {
     inset: 0 0 auto 0;
     height: 4px;
     background: linear-gradient(90deg, #FF6A00, #FFE566, #E11D48);
+}
+
+.oferta-card.tv-card::before {
+    display: none;
 }
 
 .oferta-card,
@@ -221,12 +226,15 @@ body {
 }
 
 .oferta-card.is-ad {
-    background: #FFF8E8;
+    background: #FFFFFF;
 }
 
-.oferta-card.is-ad .tv-card__off.is-ad {
-    background: #FF6A00;
-    color: #FFFFFF;
+.oferta-card.is-ad .deal-kicker {
+    color: #9CA3AF;
+}
+
+.oferta-card.is-deal .tv-card__now {
+    color: #FF6A00;
 }
 
 .meal-card {
