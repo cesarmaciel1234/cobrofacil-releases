@@ -1,0 +1,348 @@
+:root {
+    --bg-primary: #FFE566;
+    --bg-secondary: #FFFFFF;
+    --surface-primary: #FFFFFF;
+    --text-primary: #1A1A1A;
+    --text-secondary: #C2410C;
+    --accent-primary: #FF6A00;
+    --accent-secondary: #E11D48;
+    --accent-rgb: 255, 106, 0;
+    --border-subtle: rgba(17, 17, 17, 0.08);
+    --success-color: #10B981;
+}
+
+body[data-theme="temu"],
+body {
+    background: linear-gradient(180deg, #FFF4B8 0%, #FFE566 42%, #FFD24A 100%);
+}
+
+.logo {
+    background: linear-gradient(135deg, #FF6A00, #E11D48);
+    box-shadow: 0 8px 20px rgba(255, 106, 0, 0.28);
+}
+
+.flash-strip {
+    background: #1A1A1A;
+    border: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.flash-strip__track {
+    color: #FFFFFF;
+}
+
+.flash-count {
+    background: #FFE566;
+    color: #1A1A1A;
+    box-shadow: none;
+}
+
+.premium-column {
+    background: #FFFFFF;
+    border: 0;
+    border-radius: 22px;
+    box-shadow: 0 12px 36px rgba(28, 16, 0, 0.10);
+    position: relative;
+}
+
+.premium-column::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    border-radius: 22px 22px 0 0;
+    background: linear-gradient(90deg, #FF6A00, #FFB020, #E11D48);
+}
+
+.sale-head {
+    background: linear-gradient(90deg, #1A1A1A, #2A2A2A) !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    padding: 0.7vh 0.9vw !important;
+}
+
+.sale-head.board-head {
+    justify-content: center !important;
+}
+
+.sale-head--solo {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.sale-head--solo .board-kicker {
+    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+    letter-spacing: 0.16em;
+    color: #FFFFFF;
+}
+
+.sale-head.rank-head {
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.sale-head .board-kicker,
+.sale-head .rank-kicker {
+    color: #FFB020;
+    letter-spacing: 0.14em;
+}
+
+.sale-head .board-title,
+.sale-head .rank-title {
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.rank-dots .rank-dot {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.rank-dots .rank-dot.is-on {
+    background: #FF6A00;
+}
+
+/* Tarjeta híbrida: chrome de app + energía Temu en el precio. */
+.tv-card {
+    position: relative;
+    background: #FFFFFF;
+    border: 0;
+    box-shadow: 0 12px 32px rgba(28, 16, 0, 0.10);
+}
+
+.oferta-card .tv-card__name {
+    font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+    margin-bottom: 4px;
+}
+
+.oferta-card .tv-card__now {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+.oferta-card .tv-card__now-row {
+    padding: 2px 0 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.tv-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FF6A00, #FFE566, #E11D48);
+}
+
+.oferta-card,
+.meal-card {
+    background: #FFFFFF;
+    border: 0;
+    overflow: hidden;
+}
+
+.oferta-card.is-flash,
+.meal-card.is-flash {
+    background: #FFFFFF;
+}
+
+.tv-card__badge {
+    background: #FF6A00;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
+}
+
+.tv-card__off {
+    background: #FFF1D6;
+    color: #C2410C;
+}
+
+.tv-card__off.is-inline {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 7px;
+    font-size: clamp(10px, 0.85vw, 12px);
+}
+
+.tv-card__name,
+.oferta-nombre,
+.meal-name {
+    color: #1A1A1A;
+    font-weight: 800;
+}
+
+.tv-card__chip {
+    background: #FFF6E8;
+    color: #C2410C;
+}
+
+.tv-card__was,
+.oferta-antes {
+    color: #9CA3AF;
+}
+
+.tv-card__now-row {
+    background: transparent;
+    box-shadow: none;
+}
+
+.tv-card__save {
+    background: #FFE566;
+    box-shadow: inset 0 0 0 1px rgba(255, 106, 0, 0.12);
+}
+
+.tv-card__now {
+    color: #1A1A1A;
+}
+
+.tv-card__unit,
+.tv-card__save {
+    color: #C2410C;
+}
+
+.rank-card,
+.rank-card.is-top {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.rank-num {
+    color: #2563EB;
+}
+
+.rank-tag {
+    background: #FFE566;
+    color: #DC2626;
+}
+
+.rank-card.is-ad .rank-tag {
+    background: #FF6A00;
+    color: #FFFFFF;
+}
+
+.oferta-card.is-ad {
+    background: #FFF8E8;
+}
+
+.oferta-card.is-ad .tv-card__off.is-ad {
+    background: #FF6A00;
+    color: #FFFFFF;
+}
+
+.meal-card {
+    background: #FFFFFF;
+    border: 0;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 8px 22px rgba(28, 16, 0, 0.08);
+    padding: 0.7vw 0.75vw 0.65vw;
+}
+
+.meal-card .tv-card__name {
+    font-size: clamp(0.88rem, 1.2vw, 1.05rem);
+    margin-bottom: 4px;
+}
+
+.meal-card .tv-card__now {
+    font-size: clamp(1.15rem, 1.7vw, 1.4rem);
+}
+
+.meal-card .tv-card__now-row {
+    padding: 2px 0 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.meal-off {
+    display: none;
+}
+
+.meal-kicker {
+    color: #FF6A00;
+}
+
+.price-tile {
+    background: #FAFAFA;
+    border: 0;
+    box-shadow: none;
+    border-radius: 14px;
+}
+
+.price-tile__now {
+    color: #FF6A00;
+}
+
+.price-row,
+.price-row.is-offer {
+    background: #FFF8E8;
+    border: 0;
+    border-radius: 14px;
+}
+
+.price-dept {
+    color: #FFFFFF;
+    background: #1A1A1A;
+    box-shadow: inset 0 -3px 0 #FF6A00;
+}
+
+.price-ad {
+    background: #FFE566;
+}
+
+.price-ad__name {
+    color: #C2410C;
+}
+
+.price-row__meta,
+.price-row__off {
+    color: #C2410C;
+}
+
+.price-row__was {
+    color: #9CA3AF;
+}
+
+.price-row__name {
+    color: #1A1A1A;
+}
+
+.price-row__now {
+    background: #FFE566;
+    color: #1A1A1A;
+}
+
+.footer {
+    background: linear-gradient(90deg, #FF8A00, #FF6A00, #E11D48);
+    animation: none;
+}
+
+.zocalo-pill {
+    background: #FFFFFF;
+    border: 0;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.marquee-text {
+    color: #1A1A1A;
+    font-weight: 700;
+}
+
+.pronostico-recomendacion {
+    background: linear-gradient(135deg, #FF6A00, #E11D48) !important;
+    border: 0;
+    box-shadow: 0 10px 24px rgba(255, 106, 0, 0.32);
+    animation: none;
+    border-radius: 18px !important;
+}
+
+.recomendacion-texto-full,
+.recomendacion-precio-full {
+    color: #FFFFFF !important;
+    text-shadow: none;
+}
+
+.clima-badge {
+    background: #FF6A00;
+    border: 0;
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
+}

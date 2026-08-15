@@ -1,72 +1,78 @@
 import os
-import random
 import logging
-import urllib.request
-import json
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget, QGridLayout, QLabel, QApplication, QGraphicsOpacityEffect
-from PyQt6.QtCore import QTimer, Qt, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap
 
-# Componentes modulares
-from src.carteleria.theme import C_THEME
+from src.carteleria.theme import C_THEME, set_theme, get_active_theme_name
 from src.carteleria.configuraciones.info_negocio import InfoNegocio
-from src.carteleria.interfaz_principal.componentes_base.mensaje import Mensaje
-from src.carteleria.interfaz_principal.paneles.carrusel_destacados import CarruselDestacados
-from src.carteleria.interfaz_principal.paneles.grilla_precios import GrillaPrecios
-from src.carteleria.interfaz_principal.paneles.panel_combos import PanelCombos
-from src.carteleria.interfaz_principal.paneles.panel_ia import PanelIA
-from src.carteleria.interfaz_relampagos.pantalla_espia import PantallaEspia
-from src.carteleria.interfaz_relampagos.oferta_relampago import OfertaRelampago
-from src.carteleria.interfaz_relampagos.banderin import BanderinVolador
-import time
-
-db_manager = None  # Refactorizado a API REST
+from src.carteleria.motor_carteleria.web_server import CarteleriaWebServer
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
-from src.carteleria.motor_carteleria.espia_worker import EspiaWorker
-from src.carteleria.motor_carteleria.window_manager import WindowManager
-from src.carteleria.motor_carteleria.layout_manager import LayoutManager
-from src.carteleria.motor_carteleria.network_manager import NetworkManager
-
-
 
 class CarteleriaMain(QWidget):
+    """Cartelería Main - Solo interfaz web, sin componentes Qt"""
     request_screen = pyqtSignal(int)
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.layout_mode = 4 
-        self.img_index = 0
-        self.datos_destacados = []
-        self.combos_relacionados = []
         
         self.setObjectName("CarteleriaMain")
-        from PyQt6.QtCore import Qt
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         
+        # Cargar tema
         from src.config import config
-        from src.carteleria.theme import set_theme, get_active_theme_name
-        set_theme(config.get("carteleria_theme", "apple"))
+        theme_name = config.get("carteleria_theme", "temu")
+        set_theme(theme_name)
+        print(f"[Carteleria] Tema activado: {theme_name}")
 
-        self.window_manager = WindowManager(self)
-        self.layout_manager = LayoutManager(self)
-        self.network_manager = NetworkManager(self)
+        # Datos para API web
+        self.rows_precios = []
+        self.sos_data = []
+        self.top10_data = {}
+        self.web_server = None
+        self.web_view = None
         
-        # --- FONDO ---
+        # Componentes básicos
+        self.info_negocio = InfoNegocio()
+        self.info_negocio.config_requested.connect(self._abrir_configuracion)
+        
+        # Cargar productos iniciales desde inventario
+        self._cargar_productos_inventario()
+        
+        # Variables de estado
+        self.rotacion_ms = 16000
+        self.tiempo_sos_ms = 10000
+        self.frec_sos = 3
+        
+        # Fondo según tema
+        self._setup_background()
+        
+        # Construir UI web-only
+        self._build_ui_web_only()
+        
+        # Iniciar workers de datos
+        self._start_data_workers()
+        
+    def _setup_background(self):
+        """Configurar fondo según tema"""
         self.bg_label = QLabel(self)
-        self.bg_label.setScaledContents(False)  # Escalamos nosotros (4K nítido)
+        self.bg_label.setScaledContents(False)
         self._bg_image_path = None
         from src.utils.paths import get_resource_path
         
-        if get_active_theme_name() == "temu":
-            # Fondo vibrante para Temu (Gradiente Radial/Lineal de Amarillo a Naranja)
-            # FIX: Aplicarlo en bg_label para forzar el repintado opaco y evitar que deje estela (trailing)
+        tema_actual = get_active_theme_name()
+        if tema_actual == "temu":
             self.bg_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
             self.bg_label.setAutoFillBackground(True)
             self.bg_label.setStyleSheet("""
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FFFF00, stop:1 #FF6600);
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FFFF00, stop:0.5 #FFCC00, stop:1 #FF6600);
             """)
+        elif tema_actual == "blackfriday":
+            self.bg_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.bg_label.setAutoFillBackground(True)
+            self.bg_label.setStyleSheet("background: #050507;")
         else:
             img_path = get_resource_path(os.path.join("src", "carteleria", "assets", "macos_bg.png"))
             if os.path.exists(img_path):
@@ -76,120 +82,9 @@ class CarteleriaMain(QWidget):
                 self.bg_label.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
                 self.bg_label.setAutoFillBackground(True)
                 self.bg_label.setStyleSheet(f"background-color: {C_THEME['bg']};")
-
-        # --- INSTANCIAR ZONAS MODULARES ---
-        self.info_negocio = InfoNegocio()
-        self.info_negocio.btn_modo.clicked.connect(self.layout_manager.ciclar_layout)
-        self.info_negocio.config_requested.connect(self._abrir_configuracion)
-        
-        self.mensaje = Mensaje()
-        self.zona1_carrusel = CarruselDestacados()
-        self.zona2_precios = GrillaPrecios()
-        self.zona3_extra1 = PanelCombos()
-        self.zona4_extra2 = PanelIA()
-        
-        from src.carteleria.motor_carteleria.promo_manager import PromoManager
-        self.promo_manager = PromoManager(self)
-        
-        self._build_ui()
-        
-        # ⚙️ RELOJ MAESTRO GLOBAL (El "Engranaje")
-        self.ticks_maestro = 0
-        self.pausar_rotacion = False
-        
-        self.contador_rotacion = 0
-        self.frec_sos = 3 # Intercalado equilibrado
-        self.estado_sos_activo = False
-        self.lista_ofertas_sos = []
-        self.indice_sos_actual = 0
-        self.rotacion_ms = 16000
-        self.tiempo_sos_ms = 10000
-        
-        from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
-        from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
-
-        self.db_worker = DbSyncWorker(self)
-        self.db_worker.sync_finished.connect(self._on_db_sync_finished)
-
-        self.clima_pilar = ("sol", "22°C Pilar")
-        self.clima_worker = ClimaWorker(self)
-        self.clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
-        
-        self.reloj_maestro = QTimer(self)
-        self.reloj_maestro.timeout.connect(self._tick_reloj_maestro)
-        self.reloj_maestro.start(1000) # Tick de 1 segundo exacto
-        
-        self.db_worker.start()
-        # 👀 OJO ESPÍA (WORKER EN BACKGROUND)
-        from src.utils.paths import get_base_path
-        from src.config import config
-        from src.base_de_datos.database import db_manager
-        _host = str(config.get("db_host", "") or "").strip().lower()
-        is_slave = (
-            config.get("carteleria_is_slave", False)
-            or (not getattr(db_manager, "is_master", True))
-            or (_host and _host not in ("localhost", "127.0.0.1", ""))
-        )
-        
-        # El clima solo lo consulta el maestro para no saturar APIs externas
-        if not is_slave:
-            self.clima_worker.start()
-        
-        path_ls = os.path.join(get_base_path(), "live_scan.json")
-        master_ip = config.get("carteleria_master_ip", "")
-        self.espia_worker = EspiaWorker(master_ip, path_ls)
-        self.espia_worker.combo_triggered.connect(self._on_combo_triggered)
-        self.espia_worker.limpiar_solicitado.connect(self._on_espia_limpiar)
-        self.espia_worker.refresh_requested.connect(self.db_worker.start)
-        
-        # Si es esclavo, el espía solo escucha la red pasivamente y no interfiere con DB
-        self.espia_worker.start()
-        
-        self.ultimo_cambio_ia = __import__('time').time() - 16
-
-        # ── HEARTBEAT HACIA EL TERMINAL ─────────────────────────────────────
-        QTimer.singleShot(500, self.network_manager.emitir_heartbeat)  # primer latido a los 0.5s
-
-        # ── ESCUCHAR HEARTBEATS DEL TERMINAL ────────────────────────────────
-        # Si el engine ya está inicializado (cajero/admin en el mismo proceso)
-        # conectamos directamente sus señales al indicador del header.
-        QTimer.singleShot(800, self.network_manager.conectar_engine_indicador)
-
-        
-
-    def _tick_reloj_maestro(self):
-        self.ticks_maestro += 1
-        
-        # Tareas periódicas ininterrumpibles
-        if self.ticks_maestro % 10 == 0:
-            if hasattr(self, 'network_manager'):
-                self.network_manager.emitir_heartbeat()
-            if hasattr(self, 'db_worker') and not self.db_worker.isRunning():
-                self.db_worker.start()
-                
-        if self.ticks_maestro % 3600 == 0:
-            if hasattr(self, 'clima_worker') and not self.clima_worker.isRunning():
-                self.clima_worker.start()
-                
-        if getattr(self, 'pausar_rotacion', False):
-            return
-            
-        # Lógica de rotación visual sincronizada
-        rot_actual_s = (self.tiempo_sos_ms if self.estado_sos_activo else self.rotacion_ms) // 1000
-        if self.ticks_maestro % max(1, rot_actual_s) == 0:
-            self._ciclo_inteligente()
-            
-        if self.ticks_maestro % 35 == 0:
-            if self.stack.currentIndex() < 2 and hasattr(self, 'banderin'):
-                self.banderin.lanzar(getattr(self, 'datos_destacados', []))
-
-    def resizeEvent(self, event):
-        self.bg_label.resize(self.size())
-        self._refresh_background_pixmap()
-        super().resizeEvent(event)
-
+    
     def _refresh_background_pixmap(self):
-        """Fondo a resolución de pantalla (cadenas / 4K) sin setScaledContents borroso."""
+        """Refrescar pixmap de fondo"""
         path = getattr(self, "_bg_image_path", None)
         if not path or not hasattr(self, "bg_label"):
             return
@@ -205,51 +100,206 @@ class CarteleriaMain(QWidget):
             except Exception:
                 pass
 
-    def _build_ui(self):
+    def _build_ui_web_only(self):
+        """Construir interfaz solo con web view"""
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         
-        self.stack = QStackedWidget()
-        
-        # --- PANTALLA NORMAL ---
-        self.page_normal = QWidget()
-        self.page_normal.setStyleSheet("background: transparent;")
-        lay_normal = QVBoxLayout(self.page_normal)
-        lay_normal.setContentsMargins(40, 40, 40, 40)
-        # Separación clara grilla ↔ zócalo (evita que el scroll “salga” al hueco naranja)
-        lay_normal.setSpacing(18)
-        
-        lay_normal.addWidget(self.info_negocio)
-        
-        self.grid_container = QWidget()
-        self.grid_container.setStyleSheet("background: transparent;")
-        self.grid = QGridLayout(self.grid_container)
-        self.grid.setContentsMargins(0, 0, 0, 0)
-        self.grid.setSpacing(20)
-        lay_normal.addWidget(self.grid_container, 1)
-        
-        lay_normal.addWidget(self.mensaje)
-        
-        # --- PANTALLA SOS ---
-        self.page_sos = OfertaRelampago()
-        self.page_espia = PantallaEspia(self)
-        
-        self.stack.addWidget(self.page_normal) # Index 0
-        self.stack.addWidget(self.page_sos)    # Index 1
-        self.stack.addWidget(self.page_espia) # Index 2
-        root.addWidget(self.stack)
+        try:
+            from PyQt6.QtWebEngineWidgets import QWebEngineView
+            from PyQt6.QtCore import QUrl
 
-        # 🛸 WIDGET FLOTANTE MODULARIZADO
-        self.banderin = BanderinVolador(self)
-        
-        self.layout_manager.aplicar_layout()
+            self.web_view = QWebEngineView(self)
+            self.web_view.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+            self.web_view.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.web_view.page().setBackgroundColor(Qt.GlobalColor.black)
 
+            self.web_server = CarteleriaWebServer(self)
+            self.web_server.start()
+            if self.web_server.port:
+                self.web_view.setUrl(QUrl(f"http://127.0.0.1:{self.web_server.port}/"))
+            root.addWidget(self.web_view)
+        except Exception as e:
+            print(f"[CarteleriaWeb] No se pudo iniciar UI web: {e}")
+            error_label = QLabel("Error: Interfaz web no disponible")
+            error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            error_label.setStyleSheet("font-size: 24px; color: red;")
+            root.addWidget(error_label)
+    
+    def _start_data_workers(self):
+        """Iniciar workers de datos para la API"""
+        from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
+        from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
+
+        self.db_worker = DbSyncWorker(self)
+        self.db_worker.sync_finished.connect(self._on_db_sync_finished)
+        self.db_worker.start()
+
+        self.clima_pilar = ("sol", "22°C Pilar")
+        self.clima_worker = ClimaWorker(self)
+        self.clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
+        
+        # Iniciar clima solo si es maestra
+        from src.config import config
+        from src.base_de_datos.database import db_manager
+        _host = str(config.get("db_host", "") or "").strip().lower()
+        is_slave = (
+            config.get("carteleria_is_slave", False)
+            or (not getattr(db_manager, "is_master", True))
+            or (_host and _host not in ("localhost", "127.0.0.1", ""))
+        )
+        
+        if not is_slave:
+            self.clima_worker.start()
+        
+        # Timer para refrescar datos
+        self.refresh_timer = QTimer(self)
+        self.refresh_timer.timeout.connect(self.db_worker.start)
+        self.refresh_timer.start(15000)  # Reducido de 30s a 15s
+    
+    def _cargar_productos_inventario(self):
+        """Cargar productos iniciales desde inventario"""
+        try:
+            from src.base_de_datos.database import db_manager
+            q = """
+                SELECT 
+                    id, 
+                    nombre, 
+                    precio, 
+                    precio_oferta, 
+                    cant_oferta, 
+                    tipo_unidad_oferta,
+                    departamento,
+                    categoria,
+                    stock,
+                    unidad,
+                    es_pesable
+                FROM productos 
+                WHERE COALESCE(stock, 0) > 0
+                ORDER BY nombre
+                LIMIT 20
+            """
+            filas = db_manager.execute_query(q)
+            productos = []
+            if filas:
+                for r in filas:
+                    if isinstance(r, dict):
+                        productos.append({
+                            'id': r.get('id'),
+                            'nombre': r.get('nombre'),
+                            'precio': r.get('precio') or 0,
+                            'precio_oferta': r.get('precio_oferta') or 0,
+                            'cant_oferta': r.get('cant_oferta') or 0,
+                            'tipo_unidad_oferta': r.get('tipo_unidad_oferta') or '',
+                            'departamento': r.get('departamento') or '',
+                            'categoria': r.get('categoria') or '',
+                            'stock': r.get('stock') or 0,
+                            'unidad': r.get('unidad') or '',
+                            'es_pesable': r.get('es_pesable') or 0,
+                        })
+                    else:
+                        # Fallback para tuple
+                        productos.append({
+                            'id': r[0] if len(r) > 0 else 0,
+                            'nombre': r[1] if len(r) > 1 else '',
+                            'precio': r[2] if len(r) > 2 else 0,
+                            'precio_oferta': r[3] if len(r) > 3 else 0,
+                            'cant_oferta': r[4] if len(r) > 4 else 0,
+                            'tipo_unidad_oferta': r[5] if len(r) > 5 else '',
+                            'departamento': r[6] if len(r) > 6 else '',
+                            'categoria': r[7] if len(r) > 7 else '',
+                            'stock': r[8] if len(r) > 8 else 0
+                        })
+            self.rows_precios = productos
+            logger.info(f"[Carteleria] Cargados {len(productos)} productos iniciales del inventario")
+            if productos:
+                logger.info(f"[Carteleria] Primer producto: {productos[0].get('nombre')} - ${productos[0].get('precio')}")
+        except Exception as e:
+            logger.warning(f"Error cargando inventario inicial: {e}")
+            self.rows_precios = []
+    
     def _on_clima_actualizado(self, icon_name, text):
         self.clima_pilar = (icon_name, text)
-        if hasattr(self, 'zona4_extra2'):
-            self.zona4_extra2.motor.set_clima((icon_name, text))
-
+    
+    def _on_db_sync_finished(self, data, status):
+        """Procesar datos sincronizados desde inventario real"""
+        try:
+            if status == "online":
+                self.info_negocio.set_estado_red("online")
+            elif status == "offline":
+                self.info_negocio.set_estado_red("offline", "Modo Offline (Caché)")
+            else:
+                return
+            
+            if not data: return
+            
+            # Configuración
+            cfg_data = data.get("config", {})
+            nombre_negocio = cfg_data.get("business_name", "Carnicería")
+            self.info_negocio.actualizar_nombre(nombre_negocio)
+            
+            # Cargar productos desde inventario real (tabla productos)
+            from src.base_de_datos.database import db_manager
+            try:
+                q = """
+                    SELECT 
+                        id, 
+                        nombre, 
+                        precio, 
+                        precio_oferta, 
+                        cant_oferta, 
+                        tipo_unidad_oferta,
+                        departamento,
+                        categoria,
+                        stock,
+                        unidad,
+                        es_pesable
+                    FROM productos 
+                    WHERE COALESCE(stock, 0) > 0
+                    ORDER BY nombre
+                    LIMIT 50
+                """
+                filas = db_manager.execute_query(q)
+                productos = []
+                if filas:
+                    for r in filas:
+                        if isinstance(r, dict):
+                            productos.append({
+                                'id': r.get('id'),
+                                'nombre': r.get('nombre'),
+                                'precio': r.get('precio') or 0,
+                                'precio_oferta': r.get('precio_oferta') or 0,
+                                'cant_oferta': r.get('cant_oferta') or 0,
+                                'tipo_unidad_oferta': r.get('tipo_unidad_oferta') or '',
+                                'departamento': r.get('departamento') or '',
+                                'categoria': r.get('categoria') or '',
+                                'stock': r.get('stock') or 0,
+                                'unidad': r.get('unidad') or '',
+                                'es_pesable': r.get('es_pesable') or 0,
+                            })
+                self.rows_precios = productos
+                logger.info(f"[Carteleria] Cargados {len(productos)} productos del inventario")
+            except Exception as e:
+                logger.warning(f"Error cargando inventario: {e}")
+                self.rows_precios = []
+            
+            # Datos para API web
+            self.sos_data = []
+            self.top10_data = {}
+            
+            # Actualizar tiempos
+            nueva_rotacion = cfg_data.get("carteleria_rotacion", 15) * 1000
+            if hasattr(self, 'rotacion_ms') and nueva_rotacion != self.rotacion_ms:
+                self.rotacion_ms = nueva_rotacion
+                    
+            self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
+            self.frec_sos = max(3, cfg_data.get("carteleria_frec_sos", 3))
+            
+        except Exception as e:
+            logger.warning(f"Error procesando datos: {e}")
+    
     def _abrir_configuracion(self):
+        """Abrir diálogo de configuración"""
         from PyQt6.QtWidgets import QInputDialog, QMessageBox
         from src.config import config
         
@@ -271,211 +321,39 @@ class CarteleriaMain(QWidget):
                 "Configuración",
                 "Guardado.\nEn la otra PC debe estar el Servidor de Tienda (sin cajero).",
             )
-
-    def _on_db_sync_finished(self, data, status):
+    
+    def get_web_state(self):
+        """Obtener estado para la interfaz web"""
+        return {
+            "config": {
+                "business_name": getattr(self.info_negocio, 'nombre', 'Cartelería'),
+                "phone": getattr(self.info_negocio, 'telefono', 'No disponible'),
+                "carteleria_rotacion": self.rotacion_ms // 1000,
+                "carteleria_tiempo_sos": self.tiempo_sos_ms // 1000,
+                "carteleria_frec_sos": self.frec_sos,
+                "mensaje_zocalo": "",
+                "carteleria_theme": self._get_current_theme()
+            },
+            "layout_mode": 4,
+            "view_state": "normal",
+            "sos": {
+                "active": False,
+                "index": 0,
+                "items": self.sos_data or []
+            },
+            "precios": self.rows_precios or [],
+            "top10": self.top10_data or {},
+        }
+    
+    def _get_current_theme(self):
+        """Obtener el tema actual"""
         try:
-            if status == "online":
-                self.info_negocio.set_estado_red("online")
-            elif status == "offline":
-                self.info_negocio.set_estado_red("offline", "Modo Offline (Caché)")
-            else:
-                return
-            
-            if not data: return
-            
-            # 1. Configuracion
-            cfg_data = data.get("config", {})
-            nombre_negocio = cfg_data.get("business_name", "Carnicería")
-            telefono_negocio = cfg_data.get("phone", "No disponible")
-            
-            self.info_negocio.actualizar_nombre(nombre_negocio)
-            
-            # 2. Zocalo globalizado
-            msg_publicitario = cfg_data.get("mensaje_zocalo", "")
-            if not msg_publicitario:
-                msg_publicitario = f"👨‍👩‍👧‍👦 ¡La mejor calidad para disfrutar en familia! Más de 500 familias nos eligen cada semana. ¡Gracias por su apoyo! ❤️ | Consultas por WhatsApp al: {telefono_negocio}"
-            self.mensaje.actualizar_texto(msg_publicitario)
-            
-            # Actualizar tiempo de rotación
-            nueva_rotacion = cfg_data.get("carteleria_rotacion", 15) * 1000
-            if hasattr(self, 'rotacion_ms') and nueva_rotacion != self.rotacion_ms:
-                self.rotacion_ms = nueva_rotacion
-                    
-            self.tiempo_sos_ms = cfg_data.get("carteleria_tiempo_sos", 10) * 1000
-            # Garantizar al menos 3 ciclos de rotación normal antes del SOS para que la pantalla no parezca trabada
-            self.frec_sos = max(3, cfg_data.get("carteleria_frec_sos", 3))
-
-            # 2. Ofertas SOS (Múltiples y rotativas)
-            oferta_sos = data.get("sos", [])
-            self.lista_ofertas_sos = oferta_sos
-            if self.lista_ofertas_sos:
-                self.hay_oferta_sos = True
-                if self.stack.currentIndex() == 1:
-                    self._actualizar_datos_sos()
-            else:
-                self.hay_oferta_sos = False
-                if self.stack.currentIndex() == 1:
-                    self.layout_manager.fade_to_index(0)
-
-            # 3. Precios Generales
-            rows_precios = data.get("precios", [])
-            import hashlib, json
-            stable_str = json.dumps(rows_precios, sort_keys=True)
-            current_hash = hashlib.md5(stable_str.encode()).hexdigest()
-            if not hasattr(self, 'last_precios_hash') or self.last_precios_hash != current_hash:
-                self.last_precios_hash = current_hash
-                if hasattr(self, 'zona2_precios') and hasattr(self.zona2_precios, 'motor'):
-                    self.zona2_precios.motor.start()
-                    
-            # 4. Top 10 para Banderin y Carrusel (Diccionario Hoy, Semana, Mes)
-            rows_top10 = data.get("top10", {})
-            if rows_top10:
-                self.datos_destacados = rows_top10
-
-        except Exception as e:
-            logger.warning(f"Error procesando datos de carteleria (API o Caché): {e}")
-
-    def _actualizar_datos_sos(self, rotar_indice=False):
-        if not hasattr(self, 'lista_ofertas_sos') or not self.lista_ofertas_sos:
-            return
-        if rotar_indice:
-            self.indice_sos_actual = (getattr(self, 'indice_sos_actual', 0) + 1) % len(self.lista_ofertas_sos)
-        idx = min(getattr(self, 'indice_sos_actual', 0), len(self.lista_ofertas_sos) - 1)
-        r_sos = self.lista_ofertas_sos[idx]
-        if isinstance(r_sos, dict):
-            nombre = r_sos.get('nombre') or ''
-            precio = float(r_sos.get('precio') or 0.0)
-            ofertas = [float(r_sos.get(k) or 0.0) for k in ('precio_oferta', 'precio_oferta_relampago', 'precio_oferta_promedio')]
-            validas = [x for x in ofertas if x > 0]
-            precio_oferta = min(validas) if validas else 0.0
-            
-            cant_of = float(r_sos.get('cant_oferta') or 0)
-            t_un = ""
-            if cant_of > 0:
-                t_un = str(r_sos.get('tipo_unidad_oferta', '')).strip().lower()
-                t_un = "Unidades" if ('unidad' in t_un or t_un == 'u') else "Kilos"
-        else:
-            nombre = r_sos[0] if r_sos[0] else ''
-            precio = float(r_sos[1] if r_sos[1] else 0.0)
-            ofertas = [float(r_sos[i] if len(r_sos)>i and r_sos[i] else 0.0) for i in (2, 3, 4)]
-            validas = [x for x in ofertas if x > 0]
-            precio_oferta = min(validas) if validas else 0.0
-            
-            cant_of = float(r_sos[5]) if len(r_sos) > 5 and r_sos[5] else 0.0
-            t_un = ""
-            if cant_of > 0:
-                t_un = str(r_sos[6]).strip().lower() if len(r_sos) > 6 and r_sos[6] else ''
-                t_un = "Unidades" if ('unidad' in t_un or t_un == 'u') else "Kilos"
-                
-        self.page_sos.actualizar(nombre, precio, precio_oferta, cant_of, t_un)
-
-    def _ciclo_inteligente(self):
-        # Si estamos en la pantalla espía, no hacer nada automático
-        if self.stack.currentIndex() == 2:
-            return
-            
-        # Rotar e intercalar automáticamente entre Cartel de Combos/Promos y Chef Lobo
-        if hasattr(self, 'promo_manager'):
-            self.promo_manager.rotar()
-            
-        if self.estado_sos_activo:
-            # Si estábamos en SOS, volver a la normalidad
-            self.estado_sos_activo = False
-            self.layout_manager.fade_to_index(0)
-            # El Reloj Maestro ajustará el ciclo automáticamente usando rotacion_ms
-        else:
-            # No rotar las grillas automáticamente, solo incrementar contador para el SOS
-            self.contador_rotacion += 1
-            
-            # Verificar si toca Oferta Relámpago (SOS)
-            if hasattr(self, 'hay_oferta_sos') and self.hay_oferta_sos:
-                if self.contador_rotacion >= self.frec_sos:
-                    self.contador_rotacion = 0
-                    self.estado_sos_activo = True
-                    self._actualizar_datos_sos(rotar_indice=True)
-                    self.layout_manager.fade_to_index(1)
-                    # El Reloj Maestro ajustará el ciclo usando tiempo_sos_ms
-
-
-    def _guardar_sugerencia_activa(self, productos_sugeridos):
-        import json, os, time
-        from src.utils.paths import get_base_path
-        path = os.path.join(get_base_path(), "sugerencia_activa.json")
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({
-                    "productos": productos_sugeridos,
-                    "timestamp": time.time()
-                }, f, ensure_ascii=False)
-        except: pass
-
-    def _espia_ui_log(self, msg):
-        try:
-            import os
-            from datetime import datetime
-            from src.utils.paths import get_base_path
-            log_p = os.path.join(get_base_path(), "logs", "espia_debug.log")
-            with open(log_p, "a", encoding="utf-8") as f:
-                f.write(f"[{datetime.now().strftime('%H:%M:%S')}] [MAIN_THREAD] {msg}\n")
-        except: pass
-
-    def _on_espia_limpiar(self):
-        import time
-        self._espia_ui_log("Slot Limpiar ejecutado en hilo principal")
-        tiempo_abierto = time.time() - getattr(self, 'ultimo_cambio_ia', 0)
-        
-        def forzar_cierre():
-            self._espia_ui_log("Forzando cierre de Pantalla Espia")
-            self.ultimo_cambio_ia = time.time() - 16
-            if self.stack.currentIndex() == 2:
-                self.layout_manager.fade_to_index(0)
-                self.pausar_rotacion = False
-
-        if tiempo_abierto < 2.0:
-            QTimer.singleShot(2500, forzar_cierre)
-        else:
-            forzar_cierre()
-
-    def _on_combo_triggered(self, nombre_combo, precio_original, precio_final, ahorro):
-        import time
-        self._espia_ui_log(f"COMBO TRIGGERED. Ahorro: {ahorro}")
-        self.ultimo_cambio_ia = time.time()
-        self.pausar_rotacion = True
-        
-        try:
-            self.page_espia.play_combo(nombre_combo, precio_original, precio_final, ahorro)
-        except Exception as inner_e:
-            import traceback
-            self._espia_ui_log(f"ERROR CRITICO play_combo: {traceback.format_exc()}")
-        
-        if hasattr(self, 'banderin'): self.banderin.hide()
-        QTimer.singleShot(10, lambda: self.layout_manager.fade_to_index(2))
-        
-        def restaurar_estado():
-            self._espia_ui_log("Restaurando estado tras 6s")
-            self.layout_manager.fade_to_index(0)
-            self.pausar_rotacion = False
-            
-        QTimer.singleShot(6000, restaurar_estado)
-
-    def closeEvent(self, event):
-        threads = [
-            getattr(self, 'espia_worker', None),
-            getattr(self, 'db_worker', None),
-            getattr(self, 'clima_worker', None),
-            getattr(getattr(self, 'zona1_carrusel', None), 'motor', None),
-            getattr(getattr(self, 'zona2_precios', None), 'motor', None),
-            getattr(getattr(self, 'zona3_extra1', None), 'motor', None),
-            getattr(getattr(self, 'zona4_extra2', None), 'motor', None),
-        ]
-        for t in threads:
-            if t and hasattr(t, 'isRunning') and t.isRunning():
-                try:
-                    if hasattr(t, 'running'):
-                        t.running = False
-                    t.requestInterruption()
-                    t.quit()
-                    t.wait(300)
-                except Exception:
-                    pass
-        super().closeEvent(event)
+            from src.config import config
+            return config.get("carteleria_theme", "temu")
+        except Exception:
+            return "temu"
+    
+    def resizeEvent(self, event):
+        self.bg_label.resize(self.size())
+        self._refresh_background_pixmap()
+        super().resizeEvent(event)

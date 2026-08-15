@@ -1,0 +1,24 @@
+/* ============================================
+   BLACK FRIDAY THEME - Premium Dark
+   ============================================ */
+
+:root {
+    /* Colores principales */
+    --bg-primary: #050507;
+    --bg-secondary: #0B0B0D;
+    --surface-primary: rgba(11, 11, 13, 0.95);
+    
+    /* Texto */
+    --text-primary: #FFFFFF;
+    --text-secondary: #FFCC00;
+    
+    /* Acentos */
+    --accent-primary: #FFCC00;
+    --accent-secondary: #FFD700;
+    
+    /* Bordes */
+    --border-subtle: rgba(255, 204, 0, 0.2);
+    
+    /* Estados */
+    --success-color: #10B981;
+}

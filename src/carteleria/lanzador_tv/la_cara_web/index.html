@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Cartelería Premium</title>
+    <link rel="stylesheet" href="css/style.css?v=tv41" />
+    <link id="theme-colors" rel="stylesheet" href="css/themes/temu/colores.css?v=tv41" />
+    <link id="theme-styles" rel="stylesheet" href="css/themes/temu/estilos.css?v=tv41" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-theme="temu" data-wall="4h">
+    <div class="app-container">
+        <section class="hero-section" id="heroSection" data-modulo="franja_oferta" aria-label="Ofertas relámpago">
+            <div class="flash-strip">
+                <div class="flash-strip__sale">
+                    <span class="flash-strip__ends">TERMINA EN</span>
+                    <strong class="flash-count" id="flashCountdown">00:00:00</strong>
+                </div>
+                <div class="flash-strip__marquee">
+                    <div class="flash-strip__track">
+                        <div class="flash-strip__cycle">
+                            <span>⚡ OFERTA RELÁMPAGO</span>
+                            <span class="flash-dot">●</span>
+                            <span>LOS MEJORES PRECIOS</span>
+                        </div>
+                        <div class="flash-strip__cycle" aria-hidden="true">
+                            <span>⚡ OFERTA RELÁMPAGO</span>
+                            <span class="flash-dot">●</span>
+                            <span>LOS MEJORES PRECIOS</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flash-strip__live">
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span class="status-text" id="statusText">En línea</span>
+                    </div>
+                    <div class="clock" id="clock">00:00</div>
+                </div>
+            </div>
+            <div class="netflix-carousel">
+                <div class="carousel-track" id="carouselTrack"></div>
+            </div>
+        </section>
+
+        <div class="tv-wall">
+            <section class="tv-panel premium-column tv-1" data-modulo="columna1" aria-label="TV 1 Ranking">
+                <div class="column-body" id="content1"></div>
+            </section>
+
+            <section class="tv-panel premium-column tv-2" data-modulo="columna2" aria-label="TV 2 Precios">
+                <div class="column-body" id="content2"></div>
+            </section>
+
+            <section class="tv-panel premium-column tv-3" data-modulo="columna3" aria-label="TV 3 Venta cruzada">
+                <div class="column-body" id="content3"></div>
+            </section>
+
+            <section class="tv-panel premium-column tv-4" data-modulo="columna4" aria-label="TV 4 Chef">
+                <div class="column-body" id="content4"></div>
+            </section>
+        </div>
+
+        <footer class="footer" data-modulo="mensaje_zocalo">
+            <div class="zocalo-pill">
+                <div class="marquee" id="marquee">
+                    <span class="marquee-text">Bienvenido a nuestra tienda ★ Los mejores precios ★ Calidad garantizada ★</span>
+                </div>
+            </div>
+        </footer>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js?v=tv41"></script>
+</body>
+</html>

@@ -16,7 +16,7 @@ class MotorIALocal:
         Utiliza el módulo modularizado de VentaCruzadaInteligente que garantiza siempre 3 productos exactos.
         """
         try:
-            from src.carteleria.motor_carteleria.modulos_ventas_hoy.venta_cruzada_inteligente import VentaCruzadaInteligente
+            from src.carteleria.motor_carteleria.venta_cruzada import VentaCruzadaInteligente
             return VentaCruzadaInteligente.obtener_relacionados_para_ticket(producto_base, limit)
         except Exception as e:
             print(f"Error en obtener_relacionados: {e}")

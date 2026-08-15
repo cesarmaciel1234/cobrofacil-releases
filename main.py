@@ -1,8 +1,8 @@
-from src.utils.qt_compat import qt_exec
+﻿from src.utils.qt_compat import qt_exec
 import sys
 import os
 
-# Añadir el directorio raíz al path de Python
+# AÃ±adir el directorio raÃ­z al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
@@ -19,7 +19,7 @@ import urllib3
 # Suppress InsecureRequestWarning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Desactivar aceleración por hardware para evitar deadlocks del chatbot Chromium
+# Desactivar aceleraciÃ³n por hardware para evitar deadlocks del chatbot Chromium
 sys.argv.append('--disable-gpu')
 sys.argv.append('--disable-software-rasterizer')
 
@@ -29,6 +29,9 @@ configure_qt_application_attributes()
 # Vital: configurar antes de importar QApplication y QtWebEngineWidgets
 set_share_opengl_contexts()
 
+import os
+os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-gpu'
+from PyQt6 import QtWebEngineWidgets
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
 
@@ -50,7 +53,7 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
             )
             if heal.healed:
                 logger.warning(
-                    "Excepción curada en runtime (%s): %s",
+                    "ExcepciÃ³n curada en runtime (%s): %s",
                     heal.action,
                     exc_value,
                 )
@@ -60,10 +63,10 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
                 return
         except Exception:
             pass
-        logger.error("Excepción global no capturada:", exc_info=(exc_type, exc_value, exc_traceback))
+        logger.error("ExcepciÃ³n global no capturada:", exc_info=(exc_type, exc_value, exc_traceback))
         with open("crash.log", "w", encoding="utf-8") as f:
             traceback.print_exception(exc_type, exc_value, exc_traceback, file=f)
-        # El handler GitHubReportHandler encola el ERROR; refuerzo CRITICAL explícito.
+        # El handler GitHubReportHandler encola el ERROR; refuerzo CRITICAL explÃ­cito.
         try:
             from src.services.github_error_reporter import queue_error_report
             queue_error_report(
@@ -80,7 +83,7 @@ def global_excepthook(exc_type, exc_value, exc_traceback):
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 sys.excepthook = global_excepthook
 
-# Nota: Los módulos pesados se cargan dentro de launch_app para acelerar el inicio.
+# Nota: Los mÃ³dulos pesados se cargan dentro de launch_app para acelerar el inicio.
 
 # Variables globales para mantener viva la ventana principal y estado
 main_window = None
@@ -103,7 +106,7 @@ def launch_app(direct_role=None):
         app.aboutToQuit.connect(shutdown_network_engine)
         app._network_engine_shutdown_hook = True
     
-    # Tras reinicio 888: cerrar ventanas/diálogos que hayan quedado abiertos
+    # Tras reinicio 888: cerrar ventanas/diÃ¡logos que hayan quedado abiertos
     if main_window is not None:
         try:
             main_window.hide()
@@ -127,7 +130,7 @@ def launch_app(direct_role=None):
     
     is_direct = bool(direct_role)
 
-    # --- SPLASH SCREEN MODERNA (DISEÑO 2026) ---
+    # --- SPLASH SCREEN MODERNA (DISEÃ‘O 2026) ---
     if not is_direct:
         from src.inicio_y_perfiles.pantallaentrada import CobroFacilSplash
         splash = CobroFacilSplash()
@@ -142,7 +145,7 @@ def launch_app(direct_role=None):
             pass
 
     def run_heavy_task_fluid(task_func, timeout_sec=60):
-        """Ejecuta una función pesada en un hilo manteniendo la UI fluida."""
+        """Ejecuta una funciÃ³n pesada en un hilo manteniendo la UI fluida."""
         import threading, time
         t = threading.Thread(target=task_func, daemon=True)
         t.start()
@@ -154,10 +157,10 @@ def launch_app(direct_role=None):
                 break # Evitar cuelgue infinito si el hilo falla internamente
         return t
 
-    # 1. Recargar configuración desde el disco (vital tras reinicio 888)
+    # 1. Recargar configuraciÃ³n desde el disco (vital tras reinicio 888)
     from src.config import config
     config._load_config()
-    config.current_user = None # Limpiar sesión anterior si reinicia en el mismo proceso
+    config.current_user = None # Limpiar sesiÃ³n anterior si reinicia en el mismo proceso
     
     # 2. BD en hilo: el import dispara _init_db; no bloquear el splash en el hilo UI
     try:
@@ -180,7 +183,7 @@ def launch_app(direct_role=None):
     else:
         run_heavy_task_fluid(_boot_db, timeout_sec=45)
 
-    # Sync cartelería: en terminales sí; en lanzador solo si no hay Servidor dedicado
+    # Sync cartelerÃ­a: en terminales sÃ­; en lanzador solo si no hay Servidor dedicado
     try:
         from src.utils.candados import is_store_server_running
         _sync_ok = is_direct or not is_store_server_running()
@@ -200,7 +203,7 @@ def launch_app(direct_role=None):
         app.setWindowIcon(QIcon(icon_path))
 
     # --- PASO 2: CARGAR HARDWARE ---
-    update_status("Conectando periféricos industriales...", 45)
+    update_status("Conectando perifÃ©ricos industriales...", 45)
     from src.hardware.printer import printer_manager
     ok = True
     msg = ""
@@ -230,7 +233,7 @@ def launch_app(direct_role=None):
             if not qt_exec(lic): sys.exit()
             if splash: splash.show()
 
-    # --- PASO 4: CARGAR MÓDULOS DE USUARIO ---
+    # --- PASO 4: CARGAR MÃ“DULOS DE USUARIO ---
     update_status("Cargando perfiles de acceso...", 80)
     from src.inicio_y_perfiles.logica.auth_controller import AuthController
     AuthController().ensure_default_jefe()
@@ -243,7 +246,7 @@ def launch_app(direct_role=None):
     update_status("Inicializando sistema (Lazy Loading)...", 100)
     from src.main_window import MainWindow
     
-    # ¡Gracias al verdadero Lazy Loading, esto es instantáneo!
+    # Â¡Gracias al verdadero Lazy Loading, esto es instantÃ¡neo!
     main_window = MainWindow()
     
     # Precarga extrema de animaciones pesadas
@@ -259,12 +262,12 @@ def launch_app(direct_role=None):
         splash.finish(None)
 
     if not is_direct and not ok:
-        QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
+        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
-            "El sistema funcionará en modo simulación.")
-        QMessageBox.warning(None, "⚠️ AVISO DE HARDWARE", 
+            "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
+        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE", 
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
-            "El sistema funcionará en modo simulación.")
+            "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
 
     # --- HILO EN SEGUNDO PLANO PARA REPORTES SEMANALES ---
     def check_and_send_weekly_report():
@@ -278,11 +281,11 @@ def launch_app(direct_role=None):
             
     threading.Thread(target=check_and_send_weekly_report, daemon=True).start()
 
-    # --- MODO EJECUCIÓN DIRECTA DE PERFIL ---
+    # --- MODO EJECUCIÃ“N DIRECTA DE PERFIL ---
     if direct_role:
         from src.utils.candados import PerfilLocker
         if not PerfilLocker.lock_profile(direct_role):
-            QMessageBox.warning(None, "Error", f"El perfil '{direct_role}' ya está en uso.")
+            QMessageBox.warning(None, "Error", f"El perfil '{direct_role}' ya estÃ¡ en uso.")
             return 0
         from src.central_red_global.network_engine import init_network_engine
         init_network_engine(direct_role)
@@ -301,7 +304,7 @@ def launch_app(direct_role=None):
     while True:
         if step == 1:
             if qt_exec(perfil_dlg):
-                # En modo Lanzador Maestro, PerfilPantalla gestiona los subprocesos autónomos
+                # En modo Lanzador Maestro, PerfilPantalla gestiona los subprocesos autÃ³nomos
                 return 0
             else:
                 perfil_dlg.hide()
@@ -309,8 +312,8 @@ def launch_app(direct_role=None):
                 return 0
         elif step == 2:
             if role_selected == "carteleria":
-                # Lanzar la Cartelería en el mismo proceso (clave para el ejecutable).
-                # Propagar el código de qt_exec: 888/99 deben reiniciar el loop externo.
+                # Lanzar la CartelerÃ­a en el mismo proceso (clave para el ejecutable).
+                # Propagar el cÃ³digo de qt_exec: 888/99 deben reiniciar el loop externo.
                 from src.carteleria.carteleria import lanzar_app
                 perfil_dlg.hide()
                 return lanzar_app(app)
@@ -332,9 +335,9 @@ def launch_app(direct_role=None):
         elif step == 3:
             hizo_cierre, monto_c = verificar_y_realizar_autocierre()
             if hizo_cierre:
-                QMessageBox.information(None, "🛡️ SISTEMA DE SEGURIDAD", 
-                    f"Se detectaron ventas abiertas de días anteriores.\n\n"
-                    f"El sistema realizó un CIERRE AUTOMÁTICO de ${monto_c:.2f}.")
+                QMessageBox.information(None, "ðŸ›¡ï¸ SISTEMA DE SEGURIDAD", 
+                    f"Se detectaron ventas abiertas de dÃ­as anteriores.\n\n"
+                    f"El sistema realizÃ³ un CIERRE AUTOMÃTICO de ${monto_c:.2f}.")
 
             apertura = AperturaCajaPantalla()
             if qt_exec(apertura):
@@ -350,7 +353,7 @@ def launch_app(direct_role=None):
             from src.utils.qt_dpi import present_main_window
             present_main_window(main_window)
             
-            # --- ANIMACIÓN PRECARGADA (Arranca al instante) ---
+            # --- ANIMACIÃ“N PRECARGADA (Arranca al instante) ---
             if hasattr(main_window, '_welcome_overlay') and main_window._welcome_overlay is not None:
                 main_window._welcome_overlay.show()
                 main_window._welcome_overlay.raise_()
@@ -377,7 +380,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--role", "--profile", type=str, default=None,
         choices=["cajero", "admin", "jefe", "carteleria"],
-        help="Ejecutar rol autónomo (terminal)",
+        help="Ejecutar rol autÃ³nomo (terminal)",
     )
     parser.add_argument(
         "--server", action="store_true",
@@ -385,7 +388,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--updater", action="store_true",
-        help="Proceso actualizador autónomo (solo descarga/stage; no UI de venta)",
+        help="Proceso actualizador autÃ³nomo (solo descarga/stage; no UI de venta)",
     )
     parsed_args, _ = parser.parse_known_args()
     target_role = parsed_args.role
@@ -393,7 +396,7 @@ if __name__ == "__main__":
     is_updater_daemon = bool(getattr(parsed_args, "updater", False))
     is_terminal_role = bool(target_role)
 
-    # Antes que nada: si un update a medias dejó el EXE/.lock rotos, reparar
+    # Antes que nada: si un update a medias dejÃ³ el EXE/.lock rotos, reparar
     try:
         from src.updater.silent_auto_updater import heal_install_after_update
 
@@ -412,7 +415,7 @@ if __name__ == "__main__":
     except Exception:
         pass
 
-    # ── MODO ACTUALIZADOR AUTÓNOMO (proceso dedicado, aislamiento de fallos) ──
+    # â”€â”€ MODO ACTUALIZADOR AUTÃ“NOMO (proceso dedicado, aislamiento de fallos) â”€â”€
     if is_updater_daemon:
         try:
             from src.updater.entry import run_updater_daemon
@@ -422,13 +425,13 @@ if __name__ == "__main__":
             # Nunca tumbar otros procesos: salir en silencio
             sys.exit(0)
 
-    # ── MODO SERVIDOR DE TIENDA (proceso dedicado) ──────────────────────────
+    # â”€â”€ MODO SERVIDOR DE TIENDA (proceso dedicado) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if is_store_server:
         # Durante un update el autostart no debe reabrir el .exe ni aplicar el paquete
         try:
             from src.updater.silent_auto_updater import is_apply_guard_active
 
-            # Candado corto (3 min). Si quedó huérfano, heal ya lo limpió.
+            # Candado corto (3 min). Si quedÃ³ huÃ©rfano, heal ya lo limpiÃ³.
             if is_apply_guard_active(max_age_sec=120.0):
                 sys.exit(0)
         except Exception:
@@ -478,7 +481,7 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-    # Actualizador autónomo en proceso aparte (después del apply; no tumba el hub)
+    # Actualizador autÃ³nomo en proceso aparte (despuÃ©s del apply; no tumba el hub)
     try:
         from src.lanzador.entry import bootstrap_master_services
         bootstrap_master_services()
@@ -496,7 +499,7 @@ if __name__ == "__main__":
         qss_filename = "estilo_dia.qss" if tema_actual == "light" else "estilo_noche.qss"
         aplicar_tema(app, qss_filename)
     except Exception as e:
-        print(f"No se pudo cargar el módulo de temas: {e}")
+        print(f"No se pudo cargar el mÃ³dulo de temas: {e}")
 
     from src.ui_components.touch_feedback import TouchFeedbackManager
     touch_manager = TouchFeedbackManager(app)
@@ -532,22 +535,22 @@ if __name__ == "__main__":
                     set_windows_autostart,
                     is_windows_autostart_enabled,
                 )
-                print("[TIENDA] Asegurando Servidor de Tienda…")
+                print("[TIENDA] Asegurando Servidor de Tiendaâ€¦")
                 ok_srv = False
                 # Tras un update mysqld/exe pueden tardar: reintentar
                 for attempt in range(1, 4):
                     ok_srv = ensure_store_server_process(timeout_sec=35.0)
                     if ok_srv:
                         break
-                    print(f"[TIENDA] Intento {attempt}/3 falló — reintentando…")
+                    print(f"[TIENDA] Intento {attempt}/3 fallÃ³ â€” reintentandoâ€¦")
                     time.sleep(2.0)
                 if ok_srv and config.get("auto_start_store_server", True) and not is_windows_autostart_enabled():
                     set_windows_autostart(True)
                 if not ok_srv:
-                    raise RuntimeError("spawn servidor falló tras 3 intentos")
+                    raise RuntimeError("spawn servidor fallÃ³ tras 3 intentos")
             except Exception as e:
                 print(f"Aviso Servidor de Tienda: {e}")
-                # Fallback: presencia en este proceso si el spawn falló
+                # Fallback: presencia en este proceso si el spawn fallÃ³
                 try:
                     from src.services.mariadb_controller import mariadb_controller
                     mariadb_controller._ensure_firewall()
@@ -561,7 +564,7 @@ if __name__ == "__main__":
     while True:
         exit_code = launch_app(direct_role=target_role)
         # 889 = aplicar update (cierra todo + relaunch oculto)
-        # 888 = reinicio suave del hub (logout / medianoche / LAN) — sin CMD ni matar mysqld
+        # 888 = reinicio suave del hub (logout / medianoche / LAN) â€” sin CMD ni matar mysqld
         if exit_code == 889:
             from src.updater.silent_auto_updater import (
                 exit_and_relaunch_for_update,
@@ -592,3 +595,4 @@ if __name__ == "__main__":
 
     app_exit_event.set()
     sys.exit(exit_code)
+

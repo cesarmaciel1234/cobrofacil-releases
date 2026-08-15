@@ -167,6 +167,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             return False, "Falta la columna principal de 'Producto/Descripción' o 'Código'."
 
         insertados = 0; actualizados = 0; errores = 0
+        warnings = []
 
         # MODO ALTO RENDIMIENTO: Usar 1 sola conexión y 1 sola transacción en memoria
         conn = db_manager.get_connection()
@@ -184,7 +185,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
         import re
 
         # Extraer filas de valores, omitiendo el encabezado y las anteriores
-        for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+        for row_idx, row in enumerate(ws.iter_rows(min_row=header_row + 1, values_only=True), start=header_row + 1):
             if not any(row): continue  # fila vacía o nula
 
             def get_val(campo_logico, default=None):
@@ -226,6 +227,16 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             stock       = parse_float(get_val('stock'))
             minimo      = parse_float(get_val('minimo'))
             maximo      = parse_float(get_val('maximo'))
+            
+            # --- VALIDACIONES ---
+            if 'oferta' in nombre.lower():
+                warnings.append(f"Fila {row_idx}: El nombre '{nombre}' contiene 'oferta'. Se recomienda usar nombres base.")
+
+            if precio is not None and precio_of is not None and precio_of >= precio:
+                warnings.append(f"Fila {row_idx} ('{nombre}'): El precio de oferta ${precio_of:.2f} es mayor o igual al regular ${precio:.2f}. La oferta no fue importada.")
+                precio_of = None # Anular oferta inválida
+                cant_of = None
+
 
             depto  = str(get_val('depto', '') or '').strip() or None
             tipo   = str(get_val('tipo', 'UNIDAD') or 'UNIDAD').strip().upper()
@@ -285,6 +296,10 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                f"  [+] Insertados:   {insertados}\n"
                f"  [~] Actualizados: {actualizados}\n"
                f"  [-] Errores:      {errores}")
+        
+        if warnings:
+            msg += "\n\nSe detectaron las siguientes advertencias:\n" + "\n".join(f"  - {w}" for w in warnings)
+
         return True, msg
 
     except Exception as e:

@@ -64,7 +64,7 @@ def build_screen_factories(main_window):
             "src.jefe.reportes.reportes_main", fromlist=["ReportesMain"]
         ).ReportesMain(),
         Screen.CARTELERIA: lambda: _imp(
-            "src.carteleria.motor_carteleria.main_board", fromlist=["CarteleriaMain"]
+            "src.carteleria.el_cuello", fromlist=["CarteleriaMain"]
         ).CarteleriaMain(),
         Screen.CARTELERIA_CONFIG: lambda: _imp(
             "src.carteleria.admin15_carteleria", fromlist=["Admin15Carteleria"]

@@ -4,10 +4,13 @@ import os
 # Asegurar que la raíz del proyecto esté en el path para poder importar 'src'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
+import logging
 from src.utils.qt_compat import qt_exec
 
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from src.carteleria.dashboard.dashboard_main import CarteleriaDashboard
+
+logger = logging.getLogger("PunPro")
 
 class CarteleriaApp(QStackedWidget):
     def __init__(self):
@@ -40,35 +43,42 @@ class CarteleriaApp(QStackedWidget):
 
         # Conectar Admin (Volver al dashboard) - Solo si existieran (se conectan en el lazy load)
         
-        # Conectar TV (Escape global)
         from PyQt6.QtGui import QShortcut, QKeySequence
         self.shortcut = QShortcut(QKeySequence("Esc"), self)
         self.shortcut.activated.connect(self.volver_dashboard)
-        
-        # Conectar la señal que emite F11 (request_screen) para que vuelva al dashboard
-        if hasattr(self.tv_main, "request_screen"):
-            self.tv_main.request_screen.connect(lambda x: self.volver_dashboard())
 
     def volver_dashboard(self):
+        if self.tv_main:
+            try:
+                self.tv_main.detener_carteleria()
+            except Exception:
+                pass
         self.setCurrentWidget(self.dashboard)
         self.showNormal()
 
     def lanzar_tv(self):
-        # Destruir la instancia actual y crear una nueva para aplicar cambios de tema
+        logger.info("Lanzando TV...")
         if self.tv_main:
+            logger.info("Cerrando instancia TV anterior.")
+            try:
+                self.tv_main.detener_carteleria()
+            except Exception:
+                pass
             self.removeWidget(self.tv_main)
             self.tv_main.deleteLater()
-            
-        from src.carteleria.motor_carteleria.main_board import CarteleriaMain
-        self.tv_main = CarteleriaMain()
+
+        from src.carteleria.lanzador_tv.ui_lanzador_tv import CarteleriaMainTV
+        logger.info("Creando nueva instancia de TV.")
+        self.tv_main = CarteleriaMainTV()
         self.addWidget(self.tv_main)
-        
-        # Reconectar shortcut/señal
-        if hasattr(self.tv_main, "request_screen"):
-            self.tv_main.request_screen.connect(lambda x: self.volver_dashboard())
-            
+
+        if hasattr(self.tv_main, "request_back"):
+            self.tv_main.request_back.connect(self.volver_dashboard)
+
         self.setCurrentWidget(self.tv_main)
-        self.showFullScreen()
+        self.showNormal()
+        self.tv_main.iniciar_carteleria()
+        logger.info("TV lanzada: consola en este monitor, kiosk en la TV.")
 
     def lanzar_admin(self):
         if not self.admin:

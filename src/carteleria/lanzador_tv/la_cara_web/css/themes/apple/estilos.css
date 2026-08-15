@@ -1,0 +1,39 @@
+:root {
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --surface-primary: rgba(255, 255, 255, 0.8);
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B7280;
+    --accent-primary: #007AFF;
+    --accent-secondary: #5856D6;
+    --accent-rgb: 0, 122, 255;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --success-color: #34C759;
+}
+
+body {
+    background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+}
+
+.logo {
+    background: linear-gradient(135deg, #007AFF, #5856D6);
+    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.25);
+}
+
+.premium-column {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.footer {
+    background: linear-gradient(90deg, #007AFF, #5856D6);
+}
+
+.zocalo-pill {
+    background: #FFFFFF;
+}
+
+.marquee-text {
+    color: #111111;
+}

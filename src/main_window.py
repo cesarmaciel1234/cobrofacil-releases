@@ -392,7 +392,7 @@ class MainWindow(QMainWindow):
             18: lambda: __import__('src.admin.nexus_admin.nexus_admin_main',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
             20: lambda: __import__('src.jefe.reportes.reportes_main', fromlist=['ReportesMain']).ReportesMain(),
-            21: lambda: __import__('src.carteleria.motor_carteleria.main_board', fromlist=['CarteleriaMain']).CarteleriaMain(),
+            21: lambda: __import__('src.carteleria.el_cuello', fromlist=['CarteleriaMain']).CarteleriaMain(),
             22: lambda: __import__('src.carteleria.dashboard.dashboard_main', fromlist=['CarteleriaDashboard']).CarteleriaDashboard(),
             23: lambda: __import__('src.jefe.ia.jefe_ia_proactiva', fromlist=['JefeIAProactiva']).JefeIAProactiva(self),
             24: lambda: __import__('src.jefe.promedios.promedios_main', fromlist=['PromediosMain']).PromediosMain(),

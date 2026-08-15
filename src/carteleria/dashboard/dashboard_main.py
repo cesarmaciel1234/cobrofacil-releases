@@ -198,9 +198,8 @@ class CarteleriaDashboard(QWidget):
         grid.setSpacing(20)
 
         # Tarjetas de cartelería
-        self.card_tv = CarteleriaCard("Lanzar TV", "📺", "#EFF6FF", "#1D4ED8", "Abre la cartelería real a pantalla completa")
-        self.card_admin = CarteleriaCard("Admin TV", "⚙️", "#FEF2F2", "#B91C1C", "Configura IP, mensajes y autorizaciones")
-        self.card_chef = CarteleriaCard("IA Chef Lobo", "🤖", "#F0FDF4", "#15803D", "Asistente inteligente para generación de promos")
+        self.card_tv = CarteleriaCard("Lanzar TV Directo", "📺", "#EFF6FF", "#1D4ED8", "Abre cartelería en modo kiosk (sin consola)")
+        self.card_admin = CarteleriaCard("Admin TV (Avanzado)", "⚙️", "#FEF2F2", "#B91C1C", "Modo consola Qt con control avanzado")
         
         self.card_inv = CarteleriaCard("Inventario", "📦", "#FDF4FF", "#A21CAF", "Gestión local de productos y stock")
         self.card_ofe = CarteleriaCard("Ofertas", "🏷️", "#FFFBEB", "#D97706", "Crear promos y ofertas de TV")
@@ -209,7 +208,6 @@ class CarteleriaDashboard(QWidget):
 
         self.card_tv.clicked.connect(self._on_launch_tv)
         self.card_admin.clicked.connect(self._on_launch_admin)
-        self.card_chef.clicked.connect(self._on_launch_chef)
         self.card_inv.clicked.connect(self._on_launch_inv)
         self.card_ofe.clicked.connect(self._on_launch_ofe)
         self.card_red.clicked.connect(self._on_launch_red)
@@ -217,11 +215,10 @@ class CarteleriaDashboard(QWidget):
 
         grid.addWidget(self.card_tv, 0, 0)
         grid.addWidget(self.card_admin, 0, 1)
-        grid.addWidget(self.card_chef, 0, 2)
-        grid.addWidget(self.card_inv, 1, 0)
-        grid.addWidget(self.card_ofe, 1, 1)
-        grid.addWidget(self.card_red, 1, 2)
-        grid.addWidget(self.card_prov, 2, 0)
+        grid.addWidget(self.card_inv, 0, 2)
+        grid.addWidget(self.card_ofe, 1, 0)
+        grid.addWidget(self.card_red, 1, 1)
+        grid.addWidget(self.card_prov, 1, 2)
         
         page_lay.addLayout(grid)
         page_lay.addStretch()
@@ -281,10 +278,10 @@ class CarteleriaDashboard(QWidget):
             
         self.card_tv.apply_theme(is_dark)
         self.card_admin.apply_theme(is_dark)
-        self.card_chef.apply_theme(is_dark)
         self.card_inv.apply_theme(is_dark)
         self.card_ofe.apply_theme(is_dark)
         self.card_red.apply_theme(is_dark)
+        self.card_prov.apply_theme(is_dark)
 
     def _tick(self):
         ahora = datetime.datetime.now()
@@ -294,15 +291,34 @@ class CarteleriaDashboard(QWidget):
 
     def _on_launch_tv(self):
         increment_stat("Lanzar_TV")
-        self.request_launch_tv.emit()
+        # Usar lanzador directo sin consola Qt intermedia
+        try:
+            from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
+            lanzador = get_lanzador_directo()
+            if lanzador.lanzar():
+                # Mostrar mensaje de éxito
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self,
+                    "Cartelería TV",
+                    "Cartelería lanzada en modo kiosk directo.\n\n"
+                    "Presiona F11 para detener cuando quieras cerrar.",
+                )
+            else:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    "No se pudo lanzar la cartelería TV."
+                )
+        except Exception as e:
+            # Fallback al método original con consola Qt
+            self.request_launch_tv.emit()
 
     def _on_launch_admin(self):
         increment_stat("Admin_TV")
+        # Modo avanzado con consola Qt (F10/F11 funcionan desde la consola)
         self.request_admin_tv.emit()
-        
-    def _on_launch_chef(self):
-        increment_stat("IA_Chef")
-        pass
 
     def _on_launch_inv(self):
         increment_stat("Inventario")

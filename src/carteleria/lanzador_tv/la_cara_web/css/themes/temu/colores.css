@@ -1,0 +1,16 @@
+/* TEMU — paleta premium tipo app (naranja suave, no flyer). */
+
+:root {
+    --bg-primary: #FFE566;
+    --bg-secondary: #FFFFFF;
+    --surface-primary: #FFFFFF;
+    --text-primary: #1A1A1A;
+    --text-secondary: #C2410C;
+    --accent-primary: #FF6A00;
+    --accent-secondary: #E11D48;
+    --accent-rgb: 255, 106, 0;
+    --border-subtle: rgba(17, 17, 17, 0.08);
+    --success-color: #10B981;
+    --shadow-card: 0 10px 32px rgba(28, 16, 0, 0.10);
+    --shadow-soft: 0 6px 20px rgba(28, 16, 0, 0.08);
+}

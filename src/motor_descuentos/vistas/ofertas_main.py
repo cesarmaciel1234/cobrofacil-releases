@@ -294,6 +294,27 @@ class Admin2Ofertas(QWidget):
         if data['cant_oferta'] <= 0 and data['precio_oferta'] <= 0 and data['precio_oferta_relampago'] <= 0 and data['precio_oferta_promedio'] <= 0:
             QMessageBox.warning(self, "Error", "Debe configurar al menos un precio de oferta mayor a cero.")
             return
+
+        # Validación 1: El precio de oferta debe ser un descuento real.
+        precio_regular = float(data.get('precio_regular', 0))
+        precio_oferta = float(data.get('precio_oferta', 0))
+        if precio_oferta > 0 and precio_regular > 0 and precio_oferta >= precio_regular:
+            QMessageBox.warning(self, "Precio de Oferta Inválido",
+                                f"El precio de oferta (${precio_oferta:.2f}) debe ser MENOR que el precio regular (${precio_regular:.2f}).\n\nLa promoción no fue guardada.")
+            return
+
+        # Validación 2: Advertir si el nombre ya contiene "oferta".
+        nombre_producto = data.get('nombre', '').lower()
+        if 'oferta' in nombre_producto:
+            reply = QMessageBox.question(self, "Revisar Nombre de Producto",
+                                         f"El nombre del producto ('{data.get('nombre')}') ya contiene la palabra 'oferta'.\n\n"
+                                         "El sistema añade la etiqueta de promoción automáticamente (ej: 🔥 [OFERTA] Suprema).\n"
+                                         "Se recomienda usar nombres base (ej: 'Suprema') para evitar duplicados en la cartelería.\n\n"
+                                         "¿Desea continuar y guardar la promoción de todos modos?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                         QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.No:
+                return
             
         motor = MotorOfertas()
         ok = motor.aplicar_oferta(

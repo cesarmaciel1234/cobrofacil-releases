@@ -1,0 +1,24 @@
+/* ============================================
+   APPLE THEME - Moderno y Elegante
+   ============================================ */
+
+:root {
+    /* Colores principales */
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --surface-primary: rgba(255, 255, 255, 0.95);
+    
+    /* Texto */
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B7280;
+    
+    /* Acentos */
+    --accent-primary: #007AFF;
+    --accent-secondary: #5856D6;
+    
+    /* Bordes */
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    
+    /* Estados */
+    --success-color: #34C759;
+}

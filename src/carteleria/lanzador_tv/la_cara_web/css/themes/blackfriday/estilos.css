@@ -1,0 +1,52 @@
+:root {
+    --bg-primary: #0A0A0C;
+    --bg-secondary: #141416;
+    --surface-primary: rgba(20, 20, 22, 0.95);
+    --text-primary: #FFFFFF;
+    --text-secondary: #FFCC00;
+    --accent-primary: #FFCC00;
+    --accent-secondary: #FFD700;
+    --accent-rgb: 255, 204, 0;
+    --border-subtle: rgba(255, 204, 0, 0.15);
+    --success-color: #10B981;
+}
+
+body {
+    background: linear-gradient(135deg, #0A0A0C 0%, #141416 50%, #1A1A1E 100%);
+}
+
+.logo {
+    background: linear-gradient(135deg, #FFCC00, #FFD700);
+    box-shadow: 0 4px 20px rgba(255, 204, 0, 0.3);
+}
+
+.premium-column {
+    background: rgba(20, 20, 22, 0.95);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+}
+
+.clock,
+.status-badge {
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+    color: #FFCC00;
+}
+
+.footer {
+    background: linear-gradient(90deg, #FFCC00, #FFD700, #FFCC00);
+    background-size: 200% 100%;
+    animation: bf-footer 4s linear infinite;
+}
+
+.zocalo-pill {
+    background: #FFFFFF;
+}
+
+.marquee-text {
+    color: #111111;
+}
+
+@keyframes bf-footer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
