@@ -82,6 +82,14 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return
         full = ruta_archivo_icono(name)
         if not full:
+            try:
+                from src.carteleria.motor_carteleria.iconos_tv import _png_por_nombre
+                alt = _png_por_nombre(os.path.splitext(name)[0])
+                if alt and alt != name:
+                    full = ruta_archivo_icono(alt)
+            except Exception:
+                full = ""
+        if not full:
             self.send_error(404)
             return
         try:
@@ -215,6 +223,11 @@ class ServidorCuello:
             if not os.path.isdir(self.web_root):
                 logger.warning("Directorio web_root no encontrado: %s", self.web_root)
                 return False
+            try:
+                from src.carteleria.assets_paths import png_productos_dir
+                png_productos_dir()
+            except Exception as exc:
+                logger.debug("No se pudo crear Catalogos/png_productos: %s", exc)
 
             if not self.httpd:
                 handler = lambda *args, **kwargs: CarteleriaWebHandler(

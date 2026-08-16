@@ -127,7 +127,7 @@ export function htmlDealStage(item, { off = "", extraClass = "" } = {}) {
     let computedUrl = "";
     if (computedRaw.startsWith("/iconos/")) computedUrl = computedRaw;
     else if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(computedRaw)) computedUrl = `/iconos/${computedRaw}`;
-    const urls = [assignedUrl, slugUrl, computedUrl].filter((u, i, arr) => u && arr.indexOf(u) === i);
+    const urls = [assignedUrl, computedUrl, slugUrl].filter((u, i, arr) => u && arr.indexOf(u) === i);
     const url = urls[0] || "";
     const fallback = urls[1] || "";
     const letra = letraVitrina(item?.nombre);

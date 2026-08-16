@@ -17,6 +17,8 @@ class PanelPngProductos(QWidget):
         super().__init__(parent)
         self._producto_id = None
         self._icono_seleccionado = None
+        from src.carteleria.assets_paths import png_productos_dir
+        png_productos_dir()
         self._setup_ui()
         self._cargar()
 
@@ -60,10 +62,12 @@ class PanelPngProductos(QWidget):
         lbl.setStyleSheet("font-size:18px; font-weight:800; color: #1E40AF;")
         cl.addWidget(lbl)
 
+        from src.carteleria.assets_paths import png_productos_dir
+        carpeta = png_productos_dir()
         hint = QLabel(
             "Elegí un producto, asociá un PNG y la TV lo muestra. "
-            "Carga manual: 1024×1024 px, 150 dpi, PNG con fondo transparente. "
-            "Si no tiene foto, usa el ícono del departamento."
+            "Cargar desde la PC crea el archivo en esa carpeta (1024×1024, fondo transparente). "
+            f"Ruta: {carpeta}"
         )
         hint.setWordWrap(True)
         hint.setStyleSheet("color: #64748B; font-size: 13px;")
@@ -125,8 +129,12 @@ class PanelPngProductos(QWidget):
         self.btn_sel_icono = QPushButton("🎨 Seleccionar PNG de Galería")
         self.btn_sel_icono.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_sel_icono.clicked.connect(self._abrir_galeria)
+        self.btn_cargar_pc = QPushButton("➕ Cargar PNG desde PC")
+        self.btn_cargar_pc.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_cargar_pc.clicked.connect(self._cargar_desde_pc)
         ico_lay.addWidget(self.lbl_preview_icono)
         ico_lay.addWidget(self.btn_sel_icono)
+        ico_lay.addWidget(self.btn_cargar_pc)
         ico_lay.addStretch()
         form_lay.addWidget(lbl_ico)
         form_lay.addLayout(ico_lay)
@@ -176,12 +184,13 @@ class PanelPngProductos(QWidget):
             QMessageBox.information(self, "PNG productos", "Primero elegí un producto de la lista.")
             return
         from src.ui_global.inventario_ui.moleculas.dialogo_galeria_iconos import DialogoGaleriaIconos
-        from src.carteleria.assets_paths import catalogos_dir
+        from src.carteleria.assets_paths import catalogos_dir, png_productos_dir
         dlg = DialogoGaleriaIconos(
             icono_actual=self._icono_seleccionado,
             parent=self,
             titulo="PNG del producto (foto de vitrina)",
-            target_dir=catalogos_dir(),
+            target_dir=png_productos_dir(),
+            extra_dirs=[catalogos_dir()],
             nombre_sugerido=self.txt_nombre.text(),
         )
         if qt_exec(dlg):
@@ -189,6 +198,34 @@ class PanelPngProductos(QWidget):
             if sel:
                 self._icono_seleccionado = sel
                 self._actualizar_preview(sel)
+
+    def _cargar_desde_pc(self):
+        if not self._producto_id:
+            QMessageBox.information(self, "PNG productos", "Primero elegí un producto de la lista.")
+            return
+        from PyQt6.QtWidgets import QFileDialog
+        from src.ui_global.inventario_ui.moleculas.dialogo_galeria_iconos import DialogoCargarPng
+        from src.carteleria.assets_paths import png_productos_dir
+        origen, _ = QFileDialog.getOpenFileName(
+            self, "Seleccionar PNG", "",
+            "Imágenes (*.png *.jpg *.jpeg *.webp)",
+        )
+        if not origen:
+            return
+        carpeta = png_productos_dir()
+        dlg = DialogoCargarPng(
+            origen=origen,
+            destino_dir=carpeta,
+            nombre_sugerido=self.txt_nombre.text(),
+            parent=self,
+        )
+        if not qt_exec(dlg):
+            return
+        nombre = dlg.filename_guardado
+        if not nombre:
+            return
+        self._icono_seleccionado = nombre
+        self._actualizar_preview(nombre)
 
     def _actualizar_preview(self, filename):
         self.lbl_preview_icono.setPixmap(QPixmap())

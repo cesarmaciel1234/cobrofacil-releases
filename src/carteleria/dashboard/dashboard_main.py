@@ -102,6 +102,7 @@ class CarteleriaDashboard(QWidget):
 
     def __init__(self):
         super().__init__()
+        self._png_overlay = None
         self.setup_ui()
         # Timer for clock
         QTimer(self, timeout=self._tick, singleShot=False).start(30000)
@@ -322,7 +323,30 @@ class CarteleriaDashboard(QWidget):
 
     def _on_launch_png(self):
         increment_stat("PNG_Productos")
-        self.request_png_productos.emit()
+        if self.receivers(self.request_png_productos) > 0:
+            self.request_png_productos.emit()
+            return
+        self._abrir_png_local()
+
+    def _abrir_png_local(self):
+        from src.carteleria.png_productos.panel_png_productos import PanelPngProductos
+        if self._png_overlay is None:
+            self._png_overlay = PanelPngProductos(self)
+            self._png_overlay.setStyleSheet(
+                self._png_overlay.styleSheet() + " QWidget { background: #F8FAFC; }"
+            )
+            self._png_overlay.volver.connect(self._cerrar_png)
+            self.layout().addWidget(self._png_overlay)
+        self.scroll_area.hide()
+        self.nav.hide()
+        self._png_overlay.show()
+        self._png_overlay.raise_()
+
+    def _cerrar_png(self):
+        if self._png_overlay:
+            self._png_overlay.hide()
+        self.nav.show()
+        self.scroll_area.show()
 
     def _on_launch_ofe(self):
         increment_stat("Ofertas")

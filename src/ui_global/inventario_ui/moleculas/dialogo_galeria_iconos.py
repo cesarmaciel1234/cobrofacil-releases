@@ -112,8 +112,11 @@ class DialogoCargarPng(QDialog):
         )
         lay.addWidget(self.txt_nombre)
 
-        hint = QLabel("Sin espacios ni acentos. Se guarda como nombre.png")
+        hint = QLabel(
+            f"Sin espacios ni acentos. Se crea en:\n{self.destino_dir}\\nombre.png"
+        )
         hint.setStyleSheet("color: #94A3B8; font-size: 11px;")
+        hint.setWordWrap(True)
         lay.addWidget(hint)
         lay.addStretch()
 
@@ -248,8 +251,9 @@ class DialogoGaleriaIconos(QDialog):
         main_lay.addLayout(header_lay)
 
         specs = QLabel(
-            f"Medidas recomendadas: {PNG_LADO_IDEAL}×{PNG_LADO_IDEAL} px  ·  mínimo {PNG_LADO_MINIMO} px  ·  "
-            f"{PNG_DPI} dpi  ·  PNG con fondo transparente"
+            f"Los PNG se crean y cargan en:\n{self.target_dir}\n"
+            f"Medidas: {PNG_LADO_IDEAL}×{PNG_LADO_IDEAL} px  ·  mínimo {PNG_LADO_MINIMO} px  ·  "
+            f"{PNG_DPI} dpi  ·  fondo transparente"
         )
         specs.setStyleSheet(
             "background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; "

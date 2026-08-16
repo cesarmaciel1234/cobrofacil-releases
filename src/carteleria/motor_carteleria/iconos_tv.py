@@ -65,7 +65,18 @@ def _png_por_nombre(nombre):
     alias = ALIAS_POR_NOMBRE.get(slug)
     if alias:
         candidatos.append(alias)
+    partes = [p for p in slug.split("_") if p and p not in ("de", "del", "la", "el", "con", "y", "en")]
+    for i in range(len(partes), 0, -1):
+        clave = "_".join(partes[:i])
+        candidatos.append(f"{clave}.png")
+        extra = ALIAS_POR_NOMBRE.get(clave)
+        if extra:
+            candidatos.append(extra)
+    vistos = set()
     for name in candidatos:
+        if name in vistos:
+            continue
+        vistos.add(name)
         if ruta_archivo_icono(name):
             return name
     return ""

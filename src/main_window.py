@@ -585,6 +585,10 @@ class MainWindow(QMainWindow):
         if index == 22: # Carteleria Dashboard
             s.request_launch_tv.connect(lambda: self.switch_tab(21))
             s.request_admin_tv.connect(lambda: self.switch_tab(15))
+            s.request_inventario.connect(lambda: self.switch_tab(2))
+            s.request_ofertas.connect(lambda: self.switch_tab(3))
+            s.request_red_lan.connect(lambda: self.switch_tab(6))
+            s.request_proveedores.connect(lambda: self.switch_tab(11))
             s.request_exit.connect(self._logout_to_selector)
 
         if hasattr(s, 'request_tab'):
