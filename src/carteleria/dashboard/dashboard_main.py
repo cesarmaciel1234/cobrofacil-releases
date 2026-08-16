@@ -218,9 +218,9 @@ class CarteleriaDashboard(QWidget):
         self.card_prov.clicked.connect(self._on_launch_prov)
 
         grid.addWidget(self.card_tv, 0, 0)
-        grid.addWidget(self.card_admin, 0, 1)
-        grid.addWidget(self.card_inv, 0, 2)
-        grid.addWidget(self.card_png, 1, 0)
+        grid.addWidget(self.card_png, 0, 1)
+        grid.addWidget(self.card_admin, 0, 2)
+        grid.addWidget(self.card_inv, 1, 0)
         grid.addWidget(self.card_ofe, 1, 1)
         grid.addWidget(self.card_red, 1, 2)
         grid.addWidget(self.card_prov, 2, 0)
