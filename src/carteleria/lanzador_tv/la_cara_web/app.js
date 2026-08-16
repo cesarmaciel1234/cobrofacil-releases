@@ -5,7 +5,7 @@ import { renderFranjaOferta } from "./modules/franja_oferta/franja_oferta.js";
 import { iniciarRotacionColumna1 } from "./modules/columna1/columna1.js";
 import { renderColumna2 } from "./modules/columna2/columna2.js";
 import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
-import { renderColumna4 } from "./modules/columna4/columna4.js";
+import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
 const API_URL = "/api/state";
@@ -77,6 +77,7 @@ async function fetchState() {
             columna3: data.columna3,
             ia: data.ia,
             hero: data.hero,
+            climaData: data.climaData,
         });
         if (state.lastDataHash === newDataHash) return;
         state.lastDataHash = newDataHash;
@@ -95,7 +96,7 @@ async function fetchState() {
         iniciarRotacionColumna1(state, els.content1);
         renderColumna2(state.productos, els.content2);
         iniciarRotacionColumna3(state, els.content3);
-        renderColumna4(state.ia, els.content4, state.climaData, state.productos);
+        iniciarRotacionColumna4(state, els.content4);
         renderMensajeZocalo(state.config, els.marquee);
 
         if (state.isLoading) {

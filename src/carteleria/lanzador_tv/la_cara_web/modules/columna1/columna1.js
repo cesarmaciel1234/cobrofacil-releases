@@ -3,6 +3,19 @@
 import { escapeHtml } from "../shared/plata_y_texto.js";
 import { htmlTarjetaRanking } from "./tarjetas/tarjeta_ranking.js";
 
+const TITULOS_KICKER = {
+    elegidos: "Lo más pedido",
+    volumen: "Mega ventas",
+    plata: "Venta premium",
+};
+
+function kickerPanel(panel) {
+    const sub = panel.subtitulo || "";
+    if (panel.id === "volumen" || /kilo/i.test(sub)) return "Mega ventas";
+    if (panel.id === "plata" || /en ventas/i.test(sub)) return "Venta premium";
+    return TITULOS_KICKER[panel.id] || sub || "HOT";
+}
+
 const ROTACION_MS = 8000;
 
 let rotacionTimer = null;
@@ -14,7 +27,7 @@ function panelesRotacion(state) {
     const paneles = (state.rotacion || []).filter((panel) => panel?.items?.length);
     if (paneles.length) return paneles;
     if (state.destacados?.length) {
-        return [{ id: "elegidos", titulo: "Más vendidos", subtitulo: "En tickets", items: state.destacados }];
+        return [{ id: "elegidos", titulo: "Favoritos de las familias", subtitulo: "Lo más pedido", items: state.destacados }];
     }
     return [];
 }
@@ -23,16 +36,23 @@ function htmlPanel(panel, paneles, index) {
     const dots = paneles.map((_, i) =>
         `<span class="rank-dot${i === index ? " is-on" : ""}"></span>`
     ).join("");
-    const cards = (panel.items || []).slice(0, 5).map((item, i) => htmlTarjetaRanking(item, i)).join("");
+    const premium = panel.id === "plata" || /en ventas/i.test(panel.subtitulo || "");
+    const social = panel.id === "elegidos";
+    const mega = panel.id === "volumen" || /kilo/i.test(panel.subtitulo || "");
+    const cards = (panel.items || []).slice(0, 5).map((item, i) =>
+        htmlTarjetaRanking(item, i, { premium, social, mega, items: panel.items })
+    ).join("");
+    const listaClase = [
+        "rank-list",
+        social ? "is-social" : "",
+        (premium || mega) ? "is-mega" : "",
+    ].filter(Boolean).join(" ");
     return `
         <header class="rank-head sale-head">
-            <div>
-                <p class="rank-kicker">⚡ ${escapeHtml(panel.subtitulo || "HOT")}</p>
-                <h3 class="rank-title">${escapeHtml(panel.titulo || "")}</h3>
-            </div>
+            <p class="rank-kicker">⚡ ${escapeHtml(kickerPanel(panel))}</p>
             <div class="rank-dots" aria-hidden="true">${dots}</div>
         </header>
-        <div class="rank-list">${cards}</div>
+        <div class="${listaClase}">${cards}</div>
         <div class="rank-progress" style="--rank-duration:${ROTACION_MS}ms"></div>
     `;
 }

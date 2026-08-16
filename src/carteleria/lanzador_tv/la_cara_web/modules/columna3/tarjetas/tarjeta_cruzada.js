@@ -23,10 +23,7 @@ export function htmlTarjetaCruzada(slide, productos = []) {
     return `
         <article class="xsell-card">
             <header class="rank-head sale-head">
-                <div>
-                    <p class="rank-kicker">⚡ COMBO DEL MOSTRADOR</p>
-                    <h3 class="rank-title">Llevá también</h3>
-                </div>
+                <p class="rank-kicker">⚡ COMPRAS RELACIONADAS</p>
             </header>
             <p class="xsell-ask">${escapeHtml(pregunta)}</p>
             <ul class="xsell-list">${items}</ul>

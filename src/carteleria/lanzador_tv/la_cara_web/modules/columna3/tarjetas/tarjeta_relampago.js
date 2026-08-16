@@ -18,13 +18,15 @@ export function htmlTarjetaRelampago(item) {
     return `
         <article class="flash-offer">
             <header class="rank-head sale-head">
-                <div>
-                    <p class="rank-kicker">⚡ OFERTA RELÁMPAGO</p>
-                    <h3 class="rank-title">${escapeHtml(nombre)}</h3>
-                </div>
+                <p class="rank-kicker">OFERTA RELÁMPAGO</p>
             </header>
             <div class="flash-offer__deal">
-                ${htmlDealStage({ ...item, nombre }, { off: pct ? `-${pct}%` : "", extraClass: "flash-offer__stage" })}
+                ${htmlDealStage({ ...item, nombre }, {
+                    off: pct ? `-${pct}%` : "",
+                    extraClass: "flash-offer__stage",
+                    titulo: nombre,
+                    bolt: false,
+                })}
                 <div class="deal-copy flash-offer__copy">
                     <p class="deal-kicker">Precio de hoy</p>
                     <div class="deal-price-row">

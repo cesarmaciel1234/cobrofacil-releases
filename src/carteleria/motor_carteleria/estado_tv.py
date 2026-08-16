@@ -85,11 +85,28 @@ def _fmt_cantidad(valor):
     return f"{n:.1f}".replace(".", ",")
 
 
+def _detalle_familias(cantidad, periodo="hoy"):
+    n = max(1, int(round(num(cantidad))))
+    if n == 1:
+        return "1 familia lo eligió" if periodo == "hoy" else "1 familia esta semana"
+    if periodo == "semana":
+        return f"{n}+ familias esta semana"
+    return f"{n}+ familias lo eligieron"
+
+
 def _fmt_plata(valor):
     n = num(valor)
     if n <= 0:
         return ""
     return f"${int(round(n)):,}".replace(",", ".")
+
+
+def _fmt_plata_como_pct(valor):
+    """90000 → 90.00% : dato real disfrazado para la TV."""
+    n = num(valor)
+    if n <= 0:
+        return "0.00%"
+    return f"{n / 1000:.2f}%"
 
 
 def _mapa_ventas(modo="volumen", limite=400):
@@ -153,22 +170,42 @@ def _card_desde_catalogo(prod, badge, detalle="", puesto=0, cantidad=0, periodo=
     }
 
 
-def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad"):
-    """Solo productos que aparecen en ventas reales, cruzados con el catálogo."""
-    periodo = "hoy"
+def _ordenar_ranking(ranking, orden):
+    return sorted(ranking or [], key=lambda item: num(item.get(orden)), reverse=True)
+
+
+def _ranking_hoy_pisa_ayer(modo, limite, orden):
+    """Hoy manda. Si aún no hay ventas, se muestra ayer para que la tabla no quede vacía."""
+    cupo = max(limite * 4, 20)
     try:
         from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
-        ranking = MotorVentas.get_top_ventas(limit=max(limite * 4, 20), periodo="hoy", modo=modo) or []
-        if not ranking:
-            ranking = MotorVentas.get_top_ventas(limit=max(limite * 4, 20), periodo="semana", modo=modo) or []
-            periodo = "semana"
+        hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
+        ayer = MotorVentas.get_top_ventas(limit=cupo, periodo="ayer", modo=modo) or []
+        if not hoy and not ayer:
+            semana = MotorVentas.get_top_ventas(limit=cupo, periodo="semana", modo=modo) or []
+            return semana, "semana"
     except Exception as exc:
         logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
-        ranking = []
+        return [], "hoy"
 
-    ranking = sorted(ranking, key=lambda item: num(item.get(orden)), reverse=True)
+    mezclado = []
+    vistos = set()
+    for origen, tanda in (("hoy", hoy), ("ayer", ayer)):
+        for item in _ordenar_ranking(tanda, orden):
+            clave = _norm_nombre(item.get("nombre"))
+            if not clave or clave in vistos:
+                continue
+            vistos.add(clave)
+            fila = dict(item)
+            fila["_periodo"] = origen
+            mezclado.append(fila)
+    return mezclado, ("hoy" if hoy else "ayer")
+
+
+def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad"):
+    """Solo productos que aparecen en ventas reales, cruzados con el catálogo."""
+    ranking, periodo = _ranking_hoy_pisa_ayer(modo, limite, orden)
     catalogo = _catalogo_por_nombre(productos)
-    plantilla = detalle_hoy if periodo == "hoy" else detalle_semana
     cards = []
     vistos = set()
     for item in ranking:
@@ -187,10 +224,12 @@ def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite
         valor = recaudacion if orden == "recaudacion" else cantidad
         if valor <= 0:
             continue
+        origen = item.get("_periodo") or periodo
+        plantilla = detalle_hoy if origen == "hoy" else detalle_semana
         dato = _fmt_plata(recaudacion) if orden == "recaudacion" else _fmt_cantidad(cantidad)
         cards.append(_card_desde_catalogo(
-            prod, badge, plantilla.format(n=dato),
-            puesto=len(cards) + 1, cantidad=cantidad, periodo=periodo, recaudacion=recaudacion,
+            prod, badge, plantilla.format(n=dato) if plantilla else "",
+            puesto=len(cards) + 1, cantidad=cantidad, periodo=origen, recaudacion=recaudacion,
         ))
         if len(cards) >= limite:
             break
@@ -199,12 +238,37 @@ def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite
 
 def armar_destacados(productos):
     """Top real de tickets para el hero."""
-    cards, _ = _top_con_precios(
+    cards, periodo = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
         "{n} tickets hoy", "{n} tickets esta semana",
         limite=8,
     )
+    for item in cards:
+        item["detalle"] = _detalle_familias(item.get("cantidad"), periodo)
     return cards
+
+
+def _anotar_venta_premium(items):
+    """Recaudación real mostrada como porcentaje publicitario."""
+    montos = [num(item.get("recaudacion")) for item in items]
+    tope = max(montos) if montos else 0
+    for item, valor in zip(items, montos):
+        barra = (valor / tope * 100) if tope else 0
+        item["barra"] = round(barra, 1)
+        item["detalle"] = _fmt_plata_como_pct(valor)
+    return items
+
+
+def _anotar_mega_ventas(items):
+    """Muestra los kilos reales con signo % y una barra relativa al líder."""
+    kilos = [num(item.get("cantidad")) for item in items]
+    tope = max(kilos) if kilos else 0
+    for item, valor in zip(items, kilos):
+        barra = (valor / tope * 100) if tope else 0
+        item["porcentaje"] = round(valor, 1)
+        item["barra"] = round(barra, 1)
+        item["detalle"] = f"{_fmt_cantidad(valor)} %"
+    return items
 
 
 def armar_rotacion_destacados(productos):
@@ -215,37 +279,41 @@ def armar_rotacion_destacados(productos):
         "{n} tickets hoy", "{n} tickets esta semana",
         limite=5,
     )
+    for item in elegidos:
+        item["detalle"] = _detalle_familias(item.get("cantidad"), periodo_e)
     if elegidos:
         paneles.append({
             "id": "elegidos",
-            "titulo": "Más vendidos",
-            "subtitulo": "En tickets" if periodo_e == "hoy" else "Tickets semana",
+            "titulo": "Favoritos de las familias",
+            "subtitulo": "Lo más pedido",
             "items": elegidos,
         })
 
-    volumen, periodo_v = _top_con_precios(
+    volumen, _ = _top_con_precios(
         productos, "volumen", "VOLUMEN",
         "{n} vendidos hoy", "{n} vendidos esta semana",
         limite=5,
     )
     if volumen:
+        _anotar_mega_ventas(volumen)
         paneles.append({
             "id": "volumen",
-            "titulo": "Mega volumen",
-            "subtitulo": "En kilos" if periodo_v == "hoy" else "Kilos semana",
+            "titulo": "Mega ventas",
+            "subtitulo": "Mega ventas",
             "items": volumen,
         })
 
-    plata, periodo_p = _top_con_precios(
+    plata, _ = _top_con_precios(
         productos, "volumen", "PLATA",
-        "{n} hoy", "{n} esta semana",
+        "", "",
         limite=5, orden="recaudacion",
     )
     if plata:
+        _anotar_venta_premium(plata)
         paneles.append({
             "id": "plata",
-            "titulo": "Más plata",
-            "subtitulo": "En ventas" if periodo_p == "hoy" else "Ventas semana",
+            "titulo": "Cortes de mejor recaudación",
+            "subtitulo": "Venta premium",
             "items": plata,
         })
     return paneles

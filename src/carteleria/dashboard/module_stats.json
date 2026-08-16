@@ -1,9 +1,10 @@
 {
-    "Red_LAN": 56,
-    "Lanzar_TV": 318,
-    "Admin_TV": 39,
+    "Red_LAN": 57,
+    "Lanzar_TV": 467,
+    "Admin_TV": 54,
     "IA_Chef": 10,
     "Ofertas": 58,
-    "Inventario": 81,
-    "Proveedores": 2
+    "Inventario": 87,
+    "Proveedores": 2,
+    "PNG_Productos": 11
 }

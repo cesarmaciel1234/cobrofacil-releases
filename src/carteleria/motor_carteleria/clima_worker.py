@@ -28,7 +28,9 @@ class ClimaWorker(QThread):
             code = data.get("current_weather", {}).get("weathercode", 0)
 
             icon_name = "sol"
-            if code in [1, 2, 3, 45, 48]:
+            if code in (0, 1):
+                icon_name = "sol"
+            elif code in (2, 3, 45, 48):
                 icon_name = "nube"
             elif code >= 51:
                 icon_name = "lluvia"

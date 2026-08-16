@@ -116,7 +116,7 @@ export function urlIcono(item) {
     return `/iconos/${slug}.png`;
 }
 
-export function htmlDealStage(item, { off = "", extraClass = "" } = {}) {
+export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
     const assignedRaw = String(item?.icono || "").trim();
     let assignedUrl = "";
     if (assignedRaw.startsWith("/iconos/")) assignedUrl = assignedRaw;
@@ -138,8 +138,9 @@ export function htmlDealStage(item, { off = "", extraClass = "" } = {}) {
         <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
             ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallback ? `data-fallback="${escapeHtml(fallback)}"` : ""} onerror="${onerr}">` : ""}
             <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
+            ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
             ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}
-            <span class="deal-stage__bolt" aria-hidden="true">⚡</span>
+            ${bolt ? `<span class="deal-stage__bolt" aria-hidden="true">⚡</span>` : ""}
         </div>
     `;
 }
