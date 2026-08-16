@@ -138,6 +138,25 @@ jobs:
             --add-data "Catalogos;Catalogos" `
             main.py
 
+      - name: Asegurar cara web TV en el paquete
+        shell: pwsh
+        run: |
+          $src = "src/carteleria/lanzador_tv/la_cara_web"
+          $dests = @(
+            "dist/CobroFacil_POS/_internal/src/carteleria/lanzador_tv/la_cara_web",
+            "dist/CobroFacil_POS/src/carteleria/lanzador_tv/la_cara_web"
+          )
+          foreach ($dest in $dests) {
+            New-Item -ItemType Directory -Force -Path $dest | Out-Null
+            Copy-Item -Recurse -Force "$src\*" $dest
+          }
+          $ok = Test-Path "dist/CobroFacil_POS/_internal/src/carteleria/lanzador_tv/la_cara_web/index.html"
+          if (-not $ok) {
+            Write-Error "Falta index.html de la TV en el paquete PyInstaller"
+            exit 1
+          }
+          Write-Host "OK cara web TV empaquetada"
+
       - name: Copiar version.json y launcher autónomo
         shell: pwsh
         run: |

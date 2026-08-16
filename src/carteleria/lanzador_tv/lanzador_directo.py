@@ -32,9 +32,11 @@ class LanzadorDirectoTV(QObject):
         self.sos_data = []
         self.top10_data = {}
         self._paneles = {}
+        self.last_error = ""
 
     def lanzar(self, screen_index=None):
         try:
+            self.last_error = ""
             if self._cuello:
                 self.detener()
             self.screen_index = screen_index
@@ -43,6 +45,9 @@ class LanzadorDirectoTV(QObject):
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import ServidorCuello
             self._cuello = ServidorCuello(self)
             if not self._cuello.iniciar(screen_index=screen_index):
+                self.last_error = getattr(self._cuello, "last_error", "") or (
+                    "No se pudo iniciar el servidor de la TV."
+                )
                 self.detener()
                 return False
             logger.info(
@@ -51,6 +56,7 @@ class LanzadorDirectoTV(QObject):
             )
             return True
         except Exception as e:
+            self.last_error = str(e)
             logger.error("Error lanzando cartelería directa: %s", e)
             return False
     

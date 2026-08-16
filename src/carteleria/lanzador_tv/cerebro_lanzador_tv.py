@@ -16,8 +16,9 @@ import subprocess
 import platform
 import logging
 import tempfile
+import sys
 
-from src.utils.paths import get_resource_path
+from src.utils.paths import get_base_path, get_resource_path
 from src.carteleria.lanzador_tv.navegador_kiosk import (
     TeclasTv,
     buscar_navegador,
@@ -25,6 +26,31 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
 )
 
 logger = logging.getLogger("CerebroLanzadorTV")
+
+
+def resolver_web_root() -> str:
+    """Carpeta de index.html de la TV (dev, EXE y copia junto al instalador)."""
+    rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
+    candidatos = [
+        get_resource_path(rel),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
+        os.path.join(get_base_path(), rel),
+        os.path.join(get_base_path(), "_internal", rel),
+    ]
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        meipass = getattr(sys, "_MEIPASS", "")
+        candidatos.extend([
+            os.path.join(exe_dir, "_internal", rel),
+            os.path.join(meipass, rel) if meipass else "",
+            os.path.join(meipass, "la_cara_web") if meipass else "",
+            os.path.join(exe_dir, rel),
+        ])
+    for path in candidatos:
+        if path and os.path.isfile(os.path.join(path, "index.html")):
+            logger.info("Cara web TV: %s", path)
+            return path
+    return next((p for p in candidatos if p), "")
 
 
 def _json_default(value):
@@ -210,17 +236,22 @@ class ServidorCuello:
         self.thread = None
         self.browser_process = None
         self.screen_index = None
-        self.web_root = get_resource_path(
-            os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
-        )
+        self.web_root = resolver_web_root()
         self._kiosk_profile = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
         self._teclas = None
+        self.last_error = ""
 
     def iniciar(self, screen_index=None):
         try:
+            self.last_error = ""
             if screen_index is not None:
                 self.screen_index = screen_index
-            if not os.path.isdir(self.web_root):
+            self.web_root = resolver_web_root()
+            if not os.path.isfile(os.path.join(self.web_root or "", "index.html")):
+                self.last_error = (
+                    "Falta la cara web de la TV (index.html).\n"
+                    f"Buscada en:\n{self.web_root or '(sin ruta)'}"
+                )
                 logger.warning("Directorio web_root no encontrado: %s", self.web_root)
                 return False
             try:
@@ -246,6 +277,7 @@ class ServidorCuello:
             self._iniciar_teclas()
             return True
         except Exception as exc:
+            self.last_error = str(exc)
             logger.error("Error iniciando servidor: %s", exc)
             return False
 
