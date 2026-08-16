@@ -1,44 +1,50 @@
-/* Tarjeta principal del chef, extras y pronóstico del clima. */
+/* TV4: chef + recomendación con la misma familia visual del carrusel. */
 
-import { escapeHtml, formatMoney } from "../../shared/plata_y_texto.js";
-import { htmlBadgeClima } from "../componentes/badge_clima.js";
+import { escapeHtml, formatMoney, htmlDealStage, nombreVitrina } from "../../shared/plata_y_texto.js";
 import { htmlLoboChef } from "../componentes/lobo_chef.js";
-import { htmlMensajePersonalizado } from "../componentes/mensaje_personalizado.js";
-import { htmlRecomendacionDestacada } from "../componentes/recomendacion_destacada.js";
 
-export function htmlTarjetaChef(primero) {
-    return `
-        <article class="chef-pick">
-            <p class="chef-reason">${escapeHtml(primero.razon || "Recomendado ahora")}</p>
-            <h4 class="chef-name">${escapeHtml(primero.nombre)}</h4>
-            <p class="chef-price">${formatMoney(primero.precio)}</p>
-        </article>
-    `;
+function kickerClima(mensaje) {
+    const t = String(mensaje || "").toLowerCase();
+    if (t.includes("noche")) return "Esta noche";
+    if (t.includes("lluvia")) return "Día de lluvia";
+    if (t.includes("nublado")) return "Día nublado";
+    return "Del momento";
 }
 
-export function htmlTarjetaChefExtra(rec) {
-    return `
-        <article class="price-tile chef-tile">
-            <h5 class="price-tile__name">${escapeHtml(rec.nombre)}</h5>
-            <div class="price-tile__prices">
-                <strong class="price-tile__now">${formatMoney(rec.precio)}</strong>
-            </div>
-        </article>
-    `;
+function mensajeCorto(mensaje) {
+    const t = String(mensaje || "").toLowerCase();
+    if (t.includes("noche")) return "Para esta noche, llevá";
+    if (t.includes("lluvia")) return "Día de lluvia, llevá";
+    if (t.includes("nublado")) return "Día nublado, llevá";
+    return "Para este momento, llevá";
 }
 
 export function htmlPronosticoClima(climaData) {
-    const { icono, temperatura, mensaje, producto_recomendado, precio } = climaData;
-    
+    const { temperatura, mensaje, producto_recomendado, precio } = climaData || {};
+    const nombre = nombreVitrina(producto_recomendado || "Pollo entero");
+    const monto = Number(precio) > 0 ? formatMoney(precio).replace(/^\$\s*/, "") : "";
     return `
-        <article class="pronostico-card">
-            <div class="pronostico-header">
-                ${htmlBadgeClima(temperatura)}
-            </div>
-            <div class="pronostico-body">
+        <article class="chef-board">
+            <header class="rank-head sale-head">
+                <div>
+                    <p class="rank-kicker">⚡ CHEF</p>
+                    <h3 class="rank-title">${escapeHtml(kickerClima(mensaje))}</h3>
+                </div>
+                ${temperatura ? `<span class="chef-temp">${escapeHtml(temperatura)}</span>` : ""}
+            </header>
+            <div class="chef-hero">
                 ${htmlLoboChef()}
-                ${htmlMensajePersonalizado(mensaje)}
-                ${htmlRecomendacionDestacada(producto_recomendado, precio)}
+                <p class="chef-msg">${escapeHtml(mensajeCorto(mensaje))}</p>
+            </div>
+            <div class="chef-deal">
+                ${htmlDealStage({ nombre, icono_url: climaData?.icono_url, departamento: climaData?.departamento || nombre })}
+                <div class="deal-copy">
+                    <p class="deal-kicker">Recomendado</p>
+                    <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
+                    ${monto ? `<div class="deal-price-row">
+                        <strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>
+                    </div>` : ""}
+                </div>
             </div>
         </article>
     `;

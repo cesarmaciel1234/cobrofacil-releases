@@ -4,11 +4,12 @@ import { escapeHtml } from "../shared/plata_y_texto.js";
 import { htmlFilaPrecio } from "./tarjetas/fila_precio.js";
 import { htmlTarjetaPublicidad } from "./tarjetas/tarjeta_publicidad.js";
 
-const ORDEN_DEPTO = ["CARNE", "CARNES", "AVES", "CERDO", "EMBUTIDOS", "FIAMBRES", "ALMACEN"];
+const ORDEN_DEPTO = ["CARNE", "CARNES", "AVES", "CERDO", "EMBUTIDOS", "EMBUTIDO", "FIAMBRES", "ALMACEN"];
 
 function nombreDepto(item) {
     const raw = String(item.departamento || item.categoria || "GENERAL").trim().toUpperCase();
     if (raw === "CARNE") return "CARNES";
+    if (raw === "EMBUTIDO") return "EMBUTIDOS";
     return raw || "GENERAL";
 }
 
@@ -18,6 +19,9 @@ function agruparPorDepartamento(productos) {
         const depto = nombreDepto(item);
         if (!grupos.has(depto)) grupos.set(depto, []);
         grupos.get(depto).push(item);
+    }
+    for (const [, items] of grupos) {
+        items.sort((a, b) => Number(b.cantidad || 0) - Number(a.cantidad || 0));
     }
     return [...grupos.entries()].sort((a, b) => {
         const ia = ORDEN_DEPTO.indexOf(a[0]);
@@ -58,8 +62,9 @@ function armarCiclo(productos) {
         partes.push(htmlDepartamento(depto));
         let ranking = 0;
         for (const item of items) {
-            ranking += 1;
-            partes.push(htmlFilaPrecio(item, ranking, depto));
+            const vendido = Number(item.cantidad || 0) > 0;
+            if (vendido) ranking += 1;
+            partes.push(htmlFilaPrecio(item, vendido ? ranking : 0, depto));
             enBloque += 1;
             if (enBloque % 4 === 0 && ads.length) {
                 const { ad, next } = siguienteAd(ads, adIndex, item);

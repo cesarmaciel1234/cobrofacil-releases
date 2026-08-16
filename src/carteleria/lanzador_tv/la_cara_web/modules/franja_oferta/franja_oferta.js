@@ -6,6 +6,8 @@ import {
     esOferta,
     escapeHtml,
     formatMoney,
+    htmlDealStage,
+    nombreVitrina,
     precioVigente,
     unidadProducto,
 } from "../shared/plata_y_texto.js";
@@ -81,8 +83,7 @@ function htmlDealCard(producto, { ad }) {
     const pct = descuentoPct(producto.precio, vigente);
     const unidad = unidadProducto(producto);
     const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
-    const nombre = String(producto.nombre || "Destacado");
-    const letra = (nombre.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/) || ["•"])[0].toUpperCase();
+    const nombre = nombreVitrina(producto.nombre || "Destacado");
     const esAd = Boolean(ad || producto.slot_ad);
     const vendidos = Number(producto.veces || producto.cantidad || producto.vendidos || 0);
     const stock = Number(producto.stock || 0);
@@ -98,11 +99,7 @@ function htmlDealCard(producto, { ad }) {
     const clave = claveTimer(producto, esAd);
     return `
         <article class="tv-card oferta-card is-deal${enOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}">
-            <div class="deal-stage" data-tone="${escapeHtml(tonoDepto(producto))}">
-                <span class="deal-stage__letter">${escapeHtml(letra)}</span>
-                <span class="deal-stage__off">${escapeHtml(offLabel)}</span>
-                <span class="deal-stage__bolt" aria-hidden="true">⚡</span>
-            </div>
+            ${htmlDealStage(producto, { off: offLabel })}
             <div class="deal-copy">
                 <p class="deal-kicker">${escapeHtml(kicker)}</p>
                 <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
@@ -123,14 +120,6 @@ function htmlDealCard(producto, { ad }) {
             </div>
         </article>
     `;
-}
-
-function tonoDepto(item) {
-    const d = `${item?.departamento || ""} ${item?.categoria || ""} ${item?.nombre || ""}`.toLowerCase();
-    if (/ave|pollo|pavo|gallina/.test(d)) return "aves";
-    if (/cerdo|bondiola|chorizo|lech[oó]n|jam[oó]n/.test(d)) return "cerdo";
-    if (/almac[eé]n|fideo|aceite|arroz|bebida|l[aá]cteo/.test(d)) return "almacen";
-    return "carnes";
 }
 
 const DURACIONES_MIN = [5, 10, 15, 30];

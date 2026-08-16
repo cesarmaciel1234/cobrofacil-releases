@@ -748,6 +748,7 @@ class DatabaseManager:
         add_column_if_not_exists('productos', 'limite_oferta_relampago', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'ventas_oferta_relampago', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
+        add_column_if_not_exists('productos', 'icono', 'TEXT')
         
         # Verificar columnas de ventas
         add_column_if_not_exists('ventas', 'pago_con', 'REAL DEFAULT 0')

@@ -3,6 +3,7 @@ import threading
 import socket
 import os
 import hashlib
+from decimal import Decimal
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
 from src.base_de_datos.database import db_manager
@@ -19,12 +20,25 @@ def stop_lan_server():
     if _http_server_instance:
         threading.Thread(target=_http_server_instance.shutdown, daemon=True).start()
 
+def _json_safe(value):
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, (bytes, bytearray)):
+        return value.decode("utf-8", "replace")
+    if hasattr(value, "keys") and not isinstance(value, dict):
+        try:
+            return {k: value[k] for k in value.keys()}
+        except Exception:
+            pass
+    return str(value)
+
+
 class LANRequestHandler(BaseHTTPRequestHandler):
     def _send_response(self, status, data):
         self.send_response(status)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
+        self.wfile.write(json.dumps(data, ensure_ascii=False, default=_json_safe).encode('utf-8'))
 
     def do_POST(self):
         if self.path == '/api/guardar_venta':
@@ -111,6 +125,18 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 logger.error(f"Error procesando /api/set_master: {e}")
                 self._send_response(500, {"status": "error", "message": str(e)})
+
+        elif self.path == '/api/carteleria/config_update':
+            try:
+                content_length = int(self.headers.get('Content-Length', 0))
+                post_data = self.rfile.read(content_length).decode('utf-8')
+                data = json.loads(post_data)
+                for key, val in data.items():
+                    config.set(key, val)
+                config.save()
+                self._send_response(200, {"status": "success"})
+            except Exception as e:
+                self._send_response(500, {"error": str(e)})
         else:
             self._send_response(404, {"status": "not_found"})
 
@@ -176,11 +202,18 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
                 
                 # SOS
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) ORDER BY {rand_func} LIMIT 1"
+                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
                 oferta_sos = db_manager.execute_query(sos_query)
                 
-                # Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio > 0 ORDER BY categoria"
+                # Precios (mismas columnas que DbSyncWorker: PNG + departamento)
+                precios_query = (
+                    "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, "
+                    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, unidad, "
+                    "es_pesable, departamento, icono FROM productos WHERE precio > 0 "
+                    "AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                    "AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    "ORDER BY categoria"
+                )
                 rows_precios = db_manager.execute_query(precios_query)
                 
                 # Top Ventas Reales (Hoy, Semana, Mes)
@@ -257,26 +290,6 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             # Alias: cartelería esclava pedía el JSON plano (código viejo)
             self.path = "/api/carteleria/data"
             return self.do_GET()
-        else:
-            self._send_response(404, {"status": "not_found"})
-
-    def do_POST(self):
-        if self.path == '/api/carteleria/config_update':
-            try:
-                import json
-                from src.config import config
-                
-                content_length = int(self.headers.get('Content-Length', 0))
-                post_data = self.rfile.read(content_length).decode('utf-8')
-                data = json.loads(post_data)
-                
-                for key, val in data.items():
-                    config.set(key, val)
-                
-                config.save()
-                self._send_response(200, {"status": "success"})
-            except Exception as e:
-                self._send_response(500, {"error": str(e)})
         else:
             self._send_response(404, {"status": "not_found"})
 

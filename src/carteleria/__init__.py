@@ -1,8 +1,11 @@
 """Módulo de cartelería digital (monitor secundario)."""
 
-# Import lazy — no cargar CarteleriaMain al importar el paquete.
-def _get_main():
-    from src.carteleria.motor_carteleria.main_board import CarteleriaMain
-    return CarteleriaMain
+
+def __getattr__(name):
+    if name == "CarteleriaMain":
+        from src.carteleria.el_cuello import CarteleriaMain
+        return CarteleriaMain
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ["CarteleriaMain"]

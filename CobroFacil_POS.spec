@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/ui_components', 'src/ui_components'), ('src/assets', 'src/assets'), ('src/carteleria/assets', 'src/carteleria/assets'), ('Catalogos/iconos_rubros', 'Catalogos/iconos_rubros')],
+    datas=[('src/ui_components', 'src/ui_components'), ('src/assets', 'src/assets'), ('src/carteleria/assets', 'src/carteleria/assets'), ('Catalogos', 'Catalogos')],
     hiddenimports=['pymysql', 'reportlab.graphics.barcode.code93', 'reportlab.graphics.barcode.code128', 'reportlab.graphics.barcode.code39', 'reportlab.graphics.barcode.eanbc', 'lxml', 'html5lib', 'openpyxl', 'reportlab.graphics.barcode.qr', 'reportlab.graphics.barcode.dmtx', 'reportlab.graphics.barcode.ecc200datamatrix', 'reportlab.graphics.barcode.fourstate', 'reportlab.graphics.barcode.lto', 'reportlab.graphics.barcode.qrencoder', 'reportlab.graphics.barcode.usps', 'reportlab.graphics.barcode.usps4s', 'reportlab.graphics.barcode.widgets', 'reportlab.graphics.barcode.common'],
     hookspath=[],
     hooksconfig={},

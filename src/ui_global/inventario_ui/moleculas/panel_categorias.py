@@ -161,10 +161,10 @@ class PanelCategorias(QWidget):
 
     def _actualizar_preview_icono(self, filename):
         if filename:
-            import os
             from PyQt6.QtGui import QPixmap
-            fpath = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros", filename)
-            if os.path.exists(fpath):
+            from src.carteleria.assets_paths import ruta_archivo_icono
+            fpath = ruta_archivo_icono(filename)
+            if fpath:
                 pm = QPixmap(fpath)
                 if not pm.isNull():
                     self.lbl_preview_icono.setPixmap(pm.scaled(42, 42, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))

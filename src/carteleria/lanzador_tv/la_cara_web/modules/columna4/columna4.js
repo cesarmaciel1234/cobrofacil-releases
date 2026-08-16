@@ -1,6 +1,7 @@
 /* Columna 4: lobo chef + clima + recomendación del momento. */
 
 import { htmlPronosticoClima } from "./tarjetas/tarjeta_chef.js";
+import { nombreVitrina } from "../shared/plata_y_texto.js";
 
 function esNoche() {
     const hora = new Date().getHours();
@@ -20,6 +21,13 @@ function climaVisible(climaData, ia) {
     };
 }
 
-export function renderColumna4(ia, root, climaData = null) {
-    root.innerHTML = htmlPronosticoClima(climaVisible(climaData, ia));
+export function renderColumna4(ia, root, climaData = null, productos = []) {
+    const data = { ...climaVisible(climaData, ia) };
+    const clave = nombreVitrina(data.producto_recomendado).toLowerCase();
+    const hit = (productos || []).find((item) => nombreVitrina(item.nombre).toLowerCase() === clave);
+    if (hit) {
+        data.icono_url = hit.icono_url || data.icono_url;
+        data.departamento = hit.departamento || hit.categoria || data.departamento;
+    }
+    root.innerHTML = htmlPronosticoClima(data);
 }

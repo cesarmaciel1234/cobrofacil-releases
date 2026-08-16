@@ -1,91 +1,122 @@
-import os
 import json
-import socket
-import urllib.request
+import os
 import logging
+import urllib.request
+from decimal import Decimal
+
 from PyQt6.QtCore import QThread, pyqtSignal
 from src.config import config
 from src.utils.paths import get_base_path
-from src.central_red_global.network_engine import get_network_engine
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
+PRECIOS_SELECT = (
+    "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, "
+    "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, unidad, "
+    "es_pesable, departamento, icono FROM productos WHERE precio > 0 "
+    "AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+    "AND LOWER(nombre) NOT LIKE '%venta libre%' "
+    "ORDER BY categoria"
+)
+
+
+def _json_default(value):
+    if isinstance(value, Decimal):
+        return float(value)
+    if hasattr(value, "keys") and not isinstance(value, dict):
+        try:
+            return {k: value[k] for k in value.keys()}
+        except Exception:
+            pass
+    return str(value)
+
+
 class DbSyncWorker(QThread):
-    sync_finished = pyqtSignal(dict, str) # data, status (online/offline/error)
-    
+    sync_finished = pyqtSignal(dict, str)  # data, status (online/offline/error)
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
+    def _emit(self, data, status):
+        if self.isInterruptionRequested():
+            return
+        self.sync_finished.emit(data or {}, status)
+
+    def _guardar_cache(self, cache_path, data):
+        try:
+            with open(cache_path, "w", encoding="utf-8") as handle:
+                json.dump(data, handle, ensure_ascii=False, default=_json_default)
+        except Exception as exc:
+            logger.warning("No se pudo guardar la caché de cartelería: %s", exc)
+
+    def _leer_http_maestra(self, master_ip):
+        for url in (
+            f"http://{master_ip}:8000/api/carteleria/data",
+            f"http://{master_ip}:8000/carteleria_cache.json",
+        ):
+            if self.isInterruptionRequested():
+                return None
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Carteleria"})
+                with urllib.request.urlopen(req, timeout=3) as response:
+                    if response.status != 200:
+                        continue
+                    data = json.loads(response.read().decode("utf-8"))
+                if not isinstance(data, dict) or data.get("error") or not data.get("precios"):
+                    continue
+                logger.info("Cartelería sync HTTP %s (%s ítems)", url, len(data.get("precios") or []))
+                return data
+            except Exception as exc:
+                logger.debug("Sync cartelería HTTP %s: %s", url, exc)
+        return None
+
     def run(self):
         try:
-            import json
-            import os
-            from src.utils.paths import get_base_path
             from src.base_de_datos.database import db_manager
-            
+
             cache_path = os.path.join(get_base_path(), "carteleria_cache.json")
-            data = None
-            
-            from src.config import config
+
             is_master_node = getattr(db_manager, "is_master", False) or getattr(db_manager, "mode", "") == "maestro"
-            _host = str(config.get("db_host", "") or "").strip()
-            _host_l = _host.lower()
-            is_remote_host = bool(_host) and _host_l not in ("localhost", "127.0.0.1")
+            host = str(config.get("db_host", "") or "").strip()
+            host_l = host.lower()
+            is_remote_host = bool(host) and host_l not in ("localhost", "127.0.0.1")
             is_slave = (not is_master_node) and (
                 is_remote_host or bool(config.get("carteleria_is_slave", False))
             )
-            master_ip = (_host if is_remote_host else "") or config.get("carteleria_master_ip", "")
-            
+            master_ip = (host if is_remote_host else "") or config.get("carteleria_master_ip", "")
+
             if is_slave and master_ip:
-                # Servidor de Tienda (sin cajero): /api/carteleria/data
-                # Compat vieja: /carteleria_cache.json
-                for url in (
-                    f"http://{master_ip}:8000/api/carteleria/data",
-                    f"http://{master_ip}:8000/carteleria_cache.json",
-                ):
-                    try:
-                        import urllib.request
-                        req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Carteleria"})
-                        with urllib.request.urlopen(req, timeout=3) as response:
-                            if response.status == 200:
-                                data = json.loads(response.read().decode("utf-8"))
-                                if isinstance(data, dict) and data.get("error"):
-                                    continue
-                                with open(cache_path, "w", encoding="utf-8") as f:
-                                    json.dump(data, f, ensure_ascii=False)
-                                self.sync_finished.emit(data, "online")
-                                return
-                    except Exception as e_net:
-                        logger.debug(f"Sync cartelería HTTP {url}: {e_net}")
-                # Si la API falla, sigue con MariaDB remota / caché local
-                    
+                data = self._leer_http_maestra(master_ip)
+                if data:
+                    self._guardar_cache(cache_path, data)
+                    self._emit(data, "online")
+                    return
+
             try:
-                # 1. Config (Intentar cargar desde DB Global primero)
-                db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+                db_manager.execute_query(
+                    "CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)"
+                )
                 rows_cfg = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
-                
+
                 cfg_data = {}
                 if rows_cfg:
                     cfg_str = rows_cfg[0][0] if isinstance(rows_cfg[0], tuple) else rows_cfg[0].get("config_json")
                     cfg_data = json.loads(cfg_str)
                 else:
-                    # Fallback a local config.json si no hay nada en DB
                     config_path = os.path.join(get_base_path(), "config.json")
                     if os.path.exists(config_path):
-                        with open(config_path, "r", encoding="utf-8") as f:
-                            cfg_data = json.load(f)
-                
+                        with open(config_path, "r", encoding="utf-8") as handle:
+                            cfg_data = json.load(handle)
+
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
 
                 def _q(sql):
-                    """Query con fallback si faltan columnas de oferta (SQLite viejo)."""
                     db_manager.last_error = ""
                     rows = db_manager.execute_query(sql)
                     err = str(getattr(db_manager, "last_error", "") or "").lower()
                     if rows is not None and "no such column" not in err:
                         return list(rows) if rows else []
-                    # Schema viejo / offline
                     if "precio_oferta_relampago > 0" in sql:
                         return []
                     simple = (
@@ -108,91 +139,88 @@ class DbSyncWorker(QThread):
                         return list(db_manager.execute_query(simple) or [])
                     except Exception:
                         return []
-                
-                # 2. SOS (Soporta múltiples ofertas relámpago rotativas)
-                sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
+
+                sos_query = (
+                    f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    f"cant_oferta, tipo_unidad_oferta, stock FROM productos "
+                    f"WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) "
+                    f"AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                    f"AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    f"ORDER BY {rand_func} LIMIT 10"
+                )
                 oferta_sos = _q(sos_query)
-                
-                # 3. Precios
-                precios_query = "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, unidad, es_pesable, departamento FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY categoria"
-                rows_precios = _q(precios_query)
-                
-                # Top Ventas (Simplificado para el sync, la UI ya usa motor_ventas)
-                top_dict = {"hoy": [], "semana": [], "mes": []}
-                fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
-                top_dict["hoy"] = _q(fallback_q)
-                top_dict["semana"] = top_dict["hoy"]
-                top_dict["mes"] = top_dict["hoy"]
-                
+                rows_precios = _q(PRECIOS_SELECT)
+
+                fallback_q = (
+                    f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, "
+                    f"cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 "
+                    f"AND LOWER(nombre) NOT LIKE '%articulo comun%' "
+                    f"AND LOWER(nombre) NOT LIKE '%venta libre%' "
+                    f"ORDER BY {rand_func} LIMIT 10"
+                )
+                top_hoy = _q(fallback_q)
+                top_dict = {"hoy": top_hoy, "semana": top_hoy, "mes": top_hoy}
+
                 def _to_serializable(rows):
                     res = []
-                    if not rows: return res
-                    for r in rows:
-                        if isinstance(r, dict):
-                            res.append(dict(r))
-                        elif hasattr(r, "_mapping"):
-                            res.append(dict(r._mapping))
-                        elif hasattr(r, "keys") and callable(r.keys):
+                    if not rows:
+                        return res
+                    for row in rows:
+                        if isinstance(row, dict):
+                            res.append(dict(row))
+                        elif hasattr(row, "_mapping"):
+                            res.append(dict(row._mapping))
+                        elif hasattr(row, "keys") and callable(row.keys):
                             try:
-                                res.append({k: r[k] for k in r.keys()})
+                                res.append({k: row[k] for k in row.keys()})
                             except Exception:
-                                res.append(list(r))
-                        elif isinstance(r, (list, tuple)):
-                            res.append(list(r))
+                                res.append(list(row))
+                        elif isinstance(row, (list, tuple)):
+                            res.append(list(row))
                         else:
                             try:
-                                res.append(dict(r))
+                                res.append(dict(row))
                             except Exception:
-                                res.append(str(r))
+                                res.append(str(row))
                     return res
-                
+
                 oferta_sos = _to_serializable(oferta_sos)
                 rows_precios = _to_serializable(rows_precios)
                 top_dict["hoy"] = _to_serializable(top_dict["hoy"])
                 top_dict["semana"] = top_dict["hoy"]
                 top_dict["mes"] = top_dict["hoy"]
-                
-                response_data = {
+
+                data = {
                     "config": {
                         "business_name": cfg_data.get("business_name", "Carnicería"),
                         "phone": cfg_data.get("phone", "No disponible"),
                         "carteleria_rotacion": cfg_data.get("carteleria_rotacion", 15),
                         "carteleria_tiempo_sos": cfg_data.get("carteleria_tiempo_sos", 10),
                         "carteleria_frec_sos": cfg_data.get("carteleria_frec_sos", 2),
-                        "mensaje_zocalo": cfg_data.get("mensaje_zocalo", "")
+                        "mensaje_zocalo": cfg_data.get("mensaje_zocalo", ""),
                     },
                     "sos": oferta_sos,
                     "precios": rows_precios,
-                    "top10": top_dict
+                    "top10": top_dict,
                 }
-                
-                data = response_data
-                
-                # Guardar caché
-                try:
-                    with open(cache_path, "w", encoding="utf-8") as f:
-                        json.dump(data, f, ensure_ascii=False)
-                except Exception as e:
-                    logger.warning(f"No se pudo guardar la caché de cartelería: {e}")
-                self.sync_finished.emit(data, "online")
-                
+                logger.info("Cartelería sync MariaDB/local (%s ítems)", len(rows_precios))
+                self._guardar_cache(cache_path, data)
+                self._emit(data, "online")
+
             except Exception as e_req:
-                logger.warning(f"Error DB directa ({e_req}), intentando leer caché offline...")
+                logger.warning("Error DB directa (%s), intentando caché offline...", e_req)
                 try:
-                    with open(cache_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                    if not self.isInterruptionRequested():
-                        self.sync_finished.emit(data, "offline")
+                    with open(cache_path, "r", encoding="utf-8") as handle:
+                        data = json.load(handle)
+                    self._emit(data, "offline")
                 except Exception as e_cache:
-                    logger.error(f"Fallo al leer caché offline: {e_cache}")
-                    if not self.isInterruptionRequested():
-                        self.sync_finished.emit({}, "error")
+                    logger.error("Fallo al leer caché offline: %s", e_cache)
+                    self._emit({}, "error")
         except RuntimeError:
             pass
-        except Exception as e:
-            logger.warning(f"Error general en DbSyncWorker: {e}")
+        except Exception as exc:
+            logger.warning("Error general en DbSyncWorker: %s", exc)
             try:
-                if not self.isInterruptionRequested():
-                    self.sync_finished.emit({}, "error")
+                self._emit({}, "error")
             except RuntimeError:
                 pass

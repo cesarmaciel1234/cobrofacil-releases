@@ -1,6 +1,6 @@
 /* Columna 3: venta cruzada rotando con ofertas relámpago. */
 
-import { esOferta } from "../shared/plata_y_texto.js";
+import { esOferta, nombreVitrina } from "../shared/plata_y_texto.js";
 import { htmlTarjetaCruzada } from "./tarjetas/tarjeta_cruzada.js";
 import { htmlTarjetaRelampago } from "./tarjetas/tarjeta_relampago.js";
 
@@ -9,11 +9,11 @@ const ROTACION_MS = 7000;
 let rotacionTimer = null;
 let rotacionIndex = 0;
 let slidesCache = [];
+let productosCache = [];
 let rootRef = null;
 
 function tituloPregunta(nombre) {
-    const texto = String(nombre || "").trim();
-    return (texto.toLowerCase().startsWith("oferta ") ? texto.slice(7) : texto).toUpperCase() || "ESTO";
+    return nombreVitrina(nombre).toUpperCase() || "ESTO";
 }
 
 function cruzadasDesdeProductos(productos) {
@@ -81,7 +81,7 @@ function slidesColumna3(state) {
 }
 
 function htmlSlide(slide) {
-    if (slide.tipo === "cruzada") return htmlTarjetaCruzada(slide);
+    if (slide.tipo === "cruzada") return htmlTarjetaCruzada(slide, productosCache);
     return htmlTarjetaRelampago(slide);
 }
 
@@ -106,6 +106,7 @@ function pintar(conFade) {
 
 export function iniciarRotacionColumna3(state, root) {
     rootRef = root;
+    productosCache = state.productos || [];
     const slides = slidesColumna3(state);
     const firma = JSON.stringify(slides.map((s) => [s.tipo, s.nombre || s.pregunta]));
     const misma = firma === JSON.stringify(slidesCache.map((s) => [s.tipo, s.nombre || s.pregunta]));

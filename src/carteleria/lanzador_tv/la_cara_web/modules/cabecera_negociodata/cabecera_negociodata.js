@@ -27,11 +27,11 @@ export function actualizarReloj(els) {
     }
     if (els.flashCountdown) {
         const fin = new Date(now);
-        fin.setHours(24, 0, 0, 0);
+        const nextBlock = Math.floor(now.getMinutes() / 30) * 30 + 30;
+        fin.setMinutes(nextBlock, 0, 0);
         const ms = Math.max(0, fin - now);
-        const h = String(Math.floor(ms / 3600000)).padStart(2, "0");
-        const m = String(Math.floor((ms % 3600000) / 60000)).padStart(2, "0");
+        const m = String(Math.floor(ms / 60000)).padStart(2, "0");
         const s = String(Math.floor((ms % 60000) / 1000)).padStart(2, "0");
-        els.flashCountdown.textContent = `${h}:${m}:${s}`;
+        els.flashCountdown.textContent = `${m}:${s}`;
     }
 }

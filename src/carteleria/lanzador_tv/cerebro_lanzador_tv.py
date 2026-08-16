@@ -46,6 +46,9 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/api/"):
             self.handle_api()
             return
+        if self.path.startswith("/iconos/"):
+            self._serve_icono()
+            return
         return super().do_GET()
 
     def do_POST(self):
@@ -57,6 +60,41 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
+
+    def _serve_icono(self):
+        from urllib.parse import unquote, urlparse
+        from src.carteleria.assets_paths import ruta_archivo_icono
+
+        name = os.path.basename(unquote(urlparse(self.path).path))
+        if not name or name in (".", "..") or ".." in name:
+            self.send_error(404)
+            return
+        ext = os.path.splitext(name)[1].lower()
+        tipos = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }
+        if ext not in tipos:
+            self.send_error(404)
+            return
+        full = ruta_archivo_icono(name)
+        if not full:
+            self.send_error(404)
+            return
+        try:
+            with open(full, "rb") as handle:
+                data = handle.read()
+        except OSError:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", tipos[ext])
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def handle_api(self):
         if self.path == "/api/state":
@@ -134,9 +172,15 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return {"config": {}, "precios": []}
 
     def _get_precios(self):
+        precios = []
         if self.main_window and hasattr(self.main_window, "rows_precios"):
-            return self.main_window.rows_precios or []
-        return []
+            precios = self.main_window.rows_precios or []
+        try:
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+            enriquecer_iconos(precios)
+        except Exception:
+            pass
+        return precios
 
     def log_message(self, format, *args):
         pass

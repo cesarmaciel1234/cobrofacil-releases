@@ -38,14 +38,57 @@ def carteleria_asset_url(filename: str) -> str:
         return path.replace("\\", "/")
 
 
-def iconos_rubros_dir() -> str:
-    """Carpeta Catalogos/iconos_rubros (empaquetada o junto al .exe)."""
+def catalogos_dir() -> str:
+    """Carpeta única de PNG: departamentos y productos (Catalogos/)."""
     candidates = [
-        get_resource_path(os.path.join("Catalogos", "iconos_rubros")),
-        os.path.join(get_base_path(), "Catalogos", "iconos_rubros"),
-        os.path.join(os.getcwd(), "Catalogos", "iconos_rubros"),
+        os.path.join(get_base_path(), "Catalogos"),
+        os.path.join(os.getcwd(), "Catalogos"),
+        get_resource_path("Catalogos"),
     ]
     for path in candidates:
         if path and os.path.isdir(path):
             return path
-    return candidates[0]
+    dest = candidates[0]
+    try:
+        os.makedirs(dest, exist_ok=True)
+    except OSError:
+        pass
+    return dest
+
+
+def iconos_rubros_dir() -> str:
+    """Alias: rubros y productos viven en Catalogos/."""
+    return catalogos_dir()
+
+
+def png_productos_dir() -> str:
+    """Alias: rubros y productos viven en Catalogos/."""
+    return catalogos_dir()
+
+
+def _carpetas_icono():
+    raiz = catalogos_dir()
+    folders = [raiz]
+    for sub in ("iconos_rubros", "png_productos"):
+        folders.append(os.path.join(raiz, sub))
+    return folders
+
+
+def ruta_archivo_icono(filename: str) -> str:
+    """Busca el PNG en Catalogos/ (con fallback a subcarpetas viejas)."""
+    name = os.path.basename(str(filename or "").replace("\\", "/").strip())
+    if not name or name in (".", "..") or ".." in name:
+        return ""
+    for folder in _carpetas_icono():
+        if not folder or not os.path.isdir(folder):
+            continue
+        full = os.path.normpath(os.path.join(folder, name))
+        raiz = os.path.normpath(folder)
+        try:
+            if os.path.commonpath([full, raiz]) != raiz:
+                continue
+        except ValueError:
+            continue
+        if os.path.isfile(full):
+            return full
+    return ""

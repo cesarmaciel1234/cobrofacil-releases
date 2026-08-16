@@ -95,7 +95,7 @@ async function fetchState() {
         iniciarRotacionColumna1(state, els.content1);
         renderColumna2(state.productos, els.content2);
         iniciarRotacionColumna3(state, els.content3);
-        renderColumna4(state.ia, els.content4, state.climaData);
+        renderColumna4(state.ia, els.content4, state.climaData, state.productos);
         renderMensajeZocalo(state.config, els.marquee);
 
         if (state.isLoading) {

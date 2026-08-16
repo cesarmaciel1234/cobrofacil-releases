@@ -35,6 +35,7 @@ def _producto(row):
             "es_pesable": row.get("es_pesable") or 0,
             "departamento": row.get("departamento") or row.get("categoria") or "",
             "categoria": row.get("categoria") or "",
+            "icono": row.get("icono") or "",
             "es_publicidad": False,
         }
     row = list(row) if isinstance(row, (list, tuple)) else []
@@ -117,6 +118,11 @@ class PreviewWindow:
             data = {}
         productos = [_producto(row) for row in data.get("precios", [])]
         try:
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+            enriquecer_iconos(productos)
+        except Exception:
+            pass
+        try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
             motor_publicidad.cargar_configuracion()
             for item in productos:
@@ -133,11 +139,14 @@ class PreviewWindow:
             from src.carteleria.motor_carteleria.estado_tv import armar_rotacion_destacados
             rotacion = armar_rotacion_destacados(productos)
         except Exception:
-            rotacion = [
-                {"id": "elegidos", "titulo": "Más vendidos", "subtitulo": "En tickets", "items": top},
-                {"id": "volumen", "titulo": "Mega volumen", "subtitulo": "En kilos", "items": list(reversed(top)) or top},
-                {"id": "recomendados", "titulo": "Recomendados", "subtitulo": "Al azar", "items": ofertas[:5] or top},
-            ] if top else []
+            rotacion = []
+        if not rotacion and top:
+            rotacion = [{
+                "id": "carta",
+                "titulo": "Carta del local",
+                "subtitulo": "Precios vigentes",
+                "items": top,
+            }]
         self._state = {
             "config": {
                 "business_name": "MACIEL CARNICERIA",

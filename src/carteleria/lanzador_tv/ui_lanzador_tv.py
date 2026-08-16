@@ -210,6 +210,7 @@ class CarteleriaMainTV(QWidget):
                 "es_pesable": row.get("es_pesable") or 0,
                 "departamento": row.get("departamento") or row.get("categoria", "") or "",
                 "categoria": row.get("categoria", "") or "", "stock": num(row.get("stock")),
+                "icono": row.get("icono") or "",
                 "es_publicidad": False,
             }
         row = list(row) if isinstance(row, (list, tuple)) else []
@@ -281,6 +282,13 @@ class CarteleriaMainTV(QWidget):
             business_name, phone, theme, mensaje = "Cartelería", "", self._theme_name, ""
         if not mensaje:
             mensaje = f"{business_name} • {self._clima} • Ofertas sujetas a stock •"
+        try:
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+            enriquecer_iconos(self.rows_precios)
+        except Exception:
+            pass
+        if not self._paneles or not self._paneles.get("rotacion"):
+            self._refrescar_paneles()
         return {
             "config": {
                 "business_name": business_name, "phone": phone,

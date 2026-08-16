@@ -168,8 +168,8 @@ body {
 .recomendacion-precio-full {
     font-size: 36px;
     font-weight: 900;
-    color: #FF0000;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    color: #FFFFFF;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
 }
 
 .header-right {
@@ -284,6 +284,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.45vw;
+    z-index: 2;
 }
 
 .flash-strip__hot {
@@ -384,6 +385,7 @@ body {
     width: max-content;
     height: 100%;
     will-change: transform;
+    contain: layout style paint;
 }
 
 .oferta-card {
@@ -437,6 +439,22 @@ body {
     text-shadow: 0 6px 16px rgba(140, 40, 0, 0.28);
     line-height: 1;
     letter-spacing: -0.06em;
+    z-index: 0;
+}
+
+.deal-stage__img {
+    position: absolute;
+    inset: 14%;
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+    z-index: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 14px rgba(80, 30, 0, 0.28));
+}
+
+.deal-stage:has(.deal-stage__img) .deal-stage__letter.has-img {
+    display: none;
 }
 
 .deal-stage__off {
@@ -571,28 +589,12 @@ body {
     font-weight: 800;
 }
 
-/* Smooth animations with reduced motion support */
-@media (prefers-reduced-motion: no-preference) {
-    .oferta-card {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-                    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .oferta-card:hover {
-        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-                    box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-}
-
+/* Carrusel de TV: sin hover, no hay mouse. */
 @media (prefers-reduced-motion: reduce) {
     .oferta-card {
         transition: none;
     }
-    
-    .oferta-card:hover {
-        transform: none;
-    }
-    
+
     .flash-strip__track {
         animation: none;
     }
@@ -771,11 +773,6 @@ body {
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-}
-
-.oferta-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(28, 16, 0, 0.14);
 }
 
 .oferta-badge {
@@ -1167,21 +1164,9 @@ body {
     line-height: 1;
 }
 
-.column-4 .column-body {
-    padding: 0.7vw;
-}
-
-.column-4 .pronostico-card {
-    height: 100%;
-    margin: 0;
-    border: 0;
-    box-shadow: none;
-    background: transparent;
-}
-
-.column-4 .chef-lobo-img {
-    width: clamp(140px, 18vh, 240px);
-    height: clamp(140px, 18vh, 240px);
+.tv-4 .chef-lobo-img {
+    width: clamp(78px, 12vh, 150px);
+    height: clamp(78px, 12vh, 150px);
 }
 
 .hero-price {
@@ -1362,6 +1347,11 @@ body {
     text-overflow: ellipsis;
 }
 
+.rank-card.is-ad .rank-tag {
+    background: #FF6A00;
+    color: #FFFFFF;
+}
+
 .rank-name {
     margin: 0;
     font-family: var(--font-display);
@@ -1409,7 +1399,7 @@ body {
     line-height: 1.4;
 }
 
-.column-2 .price-ticker {
+.tv-2 .price-ticker {
     flex: 1;
     min-height: 0;
 }
@@ -1426,6 +1416,8 @@ body {
     display: flex;
     flex-direction: column;
     animation: price-ticker-scroll var(--price-scroll-duration, 60s) linear infinite;
+    will-change: transform;
+    contain: layout style paint;
 }
 
 @keyframes price-ticker-scroll {
@@ -1545,6 +1537,15 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.price-row__rule {
+    margin: 0.2vh 0 0;
+    font-size: clamp(0.55rem, 0.75vw, 0.68rem);
+    font-weight: 700;
+    color: #9A3412;
+    line-height: 1.2;
+    text-transform: none;
 }
 
 .price-row__prices {
@@ -1701,190 +1702,167 @@ body {
     color: #059669;
 }
 
-.tv-3 .column-body {
-    padding: 0.35vw;
+.tv-3 .column-body,
+.tv-4 .column-body {
+    padding: 1.15vh 0.95vw 1.05vh;
 }
 
 .xsell-card,
-.flash-offer {
+.flash-offer,
+.chef-board {
     height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: #FFFFFF;
-    border-radius: 18px;
-    padding: 1.4vh 1vw;
-    box-sizing: border-box;
-}
-
-.xsell-card {
-    border: 5px solid #FFE566;
-    box-shadow: inset 0 0 0 3px #FF6A00;
+    gap: 0.75vh;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    box-shadow: none;
 }
 
 .xsell-ask {
     margin: 0;
+    padding: 0.15vh 0.15vw;
     font-family: var(--font-display);
-    font-size: clamp(1.35rem, 2.2vw, 2.05rem);
+    font-size: clamp(1.15rem, 1.85vw, 1.6rem);
     font-weight: 900;
     letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1.12;
     color: #111111;
     text-transform: uppercase;
-}
-
-.xsell-cta {
-    margin: 1.6vh 0 1.4vh;
-    width: 100%;
-    background: #DC2626;
-    color: #FFFFFF;
-    border-radius: 8px;
-    padding: 0.7vh 0.4vw;
-    font-size: clamp(0.82rem, 1.15vw, 1.05rem);
-    font-weight: 800;
-    letter-spacing: 0.04em;
 }
 
 .xsell-list {
     margin: 0;
     padding: 0;
     list-style: none;
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.9vh;
+    justify-content: space-evenly;
+    gap: 0.55vh;
 }
 
-.xsell-list li {
-    font-size: clamp(1.05rem, 1.55vw, 1.4rem);
-    font-weight: 800;
-    color: #2563EB;
-    letter-spacing: 0.02em;
+.xsell-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7vw;
+    flex: 1 1 0;
+    min-height: 0;
+    padding: 0.7vh 0.75vw;
+    background: #FFF8E8;
+    border-radius: 14px;
 }
 
-.xsell-list li::before {
-    content: "• ";
+.xsell-item__stage {
+    flex: 0 0 3.8vw;
+    min-width: 48px;
+    height: clamp(48px, 7.4vh, 64px);
+    border-radius: 12px;
 }
 
-.flash-offer {
-    border: 6px solid #FF6A00;
-    gap: 0.85vh;
+.xsell-item__stage .deal-stage__letter {
+    font-size: clamp(1.15rem, 1.8vw, 1.55rem);
 }
 
-.flash-offer__badge {
-    margin: 0;
-    background: #DC2626;
-    color: #FFFFFF;
-    border-radius: 10px;
-    padding: 0.45vh 0.9vw;
-    font-size: clamp(0.72rem, 1.05vw, 0.92rem);
-    font-weight: 800;
-    letter-spacing: 0.08em;
-}
-
-.flash-offer__name {
-    margin: 0.4vh 0 0;
+.xsell-item__name {
+    min-width: 0;
     font-family: var(--font-display);
-    font-size: clamp(1.7rem, 2.8vw, 2.6rem);
+    font-size: clamp(0.95rem, 1.45vw, 1.28rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #111111;
+    line-height: 1.1;
+}
+
+.flash-offer__deal,
+.chef-deal {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(28, 16, 0, 0.10);
+}
+
+.flash-offer__stage {
+    flex: 1 1 48%;
+    min-height: 0;
+    width: 100%;
+    border-radius: 0;
+}
+
+.flash-offer__copy {
+    flex: 0 0 auto;
+    padding: 1vh 1vw 1.15vh;
+    justify-content: flex-end;
+}
+
+.flash-offer .tv-card__now,
+.chef-deal .tv-card__now {
+    color: #FF6A00;
+    font-size: clamp(1.55rem, 2.6vw, 2.35rem);
     font-weight: 900;
     letter-spacing: -0.04em;
-    color: #111111;
-    line-height: 1;
 }
 
-.flash-offer__stars {
-    background: #ECFDF3;
-    border: 2px solid #86EFAC;
-    border-radius: 12px;
-    padding: 0.7vh 0.8vw;
-    color: #15803D;
+.flash-offer .deal-save {
+    font-size: clamp(0.72rem, 1vw, 0.88rem);
 }
 
-.flash-offer__stars span {
-    display: block;
-    color: #EAB308;
-    font-size: clamp(1rem, 1.5vw, 1.35rem);
-    letter-spacing: 0.12em;
-}
-
-.flash-offer__stars p {
-    margin: 0.25vh 0 0;
-    font-size: clamp(0.68rem, 0.95vw, 0.85rem);
-    font-weight: 800;
-}
-
-.flash-offer__was {
-    color: #DC2626;
-    font-size: clamp(0.95rem, 1.35vw, 1.2rem);
-    font-weight: 700;
-}
-
-.flash-offer__now {
-    background: #FFE566;
-    color: #DC2626;
-    border-radius: 14px;
-    padding: 0.55vh 1.1vw;
-    font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3vw, 2.7rem);
-    font-weight: 900;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.flash-offer__rule {
-    margin: 0.2vh 0 0;
-    width: 92%;
+.chef-temp {
     flex-shrink: 0;
-    background: #ECFDF3;
-    border: 2px solid #86EFAC;
-    border-radius: 12px;
-    padding: 0.7vh 0.6vw;
-    color: #15803D;
-    font-size: clamp(0.72rem, 1vw, 0.9rem);
+    color: #FFB020;
+    font-family: var(--font-display);
+    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
     font-weight: 800;
+}
+
+.chef-hero {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45vh;
+}
+
+.chef-msg {
+    margin: 0;
+    max-width: 92%;
+    font-size: clamp(0.68rem, 0.95vw, 0.82rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #C2410C;
+    text-align: center;
     line-height: 1.25;
 }
 
-.chef-pick {
-    flex: 1;
-    min-height: 0;
-    padding: 0.8vw;
-    border: 2px solid var(--border-subtle);
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+.chef-deal {
+    flex: 0 0 38%;
+    min-height: 120px;
+    flex-direction: row;
+    align-items: stretch;
 }
 
-.chef-reason {
-    margin: 0;
-    font-size: clamp(0.62rem, 0.82vw, 0.72rem);
-    color: var(--text-secondary);
+.chef-deal .deal-stage {
+    flex: 0 0 34%;
+    min-width: 72px;
+    border-radius: 0;
 }
 
-.chef-name {
-    margin: 0.4vh 0 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.05rem, 1.6vw, 1.35rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.chef-deal .deal-copy {
+    padding: 0.7vh 0.8vw 0.7vh 0;
 }
 
-.chef-price {
-    margin-top: auto;
-    padding-top: 0.5vh;
-    font-family: var(--font-display);
-    font-size: clamp(1.2rem, 1.9vw, 1.55rem);
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
+.chef-deal .tv-card__name {
+    font-size: clamp(0.95rem, 1.45vw, 1.25rem);
 }
 
 .chef-rest {
@@ -1894,7 +1872,7 @@ body {
     overflow: hidden;
 }
 
-.column-4 .price-grid {
+.tv-4 .price-grid {
     height: 100%;
     align-content: stretch;
 }

@@ -98,6 +98,7 @@ class CarteleriaDashboard(QWidget):
     request_toggle_theme = pyqtSignal()
 
     request_proveedores = pyqtSignal()
+    request_png_productos = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -202,6 +203,7 @@ class CarteleriaDashboard(QWidget):
         self.card_admin = CarteleriaCard("Admin TV (Avanzado)", "⚙️", "#FEF2F2", "#B91C1C", "Modo consola Qt con control avanzado")
         
         self.card_inv = CarteleriaCard("Inventario", "📦", "#FDF4FF", "#A21CAF", "Gestión local de productos y stock")
+        self.card_png = CarteleriaCard("PNG Productos", "🖼️", "#ECFDF5", "#047857", "Foto PNG de cada corte en la TV")
         self.card_ofe = CarteleriaCard("Ofertas", "🏷️", "#FFFBEB", "#D97706", "Crear promos y ofertas de TV")
         self.card_red = CarteleriaCard("Red LAN", "🌐", "#F3F4F6", "#374151", "Configurar Maestra o Esclava")
         self.card_prov = CarteleriaCard("Proveedores", "🚚", "#E0F2FE", "#075985", "Compras y Stock")
@@ -209,6 +211,7 @@ class CarteleriaDashboard(QWidget):
         self.card_tv.clicked.connect(self._on_launch_tv)
         self.card_admin.clicked.connect(self._on_launch_admin)
         self.card_inv.clicked.connect(self._on_launch_inv)
+        self.card_png.clicked.connect(self._on_launch_png)
         self.card_ofe.clicked.connect(self._on_launch_ofe)
         self.card_red.clicked.connect(self._on_launch_red)
         self.card_prov.clicked.connect(self._on_launch_prov)
@@ -216,9 +219,10 @@ class CarteleriaDashboard(QWidget):
         grid.addWidget(self.card_tv, 0, 0)
         grid.addWidget(self.card_admin, 0, 1)
         grid.addWidget(self.card_inv, 0, 2)
-        grid.addWidget(self.card_ofe, 1, 0)
-        grid.addWidget(self.card_red, 1, 1)
-        grid.addWidget(self.card_prov, 1, 2)
+        grid.addWidget(self.card_png, 1, 0)
+        grid.addWidget(self.card_ofe, 1, 1)
+        grid.addWidget(self.card_red, 1, 2)
+        grid.addWidget(self.card_prov, 2, 0)
         
         page_lay.addLayout(grid)
         page_lay.addStretch()
@@ -279,6 +283,7 @@ class CarteleriaDashboard(QWidget):
         self.card_tv.apply_theme(is_dark)
         self.card_admin.apply_theme(is_dark)
         self.card_inv.apply_theme(is_dark)
+        self.card_png.apply_theme(is_dark)
         self.card_ofe.apply_theme(is_dark)
         self.card_red.apply_theme(is_dark)
         self.card_prov.apply_theme(is_dark)
@@ -295,21 +300,12 @@ class CarteleriaDashboard(QWidget):
         try:
             from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
             lanzador = get_lanzador_directo()
-            if lanzador.lanzar():
-                # Mostrar mensaje de éxito
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.information(
-                    self,
-                    "Cartelería TV",
-                    "Cartelería lanzada en modo kiosk directo.\n\n"
-                    "Presiona F11 para detener cuando quieras cerrar.",
-                )
-            else:
+            if not lanzador.lanzar():
                 from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.critical(
                     self,
                     "Error",
-                    "No se pudo lanzar la cartelería TV."
+                    "No se pudo lanzar la cartelería TV.",
                 )
         except Exception as e:
             # Fallback al método original con consola Qt
@@ -323,6 +319,10 @@ class CarteleriaDashboard(QWidget):
     def _on_launch_inv(self):
         increment_stat("Inventario")
         self.request_inventario.emit()
+
+    def _on_launch_png(self):
+        increment_stat("PNG_Productos")
+        self.request_png_productos.emit()
 
     def _on_launch_ofe(self):
         increment_stat("Ofertas")

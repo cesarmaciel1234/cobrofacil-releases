@@ -1,73 +1,57 @@
-"""Lanzador directo de cartelería TV sin consola Qt intermedia."""
+"""Lanzador directo de cartelería TV: datos + ServidorCuello (HTTP y kiosk)."""
 
-import os
-import sys
-import subprocess
-import tempfile
-import platform
 import logging
-import threading
-import http.server
-import socketserver
-import json
-import time
 
-from src.utils.paths import get_resource_path
-from src.carteleria.lanzador_tv.navegador_kiosk import TeclasTv, buscar_navegador, flags_pantalla_completa
+from PyQt6.QtCore import QObject, QTimer
+
 from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
 from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
 from src.carteleria.motor_carteleria.estado_tv import armar_paneles
 
 logger = logging.getLogger("LanzadorDirectoTV")
 
+SYNC_MS = 15_000
+CLIMA_MS = 15 * 60 * 1000
 
-class LanzadorDirectoTV:
-    """Lanzador directo de cartelería TV: servidor HTTP + chromium kiosk sin consola Qt."""
-    
+
+class LanzadorDirectoTV(QObject):
+    """Kiosk de TV sin consola Qt: un solo HTTP (cerebro_lanzador_tv)."""
+
     def __init__(self):
-        self.httpd = None
-        self.thread = None
-        self.browser_process = None
+        super().__init__()
         self.screen_index = None
-        self.web_root = get_resource_path(
-            os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
-        )
-        self._kiosk_profile = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
+        self._cuello = None
         self._sync_worker = None
         self._clima_worker = None
+        self._sync_timer = None
+        self._clima_timer = None
+        self._sync_status = "offline"
         self._clima_icon = "sol"
         self._clima = ""
         self.rows_precios = []
+        self.sos_data = []
+        self.top10_data = {}
         self._paneles = {}
-        self._hotkey_listener = None
-        
+
     def lanzar(self, screen_index=None):
-        """Lanza directamente el servidor HTTP y chromium kiosk."""
         try:
+            if self._cuello:
+                self.detener()
             self.screen_index = screen_index
-            
-            # Cargar datos iniciales antes de iniciar servidor
             self._cargar_datos_iniciales()
-            
-            # Iniciar servidor HTTP
-            if not self._iniciar_servidor():
-                return False
-            
-            # Iniciar motores de datos
             self._iniciar_motores()
-            
-            # Lanzar navegador kiosk
-            self._lanzar_navegador()
-            
-            # Iniciar hotkeys globales
-            self._iniciar_hotkeys()
-            
-            logger.info(f"Cartelería TV lanzada directamente en http://127.0.0.1:{self.httpd.server_address[1]}/")
-            logger.info("Controles: F10 = cambiar monitor | F11/ESC = detener cartelería")
+            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import ServidorCuello
+            self._cuello = ServidorCuello(self)
+            if not self._cuello.iniciar(screen_index=screen_index):
+                self.detener()
+                return False
+            logger.info(
+                "Cartelería TV en http://127.0.0.1:%s/  (F10 monitor · F11/ESC salir)",
+                self._cuello.port,
+            )
             return True
-            
         except Exception as e:
-            logger.error(f"Error lanzando cartelería directa: {e}")
+            logger.error("Error lanzando cartelería directa: %s", e)
             return False
     
     def _cargar_datos_iniciales(self):
@@ -86,8 +70,7 @@ class LanzadorDirectoTV:
                         data = json.load(f)
                         productos = data.get("precios", [])
                         if productos:
-                            self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
-                            self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+                            self._aplicar_catalogo(productos)
                             logger.info(f"Cargados {len(self.rows_precios)} productos desde caché")
                             return
                 except Exception as e:
@@ -106,11 +89,11 @@ class LanzadorDirectoTV:
                     categoria,
                     stock,
                     unidad,
-                    es_pesable
+                    es_pesable,
+                    icono
                 FROM productos 
                 WHERE COALESCE(stock, 0) > 0
                 ORDER BY nombre
-                LIMIT 50
             """
             filas = db_manager.execute_query(q)
             productos = []
@@ -129,97 +112,66 @@ class LanzadorDirectoTV:
                             'stock': r.get('stock') or 0,
                             'unidad': r.get('unidad') or '',
                             'es_pesable': r.get('es_pesable') or 0,
+                            'icono': r.get('icono') or '',
                         })
             
             if productos:
-                self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
-                self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+                self._aplicar_catalogo(productos)
                 logger.info(f"Cargados {len(self.rows_precios)} productos desde DB")
             else:
                 logger.warning("No se encontraron productos en la base de datos")
                 
         except Exception as e:
             logger.error(f"Error cargando datos iniciales: {e}")
-    
-    def detener(self):
-        """Detiene servidor HTTP, navegador y motores."""
-        try:
-            # Detener hotkeys
-            if self._hotkey_listener:
-                self._hotkey_listener.stop()
-                self._hotkey_listener = None
-            
-            self._cerrar_navegador()
-            
-            if self.httpd:
-                self.httpd.shutdown()
-                self.httpd.server_close()
-                self.httpd = None
-                
-            if self.thread and self.thread.is_alive():
-                self.thread.join(timeout=1)
-            self.thread = None
-            
-            if self._sync_worker and self._sync_worker.isRunning():
-                self._sync_worker.requestInterruption()
-                self._sync_worker.wait(1000)
-                
-            if self._clima_worker and self._clima_worker.isRunning():
-                self._clima_worker.wait(1000)
-                
-            logger.info("Cartelería TV directa detenida")
-            
-        except Exception as e:
-            logger.error(f"Error deteniendo cartelería: {e}")
-    
-    def _iniciar_servidor(self):
-        """Inicia servidor HTTP estático."""
-        try:
-            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import CarteleriaWebHandler, ThreadedHTTPServer
-            
-            handler = lambda *args, **kwargs: CarteleriaWebHandler(
-                *args,
-                web_root=self.web_root,
-                main_window=self,
-                **kwargs
-            )
-            self.httpd = ThreadedHTTPServer(("127.0.0.1", 0), handler)
-            self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
-            self.thread.start()
-            logger.info(f"Servidor HTTP iniciado en puerto {self.httpd.server_address[1]}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error iniciando servidor HTTP: {e}")
-            return False
-    
+
     def _iniciar_motores(self):
-        """Inicia workers de sincronización y clima."""
+        """Hilos de sync/clima + timers (el padre es QObject para que Qt no trague el arranque)."""
         try:
-            self._sync_worker = DbSyncWorker(self)
-            self._sync_worker.sync_finished.connect(self._on_sync_finished)
-            self._sync_worker.start()
-            
-            self._clima_worker = ClimaWorker(self)
-            self._clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
-            self._clima_worker.start()
-            
+            if self._sync_worker is None:
+                self._sync_worker = DbSyncWorker(self)
+                self._sync_worker.sync_finished.connect(self._on_sync_finished)
+            if self._clima_worker is None:
+                self._clima_worker = ClimaWorker(self)
+                self._clima_worker.clima_actualizado.connect(self._on_clima_actualizado)
+            if self._sync_timer is None:
+                self._sync_timer = QTimer(self)
+                self._sync_timer.timeout.connect(self._sincronizar)
+            if self._clima_timer is None:
+                self._clima_timer = QTimer(self)
+                self._clima_timer.timeout.connect(self._sincronizar_clima)
+            self._sync_timer.start(SYNC_MS)
+            self._clima_timer.start(CLIMA_MS)
+            self._sincronizar()
+            self._sincronizar_clima()
         except Exception as e:
             logger.warning(f"Error iniciando motores: {e}")
-    
-    def _iniciar_hotkeys(self):
-        """Inicia hotkeys globales F10/F11/ESC."""
+
+    def _sincronizar(self):
+        if self._sync_worker and not self._sync_worker.isRunning():
+            self._sync_worker.start()
+
+    def _sincronizar_clima(self):
+        if self._clima_worker and not self._clima_worker.isRunning():
+            self._clima_worker.start()
+
+    def detener(self):
         try:
-            if self._hotkey_listener:
-                return
-            self._hotkey_listener = TeclasTv(
-                on_f10=self._handle_f10,
-                on_f11=self._handle_f11,
-                on_esc=self._handle_esc,
-            )
-            self._hotkey_listener.start()
+            if self._sync_timer:
+                self._sync_timer.stop()
+            if self._clima_timer:
+                self._clima_timer.stop()
+            if self._sync_worker and self._sync_worker.isRunning():
+                self._sync_worker.requestInterruption()
+                self._sync_worker.wait(2000)
+            if self._clima_worker and self._clima_worker.isRunning():
+                self._clima_worker.requestInterruption()
+                self._clima_worker.wait(6000)
+            if self._cuello:
+                self._cuello.detener()
+                self._cuello = None
+            logger.info("Cartelería TV directa detenida")
         except Exception as e:
-            logger.warning(f"Error iniciando hotkeys: {e}")
+            logger.error("Error deteniendo cartelería: %s", e)
 
     def on_tv_control(self, action):
         action = str(action or "").strip().lower()
@@ -238,7 +190,8 @@ class LanzadorDirectoTV:
         except Exception:
             n = 1
         self.screen_index = ((self.screen_index or 0) + 1) % max(n, 1)
-        self._lanzar_navegador()
+        if self._cuello:
+            self._cuello.reubicar(self.screen_index)
     
     def _handle_f11(self):
         """Maneja F11: detener cartelería."""
@@ -251,52 +204,74 @@ class LanzadorDirectoTV:
         self.detener()
     
     def _on_sync_finished(self, data, status):
-        """Procesa datos sincronizados."""
+        """Aplica HTTP/MariaDB o caché; no tira el catálogo si el pulso vino vacío."""
         try:
-            if status == "online":
-                productos = data.get("precios", [])
-                self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
-                self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
-                logger.info(f"Sincronizados {len(self.rows_precios)} productos")
-                logger.info(f"Paneles generados: rotacion={len(self._paneles.get('rotacion', []))}, combos={len(self._paneles.get('combos', []))}, ia={len(self._paneles.get('ia', []))}")
+            data = data or {}
+            productos = data.get("precios") or []
+            if not productos:
+                if status:
+                    self._sync_status = status
+                return
+            self._sync_status = status or "online"
+            self.sos_data = data.get("sos") or []
+            self.top10_data = data.get("top10") or {}
+            self._aplicar_catalogo(productos)
+            logger.info(
+                "Sync %s: %s productos (rotacion=%s)",
+                self._sync_status,
+                len(self.rows_precios),
+                len(self._paneles.get("rotacion") or []),
+            )
         except Exception as e:
             logger.warning(f"Error procesando sync: {e}")
-            # Fallback: generar paneles vacíos pero válidos
-            self._paneles = {
-                "hero": None,
-                "destacados": [],
-                "rotacion": [],
-                "combos": [],
-                "columna3": [],
-                "ia": []
-            }
     
     def _on_clima_actualizado(self, icon_name, text):
         self._clima_icon = icon_name or "sol"
         self._clima = text
         if self.rows_precios:
-            self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+            self._refrescar_paneles()
     
     def _normalizar_productos(self, productos):
-        """Normaliza productos al formato estándar."""
+        """Dict de MariaDB/HTTP o tupla del SELECT de sync."""
         result = []
-        for item in productos:
+        for item in productos or []:
             if isinstance(item, dict):
                 result.append({
-                    'id': item.get('id'),
-                    'nombre': item.get('nombre', ''),
-                    'precio': float(item.get('precio') or 0),
-                    'precio_oferta': float(item.get('precio_oferta') or 0),
-                    'precio_oferta_relampago': float(item.get('precio_oferta_relampago') or 0),
-                    'cant_oferta': float(item.get('cant_oferta') or 0),
-                    'tipo_unidad_oferta': item.get('tipo_unidad_oferta', ''),
-                    'unidad': item.get('unidad', ''),
-                    'es_pesable': item.get('es_pesable') or 0,
-                    'departamento': item.get('departamento') or item.get('categoria', ''),
-                    'categoria': item.get('categoria', ''),
-                    'stock': float(item.get('stock') or 0),
-                    'es_publicidad': False
+                    "id": item.get("id"),
+                    "nombre": item.get("nombre", "") or "",
+                    "precio": float(item.get("precio") or 0),
+                    "precio_oferta": float(item.get("precio_oferta") or 0),
+                    "precio_oferta_relampago": float(item.get("precio_oferta_relampago") or 0),
+                    "cant_oferta": float(item.get("cant_oferta") or 0),
+                    "tipo_unidad_oferta": item.get("tipo_unidad_oferta") or "",
+                    "unidad": item.get("unidad") or "",
+                    "es_pesable": item.get("es_pesable") or 0,
+                    "departamento": item.get("departamento") or item.get("categoria") or "",
+                    "categoria": item.get("categoria") or "",
+                    "stock": float(item.get("stock") or 0),
+                    "icono": item.get("icono") or "",
+                    "es_publicidad": False,
                 })
+                continue
+            row = list(item) if isinstance(item, (list, tuple)) else []
+            if len(row) < 3:
+                continue
+            result.append({
+                "id": None,
+                "categoria": row[0] if len(row) > 0 else "",
+                "nombre": row[1] if len(row) > 1 else "",
+                "precio": float(row[2] or 0) if len(row) > 2 else 0,
+                "precio_oferta": float(row[3] or 0) if len(row) > 3 else 0,
+                "precio_oferta_relampago": float(row[4] or 0) if len(row) > 4 else 0,
+                "cant_oferta": float(row[6] or 0) if len(row) > 6 else 0,
+                "tipo_unidad_oferta": row[7] if len(row) > 7 else "",
+                "stock": float(row[8] or 0) if len(row) > 8 else 0,
+                "unidad": row[9] if len(row) > 9 else "",
+                "es_pesable": row[10] if len(row) > 10 else 0,
+                "departamento": (row[11] if len(row) > 11 else "") or (row[0] if row else ""),
+                "icono": row[12] if len(row) > 12 else "",
+                "es_publicidad": False,
+            })
         return result
 
     def _marcar_publicidad(self, productos):
@@ -308,15 +283,35 @@ class LanzadorDirectoTV:
         except Exception:
             pass
         return productos
-    
+
+    def _aplicar_catalogo(self, productos):
+        self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
+        self._refrescar_paneles()
+
+    def _paneles_vacios(self):
+        self._paneles = {
+            "hero": None,
+            "destacados": [],
+            "rotacion": [],
+            "combos": [],
+            "columna3": [],
+            "ia": [],
+        }
+
+    def _refrescar_paneles(self):
+        if not self.rows_precios:
+            self._paneles_vacios()
+            return
+        self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+
     def get_web_state(self):
         """Estado para la API web conectado con motores globales."""
         try:
             from src.config import config
-            
-            # Si no hay paneles generados, generarlos desde productos
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+            enriquecer_iconos(self.rows_precios)
             if not self._paneles or not self._paneles.get("rotacion"):
-                self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+                self._refrescar_paneles()
             
             # Generar datos del clima para la columna 4
             clima_data = self._generar_datos_clima()
@@ -331,9 +326,11 @@ class LanzadorDirectoTV:
                     "phone": config.get("phone", ""),
                     "carteleria_theme": config.get("carteleria_theme", "temu"),
                     "mensaje_zocalo": mensaje_personalizado,
-                    "data_status": "online"
+                    "data_status": self._sync_status,
                 },
                 "precios": self.rows_precios,
+                "sos": self.sos_data,
+                "top10": self.top10_data,
                 "hero": self._paneles.get("hero"),
                 "destacados": self._paneles.get("destacados", []),
                 "rotacion": self._paneles.get("rotacion", []),
@@ -357,23 +354,15 @@ class LanzadorDirectoTV:
             import datetime
             hora_actual = datetime.datetime.now().hour
             
+            clima = str(self._clima or "").lower()
             if 18 <= hora_actual or hora_actual < 6:
-                # Es noche
-                if "nublado" in self._clima.lower():
-                    mensaje = "PARA ESTE MOMENTO DE LA NOCHE, TE RECOMENDAMOS LLEVAR"
-                    producto_recomendado = "POLLO ENTERO"
-                elif "lluvia" in self._clima.lower():
-                    mensaje = "PARA ESTE MOMENTO DE LA NOCHE, TE RECOMENDAMOS LLEVAR"
-                    producto_recomendado = "BOLSA DE MENUDENCIOS"
-                else:
-                    mensaje = "PARA ESTE MOMENTO DE LA NOCHE, TE RECOMENDAMOS LLEVAR"
-                    producto_recomendado = "POLLO ENTERO"
+                mensaje = "PARA ESTE MOMENTO DE LA NOCHE, TE RECOMENDAMOS LLEVAR"
+                producto_recomendado = "BOLSA DE MENUDENCIOS" if "lluvia" in clima else "POLLO ENTERO"
             else:
-                # Es día
-                if "nublado" in self._clima.lower():
+                if "nublado" in clima:
                     mensaje = "Día nublado, ideal para compras en abrigo"
                     producto_recomendado = "POLLO ENTERO"
-                elif "lluvia" in self._clima.lower():
+                elif "lluvia" in clima:
                     mensaje = "Día de lluvia, perfecto para productos de olla"
                     producto_recomendado = "BOLSA DE MENUDENCIOS"
                 else:
@@ -425,77 +414,7 @@ class LanzadorDirectoTV:
             mensajes_base.append(f"• {len(ofertas_activas)} ofertas activas hoy • Aprovechá las promociones")
         
         return " • ".join(mensajes_base)
-    
-    def _lanzar_navegador(self):
-        """Abre Chrome o Edge a pantalla completa."""
-        try:
-            self._cerrar_navegador()
-            url = f"http://127.0.0.1:{self.httpd.server_address[1]}/"
-            x, y, w, h = self._geometria_tv()
-            flags = flags_pantalla_completa(url, self._kiosk_profile, x, y, w, h)
-            navegador = buscar_navegador()
-            sistema = platform.system()
-            if sistema == "Windows":
-                if navegador:
-                    self.browser_process = subprocess.Popen([navegador] + flags)
-                else:
-                    logger.warning("No hay Chrome ni Edge; abro el navegador por defecto")
-                    os.startfile(url)
-            elif sistema == "Darwin":
-                self.browser_process = subprocess.Popen(
-                    ["open", "-a", navegador or "Google Chrome", "--args"] + flags
-                )
-            else:
-                if navegador:
-                    self.browser_process = subprocess.Popen([navegador] + flags)
-                else:
-                    subprocess.Popen(["xdg-open", url])
-            logger.info("TV en %s con %s", url, navegador or "navegador por defecto")
-        except Exception as e:
-            logger.error(f"Error lanzando navegador: {e}")
 
-    def _cerrar_navegador(self):
-        """Cierra el navegador kiosk."""
-        if not self.browser_process:
-            return
-        try:
-            if platform.system() == "Windows":
-                subprocess.run(
-                    ["taskkill", "/F", "/T", "/PID", str(self.browser_process.pid)],
-                    capture_output=True,
-                    check=False,
-                )
-            else:
-                self.browser_process.terminate()
-                try:
-                    self.browser_process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    self.browser_process.kill()
-        except Exception as e:
-            logger.warning(f"Error cerrando navegador: {e}")
-        self.browser_process = None
-    
-    def _geometria_tv(self):
-        """Obtiene geometría del monitor TV."""
-        try:
-            from PyQt6.QtWidgets import QApplication
-            from src.utils.qt_dpi import secondary_screen
-            
-            app = QApplication.instance()
-            if not app:
-                return 0, 0, 1920, 1080
-            screens = app.screens()
-            if not screens:
-                return 0, 0, 1920, 1080
-            if self.screen_index is not None and 0 <= self.screen_index < len(screens):
-                screen = screens[self.screen_index]
-            else:
-                screen = secondary_screen(app) or (screens[-1] if len(screens) > 1 else screens[0])
-            geo = screen.geometry()
-            return geo.x(), geo.y(), geo.width(), geo.height()
-        except Exception:
-            return 0, 0, 1920, 1080
-    
 
 # Instancia global singleton
 _lanzador_directo = None

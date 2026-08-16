@@ -43,7 +43,8 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --add-data "src/ui_components;src/ui_components" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
-  --add-data "Catalogos/iconos_rubros;Catalogos/iconos_rubros" ^
+  --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
+  --add-data "Catalogos;Catalogos" ^
   main.py
 
 echo.

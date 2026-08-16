@@ -8,7 +8,7 @@ def generar_iconos_perfectos():
     if not app:
         app = QApplication([])
         
-    target_dir = os.path.join(os.getcwd(), "Catalogos", "iconos_rubros")
+    target_dir = os.path.join(os.getcwd(), "Catalogos")
     os.makedirs(target_dir, exist_ok=True)
     
     icons = [

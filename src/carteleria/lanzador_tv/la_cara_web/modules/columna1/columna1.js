@@ -1,4 +1,4 @@
-/* Columna 1: tickets, volumen y 5 recomendaciones al azar. */
+/* Columna 1: ranking real de ventas (tickets, kilos y recaudación). */
 
 import { escapeHtml } from "../shared/plata_y_texto.js";
 import { htmlTarjetaRanking } from "./tarjetas/tarjeta_ranking.js";
@@ -14,7 +14,7 @@ function panelesRotacion(state) {
     const paneles = (state.rotacion || []).filter((panel) => panel?.items?.length);
     if (paneles.length) return paneles;
     if (state.destacados?.length) {
-        return [{ id: "recomendados", titulo: "Recomendados", subtitulo: "Al azar", items: state.destacados }];
+        return [{ id: "elegidos", titulo: "Más vendidos", subtitulo: "En tickets", items: state.destacados }];
     }
     return [];
 }
@@ -23,7 +23,7 @@ function htmlPanel(panel, paneles, index) {
     const dots = paneles.map((_, i) =>
         `<span class="rank-dot${i === index ? " is-on" : ""}"></span>`
     ).join("");
-    const cards = (panel.items || []).slice(0, 5).map((item, i) => htmlTarjetaRanking(item, i, panel.id)).join("");
+    const cards = (panel.items || []).slice(0, 5).map((item, i) => htmlTarjetaRanking(item, i)).join("");
     return `
         <header class="rank-head sale-head">
             <div>
@@ -40,7 +40,7 @@ function htmlPanel(panel, paneles, index) {
 function pintar(conFade) {
     if (!rootRef) return;
     if (!panelesCache.length) {
-        rootRef.innerHTML = '<p class="column-empty">Sin ventas de hoy ni recomendados todavía.</p>';
+        rootRef.innerHTML = '<p class="column-empty">Sin ventas todavía.</p>';
         return;
     }
     const index = rotacionIndex % panelesCache.length;

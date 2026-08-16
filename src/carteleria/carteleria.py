@@ -28,6 +28,7 @@ class CarteleriaApp(QStackedWidget):
         self.ofe = None
         self.red = None
         self.prov = None
+        self.png_prod = None
         
         self.estilo_completo = ""  # Cacheamos el estilo para aplicarlo on-demand
 
@@ -38,6 +39,7 @@ class CarteleriaApp(QStackedWidget):
         self.dashboard.request_ofertas.connect(self.lanzar_ofe)
         self.dashboard.request_red_lan.connect(self.lanzar_red)
         self.dashboard.request_proveedores.connect(self.lanzar_prov)
+        self.dashboard.request_png_productos.connect(self.lanzar_png_productos)
         self.dashboard.request_exit.connect(self.close)
         self.dashboard.request_toggle_theme.connect(self.toggle_carteleria_theme)
 
@@ -47,7 +49,21 @@ class CarteleriaApp(QStackedWidget):
         self.shortcut = QShortcut(QKeySequence("Esc"), self)
         self.shortcut.activated.connect(self.volver_dashboard)
 
+    def lanzar_tv(self):
+        logger.info("Lanzando TV...")
+        from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
+        lanzador = get_lanzador_directo()
+        if lanzador.lanzar():
+            logger.info("TV lanzada en kiosk (F11 para salir).")
+        else:
+            logger.error("No se pudo lanzar la cartelería TV.")
+
     def volver_dashboard(self):
+        try:
+            from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
+            get_lanzador_directo().detener()
+        except Exception:
+            pass
         if self.tv_main:
             try:
                 self.tv_main.detener_carteleria()
@@ -55,30 +71,6 @@ class CarteleriaApp(QStackedWidget):
                 pass
         self.setCurrentWidget(self.dashboard)
         self.showNormal()
-
-    def lanzar_tv(self):
-        logger.info("Lanzando TV...")
-        if self.tv_main:
-            logger.info("Cerrando instancia TV anterior.")
-            try:
-                self.tv_main.detener_carteleria()
-            except Exception:
-                pass
-            self.removeWidget(self.tv_main)
-            self.tv_main.deleteLater()
-
-        from src.carteleria.lanzador_tv.ui_lanzador_tv import CarteleriaMainTV
-        logger.info("Creando nueva instancia de TV.")
-        self.tv_main = CarteleriaMainTV()
-        self.addWidget(self.tv_main)
-
-        if hasattr(self.tv_main, "request_back"):
-            self.tv_main.request_back.connect(self.volver_dashboard)
-
-        self.setCurrentWidget(self.tv_main)
-        self.showNormal()
-        self.tv_main.iniciar_carteleria()
-        logger.info("TV lanzada: consola en este monitor, kiosk en la TV.")
 
     def lanzar_admin(self):
         if not self.admin:
@@ -144,6 +136,20 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.red)
         self.showNormal()
 
+    def lanzar_png_productos(self):
+        if self.png_prod:
+            self.removeWidget(self.png_prod)
+            self.png_prod.deleteLater()
+            self.png_prod = None
+        from src.carteleria.png_productos.panel_png_productos import PanelPngProductos
+        self.png_prod = PanelPngProductos()
+        self.addWidget(self.png_prod)
+        self.png_prod.volver.connect(self.volver_dashboard)
+        if self.estilo_completo:
+            self.png_prod.setStyleSheet(self.estilo_completo)
+        self.setCurrentWidget(self.png_prod)
+        self.showNormal()
+
     def lanzar_prov(self):
         if not self.prov:
             from src.ui_global.proveedor.vista_proveedor import VistaProveedor
@@ -195,6 +201,7 @@ class CarteleriaApp(QStackedWidget):
             if self.ofe: self.ofe.setStyleSheet(estilo_completo)
             if self.red: self.red.setStyleSheet(estilo_completo)
             if self.prov: self.prov.setStyleSheet(estilo_completo)
+            if self.png_prod: self.png_prod.setStyleSheet(estilo_completo)
             
             # Notificar al inventario para que actualice sus colores internos
             if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
