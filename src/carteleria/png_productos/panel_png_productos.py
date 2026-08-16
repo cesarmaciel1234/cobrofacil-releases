@@ -19,6 +19,11 @@ class PanelPngProductos(QWidget):
         self._icono_seleccionado = None
         from src.carteleria.assets_paths import png_productos_dir
         png_productos_dir()
+        try:
+            from src.motor_inventario.base.productos_db import asociar_png_por_nombre
+            asociar_png_por_nombre()
+        except Exception:
+            pass
         self._setup_ui()
         self._cargar()
 
@@ -184,13 +189,14 @@ class PanelPngProductos(QWidget):
             QMessageBox.information(self, "PNG productos", "Primero elegí un producto de la lista.")
             return
         from src.ui_global.inventario_ui.moleculas.dialogo_galeria_iconos import DialogoGaleriaIconos
-        from src.carteleria.assets_paths import catalogos_dir, png_productos_dir
+        from src.carteleria.assets_paths import carpetas_galeria_png, png_productos_dir
+        carpetas = carpetas_galeria_png()
         dlg = DialogoGaleriaIconos(
             icono_actual=self._icono_seleccionado,
             parent=self,
             titulo="PNG del producto (foto de vitrina)",
             target_dir=png_productos_dir(),
-            extra_dirs=[catalogos_dir()],
+            extra_dirs=carpetas[1:],
             nombre_sugerido=self.txt_nombre.text(),
         )
         if qt_exec(dlg):

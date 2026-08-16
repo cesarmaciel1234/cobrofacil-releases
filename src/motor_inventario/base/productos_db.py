@@ -96,3 +96,20 @@ def guardar_icono_producto(producto_id, icono):
     except Exception as e:
         logger.error("Error guardando PNG del producto %s: %s", producto_id, e)
         return False, str(e)
+
+
+def asociar_png_por_nombre():
+    """Si el producto no tiene PNG y existe un archivo con ese nombre, lo asocia."""
+    from src.carteleria.motor_carteleria.iconos_tv import _png_por_nombre
+    n = 0
+    for row in listar_productos_png():
+        if str(row.get("icono") or "").strip():
+            continue
+        nombre = _png_por_nombre(row.get("nombre"))
+        pid = row.get("id")
+        if not nombre or not pid:
+            continue
+        ok, _msg = guardar_icono_producto(pid, nombre)
+        if ok:
+            n += 1
+    return n
