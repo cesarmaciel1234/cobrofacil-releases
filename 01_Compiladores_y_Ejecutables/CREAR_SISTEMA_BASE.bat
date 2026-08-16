@@ -5,6 +5,9 @@ echo ========================================================
 echo   CAJAFACIL PRO - COMPILAR SISTEMA BASE (EJECUTABLE)
 echo ========================================================
 echo.
+echo PASO 0: Verificando iconos del clima...
+python src\carteleria\lanzador_tv\generar_iconos_clima.py
+echo.
 echo Preparando entorno y borrando compilaciones previas...
 if exist "build" rd /s /q "build"
 if exist "dist\CobroFacil_POS" rd /s /q "dist\CobroFacil_POS"
@@ -34,6 +37,7 @@ echo Ensamblando el ejecutable principal...
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
+  --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
   --add-data "Catalogos;Catalogos" ^
   main.py
 

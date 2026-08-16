@@ -66,6 +66,10 @@ jobs:
           echo "tag=v$($data.app_version)" >> $env:GITHUB_OUTPUT
           echo "app_version=$($data.app_version)" >> $env:GITHUB_OUTPUT
 
+      - name: Generar iconos del clima
+        run: |
+          python src/carteleria/lanzador_tv/generar_iconos_clima.py
+
       # -----------------------------------------------------------------------
       # 4. Compilar main.py → dist/CobroFacil_POS/CobroFacil_POS.exe
       #    (--onedir: carpeta con el .exe y librerías; mismo criterio que Compilar_Todo.bat)
@@ -81,6 +85,7 @@ jobs:
             'src/assets/pos_icon.png',
             'src/carteleria/assets',
             'src/carteleria/lanzador_tv/la_cara_web/index.html',
+            'src/carteleria/lanzador_tv/la_cara_web/assets',
             'Catalogos'
           )
           $missing = @()

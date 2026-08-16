@@ -15,6 +15,12 @@ pause
 
 echo.
 echo =====================================================================
+echo PASO 0: VERIFICANDO ICONOS DEL CLIMA
+echo =====================================================================
+python src\carteleria\lanzador_tv\generar_iconos_clima.py
+
+echo.
+echo =====================================================================
 echo PASO 1: COMPILANDO EL SISTEMA BASE (ESTO TARDARA UNOS MINUTOS...)
 echo =====================================================================
 
@@ -44,6 +50,7 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
+  --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
   --add-data "Catalogos;Catalogos" ^
   main.py
 
