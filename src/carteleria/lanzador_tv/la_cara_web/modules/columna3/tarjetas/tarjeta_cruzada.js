@@ -25,17 +25,21 @@ export function htmlTarjetaCruzada(slide, productos = []) {
         const precio = tieneOferta ? precioVigente(prod) : (prod.precio || 0);
         const regla = tieneOferta ? textoValidezOferta(prod) : "";
         
-        return `
+                return `
             <li class="xsell-item">
                 ${htmlDealStage({ ...prod, nombre: limpio }, { extraClass: "xsell-item__stage" })}
                 <div class="xsell-item__info">
                     <div class="xsell-item__text">
                         <span class="xsell-item__name">${escapeHtml(limpio.toUpperCase())}</span>
+                    </div>
+                    <div class="xsell-item__price-wrap">
+                        ${tienePrecio ? `<span class="xsell-item__price">${formatMoney(precio)}</span>` : ""}
+                        ${tieneOferta ? `<s class="xsell-item__was">${formatMoney(prod.precio)}</s>` : ""}
                         ${regla ? `<span class="xsell-item__rule">${escapeHtml(regla)}</span>` : ""}
                     </div>
-                    ${tienePrecio ? `<span class="xsell-item__price">${formatMoney(precio)}</span>` : ""}
                 </div>
             </li>`;
+
     }).join("");
     return `
         <article class="xsell-card">
