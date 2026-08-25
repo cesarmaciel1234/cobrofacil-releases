@@ -109,7 +109,7 @@
     align-items: center;
     gap: 0.4vw;
     padding: 4px 10px;
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--badge-surface);
     border-radius: 999px;
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     font-weight: 600;
@@ -138,7 +138,7 @@
     font-size: clamp(0.9rem, 1.3vw, 1.1rem);
     font-weight: 700;
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--clock-bg);
     padding: 4px 10px;
     border-radius: 999px;
     border: 0;
@@ -191,7 +191,7 @@
     align-items: center;
     gap: 0.8vw;
     padding: 0 0.5vw 0 0.45vw;
-    background: #1A1A1A;
+    background: var(--strip-bg);
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
 }
 
@@ -201,7 +201,7 @@
     align-items: center;
     gap: 0.5vw;
     padding: 0.2vh 0.28vw 0.2vh 0.8vw;
-    background: #FF6A00;
+    background: var(--strip-accent);
     border-radius: 999px;
 }
 
@@ -217,7 +217,7 @@
     font-size: clamp(0.72rem, 1.05vw, 0.92rem);
     font-weight: 800;
     letter-spacing: 0.1em;
-    color: #FFFFFF;
+    color: var(--strip-text);
     white-space: nowrap;
 }
 
@@ -259,13 +259,13 @@
 .flash-strip__cycle span {
     font-size: clamp(0.82rem, 1.2vw, 1.05rem);
     font-weight: 800;
-    color: #FFFFFF;
+    color: var(--strip-text);
     text-transform: uppercase;
     letter-spacing: 0.1em;
 }
 
 .flash-dot {
-    color: #FF6A00 !important;
+    color: var(--strip-dot) !important;
     font-size: 0.55rem !important;
 }
 
@@ -273,13 +273,13 @@
     font-size: clamp(0.68rem, 0.95vw, 0.82rem);
     font-weight: 800;
     letter-spacing: 0.1em;
-    color: #FFFFFF;
+    color: var(--strip-ends-text);
     white-space: nowrap;
 }
 
 .flash-count {
-    background: #FFE566;
-    color: #1A1A1A;
+    background: var(--strip-count-bg);
+    color: var(--strip-count-text);
     padding: 0.2vh 0.7vw;
     border-radius: 999px;
     font-family: var(--font-display);
@@ -368,7 +368,7 @@
 .zocalo-pill {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--zocalo-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 999px;
@@ -416,7 +416,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #1A1A1A;
+    color: var(--marquee-text);
 }
 
 @keyframes zocalo-scroll {

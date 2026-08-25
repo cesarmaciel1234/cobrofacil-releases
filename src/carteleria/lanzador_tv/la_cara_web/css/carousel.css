@@ -22,7 +22,7 @@
     flex-shrink: 0;
     width: clamp(280px, 24vw, 400px);
     height: 100%;
-    background: #FFFFFF;
+    background: var(--card-bg);
     border: 0;
     border-radius: 18px;
     padding: 8px;
@@ -91,7 +91,7 @@
     position: absolute;
     top: 7px;
     left: 7px;
-    background: #E11D48;
+    background: var(--badge-off-bg);
     color: #FFFFFF;
     font-size: clamp(11px, 1.05vw, 14px);
     font-weight: 900;
@@ -121,7 +121,7 @@
     font-weight: 900;
     letter-spacing: -0.03em;
     line-height: 1.12;
-    color: #111111;
+    color: var(--stage-name-color);
     text-transform: uppercase;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
@@ -149,7 +149,7 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #FF6A00;
+    color: var(--kicker-color);
     line-height: 1;
 }
 
@@ -173,7 +173,7 @@
 
 .oferta-card.is-deal .tv-card__now {
     flex: 0 1 auto;
-    color: #FF6A00;
+    color: var(--price-deal-color);
     font-size: clamp(1.35rem, 2.2vw, 1.95rem);
     font-weight: 900;
     letter-spacing: -0.04em;
@@ -192,7 +192,7 @@
 
 .deal-save {
     margin: 0;
-    color: #15803D;
+    color: var(--deal-save-color);
     font-size: clamp(10px, 0.9vw, 12px);
     font-weight: 800;
     line-height: 1.15;
@@ -210,14 +210,14 @@
     padding: 4px 10px 4px 8px;
     gap: 5px;
     font-size: clamp(13px, 1.15vw, 15px);
-    background: #111111;
-    color: #FFE566;
+    background: var(--timer-deal-bg);
+    color: var(--timer-deal-text);
     box-shadow: none;
     animation: none;
 }
 
 .oferta-card.is-deal .tv-card__timer.is-urgent {
-    background: #E11D48;
+    background: var(--timer-urgent-bg);
     color: #FFFFFF;
 }
 
@@ -232,14 +232,14 @@
 }
 
 .deal-proof {
-    color: #6B7280;
+    color: var(--proof-color);
     font-size: clamp(10px, 0.9vw, 12px);
     font-weight: 700;
     white-space: nowrap;
 }
 
 .deal-proof.is-low {
-    color: #E11D48;
+    color: var(--proof-low-color);
     font-weight: 800;
 }
 
@@ -270,8 +270,8 @@
 .tv-card__off {
     flex-shrink: 0;
     margin-top: 2px;
-    background: #FFF1D6;
-    color: #C2410C;
+    background: var(--off-badge-bg);
+    color: var(--off-badge-text);
     border-radius: 999px;
     padding: 4px 9px;
     font-size: clamp(11px, 1vw, 13px);
@@ -287,7 +287,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.1rem, 1.8vw, 1.45rem);
     font-weight: 800;
-    color: #1A1A1A;
+    color: var(--card-text);
     line-height: 1.15;
     margin: 0 0 8px;
     display: -webkit-box;
@@ -300,8 +300,8 @@
     display: inline-block;
     padding: 3px 8px;
     border-radius: 8px;
-    background: #FFF6E8;
-    color: #C2410C;
+    background: var(--chip-bg);
+    color: var(--chip-text);
     font-size: clamp(10px, 0.95vw, 12px);
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -319,11 +319,11 @@
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    background: linear-gradient(135deg, #FFE500, #FFCC00);
+    background: var(--timer-bg);
     border-radius: 999px;
     font-size: clamp(12px, 1.2vw, 14px);
     font-weight: 800;
-    color: #111111;
+    color: var(--timer-text);
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
     animation: timer-pulse 2s ease-in-out infinite;
 }
@@ -351,7 +351,7 @@
 
 .tv-card__was {
     flex-shrink: 0;
-    color: #9CA3AF;
+    color: var(--price-was);
     font-weight: 600;
     text-decoration: line-through;
     font-size: clamp(0.72rem, 0.95vw, 0.88rem);
@@ -359,7 +359,7 @@
 
 .tv-card__rule {
     min-width: 0;
-    color: #C2410C;
+    color: var(--rule-color);
     font-size: clamp(0.55rem, 0.75vw, 0.68rem);
     font-weight: 700;
     line-height: 1.2;
@@ -383,7 +383,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.25rem, 2vw, 1.85rem);
     font-weight: 800;
-    color: #1A1A1A;
+    color: var(--price-now-color);
     line-height: 1;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -397,7 +397,7 @@
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #C2410C;
+    color: var(--unit-color);
     white-space: nowrap;
 }
 
@@ -409,9 +409,9 @@
     justify-content: center;
     gap: 1px;
     min-width: 5.6em;
-    color: #C2410C;
+    color: var(--save-text);
     line-height: 1.15;
-    background: #FFE566;
+    background: var(--save-bg);
     border-radius: 10px;
     padding: 6px 10px;
 }
@@ -433,7 +433,7 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    background: #DC2626;
+    background: var(--badge-bg);
     color: #FFFFFF;
     padding: 4px 12px;
     border-radius: 20px;
@@ -451,7 +451,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.15rem, 1.9vw, 1.55rem);
     font-weight: 800;
-    color: #1A1A1A;
+    color: var(--card-text);
     line-height: 1.15;
     margin-bottom: 6px;
     word-wrap: break-word;
@@ -464,7 +464,7 @@
 .oferta-categoria {
     font-size: clamp(12px, 1.2vw, 14px);
     font-weight: 700;
-    color: #DC2626;
+    color: var(--categoria-color);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 12px;
@@ -480,14 +480,14 @@
     font-family: var(--font-display);
     font-size: clamp(1.45rem, 2.4vw, 2rem);
     font-weight: 800;
-    color: #FF6A00;
+    color: var(--price-deal-color);
     line-height: 1;
 }
 
 .oferta-unidad {
     font-size: clamp(12px, 1.2vw, 14px);
     font-weight: 700;
-    color: #DC2626;
+    color: var(--categoria-color);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }

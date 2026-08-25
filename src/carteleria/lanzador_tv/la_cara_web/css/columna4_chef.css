@@ -112,7 +112,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.5vh 2vw;
-    background: var(--temu-gradient-hot);
+    background: var(--col4-badge-bg);
     border-radius: 0;
     margin-bottom: 1.5vh;
     box-shadow: var(--shadow-glow-red);
@@ -204,7 +204,7 @@
 
 .asian-flash-progress-bar {
     height: 100%;
-    background: var(--temu-gradient-hot);
+    background: var(--col4-badge-bg);
     border-radius: var(--radius-pill);
     position: relative;
     animation: temuProgress 2s ease-out;
@@ -240,7 +240,7 @@
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     font-weight: 900;
     color: #FFFFFF;
-    background: var(--temu-primary);
+    background: var(--accent);
     padding: 0.4vh 1vw;
     border-radius: var(--radius-pill);
     letter-spacing: 0.05em;
@@ -258,11 +258,11 @@
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    background: #FFFFFF;
+    background: var(--col4-card-bg);
     border-radius: var(--radius-round);
     overflow: hidden;
     box-shadow: var(--shadow-medium);
-    border: 2px solid rgba(255, 71, 87, 0.1);
+    border: 2px solid var(--col4-card-border);
     position: relative;
     transition: all var(--anim-snappy);
     width: clamp(160px, 16vw, 240px);
@@ -274,7 +274,7 @@
 .asian-flash-product:hover {
     transform: translateY(-12px) scale(1.02);
     box-shadow: var(--shadow-strong);
-    border-color: var(--temu-primary);
+    border-color: var(--accent);
 }
 
 /* Temu Style Badge - Prominent */
@@ -282,7 +282,7 @@
     position: absolute;
     top: 1.5vh;
     right: 1.5vw;
-    background: var(--temu-gradient-hot);
+    background: var(--col4-badge-bg);
     color: #FFFFFF;
     padding: 0.6vh 1vw;
     border-radius: var(--radius-pill);
@@ -314,7 +314,7 @@
     overflow: hidden;
     min-height: 170px;
     /* El fondo vibrante lo pone JS como inline style */
-    background: linear-gradient(145deg, #FF6B6B 0%, #FFD93D 100%);
+    background: var(--col4-img-fallback-bg);
 }
 
 /* Destello de luz en esquina superior izquierda (efecto app asiática) */
@@ -374,7 +374,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: #FFFFFF;
+    background: var(--col4-card-bg);
     gap: 1.5vh;
 }
 
@@ -400,11 +400,11 @@
 .asian-flash-product-tag {
     font-size: clamp(0.6rem, 0.75vw, 0.65rem);
     font-weight: 900;
-    color: var(--temu-primary);
+    color: var(--accent);
     background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
     padding: 0.4vh 0.8vw;
     border-radius: var(--radius-soft);
-    border: 2px solid var(--temu-primary);
+    border: 2px solid var(--accent);
     display: inline-block;
     margin-bottom: 0.5vh;
     text-transform: uppercase;
@@ -438,7 +438,7 @@
     background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
     padding: 0.4vh 0.8vw;
     border-radius: var(--radius-soft);
-    border: 2px solid var(--temu-primary);
+    border: 2px solid var(--accent);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
     box-shadow: 0 2px 8px rgba(255, 71, 87, 0.15);
@@ -483,7 +483,7 @@
     width: clamp(1.4rem, 1.8vw, 1.6rem);
     height: clamp(1.4rem, 1.8vw, 1.6rem);
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--temu-accent), var(--temu-primary));
+    background: linear-gradient(135deg, var(--temu-accent), var(--accent));
     border: 3px solid #FFFFFF;
     margin-left: -0.6vw;
     display: flex;
@@ -507,7 +507,7 @@
 }
 
 .asian-flash-social-text strong {
-    color: var(--temu-primary);
+    color: var(--accent);
     font-weight: 900;
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
 }
@@ -520,7 +520,7 @@
     background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
     padding: 0.6vh 1vw;
     border-radius: var(--radius-pill);
-    border: 2px solid var(--temu-primary);
+    border: 2px solid var(--accent);
     margin-top: 0.8vh;
     animation: temuScarcityPulse 2s infinite;
 }
@@ -551,8 +551,8 @@
 .asian-flash-scarcity-count {
     font-size: clamp(0.65rem, 0.85vw, 0.75rem);
     font-weight: 900;
-    color: var(--temu-primary);
-    background: var(--temu-primary);
+    color: var(--accent);
+    background: var(--accent);
     color: #FFFFFF;
     padding: 0.3vh 0.8vw;
     border-radius: var(--radius-pill);
@@ -561,7 +561,7 @@
 
 /* Temu Style CTA Button - Bold & Urgent */
 .asian-flash-cta {
-    background: var(--temu-gradient-hot);
+    background: var(--col4-badge-bg);
     color: #FFFFFF;
     border: none;
     padding: 1.5vh 2.5vw;

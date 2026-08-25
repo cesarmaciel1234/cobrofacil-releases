@@ -32,4 +32,56 @@
     --rank-dot-bg:           rgba(0,122,255,0.2);
     --rank-dot-active:       #007AFF;
     --rank-progress-bar:     linear-gradient(90deg, #007AFF, #5856D6);
+
+    /* ── SOBREESCRITURAS APPLE THEME ── */
+    --screen-bg:             #F8F9FA;
+    --panel-bg:              #FFFFFF;
+    --strip-bg:              #FFFFFF;
+    --strip-text:            #1A1A1A;
+    --strip-ends-text:       #6B7280;
+    --strip-dot:             #007AFF;
+    --strip-accent:          #007AFF;
+    --strip-count-bg:        #F1F5F9;
+    --strip-count-text:      #007AFF;
+    
+    --footer-bg:             linear-gradient(90deg, #F8F9FA, #E2E8F0);
+    --marquee-text:          #1A1A1A;
+    
+    --card-bg:               #FFFFFF;
+    --card-border:           rgba(0, 122, 255, 0.15);
+    
+    --price-now-color:       #1A1A1A;
+    --price-now-bg:          #F1F5F9;
+    --price-deal-color:      #007AFF;
+    --price-row-bg:          #FFFFFF;
+    
+    --badge-bg:              #007AFF;
+    --badge-off-bg:          #5856D6;
+    --off-badge-bg:          #EEF2FF;
+    --off-badge-text:        #5856D6;
+    
+    --kicker-color:          #007AFF;
+    --categoria-color:       #007AFF;
+    --meta-color:            #6B7280;
+    --rule-color:            #6B7280;
+    
+    --timer-bg:              linear-gradient(135deg, #007AFF, #5856D6);
+    --timer-text:            #FFFFFF;
+    --timer-deal-bg:         #007AFF;
+    --timer-deal-text:       #FFFFFF;
+    
+    --dept-bg:               #F8F9FA;
+    --dept-text:             #1A1A1A;
+    --ad-bg:                 #F1F5F9;
+    --ad-text:               #007AFF;
+    
+    --col4-card-bg:          #FFFFFF;
+    --col4-card-border:      rgba(0, 122, 255, 0.15);
+    --col4-badge-bg:         linear-gradient(135deg, #007AFF, #5856D6);
+    --col4-price-color:      #007AFF;
+    --col4-price-bg:         linear-gradient(135deg, #F1F5F9, #E2E8F0);
+    --col4-price-text:       #1A1A1A;
+    --col4-label-color:      #007AFF;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #007AFF, #5856D6);
+
 }

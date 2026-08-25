@@ -32,4 +32,62 @@
     --rank-dot-bg:           rgba(255,204,0,0.2);
     --rank-dot-active:       #FFCC00;
     --rank-progress-bar:     linear-gradient(90deg, #FFCC00, #FFD700);
+
+    /* ── SOBREESCRITURAS BLACK FRIDAY THEME ── */
+    --screen-bg:             #050507;
+    --panel-bg:              #0A0A0C;
+    --strip-bg:              #FFCC00;
+    --strip-text:            #000000;
+    --strip-ends-text:       #000000;
+    --strip-dot:             #E11D48;
+    --strip-accent:          #000000;
+    --strip-count-bg:        #000000;
+    --strip-count-text:      #FFCC00;
+    
+    --footer-bg:             linear-gradient(90deg, #FFCC00, #FFD700);
+    --marquee-text:          #000000;
+    
+    --card-bg:               #0F0F11;
+    --card-border:           rgba(255, 204, 0, 0.2);
+    --card-text:             #FFFFFF;
+    
+    --price-now-color:       #FFCC00;
+    --price-now-bg:          #1A1A1A;
+    --price-now-text:        #FFCC00;
+    --price-deal-color:      #FFCC00;
+    --price-row-bg:          #0A0A0C;
+    
+    --badge-bg:              #E11D48;
+    --badge-off-bg:          #FFCC00;
+    --badge-off-text:        #000000;
+    --off-badge-bg:          #1A1A1A;
+    --off-badge-text:        #FFCC00;
+    
+    --kicker-color:          #FFCC00;
+    --categoria-color:       #FFCC00;
+    --meta-color:            #9CA3AF;
+    --rule-color:            #FFCC00;
+    
+    --timer-bg:              linear-gradient(135deg, #FFCC00, #FFD700);
+    --timer-text:            #000000;
+    --timer-deal-bg:         #FFCC00;
+    --timer-deal-text:       #000000;
+    
+    --dept-bg:               #1A1A1A;
+    --dept-text:             #FFCC00;
+    --ad-bg:                 #1A1A1A;
+    --ad-text:               #FFCC00;
+    
+    --col4-card-bg:          #0F0F11;
+    --col4-card-border:      rgba(255, 204, 0, 0.2);
+    --col4-badge-bg:         linear-gradient(135deg, #FFCC00, #FFD700);
+    --col4-badge-text:       #000000;
+    --col4-name-color:       #FFFFFF;
+    --col4-price-color:      #FFCC00;
+    --col4-price-bg:         linear-gradient(135deg, #1A1A1A, #0A0A0C);
+    --col4-price-text:       #FFCC00;
+    --col4-label-color:      #FFCC00;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #FFCC00, #FFD700);
+    --stage-name-color:      #FFFFFF;
+
 }

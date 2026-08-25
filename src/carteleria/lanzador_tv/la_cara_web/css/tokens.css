@@ -1,0 +1,146 @@
+﻿/* ══════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Sistema de Cartelería TV
+   ══════════════════════════════════════════════════════════════════
+
+   REGLA DE ORO:
+   • Este archivo define los valores DEFAULT de todos los tokens.
+   • Cada tema (temu/apple/blackfriday/premium) sobreescribe estos
+     valores en su propio colores.css.
+   • Los archivos base (cards.css, carousel.css, components.css,
+     columna4_chef.css) SOLO usan var(--token), nunca colores fijos.
+
+   Para editar el DISEÑO → editar los archivos base CSS
+   Para editar los COLORES → editar themes/<nombre>/colores.css
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+
+    /* ── PANTALLA / FONDO ─────────────────────────────────── */
+    --screen-bg:             #FFFFFF;
+    --panel-bg:              #FFFFFF;
+    --panel-border:          rgba(0, 0, 0, 0.04);
+
+    /* ── TEXTO GLOBAL ─────────────────────────────────────── */
+    --text-main:             #1A1A1A;
+    --text-sub:              #6B7280;
+    --text-muted:            #9CA3AF;
+    --text-on-dark:          #FFFFFF;
+    --text-on-accent:        #FFFFFF;
+
+    /* ── ACENTO / BRAND ───────────────────────────────────── */
+    --accent:                #FF6A00;
+    --accent-alt:            #E11D48;
+    --accent-2:              #FFE566;
+
+    /* ── FRANJA SUPERIOR (flash-strip) ───────────────────── */
+    --strip-bg:              #1A1A1A;
+    --strip-text:            #FFFFFF;
+    --strip-ends-text:       #FFFFFF;
+    --strip-dot:             #FF6A00;
+    --strip-accent:          #FF6A00;
+    --strip-count-bg:        #FFE566;
+    --strip-count-text:      #1A1A1A;
+
+    /* ── RELOJ / BADGE DE ESTADO ─────────────────────────── */
+    --badge-surface:         rgba(255, 255, 255, 0.92);
+    --clock-bg:              rgba(255, 255, 255, 0.92);
+    --clock-text:            #1A1A1A;
+
+    /* ── ZÓCALO / MARQUESINA ─────────────────────────────── */
+    --footer-bg:             linear-gradient(90deg, #FFD700, #FF6A00, #E11D48);
+    --zocalo-bg:             rgba(255, 255, 255, 0.95);
+    --zocalo-border:         rgba(255, 255, 255, 0.5);
+    --marquee-text:          #1A1A1A;
+
+    /* ── TARJETA GENÉRICA ────────────────────────────────── */
+    --card-bg:               #FFFFFF;
+    --card-border:           rgba(139, 0, 0, 0.12);
+    --card-shadow:           0 8px 20px rgba(0, 0, 0, 0.06);
+    --card-text:             #1A1A1A;
+    --card-text-sub:         #6B7280;
+
+    /* ── CARRUSEL — deal-stage (fondo de imagen) ─────────── */
+    --stage-default-bg:      linear-gradient(160deg, #E2E8F0 0%, #CBD5E1 100%);
+    --stage-aves-bg:         linear-gradient(145deg, #FFF5E0 0%, #FFE0A0 100%);
+    --stage-cerdo-bg:        linear-gradient(145deg, #FFE4E8 0%, #FFBAC5 100%);
+    --stage-almacen-bg:      linear-gradient(145deg, #E8F5E9 0%, #C8E6C9 100%);
+
+    /* ── PRECIOS / DESCUENTOS ────────────────────────────── */
+    --price-now-color:       #1A1A1A;
+    --price-now-bg:          #FFE566;
+    --price-now-text:        #1A1A1A;
+    --price-was:             #9CA3AF;
+    --price-deal-color:      #FF6A00;
+    --price-row-bg:          #FFF8E8;
+
+    /* ── BADGES ──────────────────────────────────────────── */
+    --badge-bg:              #DC2626;
+    --badge-text:            #FFFFFF;
+    --badge-off-bg:          #E11D48;
+    --badge-off-text:        #FFFFFF;
+    --off-badge-bg:          #FFF1D6;
+    --off-badge-text:        #C2410C;
+
+    /* ── KICKER / CATEGORÍA ──────────────────────────────── */
+    --kicker-color:          #FF6A00;
+    --categoria-color:       #DC2626;
+    --meta-color:            #C2410C;
+    --rule-color:            #C2410C;
+    --unit-color:            #C2410C;
+
+    /* ── CHIP / AHORRO / TIMER ───────────────────────────── */
+    --chip-bg:               #FFF6E8;
+    --chip-text:             #C2410C;
+    --save-bg:               #FFE566;
+    --save-text:             #C2410C;
+    --timer-bg:              linear-gradient(135deg, #FFE500, #FFCC00);
+    --timer-text:            #111111;
+    --timer-deal-bg:         #111111;
+    --timer-deal-text:       #FFE566;
+    --timer-urgent-bg:       #E11D48;
+    --deal-save-color:       #15803D;
+    --proof-color:           #6B7280;
+    --proof-low-color:       #E11D48;
+
+    /* ── COLUMNA 2 — PRECIOS (price-dept, price-row) ─────── */
+    --dept-bg:               #1A1A1A;
+    --dept-text:             #FFFFFF;
+    --dept-accent:           #FF6A00;
+    --ad-bg:                 #FFE566;
+    --ad-text:               #C2410C;
+    --tile-bg:               #FAFAFA;
+
+    /* ── COLUMNA 3 — OFERTA RELÁMPAGO ────────────────────── */
+    --xsell-ask-color:       #FF0033;
+    --xsell-item-bg:         #FFFFFF;
+    --xsell-item-border:     #FFD700;
+    --xsell-item-alt-bg:     #FFF0F0;
+    --xsell-item-alt-border: #FF0033;
+    --xsell-name-color:      #1A1A1A;
+    --xsell-price-color:     #FF0033;
+    --xsell-price-bg:        #FFEBEE;
+    --xsell-rule-color:      #FF0033;
+    --xsell-rule-bg:         #FFF0F0;
+
+    /* ── COLUMNA 4 — TARJETA CHEF ────────────────────────── */
+    --col4-card-bg:          #FFFFFF;
+    --col4-card-border:      rgba(255, 71, 87, 0.1);
+    --col4-badge-bg:         linear-gradient(135deg, #FF3366, #FF9933);
+    --col4-badge-text:       #FFFFFF;
+    --col4-name-color:       #1A1A1A;
+    --col4-price-color:      #FF4757;
+    --col4-price-bg:         linear-gradient(135deg, #FFE500, #FF9500);
+    --col4-price-text:       #111111;
+    --col4-label-color:      #FF6A00;
+    --col4-desc-color:       #6B7280;
+    --col4-sold-color:       #FF4757;
+    --col4-buyers-color:     #6B7280;
+    --col4-img-fallback-bg:  linear-gradient(145deg, #FF6B6B, #FFD93D);
+    --col4-hot-badge-bg:     linear-gradient(135deg, #FF3366, #FF9933);
+    --col4-new-badge-bg:     linear-gradient(135deg, #00B09B, #96C93D);
+    --col4-prog-bar-bg:      linear-gradient(90deg, #FF4757, #FF8C00);
+    --col4-prog-track:       rgba(0, 0, 0, 0.08);
+
+    /* ── STAGE NAME en CARRUSEL ──────────────────────────── */
+    --stage-name-color:      #111111;
+}
