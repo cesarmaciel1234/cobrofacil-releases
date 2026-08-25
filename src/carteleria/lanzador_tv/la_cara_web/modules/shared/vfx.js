@@ -61,7 +61,7 @@ function animateOdometers() {
 }
 
 function checkSmartMarquee() {
-    const names = document.querySelectorAll('.tv-card__name, .asian-rank-name, .price-row__name, .oferta-nombre');
+    const names = document.querySelectorAll('.tv-card__name, .asian-rank-name, .price-row__name, .oferta-nombre, .xsell-item__name');
     names.forEach(el => {
         if (el.scrollWidth > el.clientWidth + 5) {
             if (!el.classList.contains('smart-marquee')) {

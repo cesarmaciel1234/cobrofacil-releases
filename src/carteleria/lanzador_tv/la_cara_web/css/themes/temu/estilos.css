@@ -787,51 +787,251 @@ body {
 }
 
 .xsell-item__info {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    width: 100% !important;
-    padding-left: 1.5vw !important;
-}
-
-.xsell-item__name {
-    font-size: 1.3rem !important;
-    line-height: 1.1 !important;
-    margin-right: 0.5vw !important;
     font-weight: 900 !important;
-    color: #1a1a1a !important;
 }
 
-.xsell-item__price {
-    font-size: 1.4rem !important;
-    font-weight: 900 !important;
-    color: #FF0033 !important;
-    background: #FFEBEE !important;
-    padding: 0.5vh 0.5vw !important;
-    white-space: nowrap !important;
-    border-radius: 50px !important;
-    border: 2px dashed #FF0033 !important;
+/* =========================================================
+   NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
+   ========================================================= */
+.asian-rank-card {
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 1.5vh 1vw;
+    margin-bottom: 1.2vh;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    position: relative;
+    border: 2px solid transparent;
+    overflow: hidden;
+    gap: 1vw;
 }
 
-.xsell-item__stage {
-    width: 60px !important;
-    height: 60px !important;
-    min-width: 60px !important;
-    min-height: 60px !important;
-    max-width: 60px !important;
-    max-height: 60px !important;
-    object-fit: contain !important;
+.asian-rank-card.top-1 {
+    background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
+    border-color: #FFD700;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    transform: scale(1.03);
+    margin-bottom: 2vh;
+    z-index: 10;
+}
+.asian-rank-card.top-2 {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
+    border-color: #CBD5E1;
+}
+.asian-rank-card.top-3 {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFEDD5 100%);
+    border-color: #FDBA74;
+}
+
+.asian-rank-badge {
+    flex-shrink: 0;
+    background: #1A1A1A;
+    color: #FFF;
+    border-radius: 12px;
+    padding: 0.6vh 0.8vw;
+    font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.asian-rank-card.top-1 .asian-rank-badge {
+    background: linear-gradient(135deg, #FF3366, #FF9933);
+    color: #FFF;
+    font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+    animation: temuPulse 2s infinite;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.asian-rank-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+
+.asian-rank-name {
+    font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+    font-weight: 900;
+    color: #1A1A1A;
+    margin: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.asian-rank-progress-container {
+    background: rgba(0,0,0,0.08);
+    border-radius: 999px;
+    height: 2.2vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 0.5vh;
+}
+
+.asian-rank-progress-bar {
+    background: linear-gradient(90deg, #FF4757, #FF8C00);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+}
+
+.asian-rank-tag {
+    position: absolute;
+    left: 0.8vw;
+    color: #FFFFFF;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 900;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    z-index: 2;
+}
+
+.asian-rank-tag-social {
+    color: #FF4757;
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    margin-top: 0.5vh;
+}
+
+.asian-rank-fire {
+    position: absolute;
+    right: 0.5vw;
+    top: -0.5vh;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    animation: temuFire 0.8s infinite alternate;
+    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.4));
+}
+
+/* Reemplazar la linea amarilla fea por una barra horizontal sleek */
+.rank-progress {
+    height: 8px !important;
+    background: linear-gradient(90deg, #FF3366, #FF9933) !important;
+    border-radius: 999px;
+    margin-top: 1vh;
+    width: 0%;
+    animation: rankProgress var(--rank-duration) linear infinite !important;
+}
+@keyframes rankProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Fix para la linea amarilla (Puntos de rotacion sin dimensiones) */
+.rank-dots {
+    display: flex;
+    gap: 0.4vw;
+    align-items: center;
+}
+.rank-dots .rank-dot {
+    display: inline-block;
+    width: 8px !important;
+    height: 8px !important;
     border-radius: 50% !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    flex-shrink: 0 !important;
+    background: rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    transition: all 0.3s ease;
 }
-.xsell-item__text {
+.rank-dots .rank-dot.is-on {
+    background: #FFD700;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+/* =========================================================
+   ASIAN HYPE STYLES FOR COMPRAS RELACIONADAS (COLUMNA 3)
+   ========================================================= */
+   
+.xsell-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.xsell-ask {
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    text-align: center;
+    background: linear-gradient(90deg, #FF0033, #FF4D4D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
+    margin-bottom: 2vh !important;
+}
+
+.xsell-item {
+    background: linear-gradient(135deg, #ffffff 0%, #FFFDF5 100%) !important;
+    border: 3px solid #FFD700 !important;
+    border-radius: 999px !important;
+    margin-bottom: 2vh !important;
+    padding: 1vh 0.5vw !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.xsell-item:nth-child(even) {
+    background: linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%) !important;
+    border-color: #FF0033 !important;
+}
+
+.xsell-item__info {
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: flex-start !important;
-    margin-right: auto !important; /* pushes price to the right */
+    width: 100% !important;
+    padding-left: 1.2vw !important;
+    gap: 0.5vh !important;
+}
+
+.xsell-item__name {
+    font-size: 1.15rem !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+    font-weight: 800 !important;
+    color: #1a1a1a !important;
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    width: 100% !important;
+}
+
+.xsell-item__price {
+    font-size: 1.3rem !important;
+    font-weight: 900 !important;
+    color: #FF0033 !important;
+    background: #FFEBEE !important;
+    padding: 0.3vh 0.8vw !important;
+    white-space: nowrap !important;
+    border-radius: 6px !important;
+    border: 2px dashed #FF0033 !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+}
+
+.xsell-item__stage {
+    width: 65px !important;
+    height: 65px !important;
+    min-width: 65px !important;
+    min-height: 65px !important;
+    max-width: 65px !important;
+    max-height: 65px !important;
+    object-fit: contain !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+    flex-shrink: 0 !important;
+}
+.xsell-item__text {
+    display: contents !important;
 }
 
 .xsell-item__rule {
