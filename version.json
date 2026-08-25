@@ -1,14 +1,14 @@
 {
-  "app_version": "11.0.1",
+  "app_version": "11.0.2",
   "channel": "stable",
-  "build_date": "2026-08-16 00:00:00",
+  "build_date": "2026-08-25 20:31:01",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
       "version": "1.0.0",
-      "checksum": "01606a9d0903b9c0960fb112325b7ede",
+      "checksum": "43465a8e1c701d18147b73a3db3ee7a0",
       "channel": "stable",
-      "size": 3972
+      "size": 4181
     },
     "add_drain.py": {
       "version": "1.0.0",
@@ -27,12 +27,6 @@
       "checksum": "98a0177d471d6ad4f5067da22f81ab3d",
       "channel": "stable",
       "size": 559
-    },
-    "CobroFacil_POS.exe.old": {
-      "version": "1.0.0",
-      "checksum": "17502f6314ca3b8b81b6114beb4e9f59",
-      "channel": "stable",
-      "size": 9502366
     },
     "debug_paso5.py": {
       "version": "1.0.0",
@@ -82,11 +76,29 @@
       "channel": "stable",
       "size": 12942
     },
+    "lanzador_cerebro.py": {
+      "version": "1.0.0",
+      "checksum": "62ec7a63b61d5b980dd410963a26b4a7",
+      "channel": "stable",
+      "size": 216
+    },
+    "lanzador_ui.py": {
+      "version": "1.0.0",
+      "checksum": "99ba6fa7942ad4998f760eda50363359",
+      "channel": "stable",
+      "size": 341
+    },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "cf73d438b574f8656565bd7e77af835f",
+      "checksum": "00e5d83eef17cfd8cb2f2fcf49e5e97a",
       "channel": "stable",
-      "size": 23356
+      "size": 23763
+    },
+    "PLAN_MEJORA_CARTELERIA_HTML.md": {
+      "version": "1.0.0",
+      "checksum": "5ec7c7b0dc57acfccefc0aa46ac53687",
+      "channel": "stable",
+      "size": 6628
     },
     "PRECIO27_06.xlsx": {
       "version": "1.0.0",
@@ -114,9 +126,9 @@
     },
     "README.md": {
       "version": "1.0.0",
-      "checksum": "94c9ac4b4b9c21084080b1c1bfb5b928",
+      "checksum": "0d315611b567d4fe3511ba7f9efaa115",
       "channel": "stable",
-      "size": 232
+      "size": 6774
     },
     "refactor_qss.py": {
       "version": "1.0.0",
@@ -154,12 +166,6 @@
       "channel": "stable",
       "size": 409
     },
-    "test_pc_vieja_w10.py": {
-      "version": "1.0.0",
-      "checksum": "28d3d909246e72081272374d95c1c6af",
-      "channel": "stable",
-      "size": 1765
-    },
     "test_slave.py": {
       "version": "1.0.0",
       "checksum": "84a79c9ed06a0f1fd264c56911bb6803",
@@ -180,9 +186,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "f431a61923af9a730d42723da22c240d",
+      "checksum": "4094017e8629cae84465faf240e172ee",
       "channel": "stable",
-      "size": 635994
+      "size": 645841
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -280,7 +286,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00c3\u00b1a.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",
@@ -352,6 +358,162 @@
       "channel": "stable",
       "size": 1541
     },
+    "creator png/app.py": {
+      "version": "1.0.0",
+      "checksum": "e586c0c6611c647b819b370946a440dd",
+      "channel": "stable",
+      "size": 14008
+    },
+    "creator png/convertir_imagen.py": {
+      "version": "1.0.0",
+      "checksum": "d2d2c59d22744c50f007f1824cc1f06d",
+      "channel": "stable",
+      "size": 29739
+    },
+    "creator png/requirements.txt": {
+      "version": "1.0.0",
+      "checksum": "6ef28d1ffc3ac6e1145efd3d12f5c194",
+      "channel": "stable",
+      "size": 25
+    },
+    "creator png/templates/index.html": {
+      "version": "1.0.0",
+      "checksum": "e156ed8922f3b89847f534ea7738e2c1",
+      "channel": "stable",
+      "size": 54011
+    },
+    "creator png/uploads/074e5f82-3ed3-452d-af7a-f319db83c6fe.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/17f28511-1180-4ffa-8e10-f398cd39c2b4.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/298466a6-13ad-4cb6-ba91-39ed7e13fa23.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/2a984b6d-f41f-48e1-83f3-8af426cdde76.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/3d0a5381-c14c-40c2-9b6e-df5f5e6b4035.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/6ec5f452-075b-4c5d-ab37-d034742f31d0.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/7f0b4a7a-fa7b-4564-9cc2-b3c4dab22661.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/800fe980-6b96-42c4-82ca-54797648ec27.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/95ad3091-40a5-4b99-a12d-7936d865e3b0.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/9e677be4-6f2c-492e-a198-32317389829e.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/a285c5d1-e9db-484d-b436-fa8c177f4b81.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/a3cdba47-78a7-4ee4-8a48-48e79f1df5ec.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/ae7a8f38-ef04-45f2-a919-ed9384bb9fd5.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/b3d90c09-f9d5-4cad-b2f9-3767fa339f2e.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/b3fd673c-8e07-47d8-89e3-a161f1718c91.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/b65046a3-95ed-40d4-bef1-573f6e968619.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/c125a396-e745-4a4c-a70c-aff7396944c5.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/c72797f1-2d72-4c22-9119-b86cfd1eba65.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/d4e8235a-beac-44dd-9a15-57fc75b91cfb.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/f0658767-6c82-41e3-abbb-8c3bbec0d375.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/f9efde96-c85e-4098-a3c9-9c2dba16e834.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
+    "creator png/uploads/fa4bcf1c-f81c-4577-863f-6e324ba4cb00.jpeg": {
+      "version": "1.0.0",
+      "checksum": "a402ffa67d5f6d4b49418a9cae43dd65",
+      "channel": "stable",
+      "size": 216717
+    },
     "scripts/ci/auto_fix_from_issue.py": {
       "version": "1.0.0",
       "checksum": "3022239e0dd0c55fc835c009709096f8",
@@ -372,9 +534,9 @@
     },
     "src/main_window.py": {
       "version": "1.0.0",
-      "checksum": "ab79ca14a936a3119c1892a06000e9ba",
+      "checksum": "fbf2259a45e9f0b80e3f94ea9ffce0bd",
       "channel": "stable",
-      "size": 43155
+      "size": 43413
     },
     "src/__init__.py": {
       "version": "1.0.0",
@@ -726,9 +888,9 @@
     },
     "src/admin/importexport/importexport_main.py": {
       "version": "1.0.0",
-      "checksum": "74effffce36d25978b13ace572eae684",
+      "checksum": "8bdbb7f691057ac361d7499122dd5430",
       "channel": "stable",
-      "size": 15181
+      "size": 15969
     },
     "src/admin/importexport/__init__.py": {
       "version": "1.0.0",
@@ -912,9 +1074,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "2916414d86023d1fa520864114a77bf5",
+      "checksum": "712aabac1a199555c55dfd9a1fc58e2e",
       "channel": "stable",
-      "size": 79371
+      "size": 79435
     },
     "src/base_de_datos/diario_ventas_externo.py": {
       "version": "1.0.0",
@@ -1326,27 +1488,39 @@
     },
     "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "53c751f58af50f1a20cd9d586cdf12a4",
+      "checksum": "4a24070794e75493b0a60437d95bcff7",
       "channel": "stable",
-      "size": 8653
+      "size": 8832
     },
     "src/carteleria/assets_paths.py": {
       "version": "1.0.0",
-      "checksum": "9304a5aebfe924f943a8f0aa8ff0c7c4",
+      "checksum": "bd812b9251a85b907077b249d625fb89",
       "channel": "stable",
-      "size": 1699
+      "size": 8070
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "4738ee07ee80ed8ecb6db720cd2654cc",
+      "checksum": "699405eba01d5c5dfdb197b4264fd6ec",
       "channel": "stable",
-      "size": 10159
+      "size": 10760
+    },
+    "src/carteleria/el_cuello.py": {
+      "version": "1.0.0",
+      "checksum": "7dd7ce343f488332642d00a6a329814a",
+      "channel": "stable",
+      "size": 983
     },
     "src/carteleria/escala_tv.py": {
       "version": "1.0.0",
       "checksum": "cce104245f804e5fc2f34d88c830dadf",
       "channel": "stable",
       "size": 3818
+    },
+    "src/carteleria/ESTRUCTURA.md": {
+      "version": "1.0.0",
+      "checksum": "fb22111981f748180012af4e8b150218",
+      "channel": "stable",
+      "size": 9562
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -1362,9 +1536,9 @@
     },
     "src/carteleria/__init__.py": {
       "version": "1.0.0",
-      "checksum": "bdbfea3e0a88fa737eba9ea689dc91ea",
+      "checksum": "843f344f0166168a3b193b50e305ac6a",
       "channel": "stable",
-      "size": 282
+      "size": 324
     },
     "src/carteleria/assets/download_icons.py": {
       "version": "1.0.0",
@@ -1392,15 +1566,15 @@
     },
     "src/carteleria/carteleria_hub/hub_admin.py": {
       "version": "1.0.0",
-      "checksum": "b504cb8ee5bd5fe09fae97d6b8b0d85f",
+      "checksum": "65aec52408a459667091cf7e94f31d00",
       "channel": "stable",
-      "size": 2463
+      "size": 2529
     },
     "src/carteleria/carteleria_hub/hub_principal.py": {
       "version": "1.0.0",
-      "checksum": "a944cf88117feb155b820ae5c852dafd",
+      "checksum": "205e7f9a843a106535a7bf45b9d03922",
       "channel": "stable",
-      "size": 3391
+      "size": 3487
     },
     "src/carteleria/carteleria_hub/__init__.py": {
       "version": "1.0.0",
@@ -1410,21 +1584,21 @@
     },
     "src/carteleria/configuraciones/indicador_red_widget.py": {
       "version": "1.0.0",
-      "checksum": "f3180a1e3383d0edb140e0cb4d09e82f",
+      "checksum": "e90e2845871822c478d1a522823357f4",
       "channel": "stable",
-      "size": 7100
+      "size": 7262
     },
     "src/carteleria/configuraciones/info_negocio.py": {
       "version": "1.0.0",
-      "checksum": "eb821cbd135a8900de3b346910e82121",
+      "checksum": "5ae851c9df1a3ac5426420d1a6d66993",
       "channel": "stable",
-      "size": 2326
+      "size": 2380
     },
     "src/carteleria/configuraciones/reloj_widget.py": {
       "version": "1.0.0",
-      "checksum": "3c616b213fe9ee35c7533c032be52291",
+      "checksum": "6ed2112979f106ffbe683f6bebd75074",
       "channel": "stable",
-      "size": 682
+      "size": 699
     },
     "src/carteleria/configuraciones/__init__.py": {
       "version": "1.0.0",
@@ -1434,9 +1608,9 @@
     },
     "src/carteleria/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "3d54eb5f2a592f23c24a3545713e1ae4",
+      "checksum": "08d61b1c4870c51f2084168c9f15cfb5",
       "channel": "stable",
-      "size": 13808
+      "size": 15486
     },
     "src/carteleria/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -1468,113 +1642,293 @@
       "channel": "stable",
       "size": 0
     },
-    "src/carteleria/interfaz_principal/__init__.py": {
+    "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "b0f84eae6a91cbaa2f6d287d9ba39a3d",
       "channel": "stable",
-      "size": 0
+      "size": 15097
     },
-    "src/carteleria/interfaz_principal/componentes_base/banner_categoria.py": {
+    "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",
-      "checksum": "455f4d936b0f237f699cd156853588e0",
+      "checksum": "6d8f860e384593a92b22122b6d387f77",
       "channel": "stable",
-      "size": 7251
+      "size": 5423
     },
-    "src/carteleria/interfaz_principal/componentes_base/mensaje.py": {
+    "src/carteleria/lanzador_tv/lanzador_directo.py": {
       "version": "1.0.0",
-      "checksum": "a39157a9a77c360f5240eb791fec29cf",
+      "checksum": "57659e30c7fc95c5046db42877e33d05",
       "channel": "stable",
-      "size": 5043
+      "size": 18734
     },
-    "src/carteleria/interfaz_principal/componentes_base/__init__.py": {
+    "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "56e0e3ced24cead37e7c8fedc7148397",
       "channel": "stable",
-      "size": 0
+      "size": 8254
     },
-    "src/carteleria/interfaz_principal/paneles/carrusel_destacados.py": {
+    "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "fb6f258bd91c291b8c973af1ea7ff8cf",
+      "checksum": "f9cea791e06c781eb2db77a5938beadb",
       "channel": "stable",
-      "size": 17638
+      "size": 22673
     },
-    "src/carteleria/interfaz_principal/paneles/grilla_precios.py": {
+    "src/carteleria/lanzador_tv/window_manager.py": {
       "version": "1.0.0",
-      "checksum": "9c6695b2b534903cc3abe00eb69bf0ef",
+      "checksum": "1a33c12ee470e862412f0affd71c3f33",
       "channel": "stable",
-      "size": 15568
+      "size": 6353
     },
-    "src/carteleria/interfaz_principal/paneles/panel_combos.py": {
+    "src/carteleria/lanzador_tv/_preview_tv.py": {
       "version": "1.0.0",
-      "checksum": "8d8bbdcbb393cebe13bfb748de531f34",
+      "checksum": "ee3e48080c8768d395744870f1732170",
       "channel": "stable",
-      "size": 9721
+      "size": 8308
     },
-    "src/carteleria/interfaz_principal/paneles/panel_ia.py": {
+    "src/carteleria/lanzador_tv/_smoke_tv.py": {
       "version": "1.0.0",
-      "checksum": "ad9b6cd79633d19806a4e50e74eebbd2",
+      "checksum": "63bce437c02ff67bb963d01ea30a1552",
       "channel": "stable",
-      "size": 13336
+      "size": 2785
     },
-    "src/carteleria/interfaz_principal/paneles/__init__.py": {
+    "src/carteleria/lanzador_tv/__init__.py": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "6eda6d7dd6a7c83321115c69506d1c39",
       "channel": "stable",
-      "size": 0
+      "size": 851
     },
-    "src/carteleria/interfaz_principal/tarjetas/tarjeta_producto.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/app.js": {
       "version": "1.0.0",
-      "checksum": "7386f2a91d9690e0941596ffb6a48a9e",
+      "checksum": "210344e5168d6ce7a95eaa24aca943b0",
       "channel": "stable",
-      "size": 11234
+      "size": 6623
     },
-    "src/carteleria/interfaz_principal/tarjetas/tarjeta_publicidad.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/index.html": {
       "version": "1.0.0",
-      "checksum": "3132f13d5ef22299fa4c43c64ff57015",
+      "checksum": "ec1fa439dde145709969bebdfce17acd",
       "channel": "stable",
-      "size": 9534
+      "size": 4348
     },
-    "src/carteleria/interfaz_principal/tarjetas/__init__.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/base.css": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "0363ea5c54ea5befa3475511fde72129",
       "channel": "stable",
-      "size": 0
+      "size": 4210
     },
-    "src/carteleria/interfaz_principal/vistas/display_promo_tv.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/cards.css": {
       "version": "1.0.0",
-      "checksum": "1cb628b88c7136faf6151893d0d6894c",
+      "checksum": "549d3980e584de44c9f6987e67ef9500",
       "channel": "stable",
-      "size": 10067
+      "size": 17108
     },
-    "src/carteleria/interfaz_principal/vistas/__init__.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/carousel.css": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "10bd4c5fb7e27988d452263b0ea4ea93",
       "channel": "stable",
-      "size": 0
+      "size": 11937
     },
-    "src/carteleria/interfaz_relampagos/banderin.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/columna4_chef.css": {
       "version": "1.0.0",
-      "checksum": "3bd45c438b4052b6386f398491d21ff1",
+      "checksum": "fd9ab6aecf58c4234c13b5d3d3ba265a",
       "channel": "stable",
-      "size": 6462
+      "size": 46209
     },
-    "src/carteleria/interfaz_relampagos/oferta_relampago.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/components.css": {
       "version": "1.0.0",
-      "checksum": "5b0ffba1ea1c3c4b24dbb410cc582cc6",
+      "checksum": "9ad0955221c5ee5522d5954c3b867c30",
       "channel": "stable",
-      "size": 7120
+      "size": 10906
     },
-    "src/carteleria/interfaz_relampagos/pantalla_espia.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/premium_black_gold.css": {
       "version": "1.0.0",
-      "checksum": "070795e5541d1e361864c5e469228e95",
+      "checksum": "fe629fc3810a5fc1040cfeb6a66f49bf",
       "channel": "stable",
-      "size": 4718
+      "size": 6279
     },
-    "src/carteleria/interfaz_relampagos/__init__.py": {
+    "src/carteleria/lanzador_tv/la_cara_web/css/responsive.css": {
       "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "checksum": "8eed5ea8c62afb673fa0267e92f62262",
       "channel": "stable",
-      "size": 0
+      "size": 4771
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/style.css": {
+      "version": "1.0.0",
+      "checksum": "cff71a1eaf03f8e4d46a453993b0b73b",
+      "channel": "stable",
+      "size": 210
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/tokens.css": {
+      "version": "1.0.0",
+      "checksum": "f57c6bbd372a8a22c4f5998951c4028e",
+      "channel": "stable",
+      "size": 7448
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/apple/colores.css": {
+      "version": "1.0.0",
+      "checksum": "a6a7cc48946e02108f40b9b7efb221e9",
+      "channel": "stable",
+      "size": 3483
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/apple/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "7dbe8d5ef0a15465140e812e8b873e61",
+      "channel": "stable",
+      "size": 871
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/colores.css": {
+      "version": "1.0.0",
+      "checksum": "3c2eeebb0bde625abcc4f70695150965",
+      "channel": "stable",
+      "size": 3726
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "3ff2613c993aaeeac870262e94eb845a",
+      "channel": "stable",
+      "size": 1196
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/premium/colores.css": {
+      "version": "1.0.0",
+      "checksum": "4848fdb2dbd49dd5d1813ccc1b6d3ccb",
+      "channel": "stable",
+      "size": 2738
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/premium/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "cddf77424933cd99e2d81ab52dbd14bd",
+      "channel": "stable",
+      "size": 11793
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/colores.css": {
+      "version": "1.0.0",
+      "checksum": "abd21c8778604cdc3adc48fc24b3978e",
+      "channel": "stable",
+      "size": 6933
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "ef4404faa01340acfc38c2437ead9adf",
+      "channel": "stable",
+      "size": 28393
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/cabecera_negociodata/cabecera_negociodata.js": {
+      "version": "1.0.0",
+      "checksum": "21fd908d091ae094c6eb0fd3554af688",
+      "channel": "stable",
+      "size": 1594
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna1/columna1.js": {
+      "version": "1.0.0",
+      "checksum": "de5f64810e1615d5101f57157cce5542",
+      "channel": "stable",
+      "size": 3485
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna1/tarjetas/tarjeta_ranking.js": {
+      "version": "1.0.0",
+      "checksum": "930aa3b69a9ca2dd7046a22ebb316bd6",
+      "channel": "stable",
+      "size": 4343
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna2/columna2.js": {
+      "version": "1.0.0",
+      "checksum": "7e00e1e29899d608c93ff8892053e15b",
+      "channel": "stable",
+      "size": 3812
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna2/tarjetas/fila_precio.js": {
+      "version": "1.0.0",
+      "checksum": "d0c2991fa7dd1d85febb9775289e89e0",
+      "channel": "stable",
+      "size": 1532
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna2/tarjetas/tarjeta_publicidad.js": {
+      "version": "1.0.0",
+      "checksum": "bc73157ac18e117df2d96748a436649c",
+      "channel": "stable",
+      "size": 678
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna3/columna3.js": {
+      "version": "1.0.0",
+      "checksum": "02768d565eabbf4fc245d78ac3c34513",
+      "channel": "stable",
+      "size": 4639
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_combo.js": {
+      "version": "1.0.0",
+      "checksum": "d52054b8585a4e4d6afa70fbd4ab2c0f",
+      "channel": "stable",
+      "size": 1449
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_cruzada.js": {
+      "version": "1.0.0",
+      "checksum": "16b99592310025a7231b9cb2457df73d",
+      "channel": "stable",
+      "size": 2814
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_relampago.js": {
+      "version": "1.0.0",
+      "checksum": "fb76ef5105e518f05239c77652712a73",
+      "channel": "stable",
+      "size": 1731
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/columna4.js": {
+      "version": "1.0.0",
+      "checksum": "b3100f9aa5adb8c9d12f92908a5e9546",
+      "channel": "stable",
+      "size": 4178
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/badge_clima.js": {
+      "version": "1.0.0",
+      "checksum": "a94596fe2dbcddfcd5eba912307cef46",
+      "channel": "stable",
+      "size": 350
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/lobo_chef.js": {
+      "version": "1.0.0",
+      "checksum": "464ea9da99979bbace8198cf2dc1dc6b",
+      "channel": "stable",
+      "size": 298
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/mensaje_personalizado.js": {
+      "version": "1.0.0",
+      "checksum": "4cc2e43f4fd02247b78c064ee2af2d63",
+      "channel": "stable",
+      "size": 259
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/recomendacion_destacada.js": {
+      "version": "1.0.0",
+      "checksum": "d62791a099c0823b8d37b624f665ecdf",
+      "channel": "stable",
+      "size": 433
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/columna4/tarjetas/tarjeta_chef.js": {
+      "version": "1.0.0",
+      "checksum": "446e8780a541e40bc03740d202b423f2",
+      "channel": "stable",
+      "size": 9724
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/franja_oferta/franja_oferta.js": {
+      "version": "1.0.0",
+      "checksum": "85c4825c982cef16a47b74b896e01b13",
+      "channel": "stable",
+      "size": 8483
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/mensaje_zocalo/mensaje_zocalo.js": {
+      "version": "1.0.0",
+      "checksum": "e71c1a60e76d69186c26c25c76ac2843",
+      "channel": "stable",
+      "size": 944
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/shared/plata_y_texto.js": {
+      "version": "1.0.0",
+      "checksum": "42441980171b3babc3cc56d9265ec0b6",
+      "channel": "stable",
+      "size": 7092
+    },
+    "src/carteleria/lanzador_tv/la_cara_web/modules/shared/vfx.js": {
+      "version": "1.0.0",
+      "checksum": "00080413f154713337a8d6ba83768478",
+      "channel": "stable",
+      "size": 3263
     },
     "src/carteleria/modo_procesos/buscador_red_worker.py": {
       "version": "1.0.0",
@@ -1596,45 +1950,39 @@
     },
     "src/carteleria/motor_carteleria/clima_worker.py": {
       "version": "1.0.0",
-      "checksum": "3bbf93557839ad4b2179face187d42b0",
+      "checksum": "e39dcd2da157dc1990180de99bb66f18",
       "channel": "stable",
-      "size": 1184
+      "size": 1449
     },
     "src/carteleria/motor_carteleria/db_sync_worker.py": {
       "version": "1.0.0",
-      "checksum": "39cb0fc2c83f1ab72e21bae08eaabcf3",
+      "checksum": "7e71e1e8cd585a0647d10c389ce60445",
       "channel": "stable",
-      "size": 10811
+      "size": 10521
     },
-    "src/carteleria/motor_carteleria/espia_worker.py": {
+    "src/carteleria/motor_carteleria/estado_tv.py": {
       "version": "1.0.0",
-      "checksum": "378d0e22f04dad212281629d6b73335a",
+      "checksum": "665b6eb1795b9af8fa210d0c038fe8f2",
       "channel": "stable",
-      "size": 2632
+      "size": 21526
+    },
+    "src/carteleria/motor_carteleria/iconos_tv.py": {
+      "version": "1.0.0",
+      "checksum": "02e75a1cc01b1ea24f94d8ce9d1cfe28",
+      "channel": "stable",
+      "size": 4698
     },
     "src/carteleria/motor_carteleria/layout_manager.py": {
       "version": "1.0.0",
-      "checksum": "c4e122dc0e000ec7d6dd11b4be2a9f4b",
+      "checksum": "a69f484aebb05e02725f65b244018f8f",
       "channel": "stable",
-      "size": 4396
+      "size": 465
     },
     "src/carteleria/motor_carteleria/main_board.py": {
       "version": "1.0.0",
-      "checksum": "6700e77ddd27afa39e96dc70cfa2b8ce",
+      "checksum": "5531885efb4bc25caee5caae13fb885b",
       "channel": "stable",
-      "size": 21468
-    },
-    "src/carteleria/motor_carteleria/motor_grilla.py": {
-      "version": "1.0.0",
-      "checksum": "ef407a83b1a1ecfaa2e9377fb31439cb",
-      "channel": "stable",
-      "size": 3471
-    },
-    "src/carteleria/motor_carteleria/motor_paneles.py": {
-      "version": "1.0.0",
-      "checksum": "9c98da54817bfb51120e41bb9678b11b",
-      "channel": "stable",
-      "size": 10591
+      "size": 187
     },
     "src/carteleria/motor_carteleria/motor_publicidad.py": {
       "version": "1.0.0",
@@ -1642,71 +1990,23 @@
       "channel": "stable",
       "size": 3583
     },
-    "src/carteleria/motor_carteleria/network_manager.py": {
+    "src/carteleria/motor_carteleria/venta_cruzada.py": {
       "version": "1.0.0",
-      "checksum": "f7f868f7e67ee6e737f036c7d550d786",
+      "checksum": "f9f54fb912eb85f6fbe6d71e35630bc7",
       "channel": "stable",
-      "size": 4521
+      "size": 8061
     },
-    "src/carteleria/motor_carteleria/promo_manager.py": {
+    "src/carteleria/motor_carteleria/web_server.py": {
       "version": "1.0.0",
-      "checksum": "e38be4451c1fe02c7929f1bac0f96d89",
+      "checksum": "25233c1c0a4e911346f2deb77eec3da3",
       "channel": "stable",
-      "size": 3698
-    },
-    "src/carteleria/motor_carteleria/window_manager.py": {
-      "version": "1.0.0",
-      "checksum": "6efe3490478001e4eee818a4cc5b4b12",
-      "channel": "stable",
-      "size": 6072
+      "size": 305
     },
     "src/carteleria/motor_carteleria/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/buscador_precios_y_stock.py": {
-      "version": "1.0.0",
-      "checksum": "0eb1308466d45999a66358906422bafb",
-      "channel": "stable",
-      "size": 5899
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/mas_elegidos_hoy.py": {
-      "version": "1.0.0",
-      "checksum": "b9456aaccc329a951c9336ef2186bdd5",
-      "channel": "stable",
-      "size": 1887
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/mas_volumen_hoy.py": {
-      "version": "1.0.0",
-      "checksum": "fa9f0c342b70b1f135b0797bc3edca59",
-      "channel": "stable",
-      "size": 1867
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/ofertas_y_destacados_hoy.py": {
-      "version": "1.0.0",
-      "checksum": "5978837e7af743038447f19b9f3c7d92",
-      "channel": "stable",
-      "size": 3391
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/recomendados_hoy.py": {
-      "version": "1.0.0",
-      "checksum": "ad7eaddcdf6809b46c55e217522ee322",
-      "channel": "stable",
-      "size": 2495
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/venta_cruzada_inteligente.py": {
-      "version": "1.0.0",
-      "checksum": "6436d00e3247b7078a11af104c825d37",
-      "channel": "stable",
-      "size": 8846
-    },
-    "src/carteleria/motor_carteleria/modulos_ventas_hoy/__init__.py": {
-      "version": "1.0.0",
-      "checksum": "afb1fd10a38114fe81533038741ec1e6",
-      "channel": "stable",
-      "size": 1228
     },
     "src/carteleria/motor_descuentos_ui/ofertas_main.py": {
       "version": "1.0.0",
@@ -1744,6 +2044,24 @@
       "channel": "stable",
       "size": 38
     },
+    "src/carteleria/png_productos/fondo_transparente.py": {
+      "version": "1.0.0",
+      "checksum": "a25b77d539865bf9e4a99c477da4e2d9",
+      "channel": "stable",
+      "size": 1585
+    },
+    "src/carteleria/png_productos/panel_png_productos.py": {
+      "version": "1.0.0",
+      "checksum": "f796064af070c28c1014a13a4e2a8c82",
+      "channel": "stable",
+      "size": 13163
+    },
+    "src/carteleria/png_productos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "7c6f13b33a09d0930d7baec3d79ce8c7",
+      "channel": "stable",
+      "size": 67
+    },
     "src/carteleria/red_lan/red_lan_main.py": {
       "version": "1.0.0",
       "checksum": "59e396643762279e228052a182e2b7d4",
@@ -1758,9 +2076,9 @@
     },
     "src/central_red_global/lan_server.py": {
       "version": "1.0.0",
-      "checksum": "b6d3f098ae41324451b171d108abfdc1",
+      "checksum": "3bb64405a0396c685e208ccffa7375b8",
       "channel": "stable",
-      "size": 18022
+      "size": 18689
     },
     "src/central_red_global/master_presence.py": {
       "version": "1.0.0",
@@ -1824,9 +2142,9 @@
     },
     "src/cerebro_global/carteleria_cerebro/motor_ia_local.py": {
       "version": "1.0.0",
-      "checksum": "05e36b9ac234c4bea06448b39d032b98",
+      "checksum": "d4955dc46ed5f39c3807feb55e4e252f",
       "channel": "stable",
-      "size": 6123
+      "size": 6092
     },
     "src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
       "version": "1.0.0",
@@ -1938,9 +2256,9 @@
     },
     "src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
       "version": "1.0.0",
-      "checksum": "c576ada4df58da6096bfda03b3937db8",
+      "checksum": "9160c4afcff873525ed0c3f427af9200",
       "channel": "stable",
-      "size": 6460
+      "size": 6732
     },
     "src/cerebro_global/servicios/cache_productos.py": {
       "version": "1.0.0",
@@ -2368,6 +2686,36 @@
       "channel": "stable",
       "size": 117
     },
+    "src/lanzadores/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "968b6ee666508dcb58fe8a69e81f63e6",
+      "channel": "stable",
+      "size": 147
+    },
+    "src/lanzadores/cerebro/run.py": {
+      "version": "1.0.0",
+      "checksum": "2f6dfc673b3dd4a8d56b5cc0ce572a2d",
+      "channel": "stable",
+      "size": 524
+    },
+    "src/lanzadores/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "ad9525b0303c4888eb9ab4779c2c9de4",
+      "channel": "stable",
+      "size": 175
+    },
+    "src/lanzadores/ui/run.py": {
+      "version": "1.0.0",
+      "checksum": "9fd719118e0b415da007514f52a3041e",
+      "channel": "stable",
+      "size": 627
+    },
+    "src/lanzadores/ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "8145c30006566afe9e5df1720a0e3544",
+      "channel": "stable",
+      "size": 155
+    },
     "src/motor_descuentos/__init__.py": {
       "version": "1.0.0",
       "checksum": "2b2af2b6d5f2c355424dc9154adb7369",
@@ -2430,9 +2778,9 @@
     },
     "src/motor_descuentos/vistas/ofertas_main.py": {
       "version": "1.0.0",
-      "checksum": "bea03883fccfa0c7e9885c70ab16a0ea",
+      "checksum": "ddd3b9f93b3522f4219b4822e6cc7779",
       "channel": "stable",
-      "size": 31733
+      "size": 33303
     },
     "src/motor_descuentos/vistas/__init__.py": {
       "version": "1.0.0",
@@ -2472,9 +2820,9 @@
     },
     "src/motor_inventario/base/productos_db.py": {
       "version": "1.0.0",
-      "checksum": "91f65b804cac68853b0a6c83e330f939",
+      "checksum": "7b3c04e67825b6e9035d40c9592180fa",
       "channel": "stable",
-      "size": 1679
+      "size": 4466
     },
     "src/motor_inventario/procesos/buscador_productos.py": {
       "version": "1.0.0",
@@ -2508,9 +2856,9 @@
     },
     "src/navigation/screen_registry.py": {
       "version": "1.0.0",
-      "checksum": "9441761e2a808ad531b20702097c7c1a",
+      "checksum": "8661db5f2fa9dac74b52762e4fb8d3b4",
       "channel": "stable",
-      "size": 3461
+      "size": 3443
     },
     "src/navigation/__init__.py": {
       "version": "1.0.0",
@@ -2844,9 +3192,9 @@
     },
     "src/ui_global/inventario_ui/moleculas/dialogo_galeria_iconos.py": {
       "version": "1.0.0",
-      "checksum": "5c49af4d7104bdfe6090c29d2aa61c42",
+      "checksum": "6d42ba31790928f4c5c71d2a12fee15a",
       "channel": "stable",
-      "size": 10329
+      "size": 18807
     },
     "src/ui_global/inventario_ui/moleculas/dialogo_producto.py": {
       "version": "1.0.0",
@@ -2862,15 +3210,15 @@
     },
     "src/ui_global/inventario_ui/moleculas/panel_categorias.py": {
       "version": "1.0.0",
-      "checksum": "5755bfdff65173bf213f87377dd18b5f",
+      "checksum": "859d6a720c96bfc43fd02298057b6106",
       "channel": "stable",
-      "size": 11262
+      "size": 11258
     },
     "src/ui_global/inventario_ui/moleculas/panel_departamentos.py": {
       "version": "1.0.0",
-      "checksum": "5e99d1ea55fd836e3d4da2d20df12763",
+      "checksum": "5d85964b58f3a6d0ca0ba96edc26f6f4",
       "channel": "stable",
-      "size": 12527
+      "size": 12523
     },
     "src/ui_global/inventario_ui/moleculas/__init__.py": {
       "version": "1.0.0",
@@ -3264,9 +3612,9 @@
     },
     "tools/generar_iconos_base.py": {
       "version": "1.0.0",
-      "checksum": "5613e6a1bb8ee089f5901373db45053b",
+      "checksum": "2a5da36bb5f9fa3f0fc4be7ff8477785",
       "channel": "stable",
-      "size": 1704
+      "size": 1687
     },
     "tools/pyqt6_audit.py": {
       "version": "1.0.0",
@@ -3316,19 +3664,7 @@
       "channel": "stable",
       "size": 221696
     },
-    "_internal/ada92cb5d92a588d1b93__mypyc.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "48939ec66bb9a4902acad835092465eb",
-      "channel": "stable",
-      "size": 221696
-    },
     "_internal/api-ms-win-core-console-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "9f746f4f7d845f063fea3c37dcebc27c",
-      "channel": "stable",
-      "size": 22072
-    },
-    "_internal/api-ms-win-core-console-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "9f746f4f7d845f063fea3c37dcebc27c",
       "channel": "stable",
@@ -3340,19 +3676,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-datetime-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "8f8eb9cb9e78e3a611bc8acaec4399cb",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-debug-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "226a5983ae2cbbf0c1bda85d65948abc",
-      "channel": "stable",
-      "size": 21944
-    },
-    "_internal/api-ms-win-core-debug-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "226a5983ae2cbbf0c1bda85d65948abc",
       "channel": "stable",
@@ -3364,19 +3688,7 @@
       "channel": "stable",
       "size": 22096
     },
-    "_internal/api-ms-win-core-errorhandling-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "c2f8c03ecce9941492bfbe4b82f7d2d5",
-      "channel": "stable",
-      "size": 22096
-    },
     "_internal/api-ms-win-core-fibers-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "b5e2760c5a46dbeb8ae18c75f335707e",
-      "channel": "stable",
-      "size": 22072
-    },
-    "_internal/api-ms-win-core-fibers-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "b5e2760c5a46dbeb8ae18c75f335707e",
       "channel": "stable",
@@ -3388,19 +3700,7 @@
       "channel": "stable",
       "size": 22072
     },
-    "_internal/api-ms-win-core-fibers-l1-1-1.dll.old": {
-      "version": "1.0.0",
-      "checksum": "050a30a687e7a2fa6f086a0db89aa131",
-      "channel": "stable",
-      "size": 22072
-    },
     "_internal/api-ms-win-core-file-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "9f45a47ebfd9d0629f4935764243dd5a",
-      "channel": "stable",
-      "size": 26152
-    },
-    "_internal/api-ms-win-core-file-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "9f45a47ebfd9d0629f4935764243dd5a",
       "channel": "stable",
@@ -3412,19 +3712,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-file-l1-2-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "cc228ff8d86b608e73026b1e9960b2f8",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-file-l2-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "e368a236f5676a3da44e76870cd691c9",
-      "channel": "stable",
-      "size": 21960
-    },
-    "_internal/api-ms-win-core-file-l2-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "e368a236f5676a3da44e76870cd691c9",
       "channel": "stable",
@@ -3436,19 +3724,7 @@
       "channel": "stable",
       "size": 21944
     },
-    "_internal/api-ms-win-core-handle-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "416aa8314222db6cbb3760856be13d46",
-      "channel": "stable",
-      "size": 21944
-    },
     "_internal/api-ms-win-core-heap-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "344a09b4be069f86356a89482c156647",
-      "channel": "stable",
-      "size": 22072
-    },
-    "_internal/api-ms-win-core-heap-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "344a09b4be069f86356a89482c156647",
       "channel": "stable",
@@ -3460,19 +3736,7 @@
       "channel": "stable",
       "size": 22072
     },
-    "_internal/api-ms-win-core-interlocked-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "86023497fa48ca2c7705d3f90b76ebc5",
-      "channel": "stable",
-      "size": 22072
-    },
     "_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll": {
-      "version": "1.0.0",
-      "checksum": "0c1cc0a54d4b38885e1b250b40a34a84",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll.old": {
       "version": "1.0.0",
       "checksum": "0c1cc0a54d4b38885e1b250b40a34a84",
       "channel": "stable",
@@ -3484,19 +3748,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-libraryloader-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "5fbcb20d99e463259b4f15429010b9cd",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-localization-l1-2-0.dll": {
-      "version": "1.0.0",
-      "checksum": "5241df2e95e31e73ccfd6357ad309df0",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-core-localization-l1-2-0.dll.old": {
       "version": "1.0.0",
       "checksum": "5241df2e95e31e73ccfd6357ad309df0",
       "channel": "stable",
@@ -3508,19 +3760,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-memory-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "8d285430e8bda6d5c9b683579adcb180",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-namedpipe-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "4a28ca64f44b91f43945ee3971e0996a",
-      "channel": "stable",
-      "size": 22096
-    },
-    "_internal/api-ms-win-core-namedpipe-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "4a28ca64f44b91f43945ee3971e0996a",
       "channel": "stable",
@@ -3532,19 +3772,7 @@
       "channel": "stable",
       "size": 21968
     },
-    "_internal/api-ms-win-core-processenvironment-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "7fd4a71085783ccfe9c289c07bcf9b04",
-      "channel": "stable",
-      "size": 21968
-    },
     "_internal/api-ms-win-core-processthreads-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "c123f2c161884fbff4f00ef1e1391266",
-      "channel": "stable",
-      "size": 22096
-    },
-    "_internal/api-ms-win-core-processthreads-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "c123f2c161884fbff4f00ef1e1391266",
       "channel": "stable",
@@ -3556,19 +3784,7 @@
       "channel": "stable",
       "size": 22072
     },
-    "_internal/api-ms-win-core-processthreads-l1-1-1.dll.old": {
-      "version": "1.0.0",
-      "checksum": "385f562bdc391ccd4f81aca3719f3236",
-      "channel": "stable",
-      "size": 22072
-    },
     "_internal/api-ms-win-core-profile-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "7a629293eeb0bca5f9bdee8ade477c54",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-core-profile-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "7a629293eeb0bca5f9bdee8ade477c54",
       "channel": "stable",
@@ -3580,19 +3796,7 @@
       "channel": "stable",
       "size": 21960
     },
-    "_internal/api-ms-win-core-rtlsupport-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "3c5c7a3130b075b2def5c413c127173f",
-      "channel": "stable",
-      "size": 21960
-    },
     "_internal/api-ms-win-core-string-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "28005b20fbef6e1db10912d0fdd6471c",
-      "channel": "stable",
-      "size": 22056
-    },
-    "_internal/api-ms-win-core-string-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "28005b20fbef6e1db10912d0fdd6471c",
       "channel": "stable",
@@ -3604,19 +3808,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-synch-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "436ea0237ed040513ec887046418faaa",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-synch-l1-2-0.dll": {
-      "version": "1.0.0",
-      "checksum": "8f107a7bc018227b181a0e7e76e9ca39",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-core-synch-l1-2-0.dll.old": {
       "version": "1.0.0",
       "checksum": "8f107a7bc018227b181a0e7e76e9ca39",
       "channel": "stable",
@@ -3628,19 +3820,7 @@
       "channel": "stable",
       "size": 22072
     },
-    "_internal/api-ms-win-core-sysinfo-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b65bf5ef316880fd8d21e1b34eb5c8a9",
-      "channel": "stable",
-      "size": 22072
-    },
     "_internal/api-ms-win-core-sysinfo-l1-2-0.dll": {
-      "version": "1.0.0",
-      "checksum": "fc9fc5f308ffc2d2d71814df8e2ae107",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-core-sysinfo-l1-2-0.dll.old": {
       "version": "1.0.0",
       "checksum": "fc9fc5f308ffc2d2d71814df8e2ae107",
       "channel": "stable",
@@ -3652,19 +3832,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-core-timezone-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "43d8d2fb8801c5bd90d9482ddf3ea356",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-core-util-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "3c58a804b90a0782e80bbbf6c6b6f167",
-      "channel": "stable",
-      "size": 21944
-    },
-    "_internal/api-ms-win-core-util-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "3c58a804b90a0782e80bbbf6c6b6f167",
       "channel": "stable",
@@ -3676,19 +3844,7 @@
       "channel": "stable",
       "size": 22056
     },
-    "_internal/api-ms-win-crt-conio-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "5794b8e183eb547aadd5faf30a8c4dd2",
-      "channel": "stable",
-      "size": 22056
-    },
     "_internal/api-ms-win-crt-convert-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "3560176d0cdbe2f5d33f543348e0a027",
-      "channel": "stable",
-      "size": 26056
-    },
-    "_internal/api-ms-win-crt-convert-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "3560176d0cdbe2f5d33f543348e0a027",
       "channel": "stable",
@@ -3700,19 +3856,7 @@
       "channel": "stable",
       "size": 22080
     },
-    "_internal/api-ms-win-crt-environment-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "e93c7f013493b12ad40229b19db02ce6",
-      "channel": "stable",
-      "size": 22080
-    },
     "_internal/api-ms-win-crt-filesystem-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "47555752931cecf90e796499b62ec729",
-      "channel": "stable",
-      "size": 22056
-    },
-    "_internal/api-ms-win-crt-filesystem-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "47555752931cecf90e796499b62ec729",
       "channel": "stable",
@@ -3724,19 +3868,7 @@
       "channel": "stable",
       "size": 22096
     },
-    "_internal/api-ms-win-crt-heap-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "527bbbfded529ea77ee798d94ce0f243",
-      "channel": "stable",
-      "size": 22096
-    },
     "_internal/api-ms-win-crt-locale-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "09796dab12cbbd920f632aeb89820193",
-      "channel": "stable",
-      "size": 22080
-    },
-    "_internal/api-ms-win-crt-locale-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "09796dab12cbbd920f632aeb89820193",
       "channel": "stable",
@@ -3748,19 +3880,7 @@
       "channel": "stable",
       "size": 30248
     },
-    "_internal/api-ms-win-crt-math-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "aa9624cb27cc50a3fbbd3b223a617b1c",
-      "channel": "stable",
-      "size": 30248
-    },
     "_internal/api-ms-win-crt-multibyte-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "6fcebd8391875127d03b4ea336b9b36b",
-      "channel": "stable",
-      "size": 30248
-    },
-    "_internal/api-ms-win-crt-multibyte-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "6fcebd8391875127d03b4ea336b9b36b",
       "channel": "stable",
@@ -3772,19 +3892,7 @@
       "channel": "stable",
       "size": 75328
     },
-    "_internal/api-ms-win-crt-private-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "c830c6447e6de3d6a611702c591831e3",
-      "channel": "stable",
-      "size": 75328
-    },
     "_internal/api-ms-win-crt-process-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "9d6925407136753e8eb8234d59fa3f1f",
-      "channel": "stable",
-      "size": 22096
-    },
-    "_internal/api-ms-win-crt-process-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "9d6925407136753e8eb8234d59fa3f1f",
       "channel": "stable",
@@ -3796,19 +3904,7 @@
       "channel": "stable",
       "size": 26152
     },
-    "_internal/api-ms-win-crt-runtime-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "bbaa58e9e1abdf7d8c4c69652d29d789",
-      "channel": "stable",
-      "size": 26152
-    },
     "_internal/api-ms-win-crt-stdio-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "ef37235fc43157a4c93241d5e49e304b",
-      "channel": "stable",
-      "size": 26168
-    },
-    "_internal/api-ms-win-crt-stdio-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "ef37235fc43157a4c93241d5e49e304b",
       "channel": "stable",
@@ -3820,19 +3916,7 @@
       "channel": "stable",
       "size": 26176
     },
-    "_internal/api-ms-win-crt-string-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "639b1fb35cb61ba633eb1791b750631f",
-      "channel": "stable",
-      "size": 26176
-    },
     "_internal/api-ms-win-crt-time-l1-1-0.dll": {
-      "version": "1.0.0",
-      "checksum": "fccce207a34c947f01d3f23a7dd09569",
-      "channel": "stable",
-      "size": 22096
-    },
-    "_internal/api-ms-win-crt-time-l1-1-0.dll.old": {
       "version": "1.0.0",
       "checksum": "fccce207a34c947f01d3f23a7dd09569",
       "channel": "stable",
@@ -3844,19 +3928,7 @@
       "channel": "stable",
       "size": 21952
     },
-    "_internal/api-ms-win-crt-utility-l1-1-0.dll.old": {
-      "version": "1.0.0",
-      "checksum": "708a5bc205384633a7b6674eecc7f0f0",
-      "channel": "stable",
-      "size": 21952
-    },
     "_internal/libcrypto-3-x64.dll": {
-      "version": "1.0.0",
-      "checksum": "efd2be8a4c55d60662713bc05ff57d97",
-      "channel": "stable",
-      "size": 7144080
-    },
-    "_internal/libcrypto-3-x64.dll.old": {
       "version": "1.0.0",
       "checksum": "efd2be8a4c55d60662713bc05ff57d97",
       "channel": "stable",
@@ -3868,19 +3940,7 @@
       "channel": "stable",
       "size": 5191960
     },
-    "_internal/libcrypto-3.dll.old": {
-      "version": "1.0.0",
-      "checksum": "e547cf6d296a88f5b1c352c116df7c0c",
-      "channel": "stable",
-      "size": 5191960
-    },
     "_internal/libffi-8.dll": {
-      "version": "1.0.0",
-      "checksum": "0f8e4992ca92baaf54cc0b43aaccce21",
-      "channel": "stable",
-      "size": 39696
-    },
-    "_internal/libffi-8.dll.old": {
       "version": "1.0.0",
       "checksum": "0f8e4992ca92baaf54cc0b43aaccce21",
       "channel": "stable",
@@ -3892,19 +3952,7 @@
       "channel": "stable",
       "size": 1314952
     },
-    "_internal/libssl-3-x64.dll.old": {
-      "version": "1.0.0",
-      "checksum": "df7d5bfe4e0b63152aefc6f3fad76556",
-      "channel": "stable",
-      "size": 1314952
-    },
     "_internal/libssl-3.dll": {
-      "version": "1.0.0",
-      "checksum": "19a2aba25456181d5fb572d88ac0e73e",
-      "channel": "stable",
-      "size": 787224
-    },
-    "_internal/libssl-3.dll.old": {
       "version": "1.0.0",
       "checksum": "19a2aba25456181d5fb572d88ac0e73e",
       "channel": "stable",
@@ -3916,19 +3964,7 @@
       "channel": "stable",
       "size": 5597264
     },
-    "_internal/mfc140u.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b5c0879f8255ae23b8bf1ccb82275615",
-      "channel": "stable",
-      "size": 5597264
-    },
     "_internal/pyexpat.pyd": {
-      "version": "1.0.0",
-      "checksum": "79561bc9f70383f8ae073802a321adfb",
-      "channel": "stable",
-      "size": 199448
-    },
-    "_internal/pyexpat.pyd.old": {
       "version": "1.0.0",
       "checksum": "79561bc9f70383f8ae073802a321adfb",
       "channel": "stable",
@@ -3940,19 +3976,7 @@
       "channel": "stable",
       "size": 67352
     },
-    "_internal/python3.dll.old": {
-      "version": "1.0.0",
-      "checksum": "7e07c63636a01df77cd31cfca9a5c745",
-      "channel": "stable",
-      "size": 67352
-    },
     "_internal/python311.dll": {
-      "version": "1.0.0",
-      "checksum": "387bb2c1e40bde1517f06b46313766be",
-      "channel": "stable",
-      "size": 5800216
-    },
-    "_internal/python311.dll.old": {
       "version": "1.0.0",
       "checksum": "387bb2c1e40bde1517f06b46313766be",
       "channel": "stable",
@@ -3964,19 +3988,7 @@
       "channel": "stable",
       "size": 30488
     },
-    "_internal/select.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "e4ab524f78a4cf31099b43b35d2faec3",
-      "channel": "stable",
-      "size": 30488
-    },
     "_internal/sqlite3.dll": {
-      "version": "1.0.0",
-      "checksum": "89c2845bd090082406649f337c0cca62",
-      "channel": "stable",
-      "size": 1540888
-    },
-    "_internal/sqlite3.dll.old": {
       "version": "1.0.0",
       "checksum": "89c2845bd090082406649f337c0cca62",
       "channel": "stable",
@@ -4000,19 +4012,7 @@
       "channel": "stable",
       "size": 1361448
     },
-    "_internal/ucrtbase.dll.old": {
-      "version": "1.0.0",
-      "checksum": "286b308df8012a5dfc4276fb16dd9ccc",
-      "channel": "stable",
-      "size": 1361448
-    },
     "_internal/unicodedata.pyd": {
-      "version": "1.0.0",
-      "checksum": "fd9132f966ee6d214e0076bf0492fb30",
-      "channel": "stable",
-      "size": 1140504
-    },
-    "_internal/unicodedata.pyd.old": {
       "version": "1.0.0",
       "checksum": "fd9132f966ee6d214e0076bf0492fb30",
       "channel": "stable",
@@ -4024,19 +4024,7 @@
       "channel": "stable",
       "size": 119192
     },
-    "_internal/VCRUNTIME140.dll.old": {
-      "version": "1.0.0",
-      "checksum": "be8dbe2dc77ebe7f88f910c61aec691a",
-      "channel": "stable",
-      "size": 119192
-    },
     "_internal/VCRUNTIME140_1.dll": {
-      "version": "1.0.0",
-      "checksum": "f8dfa78045620cf8a732e67d1b1eb53d",
-      "channel": "stable",
-      "size": 49528
-    },
-    "_internal/VCRUNTIME140_1.dll.old": {
       "version": "1.0.0",
       "checksum": "f8dfa78045620cf8a732e67d1b1eb53d",
       "channel": "stable",
@@ -4054,19 +4042,7 @@
       "channel": "stable",
       "size": 31512
     },
-    "_internal/winsound.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "50aa7eed8a6e5194f27682e3d8bf1022",
-      "channel": "stable",
-      "size": 31512
-    },
     "_internal/_asyncio.pyd": {
-      "version": "1.0.0",
-      "checksum": "07a6e6dcc30e1c4c7e0cdc41a457a887",
-      "channel": "stable",
-      "size": 65304
-    },
-    "_internal/_asyncio.pyd.old": {
       "version": "1.0.0",
       "checksum": "07a6e6dcc30e1c4c7e0cdc41a457a887",
       "channel": "stable",
@@ -4078,19 +4054,7 @@
       "channel": "stable",
       "size": 84760
     },
-    "_internal/_bz2.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "aa1083bde6d21cabfc630a18f51b1926",
-      "channel": "stable",
-      "size": 84760
-    },
     "_internal/_ctypes.pyd": {
-      "version": "1.0.0",
-      "checksum": "565d011ce1cee4d48e722c7421300090",
-      "channel": "stable",
-      "size": 124696
-    },
-    "_internal/_ctypes.pyd.old": {
       "version": "1.0.0",
       "checksum": "565d011ce1cee4d48e722c7421300090",
       "channel": "stable",
@@ -4102,19 +4066,7 @@
       "channel": "stable",
       "size": 255768
     },
-    "_internal/_decimal.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "c88282908ba54510eda3887c488198eb",
-      "channel": "stable",
-      "size": 255768
-    },
     "_internal/_elementtree.pyd": {
-      "version": "1.0.0",
-      "checksum": "e31fd445c65aec18c32a99828732264a",
-      "channel": "stable",
-      "size": 128792
-    },
-    "_internal/_elementtree.pyd.old": {
       "version": "1.0.0",
       "checksum": "e31fd445c65aec18c32a99828732264a",
       "channel": "stable",
@@ -4126,19 +4078,7 @@
       "channel": "stable",
       "size": 65304
     },
-    "_internal/_hashlib.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "b4ff25b1aca23d48897fc616e102e9b6",
-      "channel": "stable",
-      "size": 65304
-    },
     "_internal/_lzma.pyd": {
-      "version": "1.0.0",
-      "checksum": "b86b9f292af12006187ebe6c606a377d",
-      "channel": "stable",
-      "size": 159512
-    },
-    "_internal/_lzma.pyd.old": {
       "version": "1.0.0",
       "checksum": "b86b9f292af12006187ebe6c606a377d",
       "channel": "stable",
@@ -4150,19 +4090,7 @@
       "channel": "stable",
       "size": 34584
     },
-    "_internal/_multiprocessing.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "cf0b31f01a95e9f181d87197786b96ca",
-      "channel": "stable",
-      "size": 34584
-    },
     "_internal/_overlapped.pyd": {
-      "version": "1.0.0",
-      "checksum": "78e8049e26df6fd3a4011562ff8e74a0",
-      "channel": "stable",
-      "size": 51480
-    },
-    "_internal/_overlapped.pyd.old": {
       "version": "1.0.0",
       "checksum": "78e8049e26df6fd3a4011562ff8e74a0",
       "channel": "stable",
@@ -4174,19 +4102,7 @@
       "channel": "stable",
       "size": 32024
     },
-    "_internal/_queue.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "7f52ef40b083f34fd5e723e97b13382f",
-      "channel": "stable",
-      "size": 32024
-    },
     "_internal/_socket.pyd": {
-      "version": "1.0.0",
-      "checksum": "b77017baa2004833ef3847a3a3141280",
-      "channel": "stable",
-      "size": 79640
-    },
-    "_internal/_socket.pyd.old": {
       "version": "1.0.0",
       "checksum": "b77017baa2004833ef3847a3a3141280",
       "channel": "stable",
@@ -4198,19 +4114,7 @@
       "channel": "stable",
       "size": 120600
     },
-    "_internal/_sqlite3.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "68d89aaab48b82a7d76fb65e9c613a24",
-      "channel": "stable",
-      "size": 120600
-    },
     "_internal/_ssl.pyd": {
-      "version": "1.0.0",
-      "checksum": "0f02eccd7933b7a7c2bdedca2a72aab6",
-      "channel": "stable",
-      "size": 178456
-    },
-    "_internal/_ssl.pyd.old": {
       "version": "1.0.0",
       "checksum": "0f02eccd7933b7a7c2bdedca2a72aab6",
       "channel": "stable",
@@ -4223,12 +4127,6 @@
       "size": 64280
     },
     "_internal/_uuid.pyd": {
-      "version": "1.0.0",
-      "checksum": "cc2fc10d528ec8eac403f3955a214d5b",
-      "channel": "stable",
-      "size": 25368
-    },
-    "_internal/_uuid.pyd.old": {
       "version": "1.0.0",
       "checksum": "cc2fc10d528ec8eac403f3955a214d5b",
       "channel": "stable",
@@ -4252,19 +4150,7 @@
       "channel": "stable",
       "size": 10752
     },
-    "_internal/charset_normalizer/cd.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "e700d808369b39625067d37710d693c3",
-      "channel": "stable",
-      "size": 10752
-    },
     "_internal/charset_normalizer/md.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "ba622edb3e9ee1ffac1e319cd803d85c",
-      "channel": "stable",
-      "size": 10752
-    },
-    "_internal/charset_normalizer/md.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "ba622edb3e9ee1ffac1e319cd803d85c",
       "channel": "stable",
@@ -4282,19 +4168,7 @@
       "channel": "stable",
       "size": 276480
     },
-    "_internal/numpy/fft/_pocketfft_umath.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "92d2f89c920f4ea89f53499ef3e85afc",
-      "channel": "stable",
-      "size": 276480
-    },
     "_internal/numpy/linalg/_umath_linalg.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "71b81d88c868911f37e4f84bd0a01632",
-      "channel": "stable",
-      "size": 112128
-    },
-    "_internal/numpy/linalg/_umath_linalg.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "71b81d88c868911f37e4f84bd0a01632",
       "channel": "stable",
@@ -4306,19 +4180,7 @@
       "channel": "stable",
       "size": 165888
     },
-    "_internal/numpy/random/bit_generator.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "1bdee533942fc40fadd3ae112ee1fec3",
-      "channel": "stable",
-      "size": 165888
-    },
     "_internal/numpy/random/mtrand.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "75c3945a12b3f9574eb57f776c0c2733",
-      "channel": "stable",
-      "size": 512512
-    },
-    "_internal/numpy/random/mtrand.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "75c3945a12b3f9574eb57f776c0c2733",
       "channel": "stable",
@@ -4330,19 +4192,7 @@
       "channel": "stable",
       "size": 220160
     },
-    "_internal/numpy/random/_bounded_integers.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "e86234d541bc91d247d56474abac4bb2",
-      "channel": "stable",
-      "size": 220160
-    },
     "_internal/numpy/random/_common.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "3b0acbfa665429f434c632f4b00415a0",
-      "channel": "stable",
-      "size": 169984
-    },
-    "_internal/numpy/random/_common.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "3b0acbfa665429f434c632f4b00415a0",
       "channel": "stable",
@@ -4354,19 +4204,7 @@
       "channel": "stable",
       "size": 608768
     },
-    "_internal/numpy/random/_generator.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "9875e0614e8c6b15053b00431292a791",
-      "channel": "stable",
-      "size": 608768
-    },
     "_internal/numpy/random/_mt19937.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "30c69157f08127397f4375f9b51a0942",
-      "channel": "stable",
-      "size": 84992
-    },
-    "_internal/numpy/random/_mt19937.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "30c69157f08127397f4375f9b51a0942",
       "channel": "stable",
@@ -4378,19 +4216,7 @@
       "channel": "stable",
       "size": 96768
     },
-    "_internal/numpy/random/_pcg64.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "e78e9ec6bb95791ab883407bac3d4fb8",
-      "channel": "stable",
-      "size": 96768
-    },
     "_internal/numpy/random/_philox.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "f8285c0abad6500c53c5137e917bf6bc",
-      "channel": "stable",
-      "size": 79872
-    },
-    "_internal/numpy/random/_philox.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "f8285c0abad6500c53c5137e917bf6bc",
       "channel": "stable",
@@ -4402,31 +4228,13 @@
       "channel": "stable",
       "size": 59392
     },
-    "_internal/numpy/random/_sfc64.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "34a768949839b9d070d500b58f67019a",
-      "channel": "stable",
-      "size": 59392
-    },
     "_internal/numpy/_core/_multiarray_tests.cp311-win_amd64.pyd": {
       "version": "1.0.0",
       "checksum": "cb5cb3ccafbe2212045debdfabcea81e",
       "channel": "stable",
       "size": 64512
     },
-    "_internal/numpy/_core/_multiarray_tests.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "cb5cb3ccafbe2212045debdfabcea81e",
-      "channel": "stable",
-      "size": 64512
-    },
     "_internal/numpy/_core/_multiarray_umath.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "97b228bafbdc57b6276b6e35cfab8ed6",
-      "channel": "stable",
-      "size": 3703296
-    },
-    "_internal/numpy/_core/_multiarray_umath.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "97b228bafbdc57b6276b6e35cfab8ed6",
       "channel": "stable",
@@ -4582,19 +4390,7 @@
       "channel": "stable",
       "size": 20415488
     },
-    "_internal/numpy.libs/libscipy_openblas64_-63c857e738469261263c764a36be9436.dll.old": {
-      "version": "1.0.0",
-      "checksum": "4da49089f9ead2d99ce6b4d09cbf509f",
-      "channel": "stable",
-      "size": 20415488
-    },
     "_internal/numpy.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll": {
-      "version": "1.0.0",
-      "checksum": "72f3d84384e888bf0d38852eb863026b",
-      "channel": "stable",
-      "size": 575056
-    },
-    "_internal/numpy.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll.old": {
       "version": "1.0.0",
       "checksum": "72f3d84384e888bf0d38852eb863026b",
       "channel": "stable",
@@ -4606,19 +4402,7 @@
       "channel": "stable",
       "size": 7888896
     },
-    "_internal/PIL/_avif.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "550680c4706679d70648e7e03b3dd2dd",
-      "channel": "stable",
-      "size": 7888896
-    },
     "_internal/PIL/_imaging.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "52d876530dd60ee6f1456a1802a00b0c",
-      "channel": "stable",
-      "size": 2632704
-    },
-    "_internal/PIL/_imaging.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "52d876530dd60ee6f1456a1802a00b0c",
       "channel": "stable",
@@ -4630,19 +4414,7 @@
       "channel": "stable",
       "size": 273408
     },
-    "_internal/PIL/_imagingcms.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "639248b4cedfa7e17733d4b1d87ad1d9",
-      "channel": "stable",
-      "size": 273408
-    },
     "_internal/PIL/_imagingft.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "9d598f7c861307de6f4ba99986514711",
-      "channel": "stable",
-      "size": 2174464
-    },
-    "_internal/PIL/_imagingft.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "9d598f7c861307de6f4ba99986514711",
       "channel": "stable",
@@ -4654,19 +4426,7 @@
       "channel": "stable",
       "size": 21504
     },
-    "_internal/PIL/_imagingmath.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "6fb5f4a018fcb365e69bb7c54ff7deae",
-      "channel": "stable",
-      "size": 21504
-    },
     "_internal/PIL/_imagingtk.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "fe1856d66f4181134c0f70ad6ec0989a",
-      "channel": "stable",
-      "size": 14848
-    },
-    "_internal/PIL/_imagingtk.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "fe1856d66f4181134c0f70ad6ec0989a",
       "channel": "stable",
@@ -4678,19 +4438,7 @@
       "channel": "stable",
       "size": 416256
     },
-    "_internal/PIL/_webp.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "8546d03b99f5fb4ee1139cfdeb0965a8",
-      "channel": "stable",
-      "size": 416256
-    },
     "_internal/PyQt6/QtCore.pyd": {
-      "version": "1.0.0",
-      "checksum": "477f328e542a3011dda5ec0d05cec056",
-      "channel": "stable",
-      "size": 2666496
-    },
-    "_internal/PyQt6/QtCore.pyd.old": {
       "version": "1.0.0",
       "checksum": "477f328e542a3011dda5ec0d05cec056",
       "channel": "stable",
@@ -4702,19 +4450,7 @@
       "channel": "stable",
       "size": 2310144
     },
-    "_internal/PyQt6/QtGui.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "68419c7c16a356368bf5fce460282a7c",
-      "channel": "stable",
-      "size": 2310144
-    },
     "_internal/PyQt6/QtNetwork.pyd": {
-      "version": "1.0.0",
-      "checksum": "f99158d1bd9edc60b2c7e23939432a66",
-      "channel": "stable",
-      "size": 823296
-    },
-    "_internal/PyQt6/QtNetwork.pyd.old": {
       "version": "1.0.0",
       "checksum": "f99158d1bd9edc60b2c7e23939432a66",
       "channel": "stable",
@@ -4726,19 +4462,7 @@
       "channel": "stable",
       "size": 1140224
     },
-    "_internal/PyQt6/QtOpenGL.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "22e075d4be8c545cb3280c5f19a9b128",
-      "channel": "stable",
-      "size": 1140224
-    },
     "_internal/PyQt6/QtPositioning.pyd": {
-      "version": "1.0.0",
-      "checksum": "cd43fe99bcf06d6c78082433271a8db7",
-      "channel": "stable",
-      "size": 213504
-    },
-    "_internal/PyQt6/QtPositioning.pyd.old": {
       "version": "1.0.0",
       "checksum": "cd43fe99bcf06d6c78082433271a8db7",
       "channel": "stable",
@@ -4750,19 +4474,7 @@
       "channel": "stable",
       "size": 258048
     },
-    "_internal/PyQt6/QtPrintSupport.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "83e56492a88bf959f13817e9bc71a08e",
-      "channel": "stable",
-      "size": 258048
-    },
     "_internal/PyQt6/QtQml.pyd": {
-      "version": "1.0.0",
-      "checksum": "5d7b5483cf8e2327b28dbf634c33f86f",
-      "channel": "stable",
-      "size": 744448
-    },
-    "_internal/PyQt6/QtQml.pyd.old": {
       "version": "1.0.0",
       "checksum": "5d7b5483cf8e2327b28dbf634c33f86f",
       "channel": "stable",
@@ -4774,19 +4486,7 @@
       "channel": "stable",
       "size": 980480
     },
-    "_internal/PyQt6/QtQuick.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "1b5857793fffef749c316164409b2b63",
-      "channel": "stable",
-      "size": 980480
-    },
     "_internal/PyQt6/QtQuickWidgets.pyd": {
-      "version": "1.0.0",
-      "checksum": "cb9cfc0ea1666d34064adba35c194e9a",
-      "channel": "stable",
-      "size": 70144
-    },
-    "_internal/PyQt6/QtQuickWidgets.pyd.old": {
       "version": "1.0.0",
       "checksum": "cb9cfc0ea1666d34064adba35c194e9a",
       "channel": "stable",
@@ -4798,19 +4498,7 @@
       "channel": "stable",
       "size": 44544
     },
-    "_internal/PyQt6/QtWebChannel.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "58e3c9902480097909a216bacb2aa432",
-      "channel": "stable",
-      "size": 44544
-    },
     "_internal/PyQt6/QtWebEngineCore.pyd": {
-      "version": "1.0.0",
-      "checksum": "0be2048b180fa40b5bed5ab9f6bc0300",
-      "channel": "stable",
-      "size": 391168
-    },
-    "_internal/PyQt6/QtWebEngineCore.pyd.old": {
       "version": "1.0.0",
       "checksum": "0be2048b180fa40b5bed5ab9f6bc0300",
       "channel": "stable",
@@ -4822,19 +4510,7 @@
       "channel": "stable",
       "size": 77312
     },
-    "_internal/PyQt6/QtWebEngineWidgets.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "51a5bda2b7b0a7003c586f9e29ada747",
-      "channel": "stable",
-      "size": 77312
-    },
     "_internal/PyQt6/QtWidgets.pyd": {
-      "version": "1.0.0",
-      "checksum": "a1a3f9d449ac15577ac07b9f7e225f5d",
-      "channel": "stable",
-      "size": 5072896
-    },
-    "_internal/PyQt6/QtWidgets.pyd.old": {
       "version": "1.0.0",
       "checksum": "a1a3f9d449ac15577ac07b9f7e225f5d",
       "channel": "stable",
@@ -4846,19 +4522,7 @@
       "channel": "stable",
       "size": 113152
     },
-    "_internal/PyQt6/sip.cp311-win_amd64.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "b53743b23efeb6941070ca4a35bd9057",
-      "channel": "stable",
-      "size": 113152
-    },
     "_internal/PyQt6/Qt6/bin/MSVCP140.dll": {
-      "version": "1.0.0",
-      "checksum": "bc88b387cafa556068b5c5d6ff3ccc8f",
-      "channel": "stable",
-      "size": 557728
-    },
-    "_internal/PyQt6/Qt6/bin/MSVCP140.dll.old": {
       "version": "1.0.0",
       "checksum": "bc88b387cafa556068b5c5d6ff3ccc8f",
       "channel": "stable",
@@ -4870,31 +4534,13 @@
       "channel": "stable",
       "size": 35952
     },
-    "_internal/PyQt6/Qt6/bin/MSVCP140_1.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2a214cb2f0f9473e7765ee3b8db8651e",
-      "channel": "stable",
-      "size": 35952
-    },
     "_internal/PyQt6/Qt6/bin/MSVCP140_2.dll": {
       "version": "1.0.0",
       "checksum": "3151333808c2c2339d5f5466df70b7dc",
       "channel": "stable",
       "size": 280200
     },
-    "_internal/PyQt6/Qt6/bin/MSVCP140_2.dll.old": {
-      "version": "1.0.0",
-      "checksum": "3151333808c2c2339d5f5466df70b7dc",
-      "channel": "stable",
-      "size": 280200
-    },
     "_internal/PyQt6/Qt6/bin/opengl32sw.dll": {
-      "version": "1.0.0",
-      "checksum": "83bbecf92fb68795a620b395998b131b",
-      "channel": "stable",
-      "size": 20639888
-    },
-    "_internal/PyQt6/Qt6/bin/opengl32sw.dll.old": {
       "version": "1.0.0",
       "checksum": "83bbecf92fb68795a620b395998b131b",
       "channel": "stable",
@@ -4912,19 +4558,7 @@
       "channel": "stable",
       "size": 10480440
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Core.dll.old": {
-      "version": "1.0.0",
-      "checksum": "3b5c8f8981b2cca0c4741dcf09d7a79d",
-      "channel": "stable",
-      "size": 10480440
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Gui.dll": {
-      "version": "1.0.0",
-      "checksum": "5d0da93b83dc26e65d414ff04cf86e21",
-      "channel": "stable",
-      "size": 9589560
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Gui.dll.old": {
       "version": "1.0.0",
       "checksum": "5d0da93b83dc26e65d414ff04cf86e21",
       "channel": "stable",
@@ -4936,19 +4570,7 @@
       "channel": "stable",
       "size": 1283896
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Multimedia.dll.old": {
-      "version": "1.0.0",
-      "checksum": "900802ae394d058232fa4daaab43eb19",
-      "channel": "stable",
-      "size": 1283896
-    },
     "_internal/PyQt6/Qt6/bin/Qt6MultimediaQuick.dll": {
-      "version": "1.0.0",
-      "checksum": "40b4764ff24ad18d2d0ccefd27ec186e",
-      "channel": "stable",
-      "size": 293688
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6MultimediaQuick.dll.old": {
       "version": "1.0.0",
       "checksum": "40b4764ff24ad18d2d0ccefd27ec186e",
       "channel": "stable",
@@ -4960,19 +4582,7 @@
       "channel": "stable",
       "size": 1771320
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Network.dll.old": {
-      "version": "1.0.0",
-      "checksum": "c1f79b2e138a1658d122eccc3c446a4b",
-      "channel": "stable",
-      "size": 1771320
-    },
     "_internal/PyQt6/Qt6/bin/Qt6OpenGL.dll": {
-      "version": "1.0.0",
-      "checksum": "709d2042d71c62371f68a899f427c132",
-      "channel": "stable",
-      "size": 1977656
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6OpenGL.dll.old": {
       "version": "1.0.0",
       "checksum": "709d2042d71c62371f68a899f427c132",
       "channel": "stable",
@@ -4984,19 +4594,7 @@
       "channel": "stable",
       "size": 4611384
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Pdf.dll.old": {
-      "version": "1.0.0",
-      "checksum": "35dbfb82dde3c9c88587019de1b49849",
-      "channel": "stable",
-      "size": 4611384
-    },
     "_internal/PyQt6/Qt6/bin/Qt6PdfQuick.dll": {
-      "version": "1.0.0",
-      "checksum": "b34c7a663108e0eddbaba7be2abccf25",
-      "channel": "stable",
-      "size": 575800
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6PdfQuick.dll.old": {
       "version": "1.0.0",
       "checksum": "b34c7a663108e0eddbaba7be2abccf25",
       "channel": "stable",
@@ -5008,19 +4606,7 @@
       "channel": "stable",
       "size": 523064
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Positioning.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2d3604cfea8c4011b1a733caeb0c2044",
-      "channel": "stable",
-      "size": 523064
-    },
     "_internal/PyQt6/Qt6/bin/Qt6PositioningQuick.dll": {
-      "version": "1.0.0",
-      "checksum": "b52cdc63442d7e8c561577b50babbcf8",
-      "channel": "stable",
-      "size": 345912
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6PositioningQuick.dll.old": {
       "version": "1.0.0",
       "checksum": "b52cdc63442d7e8c561577b50babbcf8",
       "channel": "stable",
@@ -5032,19 +4618,7 @@
       "channel": "stable",
       "size": 407352
     },
-    "_internal/PyQt6/Qt6/bin/Qt6PrintSupport.dll.old": {
-      "version": "1.0.0",
-      "checksum": "70baaa7f8d4d1a4aa422ba8aa016269b",
-      "channel": "stable",
-      "size": 407352
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Qml.dll": {
-      "version": "1.0.0",
-      "checksum": "9f7b897e74497d5617d0917133b5a9f1",
-      "channel": "stable",
-      "size": 5380920
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Qml.dll.old": {
       "version": "1.0.0",
       "checksum": "9f7b897e74497d5617d0917133b5a9f1",
       "channel": "stable",
@@ -5056,19 +4630,7 @@
       "channel": "stable",
       "size": 160056
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QmlMeta.dll.old": {
-      "version": "1.0.0",
-      "checksum": "1b7e4abead9d3b2857855882f9c6b761",
-      "channel": "stable",
-      "size": 160056
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QmlModels.dll": {
-      "version": "1.0.0",
-      "checksum": "0dd76a4108d927930f913540d795d5a8",
-      "channel": "stable",
-      "size": 997176
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QmlModels.dll.old": {
       "version": "1.0.0",
       "checksum": "0dd76a4108d927930f913540d795d5a8",
       "channel": "stable",
@@ -5080,19 +4642,7 @@
       "channel": "stable",
       "size": 80696
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QmlWorkerScript.dll.old": {
-      "version": "1.0.0",
-      "checksum": "1cdbac57a48040855b65e2959503e55a",
-      "channel": "stable",
-      "size": 80696
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick.dll": {
-      "version": "1.0.0",
-      "checksum": "022c68d01e66806f589ea520bdad5b01",
-      "channel": "stable",
-      "size": 6593336
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick.dll.old": {
       "version": "1.0.0",
       "checksum": "022c68d01e66806f589ea520bdad5b01",
       "channel": "stable",
@@ -5104,19 +4654,7 @@
       "channel": "stable",
       "size": 1470776
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3D.dll.old": {
-      "version": "1.0.0",
-      "checksum": "3d5ab70998336a6c2da9b6607256c470",
-      "channel": "stable",
-      "size": 1470776
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DAssetImport.dll": {
-      "version": "1.0.0",
-      "checksum": "25e509758491a8484b87a7bfaf259bd1",
-      "channel": "stable",
-      "size": 70456
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DAssetImport.dll.old": {
       "version": "1.0.0",
       "checksum": "25e509758491a8484b87a7bfaf259bd1",
       "channel": "stable",
@@ -5128,19 +4666,7 @@
       "channel": "stable",
       "size": 317240
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DAssetUtils.dll.old": {
-      "version": "1.0.0",
-      "checksum": "041cc1618340f824fccd1161563b2f97",
-      "channel": "stable",
-      "size": 317240
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DEffects.dll": {
-      "version": "1.0.0",
-      "checksum": "957e0276f714e0a52c8e4792ee7c6cc7",
-      "channel": "stable",
-      "size": 419128
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DEffects.dll.old": {
       "version": "1.0.0",
       "checksum": "957e0276f714e0a52c8e4792ee7c6cc7",
       "channel": "stable",
@@ -5152,19 +4678,7 @@
       "channel": "stable",
       "size": 717112
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DHelpers.dll.old": {
-      "version": "1.0.0",
-      "checksum": "f5ae9600964d6fcc5400775aedcab4f9",
-      "channel": "stable",
-      "size": 717112
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DHelpersImpl.dll": {
-      "version": "1.0.0",
-      "checksum": "404fff41f7f4c9277e177f476c3c14c0",
-      "channel": "stable",
-      "size": 536888
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DHelpersImpl.dll.old": {
       "version": "1.0.0",
       "checksum": "404fff41f7f4c9277e177f476c3c14c0",
       "channel": "stable",
@@ -5176,19 +4690,7 @@
       "channel": "stable",
       "size": 2082104
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DParticles.dll.old": {
-      "version": "1.0.0",
-      "checksum": "1d7b259d44eec6de244ed62719290133",
-      "channel": "stable",
-      "size": 2082104
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DPhysics.dll": {
-      "version": "1.0.0",
-      "checksum": "276cc43d82855941bb47f22c1d3c8ffa",
-      "channel": "stable",
-      "size": 3713848
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DPhysics.dll.old": {
       "version": "1.0.0",
       "checksum": "276cc43d82855941bb47f22c1d3c8ffa",
       "channel": "stable",
@@ -5200,19 +4702,7 @@
       "channel": "stable",
       "size": 51000
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DPhysicsHelpers.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b3d5284392139191699af7bda1b90547",
-      "channel": "stable",
-      "size": 51000
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DRuntimeRender.dll": {
-      "version": "1.0.0",
-      "checksum": "ea9e2c499c5596d23824bbca527e3933",
-      "channel": "stable",
-      "size": 4415288
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DRuntimeRender.dll.old": {
       "version": "1.0.0",
       "checksum": "ea9e2c499c5596d23824bbca527e3933",
       "channel": "stable",
@@ -5224,19 +4714,7 @@
       "channel": "stable",
       "size": 85816
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DSpatialAudio.dll.old": {
-      "version": "1.0.0",
-      "checksum": "f497747431825e233d94ea890e623c96",
-      "channel": "stable",
-      "size": 85816
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Quick3DUtils.dll": {
-      "version": "1.0.0",
-      "checksum": "e220c83887c7ae19f3863f7af3a29c5c",
-      "channel": "stable",
-      "size": 482104
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DUtils.dll.old": {
       "version": "1.0.0",
       "checksum": "e220c83887c7ae19f3863f7af3a29c5c",
       "channel": "stable",
@@ -5248,19 +4726,7 @@
       "channel": "stable",
       "size": 914232
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Quick3DXr.dll.old": {
-      "version": "1.0.0",
-      "checksum": "a818bd956e19b244fb4ce88adfd093c5",
-      "channel": "stable",
-      "size": 914232
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2.dll": {
-      "version": "1.0.0",
-      "checksum": "31caa597a1fdcac3c63e004226e85fde",
-      "channel": "stable",
-      "size": 103224
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2.dll.old": {
       "version": "1.0.0",
       "checksum": "31caa597a1fdcac3c63e004226e85fde",
       "channel": "stable",
@@ -5272,19 +4738,7 @@
       "channel": "stable",
       "size": 1848632
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Basic.dll.old": {
-      "version": "1.0.0",
-      "checksum": "9e3bdd9fed7621908d61f06d78b84aec",
-      "channel": "stable",
-      "size": 1848632
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2BasicStyleImpl.dll": {
-      "version": "1.0.0",
-      "checksum": "3daade67cc25d92e08a27335990f1382",
-      "channel": "stable",
-      "size": 90936
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2BasicStyleImpl.dll.old": {
       "version": "1.0.0",
       "checksum": "3daade67cc25d92e08a27335990f1382",
       "channel": "stable",
@@ -5296,19 +4750,7 @@
       "channel": "stable",
       "size": 1511736
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Fusion.dll.old": {
-      "version": "1.0.0",
-      "checksum": "1448b5aaf09a2f022d2f55fa445dfed7",
-      "channel": "stable",
-      "size": 1511736
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2FusionStyleImpl.dll": {
-      "version": "1.0.0",
-      "checksum": "f5852091cb70b113156445307aa55979",
-      "channel": "stable",
-      "size": 185656
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2FusionStyleImpl.dll.old": {
       "version": "1.0.0",
       "checksum": "f5852091cb70b113156445307aa55979",
       "channel": "stable",
@@ -5320,19 +4762,7 @@
       "channel": "stable",
       "size": 3088184
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Imagine.dll.old": {
-      "version": "1.0.0",
-      "checksum": "4cdeec9a1c401cce712c52f62ff27c89",
-      "channel": "stable",
-      "size": 3088184
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2ImagineStyleImpl.dll": {
-      "version": "1.0.0",
-      "checksum": "3b3e9bc23c1b4e3498b64bcd8aa46609",
-      "channel": "stable",
-      "size": 70456
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2ImagineStyleImpl.dll.old": {
       "version": "1.0.0",
       "checksum": "3b3e9bc23c1b4e3498b64bcd8aa46609",
       "channel": "stable",
@@ -5344,19 +4774,7 @@
       "channel": "stable",
       "size": 331064
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Impl.dll.old": {
-      "version": "1.0.0",
-      "checksum": "f77ba2c997ebcc8cb1de38bdb79998a8",
-      "channel": "stable",
-      "size": 331064
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Material.dll": {
-      "version": "1.0.0",
-      "checksum": "25793302921c70ce067601b1d137161d",
-      "channel": "stable",
-      "size": 1922360
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Material.dll.old": {
       "version": "1.0.0",
       "checksum": "25793302921c70ce067601b1d137161d",
       "channel": "stable",
@@ -5368,19 +4786,7 @@
       "channel": "stable",
       "size": 312120
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2MaterialStyleImpl.dll.old": {
-      "version": "1.0.0",
-      "checksum": "6cfbc75c698d04cf73dd47f6032afa01",
-      "channel": "stable",
-      "size": 312120
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Universal.dll": {
-      "version": "1.0.0",
-      "checksum": "c1f458ec4447ce304a527fd8428bd176",
-      "channel": "stable",
-      "size": 1592632
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2Universal.dll.old": {
       "version": "1.0.0",
       "checksum": "c1f458ec4447ce304a527fd8428bd176",
       "channel": "stable",
@@ -5392,19 +4798,7 @@
       "channel": "stable",
       "size": 142136
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickControls2UniversalStyleImpl.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b36993d02a03f8fdc5cbbde3c230719c",
-      "channel": "stable",
-      "size": 142136
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickDialogs2.dll": {
-      "version": "1.0.0",
-      "checksum": "67226cb5ebd47cee5e092c61ccf01dce",
-      "channel": "stable",
-      "size": 159544
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickDialogs2.dll.old": {
       "version": "1.0.0",
       "checksum": "67226cb5ebd47cee5e092c61ccf01dce",
       "channel": "stable",
@@ -5416,19 +4810,7 @@
       "channel": "stable",
       "size": 2857272
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickDialogs2QuickImpl.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2bf6bfc4d2de1a300fb600b01680ef68",
-      "channel": "stable",
-      "size": 2857272
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickDialogs2Utils.dll": {
-      "version": "1.0.0",
-      "checksum": "537426449e03b2ed3e846979c7ceb3ea",
-      "channel": "stable",
-      "size": 47416
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickDialogs2Utils.dll.old": {
       "version": "1.0.0",
       "checksum": "537426449e03b2ed3e846979c7ceb3ea",
       "channel": "stable",
@@ -5440,19 +4822,7 @@
       "channel": "stable",
       "size": 433976
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickEffects.dll.old": {
-      "version": "1.0.0",
-      "checksum": "3ddfae806601eb2aa28249f14ae66f94",
-      "channel": "stable",
-      "size": 433976
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickLayouts.dll": {
-      "version": "1.0.0",
-      "checksum": "4c5344cef5f255992f290126dc25c237",
-      "channel": "stable",
-      "size": 308536
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickLayouts.dll.old": {
       "version": "1.0.0",
       "checksum": "4c5344cef5f255992f290126dc25c237",
       "channel": "stable",
@@ -5464,19 +4834,7 @@
       "channel": "stable",
       "size": 641336
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickParticles.dll.old": {
-      "version": "1.0.0",
-      "checksum": "70c3ca6fc584731e67030569070b1084",
-      "channel": "stable",
-      "size": 641336
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickShapes.dll": {
-      "version": "1.0.0",
-      "checksum": "74f913c9619f813bd4accad432356ef2",
-      "channel": "stable",
-      "size": 348472
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickShapes.dll.old": {
       "version": "1.0.0",
       "checksum": "74f913c9619f813bd4accad432356ef2",
       "channel": "stable",
@@ -5488,19 +4846,7 @@
       "channel": "stable",
       "size": 2061112
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickTemplates2.dll.old": {
-      "version": "1.0.0",
-      "checksum": "395e2a2845a9efa530afa060e910c793",
-      "channel": "stable",
-      "size": 2061112
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickTest.dll": {
-      "version": "1.0.0",
-      "checksum": "0b10251e88046adf5c0ff2b1880bac4c",
-      "channel": "stable",
-      "size": 314168
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickTest.dll.old": {
       "version": "1.0.0",
       "checksum": "0b10251e88046adf5c0ff2b1880bac4c",
       "channel": "stable",
@@ -5512,19 +4858,7 @@
       "channel": "stable",
       "size": 98104
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickTimeline.dll.old": {
-      "version": "1.0.0",
-      "checksum": "9167728f983e577c22943e69177944b0",
-      "channel": "stable",
-      "size": 98104
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickTimelineBlendTrees.dll": {
-      "version": "1.0.0",
-      "checksum": "d7ed6ac27245c76398e453ae364213e7",
-      "channel": "stable",
-      "size": 82744
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickTimelineBlendTrees.dll.old": {
       "version": "1.0.0",
       "checksum": "d7ed6ac27245c76398e453ae364213e7",
       "channel": "stable",
@@ -5536,19 +4870,7 @@
       "channel": "stable",
       "size": 70968
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickVectorImage.dll.old": {
-      "version": "1.0.0",
-      "checksum": "a5a2c3073e3c58bd9ff7b16acf8c9d77",
-      "channel": "stable",
-      "size": 70968
-    },
     "_internal/PyQt6/Qt6/bin/Qt6QuickVectorImageGenerator.dll": {
-      "version": "1.0.0",
-      "checksum": "74b83373ac38080f1a46939de2a6f3d6",
-      "channel": "stable",
-      "size": 287032
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickVectorImageGenerator.dll.old": {
       "version": "1.0.0",
       "checksum": "74b83373ac38080f1a46939de2a6f3d6",
       "channel": "stable",
@@ -5560,19 +4882,7 @@
       "channel": "stable",
       "size": 134968
     },
-    "_internal/PyQt6/Qt6/bin/Qt6QuickWidgets.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b1ebc3f7a169e307f01c6870f0578d9c",
-      "channel": "stable",
-      "size": 134968
-    },
     "_internal/PyQt6/Qt6/bin/Qt6RemoteObjects.dll": {
-      "version": "1.0.0",
-      "checksum": "1e2834b545e2b0d3248d0c42880344cf",
-      "channel": "stable",
-      "size": 872760
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6RemoteObjects.dll.old": {
       "version": "1.0.0",
       "checksum": "1e2834b545e2b0d3248d0c42880344cf",
       "channel": "stable",
@@ -5584,19 +4894,7 @@
       "channel": "stable",
       "size": 67896
     },
-    "_internal/PyQt6/Qt6/bin/Qt6RemoteObjectsQml.dll.old": {
-      "version": "1.0.0",
-      "checksum": "83fca04a7870d64b5f64ae116e6abc37",
-      "channel": "stable",
-      "size": 67896
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Sensors.dll": {
-      "version": "1.0.0",
-      "checksum": "1bd8de77bebae38e7116d488f4b4828d",
-      "channel": "stable",
-      "size": 225080
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Sensors.dll.old": {
       "version": "1.0.0",
       "checksum": "1bd8de77bebae38e7116d488f4b4828d",
       "channel": "stable",
@@ -5608,19 +4906,7 @@
       "channel": "stable",
       "size": 277304
     },
-    "_internal/PyQt6/Qt6/bin/Qt6SensorsQuick.dll.old": {
-      "version": "1.0.0",
-      "checksum": "d08cb6be0f2b1d6961c4ed9ffd746b2f",
-      "channel": "stable",
-      "size": 277304
-    },
     "_internal/PyQt6/Qt6/bin/Qt6SerialPort.dll": {
-      "version": "1.0.0",
-      "checksum": "17aece765fc6d568eb850216fe8e1494",
-      "channel": "stable",
-      "size": 134968
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6SerialPort.dll.old": {
       "version": "1.0.0",
       "checksum": "17aece765fc6d568eb850216fe8e1494",
       "channel": "stable",
@@ -5632,19 +4918,7 @@
       "channel": "stable",
       "size": 4336952
     },
-    "_internal/PyQt6/Qt6/bin/Qt6ShaderTools.dll.old": {
-      "version": "1.0.0",
-      "checksum": "0178730280b58d87152fb93a18a41eaf",
-      "channel": "stable",
-      "size": 4336952
-    },
     "_internal/PyQt6/Qt6/bin/Qt6SpatialAudio.dll": {
-      "version": "1.0.0",
-      "checksum": "16e76ea9080bc6ad3464d7586c97a6f9",
-      "channel": "stable",
-      "size": 740152
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6SpatialAudio.dll.old": {
       "version": "1.0.0",
       "checksum": "16e76ea9080bc6ad3464d7586c97a6f9",
       "channel": "stable",
@@ -5656,19 +4930,7 @@
       "channel": "stable",
       "size": 341816
     },
-    "_internal/PyQt6/Qt6/bin/Qt6StateMachine.dll.old": {
-      "version": "1.0.0",
-      "checksum": "cf389471b480c2879e1bb9133169a6f4",
-      "channel": "stable",
-      "size": 341816
-    },
     "_internal/PyQt6/Qt6/bin/Qt6StateMachineQml.dll": {
-      "version": "1.0.0",
-      "checksum": "5e4f2b448b8835f97bf455202c633f80",
-      "channel": "stable",
-      "size": 117048
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6StateMachineQml.dll.old": {
       "version": "1.0.0",
       "checksum": "5e4f2b448b8835f97bf455202c633f80",
       "channel": "stable",
@@ -5680,19 +4942,7 @@
       "channel": "stable",
       "size": 642360
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Svg.dll.old": {
-      "version": "1.0.0",
-      "checksum": "d9232ddf1b55fccaf7dc1bd306bd4a82",
-      "channel": "stable",
-      "size": 642360
-    },
     "_internal/PyQt6/Qt6/bin/Qt6Test.dll": {
-      "version": "1.0.0",
-      "checksum": "b986bac6b203b7d40c48e84df9d549c8",
-      "channel": "stable",
-      "size": 382776
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6Test.dll.old": {
       "version": "1.0.0",
       "checksum": "b986bac6b203b7d40c48e84df9d549c8",
       "channel": "stable",
@@ -5704,19 +4954,7 @@
       "channel": "stable",
       "size": 133432
     },
-    "_internal/PyQt6/Qt6/bin/Qt6TextToSpeech.dll.old": {
-      "version": "1.0.0",
-      "checksum": "d80deeb70955f3e5af45b1890c051f7e",
-      "channel": "stable",
-      "size": 133432
-    },
     "_internal/PyQt6/Qt6/bin/Qt6WebChannel.dll": {
-      "version": "1.0.0",
-      "checksum": "788a48e32378ad13a77148952c421dd8",
-      "channel": "stable",
-      "size": 255800
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6WebChannel.dll.old": {
       "version": "1.0.0",
       "checksum": "788a48e32378ad13a77148952c421dd8",
       "channel": "stable",
@@ -5728,19 +4966,7 @@
       "channel": "stable",
       "size": 63288
     },
-    "_internal/PyQt6/Qt6/bin/Qt6WebChannelQuick.dll.old": {
-      "version": "1.0.0",
-      "checksum": "353bf9843b7b0e09baffe64b3ab42901",
-      "channel": "stable",
-      "size": 63288
-    },
     "_internal/PyQt6/Qt6/bin/Qt6WebEngineCore.dll": {
-      "version": "1.0.0",
-      "checksum": "354c0f23be4ac1a52f83c56212b5d8e4",
-      "channel": "stable",
-      "size": 204828984
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6WebEngineCore.dll.old": {
       "version": "1.0.0",
       "checksum": "354c0f23be4ac1a52f83c56212b5d8e4",
       "channel": "stable",
@@ -5752,19 +4978,7 @@
       "channel": "stable",
       "size": 693560
     },
-    "_internal/PyQt6/Qt6/bin/Qt6WebEngineQuick.dll.old": {
-      "version": "1.0.0",
-      "checksum": "6bb31de008c522717f93ae2c55fe4355",
-      "channel": "stable",
-      "size": 693560
-    },
     "_internal/PyQt6/Qt6/bin/Qt6WebEngineQuickDelegatesQml.dll": {
-      "version": "1.0.0",
-      "checksum": "5d6a504b04b1283fc1895659bce1b884",
-      "channel": "stable",
-      "size": 165688
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6WebEngineQuickDelegatesQml.dll.old": {
       "version": "1.0.0",
       "checksum": "5d6a504b04b1283fc1895659bce1b884",
       "channel": "stable",
@@ -5776,19 +4990,7 @@
       "channel": "stable",
       "size": 188728
     },
-    "_internal/PyQt6/Qt6/bin/Qt6WebEngineWidgets.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b72727e876a30892174a175238f845ee",
-      "channel": "stable",
-      "size": 188728
-    },
     "_internal/PyQt6/Qt6/bin/Qt6WebSockets.dll": {
-      "version": "1.0.0",
-      "checksum": "2522f65ec415835081d48617c52d1311",
-      "channel": "stable",
-      "size": 219960
-    },
-    "_internal/PyQt6/Qt6/bin/Qt6WebSockets.dll.old": {
       "version": "1.0.0",
       "checksum": "2522f65ec415835081d48617c52d1311",
       "channel": "stable",
@@ -5800,25 +5002,7 @@
       "channel": "stable",
       "size": 6594360
     },
-    "_internal/PyQt6/Qt6/bin/Qt6Widgets.dll.old": {
-      "version": "1.0.0",
-      "checksum": "fe194f3803df1543fad6f316a50477b8",
-      "channel": "stable",
-      "size": 6594360
-    },
-    "_internal/PyQt6/Qt6/bin/QtWebEngineProcess.exe.old": {
-      "version": "1.0.0",
-      "checksum": "846b018412a06f82869558540c0cb2e8",
-      "channel": "stable",
-      "size": 773432
-    },
     "_internal/PyQt6/Qt6/bin/VCRUNTIME140.dll": {
-      "version": "1.0.0",
-      "checksum": "6ca4edb2b52ec46c7fca3fd372ca6c00",
-      "channel": "stable",
-      "size": 124544
-    },
-    "_internal/PyQt6/Qt6/bin/VCRUNTIME140.dll.old": {
       "version": "1.0.0",
       "checksum": "6ca4edb2b52ec46c7fca3fd372ca6c00",
       "channel": "stable",
@@ -5830,19 +5014,7 @@
       "channel": "stable",
       "size": 49792
     },
-    "_internal/PyQt6/Qt6/bin/VCRUNTIME140_1.dll.old": {
-      "version": "1.0.0",
-      "checksum": "cd1b08f4930b276ad78853580b76b5c6",
-      "channel": "stable",
-      "size": 49792
-    },
     "_internal/PyQt6/Qt6/plugins/generic/qtuiotouchplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "f666b030d95cdaac4f177dffcf36436f",
-      "channel": "stable",
-      "size": 101176
-    },
-    "_internal/PyQt6/Qt6/plugins/generic/qtuiotouchplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "f666b030d95cdaac4f177dffcf36436f",
       "channel": "stable",
@@ -5854,19 +5026,7 @@
       "channel": "stable",
       "size": 72504
     },
-    "_internal/PyQt6/Qt6/plugins/iconengines/qsvgicon.dll.old": {
-      "version": "1.0.0",
-      "checksum": "df5dee25db3c355c698a2e66a219b63f",
-      "channel": "stable",
-      "size": 72504
-    },
     "_internal/PyQt6/Qt6/plugins/imageformats/qgif.dll": {
-      "version": "1.0.0",
-      "checksum": "34fab6ad2c3ca6cc2f1128de0ec38777",
-      "channel": "stable",
-      "size": 47928
-    },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qgif.dll.old": {
       "version": "1.0.0",
       "checksum": "34fab6ad2c3ca6cc2f1128de0ec38777",
       "channel": "stable",
@@ -5878,19 +5038,7 @@
       "channel": "stable",
       "size": 55608
     },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qicns.dll.old": {
-      "version": "1.0.0",
-      "checksum": "51315eea43363fc39472435ae1955eb4",
-      "channel": "stable",
-      "size": 55608
-    },
     "_internal/PyQt6/Qt6/plugins/imageformats/qico.dll": {
-      "version": "1.0.0",
-      "checksum": "acb1c5151430eae36afcf007d5beb08a",
-      "channel": "stable",
-      "size": 45880
-    },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qico.dll.old": {
       "version": "1.0.0",
       "checksum": "acb1c5151430eae36afcf007d5beb08a",
       "channel": "stable",
@@ -5902,19 +5050,7 @@
       "channel": "stable",
       "size": 577848
     },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qjpeg.dll.old": {
-      "version": "1.0.0",
-      "checksum": "94754ca8e90cf6726634b09d9f36823c",
-      "channel": "stable",
-      "size": 577848
-    },
     "_internal/PyQt6/Qt6/plugins/imageformats/qpdf.dll": {
-      "version": "1.0.0",
-      "checksum": "ed229ac367949ca5259ac4945a7fc1c2",
-      "channel": "stable",
-      "size": 42296
-    },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qpdf.dll.old": {
       "version": "1.0.0",
       "checksum": "ed229ac367949ca5259ac4945a7fc1c2",
       "channel": "stable",
@@ -5926,19 +5062,7 @@
       "channel": "stable",
       "size": 39224
     },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qsvg.dll.old": {
-      "version": "1.0.0",
-      "checksum": "ec7a145be1696b7f621fdf341386556b",
-      "channel": "stable",
-      "size": 39224
-    },
     "_internal/PyQt6/Qt6/plugins/imageformats/qtga.dll": {
-      "version": "1.0.0",
-      "checksum": "94016de809e75953f2ef573ff9c1322c",
-      "channel": "stable",
-      "size": 38200
-    },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qtga.dll.old": {
       "version": "1.0.0",
       "checksum": "94016de809e75953f2ef573ff9c1322c",
       "channel": "stable",
@@ -5950,19 +5074,7 @@
       "channel": "stable",
       "size": 441656
     },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qtiff.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2d1d844fcacb02a033788bf20c254fdf",
-      "channel": "stable",
-      "size": 441656
-    },
     "_internal/PyQt6/Qt6/plugins/imageformats/qwbmp.dll": {
-      "version": "1.0.0",
-      "checksum": "39278e139dbb0d12b8407c76f4e2f9f8",
-      "channel": "stable",
-      "size": 36664
-    },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qwbmp.dll.old": {
       "version": "1.0.0",
       "checksum": "39278e139dbb0d12b8407c76f4e2f9f8",
       "channel": "stable",
@@ -5974,19 +5086,7 @@
       "channel": "stable",
       "size": 562488
     },
-    "_internal/PyQt6/Qt6/plugins/imageformats/qwebp.dll.old": {
-      "version": "1.0.0",
-      "checksum": "07b8e631474c0f9756f2f5d4e065e8a7",
-      "channel": "stable",
-      "size": 562488
-    },
     "_internal/PyQt6/Qt6/plugins/networkinformation/qnetworklistmanager.dll": {
-      "version": "1.0.0",
-      "checksum": "c10ceabe936f848ee2c96418edebfc5a",
-      "channel": "stable",
-      "size": 70968
-    },
-    "_internal/PyQt6/Qt6/plugins/networkinformation/qnetworklistmanager.dll.old": {
       "version": "1.0.0",
       "checksum": "c10ceabe936f848ee2c96418edebfc5a",
       "channel": "stable",
@@ -5998,19 +5098,7 @@
       "channel": "stable",
       "size": 61752
     },
-    "_internal/PyQt6/Qt6/plugins/platforms/qminimal.dll.old": {
-      "version": "1.0.0",
-      "checksum": "ead0aeb48268956287fc93adfea59878",
-      "channel": "stable",
-      "size": 61752
-    },
     "_internal/PyQt6/Qt6/plugins/platforms/qoffscreen.dll": {
-      "version": "1.0.0",
-      "checksum": "a541ec0ad6651eb5d700fbd56b8223a6",
-      "channel": "stable",
-      "size": 113976
-    },
-    "_internal/PyQt6/Qt6/plugins/platforms/qoffscreen.dll.old": {
       "version": "1.0.0",
       "checksum": "a541ec0ad6651eb5d700fbd56b8223a6",
       "channel": "stable",
@@ -6022,19 +5110,7 @@
       "channel": "stable",
       "size": 1006904
     },
-    "_internal/PyQt6/Qt6/plugins/platforms/qwindows.dll.old": {
-      "version": "1.0.0",
-      "checksum": "4cae29bada2173718689e037d346ddac",
-      "channel": "stable",
-      "size": 1006904
-    },
     "_internal/PyQt6/Qt6/plugins/position/qtposition_nmea.dll": {
-      "version": "1.0.0",
-      "checksum": "2bf9afd6bfeffd5ab0f92127d622c334",
-      "channel": "stable",
-      "size": 85816
-    },
-    "_internal/PyQt6/Qt6/plugins/position/qtposition_nmea.dll.old": {
       "version": "1.0.0",
       "checksum": "2bf9afd6bfeffd5ab0f92127d622c334",
       "channel": "stable",
@@ -6046,19 +5122,7 @@
       "channel": "stable",
       "size": 76088
     },
-    "_internal/PyQt6/Qt6/plugins/position/qtposition_positionpoll.dll.old": {
-      "version": "1.0.0",
-      "checksum": "69128b4d17a30878b807ac1d139361fe",
-      "channel": "stable",
-      "size": 76088
-    },
     "_internal/PyQt6/Qt6/plugins/position/qtposition_winrt.dll": {
-      "version": "1.0.0",
-      "checksum": "10484f8ba5a848d41ade63f1e5beb63a",
-      "channel": "stable",
-      "size": 67384
-    },
-    "_internal/PyQt6/Qt6/plugins/position/qtposition_winrt.dll.old": {
       "version": "1.0.0",
       "checksum": "10484f8ba5a848d41ade63f1e5beb63a",
       "channel": "stable",
@@ -6070,19 +5134,7 @@
       "channel": "stable",
       "size": 230712
     },
-    "_internal/PyQt6/Qt6/plugins/styles/qmodernwindowsstyle.dll.old": {
-      "version": "1.0.0",
-      "checksum": "bd2dfc33c125920d140f1ab3bcaead59",
-      "channel": "stable",
-      "size": 230712
-    },
     "_internal/PyQt6/Qt6/plugins/tls/qcertonlybackend.dll": {
-      "version": "1.0.0",
-      "checksum": "043332c126e17c9a3f395bece3add270",
-      "channel": "stable",
-      "size": 103736
-    },
-    "_internal/PyQt6/Qt6/plugins/tls/qcertonlybackend.dll.old": {
       "version": "1.0.0",
       "checksum": "043332c126e17c9a3f395bece3add270",
       "channel": "stable",
@@ -6094,19 +5146,7 @@
       "channel": "stable",
       "size": 319288
     },
-    "_internal/PyQt6/Qt6/plugins/tls/qopensslbackend.dll.old": {
-      "version": "1.0.0",
-      "checksum": "938e0bc44c8851d13a5cf7425f2ce9ca",
-      "channel": "stable",
-      "size": 319288
-    },
     "_internal/PyQt6/Qt6/plugins/tls/qschannelbackend.dll": {
-      "version": "1.0.0",
-      "checksum": "ef62047b289f05529e4ed411382af4f0",
-      "channel": "stable",
-      "size": 263992
-    },
-    "_internal/PyQt6/Qt6/plugins/tls/qschannelbackend.dll.old": {
       "version": "1.0.0",
       "checksum": "ef62047b289f05529e4ed411382af4f0",
       "channel": "stable",
@@ -6130,12 +5170,6 @@
       "channel": "stable",
       "size": 32568
     },
-    "_internal/PyQt6/Qt6/qml/QtMultimedia/quickmultimediaplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2d98ac147cc0fecbe349b985f1a736b3",
-      "channel": "stable",
-      "size": 32568
-    },
     "_internal/PyQt6/Qt6/qml/QtMultimedia/Video.qml": {
       "version": "1.0.0",
       "checksum": "7d11bd626ac0f92b097a4280d0a5ffc6",
@@ -6149,12 +5183,6 @@
       "size": 49798
     },
     "_internal/PyQt6/Qt6/qml/QtPositioning/positioningquickplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "ea58344e90b4817396b179f6e53ad719",
-      "channel": "stable",
-      "size": 61752
-    },
-    "_internal/PyQt6/Qt6/qml/QtPositioning/positioningquickplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "ea58344e90b4817396b179f6e53ad719",
       "channel": "stable",
@@ -6184,19 +5212,7 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQml/qmlplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "628eae3ef08e05085980de94c370b093",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQml/Models/modelsplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "84c7d8b57b0b5e04414c7b34fb348663",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQml/Models/modelsplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "84c7d8b57b0b5e04414c7b34fb348663",
       "channel": "stable",
@@ -6232,12 +5248,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQml/StateMachine/qtqmlstatemachineplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "5e5b692bdeb55382254e371c5fdf7d3a",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQml/WorkerScript/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "948a9fecba6d8dccfe89d653d4128505",
@@ -6251,12 +5261,6 @@
       "size": 252
     },
     "_internal/PyQt6/Qt6/qml/QtQml/WorkerScript/workerscriptplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "e0d15fa4e69d52fdf1e46283cdfe8b5a",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQml/WorkerScript/workerscriptplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "e0d15fa4e69d52fdf1e46283cdfe8b5a",
       "channel": "stable",
@@ -6280,12 +5284,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/qtquick2plugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "61c2f6dbb5efa3f40841fb19dfc6b7b9",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "2006d4b7d0da455aa4c7414653c0018a",
@@ -6299,12 +5297,6 @@
       "size": 579
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/qtquickcontrols2plugin.dll": {
-      "version": "1.0.0",
-      "checksum": "517fa827dd57287d3120ad2c3714e65a",
-      "channel": "stable",
-      "size": 41272
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/qtquickcontrols2plugin.dll.old": {
       "version": "1.0.0",
       "checksum": "517fa827dd57287d3120ad2c3714e65a",
       "channel": "stable",
@@ -6556,12 +5548,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Basic/qtquickcontrols2basicstyleplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "f4ff4eccffab305716503731271523f6",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Basic/RadioButton.qml": {
       "version": "1.0.0",
       "checksum": "50e38696da926ce077f45bafc0696f75",
@@ -6761,12 +5747,6 @@
       "size": 361
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Basic/impl/qtquickcontrols2basicstyleimplplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "67061bf4607df22029ecd4d5cbb1c61d",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Basic/impl/qtquickcontrols2basicstyleimplplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "67061bf4607df22029ecd4d5cbb1c61d",
       "channel": "stable",
@@ -7240,12 +6220,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Fusion/qtquickcontrols2fusionstyleplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "975a7e53e64a918fab27c7ac476c74f2",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Fusion/RadioButton.qml": {
       "version": "1.0.0",
       "checksum": "0c173cf54e3c3409bc1de22739bdcc01",
@@ -7457,12 +6431,6 @@
       "size": 1097
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Fusion/impl/qtquickcontrols2fusionstyleimplplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "23c98e4e0a13cfd3c1fbd9abe77a7435",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Fusion/impl/qtquickcontrols2fusionstyleimplplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "23c98e4e0a13cfd3c1fbd9abe77a7435",
       "channel": "stable",
@@ -7696,12 +6664,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Imagine/qtquickcontrols2imaginestyleplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "88490608c3775e6556f9a931169b6a40",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Imagine/RadioButton.qml": {
       "version": "1.0.0",
       "checksum": "1049d6271e080c9f20f703c4bde9c8be",
@@ -7888,12 +6850,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Imagine/impl/qtquickcontrols2imaginestyleimplplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "1ce3fd87d1d9e60181b0f595b0828c15",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Imagine/impl/QuickControls2ImagineStyleImpl.qmltypes": {
       "version": "1.0.0",
       "checksum": "2006d4b7d0da455aa4c7414653c0018a",
@@ -7943,12 +6899,6 @@
       "size": 533
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/impl/qtquickcontrols2implplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "c09578ecdfecfe13b4b0b35ca9b2267a",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/impl/qtquickcontrols2implplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "c09578ecdfecfe13b4b0b35ca9b2267a",
       "channel": "stable",
@@ -8153,12 +7103,6 @@
       "size": 3770
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Material/qtquickcontrols2materialstyleplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "a2c9bcd2857a7407f75b47365fca66fc",
-      "channel": "stable",
-      "size": 31544
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Material/qtquickcontrols2materialstyleplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "a2c9bcd2857a7407f75b47365fca66fc",
       "channel": "stable",
@@ -8375,12 +7319,6 @@
       "size": 1130
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Material/impl/qtquickcontrols2materialstyleimplplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "3bf6f04c754eee0d4672680be71dd89e",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Material/impl/qtquickcontrols2materialstyleimplplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "3bf6f04c754eee0d4672680be71dd89e",
       "channel": "stable",
@@ -8608,12 +7546,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Universal/qtquickcontrols2universalstyleplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "a0a6a46f5369a902bad952a8d5ece2e5",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Universal/RadioButton.qml": {
       "version": "1.0.0",
       "checksum": "2a7019a3e267dbc42f210dc0b2832cec",
@@ -8824,12 +7756,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Universal/impl/qtquickcontrols2universalstyleimplplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "636c31e09410bf9912442fd119a955fc",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Universal/impl/RadioIndicator.qml": {
       "version": "1.0.0",
       "checksum": "ff4aa8db065d770eb30406a01f742f0c",
@@ -8980,12 +7906,6 @@
       "channel": "stable",
       "size": 705336
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Windows/qtquickcontrols2windowsstyleplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "c666b27bd167e93a9df9da24c5e0c24d",
-      "channel": "stable",
-      "size": 705336
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Controls/Windows/RadioButton.qml": {
       "version": "1.0.0",
       "checksum": "6f73d140536a6fcbb287d25ec18ceee1",
@@ -9088,12 +8008,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Dialogs/qtquickdialogsplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "6efe2b91d9b782941b68b057633e2181",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Dialogs/quickimpl/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "be4e752d59de7d7996636ce8e24dc7d0",
@@ -9107,12 +8021,6 @@
       "size": 3152
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Dialogs/quickimpl/qtquickdialogs2quickimplplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "32bf127b6e0f2de9e9aeb2afd45b7a16",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Dialogs/quickimpl/qtquickdialogs2quickimplplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "32bf127b6e0f2de9e9aeb2afd45b7a16",
       "channel": "stable",
@@ -9466,12 +8374,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Effects/effectsplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "4321f276c11488a8f20535a7f77a4c65",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Effects/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "e793e0d8c32bd6baaf5a6cbe44d4c46b",
@@ -9502,12 +8404,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Layouts/qquicklayoutsplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "f361abdeb69f42533675af465687d84f",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/NativeStyle/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "38d7b810d80d440336877534f507a294",
@@ -9521,12 +8417,6 @@
       "size": 2468
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/NativeStyle/qtquickcontrols2nativestyleplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "7d006ffb8790039112289b7b3c72bbc1",
-      "channel": "stable",
-      "size": 973112
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/NativeStyle/qtquickcontrols2nativestyleplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "7d006ffb8790039112289b7b3c72bbc1",
       "channel": "stable",
@@ -9670,12 +8560,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Particles/particlesplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "336b4eb2cbd6017a94f54f6bea945ae7",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Particles/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "47a7a1fcf4c1396c52ddb2a8e3da85f7",
@@ -9707,12 +8591,6 @@
       "size": 14834
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Pdf/pdfquickplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "152fb021e467fb30c25426a8c6258abf",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Pdf/pdfquickplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "152fb021e467fb30c25426a8c6258abf",
       "channel": "stable",
@@ -9772,12 +8650,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Shapes/qmlshapesplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "27b5c13c77a38b8ed75ed3cd7ebef113",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Templates/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "ba0198ad1d7a4048f75a405ff4c8807e",
@@ -9791,12 +8663,6 @@
       "size": 237
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Templates/qtquicktemplates2plugin.dll": {
-      "version": "1.0.0",
-      "checksum": "ef0da125497e846b513cb6231cc6473b",
-      "channel": "stable",
-      "size": 31032
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Templates/qtquicktemplates2plugin.dll.old": {
       "version": "1.0.0",
       "checksum": "ef0da125497e846b513cb6231cc6473b",
       "channel": "stable",
@@ -9820,12 +8686,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Timeline/qtquicktimelineplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b6bffbccdaa596a69c9657d48c80839e",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Timeline/BlendTrees/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "68290ef749d205dab45ee0a189f31a8f",
@@ -9839,12 +8699,6 @@
       "size": 340
     },
     "_internal/PyQt6/Qt6/qml/QtQuick/Timeline/BlendTrees/qtquicktimelineblendtreesplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "9b2396016c18b75dbe10e3883823d0c4",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Timeline/BlendTrees/qtquicktimelineblendtreesplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "9b2396016c18b75dbe10e3883823d0c4",
       "channel": "stable",
@@ -9910,12 +8764,6 @@
       "channel": "stable",
       "size": 69432
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/tooling/quicktoolingplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "2ede64a84514e02a9bf2a48d095e0713",
-      "channel": "stable",
-      "size": 69432
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/tooling/Signal.qml": {
       "version": "1.0.0",
       "checksum": "79c149bd834a5a757a9e5c9cb3564072",
@@ -9940,12 +8788,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/VectorImage/qquickvectorimageplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "c1eba5a4ed0958f6257f3058b3d2902d",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick/Window/qmldir": {
       "version": "1.0.0",
       "checksum": "94ebe16c3ede17a27d79716cf1b00d3c",
@@ -9964,12 +8806,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick/Window/quickwindowplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "19b20377ea94914d7779b24c0a65a051",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/LightmapperOutputWindow.qml": {
       "version": "1.0.0",
       "checksum": "4f5f388d0ea9bed6fc7da94ec7656e8b",
@@ -9983,12 +8819,6 @@
       "size": 270
     },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/qquick3dplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "d777e2a6d9a186caa0da90c3f363507a",
-      "channel": "stable",
-      "size": 35128
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/qquick3dplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "d777e2a6d9a186caa0da90c3f363507a",
       "channel": "stable",
@@ -10013,12 +8843,6 @@
       "size": 296
     },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/AssetUtils/qtquick3dassetutilsplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "2dcf8fd851b8d61a6310068188afc3cb",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/AssetUtils/qtquick3dassetutilsplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "2dcf8fd851b8d61a6310068188afc3cb",
       "channel": "stable",
@@ -10666,12 +9490,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Effects/qtquick3deffectplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "6933268c225b9b91017415766a05ac3a",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Effects/Quick3DEffects.qmltypes": {
       "version": "1.0.0",
       "checksum": "2006d4b7d0da455aa4c7414653c0018a",
@@ -11008,12 +9826,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Helpers/qtquick3dhelpersplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "b18ff36561aca6c2b42be4274b2fbb0c",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Helpers/WasdController.qml": {
       "version": "1.0.0",
       "checksum": "97878e7c1bc15e59b0c368197fa32f3d",
@@ -11218,12 +10030,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Helpers/impl/qtquick3dhelpersimplplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "bff2198b385960a6e0a3b1c4ac103745",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Helpers/impl/SceneEffect.qml": {
       "version": "1.0.0",
       "checksum": "0ad9bcab26decaf987252124862437aa",
@@ -11387,12 +10193,6 @@
       "size": 301
     },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Particles3D/qtquick3dparticles3dplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "ff3d4a1154953f54061641cd643d6a51",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Particles3D/qtquick3dparticles3dplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "ff3d4a1154953f54061641cd643d6a51",
       "channel": "stable",
@@ -11764,12 +10564,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Physics/qquick3dphysicsplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "26412051b59f98d5f1b1e47856593c44",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Physics/designer/BoxShapeSection.qml": {
       "version": "1.0.0",
       "checksum": "836ec42c8b265f781986822f2ecf1833",
@@ -11956,12 +10750,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Physics/Helpers/qtquick3dphysicshelpersplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "4cd2c06bf33d62bb1e3267bfaf685e55",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/SpatialAudio/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "6fb08fe1da9e0c656a7f06c995a527cb",
@@ -11975,12 +10763,6 @@
       "size": 258
     },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/SpatialAudio/quick3dspatialaudioplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "e11d3822f40ad274df5de939a3b31eef",
-      "channel": "stable",
-      "size": 30008
-    },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/SpatialAudio/quick3dspatialaudioplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "e11d3822f40ad274df5de939a3b31eef",
       "channel": "stable",
@@ -12004,12 +10786,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtQuick3D/Xr/quick3dxrplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "bd04965df83305485b5da92d6abaf80e",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtQuick3D/Xr/XrErrorDialog.qml": {
       "version": "1.0.0",
       "checksum": "a31ab19096ec0eba56238e150d32cbe2",
@@ -12017,12 +10793,6 @@
       "size": 809
     },
     "_internal/PyQt6/Qt6/qml/QtRemoteObjects/declarative_remoteobjectsplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "97517ba77ac6c2aee41fbd9be79f1759",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtRemoteObjects/declarative_remoteobjectsplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "97517ba77ac6c2aee41fbd9be79f1759",
       "channel": "stable",
@@ -12058,12 +10828,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtSensors/sensorsquickplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "da08bcf56212a957fb13726c76b47fc7",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtTest/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "07a64e543c9f80f668e36997746d560c",
@@ -12077,12 +10841,6 @@
       "size": 423
     },
     "_internal/PyQt6/Qt6/qml/QtTest/quicktestplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "4efc38f7565941c7489559cbcf784a52",
-      "channel": "stable",
-      "size": 30520
-    },
-    "_internal/PyQt6/Qt6/qml/QtTest/quicktestplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "4efc38f7565941c7489559cbcf784a52",
       "channel": "stable",
@@ -12130,12 +10888,6 @@
       "channel": "stable",
       "size": 93496
     },
-    "_internal/PyQt6/Qt6/qml/QtTextToSpeech/texttospeechqmlplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "27e878178635d951a044ac48d455f043",
-      "channel": "stable",
-      "size": 93496
-    },
     "_internal/PyQt6/Qt6/qml/QtWebChannel/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "60cbfc1c7ac5bd9f4ab75c5e284b72d6",
@@ -12154,12 +10906,6 @@
       "channel": "stable",
       "size": 30520
     },
-    "_internal/PyQt6/Qt6/qml/QtWebChannel/webchannelquickplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "ac719b10b21ef24d1ff17fcc36ea31ff",
-      "channel": "stable",
-      "size": 30520
-    },
     "_internal/PyQt6/Qt6/qml/QtWebEngine/plugins.qmltypes": {
       "version": "1.0.0",
       "checksum": "a6ad9e7c1b0ea3e21926fe5b8ff54506",
@@ -12173,12 +10919,6 @@
       "size": 288
     },
     "_internal/PyQt6/Qt6/qml/QtWebEngine/qtwebenginequickplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "6c80f00ac7d6a12895d1bc5eb2e3144a",
-      "channel": "stable",
-      "size": 34616
-    },
-    "_internal/PyQt6/Qt6/qml/QtWebEngine/qtwebenginequickplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "6c80f00ac7d6a12895d1bc5eb2e3144a",
       "channel": "stable",
@@ -12262,12 +11002,6 @@
       "channel": "stable",
       "size": 31544
     },
-    "_internal/PyQt6/Qt6/qml/QtWebEngine/ControlsDelegates/qtwebenginequickdelegatesplugin.dll.old": {
-      "version": "1.0.0",
-      "checksum": "aa71539dd1bc95dbe7d7f6f3688b43dd",
-      "channel": "stable",
-      "size": 31544
-    },
     "_internal/PyQt6/Qt6/qml/QtWebEngine/ControlsDelegates/ToolTip.qml": {
       "version": "1.0.0",
       "checksum": "9802034510488cd60bc2093fae861ec7",
@@ -12305,12 +11039,6 @@
       "size": 206
     },
     "_internal/PyQt6/Qt6/qml/QtWebSockets/qmlwebsocketsplugin.dll": {
-      "version": "1.0.0",
-      "checksum": "539bf236608275efcc4c852c652926bc",
-      "channel": "stable",
-      "size": 79160
-    },
-    "_internal/PyQt6/Qt6/qml/QtWebSockets/qmlwebsocketsplugin.dll.old": {
       "version": "1.0.0",
       "checksum": "539bf236608275efcc4c852c652926bc",
       "channel": "stable",
@@ -13648,31 +12376,13 @@
       "channel": "stable",
       "size": 1122816
     },
-    "_internal/pythonwin/win32ui.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "7ce7439199c452e8f536540a218fdcc1",
-      "channel": "stable",
-      "size": 1122816
-    },
     "_internal/pywin32_system32/pythoncom311.dll": {
       "version": "1.0.0",
       "checksum": "9e901da03e11dea3125e07e91104edef",
       "channel": "stable",
       "size": 680960
     },
-    "_internal/pywin32_system32/pythoncom311.dll.old": {
-      "version": "1.0.0",
-      "checksum": "9e901da03e11dea3125e07e91104edef",
-      "channel": "stable",
-      "size": 680960
-    },
     "_internal/pywin32_system32/pywintypes311.dll": {
-      "version": "1.0.0",
-      "checksum": "7e2a89358ac141372344bf2477129638",
-      "channel": "stable",
-      "size": 135168
-    },
-    "_internal/pywin32_system32/pywintypes311.dll.old": {
       "version": "1.0.0",
       "checksum": "7e2a89358ac141372344bf2477129638",
       "channel": "stable",
@@ -13864,19 +12574,7 @@
       "channel": "stable",
       "size": 138240
     },
-    "_internal/win32/win32api.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "284be277fc54cef6bcc01873ea46a570",
-      "channel": "stable",
-      "size": 138240
-    },
     "_internal/win32/win32event.pyd": {
-      "version": "1.0.0",
-      "checksum": "2b87996809db667220a659eac1e4f05d",
-      "channel": "stable",
-      "size": 30208
-    },
-    "_internal/win32/win32event.pyd.old": {
       "version": "1.0.0",
       "checksum": "2b87996809db667220a659eac1e4f05d",
       "channel": "stable",
@@ -13888,19 +12586,7 @@
       "channel": "stable",
       "size": 33792
     },
-    "_internal/win32/win32pdh.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "031ca81927a2e291ff9a90b6081e1957",
-      "channel": "stable",
-      "size": 33792
-    },
     "_internal/win32/win32print.pyd": {
-      "version": "1.0.0",
-      "checksum": "2d3f5c87142055af534c9ddd3599341e",
-      "channel": "stable",
-      "size": 74752
-    },
-    "_internal/win32/win32print.pyd.old": {
       "version": "1.0.0",
       "checksum": "2d3f5c87142055af534c9ddd3599341e",
       "channel": "stable",
@@ -13912,31 +12598,13 @@
       "channel": "stable",
       "size": 24576
     },
-    "_internal/win32/win32trace.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "f974026b085e7b44058c430afe94ef80",
-      "channel": "stable",
-      "size": 24576
-    },
     "_internal/win32/_win32sysloader.pyd": {
       "version": "1.0.0",
       "checksum": "a95fe657378233c5689fac1cebdf8d54",
       "channel": "stable",
       "size": 15872
     },
-    "_internal/win32/_win32sysloader.pyd.old": {
-      "version": "1.0.0",
-      "checksum": "a95fe657378233c5689fac1cebdf8d54",
-      "channel": "stable",
-      "size": 15872
-    },
     "_internal/yaml/_yaml.cp311-win_amd64.pyd": {
-      "version": "1.0.0",
-      "checksum": "eaa741c36c743d50fea7fa10c0496ec4",
-      "channel": "stable",
-      "size": 258560
-    },
-    "_internal/yaml/_yaml.cp311-win_amd64.pyd.old": {
       "version": "1.0.0",
       "checksum": "eaa741c36c743d50fea7fa10c0496ec4",
       "channel": "stable",
