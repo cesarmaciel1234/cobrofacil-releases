@@ -1,3 +1,230 @@
+/* ══════════════════════════════════════════════════════════
+   COLUMNA 1 — ESTRUCTURA BASE PERMANENTE (todos los temas)
+   La estructura no cambia. Los colores se controlan con
+   variables CSS que cada tema sobreescribe en su estilos.css
+   ══════════════════════════════════════════════════════════ */
+
+/* Variables de fallback (si el tema no las define) */
+:root {
+    --rank-card-bg:          #1C1C1E;
+    --rank-card-border:      rgba(255,215,0,0.25);
+    --rank-card-shadow:      0 4px 12px rgba(0,0,0,0.35);
+    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
+    --rank-top1-border:      #FFD700;
+    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
+    --rank-top2-bg:          linear-gradient(135deg, #222222, #1A1A1A);
+    --rank-top2-border:      rgba(200,200,200,0.25);
+    --rank-top3-bg:          linear-gradient(135deg, #1E1800, #1A1200);
+    --rank-top3-border:      rgba(180,100,50,0.35);
+    --rank-badge-bg:         #1A1A1A;
+    --rank-badge-color:      #FFFFFF;
+    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
+    --rank-badge-top1-color: #FFFFFF;
+    --rank-name-color:       #FFFFFF;
+    --rank-bar-bg:           linear-gradient(90deg, #FF4757, #FF8C00);
+    --rank-bar-track:        rgba(255,255,255,0.1);
+    --rank-tag-color:        #FFFFFF;
+    --rank-social-color:     #FF4757;
+    --rank-fire-shadow:      rgba(255,71,87,0.4);
+    --rank-dot-bg:           rgba(255,215,0,0.3);
+    --rank-dot-active:       #FFD700;
+    --rank-progress-bar:     linear-gradient(90deg, #FF3366, #FF9933);
+}
+
+/* ── Cabecera (header + kicker + dots) ── */
+.sale-head.rank-head, .rank-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #8B0000, #CC0000, #FF0000);
+    border-radius: 16px;
+    padding: 1vh 1.2vw;
+    box-shadow: 0 0 30px rgba(139,0,0,0.4), 0 0 60px rgba(204,0,0,0.3);
+    margin-bottom: 1.2vh;
+    position: relative;
+    overflow: hidden;
+}
+.rank-kicker {
+    margin: 0;
+    color: #FFFFFF;
+    font-weight: 900;
+    font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 0 16px rgba(255,215,0,0.5);
+    position: relative;
+    z-index: 2;
+}
+.rank-kicker::before { content: '👑'; margin-right: 0.4vw; }
+
+/* Dots de rotación */
+.rank-dots { display: flex; gap: 0.4vw; align-items: center; }
+.rank-dots .rank-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rank-dot-bg);
+    border: 1px solid rgba(255,215,0,0.5);
+    transition: all 0.3s ease;
+}
+.rank-dots .rank-dot.is-on {
+    background: var(--rank-dot-active);
+    width: 10px; height: 10px;
+    box-shadow: 0 0 12px rgba(255,215,0,0.6);
+}
+
+/* Barra de progreso de tiempo */
+.rank-progress {
+    height: 6px;
+    background: var(--rank-progress-bar);
+    border-radius: 999px;
+    margin-top: 1vh;
+    width: 0%;
+    animation: rankProgress var(--rank-duration, 8000ms) linear infinite;
+}
+@keyframes rankProgress { 0%{width:0%} 100%{width:100%} }
+
+/* Lista de tarjetas */
+.rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Tarjeta de ranking ── */
+.asian-rank-card {
+    display: flex;
+    align-items: center;
+    background: var(--rank-card-bg);
+    border-radius: 16px;
+    padding: 1.5vh 1vw;
+    margin-bottom: 1.2vh;
+    box-shadow: var(--rank-card-shadow);
+    position: relative;
+    border: 2px solid var(--rank-card-border);
+    overflow: hidden;
+    gap: 1vw;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.asian-rank-card.top-1 {
+    background: var(--rank-top1-bg);
+    border-color: var(--rank-top1-border);
+    box-shadow: var(--rank-top1-shadow);
+    transform: scale(1.03);
+    margin-bottom: 2vh;
+    z-index: 10;
+}
+.asian-rank-card.top-2 {
+    background: var(--rank-top2-bg);
+    border-color: var(--rank-top2-border);
+}
+.asian-rank-card.top-3 {
+    background: var(--rank-top3-bg);
+    border-color: var(--rank-top3-border);
+}
+
+/* Badge número de puesto */
+.asian-rank-badge {
+    flex-shrink: 0;
+    background: var(--rank-badge-bg);
+    color: var(--rank-badge-color);
+    border-radius: 12px;
+    padding: 0.6vh 0.8vw;
+    font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    text-align: center;
+    white-space: nowrap;
+}
+.asian-rank-card.top-1 .asian-rank-badge {
+    background: var(--rank-badge-top1-bg);
+    color: var(--rank-badge-top1-color);
+    font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+    animation: temuPulse 2s infinite;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+@keyframes temuPulse {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+}
+
+/* Info (nombre + barra de progreso) */
+.asian-rank-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+.asian-rank-name {
+    font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+    font-weight: 900;
+    color: var(--rank-name-color);
+    margin: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+.asian-rank-card.top-1 .asian-rank-name { color: #1A1A1A; }
+
+/* Barra de progreso */
+.asian-rank-progress-container {
+    background: var(--rank-bar-track);
+    border-radius: 999px;
+    height: 2.2vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 0.5vh;
+}
+.asian-rank-progress-bar {
+    background: var(--rank-bar-bg);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+}
+.asian-rank-tag {
+    position: absolute;
+    left: 0.8vw;
+    color: var(--rank-tag-color);
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 900;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    letter-spacing: 0.05em;
+    z-index: 2;
+}
+
+/* Texto social (familias) */
+.asian-rank-tag-social {
+    color: var(--rank-social-color);
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    margin-top: 0.5vh;
+}
+
+/* Fuego del #1 */
+.asian-rank-fire {
+    position: absolute;
+    right: 0.5vw;
+    top: -0.5vh;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    animation: temuFire 0.8s infinite alternate;
+    filter: drop-shadow(0 2px 4px var(--rank-fire-shadow));
+}
+@keyframes temuFire {
+    0%   { transform: rotate(-8deg) scale(1); }
+    100% { transform: rotate(8deg) scale(1.1); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   FIN COLUMNA 1 BASE — continúa cards.css original
+   ══════════════════════════════════════════════════════════ */
+
 .price-dept {
     margin: 0.9vh 0 0.35vh;
     padding: 0.55vh 0.7vw;

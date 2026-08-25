@@ -1,24 +1,35 @@
-/* ============================================
-   APPLE THEME - Moderno y Elegante
-   ============================================ */
-
 :root {
-    /* Colores principales */
     --bg-primary: #F8F9FA;
     --bg-secondary: #FFFFFF;
     --surface-primary: rgba(255, 255, 255, 0.95);
-    
-    /* Texto */
     --text-primary: #1A1A1A;
     --text-secondary: #6B7280;
-    
-    /* Acentos */
     --accent-primary: #007AFF;
     --accent-secondary: #5856D6;
-    
-    /* Bordes */
     --border-subtle: rgba(0, 0, 0, 0.08);
-    
-    /* Estados */
     --success-color: #34C759;
+    /* ── Columna 1 colores ── */
+    --rank-card-bg:          #FFFFFF;
+    --rank-card-border:      rgba(0,122,255,0.15);
+    --rank-card-shadow:      0 4px 15px rgba(0,0,0,0.06);
+    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
+    --rank-top1-border:      #FFD700;
+    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
+    --rank-top2-bg:          linear-gradient(135deg, #F8F9FA, #EEF2FF);
+    --rank-top2-border:      rgba(88,86,214,0.3);
+    --rank-top3-bg:          linear-gradient(135deg, #FFFFFF, #FFF0E6);
+    --rank-top3-border:      rgba(255,149,0,0.35);
+    --rank-badge-bg:         #1C1C1E;
+    --rank-badge-color:      #FFFFFF;
+    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
+    --rank-badge-top1-color: #FFFFFF;
+    --rank-name-color:       #1A1A1A;
+    --rank-bar-bg:           linear-gradient(90deg, #007AFF, #5856D6);
+    --rank-bar-track:        rgba(0,0,0,0.06);
+    --rank-tag-color:        #FFFFFF;
+    --rank-social-color:     #007AFF;
+    --rank-fire-shadow:      rgba(255,149,0,0.4);
+    --rank-dot-bg:           rgba(0,122,255,0.2);
+    --rank-dot-active:       #007AFF;
+    --rank-progress-bar:     linear-gradient(90deg, #007AFF, #5856D6);
 }

@@ -9,6 +9,30 @@
     --accent-rgb: 255, 106, 0;
     --border-subtle: rgba(17, 17, 17, 0.08);
     --success-color: #10B981;
+    /* ── Columna 1 colores ── */
+    --rank-card-bg:          #FFFFFF;
+    --rank-card-border:      rgba(255,71,87,0.18);
+    --rank-card-shadow:      0 4px 15px rgba(255,71,87,0.08);
+    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
+    --rank-top1-border:      #FFD700;
+    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
+    --rank-top2-bg:          linear-gradient(135deg, #FFFFFF, #F1F5F9);
+    --rank-top2-border:      #CBD5E1;
+    --rank-top3-bg:          linear-gradient(135deg, #FFFFFF, #FFEDD5);
+    --rank-top3-border:      #FDBA74;
+    --rank-badge-bg:         #1A1A1A;
+    --rank-badge-color:      #FFFFFF;
+    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
+    --rank-badge-top1-color: #FFFFFF;
+    --rank-name-color:       #1A1A1A;
+    --rank-bar-bg:           linear-gradient(90deg, #FF4757, #FF8C00);
+    --rank-bar-track:        rgba(0,0,0,0.08);
+    --rank-tag-color:        #FFFFFF;
+    --rank-social-color:     #FF4757;
+    --rank-fire-shadow:      rgba(255,71,87,0.4);
+    --rank-dot-bg:           rgba(255,106,0,0.25);
+    --rank-dot-active:       #FF6A00;
+    --rank-progress-bar:     linear-gradient(90deg, #FF3366, #FF9933);
 }
 
 body[data-theme="temu"],

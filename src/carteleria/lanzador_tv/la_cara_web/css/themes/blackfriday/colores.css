@@ -1,24 +1,35 @@
-/* ============================================
-   BLACK FRIDAY THEME - Premium Dark
-   ============================================ */
-
 :root {
-    /* Colores principales */
     --bg-primary: #050507;
     --bg-secondary: #0B0B0D;
     --surface-primary: rgba(11, 11, 13, 0.95);
-    
-    /* Texto */
     --text-primary: #FFFFFF;
     --text-secondary: #FFCC00;
-    
-    /* Acentos */
     --accent-primary: #FFCC00;
     --accent-secondary: #FFD700;
-    
-    /* Bordes */
     --border-subtle: rgba(255, 204, 0, 0.2);
-    
-    /* Estados */
     --success-color: #10B981;
+    /* ── Columna 1 colores ── */
+    --rank-card-bg:          #0F0F11;
+    --rank-card-border:      rgba(255,204,0,0.2);
+    --rank-card-shadow:      0 4px 16px rgba(0,0,0,0.5);
+    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
+    --rank-top1-border:      #FFD700;
+    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
+    --rank-top2-bg:          linear-gradient(135deg, #141416, #0A0A0C);
+    --rank-top2-border:      rgba(255,204,0,0.2);
+    --rank-top3-bg:          linear-gradient(135deg, #141414, #0A0A0A);
+    --rank-top3-border:      rgba(255,204,0,0.15);
+    --rank-badge-bg:         #1A1A1A;
+    --rank-badge-color:      #FFCC00;
+    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
+    --rank-badge-top1-color: #FFFFFF;
+    --rank-name-color:       #FFFFFF;
+    --rank-bar-bg:           linear-gradient(90deg, #FFCC00, #FFD700);
+    --rank-bar-track:        rgba(255,255,255,0.06);
+    --rank-tag-color:        #000000;
+    --rank-social-color:     #FFCC00;
+    --rank-fire-shadow:      rgba(255,204,0,0.4);
+    --rank-dot-bg:           rgba(255,204,0,0.2);
+    --rank-dot-active:       #FFCC00;
+    --rank-progress-bar:     linear-gradient(90deg, #FFCC00, #FFD700);
 }
