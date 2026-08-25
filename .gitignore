@@ -106,3 +106,8 @@ ia_doc_content.txt
 mariadb_server/data/
 mariadb_server/data_corrupt/
 _internal/
+
+# ─── Creator PNG (archivos generados y temporales) ──────────────────────────
+creator png/uploads/
+creator png/converted/
+carteleria_cache.json

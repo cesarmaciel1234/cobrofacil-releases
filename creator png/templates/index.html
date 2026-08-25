@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Image Converter - Remove Background</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 20px auto; 
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 40px; }
+        h1 { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #666; font-size: 1.2rem; font-weight: 300; margin-bottom: 20px; }
+        .carteleria-info {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            border: 1px solid #c3e6cb;
+            text-align: left;
+        }
+        .carteleria-info small { color: #155724; opacity: 0.8; font-size: 0.85rem; display: block; margin-top: 5px; }
+
+        /* Upload Section */
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-section:hover { background: #e9ecef; border-color: #764ba2; }
+        .upload-icon { font-size: 4rem; color: #667eea; margin-bottom: 20px; }
+        .upload-text { color: #495057; font-size: 1.2rem; margin-bottom: 15px; }
+        .upload-hint { color: #6c757d; font-size: 0.9rem; }
+
+        /* Batch Controls */
+        .batch-controls { text-align: center; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 15px; }
+        .batch-btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .batch-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(23, 162, 184, 0.3); }
+        .batch-btn.active { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+        #fileCount { color: #667eea; font-weight: 500; }
+
+        /* Controls Section */
+        .controls-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-label { font-weight: 500; color: #495057; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .control-label span { font-weight: 400; font-size: 0.85rem; color: #6c757d; }
+        .control-input { 
+            padding: 10px 15px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            font-size: 0.95rem; 
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        input[type="range"].control-input { padding: 0; }
+        .control-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+
+        .button-group { display: flex; gap: 15px; margin-top: 20px; }
+        .convert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        .convert-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .convert-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Loading, Preview, Download */
+        .loading { display: none; text-align: center; margin-top: 20px; }
+        .loading.active { display: block; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: #667eea; font-weight: 500; }
+
+        .preview-section { display: none; margin-top: 30px; }
+        .preview-section.active { display: block; }
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .preview-item { background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .preview-title { font-weight: 600; color: #495057; margin-bottom: 15px; font-size: 1.1rem; }
+        .preview-image { max-width: 100%; height: auto; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); background: repeating-conic-gradient(#e9ecef 0% 25%, white 0% 50%) 50% / 20px 20px; }
+
+        .download-section { display: none; margin-top: 30px; text-align: center; }
+        .download-section.active { display: block; }
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .download-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3); }
+
+        .error-message { 
+            color: #dc3545; 
+            text-align: center; 
+            margin-top: 20px; 
+            padding: 15px;
+            background: #f8d7da;
+            border-radius: 10px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .batch-results-section {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .batch-results-section h3 { margin-bottom: 15px; color: #495057; text-align: center; }
+        .batch-results-list { max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 10px; padding: 15px; background: #fff; }
+        .batch-result-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px; 
+            border-bottom: 1px solid #eee; 
+        }
+        .batch-result-item:last-child { border-bottom: none; }
+        .batch-result-item.success { color: #28a745; }
+        .batch-result-item.error { color: #dc3545; }
+        .batch-result-item button { 
+            background: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; 
+            transition: background-color 0.2s ease;
+        }
+        .batch-result-item button:hover { background: #218838; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            backdrop-filter: blur(5px);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 15% from the top and centered */
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 15px;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            color: #333;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .modal ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .modal li {
+            margin-bottom: 5px;
+        }
+
+        .about-button {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .about-button:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(23, 162, 184, 0.3); }
+
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls-grid { grid-template-columns: 1fr; }
+            .preview-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 2rem; }
+            .container { padding: 20px; }
+            .convert-btn { padding: 12px 20px; font-size: 1rem; }
+            .download-btn { padding: 12px 20px; font-size: 1rem; }
+            .modal-content { width: 95%; margin: 10% auto; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Pro Image Converter</h1>
+            <p class="subtitle">Remove backgrounds with professional quality and advanced 3D effects</p>
+            <div class="carteleria-info">
+                <strong>📺 Requisitos Cartelería:</strong> Tamaño ideal: 2048x2048px (mín 1024px) • 150 DPI • Fondo transparente<br>
+                <small>Directorio de salida: C:\Users\cesar\OneDrive\Desktop\tpv pro 2026\Catalogos\png_productos</small>
+            </div>
+        </div>
+        
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Arrastra y suelta tu imagen aquí</div>
+            <div class="upload-hint">o haz clic para buscar • Soporta JPG, PNG, WEBP</div>
+            <input type="file" id="fileInput" name="file" accept="image/*" style="display: none;" required>
+            <input type="file" id="batchFileInput" name="files" accept="image/*" multiple style="display: none;">
+        </div>
+        
+        <div class="batch-controls">
+            <button class="batch-btn" id="batchModeBtn">📚 Modo por Lotes</button>
+            <span id="fileCount"></span>
+        </div>
+        
+        <div class="controls-section">
+            <h2>Configuración de Conversión</h2>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label" for="preset">Preset</label>
+                    <select class="control-input" id="preset">
+                        <option value="custom">Custom</option>
+                        <option value="carteleria" selected>📺 Cartelería (2048x2048)</option>
+                        <option value="web">🌐 Web Optimized</option>
+                        <option value="print">🖨️ Print Quality</option>
+                        <option value="social">📱 Social Media</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="blackThreshold">Umbral Negro <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="blackThreshold" min="0" max="255" value="40">
+                    <span id="blackThresholdValue" class="control-label-value">40</span>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="whiteThreshold">Umbral Blanco <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="whiteThreshold" min="0" max="255" value="240">
+                    <span id="whiteThresholdValue" class="control-label-value">240</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="sharpnessFactor">Nitidez <span>(0.5-2.0)</span></label>
+                    <input type="range" class="control-input" id="sharpnessFactor" min="0.5" max="2.0" step="0.05" value="1.3">
+                    <span id="sharpnessFactorValue" class="control-label-value">1.3</span>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="contrastFactor">Contraste <span>(0.5-2.0)</span></label>
+                    <input type="range" class="control-input" id="contrastFactor" min="0.5" max="2.0" step="0.05" value="1.1">
+                    <span id="contrastFactorValue" class="control-label-value">1.1</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="saturationFactor">Saturación <span>(0.5-2.0)</span></label>
+                    <input type="range" class="control-input" id="saturationFactor" min="0.5" max="2.0" step="0.05" value="1.05">
+                    <span id="saturationFactorValue" class="control-label-value">1.05</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="brightnessFactor">Brillo <span>(0.5-2.0)</span></label>
+                    <input type="range" class="control-input" id="brightnessFactor" min="0.5" max="2.0" step="0.05" value="1.05">
+                    <span id="brightnessFactorValue" class="control-label-value">1.05</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="denoiseStrength">Reducción Ruido <span>(0-10)</span></label>
+                    <input type="range" class="control-input" id="denoiseStrength" min="0" max="10" step="1" value="3">
+                    <span id="denoiseStrengthValue" class="control-label-value">3</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="edgePreserveSmoothRadius">Suavizado Bordes <span>(0-5)</span></label>
+                    <input type="range" class="control-input" id="edgePreserveSmoothRadius" min="0" max="5" step="1" value="1">
+                    <span id="edgePreserveSmoothRadiusValue" class="control-label-value">1</span>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="outputSize">Tamaño Salida</label>
+                    <select class="control-input" id="outputSize">
+                        <option value="512">512x512</option>
+                        <option value="1024">1024x1024</option>
+                        <option value="2048" selected>2048x2048</option>
+                        <option value="original">Tamaño Original</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label" for="outputFolder">Carpeta Salida</label>
+                    <select class="control-input" id="outputFolder">
+                        <option value="converted">Converted (Default)</option>
+                        <option value="carteleria">📺 Carteleria (Catalogos/png_productos)</option>
+                    </select>
+                </div>
+
+                <!-- Shadow Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="shadowOffset">Desplazamiento Sombra <span>(px)</span></label>
+                    <input type="range" class="control-input" id="shadowOffset" min="0" max="50" value="12">
+                    <span id="shadowOffsetValue" class="control-label-value">12</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="shadowBlurRadius">Desenfoque Sombra <span>(px)</span></label>
+                    <input type="range" class="control-input" id="shadowBlurRadius" min="0" max="20" value="8">
+                    <span id="shadowBlurRadiusValue" class="control-label-value">8</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="shadowAlphaStart">Opacidad Sombra <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="shadowAlphaStart" min="0" max="255" value="40">
+                    <span id="shadowAlphaStartValue" class="control-label-value">40</span>
+                </div>
+
+                <!-- Highlight Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="highlightAlphaStart">Opacidad Highlight <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="highlightAlphaStart" min="0" max="255" value="30">
+                    <span id="highlightAlphaStartValue" class="control-label-value">30</span>
+                </div>
+
+                <!-- Depth Effect Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="depthAlphaStart">Opacidad Profundidad <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="depthAlphaStart" min="0" max="255" value="40">
+                    <span id="depthAlphaStartValue" class="control-label-value">40</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="depthOutlineWidth">Ancho Contorno Profundidad <span>(px)</span></label>
+                    <input type="range" class="control-input" id="depthOutlineWidth" min="0" max="10" value="5">
+                    <span id="depthOutlineWidthValue" class="control-label-value">5</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="depthBlurRadius">Desenfoque Profundidad <span>(px)</span></label>
+                    <input type="range" class="control-input" id="depthBlurRadius" min="0" max="10" value="3">
+                    <span id="depthBlurRadiusValue" class="control-label-value">3</span>
+                </div>
+
+                <!-- Rim Light Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="rimLightAlphaStart">Opacidad Rim Light <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="rimLightAlphaStart" min="0" max="255" value="15">
+                    <span id="rimLightAlphaStartValue" class="control-label-value">15</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="rimLightIterations">Iteraciones Rim Light <span>(1-5)</span></label>
+                    <input type="range" class="control-input" id="rimLightIterations" min="1" max="5" value="3">
+                    <span id="rimLightIterationsValue" class="control-label-value">3</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="rimLightOffsetMultiplier">Multiplicador Offset Rim Light <span>(1-5)</span></label>
+                    <input type="range" class="control-input" id="rimLightOffsetMultiplier" min="1" max="5" value="2">
+                    <span id="rimLightOffsetMultiplierValue" class="control-label-value">2</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="rimLightAlphaDecrement">Decremento Alpha Rim Light <span>(0-10)</span></label>
+                    <input type="range" class="control-input" id="rimLightAlphaDecrement" min="0" max="10" value="5">
+                    <span id="rimLightAlphaDecrementValue" class="control-label-value">5</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="rimLightOutlineWidth">Ancho Contorno Rim Light <span>(px)</span></label>
+                    <input type="range" class="control-input" id="rimLightOutlineWidth" min="0" max="5" value="2">
+                    <span id="rimLightOutlineWidthValue" class="control-label-value">2</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="rimLightBlurRadius">Desenfoque Rim Light <span>(px)</span></label>
+                    <input type="range" class="control-input" id="rimLightBlurRadius" min="0" max="10" value="2">
+                    <span id="rimLightBlurRadiusValue" class="control-label-value">2</span>
+                </div>
+
+                <!-- Vignette Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="vignetteAlphaStart">Opacidad Viñeta <span>(0-255)</span></label>
+                    <input type="range" class="control-input" id="vignetteAlphaStart" min="0" max="255" value="20">
+                    <span id="vignetteAlphaStartValue" class="control-label-value">20</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="vignetteOutlineWidth">Ancho Contorno Viñeta <span>(px)</span></label>
+                    <input type="range" class="control-input" id="vignetteOutlineWidth" min="0" max="10" value="8">
+                    <span id="vignetteOutlineWidthValue" class="control-label-value">8</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="vignetteBlurRadius">Desenfoque Viñeta <span>(px)</span></label>
+                    <input type="range" class="control-input" id="vignetteBlurRadius" min="0" max="10" value="6">
+                    <span id="vignetteBlurRadiusValue" class="control-label-value">6</span>
+                </div>
+
+                <!-- Unsharp Mask Controls -->
+                <div class="control-group">
+                    <label class="control-label" for="unsharpMaskRadius">Radio Unsharp <span>(px)</span></label>
+                    <input type="range" class="control-input" id="unsharpMaskRadius" min="0" max="5" step="0.1" value="2">
+                    <span id="unsharpMaskRadiusValue" class="control-label-value">2</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="unsharpMaskPercent">Porcentaje Unsharp <span>(0-200)</span></label>
+                    <input type="range" class="control-input" id="unsharpMaskPercent" min="0" max="200" step="1" value="150">
+                    <span id="unsharpMaskPercentValue" class="control-label-value">150</span>
+                </div>
+                <div class="control-group">
+                    <label class="control-label" for="unsharpMaskThreshold">Umbral Unsharp <span>(0-10)</span></label>
+                    <input type="range" class="control-input" id="unsharpMaskThreshold" min="0" max="10" step="0.1" value="3">
+                    <span id="unsharpMaskThresholdValue" class="control-label-value">3</span>
+                </div>
+            </div>
+
+            <h3>Habilitar/Deshabilitar Efectos</h3>
+            <div class="controls-grid">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableDepthEffect" checked>
+                    <label for="enableDepthEffect">Efecto de Profundidad</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableVignetteEffect" checked>
+                    <label for="enableVignetteEffect">Efecto de Viñeta</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="enableRimLightEffect">
+                    <label for="enableRimLightEffect">Efecto Rim Light</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="convert-btn" id="convertBtn" disabled>🚀 Convertir Imagen</button>
+                <button class="about-button" id="openAboutModal">Acerca de / Instrucciones</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Procesando tu imagen...</div>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <h2>Resultados</h2>
+            <div class="preview-grid">
+                <div class="preview-item">
+                    <div class="preview-title">Original</div>
+                    <img src="" alt="Original" class="preview-image" id="originalPreview">
+                </div>
+                <div class="preview-item">
+                    <div class="preview-title">Convertida</div>
+                    <img src="" alt="Converted" class="preview-image" id="convertedPreview">
+                </div>
+            </div>
+        </div>
+        
+        <div class="download-section" id="downloadSection">
+            <a href="#" class="download-btn" id="downloadBtn" download>📥 Descargar PNG</a>
+            <a href="#" class="download-btn" id="downloadOriginalBtn" download>📥 Descargar Original</a>
+        </div>
+
+        <div class="batch-results-section" id="batchResultsSection" style="display: none;">
+            <h3>Resultados de Conversión por Lotes</h3>
+            <div class="batch-results-list" id="batchResultsList">
+                <!-- Batch results will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="error-message" id="errorMessage" style="display: none;"></div>
+    </div>
+    
+    <!-- The Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeAboutModal">&times;</span>
+            <h2>Pro Image Converter</h2>
+            <p>Esta herramienta te permite convertir imágenes a PNG con fondo transparente, aplicando efectos 3D avanzados y personalizables.</p>
+            <h3>Cómo Usar:</h3>
+            <ul>
+                <li><strong>Cargar Imagen:</strong> Arrastra y suelta una o varias imágenes, o haz clic en la zona de carga para seleccionarlas.</li>
+                <li><strong>Modo Individual vs. Lotes:</strong> Utiliza el botón "Modo por Lotes" para alternar entre la conversión de una sola imagen o múltiples.</li>
+                <li><strong>Presets:</strong> Selecciona uno de los presets predefinidos (Cartelería, Web Optimized, Print Quality, Social Media) para aplicar configuraciones comunes rápidamente. Seleccionar un preset ajustará automáticamente los controles deslizantes y checkboxes.</li>
+                <li><strong>Controles Personalizados:</strong> Ajusta los diversos controles deslizantes para modificar los umbrales de eliminación de fondo, nitidez, contraste, saturación, brillo, y los parámetros de los efectos de sombra, iluminación, profundidad, "rim light", viñeta y máscara de enfoque.</li>
+                <li><strong>Habilitar/Deshabilitar Efectos:</strong> Marca o desmarca las casillas para activar o desactivar los efectos de profundidad, viñeta y "rim light".</li>
+                <li><strong>Carpeta de Salida:</strong> Elige dónde guardar las imágenes convertidas. Para "Cartelería", las imágenes se guardarán en el directorio `Catalogos/png_productos` con un tamaño ideal de 2048x2048px y 150 DPI.</li>
+                <li><strong>Convertir:</strong> Una vez configurados los parámetros, haz clic en "Convertir Imagen" o "Convertir X Imágenes" para iniciar el proceso.</li>
+                <li><strong>Previsualización y Descarga:</strong> Después de la conversión, podrás ver una previsualización (en modo individual) y descargar las imágenes convertidas.</li>
+            </ul>
+            <h3>Notas Importantes:</h3>
+            <ul>
+                <li>La calidad de la imagen de salida depende en gran medida de la imagen original y los parámetros ajustados.</li>
+                <li>El script de backend utiliza Pillow para el procesamiento de imágenes, con un fallback a NumPy si está disponible para mayor eficiencia.</li>
+                <li>Los efectos de "Profundidad", "Rim Light" y "Viñeta" simulan un look 3D para darle más realismo a tus productos.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const batchFileInput = document.getElementById('batchFileInput');
+        const convertBtn = document.getElementById('convertBtn');
+        const loading = document.getElementById('loading');
+        const previewSection = document.getElementById('previewSection');
+        const downloadSection = document.getElementById('downloadSection');
+        const batchModeBtn = document.getElementById('batchModeBtn');
+        const fileCount = document.getElementById('fileCount');
+        const errorMessage = document.getElementById('errorMessage');
+        const batchResultsSection = document.getElementById('batchResultsSection');
+        const batchResultsList = document.getElementById('batchResultsList');
+        const aboutModal = document.getElementById('aboutModal');
+        const openAboutModalBtn = document.getElementById('openAboutModal');
+        const closeAboutModalBtn = document.getElementById('closeAboutModal');
+
+        let isBatchMode = false;
+        let currentFiles = [];
+        
+        // Helper to update range slider display values
+        function updateSliderValue(id) {
+            const slider = document.getElementById(id);
+            const valueDisplay = document.getElementById(id + 'Value');
+            valueDisplay.textContent = slider.value;
+            document.getElementById('preset').value = 'custom';
+        }
+
+        // Attach listeners for all range sliders
+        const sliders = [
+            'blackThreshold', 'whiteThreshold', 'sharpnessFactor', 'contrastFactor',
+            'saturationFactor', 'brightnessFactor', 'denoiseStrength', 'edgePreserveSmoothRadius',
+            'shadowOffset', 'shadowBlurRadius', 'shadowAlphaStart', 'highlightAlphaStart',
+            'depthAlphaStart', 'depthOutlineWidth', 'depthBlurRadius', 'rimLightAlphaStart',
+            'rimLightIterations', 'rimLightOffsetMultiplier', 'rimLightAlphaDecrement', 'rimLightOutlineWidth', 'rimLightBlurRadius',
+            'vignetteAlphaStart', 'vignetteOutlineWidth', 'vignetteBlurRadius',
+            'unsharpMaskRadius', 'unsharpMaskPercent', 'unsharpMaskThreshold'
+        ];
+        sliders.forEach(id => {
+            const slider = document.getElementById(id);
+            if (slider) {
+                slider.addEventListener('input', () => updateSliderValue(id));
+            }
+        });
+
+        // Presets
+        const presets = {
+            carteleria: {
+                blackThreshold: 35,
+                whiteThreshold: 245,
+                sharpnessFactor: 1.4,
+                contrastFactor: 1.15,
+                saturationFactor: 1.1,
+                brightnessFactor: 1.05,
+                denoiseStrength: 3,
+                edgePreserveSmoothRadius: 1,
+                outputSize: '2048',
+                shadowOffset: 12,
+                shadowBlurRadius: 8,
+                shadowAlphaStart: 40,
+                highlightAlphaStart: 30,
+                depthAlphaStart: 40,
+                depthOutlineWidth: 5,
+                depthBlurRadius: 3,
+                rimLightAlphaStart: 15,
+                rimLightIterations: 3,
+                rimLightOffsetMultiplier: 2,
+                rimLightAlphaDecrement: 5,
+                rimLightOutlineWidth: 2,
+                rimLightBlurRadius: 2,
+                vignetteAlphaStart: 20,
+                vignetteOutlineWidth: 8,
+                vignetteBlurRadius: 6,
+                unsharpMaskRadius: 2,
+                unsharpMaskPercent: 150,
+                unsharpMaskThreshold: 3,
+                enableDepthEffect: true,
+                enableVignetteEffect: true,
+                enableRimLightEffect: false,
+                outputFolder: 'carteleria',
+            },
+            web: {
+                blackThreshold: 40,
+                whiteThreshold: 240,
+                sharpnessFactor: 1.2,
+                contrastFactor: 1.1,
+                saturationFactor: 1.0,
+                brightnessFactor: 1.0,
+                denoiseStrength: 2,
+                edgePreserveSmoothRadius: 0,
+                outputSize: '512',
+                shadowOffset: 8,
+                shadowBlurRadius: 6,
+                shadowAlphaStart: 30,
+                highlightAlphaStart: 20,
+                depthAlphaStart: 10,
+                depthOutlineWidth: 1,
+                depthBlurRadius: 1,
+                rimLightAlphaStart: 0,
+                vignetteAlphaStart: 10,
+                vignetteOutlineWidth: 2,
+                vignetteBlurRadius: 3,
+                unsharpMaskRadius: 1.5,
+                unsharpMaskPercent: 120,
+                unsharpMaskThreshold: 2,
+                enableDepthEffect: true,
+                enableVignetteEffect: true,
+                enableRimLightEffect: false,
+                outputFolder: 'converted',
+            },
+            print: {
+                blackThreshold: 30,
+                whiteThreshold: 250,
+                sharpnessFactor: 1.5,
+                contrastFactor: 1.2,
+                saturationFactor: 1.2,
+                brightnessFactor: 1.1,
+                denoiseStrength: 4,
+                edgePreserveSmoothRadius: 2,
+                outputSize: '2048',
+                shadowOffset: 15,
+                shadowBlurRadius: 10,
+                shadowAlphaStart: 50,
+                highlightAlphaStart: 40,
+                depthAlphaStart: 60,
+                depthOutlineWidth: 7,
+                depthBlurRadius: 4,
+                rimLightAlphaStart: 20,
+                rimLightIterations: 4,
+                rimLightOffsetMultiplier: 3,
+                rimLightAlphaDecrement: 4,
+                rimLightOutlineWidth: 3,
+                rimLightBlurRadius: 3,
+                vignetteAlphaStart: 30,
+                vignetteOutlineWidth: 10,
+                vignetteBlurRadius: 8,
+                unsharpMaskRadius: 2.5,
+                unsharpMaskPercent: 180,
+                unsharpMaskThreshold: 2,
+                enableDepthEffect: true,
+                enableVignetteEffect: true,
+                enableRimLightEffect: true,
+                outputFolder: 'converted',
+            },
+            social: {
+                blackThreshold: 45,
+                whiteThreshold: 235,
+                sharpnessFactor: 1.3,
+                contrastFactor: 1.15,
+                saturationFactor: 1.15,
+                brightnessFactor: 1.08,
+                denoiseStrength: 3,
+                edgePreserveSmoothRadius: 1,
+                outputSize: '1024',
+                shadowOffset: 10,
+                shadowBlurRadius: 7,
+                shadowAlphaStart: 45,
+                highlightAlphaStart: 35,
+                depthAlphaStart: 25,
+                depthOutlineWidth: 3,
+                depthBlurRadius: 2,
+                rimLightAlphaStart: 10,
+                rimLightIterations: 2,
+                rimLightOffsetMultiplier: 1,
+                rimLightAlphaDecrement: 3,
+                rimLightOutlineWidth: 1,
+                rimLightBlurRadius: 1,
+                vignetteAlphaStart: 15,
+                vignetteOutlineWidth: 5,
+                vignetteBlurRadius: 4,
+                unsharpMaskRadius: 1.8,
+                unsharpMaskPercent: 140,
+                unsharpMaskThreshold: 2.5,
+                enableDepthEffect: true,
+                enableVignetteEffect: true,
+                enableRimLightEffect: false,
+                outputFolder: 'converted',
+            }
+        };
+
+        document.getElementById('preset').addEventListener('change', function() {
+            const presetName = this.value;
+            if (presetName === 'custom') return;
+            const preset = presets[presetName];
+            if (preset) {
+                Object.keys(preset).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = preset[key];
+                        } else {
+                            element.value = preset[key];
+                        }
+                        const valueDisplay = document.getElementById(key + 'Value');
+                        if (valueDisplay) {
+                            valueDisplay.textContent = preset[key];
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Initial preset application
+        document.getElementById('preset').dispatchEvent(new Event('change'));
+
+        // File input handling
+        uploadSection.addEventListener('click', () => { 
+            if (isBatchMode) {
+                batchFileInput.click();
+            } else {
+                fileInput.click();
+            }
+        });
+        
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.style.background = '#e9ecef';
+        });
+        
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.style.background = '#f8f9fa';
+        });
+        
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.style.background = '#f8f9fa';
+            if (e.dataTransfer.files.length) {
+                currentFiles = Array.from(e.dataTransfer.files);
+                updateFileSelection();
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            currentFiles = Array.from(fileInput.files);
+            updateFileSelection();
+        });
+        batchFileInput.addEventListener('change', () => {
+            currentFiles = Array.from(batchFileInput.files);
+            updateFileSelection();
+        });
+        
+        function updateFileSelection() {
+            errorMessage.style.display = 'none';
+            if (currentFiles.length) {
+                convertBtn.disabled = false;
+                if (isBatchMode) {
+                    fileCount.textContent = `${currentFiles.length} archivos seleccionados`;
+                    convertBtn.textContent = `🚀 Convertir ${currentFiles.length} Imágenes`;
+                    previewSection.classList.remove('active');
+                    downloadSection.classList.remove('active');
+                } else {
+                    fileCount.textContent = `${currentFiles[0].name}`; // Display single file name
+                    convertBtn.textContent = `🚀 Convertir Imagen`;
+                    showOriginalPreview(currentFiles[0]);
+                }
+            } else {
+                convertBtn.disabled = true;
+                fileCount.textContent = '';
+                previewSection.classList.remove('active');
+                downloadSection.classList.remove('active');
+            }
+        }
+
+        function showOriginalPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('originalPreview').src = e.target.result;
+                previewSection.classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Batch Mode Toggle
+        batchModeBtn.addEventListener('click', () => {
+            isBatchMode = !isBatchMode;
+            batchModeBtn.classList.toggle('active');
+            batchModeBtn.textContent = isBatchMode ? '❌ Modo Individual' : '📚 Modo por Lotes';
+            if (isBatchMode) {
+                fileInput.value = ''; // Clear single file input
+                currentFiles = [];
+                fileCount.textContent = '';
+                previewSection.classList.remove('active');
+                downloadSection.classList.remove('active');
+            } else {
+                batchFileInput.value = ''; // Clear batch file input
+                currentFiles = [];
+                fileCount.textContent = '';
+            }
+            convertBtn.disabled = true;
+            convertBtn.textContent = `🚀 Convertir Imagen`; // Reset button text
+            batchResultsSection.style.display = 'none'; // Hide batch results on mode switch
+        });
+        
+        // Convert button handler
+        convertBtn.addEventListener('click', async () => {
+            errorMessage.style.display = 'none';
+            if (isBatchMode) {
+                await handleBatchConvert();
+            } else {
+                await handleSingleConvert();
+            }
+        });
+        
+        async function handleSingleConvert() {
+            if (!currentFiles.length) return;
+            
+            loading.classList.add('active');
+            convertBtn.disabled = true;
+            previewSection.classList.remove('active');
+            downloadSection.classList.remove('active');
+            batchResultsSection.style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('file', currentFiles[0]);
+            collectParameters(formData);
+            
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('convertedPreview').src = result.converted_image;
+                    
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    const downloadOriginalBtn = document.getElementById('downloadOriginalBtn');
+                    
+                    downloadBtn.onclick = () => downloadImage(result.download_url, 'converted_image.png');
+                    downloadOriginalBtn.onclick = () => downloadImage(result.original_url, 'original_image.png');
+                    
+                    previewSection.classList.add('active');
+                    downloadSection.classList.add('active');
+                } else {
+                    const errorData = await response.json();
+                    errorMessage.textContent = 'Error: ' + (errorData.error || 'Unknown error');
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error de conexión: ' + error.message;
+                errorMessage.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+                convertBtn.disabled = false;
+            }
+        }
+        
+        async function handleBatchConvert() {
+            if (!currentFiles.length) return;
+            
+            loading.classList.add('active');
+            convertBtn.disabled = true;
+            previewSection.classList.remove('active');
+            downloadSection.classList.remove('active');
+            batchResultsSection.style.display = 'none';
+            batchResultsList.innerHTML = '';
+            
+            const formData = new FormData();
+            for (let file of currentFiles) {
+                formData.append('files', file);
+            }
+            collectParameters(formData);
+            
+            try {
+                const response = await fetch('/batch_convert', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showBatchResults(result.results);
+                    batchResultsSection.style.display = 'block';
+                } else {
+                    const errorData = await response.json();
+                    errorMessage.textContent = 'Error: ' + (errorData.error || 'Unknown error');
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Error de conexión: ' + error.message;
+                errorMessage.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+                convertBtn.disabled = false;
+            }
+        }
+
+        function collectParameters(formData) {
+            formData.append('black_threshold', document.getElementById('blackThreshold').value);
+            formData.append('white_threshold', document.getElementById('whiteThreshold').value);
+            formData.append('sharpness_factor', document.getElementById('sharpnessFactor').value);
+            formData.append('contrast_factor', document.getElementById('contrastFactor').value);
+            formData.append('saturation_factor', document.getElementById('saturationFactor').value);
+            formData.append('brightness_factor', document.getElementById('brightnessFactor').value);
+            formData.append('denoise_strength', document.getElementById('denoiseStrength').value);
+            formData.append('edge_preserve_smooth_radius', document.getElementById('edgePreserveSmoothRadius').value);
+            formData.append('output_size', document.getElementById('outputSize').value);
+            formData.append('output_folder', document.getElementById('outputFolder').value);
+            formData.append('shadow_offset', document.getElementById('shadowOffset').value);
+            formData.append('shadow_blur_radius', document.getElementById('shadowBlurRadius').value);
+            formData.append('shadow_alpha_start', document.getElementById('shadowAlphaStart').value);
+            formData.append('highlight_alpha_start', document.getElementById('highlightAlphaStart').value);
+            formData.append('depth_alpha_start', document.getElementById('depthAlphaStart').value);
+            formData.append('depth_outline_width', document.getElementById('depthOutlineWidth').value);
+            formData.append('depth_blur_radius', document.getElementById('depthBlurRadius').value);
+            formData.append('rim_light_alpha_start', document.getElementById('rimLightAlphaStart').value);
+            formData.append('rim_light_iterations', document.getElementById('rimLightIterations').value);
+            formData.append('rim_light_offset_multiplier', document.getElementById('rimLightOffsetMultiplier').value);
+            formData.append('rim_light_alpha_decrement', document.getElementById('rimLightAlphaDecrement').value);
+            formData.append('rim_light_outline_width', document.getElementById('rimLightOutlineWidth').value);
+            formData.append('rim_light_blur_radius', document.getElementById('rimLightBlurRadius').value);
+            formData.append('vignette_alpha_start', document.getElementById('vignetteAlphaStart').value);
+            formData.append('vignette_outline_width', document.getElementById('vignetteOutlineWidth').value);
+            formData.append('vignette_blur_radius', document.getElementById('vignetteBlurRadius').value);
+            formData.append('unsharp_mask_radius', document.getElementById('unsharpMaskRadius').value);
+            formData.append('unsharp_mask_percent', document.getElementById('unsharpMaskPercent').value);
+            formData.append('unsharp_mask_threshold', document.getElementById('unsharpMaskThreshold').value);
+            formData.append('denoise_strength', document.getElementById('denoiseStrength').value);
+            formData.append('smart_sharpen_amount', document.getElementById('smartSharpenAmount').value);
+            formData.append('smart_sharpen_radius', document.getElementById('smartSharpenRadius').value);
+            formData.append('smart_sharpen_threshold', document.getElementById('smartSharpenThreshold').value);
+            formData.append('edge_preserve_smooth_radius', document.getElementById('edgePreserveSmoothRadius').value);
+
+            if (document.getElementById('enableDepthEffect').checked) formData.append('enable_depth_effect', 'true');
+            if (document.getElementById('enableVignetteEffect').checked) formData.append('enable_vignette_effect', 'true');
+            if (document.getElementById('enableRimLightEffect').checked) formData.append('enable_rim_light_effect', 'true');
+        }
+        
+        function showBatchResults(results) {
+            batchResultsList.innerHTML = '';
+            results.forEach(r => {
+                const item = document.createElement('div');
+                item.classList.add('batch-result-item');
+                item.classList.add(r.success ? 'success' : 'error');
+                item.innerHTML = `
+                    <span><strong>${r.original_name}</strong>: ${r.success ? '✅ Éxito' : '❌ ' + (r.error || 'Falló')}</span>
+                    ${r.success ? `<button onclick="downloadImage('${r.download_url}', '${r.original_name.split('.')[0]}_converted.png')">Descargar</button>` : ''}
+                `;
+                batchResultsList.appendChild(item);
+            });
+        }
+        
+        async function downloadImage(url, filename) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+
+                link.click();
+
+                document.body.removeChild(link);
+
+                
+                window.URL.revokeObjectURL(blobUrl);
+
+            } catch (error) {
+
+                console.error('Download failed:', error);
+
+                alert('Download failed. Please try again.');
+
+            }
+
+        }
+
+        // About Modal interactions
+        openAboutModalBtn.addEventListener('click', () => {
+            aboutModal.style.display = 'block';
+        });
+
+        closeAboutModalBtn.addEventListener('click', () => {
+            aboutModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == aboutModal) {
+                aboutModal.style.display = 'none';
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
