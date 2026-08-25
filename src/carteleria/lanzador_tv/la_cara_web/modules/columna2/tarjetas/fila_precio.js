@@ -21,7 +21,7 @@ export function htmlFilaPrecio(item, puesto = 1, depto = "") {
             <div class="price-row__prices">
                 ${pct ? `<span class="price-row__off">-${pct}%</span>` : ""}
                 ${oferta ? `<s class="price-row__was">${formatMoney(item.precio)}</s>` : ""}
-                <strong class="price-row__now">${formatMoney(vigente)}</strong>
+                <strong class="price-row__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${formatMoney(vigente).replace(/^\$\s*/, "")}</span></strong>
             </div>
         </article>
     `;

@@ -33,7 +33,7 @@ export function htmlTarjetaCruzada(slide, productos = []) {
                         <span class="xsell-item__name">${escapeHtml(limpio.toUpperCase())}</span>
                     </div>
                     <div class="xsell-item__price-wrap">
-                        ${tienePrecio ? `<span class="xsell-item__price">${formatMoney(precio)}</span>` : ""}
+                        ${tienePrecio ? `<span class="xsell-item__price"><span class="deal-currency">$</span><span class="odometer-val" data-val="${precio}">${formatMoney(precio).replace(/^\$\s*/, "")}</span></span>` : ""}
                         ${tieneOferta ? `<s class="xsell-item__was">${formatMoney(prod.precio)}</s>` : ""}
                         ${regla ? `<span class="xsell-item__rule">${escapeHtml(regla)}</span>` : ""}
                     </div>

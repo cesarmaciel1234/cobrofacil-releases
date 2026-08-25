@@ -105,7 +105,7 @@ function htmlDealCard(producto, { ad }) {
                 <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
                 <div class="deal-price-row">
                     ${vigente > 0
-                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>`
+                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
                         : `<strong class="tv-card__now">DESTACADO</strong>`}
                     ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
                 </div>
