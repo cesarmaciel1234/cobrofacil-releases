@@ -159,18 +159,44 @@ function tickCronometros(track) {
     });
 }
 
+
 function iniciarCarrusel(track) {
     if (track.dataset.running === "1") return;
     track.dataset.running = "1";
-    let position = 0;
-    const speed = 1.15;
-
-    function animate() {
-        position -= speed;
-        const loopWidth = track.scrollWidth / 2;
-        if (loopWidth > 0 && Math.abs(position) >= loopWidth) position = 0;
+    
+    let currentIndex = 0;
+    
+    // Para que la primera tarjeta arranque en el centro (opcional, pero ayuda al efecto)
+    // Inicialmente track está a la izquierda.
+    track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+    
+    function moverSiguiente() {
+        if (!track.children.length) return;
+        
+        const card = track.children[0];
+        const gap = window.innerWidth * 0.014; // 1.4vw
+        const cardWidth = card.offsetWidth + gap;
+        
+        // Calculamos offset para que la tarjeta actual quede en el centro de la pantalla
+        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        
+        currentIndex++;
+        
+        // Si llegamos a la mitad (porque el html está duplicado), reiniciamos sin transición
+        const totalOriginal = track.children.length / 2;
+        if (currentIndex > totalOriginal) {
+            track.style.transition = "none";
+            currentIndex = 1;
+            const resetPos = centerOffset - (currentIndex - 1) * cardWidth;
+            track.style.transform = `translateX(${resetPos}px)`;
+            
+            // Forzar reflow
+            void track.offsetWidth;
+            track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+        }
+        
+        const position = centerOffset - (currentIndex * cardWidth);
         track.style.transform = `translateX(${position}px)`;
-        requestAnimationFrame(animate);
     }
 
     if (track.dataset.timer !== "1") {
@@ -178,5 +204,14 @@ function iniciarCarrusel(track) {
         setInterval(() => tickCronometros(track), 1000);
     }
 
-    requestAnimationFrame(animate);
+    // Posicionamos la primera en el centro inmediatamente
+    setTimeout(() => {
+        if (!track.children.length) return;
+        const card = track.children[0];
+        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        track.style.transform = `translateX(${centerOffset}px)`;
+    }, 100);
+
+    // Cada 4 segundos, avanza una tarjeta y se detiene (posa)
+    setInterval(moverSiguiente, 4000);
 }

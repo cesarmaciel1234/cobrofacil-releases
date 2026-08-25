@@ -75,7 +75,7 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
         const pctReal = dato.texto;
         
         return `
-        <article class="asian-rank-card ${topClass}">
+        <article class="asian-rank-card ${topClass} cascade-enter" style="animation-delay: ${i * 0.1}s">
             <div class="asian-rank-badge">
                 <span class="asian-rank-num">${medal} #${puesto}</span>
             </div>
@@ -98,7 +98,7 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
             : String(item.detalle || "").toUpperCase();
             
     return `
-        <article class="asian-rank-card ${topClass} ${item.es_publicidad ? "is-ad" : ""}">
+        <article class="asian-rank-card ${topClass} cascade-enter ${item.es_publicidad ? "is-ad" : ""}" style="animation-delay: ${i * 0.1}s">
             <div class="asian-rank-badge">
                 <span class="asian-rank-num">${medal} #${puesto}</span>
             </div>

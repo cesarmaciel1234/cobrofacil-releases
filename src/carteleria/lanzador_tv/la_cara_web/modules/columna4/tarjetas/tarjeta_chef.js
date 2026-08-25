@@ -129,7 +129,7 @@ function htmlCarruselOfertas(ofertas = []) {
             : `<span class="prod-emoji-fallback">🥩</span>`;
 
         return `
-            <article class="asian-flash-product">
+            <article class="asian-flash-product cascade-enter shimmer-fx" style="animation-delay: ${idx * 0.2}s">
                 <div class="asian-flash-badge">${descuento ? `-${descuento}%` : "HOT"}</div>
                 <div class="asian-flash-product-image" style="background:${fondo};">${imagenHtml}</div>
                 <div class="asian-flash-product-info">

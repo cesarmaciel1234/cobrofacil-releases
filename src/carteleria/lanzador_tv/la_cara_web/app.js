@@ -1,3 +1,4 @@
+import { initCenterFocus, animateOdometers, checkSmartMarquee } from "./modules/shared/vfx.js";
 /* Cartelería TV: orquesta los módulos de la cara web. */
 
 import { renderCabeceraNegocio, marcarCabeceraDesconectada, actualizarReloj } from "./modules/cabecera_negociodata/cabecera_negociodata.js";
@@ -162,8 +163,15 @@ function init() {
     actualizarReloj(els);
     setInterval(() => actualizarReloj(els), 1000);
     setupTvKeys();
+    initCenterFocus();
     fetchState();
     setInterval(fetchState, REFRESH_INTERVAL);
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// Ejecutar VFX periódicamente para procesar nuevos elementos inyectados en el DOM
+setInterval(() => {
+    animateOdometers();
+    checkSmartMarquee();
+}, 1000);
