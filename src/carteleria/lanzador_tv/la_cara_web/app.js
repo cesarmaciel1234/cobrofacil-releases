@@ -37,6 +37,8 @@ const els = {
     content4: document.getElementById("content4"),
     marquee: document.getElementById("marquee"),
     loading: document.getElementById("loading"),
+    climaIcon: document.getElementById("climaIcon"),
+    climaTemp: document.getElementById("climaTemp"),
 };
 
 function loadTheme(themeName) {
@@ -46,14 +48,16 @@ function loadTheme(themeName) {
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
     const themePaths = {
-        apple: "css/themes/apple/colores.css",
-        temu: "css/themes/temu/colores.css",
-        blackfriday: "css/themes/blackfriday/colores.css",
+        apple:      "css/themes/apple/colores.css",
+        temu:       "css/themes/temu/colores.css",
+        blackfriday:"css/themes/blackfriday/colores.css",
+        premium:    "css/themes/premium/colores.css",
     };
     const stylePaths = {
-        apple: "css/themes/apple/estilos.css",
-        temu: "css/themes/temu/estilos.css",
-        blackfriday: "css/themes/blackfriday/estilos.css",
+        apple:      "css/themes/apple/estilos.css",
+        temu:       "css/themes/temu/estilos.css",
+        blackfriday:"css/themes/blackfriday/estilos.css",
+        premium:    "css/themes/premium/estilos.css",
     };
     if (themePaths[themeName] && stylePaths[themeName]) {
         const bust = `?v=${Date.now()}`;
@@ -98,6 +102,7 @@ async function fetchState() {
         iniciarRotacionColumna3(state, els.content3);
         iniciarRotacionColumna4(state, els.content4);
         renderMensajeZocalo(state.config, els.marquee);
+        actualizarClimaHeader(state.climaData);
 
         if (state.isLoading) {
             state.isLoading = false;
@@ -106,6 +111,39 @@ async function fetchState() {
     } catch (error) {
         console.error("[Cartelería] Error al obtener datos:", error);
         marcarCabeceraDesconectada(els);
+    }
+}
+
+function actualizarClimaHeader(climaData) {
+    if (!els.climaIcon || !els.climaTemp) return;
+    
+    const icono = climaData?.icono || "sol";
+    const temperatura = climaData?.temperatura || "22°C";
+    
+    const iconMap = {
+        lluvia: "assets/lluvia.png",
+        nube: "assets/nube.png",
+        nublado: "assets/nube.png",
+        sol: "assets/sol.png"
+    };
+    
+    els.climaIcon.src = iconMap[icono] || iconMap.sol;
+    els.climaIcon.alt = icono.charAt(0).toUpperCase() + icono.slice(1);
+    els.climaTemp.textContent = temperatura;
+    
+    const flashClima = document.getElementById('flashClima');
+    if (flashClima) {
+        flashClima.classList.remove('clima-cold', 'clima-hot', 'clima-mild');
+        const numTemp = parseInt(temperatura);
+        if (!isNaN(numTemp)) {
+            if (numTemp < 15) {
+                flashClima.classList.add('clima-cold');
+            } else if (numTemp > 25) {
+                flashClima.classList.add('clima-hot');
+            } else {
+                flashClima.classList.add('clima-mild');
+            }
+        }
     }
 }
 

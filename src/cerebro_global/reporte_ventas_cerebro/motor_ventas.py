@@ -66,6 +66,27 @@ class MotorVentas:
             return 0.0
 
     @staticmethod
+    def _rango_periodo(periodo="mes"):
+        today = datetime.date.today()
+        maniana = today + datetime.timedelta(days=1)
+        if periodo == "hoy":
+            inicio = today
+            fin = maniana
+        elif periodo == "ayer":
+            inicio = today - datetime.timedelta(days=1)
+            fin = today
+        elif periodo == "semana":
+            inicio = today - datetime.timedelta(days=7)
+            fin = maniana
+        else:
+            inicio = today - datetime.timedelta(days=30)
+            fin = maniana
+        return (
+            inicio.strftime("%Y-%m-%d 00:00:00"),
+            fin.strftime("%Y-%m-%d 00:00:00"),
+        )
+
+    @staticmethod
     def get_top_ventas(limit=5, periodo="mes", modo="volumen"):
         """
         Calcula el Top de productos más vendidos.
@@ -74,47 +95,41 @@ class MotorVentas:
         Retorna lista de diccionarios: [{'nombre': 'Lomo', 'cantidad': 120.5, 'recaudacion': 50000}]
         """
         try:
-            today = datetime.date.today()
-            if periodo == "hoy":
-                start_date = today.strftime('%Y-%m-%d 00:00:00')
-            elif periodo == "semana":
-                start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
-            else:
-                start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
-                
+            start_date, end_date = MotorVentas._rango_periodo(periodo)
+            filtro_fecha = "v.fecha >= ? AND v.fecha < ? AND COALESCE(v.estado, '') != 'CANCELADA'"
+
             if modo == "frecuencia":
-                query = """
+                query = f"""
                     SELECT dv.nombre_producto, COUNT(DISTINCT dv.id_venta) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
+                    WHERE {filtro_fecha}
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant DESC
                     LIMIT ?
                 """
             elif modo == "clavos":
-                # Productos menos vendidos (o con stock que no salen)
-                query = """
+                query = f"""
                     SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
+                    WHERE {filtro_fecha}
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant ASC
                     LIMIT ?
                 """
             else:
-                query = """
+                query = f"""
                     SELECT dv.nombre_producto, SUM(dv.cantidad) as total_cant, SUM(dv.subtotal) as total_recaudacion
                     FROM detalles_ventas dv
                     JOIN ventas v ON dv.id_venta = v.id
-                    WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
+                    WHERE {filtro_fecha}
                     GROUP BY dv.nombre_producto
                     ORDER BY total_cant DESC
                     LIMIT ?
                 """
-            
-            rows = db_manager.execute_query(query, (start_date, limit))
+
+            rows = db_manager.execute_query(query, (start_date, end_date, limit))
             
             results = []
             if not rows: return results

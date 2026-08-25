@@ -1,0 +1,15 @@
+﻿/* PREMIUM — Negro & Oro Lujo */
+:root {
+    --bg-primary:      #0A0A0A;
+    --bg-secondary:    #1C1C1E;
+    --surface-primary: rgba(28, 28, 30, 0.98);
+    --text-primary:    #FFFFFF;
+    --text-secondary:  #D4AF37;
+    --accent-primary:  #D4AF37;
+    --accent-secondary:#F5E17A;
+    --accent-rgb:      212, 175, 55;
+    --border-subtle:   rgba(212, 175, 55, 0.25);
+    --success-color:   #22C55E;
+    --shadow-card:     0 12px 40px rgba(0,0,0,0.6), inset 0 0 40px rgba(212,175,55,0.04);
+    --shadow-soft:     0 6px 20px rgba(0,0,0,0.5);
+}

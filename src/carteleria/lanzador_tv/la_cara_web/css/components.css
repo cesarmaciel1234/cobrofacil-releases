@@ -1,0 +1,460 @@
+/* Floating Header Elements */
+.floating-header {
+    position: fixed;
+    top: calc(var(--tv-safe-y) + 8px);
+    right: calc(var(--tv-safe-x) + 10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+/* Pronóstico del clima para columna 4 */
+.pronostico-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.pronostico-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.clima-badge {
+    background: #DC2626;
+    border-radius: 50px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clima-temp-badge {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.clima-dot {
+    width: 8px;
+    height: 8px;
+    background: #FF0000;
+    border-radius: 50%;
+}
+
+.pronostico-body {
+    text-align: center;
+}
+
+.chef-wrapper {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.chef-lobo-img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+}
+
+.pronostico-mensaje-full {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111111;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.pronostico-recomendacion {
+    background: linear-gradient(135deg, #DC2626, #FF0000);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+}
+
+.recomendacion-texto-full {
+    font-size: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.recomendacion-precio-full {
+    font-size: 36px;
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 600;
+    color: var(--text-secondary);
+    border: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+.status-dot {
+    width: 0.6vw;
+    height: 0.6vw;
+    min-width: 6px;
+    min-height: 6px;
+    background: var(--success-color);
+    border-radius: 50%;
+    animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.clock {
+    font-family: var(--font-display);
+    font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 1.2vh;
+    overflow: hidden;
+    min-height: 0;
+    height: auto;
+}
+
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: var(--hero-height);
+    min-height: 168px;
+    flex-shrink: 0;
+    padding: 0 0.15vw;
+    overflow: hidden;
+    gap: 0.8vh;
+}
+
+.floating-header {
+    position: fixed;
+    top: calc(var(--tv-safe-y) + 8px);
+    right: calc(var(--tv-safe-x) + 10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+.flash-strip {
+    flex-shrink: 0;
+    height: 4.6vh;
+    min-height: 38px;
+    overflow: hidden;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+    padding: 0 0.5vw 0 0.45vw;
+    background: #1A1A1A;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
+}
+
+.flash-strip__sale {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    padding: 0.2vh 0.28vw 0.2vh 0.8vw;
+    background: #FF6A00;
+    border-radius: 999px;
+}
+
+.flash-strip__live {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.45vw;
+    z-index: 2;
+}
+
+.flash-strip__hot {
+    font-size: clamp(0.72rem, 1.05vw, 0.92rem);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+
+.flash-strip .status-badge {
+    padding: 3px 10px;
+    font-size: clamp(0.62rem, 0.85vw, 0.75rem);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.flash-strip .clock {
+    padding: 3px 10px;
+    font-size: clamp(0.78rem, 1.1vw, 0.95rem);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.flash-strip__marquee {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 3%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 96%, transparent);
+}
+
+.flash-strip__track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: flash-scroll 22s linear infinite;
+}
+
+.flash-strip__cycle {
+    display: flex;
+    align-items: center;
+    gap: 1.2vw;
+    padding-right: 1.2vw;
+    white-space: nowrap;
+}
+
+.flash-strip__cycle span {
+    font-size: clamp(0.82rem, 1.2vw, 1.05rem);
+    font-weight: 800;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.flash-dot {
+    color: #FF6A00 !important;
+    font-size: 0.55rem !important;
+}
+
+.flash-strip__ends {
+    font-size: clamp(0.68rem, 0.95vw, 0.82rem);
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+
+.flash-count {
+    background: #FFE566;
+    color: #1A1A1A;
+    padding: 0.2vh 0.7vw;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: clamp(0.9rem, 1.25vw, 1.12rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    box-shadow: none;
+}
+
+@keyframes flash-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* --- Mejora de Pronóstico (Weather Widget) --- */
+.flash-strip__clima {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    color: #FFFFFF;
+    transition: all 0.5s ease;
+}
+
+.flash-strip__clima.clima-cold {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.flash-strip__clima.clima-hot {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.flash-strip__clima.clima-mild {
+    background: rgba(250, 204, 21, 0.15);
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.clima-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+.flash-clima-icon {
+    width: clamp(16px, 1.5vw, 22px);
+    height: clamp(16px, 1.5vw, 22px);
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+.flash-clima-temp {
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Mejora de Zócalo (Mensaje Publicitario) --- */
+.footer {
+    position: relative;
+    overflow: hidden;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1vw;
+}
+
+.zocalo-pill {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 999px;
+    padding: 6px 12px;
+    width: 98%;
+    height: 70%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 1);
+    position: relative;
+    z-index: 2;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.zocalo-icon {
+    flex-shrink: 0;
+    font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+    margin-right: 12px;
+    animation: zocalo-pulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+@keyframes zocalo-pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.15) rotate(-10deg); }
+}
+
+.marquee {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+}
+
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: zocalo-scroll 35s linear infinite;
+    will-change: transform;
+}
+
+.marquee-text {
+    white-space: nowrap;
+    padding-right: 2vw;
+    font-size: clamp(1rem, 1.4vw, 1.25rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1A1A1A;
+}
+
+@keyframes zocalo-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-33.33%); }
+}
+
+/* Ajuste de dimensiones de columnas y Scroll de Grilla de Precios */
+
+.price-ticker {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.price-track {
+    display: flex;
+    flex-direction: column;
+    animation: scrollVertical var(--price-scroll-duration, 60s) linear infinite;
+    will-change: transform;
+ backface-visibility: hidden; perspective: 1000; -webkit-font-smoothing: subpixel-antialiased; }
+
+.price-cycle {
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes scrollVertical { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, -50%, 0); } }
+    100% { transform: translateY(-50%); }
+}
+
+/* Safe Area para Multi-TV (Video Wall) */
+.tv-1 { padding: 0 !important; }
+
+.tv-4 { padding: 0 !important; }
+
+.chef-carousel-track {
+    /* Ensure the cards scale to fit inside 1 TV screen perfectly */
+    gap: 1vw !important;
+}

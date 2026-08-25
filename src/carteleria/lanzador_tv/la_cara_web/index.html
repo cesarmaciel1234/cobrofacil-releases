@@ -5,9 +5,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cartelería Premium</title>
-    <link rel="stylesheet" href="css/style.css?v=tv61" />
-    <link id="theme-colors" rel="stylesheet" href="css/themes/temu/colores.css?v=tv61" />
-    <link id="theme-styles" rel="stylesheet" href="css/themes/temu/estilos.css?v=tv61" />
+    <link rel="stylesheet" href="css/style.css?v=tv67" />
+    <link id="theme-colors" rel="stylesheet" href="css/themes/temu/colores.css?v=tv67" />
+    <link id="theme-styles" rel="stylesheet" href="css/themes/temu/estilos.css?v=tv67" />
+    <link rel="stylesheet" href="css/columna4_chef.css?v=tv67" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,6 +20,12 @@
                 <div class="flash-strip__sale">
                     <span class="flash-strip__ends">TERMINA EN</span>
                     <strong class="flash-count" id="flashCountdown">00:00:00</strong>
+                </div>
+                <div class="flash-strip__clima" id="flashClima">
+                    <div class="clima-icon-wrapper">
+                        <img class="flash-clima-icon" id="climaIcon" src="assets/sol.png" alt="Clima">
+                    </div>
+                    <span class="flash-clima-temp" id="climaTemp">22°C</span>
                 </div>
                 <div class="flash-strip__marquee">
                     <div class="flash-strip__track">
@@ -67,8 +74,11 @@
 
         <footer class="footer" data-modulo="mensaje_zocalo">
             <div class="zocalo-pill">
+                <div class="zocalo-icon">📢</div>
                 <div class="marquee" id="marquee">
-                    <span class="marquee-text">Bienvenido a nuestra tienda ★ Los mejores precios ★ Calidad garantizada ★</span>
+                    <div class="marquee-track">
+                        <span class="marquee-text">Bienvenido a nuestra tienda ★ Los mejores precios ★ Calidad garantizada ★</span>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -78,6 +88,6 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=tv61"></script>
+    <script type="module" src="app.js?v=tv67"></script>
 </body>
 </html>

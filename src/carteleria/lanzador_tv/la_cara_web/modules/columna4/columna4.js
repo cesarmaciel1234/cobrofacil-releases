@@ -18,8 +18,18 @@ function esNoche() {
 }
 
 function itemsTickets(state) {
-    const panel = (state.rotacion || []).find((p) => p.id === "elegidos");
-    const lista = (panel?.items?.length ? panel.items : state.destacados) || [];
+    // Priorizamos "mas_vendidos" (volumen/tickets del día) para apalancar el boom del día
+    const panel = (state.rotacion || []).find((p) => p.id === "mas_vendidos" || p.id === "elegidos");
+    let lista = [];
+    
+    if (state.mas_vendidos && state.mas_vendidos.length > 0) {
+        lista = state.mas_vendidos;
+    } else if (panel?.items?.length) {
+        lista = panel.items;
+    } else {
+        lista = state.destacados || [];
+    }
+    
     const vistos = new Set();
     const out = [];
     for (const item of lista) {
@@ -59,11 +69,16 @@ function climaVisible(climaData) {
 function pintar(conFade) {
     if (!rootRef) return;
     const clima = climaVisible(climaCache);
+    
+    // Generar ofertas para el carrusel (primeros 6 productos)
+    const ofertas = itemsCache.slice(0, 6).map(item => enriquecer(item, productosCache));
+    
     if (!itemsCache.length) {
         rootRef.innerHTML = htmlPronosticoClima({
             ...clima,
             producto_recomendado: "Pollo entero",
             precio: 4900,
+            ofertas: [],
         });
         return;
     }
@@ -75,6 +90,7 @@ function pintar(conFade) {
         precio: item.precio,
         icono_url: item.icono_url,
         departamento: item.departamento,
+        ofertas: ofertas,
     });
     if (!conFade) {
         rootRef.innerHTML = html;

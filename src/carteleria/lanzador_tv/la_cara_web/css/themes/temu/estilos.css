@@ -13,7 +13,8 @@
 
 body[data-theme="temu"],
 body {
-    background: linear-gradient(180deg, #FFF4B8 0%, #FFE566 42%, #FFD24A 100%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 50%, #E2E8F0 100%);
+    min-height: 100vh;
 }
 
 .logo {
@@ -79,12 +80,51 @@ body {
 .sale-head.rank-head {
     justify-content: space-between !important;
     align-items: center !important;
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
+    border-radius: 16px;
+    padding: 1vh 1.2vw;
+    box-shadow: 0 0 30px rgba(139, 0, 0, 0.4), 0 0 60px rgba(204, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.2vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.sale-head.rank-head::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+    animation: premiumGoldShine 4s infinite linear;
+}
+
+@keyframes premiumGoldShine {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .sale-head .board-kicker,
 .sale-head .rank-kicker {
-    color: #FFB020;
+    color: #FFFFFF;
     letter-spacing: 0.14em;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.sale-head .board-kicker::before,
+.sale-head .rank-kicker::before {
+    content: '👑';
+    margin-right: 0.5vw;
+    animation: premiumCrownPulse 2s infinite;
+}
+
+@keyframes premiumCrownPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
 }
 
 .sale-head .board-title,
@@ -95,29 +135,63 @@ body {
 }
 
 .rank-dots .rank-dot {
-    background: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+    transition: all 0.3s ease;
 }
 
 .rank-dots .rank-dot.is-on {
-    background: #FF6A00;
+    background: #FFD700;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4);
+    transform: scale(1.2);
 }
 
-/* Tarjeta híbrida: chrome de app + energía Temu en el precio. */
+/* Tarjeta híbrida: chrome de app + energía Temu en el precio - Premium Luxury */
 .tv-card {
     position: relative;
-    background: #FFFFFF;
-    border: 0;
-    box-shadow: 0 12px 32px rgba(28, 16, 0, 0.10);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF0 50%, #FFF8F0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(28, 16, 0, 0.08), 0 4px 16px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.tv-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.tv-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 48px rgba(28, 16, 0, 0.12), 0 8px 24px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    border-color: rgba(139, 0, 0, 0.25);
 }
 
 .oferta-card .tv-card__name {
     font-size: clamp(0.95rem, 1.45vw, 1.25rem);
     margin-bottom: 0;
+    font-weight: 800;
+    color: #1A1A1A;
+    letter-spacing: -0.02em;
 }
 
 .oferta-card .tv-card__now {
     font-size: clamp(1.35rem, 2.2vw, 1.95rem);
-    color: #FF6A00;
+    color: #8B0000;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .oferta-card .tv-card__now-row {
@@ -131,7 +205,9 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 4px;
-    background: linear-gradient(90deg, #FF6A00, #FFE566, #E11D48);
+    background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
 }
 
 .oferta-card.tv-card::before {
@@ -140,25 +216,34 @@ body {
 
 .oferta-card,
 .meal-card {
-    background: #FFFFFF;
-    border: 0;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF0 50%, #FFF8F0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.12);
     overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .oferta-card.is-flash,
 .meal-card.is-flash {
-    background: #FFFFFF;
+    background: linear-gradient(180deg, #FFF8F0 0%, #FFFFFF 50%, #FFFBF0 100%);
+    border-color: rgba(139, 0, 0, 0.18);
+    box-shadow: 0 12px 28px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .tv-card__badge {
-    background: #FF6A00;
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
     color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    font-weight: 800;
+    letter-spacing: 0.05em;
 }
 
 .tv-card__off {
-    background: #FFF1D6;
-    color: #C2410C;
+    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
 }
 
 .tv-card__off.is-inline {
@@ -206,23 +291,72 @@ body {
 
 .rank-card,
 .rank-card.is-top {
-    background: transparent;
-    border: 0;
-    box-shadow: none;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF8F0 50%, #FFFBF0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+}
+
+.rank-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.rank-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 8px 20px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    border-color: rgba(139, 0, 0, 0.3);
 }
 
 .rank-num {
-    color: #2563EB;
+    color: #8B0000;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .rank-tag {
-    background: #FFE566;
-    color: #DC2626;
+    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
 }
 
 .rank-card.is-ad .rank-tag {
-    background: #FF6A00;
-    color: #FFFFFF;
+    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+}
+
+/* Premium glow effect para tarjetas top */
+.rank-card.is-top::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: premiumTopGlow 3s infinite ease-in-out;
+}
+
+@keyframes premiumTopGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
 }
 
 .oferta-card.is-ad {
@@ -320,19 +454,26 @@ body {
 }
 
 .footer {
-    background: linear-gradient(90deg, #FF8A00, #FF6A00, #E11D48);
-    animation: none;
+    background: linear-gradient(90deg, #FFD700 0%, #FF6A00 50%, #E11D48 100%);
+    animation: footerGlow 8s ease infinite;
+    background-size: 200% 200%;
+}
+
+@keyframes footerGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .zocalo-pill {
-    background: #FFFFFF;
-    border: 0;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
 .marquee-text {
     color: #1A1A1A;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .chef-deal {
@@ -343,4 +484,339 @@ body {
     background: #FF6A00;
     border: 0;
     box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
+}
+
+/* =========================================================
+   ASIAN STYLE OVERRIDES - Todo el sistema vibrante (Temu/Shein)
+   ========================================================= */
+
+/* --- Columna 1 (Ranking) --- */
+.rank-card {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F7 100%) !important;
+    border: 2px solid rgba(255, 71, 87, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.08) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    margin-bottom: 1vh !important;
+}
+.rank-score {
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%) !important;
+    color: #FFFFFF !important;
+    border-radius: 999px !important;
+    padding: 2px 10px !important;
+    font-weight: 900 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+.rank-name {
+    font-weight: 800 !important;
+    color: #2D2D2D !important;
+}
+
+/* --- Columna 2 (Grilla de Precios) --- */
+.price-row {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8DC 100%) !important;
+    border: 1px solid rgba(255, 140, 0, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06) !important;
+    margin-bottom: 0.6vh !important;
+}
+.price-name {
+    font-weight: 800 !important;
+    color: #1A1A1A !important;
+}
+.price-val {
+    color: #FF4757 !important;
+    background: #FFF5F7 !important;
+    padding: 3px 10px !important;
+    border-radius: 8px !important;
+    border: 2px solid rgba(255, 71, 87, 0.15) !important;
+    font-weight: 900 !important;
+}
+.price-dept {
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2) !important;
+    border-radius: 999px !important;
+    text-align: center !important;
+    padding: 0.6vh 1vw !important;
+    margin-bottom: 1vh !important;
+}
+.price-ad {
+    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%) !important;
+    border: 2px solid rgba(255, 71, 87, 0.4) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.15) !important;
+    margin-bottom: 0.8vh !important;
+}
+.price-ad__badge {
+    background: linear-gradient(135deg, #FF4757 0%, #FF6B81 100%) !important;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3) !important;
+}
+.price-ad .price-val {
+    background: #FF4757 !important;
+    color: #FFFFFF !important;
+}
+
+/* --- Cabeceras Globales --- */
+.board-head, .rank-head, .sale-head {
+    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+    margin-bottom: 1.5vh !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.board-kicker, .rank-kicker {
+    color: #FFE566 !important;
+    text-shadow: 0 2px 6px rgba(255, 215, 0, 0.4) !important;
+    font-weight: 900 !important;
+}
+
+/* =========================================================
+   NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
+   ========================================================= */
+.asian-rank-card {
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 1.5vh 1vw;
+    margin-bottom: 1.2vh;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    position: relative;
+    border: 2px solid transparent;
+    overflow: hidden;
+    gap: 1vw;
+}
+
+.asian-rank-card.top-1 {
+    background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
+    border-color: #FFD700;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    transform: scale(1.03);
+    margin-bottom: 2vh;
+    z-index: 10;
+}
+.asian-rank-card.top-2 {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
+    border-color: #CBD5E1;
+}
+.asian-rank-card.top-3 {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFEDD5 100%);
+    border-color: #FDBA74;
+}
+
+.asian-rank-badge {
+    flex-shrink: 0;
+    background: #1A1A1A;
+    color: #FFF;
+    border-radius: 12px;
+    padding: 0.6vh 0.8vw;
+    font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.asian-rank-card.top-1 .asian-rank-badge {
+    background: linear-gradient(135deg, #FF3366, #FF9933);
+    color: #FFF;
+    font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+    animation: temuPulse 2s infinite;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.asian-rank-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+
+.asian-rank-name {
+    font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+    font-weight: 900;
+    color: #1A1A1A;
+    margin: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.asian-rank-progress-container {
+    background: rgba(0,0,0,0.08);
+    border-radius: 999px;
+    height: 2.2vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 0.5vh;
+}
+
+.asian-rank-progress-bar {
+    background: linear-gradient(90deg, #FF4757, #FF8C00);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+}
+
+.asian-rank-tag {
+    position: absolute;
+    left: 0.8vw;
+    color: #FFFFFF;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 900;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    z-index: 2;
+}
+
+.asian-rank-tag-social {
+    color: #FF4757;
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    margin-top: 0.5vh;
+}
+
+.asian-rank-fire {
+    position: absolute;
+    right: 0.5vw;
+    top: -0.5vh;
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    animation: temuFire 0.8s infinite alternate;
+    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.4));
+}
+
+/* Reemplazar la linea amarilla fea por una barra horizontal sleek */
+.rank-progress {
+    height: 8px !important;
+    background: linear-gradient(90deg, #FF3366, #FF9933) !important;
+    border-radius: 999px;
+    margin-top: 1vh;
+    width: 0%;
+    animation: rankProgress var(--rank-duration) linear infinite !important;
+}
+@keyframes rankProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Fix para la linea amarilla (Puntos de rotacion sin dimensiones) */
+.rank-dots {
+    display: flex;
+    gap: 0.4vw;
+    align-items: center;
+}
+.rank-dots .rank-dot {
+    display: inline-block;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    transition: all 0.3s ease;
+}
+.rank-dots .rank-dot.is-on {
+    background: #FFD700;
+    width: 10px !important;
+    height: 10px !important;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+/* =========================================================
+   ASIAN HYPE STYLES FOR COMPRAS RELACIONADAS (COLUMNA 3)
+   ========================================================= */
+   
+.xsell-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.xsell-ask {
+    font-size: 1.8rem !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    text-align: center;
+    background: linear-gradient(90deg, #FF0033, #FF4D4D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
+    margin-bottom: 2vh !important;
+}
+
+.xsell-item {
+    background: linear-gradient(135deg, #ffffff 0%, #FFFDF5 100%) !important;
+    border: 3px solid #FFD700 !important;
+    border-radius: 999px !important;
+    margin-bottom: 2vh !important;
+    padding: 1vh 0.5vw !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.xsell-item:nth-child(even) {
+    background: linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%) !important;
+    border-color: #FF0033 !important;
+}
+
+.xsell-item__info {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-left: 1.5vw !important;
+}
+
+.xsell-item__name {
+    font-size: 1.3rem !important;
+    line-height: 1.1 !important;
+    margin-right: 0.5vw !important;
+    font-weight: 900 !important;
+    color: #1a1a1a !important;
+}
+
+.xsell-item__price {
+    font-size: 1.4rem !important;
+    font-weight: 900 !important;
+    color: #FF0033 !important;
+    background: #FFEBEE !important;
+    padding: 0.5vh 0.5vw !important;
+    white-space: nowrap !important;
+    border-radius: 50px !important;
+    border: 2px dashed #FF0033 !important;
+}
+
+.xsell-item__stage {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+    object-fit: contain !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    flex-shrink: 0 !important;
+}
+.xsell-item__text {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    margin-right: auto !important; /* pushes price to the right */
+}
+
+.xsell-item__rule {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: #FF0033 !important;
+    background: #FFF0F0 !important;
+    padding: 0.2vh 0.5vw !important;
+    border-radius: 4px !important;
+    margin-top: 0.5vh !important;
+    text-transform: uppercase !important;
 }

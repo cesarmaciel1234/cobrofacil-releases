@@ -76,6 +76,8 @@ function armarCiclo(productos) {
     return partes.join("");
 }
 
+let lastColumna2Html = "";
+
 export function renderColumna2(productos, root) {
     if (!productos || productos.length === 0) {
         root.innerHTML = '<p class="column-empty">Sin precios para mostrar.</p>';
@@ -83,7 +85,8 @@ export function renderColumna2(productos, root) {
     }
     const filas = armarCiclo(productos);
     const duracion = Math.max(50, Math.min(productos.length * 5, 180));
-    root.innerHTML = `
+    
+    const newHtml = `
         <header class="board-head sale-head sale-head--solo">
             <p class="board-kicker">⚡ PRECIOS</p>
         </header>
@@ -94,4 +97,10 @@ export function renderColumna2(productos, root) {
             </div>
         </div>
     `;
+    
+    // Solo actualizar el DOM si los productos/precios cambiaron para no resetear la animación CSS
+    if (newHtml !== lastColumna2Html) {
+        root.innerHTML = newHtml;
+        lastColumna2Html = newHtml;
+    }
 }

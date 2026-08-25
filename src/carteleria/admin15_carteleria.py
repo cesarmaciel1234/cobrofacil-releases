@@ -70,6 +70,7 @@ class CarteleriaConfigPanel(QWidget):
         self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style - Premium)", "apple")
         self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo - Alto Impacto)", "temu")
         self.cmb_theme.addItem("🛒 Tema Black Friday (Ofertas Explosivas)", "blackfriday")
+        self.cmb_theme.addItem("🥇 Tema Premium (Negro & Oro - Lujo)", "premium")
         self.cmb_theme.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 14px; background: white;")
         c_layout.addWidget(self.cmb_theme)
 

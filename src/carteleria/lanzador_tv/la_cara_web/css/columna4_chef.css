@@ -1,0 +1,1579 @@
+/* =====================================================
+   TV4 – Premium 2026 Flash Sale Column
+   Diseño contemporáneo con elegancia sofisticada
+   Elementos: Premium UI, Micro-interacciones, Elegancia
+   ===================================================== */
+
+/* ============================================
+   MÓDULO 1: Variables Premium 2026
+   ============================================ */
+
+:root {
+    /* Asian E-commerce Temu/Shein Style - Vibrant & Light */
+    --temu-primary: #FF4757;
+    --temu-primary-dark: #E04040;
+    --temu-accent: #FF6B81;
+    --temu-gold: #FFD700;
+    --temu-orange: #FF8C00;
+    --temu-purple: #9B59B6;
+    --temu-blue: #3498DB;
+    --temu-green: #2ECC71;
+    
+    /* Asian Vibrant Gradients */
+    --temu-gradient-hot: linear-gradient(135deg, #FF4757 0%, #FF6B81 50%, #FF8C94 100%);
+    --temu-gradient-urgent: linear-gradient(135deg, #FF6B81 0%, #FF8C94 50%, #FFA4A8 100%);
+    --temu-gradient-premium: linear-gradient(135deg, #FFD700 0%, #FFEC8B 50%, #FFF4CC 100%);
+    --temu-gradient-deal: linear-gradient(135deg, #9B59B6 0%, #BE90D4 50%, #D4B8E0 100%);
+    
+    /* Light Base Colors - No Black */
+    --surface-white: #FFFFFF;
+    --surface-off-white: #F8F9FA;
+    --surface-cream: #FFF5F7;
+    --surface-pink: #FFE4E8;
+    --surface-gold: #FFF8DC;
+    --surface-blue: #E8F4FD;
+    
+    /* Asian E-commerce Text Colors - Light & Vibrant */
+    --text-primary: #4A4A4A;
+    --text-secondary: #6B6B6B;
+    --text-muted: #9B9B9B;
+    --text-accent: #FF4757;
+    --text-price: #E04040;
+    
+    /* Status Colors Asian Style */
+    --status-hot: #FF4757;
+    --status-deal: #FF6B81;
+    --status-new: #9B59B6;
+    --status-limited: #FF8C00;
+    --status-clearance: #2ECC71;
+    
+    /* Light Shadow System */
+    --shadow-soft: 0 2px 8px rgba(255, 71, 87, 0.08);
+    --shadow-medium: 0 4px 16px rgba(255, 71, 87, 0.12);
+    --shadow-strong: 0 8px 24px rgba(255, 71, 87, 0.16);
+    --shadow-glow-red: 0 0 20px rgba(255, 71, 87, 0.2);
+    --shadow-glow-gold: 0 0 20px rgba(255, 215, 0, 0.2);
+    
+    /* Modern Border Radius */
+    --radius-soft: 8px;
+    --radius-medium: 12px;
+    --radius-round: 16px;
+    --radius-pill: 20px;
+    --radius-circle: 50%;
+    
+    /* Asian Animation Timings */
+    --anim-snappy: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --anim-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --anim-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================
+   MÓDULO 2: Contenedor Premium 2026
+   ============================================ */
+
+/* RTL Support for International Markets */
+[dir="rtl"] .asian-flash-product {
+    direction: rtl;
+}
+
+/* Contenedor Temu Style */
+.chef-board.professional {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 100%);
+    border-radius: 0;
+    overflow: visible;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+/* ============================================
+   MÓDULO 3: Header Premium 2026
+   ============================================ */
+
+/* Temu Style Container */
+.asian-flash-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF5F7 100%);
+    overflow: hidden;
+    position: relative;
+    padding: 0 0.5vw 0 0;
+    border: none;
+}
+
+/* Temu Style Header - Vibrant & Bold */
+.asian-flash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5vh 2vw;
+    background: var(--temu-gradient-hot);
+    border-radius: 0;
+    margin-bottom: 1.5vh;
+    box-shadow: var(--shadow-glow-red);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.asian-flash-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: temuShine 3s infinite linear;
+}
+
+@keyframes temuShine {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Temu Style Title - Bold & Urgent */
+.asian-flash-title {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: clamp(1.2rem, 1.6vw, 1.4rem);
+    font-weight: 900;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.asian-flash-title::before {
+    content: '🔥';
+    font-size: 1.3em;
+    animation: temuFire 0.8s infinite alternate;
+}
+
+@keyframes temuFire {
+    0% { transform: scale(1) rotate(-5deg); }
+    100% { transform: scale(1.2) rotate(5deg); }
+}
+
+/* Temu Style Timer - Prominent */
+.asian-flash-timer {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Consolas', monospace;
+    font-size: clamp(1rem, 1.4vw, 1.2rem);
+    font-weight: 900;
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.8vh 1.5vw;
+    border-radius: var(--radius-pill);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    z-index: 2;
+    letter-spacing: 0.1em;
+    text-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
+    animation: temuTimerPulse 1.5s infinite;
+}
+
+@keyframes temuTimerPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.4); }
+    50% { box-shadow: 0 0 25px rgba(255, 255, 255, 0.6); }
+}
+
+/* ============================================
+   MÓDULO 4: Barra de Progreso Premium
+   ============================================ */
+
+/* Temu Style Progress Bar - Prominent */
+.asian-flash-progress {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 71, 87, 0.15);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    margin-bottom: 2vh;
+    position: relative;
+    border: 2px solid rgba(255, 71, 87, 0.2);
+}
+
+.asian-flash-progress-bar {
+    height: 100%;
+    background: var(--temu-gradient-hot);
+    border-radius: var(--radius-pill);
+    position: relative;
+    animation: temuProgress 2s ease-out;
+    box-shadow: var(--shadow-glow-red);
+}
+
+@keyframes temuProgress {
+    0% { width: 0%; }
+    100% { width: 78%; }
+}
+
+.asian-flash-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    animation: temuProgressShine 1.5s infinite;
+}
+
+@keyframes temuProgressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.asian-flash-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 900;
+    color: #FFFFFF;
+    background: var(--temu-primary);
+    padding: 0.4vh 1vw;
+    border-radius: var(--radius-pill);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   MÓDULO 5: Tarjeta Premium 2026
+   ============================================ */
+
+/* Temu Style Product Card - Vibrant & Bold */
+.asian-flash-product {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border-radius: var(--radius-round);
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+    border: 2px solid rgba(255, 71, 87, 0.1);
+    position: relative;
+    transition: all var(--anim-snappy);
+    width: clamp(160px, 16vw, 240px);
+    height: clamp(350px, 45vh, 500px);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.asian-flash-product:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: var(--shadow-strong);
+    border-color: var(--temu-primary);
+}
+
+/* Temu Style Badge - Prominent */
+.asian-flash-badge {
+    position: absolute;
+    top: 1.5vh;
+    right: 1.5vw;
+    background: var(--temu-gradient-hot);
+    color: #FFFFFF;
+    padding: 0.6vh 1vw;
+    border-radius: var(--radius-pill);
+    font-size: clamp(0.7rem, 0.85vw, 0.75rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    z-index: 10;
+    box-shadow: var(--shadow-glow-red);
+    animation: temuBadgeBounce 1s infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes temuBadgeBounce {
+    0%, 100% { transform: none !important; }
+    50% { transform: scale(1.1); }
+}
+
+/* ═══════════════════════════════════════════════════
+   IMAGEN DEL PRODUCTO — Estilo Temu / Shopee
+   Fondo vibrante inyectado por JS (inline style)
+   ═══════════════════════════════════════════════════ */
+.asian-flash-product-image {
+    flex: 0 0 42%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    min-height: 170px;
+    /* El fondo vibrante lo pone JS como inline style */
+    background: linear-gradient(145deg, #FF6B6B 0%, #FFD93D 100%);
+}
+
+/* Destello de luz en esquina superior izquierda (efecto app asiática) */
+.asian-flash-product-image::after {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -20%;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Quitar el emoji ::before — el fondo vibrante ya hace el trabajo */
+.asian-flash-product-image::before {
+    content: none;
+    display: none;
+}
+
+/* Emoji fallback cuando no hay PNG */
+.prod-emoji-fallback {
+    font-size: clamp(4rem, 8vw, 6rem);
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25));
+    animation: prodFloat 3.5s ease-in-out infinite;
+    z-index: 2;
+    position: relative;
+    display: block;
+    text-align: center;
+}
+
+/* Imagen PNG real del producto */
+.asian-flash-product-image img {
+    position: relative;
+    z-index: 2;
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+    /* Sin rotación — centrada, grande, limpia */
+    filter:
+        drop-shadow(0 6px 20px rgba(0,0,0,0.30))
+        drop-shadow(0 2px 6px rgba(0,0,0,0.20));
+    animation: prodFloat 3.5s ease-in-out infinite;
+    transition: transform 0.3s ease;
+}
+
+@keyframes prodFloat {
+    0%, 100% { transform: translateY(0px) rotate(-8deg); }
+    50%       { transform: translateY(-10px) rotate(8deg); }
+}
+
+/* Temu Style Info Section */
+.asian-flash-product-info {
+    flex: 1;
+    padding: 2vh 1vw 1.5vh 0.8vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #FFFFFF;
+    gap: 1.5vh;
+}
+
+.asian-flash-product-info > div:first-child {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+/* Temu Style Typography - Bold & Prominent */
+.asian-flash-product-name {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: clamp(1rem, 1.25vw, 1.15rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.8vh;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.asian-flash-product-tag {
+    font-size: clamp(0.6rem, 0.75vw, 0.65rem);
+    font-weight: 900;
+    color: var(--temu-primary);
+    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
+    padding: 0.4vh 0.8vw;
+    border-radius: var(--radius-soft);
+    border: 2px solid var(--temu-primary);
+    display: inline-block;
+    margin-bottom: 0.5vh;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-left: 0;
+}
+
+.asian-flash-prices {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5vw;
+    margin-bottom: 0.5vh;
+    margin-left: 0;
+}
+
+.asian-flash-original {
+    font-size: clamp(0.65rem, 0.8vw, 0.7rem);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    background: rgba(255, 71, 87, 0.05);
+    padding: 0.2vh 0.5vw;
+    border-radius: var(--radius-soft);
+}
+
+.asian-flash-current {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: clamp(1.2rem, 1.5vw, 1.35rem);
+    font-weight: 900;
+    color: var(--text-price);
+    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
+    padding: 0.4vh 0.8vw;
+    border-radius: var(--radius-soft);
+    border: 2px solid var(--temu-primary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.15);
+}
+
+.asian-flash-savings {
+    font-size: clamp(0.6rem, 0.75vw, 0.65rem);
+    font-weight: 900;
+    color: var(--temu-green);
+    background: linear-gradient(135deg, #E8F8F5 0%, #D4EFDF 100%);
+    padding: 0.3vh 0.6vw;
+    border-radius: var(--radius-soft);
+    border: 2px solid var(--temu-green);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ============================================
+   MÓDULO 6: Social Proof Premium 2026
+   ============================================ */
+
+/* Temu Style Social Proof - Urgent & Active */
+.asian-flash-social {
+    border-radius: 999px !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+    padding: 0.8vh 0;
+    border-top: 2px solid rgba(255, 71, 87, 0.1);
+    margin-top: 1vh;
+}
+
+.asian-flash-avatars {
+    display: flex;
+    align-items: center;
+}
+
+.asian-flash-avatar {
+    width: clamp(1.4rem, 1.8vw, 1.6rem);
+    height: clamp(1.4rem, 1.8vw, 1.6rem);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--temu-accent), var(--temu-primary));
+    border: 3px solid #FFFFFF;
+    margin-left: -0.6vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 4px 8px rgba(255, 71, 87, 0.2);
+}
+
+.asian-flash-avatar:first-child {
+    margin-left: 0;
+}
+
+.asian-flash-social-text {
+    font-size: clamp(0.65rem, 0.8vw, 0.7rem);
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.asian-flash-social-text strong {
+    color: var(--temu-primary);
+    font-weight: 900;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+}
+
+/* Temu Style Scarcity - Urgent */
+.asian-flash-scarcity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
+    padding: 0.6vh 1vw;
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--temu-primary);
+    margin-top: 0.8vh;
+    animation: temuScarcityPulse 2s infinite;
+}
+
+@keyframes temuScarcityPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 71, 87, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.4); }
+}
+
+.asian-flash-scarcity-icon {
+    font-size: clamp(0.8rem, 1vw, 0.9rem);
+    animation: temuWarningPulse 1s infinite;
+}
+
+@keyframes temuWarningPulse {
+    0%, 100% { opacity: 1; transform: none !important; }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.asian-flash-scarcity-text {
+    font-size: clamp(0.6rem, 0.75vw, 0.65rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.asian-flash-scarcity-count {
+    font-size: clamp(0.65rem, 0.85vw, 0.75rem);
+    font-weight: 900;
+    color: var(--temu-primary);
+    background: var(--temu-primary);
+    color: #FFFFFF;
+    padding: 0.3vh 0.8vw;
+    border-radius: var(--radius-pill);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Temu Style CTA Button - Bold & Urgent */
+.asian-flash-cta {
+    background: var(--temu-gradient-hot);
+    color: #FFFFFF;
+    border: none;
+    padding: 1.5vh 2.5vw;
+    border-radius: var(--radius-pill);
+    font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-top: 1.5vh;
+    margin-left: 0;
+    padding-left: 2.5vw;
+    box-shadow: var(--shadow-glow-red);
+    transition: all var(--anim-snappy);
+    position: relative;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.asian-flash-cta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.4s;
+}
+
+.asian-flash-cta:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(255, 71, 87, 0.4);
+    background: var(--temu-accent);
+}
+
+.asian-flash-cta:hover::before {
+    left: 100%;
+}
+
+.asian-flash-cta:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* ============================================
+   MÓDULO 7: Carrusel Premium 2026
+   ============================================ */
+
+/* Temu Style Carousel - Dynamic & Fast */
+.chef-carousel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+}
+
+.chef-carousel::before {
+    display: none;
+}
+
+.chef-carousel-line {
+    flex: 1;
+    overflow: hidden;
+    padding: 2.5vh 0;
+    position: relative;
+    z-index: 2;
+}
+
+.chef-carousel-line-right {
+    animation: scrollRight 45s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.chef-carousel-line-left {
+    animation: scrollLeft 45s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.chef-carousel-track {
+    display: flex;
+    gap: 1.2vw;
+    width: max-content;
+    will-change: transform;
+    flex-shrink: 0;
+    min-width: 100%;
+    padding: 0 0.5vw 0 0;
+}
+
+.chef-carousel-track-right {
+    animation: scrollRight 35s linear infinite;
+}
+
+.chef-carousel-track-left {
+    animation: scrollLeft 35s linear infinite;
+}
+
+@keyframes scrollRight {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes scrollLeft {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.chef-carousel:hover .chef-carousel-line-right,
+.chef-carousel:hover .chef-carousel-line-left,
+.chef-carousel:hover .chef-carousel-track-right,
+.chef-carousel:hover .chef-carousel-track-left {
+    animation-play-state: paused;
+}
+
+/* Temu Style scroll optimization */
+.chef-carousel .asian-flash-product {
+    flex-shrink: 0;
+    max-width: none;
+    width: clamp(160px, 16vw, 240px);
+}
+
+/* ============================================
+   MÓDULO 8: Componentes Premium 2026
+   ============================================ */
+
+/* Premium Live Counter */
+.asian-live-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4vw;
+    background: rgba(255, 59, 48, 0.06);
+    padding: 0.4vh 0.8vw;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 59, 48, 0.12);
+}
+
+.asian-live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--premium-accent);
+    border-radius: 50%;
+    animation: premiumLivePulse 1.5s infinite;
+}
+
+@keyframes premiumLivePulse {
+    0%, 100% { opacity: 1; transform: none !important; }
+    50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.asian-live-text {
+    font-size: clamp(0.55rem, 0.7vw, 0.6rem);
+    font-weight: 500;
+    color: var(--premium-accent);
+    text-transform: none;
+    letter-spacing: 0.02em;
+}
+
+/* Premium Group Buying */
+.asian-group-buy {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    background: rgba(0, 122, 255, 0.06);
+    padding: 0.5vh 0.8vw;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 122, 255, 0.12);
+    margin-top: 0.5vh;
+}
+
+.asian-group-icon {
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+}
+
+.asian-group-text {
+    font-size: clamp(0.55rem, 0.7vw, 0.6rem);
+    font-weight: 400;
+    color: var(--neutral-600);
+}
+
+.asian-group-text strong {
+    color: var(--status-info);
+    font-weight: 500;
+}
+
+/* Premium Stock Alert */
+.asian-stock-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    background: rgba(255, 59, 48, 0.04);
+    padding: 0.4vh 0.7vw;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 59, 48, 0.08);
+    margin-top: 0.4vh;
+}
+
+.asian-stock-fire {
+    font-size: clamp(0.65rem, 0.85vw, 0.75rem);
+    animation: premiumFireAnim 1s infinite alternate;
+}
+
+@keyframes premiumFireAnim {
+    0% { transform: scale(1) rotate(-3deg); }
+    100% { transform: scale(1.08) rotate(3deg); }
+}
+
+.asian-stock-text {
+    font-size: clamp(0.5rem, 0.65vw, 0.55rem);
+    font-weight: 500;
+    color: var(--premium-accent);
+    text-transform: none;
+}
+
+/* Premium Price Drop */
+.asian-price-drop {
+    position: relative;
+    display: inline-block;
+}
+
+.asian-price-drop::after {
+    content: '↓';
+    position: absolute;
+    top: -0.4vh;
+    right: -0.4vw;
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    color: var(--status-success);
+    animation: premiumDropBounce 1.2s infinite;
+}
+
+@keyframes premiumDropBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+}
+
+/* Premium VIP Badge */
+.asian-vip-badge {
+    background: var(--premium-gradient-gold);
+    color: var(--neutral-900);
+    padding: 0.3vh 0.7vw;
+    border-radius: var(--radius-full);
+    font-size: clamp(0.5rem, 0.65vw, 0.55rem);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2vw;
+}
+
+.asian-vip-badge::before {
+    content: '✦';
+    font-size: 0.8em;
+}
+
+/* Premium Trust Badges */
+.asian-trust-badges {
+    display: flex;
+    gap: 0.5vw;
+    margin-top: 0.5vh;
+    flex-wrap: wrap;
+}
+
+.asian-trust-badge {
+    font-size: clamp(0.5rem, 0.65vw, 0.55rem);
+    font-weight: 400;
+    color: var(--neutral-600);
+    background: rgba(0, 0, 0, 0.02);
+    padding: 0.2vh 0.5vw;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.2vw;
+}
+
+.chef-carousel-now {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+    font-weight: 900;
+    color: var(--asian-red);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
+    background: linear-gradient(135deg, #FFEBEE 0%, #FFFFFF 100%);
+    padding: 5px 12px;
+    border-radius: var(--asian-radius-md);
+    border: 2px solid rgba(255, 0, 0, 0.3);
+    letter-spacing: -0.01em;
+    box-shadow: 0 2px 8px rgba(255, 0, 0, 0.15);
+}
+
+.chef-carousel-tag {
+    font-size: clamp(0.65rem, 0.85vw, 0.75rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--asian-purple);
+    margin-bottom: 0.5vh;
+    display: inline-block;
+    background: linear-gradient(135deg, #F3E5F5 0%, #FFFFFF 100%);
+    padding: 4px 10px;
+    border-radius: var(--asian-radius-sm);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    box-shadow: 0 1px 4px rgba(156, 39, 176, 0.15);
+}
+
+.chef-carousel-save {
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    font-weight: 800;
+    color: var(--flash-success);
+    margin-top: 0.4vh;
+    background: linear-gradient(135deg, #E8F5E9 0%, #FFFFFF 100%);
+    padding: 3px 8px;
+    border-radius: var(--asian-radius-sm);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.chef-carousel-rule {
+    font-size: clamp(0.65rem, 0.85vw, 0.75rem);
+    font-weight: 700;
+    color: var(--asian-orange-dark);
+    margin-top: 0.3vh;
+    background: rgba(255, 102, 0, 0.1);
+    padding: 3px 8px;
+    border-radius: var(--asian-radius-sm);
+    letter-spacing: 0.01em;
+}
+
+/* ============================================
+   MÓDULO 9: Responsive Premium 2026
+   ============================================ */
+
+/* Ultra HD 4K+ (3840px+) */
+@media (min-width: 3840px) {
+    .asian-flash-product-name {
+        font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+    }
+
+    .asian-flash-current {
+        font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+    }
+
+    .asian-flash-product {
+        min-width: clamp(280px, 32vw, 380px);
+    }
+}
+
+/* Full HD (1920px - 3839px) */
+@media (min-width: 1920px) and (max-width: 3839px) {
+    .asian-flash-product-name {
+        font-size: clamp(1rem, 1.3vw, 1.2rem);
+    }
+
+    .asian-flash-current {
+        font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+    }
+}
+
+/* Standard HD (1366px - 1919px) */
+@media (min-width: 1366px) and (max-width: 1919px) {
+    .asian-flash-product-name {
+        font-size: clamp(0.95rem, 1.25vw, 1.15rem);
+    }
+
+    .asian-flash-current {
+        font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+    }
+}
+
+/* Tablet (768px - 1365px) */
+@media (max-width: 1365px) {
+    .asian-flash-product {
+        min-width: clamp(180px, 22vw, 280px);
+    }
+
+    .asian-flash-product-image {
+        flex: 0 0 38%;
+        min-height: 140px;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+    .asian-flash-product {
+        min-width: clamp(160px, 45vw, 260px);
+    }
+
+    .asian-flash-product-info {
+        padding: 1.5vh 0.6vw 1.2vh 0.5vw;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .asian-flash-product:hover {
+        transform: none;
+    }
+}
+
+
+/* ============================================
+   MÓDULO 10: Componentes Adicionales
+   ============================================ */
+
+/* Live Counter Animation */
+.asian-live-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3vw;
+    background: rgba(255, 0, 0, 0.1);
+    padding: 0.3vh 0.6vw;
+    border-radius: var(--asian-radius-full);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.asian-live-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--asian-red);
+    border-radius: 50%;
+    animation: asianLivePulse 1s infinite;
+}
+
+@keyframes asianLivePulse {
+    0%, 100% { opacity: 1; transform: none !important; }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+.asian-live-text {
+    font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+    font-weight: 700;
+    color: var(--asian-red);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Group Buying Indicator */
+.asian-group-buy {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    background: linear-gradient(135deg, #E3F2FD 0%, #FFFFFF 100%);
+    padding: 0.5vh 0.8vw;
+    border-radius: var(--asian-radius-md);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    margin-top: 0.5vh;
+}
+
+.asian-group-icon {
+    font-size: clamp(0.8rem, 1vw, 0.9rem);
+}
+
+.asian-group-text {
+    font-size: clamp(0.6rem, 0.8vw, 0.7rem);
+    font-weight: 600;
+    color: var(--chef-neutral-700);
+}
+
+.asian-group-text strong {
+    color: var(--flash-info);
+}
+
+/* Limited Stock Alert */
+.asian-stock-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    background: linear-gradient(135deg, #FFEBEE 0%, #FFFFFF 100%);
+    padding: 0.4vh 0.7vw;
+    border-radius: var(--asian-radius-sm);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    margin-top: 0.4vh;
+}
+
+.asian-stock-fire {
+    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+    animation: asianFireAnim 0.5s infinite alternate;
+}
+
+@keyframes asianFireAnim {
+    0% { transform: scale(1) rotate(-5deg); }
+    100% { transform: scale(1.1) rotate(5deg); }
+}
+
+.asian-stock-text {
+    font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+    font-weight: 800;
+    color: var(--asian-red);
+    text-transform: uppercase;
+}
+
+/* Price Drop Animation */
+.asian-price-drop {
+    position: relative;
+    display: inline-block;
+}
+
+.asian-price-drop::after {
+    content: '↓';
+    position: absolute;
+    top: -0.5vh;
+    right: -0.5vw;
+    font-size: clamp(0.8rem, 1vw, 0.9rem);
+    color: var(--flash-success);
+    animation: asianDropBounce 1s infinite;
+}
+
+@keyframes asianDropBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+/* VIP/Badge System */
+.asian-vip-badge {
+    background: var(--asian-gradient-gold);
+    color: var(--chef-neutral-900);
+    padding: 0.3vh 0.6vw;
+    border-radius: var(--asian-radius-full);
+    font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2vw;
+}
+
+.asian-vip-badge::before {
+    content: '👑';
+    font-size: 0.8em;
+}
+
+/* Trust Badges */
+.asian-trust-badges {
+    display: flex;
+    gap: 0.5vw;
+    margin-top: 0.5vh;
+    flex-wrap: wrap;
+}
+
+.asian-trust-badge {
+    font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+    font-weight: 600;
+    color: var(--chef-neutral-600);
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2vh 0.5vw;
+    border-radius: var(--asian-radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.2vw;
+}
+
+/* ============================================
+   MÓDULO 11: Performance Optimizations
+   ============================================ */
+
+/* GPU Acceleration for Smooth Animations */
+.asian-flash-product,
+.asian-flash-header,
+.asian-flash-progress-bar {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ============================================
+   FIN DEL ARCHIVO - CSS MODULARIZADO
+   ============================================ */
+/* Fix para la barra de progreso por tarjeta */
+.card-progress {
+    overflow: visible !important;
+    height: 18px !important;
+    margin-top: 1.5vh;
+    margin-bottom: 0;
+}
+@keyframes temuProgress {
+    0% { max-width: 0%; }
+    100% { max-width: 100%; }
+}
+.asian-flash-progress-bar {
+    width: 100%;
+}
+.card-progress .asian-flash-progress-text {
+    font-size: clamp(0.6rem, 0.75vw, 0.7rem);
+    padding: 0.2vh 0.6vw;
+}
+
+/* =========================================================
+   NIVEL ASIATICO EXTREMO (VENDE HUMO / HYPE MAXIMO)
+   ========================================================= */
+
+/* Fondo de la columna 4 entero: Fuego oscuro y rayos */
+.tv-4 {
+    background: radial-gradient(circle at center, #4A0000 0%, #1A0000 100%) !important;
+    position: relative;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: inset 0 0 50px #000 !important;
+}
+.tv-4::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: repeating-conic-gradient(from 0deg, rgba(255, 0, 0, 0.15) 0deg 15deg, transparent 15deg 30deg) !important;
+    animation: rotateSunburst 30s linear infinite !important;
+    z-index: 0;
+}
+@keyframes rotateSunburst { 100% { transform: rotate(360deg); } }
+
+/* Asegurar que el contenido este encima del fondo rotatorio */
+.column-body#content4 {
+    position: relative;
+    z-index: 1;
+}
+.asian-flash-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Cabecera FLASH SALE */
+.asian-flash-header {
+    background: linear-gradient(90deg, #FF0033, #FF6600) !important;
+    border: 4px solid #FFD700 !important;
+    box-shadow: 0 10px 30px rgba(255, 0, 51, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.6) !important;
+    transform: skewX(-5deg) scale(1.05) !important;
+    margin-bottom: 3vh !important;
+    border-radius: 12px !important;
+}
+.asian-flash-title {
+    font-size: clamp(1.5rem, 2.2vw, 2.2rem) !important;
+    color: #FFFFFF !important;
+    text-shadow: 2px 2px 0 #FF0000, 4px 4px 0 #8B0000, 0 0 20px #FFD700 !important;
+    font-style: italic !important;
+    animation: pulseTitle 0.6s infinite alternate !important;
+}
+@keyframes pulseTitle { 
+    100% { transform: scale(1.1); text-shadow: 2px 2px 0 #FF0000, 4px 4px 0 #8B0000, 0 0 50px #FFD700; } 
+}
+.asian-flash-timer {
+    background: #000000 !important;
+    color: #FFD700 !important;
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 0 20px #FFD700 !important;
+    font-size: clamp(1rem, 1.2vw, 1.2rem) !important; padding: 0.2vh 0.5vw !important; flex-shrink: 0 !important;
+    font-weight: 900 !important;
+}
+
+/* Tarjeta del Producto */
+.asian-flash-product {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF0D4 100%) !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    overflow: visible !important; transform: none !important; margin-bottom: 2vh !important;
+}
+
+/* Etiqueta HOT flotante y agresiva */
+.asian-flash-badge {
+    background: linear-gradient(135deg, #FF0000, #FF6600) !important;
+    color: #FFFF00 !important;
+    border: 3px solid #FFFF00 !important;
+    font-size: clamp(1.2rem, 2vw, 1.8rem) !important;
+    padding: 0.8vh 1.5vw !important;
+    top: 10px !important;
+    right: 10px !important;
+    border-radius: 999px !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    animation: badgeShake 0.8s infinite !important;
+    z-index: 10 !important;
+}
+@keyframes badgeShake { 
+    0%, 100% { transform: rotate(15deg) scale(1.2); }
+    50% { transform: rotate(5deg) scale(1.4); }
+}
+
+/* Nombre del producto gigante */
+.asian-flash-product-name {
+    font-size: clamp(2rem, 2.5vw, 2.5rem) !important;
+    color: #000 !important;
+    text-shadow: 2px 2px 0px rgba(255, 255, 255, 1) !important;
+    line-height: 1 !important;
+    margin-bottom: 1vh !important;
+}
+
+/* Caja de Precios explotada */
+.asian-flash-prices {
+    background: #FF0033 !important;
+    border: 4px dashed #FFD700 !important;
+    border-radius: 16px !important;
+    padding: 0.5vh 1vw !important;
+    margin: 0.5vh 0 1.5vh 0 !important;
+    transform: rotate(-3deg) scale(1.02) !important;
+    box-shadow: 0 12px 30px rgba(255,0,51,0.5) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+.asian-flash-current {
+    font-size: clamp(1.8rem, 2.5vw, 2.5rem) !important;
+    color: #FFFF00 !important;
+    text-shadow: 4px 4px 0 #000, 0 0 30px #FFD700 !important;
+    line-height: 0.9 !important;
+}
+.asian-flash-original {
+    color: #FFFFFF !important;
+    font-size: clamp(1rem, 1.2vw, 1.2rem) !important; padding: 0.2vh 0.5vw !important; flex-shrink: 0 !important;
+    text-decoration-thickness: 3px !important;
+}
+
+/* Barra de progreso de ventas estilo cinta de peligro roja */
+.card-progress {
+    background: #222 !important;
+    border: 3px solid #FFD700 !important;
+    border-radius: 999px !important;
+    height: 28px !important;
+    overflow: hidden !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important;
+    position: relative !important;
+}
+.asian-flash-progress-bar {
+    background: repeating-linear-gradient(
+        45deg,
+        #FF0033,
+        #FF0033 15px,
+        #FF6600 15px,
+        #FF6600 30px
+    ) !important;
+    background-size: 42px 42px !important;
+    animation: barberPole 0.8s linear infinite !important;
+    height: 100% !important;
+}
+@keyframes barberPole { 100% { background-position: 42px 0; } }
+
+.asian-flash-progress-text {
+    color: #FFFFFF !important;
+    text-shadow: 2px 2px 4px #000000 !important;
+    font-size: 1.1rem !important;
+    background: transparent !important;
+    border: none !important;
+    font-style: italic !important;
+    letter-spacing: 0.05em !important;
+    z-index: 5;
+}
+
+/* Texto de comprando hoy saltando */
+.asian-flash-social {
+    border-radius: 999px !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    background: #FFFF00 !important;
+    border: 3px solid #FF0033 !important;
+    color: #FF0033 !important;
+    font-size: 1.2rem !important;
+    padding: 0.8vh 1.5vw !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+    animation: heartbeat 1.2s infinite !important;
+}
+@keyframes heartbeat {
+    0%, 100% { transform: none !important; }
+    15% { transform: scale(1.15); }
+    30% { transform: none !important; }
+    45% { transform: scale(1.15); }
+}
+
+/* Ajustes de espacio vertical para que no se corte abajo */
+.asian-flash-product {
+    padding: 1.5vh 1vw !important;
+}
+.asian-flash-product-image {
+    height: 25vh !important;
+    min-height: 100px !important;
+    margin-bottom: 0.5vh !important;
+}
+.asian-flash-header {
+    padding: 1vh 1vw !important;
+    margin-bottom: 1.5vh !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+.asian-flash-social {
+    border-radius: 999px !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 1vh !important;
+}
+
+.asian-flash-product-info {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    flex: 1 !important;
+}
+.asian-flash-product {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100vh !important; margin: 0 !important; /* Prevent it from being cut off at the bottom */
+}
+.chef-carousel-track {
+    height: 100% !important;
+    align-items: center !important;
+}
+
+/* Forzar Full Screen extremo en Columna 4 */
+#columna4, #content4, .asian-flash-container, .chef-carousel, .chef-carousel-track {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+}
+.asian-flash-product {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+/* =========================================================
+   ASIAN HYPE PREMIUM ALTA GAMA (BLACK & GOLD LUXURY)
+   ========================================================= */
+
+/* Fondo de la Tarjeta — negro lujo */
+.asian-flash-product {
+    background: linear-gradient(145deg, #1C1C1E 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 215, 0, 0.2) !important;
+    box-shadow: inset 0 0 50px rgba(212, 175, 55, 0.1) !important;
+}
+
+/* Etiqueta HOT tipo Joya Rubí */
+.asian-flash-badge {
+    background: linear-gradient(135deg, #D90429 0%, #8D0801 100%) !important;
+    color: #FFDF73 !important;
+    border: 2px solid #D4AF37 !important;
+    box-shadow: 0 10px 30px rgba(217, 4, 41, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.4) !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+    letter-spacing: 0.1em !important;
+}
+
+/* Nombre del Producto en Blanco Brillante */
+.asian-flash-product-name {
+    color: #FFFFFF !important;
+    text-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* Caja de Precios Gold Premium */
+.asian-flash-prices {
+    background: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728, #FBF5B7) !important;
+    border: 2px solid #FFFFFF !important;
+    border-radius: 12px !important;
+    box-shadow: 0 15px 35px rgba(191, 149, 63, 0.4) !important;
+    transform: rotate(0deg) scale(1) !important;
+}
+.asian-flash-current {
+    color: #000000 !important;
+    text-shadow: none !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.04em !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+.asian-flash-original {
+    color: rgba(0,0,0,0.6) !important;
+    text-decoration-color: #D90429 !important;
+}
+
+/* Barra de Progreso Elegante (Neón Rojo/Oro) */
+.card-progress {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,215,0,0.3) !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8) !important;
+    border-radius: 8px !important;
+    height: 20px !important;
+}
+.asian-flash-progress-bar {
+    background: linear-gradient(90deg, #D90429, #FF4D4D) !important;
+    box-shadow: 0 0 15px rgba(217, 4, 41, 0.8) !important;
+    animation: pulseGlowBar 2s infinite alternate !important;
+}
+@keyframes pulseGlowBar {
+    0%   { filter: brightness(1);   box-shadow: 0 0 10px rgba(217,4,41,0.5); }
+    100% { filter: brightness(1.3); box-shadow: 0 0 25px rgba(217,4,41,1); }
+}
+.asian-flash-progress-text {
+    color: #FFFFFF !important;
+    font-family: monospace !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Comprando Hoy (Glassmorphism Gold) */
+.asian-flash-social {
+    background: rgba(212, 175, 55, 0.1) !important;
+    border: 1px solid rgba(212, 175, 55, 0.4) !important;
+    color: #D4AF37 !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-size: 1rem !important;
+    padding: 1vh 2vw !important;
+    animation: elegantPulse 2s infinite !important;
+    border-radius: 999px !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 1vh !important;
+}
+@keyframes elegantPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3); border-color: rgba(212, 175, 55, 0.4); }
+    50%       { box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3); border-color: rgba(212, 175, 55, 0.8); }
+}
+.asian-flash-social,
+.asian-flash-social-text,
+.asian-flash-social-text strong {
+    color: #D4AF37 !important;
+    background-color: transparent !important;
+}
+
+/* ─────────────────────────────────────────────────────────
+   ÁREA DE IMAGEN DEL PRODUCTO — FIX DEFINITIVO
+   • NO sobreescribir el background (lo inyecta JS en inline style)
+   • Tamaño suficiente, sin márgenes que creen rectángulo negro
+   • Imagen ocupa 85% centrada con sombra y flotación
+   ───────────────────────────────────────────────────────── */
+.asian-flash-product-image {
+    /* NO poner background aquí: el inline style del JS lo controla */
+    flex: 0 0 auto !important;
+    height: 52% !important;
+    min-height: 140px !important;
+    margin: 0 !important;           /* sin margen — evita el rectángulo negro vacío */
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    position: relative !important;
+    /* Sombra dorada sutil sobre el borde inferior */
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15) !important;
+    filter: none !important;        /* quitar el drop-shadow que aplastaba colores */
+    border: none !important;
+}
+
+/* Imagen PNG real: grande, centrada, con sombra doble */
+.asian-flash-product-image img {
+    width: 85% !important;
+    height: 85% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.45))
+            drop-shadow(0 2px 6px rgba(212,175,55,0.20)) !important;
+    animation: prodFloat 3.5s ease-in-out infinite !important;
+    position: relative !important;
+    z-index: 2 !important;
+    display: block !important;
+}
+
+/* Emoji fallback visible sobre el fondo vibrante */
+.prod-emoji-fallback {
+    font-size: clamp(4.5rem, 9vw, 7rem) !important;
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.35)) !important;
+    animation: prodFloat 3.5s ease-in-out infinite !important;
+    position: relative !important;
+    z-index: 2 !important;
+    display: block !important;
+    text-align: center !important;
+}
+
+@keyframes prodFloat {
+    0%, 100% { transform: translateY(0px) rotate(-8deg); }
+    50%       { transform: translateY(-10px) rotate(8deg); }
+}
+
+/* Info / contenido de texto — fondo transparente sobre tarjeta negra */
+.asian-flash-product-info,
+.asian-flash-product-info > div {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Etiqueta NUEVO/OFERTA estilo oro */
+.asian-flash-product-tag {
+    background: rgba(212, 175, 55, 0.2) !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3) !important;
+}
+.asian-flash-product .asian-vip-badge {
+    background: #D4AF37 !important;
+    color: #000 !important;
+    border: none !important;
+}

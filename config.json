@@ -27,7 +27,7 @@
     "auto_virtual_keyboard": false,
     "facturacion_afip_global": false,
     "db_engine": "mariadb",
-    "db_host": "192.168.0.5",
+    "db_host": "192.168.0.2",
     "cierre_auto_hora": "00:00",
     "cierre_auto_activo": true,
     "stock_alerta_activa": true,
@@ -84,8 +84,8 @@
     "opt_solicitar_cajero": true,
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
-    "last_weekly_report_sent": "2026-W32",
-    "carteleria_master_ip": "192.168.0.5",
+    "last_weekly_report_sent": "2026-W35",
+    "carteleria_master_ip": "192.168.0.2",
     "clover_ip": "",
     "clover_port": "1234",
     "license_key": "",
@@ -97,8 +97,8 @@
     "carteleria_frec_sos": 2,
     "is_master": false,
     "mensaje_zocalo": "",
-    "carteleria_theme": "temu",
+    "carteleria_theme": "premium",
     "cuit": "CUIT: 00-00000000-0",
     "mensaje_despedida": "Gracias por su compra!",
-    "preferred_master_ip": "192.168.0.5"
+    "preferred_master_ip": "192.168.0.8"
 }

@@ -1,0 +1,134 @@
+﻿/* ══════════════════════════════════════════════════════════════
+   TEMA PREMIUM — NEGRO & ORO — TODA LA CARTELERÍA TV
+   Aplicado encima de todos los demás CSS para unificar el look
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+    --premium-bg-card:    linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%);
+    --premium-gold:       #D4AF37;
+    --premium-gold-light: #F5E17A;
+    --premium-gold-dim:   rgba(212, 175, 55, 0.25);
+    --premium-gold-glow:  rgba(212, 175, 55, 0.15);
+    --premium-red:        #D90429;
+    --premium-border:     rgba(212, 175, 55, 0.30);
+    --premium-price-bg:   linear-gradient(90deg, #BF953F, #FCF6BA, #B38728, #FBF5B7);
+}
+
+/* 1. FONDO GENERAL */
+body, .app-container { background: #050505 !important; }
+
+.tv-panel, .premium-column {
+    background: #0A0A0A !important;
+    border-right: 1px solid var(--premium-border) !important;
+}
+
+/* 2. FRANJA SUPERIOR */
+.hero-section, .flash-strip {
+    background: linear-gradient(90deg, #0A0A00 0%, #1C1400 40%, #0A0A00 100%) !important;
+    border-bottom: 1px solid var(--premium-border) !important;
+}
+.flash-strip__cycle span, .flash-strip__marquee { color: var(--premium-gold) !important; }
+.flash-dot { color: #D90429 !important; }
+.flash-count { color: #F5E17A !important; text-shadow: 0 0 16px rgba(212,175,55,0.6) !important; }
+.flash-strip__ends { color: rgba(255,255,255,0.6) !important; }
+.clock { color: var(--premium-gold) !important; }
+.status-dot { background: #22C55E !important; box-shadow: 0 0 8px rgba(34,197,94,0.6) !important; }
+
+/* 3. CARRUSEL SUPERIOR — tarjetas oferta-card */
+.oferta-card {
+    background: linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%) !important;
+    border: 1px solid rgba(212,175,55,0.30) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 0 40px rgba(212,175,55,0.05) !important;
+}
+.deal-stage {
+    background: linear-gradient(145deg, #2A2A2A 0%, #111 100%) !important;
+    border-right: 1px solid rgba(212,175,55,0.20) !important;
+}
+.deal-stage[data-tone="aves"]    { background: linear-gradient(145deg, #3D2800 0%, #7A5000 100%) !important; }
+.deal-stage[data-tone="cerdo"]   { background: linear-gradient(145deg, #3D0010 0%, #7A0020 100%) !important; }
+.deal-stage[data-tone="almacen"] { background: linear-gradient(145deg, #1A3D00 0%, #2D6600 100%) !important; }
+
+.deal-kicker  { color: var(--premium-gold) !important; }
+.deal-stage__off {
+    background: linear-gradient(135deg, #D90429, #8D0801) !important;
+    border: 1px solid var(--premium-gold) !important;
+    color: #F5E17A !important;
+}
+.deal-stage__name, .tv-card__name { color: #FFFFFF !important; text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important; }
+.tv-card__now { color: var(--premium-gold) !important; text-shadow: 0 0 20px rgba(212,175,55,0.4) !important; }
+.tv-card__was { color: rgba(255,255,255,0.4) !important; }
+.deal-save    { color: #F5E17A !important; }
+.tv-card__timer {
+    background: rgba(217,4,41,0.15) !important;
+    border: 1px solid rgba(217,4,41,0.4) !important;
+    color: #FF6B6B !important;
+}
+
+/* 4. COL 1 — RANKING */
+.price-dept {
+    background: linear-gradient(90deg, #1A1400 0%, #0A0A0A 100%) !important;
+    color: var(--premium-gold) !important;
+    border-left: 3px solid var(--premium-gold) !important;
+    border-radius: 8px !important;
+    text-shadow: 0 0 12px rgba(212,175,55,0.4) !important;
+}
+
+/* 5. COL 2 — PRECIOS */
+.price-row {
+    background: linear-gradient(90deg, #1C1C1E 0%, #141414 100%) !important;
+    border: 1px solid rgba(212,175,55,0.20) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+.price-row__name  { color: #FFFFFF !important; }
+.price-row__meta, .price-row__rule { color: #F5E17A !important; opacity: 0.8; }
+.price-row__off   { color: #FF6B6B !important; }
+.price-row__was   { color: rgba(255,255,255,0.35) !important; }
+.price-row__now {
+    background: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728, #FBF5B7) !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 14px rgba(191,149,63,0.35) !important;
+}
+.price-ad {
+    background: linear-gradient(135deg, #1A1400 0%, #0A0A00 100%) !important;
+    border: 1px solid rgba(212,175,55,0.4) !important;
+}
+.price-ad__badge { background: #D90429 !important; color: #F5E17A !important; }
+.price-ad__name  { color: var(--premium-gold) !important; }
+.price-ad__price { color: #FFFFFF !important; }
+
+/* 6. COL 3 — OFERTA RELÁMPAGO */
+.flash-offer__deal, .chef-deal {
+    background: linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%) !important;
+    border: 1px solid rgba(212,175,55,0.30) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 0 60px rgba(212,175,55,0.04) !important;
+}
+.flash-offer__stage {
+    background: linear-gradient(145deg, #2A2000 0%, #1A1400 100%) !important;
+}
+.xsell-ask    { color: var(--premium-gold) !important; text-shadow: 0 0 20px rgba(212,175,55,0.4) !important; }
+.xsell-item {
+    background: linear-gradient(90deg, #1C1C1E 0%, #141414 100%) !important;
+    border: 1px solid rgba(212,175,55,0.20) !important;
+    border-radius: 12px !important;
+}
+.xsell-item__name { color: #FFFFFF !important; }
+.flash-offer .tv-card__now, .chef-deal .tv-card__now {
+    color: var(--premium-gold) !important;
+    text-shadow: 0 0 30px rgba(212,175,55,0.5) !important;
+}
+.flash-offer .deal-save, .flash-offer .deal-kicker { color: #F5E17A !important; }
+.flash-offer__stage .deal-stage__off {
+    background: linear-gradient(135deg, #D90429, #8D0801) !important;
+    border: 1px solid var(--premium-gold) !important;
+    color: #F5E17A !important;
+}
+
+/* 7. ZÓCALO */
+.footer, .zocalo-pill {
+    background: linear-gradient(90deg, #0A0A00 0%, #1C1400 50%, #0A0A00 100%) !important;
+    border-top: 1px solid rgba(212,175,55,0.30) !important;
+}
+.marquee-text { color: var(--premium-gold) !important; text-shadow: 0 0 12px rgba(212,175,55,0.4) !important; }
+.zocalo-icon  { filter: drop-shadow(0 0 8px rgba(212,175,55,0.6)) !important; }

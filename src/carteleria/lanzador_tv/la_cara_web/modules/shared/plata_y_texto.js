@@ -4,7 +4,33 @@ export function nombreVitrina(nombre) {
     const original = String(nombre || "").trim();
     const limpio = original.replace(/^oferta\s+(?:de\s+)?/i, "").trim() || original;
     if (!limpio) return original;
-    return limpio.replace(/^\p{L}/u, (ch) => ch.toUpperCase());
+    
+    // Corrección de errores comunes en nombres de productos
+    const corregido = corregirErroresComunes(limpio);
+    
+    return corregido.replace(/^\p{L}/u, (ch) => ch.toUpperCase());
+}
+
+function corregirErroresComunes(nombre) {
+    const correcciones = {
+        'asadc': 'asado',
+        'asado c': 'asado',
+        'asadoc': 'asado',
+        'pollo entero c': 'pollo entero',
+        'pollo c': 'pollo entero',
+        'bondiola c': 'bondiola',
+        'bife c': 'bife',
+        'milanesa c': 'milanesa',
+    };
+    
+    const nombreLower = nombre.toLowerCase();
+    for (const [error, correcto] of Object.entries(correcciones)) {
+        if (nombreLower === error || nombreLower.endsWith(' ' + error)) {
+            return nombreLower.replace(error, correcto);
+        }
+    }
+    
+    return nombre;
 }
 
 export function formatMoney(value) {
@@ -140,7 +166,6 @@ export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bo
             <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
             ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
             ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}
-            ${bolt ? `<span class="deal-stage__bolt" aria-hidden="true">⚡</span>` : ""}
         </div>
     `;
 }

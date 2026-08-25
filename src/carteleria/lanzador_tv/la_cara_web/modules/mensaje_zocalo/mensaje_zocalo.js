@@ -12,7 +12,10 @@ export function renderMensajeZocalo(config, marquee) {
         ? `${mensaje} ★ Bienvenido a ${negocio} ★`
         : mensaje;
     marquee.innerHTML = `
-        <span class="marquee-text">${escapeHtml(texto)} ★ </span>
-        <span class="marquee-text">${escapeHtml(texto)} ★ </span>
+        <div class="marquee-track">
+            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
+            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
+            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
+        </div>
     `;
 }

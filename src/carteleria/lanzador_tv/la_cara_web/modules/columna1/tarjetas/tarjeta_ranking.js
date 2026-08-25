@@ -58,35 +58,54 @@ function premiumDelItem(item, items = []) {
 export function htmlTarjetaRanking(item, i, opciones = {}) {
     const puesto = Number(item.puesto || i + 1);
     const nombre = nombreVitrina(item.nombre).toUpperCase();
+    
+    // Sistema de medallas y resaltado Top 3
+    let topClass = "";
+    let medal = "";
+    if (puesto === 1) { topClass = "top-1"; medal = "👑"; }
+    else if (puesto === 2) { topClass = "top-2"; medal = "🥈"; }
+    else if (puesto === 3) { topClass = "top-3"; medal = "🥉"; }
+
     if ((opciones.premium || opciones.mega) && !item.es_publicidad) {
         const dato = opciones.premium
             ? premiumDelItem(item, opciones.items)
             : megaDelItem(item, opciones.items);
+            
+        // Forzar porcentaje un poco más agresivo si es el top 1 para simular boom (Opcional, pero se lee del motor real)
+        const pctReal = dato.texto;
+        
         return `
-        <article class="rank-card">
-            <div class="rank-line">
-                <span class="rank-num">#${puesto}</span>
-                <span class="rank-tag">${escapeHtml(dato.texto)}</span>
+        <article class="asian-rank-card ${topClass}">
+            <div class="asian-rank-badge">
+                <span class="asian-rank-num">${medal} #${puesto}</span>
             </div>
-            <h4 class="rank-name">${escapeHtml(nombre)}</h4>
-            <div class="rank-share" aria-hidden="true">
-                <span class="rank-share__bar" style="width:${Math.max(8, dato.barra).toFixed(1)}%"></span>
+            <div class="asian-rank-info">
+                <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
+                <div class="asian-rank-progress-container">
+                    <div class="asian-rank-progress-bar" style="width:${Math.max(15, dato.barra).toFixed(1)}%"></div>
+                    <span class="asian-rank-tag">${escapeHtml(pctReal)} VENDIDO</span>
+                </div>
             </div>
+            ${puesto === 1 ? '<div class="asian-rank-fire">🔥</div>' : ''}
         </article>
-    `;
+        `;
     }
+    
     const tag = item.es_publicidad
         ? "PUBLICIDAD"
         : opciones.social
             ? textoFamilias(item)
             : String(item.detalle || "").toUpperCase();
+            
     return `
-        <article class="rank-card${item.es_publicidad ? " is-ad" : ""}">
-            <div class="rank-line">
-                <span class="rank-num">#${puesto}</span>
-                ${tag ? `<span class="rank-tag">${escapeHtml(tag)}</span>` : ""}
+        <article class="asian-rank-card ${topClass} ${item.es_publicidad ? "is-ad" : ""}">
+            <div class="asian-rank-badge">
+                <span class="asian-rank-num">${medal} #${puesto}</span>
             </div>
-            <h4 class="rank-name">${escapeHtml(nombre)}</h4>
+            <div class="asian-rank-info">
+                <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
+                ${tag ? `<div class="asian-rank-tag-social">❤️ ${escapeHtml(tag)}</div>` : ""}
+            </div>
         </article>
     `;
 }
