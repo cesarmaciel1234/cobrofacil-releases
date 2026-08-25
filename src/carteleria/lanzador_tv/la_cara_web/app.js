@@ -1,4 +1,4 @@
-import { initCenterFocus, animateOdometers, checkSmartMarquee } from "./modules/shared/vfx.js";
+import { initCenterFocus, updateVFX } from "./modules/shared/vfx.js";
 /* Cartelería TV: orquesta los módulos de la cara web. */
 
 import { renderCabeceraNegocio, marcarCabeceraDesconectada, actualizarReloj } from "./modules/cabecera_negociodata/cabecera_negociodata.js";
@@ -104,6 +104,7 @@ async function fetchState() {
         iniciarRotacionColumna4(state, els.content4);
         renderMensajeZocalo(state.config, els.marquee);
         actualizarClimaHeader(state.climaData);
+        updateVFX(); // Dispara los efectos solo cuando hay datos nuevos
 
         if (state.isLoading) {
             state.isLoading = false;
@@ -170,8 +171,4 @@ function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
-// Ejecutar VFX periódicamente para procesar nuevos elementos inyectados en el DOM
-setInterval(() => {
-    animateOdometers();
-    checkSmartMarquee();
-}, 1000);
+
