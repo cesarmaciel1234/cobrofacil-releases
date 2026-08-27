@@ -96,7 +96,31 @@ async function fetchState() {
         state.hero = data.hero || null;
         state.climaData = data.climaData || null;
 
-        if (data.config?.carteleria_theme) loadTheme(data.config.carteleria_theme);
+        // --- APLICACIÓN DE ESTRUCTURA.md (Lógica Empresarial) ---
+        
+        // 1. Scoring de Productos (Estilo Amazon): Priorizar por ventas y ofertas
+        if (state.productos.length > 0) {
+            state.productos.sort((a, b) => {
+                const scoreA = (a.precio_oferta ? 50 : 0) + (a.vendidos || a.ventas_dia || 0);
+                const scoreB = (b.precio_oferta ? 50 : 0) + (b.vendidos || b.ventas_dia || 0);
+                return scoreB - scoreA;
+            });
+        }
+        
+        // 2. Personalización Temporal (Estilo Netflix): Cambiar tema por hora del día
+        let temaDefinitivo = data.config?.carteleria_theme;
+        if (!temaDefinitivo || temaDefinitivo === "auto") {
+            const hora = new Date().getHours();
+            if (hora >= 6 && hora < 12) temaDefinitivo = "apple";       // Mañana: Limpio y claro
+            else if (hora >= 12 && hora < 19) temaDefinitivo = "temu";  // Tarde: Vibrante comercial
+            else temaDefinitivo = "premium";                            // Noche: Oscuro y elegante
+        }
+        loadTheme(temaDefinitivo);
+        
+        // 3-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
+        // ya se aplican en la renderización de las columnas (shimmer-fx, rotación, etc).
+        // --------------------------------------------------------
+
         renderFranjaOferta(state.hero, state.productos, els);
         iniciarRotacionColumna1(state, els.content1);
         renderColumna2(state.productos, els.content2);

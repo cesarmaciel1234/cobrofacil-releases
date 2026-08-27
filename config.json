@@ -97,8 +97,8 @@
     "carteleria_frec_sos": 2,
     "is_master": false,
     "mensaje_zocalo": "",
-    "carteleria_theme": "temu",
+    "carteleria_theme": "premium",
     "cuit": "CUIT: 00-00000000-0",
     "mensaje_despedida": "Gracias por su compra!",
-    "preferred_master_ip": "192.168.0.8"
+    "preferred_master_ip": "192.168.0.2"
 }

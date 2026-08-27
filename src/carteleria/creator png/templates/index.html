@@ -515,6 +515,10 @@
                     <input type="checkbox" id="enableRimLightEffect">
                     <label for="enableRimLightEffect">Efecto Rim Light</label>
                 </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="useAiBackgroundRemoval">
+                    <label for="useAiBackgroundRemoval">Mejorar recorte con IA</label>
+                </div>
             </div>
 
             <div class="button-group">
@@ -1010,6 +1014,7 @@
             if (document.getElementById('enableDepthEffect').checked) formData.append('enable_depth_effect', 'true');
             if (document.getElementById('enableVignetteEffect').checked) formData.append('enable_vignette_effect', 'true');
             if (document.getElementById('enableRimLightEffect').checked) formData.append('enable_rim_light_effect', 'true');
+            if (document.getElementById('useAiBackgroundRemoval').checked) formData.append('use_ai', 'true');
         }
         
         function showBatchResults(results) {

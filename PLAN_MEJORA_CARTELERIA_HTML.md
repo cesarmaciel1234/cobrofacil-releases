@@ -1,261 +1,105 @@
 # Plan de Mejora - Cartelería HTML
 
 ## 📋 Estado Actual
-- ✅ Layout responsive de 4 paneles TV
-- ✅ Carrusel estilo marketplace con publicidad
-- ✅ Flash strip con contador regresivo
-- ✅ Columna 4 con clima y lobo chef
-- ✅ Header flotante con estado y reloj
-- ✅ Integación con motores globales (publicidad, clima, IA)
-- ✅ Sistema de temas autónomo
+- ✅ Layout full-screen expandido (el carrusel de ofertas ahora abarca de manera continua las 4 pantallas).
+- ✅ Carrusel unificado estilo marketplace con publicidad.
+- ✅ Flash strip con contador regresivo.
+- ✅ Header flotante con estado y reloj.
+- ✅ Integración con motores globales (publicidad, clima, IA).
+- ✅ Sistema de temas autónomo.
+- ❌ **El Chef Lobo fue despedido** (Personaje e IA asociada retirados completamente de la cartelería).
 
 ## 🎯 Plan de Mejoras Prioritarias
 
-### 1. Optimización de Performance 🚀
-**Objetivo:** Reducir tiempo de carga y mejorar fluidez
+### 1. Optimización de Performance (Vista Ultra-Wide) 🚀
+**Objetivo:** Reducir tiempo de carga y garantizar máxima fluidez a lo largo de las 4 pantallas.
 
 **Acciones:**
-- Implementar lazy loading para imágenes del lobo chef
-- Usar CSS containment para carrusel
-- Optimizar animaciones con `will-change` y `transform`
-- Carga diferida de componentes no críticos
-- Minificar CSS/JS en producción
+- Implementar lazy loading sincronizado para todas las imágenes del carrusel gigante.
+- Usar CSS containment para el track del carrusel (`contain: layout style paint;`).
+- Optimizar animaciones de desplazamiento con `will-change: transform` y `transform: translateZ(0)`.
+- Carga diferida de componentes publicitarios no críticos.
+- Limpiar y remover código muerto relacionado al Chef Lobo en CSS y JS (`columna4_chef.css`, `lobo_chef.js`, etc.).
 
 **Beneficios:**
-- 30-40% reducción en tiempo de carga inicial
-- Carrusel más fluido en TVs de bajo rendimiento
-- Menor consumo de CPU/GPU
+- 30-40% de reducción en el tiempo de carga inicial.
+- Carrusel ultra fluido y sin saltos al cruzar entre monitores.
+- Liberación significativa de RAM y CPU al remover al personaje interactivo.
 
-### 2. Animaciones y Transiciones Suaves ✨
-**Objetivo:** Experiencia visual más profesional
+### 2. Sincronización y Transiciones Suaves ✨
+**Objetivo:** Experiencia visual profesional continua sin cortes bruscos.
 
 **Acciones:**
-- Transiciones suaves entre rotaciones de columna 1
-- Fade-in/out para cambios de tema
-- Animación de entrada para tarjetas del carrusel
-- Efecto parallax en hover de tarjetas
-- Skeleton loading mientras cargan datos
+- Transiciones suaves y continuas del carrusel a lo largo de la matriz de TVs.
+- Fade-in/out sincronizado para cambios de tema globales.
+- Compensación de biseles (Bezel Correction) para que las tarjetas de productos no se deformen en las uniones de las TVs.
+- Skeleton loading dinámico mientras cargan los datos de las ofertas.
 
 **Beneficios:**
-- Experiencia más pulida
-- Feedback visual mejorado
-- Reducción de saltos visuales
+- Sensación de una única pantalla gigante inmersiva.
+- Evita productos cortados a la mitad por los marcos de las pantallas.
+- Feedback visual mejorado para los clientes en sala.
 
-### 3. Responsive Design Avanzado 📺
-**Objetivo:** Perfecto en cualquier tamaño de TV
+### 3. Responsive Design Avanzado (Multi-Monitor) 📺
+**Objetivo:** Perfecto ajuste para cualquier matriz de pantallas combinadas.
 
 **Acciones:**
-- Breakpoints específicos: 1366px, 1920px, 2560px, 3840px
-- Adaptive sizing basado en resolución real
-- Safe zones ajustables por configuración
-- Orientación responsive (portrait/landscape)
-- Font scaling dinámico por densidad de píxeles
+- Configuración de resolución panorámica combinada (Ej: 7680x1080px para 4 monitores Full HD).
+- Adaptive sizing para asegurar que las tarjetas de productos mantengan una proporción legible a la distancia.
+- Zonas seguras (Safe Zones) dinámicas basadas en los bordes del hardware.
+- Escala de tipografía global basada en la distancia promedio del espectador.
 
 **Beneficios:**
-- Perfecto en TVs desde 32" hasta 85"
-- Adaptación automática a 4K/8K
-- Safe zones para TV bezels
+- Continuidad perfecta e impacto visual maximizado.
+- Ajuste universal sin importar si son pantallas de 32", 55" o 85".
 
-### 4. Sistema de Rotación Inteligente 🔄
-**Objetivo:** Contenido dinámico y relevante
+### 4. Sistema de Rotación y Publicidad Inteligente ("Takeover") 🔄📢
+**Objetivo:** Publicidad espectacular que aproveche todo el espacio.
 
 **Acciones:**
-- Rotación basada en hora del día
-- Priorizar productos según stock disponible
-- Integración con IA para recomendaciones
-- A/B testing de layouts
-- Personalización por ubicación/tienda
+- Formato **Takeover**: Permitir que un solo anuncio o promoción tome las 4 pantallas temporalmente.
+- Rotación del carrusel basada en hora del día y stock disponible (para no promocionar productos agotados).
+- Integración de IA para recomendaciones globales (cross-selling).
+- Segmentación publicitaria por categorías y programación horaria.
 
 **Beneficios:**
-- Contenido más relevante
-- Mejor conversión
-- Experiencia personalizada
+- Efecto WOW que capta 100% la atención del cliente.
+- Mayor rentabilidad por espacios publicitarios en tienda.
+- Contenido sumamente relevante y actualizado en tiempo real.
 
-### 5. Monitoreo y Analytics 📊
-**Objetivo:** Métricas de uso y performance
+### 5. Monitoreo, Analytics y Accesibilidad 📊♿
+**Objetivo:** Medir rendimiento técnico e impacto comercial.
 
 **Acciones:**
-- Event tracking para interacciones
-- Performance monitoring (FPS, carga)
-- Error logging y alertas
-- Métricas de productos más vistos
-- A/B testing de layouts
+- Performance tracking de FPS específico para arreglos multi-pantalla.
+- Métricas de productos más visualizados (Tiempo en pantalla).
+- A/B testing de tiempos de desplazamiento del carrusel.
+- Soporte para alto contraste (WCAG) y temas nocturnos o para tiendas con alta iluminación.
 
 **Beneficios:**
-- Data-driven improvements
-- Detección temprana de problemas
-- Optimización basada en datos reales
-
-### 6. Accesibilidad y Contraste ♿
-**Objetivo:** Cumplimiento WCAG y mejor legibilidad
-
-**Acciones:**
-- Verificar contraste WCAG AA/AAA
-- Soporte para screen readers
-- Navegación por teclado completa
-- Texto escalable por usuario
-- Modo alto contraste opcional
-
-**Beneficios:**
-- Inclusividad mejorada
-- Cumplimiento legal
-- Experiencia para todos los usuarios
-
-### 7. Integración Avanzada de Motores ⚙️
-**Objetivo:** Máximo provecho de motores existentes
-
-**Acciones:**
-- Integración completa con motor_ventas
-- Cross-selling inteligente en columna 3
-- Upselling basado en IA
-- Recomendaciones por clima real
-- Predicción de demanda
-
-**Beneficios:**
-- Mayor conversión
-- Experiencia más inteligente
-- Ventas cruzadas efectivas
-
-### 8. Sistema de Publicidad Dinámico 📢
-**Objetivo:** Publicidad no intrusiva pero efectiva
-
-**Acciones:**
-- Reglas de frecuencia configurable
-- Segmentación por categoría
-- A/B testing de creativos
-- CTR tracking
-- Programación horaria
-
-**Beneficios:**
-- Publicidad más efectiva
-- Menor intrusión
-- ROI medible
+- Decisiones respaldadas por datos reales.
+- Detección inmediata si un monitor sufre caídas de cuadros.
+- Mejor legibilidad para todo tipo de clientes.
 
 ## 📅 Roadmap de Implementación
 
 ### Fase 1 (Inmediata - 1 semana)
-1. Optimización de performance básica
-2. Animaciones suaves de entrada
-3. Responsive para tamaños comunes (1920, 2560)
+1. **Refactorización de limpieza**: Eliminar los archivos CSS, JS y módulos antiguos del Chef Lobo (limpiar `columna4` y `lobo.db`).
+2. Implementar la estructura CSS ultra-wide (`width: 400vw` o contenedor global en lugar de 4 columnas separadas).
+3. Ajuste inicial de Bezel Correction (Compensación de bordes).
 
 ### Fase 2 (Corto plazo - 2 semanas)
-4. Lazy loading y carga diferida
-5. Sistema de rotación por hora
-6. Monitoreo básico de errores
+4. Sincronización del lazy loading en el carrusel de ofertas unificado.
+5. Monitoreo de FPS para evaluar el impacto en la tarjeta gráfica del servidor TPV.
+6. Habilitar la primera versión del formato publicitario "Takeover".
 
-### Fase 3 (Mediano plazo - 1 mes)
-7. Analytics y event tracking
-8. Integración avanzada IA
-9. Publicidad dinámica programable
+### Fase 3 (Mediano/Largo plazo - 1 a 2 meses)
+7. Integración avanzada de la IA (ahora orientada a la sugerencia general de productos, sin avatar).
+8. A/B testing de velocidad del carrusel para maximizar el tiempo de retención visual del cliente.
+9. Despliegue del sistema de métricas de impacto comercial.
 
-### Fase 4 (Largo plazo - 2 meses)
-10. A/B testing completo
-11. Personalización avanzada
-12. Sistema de recomendaciones predictivo
+## 🚀 Próximos Pasos Técnicos
 
-## 🔧 Mejoras Técnicas Específicas
-
-### CSS Optimizations
-```css
-/* Containment para performance */
-.carousel-track {
-    contain: layout style paint;
-}
-
-/* GPU acceleration */
-.tv-card {
-    transform: translateZ(0);
-    will-change: transform;
-}
-
-/* Smooth animations */
-@media (prefers-reduced-motion: no-preference) {
-    .tv-card {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-}
-```
-
-### JavaScript Optimizations
-```javascript
-// Lazy loading
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            loadCard(entry.target);
-        }
-    });
-});
-
-// Virtualized carousel
-const visibleRange = { start: 0, end: 6 };
-function updateVisibleCards() {
-    // Solo renderizar tarjetas visibles
-}
-```
-
-### Performance Monitoring
-```javascript
-// FPS tracking
-const fpsMonitor = {
-    frameCount: 0,
-    lastTime: performance.now(),
-    update() {
-        this.frameCount++;
-        const now = performance.now();
-        if (now - this.lastTime >= 1000) {
-            const fps = this.frameCount;
-            console.log(`FPS: ${fps}`);
-            this.frameCount = 0;
-            this.lastTime = now;
-        }
-    }
-};
-```
-
-## 🎨 Mejoras Visuales
-
-### Temas Expandidos
-- Tema "Cyberpunk" para tiendas nocturnas
-- Tema "Minimalista" para boutiques premium
-- Tema "Fiesta" para temporadas especiales
-- Tema "Deportivo" para gimnasios
-
-### Micro-interacciones
-- Pulse effect en ofertas flash
-- Skeleton shimmer durante carga
-- Progress circle para contador
-- Confetti en compras especiales
-
-### Tipografía Mejorada
-- Display fonts más impactantes
-- Mejor legibilidad en distancias largas
-- Weight pairing optimizado
-- Line-height ajustado por tamaño de TV
-
-## 📊 Métricas de Éxito
-
-### Performance
-- Tiempo de carga < 2s
-- FPS > 55 en carrusel
-- Memory < 100MB
-
-### UX
-- Tasa de interacción > 15%
-- CTR en publicidad > 2%
-- Satisfacción visual > 4.5/5
-
-### Negocio
-- Aumento de conversión esperado: 15-25%
-- Mayor engagement con productos
-- Mejor recuerdo de marca
-
-## 🚀 Next Steps
-
-1. **Implementar Phase 1** immediately
-2. **Testing en diferentes TVs** (32", 42", 55", 65", 85")
-3. **Recolección de feedback** de usuarios reales
-4. **Iterar basado en datos** reales
-5. **Escalar** a múltiples tiendas
-
-Este plan garantiza una cartelería HTML profesional, performante y efectiva para aumentar ventas.
+1. Entrar a `src/carteleria/lanzador_tv/la_cara_web/` y desvincular `columna4_chef.css` y `columna4.js`.
+2. Actualizar `app.js` e `index.html` para remover la estructura de 4 columnas independientes y usar un layout Flex/Grid unificado para el carrusel principal.
+3. Probar en los monitores físicos la nueva velocidad de desplazamiento.

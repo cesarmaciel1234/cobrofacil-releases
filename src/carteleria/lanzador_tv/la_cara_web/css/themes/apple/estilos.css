@@ -1,39 +1,202 @@
+/* ==========================================================
+   TEMA APPLE - ALTA GAMA (iOS / visionOS Aesthetic)
+   ⚡ OTRO NIVEL: Animaciones, Fluidos, 3D y Glow ⚡
+   ========================================================== */
+
 :root {
-    --bg-primary: #F8F9FA;
+    --bg-primary: #F5F5F7; 
     --bg-secondary: #FFFFFF;
-    --surface-primary: rgba(255, 255, 255, 0.8);
-    --text-primary: #1A1A1A;
-    --text-secondary: #6B7280;
-    --accent-primary: #007AFF;
-    --accent-secondary: #5856D6;
-    --accent-rgb: 0, 122, 255;
-    --border-subtle: rgba(0, 0, 0, 0.06);
-    --success-color: #34C759;
+    --apple-red: #FF3B30;
+    --apple-orange: #FF9500;
+    --apple-pink: #FF2D55;
+    --apple-blue: #0071E3;
+
+    /* Tarjetas con extra volumen y contraste */
+    --rank-card-bg: rgba(255, 255, 255, 0.85);
+    --rank-card-border: rgba(255, 255, 255, 1);
+    --rank-card-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04);
+    
+    /* Top 1 como una joya absoluta */
+    --rank-top1-bg: linear-gradient(135deg, #FFFFFF 0%, #FFF9F0 100%);
+    --rank-top1-border: #FF9500;
+    --rank-top1-shadow: 0 15px 50px rgba(255, 149, 0, 0.25), inset 0 0 0 2px rgba(255, 255, 255, 0.8);
+    
+    --rank-top2-bg: rgba(255, 255, 255, 0.85);
+    --rank-top2-border: rgba(255, 255, 255, 1);
+    --rank-top3-bg: rgba(255, 255, 255, 0.85);
+    --rank-top3-border: rgba(255, 255, 255, 1);
+    
+    --rank-badge-bg: #F5F5F7;
+    --rank-badge-color: #1D1D1F;
+    
+    /* El #1 súper vibrante */
+    --rank-badge-top1-bg: linear-gradient(135deg, #FF2D55, #FF3B30, #FF9500);
+    --rank-badge-top1-color: #FFFFFF;
+    
+    --rank-name-color: #1D1D1F;
+    --rank-bar-bg: linear-gradient(90deg, #FF3B30, #FF9500, #FFCC00);
+    --rank-bar-track: rgba(0, 0, 0, 0.05);
+    --rank-tag-color: #1D1D1F;
+    --rank-social-color: #FF2D55;
+    --rank-fire-shadow: rgba(255, 59, 48, 0.6);
+    
+    --rank-dot-bg: rgba(0, 0, 0, 0.15);
+    --rank-dot-active: #FF3B30;
+    --rank-progress-bar: linear-gradient(90deg, #FF3B30, #FF9500);
 }
 
-body {
-    background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+/* ==========================================================
+   ANIMACIONES KEYFRAMES (Next Level)
+   ========================================================== */
+@keyframes aurora {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0px) scale(1.05); }
+    50% { transform: translateY(-8px) scale(1.05); }
+}
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); transform: scale(1); }
+    50% { box-shadow: 0 4px 30px rgba(255, 59, 48, 0.8), 0 0 15px rgba(255, 59, 48, 0.6); transform: scale(1.05); }
+}
+@keyframes glass-shine {
+    0% { left: -100%; opacity: 0; }
+    20% { opacity: 1; }
+    100% { left: 200%; opacity: 0; }
 }
 
-.logo {
-    background: linear-gradient(135deg, #007AFF, #5856D6);
-    box-shadow: 0 4px 20px rgba(0, 122, 255, 0.25);
+/* ==========================================================
+   FONDO FLUIDO Y DINÁMICO
+   ========================================================== */
+body[data-theme="apple"] {
+    /* Fondo que respira y se mueve lentamente */
+    background: linear-gradient(135deg, #FFE9F0 0%, #FFF5E5 25%, #E6F2FF 75%, #FFFFFF 100%);
+    background-size: 300% 300%;
+    animation: aurora 15s ease infinite alternate;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.premium-column {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+/* ==========================================================
+   CABECERAS CON EFECTO TITANIO / CRISTAL
+   ========================================================== */
+body[data-theme="apple"] .sale-head.rank-head, 
+body[data-theme="apple"] .rank-head,
+body[data-theme="apple"] .asian-flash-header,
+body[data-theme="apple"] .asian-flash-header-urgent {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 250, 0.85)) !important;
+    backdrop-filter: blur(40px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    border: 1px solid rgba(255, 255, 255, 1) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 2px 5px rgba(255,255,255,0.8) !important;
+    border-radius: 20px !important;
 }
 
-.footer {
-    background: linear-gradient(90deg, #007AFF, #5856D6);
+body[data-theme="apple"] .rank-kicker,
+body[data-theme="apple"] .asian-flash-title {
+    color: #1D1D1F !important;
+    text-shadow: 0 2px 4px rgba(255,255,255,0.9) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em !important;
+    font-size: clamp(1.2rem, 1.6vw, 1.4rem) !important;
 }
 
-.zocalo-pill {
-    background: #FFFFFF;
+/* ==========================================================
+   TARJETAS DE OFERTAS: EFECTOS 3D Y DESTELLOS
+   ========================================================== */
+body[data-theme="apple"] .asian-flash-product {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.85) 100%) !important;
+    backdrop-filter: blur(30px) !important;
+    border: 1px solid #FFFFFF !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0,0,0,0.03) !important;
+    border-radius: 22px !important;
+    position: relative;
+    overflow: hidden !important; /* Para que el destello no se salga */
 }
 
-.marquee-text {
-    color: #111111;
+/* El destello de luz que pasa por la tarjeta simulando cristal caro */
+body[data-theme="apple"] .asian-flash-product::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    animation: glass-shine 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* IMÁGENES FLOTANTES (3D Effect) */
+body[data-theme="apple"] .asian-flash-product-image {
+    background: radial-gradient(circle at center, #FFFFFF 0%, #FFF0F0 100%) !important;
+    border-radius: 16px !important;
+    box-shadow: inset 0 2px 8px rgba(255, 59, 48, 0.08) !important;
+    perspective: 1000px;
+}
+body[data-theme="apple"] .asian-flash-product-image img {
+    animation: float 4s ease-in-out infinite;
+    filter: drop-shadow(0 12px 15px rgba(0,0,0,0.2));
+}
+
+/* TEXTOS Y PRECIOS */
+body[data-theme="apple"] .asian-flash-product-name {
+    color: #000000 !important;
+    font-weight: 800 !important;
+    font-size: clamp(1.1rem, 1.4vw, 1.3rem) !important;
+}
+
+body[data-theme="apple"] .asian-flash-current {
+    /* Precio con degradado metálico/cálido */
+    background: linear-gradient(135deg, #FF3B30, #FF9500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900 !important;
+    font-size: clamp(1.4rem, 1.8vw, 1.7rem) !important;
+    filter: drop-shadow(0px 2px 4px rgba(255,59,48,0.25));
+}
+
+/* BADGES QUE PALPITAN (Urgencia viva) */
+body[data-theme="apple"] .asian-flash-badge {
+    background: linear-gradient(135deg, #FF3B30, #FF2D55) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    font-weight: 900 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+    border-radius: 12px !important;
+    animation: pulse-glow 2s ease-in-out infinite !important;
+    z-index: 20;
+}
+
+body[data-theme="apple"] .asian-flash-product-tag {
+    color: #FF9500 !important;
+    font-weight: 800 !important;
+    background: rgba(255, 149, 0, 0.1) !important;
+    padding: 3px 10px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 149, 0, 0.2) !important;
+}
+
+/* ==========================================================
+   ZÓCALO Y RELOJ (Island)
+   ========================================================== */
+body[data-theme="apple"] .zocalo-pill {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(40px) !important;
+    border: 1px solid #FFFFFF !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+body[data-theme="apple"] .marquee-text {
+    color: #000000 !important;
+    font-weight: 800 !important;
+    font-size: 1.2em !important;
+}
+
+body[data-theme="apple"] .glass-panel {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #FFFFFF !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+    font-weight: 800 !important;
 }

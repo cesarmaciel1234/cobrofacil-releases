@@ -43,51 +43,70 @@ UNSHARP_MASK_RADIUS = 2
 UNSHARP_MASK_PERCENT = 150
 UNSHARP_MASK_THRESHOLD = 3
 
-def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_THRESHOLD):
+def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_THRESHOLD, use_ai=False):
     """
-    Remueve fondo negro y blanco y lo hace transparente
+    Remueve el fondo. Si use_ai es True, usa rembg. Si no, usa el método básico por colores.
     """
+    if use_ai:
+        try:
+            from rembg import remove, new_session
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            # Usamos u2netp (versión ultraligera de 4MB) para que sea rapidísimo y no tarde descargando
+            session = new_session('u2netp')
+            result = remove(img, session=session)
+            return result
+        except ImportError:
+            import sys
+            print("ADVERTENCIA: rembg no está instalado. Fallback a método básico por colores.", file=sys.stderr)
+        except Exception as e:
+            print(f"ERROR: Error al usar rembg: {e}. Fallback a método básico por colores.")
+            import traceback
+            traceback.print_exc()
+
+    # MÉTODO BÁSICO (Threshold)
     # Convertir a RGBA si no lo está para asegurar el canal alfa
     if img.mode != 'RGBA':
         img = img.convert('RGBA')
-    
-    # Intentar usar numpy para un procesamiento más rápido si está disponible
-    try:
-        import numpy as np
-        data = np.array(img)
         
-        # Crear máscara para píxeles oscuros (negro) basándose en los umbrales
-        mask_black = (data[:, :, 0] < black_threshold) & (data[:, :, 1] < black_threshold) & (data[:, :, 2] < black_threshold)
+        # Intentar usar numpy para un procesamiento más rápido si está disponible
+        try:
+            import numpy as np
+            data = np.array(img)
+            
+            # Crear máscara para píxeles oscuros (negro) basándose en los umbrales
+            mask_black = (data[:, :, 0] < black_threshold) & (data[:, :, 1] < black_threshold) & (data[:, :, 2] < black_threshold)
+            
+            # Crear máscara para píxeles claros (blanco) basándose en los umbrales
+            mask_white = (data[:, :, 0] > white_threshold) & (data[:, :, 1] > white_threshold) & (data[:, :, 2] > white_threshold)
+            
+            # Combinar ambas máscaras para identificar los píxeles a hacer transparentes
+            mask = mask_black | mask_white
+            
+            # Establecer el canal alfa a 0 (transparente) para los píxeles en la máscara
+            data[mask, 3] = 0  # Alpha = 0 para transparente
+            
+            # Convertir la matriz numpy de vuelta a un objeto PIL Image
+            img = Image.fromarray(data, 'RGBA')
+            
+        except ImportError:
+            # Fallback si numpy no está instalado, usando iteración de píxeles (más lento)
+            pixels = img.getdata()
+            new_pixels = []
+            
+            for p in pixels:
+                r, g, b, a = p
+                # Si el píxel es negro/muy oscuro o blanco/muy claro, hacerlo transparente
+                if (r < black_threshold and g < black_threshold and b < black_threshold) or \
+                   (r > white_threshold and g > white_threshold and b > white_threshold):
+                    new_pixels.append((0, 0, 0, 0))  # Transparente
+                else:
+                    new_pixels.append(p)
+            
+            img.putdata(new_pixels)
         
-        # Crear máscara para píxeles claros (blanco) basándose en los umbrales
-        mask_white = (data[:, :, 0] > white_threshold) & (data[:, :, 1] > white_threshold) & (data[:, :, 2] > white_threshold)
-        
-        # Combinar ambas máscaras para identificar los píxeles a hacer transparentes
-        mask = mask_black | mask_white
-        
-        # Establecer el canal alfa a 0 (transparente) para los píxeles en la máscara
-        data[mask, 3] = 0  # Alpha = 0 para transparente
-        
-        # Convertir la matriz numpy de vuelta a un objeto PIL Image
-        img = Image.fromarray(data, 'RGBA')
-        
-    except ImportError:
-        # Fallback si numpy no está instalado, usando iteración de píxeles (más lento)
-        pixels = img.getdata()
-        new_pixels = []
-        
-        for p in pixels:
-            r, g, b, a = p
-            # Si el píxel es negro/muy oscuro o blanco/muy claro, hacerlo transparente
-            if (r < black_threshold and g < black_threshold and b < black_threshold) or \
-               (r > white_threshold and g > white_threshold and b > white_threshold):
-                new_pixels.append((0, 0, 0, 0))  # Transparente
-            else:
-                new_pixels.append(p)
-        
-        img.putdata(new_pixels)
-    
-    return img
+        return img
 
 def smart_sharpen(img, amount=1.5, radius=2, threshold=3):
     """
@@ -181,48 +200,9 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
                              white_threshold=WHITE_THRESHOLD,
                              denoise_strength=3, smart_sharpen_amount=1.5, smart_sharpen_radius=2, smart_sharpen_threshold=3,
                              edge_preserve_smooth_radius=1,
-                             enable_depth_effect=True, enable_vignette_effect=True, enable_rim_light_effect=True):
+                             enable_depth_effect=True, enable_vignette_effect=True, enable_rim_light_effect=True, use_ai=False):
     """
     Convierte imagen a PNG con fondo transparente y efectos 3D personalizables.
-    
-    Parámetros:
-    input_path (str): Ruta al archivo de imagen de entrada.
-    output_path (str): Ruta para guardar la imagen de salida PNG.
-    target_size (tuple, optional): (ancho, alto) de la imagen de salida. None para mantener el tamaño original.
-    dpi (int, optional): DPI para guardar la imagen. Por defecto 150.
-    sharpness_factor (float, optional): Factor de nitidez para ImageEnhance.Sharpness.
-    contrast_factor (float, optional): Factor de contraste para ImageEnhance.Contrast.
-    saturation_factor (float, optional): Factor de saturación para enhance_colors.
-    brightness_factor (float, optional): Factor de brillo para enhance_colors.
-    shadow_offset (int, optional): Desplazamiento de la sombra.
-    shadow_blur_radius (int, optional): Radio de desenfoque de la sombra.
-    highlight_alpha_start (int, optional): Transparencia inicial del highlight.
-    depth_alpha_start (int, optional): Transparencia inicial del efecto de profundidad.
-    depth_outline_width (int, optional): Ancho del contorno del efecto de profundidad.
-    depth_blur_radius (int, optional): Radio de desenfoque del efecto de profundidad.
-    rim_light_alpha_start (int, optional): Transparencia inicial del rim light.
-    rim_light_iterations (int, optional): Número de iteraciones para el rim light.
-    rim_light_offset_multiplier (int, optional): Multiplicador de offset para el rim light.
-    rim_light_alpha_decrement (int, optional): Decremento de transparencia para el rim light.
-    rim_light_outline_width (int, optional): Ancho del contorno para el rim light.
-    rim_light_blur_radius (int, optional): Radio de desenfoque del rim light.
-    vignette_alpha_start (int, optional): Transparencia inicial de la viñeta.
-    vignette_outline_width (int, optional): Ancho del contorno de la viñeta.
-    vignette_blur_radius (int, optional): Radio de desenfoque de la viñeta.
-    unsharp_mask_radius (int, optional): Radio para UnsharpMask.
-    unsharp_mask_percent (int, optional): Porcentaje para UnsharpMask.
-    unsharp_mask_threshold (int, optional): Umbral para UnsharpMask.
-    shadow_alpha_start (int, optional): Alpha inicial de la sombra.
-    black_threshold (int, optional): Umbral para detectar negro en remover_fondo.
-    white_threshold (int, optional): Umbral para detectar blanco en remover_fondo.
-    denoise_strength (int, optional): Fuerza de denoising.
-    smart_sharpen_amount (float, optional): Cantidad para smart_sharpen.
-    smart_sharpen_radius (int, optional): Radio para smart_sharpen.
-    smart_sharpen_threshold (int, optional): Umbral para smart_sharpen.
-    edge_preserve_smooth_radius (int, optional): Radio para edge_preserve_smooth.
-    enable_depth_effect (bool, optional): Habilita/deshabilita el efecto de profundidad.
-    enable_vignette_effect (bool, optional): Habilita/deshabilita el efecto de viñeta.
-    enable_rim_light_effect (bool, optional): Habilita/deshabilita el efecto de rim light.
     """
     try:
         print(f"INFO: Iniciando procesamiento de imagen: {input_path}")
@@ -231,7 +211,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         print("INFO: Imagen abierta. Tamaño original:", img.size)
         
         # Remover fondo negro y blanco con umbrales dinámicos
-        img = remover_fondo(img, black_threshold=black_threshold, white_threshold=white_threshold)
+        img = remover_fondo(img, black_threshold=black_threshold, white_threshold=white_threshold, use_ai=use_ai)
         print("INFO: Fondo removido.")
         
         # Redimensionar a tamaño objetivo con alta calidad (si se especifica)
@@ -259,7 +239,13 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             # Centrar la imagen en el canvas
             offset_x = (target_width - new_width) // 2
             offset_y = (target_height - new_height) // 2
-            canvas.paste(img, (offset_x, offset_y), img if img.mode == 'RGBA' else None)
+            
+            # Asegurar que la imagen tenga canal alpha para el paste
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            # Usar el canal alpha de la imagen como máscara
+            canvas.paste(img, (offset_x, offset_y), img)
             
             img = canvas
         
@@ -474,6 +460,7 @@ def main():
     parser.add_argument("--enable_depth", type=bool, default=True, help="Habilita el efecto de profundidad.")
     parser.add_argument("--enable_vignette", type=bool, default=True, help="Habilita el efecto de viñeta.")
     parser.add_argument("--enable_rim_light", type=bool, default=False, help="Habilita el efecto de rim light.")
+    parser.add_argument("--use_ai", action='store_true', help="Usar rembg (IA) para eliminar el fondo.")
     
     args = parser.parse_args()
     
@@ -499,8 +486,9 @@ def main():
             sys.exit(1)
 
     success = crear_efecto_3d_realista(
-        input_path=args.input_path, 
-        output_path=args.output_path,
+        args.input_path, 
+        args.output_path,
+        use_ai=args.use_ai,
         target_size=target_size,
         sharpness_factor=args.sharpness_factor,
         contrast_factor=args.contrast_factor,
