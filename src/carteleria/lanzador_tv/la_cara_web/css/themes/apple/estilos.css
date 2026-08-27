@@ -1,202 +1,237 @@
-/* ==========================================================
-   TEMA APPLE - ALTA GAMA (iOS / visionOS Aesthetic)
-   ⚡ OTRO NIVEL: Animaciones, Fluidos, 3D y Glow ⚡
-   ========================================================== */
+/* ══════════════════════════════════════════════════
+   APPLE — Alta Gama — estilos.css
+   Mismo DOM/estructura que premium/temu/blackfriday,
+   solo cambia el vestuario.
+   ══════════════════════════════════════════════════ */
+@import url('../../structural_base.css');
 
-:root {
-    --bg-primary: #F5F5F7; 
-    --bg-secondary: #FFFFFF;
-    --apple-red: #FF3B30;
-    --apple-orange: #FF9500;
-    --apple-pink: #FF2D55;
-    --apple-blue: #0071E3;
-
-    /* Tarjetas con extra volumen y contraste */
-    --rank-card-bg: rgba(255, 255, 255, 0.85);
-    --rank-card-border: rgba(255, 255, 255, 1);
-    --rank-card-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04);
-    
-    /* Top 1 como una joya absoluta */
-    --rank-top1-bg: linear-gradient(135deg, #FFFFFF 0%, #FFF9F0 100%);
-    --rank-top1-border: #FF9500;
-    --rank-top1-shadow: 0 15px 50px rgba(255, 149, 0, 0.25), inset 0 0 0 2px rgba(255, 255, 255, 0.8);
-    
-    --rank-top2-bg: rgba(255, 255, 255, 0.85);
-    --rank-top2-border: rgba(255, 255, 255, 1);
-    --rank-top3-bg: rgba(255, 255, 255, 0.85);
-    --rank-top3-border: rgba(255, 255, 255, 1);
-    
-    --rank-badge-bg: #F5F5F7;
-    --rank-badge-color: #1D1D1F;
-    
-    /* El #1 súper vibrante */
-    --rank-badge-top1-bg: linear-gradient(135deg, #FF2D55, #FF3B30, #FF9500);
-    --rank-badge-top1-color: #FFFFFF;
-    
-    --rank-name-color: #1D1D1F;
-    --rank-bar-bg: linear-gradient(90deg, #FF3B30, #FF9500, #FFCC00);
-    --rank-bar-track: rgba(0, 0, 0, 0.05);
-    --rank-tag-color: #1D1D1F;
-    --rank-social-color: #FF2D55;
-    --rank-fire-shadow: rgba(255, 59, 48, 0.6);
-    
-    --rank-dot-bg: rgba(0, 0, 0, 0.15);
-    --rank-dot-active: #FF3B30;
-    --rank-progress-bar: linear-gradient(90deg, #FF3B30, #FF9500);
+body {
+    background: var(--screen-bg);
 }
 
-/* ==========================================================
-   ANIMACIONES KEYFRAMES (Next Level)
-   ========================================================== */
-@keyframes aurora {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-@keyframes float {
-    0%, 100% { transform: translateY(0px) scale(1.05); }
-    50% { transform: translateY(-8px) scale(1.05); }
-}
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4); transform: scale(1); }
-    50% { box-shadow: 0 4px 30px rgba(255, 59, 48, 0.8), 0 0 15px rgba(255, 59, 48, 0.6); transform: scale(1.05); }
-}
-@keyframes glass-shine {
-    0% { left: -100%; opacity: 0; }
-    20% { opacity: 1; }
-    100% { left: 200%; opacity: 0; }
+.logo {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.25);
 }
 
-/* ==========================================================
-   FONDO FLUIDO Y DINÁMICO
-   ========================================================== */
-body[data-theme="apple"] {
-    /* Fondo que respira y se mueve lentamente */
-    background: linear-gradient(135deg, #FFE9F0 0%, #FFF5E5 25%, #E6F2FF 75%, #FFFFFF 100%);
-    background-size: 300% 300%;
-    animation: aurora 15s ease infinite alternate;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+.premium-column {
+    background: var(--surface-primary);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid var(--border-subtle);
 }
 
-/* ==========================================================
-   CABECERAS CON EFECTO TITANIO / CRISTAL
-   ========================================================== */
-body[data-theme="apple"] .sale-head.rank-head, 
-body[data-theme="apple"] .rank-head,
-body[data-theme="apple"] .asian-flash-header,
-body[data-theme="apple"] .asian-flash-header-urgent {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 250, 0.85)) !important;
-    backdrop-filter: blur(40px) !important;
-    -webkit-backdrop-filter: blur(40px) !important;
-    border: 1px solid rgba(255, 255, 255, 1) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 2px 5px rgba(255,255,255,0.8) !important;
-    border-radius: 20px !important;
+.footer {
+    background: var(--footer-bg);
 }
 
-body[data-theme="apple"] .rank-kicker,
-body[data-theme="apple"] .asian-flash-title {
-    color: #1D1D1F !important;
-    text-shadow: 0 2px 4px rgba(255,255,255,0.9) !important;
-    font-weight: 900 !important;
-    letter-spacing: -0.02em !important;
-    font-size: clamp(1.2rem, 1.6vw, 1.4rem) !important;
+.zocalo-pill {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
 }
 
-/* ==========================================================
-   TARJETAS DE OFERTAS: EFECTOS 3D Y DESTELLOS
-   ========================================================== */
-body[data-theme="apple"] .asian-flash-product {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.85) 100%) !important;
-    backdrop-filter: blur(30px) !important;
-    border: 1px solid #FFFFFF !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0,0,0,0.03) !important;
-    border-radius: 22px !important;
-    position: relative;
-    overflow: hidden !important; /* Para que el destello no se salga */
+.marquee-text {
+    color: var(--marquee-text);
 }
 
-/* El destello de luz que pasa por la tarjeta simulando cristal caro */
-body[data-theme="apple"] .asian-flash-product::before {
-    content: "";
-    position: absolute;
-    top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-    transform: skewX(-25deg);
-    animation: glass-shine 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    z-index: 10;
-    pointer-events: none;
+/* ── Franja superior (flash-strip) ── */
+.flash-strip {
+    background: var(--strip-bg);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
-/* IMÁGENES FLOTANTES (3D Effect) */
-body[data-theme="apple"] .asian-flash-product-image {
-    background: radial-gradient(circle at center, #FFFFFF 0%, #FFF0F0 100%) !important;
-    border-radius: 16px !important;
-    box-shadow: inset 0 2px 8px rgba(255, 59, 48, 0.08) !important;
-    perspective: 1000px;
+.flash-strip__track { color: var(--strip-text); }
+.flash-dot   { background: var(--strip-dot); }
+.flash-count {
+    background: var(--strip-count-bg);
+    color: var(--strip-count-text);
 }
-body[data-theme="apple"] .asian-flash-product-image img {
-    animation: float 4s ease-in-out infinite;
-    filter: drop-shadow(0 12px 15px rgba(0,0,0,0.2));
-}
-
-/* TEXTOS Y PRECIOS */
-body[data-theme="apple"] .asian-flash-product-name {
-    color: #000000 !important;
-    font-weight: 800 !important;
-    font-size: clamp(1.1rem, 1.4vw, 1.3rem) !important;
+.flash-strip__ends { color: var(--strip-ends-text); }
+.clock        { color: var(--strip-text); }
+.status-dot   { background: var(--success-color); box-shadow: 0 0 8px rgba(52,199,89,0.5); }
+.status-badge {
+    background: var(--strip-count-bg);
+    border: 1px solid var(--border-subtle);
+    color: var(--accent-primary);
 }
 
-body[data-theme="apple"] .asian-flash-current {
-    /* Precio con degradado metálico/cálido */
-    background: linear-gradient(135deg, #FF3B30, #FF9500);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 900 !important;
-    font-size: clamp(1.4rem, 1.8vw, 1.7rem) !important;
-    filter: drop-shadow(0px 2px 4px rgba(255,59,48,0.25));
+/* ── CABECERAS (sale-head / rank-head) ── */
+.sale-head, .board-head, .rank-head, .sale-head.rank-head {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.board-kicker, .rank-kicker, .sale-head .board-kicker, .sale-head .rank-kicker {
+    color: var(--kicker-color);
+}
+.sale-head .board-title, .sale-head .rank-title { color: var(--text-primary); }
+.rank-dots .rank-dot      { background: var(--rank-dot-bg); border-color: var(--border-subtle); }
+.rank-dots .rank-dot.is-on{ background: var(--rank-dot-active); box-shadow: 0 0 12px rgba(var(--accent-rgb),0.3); }
+
+/* ── TARJETA GENERAL ── */
+.oferta-card, .meal-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+.oferta-card.is-flash, .meal-card.is-flash {
+    border-color: rgba(var(--accent-rgb),0.3);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(var(--accent-rgb),0.1);
+}
+.deal-stage {
+    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
+    border-right: 1px solid var(--border-subtle);
+}
+.deal-stage[data-tone="aves"]    { background: #FFF7EB; }
+.deal-stage[data-tone="cerdo"]   { background: #F8E9EB; }
+.deal-stage[data-tone="almacen"] { background: #E6F3E6; }
+
+.deal-stage__off, .tv-card__badge {
+    background: var(--badge-bg);
+    color: var(--badge-color); /* asumo var(--badge-color) es blanco */
+    box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.25);
+}
+.deal-kicker { color: var(--kicker-color); }
+.deal-stage__name, .tv-card__name, .oferta-card .tv-card__name, .meal-name {
+    color: var(--text-primary);
+}
+.tv-card__now, .oferta-card .tv-card__now, .oferta-card.is-deal .tv-card__now {
+    color: var(--accent-primary);
+}
+.tv-card__was, .oferta-antes { color: var(--text-secondary); }
+.deal-save, .tv-card__save {
+    background: var(--off-badge-bg);
+    color: var(--off-badge-text);
+}
+.tv-card__chip { background: var(--off-badge-bg); color: var(--off-badge-text); }
+.tv-card__unit { color: var(--accent-primary); }
+.tv-card__off  { background: transparent; color: var(--accent-primary); border: none; }
+.tv-card__timer {
+    background: var(--timer-bg);
+    color: var(--timer-text);
+    border: none;
 }
 
-/* BADGES QUE PALPITAN (Urgencia viva) */
-body[data-theme="apple"] .asian-flash-badge {
-    background: linear-gradient(135deg, #FF3B30, #FF2D55) !important;
-    color: #FFFFFF !important;
-    border: none !important;
-    font-weight: 900 !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
-    border-radius: 12px !important;
-    animation: pulse-glow 2s ease-in-out infinite !important;
-    z-index: 20;
+/* ── COL 1 — RANKING ── */
+.rank-card, .rank-card.is-top, .asian-rank-card {
+    background: var(--rank-card-bg);
+    border: 1px solid var(--rank-card-border);
+    box-shadow: var(--rank-card-shadow);
+}
+.rank-card::before { display: none; } /* Remover el antes */
+.rank-card.is-top::after { background: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb),0.1) 0%, transparent 70%); }
+.rank-num { color: var(--accent-primary); }
+.rank-tag {
+    background: var(--off-badge-bg);
+    color: var(--off-badge-text);
+    border: none;
+    box-shadow: none;
+}
+.asian-rank-badge {
+    background: var(--accent-primary);
+    color: var(--text-on-dark);
+}
+.asian-rank-card.top-1 {
+    background: var(--rank-top1-bg);
+    border-color: var(--rank-top1-border);
+    box-shadow: var(--rank-top1-shadow);
+}
+.asian-rank-card.top-2 {
+    background: var(--rank-top2-bg);
+    border-color: var(--rank-top2-border);
+}
+.asian-rank-card.top-3 {
+    background: var(--rank-top3-bg);
+    border-color: var(--rank-top3-border);
+}
+.asian-rank-name  { color: var(--text-primary); }
+.asian-rank-tag   { color: var(--text-primary); }
+.asian-rank-tag-social { color: var(--accent-primary); }
+.asian-rank-progress-bar { background: var(--rank-bar-bg); }
+.rank-score {
+    background: var(--accent-primary);
+    color: var(--text-on-dark);
+}
+.rank-name { color: var(--text-primary); }
+.rank-progress { background: var(--rank-bar-bg); }
+
+
+/* ── COL 2 — PRECIOS ── */
+.price-dept {
+    background: var(--dept-bg);
+    color: var(--dept-text);
+    border-left: 3px solid var(--accent-primary);
+    box-shadow: none;
+}
+.price-row, .price-row.is-offer {
+    background: var(--price-row-bg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.price-row__name  { color: var(--text-primary); }
+.price-row__meta, .price-row__off { color: var(--text-secondary); }
+.price-row__rule  { color: var(--rule-color); }
+.price-row__was   { color: var(--text-secondary); }
+.price-row__now {
+    background: var(--price-now-bg);
+    color: var(--price-now-color);
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.price-ad {
+    background: var(--ad-bg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.price-ad__badge { background: var(--accent-primary); color: var(--text-on-dark); }
+.price-ad__name  { color: var(--ad-text); }
+.price-ad__price { color: var(--text-primary); }
+
+/* ── COL 3 — OFERTA RELÁMPAGO ── */
+.flash-offer__deal, .chef-deal {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.flash-offer__stage {
+    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
+}
+.xsell-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.xsell-ask {
+    color: var(--accent-primary);
+    filter: none;
+}
+.xsell-item {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.xsell-item:nth-child(even) {
+    background: var(--panel-bg);
+    border-color: var(--border-subtle);
+}
+.xsell-item__name  { color: var(--text-primary); }
+.xsell-item__price {
+    color: var(--accent-primary);
+    background: var(--off-badge-bg);
+    border: 1px solid var(--border-subtle);
+}
+.xsell-item__rule  { color: var(--text-secondary); background: var(--off-badge-bg); }
+.flash-offer .tv-card__now, .chef-deal .tv-card__now {
+    color: var(--accent-primary);
+}
+.flash-offer .deal-save, .flash-offer .deal-kicker { color: var(--accent-primary); }
+.flash-offer__stage .deal-stage__off {
+    background: var(--badge-bg);
+    border: none;
+    color: var(--badge-color);
 }
 
-body[data-theme="apple"] .asian-flash-product-tag {
-    color: #FF9500 !important;
-    font-weight: 800 !important;
-    background: rgba(255, 149, 0, 0.1) !important;
-    padding: 3px 10px !important;
-    border-radius: 8px !important;
-    border: 1px solid rgba(255, 149, 0, 0.2) !important;
-}
-
-/* ==========================================================
-   ZÓCALO Y RELOJ (Island)
-   ========================================================== */
-body[data-theme="apple"] .zocalo-pill {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(40px) !important;
-    border: 1px solid #FFFFFF !important;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08) !important;
-}
-
-body[data-theme="apple"] .marquee-text {
-    color: #000000 !important;
-    font-weight: 800 !important;
-    font-size: 1.2em !important;
-}
-
-body[data-theme="apple"] .glass-panel {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid #FFFFFF !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
-    font-weight: 800 !important;
-}
+/* ── Col 4 — tarjetas asiáticas (ya estilizadas en columna4_chef.css) ── */
+/* Sin overrides necesarios — el tema apple es el default de col4 */

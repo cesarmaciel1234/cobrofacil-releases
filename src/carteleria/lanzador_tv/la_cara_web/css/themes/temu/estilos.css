@@ -1,73 +1,40 @@
-:root {
-    --bg-primary: #FFE566;
-    --bg-secondary: #FFFFFF;
-    --surface-primary: #FFFFFF;
-    --text-primary: #1A1A1A;
-    --text-secondary: #C2410C;
-    --accent-primary: #FF6A00;
-    --accent-secondary: #E11D48;
-    --accent-rgb: 255, 106, 0;
-    --border-subtle: rgba(17, 17, 17, 0.08);
-    --success-color: #10B981;
-    /* ── Columna 1 colores ── */
-    --rank-card-bg:          #FFFFFF;
-    --rank-card-border:      rgba(255,71,87,0.18);
-    --rank-card-shadow:      0 4px 15px rgba(255,71,87,0.08);
-    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
-    --rank-top1-border:      #FFD700;
-    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
-    --rank-top2-bg:          linear-gradient(135deg, #FFFFFF, #F1F5F9);
-    --rank-top2-border:      #CBD5E1;
-    --rank-top3-bg:          linear-gradient(135deg, #FFFFFF, #FFEDD5);
-    --rank-top3-border:      #FDBA74;
-    --rank-badge-bg:         #1A1A1A;
-    --rank-badge-color:      #FFFFFF;
-    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
-    --rank-badge-top1-color: #FFFFFF;
-    --rank-name-color:       #1A1A1A;
-    --rank-bar-bg:           linear-gradient(90deg, #FF4757, #FF8C00);
-    --rank-bar-track:        rgba(0,0,0,0.08);
-    --rank-tag-color:        #FFFFFF;
-    --rank-social-color:     #FF4757;
-    --rank-fire-shadow:      rgba(255,71,87,0.4);
-    --rank-dot-bg:           rgba(255,106,0,0.25);
-    --rank-dot-active:       #FF6A00;
-    --rank-progress-bar:     linear-gradient(90deg, #FF3366, #FF9933);
-}
+/* ══════════════════════════════════════════════════
+   TEMU — Nivel Inalcanzable — estilos.css
+   Mismo DOM/estructura que premium/apple/blackfriday,
+   solo cambia el vestuario.
+   ══════════════════════════════════════════════════ */
+@import url('../../structural_base.css');
 
 body[data-theme="temu"],
 body {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 50%, #E2E8F0 100%);
-    min-height: 100vh;
+    background: var(--screen-bg);
 }
 
 .logo {
-    background: linear-gradient(135deg, #FF6A00, #E11D48);
-    box-shadow: 0 8px 20px rgba(255, 106, 0, 0.28);
+    background: linear-gradient(135deg, var(--accent), var(--accent-alt));
+    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.28);
 }
 
 .flash-strip {
-    background: #1A1A1A;
+    background: var(--strip-bg);
     border: 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    box-shadow: var(--shadow-soft);
 }
 
 .flash-strip__track {
-    color: #FFFFFF;
+    color: var(--strip-text);
 }
 
 .flash-count {
-    background: #FFE566;
-    color: #1A1A1A;
+    background: var(--strip-count-bg);
+    color: var(--strip-count-text);
     box-shadow: none;
 }
 
 .premium-column {
-    background: #FFFFFF;
+    background: var(--panel-bg);
     border: 0;
-    border-radius: 22px;
-    box-shadow: 0 12px 36px rgba(28, 16, 0, 0.10);
-    position: relative;
+    box-shadow: none;
 }
 
 .premium-column::before {
@@ -75,35 +42,35 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 4px;
-    border-radius: 22px 22px 0 0;
-    background: linear-gradient(90deg, #FF6A00, #FFB020, #E11D48);
+    border-radius: 22px; /* asumo 22px porque no está en colores.css */
+    background: linear-gradient(90deg, var(--accent), var(--accent-alt), var(--accent));
 }
 
 .sale-head {
-    background: linear-gradient(90deg, #1A1A1A, #2A2A2A) !important;
-    border: 0 !important;
-    border-radius: 14px !important;
-    padding: 0.7vh 0.9vw !important;
+    background: linear-gradient(90deg, var(--text-main), #2A2A2A); /* #2A2A2A no está en colores.css, lo mantengo */
+    border: 0;
+    border-radius: 14px;
+    padding: 0.7vh 0.9vw;
 }
 
 .sale-head.board-head {
-    justify-content: center !important;
+    justify-content: center;
 }
 
 .sale-head--solo {
-    justify-content: center !important;
-    align-items: center !important;
+    justify-content: center;
+    align-items: center;
 }
 
 .sale-head--solo .board-kicker {
     font-size: clamp(0.85rem, 1.2vw, 1.05rem);
     letter-spacing: 0.16em;
-    color: #FFFFFF;
+    color: var(--text-on-dark);
 }
 
 .sale-head.rank-head {
-    justify-content: space-between !important;
-    align-items: center !important;
+    justify-content: space-between;
+    align-items: center;
     background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
     border-radius: 16px;
     padding: 1vh 1.2vw;
@@ -131,7 +98,7 @@ body {
 
 .sale-head .board-kicker,
 .sale-head .rank-kicker {
-    color: #FFFFFF;
+    color: var(--text-on-dark);
     letter-spacing: 0.14em;
     font-weight: 900;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.3);
@@ -153,28 +120,27 @@ body {
 
 .sale-head .board-title,
 .sale-head .rank-title {
-    color: #FFFFFF;
+    color: var(--text-on-dark);
     font-weight: 700;
     letter-spacing: -0.03em;
 }
 
 .rank-dots .rank-dot {
-    background: rgba(255, 215, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.2);
+    background: var(--rank-dot-bg);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.2);
     transition: all 0.3s ease;
 }
 
 .rank-dots .rank-dot.is-on {
-    background: #FFD700;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4);
+    background: var(--rank-dot-active);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6), 0 0 20px rgba(var(--accent-rgb), 0.4);
     transform: scale(1.2);
 }
 
 /* Tarjeta híbrida: chrome de app + energía Temu en el precio - Premium Luxury */
 .tv-card {
-    position: relative;
-    background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF0 50%, #FFF8F0 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
     border: 2px solid rgba(139, 0, 0, 0.12);
     box-shadow: 0 12px 32px rgba(28, 16, 0, 0.08), 0 4px 16px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
     border-radius: 16px;
@@ -203,7 +169,7 @@ body {
     font-size: clamp(0.95rem, 1.45vw, 1.25rem);
     margin-bottom: 0;
     font-weight: 800;
-    color: #1A1A1A;
+    color: var(--text-main);
     letter-spacing: -0.02em;
 }
 
@@ -219,7 +185,6 @@ body {
 }
 
 .oferta-card .tv-card__now-row {
-    padding: 2px 0 0;
     background: transparent;
     box-shadow: none;
 }
@@ -240,7 +205,7 @@ body {
 
 .oferta-card,
 .meal-card {
-    background: linear-gradient(180deg, #FFFFFF 0%, #FFFBF0 50%, #FFF8F0 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
     border: 2px solid rgba(139, 0, 0, 0.12);
     overflow: hidden;
     border-radius: 16px;
@@ -249,21 +214,21 @@ body {
 
 .oferta-card.is-flash,
 .meal-card.is-flash {
-    background: linear-gradient(180deg, #FFF8F0 0%, #FFFFFF 50%, #FFFBF0 100%);
+    background: linear-gradient(180deg, #FFF8F0 0%, var(--bg-secondary) 50%, #FFFBF0 100%);
     border-color: rgba(139, 0, 0, 0.18);
     box-shadow: 0 12px 28px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.4);
 }
 
 .tv-card__badge {
     background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
-    color: #FFFFFF;
+    color: var(--text-on-dark);
     box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
     font-weight: 800;
     letter-spacing: 0.05em;
 }
 
 .tv-card__off {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
     color: #B45309;
     border: 1px solid rgba(180, 83, 9, 0.3);
     font-weight: 700;
@@ -280,13 +245,13 @@ body {
 .tv-card__name,
 .oferta-nombre,
 .meal-name {
-    color: #1A1A1A;
+    color: var(--text-main);
     font-weight: 800;
 }
 
 .tv-card__chip {
     background: #FFF6E8;
-    color: #C2410C;
+    color: var(--text-secondary);
 }
 
 .tv-card__was,
@@ -305,22 +270,21 @@ body {
 }
 
 .tv-card__now {
-    color: #1A1A1A;
+    color: var(--text-main);
 }
 
 .tv-card__unit,
 .tv-card__save {
-    color: #C2410C;
+    color: var(--text-secondary);
 }
 
 .rank-card,
 .rank-card.is-top {
-    background: linear-gradient(180deg, #FFFFFF 0%, #FFF8F0 50%, #FFFBF0 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFF8F0 50%, #FFFBF0 100%);
     border: 2px solid rgba(139, 0, 0, 0.15);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.5);
     border-radius: 16px;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
     overflow: hidden;
 }
 
@@ -352,7 +316,7 @@ body {
 }
 
 .rank-tag {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
     color: #B45309;
     border: 1px solid rgba(180, 83, 9, 0.3);
     font-weight: 700;
@@ -360,7 +324,7 @@ body {
 }
 
 .rank-card.is-ad .rank-tag {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FFFFFF 100%);
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
     color: #B45309;
     border: 1px solid rgba(180, 83, 9, 0.3);
 }
@@ -384,7 +348,7 @@ body {
 }
 
 .oferta-card.is-ad {
-    background: #FFFFFF;
+    background: var(--bg-secondary);
 }
 
 .oferta-card.is-ad .deal-kicker {
@@ -396,7 +360,7 @@ body {
 }
 
 .meal-card {
-    background: #FFFFFF;
+    background: var(--bg-secondary);
     border: 0;
     border-radius: 16px;
     position: relative;
@@ -414,7 +378,6 @@ body {
 }
 
 .meal-card .tv-card__now-row {
-    padding: 2px 0 0;
     background: transparent;
     box-shadow: none;
 }
@@ -446,8 +409,8 @@ body {
 }
 
 .price-dept {
-    color: #FFFFFF;
-    background: #1A1A1A;
+    color: var(--text-on-dark);
+    background: var(--text-main);
     box-shadow: inset 0 -3px 0 #FF6A00;
 }
 
@@ -456,12 +419,12 @@ body {
 }
 
 .price-ad__name {
-    color: #C2410C;
+    color: var(--text-secondary);
 }
 
 .price-row__meta,
 .price-row__off {
-    color: #C2410C;
+    color: var(--text-secondary);
 }
 
 .price-row__was {
@@ -469,12 +432,12 @@ body {
 }
 
 .price-row__name {
-    color: #1A1A1A;
+    color: var(--text-main);
 }
 
 .price-row__now {
     background: #FFE566;
-    color: #1A1A1A;
+    color: var(--text-main);
 }
 
 .footer {
@@ -496,7 +459,7 @@ body {
 }
 
 .marquee-text {
-    color: #1A1A1A;
+    color: var(--text-main);
     font-weight: 800;
 }
 
@@ -516,100 +479,92 @@ body {
 
 /* --- Columna 1 (Ranking) --- */
 .rank-card {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F7 100%) !important;
-    border: 2px solid rgba(255, 71, 87, 0.2) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.08) !important;
-    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-    margin-bottom: 1vh !important;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF5F7 100%);
+    border: 2px solid rgba(255, 71, 87, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1vh;
 }
 .rank-score {
-    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%) !important;
-    color: #FFFFFF !important;
-    border-radius: 999px !important;
-    padding: 2px 10px !important;
-    font-weight: 900 !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
+    color: var(--text-on-dark);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .rank-name {
-    font-weight: 800 !important;
-    color: #2D2D2D !important;
+    font-weight: 800;
+    color: #2D2D2D;
 }
 
 /* --- Columna 2 (Grilla de Precios) --- */
 .price-row {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFF8DC 100%) !important;
-    border: 1px solid rgba(255, 140, 0, 0.2) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06) !important;
-    margin-bottom: 0.6vh !important;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF8DC 100%);
+    border: 1px solid rgba(255, 140, 0, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06);
+    margin-bottom: 0.6vh;
 }
 .price-name {
-    font-weight: 800 !important;
-    color: #1A1A1A !important;
+    font-weight: 800;
+    color: var(--text-main);
 }
 .price-val {
-    color: #FF4757 !important;
-    background: #FFF5F7 !important;
-    padding: 3px 10px !important;
-    border-radius: 8px !important;
-    border: 2px solid rgba(255, 71, 87, 0.15) !important;
-    font-weight: 900 !important;
+    color: #FF4757;
+    background: #FFF5F7;
+    padding: 3px 10px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 71, 87, 0.15);
+    font-weight: 900;
 }
 .price-dept {
-    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%) !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2) !important;
-    border-radius: 999px !important;
-    text-align: center !important;
-    padding: 0.6vh 1vw !important;
-    margin-bottom: 1vh !important;
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
+    color: var(--text-on-dark);
+    box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2);
+    border-radius: 999px;
+    text-align: center;
+    padding: 0.6vh 1vw;
+    margin-bottom: 1vh;
 }
 .price-ad {
-    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%) !important;
-    border: 2px solid rgba(255, 71, 87, 0.4) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.15) !important;
-    margin-bottom: 0.8vh !important;
+    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
+    border: 2px solid rgba(255, 71, 87, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.15);
+    margin-bottom: 0.8vh;
 }
 .price-ad__badge {
-    background: linear-gradient(135deg, #FF4757 0%, #FF6B81 100%) !important;
-    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3) !important;
+    background: linear-gradient(135deg, #FF4757 0%, #FF6B81 100%);
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
 }
 .price-ad .price-val {
-    background: #FF4757 !important;
-    color: #FFFFFF !important;
+    background: #FF4757;
+    color: var(--text-on-dark);
 }
 
 /* --- Cabeceras Globales --- */
 .board-head, .rank-head, .sale-head {
-    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%) !important;
-    border-radius: 999px !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
-    margin-bottom: 1.5vh !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5vh;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 .board-kicker, .rank-kicker {
-    color: #FFE566 !important;
-    text-shadow: 0 2px 6px rgba(255, 215, 0, 0.4) !important;
-    font-weight: 900 !important;
+    color: #FFE566;
+    text-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    font-weight: 900;
 }
 
 /* =========================================================
    NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
    ========================================================= */
 .asian-rank-card {
-    display: flex;
-    align-items: center;
-    background: #FFFFFF;
-    border-radius: 16px;
-    padding: 1.5vh 1vw;
-    margin-bottom: 1.2vh;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    position: relative;
+    background: var(--bg-secondary);
     border: 2px solid transparent;
-    overflow: hidden;
-    gap: 1vw;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .asian-rank-card.top-1 {
@@ -621,29 +576,23 @@ body {
     z-index: 10;
 }
 .asian-rank-card.top-2 {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #F1F5F9 100%);
     border-color: #CBD5E1;
 }
 .asian-rank-card.top-3 {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFEDD5 100%);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFEDD5 100%);
     border-color: #FDBA74;
 }
 
 .asian-rank-badge {
-    flex-shrink: 0;
     background: #1A1A1A;
-    color: #FFF;
-    border-radius: 12px;
-    padding: 0.6vh 0.8vw;
-    font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+    color: var(--text-on-dark);
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    text-align: center;
-    white-space: nowrap;
 }
 
 .asian-rank-card.top-1 .asian-rank-badge {
     background: linear-gradient(135deg, #FF3366, #FF9933);
-    color: #FFF;
+    color: var(--text-on-dark);
     font-size: clamp(1.3rem, 1.8vw, 1.6rem);
     animation: temuPulse 2s infinite;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -659,7 +608,7 @@ body {
 .asian-rank-name {
     font-size: clamp(1.1rem, 1.5vw, 1.4rem);
     font-weight: 900;
-    color: #1A1A1A;
+    color: var(--text-main);
     margin: 0;
     line-height: 1.1;
     text-transform: uppercase;
@@ -686,7 +635,7 @@ body {
 .asian-rank-tag {
     position: absolute;
     left: 0.8vw;
-    color: #FFFFFF;
+    color: var(--text-on-dark);
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     font-weight: 900;
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -715,12 +664,12 @@ body {
 
 /* Reemplazar la linea amarilla fea por una barra horizontal sleek */
 .rank-progress {
-    height: 8px !important;
-    background: linear-gradient(90deg, #FF3366, #FF9933) !important;
+    height: 8px;
+    background: linear-gradient(90deg, #FF3366, #FF9933);
     border-radius: 999px;
     margin-top: 1vh;
     width: 0%;
-    animation: rankProgress var(--rank-duration) linear infinite !important;
+    animation: rankProgress var(--rank-duration) linear infinite;
 }
 @keyframes rankProgress {
     0% { width: 0%; }
@@ -735,17 +684,17 @@ body {
 }
 .rank-dots .rank-dot {
     display: inline-block;
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     background: rgba(255, 215, 0, 0.3);
     border: 1px solid rgba(255, 215, 0, 0.5);
     transition: all 0.3s ease;
 }
 .rank-dots .rank-dot.is-on {
     background: #FFD700;
-    width: 10px !important;
-    height: 10px !important;
+    width: 10px;
+    height: 10px;
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
 }
 /* =========================================================
@@ -753,309 +702,115 @@ body {
    ========================================================= */
    
 .xsell-card {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 .xsell-ask {
-    font-size: 1.8rem !important;
-    font-weight: 900 !important;
+    font-size: 1.8rem;
+    font-weight: 900;
     text-transform: uppercase;
     text-align: center;
     background: linear-gradient(90deg, #FF0033, #FF4D4D);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
-    margin-bottom: 2vh !important;
+    margin-bottom: 2vh;
 }
 
 .xsell-item {
-    background: linear-gradient(135deg, #ffffff 0%, #FFFDF5 100%) !important;
-    border: 3px solid #FFD700 !important;
-    border-radius: 999px !important;
-    margin-bottom: 2vh !important;
-    padding: 1vh 0.5vw !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1) !important;
-    display: flex !important;
-    align-items: center !important;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFFDF5 100%);
+    border: 3px solid #FFD700;
+    border-radius: 999px;
+    margin-bottom: 2vh;
+    padding: 1vh 0.5vw;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1);
+    display: flex;
+    align-items: center;
 }
 
 .xsell-item:nth-child(even) {
-    background: linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%) !important;
-    border-color: #FF0033 !important;
+    background: linear-gradient(135deg, #FFF0F0 0%, var(--bg-secondary) 100%);
+    border-color: #FF0033;
 }
 
 .xsell-item__info {
-    font-weight: 900 !important;
-}
-
-/* =========================================================
-   NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
-   ========================================================= */
-.asian-rank-card {
-    display: flex;
-    align-items: center;
-    background: #FFFFFF;
-    border-radius: 16px;
-    padding: 1.5vh 1vw;
-    margin-bottom: 1.2vh;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    position: relative;
-    border: 2px solid transparent;
-    overflow: hidden;
-    gap: 1vw;
-}
-
-.asian-rank-card.top-1 {
-    background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
-    border-color: #FFD700;
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-    transform: scale(1.03);
-    margin-bottom: 2vh;
-    z-index: 10;
-}
-.asian-rank-card.top-2 {
-    background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
-    border-color: #CBD5E1;
-}
-.asian-rank-card.top-3 {
-    background: linear-gradient(135deg, #FFFFFF 0%, #FFEDD5 100%);
-    border-color: #FDBA74;
-}
-
-.asian-rank-badge {
-    flex-shrink: 0;
-    background: #1A1A1A;
-    color: #FFF;
-    border-radius: 12px;
-    padding: 0.6vh 0.8vw;
-    font-size: clamp(1.1rem, 1.4vw, 1.3rem);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    text-align: center;
-    white-space: nowrap;
-}
-
-.asian-rank-card.top-1 .asian-rank-badge {
-    background: linear-gradient(135deg, #FF3366, #FF9933);
-    color: #FFF;
-    font-size: clamp(1.3rem, 1.8vw, 1.6rem);
-    animation: temuPulse 2s infinite;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.asian-rank-info {
-    flex: 1;
+    font-weight: 900;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    padding-left: 1.2vw;
     gap: 0.5vh;
-}
-
-.asian-rank-name {
-    font-size: clamp(1.1rem, 1.5vw, 1.4rem);
-    font-weight: 900;
-    color: #1A1A1A;
-    margin: 0;
-    line-height: 1.1;
-    text-transform: uppercase;
-}
-
-.asian-rank-progress-container {
-    background: rgba(0,0,0,0.08);
-    border-radius: 999px;
-    height: 2.2vh;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    margin-top: 0.5vh;
-}
-
-.asian-rank-progress-bar {
-    background: linear-gradient(90deg, #FF4757, #FF8C00);
-    height: 100%;
-    border-radius: 999px;
-    transition: width 1s ease-out;
-}
-
-.asian-rank-tag {
-    position: absolute;
-    left: 0.8vw;
-    color: #FFFFFF;
-    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
-    font-weight: 900;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    letter-spacing: 0.05em;
-    z-index: 2;
-}
-
-.asian-rank-tag-social {
-    color: #FF4757;
-    font-size: clamp(0.85rem, 1.1vw, 1rem);
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    gap: 0.3vw;
-    margin-top: 0.5vh;
-}
-
-.asian-rank-fire {
-    position: absolute;
-    right: 0.5vw;
-    top: -0.5vh;
-    font-size: clamp(2rem, 3vw, 2.8rem);
-    animation: temuFire 0.8s infinite alternate;
-    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.4));
-}
-
-/* Reemplazar la linea amarilla fea por una barra horizontal sleek */
-.rank-progress {
-    height: 8px !important;
-    background: linear-gradient(90deg, #FF3366, #FF9933) !important;
-    border-radius: 999px;
-    margin-top: 1vh;
-    width: 0%;
-    animation: rankProgress var(--rank-duration) linear infinite !important;
-}
-@keyframes rankProgress {
-    0% { width: 0%; }
-    100% { width: 100%; }
-}
-
-/* Fix para la linea amarilla (Puntos de rotacion sin dimensiones) */
-.rank-dots {
-    display: flex;
-    gap: 0.4vw;
-    align-items: center;
-}
-.rank-dots .rank-dot {
-    display: inline-block;
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
-    background: rgba(255, 215, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    transition: all 0.3s ease;
-}
-.rank-dots .rank-dot.is-on {
-    background: #FFD700;
-    width: 10px !important;
-    height: 10px !important;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-}
-/* =========================================================
-   ASIAN HYPE STYLES FOR COMPRAS RELACIONADAS (COLUMNA 3)
-   ========================================================= */
-   
-.xsell-card {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-.xsell-ask {
-    font-size: 1.8rem !important;
-    font-weight: 900 !important;
-    text-transform: uppercase;
-    text-align: center;
-    background: linear-gradient(90deg, #FF0033, #FF4D4D);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
-    margin-bottom: 2vh !important;
-}
-
-.xsell-item {
-    background: linear-gradient(135deg, #ffffff 0%, #FFFDF5 100%) !important;
-    border: 3px solid #FFD700 !important;
-    border-radius: 999px !important;
-    margin-bottom: 2vh !important;
-    padding: 1vh 0.5vw !important;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1) !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-.xsell-item:nth-child(even) {
-    background: linear-gradient(135deg, #FFF0F0 0%, #FFFFFF 100%) !important;
-    border-color: #FF0033 !important;
-}
-
-.xsell-item__info {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    width: 100% !important;
-    padding-left: 1.2vw !important;
-    gap: 0.5vh !important;
 }
 
 .xsell-item__name {
-    font-size: 1.15rem !important;
-    line-height: 1.1 !important;
-    margin: 0 !important;
-    font-weight: 800 !important;
-    color: #1a1a1a !important;
-    white-space: normal !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    width: 100% !important;
+    font-size: 1.15rem;
+    line-height: 1.1;
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-main);
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    width: 100%;
 }
 
 .xsell-item__price {
-    font-size: 1.3rem !important;
-    font-weight: 900 !important;
-    color: #FF0033 !important;
-    background: #FFEBEE !important;
-    padding: 0.3vh 0.8vw !important;
-    white-space: nowrap !important;
-    border-radius: 6px !important;
-    border: 2px dashed #FF0033 !important;
-    flex-shrink: 0 !important;
-    display: inline-block !important;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #FF0033;
+    background: #FFEBEE;
+    padding: 0.3vh 0.8vw;
+    white-space: nowrap;
+    border-radius: 6px;
+    border: 2px dashed #FF0033;
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 .xsell-item__stage {
-    width: 65px !important;
-    height: 65px !important;
-    min-width: 65px !important;
-    min-height: 65px !important;
-    max-width: 65px !important;
-    max-height: 65px !important;
-    object-fit: contain !important;
-    border-radius: 50% !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
-    flex-shrink: 0 !important;
+    width: 65px;
+    height: 65px;
+    min-width: 65px;
+    min-height: 65px;
+    max-width: 65px;
+    max-height: 65px;
+    object-fit: contain;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    flex-shrink: 0;
 }
 .xsell-item__text {
-    display: contents !important;
+    display: contents;
 }
 
 .xsell-item__price-wrap {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.5vw !important;
-    flex-wrap: wrap !important;
-    width: 100% !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
 .xsell-item__was {
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    color: #9CA3AF !important;
-    text-decoration: line-through !important;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #9CA3AF;
+    text-decoration: line-through;
 }
 
 .xsell-item__rule {
-    font-size: 0.8rem !important;
-    font-weight: 800 !important;
-    color: #FF0033 !important;
-    background: #FFEBEE !important;
-    padding: 0.2vh 0.4vw !important;
-    border-radius: 4px !important;
-    text-transform: uppercase !important;
-    margin-left: auto !important; /* Push it to the right if there is space */
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #FF0033;
+    background: #FFEBEE;
+    padding: 0.2vh 0.4vw;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-left: auto;
 }
