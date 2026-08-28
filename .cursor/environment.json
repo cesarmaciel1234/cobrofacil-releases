@@ -1,0 +1,4 @@
+{
+  "name": "Cobro Fácil POS",
+  "install": "bash .cursor/install.sh"
+}
