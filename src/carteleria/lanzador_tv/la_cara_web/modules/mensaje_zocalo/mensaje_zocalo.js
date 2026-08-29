@@ -11,11 +11,13 @@ export function renderMensajeZocalo(config, marquee) {
     const texto = negocio && !mensaje.toLowerCase().includes(negocio.toLowerCase())
         ? `${mensaje} ★ Bienvenido a ${negocio} ★`
         : mensaje;
+    const t = escapeHtml(texto);
+    const repetido = `${t} 💎 ${t} 💎 ${t} 💎 `;
     marquee.innerHTML = `
         <div class="marquee-track">
-            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
-            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
-            <span class="marquee-text">${escapeHtml(texto)} ★ </span>
+            <span class="marquee-text">${repetido}</span>
+            <span class="marquee-text">${repetido}</span>
+            <span class="marquee-text">${repetido}</span>
         </div>
     `;
 }

@@ -405,7 +405,7 @@
 .marquee-track {
     display: flex;
     width: max-content;
-    animation: zocalo-scroll 35s linear infinite;
+    animation: zocalo-scroll 105s linear infinite;
     will-change: transform;
 }
 
