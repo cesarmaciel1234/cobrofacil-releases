@@ -164,6 +164,18 @@ body {
     }
 }
 
+/* Transición Cinemática de los Motores JS */
+.tv-panel, .premium-column {
+    transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+
+.is-fading {
+    opacity: 0 !important;
+    filter: blur(8px) !important;
+    transform: scale(0.98) !important;
+    pointer-events: none;
+}
+
 /* 3. Skeleton Loading */
 .skeleton-box {
     background: linear-gradient(90deg, var(--card-bg) 25%, rgba(255,255,255,0.1) 50%, var(--card-bg) 75%);

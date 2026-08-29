@@ -146,8 +146,9 @@ body {
     background: var(--rank-top3-bg);
     border-color: var(--rank-top3-border);
 }
-.asian-rank-name  { color: var(--text-primary); }
-.asian-rank-tag   { color: var(--text-primary); }
+.asian-rank-name  { color: var(--rank-name-color, var(--text-primary)); }
+.asian-rank-card.top-1 .asian-rank-name { color: var(--rank-top1-name-color, #1A1A1A); }
+.asian-rank-tag   { color: var(--rank-tag-color, var(--text-primary)); }
 .asian-rank-tag-social { color: var(--accent-primary); }
 .asian-rank-progress-bar { background: var(--rank-bar-bg); }
 .rank-score {
@@ -170,7 +171,7 @@ body {
     border: 1px solid var(--border-subtle);
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.price-row__name  { color: var(--text-primary); }
+.price-row__name  { color: var(--card-text, var(--text-primary)); }
 .price-row__meta, .price-row__off { color: var(--text-secondary); }
 .price-row__rule  { color: var(--rule-color); }
 .price-row__was   { color: var(--text-secondary); }
@@ -181,13 +182,13 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .price-ad {
-    background: var(--ad-bg);
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
 }
-.price-ad__badge { background: var(--accent-primary); color: var(--text-on-dark); }
-.price-ad__name  { color: var(--ad-text); }
-.price-ad__price { color: var(--text-primary); }
+.price-ad__badge { background: #FFF7CC; color: #9F1239; }
+.price-ad__name  { color: #FFFFFF; }
+.price-ad__price { color: #FFFFFF; }
 
 /* ── COL 3 — OFERTA RELÁMPAGO ── */
 .flash-offer__deal, .chef-deal {

@@ -107,7 +107,7 @@ mariadb_server/data/
 mariadb_server/data_corrupt/
 _internal/
 
-# ─── Creator PNG (archivos generados y temporales) ──────────────────────────
-creator png/uploads/
-creator png/converted/
+# ─── Creador PNG (temporales de conversión) ─────────────────────────────────
+src/carteleria/creador_png/uploads/
+src/carteleria/creador_png/converted/
 carteleria_cache.json

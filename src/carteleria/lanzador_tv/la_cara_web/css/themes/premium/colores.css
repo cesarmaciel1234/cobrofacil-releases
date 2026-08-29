@@ -4,10 +4,10 @@
     --bg-secondary:    #1C1C1E;
     --surface-primary: rgba(28, 28, 30, 0.98);
     --text-primary:    #FFFFFF;
-    --text-secondary:  #D4AF37;
-    --accent-primary:  #D4AF37;
-    --accent-secondary:#F5E17A;
-    --accent-rgb:      212, 175, 55;
+    --text-secondary:  #E4D2A3;
+    --accent-primary:  #C9A84C;
+    --accent-secondary:#F3E6C0;
+    --accent-rgb:      201, 168, 76;
     --border-subtle:   rgba(212, 175, 55, 0.25);
     --success-color:   #22C55E;
     --shadow-card:     0 12px 40px rgba(0,0,0,0.6), inset 0 0 40px rgba(212,175,55,0.04);
@@ -16,11 +16,11 @@
     /* ── SOBREESCRITURAS PREMIUM THEME ── */
     --screen-bg:             #000000;
     --panel-bg:              #0A0A0A;
-    --strip-bg:              #1A1A1A;
-    --strip-text:            #FFD700;
-    --strip-ends-text:       #FFD700;
-    --strip-dot:             #FFD700;
-    --strip-accent:          #FFD700;
+    --strip-bg:              linear-gradient(90deg, #050505, #16120A 50%, #050505);
+    --strip-text:            #F3E6C0;
+    --strip-ends-text:       #C9A84C;
+    --strip-dot:             #C9A84C;
+    --strip-accent:          #C9A84C;
     --strip-count-bg:        #333333;
     --strip-count-text:      #FFD700;
     
@@ -70,5 +70,31 @@
     --col4-label-color:      #FFD700;
     --col4-prog-bar-bg:      linear-gradient(90deg, #FFD700, #FFA500);
     --stage-name-color:      #FFFFFF;
+
+    /* ── Columna 1 (Ranking) ── */
+    --rank-card-bg:          #1C1C1E;
+    --rank-card-border:      rgba(212, 175, 55, 0.28);
+    --rank-card-shadow:      0 4px 16px rgba(0, 0, 0, 0.45);
+    --rank-top1-bg:          linear-gradient(135deg, #2D2000, #1C1400);
+    --rank-top1-border:      #D4AF37;
+    --rank-top1-shadow:      0 8px 25px rgba(212, 175, 55, 0.28);
+    --rank-top2-bg:          linear-gradient(135deg, #222222, #141414);
+    --rank-top2-border:      rgba(200, 200, 200, 0.22);
+    --rank-top3-bg:          linear-gradient(135deg, #1E1800, #141000);
+    --rank-top3-border:      rgba(180, 100, 50, 0.35);
+    --rank-badge-bg:         linear-gradient(135deg, #D4AF37, #F5E17A);
+    --rank-badge-color:      #111111;
+    --rank-badge-top1-bg:    linear-gradient(135deg, #F5E17A, #D4AF37);
+    --rank-badge-top1-color: #111111;
+    --rank-name-color:       #FFFFFF;
+    --rank-top1-name-color:  #F5E17A;
+    --rank-bar-bg:           linear-gradient(90deg, #D4AF37, #F5E17A);
+    --rank-bar-track:        rgba(255, 255, 255, 0.14);
+    --rank-tag-color:        #111111;
+    --rank-social-color:     #F5E17A;
+    --rank-fire-shadow:      rgba(212, 175, 55, 0.45);
+    --rank-dot-bg:           rgba(212, 175, 55, 0.25);
+    --rank-dot-active:       #F5E17A;
+    --rank-progress-bar:     linear-gradient(90deg, #D4AF37, #F5E17A);
 
 }

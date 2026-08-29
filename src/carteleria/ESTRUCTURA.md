@@ -42,7 +42,19 @@ src/carteleria/
 ├── el_cerebro/                           # Lógica central adicional. Orquesta la toma de decisiones complejas no cubiertas por los motores básicos.
 │
 ├── assets/                               # Recursos estáticos globales (fondos, iconos como clima y mascotas).
-├── png_productos/                        # Directorio de almacenamiento en caché o temporal para imágenes de productos renderizadas.
+├── creador_png/                          # Creador PNG: panel Qt + UI HTML. Salida en Catalogos/png_productos/.
+│   ├── __init__.py                       # Exporta DialogoCreadorPNG, PanelPngProductos, quitar_fondo_negro.
+│   ├── panel_png_productos.py            # Lista de productos, asociar PNG, botón Creador PNG Pro.
+│   ├── ventana_html.py                   # QDialog con QWebEngineView (o abre el navegador).
+│   ├── servidor.py                       # Levanta Flask en 127.0.0.1 (5000 / 5055–5057) en un hilo.
+│   ├── app.py                            # Rutas Flask: /, /convert, /api/ping, archivos de salida.
+│   ├── convertir_imagen.py               # Recorte de fondo + color + sombra (en el mismo proceso).
+│   ├── presets.py                        # Estilos: carteleria, fresco, intenso, cromo, frio_rocio.
+│   ├── fondo_transparente.py             # Flood-fill de fondo negro (galería de iconos, no el HTML).
+│   ├── rutas.py                          # Helpers de paths (hoy no lo usa app.py).
+│   ├── templates/index.html              # UI del creador.
+│   ├── static/app.js + estilos.css       # Cliente: subir foto, presets, usar imagen.
+│   └── uploads/ / converted/             # Temporales (gitignore). El PNG final va a Catalogos/png_productos/.
 │
 ├── ia_chef_lobo/                         # Integración con Inteligencia Artificial.
 │   ├── motor_ia.py                       # Orquestador principal de solicitudes a IA.
@@ -64,6 +76,15 @@ src/carteleria/
 ├── dashboard/                            # Dashboard administrativo o analítico opcional para control de métricas.
 └── red_lan/                              # Comunicación por Red Local (LAN) para control remoto o envío de comandos a las pantallas.
 ```
+
+## Creador PNG — flujo
+
+1. Cartelería o dashboard abre `PanelPngProductos`.
+2. **Creador PNG Pro** abre `DialogoCreadorPNG` → `servidor.asegurar_servidor()` → Flask (`app.py`).
+3. El HTML llama `POST /convert`. Flask ejecuta `crear_efecto_3d_realista` en el mismo proceso.
+4. El PNG queda en `Catalogos/png_productos/`. El diálogo lee el título `CREADOR_PNG_DONE:` y asocia el archivo al producto.
+
+No hay carpeta `creator png` (nombre viejo). `version.json` todavía lista rutas de esa carpeta.
 
 ## 🎯 Flujo de Datos y Arquitectura
 

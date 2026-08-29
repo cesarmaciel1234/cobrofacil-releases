@@ -10,6 +10,8 @@
     --panel-border:          rgba(255, 149, 0, 0.4);
 
     /* ── TEXTO GLOBAL ── */
+    --text-primary:          #111111;
+    --text-secondary:        #555555;
     --text-main:             #111111;
     --text-sub:              #555555;
     --text-muted:            #999999;
@@ -137,6 +139,7 @@
     --rank-badge-top1-bg:    linear-gradient(135deg, #FFD700, #FF9500);
     --rank-badge-top1-color: #6B0000;
     --rank-name-color:       #111111;
+    --rank-top1-name-color:  #111111;
     --rank-bar-bg:           linear-gradient(90deg, #FF0055, #FF6A00);
     --rank-bar-track:        rgba(255,0,85,0.08);
     --rank-tag-color:        #FFFFFF;

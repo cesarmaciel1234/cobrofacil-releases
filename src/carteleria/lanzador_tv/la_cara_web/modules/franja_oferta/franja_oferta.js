@@ -93,7 +93,7 @@ function htmlDealCard(producto, { ad }) {
         : (vendidos > 0
             ? `${Math.round(vendidos)} vendidos`
             : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
-    const kicker = esAd ? "Publicidad" : (enOferta ? "Oferta relámpago" : "Precio especial");
+    const kicker = esAd ? "Publicidad" : (enOferta ? "Ofertas" : "Precio especial");
     const offLabel = pct ? `-${pct}%` : (esAd ? "HOT" : "NEW");
     const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
     const clave = claveTimer(producto, esAd);

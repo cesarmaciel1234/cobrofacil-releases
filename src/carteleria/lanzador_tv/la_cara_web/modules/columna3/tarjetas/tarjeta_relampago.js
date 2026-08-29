@@ -18,7 +18,7 @@ export function htmlTarjetaRelampago(item) {
     return `
         <article class="flash-offer">
             <header class="rank-head sale-head">
-                <p class="rank-kicker">OFERTA RELÁMPAGO</p>
+                <p class="rank-kicker">OFERTAS</p>
             </header>
             <div class="flash-offer__deal">
                 ${htmlDealStage({ ...item, nombre }, {

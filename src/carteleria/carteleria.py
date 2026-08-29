@@ -141,7 +141,7 @@ class CarteleriaApp(QStackedWidget):
             self.removeWidget(self.png_prod)
             self.png_prod.deleteLater()
             self.png_prod = None
-        from src.carteleria.png_productos.panel_png_productos import PanelPngProductos
+        from src.carteleria.creador_png.panel_png_productos import PanelPngProductos
         self.png_prod = PanelPngProductos()
         self.addWidget(self.png_prod)
         self.png_prod.volver.connect(self.volver_dashboard)

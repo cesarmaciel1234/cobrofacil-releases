@@ -415,11 +415,11 @@ body {
 }
 
 .price-ad {
-    background: #FFE566;
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
 }
 
 .price-ad__name {
-    color: var(--text-secondary);
+    color: #FFFFFF;
 }
 
 .price-row__meta,
@@ -432,7 +432,7 @@ body {
 }
 
 .price-row__name {
-    color: var(--text-main);
+    color: var(--card-text, var(--text-main));
 }
 
 .price-row__now {
@@ -529,10 +529,10 @@ body {
     margin-bottom: 1vh;
 }
 .price-ad {
-    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
-    border: 2px solid rgba(255, 71, 87, 0.4);
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    border: 2px solid rgba(255, 255, 255, 0.22);
     border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.15);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35);
     margin-bottom: 0.8vh;
 }
 .price-ad__badge {
@@ -608,10 +608,13 @@ body {
 .asian-rank-name {
     font-size: clamp(1.1rem, 1.5vw, 1.4rem);
     font-weight: 900;
-    color: var(--text-main);
+    color: var(--rank-name-color, var(--text-main));
     margin: 0;
     line-height: 1.1;
     text-transform: uppercase;
+}
+.asian-rank-card.top-1 .asian-rank-name {
+    color: var(--rank-top1-name-color, #111111);
 }
 
 .asian-rank-progress-container {

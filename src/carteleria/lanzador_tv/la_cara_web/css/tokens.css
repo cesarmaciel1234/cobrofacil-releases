@@ -21,6 +21,8 @@
     --panel-border:          rgba(0, 0, 0, 0.04);
 
     /* ── TEXTO GLOBAL ─────────────────────────────────────── */
+    --text-primary:          #1A1A1A;
+    --text-secondary:        #6B7280;
     --text-main:             #1A1A1A;
     --text-sub:              #6B7280;
     --text-muted:            #9CA3AF;

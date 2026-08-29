@@ -100,7 +100,7 @@ function pintar(conFade) {
     window.setTimeout(() => {
         rootRef.innerHTML = html;
         rootRef.classList.remove("is-fading");
-    }, 160);
+    }, 400);
 }
 
 export function iniciarRotacionColumna4(state, root) {

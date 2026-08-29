@@ -22,7 +22,7 @@ const state = {
     ia: [],
     hero: null,
     climaData: null,
-    currentTheme: "temu",
+    currentTheme: "premium",
     isLoading: true,
     lastDataHash: null,
 };

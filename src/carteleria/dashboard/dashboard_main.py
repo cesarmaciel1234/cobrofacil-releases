@@ -326,7 +326,7 @@ class CarteleriaDashboard(QWidget):
         self._abrir_png_local()
 
     def _abrir_png_local(self):
-        from src.carteleria.png_productos.panel_png_productos import PanelPngProductos
+        from src.carteleria.creador_png.panel_png_productos import PanelPngProductos
         if self._png_overlay is None:
             self._png_overlay = PanelPngProductos(self)
             self._png_overlay.setStyleSheet(

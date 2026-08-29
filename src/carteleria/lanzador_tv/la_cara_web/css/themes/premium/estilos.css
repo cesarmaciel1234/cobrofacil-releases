@@ -1,4 +1,4 @@
-﻿/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    PREMIUM — Negro & Oro Lujo — estilos.css
    Mismo DOM/estructura que temu/apple/blackfriday,
    solo cambia el vestuario.
@@ -97,20 +97,31 @@ body[data-theme="premium"], body {
 /* Precio tachado */
 .tv-card__was, .oferta-antes { color: rgba(var(--text-primary-rgb),0.38); }
 
-/* Ahorro */
-.deal-save, .tv-card__save {
-    background: rgba(var(--accent-rgb),0.12);
-    color: var(--accent-secondary);
+/* Ahorro (Ahorrás $X / kilo) */
+body[data-theme="premium"] .deal-save, 
+body[data-theme="premium"] .tv-card__save {
+    background: transparent !important;
+    color: #FFDF00 !important;
+    font-weight: 800;
+    font-size: clamp(0.75rem, 1vw, 0.9rem);
+    padding: 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
 .tv-card__chip { background: rgba(var(--accent-rgb),0.1); color: var(--accent-primary); }
 .tv-card__unit { color: var(--accent-primary); }
 .tv-card__off  { background: transparent; color: var(--accent-primary); border: none; }
 
-/* Timer */
-.tv-card__timer {
-    background: rgba(var(--strip-dot-rgb),0.15);
-    border: 1px solid rgba(var(--strip-dot-rgb),0.4);
-    color: #FF6B6B;
+/* Timer (Pastilla de Reloj) */
+body[data-theme="premium"] .tv-card__timer {
+    background: linear-gradient(135deg, #FFDF00 0%, #FFA500 100%) !important;
+    border: 2px solid #FFFFFF !important;
+    color: #000000 !important;
+    font-weight: 900;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 }
 
 /* ── CABECERAS (sale-head / rank-head) ── */
@@ -171,17 +182,19 @@ body[data-theme="premium"], body {
     box-shadow: none;
 }
 .asian-rank-badge {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: #000;
+    background: var(--rank-badge-bg);
+    color: var(--rank-badge-color);
 }
 .asian-rank-card.top-1 .asian-rank-badge {
-    background: linear-gradient(135deg, var(--strip-dot), rgba(var(--accent-rgb), 1)); /* Usando la variable --strip-dot */
-    color: var(--accent-primary);
+    background: var(--rank-badge-top1-bg);
+    color: var(--rank-badge-top1-color);
 }
-.asian-rank-name  { color: var(--text-primary); }
-.asian-rank-tag   { color: var(--text-primary); }
-.asian-rank-tag-social { color: var(--accent-primary); }
-.asian-rank-progress-bar { background: linear-gradient(90deg, var(--strip-dot), var(--accent-primary)); }
+.asian-rank-name  { color: var(--rank-name-color, #FFFFFF); }
+.asian-rank-card.top-1 .asian-rank-name { color: var(--rank-top1-name-color, #F5E17A); }
+.asian-rank-tag   { color: var(--rank-tag-color, #111111); }
+.asian-rank-tag-social { color: var(--rank-social-color, #F5E17A); }
+.asian-rank-progress-bar { background: var(--rank-bar-bg); }
+.asian-rank-progress-container { background: var(--rank-bar-track); }
 .rank-score {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: #000;
@@ -205,7 +218,7 @@ body[data-theme="premium"], body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     margin-bottom: 0.5vh;
 }
-.price-row__name  { color: var(--text-primary); }
+.price-row__name  { color: var(--card-text, var(--text-primary)); }
 .price-row__meta, .price-row__off { color: var(--accent-secondary); opacity: 0.85; }
 .price-row__rule  { color: var(--rule-color); }
 .price-row__was   { color: rgba(var(--text-primary-rgb),0.35); }
@@ -216,13 +229,13 @@ body[data-theme="premium"], body {
     box-shadow: 0 4px 14px rgba(191,149,63,0.35);
 }
 .price-ad {
-    background: linear-gradient(135deg, #1A1400, #0A0A00);
-    border: 1px solid rgba(var(--accent-rgb),0.38);
-    box-shadow: inset 0 0 20px rgba(var(--accent-rgb),0.04);
+    background: linear-gradient(135deg, #DC2626 0%, #9F1239 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
 }
-.price-ad__badge { background: var(--strip-dot); color: var(--accent-secondary); }
-.price-ad__name  { color: var(--accent-primary); }
-.price-ad__price { color: var(--text-primary); }
+.price-ad__badge { background: #FFF7CC; color: #9F1239; }
+.price-ad__name  { color: #FFFFFF; }
+.price-ad__price { color: #FFFFFF; }
 
 /* ── COL 3 — OFERTA RELÁMPAGO ── */
 .flash-offer__deal, .chef-deal {
@@ -265,15 +278,16 @@ body[data-theme="premium"], body {
 }
 .xsell-item__rule  { color: var(--accent-primary); background: rgba(var(--accent-rgb),0.08); }
 .flash-offer .tv-card__now, .chef-deal .tv-card__now {
-    color: var(--accent-primary);
-    text-shadow: 0 0 30px rgba(var(--accent-rgb),0.5);
-    -webkit-text-fill-color: var(--accent-primary);
+    color: #FFDF00 !important;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+    -webkit-text-fill-color: #FFDF00 !important;
 }
-.flash-offer .deal-save, .flash-offer .deal-kicker { color: var(--accent-secondary); }
+.flash-offer .deal-save { color: #FFDF00 !important; }
+.flash-offer .deal-kicker { color: #FFFFFF !important; }
 .flash-offer__stage .deal-stage__off {
-    background: linear-gradient(135deg, var(--strip-dot), rgba(var(--strip-dot-rgb), 1));
-    border: 1px solid var(--accent-primary);
-    color: var(--accent-secondary);
+    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+    border: 1px solid #FF8A8A !important;
+    color: #FFFFFF !important;
 }
 
 /* ── ZÓCALO ── */
@@ -311,4 +325,289 @@ body[data-theme="premium"], body {
     0% { left: -150%; }
     20% { left: 200%; }
     100% { left: 200%; }
+}
+
+/* ══════════════════════════════════════════════════
+   ULTRA-PREMIUM "BLACK CARD" VIP — El Nivel Máximo Absoluto
+   Inspiración: Tarjetas Centurion, Joyería Holográfica, Fotorrealismo 3D.
+   ══════════════════════════════════════════════════ */
+body[data-theme="premium"] {
+    --font-primary: "Inter", "Montserrat", sans-serif;
+    --font-display: "Playfair Display", "Cinzel", "Cormorant Garamond", serif;
+    font-family: var(--font-primary);
+    background: #030202;
+    background-image: 
+        radial-gradient(circle at 20% 0%, rgba(255, 215, 0, 0.1), transparent 50%),
+        radial-gradient(circle at 80% 100%, rgba(139, 0, 0, 0.15), transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02), transparent 70%);
+    letter-spacing: 0.02em;
+}
+
+body[data-theme="premium"] .app-container {
+    background: transparent;
+    gap: 2vh;
+}
+
+/* Paneles: Efecto Cristal 3D de altísima pureza */
+body[data-theme="premium"] .tv-panel,
+body[data-theme="premium"] .premium-column {
+    background: rgba(8, 6, 4, 0.4);
+    backdrop-filter: blur(30px) saturate(130%);
+    -webkit-backdrop-filter: blur(30px) saturate(130%);
+    border-top: 1px solid rgba(255, 215, 0, 0.4);
+    border-left: 1px solid rgba(255, 215, 0, 0.15);
+    border-right: 1px solid rgba(255, 215, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(255, 215, 0, 0.03);
+    border-radius: 16px;
+}
+
+body[data-theme="premium"] .flash-strip {
+    background: linear-gradient(90deg, #050300, #1A1200 50%, #050300);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.6);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+}
+
+body[data-theme="premium"] .flash-strip__cycle span {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #FFF;
+}
+
+body[data-theme="premium"] .clock {
+    font-family: var(--font-primary);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: #F5E1A4;
+}
+
+/* Tarjetas: Materialidad de Tarjeta de Crédito Metálica */
+body[data-theme="premium"] .oferta-card,
+body[data-theme="premium"] .meal-card,
+body[data-theme="premium"] .asian-rank-card {
+    background: linear-gradient(145deg, rgba(20, 16, 10, 0.7), rgba(2, 2, 2, 0.8));
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 215, 0, 0.35);
+    border-left: 1px solid rgba(255, 215, 0, 0.15);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.9);
+    border-right: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.8),
+        inset 0 2px 10px rgba(255, 255, 255, 0.03);
+    padding: clamp(0.5rem, 1.5vh, 1.2rem);
+    margin-bottom: clamp(0.4rem, 1vh, 1rem);
+}
+
+/* Grilla de Precios (Auto-Ajustable Alto Contraste) */
+body[data-theme="premium"] .price-row {
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.15);
+    border-radius: 0;
+    box-shadow: none;
+    padding: clamp(0.4rem, 1vh, 1.2rem) 0;
+}
+
+body[data-theme="premium"] .price-row:last-child {
+    border-bottom: none;
+}
+
+body[data-theme="premium"] .deal-kicker,
+body[data-theme="premium"] .board-kicker,
+body[data-theme="premium"] .rank-kicker {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    color: #D4AF37;
+    text-transform: uppercase;
+    text-shadow: 0 2px 15px rgba(255, 215, 0, 0.4);
+    font-size: clamp(0.7rem, 1vw, 1rem);
+}
+
+/* Nombres: Blanco Sólido Fluido */
+body[data-theme="premium"] .tv-card__name,
+body[data-theme="premium"] .deal-stage__name,
+body[data-theme="premium"] .asian-rank-name,
+body[data-theme="premium"] .price-row__name,
+body[data-theme="premium"] .xsell-item__name,
+body[data-theme="premium"] .xsell-ask {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #FFFFFF;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: #FFFFFF;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 1), 0 2px 5px rgba(0, 0, 0, 0.8);
+    font-size: clamp(1rem, 1.5vw, 1.25em);
+    line-height: 1.1;
+}
+
+body[data-theme="premium"] .tv-card__now {
+    font-family: var(--font-primary);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #FFD700;
+    text-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+}
+
+/* Cabeceras fundidas en el fondo */
+body[data-theme="premium"] .sale-head,
+body[data-theme="premium"] .board-head,
+body[data-theme="premium"] .rank-head {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+    box-shadow: none;
+    border-radius: 0;
+    padding-bottom: clamp(0.2rem, 0.5vh, 0.5rem);
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.5rem);
+}
+
+body[data-theme="premium"] .sale-head.rank-head::before {
+    display: none;
+}
+
+/* Placas de Precio: Píldoras Sólidas Auto-ajustables */
+body[data-theme="premium"] .price-row__now {
+    background: linear-gradient(135deg, #FFDF00 0%, #FFA500 100%);
+    color: #000000 !important;
+    border: 2px solid #FFFFFF;
+    border-radius: 8px;
+    padding: clamp(0.1em, 0.4vh, 0.2em) clamp(0.4em, 1vw, 0.6em);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4), inset 0 2px 5px rgba(255,255,255,0.8);
+    font-weight: 900;
+    font-size: clamp(1.1em, 1.8vw, 1.4em);
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    -webkit-text-fill-color: #000000 !important;
+    animation: none;
+    text-shadow: none;
+    letter-spacing: -0.02em;
+}
+
+body[data-theme="premium"] .price-row__meta {
+    font-family: var(--font-primary);
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    font-size: clamp(0.7em, 1vw, 0.85em);
+    text-transform: uppercase;
+}
+
+body[data-theme="premium"] .price-dept {
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.3), transparent);
+    color: #FFFFFF;
+    border-left: clamp(3px, 0.5vw, 6px) solid #FFD700;
+    letter-spacing: 0.3em;
+    padding: clamp(0.3rem, 0.6vh, 0.6rem) clamp(0.6rem, 1vw, 1.2rem);
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.5rem);
+    text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+    font-weight: 800;
+    font-size: clamp(0.9em, 1.3vw, 1.2em);
+    text-transform: uppercase;
+}
+
+body[data-theme="premium"] .footer {
+    background: rgba(5, 3, 2, 0.95);
+    border-top: 1px solid rgba(255, 215, 0, 0.3);
+    backdrop-filter: blur(15px);
+}
+
+body[data-theme="premium"] .zocalo-pill {
+    background: rgba(15, 10, 5, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 999px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+body[data-theme="premium"] .marquee-text {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: #FFD700;
+    text-transform: uppercase;
+}
+
+/* Badges con gradiente cónico (Efecto Joya) */
+body[data-theme="premium"] .asian-rank-badge {
+    background: conic-gradient(from 0deg, #D4AF37, #FFF700, #F5E1A4, #D4AF37, #8B6508, #D4AF37);
+    color: #000;
+    font-family: var(--font-primary);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    padding: 2px 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.6);
+    text-shadow: none;
+}
+
+/* Tarjeta Top 1: Flotando en 3D absoluto */
+body[data-theme="premium"] .asian-rank-card.top-1 {
+    background: linear-gradient(145deg, rgba(40, 30, 10, 0.85), rgba(5, 5, 5, 0.95));
+    border-top: 1px solid #FFF700;
+    border-left: 1px solid #FFD700;
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, blackcard-float 4s 0.6s infinite ease-in-out !important;
+}
+
+body[data-theme="premium"] .asian-rank-card.top-1 .asian-rank-badge {
+    background: conic-gradient(from 45deg, #FFF700, #FFD700, #FFFFFF, #FFD700, #B8860B, #FFF700);
+    color: #000000;
+    transform: scale(1.15);
+    box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5), inset 0 2px 5px rgba(255,255,255,0.8);
+    border-color: #FFFFFF;
+}
+
+body[data-theme="premium"] .asian-rank-card.top-1 .asian-rank-name {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 15px rgba(255, 215, 0, 0.5);
+}
+
+/* ── ANIMACIONES ULTRA PREMIUM ── */
+@keyframes blackcard-float {
+    0%, 100% { 
+        box-shadow: 0 15px 35px rgba(0,0,0,0.9), 0 0 20px rgba(255, 215, 0, 0.2), inset 0 2px 5px rgba(255,255,255,0.05); 
+        transform: translateY(0) scale(1); 
+    }
+    50% { 
+        box-shadow: 0 35px 60px rgba(0,0,0,1), 0 0 40px rgba(255, 215, 0, 0.4), inset 0 2px 10px rgba(255,255,255,0.15); 
+        transform: translateY(-5px) scale(1.02); 
+    }
+}
+
+@keyframes foil-shine {
+    to { background-position: 200% center; }
+}
+
+@keyframes diamond-flare {
+    0%, 100% { opacity: 0.9; filter: drop-shadow(0 0 15px rgba(255,255,255,0.5)) hue-rotate(0deg); transform: scale(1); }
+    50% { opacity: 1; filter: drop-shadow(0 0 30px #FFF700) hue-rotate(-10deg); transform: scale(1.2); }
+}
+
+@keyframes platinum-sweep {
+    0%, 100% { text-shadow: 0 0 15px rgba(255,255,255,0.2); opacity: 0.9; }
+    50% { text-shadow: 0 0 30px #FFFFFF, 0 0 40px #FFD700; opacity: 1; }
+}
+
+body[data-theme="premium"] .asian-rank-fire {
+    animation: diamond-flare 2.5s infinite ease-in-out !important;
+    display: inline-block;
+}
+
+body[data-theme="premium"] .flash-strip__cycle span:first-child {
+    background: linear-gradient(90deg, #D4AF37 0%, #FFFFFF 50%, #D4AF37 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: foil-shine 3s linear infinite, platinum-sweep 2s alternate infinite ease-in-out;
 }

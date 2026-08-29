@@ -59,12 +59,11 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
     const puesto = Number(item.puesto || i + 1);
     const nombre = nombreVitrina(item.nombre).toUpperCase();
     
-    // Sistema de medallas y resaltado Top 3
+    // Sistema de resaltado Top 3
     let topClass = "";
-    let medal = "";
-    if (puesto === 1) { topClass = "top-1"; medal = "👑"; }
-    else if (puesto === 2) { topClass = "top-2"; medal = "🥈"; }
-    else if (puesto === 3) { topClass = "top-3"; medal = "🥉"; }
+    if (puesto === 1) { topClass = "top-1"; }
+    else if (puesto === 2) { topClass = "top-2"; }
+    else if (puesto === 3) { topClass = "top-3"; }
 
     if ((opciones.premium || opciones.mega) && !item.es_publicidad) {
         const dato = opciones.premium
@@ -77,7 +76,7 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
         return `
         <article class="asian-rank-card ${topClass} cascade-enter" style="animation-delay: ${i * 0.1}s">
             <div class="asian-rank-badge">
-                <span class="asian-rank-num">${medal} #${puesto}</span>
+                <span class="asian-rank-num">#${puesto}</span>
             </div>
             <div class="asian-rank-info">
                 <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
@@ -86,7 +85,7 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
                     <span class="asian-rank-tag">${escapeHtml(pctReal)} VENDIDO</span>
                 </div>
             </div>
-            ${puesto === 1 ? '<div class="asian-rank-fire">🔥</div>' : ''}
+            ${puesto === 1 ? '<div class="asian-rank-fire" style="font-size: 2rem; filter: drop-shadow(0 0 10px #FFD700);">🔥</div>' : ''}
         </article>
         `;
     }
@@ -100,11 +99,11 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
     return `
         <article class="asian-rank-card ${topClass} cascade-enter ${item.es_publicidad ? "is-ad" : ""}" style="animation-delay: ${i * 0.1}s">
             <div class="asian-rank-badge">
-                <span class="asian-rank-num">${medal} #${puesto}</span>
+                <span class="asian-rank-num">#${puesto}</span>
             </div>
             <div class="asian-rank-info">
                 <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
-                ${tag ? `<div class="asian-rank-tag-social">❤️ ${escapeHtml(tag)}</div>` : ""}
+                ${tag ? `<div class="asian-rank-tag-social">${escapeHtml(tag)}</div>` : ""}
             </div>
         </article>
     `;

@@ -24,6 +24,7 @@
     --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
     --rank-badge-top1-color: #FFFFFF;
     --rank-name-color:       #FFFFFF;
+    --rank-top1-name-color:  #1A1A1A;
     --rank-bar-bg:           linear-gradient(90deg, #FFCC00, #FFD700);
     --rank-bar-track:        rgba(255,255,255,0.06);
     --rank-tag-color:        #000000;

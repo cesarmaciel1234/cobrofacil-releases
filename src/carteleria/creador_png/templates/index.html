@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador PNG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+    <div class="app">
+        <header class="top">
+            <div>
+                <h1>Creador PNG</h1>
+                <p id="subtitulo">Fondo transparente para la vitrina</p>
+            </div>
+        </header>
+
+        <section class="workspace">
+            <article class="pane">
+                <div class="pane-head">Original</div>
+                <div class="pane-body" id="dropZone">
+                    <label class="drop" id="dropLabel" for="fileInput">
+                        <span class="drop-title">Elegí una foto</span>
+                        <span>JPG, PNG o WEBP</span>
+                    </label>
+                    <input class="hidden" type="file" id="fileInput" accept="image/png,image/jpeg,image/webp">
+                    <img id="imgOrig" class="hidden" alt="Original">
+                </div>
+            </article>
+            <article class="pane">
+                <div class="pane-head">Resultado</div>
+                <div class="pane-body" id="resBody">
+                    <span class="placeholder" id="phRes">Todavía no hay resultado</span>
+                    <img id="imgRes" class="hidden" alt="Resultado">
+                    <div class="busy hidden" id="busy"><span class="spin"></span></div>
+                    <!-- Pro Feature: Background Preview Toggle -->
+                    <button type="button" id="btnBgToggle" class="hidden" style="position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 20px; padding: 4px 10px; font-size: 11px; cursor: pointer; backdrop-filter: blur(4px);">Fondo: Transparente</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="bar">
+            <div class="filter-carousel" id="filterCarousel">
+                <button type="button" class="filter-btn active" data-id="carteleria">
+                    <div class="filter-thumb" style="background: linear-gradient(135deg, #fef3c7, #fbbf24);"></div>
+                    <span>Estándar</span>
+                </button>
+                <button type="button" class="filter-btn" data-id="fresco">
+                    <div class="filter-thumb" style="background: linear-gradient(135deg, #e0f2fe, #38bdf8);"></div>
+                    <span>Fresco</span>
+                </button>
+                <button type="button" class="filter-btn" data-id="intenso">
+                    <div class="filter-thumb" style="background: linear-gradient(135deg, #fee2e2, #ef4444);"></div>
+                    <span>Intenso</span>
+                </button>
+                <button type="button" class="filter-btn" data-id="cromo">
+                    <div class="filter-thumb" style="background: linear-gradient(135deg, #f1f5f9, #94a3b8);"></div>
+                    <span>B & N</span>
+                </button>
+                <button type="button" class="filter-btn" data-id="frio_rocio">
+                    <div class="filter-thumb" style="background: linear-gradient(135deg, #dbeafe, #60a5fa); position:relative;">
+                        <span style="position:absolute; top:2px; right:2px; font-size:10px;">💧</span>
+                    </div>
+                    <span>Rocío</span>
+                </button>
+                <div style="width: 1px; background: var(--line); margin: 0 4px;"></div>
+                <button type="button" class="filter-btn" id="btnRotar">
+                    <div class="filter-thumb" style="background: #f8fafc; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 16px;">↻</span>
+                    </div>
+                    <span>Girar</span>
+                </button>
+            </div>
+            
+            <!-- Live Controls -->
+            <div id="liveControls" class="hidden" style="display: flex; flex-direction: column; gap: 8px; border-left: 1px solid var(--line); padding-left: 14px; margin-left: 2px;">
+                <div id="rocioControl" class="hidden" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: 600; color: var(--muted);">Gotas:</span>
+                    <input type="range" id="sliderRocio" min="0" max="100" value="28" style="width: 80px; accent-color: var(--blue);">
+                </div>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer;">
+                    <input type="checkbox" id="chkVignette" style="accent-color: var(--blue);"> Viñeta
+                </label>
+            </div>
+
+            <label class="ia">
+                <input type="checkbox" id="chkIa">
+                Recorte con IA
+            </label>
+            <p class="msg" id="status"></p>
+            <div class="actions">
+                <button type="button" class="btn ghost" id="btnCancelar">Cerrar</button>
+                <button type="button" class="btn" id="btnConvertir" disabled>Convertir</button>
+                <button type="button" class="btn primary hidden" id="btnUsar">Usar imagen</button>
+            </div>
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
