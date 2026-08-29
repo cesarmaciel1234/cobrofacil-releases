@@ -577,7 +577,9 @@ def armar_hero(destacados, productos):
 
 def armar_paneles(productos, clima_icon="sol", clima_text=""):
     from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+    from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
     productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
+    motor_publicidad.marcar_lista(productos)
     rotacion = armar_rotacion_destacados(productos)
     destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos)
     hero = armar_hero(destacados, productos)

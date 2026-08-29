@@ -21,6 +21,7 @@ const ROTACION_MS = 8000;
 let rotacionTimer = null;
 let rotacionIndex = 0;
 let panelesCache = [];
+let productosCache = [];
 let rootRef = null;
 
 function panelesRotacion(state) {
@@ -32,15 +33,55 @@ function panelesRotacion(state) {
     return [];
 }
 
-function htmlPanel(panel, paneles, index) {
+function nombreClave(item) {
+    return String(item?.nombre || "").toLowerCase().trim();
+}
+
+function siguienteAd(ads, adIndex, evitar) {
+    if (!ads.length) return { ad: null, next: adIndex };
+    const evitarClave = nombreClave(evitar);
+    for (let k = 0; k < ads.length; k += 1) {
+        const ad = ads[(adIndex + k) % ads.length];
+        if (nombreClave(ad) !== evitarClave) {
+            return { ad, next: adIndex + k + 1 };
+        }
+    }
+    return { ad: ads[adIndex % ads.length], next: adIndex + 1 };
+}
+
+function inyectarPublicidad(items, productos) {
+    const ads = (productos || []).filter((item) => item.es_publicidad);
+    if (!ads.length || !items.length) return items;
+    const out = [];
+    let adIndex = 0;
+    items.forEach((item, i) => {
+        out.push(item);
+        if ((i + 1) % 4 === 0) {
+            const { ad, next } = siguienteAd(ads, adIndex, item);
+            if (ad) {
+                out.push({ ...ad, es_publicidad: true, slot_ad: true });
+                adIndex = next;
+            }
+        }
+    });
+    if (out.every((item) => !item.es_publicidad) && ads.length) {
+        const { ad } = siguienteAd(ads, 0, items[items.length - 1]);
+        if (ad) out.push({ ...ad, es_publicidad: true, slot_ad: true });
+    }
+    return out;
+}
+
+function htmlPanel(panel, paneles, index, productos) {
     const dots = paneles.map((_, i) =>
         `<span class="rank-dot${i === index ? " is-on" : ""}"></span>`
     ).join("");
     const premium = panel.id === "plata" || /en ventas/i.test(panel.subtitulo || "");
     const social = panel.id === "elegidos";
     const mega = panel.id === "volumen" || /kilo/i.test(panel.subtitulo || "");
-    const cards = (panel.items || []).slice(0, 5).map((item, i) =>
-        htmlTarjetaRanking(item, i, { premium, social, mega, items: panel.items })
+    const ranking = (panel.items || []).slice(0, 5);
+    const items = inyectarPublicidad(ranking, productos);
+    const cards = items.map((item, i) =>
+        htmlTarjetaRanking(item, i, { premium, social, mega, items })
     ).join("");
     const listaClase = [
         "rank-list",
@@ -64,7 +105,7 @@ function pintar(conFade) {
         return;
     }
     const index = rotacionIndex % panelesCache.length;
-    const html = htmlPanel(panelesCache[index], panelesCache, index);
+    const html = htmlPanel(panelesCache[index], panelesCache, index, productosCache);
     if (!conFade) {
         rootRef.innerHTML = html;
         return;
@@ -79,6 +120,7 @@ function pintar(conFade) {
 export function iniciarRotacionColumna1(state, root) {
     rootRef = root;
     const paneles = panelesRotacion(state);
+    productosCache = state.productos || [];
     const firma = JSON.stringify(paneles.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
     const misma = firma === JSON.stringify(panelesCache.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
     panelesCache = paneles;

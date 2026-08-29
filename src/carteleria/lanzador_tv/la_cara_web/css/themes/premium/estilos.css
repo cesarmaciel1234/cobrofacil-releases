@@ -191,7 +191,10 @@ body[data-theme="premium"] .tv-card__timer {
 }
 .asian-rank-name  { color: var(--rank-name-color, #FFFFFF); }
 .asian-rank-card.top-1 .asian-rank-name { color: var(--rank-top1-name-color, #F5E17A); }
-.asian-rank-tag   { color: var(--rank-tag-color, #111111); }
+.asian-rank-tag   { 
+    color: var(--rank-tag-color, #FFFFFF) !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
 .asian-rank-tag-social { color: var(--rank-social-color, #F5E17A); }
 .asian-rank-progress-bar { background: var(--rank-bar-bg); }
 .asian-rank-progress-container { background: var(--rank-bar-track); }
@@ -288,6 +291,53 @@ body[data-theme="premium"] .tv-card__timer {
     background: linear-gradient(135deg, #DC2626, #991B1B) !important;
     border: 1px solid #FF8A8A !important;
     color: #FFFFFF !important;
+}
+
+/* Etiqueta micro para el carrusel superior (Sellado) */
+body[data-theme="premium"] .hero-section .deal-stage__off {
+    bottom: auto !important;
+    left: auto !important;
+    top: 0 !important;
+    right: 0 !important;
+    font-size: clamp(8px, 0.7vw, 10px) !important;
+    padding: 1px 5px !important;
+    border-radius: 0 12px 0 8px !important;
+    transform: scale(0.8) !important;
+    transform-origin: top right !important;
+    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+    border: 1px solid #FF8A8A !important;
+    color: #FFFFFF !important;
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* Etiqueta grande y animada para tarjetas gigantes (Columna 3 y 4 - Sellado) */
+body[data-theme="premium"] .tv-3 .deal-stage__off,
+body[data-theme="premium"] .tv-4 .asian-flash-badge {
+    position: absolute !important;
+    bottom: auto !important;
+    left: auto !important;
+    top: 0 !important;
+    right: 0 !important;
+    font-size: clamp(14px, 1.2vw, 18px) !important;
+    padding: 4px 12px !important;
+    border-radius: 0 12px 0 12px !important;
+    transform-origin: center !important;
+    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
+    border: 2px solid #FF8A8A !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.6) !important;
+    animation: premiumBadgePulse 1.5s infinite !important;
+    z-index: 10 !important;
+}
+
+body[data-theme="premium"] .deal-proof {
+    color: #FFFFFF !important;
+}
+
+@keyframes premiumBadgePulse {
+    0%, 100% { transform: scale(1) rotate(0deg) !important; }
+    50% { transform: scale(1.15) rotate(3deg) !important; }
 }
 
 /* ── ZÓCALO ── */

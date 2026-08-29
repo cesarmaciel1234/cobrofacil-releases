@@ -169,6 +169,15 @@
 }
 .asian-rank-card.top-1 .asian-rank-name { color: var(--rank-top1-name-color, #1A1A1A); }
 
+.asian-rank-card.is-ad {
+    background: linear-gradient(135deg, #DC2626 0%, #9F1239 100%);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.asian-rank-card.is-ad .asian-rank-name,
+.asian-rank-card.is-ad .asian-rank-tag-social {
+    color: #FFF7ED;
+}
+
 /* Barra de progreso */
 .asian-rank-progress-container {
     background: var(--rank-bar-track);

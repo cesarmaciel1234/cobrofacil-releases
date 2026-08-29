@@ -124,9 +124,7 @@ class PreviewWindow:
             pass
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-            motor_publicidad.cargar_configuracion()
-            for item in productos:
-                item["es_publicidad"] = motor_publicidad.is_promocionado(item.get("nombre"))
+            motor_publicidad.marcar_lista(productos)
         except Exception:
             pass
         ofertas = [p for p in productos if p["precio_oferta"] > 0 and p["precio_oferta"] < p["precio"]]

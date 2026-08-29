@@ -186,7 +186,7 @@ class DialogoCargarPng(QDialog):
             )
             canvas.save(dest, "PNG", dpi=(PNG_DPI, PNG_DPI))
             try:
-                from src.carteleria.png_productos.fondo_transparente import quitar_fondo_negro
+                from src.carteleria.creador_png.fondo_transparente import quitar_fondo_negro
                 quitar_fondo_negro(dest)
             except Exception:
                 pass

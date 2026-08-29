@@ -814,6 +814,21 @@ class DatabaseManager:
         except Exception as e:
             logger.warning(f"Error creando tabla detalle_ventas (compat): {e}")
 
+        # ── MODULO AISLADO CARTELERIA ──
+        # Motor autónomo de imágenes PNG en red
+        try:
+            # LONGBLOB for MariaDB, BLOB for SQLite
+            col_type = "LONGBLOB" if getattr(self, "db_engine_type", "sqlite") == "mariadb" else "BLOB"
+            cursor.execute(f"""
+                CREATE TABLE IF NOT EXISTS carteleria_media (
+                    nombre_archivo VARCHAR(255) PRIMARY KEY,
+                    imagen_blob {col_type},
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error creando tabla carteleria_media: {e}")
+
         # ── COMPATIBILIDAD RETROACTIVA: tabla 'configuracion' ──
         # Módulos legacy pueden consultar SELECT/INSERT aquí. La poblamos desde config.json.
         try:

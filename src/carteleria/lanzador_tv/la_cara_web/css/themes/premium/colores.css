@@ -1,4 +1,4 @@
-﻿/* PREMIUM — Negro & Oro Lujo */
+/* PREMIUM — Negro & Oro Lujo */
 :root {
     --bg-primary:      #0A0A0A;
     --bg-secondary:    #1C1C1E;
@@ -90,7 +90,7 @@
     --rank-top1-name-color:  #F5E17A;
     --rank-bar-bg:           linear-gradient(90deg, #D4AF37, #F5E17A);
     --rank-bar-track:        rgba(255, 255, 255, 0.14);
-    --rank-tag-color:        #111111;
+    --rank-tag-color:        #FFFFFF;
     --rank-social-color:     #F5E17A;
     --rank-fire-shadow:      rgba(212, 175, 55, 0.45);
     --rank-dot-bg:           rgba(212, 175, 55, 0.25);

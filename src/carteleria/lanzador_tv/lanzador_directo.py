@@ -283,9 +283,7 @@ class LanzadorDirectoTV(QObject):
     def _marcar_publicidad(self, productos):
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-            motor_publicidad.cargar_configuracion()
-            for item in productos:
-                item["es_publicidad"] = motor_publicidad.is_promocionado(item.get("nombre"))
+            motor_publicidad.marcar_lista(productos)
         except Exception:
             pass
         return productos

@@ -89,7 +89,7 @@ function htmlDealCard(producto, { ad }) {
     const stock = Number(producto.stock || 0);
     const min = cantMinimaOferta(producto);
     const proof = stock > 0 && stock <= 8
-        ? `Últimos ${Math.round(stock)}`
+        ? `¡Se agota!`
         : (vendidos > 0
             ? `${Math.round(vendidos)} vendidos`
             : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
