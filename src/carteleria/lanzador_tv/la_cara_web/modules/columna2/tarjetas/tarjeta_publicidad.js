@@ -7,7 +7,7 @@ export function htmlTarjetaPublicidad(item) {
     const precio = precioVigente(item);
     return `
         <article class="price-ad">
-            <span class="price-ad__badge">PUBLICIDAD</span>
+            <span class="price-ad__badge">★ SELECCIÓN VIP ★</span>
             <div class="price-ad__body">
                 <h5 class="price-ad__name">${escapeHtml(nombre)}</h5>
                 ${precio > 0 ? `<strong class="price-ad__price">${formatMoney(precio)}</strong>` : ""}

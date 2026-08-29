@@ -231,14 +231,83 @@ body[data-theme="premium"] .tv-card__timer {
     font-weight: 900;
     box-shadow: 0 4px 14px rgba(191,149,63,0.35);
 }
+/* --- PUBLICIDAD "NEXT LEVEL" --- */
 .price-ad {
-    background: linear-gradient(135deg, #DC2626 0%, #9F1239 100%);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+    background: linear-gradient(135deg, #1A1200 0%, #2A1F00 50%, #1A1200 100%) !important;
+    position: relative !important;
+    padding: 2.5vh 2vw !important;
+    margin: 1.5vh 0 !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1.5vh !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25), inset 0 0 25px rgba(212, 175, 55, 0.08) !important;
+    overflow: hidden !important;
+    z-index: 1;
 }
-.price-ad__badge { background: #FFF7CC; color: #9F1239; }
-.price-ad__name  { color: #FFFFFF; }
-.price-ad__price { color: #FFFFFF; }
+
+/* Borde animado de oro fluyendo */
+.price-ad::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 18px;
+    padding: 2px; /* Grosor del borde */
+    background: linear-gradient(60deg, #D4AF37, #FFF7CC, #B8860B, #111, #D4AF37, #FFF7CC);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: -1;
+    animation: goldAdBorder 4s linear infinite;
+}
+
+@keyframes goldAdBorder {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.price-ad__badge { 
+    background: linear-gradient(90deg, #FFDF00, #D4AF37) !important;
+    color: #000000 !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.6) !important;
+    padding: 0.5vh 1.5vw !important;
+    font-size: clamp(0.7rem, 0.9vw, 1rem) !important;
+    border-radius: 999px !important;
+    letter-spacing: 0.2em !important;
+    font-weight: 900 !important;
+    align-self: center !important;
+}
+
+.price-ad__body {
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 0.5vh !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
+.price-ad__name { 
+    color: #FFFFFF !important;
+    font-size: clamp(1.5rem, 2vw, 2.2rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.9) !important;
+    margin: 0 !important;
+}
+
+.price-ad__price { 
+    color: #FFDF00 !important; 
+    font-size: clamp(2.2rem, 3vw, 3.5rem) !important;
+    text-shadow: 0 0 20px rgba(255, 223, 0, 0.5) !important;
+    line-height: 1 !important;
+    margin-top: 0.5vh !important;
+}
 
 /* ── COL 3 — OFERTA RELÁMPAGO ── */
 .flash-offer__deal, .chef-deal {
