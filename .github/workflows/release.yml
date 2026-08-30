@@ -152,6 +152,10 @@ jobs:
             --add-data "Catalogos;Catalogos" `
             main.py
 
+      - name: Instalar dependencias del Worker (rembg)
+        run: |
+          pip install rembg onnxruntime pooch scikit-image
+
       - name: Compilar Worker de Creador PNG
         env:
           TPV_QT: "6"
