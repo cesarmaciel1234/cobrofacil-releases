@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_from_directory, jsonify
+﻿from flask import Flask, request, render_template, send_from_directory, jsonify
 import os
 import threading
 import uuid
@@ -200,7 +200,8 @@ def convert_image():
                 "filename": output_filename,
                 "upload_id": upload_id,
             })
-        err_txt = proc.stderr.decode("utf-8", "replace") if not ok else "File missing"`n        return jsonify({"error": f"Conversion failed. {err_txt}"}), 500
+        err_txt = proc.stderr.decode("utf-8", "replace") if not ok else "File missing"
+        return jsonify({"error": f"Conversion failed. {err_txt}"}), 500
     except Exception as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
@@ -222,6 +223,8 @@ def carteleria_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
+
 
 
 
