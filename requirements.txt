@@ -16,3 +16,4 @@ pymysql
 xlrd
 numpy
 Flask
+rembg

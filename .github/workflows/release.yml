@@ -147,6 +147,22 @@ jobs:
             --add-data "Catalogos;Catalogos" `
             main.py
 
+      - name: Compilar Worker de Creador PNG
+        env:
+          TPV_QT: "6"
+        run: |
+          python -m PyInstaller --noconfirm --onedir --console --name "Creador_PNG_Worker" `
+            --hidden-import "rembg" `
+            --collect-all "rembg" `
+            --collect-all "onnxruntime" `
+            --collect-all "pooch" `
+            src/carteleria/creador_png/convertir_imagen.py
+
+      - name: Integrar Worker al paquete principal
+        shell: pwsh
+        run: |
+          Move-Item -Path "dist/Creador_PNG_Worker" -Destination "dist/CobroFacil_POS/worker" -Force
+
       - name: Asegurar cara web TV en el paquete
         shell: pwsh
         run: |
@@ -284,3 +300,4 @@ jobs:
             exit 1
           fi
           gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].name'
+

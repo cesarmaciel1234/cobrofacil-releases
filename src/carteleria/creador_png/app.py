@@ -160,12 +160,16 @@ def convert_image():
     rapido = request.form.get("fast") in ("1", "true", "on")
 
     try:
-import subprocess
+        import subprocess
         import sys
         
-        args = [
-            sys.executable,
-            "--run-png-creator",
+        worker_exe = os.path.join(os.path.dirname(sys.executable), "worker", "Creador_PNG_Worker.exe")
+        if os.path.exists(worker_exe):
+            base_cmd = [worker_exe]
+        else:
+            base_cmd = [sys.executable, "--run-png-creator"]
+            
+        args = base_cmd + [
             input_filepath,
             output_filepath,
             "--black_threshold", str(params["black_threshold"]),
@@ -220,6 +224,7 @@ def carteleria_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
 
 
 
