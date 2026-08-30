@@ -29,6 +29,9 @@ if exist "..\dist\CobroFacil_POS" rd /s /q "..\dist\CobroFacil_POS"
 
 cd ..
 python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
+  --exclude-module "rembg" ^
+  --exclude-module "scipy" ^
+  --exclude-module "src.carteleria.creador_png.convertir_imagen" ^
   --hidden-import "reportlab.graphics.barcode.code93" ^
   --hidden-import "reportlab.graphics.barcode.code128" ^
   --hidden-import "reportlab.graphics.barcode.code39" ^
@@ -42,17 +45,37 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --hidden-import "PyQt6.QtWebEngineCore" ^
   --collect-all "PyQt6.QtWebEngineCore" ^
   --collect-all "PyQt6.QtWebEngineWidgets" ^
+  --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_qt_dll_path.py" ^
   --collect-submodules "src.admin" ^
   --collect-submodules "src.jefe" ^
   --collect-submodules "src.carteleria" ^
+  --collect-submodules "src.motor_descuentos" ^
   --collect-submodules "src.services" ^
+  --hidden-import "src.carteleria.creador_png.app" ^
+  --hidden-import "src.carteleria.creador_png.servidor" ^
+  --hidden-import "flask" ^
+  --hidden-import "jinja2" ^
+  --hidden-import "werkzeug" ^
   --add-data "src/ui_components;src/ui_components" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
+  --add-data "src/carteleria/creador_png/templates;src/carteleria/creador_png/templates" ^
+  --add-data "src/carteleria/creador_png/static;src/carteleria/creador_png/static" ^
   --add-data "Catalogos;Catalogos" ^
   main.py
+
+echo.
+echo Compilando worker Creador PNG (recorte IA)...
+python -m PyInstaller --noconfirm --onedir --console --name "Creador_PNG_Worker" ^
+  --hidden-import "rembg" ^
+  --collect-all "rembg" ^
+  --collect-all "onnxruntime" ^
+  --collect-all "pooch" ^
+  src\carteleria\creador_png\convertir_imagen.py
+if exist "dist\CobroFacil_POS\worker" rd /s /q "dist\CobroFacil_POS\worker"
+if exist "dist\Creador_PNG_Worker" move "dist\Creador_PNG_Worker" "dist\CobroFacil_POS\worker"
 
 echo.
 echo =====================================================================

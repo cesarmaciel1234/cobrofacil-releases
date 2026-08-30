@@ -4,14 +4,11 @@ import os
 
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import src.carteleria.creador_png.app
-import src.carteleria.creador_png.servidor
-
-
 
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
-from src.utils.qt_compat import set_share_opengl_contexts, qt_exec
+from src.utils.qt_compat import set_share_opengl_contexts, prepare_frozen_qt_paths, qt_exec
 
+prepare_frozen_qt_paths()
 configure_process_dpi()
 
 import traceback
@@ -34,8 +31,11 @@ configure_qt_application_attributes()
 set_share_opengl_contexts()
 
 import os
-os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-gpu'
-from PyQt6 import QtWebEngineWidgets
+os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-gpu --disable-software-rasterizer'
+try:
+    from PyQt6 import QtWebEngineWidgets  # noqa: F401
+except (ImportError, OSError, Exception):
+    QtWebEngineWidgets = None
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
 

@@ -1,5 +1,7 @@
 ﻿from flask import Flask, request, render_template, send_from_directory, jsonify
 import os
+import sys
+import tempfile
 import threading
 import uuid
 
@@ -8,19 +10,63 @@ try:
 except ImportError:
     from presets import PRESETS
 
-_convert_lock = threading.Lock()
 
-_DIR = os.path.dirname(os.path.abspath(__file__))
-_ROOT = os.path.abspath(os.path.join(_DIR, "..", "..", ".."))
+def _dir_recursos():
+    rel = os.path.join("src", "carteleria", "creador_png")
+    candidatos = [os.path.dirname(os.path.abspath(__file__))]
+    try:
+        from src.utils.paths import get_resource_path, get_base_path
+        candidatos.extend([
+            get_resource_path(rel),
+            os.path.join(get_base_path(), "_internal", rel),
+            os.path.join(get_base_path(), rel),
+        ])
+        if getattr(sys, "frozen", False):
+            meipass = getattr(sys, "_MEIPASS", "")
+            exe_dir = os.path.dirname(sys.executable)
+            candidatos.extend([
+                os.path.join(meipass, rel) if meipass else "",
+                os.path.join(exe_dir, "_internal", rel),
+            ])
+    except Exception:
+        pass
+    for path in candidatos:
+        if path and os.path.isdir(os.path.join(path, "templates")):
+            return path
+    return candidatos[0]
+
+
+def _dir_writable(nombre):
+    try:
+        from src.utils.paths import get_base_path
+        base = os.path.join(get_base_path(), "creador_png_tmp", nombre)
+    except Exception:
+        base = os.path.join(tempfile.gettempdir(), "tpv_creador_png", nombre)
+    os.makedirs(base, exist_ok=True)
+    return base
+
+
+def _dir_png_productos():
+    try:
+        from src.carteleria.assets_paths import png_productos_dir
+        return png_productos_dir()
+    except Exception:
+        dest = os.path.join(_dir_writable("png_productos"))
+        os.makedirs(dest, exist_ok=True)
+        return dest
+
+
+_convert_lock = threading.Lock()
+_DIR = _dir_recursos()
 
 app = Flask(
     __name__,
     template_folder=os.path.join(_DIR, "templates"),
     static_folder=os.path.join(_DIR, "static"),
 )
-app.config["UPLOAD_FOLDER"] = os.path.join(_DIR, "uploads")
-app.config["CONVERTED_FOLDER"] = os.path.join(_DIR, "converted")
-app.config["CARTELERIA_FOLDER"] = os.path.join(_ROOT, "Catalogos", "png_productos")
+app.config["UPLOAD_FOLDER"] = _dir_writable("uploads")
+app.config["CONVERTED_FOLDER"] = _dir_writable("converted")
+app.config["CARTELERIA_FOLDER"] = _dir_png_productos()
 app.config["SCRIPT_PATH"] = os.path.join(_DIR, "convertir_imagen.py")
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -119,6 +165,85 @@ def get_conversion_params(form_data):
     return params
 
 
+def _exe_worker():
+    if not getattr(sys, "frozen", False):
+        return ""
+    exe_dir = os.path.dirname(sys.executable)
+    candidatos = (
+        os.path.join(exe_dir, "worker", "Creador_PNG_Worker.exe"),
+        os.path.join(exe_dir, "Creador_PNG_Worker.exe"),
+    )
+    for path in candidatos:
+        if path and os.path.isfile(path):
+            return path
+    return ""
+
+
+def _args_convert(params, input_filepath, output_filepath, size, rapido):
+    args = [
+        input_filepath,
+        output_filepath,
+        "--black_threshold", str(params["black_threshold"]),
+        "--white_threshold", str(params["white_threshold"]),
+        "--sharpness_factor", str(params["sharpness_factor"]),
+        "--contrast_factor", str(params["contrast_factor"]),
+        "--saturation_factor", str(params["saturation_factor"]),
+        "--brightness_factor", str(params["brightness_factor"]),
+        "--output_size", str(size),
+        "--temperature", str(params["temperature"]),
+        "--wet_shine_intensity", str(params["wet_shine_intensity"]),
+        "--water_droplets_density", str(params["water_droplets_density"]),
+        "--rotation", str(params["rotation"]),
+    ]
+    if params.get("use_ai"):
+        args.append("--use_ai")
+    if params.get("enable_depth_effect"):
+        args.append("--enable_depth_effect")
+    if params.get("enable_vignette_effect"):
+        args.append("--enable_vignette_effect")
+    if params.get("enable_rim_light_effect"):
+        args.append("--enable_rim_light_effect")
+    if rapido:
+        args.append("--use_cached_cutout")
+    return args
+
+
+def _convertir(params, input_filepath, output_filepath, size, rapido):
+    worker = _exe_worker()
+    if worker:
+        import subprocess
+        cmd = [worker] + _args_convert(params, input_filepath, output_filepath, size, rapido)
+        kwargs = {"capture_output": True, "text": True}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000
+        proc = subprocess.run(cmd, **kwargs)
+        if proc.returncode != 0:
+            raise RuntimeError((proc.stderr or proc.stdout or "worker error").strip())
+        return os.path.isfile(output_filepath)
+
+    from src.carteleria.creador_png.convertir_imagen import crear_efecto_3d_realista
+    return bool(crear_efecto_3d_realista(
+        input_filepath,
+        output_filepath,
+        target_size=(size, size),
+        black_threshold=params["black_threshold"],
+        white_threshold=params["white_threshold"],
+        sharpness_factor=params["sharpness_factor"],
+        contrast_factor=params["contrast_factor"],
+        saturation_factor=params["saturation_factor"],
+        brightness_factor=params["brightness_factor"],
+        use_ai=params["use_ai"],
+        temperature=params["temperature"],
+        wet_shine_intensity=params["wet_shine_intensity"],
+        water_droplets_density=params["water_droplets_density"],
+        rotation=params["rotation"],
+        enable_depth_effect=params["enable_depth_effect"],
+        enable_vignette_effect=params["enable_vignette_effect"],
+        enable_rim_light_effect=params["enable_rim_light_effect"],
+        use_cached_cutout=rapido,
+    ))
+
+
 def _upload_seguro(nombre):
     nombre = os.path.basename(nombre or "")
     if not nombre or ".." in nombre:
@@ -158,39 +283,8 @@ def convert_image():
     rapido = request.form.get("fast") in ("1", "true", "on")
 
     try:
-        import subprocess
-        import sys
-        
-        worker_exe = os.path.join(os.path.dirname(sys.executable), "worker", "Creador_PNG_Worker.exe")
-        if os.path.exists(worker_exe):
-            base_cmd = [worker_exe]
-        else:
-            base_cmd = [sys.executable, "--run-png-creator"]
-            
-        args = base_cmd + [
-            input_filepath,
-            output_filepath,
-            "--black_threshold", str(params["black_threshold"]),
-            "--white_threshold", str(params["white_threshold"]),
-            "--sharpness_factor", str(params["sharpness_factor"]),
-            "--contrast_factor", str(params["contrast_factor"]),
-            "--saturation_factor", str(params["saturation_factor"]),
-            "--brightness_factor", str(params["brightness_factor"]),
-            "--output_size", str(size),
-            "--temperature", str(params["temperature"]),
-            "--wet_shine_intensity", str(params["wet_shine_intensity"]),
-            "--water_droplets_density", str(params["water_droplets_density"]),
-            "--rotation", str(params["rotation"]),
-        ]
-        if params["use_ai"]: args.append("--use_ai")
-        if params["enable_depth_effect"]: args.append("--enable_depth_effect")
-        if params["enable_vignette_effect"]: args.append("--enable_vignette_effect")
-        if params["enable_rim_light_effect"]: args.append("--enable_rim_light_effect")
-        if rapido: args.append("--use_cached_cutout")
-        
         with _convert_lock:
-            proc = subprocess.run(args, capture_output=True, creationflags=0x08000000)
-            ok = proc.returncode == 0
+            ok = _convertir(params, input_filepath, output_filepath, size, rapido)
         if ok and os.path.exists(output_filepath):
             return jsonify({
                 "success": True,
@@ -200,8 +294,7 @@ def convert_image():
                 "filename": output_filename,
                 "upload_id": upload_id,
             })
-        err_txt = proc.stderr.decode("utf-8", "replace") if not ok else "File missing"
-        return jsonify({"error": f"Conversion failed. {err_txt}"}), 500
+        return jsonify({"error": "Conversion failed: Output file not found."}), 500
     except Exception as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 

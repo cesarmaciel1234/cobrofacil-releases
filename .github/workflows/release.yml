@@ -114,7 +114,7 @@ jobs:
             --exclude-module "tcl" `
             --exclude-module "_tkinter" `
             --exclude-module "Tkinter" `
-            --hidden-import "reportlab.graphics.barcode.code93" `
+            --exclude-module "rembg" n            --exclude-module "scipy" n            --exclude-module "src.carteleria.creador_png.convertir_imagen" n            --hidden-import "reportlab.graphics.barcode.code93" `
             --hidden-import "reportlab.graphics.barcode.code128" `
             --hidden-import "reportlab.graphics.barcode.code39" `
             --hidden-import "reportlab.graphics.barcode.eanbc" `

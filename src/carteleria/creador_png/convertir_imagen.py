@@ -532,6 +532,10 @@ def main():
         wet_shine_intensity=args.wet_shine_intensity,
         water_droplets_density=args.water_droplets_density,
         rotation=args.rotation,
+        enable_depth_effect=args.enable_depth_effect,
+        enable_vignette_effect=args.enable_vignette_effect,
+        enable_rim_light_effect=args.enable_rim_light_effect,
+        use_cached_cutout=args.use_cached_cutout,
     )
     
     if success:

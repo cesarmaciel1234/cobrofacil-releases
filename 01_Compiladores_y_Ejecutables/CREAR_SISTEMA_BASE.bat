@@ -38,7 +38,14 @@ echo Ensamblando el ejecutable principal...
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
   --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
+  --add-data "src/carteleria/creador_png/templates;src/carteleria/creador_png/templates" ^
+  --add-data "src/carteleria/creador_png/static;src/carteleria/creador_png/static" ^
   --add-data "Catalogos;Catalogos" ^
+  --collect-submodules "src.carteleria" ^
+  --collect-submodules "src.motor_descuentos" ^
+  --hidden-import "src.carteleria.creador_png.app" ^
+  --hidden-import "flask" ^
+  --hidden-import "jinja2" ^
   main.py
 
 echo ========================================================

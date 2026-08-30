@@ -156,6 +156,50 @@ def set_share_opengl_contexts() -> None:
         pass
 
 
+def prepare_frozen_qt_paths() -> None:
+    """DLL de QtWebEngine en el .exe: PATH y QtWebEngineProcess junto a _internal."""
+    if not getattr(sys, "frozen", False):
+        return
+    roots = []
+    meipass = getattr(sys, "_MEIPASS", "") or ""
+    exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+    if meipass:
+        roots.append(meipass)
+    roots.extend([
+        os.path.join(exe_dir, "_internal"),
+        exe_dir,
+    ])
+    extra = []
+    for root in roots:
+        if not root or not os.path.isdir(root):
+            continue
+        extra.append(root)
+        for sub in (
+            os.path.join("PyQt6", "Qt6", "bin"),
+            os.path.join("PyQt6", "Qt6", "plugins"),
+            "PyQt6",
+        ):
+            path = os.path.join(root, sub)
+            if os.path.isdir(path):
+                extra.append(path)
+    if extra:
+        os.environ["PATH"] = os.pathsep.join(extra + [os.environ.get("PATH", "")])
+    for root in roots:
+        plugin = os.path.join(root, "PyQt6", "Qt6", "plugins")
+        if os.path.isdir(plugin):
+            os.environ["QT_PLUGIN_PATH"] = plugin
+            break
+    for root in roots:
+        for rel in (
+            os.path.join("PyQt6", "Qt6", "bin", "QtWebEngineProcess.exe"),
+            "QtWebEngineProcess.exe",
+        ):
+            proc = os.path.join(root, rel)
+            if os.path.isfile(proc):
+                os.environ["QTWEBENGINEPROCESS_PATH"] = proc
+                return
+
+
 def queued_connection():
     try:
         return Qt.ConnectionType.QueuedConnection
