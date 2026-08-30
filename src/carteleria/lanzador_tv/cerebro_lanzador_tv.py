@@ -31,7 +31,7 @@ logger = logging.getLogger("CerebroLanzadorTV")
 
 
 def cargar_web_tv():
-    """En el EXE: archivos en memoria. En dev: carpeta la_cara_web."""
+    """En el EXE: tv_cara.bin en memoria. Si falta, la carpeta la_cara_web (dev o instalado viejo)."""
     if getattr(sys, "frozen", False):
         try:
             from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
@@ -41,18 +41,25 @@ def cargar_web_tv():
                 return None, mem
         except Exception:
             logger.exception("No se pudo abrir el paquete oculto de la TV")
-            return None, None
 
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
         get_resource_path(rel),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
         os.path.join(get_base_path(), rel),
+        os.path.join(get_base_path(), "_internal", rel),
     ]
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        meipass = getattr(sys, "_MEIPASS", "")
+        candidatos.extend([
+            os.path.join(exe_dir, "_internal", rel),
+            os.path.join(meipass, rel) if meipass else "",
+        ])
     for path in candidatos:
         if path and os.path.isfile(os.path.join(path, "index.html")):
             return path, None
-    return next((p for p in candidatos if p), ""), None
+    return "", None
 
 
 def _json_default(value):
@@ -382,7 +389,6 @@ class ServidorCuello:
     def _geometria_tv(self):
         try:
             from PyQt6.QtWidgets import QApplication
-            from src.utils.qt_dpi import secondary_screen
 
             app = QApplication.instance()
             if not app:
@@ -393,7 +399,7 @@ class ServidorCuello:
             if self.screen_index is not None and 0 <= self.screen_index < len(screens):
                 screen = screens[self.screen_index]
             else:
-                screen = secondary_screen(app) or (screens[-1] if len(screens) > 1 else screens[0])
+                screen = app.primaryScreen() or screens[0]
             geo = screen.geometry()
             return geo.x(), geo.y(), geo.width(), geo.height()
         except Exception:

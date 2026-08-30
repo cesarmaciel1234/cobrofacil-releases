@@ -62,6 +62,8 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --collect-submodules "src.jefe" ^
   --collect-submodules "src.carteleria" ^
   --collect-submodules "src.motor_descuentos" ^
+  --hidden-import "src.motor_descuentos.vistas.dialog_gestor_publicidad" ^
+  --hidden-import "src.motor_descuentos.vistas.ofertas_main" ^
   --collect-submodules "src.services" ^
   --hidden-import "src.carteleria.creador_png.app" ^
   --hidden-import "src.carteleria.creador_png.servidor" ^

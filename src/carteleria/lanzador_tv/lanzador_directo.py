@@ -3,16 +3,34 @@
 import hashlib
 import logging
 
-from PyQt6.QtCore import QObject, QTimer
+from PyQt6.QtCore import QObject, QThread, QTimer, Qt, pyqtSignal
 
 from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
 from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
-from src.carteleria.motor_carteleria.estado_tv import armar_paneles
 
 logger = logging.getLogger("LanzadorDirectoTV")
 
 SYNC_MS = 15_000
 CLIMA_MS = 15 * 60 * 1000
+
+
+class _PanelesWorker(QThread):
+    listo = pyqtSignal(dict)
+
+    def __init__(self, productos, clima_icon, clima, parent=None):
+        super().__init__(parent)
+        self._productos = productos
+        self._clima_icon = clima_icon
+        self._clima = clima
+
+    def run(self):
+        try:
+            from src.carteleria.motor_carteleria.estado_tv import armar_paneles
+            paneles = armar_paneles(self._productos, self._clima_icon, self._clima)
+            self.listo.emit(paneles or {})
+        except Exception:
+            logger.exception("Error armando paneles TV")
+            self.listo.emit({})
 
 
 class LanzadorDirectoTV(QObject):
@@ -35,16 +53,18 @@ class LanzadorDirectoTV(QObject):
         self._paneles = {}
         self._state_cache = {"config": {}, "precios": []}
         self._huella = ""
+        self._vivo = False
+        self._paneles_worker = None
         self.last_error = ""
 
     def lanzar(self, screen_index=None):
         try:
             self.last_error = ""
+            self._vivo = True
             if self._cuello:
                 self.detener()
+                self._vivo = True
             self.screen_index = screen_index
-            self._cargar_datos_iniciales()
-            self._iniciar_motores()
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import ServidorCuello
             self._cuello = ServidorCuello(self)
             if not self._cuello.iniciar(screen_index=screen_index):
@@ -53,6 +73,8 @@ class LanzadorDirectoTV(QObject):
                 )
                 self.detener()
                 return False
+            QTimer.singleShot(0, self._cargar_datos_iniciales)
+            QTimer.singleShot(50, self._iniciar_motores)
             logger.info(
                 "Cartelería TV en http://127.0.0.1:%s/  (F10 monitor · F11/ESC salir)",
                 self._cuello.port,
@@ -165,16 +187,15 @@ class LanzadorDirectoTV(QObject):
 
     def detener(self):
         try:
+            self._vivo = False
             if self._sync_timer:
                 self._sync_timer.stop()
             if self._clima_timer:
                 self._clima_timer.stop()
             if self._sync_worker and self._sync_worker.isRunning():
                 self._sync_worker.requestInterruption()
-                self._sync_worker.wait(400)
             if self._clima_worker and self._clima_worker.isRunning():
                 self._clima_worker.requestInterruption()
-                self._clima_worker.wait(400)
             if self._cuello:
                 self._cuello.detener()
                 self._cuello = None
@@ -207,6 +228,8 @@ class LanzadorDirectoTV(QObject):
 
     def _on_sync_finished(self, data, status):
         """Aplica HTTP/MariaDB o caché; no tira el catálogo si el pulso vino vacío."""
+        if not self._vivo:
+            return
         try:
             data = data or {}
             productos = data.get("precios") or []
@@ -228,6 +251,8 @@ class LanzadorDirectoTV(QObject):
             logger.warning(f"Error procesando sync: {e}")
     
     def _on_clima_actualizado(self, icon_name, text):
+        if not self._vivo:
+            return
         self._clima_icon = icon_name or "sol"
         self._clima = text
         if self.rows_precios:
@@ -321,8 +346,20 @@ class LanzadorDirectoTV(QObject):
         if not force and huella == self._huella and self._paneles.get("rotacion"):
             self._publicar_estado()
             return
+        if self._paneles_worker and self._paneles_worker.isRunning():
+            return
         self._huella = huella
-        self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+        copia = [dict(p) for p in self.rows_precios]
+        self._paneles_worker = _PanelesWorker(copia, self._clima_icon, self._clima, self)
+        self._paneles_worker.listo.connect(self._on_paneles_listos, Qt.ConnectionType.UniqueConnection)
+        self._paneles_worker.start()
+        self._publicar_estado()
+
+    def _on_paneles_listos(self, paneles):
+        if not self._vivo:
+            return
+        if paneles:
+            self._paneles = paneles
         self._publicar_estado()
 
     def _publicar_estado(self):

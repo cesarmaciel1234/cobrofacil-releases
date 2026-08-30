@@ -141,6 +141,9 @@ jobs:
             --collect-submodules "src.jefe" `
             --collect-submodules "src.cajero" `
             --collect-submodules "src.carteleria" `
+            --collect-submodules "src.motor_descuentos" `
+            --hidden-import "src.motor_descuentos.vistas.dialog_gestor_publicidad" `
+            --hidden-import "src.motor_descuentos.vistas.ofertas_main" `
             --hidden-import "src.carteleria.creador_png.app" `
             --hidden-import "src.carteleria.creador_png.servidor" `
             --hidden-import "flask" `

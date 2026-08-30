@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from src.motor_descuentos.cerebro.motor_ofertas import MotorOfertas
 from src.motor_descuentos.moleculas.tabla_ofertas import TablaOfertas
 from src.motor_descuentos.moleculas.creador_promociones import CreadorPromociones
+from src.motor_descuentos.vistas.dialog_gestor_publicidad import DialogGestorPublicidad
 
 def _parse_precio_texto(text, default=0.0):
     if text is None: return default
@@ -666,6 +667,8 @@ class Admin2Ofertas(QWidget):
         dlg.exec()
 
     def _gestionar_publicidad(self):
-        from src.motor_descuentos.vistas.dialog_gestor_publicidad import DialogGestorPublicidad
-        dlg = DialogGestorPublicidad(self)
-        dlg.exec()
+        try:
+            dlg = DialogGestorPublicidad(self)
+            dlg.exec()
+        except Exception as ex:
+            QMessageBox.critical(self, "Publicidad", f"No se pudo abrir el gestor:\n{ex}")

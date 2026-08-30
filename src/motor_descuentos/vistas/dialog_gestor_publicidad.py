@@ -12,6 +12,7 @@ class DialogGestorPublicidad(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Gestor de publicidad")
+        self.setModal(True)
         self.resize(520, 640)
         self.setStyleSheet("""
             QDialog { background: #F8FAFC; }
@@ -80,6 +81,8 @@ class DialogGestorPublicidad(QDialog):
         productos = self.motor_db.buscar_productos("", None, False) or []
         motor_publicidad.cargar_configuracion()
         for row in productos:
+            if not isinstance(row, dict):
+                continue
             nombre = (row.get("nombre") or "").strip()
             if not nombre:
                 continue
