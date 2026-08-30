@@ -5,28 +5,28 @@ import subprocess
 import sys
 import time
 
-TCP_PORTS = "3306,8000"
+TCP_PORTS = "3306,8000,5000"
 UDP_PORTS = "37020,8000"
 
 # Reglas mínimas que deben existir (entrada). Sin ellas la PC Maestra queda aislada.
 REQUIRED_IN_RULES = (
-    "TPV_CajaFacil_TCP_v3",
-    "TPV_CajaFacil_UDP_v3",
+    "TPV_CajaFacil_TCP_v4",
+    "TPV_CajaFacil_UDP_v4",
 )
 
 RULES = [
     (
-        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_v3" '
+        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_v4" '
         f'dir=in action=allow protocol=TCP localport={TCP_PORTS} profile=any enable=yes',
-        "Entrada TCP v3",
+        "Entrada TCP v4",
     ),
     (
-        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out_v3" '
+        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_TCP_Out_v4" '
         f'dir=out action=allow protocol=TCP localport={TCP_PORTS} profile=any enable=yes',
-        "Salida TCP v3",
+        "Salida TCP v4",
     ),
     (
-        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_v3" '
+        f'netsh advfirewall firewall add rule name="TPV_CajaFacil_UDP_v4" '
         f'dir=in action=allow protocol=UDP localport={UDP_PORTS} profile=any enable=yes',
         "Entrada UDP v3",
     ),
