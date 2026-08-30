@@ -160,27 +160,35 @@ def convert_image():
     rapido = request.form.get("fast") in ("1", "true", "on")
 
     try:
+import subprocess
+        import sys
+        
+        args = [
+            sys.executable,
+            "--run-png-creator",
+            input_filepath,
+            output_filepath,
+            "--black_threshold", str(params["black_threshold"]),
+            "--white_threshold", str(params["white_threshold"]),
+            "--sharpness_factor", str(params["sharpness_factor"]),
+            "--contrast_factor", str(params["contrast_factor"]),
+            "--saturation_factor", str(params["saturation_factor"]),
+            "--brightness_factor", str(params["brightness_factor"]),
+            "--output_size", str(size),
+            "--temperature", str(params["temperature"]),
+            "--wet_shine_intensity", str(params["wet_shine_intensity"]),
+            "--water_droplets_density", str(params["water_droplets_density"]),
+            "--rotation", str(params["rotation"]),
+        ]
+        if params["use_ai"]: args.append("--use_ai")
+        if params["enable_depth_effect"]: args.append("--enable_depth_effect")
+        if params["enable_vignette_effect"]: args.append("--enable_vignette_effect")
+        if params["enable_rim_light_effect"]: args.append("--enable_rim_light_effect")
+        if rapido: args.append("--use_cached_cutout")
+        
         with _convert_lock:
-            ok = crear_efecto_3d_realista(
-                input_filepath,
-                output_filepath,
-                target_size=(size, size),
-                black_threshold=params["black_threshold"],
-                white_threshold=params["white_threshold"],
-                sharpness_factor=params["sharpness_factor"],
-                contrast_factor=params["contrast_factor"],
-                saturation_factor=params["saturation_factor"],
-                brightness_factor=params["brightness_factor"],
-                use_ai=params["use_ai"],
-                temperature=params["temperature"],
-                wet_shine_intensity=params["wet_shine_intensity"],
-                water_droplets_density=params["water_droplets_density"],
-                rotation=params["rotation"],
-                enable_depth_effect=params["enable_depth_effect"],
-                enable_vignette_effect=params["enable_vignette_effect"],
-                enable_rim_light_effect=params["enable_rim_light_effect"],
-                use_cached_cutout=rapido,
-            )
+            proc = subprocess.run(args, capture_output=True, creationflags=0x08000000)
+            ok = proc.returncode == 0
         if ok and os.path.exists(output_filepath):
             return jsonify({
                 "success": True,
@@ -212,6 +220,7 @@ def carteleria_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
 
 
 

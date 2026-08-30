@@ -1,4 +1,4 @@
-Ôªøfrom PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageOps, ImageChops
+from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageOps, ImageChops
 import os
 import sys
 import math
@@ -11,7 +11,7 @@ WHITE_THRESHOLD = 240
 # Constantes para crear_efecto_3d_realista
 SHARPNESS_FACTOR = 1.3
 CONTRAST_FACTOR = 1.1
-COLOR_FACTOR = 1.05 # Se convertir√° en saturation_factor
+COLOR_FACTOR = 1.05 # Se convertir· en saturation_factor
 
 SHADOW_OFFSET = 12
 SHADOW_COLOR_ALPHA = (20, 20, 20, 40) # R, G, B, Alpha
@@ -92,7 +92,7 @@ def _sesion_rembg():
 
 def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_THRESHOLD, use_ai=False):
     """
-    Remueve el fondo. Si use_ai es True, usa rembg. Si no, usa el m√©todo b√°sico por colores.
+    Remueve el fondo. Si use_ai es True, usa rembg. Si no, usa el mÈtodo b·sico por colores.
     """
     img = _limitar_lado(img)
     if use_ai:
@@ -104,9 +104,9 @@ def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_TH
             return _refinar_mascara(result)
         except ImportError:
             import sys
-            print("ADVERTENCIA: rembg no est√° instalado. Fallback a m√©todo b√°sico por colores.", file=sys.stderr)
+            print("ADVERTENCIA: rembg no est· instalado. Fallback a mÈtodo b·sico por colores.", file=sys.stderr)
         except Exception as e:
-            print(f"ERROR: Error al usar rembg: {e}. Fallback a m√©todo b√°sico por colores.")
+            print(f"ERROR: Error al usar rembg: {e}. Fallback a mÈtodo b·sico por colores.")
             import traceback
             traceback.print_exc()
 
@@ -137,25 +137,25 @@ def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_TH
 def smart_sharpen(img, amount=1.5, radius=2, threshold=3):
     """
     Aplica un enfoque inteligente a la imagen, realzando los bordes sin amplificar el ruido.
-    Utiliza una aproximaci√≥n de m√°scara de desenfoque.
+    Utiliza una aproximaciÛn de m·scara de desenfoque.
     """
     # Convertir a RGB si es necesario para asegurar el procesamiento correcto de los colores
     if img.mode != 'RGB':
         img = img.convert('RGB')
     
-    # Aplicar desenfoque Gaussiano para obtener una versi√≥n suavizada de la imagen
+    # Aplicar desenfoque Gaussiano para obtener una versiÛn suavizada de la imagen
     blurred = img.filter(ImageFilter.GaussianBlur(radius=radius))
     
     # Calcular la diferencia entre la imagen original y la desenfocada para encontrar los bordes
     diff = ImageChops.subtract(img, blurred)
     
-    # Funci√≥n para aplicar un umbral a la diferencia y controlar la amplificaci√≥n del ruido
+    # FunciÛn para aplicar un umbral a la diferencia y controlar la amplificaciÛn del ruido
     def threshold_func(x):
         if x <= threshold:
-            return 0  # No enfocar si la diferencia es peque√±a (posible ruido)
+            return 0  # No enfocar si la diferencia es pequeÒa (posible ruido)
         return int((x - threshold) * amount) # Amplificar la diferencia (bordes) por el factor 'amount'
     
-    # Aplicar la funci√≥n de umbral a cada p√≠xel de la diferencia
+    # Aplicar la funciÛn de umbral a cada pÌxel de la diferencia
     diff = diff.point(threshold_func)
     
     # Sumar los bordes enfocados de vuelta a la imagen original
@@ -165,8 +165,8 @@ def smart_sharpen(img, amount=1.5, radius=2, threshold=3):
 
 def enhance_colors(img, saturation=1.2, brightness=1.05, temperature=0):
     """
-    Mejora los colores de la imagen ajustando la saturaci√≥n, brillo y temperatura.
-    temperature: negativo = fr√≠o (azulado), positivo = c√°lido (amarillento/rojizo)
+    Mejora los colores de la imagen ajustando la saturaciÛn, brillo y temperatura.
+    temperature: negativo = frÌo (azulado), positivo = c·lido (amarillento/rojizo)
     """
     if img.mode != 'RGB':
         img = img.convert('RGB')
@@ -210,18 +210,18 @@ def denoise_image(img, strength=5):
 
 def edge_preserve_smooth(img, radius=2):
     """
-    Suavizado que intenta preservar los bordes utilizando una aproximaci√≥n de filtro bilateral.
+    Suavizado que intenta preservar los bordes utilizando una aproximaciÛn de filtro bilateral.
     """
     # Aplicar desenfoque Gaussiano para suavizar la imagen general
     blurred = img.filter(ImageFilter.GaussianBlur(radius=radius))
     # Encontrar los bordes en la imagen original
     edges = img.filter(ImageFilter.FIND_EDGES)
     
-    # Crear una m√°scara de bordes: blanco donde hay bordes fuertes, negro en otro lugar
+    # Crear una m·scara de bordes: blanco donde hay bordes fuertes, negro en otro lugar
     # Convertir a escala de grises y luego aplicar un umbral para binarizar los bordes
     edge_mask = edges.convert('L').point(lambda x: 255 if x > 50 else 0)
     
-    # Mezclar la imagen original con la desenfocada usando la m√°scara de bordes.
+    # Mezclar la imagen original con la desenfocada usando la m·scara de bordes.
     # Donde hay bordes (blanco en edge_mask), se mantiene la imagen original.
     # Donde no hay bordes (negro en edge_mask), se usa la imagen desenfocada.
     result = Image.composite(img, blurred, edge_mask)
@@ -229,7 +229,7 @@ def edge_preserve_smooth(img, radius=2):
     return result
 
 def _intensidad_rocio(density):
-    """Normaliza el control de roc√≠o a 0‚Äì1 (0‚Äì1 directo, o 0‚Äì100 del slider)."""
+    """Normaliza el control de rocÌo a 0ñ1 (0ñ1 directo, o 0ñ100 del slider)."""
     try:
         value = float(density)
     except (TypeError, ValueError):
@@ -242,7 +242,7 @@ def _intensidad_rocio(density):
 
 
 def add_wet_shine(img, intensity=0.3):
-    """Brillo h√∫medo: el producto se ve fr√≠o, brillante, como con condensaci√≥n."""
+    """Brillo h˙medo: el producto se ve frÌo, brillante, como con condensaciÛn."""
     intensity = _intensidad_rocio(intensity) if intensity > 1 else max(0.0, min(1.0, float(intensity)))
     if intensity <= 0:
         return img
@@ -277,8 +277,8 @@ def add_wet_shine(img, intensity=0.3):
 
 def add_water_droplets(img, density=50, size_range=(2, 5)):
     """
-    Roc√≠o / sudor: gotas de agua fr√≠a pegadas al producto (lata helada, fruta con roc√≠o).
-    density: 0‚Äì100.
+    RocÌo / sudor: gotas de agua frÌa pegadas al producto (lata helada, fruta con rocÌo).
+    density: 0ñ100.
     """
     intensity = _intensidad_rocio(density)
     if intensity <= 0:
@@ -377,18 +377,18 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         cutout_path = input_path + '.cutout.png'
         if use_cached_cutout and __import__('os').path.exists(cutout_path):
             img = Image.open(cutout_path).convert('RGBA')
-            print('INFO: Usando mascara de IA en cache.')
+            import time; time.sleep(0.02); print('INFO: Usando mascara de IA en cache.')
         else:
             img = Image.open(input_path)
             if rotation:
                 img = img.rotate(-rotation, expand=True)
-            print('INFO: Imagen abierta. Tama√±o original:', img.size)
+            import time; time.sleep(0.02); print('INFO: Imagen abierta. TamaÒo original:', img.size)
             img = remover_fondo(img, black_threshold=black_threshold, white_threshold=white_threshold, use_ai=use_ai)
             if use_ai:
                 img.save(cutout_path)
-        print('INFO: Fondo removido/cargado.')
+        import time; time.sleep(0.02); print('INFO: Fondo removido/cargado.')
         
-        # Redimensionar a tama√±o objetivo con alta calidad (si se especifica)
+        # Redimensionar a tamaÒo objetivo con alta calidad (si se especifica)
         if target_size:
             original_width, original_height = img.size
             target_width, target_height = target_size
@@ -401,23 +401,23 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             # Redimensionar manteniendo aspect ratio
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
             
-            # Crear canvas transparente del tama√±o objetivo
+            # Crear canvas transparente del tamaÒo objetivo
             canvas = Image.new('RGBA', target_size, (0, 0, 0, 0))
             
             # Centrar la imagen en el canvas
             offset_x = (target_width - new_width) // 2
             offset_y = (target_height - new_height) // 2
             
-            # Pegar la imagen en el canvas con el canal alpha como m√°scara
+            # Pegar la imagen en el canvas con el canal alpha como m·scara
             if img.mode != 'RGBA':
                 img = img.convert('RGBA')
             
-            # Usar el canal alpha de la imagen como m√°scara
+            # Usar el canal alpha de la imagen como m·scara
             canvas.paste(img, (offset_x, offset_y), img)
             
             img = canvas
         
-        print("INFO: Aplicando color y nitidez...")
+        import time; time.sleep(0.02); print("INFO: Aplicando color y nitidez...")
         has_alpha = img.mode == 'RGBA'
         alpha_channel = None
         if has_alpha:
@@ -429,7 +429,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         if sharpness_factor and sharpness_factor != 1:
             img = ImageEnhance.Sharpness(img).enhance(sharpness_factor)
         
-        # Restaurar canal alpha para aplicar roc√≠o solo sobre el producto
+        # Restaurar canal alpha para aplicar rocÌo solo sobre el producto
         if has_alpha and alpha_channel is not None:
             img = img.convert('RGBA')
             img.putalpha(alpha_channel)
@@ -437,11 +437,11 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             img = img.convert('RGBA')
 
         if wet_shine_intensity > 0:
-            print("INFO: Aplicando brillo h√∫medo...")
+            import time; time.sleep(0.02); print("INFO: Aplicando brillo h˙medo...")
             img = add_wet_shine(img, intensity=wet_shine_intensity)
 
         if water_droplets_density > 0:
-            print("INFO: Agregando roc√≠o / sudor de agua...")
+            import time; time.sleep(0.02); print("INFO: Agregando rocÌo / sudor de agua...")
             img = add_water_droplets(img, density=water_droplets_density)
         
         # Crear imagen base para efectos 3D
@@ -456,12 +456,14 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         shadow = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         shadow.paste((20, 20, 20, shadow_alpha_start), (shadow_offset, shadow_offset), alpha)
         shadow = shadow.filter(ImageFilter.GaussianBlur(radius=shadow_blur_radius))
+        import time; time.sleep(0.05)
 
         highlight = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         draw = ImageDraw.Draw(highlight)
         radius = int(min(width, height) * HIGHLIGHT_RADIUS_FACTOR)
         draw.ellipse([-radius // 3, -radius // 3, radius * 2, radius * 2], fill=(255, 255, 255, highlight_alpha_start))
         highlight = highlight.filter(ImageFilter.GaussianBlur(radius=HIGHLIGHT_BLUR_RADIUS + 8))
+        import time; time.sleep(0.05)
 
         result = Image.alpha_composite(result, shadow)
         result = Image.alpha_composite(result, img)
@@ -491,20 +493,20 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         return False
 
 def main():
-    parser = argparse.ArgumentParser(description='Convierte im√°genes a PNG con fondo transparente y efectos 3D.')
+    parser = argparse.ArgumentParser(description='Convierte im·genes a PNG con fondo transparente y efectos 3D.')
     parser.add_argument('input', help='Ruta de la imagen de entrada')
     parser.add_argument('output', help='Ruta de la imagen de salida')
     parser.add_argument('--black_threshold', type=int, default=BLACK_THRESHOLD, help='Umbral para negro (0-100)')
     parser.add_argument('--white_threshold', type=int, default=WHITE_THRESHOLD, help='Umbral para blanco (200-255)')
     parser.add_argument('--sharpness_factor', type=float, default=SHARPNESS_FACTOR, help='Factor de nitidez')
     parser.add_argument('--contrast_factor', type=float, default=CONTRAST_FACTOR, help='Factor de contraste')
-    parser.add_argument('--saturation_factor', type=float, default=COLOR_FACTOR, help='Factor de saturaci√≥n')
+    parser.add_argument('--saturation_factor', type=float, default=COLOR_FACTOR, help='Factor de saturaciÛn')
     parser.add_argument('--brightness_factor', type=float, default=1.05, help='Factor de brillo')
-    parser.add_argument('--output_size', type=int, default=1024, help='Tama√±o de salida (cuadrado)')
-    parser.add_argument('--use_ai', action='store_true', help='Usar rembg para remoci√≥n de fondo con IA')
+    parser.add_argument('--output_size', type=int, default=1024, help='TamaÒo de salida (cuadrado)')
+    parser.add_argument('--use_ai', action='store_true', help='Usar rembg para remociÛn de fondo con IA')
     parser.add_argument('--temperature', type=float, default=0, help='Temperatura de color (-5 a 5)')
-    parser.add_argument('--wet_shine_intensity', type=float, default=0, help='Brillo h√∫medo (0-1)')
-    parser.add_argument('--water_droplets_density', type=int, default=0, help='Roc√≠o / sudor de agua (0-100)')
+    parser.add_argument('--wet_shine_intensity', type=float, default=0, help='Brillo h˙medo (0-1)')
+    parser.add_argument('--water_droplets_density', type=int, default=0, help='RocÌo / sudor de agua (0-100)')
     parser.add_argument('--rotation', type=int, default=0, help='Rotacion en grados')
     parser.add_argument('--enable_depth_effect', action='store_true')
     parser.add_argument('--enable_vignette_effect', action='store_true')
@@ -535,11 +537,13 @@ def main():
         print("SUCCESS: Imagen procesada exitosamente.")
         sys.exit(0)
     else:
-        print("ERROR: Fall√≥ el procesamiento de la imagen.")
+        print("ERROR: FallÛ el procesamiento de la imagen.")
         sys.exit(1)
 
 if __name__ == '__main__':
     main()
+
+
 
 
 
