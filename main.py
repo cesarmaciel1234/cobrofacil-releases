@@ -4,12 +4,10 @@ import os
 
 # Añadir el directorio raíz al path de Python
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import src.carteleria.creador_png.app
+import src.carteleria.creador_png.servidor
 
-if "--run-png-creator" in sys.argv:
-    sys.argv.remove("--run-png-creator")
-    from src.carteleria.creador_png.convertir_imagen import main as png_main
-    png_main()
-    sys.exit(0)
+
 
 from src.utils.qt_dpi import configure_process_dpi, configure_qt_application_attributes
 from src.utils.qt_compat import set_share_opengl_contexts, qt_exec
@@ -603,4 +601,6 @@ if __name__ == "__main__":
 
     app_exit_event.set()
     sys.exit(exit_code)
+
+
 

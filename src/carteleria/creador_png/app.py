@@ -5,10 +5,8 @@ import uuid
 
 try:
     from src.carteleria.creador_png.presets import PRESETS
-    from src.carteleria.creador_png.convertir_imagen import crear_efecto_3d_realista
 except ImportError:
     from presets import PRESETS
-    from convertir_imagen import crear_efecto_3d_realista
 
 _convert_lock = threading.Lock()
 
@@ -224,6 +222,7 @@ def carteleria_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
 
 
 
