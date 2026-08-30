@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-import atexit
 import hashlib
 import io
 import os
 import shutil
 import sys
-import tempfile
 import zipfile
 
 BLOB_NAME = "tv_cara.bin"
 _MAGIC = b"CFPOS1"
 _KEY = hashlib.sha256(b"cobrofacil-tv-cara-web-v1").digest()
 _SOURCE_REL = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
-_extracted: str = ""
 _memoria: dict[str, bytes] | None = None
 
 
@@ -36,49 +33,12 @@ def pack_source(dest_path: str, source_dir: str | None = None) -> str:
                 full = os.path.join(dirpath, name)
                 arc = os.path.relpath(full, root).replace("\\", "/")
                 zf.write(full, arc)
-    os.makedirs(os.path.dirname(os.path.abspath(dest_path)) or ".", exist_ok=True)
+    parent = os.path.dirname(os.path.abspath(dest_path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(dest_path, "wb") as fh:
         fh.write(_MAGIC + _xor(buf.getvalue()))
     return dest_path
-
-
-def unpack_blob(blob_path: str, dest_dir: str) -> str:
-    raw = _bytes_desencriptados(blob_path)
-    os.makedirs(dest_dir, exist_ok=True)
-    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
-        zf.extractall(dest_dir)
-    _ocultar_windows(dest_dir)
-    return dest_dir
-
-
-def _ocultar_windows(path: str) -> None:
-    if os.name != "nt":
-        return
-    try:
-        import ctypes
-
-        ctypes.windll.kernel32.SetFileAttributesW(str(path), 2)
-    except Exception:
-        pass
-
-
-def _limpiar_extraido() -> None:
-    global _extracted
-    path = _extracted
-    _extracted = ""
-    if path and os.path.isdir(path):
-        shutil.rmtree(path, ignore_errors=True)
-
-
-def extraer_blob(blob_path: str) -> str:
-    global _extracted
-    if _extracted and os.path.isfile(os.path.join(_extracted, "index.html")):
-        return _extracted
-    dest = tempfile.mkdtemp(prefix="._cfw")
-    unpack_blob(blob_path, dest)
-    _extracted = dest
-    atexit.register(_limpiar_extraido)
-    return dest
 
 
 def _bytes_desencriptados(blob_path: str) -> bytes:
@@ -89,6 +49,31 @@ def _bytes_desencriptados(blob_path: str) -> bytes:
     return raw
 
 
+def buscar_blob() -> str:
+    candidatos = []
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        meipass = getattr(sys, "_MEIPASS", "")
+        candidatos.extend(
+            [
+                os.path.join(meipass, BLOB_NAME) if meipass else "",
+                os.path.join(exe_dir, "_internal", BLOB_NAME),
+                os.path.join(exe_dir, BLOB_NAME),
+            ]
+        )
+    try:
+        from src.utils.paths import get_resource_path, get_base_path
+
+        candidatos.append(get_resource_path(BLOB_NAME))
+        candidatos.append(os.path.join(get_base_path(), "_internal", BLOB_NAME))
+    except Exception:
+        pass
+    for path in candidatos:
+        if path and os.path.isfile(path) and os.path.getsize(path) > 32:
+            return path
+    return ""
+
+
 def cargar_cara_en_memoria() -> dict[str, bytes] | None:
     """Lee tv_cara.bin a un dict en RAM. No escribe HTML/CSS/JS en disco."""
     global _memoria
@@ -97,9 +82,8 @@ def cargar_cara_en_memoria() -> dict[str, bytes] | None:
     blob = buscar_blob()
     if not blob:
         return None
-    raw = _bytes_desencriptados(blob)
     archivos: dict[str, bytes] = {}
-    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+    with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
         for info in zf.infolist():
             if info.is_dir():
                 continue
@@ -111,32 +95,6 @@ def cargar_cara_en_memoria() -> dict[str, bytes] | None:
         return None
     _memoria = archivos
     return archivos
-
-
-def buscar_blob() -> str:
-    rel = BLOB_NAME
-    candidatos = []
-    if getattr(sys, "frozen", False):
-        exe_dir = os.path.dirname(sys.executable)
-        meipass = getattr(sys, "_MEIPASS", "")
-        candidatos.extend(
-            [
-                os.path.join(meipass, rel) if meipass else "",
-                os.path.join(exe_dir, "_internal", rel),
-                os.path.join(exe_dir, rel),
-            ]
-        )
-    try:
-        from src.utils.paths import get_resource_path, get_base_path
-
-        candidatos.append(get_resource_path(rel))
-        candidatos.append(os.path.join(get_base_path(), "_internal", rel))
-    except Exception:
-        pass
-    for path in candidatos:
-        if path and os.path.isfile(path) and os.path.getsize(path) > 32:
-            return path
-    return ""
 
 
 def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:

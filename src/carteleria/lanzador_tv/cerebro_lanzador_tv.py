@@ -18,7 +18,7 @@ import platform
 import logging
 import tempfile
 import sys
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from src.utils.paths import get_base_path, get_resource_path
 from src.carteleria.lanzador_tv.navegador_kiosk import (
@@ -53,11 +53,6 @@ def cargar_web_tv():
         if path and os.path.isfile(os.path.join(path, "index.html")):
             return path, None
     return next((p for p in candidatos if p), ""), None
-
-
-def resolver_web_root() -> str:
-    path, _mem = cargar_web_tv()
-    return path or ""
 
 
 def _json_default(value):
@@ -119,7 +114,6 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def _serve_icono(self):
-        from urllib.parse import unquote, urlparse
         from src.carteleria.assets_paths import ruta_archivo_icono
 
         name = os.path.basename(unquote(urlparse(self.path).path))
@@ -187,8 +181,6 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         self._write_json({"error": "Not found"}, status=404)
 
     def _handle_control(self):
-        from urllib.parse import parse_qs, urlparse
-
         action = ""
         parsed = urlparse(self.path)
         action = (parse_qs(parsed.query).get("action") or [""])[0].strip().lower()
@@ -240,11 +232,6 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         precios = []
         if self.main_window and hasattr(self.main_window, "rows_precios"):
             precios = self.main_window.rows_precios or []
-        try:
-            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-            enriquecer_iconos(precios)
-        except Exception:
-            pass
         return precios
 
     def log_message(self, format, *args):

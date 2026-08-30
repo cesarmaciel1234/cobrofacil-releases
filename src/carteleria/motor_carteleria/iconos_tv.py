@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import logging
+import time
 import unicodedata
 
 logger = logging.getLogger("IconosTV")
@@ -56,11 +57,18 @@ def _slug_producto(nombre):
     return texto[:60]
 
 
+_png_nombre_cache = {}
+_mapa_iconos_cache = None
+_mapa_iconos_ts = 0
+
+
 def _png_por_nombre(nombre):
     from src.carteleria.assets_paths import ruta_archivo_icono
     slug = _slug_producto(nombre)
     if not slug:
         return ""
+    if slug in _png_nombre_cache:
+        return _png_nombre_cache[slug]
     candidatos = [f"{slug}.png"]
     alias = ALIAS_POR_NOMBRE.get(slug)
     if alias:
@@ -73,13 +81,16 @@ def _png_por_nombre(nombre):
         if extra:
             candidatos.append(extra)
     vistos = set()
+    hallado = ""
     for name in candidatos:
         if name in vistos:
             continue
         vistos.add(name)
         if ruta_archivo_icono(name):
-            return name
-    return ""
+            hallado = name
+            break
+    _png_nombre_cache[slug] = hallado
+    return hallado
 
 
 def _safe_filename(name):
@@ -93,6 +104,10 @@ def _safe_filename(name):
 
 
 def _mapa_iconos_db():
+    global _mapa_iconos_cache, _mapa_iconos_ts
+    ahora = time.monotonic()
+    if _mapa_iconos_cache is not None and (ahora - _mapa_iconos_ts) < 60:
+        return _mapa_iconos_cache
     mapa = {}
     try:
         from src.motor_inventario.base.departamentos_db import (
@@ -108,6 +123,8 @@ def _mapa_iconos_db():
                 mapa[nombre] = ico
     except Exception as exc:
         logger.debug("Íconos de departamento no disponibles: %s", exc)
+    _mapa_iconos_cache = mapa
+    _mapa_iconos_ts = time.monotonic()
     return mapa
 
 
@@ -142,6 +159,8 @@ def icono_url(item, mapa_db=None):
 def enriquecer_iconos(productos):
     mapa = _mapa_iconos_db()
     for item in productos or []:
+        if item.get("icono_url"):
+            continue
         url = icono_url(item, mapa)
         if url:
             item["icono_url"] = url

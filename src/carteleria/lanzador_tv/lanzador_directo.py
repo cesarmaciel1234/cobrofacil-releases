@@ -1,5 +1,6 @@
 """Lanzador directo de cartelería TV: datos + ServidorCuello (HTTP y kiosk)."""
 
+import hashlib
 import logging
 
 from PyQt6.QtCore import QObject, QTimer
@@ -32,6 +33,8 @@ class LanzadorDirectoTV(QObject):
         self.sos_data = []
         self.top10_data = {}
         self._paneles = {}
+        self._state_cache = {"config": {}, "precios": []}
+        self._huella = ""
         self.last_error = ""
 
     def lanzar(self, screen_index=None):
@@ -168,10 +171,10 @@ class LanzadorDirectoTV(QObject):
                 self._clima_timer.stop()
             if self._sync_worker and self._sync_worker.isRunning():
                 self._sync_worker.requestInterruption()
-                self._sync_worker.wait(2000)
+                self._sync_worker.wait(400)
             if self._clima_worker and self._clima_worker.isRunning():
                 self._clima_worker.requestInterruption()
-                self._clima_worker.wait(6000)
+                self._clima_worker.wait(400)
             if self._cuello:
                 self._cuello.detener()
                 self._cuello = None
@@ -181,6 +184,9 @@ class LanzadorDirectoTV(QObject):
 
     def on_tv_control(self, action):
         action = str(action or "").strip().lower()
+        QTimer.singleShot(0, lambda a=action: self._on_tv_control_main(a))
+
+    def _on_tv_control_main(self, action):
         if action in ("stop", "f11", "esc"):
             self.detener()
         elif action in ("monitor", "f10"):
@@ -198,17 +204,7 @@ class LanzadorDirectoTV(QObject):
         self.screen_index = ((self.screen_index or 0) + 1) % max(n, 1)
         if self._cuello:
             self._cuello.reubicar(self.screen_index)
-    
-    def _handle_f11(self):
-        """Maneja F11: detener cartelería."""
-        logger.info("F11 presionado - deteniendo cartelería")
-        self.detener()
-    
-    def _handle_esc(self):
-        """Maneja ESC: detener cartelería (alternativa a F11)."""
-        logger.info("ESC presionado - deteniendo cartelería")
-        self.detener()
-    
+
     def _on_sync_finished(self, data, status):
         """Aplica HTTP/MariaDB o caché; no tira el catálogo si el pulso vino vacío."""
         try:
@@ -235,7 +231,7 @@ class LanzadorDirectoTV(QObject):
         self._clima_icon = icon_name or "sol"
         self._clima = text
         if self.rows_precios:
-            self._refrescar_paneles()
+            self._refrescar_paneles(force=True)
     
     def _normalizar_productos(self, productos):
         """Dict de MariaDB/HTTP o tupla del SELECT de sync."""
@@ -288,8 +284,22 @@ class LanzadorDirectoTV(QObject):
             pass
         return productos
 
+    def _huella_catalogo(self):
+        h = hashlib.md5()
+        for item in self.rows_precios or []:
+            h.update(
+                f"{item.get('nombre')}|{item.get('precio')}|{item.get('precio_oferta')}|"
+                f"{item.get('icono')}|{item.get('es_publicidad')}\n".encode("utf-8", "ignore")
+            )
+        return h.hexdigest()
+
     def _aplicar_catalogo(self, productos):
         self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
+        try:
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+            enriquecer_iconos(self.rows_precios)
+        except Exception:
+            pass
         self._refrescar_paneles()
 
     def _paneles_vacios(self):
@@ -302,34 +312,29 @@ class LanzadorDirectoTV(QObject):
             "ia": [],
         }
 
-    def _refrescar_paneles(self):
+    def _refrescar_paneles(self, force=False):
         if not self.rows_precios:
             self._paneles_vacios()
+            self._publicar_estado()
             return
+        huella = self._huella_catalogo()
+        if not force and huella == self._huella and self._paneles.get("rotacion"):
+            self._publicar_estado()
+            return
+        self._huella = huella
         self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+        self._publicar_estado()
 
-    def get_web_state(self):
-        """Estado para la API web conectado con motores globales."""
+    def _publicar_estado(self):
         try:
             from src.config import config
-            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-            enriquecer_iconos(self.rows_precios)
-            if not self._paneles or not self._paneles.get("rotacion"):
-                self._refrescar_paneles()
-            
-            # Generar datos del clima para la columna 4
-            clima_data = self._generar_datos_clima()
-            
-            # Generar mensaje dinámico para el banderín basado en clima y ofertas
             business_name = config.get("business_name", "Cartelería")
-            mensaje_personalizado = self._generar_mensaje_banderin(business_name)
-            
-            return {
+            self._state_cache = {
                 "config": {
                     "business_name": business_name,
                     "phone": config.get("phone", ""),
                     "carteleria_theme": config.get("carteleria_theme", "temu"),
-                    "mensaje_zocalo": mensaje_personalizado,
+                    "mensaje_zocalo": self._generar_mensaje_banderin(business_name),
                     "data_status": self._sync_status,
                 },
                 "precios": self.rows_precios,
@@ -341,11 +346,14 @@ class LanzadorDirectoTV(QObject):
                 "combos": self._paneles.get("combos", []),
                 "columna3": self._paneles.get("columna3", []),
                 "ia": self._paneles.get("ia", []),
-                "climaData": clima_data
+                "climaData": self._generar_datos_clima(),
             }
         except Exception as e:
-            logger.warning(f"Error generando web state: {e}")
-            return {"config": {}, "precios": []}
+            logger.warning("Error publicando estado TV: %s", e)
+
+    def get_web_state(self):
+        """Snapshot ya armado; el HTTP no recalcula paneles ni íconos."""
+        return self._state_cache or {"config": {}, "precios": []}
     
     def _generar_datos_clima(self):
         """Genera datos del clima para la columna 4 con PNG y mensaje."""

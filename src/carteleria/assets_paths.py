@@ -211,15 +211,23 @@ def ruta_archivo_icono(filename: str) -> str:
     name = os.path.basename(str(filename or "").replace("\\", "/").strip())
     if not name or name in (".", "..") or ".." in name:
         return ""
+    cache = getattr(ruta_archivo_icono, "_cache", None)
+    if cache is None:
+        cache = {}
+        ruta_archivo_icono._cache = cache
+    if name in cache:
+        return cache[name]
     hit = _buscar_en_carpetas(name)
     if hit:
+        cache[name] = hit
         return hit
     stem, ext = os.path.splitext(name)
     if not ext:
         ext = ".png"
-        name = f"{stem}{ext}"
-        hit = _buscar_en_carpetas(name)
+        name2 = f"{stem}{ext}"
+        hit = _buscar_en_carpetas(name2)
         if hit:
+            cache[name] = hit
             return hit
     aliases = {
         "suprema": "suprema.png",
@@ -233,13 +241,19 @@ def ruta_archivo_icono(filename: str) -> str:
     if alias:
         hit = _buscar_en_carpetas(alias)
         if hit:
+            cache[name] = hit
             return hit
     limpio = re.sub(r"^oferta_+(?:de_+)?", "", stem, flags=re.I)
     if limpio != stem:
         hit = _buscar_en_carpetas(f"{limpio}{ext}")
         if hit:
+            cache[name] = hit
             return hit
         alias = aliases.get(limpio.lower())
         if alias:
-            return _buscar_en_carpetas(alias)
+            hit = _buscar_en_carpetas(alias)
+            if hit:
+                cache[name] = hit
+                return hit
+    cache[name] = ""
     return ""

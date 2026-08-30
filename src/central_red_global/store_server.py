@@ -371,13 +371,12 @@ def run_store_server_app(app) -> int:
     timer.start(10000)
     QTimer.singleShot(200, _watchdog)
 
-    if not tray:
-        win.show()
-    else:
-        win.hide()
+    win.show()
+    win.raise_()
+    if tray:
         tray.showMessage(
             "Servidor de Tienda activo",
-            "MariaDB y red LAN en marcha. Podés abrir el Lanzador cuando quieras.",
+            "MariaDB y red LAN en marcha. Podés minimizarlo a la bandeja.",
             QSystemTrayIcon.MessageIcon.Information,
             4000,
         )

@@ -244,6 +244,11 @@ class CarteleriaMainTV(QWidget):
             pass
         if productos:
             self.rows_precios = productos
+            try:
+                from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+                enriquecer_iconos(self.rows_precios)
+            except Exception:
+                pass
         self.sos_data = data.get("sos", []) or []
         self.top10_data = data.get("top10", {}) or {}
         self._sync_status, self._ultima_sincro = status, datetime.now()
@@ -280,13 +285,6 @@ class CarteleriaMainTV(QWidget):
             business_name, phone, theme, mensaje = "Cartelería", "", self._theme_name, ""
         if not mensaje:
             mensaje = f"{business_name} • {self._clima} • Ofertas sujetas a stock •"
-        try:
-            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-            enriquecer_iconos(self.rows_precios)
-        except Exception:
-            pass
-        if not self._paneles or not self._paneles.get("rotacion"):
-            self._refrescar_paneles()
         return {
             "config": {
                 "business_name": business_name, "phone": phone,

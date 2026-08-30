@@ -17,11 +17,21 @@ class MotorPublicidad:
             cls._instance.config_path = os.path.join(get_base_path(), "publicidad_config.json")
             cls._instance._nombres = set()
             cls._instance._ids = set()
+            cls._instance._mtime = 0
             cls._instance.cargar_configuracion()
         return cls._instance
 
-    def cargar_configuracion(self):
+    def cargar_configuracion(self, forzar=False):
         """Solo lo marcado a mano o al azar en el gestor (no las ofertas)."""
+        mtime = 0
+        try:
+            if os.path.exists(self.config_path):
+                mtime = os.path.getmtime(self.config_path)
+        except OSError:
+            mtime = 0
+        if not forzar and mtime and mtime == getattr(self, "_mtime", 0):
+            return
+        self._mtime = mtime
         self._nombres = set()
         self._ids = set()
         if os.path.exists(self.config_path):
@@ -39,6 +49,7 @@ class MotorPublicidad:
                         pass
             except Exception:
                 pass
+
     def guardar_configuracion(self, lista_nombres, lista_ids=None):
         data = {
             "promocionados": [str(item).strip() for item in lista_nombres if str(item).strip()],
@@ -47,9 +58,7 @@ class MotorPublicidad:
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception:
-            return
-        self.cargar_configuracion()
+        self.cargar_configuracion(forzar=True)
 
     def is_promocionado(self, nombre_producto, producto_id=None):
         if producto_id is not None:

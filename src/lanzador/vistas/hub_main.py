@@ -494,7 +494,15 @@ class PerfilPantalla(QDialog):
             from src.updater.silent_auto_updater import end_apply_guard
 
             if is_store_server_online():
-                focus_existing_store_server()
+                if not focus_existing_store_server():
+                    QMessageBox.information(
+                        self,
+                        "Servidor",
+                        "El servidor ya está encendido (PID en la pastilla verde).\n\n"
+                        "No aparece junto a WhatsApp: está en una ventana propia "
+                        "o en la bandeja, abajo a la derecha junto al reloj.\n\n"
+                        "Doble clic en el icono de la bandeja para mostrarlo.",
+                    )
             else:
                 end_apply_guard()
                 self.lbl_server_badge.setText("Servidor: arrancando…")

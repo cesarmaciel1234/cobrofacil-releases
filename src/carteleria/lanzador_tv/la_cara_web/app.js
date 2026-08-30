@@ -10,7 +10,7 @@ import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
 const API_URL = "/api/state";
-const REFRESH_INTERVAL = 5000;
+const REFRESH_INTERVAL = 15000;
 
 const state = {
     config: null,
