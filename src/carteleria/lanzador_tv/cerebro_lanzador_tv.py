@@ -9,6 +9,7 @@ Responsabilidades:
 
 import http.server
 import json
+import mimetypes
 import os
 import socketserver
 import threading
@@ -17,6 +18,7 @@ import platform
 import logging
 import tempfile
 import sys
+from urllib.parse import unquote, urlparse
 
 from src.utils.paths import get_base_path, get_resource_path
 from src.carteleria.lanzador_tv.navegador_kiosk import (
@@ -28,29 +30,34 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
 logger = logging.getLogger("CerebroLanzadorTV")
 
 
-def resolver_web_root() -> str:
-    """Carpeta de index.html de la TV (dev, EXE y copia junto al instalador)."""
+def cargar_web_tv():
+    """En el EXE: archivos en memoria. En dev: carpeta la_cara_web."""
+    if getattr(sys, "frozen", False):
+        try:
+            from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
+
+            mem = cargar_cara_en_memoria()
+            if mem:
+                return None, mem
+        except Exception:
+            logger.exception("No se pudo abrir el paquete oculto de la TV")
+            return None, None
+
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
         get_resource_path(rel),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
         os.path.join(get_base_path(), rel),
-        os.path.join(get_base_path(), "_internal", rel),
     ]
-    if getattr(sys, "frozen", False):
-        exe_dir = os.path.dirname(sys.executable)
-        meipass = getattr(sys, "_MEIPASS", "")
-        candidatos.extend([
-            os.path.join(exe_dir, "_internal", rel),
-            os.path.join(meipass, rel) if meipass else "",
-            os.path.join(meipass, "la_cara_web") if meipass else "",
-            os.path.join(exe_dir, rel),
-        ])
     for path in candidatos:
         if path and os.path.isfile(os.path.join(path, "index.html")):
-            logger.info("Cara web TV: %s", path)
-            return path
-    return next((p for p in candidatos if p), "")
+            return path, None
+    return next((p for p in candidatos if p), ""), None
+
+
+def resolver_web_root() -> str:
+    path, _mem = cargar_web_tv()
+    return path or ""
 
 
 def _json_default(value):
@@ -63,10 +70,12 @@ def _json_default(value):
 class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
     """Handler HTTP para servir archivos estáticos y API de cartelería"""
 
-    def __init__(self, *args, web_root=None, main_window=None, **kwargs):
+    def __init__(self, *args, web_root=None, main_window=None, zip_store=None, **kwargs):
         self.web_root = web_root
         self.main_window = main_window
-        super().__init__(*args, directory=web_root, **kwargs)
+        self.zip_store = zip_store
+        dummy = web_root if web_root and os.path.isdir(web_root) else os.getcwd()
+        super().__init__(*args, directory=dummy, **kwargs)
 
     def do_GET(self):
         if self.path.startswith("/api/"):
@@ -75,7 +84,29 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/iconos/"):
             self._serve_icono()
             return
+        if self.zip_store is not None:
+            self._serve_memoria()
+            return
         return super().do_GET()
+
+    def _serve_memoria(self):
+        parsed = urlparse(self.path)
+        rel = unquote(parsed.path or "/").lstrip("/")
+        if not rel or rel.endswith("/"):
+            rel = (rel + "index.html") if rel else "index.html"
+        if ".." in rel.split("/"):
+            self.send_error(404)
+            return
+        data = self.zip_store.get(rel)
+        if data is None:
+            self.send_error(404)
+            return
+        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_POST(self):
         if self.path.startswith("/api/control"):
@@ -236,7 +267,7 @@ class ServidorCuello:
         self.thread = None
         self.browser_process = None
         self.screen_index = None
-        self.web_root = resolver_web_root()
+        self.web_root, self.zip_store = cargar_web_tv()
         self._kiosk_profile = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
         self._teclas = None
         self.last_error = ""
@@ -246,13 +277,15 @@ class ServidorCuello:
             self.last_error = ""
             if screen_index is not None:
                 self.screen_index = screen_index
-            self.web_root = resolver_web_root()
-            if not os.path.isfile(os.path.join(self.web_root or "", "index.html")):
+            self.web_root, self.zip_store = cargar_web_tv()
+            tiene_mem = bool(self.zip_store and "index.html" in self.zip_store)
+            tiene_disco = bool(self.web_root and os.path.isfile(os.path.join(self.web_root, "index.html")))
+            if not tiene_mem and not tiene_disco:
                 self.last_error = (
                     "Falta la cara web de la TV (index.html).\n"
-                    f"Buscada en:\n{self.web_root or '(sin ruta)'}"
+                    f"Buscada en:\n{self.web_root or '(paquete en memoria)'}"
                 )
-                logger.warning("Directorio web_root no encontrado: %s", self.web_root)
+                logger.warning("Cara web TV no encontrada")
                 return False
             try:
                 from src.carteleria.assets_paths import png_productos_dir
@@ -265,6 +298,7 @@ class ServidorCuello:
                     *args,
                     web_root=self.web_root,
                     main_window=self.main_window,
+                    zip_store=self.zip_store,
                     **kwargs
                 )
                 self.httpd = ThreadedHTTPServer((self.host, self.port), handler)

@@ -18,6 +18,8 @@ echo =====================================================================
 echo PASO 0: VERIFICANDO ICONOS DEL CLIMA
 echo =====================================================================
 python src\carteleria\lanzador_tv\generar_iconos_clima.py
+if not exist "build" mkdir build
+python -c "from src.carteleria.lanzador_tv.tv_cara_pack import pack_source; pack_source('build/tv_cara.bin')"
 
 echo.
 echo =====================================================================
@@ -59,8 +61,7 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --add-data "src/ui_components;src/ui_components" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
-  --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
-  --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
+  --add-data "build/tv_cara.bin;tv_cara.bin" ^
   --add-data "src/carteleria/creador_png/templates;src/carteleria/creador_png/templates" ^
   --add-data "src/carteleria/creador_png/static;src/carteleria/creador_png/static" ^
   --add-data "Catalogos;Catalogos" ^
@@ -76,6 +77,7 @@ python -m PyInstaller --noconfirm --onedir --console --name "Creador_PNG_Worker"
   src\carteleria\creador_png\convertir_imagen.py
 if exist "dist\CobroFacil_POS\worker" rd /s /q "dist\CobroFacil_POS\worker"
 if exist "dist\Creador_PNG_Worker" move "dist\Creador_PNG_Worker" "dist\CobroFacil_POS\worker"
+python -c "from src.carteleria.lanzador_tv.tv_cara_pack import instalar_blob_en_dist; instalar_blob_en_dist(r'dist\CobroFacil_POS')"
 
 echo.
 echo =====================================================================

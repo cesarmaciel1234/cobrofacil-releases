@@ -1,0 +1,167 @@
+"""Empaqueta la cara web de la TV en un blob opaco (no HTML/CSS/JS sueltos)."""
+
+from __future__ import annotations
+
+import atexit
+import hashlib
+import io
+import os
+import shutil
+import sys
+import tempfile
+import zipfile
+
+BLOB_NAME = "tv_cara.bin"
+_MAGIC = b"CFPOS1"
+_KEY = hashlib.sha256(b"cobrofacil-tv-cara-web-v1").digest()
+_SOURCE_REL = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
+_extracted: str = ""
+_memoria: dict[str, bytes] | None = None
+
+
+def _xor(data: bytes) -> bytes:
+    key = _KEY
+    n = len(key)
+    return bytes(b ^ key[i % n] for i, b in enumerate(data))
+
+
+def pack_source(dest_path: str, source_dir: str | None = None) -> str:
+    root = source_dir or _SOURCE_REL
+    if not os.path.isfile(os.path.join(root, "index.html")):
+        raise FileNotFoundError(f"Falta index.html en {root}")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for dirpath, _dirs, files in os.walk(root):
+            for name in files:
+                full = os.path.join(dirpath, name)
+                arc = os.path.relpath(full, root).replace("\\", "/")
+                zf.write(full, arc)
+    os.makedirs(os.path.dirname(os.path.abspath(dest_path)) or ".", exist_ok=True)
+    with open(dest_path, "wb") as fh:
+        fh.write(_MAGIC + _xor(buf.getvalue()))
+    return dest_path
+
+
+def unpack_blob(blob_path: str, dest_dir: str) -> str:
+    raw = _bytes_desencriptados(blob_path)
+    os.makedirs(dest_dir, exist_ok=True)
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        zf.extractall(dest_dir)
+    _ocultar_windows(dest_dir)
+    return dest_dir
+
+
+def _ocultar_windows(path: str) -> None:
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.kernel32.SetFileAttributesW(str(path), 2)
+    except Exception:
+        pass
+
+
+def _limpiar_extraido() -> None:
+    global _extracted
+    path = _extracted
+    _extracted = ""
+    if path and os.path.isdir(path):
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def extraer_blob(blob_path: str) -> str:
+    global _extracted
+    if _extracted and os.path.isfile(os.path.join(_extracted, "index.html")):
+        return _extracted
+    dest = tempfile.mkdtemp(prefix="._cfw")
+    unpack_blob(blob_path, dest)
+    _extracted = dest
+    atexit.register(_limpiar_extraido)
+    return dest
+
+
+def _bytes_desencriptados(blob_path: str) -> bytes:
+    with open(blob_path, "rb") as fh:
+        raw = fh.read()
+    if raw.startswith(_MAGIC):
+        raw = _xor(raw[len(_MAGIC) :])
+    return raw
+
+
+def cargar_cara_en_memoria() -> dict[str, bytes] | None:
+    """Lee tv_cara.bin a un dict en RAM. No escribe HTML/CSS/JS en disco."""
+    global _memoria
+    if _memoria and "index.html" in _memoria:
+        return _memoria
+    blob = buscar_blob()
+    if not blob:
+        return None
+    raw = _bytes_desencriptados(blob)
+    archivos: dict[str, bytes] = {}
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        for info in zf.infolist():
+            if info.is_dir():
+                continue
+            nombre = info.filename.replace("\\", "/").lstrip("/")
+            if not nombre or ".." in nombre.split("/"):
+                continue
+            archivos[nombre] = zf.read(info)
+    if "index.html" not in archivos:
+        return None
+    _memoria = archivos
+    return archivos
+
+
+def buscar_blob() -> str:
+    rel = BLOB_NAME
+    candidatos = []
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        meipass = getattr(sys, "_MEIPASS", "")
+        candidatos.extend(
+            [
+                os.path.join(meipass, rel) if meipass else "",
+                os.path.join(exe_dir, "_internal", rel),
+                os.path.join(exe_dir, rel),
+            ]
+        )
+    try:
+        from src.utils.paths import get_resource_path, get_base_path
+
+        candidatos.append(get_resource_path(rel))
+        candidatos.append(os.path.join(get_base_path(), "_internal", rel))
+    except Exception:
+        pass
+    for path in candidatos:
+        if path and os.path.isfile(path) and os.path.getsize(path) > 32:
+            return path
+    return ""
+
+
+def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:
+    internal = os.path.join(dist_dir, "_internal")
+    os.makedirs(internal, exist_ok=True)
+    dest = os.path.join(internal, BLOB_NAME)
+    pack_source(dest, source_dir)
+    leftover = os.path.join(internal, "src", "carteleria", "lanzador_tv", "la_cara_web")
+    if os.path.isdir(leftover):
+        shutil.rmtree(leftover, ignore_errors=True)
+    public_src = os.path.join(dist_dir, "src")
+    if os.path.isdir(public_src):
+        shutil.rmtree(public_src, ignore_errors=True)
+    return dest
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("uso: tv_cara_pack.py pack <carpeta_web> <salida.bin>")
+        print("     tv_cara_pack.py dist <dist/CobroFacil_POS>")
+        sys.exit(2)
+    cmd = sys.argv[1]
+    if cmd == "pack":
+        pack_source(sys.argv[3], sys.argv[2])
+    elif cmd == "dist":
+        instalar_blob_en_dist(sys.argv[2])
+    else:
+        sys.exit(2)

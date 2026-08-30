@@ -11,6 +11,8 @@ echo.
 echo Preparando entorno y borrando compilaciones previas...
 if exist "build" rd /s /q "build"
 if exist "dist\CobroFacil_POS" rd /s /q "dist\CobroFacil_POS"
+mkdir build
+python -c "from src.carteleria.lanzador_tv.tv_cara_pack import pack_source; pack_source('build/tv_cara.bin')"
 
 echo.
 echo Ensamblando el ejecutable principal...
@@ -36,8 +38,7 @@ echo Ensamblando el ejecutable principal...
   --add-data "src/ui_components;src/ui_components" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
-  --add-data "src/carteleria/lanzador_tv/la_cara_web;src/carteleria/lanzador_tv/la_cara_web" ^
-  --add-data "src/carteleria/lanzador_tv/la_cara_web/assets;src/carteleria/lanzador_tv/la_cara_web/assets" ^
+  --add-data "build/tv_cara.bin;tv_cara.bin" ^
   --add-data "src/carteleria/creador_png/templates;src/carteleria/creador_png/templates" ^
   --add-data "src/carteleria/creador_png/static;src/carteleria/creador_png/static" ^
   --add-data "Catalogos;Catalogos" ^
@@ -47,6 +48,8 @@ echo Ensamblando el ejecutable principal...
   --hidden-import "flask" ^
   --hidden-import "jinja2" ^
   main.py
+
+python -c "from src.carteleria.lanzador_tv.tv_cara_pack import instalar_blob_en_dist; instalar_blob_en_dist(r'dist\CobroFacil_POS')"
 
 echo ========================================================
 echo   COMPILACION FINALIZADA.
