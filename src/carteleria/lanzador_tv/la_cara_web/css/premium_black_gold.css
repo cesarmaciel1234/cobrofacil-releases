@@ -1,7 +1,7 @@
-﻿/* ══════════════════════════════════════════════════════════════
-   TEMA PREMIUM — NEGRO & ORO — TODA LA CARTELERÍA TV
-   Aplicado encima de todos los demás CSS para unificar el look
-   ══════════════════════════════════════════════════════════════ */
+/* --------------------------------------------------------------
+   TEMA PREMIUM � NEGRO & ORO � TODA LA CARTELER�A TV
+   Aplicado encima de todos los dem�s CSS para unificar el look
+   -------------------------------------------------------------- */
 
 :root {
     --premium-bg-card:    linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%);
@@ -34,7 +34,7 @@ body, .app-container { background: #050505 !important; }
 .clock { color: var(--premium-gold) !important; }
 .status-dot { background: #22C55E !important; box-shadow: 0 0 8px rgba(34,197,94,0.6) !important; }
 
-/* 3. CARRUSEL SUPERIOR — tarjetas oferta-card */
+/* 3. CARRUSEL SUPERIOR � tarjetas oferta-card */
 .oferta-card {
     background: linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%) !important;
     border: 1px solid rgba(212,175,55,0.30) !important;
@@ -54,7 +54,7 @@ body, .app-container { background: #050505 !important; }
     border: 1px solid var(--premium-gold) !important;
     color: #F5E17A !important;
 }
-.deal-stage__name, .tv-card__name { color: #FFFFFF !important; text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important; }
+.deal-stage__name, .tv-card__name { color: #FFFFFF !important; text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important; line-height: 1.35 !important; padding-bottom: 6px !important; }
 .tv-card__now { color: var(--premium-gold) !important; text-shadow: 0 0 20px rgba(212,175,55,0.4) !important; }
 .tv-card__was { color: rgba(255,255,255,0.4) !important; }
 .deal-save    { color: #F5E17A !important; }
@@ -64,7 +64,7 @@ body, .app-container { background: #050505 !important; }
     color: #FF6B6B !important;
 }
 
-/* 4. COL 1 — RANKING */
+/* 4. COL 1 � RANKING */
 .price-dept {
     background: linear-gradient(90deg, #1A1400 0%, #0A0A0A 100%) !important;
     color: var(--premium-gold) !important;
@@ -73,7 +73,7 @@ body, .app-container { background: #050505 !important; }
     text-shadow: 0 0 12px rgba(212,175,55,0.4) !important;
 }
 
-/* 5. COL 2 — PRECIOS */
+/* 5. COL 2 � PRECIOS */
 .price-row {
     background: linear-gradient(90deg, #1C1C1E 0%, #141414 100%) !important;
     border: 1px solid rgba(212,175,55,0.20) !important;
@@ -98,7 +98,7 @@ body, .app-container { background: #050505 !important; }
 .price-ad__name  { color: var(--premium-gold) !important; }
 .price-ad__price { color: #FFFFFF !important; }
 
-/* 6. COL 3 — OFERTA RELÁMPAGO */
+/* 6. COL 3 � OFERTA REL�MPAGO */
 .flash-offer__deal, .chef-deal {
     background: linear-gradient(145deg, #1C1C1E 0%, #0A0A0A 100%) !important;
     border: 1px solid rgba(212,175,55,0.30) !important;
@@ -125,10 +125,11 @@ body, .app-container { background: #050505 !important; }
     color: #F5E17A !important;
 }
 
-/* 7. ZÓCALO */
+/* 7. Z�CALO */
 .footer, .zocalo-pill {
     background: linear-gradient(90deg, #0A0A00 0%, #1C1400 50%, #0A0A00 100%) !important;
     border-top: 1px solid rgba(212,175,55,0.30) !important;
 }
 .marquee-text { color: var(--premium-gold) !important; text-shadow: 0 0 12px rgba(212,175,55,0.4) !important; }
 .zocalo-icon  { filter: drop-shadow(0 0 8px rgba(212,175,55,0.6)) !important; }
+

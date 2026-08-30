@@ -65,7 +65,7 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
     else if (puesto === 2) { topClass = "top-2"; }
     else if (puesto === 3) { topClass = "top-3"; }
 
-    if ((opciones.premium || opciones.mega) && !item.es_publicidad) {
+    if (opciones.premium || opciones.mega) {
         const dato = opciones.premium
             ? premiumDelItem(item, opciones.items)
             : megaDelItem(item, opciones.items);
@@ -90,14 +90,12 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
         `;
     }
     
-    const tag = item.es_publicidad
-        ? "PUBLICIDAD"
-        : opciones.social
+    const tag = opciones.social
             ? textoFamilias(item)
             : String(item.detalle || "").toUpperCase();
             
     return `
-        <article class="asian-rank-card ${topClass} cascade-enter ${item.es_publicidad ? "is-ad" : ""}" style="animation-delay: ${i * 0.1}s">
+        <article class="asian-rank-card ${topClass} cascade-enter" style="animation-delay: ${i * 0.1}s">
             <div class="asian-rank-badge">
                 <span class="asian-rank-num">#${puesto}</span>
             </div>

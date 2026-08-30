@@ -169,7 +169,7 @@
 .oferta-card.is-deal .tv-card__name {
     margin: 0;
     font-size: clamp(0.95rem, 1.45vw, 1.25rem);
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2; padding-bottom: 4px;
 }
 
 .deal-price-row {
@@ -204,7 +204,7 @@
     color: var(--deal-save-color);
     font-size: clamp(10px, 0.9vw, 12px);
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.35; padding-bottom: 4px;
 }
 
 .deal-foot {
@@ -297,10 +297,10 @@
     font-size: clamp(1.1rem, 1.8vw, 1.45rem);
     font-weight: 800;
     color: var(--card-text);
-    line-height: 1.15;
+    line-height: 1.35; padding-bottom: 4px;
     margin: 0 0 8px;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2; padding-bottom: 4px;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -419,7 +419,7 @@
     gap: 1px;
     min-width: 5.6em;
     color: var(--save-text);
-    line-height: 1.15;
+    line-height: 1.35; padding-bottom: 4px;
     background: var(--save-bg);
     border-radius: 10px;
     padding: 6px 10px;
@@ -461,11 +461,11 @@
     font-size: clamp(1.15rem, 1.9vw, 1.55rem);
     font-weight: 800;
     color: var(--card-text);
-    line-height: 1.15;
+    line-height: 1.35; padding-bottom: 4px;
     margin-bottom: 6px;
     word-wrap: break-word;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2; padding-bottom: 4px;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -525,3 +525,5 @@
     opacity: 0.75;
     transform: scale(0.92);
 }
+
+
