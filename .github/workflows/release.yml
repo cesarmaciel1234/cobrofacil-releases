@@ -128,7 +128,6 @@ jobs:
             --hidden-import "PyQt6.QtWebEngineCore" `
             --collect-all "PyQt6.QtWebEngineCore" `
             --collect-all "PyQt6.QtWebEngineWidgets" `
-            --hidden-import "rembg" `
             --collect-submodules "src.admin" `
             --collect-submodules "src.jefe" `
             --collect-submodules "src.cajero" `
