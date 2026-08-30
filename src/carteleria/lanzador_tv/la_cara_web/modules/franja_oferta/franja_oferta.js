@@ -1,4 +1,4 @@
-/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
+﻿/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
 
 import {
     cantMinimaOferta,
@@ -89,10 +89,10 @@ function htmlDealCard(producto, { ad }) {
     const stock = Number(producto.stock || 0);
     const min = cantMinimaOferta(producto);
     const proof = stock > 0 && stock <= 8
-        ? `¡Se agota!`
+        ? `Â¡Se agota!`
         : (vendidos > 0
-            ? `${Math.round(vendidos)} vendidos`
-            : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
+            ? 'Más elegido'
+            : (enOferta ? `LlevÃ¡ ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
     const kicker = esAd ? "Publicidad" : (enOferta ? "Ofertas" : "Precio especial");
     const offLabel = pct ? `-${pct}%` : (esAd ? "HOT" : "NEW");
     const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
@@ -109,10 +109,10 @@ function htmlDealCard(producto, { ad }) {
                         : `<strong class="tv-card__now">DESTACADO</strong>`}
                     ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
                 </div>
-                ${ahorro > 0 ? `<p class="deal-save">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                ${ahorro > 0 ? `<p class="deal-save">AhorrÃ¡s ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
                 <div class="deal-foot">
                     <span class="tv-card__timer">
-                        <span class="tv-card__timer-icon" aria-hidden="true">⏰</span>
+                        <span class="tv-card__timer-icon" aria-hidden="true">â°</span>
                         <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
                     </span>
                     <span class="deal-proof${stock > 0 && stock <= 8 ? " is-low" : ""}">${escapeHtml(proof)}</span>
@@ -167,7 +167,7 @@ function iniciarCarrusel(track) {
     let currentIndex = 0;
     
     // Para que la primera tarjeta arranque en el centro (opcional, pero ayuda al efecto)
-    // Inicialmente track está a la izquierda.
+    // Inicialmente track estÃ¡ a la izquierda.
     track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
     
     function moverSiguiente() {
@@ -182,7 +182,7 @@ function iniciarCarrusel(track) {
         
         currentIndex++;
         
-        // Si llegamos a la mitad (porque el html está duplicado), reiniciamos sin transición
+        // Si llegamos a la mitad (porque el html estÃ¡ duplicado), reiniciamos sin transiciÃ³n
         const totalOriginal = track.children.length / 2;
         if (currentIndex > totalOriginal) {
             track.style.transition = "none";
@@ -215,3 +215,5 @@ function iniciarCarrusel(track) {
     // Cada 4 segundos, avanza una tarjeta y se detiene (posa)
     setInterval(moverSiguiente, 4000);
 }
+
+
