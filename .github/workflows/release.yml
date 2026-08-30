@@ -129,9 +129,6 @@ jobs:
             --collect-all "PyQt6.QtWebEngineCore" `
             --collect-all "PyQt6.QtWebEngineWidgets" `
             --hidden-import "rembg" `
-            --collect-all "rembg" `
-            --collect-all "onnxruntime" `
-            --collect-all "pooch" `
             --collect-submodules "src.admin" `
             --collect-submodules "src.jefe" `
             --collect-submodules "src.cajero" `
