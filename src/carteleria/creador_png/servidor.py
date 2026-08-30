@@ -33,7 +33,7 @@ def _es_nuestro(port: int) -> bool:
 def _puerto_libre(port: int) -> bool:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        sock.bind(("127.0.0.1", port))
+        sock.bind(("0.0.0.0", port))
         return True
     except OSError:
         return False
@@ -45,7 +45,7 @@ def _run(port: int):
     global _error
     try:
         from src.carteleria.creador_png.app import app
-        app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False, threaded=True)
+        app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False, threaded=True)
     except Exception as exc:
         _error = str(exc)
 
