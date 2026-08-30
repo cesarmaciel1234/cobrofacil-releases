@@ -5,8 +5,10 @@ import uuid
 
 try:
     from src.carteleria.creador_png.presets import PRESETS
+    from src.carteleria.creador_png.convertir_imagen import crear_efecto_3d_realista
 except ImportError:
     from presets import PRESETS
+    from convertir_imagen import crear_efecto_3d_realista
 
 _convert_lock = threading.Lock()
 
@@ -158,7 +160,6 @@ def convert_image():
     rapido = request.form.get("fast") in ("1", "true", "on")
 
     try:
-        from src.carteleria.creador_png.convertir_imagen import crear_efecto_3d_realista
         with _convert_lock:
             ok = crear_efecto_3d_realista(
                 input_filepath,

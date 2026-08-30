@@ -85,7 +85,7 @@
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
     "last_weekly_report_sent": "2026-W35",
-    "carteleria_master_ip": "192.168.0.2",
+    "carteleria_master_ip": "192.168.0.9",
     "clover_ip": "",
     "clover_port": "1234",
     "license_key": "",
@@ -100,5 +100,5 @@
     "carteleria_theme": "premium",
     "cuit": "CUIT: 00-00000000-0",
     "mensaje_despedida": "Gracias por su compra!",
-    "preferred_master_ip": "192.168.0.2"
+    "preferred_master_ip": "192.168.0.9"
 }
