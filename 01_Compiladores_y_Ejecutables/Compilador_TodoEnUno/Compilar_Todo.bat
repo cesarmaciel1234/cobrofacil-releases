@@ -48,6 +48,16 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --collect-all "PyQt6.QtWebEngineCore" ^
   --collect-all "PyQt6.QtWebEngineWidgets" ^
   --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_qt_dll_path.py" ^
+  --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_pkg_metadata.py" ^
+  --copy-metadata "werkzeug" ^
+  --copy-metadata "flask" ^
+  --copy-metadata "jinja2" ^
+  --copy-metadata "markupsafe" ^
+  --copy-metadata "itsdangerous" ^
+  --copy-metadata "blinker" ^
+  --copy-metadata "click" ^
+  --collect-all "flask" ^
+  --collect-all "werkzeug" ^
   --collect-submodules "src.admin" ^
   --collect-submodules "src.jefe" ^
   --collect-submodules "src.carteleria" ^

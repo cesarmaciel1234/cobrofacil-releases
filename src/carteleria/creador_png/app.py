@@ -1,9 +1,26 @@
-﻿from flask import Flask, request, render_template, send_from_directory, jsonify
-import os
+﻿import os
 import sys
 import tempfile
 import threading
 import uuid
+
+if getattr(sys, "frozen", False):
+    try:
+        import importlib.metadata as _md
+
+        _orig_ver = _md.version
+
+        def _version_ok(name):
+            try:
+                return _orig_ver(name)
+            except _md.PackageNotFoundError:
+                return "0"
+
+        _md.version = _version_ok
+    except Exception:
+        pass
+
+from flask import Flask, request, render_template, send_from_directory, jsonify
 
 try:
     from src.carteleria.creador_png.presets import PRESETS

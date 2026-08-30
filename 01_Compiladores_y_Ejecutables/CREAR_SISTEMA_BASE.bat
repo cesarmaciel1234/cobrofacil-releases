@@ -47,6 +47,13 @@ echo Ensamblando el ejecutable principal...
   --hidden-import "src.carteleria.creador_png.app" ^
   --hidden-import "flask" ^
   --hidden-import "jinja2" ^
+  --hidden-import "werkzeug" ^
+  --copy-metadata "werkzeug" ^
+  --copy-metadata "flask" ^
+  --copy-metadata "jinja2" ^
+  --collect-all "flask" ^
+  --collect-all "werkzeug" ^
+  --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_pkg_metadata.py" ^
   main.py
 
 python -c "from src.carteleria.lanzador_tv.tv_cara_pack import instalar_blob_en_dist; instalar_blob_en_dist(r'dist\CobroFacil_POS')"

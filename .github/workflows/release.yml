@@ -143,6 +143,20 @@ jobs:
             --collect-submodules "src.carteleria" `
             --hidden-import "src.carteleria.creador_png.app" `
             --hidden-import "src.carteleria.creador_png.servidor" `
+            --hidden-import "flask" `
+            --hidden-import "jinja2" `
+            --hidden-import "werkzeug" `
+            --copy-metadata "werkzeug" `
+            --copy-metadata "flask" `
+            --copy-metadata "jinja2" `
+            --copy-metadata "markupsafe" `
+            --copy-metadata "itsdangerous" `
+            --copy-metadata "blinker" `
+            --copy-metadata "click" `
+            --collect-all "flask" `
+            --collect-all "werkzeug" `
+            --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_qt_dll_path.py" `
+            --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_pkg_metadata.py" `
             --collect-submodules "src.services" `
             --collect-submodules "src.utils" `
             --collect-submodules "src.base_de_datos" `
