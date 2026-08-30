@@ -132,6 +132,8 @@ jobs:
             --collect-submodules "src.jefe" `
             --collect-submodules "src.cajero" `
             --collect-submodules "src.carteleria" `
+            --hidden-import "src.carteleria.creador_png.app" `
+            --hidden-import "src.carteleria.creador_png.servidor" `
             --collect-submodules "src.services" `
             --collect-submodules "src.utils" `
             --collect-submodules "src.base_de_datos" `
@@ -300,4 +302,6 @@ jobs:
             exit 1
           fi
           gh release view "$TAG" --repo "${{ github.repository }}" --json assets -q '.assets[].name'
+
+
 
