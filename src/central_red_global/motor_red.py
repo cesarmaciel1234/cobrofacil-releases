@@ -89,25 +89,18 @@ class MotorRed:
 
     def convertir_en_maestra(self):
         """Convierte la PC en maestra (MariaDB local). No pisa el rol si localhost no responde."""
-        # Cartelería/caja esclava: no forzar MAESTRA (congela arrancando mysqld)
+        # En perfil cartelería no arrancar mysqld (congela la TV). Si ya hay
+        # MariaDB local, sí se puede promover esclava → maestra.
+        era_esclava = False
         try:
-            if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
-                preferred = str(
-                    config.get("preferred_master_ip")
-                    or config.get("carteleria_master_ip")
-                    or config.get("db_host")
-                    or ""
-                ).strip()
-                if preferred and preferred.lower() not in ("localhost", "127.0.0.1"):
-                    return (
-                        False,
-                        "Esta PC está configurada como ESCLAVA.\n\n"
-                        f"Seguí conectada a la Maestra ({preferred}).\n"
-                        "No uses 'Convertir en MAESTRA' en cartelería/caja esclava:\n"
-                        "congela la app al intentar levantar MariaDB local.",
-                    )
+            era_esclava = bool(config.get("carteleria_is_slave")) or (
+                config.get("is_master") is False
+            )
         except Exception:
-            pass
+            era_esclava = False
+        no_arrancar_mysqld = era_esclava and (
+            "--role" in sys.argv and "carteleria" in sys.argv
+        )
 
         # Snapshot para revertir si falla (p.ej. cartelería/esclava sin mysqld)
         prev_master = getattr(db_manager, "is_master", True)
@@ -148,6 +141,14 @@ class MotorRed:
         try:
             # 1) Puerto local antes de tocar config
             if not self._probe_mariadb("127.0.0.1"):
+                if no_arrancar_mysqld:
+                    return (
+                        False,
+                        "Esta cartelería no tiene MariaDB local.\n\n"
+                        "Para ser MAESTRA usá la PC servidor (caja/admin) "
+                        "con Servidor de Tienda corriendo.\n"
+                        "En la TV seguí como ESCLAVA y reconectá a esa IP.",
+                    )
                 self.logger.info("MariaDB local no responde; intentando arrancar mysqld portable...")
                 if not self._intentar_arrancar_mariadb_local():
                     hint_slave = ""
@@ -175,6 +176,7 @@ class MotorRed:
             config.set("auto_start_store_server", True)
             try:
                 config.set("carteleria_is_slave", False)
+                config.set("carteleria_master_ip", "")
                 config.data["preferred_master_ip"] = ""
                 config.save()
             except Exception:

@@ -268,9 +268,9 @@ class PanelPngProductos(QWidget):
     def _sincronizar_a_maestra(self, filename: str):
         from src.config import config
         is_master = config.get("is_master", True)
-        if is_master:
-            return  # No hace falta, ya está local
-        
+        if is_master or not config.get("carteleria_is_slave"):
+            return  # Local / ya es maestra: el PNG queda en esta PC
+
         db_host = config.get("db_host", "127.0.0.1")
         if not db_host or db_host in ("127.0.0.1", "localhost"):
             return

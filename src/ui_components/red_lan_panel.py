@@ -302,53 +302,34 @@ class SharedRedLanPanel(QWidget):
     # ACCIONES
     # ──────────────────────────────────────────────────────────────────────────
     def _actualizar_botones(self):
-        """Deshabilita el botón del modo ya activo / bloquea MAESTRA en esclavas."""
+        """Deshabilita el botón del modo ya activo."""
         estado = RedLanService.obtener_estado_red()
         is_master = estado["es_maestra"]
-        # Cartelería / caja esclava: no ofrecer MAESTRA (congela al levantar mysqld)
-        es_esclava_fija = False
         try:
             from src.config import config
-            es_esclava_fija = bool(config.get("carteleria_is_slave")) or (
-                config.get("is_master") is False
-            )
+            if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
+                is_master = False
         except Exception:
-            es_esclava_fija = not is_master
+            pass
 
-        if is_master and not es_esclava_fija:
+        if is_master:
             self.btn_hacer_maestra.setEnabled(False)
             self.btn_hacer_maestra.setText("✅ MAESTRA  (activo)")
+            self.btn_hacer_maestra.setToolTip("")
             self.btn_hacer_esclava.setEnabled(True)
             self.btn_hacer_esclava.setText("🔗 Convertir en ESCLAVA")
         else:
-            # Ya es esclava: MAESTRA deshabilitada; ESCLAVA = reconectar
-            self.btn_hacer_maestra.setEnabled(False)
-            self.btn_hacer_maestra.setText("🚫 Solo en PC servidor")
+            self.btn_hacer_maestra.setEnabled(True)
+            self.btn_hacer_maestra.setText("✅ Convertir en MAESTRA")
             self.btn_hacer_maestra.setToolTip(
-                "Esta PC es terminal/cartelería esclava.\n"
-                "La Maestra es otra PC de la red (ej. 192.168.0.53)."
+                "Requiere MariaDB / Servidor de Tienda en ESTA PC.\n"
+                "En una TV de cartelería no arranca mysqld (evita congelar)."
             )
             self.btn_hacer_esclava.setEnabled(True)
             self.btn_hacer_esclava.setText("🔗 Reconectar ESCLAVA")
 
     def _convertir_maestra(self):
-        """Pasa esta PC a modo MAESTRA (solo PC servidor)."""
-        try:
-            from src.config import config
-            if bool(config.get("carteleria_is_slave")) or config.get("is_master") is False:
-                QMessageBox.information(
-                    self,
-                    "Esta PC es ESCLAVA",
-                    "Esta cartelería/caja debe seguir como ESCLAVA.\n\n"
-                    "Usá el botón azul «Reconectar ESCLAVA» con la IP "
-                    "de la Maestra (ej. 192.168.0.53).\n\n"
-                    "«Convertir en MAESTRA» solo se usa en la PC servidor.",
-                )
-                self._actualizar_botones()
-                return
-        except Exception:
-            pass
-
+        """Pasa esta PC a modo MAESTRA si hay MariaDB local."""
         resp = QMessageBox.question(
             self, "Cambiar a MAESTRA",
             "¿Convertir esta PC en MAESTRA?\n\n"
