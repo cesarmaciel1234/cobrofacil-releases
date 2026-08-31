@@ -3,7 +3,7 @@
 import hashlib
 import logging
 
-from PyQt6.QtCore import QObject, QThread, QTimer, Qt, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
 
 from src.carteleria.motor_carteleria.db_sync_worker import DbSyncWorker
 from src.carteleria.motor_carteleria.clima_worker import ClimaWorker
@@ -25,9 +25,11 @@ class _PanelesWorker(QThread):
 
     def run(self):
         try:
+            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
             from src.carteleria.motor_carteleria.estado_tv import armar_paneles
+            enriquecer_iconos(self._productos)
             paneles = armar_paneles(self._productos, self._clima_icon, self._clima)
-            self.listo.emit(paneles or {})
+            self.listo.emit({"paneles": paneles or {}, "precios": self._productos})
         except Exception:
             logger.exception("Error armando paneles TV")
             self.listo.emit({})
@@ -320,11 +322,6 @@ class LanzadorDirectoTV(QObject):
 
     def _aplicar_catalogo(self, productos):
         self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
-        try:
-            from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-            enriquecer_iconos(self.rows_precios)
-        except Exception:
-            pass
         self._refrescar_paneles()
 
     def _paneles_vacios(self):
@@ -350,16 +347,25 @@ class LanzadorDirectoTV(QObject):
             return
         self._huella = huella
         copia = [dict(p) for p in self.rows_precios]
+        if self._paneles_worker is not None:
+            try:
+                self._paneles_worker.listo.disconnect(self._on_paneles_listos)
+            except Exception:
+                pass
         self._paneles_worker = _PanelesWorker(copia, self._clima_icon, self._clima, self)
-        self._paneles_worker.listo.connect(self._on_paneles_listos, Qt.ConnectionType.UniqueConnection)
+        self._paneles_worker.listo.connect(self._on_paneles_listos)
         self._paneles_worker.start()
         self._publicar_estado()
 
-    def _on_paneles_listos(self, paneles):
+    def _on_paneles_listos(self, payload):
         if not self._vivo:
             return
+        paneles = (payload or {}).get("paneles") if isinstance(payload, dict) else payload
+        precios = (payload or {}).get("precios") if isinstance(payload, dict) else None
         if paneles:
             self._paneles = paneles
+        if precios:
+            self.rows_precios = precios
         self._publicar_estado()
 
     def _publicar_estado(self):

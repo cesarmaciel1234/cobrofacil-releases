@@ -281,11 +281,6 @@ class ServidorCuello:
                 )
                 logger.warning("Cara web TV no encontrada")
                 return False
-            try:
-                from src.carteleria.assets_paths import png_productos_dir
-                png_productos_dir()
-            except Exception as exc:
-                logger.debug("No se pudo crear Catalogos/png_productos: %s", exc)
 
             if not self.httpd:
                 handler = lambda *args, **kwargs: CarteleriaWebHandler(
@@ -319,11 +314,15 @@ class ServidorCuello:
             self._detener_teclas()
             self._cerrar_navegador()
             if self.httpd:
-                self.httpd.shutdown()
-                self.httpd.server_close()
+                try:
+                    self.httpd.shutdown()
+                except Exception:
+                    pass
+                try:
+                    self.httpd.server_close()
+                except Exception:
+                    pass
                 self.httpd = None
-            if self.thread and self.thread.is_alive():
-                self.thread.join(timeout=1)
             self.thread = None
             logger.info("Servidor HTTP y navegador detenidos")
         except Exception as exc:
@@ -332,10 +331,18 @@ class ServidorCuello:
     def _iniciar_teclas(self):
         if self._teclas:
             return
+        parent = self.main_window if isinstance(self.main_window, object) else None
+        try:
+            from PyQt6.QtCore import QObject
+            if not isinstance(parent, QObject):
+                parent = None
+        except Exception:
+            parent = None
         self._teclas = TeclasTv(
             on_f10=self._tecla_f10,
             on_f11=self._tecla_salir,
             on_esc=self._tecla_salir,
+            parent=parent,
         )
         self._teclas.start()
 
