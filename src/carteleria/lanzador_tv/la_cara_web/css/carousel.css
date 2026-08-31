@@ -343,12 +343,43 @@
 }
 
 .tv-card__timer-icon {
-    font-size: clamp(10px, 1vw, 12px);
+    position: relative;
+    flex-shrink: 0;
+    width: 1.05em;
+    height: 1.05em;
+    border: 0.14em solid currentColor;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+.tv-card__timer-icon::before,
+.tv-card__timer-icon::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: currentColor;
+    transform-origin: bottom center;
+    border-radius: 1px;
+}
+.tv-card__timer-icon::before {
+    width: 0.12em;
+    height: 0.28em;
+    margin-left: -0.06em;
+    margin-top: -0.28em;
+}
+.tv-card__timer-icon::after {
+    width: 0.12em;
+    height: 0.38em;
+    margin-left: -0.06em;
+    margin-top: -0.38em;
+    transform: rotate(90deg);
+    transform-origin: bottom center;
 }
 
 .tv-card__timer-text {
     font-family: var(--font-display);
     letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
 }
 
 .tv-card__was-row {

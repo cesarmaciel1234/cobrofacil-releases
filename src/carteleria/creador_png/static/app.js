@@ -106,7 +106,8 @@ async function convertir(isFast = false) {
     data.append("save_as", nombreSugerido);
     data.append("rotation", String(rotationAngle || 0));
     if (sliderRocio) data.append("water_droplets_density", sliderRocio.value);
-    if (chkIa.checked) data.append("use_ai", "1");
+    data.append("enable_vignette_effect", (chkVignette && chkVignette.checked) ? "1" : "0");
+    if (chkIa && chkIa.checked) data.append("use_ai", "1");
     try {
         const res = await fetch("/convert", { method: "POST", body: data, signal: convertAbort.signal });
         const json = await res.json();

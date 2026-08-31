@@ -18,12 +18,12 @@ function esNoche() {
 }
 
 function itemsTickets(state) {
-    // Priorizamos "mas_vendidos" (volumen/tickets del día) para apalancar el boom del día
-    const panel = (state.rotacion || []).find((p) => p.id === "mas_vendidos" || p.id === "elegidos");
+    // Priorizamos "mega_ventas" (volumen del día) para apalancar el boom del día
+    const panel = (state.rotacion || []).find((p) => p.id === "mega_ventas" || p.id === "elegidos");
     let lista = [];
     
-    if (state.mas_vendidos && state.mas_vendidos.length > 0) {
-        lista = state.mas_vendidos;
+    if (state.mega_ventas && state.mega_ventas.length > 0) {
+        lista = state.mega_ventas;
     } else if (panel?.items?.length) {
         lista = panel.items;
     } else {
@@ -112,16 +112,7 @@ export function iniciarRotacionColumna4(state, root) {
     const misma = firma === JSON.stringify(itemsCache.map((i) => i.nombre));
     itemsCache = items.length ? items : itemsCache;
     if (!misma) {
-        rotacionIndex = 0;
-        pintar(false);
-    } else {
         pintar(false);
     }
-    if (rotacionTimer) return;
-    if (itemsCache.length <= 1) return;
-    rotacionTimer = setInterval(() => {
-        if (itemsCache.length <= 1) return;
-        rotacionIndex = (rotacionIndex + 1) % itemsCache.length;
-        pintar(true);
-    }, ROTACION_MS);
+
 }

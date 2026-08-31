@@ -84,7 +84,6 @@ export function iniciarRotacionColumna1(state, root) {
     const misma = firma === JSON.stringify(panelesCache.map((p) => [p.id, (p.items || []).map((i) => i.nombre)]));
     panelesCache = paneles;
     if (!misma) {
-        rotacionIndex = 0;
         pintar(false);
     }
     if (rotacionTimer) return;

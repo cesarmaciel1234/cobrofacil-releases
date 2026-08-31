@@ -89,12 +89,12 @@ function htmlDealCard(producto, { ad }) {
     const stock = Number(producto.stock || 0);
     const min = cantMinimaOferta(producto);
     const proof = stock > 0 && stock <= 8
-        ? `Â¡Se agota!`
+        ? `¡Se agota!`
         : (vendidos > 0
             ? 'Más elegido'
-            : (enOferta ? `LlevÃ¡ ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
-    const kicker = esAd ? "Publicidad" : (enOferta ? "Ofertas" : "Precio especial");
-    const offLabel = pct ? `-${pct}%` : (esAd ? "HOT" : "NEW");
+            : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
+    const kicker = esAd ? "PUBLICIDAD" : (enOferta ? "Ofertas" : "Precio especial");
+    const offLabel = pct ? `-${pct}%` : (esAd ? "AD" : "NEW");
     const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
     const clave = claveTimer(producto, esAd);
     return `
@@ -109,10 +109,10 @@ function htmlDealCard(producto, { ad }) {
                         : `<strong class="tv-card__now">DESTACADO</strong>`}
                     ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
                 </div>
-                ${ahorro > 0 ? `<p class="deal-save">AhorrÃ¡s ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                ${ahorro > 0 ? `<p class="deal-save">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
                 <div class="deal-foot">
                     <span class="tv-card__timer">
-                        <span class="tv-card__timer-icon" aria-hidden="true">â°</span>
+                        <span class="tv-card__timer-icon" aria-hidden="true"></span>
                         <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
                     </span>
                     <span class="deal-proof${stock > 0 && stock <= 8 ? " is-low" : ""}">${escapeHtml(proof)}</span>
@@ -148,7 +148,7 @@ function segundosDeTarjeta(key) {
 function formatMmSs(total) {
     const m = Math.floor(total / 60);
     const s = total % 60;
-    return `${m}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 function tickCronometros(track) {

@@ -84,12 +84,12 @@
     "opt_solicitar_cajero": true,
     "opt_bot_asistente": true,
     "opt_devoluciones": true,
-    "last_weekly_report_sent": "2026-W35",
+    "last_weekly_report_sent": "2026-W36",
     "carteleria_master_ip": "192.168.0.9",
     "clover_ip": "",
     "clover_port": "1234",
     "license_key": "",
-    "failed_token_attempts": 0,
+    "failed_token_attempts": 2,
     "mp_user_id": "171085024",
     "mp_qr_pos_external_id": "default",
     "carteleria_rotacion": 15,
@@ -100,5 +100,6 @@
     "carteleria_theme": "premium",
     "cuit": "CUIT: 00-00000000-0",
     "mensaje_despedida": "Gracias por su compra!",
-    "preferred_master_ip": "192.168.0.9"
+    "preferred_master_ip": "192.168.0.9",
+    "carteleria_perf": "max"
 }

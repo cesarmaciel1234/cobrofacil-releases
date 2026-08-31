@@ -1,9 +1,16 @@
 {
     "promocionados": [
-        "ACEITUNA",
-        "CARCAZA",
-        "HUEVO X 6U",
-        "PALOMITA",
-        "SAL C.CERDO"
+        "Cadril",
+        "Falda",
+        "Oferta Picada Comun",
+        "Pollo Trozado",
+        "Vacio"
+    ],
+    "ids": [
+        2147483647,
+        80,
+        310,
+        720,
+        20
     ]
 }

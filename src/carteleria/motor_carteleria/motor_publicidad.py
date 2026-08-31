@@ -58,6 +58,8 @@ class MotorPublicidad:
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
+        except OSError:
+            pass
         self.cargar_configuracion(forzar=True)
 
     def is_promocionado(self, nombre_producto, producto_id=None):
@@ -68,7 +70,15 @@ class MotorPublicidad:
             except (TypeError, ValueError):
                 pass
         clave = _norm(nombre_producto)
-        return bool(clave) and clave in self._nombres
+        if not clave:
+            return False
+        if clave in self._nombres:
+            return True
+        # "asado" pega "asado de tira"; "aceite" no pega "aceituna"
+        for marcado in self._nombres:
+            if clave == marcado or clave.startswith(marcado + " "):
+                return True
+        return False
 
     def marcar_lista(self, productos):
         self.cargar_configuracion()

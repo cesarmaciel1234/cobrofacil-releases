@@ -77,7 +77,15 @@ body[data-theme="premium"], body {
 }
 /* Kicker (OFERTA RELÁMPAGO) */
 .deal-kicker { color: var(--kicker-color); text-shadow: 0 0 8px rgba(var(--accent-rgb),0.4); }
-.oferta-card.is-ad .deal-kicker { color: rgba(255,255,255,0.35); }
+.oferta-card.is-ad {
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 0 1px rgba(212,175,55,0.35);
+}
+.oferta-card.is-ad .deal-kicker {
+    color: #FFDF00;
+    letter-spacing: 0.16em;
+    font-weight: 800;
+}
 
 /* Nombre producto */
 .deal-stage__name, .tv-card__name, .oferta-card .tv-card__name, .meal-name {
@@ -232,19 +240,20 @@ body[data-theme="premium"] .tv-card__timer {
     box-shadow: 0 4px 14px rgba(191,149,63,0.35);
 }
 /* --- PUBLICIDAD "NEXT LEVEL" --- */
+/* --- PUBLICIDAD compacta (misma columna que precios) --- */
 .price-ad {
     background: linear-gradient(135deg, #1A1200 0%, #2A1F00 50%, #1A1200 100%) !important;
     position: relative !important;
-    padding: 2.5vh 2vw !important;
-    margin: 1.5vh 0 !important;
-    border-radius: 18px !important;
+    padding: 0.65vh 0.75vw !important;
+    margin: 0.45vh 0 !important;
+    border-radius: 12px !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
+    align-items: stretch !important;
     justify-content: center !important;
-    gap: 1.5vh !important;
+    gap: 0.35vh !important;
     border: none !important;
-    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25), inset 0 0 25px rgba(212, 175, 55, 0.08) !important;
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.2), inset 0 0 16px rgba(212, 175, 55, 0.06) !important;
     overflow: hidden !important;
     z-index: 1;
 }
@@ -254,7 +263,7 @@ body[data-theme="premium"] .tv-card__timer {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 18px;
+    border-radius: 12px;
     padding: 2px; /* Grosor del borde */
     background: linear-gradient(60deg, #D4AF37, #FFF7CC, #B8860B, #111, #D4AF37, #FFF7CC);
     background-size: 300% 300%;
@@ -274,39 +283,46 @@ body[data-theme="premium"] .tv-card__timer {
 .price-ad__badge { 
     background: linear-gradient(90deg, #FFDF00, #D4AF37) !important;
     color: #000000 !important;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.6) !important;
-    padding: 0.5vh 1.5vw !important;
-    font-size: clamp(0.7rem, 0.9vw, 1rem) !important;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.45) !important;
+    padding: 0.15vh 0.55vw !important;
+    font-size: clamp(0.5rem, 0.65vw, 0.62rem) !important;
     border-radius: 999px !important;
-    letter-spacing: 0.2em !important;
+    letter-spacing: 0.14em !important;
     font-weight: 900 !important;
-    align-self: center !important;
+    align-self: flex-start !important;
 }
 
 .price-ad__body {
-    flex-direction: column !important;
-    justify-content: center !important;
-    gap: 0.5vh !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.6vw !important;
     width: 100% !important;
-    text-align: center !important;
+    text-align: left !important;
+}
+
+.price-ad__img {
+    width: 2.6vw !important;
+    height: 2.6vw !important;
 }
 
 .price-ad__name { 
     color: #FFFFFF !important;
-    font-size: clamp(1.5rem, 2vw, 2.2rem) !important;
+    font-size: clamp(0.95rem, 1.35vw, 1.2rem) !important;
     font-weight: 800 !important;
-    letter-spacing: 0.05em !important;
+    letter-spacing: 0.04em !important;
     text-transform: uppercase !important;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.9) !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
     margin: 0 !important;
+    flex: 1 !important;
 }
 
 .price-ad__price { 
     color: #FFDF00 !important; 
-    font-size: clamp(2.2rem, 3vw, 3.5rem) !important;
-    text-shadow: 0 0 20px rgba(255, 223, 0, 0.5) !important;
+    font-size: clamp(1.15rem, 1.7vw, 1.5rem) !important;
+    text-shadow: 0 0 12px rgba(255, 223, 0, 0.4) !important;
     line-height: 1 !important;
-    margin-top: 0.5vh !important;
+    margin-top: 0 !important;
 }
 
 /* ── COL 3 — OFERTA RELÁMPAGO ── */
@@ -336,7 +352,7 @@ body[data-theme="premium"] .tv-card__timer {
     border: 1px solid rgba(var(--accent-rgb),0.22);
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    margin-bottom: 1.2vh;
+    margin-bottom: 0.45vh;
 }
 .xsell-item:nth-child(even) {
     background: linear-gradient(90deg, #1A1400, #111100);
@@ -497,9 +513,24 @@ body[data-theme="premium"] .flash-strip__cycle span {
 
 body[data-theme="premium"] .clock {
     font-family: var(--font-primary);
-    font-weight: 400;
-    letter-spacing: 0.1em;
+    background: linear-gradient(180deg, #1A1404, #0A0802);
+    border: 1px solid rgba(212, 175, 55, 0.45);
     color: #F5E1A4;
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.18);
+}
+
+body[data-theme="premium"] .clock-face {
+    border-color: #D4AF37;
+    background: radial-gradient(circle at 32% 30%, #3D320C, #0C0902);
+}
+
+body[data-theme="premium"] .clock-hand--s {
+    background: #D90429;
+}
+
+body[data-theme="premium"] .clock-hm {
+    color: #FFDF00;
+    text-shadow: 0 0 12px rgba(255, 223, 0, 0.35);
 }
 
 /* Tarjetas: Materialidad de Tarjeta de Crédito Metálica */

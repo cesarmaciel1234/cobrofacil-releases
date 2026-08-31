@@ -280,7 +280,9 @@ class CarteleriaMainTV(QWidget):
         try:
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
+            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
+            motor_publicidad.marcar_lista(self.rows_precios)
             business_name, phone = config.get("business_name", "Cartelería"), config.get("phone", "")
             theme, mensaje = config.get("carteleria_theme", self._theme_name or "temu"), config.get("mensaje_zocalo", "")
             perf = perfil_activo()

@@ -103,7 +103,7 @@ function htmlCarruselOfertas(ofertas = []) {
         const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐ NUEVO";
 
         // Ventas dinámicas
-        const vendidosReales = item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.tickets_dia || item.volumen_dia || item.tickets || item.volumen || 0;
+        const vendidosReales = item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.tickets_dia || item.volumen_dia || item.tickets || item.volumen || 0;
         let porcentaje = 0;
         let comprando = 0;
         if (vendidosReales > 0) {
@@ -139,8 +139,8 @@ function htmlCarruselOfertas(ofertas = []) {
                         <div class="asian-flash-prices">
                             ${esOferta(item) ? `<span class="asian-flash-original">${escapeHtml(precio)}</span>` : ""}
                             <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
-                            ${ahorro ? `<span class="asian-flash-savings">-${escapeHtml(ahorro)}</span>` : ""}
                         </div>
+                        ${esOferta(item) ? `<div style="color: #FFDF00; font-size: clamp(1rem, 1.2vw, 1.3rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.8vh; display: inline-block; background: rgba(0,0,0,0.75); padding: 0.25em 0.6em; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
                         <div class="asian-flash-progress card-progress">
                             <div class="asian-flash-progress-bar" style="width: ${porcentaje}%;"></div>
                             <div class="asian-flash-progress-text">${porcentaje}% VENDIDO</div>

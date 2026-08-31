@@ -81,7 +81,9 @@ class DialogGestorPublicidad(QDialog):
         productos = self.motor_db.buscar_productos("", None, False) or []
         motor_publicidad.cargar_configuracion()
         for row in productos:
-            if not isinstance(row, dict):
+            try:
+                row = dict(row)
+            except Exception:
                 continue
             nombre = (row.get("nombre") or "").strip()
             if not nombre:

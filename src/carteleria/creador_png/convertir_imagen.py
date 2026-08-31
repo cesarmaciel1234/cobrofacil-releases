@@ -74,6 +74,18 @@ _REMBG_SESSION = None
 _MAX_LADO_TRABAJO = 1280
 
 
+def _u2net_home():
+    if getattr(sys, "frozen", False):
+        return os.path.join(os.path.dirname(sys.executable), "u2net")
+    return os.path.join(os.path.expanduser("~"), ".u2net")
+
+
+def _preparar_rembg():
+    home = _u2net_home()
+    os.makedirs(home, exist_ok=True)
+    os.environ.setdefault("U2NET_HOME", home)
+
+
 def _limitar_lado(img, max_lado=_MAX_LADO_TRABAJO):
     w, h = img.size
     lado = max(w, h)
@@ -86,30 +98,54 @@ def _limitar_lado(img, max_lado=_MAX_LADO_TRABAJO):
 def _sesion_rembg():
     global _REMBG_SESSION
     if _REMBG_SESSION is None:
+        _preparar_rembg()
         from rembg import new_session
-        _REMBG_SESSION = new_session('u2net')
+        ultimo = None
+        for modelo in ("u2net", "u2netp"):
+            try:
+                _REMBG_SESSION = new_session(modelo)
+                break
+            except Exception as exc:
+                ultimo = exc
+                _REMBG_SESSION = None
+        if _REMBG_SESSION is None:
+            raise RuntimeError(f"No se pudo cargar el modelo de recorte IA: {ultimo}")
     return _REMBG_SESSION
+
+
+def _tiene_transparencia(img):
+    if img.mode != "RGBA":
+        return False
+    lo, hi = img.split()[-1].getextrema()
+    return lo < 250
 
 
 def remover_fondo(img, black_threshold=BLACK_THRESHOLD, white_threshold=WHITE_THRESHOLD, use_ai=False):
     """
     Remueve el fondo. Si use_ai es True, usa rembg. Si no, usa el método básico por colores.
     """
+    try:
+        img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
     img = _limitar_lado(img)
     if use_ai:
-        try:
-            from rembg import remove
-            if img.mode != 'RGBA':
-                img = img.convert('RGBA')
-            result = remove(img, session=_sesion_rembg())
-            return _refinar_mascara(result)
-        except ImportError:
-            import sys
-            print("ADVERTENCIA: rembg no está instalado. Fallback a método básico por colores.", file=sys.stderr)
-        except Exception as e:
-            print(f"ERROR: Error al usar rembg: {e}. Fallback a método básico por colores.")
-            import traceback
-            traceback.print_exc()
+        import io
+        from rembg import remove
+
+        if img.mode != "RGBA":
+            img = img.convert("RGBA")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        crudo = remove(buf.getvalue(), session=_sesion_rembg())
+        if isinstance(crudo, Image.Image):
+            result = crudo.convert("RGBA")
+        else:
+            result = Image.open(io.BytesIO(crudo)).convert("RGBA")
+        result = _refinar_mascara(result)
+        if not _tiene_transparencia(result):
+            raise RuntimeError("La IA no recortó el fondo (la foto quedó opaca).")
+        return result
 
     if img.mode != 'RGBA':
         img = img.convert('RGBA')
@@ -355,6 +391,23 @@ def add_water_droplets(img, density=50, size_range=(2, 5)):
     layer.putalpha(masked)
     return Image.alpha_composite(img, layer)
 
+
+def _capa_plato(width, height, alpha_producto):
+    """Halo de vidrio: solo un resplandor suave alrededor del recorte."""
+    lado = min(width, height)
+    if alpha_producto is None:
+        return Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    mascara = alpha_producto.convert("L")
+    if mascara.size != (width, height):
+        mascara = mascara.resize((width, height), Image.Resampling.BILINEAR)
+    radio = max(14, int(lado * 0.038))
+    expandido = mascara.filter(ImageFilter.MaxFilter(size=max(3, (radio // 4) * 2 + 1)))
+    aura = expandido.filter(ImageFilter.GaussianBlur(radius=radio))
+    capa = Image.new("RGBA", (width, height), (255, 253, 248, 0))
+    capa.putalpha(aura.point(lambda p: int(p * 0.22)))
+    return capa.filter(ImageFilter.GaussianBlur(radius=max(6, radio // 3)))
+
+
 def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), dpi=150,
                              sharpness_factor=SHARPNESS_FACTOR, contrast_factor=CONTRAST_FACTOR,
                              saturation_factor=COLOR_FACTOR, brightness_factor=1.05, 
@@ -385,7 +438,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
                 img = img.rotate(-rotation, expand=True)
             import time; time.sleep(0.02); print('INFO: Imagen abierta. Tamaño original:', img.size)
             img = remover_fondo(img, black_threshold=black_threshold, white_threshold=white_threshold, use_ai=use_ai)
-            if use_ai:
+            if use_ai and _tiene_transparencia(img):
                 img.save(cutout_path)
         import time; time.sleep(0.02); print('INFO: Fondo removido/cargado.')
         
@@ -464,25 +517,15 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         radius = int(min(width, height) * HIGHLIGHT_RADIUS_FACTOR)
         draw.ellipse([-radius // 3, -radius // 3, radius * 2, radius * 2], fill=(255, 255, 255, highlight_alpha_start))
         highlight = highlight.filter(ImageFilter.GaussianBlur(radius=HIGHLIGHT_BLUR_RADIUS + 8))
+        highlight.putalpha(ImageChops.multiply(highlight.split()[3], alpha))
         import time; time.sleep(0.05)
 
         result = Image.alpha_composite(result, shadow)
+        if enable_vignette_effect:
+            result = Image.alpha_composite(result, _capa_plato(width, height, alpha))
         result = Image.alpha_composite(result, img)
         result = Image.alpha_composite(result, highlight)
-
-        if enable_vignette_effect:
-            try:
-                import numpy as np
-                yy, xx = np.ogrid[:height, :width]
-                dist = np.sqrt((xx - width / 2.0) ** 2 + (yy - height / 2.0) ** 2)
-                norm = dist / (dist.max() or 1)
-                a = np.clip(norm ** 2 * vignette_alpha_start, 0, 255).astype(np.uint8)
-                layer = np.zeros((height, width, 4), dtype=np.uint8)
-                layer[:, :, 3] = a
-                result = Image.alpha_composite(result, Image.fromarray(layer, 'RGBA'))
-            except ImportError:
-                pass
-        
+ 
         # Guardar resultado
         result.save(output_path, 'PNG', dpi=(dpi, dpi))
         print(f"INFO: Imagen procesada guardada en: {output_path}")
@@ -491,6 +534,8 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         print(f"ERROR: Error procesando imagen: {e}")
         import traceback
         traceback.print_exc()
+        if use_ai:
+            raise
         return False
 
 def main():

@@ -169,7 +169,11 @@ def get_conversion_params(form_data):
         "smart_sharpen_threshold": int(form_data.get("smart_sharpen_threshold", "3")),
         "edge_preserve_smooth_radius": int(form_data.get("edge_preserve_smooth_radius", "1")),
         "enable_depth_effect": base["enable_depth_effect"],
-        "enable_vignette_effect": base["enable_vignette_effect"],
+        "enable_vignette_effect": (
+            form_data.get("enable_vignette_effect") in ("1", "true", "on", "yes")
+            if form_data.get("enable_vignette_effect") is not None
+            else base["enable_vignette_effect"]
+        ),
         "enable_rim_light_effect": base["enable_rim_light_effect"],
         "output_folder": form_data.get("output_folder", base["output_folder"]),
         "temperature": float(form_data.get("temperature", base["temperature"])),
@@ -233,7 +237,14 @@ def _convertir(params, input_filepath, output_filepath, size, rapido):
         kwargs = {"capture_output": True, "text": True}
         if sys.platform == "win32":
             kwargs["creationflags"] = 0x08000000
-        proc = subprocess.run(cmd, **kwargs)
+        env = os.environ.copy()
+        env.setdefault("U2NET_HOME", os.path.join(os.path.dirname(worker), "u2net"))
+        kwargs["env"] = env
+        kwargs["timeout"] = 240
+        try:
+            proc = subprocess.run(cmd, **kwargs)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("La IA tardó demasiado recortando el fondo.")
         if proc.returncode != 0:
             raise RuntimeError((proc.stderr or proc.stdout or "worker error").strip())
         return os.path.isfile(output_filepath)

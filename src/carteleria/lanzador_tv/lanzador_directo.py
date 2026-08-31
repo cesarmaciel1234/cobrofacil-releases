@@ -373,6 +373,7 @@ class LanzadorDirectoTV(QObject):
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
 
+            self._marcar_publicidad(self.rows_precios)
             business_name = config.get("business_name", "Cartelería")
             self._state_cache = {
                 "config": {

@@ -73,6 +73,10 @@ function armarCiclo(productos) {
             }
         }
     }
+    if (ads.length && enBloque > 0 && enBloque < 4) {
+        const { ad } = siguienteAd(ads, 0, null);
+        partes.push(htmlTarjetaPublicidad(ad));
+    }
     return partes.join("");
 }
 
