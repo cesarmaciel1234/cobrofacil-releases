@@ -38,10 +38,10 @@
     align-items: center;
     justify-content: space-between;
     background: linear-gradient(135deg, #8B0000, #CC0000, #FF0000);
-    border-radius: 16px;
-    padding: 1vh 1.2vw;
+    border-radius: clamp(12px, 2vw, 16px);
+    padding: clamp(0.6vh, 0.8vh, 1vh) clamp(0.8vw, 1.2vw, 1.5vw);
     box-shadow: 0 0 30px rgba(139,0,0,0.4), 0 0 60px rgba(204,0,0,0.3);
-    margin-bottom: 1.2vh;
+    margin-bottom: clamp(0.5vh, 0.8vh, 1vh);
     position: relative;
     overflow: hidden;
 }
@@ -89,34 +89,40 @@
 .rank-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: clamp(0.3vh, 0.8vh, 1vh);
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    padding: clamp(0.3vh, 0.5vh, 0.8vh) 0;
+    max-height: 100%;
 }
 
 /* ── Tarjeta de ranking ── */
 .asian-rank-card {
     display: flex;
+    flex: 1;
     align-items: center;
     background: var(--rank-card-bg);
-    border-radius: 16px;
-    padding: 1vh 0.85vw;
-    margin-bottom: 0.7vh;
+    border-radius: clamp(12px, 2vw, 16px);
+    padding: clamp(0.6vh, 1vh, 1.2vh) clamp(0.6vw, 0.85vw, 1.2vw);
+    margin-bottom: 0;
     box-shadow: var(--rank-card-shadow);
     position: relative;
-    border: 2px solid var(--rank-card-border);
+    border: clamp(1px, 0.2vw, 2px) solid var(--rank-card-border);
     overflow: hidden;
-    gap: 0.8vw;
+    gap: clamp(0.5vw, 0.8vw, 1.2vw);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 0;
+    max-height: none;
 }
 .asian-rank-card.top-1 {
     background: var(--rank-top1-bg);
     border-color: var(--rank-top1-border);
     box-shadow: var(--rank-top1-shadow);
     transform: none;
-    margin-bottom: 0.85vh;
+    margin-bottom: 0;
     z-index: 10;
+    padding: clamp(0.5vh, 0.8vh, 1vh) clamp(0.6vw, 0.85vw, 1.2vw);
 }
 .asian-rank-card.top-2 {
     background: var(--rank-top2-bg);
@@ -198,7 +204,7 @@
 .asian-rank-tag {
     position: absolute;
     left: 0.8vw;
-    color: var(--rank-tag-color);
+    color: #EF4444;
     font-size: clamp(0.7rem, 0.9vw, 0.8rem);
     font-weight: 900;
     text-shadow: 0 1px 3px rgba(0,0,0,0.6);
@@ -264,62 +270,308 @@
     border-radius: 14px;
 }
 
-.price-ad {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35vh;
-    margin: 0.25vh 0;
-    padding: 0.9vh 0.7vw;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+/* ══════════════════════════════════════════════════════════
+   CARTELERÍA ESTILO ASIÁTICO - DISEÑO DE VENTA IMPACTANTE
+   Elementos de FOMO, social proof, y conversión para cartelería
+   ══════════════════════════════════════════════════════════ */
+
+.asian-billboard-card {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 1vw;
+    margin: 0.8vh 0;
+    padding: 1vh 1.2vw;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border: 3px solid #3B82F6;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
-.price-ad__badge {
-    align-self: flex-start;
-    background: #FFF7CC;
-    color: #9F1239;
-    border-radius: 999px;
-    padding: 2px 8px;
-    font-size: clamp(0.55rem, 0.72vw, 0.66rem);
-    font-weight: 800;
+.asian-billboard-card--hot {
+    background: linear-gradient(135deg, #1E3A8A 0%, #1E293B 100%);
+    border-color: #EF4444;
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.5), 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.asian-billboard-card--special {
+    background: linear-gradient(135deg, #1E293B 0%, #374151 100%);
+    border-color: #F59E0B;
+    box-shadow: 0 8px 32px rgba(245, 158, 11, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+/* Efecto shimmer para tarjetas hot */
+.asian-billboard-card--hot::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.3), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    50%, 100% { left: 200%; }
+}
+
+/* Corner Badges estilo asiático */
+.asian-billboard__badges {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+}
+
+.asian-badge {
+    padding: 3px 10px;
+    border-radius: 0 12px 0 8px;
+    font-size: clamp(0.6rem, 0.8vw, 0.7rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.asian-badge--hot {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    color: white;
+    animation: badgePulse 1.5s ease-in-out infinite;
+}
+
+.asian-badge--special {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+}
+
+.asian-badge--discount {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* Layout principal */
+.asian-billboard__main {
+    display: contents;
+}
+
+/* Sección de imagen */
+.asian-billboard__image-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.asian-billboard__image-container {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1E3A8A, #1E293B);
+    position: relative;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.asian-billboard__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.asian-billboard__image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+}
+
+.asian-billboard__overlay-text {
+    color: white;
+    font-size: clamp(0.65rem, 0.9vw, 0.75rem);
+    font-weight: 900;
+    text-transform: uppercase;
     letter-spacing: 0.1em;
 }
 
-.price-ad__img {
-    width: 3.6vw;
-    height: 3.6vw;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-.price-ad__body {
+.asian-billboard__placeholder {
+    width: 100%;
+    aspect-ratio: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.8vw;
+    justify-content: center;
+    background: linear-gradient(135deg, #1E3A8A, #1E293B);
+    border-radius: 12px;
+    border: 2px dashed rgba(59, 130, 246, 0.3);
 }
 
-.price-ad__name {
+.asian-billboard__placeholder-icon {
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    opacity: 0.6;
+}
+
+/* Sección de contenido */
+.asian-billboard__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7vh;
+    justify-content: space-between;
+}
+
+.asian-billboard__title {
     margin: 0;
-    min-width: 0;
     font-family: var(--font-display);
-    font-size: clamp(0.95rem, 1.3vw, 1.15rem);
-    font-weight: 800;
+    font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+    font-weight: 900;
     color: #FFFFFF;
-    white-space: nowrap;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.price-ad__price {
-    flex-shrink: 0;
+/* Sección de precios estilo asiático */
+.asian-billboard__price-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4vh;
+}
+
+.asian-billboard__price-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8vw;
+    flex-wrap: wrap;
+}
+
+.asian-billboard__price-before {
     font-family: var(--font-display);
-    font-size: clamp(1.05rem, 1.5vw, 1.28rem);
-    font-weight: 800;
-    color: #FFFFFF;
+    font-size: clamp(1rem, 1.4vw, 1.2rem);
+    font-weight: 700;
+    color: #94A3B8;
+    text-decoration: line-through;
+}
+
+.asian-billboard__price-now {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 900;
+    color: #FBBF24;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
+}
+
+.asian-billboard__savings {
+    font-size: clamp(0.75rem, 1vw, 0.85rem);
+    font-weight: 800;
+    color: #10B981;
+    background: rgba(16, 185, 129, 0.15);
+    padding: 0.3vh 0.6vw;
+    border-radius: 6px;
+    align-self: flex-start;
+}
+
+/* Social proof estilo asiático */
+.asian-billboard__social-proof {
+    display: flex;
+    gap: 1.2vw;
+    align-items: center;
+}
+
+.asian-billboard__proof-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2vh;
+}
+
+.asian-billboard__proof-number {
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 1.7vw, 1.4rem);
+    font-weight: 900;
+    color: #F87171;
+    font-variant-numeric: tabular-nums;
+}
+
+.asian-billboard__proof-label {
+    font-size: clamp(0.6rem, 0.85vw, 0.7rem);
+    font-weight: 700;
+    color: #CBD5E1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Barra de progreso estilo asiático */
+.asian-billboard__progress-bar {
+    position: relative;
+    background: rgba(59, 130, 246, 0.2);
+    border-radius: 8px;
+    height: 1.2vh;
+    overflow: hidden;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.asian-billboard__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #EF4444, #F87171);
+    border-radius: 8px;
+    animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.asian-billboard__progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(0.55rem, 0.75vw, 0.65rem);
+    font-weight: 900;
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+
+/* Footer con mensaje de venta */
+.asian-billboard__footer {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, #EF4444, #DC2626);
+    color: white;
+    padding: 0.5vh 1vw;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 0.4vh;
+}
+
+.asian-billboard__footer-text {
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .price-row__info {
