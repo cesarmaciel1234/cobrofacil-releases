@@ -49,10 +49,10 @@ def buscar_navegador():
     return None
 
 
-def flags_pantalla_completa(url, profile, x, y, w, h):
-    """App fullscreen (no --kiosk): F10/F11/Esc llegan a la página."""
+def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
+    """Fullscreen a 1 px = 1 px del monitor (sin zoom de Windows)."""
     os.makedirs(profile, exist_ok=True)
-    return [
+    flags = [
         f"--user-data-dir={profile}",
         "--no-first-run",
         "--no-default-browser-check",
@@ -62,11 +62,49 @@ def flags_pantalla_completa(url, profile, x, y, w, h):
         "--disable-restore-session-state",
         "--noerrdialogs",
         "--autoplay-policy=no-user-gesture-required",
+        "--force-device-scale-factor=1",
+        "--high-dpi-support=1",
         "--start-fullscreen",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
-        f"--app={url}",
     ]
+    if extra:
+        flags.extend(extra)
+    flags.append(f"--app={url}")
+    return flags
+
+
+def rect_monitor_nativo(indice=None):
+    """Píxeles reales del monitor (no los lógicos de Qt / 125% de Windows)."""
+    if platform.system() != "Windows":
+        return None
+    try:
+        class RECT(ctypes.Structure):
+            _fields_ = [
+                ("left", ctypes.c_long),
+                ("top", ctypes.c_long),
+                ("right", ctypes.c_long),
+                ("bottom", ctypes.c_long),
+            ]
+
+        monitors = []
+
+        def _cb(hmon, hdc, lprect, lparam):
+            r = ctypes.cast(lprect, ctypes.POINTER(RECT)).contents
+            monitors.append((r.left, r.top, r.right - r.left, r.bottom - r.top))
+            return 1
+
+        MONITORENUMPROC = ctypes.WINFUNCTYPE(
+            ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.POINTER(RECT), ctypes.c_void_p
+        )
+        ctypes.windll.user32.EnumDisplayMonitors(0, 0, MONITORENUMPROC(_cb), 0)
+        if not monitors:
+            return None
+        if indice is not None and 0 <= int(indice) < len(monitors):
+            return monitors[int(indice)]
+        return monitors[0]
+    except Exception:
+        return None
 
 
 def _foco_es_navegador_tv():

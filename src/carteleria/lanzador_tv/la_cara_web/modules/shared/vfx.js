@@ -4,6 +4,7 @@
 let observer = null;
 
 export function initCenterFocus() {
+    if (esEco()) return;
     // Usamos IntersectionObserver en lugar de requestAnimationFrame.
     // Esto evita recalcular layout (reflow) a 60fps, salvando muchísima CPU.
     // Creamos un margen de observación que solo detecta el centro de la pantalla (aprox 15% de ancho).
@@ -25,7 +26,15 @@ export function initCenterFocus() {
 }
 
 // Nueva función que se llama solo cuando se re-renderiza el DOM
+function esEco() {
+    return document.body.getAttribute("data-perf") === "eco";
+}
+
 export function updateVFX() {
+    if (esEco()) {
+        checkSmartMarquee();
+        return;
+    }
     if (observer) {
         // Desconectar observables viejos (previene memory leaks al recargar datos)
         observer.disconnect();

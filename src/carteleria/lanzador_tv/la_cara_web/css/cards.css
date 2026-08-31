@@ -697,3 +697,12 @@
     align-content: stretch;
 }
 
+/* PNG de producto: el kiosk no debe suavizar de más al achicar */
+.tv-card img,
+.deal-stage__img,
+.asian-flash-product-image img,
+.chef-lobo-img {
+    image-rendering: -webkit-optimize-contrast;
+}
+
+

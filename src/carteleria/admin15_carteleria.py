@@ -75,6 +75,15 @@ class CarteleriaConfigPanel(QWidget):
         c_layout.addWidget(self.cmb_theme)
 
         c_layout.addSpacing(10)
+        c_layout.addWidget(QLabel("Potencia de la PC de la TV (mismo look premium):"))
+        self.cmb_perf = QComboBox()
+        self.cmb_perf.addItem("Automático (mide RAM y núcleos)", "auto")
+        self.cmb_perf.addItem("PC de bajo recurso (fluida, sin blur)", "eco")
+        self.cmb_perf.addItem("Alta gama (blur, brillos y GPU)", "max")
+        self.cmb_perf.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 14px; background: white;")
+        c_layout.addWidget(self.cmb_perf)
+
+        c_layout.addSpacing(10)
 
         c_layout.addWidget(QLabel("Mensaje principal (Zócalo / Banner animado):"))
         self.txt_mensaje = QTextEdit()
@@ -123,6 +132,9 @@ class CarteleriaConfigPanel(QWidget):
                 th = cfg_data.get("carteleria_theme", "apple")
                 index = self.cmb_theme.findData(th)
                 if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                pf = cfg_data.get("carteleria_perf", "auto")
+                ip = self.cmb_perf.findData(pf)
+                if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
                 
                 self.panel_negocio.txt_name.setText(cfg_data.get("business_name", ""))
                 self.panel_negocio.txt_addr.setText(cfg_data.get("address", ""))
@@ -135,6 +147,9 @@ class CarteleriaConfigPanel(QWidget):
                 th = config.get("carteleria_theme", "apple")
                 index = self.cmb_theme.findData(th)
                 if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                pf = config.get("carteleria_perf", "auto")
+                ip = self.cmb_perf.findData(pf)
+                if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
                 
         except Exception as e:
             print(f"Error al cargar config de DB: {e}")
@@ -162,7 +177,8 @@ class CarteleriaConfigPanel(QWidget):
             "cuit": self.panel_negocio.txt_cuit.text().strip(),
             "mensaje_despedida": self.panel_negocio.txt_msg.text().strip(),
             "mensaje_zocalo": self.txt_mensaje.toPlainText().strip(),
-            "carteleria_theme": self.cmb_theme.currentData()
+            "carteleria_theme": self.cmb_theme.currentData(),
+            "carteleria_perf": self.cmb_perf.currentData(),
         }
 
         # 2. Guardar en Base de Datos para que TODAS las PCs lo vean

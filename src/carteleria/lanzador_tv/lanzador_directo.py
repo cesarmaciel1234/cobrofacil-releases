@@ -371,12 +371,15 @@ class LanzadorDirectoTV(QObject):
     def _publicar_estado(self):
         try:
             from src.config import config
+            from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
+
             business_name = config.get("business_name", "Cartelería")
             self._state_cache = {
                 "config": {
                     "business_name": business_name,
                     "phone": config.get("phone", ""),
                     "carteleria_theme": config.get("carteleria_theme", "temu"),
+                    "carteleria_perf": perfil_activo(),
                     "mensaje_zocalo": self._generar_mensaje_banderin(business_name),
                     "data_status": self._sync_status,
                 },

@@ -42,6 +42,17 @@ const els = {
     climaTemp: document.getElementById("climaTemp"),
 };
 
+function perfilNavegador() {
+    const ram = navigator.deviceMemory || 4;
+    const cpu = navigator.hardwareConcurrency || 4;
+    return ram < 6 || cpu < 4 ? "eco" : "max";
+}
+
+function aplicarPerfil(perfil) {
+    const modo = perfil === "eco" || perfil === "max" ? perfil : perfilNavegador();
+    document.body.setAttribute("data-perf", modo);
+}
+
 function loadTheme(themeName) {
     if (!themeName) return;
     document.body.setAttribute("data-theme", themeName);
@@ -73,6 +84,7 @@ async function fetchState() {
         const response = await fetch(API_URL, { cache: "no-store" });
         if (!response.ok) throw new Error(response.statusText);
         const data = await response.json();
+        aplicarPerfil(data.config?.carteleria_perf);
         const newDataHash = JSON.stringify({
             config: data.config,
             precios: data.precios,
@@ -184,6 +196,7 @@ function setupTvKeys() {
 }
 
 function init() {
+    aplicarPerfil();
     document.body.setAttribute("data-theme", state.currentTheme);
     actualizarReloj(els);
     setInterval(() => actualizarReloj(els), 1000);

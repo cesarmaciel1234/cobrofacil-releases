@@ -25,6 +25,7 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
     TeclasTv,
     buscar_navegador,
     flags_pantalla_completa,
+    rect_monitor_nativo,
 )
 
 logger = logging.getLogger("CerebroLanzadorTV")
@@ -222,12 +223,15 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return self.main_window.get_web_state()
         try:
             from src.config import config
+            from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
+
             return {
                 "config": {
                     "business_name": config.get("business_name", "Cartelería"),
                     "phone": config.get("phone", ""),
                     "mensaje_zocalo": config.get("mensaje_zocalo", ""),
                     "carteleria_theme": config.get("carteleria_theme", "temu"),
+                    "carteleria_perf": perfil_activo(),
                 },
                 "precios": self._get_precios(),
             }
@@ -394,6 +398,9 @@ class ServidorCuello:
         self.browser_process = None
 
     def _geometria_tv(self):
+        nativo = rect_monitor_nativo(self.screen_index)
+        if nativo:
+            return nativo
         try:
             from PyQt6.QtWidgets import QApplication
 
@@ -413,8 +420,12 @@ class ServidorCuello:
             return 0, 0, 1920, 1080
 
     def _flags_kiosk(self, url):
+        from src.carteleria.lanzador_tv.perfil_pc import flags_chrome_perfil, perfil_activo
+
         x, y, w, h = self._geometria_tv()
-        return flags_pantalla_completa(url, self._kiosk_profile, x, y, w, h)
+        return flags_pantalla_completa(
+            url, self._kiosk_profile, x, y, w, h, extra=flags_chrome_perfil(perfil_activo())
+        )
 
     def _lanzar_navegador(self):
         try:

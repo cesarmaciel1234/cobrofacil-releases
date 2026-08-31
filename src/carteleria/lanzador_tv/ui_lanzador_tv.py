@@ -279,16 +279,21 @@ class CarteleriaMainTV(QWidget):
         """Contrato de datos para app.js; lo consulta el servidor del lanzador."""
         try:
             from src.config import config
+            from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
+
             business_name, phone = config.get("business_name", "Cartelería"), config.get("phone", "")
             theme, mensaje = config.get("carteleria_theme", self._theme_name or "temu"), config.get("mensaje_zocalo", "")
+            perf = perfil_activo()
         except Exception:
-            business_name, phone, theme, mensaje = "Cartelería", "", self._theme_name, ""
+            business_name, phone, theme, mensaje, perf = "Cartelería", "", self._theme_name, "", "eco"
         if not mensaje:
             mensaje = f"{business_name} • {self._clima} • Ofertas sujetas a stock •"
         return {
             "config": {
                 "business_name": business_name, "phone": phone,
-                "carteleria_theme": theme, "mensaje_zocalo": mensaje,
+                "carteleria_theme": theme,
+                "carteleria_perf": perf,
+                "mensaje_zocalo": mensaje,
                 "data_status": self._sync_status,
             },
             "precios": self.rows_precios,
