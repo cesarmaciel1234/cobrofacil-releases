@@ -1,7 +1,7 @@
 {
-  "app_version": "12.0.16",
+  "app_version": "12.0.17",
   "channel": "stable",
-  "build_date": "2026-09-01 10:05:32",
+  "build_date": "2026-09-01 10:32:21",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -228,9 +228,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "08a0ab9ac5dbe0de17406b9ec1fa367c",
+      "checksum": "7b2fcd14cb31b903e003887e217ae984",
       "channel": "stable",
-      "size": 601222
+      "size": 615608
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -1026,9 +1026,9 @@
     },
     "src/base_de_datos/database.py": {
       "version": "1.0.0",
-      "checksum": "7419f30490337562e6fbc06314f78a7c",
+      "checksum": "617d1975e5f738a599b5ca92e616283f",
       "channel": "stable",
-      "size": 80134
+      "size": 81510
     },
     "src/base_de_datos/diario_ventas_externo.py": {
       "version": "1.0.0",
@@ -2052,9 +2052,9 @@
     },
     "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
-      "checksum": "0f37930c3c5816418e348db3b8b2f7c1",
+      "checksum": "413ae0155c033810c95b2fafd055f3b5",
       "channel": "stable",
-      "size": 6430
+      "size": 6458
     },
     "src/carteleria/lanzador_tv/perfil_pc.py": {
       "version": "1.0.0",
@@ -2100,21 +2100,21 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/app.js": {
       "version": "1.0.0",
-      "checksum": "6699a039665deb873726de5736f387fb",
+      "checksum": "89874604ce9fbcbf2100a7b44206b1f2",
       "channel": "stable",
-      "size": 8381
+      "size": 9146
     },
     "src/carteleria/lanzador_tv/la_cara_web/index.html": {
       "version": "1.0.0",
-      "checksum": "7b8d6eb3ee46de52d3917f4198f1a7c4",
+      "checksum": "cb9967dc86a532e1233f39e8d783e8af",
       "channel": "stable",
       "size": 5957
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/base.css": {
       "version": "1.0.0",
-      "checksum": "e2969bdf674d738aedd9caa32d01f57d",
+      "checksum": "5164652cf23c64e99dc8abe9862b02ce",
       "channel": "stable",
-      "size": 4539
+      "size": 4393
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/cards.css": {
       "version": "1.0.0",
@@ -2154,7 +2154,7 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/responsive.css": {
       "version": "1.0.0",
-      "checksum": "8eed5ea8c62afb673fa0267e92f62262",
+      "checksum": "8be3c5ff3b1822a73a2bda3dd866f154",
       "channel": "stable",
       "size": 4771
     },
@@ -2706,9 +2706,9 @@
     },
     "src/db_engines/mariadb_engine.py": {
       "version": "1.0.0",
-      "checksum": "5fc330baf44f2af512c71c1202f344ee",
+      "checksum": "04d96d367fbc17d72c837a307eccf73a",
       "channel": "stable",
-      "size": 5826
+      "size": 5889
     },
     "src/db_engines/__init__.py": {
       "version": "1.0.0",

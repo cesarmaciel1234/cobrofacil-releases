@@ -2,8 +2,8 @@
 /* Responsive layout adjustments para diferentes tamaños de TV */
 @media (max-width: 1366px) {
     :root {
-        --footer-height: 7.5vh;
-        --hero-height: 26vh;
+        --footer-height: 76px;
+        --hero-height: 302px;
     }
     
     .columns-section {
@@ -28,8 +28,8 @@
 
 @media (min-width: 1920px) {
     :root {
-        --footer-height: 6.2vh;
-        --hero-height: 28vh;
+        --footer-height: 76px;
+        --hero-height: 302px;
     }
     
     .columns-section {
@@ -48,8 +48,8 @@
 
 @media (min-width: 2560px) {
     :root {
-        --footer-height: 5.8vh;
-        --hero-height: 28vh;
+        --footer-height: 76px;
+        --hero-height: 302px;
     }
     
     .hero-title {

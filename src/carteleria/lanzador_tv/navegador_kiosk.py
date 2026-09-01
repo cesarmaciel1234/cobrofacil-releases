@@ -64,6 +64,7 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--autoplay-policy=no-user-gesture-required",
         "--force-device-scale-factor=1",
         "--high-dpi-support=1",
+        "--disable-pinch",
         "--start-fullscreen",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
