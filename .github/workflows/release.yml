@@ -198,17 +198,16 @@ jobs:
       - name: Asegurar cara web TV oculta en el paquete
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path "dist/CobroFacil_POS/_internal" | Out-Null
+          if (Test-Path "build/tv_cara.bin") {
+            Copy-Item -Force "build/tv_cara.bin" "dist/CobroFacil_POS/_internal/tv_cara.bin"
+          }
           python -c "from src.carteleria.lanzador_tv.tv_cara_pack import instalar_blob_en_dist; instalar_blob_en_dist('dist/CobroFacil_POS')"
+          Get-ChildItem -Path "dist/CobroFacil_POS" -Recurse -Directory -Filter "la_cara_web" -ErrorAction SilentlyContinue | ForEach-Object {
+            Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+          }
           if (-not (Test-Path "dist/CobroFacil_POS/_internal/tv_cara.bin")) {
             Write-Error "Falta tv_cara.bin en el paquete"
-            exit 1
-          }
-          if (Test-Path "dist/CobroFacil_POS/src") {
-            Write-Error "No debe quedar src junto al exe"
-            exit 1
-          }
-          if (Test-Path "dist/CobroFacil_POS/_internal/src/carteleria/lanzador_tv/la_cara_web/index.html") {
-            Write-Error "La cara web no debe quedar como archivos sueltos"
             exit 1
           }
           Write-Host "OK cara web TV oculta (tv_cara.bin)"

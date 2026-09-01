@@ -102,9 +102,10 @@ def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:
     os.makedirs(internal, exist_ok=True)
     dest = os.path.join(internal, BLOB_NAME)
     pack_source(dest, source_dir)
-    leftover = os.path.join(internal, "src", "carteleria", "lanzador_tv", "la_cara_web")
-    if os.path.isdir(leftover):
-        shutil.rmtree(leftover, ignore_errors=True)
+    for root, dirs, _files in os.walk(dist_dir):
+        if "la_cara_web" in dirs:
+            shutil.rmtree(os.path.join(root, "la_cara_web"), ignore_errors=True)
+            dirs.remove("la_cara_web")
     public_src = os.path.join(dist_dir, "src")
     if os.path.isdir(public_src):
         shutil.rmtree(public_src, ignore_errors=True)

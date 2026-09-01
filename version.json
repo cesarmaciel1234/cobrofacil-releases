@@ -1,7 +1,7 @@
 {
-  "app_version": "12.0.17",
+  "app_version": "12.0.18",
   "channel": "stable",
-  "build_date": "2026-09-01 10:32:21",
+  "build_date": "2026-09-01 10:36:30",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -228,7 +228,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "7b2fcd14cb31b903e003887e217ae984",
+      "checksum": "81a0453cdca5895e512534913ed9a0d7",
       "channel": "stable",
       "size": 615608
     },
@@ -2064,9 +2064,9 @@
     },
     "src/carteleria/lanzador_tv/tv_cara_pack.py": {
       "version": "1.0.0",
-      "checksum": "b3285acae780cee2b9fc39e574e388ac",
+      "checksum": "2ee44dcbb192734ea88d2ad3d25a725c",
       "channel": "stable",
-      "size": 4227
+      "size": 4258
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
