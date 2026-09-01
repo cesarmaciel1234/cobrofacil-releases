@@ -29,7 +29,7 @@ export function htmlTarjetaRelampago(item) {
             </header>
             <div class="flash-offer__deal">
                 ${htmlDealStage({ ...item, nombre }, {
-                    off: pct ? \`-\${pct}%\` : "",
+                    off: pct ? `-${pct}%` : "",
                     extraClass: "flash-offer__stage",
                     titulo: nombre,
                     bolt: false,
@@ -37,13 +37,13 @@ export function htmlTarjetaRelampago(item) {
                 <div class="deal-copy flash-offer__copy">
                     <div class="deal-price-row">
                         ${precio > 0
-                            ? \`<strong class="tv-card__now"><span class="deal-currency">$</span>\${escapeHtml(monto)}</strong>\`
+                            ? `<strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>`
                             : ""}
-                        ${original > precio ? \`<s class="tv-card__was" style="font-size: 0.85em; opacity: 0.8;">\${formatMoney(original)}</s>\` : ""}
+                        ${original > precio ? `<s class="tv-card__was" style="font-size: 0.85em; opacity: 0.8;">${formatMoney(original)}</s>` : ""}
                     </div>
-                    ${tieneCondicion ? \`<div style="color: #000; font-size: clamp(0.85rem, 1.1vw, 1.2rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 1vh; display: inline-block; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); animation: pulseGold 2s infinite;">\${escapeHtml(textoValidezOferta(item))}</div>\` : ""}
+                    ${tieneCondicion ? `<div style="color: #000; font-size: clamp(0.85rem, 1.1vw, 1.2rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 1vh; display: inline-block; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); animation: pulseGold 2s infinite;">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
                 </div>
             </div>
         </article>
-    \`;
+    `;
 }

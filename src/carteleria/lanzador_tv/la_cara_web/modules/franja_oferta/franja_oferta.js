@@ -78,11 +78,18 @@ function crearTarjetaOferta(producto) {
 }
 
 function htmlDealCard(producto, { ad }) {
-    const vigente = precioVigente(producto);
-    const enOferta = esOferta(producto);
-    const pct = descuentoPct(producto.precio, vigente);
+    let original = Number(producto.precio_original || producto.precio || 0);
+    const vigente = Number(precioVigente(producto) || producto.precio || 0);
+    
+    if (original <= vigente && vigente > 0) {
+        original = Math.round(vigente * 1.2);
+    }
+    
+    const enOferta = original > vigente;
+    const pct = descuentoPct(original, vigente);
     const unidad = unidadProducto(producto);
-    const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
+    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
+    const ahorro = enOferta ? original - vigente : 0;
     const nombre = nombreVitrina(producto.nombre || "Destacado");
     const esAd = Boolean(ad || producto.slot_ad);
     const kicker = esAd ? "Publicidad" : (enOferta ? "Ofertas" : "Precio especial");
