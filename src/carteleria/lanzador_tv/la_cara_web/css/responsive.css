@@ -1,234 +1,209 @@
-
-/* Responsive layout adjustments para diferentes tamaños de TV */
-@media (max-width: 1366px) {
-    :root {
-        --footer-height: 76px;
-        --hero-height: 302px;
-    }
-    
-    .columns-section {
-        gap: 1.5vw;
-    }
-    
-    .pronostico-card {
-        padding: 20px;
-    }
-    
-    .chef-lobo-img {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .floating-header {
-        top: 10px;
-        right: 10px;
-        padding: 0;
-    }
-}
-
-@media (min-width: 1920px) {
-    :root {
-        --footer-height: 76px;
-        --hero-height: 302px;
-    }
-    
-    .columns-section {
-        gap: 2.5vw;
-    }
-    
-    .pronostico-card {
-        padding: 28px;
-    }
-    
-    .chef-lobo-img {
-        width: 140px;
-        height: 140px;
-    }
-}
-
-@media (min-width: 2560px) {
-    :root {
-        --footer-height: 76px;
-        --hero-height: 302px;
-    }
-    
-    .hero-title {
-        font-size: clamp(2.5rem, 5vw, 4.5rem);
-    }
-    
-    .hero-amount {
-        font-size: clamp(3rem, 6vw, 5.5rem);
-    }
-    
-    .chef-lobo-img {
-        width: 160px;
-        height: 160px;
-    }
-    
-    .pronostico-mensaje-full {
-        font-size: 22px;
-    }
-    
-    .recomendacion-texto-full {
-        font-size: 24px;
-    }
-    
-    .recomendacion-precio-full {
-        font-size: 42px;
-    }
-}
-
-/* Adaptación vertical para pantallas muy altas */
-@media (min-aspect-ratio: 16/9) {
-    .columns-section {
-        gap: 3vw;
-    }
-    
-    .pronostico-card {
-        padding: 32px;
-    }
-}
-
-/* Adaptación horizontal para pantallas muy anchas */
-@media (max-aspect-ratio: 16/10) {
-    .columns-section {
-        gap: 1.5vw;
-    }
-    
-    .hero-section {
-        gap: 1.5vw;
-    }
-}
-
-.floating-header {
-    position: fixed;
-    top: calc(var(--tv-safe-y) + 8px);
-    right: calc(var(--tv-safe-x) + 10px);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-    background: transparent;
-    padding: 0;
-    box-shadow: none;
-}
-.pronostico-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: clamp(16px, 2vh, 24px);
-    margin-bottom: clamp(12px, 1.5vh, 16px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.pronostico-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: clamp(12px, 1.5vh, 20px);
-}
-
-.clima-badge {
-    background: #DC2626;
-    border-radius: 50px;
-    padding: clamp(6px, 0.8vh, 8px) clamp(12px, 1.2vw, 16px);
-    display: flex;
-    align-items: center;
-    gap: clamp(6px, 0.8vw, 8px);
-}
-
-.clima-temp-badge {
-    color: white;
-    font-size: clamp(14px, 1.2vw, 16px);
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.clima-dot {
-    width: clamp(6px, 0.8vw, 8px);
-    height: clamp(6px, 0.8vw, 8px);
-    background: #FF0000;
-    border-radius: 50%;
-}
-
-.pronostico-body {
-    text-align: center;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: clamp(12px, 1.5vh, 16px);
-}
-
-.chef-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-bottom: clamp(8px, 1vh, 12px);
-}
-
-.chef-lobo-img {
-    width: clamp(80px, 8vw, 120px);
-    height: clamp(80px, 8vw, 120px);
-    object-fit: contain;
-    max-width: 100%;
-    max-height: 100%;
-}
-
-.pronostico-mensaje-full {
-    font-size: clamp(14px, 1.8vw, 18px);
-    font-weight: 600;
-    color: #111111;
-    line-height: 1.4;
-    text-transform: uppercase;
-    padding: 0 clamp(8px, 1vw, 12px);
-}
-
-.pronostico-recomendacion {
-    background: linear-gradient(135deg, #DC2626, #FF0000);
-    border-radius: clamp(12px, 1.5vh, 16px);
-    padding: clamp(12px, 1.5vh, 20px);
-    color: white;
-    margin-top: auto;
-}
-
-.recomendacion-texto-full {
-    font-size: clamp(16px, 2vw, 20px);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: clamp(8px, 1vh, 12px);
-    line-height: 1.3;
-}
-
-.recomendacion-precio-full {
-    font-size: clamp(24px, 3.5vw, 36px);
-    font-weight: 900;
-    color: #FFFFFF;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
-    text-decoration: none !important;
-    display: block;
-    line-height: 1;
-}
-
-.tv-4 .chef-lobo-img {
-    width: clamp(78px, 12vh, 150px);
-    height: clamp(78px, 12vh, 150px);
-}
-@media (max-height: 800px) {
-    .main-content {
-        padding-top: 1.5vh;
-        padding-bottom: 1.5vh;
-        gap: 1.5vh;
-    }
-
-    .hero-section {
-        height: 26vh;
-        min-height: 160px;
-    }
-
-    .footer {
-        height: 8vh;
-    }
-}
+
+/* Responsive layout adjustments para diferentes tamaños de TV */
+@media (max-width: 1366px) {
+    :root {
+        --footer-height: 76px;
+        --hero-height: 302px;
+    }
+    
+    .columns-section {
+        gap: 1.5cqw;
+    }
+    
+    .pronostico-card {
+        padding: 20px;
+    }
+    
+    .chef-lobo-img {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .floating-header {
+        top: 10px;
+        right: 10px;
+        padding: 0;
+    }
+}
+
+@media (min-width: 1920px) {
+    :root {
+        --footer-height: 76px;
+        --hero-height: 302px;
+    }
+    
+    .columns-section {
+        gap: 2.5cqw;
+    }
+    
+    .pronostico-card {
+        padding: 28px;
+    }
+    
+    .chef-lobo-img {
+        width: 140px;
+        height: 140px;
+    }
+}
+
+@media (min-width: 2560px) {
+    :root {
+        --footer-height: 76px;
+        --hero-height: 302px;
+    }
+}
+
+/* Adaptación vertical para pantallas muy altas */
+@media (min-aspect-ratio: 16/9) {
+    .columns-section {
+        gap: 3cqw;
+    }
+    
+    .pronostico-card {
+        padding: 32px;
+    }
+}
+
+/* Adaptación horizontal para pantallas muy anchas */
+@media (max-aspect-ratio: 16/10) {
+    .columns-section {
+        gap: 1.5cqw;
+    }
+    
+    .hero-section {
+        gap: 1.5cqw;
+    }
+}
+
+.floating-header {
+    position: fixed;
+    top: calc(var(--tv-safe-y) + 8px);
+    right: calc(var(--tv-safe-x) + 10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+.pronostico-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: clamp(16px, 2cqh, 24px);
+    margin-bottom: clamp(12px, 1.5cqh, 16px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pronostico-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: clamp(12px, 1.5cqh, 20px);
+}
+
+.clima-badge {
+    background: #DC2626;
+    border-radius: 50px;
+    padding: clamp(6px, 0.8cqh, 8px) clamp(12px, 1.2cqw, 16px);
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 0.8cqw, 8px);
+}
+
+.clima-temp-badge {
+    color: white;
+    font-size: clamp(14px, 1.2cqw, 16px);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.clima-dot {
+    width: clamp(6px, 0.8cqw, 8px);
+    height: clamp(6px, 0.8cqw, 8px);
+    background: #FF0000;
+    border-radius: 50%;
+}
+
+.pronostico-body {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: clamp(12px, 1.5cqh, 16px);
+}
+
+.chef-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: clamp(8px, 1cqh, 12px);
+}
+
+.chef-lobo-img {
+    width: clamp(80px, 8cqw, 120px);
+    height: clamp(80px, 8cqw, 120px);
+    object-fit: contain;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.pronostico-mensaje-full {
+    font-size: clamp(14px, 1.8cqw, 18px);
+    font-weight: 600;
+    color: #111111;
+    line-height: 1.4;
+    text-transform: uppercase;
+    padding: 0 clamp(8px, 1cqw, 12px);
+}
+
+.pronostico-recomendacion {
+    background: linear-gradient(135deg, #DC2626, #FF0000);
+    border-radius: clamp(12px, 1.5cqh, 16px);
+    padding: clamp(12px, 1.5cqh, 20px);
+    color: white;
+    margin-top: auto;
+}
+
+.recomendacion-texto-full {
+    font-size: clamp(16px, 2cqw, 20px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: clamp(8px, 1cqh, 12px);
+    line-height: 1.3;
+}
+
+.recomendacion-precio-full {
+    font-size: clamp(24px, 3.5cqw, 36px);
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    text-decoration: none !important;
+    display: block;
+    line-height: 1;
+}
+
+.tv-4 .chef-lobo-img {
+    width: clamp(78px, 12cqh, 150px);
+    height: clamp(78px, 12cqh, 150px);
+}
+@media (max-height: 800px) {
+    .main-content {
+        padding-top: 1.5cqh;
+        padding-bottom: 1.5cqh;
+        gap: 1.5cqh;
+    }
+
+    .hero-section {
+        height: 26cqh;
+        min-height: 160px;
+    }
+
+    .footer {
+        height: 8cqh;
+    }
+}

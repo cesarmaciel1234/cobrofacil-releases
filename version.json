@@ -1,7 +1,7 @@
 {
-  "app_version": "12.0.18",
+  "app_version": "12.0.19",
   "channel": "stable",
-  "build_date": "2026-09-01 10:36:30",
+  "build_date": "2026-09-01 10:52:52",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -228,7 +228,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "81a0453cdca5895e512534913ed9a0d7",
+      "checksum": "495adf1051de0757935f7ac367668ea8",
       "channel": "stable",
       "size": 615608
     },
@@ -2052,9 +2052,9 @@
     },
     "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
-      "checksum": "413ae0155c033810c95b2fafd055f3b5",
+      "checksum": "fea4f978e1743e564521e1480354c9d1",
       "channel": "stable",
-      "size": 6458
+      "size": 6416
     },
     "src/carteleria/lanzador_tv/perfil_pc.py": {
       "version": "1.0.0",
@@ -2064,9 +2064,9 @@
     },
     "src/carteleria/lanzador_tv/tv_cara_pack.py": {
       "version": "1.0.0",
-      "checksum": "2ee44dcbb192734ea88d2ad3d25a725c",
+      "checksum": "85683f8a5f19a7151bfd9e7f8f4e327a",
       "channel": "stable",
-      "size": 4258
+      "size": 4415
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
@@ -2094,51 +2094,51 @@
     },
     "src/carteleria/lanzador_tv/__init__.py": {
       "version": "1.0.0",
-      "checksum": "6eda6d7dd6a7c83321115c69506d1c39",
+      "checksum": "6a1660bcaa30f9cd9fa26449c38ac00b",
       "channel": "stable",
-      "size": 851
+      "size": 1441
     },
     "src/carteleria/lanzador_tv/la_cara_web/app.js": {
       "version": "1.0.0",
-      "checksum": "89874604ce9fbcbf2100a7b44206b1f2",
+      "checksum": "13c9a758ad8c1e2d854678d54653fb52",
       "channel": "stable",
-      "size": 9146
+      "size": 9154
     },
     "src/carteleria/lanzador_tv/la_cara_web/index.html": {
       "version": "1.0.0",
-      "checksum": "cb9967dc86a532e1233f39e8d783e8af",
+      "checksum": "e09c4b273b60fab0ceb07bbc801439b6",
       "channel": "stable",
       "size": 5957
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/base.css": {
       "version": "1.0.0",
-      "checksum": "5164652cf23c64e99dc8abe9862b02ce",
+      "checksum": "ba0a76a5ca7ced7c137d93dbae2244d9",
       "channel": "stable",
-      "size": 4393
+      "size": 4412
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/cards.css": {
       "version": "1.0.0",
-      "checksum": "142603fa67111b00d9e59cf14b9733fc",
+      "checksum": "6961dfc45fa7a5e001d540d6de3b1cad",
       "channel": "stable",
-      "size": 25699
+      "size": 25849
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/carousel.css": {
       "version": "1.0.0",
-      "checksum": "c949d12f6a2ef6e8a8cb4fa8f098a9d7",
+      "checksum": "c17f71622989522a965387fed0742ae2",
       "channel": "stable",
-      "size": 12829
+      "size": 12858
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/columna4_chef.css": {
       "version": "1.0.0",
-      "checksum": "3a2a115327ec5272e623601443bd1cee",
+      "checksum": "7f3100e72c46815db2ec0a7604451508",
       "channel": "stable",
-      "size": 46317
+      "size": 46502
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/components.css": {
       "version": "1.0.0",
-      "checksum": "77f8db243452ef292b6c8299f4c464d6",
+      "checksum": "addfaff99b43c24d5d69e8c1834cf701",
       "channel": "stable",
-      "size": 12659
+      "size": 12708
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/perf.css": {
       "version": "1.0.0",
@@ -2154,15 +2154,15 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/responsive.css": {
       "version": "1.0.0",
-      "checksum": "8be3c5ff3b1822a73a2bda3dd866f154",
+      "checksum": "fa5f72790bb42615349a3ca2449ca76f",
       "channel": "stable",
-      "size": 4771
+      "size": 4555
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/structural_base.css": {
       "version": "1.0.0",
-      "checksum": "5dab5beab77a9f0a6d9847c0c3672a02",
+      "checksum": "9744effbe8b701b66afea72ec43d6d65",
       "channel": "stable",
-      "size": 7684
+      "size": 7924
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/style.css": {
       "version": "1.0.0",
@@ -2208,9 +2208,9 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/premium/estilos.css": {
       "version": "1.0.0",
-      "checksum": "7414c044ca02726dd6a588ade0c65e74",
+      "checksum": "b1bd8b9a39fccaf6495f102d30385ea5",
       "channel": "stable",
-      "size": 28058
+      "size": 28857
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/colores.css": {
       "version": "1.0.0",
@@ -2220,9 +2220,9 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/estilos.css": {
       "version": "1.0.0",
-      "checksum": "ff01a42e4d032d362c93dac36a517d00",
+      "checksum": "9322bd1682192d9c497fbedf02607845",
       "channel": "stable",
-      "size": 21017
+      "size": 21884
     },
     "src/carteleria/lanzador_tv/la_cara_web/modules/cabecera_negociodata/cabecera_negociodata.js": {
       "version": "1.0.0",
@@ -2322,9 +2322,9 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/modules/franja_oferta/franja_oferta.js": {
       "version": "1.0.0",
-      "checksum": "53f9a2fb81a27bc83bf21f210b5e446f",
+      "checksum": "cb0597690b412abb83d088569c486337",
       "channel": "stable",
-      "size": 8469
+      "size": 8575
     },
     "src/carteleria/lanzador_tv/la_cara_web/modules/mensaje_zocalo/mensaje_zocalo.js": {
       "version": "1.0.0",

@@ -62,7 +62,6 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--disable-restore-session-state",
         "--noerrdialogs",
         "--autoplay-policy=no-user-gesture-required",
-        "--force-device-scale-factor=1",
         "--high-dpi-support=1",
         "--disable-pinch",
         "--start-fullscreen",

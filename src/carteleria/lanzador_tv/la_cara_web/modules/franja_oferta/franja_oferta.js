@@ -173,12 +173,12 @@ function iniciarCarrusel(track) {
     function moverSiguiente() {
         if (!track.children.length) return;
         
+        const stage = document.querySelector(".app-container");
+        const vista = (stage && stage.clientWidth) || 1920;
         const card = track.children[0];
-        const gap = window.innerWidth * 0.014; // 1.4vw
+        const gap = vista * 0.014;
         const cardWidth = card.offsetWidth + gap;
-        
-        // Calculamos offset para que la tarjeta actual quede en el centro de la pantalla
-        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        const centerOffset = (vista / 2) - (card.offsetWidth / 2);
         
         currentIndex++;
         
@@ -208,7 +208,9 @@ function iniciarCarrusel(track) {
     setTimeout(() => {
         if (!track.children.length) return;
         const card = track.children[0];
-        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        const stage = document.querySelector(".app-container");
+        const vista = (stage && stage.clientWidth) || 1920;
+        const centerOffset = (vista / 2) - (card.offsetWidth / 2);
         track.style.transform = `translateX(${centerOffset}px)`;
     }, 100);
 

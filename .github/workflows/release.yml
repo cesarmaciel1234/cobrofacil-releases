@@ -107,7 +107,7 @@ jobs:
       - name: Empaquetar cara web TV (blob oculto)
         run: |
           New-Item -ItemType Directory -Force -Path build | Out-Null
-          python -c "from src.carteleria.lanzador_tv.tv_cara_pack import pack_source; pack_source('build/tv_cara.bin')"
+          python src/carteleria/lanzador_tv/tv_cara_pack.py pack build/tv_cara.bin
           if (-not (Test-Path "build/tv_cara.bin")) { Write-Error "Fallo pack TV"; exit 1 }
 
       - name: Compilar ejecutable con PyInstaller
@@ -202,10 +202,7 @@ jobs:
           if (Test-Path "build/tv_cara.bin") {
             Copy-Item -Force "build/tv_cara.bin" "dist/CobroFacil_POS/_internal/tv_cara.bin"
           }
-          python -c "from src.carteleria.lanzador_tv.tv_cara_pack import instalar_blob_en_dist; instalar_blob_en_dist('dist/CobroFacil_POS')"
-          Get-ChildItem -Path "dist/CobroFacil_POS" -Recurse -Directory -Filter "la_cara_web" -ErrorAction SilentlyContinue | ForEach-Object {
-            Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
-          }
+          python src/carteleria/lanzador_tv/tv_cara_pack.py dist dist/CobroFacil_POS
           if (-not (Test-Path "dist/CobroFacil_POS/_internal/tv_cara.bin")) {
             Write-Error "Falta tv_cara.bin en el paquete"
             exit 1
