@@ -509,27 +509,40 @@
 
 /* Ajuste de dimensiones de columnas y Scroll de Grilla de Precios */
 
+.tv-2 .column-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
 .price-ticker {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: hidden;
     position: relative;
-    height: 100%;
 }
 
 .price-track {
     display: flex;
     flex-direction: column;
+    align-self: flex-start;
+    width: 100%;
+    height: auto;
     animation: scrollVertical var(--price-scroll-duration, 60s) linear infinite;
     will-change: transform;
- backface-visibility: hidden; perspective: 1000; -webkit-font-smoothing: subpixel-antialiased; }
+    backface-visibility: hidden;
+}
 
 .price-cycle {
     display: flex;
     flex-direction: column;
+    flex: none;
+    width: 100%;
 }
 
-@keyframes scrollVertical { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(0, -50%, 0); } }
-    100% { transform: translateY(-50%); }
+@keyframes scrollVertical {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, calc(-1 * var(--price-cycle-h, 50%)), 0); }
 }
 
 /* Safe Area para Multi-TV (Video Wall) */

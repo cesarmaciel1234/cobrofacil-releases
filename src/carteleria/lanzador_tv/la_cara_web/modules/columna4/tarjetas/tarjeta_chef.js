@@ -92,20 +92,30 @@ function htmlCarruselOfertas(ofertas = []) {
 
     const itemsHtml = items.map((item, idx) => {
         const nombre = nombreVitrina(item.nombre);
-        const precio = formatMoney(item.precio);
-        const precioVigenteVal = precioVigente(item) || item.precio;
+        
+        let precioVigenteVal = precioVigente(item) || item.precio;
+        let precioOriginalVal = item.precio || precioVigenteVal;
+        
+        // Si no hay descuento cargado en la base de datos, simulamos el "Precio Mostrador" agregando un 20% al precio mayorista para tacharlo.
+        if (precioOriginalVal <= precioVigenteVal && precioVigenteVal > 0) {
+            precioOriginalVal = Math.round(precioVigenteVal * 1.2);
+        }
+
+        const precioStr = formatMoney(precioOriginalVal);
         const precioVigenteStr = formatMoney(precioVigenteVal);
-        const descuento = descuentoPct(item.precio, precioVigenteVal);
+        const descuento = descuentoPct(precioOriginalVal, precioVigenteVal);
         const unidad = unidadProducto(item);
-        const ahorro = item.precio_oferta && item.precio_oferta < item.precio
-            ? formatMoney(item.precio - item.precio_oferta)
-            : (item.precio && precioVigenteVal < item.precio ? formatMoney(item.precio - precioVigenteVal) : "");
+        const ahorro = (precioOriginalVal > precioVigenteVal) ? formatMoney(precioOriginalVal - precioVigenteVal) : "";
         const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐ NUEVO";
 
         // Ventas dinámicas
         const vendidosReales = item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.tickets_dia || item.volumen_dia || item.tickets || item.volumen || 0;
         let porcentaje = 0;
         let comprando = 0;
+
+        // Mostrar SIEMPRE la condición (ej. Llevando 2 kilos) porque en la TV todo es precio mayorista
+        const tieneCondicion = true;
+
         if (vendidosReales > 0) {
             comprando = vendidosReales;
             const stockTotal = item.stock_inicial || (vendidosReales + (item.stock || (vendidosReales < 10 ? 20 : Math.round(vendidosReales * 1.3))));
@@ -131,17 +141,19 @@ function htmlCarruselOfertas(ofertas = []) {
         return `
             <article class="asian-flash-product cascade-enter shimmer-fx" style="animation-delay: ${idx * 0.2}s">
                 <div class="asian-flash-badge">${descuento ? `-${descuento}%` : "HOT"}</div>
-                <div class="asian-flash-product-image" style="background:${fondo};">${imagenHtml}</div>
+                <div class="asian-flash-product-image" style="background:${fondo};">
+                    ${imagenHtml}
+                    <div class="asian-flash-product-tag">${escapeHtml(kicker)}</div>
+                </div>
                 <div class="asian-flash-product-info">
                     <div>
-                        <span class="asian-flash-product-tag">${escapeHtml(kicker)}</span>
                         <h3 class="asian-flash-product-name">${escapeHtml(nombre)}</h3>
-                        <div class="asian-flash-prices">
-                            ${esOferta(item) ? `<span class="asian-flash-original">${escapeHtml(precio)}</span>` : ""}
-                            <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
-                        </div>
-                        ${esOferta(item) ? `<div style="color: #FFDF00; font-size: clamp(1rem, 1.2vw, 1.3rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.8vh; display: inline-block; background: rgba(0,0,0,0.75); padding: 0.25em 0.6em; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
-                        <div class="asian-flash-progress card-progress">
+                          <div class="asian-flash-prices">
+                              ${(precioOriginalVal > precioVigenteVal) ? `<span class="asian-flash-original">${escapeHtml(precioStr)}</span>` : ""}
+                              <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
+                          </div>
+                          ${tieneCondicion ? `<div style="color: #000; font-size: clamp(1rem, 1.2vw, 1.4rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin: 0 auto 1.5vh; display: inline-block; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); transform: scale(1.05); animation: pulseGold 2s infinite;">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
+                          <div class="asian-flash-progress card-progress">
                             <div class="asian-flash-progress-bar" style="width: ${porcentaje}%;"></div>
                             <div class="asian-flash-progress-text">${porcentaje}% VENDIDO</div>
                         </div>

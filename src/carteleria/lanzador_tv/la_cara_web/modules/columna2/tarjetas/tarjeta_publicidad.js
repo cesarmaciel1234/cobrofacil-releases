@@ -5,7 +5,7 @@ import { escapeHtml, formatMoney, precioVigente, esOferta, textoValidezOferta } 
 export function htmlTarjetaPublicidad(item) {
     const nombre = item?.nombre || "Destacado";
     const precio = precioVigente(item);
-    const precioAnterior = item?.precio_anterior || 0;
+    const precioAnterior = item?.precio_original || item?.precio_anterior || item?.precio || 0;
     const descuento = item?.descuento || 0;
     const imagen = item?.imagen || "";
     const vendido = item?.cantidad || item?.vendidos || 0;
@@ -22,7 +22,9 @@ export function htmlTarjetaPublicidad(item) {
     const esHot = porcentajeVendido > 50 || descuentoPorcentaje > 15;
     const esOfertaEspecial = true; 
     
-    const condicion = esOferta(item) ? textoValidezOferta(item) : "";
+    // Mostrar siempre la condición porque en la TV todo es precio mayorista
+    const tieneCondicion = true;
+    const condicion = tieneCondicion ? textoValidezOferta(item) : "";
     
     return `
         <article class="asian-billboard-card ${esHot ? 'asian-billboard-card--hot' : ''} ${esOfertaEspecial ? 'asian-billboard-card--special' : ''}" ${!imagen ? 'style="grid-template-columns: 1fr;"' : ''}>

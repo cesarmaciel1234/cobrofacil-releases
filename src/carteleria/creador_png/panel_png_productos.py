@@ -263,34 +263,59 @@ class PanelPngProductos(QWidget):
         if qt_exec(dlg) and dlg.filename_guardado:
             self._icono_seleccionado = dlg.filename_guardado
             self._actualizar_preview(self._icono_seleccionado)
-            self._sincronizar_a_maestra(dlg.filename_guardado)
+            ok_sync, sync_msg = self._sincronizar_a_maestra(dlg.filename_guardado)
+            if not ok_sync and sync_msg:
+                QMessageBox.warning(self, "Envío a maestra", sync_msg)
 
     def _sincronizar_a_maestra(self, filename: str):
+        """Envía el PNG a la maestra (API :8000, luego Creador PNG :5000)."""
         from src.config import config
-        is_master = config.get("is_master", True)
-        if is_master or not config.get("carteleria_is_slave"):
-            return  # Local / ya es maestra: el PNG queda en esta PC
+        if config.get("is_master", True) and not config.get("carteleria_is_slave"):
+            return True, ""
 
-        db_host = config.get("db_host", "127.0.0.1")
-        if not db_host or db_host in ("127.0.0.1", "localhost"):
-            return
-            
+        db_host = str(
+            config.get("preferred_master_ip")
+            or config.get("carteleria_master_ip")
+            or config.get("db_host")
+            or ""
+        ).strip()
+        if not db_host or db_host.lower() in ("127.0.0.1", "localhost"):
+            return True, ""
+
         from src.carteleria.assets_paths import ruta_archivo_icono
         fpath = ruta_archivo_icono(filename)
         if not fpath or not os.path.exists(fpath):
-            return
-            
+            return False, "No se encontró el PNG local para enviar."
+
         import requests
-        url = f"http://{db_host}:5000/upload_carteleria_png"
-        try:
-            with open(fpath, "rb") as f:
-                res = requests.post(url, files={"file": (filename, f)}, timeout=10)
+
+        urls = [
+            f"http://{db_host}:8000/api/carteleria/upload_png",
+            f"http://{db_host}:5000/upload_carteleria_png",
+            f"http://{db_host}:5055/upload_carteleria_png",
+        ]
+        last_err = ""
+        for url in urls:
+            try:
+                with open(fpath, "rb") as f:
+                    res = requests.post(
+                        url,
+                        files={"file": (filename, f, "image/png")},
+                        timeout=8,
+                    )
                 if res.status_code == 200:
-                    print(f"[Cartelería] Sincronizado {filename} a maestra en {db_host}")
-                else:
-                    QMessageBox.warning(self, "Sincronización Fallida", f"No se pudo enviar el PNG a la maestra. Error {res.status_code}")
-        except Exception as e:
-            QMessageBox.warning(self, "Sincronización Fallida", f"No se pudo contactar al servidor PNG en {db_host}:5000\n{e}")
+                    print(f"[Cartelería] PNG {filename} enviado a maestra {url}")
+                    return True, f"PNG copiado a la maestra ({db_host})."
+                last_err = f"HTTP {res.status_code} en {url}"
+            except Exception as e:
+                last_err = str(e)
+                continue
+        return (
+            False,
+            f"No se pudo enviar el PNG a la maestra {db_host}.\n"
+            "Encendé esa PC y el Servidor de Tienda (puerto 8000).\n"
+            f"{last_err}",
+        )
 
     def _actualizar_preview(self, filename):
         self.lbl_preview_icono.setPixmap(QPixmap())
@@ -346,14 +371,20 @@ class PanelPngProductos(QWidget):
         ok, msg = guardar_icono_producto(self._producto_id, self._icono_seleccionado)
         if ok:
             nombre = self.txt_nombre.text()
+            extra = ""
             if self._icono_seleccionado:
-                self._sincronizar_a_maestra(self._icono_seleccionado)
+                ok_sync, sync_msg = self._sincronizar_a_maestra(self._icono_seleccionado)
+                if sync_msg:
+                    extra = "\n\n" + sync_msg
+                if not ok_sync:
+                    QMessageBox.warning(self, "Envío a maestra", sync_msg or "No se pudo enviar.")
             self._cargar()
             self._reseleccionar(nombre)
             QMessageBox.information(
                 self,
                 "PNG productos",
-                "Listo. La cartelería va a mostrar ese PNG en las tarjetas de ese producto.",
+                "Listo. La cartelería va a mostrar ese PNG en las tarjetas de ese producto."
+                + extra,
             )
         else:
             QMessageBox.warning(self, "Error", msg)

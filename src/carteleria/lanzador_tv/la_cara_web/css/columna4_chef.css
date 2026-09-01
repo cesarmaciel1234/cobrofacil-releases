@@ -420,7 +420,7 @@
     margin-left: 0;
 }
 
-.asian-flash-original {
+.asian-flash-original { background: transparent !important;
     font-size: clamp(0.65rem, 0.8vw, 0.7rem);
     font-weight: 600;
     color: var(--text-muted);
@@ -1277,7 +1277,7 @@
     text-shadow: 4px 4px 0 #000, 0 0 30px #FFD700 !important;
     line-height: 0.9 !important;
 }
-.asian-flash-original {
+.asian-flash-original { background: transparent !important;
     color: #FFFFFF !important;
     font-size: clamp(1rem, 1.2vw, 1.2rem) !important; padding: 0.2vh 0.5vw !important; flex-shrink: 0 !important;
     text-decoration-thickness: 3px !important;
@@ -1443,7 +1443,7 @@
     padding: 0 !important;
     box-shadow: none !important;
 }
-.asian-flash-original {
+.asian-flash-original { background: transparent !important;
     color: rgba(0,0,0,0.6) !important;
     text-decoration-color: #D90429 !important;
 }

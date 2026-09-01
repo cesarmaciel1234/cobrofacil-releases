@@ -18,12 +18,12 @@ function esNoche() {
 }
 
 function itemsTickets(state) {
-    // Priorizamos "mega_ventas" (volumen del día) para apalancar el boom del día
-    const panel = (state.rotacion || []).find((p) => p.id === "mega_ventas" || p.id === "elegidos");
+    // Priorizamos "volumen" (volumen del día) para apalancar el boom del día
+    const panel = (state.rotacion || []).find((p) => p.id === "volumen" || p.id === "elegidos");
     let lista = [];
     
-    if (state.mega_ventas && state.mega_ventas.length > 0) {
-        lista = state.mega_ventas;
+    if (state.volumen && state.volumen.length > 0) {
+        lista = state.volumen;
     } else if (panel?.items?.length) {
         lista = panel.items;
     } else {
