@@ -40,7 +40,7 @@ export function htmlFilaPrecio(item, puesto = 1, depto = "") {
                     </div>
                 </div>
             </div>
-            ${regla ? `<div class="price-row__rule" style="width: 100%; font-size: clamp(0.75em, 1.1vw, 0.9em); color: #FFD700; opacity: 0.9; margin: 0; background: rgba(255, 215, 0, 0.1); padding: 0.2vh 0.5vw; border-radius: 4px; border: 1px solid rgba(255, 215, 0, 0.2);">${escapeHtml(regla)}</div>` : ""}
+            ${regla ? `<div class="price-row__rule" style="width: 100%; font-size: clamp(0.75em, 1.1vw, 0.9em); color: #FFDF00; font-weight: bold; margin: 0; background: rgba(255, 215, 0, 0.15); padding: 0.3vh 0.6vw; border-radius: 6px; border: 1px solid rgba(255, 215, 0, 0.4); text-transform: uppercase;">${escapeHtml(regla)}</div>` : ""}
         </article>
     `;
 }

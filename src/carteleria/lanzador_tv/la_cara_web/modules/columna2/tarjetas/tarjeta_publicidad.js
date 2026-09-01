@@ -68,7 +68,7 @@ export function htmlTarjetaPublicidad(item) {
                         
                         <!-- Condiciones de oferta -->
                         ${condicion ? `
-                            <div style="margin-top: 0.5vh; background: linear-gradient(90deg, #F59E0B, #D97706); color: white; padding: 0.4vh 0.8vw; border-radius: 6px; font-weight: 800; font-size: clamp(0.7rem, 1vw, 0.9rem); display: inline-block; align-self: flex-start; text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                            <div style="margin-top: 0.8vh; color: #000; font-size: clamp(0.85rem, 1.1vw, 1.2rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; display: inline-block; align-self: flex-start; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); animation: pulseGold 2s infinite;">
                                 ${escapeHtml(condicion)}
                             </div>
                         ` : ''}
