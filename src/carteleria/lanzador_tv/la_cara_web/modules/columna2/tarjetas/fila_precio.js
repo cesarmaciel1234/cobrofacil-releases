@@ -27,15 +27,17 @@ export function htmlFilaPrecio(item, puesto = 1, depto = "") {
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="price-row__info" style="display: flex; flex-direction: column; justify-content: center; gap: 0.15rem;">
                     <div style="display: flex; align-items: center; gap: 0.5vw;">
-                        ${esDestacado ? '<span style="font-size: clamp(0.8rem, 1.2vw, 1rem);">⭐</span>' : ''}
-                        <h5 class="price-row__name" style="margin: 0;">${escapeHtml(nombreVitrina(item.nombre))}</h5>
+                        ${esDestacado ? '<span style="font-size: clamp(0.8rem, 1.2vw, 1rem);">🔥</span>' : ''}
+                        <h5 class="price-row__name" style="margin: 0;">${escapeHtml(nombreVitrina(item.nombre) || "Oferta Especial")}</h5>
                     </div>
                     <p class="price-row__meta" style="margin: 0;">${escapeHtml(meta)}</p>
                 </div>
                 <div class="price-row__prices" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 0.2rem;">
-                    ${pct ? `<span class="price-row__off" style="margin: 0;">-${pct}%</span>` : ""}
-                    ${(precioOriginal > vigente) ? `<s class="price-row__was" style="margin: 0;">${formatMoney(precioOriginal)}</s>` : ""}
-                    <strong class="price-row__now" style="margin-top: 0.1rem;"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${formatMoney(vigente).replace(/^\$\s*/, "")}</span></strong>
+                    ${pct ? `<span class="price-row__off" style="margin: 0; align-self: flex-end;">-${pct}%</span>` : ""}
+                    <div style="display: flex; flex-direction: row; align-items: center; gap: 0.5vw;">
+                        ${(precioOriginal > vigente) ? `<s class="price-row__was" style="margin: 0; color: rgba(255,255,255,0.6); font-size: 0.85em;">${formatMoney(precioOriginal)}</s>` : ""}
+                        <strong class="price-row__now" style="margin: 0;"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${formatMoney(vigente).replace(/^\$\s*/, "")}</span></strong>
+                    </div>
                 </div>
             </div>
             ${regla ? `<div class="price-row__rule" style="width: 100%; font-size: clamp(0.75em, 1.1vw, 0.9em); color: #FFD700; opacity: 0.9; margin: 0; background: rgba(255, 215, 0, 0.1); padding: 0.2vh 0.5vw; border-radius: 4px; border: 1px solid rgba(255, 215, 0, 0.2);">${escapeHtml(regla)}</div>` : ""}
