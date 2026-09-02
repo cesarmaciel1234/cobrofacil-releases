@@ -397,20 +397,19 @@
     padding-left: 0;
 }
 
+
 .asian-flash-product-tag {
-    font-size: clamp(0.6rem, 0.75cqw, 0.65rem);
-    font-weight: 900;
-    color: var(--accent);
-    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
-    padding: 0.4cqh 0.8cqw;
-    border-radius: var(--radius-soft);
-    border: 2px solid var(--accent);
-    display: inline-block;
-    margin-bottom: 0.5cqh;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-left: 0;
+    background: rgba(212, 175, 55, 0.2) !important;
+    color: #D4AF37 !important;
+    border: 1px solid #D4AF37 !important;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3) !important;
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    z-index: 10 !important;
+    margin: 0 !important;
 }
+
 
 .asian-flash-prices {
     display: flex;
@@ -1559,12 +1558,19 @@
 }
 
 /* Etiqueta NUEVO/OFERTA estilo oro */
+
 .asian-flash-product-tag {
     background: rgba(212, 175, 55, 0.2) !important;
     color: #D4AF37 !important;
     border: 1px solid #D4AF37 !important;
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.3) !important;
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    z-index: 10 !important;
+    margin: 0 !important;
 }
+
 .asian-flash-product .asian-vip-badge {
     background: #D4AF37 !important;
     color: #000 !important;
