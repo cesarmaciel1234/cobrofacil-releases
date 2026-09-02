@@ -720,17 +720,14 @@ body[data-theme="premium"] .tv-card__timer {
 
 .xsell-item__name  { color: var(--text-primary); }
 
+
 .xsell-item__price {
-
     color: var(--accent-primary);
-
-    background: rgba(var(--accent-rgb),0.10);
-
-    border: 1px solid rgba(var(--accent-rgb),0.3);
-
+    background: transparent;
+    border: none;
 }
+.xsell-item__rule  { color: var(--accent-primary); background: transparent; }
 
-.xsell-item__rule  { color: var(--accent-primary); background: rgba(var(--accent-rgb),0.08); }
 
 .flash-offer .tv-card__now, .chef-deal .tv-card__now {
 

@@ -1,235 +1,466 @@
-/* ══════════════════════════════════════════════════
-   Base Estructural Común (structural_base.css)
-   Define el layout, posicionamiento, tamaños y forma general
-   compartida por todos los temas.
-   ══════════════════════════════════════════════════ */
-
-/* ── Fondo pantalla ── */
-body {
-    min-height: 100cqh;
-}
-
-/* ── Columnas ── */
-.tv-panel {
-    position: relative;
-    overflow: hidden;
-    border: 0;
-    border-right: 1px solid;
-    border-radius: 0;
-    box-shadow: none;
-}
-.tv-panel::before { display: none; }
-
-/* ── Franja superior ── */
-.flash-strip {
-    border-bottom: 1px solid;
-    box-shadow: none;
-}
-
-/* ── Logo ── */
-.logo {
-    /* Color de fondo y sombra se definirán por el tema */
-    /* box-shadow: 0 4px 20px rgba(212,175,55,0.4); */ /* Esto es de color */
-}
-
-/* ── CARRUSEL SUPERIOR — .oferta-card ── */
-.oferta-card, .meal-card {
-    border: 1px solid;
-    border-radius: 16px;
-    /* box-shadow se definirá por el tema */
-}
-.oferta-card.is-flash, .meal-card.is-flash {
-    /* box-shadow se definirá por el tema */
-}
-
-/* Etapa / imagen del producto */
-.deal-stage {
-    border-right: 1px solid;
-}
-
-/* Badge descuento */
-.deal-stage__off, .tv-card__badge {
-    border: 1px solid;
-    /* box-shadow se definirá por el tema */
-}
-
-/* Kicker (OFERTA RELÁMPAGO) */
-.deal-kicker {
-    /* text-shadow se definirá por el tema */
-}
-.oferta-card.is-ad .deal-kicker { /* color se definirá por el tema */ }
-
-/* Nombre producto */
-.deal-stage__name, .tv-card__name, .oferta-card .tv-card__name, .meal-name {
-    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-}
-
-/* Precio actual */
-.tv-card__now, .oferta-card .tv-card__now, .oferta-card.is-deal .tv-card__now {
-    background: none;
-    -webkit-background-clip: unset;
-    background-clip: unset;
-}
-
-/* Ahorro */
-.deal-save, .tv-card__save {
-    box-shadow: none;
-}
-
-/* Timer */
-.tv-card__timer {
-    border: 1px solid;
-}
-
-/* ── CABECERAS (sale-head / rank-head) ── */
-.sale-head, .board-head, .rank-head, .sale-head.rank-head {
-    border: 1px solid !important;
-    border-radius: 16px !important;
-    margin-bottom: 1.2cqh !important;
-    overflow: hidden;
-    /* background y box-shadow se definirán por el tema */
-}
-.sale-head.rank-head::before {
-    /* background se definirá por el tema */
-}
-.board-kicker, .rank-kicker, .sale-head .board-kicker, .sale-head .rank-kicker {
-    /* color y text-shadow se definirán por el tema */
-}
-.sale-head .board-title, .sale-head .rank-title { /* color se definirá por el tema */ }
-.rank-dots .rank-dot { /* background y border-color se definirán por el tema */ }
-.rank-dots .rank-dot.is-on{ /* background y box-shadow se definirán por el tema */ }
-
-/* ── COL 1 — RANKING ── */
-.rank-card, .rank-card.is-top, .asian-rank-card {
-    border: 1px solid !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
-    margin-bottom: 1cqh !important;
-}
-.rank-card::before { /* background se definirá por el tema */ }
-.rank-card.is-top::after { /* background se definirá por el tema */ }
-.rank-card:hover { /* border-color se definirá por el tema */ }
-
-.asian-rank-card.top-1 {
-    /* background, border-color y box-shadow se definirán por el tema */
-}
-.asian-rank-card.top-2 {
-    /* background y border-color se definirán por el tema */
-}
-.asian-rank-card.top-3 {
-    /* background y border-color se definirán por el tema */
-}
-
-.rank-num {
-    background: none;
-    -webkit-background-clip: unset;
-    background-clip: unset;
-    /* color y -webkit-text-fill-color se definirán por el tema */
-}
-.rank-tag {
-    border: 1px solid;
-    box-shadow: none;
-    /* background y color se definirán por el tema */
-}
-.asian-rank-badge {
-    /* background y color se definirán por el tema */
-}
-.asian-rank-card.top-1 .asian-rank-badge {
-    /* background y color se definirán por el tema */
-}
-.asian-rank-name  { /* color se definirá por el tema */ }
-.asian-rank-tag   { /* color se definirá por el tema */ }
-.asian-rank-tag-social { /* color se definirá por el tema */ }
-.asian-rank-progress-bar { /* background se definirá por el tema */ }
-.rank-score {
-    /* background y color se definirán por el tema */
-}
-.rank-name { /* color se definirá por el tema */ }
-.rank-progress { /* background se definirá por el tema */ }
-
-/* ── COL 2 — PRECIOS ── */
-.price-dept {
-    border-left: 3px solid !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    /* background, color y text-shadow se definirán por el tema */
-}
-.price-row, .price-row.is-offer {
-    border: 1px solid !important;
-    border-radius: 10px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
-    margin-bottom: 0.5cqh !important;
-    /* background se definirá por el tema */
-}
-.price-row__name  { /* color se definirá por el tema */ }
-.price-row__meta, .price-row__off { /* color se definirá por el tema */ }
-.price-row__rule  { /* color se definirá por el tema */ }
-.price-row__was   { /* color se definirá por el tema */ }
-.price-row__now {
-    font-weight: 900 !important;
-    /* background, color y box-shadow se definirán por el tema */
-}
-.price-ad {
-    border: 1px solid !important;
-    /* background y box-shadow se definirán por el tema */
-}
-.price-ad__badge { /* background y color se definirán por el tema */ }
-.price-ad__name  { /* color se definirá por el tema */ }
-.price-ad__price { /* color se definirá por el tema */ }
-
-/* ── COL 3 — OFERTA RELÁMPAGO ── */
-.flash-offer__deal, .chef-deal {
-    border: 1px solid !important;
-    /* background y box-shadow se definirán por el tema */
-}
-.flash-offer__stage {
-    /* background se definirá por el tema */
-}
-.xsell-card {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-.xsell-ask {
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    filter: none !important;
-    /* color y text-shadow se definirán por el tema */
-}
-.xsell-item {
-    border: 1px solid !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-    margin-bottom: 1.2cqh !important;
-    /* background y border-color se definirán por el tema */
-}
-.xsell-item__name  { /* color se definirá por el tema */ }
-.xsell-item__price {
-    border: 1px solid !important;
-    /* color y background se definirán por el tema */
-}
-.xsell-item__rule  { /* color y background se definirán por el tema */ }
-.flash-offer .tv-card__now, .chef-deal .tv-card__now {
-    -webkit-text-fill-color: unset !important;
-    /* color y text-shadow se definirán por el tema */
-}
-.flash-offer .deal-save, .flash-offer .deal-kicker { /* color se definirá por el tema */ }
-.flash-offer__stage .deal-stage__off {
-    border: 1px solid !important;
-    /* background y color se definirán por el tema */
-}
-
-/* ── ZÓCALO ── */
-.footer {
-    animation: none;
-    /* background se definirá por el tema */
-}
-.zocalo-pill {
-    border: 1px solid;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-    /* background y border-color se definirán por el tema */
-}
-.marquee-text {
-    font-weight: 800;
-    /* color y text-shadow se definirán por el tema */
-}
+/* ══════════════════════════════════════════════════
+
+   Base Estructural Común (structural_base.css)
+
+   Define el layout, posicionamiento, tamaños y forma general
+
+   compartida por todos los temas.
+
+   ══════════════════════════════════════════════════ */
+
+
+
+/* ── Fondo pantalla ── */
+
+body {
+
+    min-height: 100cqh;
+
+}
+
+
+
+/* ── Columnas ── */
+
+.tv-panel {
+
+    position: relative;
+
+    overflow: hidden;
+
+    border: 0;
+
+    border-right: 1px solid;
+
+    border-radius: 0;
+
+    box-shadow: none;
+
+}
+
+.tv-panel::before { display: none; }
+
+
+
+/* ── Franja superior ── */
+
+.flash-strip {
+
+    border-bottom: 1px solid;
+
+    box-shadow: none;
+
+}
+
+
+
+/* ── Logo ── */
+
+.logo {
+
+    /* Color de fondo y sombra se definirán por el tema */
+
+    /* box-shadow: 0 4px 20px rgba(212,175,55,0.4); */ /* Esto es de color */
+
+}
+
+
+
+/* ── CARRUSEL SUPERIOR — .oferta-card ── */
+
+.oferta-card, .meal-card {
+
+    border: 1px solid;
+
+    border-radius: 16px;
+
+    /* box-shadow se definirá por el tema */
+
+}
+
+.oferta-card.is-flash, .meal-card.is-flash {
+
+    /* box-shadow se definirá por el tema */
+
+}
+
+
+
+/* Etapa / imagen del producto */
+
+.deal-stage {
+
+    border-right: 1px solid;
+
+}
+
+
+
+/* Badge descuento */
+
+.deal-stage__off, .tv-card__badge {
+
+    border: 1px solid;
+
+    /* box-shadow se definirá por el tema */
+
+}
+
+
+
+/* Kicker (OFERTA RELÁMPAGO) */
+
+.deal-kicker {
+
+    /* text-shadow se definirá por el tema */
+
+}
+
+.oferta-card.is-ad .deal-kicker { /* color se definirá por el tema */ }
+
+
+
+/* Nombre producto */
+
+.deal-stage__name, .tv-card__name, .oferta-card .tv-card__name, .meal-name {
+
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+
+}
+
+
+
+/* Precio actual */
+
+.tv-card__now, .oferta-card .tv-card__now, .oferta-card.is-deal .tv-card__now {
+
+    background: none;
+
+    -webkit-background-clip: unset;
+
+    background-clip: unset;
+
+}
+
+
+
+/* Ahorro */
+
+.deal-save, .tv-card__save {
+
+    box-shadow: none;
+
+}
+
+
+
+/* Timer */
+
+.tv-card__timer {
+
+    border: 1px solid;
+
+}
+
+
+
+/* ── CABECERAS (sale-head / rank-head) ── */
+
+.sale-head, .board-head, .rank-head, .sale-head.rank-head {
+
+    border: 1px solid !important;
+
+    border-radius: 16px !important;
+
+    margin-bottom: 1.2cqh !important;
+
+    overflow: hidden;
+
+    /* background y box-shadow se definirán por el tema */
+
+}
+
+.sale-head.rank-head::before {
+
+    /* background se definirá por el tema */
+
+}
+
+.board-kicker, .rank-kicker, .sale-head .board-kicker, .sale-head .rank-kicker {
+
+    /* color y text-shadow se definirán por el tema */
+
+}
+
+.sale-head .board-title, .sale-head .rank-title { /* color se definirá por el tema */ }
+
+.rank-dots .rank-dot { /* background y border-color se definirán por el tema */ }
+
+.rank-dots .rank-dot.is-on{ /* background y box-shadow se definirán por el tema */ }
+
+
+
+/* ── COL 1 — RANKING ── */
+
+.rank-card, .rank-card.is-top, .asian-rank-card {
+
+    border: 1px solid !important;
+
+    border-radius: 16px !important;
+
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
+
+    margin-bottom: 1cqh !important;
+
+}
+
+.rank-card::before { /* background se definirá por el tema */ }
+
+.rank-card.is-top::after { /* background se definirá por el tema */ }
+
+.rank-card:hover { /* border-color se definirá por el tema */ }
+
+
+
+.asian-rank-card.top-1 {
+
+    /* background, border-color y box-shadow se definirán por el tema */
+
+}
+
+.asian-rank-card.top-2 {
+
+    /* background y border-color se definirán por el tema */
+
+}
+
+.asian-rank-card.top-3 {
+
+    /* background y border-color se definirán por el tema */
+
+}
+
+
+
+.rank-num {
+
+    background: none;
+
+    -webkit-background-clip: unset;
+
+    background-clip: unset;
+
+    /* color y -webkit-text-fill-color se definirán por el tema */
+
+}
+
+.rank-tag {
+
+    border: 1px solid;
+
+    box-shadow: none;
+
+    /* background y color se definirán por el tema */
+
+}
+
+.asian-rank-badge {
+
+    /* background y color se definirán por el tema */
+
+}
+
+.asian-rank-card.top-1 .asian-rank-badge {
+
+    /* background y color se definirán por el tema */
+
+}
+
+.asian-rank-name  { /* color se definirá por el tema */ }
+
+.asian-rank-tag   { /* color se definirá por el tema */ }
+
+.asian-rank-tag-social { /* color se definirá por el tema */ }
+
+.asian-rank-progress-bar { /* background se definirá por el tema */ }
+
+.rank-score {
+
+    /* background y color se definirán por el tema */
+
+}
+
+.rank-name { /* color se definirá por el tema */ }
+
+.rank-progress { /* background se definirá por el tema */ }
+
+
+
+/* ── COL 2 — PRECIOS ── */
+
+.price-dept {
+
+    border-left: 3px solid !important;
+
+    border-radius: 8px !important;
+
+    box-shadow: none !important;
+
+    /* background, color y text-shadow se definirán por el tema */
+
+}
+
+.price-row, .price-row.is-offer {
+
+    border: 1px solid !important;
+
+    border-radius: 10px !important;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+
+    margin-bottom: 0.5cqh !important;
+
+    /* background se definirá por el tema */
+
+}
+
+.price-row__name  { /* color se definirá por el tema */ }
+
+.price-row__meta, .price-row__off { /* color se definirá por el tema */ }
+
+.price-row__rule  { /* color se definirá por el tema */ }
+
+.price-row__was   { /* color se definirá por el tema */ }
+
+.price-row__now {
+
+    font-weight: 900 !important;
+
+    /* background, color y box-shadow se definirán por el tema */
+
+}
+
+.price-ad {
+
+    border: 1px solid !important;
+
+    /* background y box-shadow se definirán por el tema */
+
+}
+
+.price-ad__badge { /* background y color se definirán por el tema */ }
+
+.price-ad__name  { /* color se definirá por el tema */ }
+
+.price-ad__price { /* color se definirá por el tema */ }
+
+
+
+/* ── COL 3 — OFERTA RELÁMPAGO ── */
+
+.flash-offer__deal, .chef-deal {
+
+    border: 1px solid !important;
+
+    /* background y box-shadow se definirán por el tema */
+
+}
+
+.flash-offer__stage {
+
+    /* background se definirá por el tema */
+
+}
+
+.xsell-card {
+
+    background: transparent !important;
+
+    border: none !important;
+
+    box-shadow: none !important;
+
+}
+
+.xsell-ask {
+
+    background: none !important;
+
+    -webkit-background-clip: unset !important;
+
+    filter: none !important;
+
+    /* color y text-shadow se definirán por el tema */
+
+}
+
+.xsell-item {
+
+    border: 1px solid !important;
+
+    border-radius: 12px !important;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+
+    margin-bottom: 1.2cqh !important;
+
+    /* background y border-color se definirán por el tema */
+
+}
+
+.xsell-item__name  { /* color se definirá por el tema */ }
+
+.xsell-item__price {
+    /* color y background se definirán por el tema */
+}
+
+.xsell-item__rule  { /* color y background se definirán por el tema */ }
+
+.flash-offer .tv-card__now, .chef-deal .tv-card__now {
+
+    -webkit-text-fill-color: unset !important;
+
+    /* color y text-shadow se definirán por el tema */
+
+}
+
+.flash-offer .deal-save, .flash-offer .deal-kicker { /* color se definirá por el tema */ }
+
+.flash-offer__stage .deal-stage__off {
+
+    border: 1px solid !important;
+
+    /* background y color se definirán por el tema */
+
+}
+
+
+
+/* ── ZÓCALO ── */
+
+.footer {
+
+    animation: none;
+
+    /* background se definirá por el tema */
+
+}
+
+.zocalo-pill {
+
+    border: 1px solid;
+
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+
+    /* background y border-color se definirán por el tema */
+
+}
+
+.marquee-text {
+
+    font-weight: 800;
+
+    /* color y text-shadow se definirán por el tema */
+
+}
+
