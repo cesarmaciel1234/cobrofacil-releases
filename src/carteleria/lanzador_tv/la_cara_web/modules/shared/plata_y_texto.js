@@ -56,10 +56,15 @@ export function esPorKg(item) {
     if (Number(item?.es_pesable || 0) === 1) return true;
     
     // Inferir por departamento/rubro si la DB no está completa
-    const rubro = String(item?.departamento || item?.categoria || "").trim().toLowerCase();
-    if (rubro.includes("carne") || rubro.includes("pollo") || rubro.includes("cerdo") || rubro.includes("pescado") || rubro.includes("fiambre") || rubro.includes("queso") || rubro.includes("fruta") || rubro.includes("verdura")) {
+    const rubro = String(item?.departamento || item?.categoria || item?.rubro || "").trim().toLowerCase();
+    if (rubro.includes("carne") || rubro.includes("pollo") || rubro.includes("cerdo") || rubro.includes("pescado") || rubro.includes("fiambre") || rubro.includes("queso") || rubro.includes("fruta") || rubro.includes("verdura") || rubro.includes("achura") || rubro.includes("granja")) {
         return true;
     }
+    
+    // Inferir por nombre del producto como último recurso
+    const nombre = String(item?.nombre || "").toLowerCase();
+    const pesables = ["asado", "vacio", "vacío", "costilla", "matambre", "falda", "tapa", "nalga", "cuadril", "peceto", "bola de lomo", "bife", "entraña", "chorizo", "morcilla", "chinchulin", "bondiola", "pechito", "pollo", "pata", "muslo", "alita", "suprema", "milanesa", "picada", "roast beef", "aguja", "paleta", "osobuco", "molida", "chuleta"];
+    if (pesables.some(c => nombre.includes(c))) return true;
     
     return false;
 }
