@@ -1,4 +1,4 @@
-﻿/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
+/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
 
 import {
     cantMinimaOferta,
@@ -167,22 +167,24 @@ function iniciarCarrusel(track) {
     let currentIndex = 0;
     
     // Para que la primera tarjeta arranque en el centro (opcional, pero ayuda al efecto)
-    // Inicialmente track estÃ¡ a la izquierda.
+    // Inicialmente track está a la izquierda.
     track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
     
     function moverSiguiente() {
         if (!track.children.length) return;
         
+        const container = document.querySelector(".app-container") || document.body;
+        const cw = container.offsetWidth;
         const card = track.children[0];
-        const gap = window.innerWidth * 0.014; // 1.4vw
+        const gap = cw * 0.014; // 1.4vw o 1.4cqw
         const cardWidth = card.offsetWidth + gap;
         
         // Calculamos offset para que la tarjeta actual quede en el centro de la pantalla
-        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        const centerOffset = (cw / 2) - (card.offsetWidth / 2);
         
         currentIndex++;
         
-        // Si llegamos a la mitad (porque el html estÃ¡ duplicado), reiniciamos sin transiciÃ³n
+        // Si llegamos a la mitad (porque el html está duplicado), reiniciamos sin transición
         const totalOriginal = track.children.length / 2;
         if (currentIndex > totalOriginal) {
             track.style.transition = "none";
@@ -207,13 +209,16 @@ function iniciarCarrusel(track) {
     // Posicionamos la primera en el centro inmediatamente
     setTimeout(() => {
         if (!track.children.length) return;
+        const container = document.querySelector(".app-container") || document.body;
+        const cw = container.offsetWidth;
         const card = track.children[0];
-        const centerOffset = (window.innerWidth / 2) - (card.offsetWidth / 2);
+        const centerOffset = (cw / 2) - (card.offsetWidth / 2);
         track.style.transform = `translateX(${centerOffset}px)`;
     }, 100);
 
     // Cada 4 segundos, avanza una tarjeta y se detiene (posa)
     setInterval(moverSiguiente, 4000);
-}
 
+
+}
 
