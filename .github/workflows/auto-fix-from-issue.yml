@@ -30,6 +30,10 @@ permissions:
   pull-requests: write
   issues: write
 
+concurrency:
+  group: autofix-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   autofix:
     # Ignorar checks de CI / token-check (provocaban bucle infinito de PRs).

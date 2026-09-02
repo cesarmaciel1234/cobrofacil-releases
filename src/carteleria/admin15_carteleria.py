@@ -29,89 +29,319 @@ class CarteleriaConfigPanel(QWidget):
     def _build(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
+        # Header moderno con fondo claro
         header = QFrame()
-        header.setStyleSheet("background: #FFF1F2; border-bottom: 1px solid #FECDD3;")
+        header.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                    stop:0 #F8FAFC, stop:0.5 #FFFFFF, stop:1 #F8FAFC);
+                border-bottom: 2px solid #E2E8F0;
+                border-radius: 0px;
+            }
+        """)
         h = QHBoxLayout(header)
-        h.setContentsMargins(24, 16, 24, 16)
+        h.setContentsMargins(24, 20, 24, 20)
 
-        btn_back = QPushButton("← Dashboard")
+        btn_back = QPushButton("← Volver")
         btn_back.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_back.clicked.connect(self.request_back.emit)
+        btn_back.setStyleSheet("""
+            QPushButton {
+                background: #FFFFFF;
+                color: #1E293B;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: #F1F5F9;
+                border-color: #94A3B8;
+            }
+        """)
         h.addWidget(btn_back)
 
-        title = QLabel("📺 Cartelería / Ajustes Generales")
-        title.setStyleSheet("font-size: 22px; font-weight: bold; color: #881337; border: none;")
+        title = QLabel("📺 Configuración de Cartelería")
+        title.setStyleSheet("""
+            QLabel {
+                font-size: 24px; 
+                font-weight: 800; 
+                color: #1E293B; 
+                border: none;
+                letter-spacing: 0.5px;
+            }
+        """)
         h.addWidget(title)
         h.addStretch()
         root.addWidget(header)
 
+        # Contenedor principal con fondo claro moderno
+        main_container = QFrame()
+        main_container.setStyleSheet("""
+            QFrame {
+                background: #F8FAFC;
+                border: none;
+                border-radius: 0px;
+            }
+        """)
+        main_layout = QVBoxLayout(main_container)
+        main_layout.setContentsMargins(32, 32, 32, 32)
+        main_layout.setSpacing(24)
+
         body_local = QVBoxLayout()
-        body_local.setContentsMargins(32, 24, 32, 24)
-        body_local.setSpacing(16)
+        body_local.setSpacing(20)
 
-        # 1. Panel de Datos del Negocio (Motor Global Compartido)
+        # 1. Panel de Datos del Negocio con diseño claro
+        negocio_frame = QFrame()
+        negocio_frame.setStyleSheet("""
+            QFrame {
+                background: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+        """)
+        negocio_layout = QVBoxLayout(negocio_frame)
+        negocio_layout.setContentsMargins(20, 20, 20, 20)
+        
+        lbl_negocio = QLabel("🏢 Datos del Negocio")
+        lbl_negocio.setStyleSheet("""
+            QLabel {
+                font-size: 20px; 
+                font-weight: 800; 
+                color: #3B82F6; 
+                border: none;
+                margin-bottom: 10px;
+            }
+        """)
+        negocio_layout.addWidget(lbl_negocio)
+        
         self.panel_negocio = PanelDatosNegocio(self, show_save_button=False)
-        body_local.addWidget(self.panel_negocio)
+        negocio_layout.addWidget(self.panel_negocio)
+        body_local.addWidget(negocio_frame)
 
-        # 2. Configuración específica de Cartelería
+        # 2. Configuración específica de Cartelería con diseño claro
         carteleria_frame = QFrame()
-        carteleria_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #E2E8F0;")
+        carteleria_frame.setStyleSheet("""
+            QFrame {
+                background: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+        """)
         c_layout = QVBoxLayout(carteleria_frame)
-        c_layout.setContentsMargins(25, 25, 25, 25)
+        c_layout.setContentsMargins(20, 20, 20, 20)
+        c_layout.setSpacing(16)
 
-        lbl_c_title = QLabel("📢 Mensajes y Estilo")
-        lbl_c_title.setStyleSheet("font-size: 18px; font-weight: bold; border: none;")
+        lbl_c_title = QLabel("🎨 Mensajes y Estilo")
+        lbl_c_title.setStyleSheet("""
+            QLabel {
+                font-size: 20px; 
+                font-weight: 800; 
+                color: #3B82F6; 
+                border: none;
+                margin-bottom: 12px;
+            }
+        """)
         c_layout.addWidget(lbl_c_title)
         
-        c_layout.addSpacing(15)
-        c_layout.addWidget(QLabel("Estilo Visual de la Cartelería:"))
+        c_layout.addSpacing(12)
+        
+        lbl_theme = QLabel("Estilo Visual de la Cartelería:")
+        lbl_theme.setStyleSheet("""
+            QLabel {
+                font-size: 14px; 
+                font-weight: 600; 
+                color: #64748B; 
+                border: none;
+                margin-bottom: 6px;
+            }
+        """)
+        c_layout.addWidget(lbl_theme)
+        
         self.cmb_theme = QComboBox()
         self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style - Premium)", "apple")
         self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo - Alto Impacto)", "temu")
         self.cmb_theme.addItem("🛒 Tema Black Friday (Ofertas Explosivas)", "blackfriday")
         self.cmb_theme.addItem("🥇 Tema Premium (Negro & Oro - Lujo)", "premium")
-        self.cmb_theme.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 14px; background: white;")
+        self.cmb_theme.setStyleSheet("""
+            QComboBox {
+                padding: 12px 16px;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                font-size: 15px;
+                background: #FFFFFF;
+                color: #1E293B;
+                font-weight: 600;
+            }
+            QComboBox:hover {
+                border-color: #94A3B8;
+                background: #F8FAFC;
+            }
+            QComboBox::drop-down {
+                border: none;
+                background: #3B82F6;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid #1E293B;
+                border-top: 5px solid transparent;
+                border-bottom: 5px solid transparent;
+            }
+        """)
         c_layout.addWidget(self.cmb_theme)
 
-        c_layout.addSpacing(10)
-        c_layout.addWidget(QLabel("Potencia de la PC de la TV (mismo look premium):"))
+        c_layout.addSpacing(16)
+        
+        lbl_perf = QLabel("Potencia de la PC de la TV:")
+        lbl_perf.setStyleSheet("""
+            QLabel {
+                font-size: 14px; 
+                font-weight: 600; 
+                color: #64748B; 
+                border: none;
+                margin-bottom: 6px;
+            }
+        """)
+        c_layout.addWidget(lbl_perf)
+        
         self.cmb_perf = QComboBox()
-        self.cmb_perf.addItem("Automático (mide RAM y núcleos)", "auto")
-        self.cmb_perf.addItem("PC de bajo recurso (fluida, sin blur)", "eco")
-        self.cmb_perf.addItem("Alta gama (blur, brillos y GPU)", "max")
-        self.cmb_perf.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 14px; background: white;")
+        self.cmb_perf.addItem("⚡ Automático (mide RAM y núcleos)", "auto")
+        self.cmb_perf.addItem("💻 PC de bajo recurso (fluida, sin blur)", "eco")
+        self.cmb_perf.addItem("🚀 Alta gama (blur, brillos y GPU)", "max")
+        self.cmb_perf.setStyleSheet("""
+            QComboBox {
+                padding: 12px 16px;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                font-size: 15px;
+                background: #FFFFFF;
+                color: #1E293B;
+                font-weight: 600;
+            }
+            QComboBox:hover {
+                border-color: #94A3B8;
+                background: #F8FAFC;
+            }
+            QComboBox::drop-down {
+                border: none;
+                background: #3B82F6;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid #1E293B;
+                border-top: 5px solid transparent;
+                border-bottom: 5px solid transparent;
+            }
+        """)
         c_layout.addWidget(self.cmb_perf)
 
-        c_layout.addSpacing(10)
+        c_layout.addSpacing(16)
 
-        c_layout.addWidget(QLabel("Mensaje principal (Zócalo / Banner animado):"))
+        lbl_mensaje = QLabel("Mensaje principal (Zócalo / Banner animado):")
+        lbl_mensaje.setStyleSheet("""
+            QLabel {
+                font-size: 14px; 
+                font-weight: 600; 
+                color: #64748B; 
+                border: none;
+                margin-bottom: 6px;
+            }
+        """)
+        c_layout.addWidget(lbl_mensaje)
+        
         self.txt_mensaje = QTextEdit()
-        self.txt_mensaje.setMinimumHeight(80)
-        self.txt_mensaje.setStyleSheet("padding: 8px; border: 1px solid #94A3B8; border-radius: 4px; font-size: 13px; background: white;")
+        self.txt_mensaje.setMinimumHeight(100)
+        self.txt_mensaje.setStyleSheet("""
+            QTextEdit {
+                padding: 12px 16px;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                font-size: 14px;
+                background: #FFFFFF;
+                color: #1E293B;
+                font-weight: 500;
+            }
+            QTextEdit:focus {
+                border-color: #3B82F6;
+                background: #F8FAFC;
+            }
+        """)
         c_layout.addWidget(self.txt_mensaje)
 
         body_local.addWidget(carteleria_frame)
 
-        # Botón Guardar Todo Local / Remoto
-        self.btn_save = QPushButton("💾 Guardar Cambios Locales")
+        main_layout.addLayout(body_local)
+
+        # Botón Guardar con diseño claro moderno
+        btn_container = QFrame()
+        btn_container.setStyleSheet("background: transparent; border: none;")
+        btn_layout = QHBoxLayout(btn_container)
+        btn_layout.addStretch()
+        
+        self.btn_save = QPushButton("💾 Guardar Cambios")
         self.btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self.btn_save.setStyleSheet(
-            "QPushButton { background: #E11D48; color: white; font-weight: bold; "
-            "padding: 14px 24px; border-radius: 8px; border: none; font-size: 15px; }"
-        )
+        self.btn_save.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #3B82F6, stop:1 #2563EB);
+                color: white;
+                font-weight: 800;
+                padding: 16px 32px;
+                border-radius: 12px;
+                border: none;
+                font-size: 16px;
+                letter-spacing: 0.5px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #2563EB, stop:1 #1D4ED8);
+            }
+            QPushButton:pressed {
+                background: #1D4ED8;
+            }
+        """)
         self.btn_save.clicked.connect(self._save_all)
-        body_local.addWidget(self.btn_save)
-        body_local.addStretch()
+        btn_layout.addWidget(self.btn_save)
+        btn_layout.addStretch()
+        
+        main_layout.addWidget(btn_container)
+        main_layout.addStretch()
 
         scroll_local = QScrollArea()
-        wrapper = QWidget()
-        wrapper.setLayout(body_local)
+        scroll_local.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background: transparent;
+            }
+            QScrollBar:vertical {
+                background: #E2E8F0;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background: #94A3B8;
+                border-radius: 6px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #64748B;
+            }
+        """)
         
-        scroll_local = QScrollArea()
+        wrapper = QWidget()
+        wrapper.setLayout(main_layout)
+        
         scroll_local.setWidgetResizable(True)
         scroll_local.setWidget(wrapper)
-        scroll_local.setStyleSheet("QScrollArea { border: none; }")
         
         root.addWidget(scroll_local)
 

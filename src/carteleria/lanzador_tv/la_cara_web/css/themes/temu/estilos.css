@@ -1,819 +1,819 @@
-/* ══════════════════════════════════════════════════
-   TEMU — Nivel Inalcanzable — estilos.css
-   Mismo DOM/estructura que premium/apple/blackfriday,
-   solo cambia el vestuario.
-   ══════════════════════════════════════════════════ */
-@import url('../../structural_base.css');
-
-body[data-theme="temu"],
-body {
-    background: var(--screen-bg);
-}
-
-.logo {
-    background: linear-gradient(135deg, var(--accent), var(--accent-alt));
-    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.28);
-}
-
-.flash-strip {
-    background: var(--strip-bg);
-    border: 0;
-    box-shadow: var(--shadow-soft);
-}
-
-.flash-strip__track {
-    color: var(--strip-text);
-}
-
-.flash-count {
-    background: var(--strip-count-bg);
-    color: var(--strip-count-text);
-    box-shadow: none;
-}
-
-.premium-column {
-    background: var(--panel-bg);
-    border: 0;
-    box-shadow: none;
-}
-
-.premium-column::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 4px;
-    border-radius: 22px; /* asumo 22px porque no está en colores.css */
-    background: linear-gradient(90deg, var(--accent), var(--accent-alt), var(--accent));
-}
-
-.sale-head {
-    background: linear-gradient(90deg, var(--text-main), #2A2A2A); /* #2A2A2A no está en colores.css, lo mantengo */
-    border: 0;
-    border-radius: 14px;
-    padding: 0.7vh 0.9vw;
-}
-
-.sale-head.board-head {
-    justify-content: center;
-}
-
-.sale-head--solo {
-    justify-content: center;
-    align-items: center;
-}
-
-.sale-head--solo .board-kicker {
-    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
-    letter-spacing: 0.16em;
-    color: var(--text-on-dark);
-}
-
-.sale-head.rank-head {
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
-    border-radius: 16px;
-    padding: 1vh 1.2vw;
-    box-shadow: 0 0 30px rgba(139, 0, 0, 0.4), 0 0 60px rgba(204, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
-    margin-bottom: 1.2vh;
-    position: relative;
-    overflow: hidden;
-}
-
-.sale-head.rank-head::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
-    animation: premiumGoldShine 4s infinite linear;
-}
-
-@keyframes premiumGoldShine {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.sale-head .board-kicker,
-.sale-head .rank-kicker {
-    color: var(--text-on-dark);
-    letter-spacing: 0.14em;
-    font-weight: 900;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.3);
-    position: relative;
-    z-index: 2;
-}
-
-.sale-head .board-kicker::before,
-.sale-head .rank-kicker::before {
-    content: '👑';
-    margin-right: 0.5vw;
-    animation: premiumCrownPulse 2s infinite;
-}
-
-@keyframes premiumCrownPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-}
-
-.sale-head .board-title,
-.sale-head .rank-title {
-    color: var(--text-on-dark);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-}
-
-.rank-dots .rank-dot {
-    background: var(--rank-dot-bg);
-    border: 1px solid rgba(var(--accent-rgb), 0.5);
-    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.2);
-    transition: all 0.3s ease;
-}
-
-.rank-dots .rank-dot.is-on {
-    background: var(--rank-dot-active);
-    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6), 0 0 20px rgba(var(--accent-rgb), 0.4);
-    transform: scale(1.2);
-}
-
-/* Tarjeta híbrida: chrome de app + energía Temu en el precio - Premium Luxury */
-.tv-card {
-    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
-    border: 2px solid rgba(139, 0, 0, 0.12);
-    box-shadow: 0 12px 32px rgba(28, 16, 0, 0.08), 0 4px 16px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
-    border-radius: 16px;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
-}
-
-.tv-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-}
-
-.tv-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 48px rgba(28, 16, 0, 0.12), 0 8px 24px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-    border-color: rgba(139, 0, 0, 0.25);
-}
-
-.oferta-card .tv-card__name {
-    font-size: clamp(0.95rem, 1.45vw, 1.25rem);
-    margin-bottom: 0;
-    font-weight: 800;
-    color: var(--text-main);
-    letter-spacing: -0.02em;
-}
-
-.oferta-card .tv-card__now {
-    font-size: clamp(1.35rem, 2.2vw, 1.95rem);
-    color: #8B0000;
-    font-weight: 900;
-    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
-    background: linear-gradient(135deg, #8B0000 0%, #CC0000 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.oferta-card .tv-card__now-row {
-    background: transparent;
-    box-shadow: none;
-}
-
-.tv-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 4px;
-    background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00);
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-}
-
-.oferta-card.tv-card::before {
-    display: none;
-}
-
-.oferta-card,
-.meal-card {
-    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
-    border: 2px solid rgba(139, 0, 0, 0.12);
-    overflow: hidden;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.5);
-}
-
-.oferta-card.is-flash,
-.meal-card.is-flash {
-    background: linear-gradient(180deg, #FFF8F0 0%, var(--bg-secondary) 50%, #FFFBF0 100%);
-    border-color: rgba(139, 0, 0, 0.18);
-    box-shadow: 0 12px 28px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-}
-
-.tv-card__badge {
-    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
-    color: var(--text-on-dark);
-    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-    font-weight: 800;
-    letter-spacing: 0.05em;
-}
-
-.tv-card__off {
-    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
-    color: #B45309;
-    border: 1px solid rgba(180, 83, 9, 0.3);
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
-}
-
-.tv-card__off.is-inline {
-    display: inline-block;
-    margin-bottom: 4px;
-    padding: 2px 7px;
-    font-size: clamp(10px, 0.85vw, 12px);
-}
-
-.tv-card__name,
-.oferta-nombre,
-.meal-name {
-    color: var(--text-main);
-    font-weight: 800;
-}
-
-.tv-card__chip {
-    background: #FFF6E8;
-    color: var(--text-secondary);
-}
-
-.tv-card__was,
-.oferta-antes {
-    color: #9CA3AF;
-}
-
-.tv-card__now-row {
-    background: transparent;
-    box-shadow: none;
-}
-
-.tv-card__save {
-    background: #FFE566;
-    box-shadow: inset 0 0 0 1px rgba(255, 106, 0, 0.12);
-}
-
-.tv-card__now {
-    color: var(--text-main);
-}
-
-.tv-card__unit,
-.tv-card__save {
-    color: var(--text-secondary);
-}
-
-.rank-card,
-.rank-card.is-top {
-    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFF8F0 50%, #FFFBF0 100%);
-    border: 2px solid rgba(139, 0, 0, 0.15);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.5);
-    border-radius: 16px;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
-}
-
-.rank-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
-    border-radius: 16px 16px 0 0;
-}
-
-.rank-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 8px 20px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3);
-    border-color: rgba(139, 0, 0, 0.3);
-}
-
-.rank-num {
-    color: #8B0000;
-    font-weight: 900;
-    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.rank-tag {
-    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
-    color: #B45309;
-    border: 1px solid rgba(180, 83, 9, 0.3);
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
-}
-
-.rank-card.is-ad .rank-tag {
-    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
-    color: #B45309;
-    border: 1px solid rgba(180, 83, 9, 0.3);
-}
-
-/* Premium glow effect para tarjetas top */
-.rank-card.is-top::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
-    pointer-events: none;
-    animation: premiumTopGlow 3s infinite ease-in-out;
-}
-
-@keyframes premiumTopGlow {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-}
-
-.oferta-card.is-ad {
-    background: var(--bg-secondary);
-}
-
-.oferta-card.is-ad .deal-kicker {
-    color: #9CA3AF;
-}
-
-.oferta-card.is-deal .tv-card__now {
-    color: #FF6A00;
-}
-
-.meal-card {
-    background: var(--bg-secondary);
-    border: 0;
-    border-radius: 16px;
-    position: relative;
-    box-shadow: 0 8px 22px rgba(28, 16, 0, 0.08);
-    padding: 0.7vw 0.75vw 0.65vw;
-}
-
-.meal-card .tv-card__name {
-    font-size: clamp(0.88rem, 1.2vw, 1.05rem);
-    margin-bottom: 4px;
-}
-
-.meal-card .tv-card__now {
-    font-size: clamp(1.15rem, 1.7vw, 1.4rem);
-}
-
-.meal-card .tv-card__now-row {
-    background: transparent;
-    box-shadow: none;
-}
-
-.meal-off {
-    display: none;
-}
-
-.meal-kicker {
-    color: #FF6A00;
-}
-
-.price-tile {
-    background: #FAFAFA;
-    border: 0;
-    box-shadow: none;
-    border-radius: 14px;
-}
-
-.price-tile__now {
-    color: #FF6A00;
-}
-
-.price-row,
-.price-row.is-offer {
-    background: #FFF8E8;
-    border: 0;
-    border-radius: 14px;
-}
-
-.price-dept {
-    color: var(--text-on-dark);
-    background: var(--text-main);
-    box-shadow: inset 0 -3px 0 #FF6A00;
-}
-
-.price-ad {
-    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
-}
-
-.price-ad__name {
-    color: #FFFFFF;
-}
-
-.price-row__meta,
-.price-row__off {
-    color: var(--text-secondary);
-}
-
-.price-row__was {
-    color: #9CA3AF;
-}
-
-.price-row__name {
-    color: var(--card-text, var(--text-main));
-}
-
-.price-row__now {
-    background: #FFE566;
-    color: var(--text-main);
-}
-
-.footer {
-    background: linear-gradient(90deg, #FFD700 0%, #FF6A00 50%, #E11D48 100%);
-    animation: footerGlow 8s ease infinite;
-    background-size: 200% 200%;
-}
-
-@keyframes footerGlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.zocalo-pill {
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
-}
-
-.marquee-text {
-    color: var(--text-main);
-    font-weight: 800;
-}
-
-.chef-deal {
-    box-shadow: 0 10px 28px rgba(28, 16, 0, 0.10);
-}
-
-.clima-badge {
-    background: #FF6A00;
-    border: 0;
-    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
-}
-
-/* =========================================================
-   ASIAN STYLE OVERRIDES - Todo el sistema vibrante (Temu/Shein)
-   ========================================================= */
-
-/* --- Columna 1 (Ranking) --- */
-.rank-card {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF5F7 100%);
-    border: 2px solid rgba(255, 71, 87, 0.2);
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    margin-bottom: 1vh;
-}
-.rank-score {
-    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
-    color: var(--text-on-dark);
-    border-radius: 999px;
-    padding: 2px 10px;
-    font-weight: 900;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-.rank-name {
-    font-weight: 800;
-    color: #2D2D2D;
-}
-
-/* --- Columna 2 (Grilla de Precios) --- */
-.price-row {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF8DC 100%);
-    border: 1px solid rgba(255, 140, 0, 0.2);
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06);
-    margin-bottom: 0.6vh;
-}
-.price-name {
-    font-weight: 800;
-    color: var(--text-main);
-}
-.price-val {
-    color: #FF4757;
-    background: #FFF5F7;
-    padding: 3px 10px;
-    border-radius: 8px;
-    border: 2px solid rgba(255, 71, 87, 0.15);
-    font-weight: 900;
-}
-.price-dept {
-    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
-    color: var(--text-on-dark);
-    box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2);
-    border-radius: 999px;
-    text-align: center;
-    padding: 0.6vh 1vw;
-    margin-bottom: 1vh;
-}
-.price-ad {
-    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
-    border: 2px solid rgba(255, 255, 255, 0.22);
-    border-radius: 16px;
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35);
-    margin-bottom: 0.8vh;
-}
-.price-ad__badge {
-    background: linear-gradient(135deg, #FF4757 0%, #FF6B81 100%);
-    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
-}
-.price-ad .price-val {
-    background: #FF4757;
-    color: var(--text-on-dark);
-}
-
-/* --- Cabeceras Globales --- */
-.board-head, .rank-head, .sale-head {
-    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
-    border-radius: 999px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-    margin-bottom: 1.5vh;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.board-kicker, .rank-kicker {
-    color: #FFE566;
-    text-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
-    font-weight: 900;
-}
-
-/* =========================================================
-   NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
-   ========================================================= */
-.asian-rank-card {
-    background: var(--bg-secondary);
-    border: 2px solid transparent;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.asian-rank-card.top-1 {
-    background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
-    border-color: #FFD700;
-    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-    transform: scale(1.03);
-    margin-bottom: 2vh;
-    z-index: 10;
-}
-.asian-rank-card.top-2 {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #F1F5F9 100%);
-    border-color: #CBD5E1;
-}
-.asian-rank-card.top-3 {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFEDD5 100%);
-    border-color: #FDBA74;
-}
-
-.asian-rank-badge {
-    background: #1A1A1A;
-    color: var(--text-on-dark);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.asian-rank-card.top-1 .asian-rank-badge {
-    background: linear-gradient(135deg, #FF3366, #FF9933);
-    color: var(--text-on-dark);
-    font-size: clamp(1.3rem, 1.8vw, 1.6rem);
-    animation: temuPulse 2s infinite;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.asian-rank-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5vh;
-}
-
-.asian-rank-name {
-    font-size: clamp(1.1rem, 1.5vw, 1.4rem);
-    font-weight: 900;
-    color: var(--rank-name-color, var(--text-main));
-    margin: 0;
-    line-height: 1.1;
-    text-transform: uppercase;
-}
-.asian-rank-card.top-1 .asian-rank-name {
-    color: var(--rank-top1-name-color, #111111);
-}
-
-.asian-rank-progress-container {
-    background: rgba(0,0,0,0.08);
-    border-radius: 999px;
-    height: 2.2vh;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    margin-top: 0.5vh;
-}
-
-.asian-rank-progress-bar {
-    background: linear-gradient(90deg, #FF4757, #FF8C00);
-    height: 100%;
-    border-radius: 999px;
-    transition: width 1s ease-out;
-}
-
-.asian-rank-tag {
-    position: absolute;
-    left: 0.8vw;
-    color: var(--text-on-dark);
-    font-size: clamp(0.7rem, 0.9vw, 0.8rem);
-    font-weight: 900;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    letter-spacing: 0.05em;
-    z-index: 2;
-}
-
-.asian-rank-tag-social {
-    color: #FF4757;
-    font-size: clamp(0.85rem, 1.1vw, 1rem);
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    gap: 0.3vw;
-    margin-top: 0.5vh;
-}
-
-.asian-rank-fire {
-    position: absolute;
-    right: 0.5vw;
-    top: -0.5vh;
-    font-size: clamp(2rem, 3vw, 2.8rem);
-    animation: temuFire 0.8s infinite alternate;
-    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.4));
-}
-
-/* Reemplazar la linea amarilla fea por una barra horizontal sleek */
-.rank-progress {
-    height: 8px;
-    background: linear-gradient(90deg, #FF3366, #FF9933);
-    border-radius: 999px;
-    margin-top: 1vh;
-    width: 0%;
-    animation: rankProgress var(--rank-duration) linear infinite;
-}
-@keyframes rankProgress {
-    0% { width: 0%; }
-    100% { width: 100%; }
-}
-
-/* Fix para la linea amarilla (Puntos de rotacion sin dimensiones) */
-.rank-dots {
-    display: flex;
-    gap: 0.4vw;
-    align-items: center;
-}
-.rank-dots .rank-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255, 215, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    transition: all 0.3s ease;
-}
-.rank-dots .rank-dot.is-on {
-    background: #FFD700;
-    width: 10px;
-    height: 10px;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-}
-/* =========================================================
-   ASIAN HYPE STYLES FOR COMPRAS RELACIONADAS (COLUMNA 3)
-   ========================================================= */
-   
-.xsell-card {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-}
-
-.xsell-ask {
-    font-size: 1.8rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    text-align: center;
-    background: linear-gradient(90deg, #FF0033, #FF4D4D);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
-    margin-bottom: 2vh;
-}
-
-.xsell-item {
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFFDF5 100%);
-    border: 3px solid #FFD700;
-    border-radius: 999px;
-    margin-bottom: 2vh;
-    padding: 1vh 0.5vw;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1);
-    display: flex;
-    align-items: center;
-}
-
-.xsell-item:nth-child(even) {
-    background: linear-gradient(135deg, #FFF0F0 0%, var(--bg-secondary) 100%);
-    border-color: #FF0033;
-}
-
-.xsell-item__info {
-    font-weight: 900;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    padding-left: 1.2vw;
-    gap: 0.5vh;
-}
-
-.xsell-item__name {
-    font-size: 1.15rem;
-    line-height: 1.1;
-    margin: 0;
-    font-weight: 800;
-    color: var(--text-main);
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    width: 100%;
-}
-
-.xsell-item__price {
-    font-size: 1.3rem;
-    font-weight: 900;
-    color: #FF0033;
-    background: #FFEBEE;
-    padding: 0.3vh 0.8vw;
-    white-space: nowrap;
-    border-radius: 6px;
-    border: 2px dashed #FF0033;
-    flex-shrink: 0;
-    display: inline-block;
-}
-
-.xsell-item__stage {
-    width: 65px;
-    height: 65px;
-    min-width: 65px;
-    min-height: 65px;
-    max-width: 65px;
-    max-height: 65px;
-    object-fit: contain;
-    border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    flex-shrink: 0;
-}
-.xsell-item__text {
-    display: contents;
-}
-
-.xsell-item__price-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0.5vw;
-    flex-wrap: wrap;
-    width: 100%;
-}
-
-.xsell-item__was {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #9CA3AF;
-    text-decoration: line-through;
-}
-
-.xsell-item__rule {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #FF0033;
-    background: #FFEBEE;
-    padding: 0.2vh 0.4vw;
-    border-radius: 4px;
-    text-transform: uppercase;
-    margin-left: auto;
+/* ══════════════════════════════════════════════════
+   TEMU — Nivel Inalcanzable — estilos.css
+   Mismo DOM/estructura que premium/apple/blackfriday,
+   solo cambia el vestuario.
+   ══════════════════════════════════════════════════ */
+@import url('../../structural_base.css');
+
+body[data-theme="temu"],
+body {
+    background: var(--screen-bg);
+}
+
+.logo {
+    background: linear-gradient(135deg, var(--accent), var(--accent-alt));
+    box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.28);
+}
+
+.flash-strip {
+    background: var(--strip-bg);
+    border: 0;
+    box-shadow: var(--shadow-soft);
+}
+
+.flash-strip__track {
+    color: var(--strip-text);
+}
+
+.flash-count {
+    background: var(--strip-count-bg);
+    color: var(--strip-count-text);
+    box-shadow: none;
+}
+
+.premium-column {
+    background: var(--panel-bg);
+    border: 0;
+    box-shadow: none;
+}
+
+.premium-column::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    border-radius: 22px; /* asumo 22px porque no está en colores.css */
+    background: linear-gradient(90deg, var(--accent), var(--accent-alt), var(--accent));
+}
+
+.sale-head {
+    background: linear-gradient(90deg, var(--text-main), #2A2A2A); /* #2A2A2A no está en colores.css, lo mantengo */
+    border: 0;
+    border-radius: 14px;
+    padding: 0.7cqh 0.9cqw;
+}
+
+.sale-head.board-head {
+    justify-content: center;
+}
+
+.sale-head--solo {
+    justify-content: center;
+    align-items: center;
+}
+
+.sale-head--solo .board-kicker {
+    font-size: clamp(0.85rem, 1.2cqw, 1.05rem);
+    letter-spacing: 0.16em;
+    color: var(--text-on-dark);
+}
+
+.sale-head.rank-head {
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
+    border-radius: 16px;
+    padding: 1cqh 1.2cqw;
+    box-shadow: 0 0 30px rgba(139, 0, 0, 0.4), 0 0 60px rgba(204, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    margin-bottom: 1.2cqh;
+    position: relative;
+    overflow: hidden;
+}
+
+.sale-head.rank-head::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+    animation: premiumGoldShine 4s infinite linear;
+}
+
+@keyframes premiumGoldShine {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.sale-head .board-kicker,
+.sale-head .rank-kicker {
+    color: var(--text-on-dark);
+    letter-spacing: 0.14em;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.sale-head .board-kicker::before,
+.sale-head .rank-kicker::before {
+    content: '👑';
+    margin-right: 0.5cqw;
+    animation: premiumCrownPulse 2s infinite;
+}
+
+@keyframes premiumCrownPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.sale-head .board-title,
+.sale-head .rank-title {
+    color: var(--text-on-dark);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.rank-dots .rank-dot {
+    background: var(--rank-dot-bg);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.2);
+    transition: all 0.3s ease;
+}
+
+.rank-dots .rank-dot.is-on {
+    background: var(--rank-dot-active);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6), 0 0 20px rgba(var(--accent-rgb), 0.4);
+    transform: scale(1.2);
+}
+
+/* Tarjeta híbrida: chrome de app + energía Temu en el precio - Premium Luxury */
+.tv-card {
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(28, 16, 0, 0.08), 0 4px 16px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.tv-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.tv-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 48px rgba(28, 16, 0, 0.12), 0 8px 24px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    border-color: rgba(139, 0, 0, 0.25);
+}
+
+.oferta-card .tv-card__name {
+    font-size: clamp(0.95rem, 1.45cqw, 1.25rem);
+    margin-bottom: 0;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.oferta-card .tv-card__now {
+    font-size: clamp(1.35rem, 2.2cqw, 1.95rem);
+    color: #8B0000;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.oferta-card .tv-card__now-row {
+    background: transparent;
+    box-shadow: none;
+}
+
+.tv-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FFD700, #FFA500, #FF8C00);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.oferta-card.tv-card::before {
+    display: none;
+}
+
+.oferta-card,
+.meal-card {
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.12);
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.oferta-card.is-flash,
+.meal-card.is-flash {
+    background: linear-gradient(180deg, #FFF8F0 0%, var(--bg-secondary) 50%, #FFFBF0 100%);
+    border-color: rgba(139, 0, 0, 0.18);
+    box-shadow: 0 12px 28px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.tv-card__badge {
+    background: linear-gradient(135deg, #8B0000 0%, #CC0000 50%, #FF0000 100%);
+    color: var(--text-on-dark);
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.tv-card__off {
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
+}
+
+.tv-card__off.is-inline {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 7px;
+    font-size: clamp(10px, 0.85cqw, 12px);
+}
+
+.tv-card__name,
+.oferta-nombre,
+.meal-name {
+    color: var(--text-main);
+    font-weight: 800;
+}
+
+.tv-card__chip {
+    background: #FFF6E8;
+    color: var(--text-secondary);
+}
+
+.tv-card__was,
+.oferta-antes {
+    color: #9CA3AF;
+}
+
+.tv-card__now-row {
+    background: transparent;
+    box-shadow: none;
+}
+
+.tv-card__save {
+    background: #FFE566;
+    box-shadow: inset 0 0 0 1px rgba(255, 106, 0, 0.12);
+}
+
+.tv-card__now {
+    color: var(--text-main);
+}
+
+.tv-card__unit,
+.tv-card__save {
+    color: var(--text-secondary);
+}
+
+.rank-card,
+.rank-card.is-top {
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFF8F0 50%, #FFFBF0 100%);
+    border: 2px solid rgba(139, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(139, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.rank-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.rank-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 8px 20px rgba(139, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    border-color: rgba(139, 0, 0, 0.3);
+}
+
+.rank-num {
+    color: #8B0000;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(139, 0, 0, 0.1);
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.rank-tag {
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(180, 83, 9, 0.1);
+}
+
+.rank-card.is-ad .rank-tag {
+    background: linear-gradient(135deg, #FEF3C7 0%, var(--bg-secondary) 100%);
+    color: #B45309;
+    border: 1px solid rgba(180, 83, 9, 0.3);
+}
+
+/* Premium glow effect para tarjetas top */
+.rank-card.is-top::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    animation: premiumTopGlow 3s infinite ease-in-out;
+}
+
+@keyframes premiumTopGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.oferta-card.is-ad {
+    background: var(--bg-secondary);
+}
+
+.oferta-card.is-ad .deal-kicker {
+    color: #9CA3AF;
+}
+
+.oferta-card.is-deal .tv-card__now {
+    color: #FF6A00;
+}
+
+.meal-card {
+    background: var(--bg-secondary);
+    border: 0;
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 8px 22px rgba(28, 16, 0, 0.08);
+    padding: 0.7cqw 0.75cqw 0.65cqw;
+}
+
+.meal-card .tv-card__name {
+    font-size: clamp(0.88rem, 1.2cqw, 1.05rem);
+    margin-bottom: 4px;
+}
+
+.meal-card .tv-card__now {
+    font-size: clamp(1.15rem, 1.7cqw, 1.4rem);
+}
+
+.meal-card .tv-card__now-row {
+    background: transparent;
+    box-shadow: none;
+}
+
+.meal-off {
+    display: none;
+}
+
+.meal-kicker {
+    color: #FF6A00;
+}
+
+.price-tile {
+    background: #FAFAFA;
+    border: 0;
+    box-shadow: none;
+    border-radius: 14px;
+}
+
+.price-tile__now {
+    color: #FF6A00;
+}
+
+.price-row,
+.price-row.is-offer {
+    background: #FFF8E8;
+    border: 0;
+    border-radius: 14px;
+}
+
+.price-dept {
+    color: var(--text-on-dark);
+    background: var(--text-main);
+    box-shadow: inset 0 -3px 0 #FF6A00;
+}
+
+.price-ad {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+}
+
+.price-ad__name {
+    color: #FFFFFF;
+}
+
+.price-row__meta,
+.price-row__off {
+    color: var(--text-secondary);
+}
+
+.price-row__was {
+    color: #9CA3AF;
+}
+
+.price-row__name {
+    color: var(--card-text, var(--text-main));
+}
+
+.price-row__now {
+    background: #FFE566;
+    color: var(--text-main);
+}
+
+.footer {
+    background: linear-gradient(90deg, #FFD700 0%, #FF6A00 50%, #E11D48 100%);
+    animation: footerGlow 8s ease infinite;
+    background-size: 200% 200%;
+}
+
+@keyframes footerGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.zocalo-pill {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.marquee-text {
+    color: var(--text-main);
+    font-weight: 800;
+}
+
+.chef-deal {
+    box-shadow: 0 10px 28px rgba(28, 16, 0, 0.10);
+}
+
+.clima-badge {
+    background: #FF6A00;
+    border: 0;
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.28);
+}
+
+/* =========================================================
+   ASIAN STYLE OVERRIDES - Todo el sistema vibrante (Temu/Shein)
+   ========================================================= */
+
+/* --- Columna 1 (Ranking) --- */
+.rank-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF5F7 100%);
+    border: 2px solid rgba(255, 71, 87, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1cqh;
+}
+.rank-score {
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
+    color: var(--text-on-dark);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-weight: 900;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.rank-name {
+    font-weight: 800;
+    color: #2D2D2D;
+}
+
+/* --- Columna 2 (Grilla de Precios) --- */
+.price-row {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFF8DC 100%);
+    border: 1px solid rgba(255, 140, 0, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06);
+    margin-bottom: 0.6cqh;
+}
+.price-name {
+    font-weight: 800;
+    color: var(--text-main);
+}
+.price-val {
+    color: #FF4757;
+    background: #FFF5F7;
+    padding: 3px 10px;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 71, 87, 0.15);
+    font-weight: 900;
+}
+.price-dept {
+    background: linear-gradient(135deg, #FF4757 0%, #FF8C00 100%);
+    color: var(--text-on-dark);
+    box-shadow: 0 4px 10px rgba(255, 71, 87, 0.2);
+    border-radius: 999px;
+    text-align: center;
+    padding: 0.6cqh 1cqw;
+    margin-bottom: 1cqh;
+}
+.price-ad {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35);
+    margin-bottom: 0.8cqh;
+}
+.price-ad__badge {
+    background: linear-gradient(135deg, #FF4757 0%, #FF6B81 100%);
+    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+}
+.price-ad .price-val {
+    background: #FF4757;
+    color: var(--text-on-dark);
+}
+
+/* --- Cabeceras Globales --- */
+.board-head, .rank-head, .sale-head {
+    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5cqh;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.board-kicker, .rank-kicker {
+    color: #FFE566;
+    text-shadow: 0 2px 6px rgba(255, 215, 0, 0.4);
+    font-weight: 900;
+}
+
+/* =========================================================
+   NUEVO RANKING ASIATICO EXTREMO - COLUMNA 1
+   ========================================================= */
+.asian-rank-card {
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.asian-rank-card.top-1 {
+    background: linear-gradient(135deg, #FFFDF0 0%, #FFF4C2 100%);
+    border-color: #FFD700;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    transform: scale(1.03);
+    margin-bottom: 2cqh;
+    z-index: 10;
+}
+.asian-rank-card.top-2 {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #F1F5F9 100%);
+    border-color: #CBD5E1;
+}
+.asian-rank-card.top-3 {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFEDD5 100%);
+    border-color: #FDBA74;
+}
+
+.asian-rank-badge {
+    background: #1A1A1A;
+    color: var(--text-on-dark);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.asian-rank-card.top-1 .asian-rank-badge {
+    background: linear-gradient(135deg, #FF3366, #FF9933);
+    color: var(--text-on-dark);
+    font-size: clamp(1.3rem, 1.8cqw, 1.6rem);
+    animation: temuPulse 2s infinite;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.asian-rank-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5cqh;
+}
+
+.asian-rank-name {
+    font-size: clamp(1.1rem, 1.5cqw, 1.4rem);
+    font-weight: 900;
+    color: var(--rank-name-color, var(--text-main));
+    margin: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+.asian-rank-card.top-1 .asian-rank-name {
+    color: var(--rank-top1-name-color, #111111);
+}
+
+.asian-rank-progress-container {
+    background: rgba(0,0,0,0.08);
+    border-radius: 999px;
+    height: 2.2cqh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    margin-top: 0.5cqh;
+}
+
+.asian-rank-progress-bar {
+    background: linear-gradient(90deg, #FF4757, #FF8C00);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1s ease-out;
+}
+
+.asian-rank-tag {
+    position: absolute;
+    left: 0.8cqw;
+    color: var(--text-on-dark);
+    font-size: clamp(0.7rem, 0.9cqw, 0.8rem);
+    font-weight: 900;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    z-index: 2;
+}
+
+.asian-rank-tag-social {
+    color: #FF4757;
+    font-size: clamp(0.85rem, 1.1cqw, 1rem);
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 0.3cqw;
+    margin-top: 0.5cqh;
+}
+
+.asian-rank-fire {
+    position: absolute;
+    right: 0.5cqw;
+    top: -0.5cqh;
+    font-size: clamp(2rem, 3cqw, 2.8rem);
+    animation: temuFire 0.8s infinite alternate;
+    filter: drop-shadow(0 2px 4px rgba(255, 71, 87, 0.4));
+}
+
+/* Reemplazar la linea amarilla fea por una barra horizontal sleek */
+.rank-progress {
+    height: 8px;
+    background: linear-gradient(90deg, #FF3366, #FF9933);
+    border-radius: 999px;
+    margin-top: 1cqh;
+    width: 0%;
+    animation: rankProgress var(--rank-duration) linear infinite;
+}
+@keyframes rankProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Fix para la linea amarilla (Puntos de rotacion sin dimensiones) */
+.rank-dots {
+    display: flex;
+    gap: 0.4cqw;
+    align-items: center;
+}
+.rank-dots .rank-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    transition: all 0.3s ease;
+}
+.rank-dots .rank-dot.is-on {
+    background: #FFD700;
+    width: 10px;
+    height: 10px;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+/* =========================================================
+   ASIAN HYPE STYLES FOR COMPRAS RELACIONADAS (COLUMNA 3)
+   ========================================================= */
+   
+.xsell-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.xsell-ask {
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: center;
+    background: linear-gradient(90deg, #FF0033, #FF4D4D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.1));
+    margin-bottom: 2cqh;
+}
+
+.xsell-item {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, #FFFDF5 100%);
+    border: 3px solid #FFD700;
+    border-radius: 999px;
+    margin-bottom: 2cqh;
+    padding: 1cqh 0.5cqw;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1), inset 0 -4px 10px rgba(255,215,0,0.1);
+    display: flex;
+    align-items: center;
+}
+
+.xsell-item:nth-child(even) {
+    background: linear-gradient(135deg, #FFF0F0 0%, var(--bg-secondary) 100%);
+    border-color: #FF0033;
+}
+
+.xsell-item__info {
+    font-weight: 900;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    padding-left: 1.2cqw;
+    gap: 0.5cqh;
+}
+
+.xsell-item__name {
+    font-size: 1.15rem;
+    line-height: 1.1;
+    margin: 0;
+    font-weight: 800;
+    color: var(--text-main);
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    width: 100%;
+}
+
+.xsell-item__price {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #FF0033;
+    background: #FFEBEE;
+    padding: 0.3cqh 0.8cqw;
+    white-space: nowrap;
+    border-radius: 6px;
+    border: 2px dashed #FF0033;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.xsell-item__stage {
+    width: 65px;
+    height: 65px;
+    min-width: 65px;
+    min-height: 65px;
+    max-width: 65px;
+    max-height: 65px;
+    object-fit: contain;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+.xsell-item__text {
+    display: contents;
+}
+
+.xsell-item__price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5cqw;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.xsell-item__was {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #9CA3AF;
+    text-decoration: line-through;
+}
+
+.xsell-item__rule {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #FF0033;
+    background: #FFEBEE;
+    padding: 0.2cqh 0.4cqw;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-left: auto;
 }

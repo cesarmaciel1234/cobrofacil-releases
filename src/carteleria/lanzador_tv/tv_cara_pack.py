@@ -102,9 +102,13 @@ def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:
     os.makedirs(internal, exist_ok=True)
     dest = os.path.join(internal, BLOB_NAME)
     pack_source(dest, source_dir)
-    leftover = os.path.join(internal, "src", "carteleria", "lanzador_tv", "la_cara_web")
-    if os.path.isdir(leftover):
-        shutil.rmtree(leftover, ignore_errors=True)
+    leftovers = []
+    for root, dirs, _files in os.walk(dist_dir):
+        if "la_cara_web" in dirs:
+            leftovers.append(os.path.join(root, "la_cara_web"))
+            dirs.remove("la_cara_web")
+    for path in leftovers:
+        shutil.rmtree(path, ignore_errors=True)
     public_src = os.path.join(dist_dir, "src")
     if os.path.isdir(public_src):
         shutil.rmtree(public_src, ignore_errors=True)
@@ -113,12 +117,14 @@ def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("uso: tv_cara_pack.py pack <carpeta_web> <salida.bin>")
+        print("uso: tv_cara_pack.py pack <salida.bin> [carpeta_web]")
         print("     tv_cara_pack.py dist <dist/CobroFacil_POS>")
         sys.exit(2)
     cmd = sys.argv[1]
     if cmd == "pack":
-        pack_source(sys.argv[3], sys.argv[2])
+        dest = sys.argv[2]
+        source = sys.argv[3] if len(sys.argv) > 3 else None
+        pack_source(dest, source)
     elif cmd == "dist":
         instalar_blob_en_dist(sys.argv[2])
     else:

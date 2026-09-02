@@ -53,7 +53,15 @@ export function esPorKg(item) {
     const unidad = String(item?.unidad || "").trim().toUpperCase();
     if (unidad === "KG") return true;
     if (unidad === "UN" || unidad === "U" || unidad === "UNIDAD") return false;
-    return Number(item?.es_pesable || 0) === 1;
+    if (Number(item?.es_pesable || 0) === 1) return true;
+    
+    // Inferir por departamento/rubro si la DB no está completa
+    const rubro = String(item?.departamento || item?.categoria || "").trim().toLowerCase();
+    if (rubro.includes("carne") || rubro.includes("pollo") || rubro.includes("cerdo") || rubro.includes("pescado") || rubro.includes("fiambre") || rubro.includes("queso") || rubro.includes("fruta") || rubro.includes("verdura")) {
+        return true;
+    }
+    
+    return false;
 }
 
 export function unidadProducto(item) {

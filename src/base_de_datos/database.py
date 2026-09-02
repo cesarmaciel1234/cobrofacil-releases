@@ -1154,21 +1154,65 @@ class DatabaseManager:
             logger.error(f"Error en _create_tables: {e}")
 
     def _ensure_table_columns_and_autoincrement(self):
-        """Asegura que los tipos de datos e incrementos automáticos de MariaDB no colapsen por overflow 32-bit."""
+        """MariaDB: BIGINT en productos.id si hace falta; utf8mb4 en tickets. Sin DDL en cada arranque."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
         try:
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb":
-                # Convertir la columna id de productos a BIGINT para soportar 64-bit y evitar desbordamientos
-                self.execute_non_query("ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT")
-                
-                # Verificar si el auto_increment actual está cerca o por encima del límite 32-bit (2147483647)
-                res = self.execute_query("SELECT MAX(id) as m FROM productos WHERE id < 2147483647")
-                if res and res[0].get('m') is not None:
-                    max_normal = res[0]['m']
-                    self.execute_non_query("UPDATE productos SET id = ? WHERE id >= 2147483647", (max_normal + 1,))
-                    new_max = self.execute_scalar("SELECT MAX(id) FROM productos") or max_normal
-                    self.execute_non_query(f"ALTER TABLE productos AUTO_INCREMENT = {new_max + 1}")
+            tipo = ""
+            rows = self.execute_query(
+                "SELECT DATA_TYPE FROM information_schema.COLUMNS "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                ("productos", "id"),
+            )
+            if rows:
+                tipo = str(rows[0].get("DATA_TYPE") or rows[0].get("data_type") or "").lower()
+            if tipo and tipo != "bigint":
+                self._mariadb_ddl(
+                    "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT",
+                    timeout=180,
+                )
+                logger.info("productos.id pasado a BIGINT.")
+
+            cs = ""
+            rows = self.execute_query(
+                "SELECT CHARACTER_SET_NAME FROM information_schema.COLUMNS "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                ("detalles_ventas", "nombre_producto"),
+            )
+            if rows:
+                cs = str(
+                    rows[0].get("CHARACTER_SET_NAME") or rows[0].get("character_set_name") or ""
+                ).lower()
+            if cs and cs not in ("utf8mb4",):
+                self._mariadb_ddl(
+                    "ALTER TABLE detalles_ventas "
+                    "MODIFY COLUMN nombre_producto TEXT CHARACTER SET utf8mb4 "
+                    "COLLATE utf8mb4_unicode_ci",
+                    timeout=120,
+                )
+                logger.info("detalles_ventas.nombre_producto en utf8mb4.")
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
+
+    def _mariadb_ddl(self, sql: str, timeout: int = 120):
+        """DDL con timeout largo (el IO de 3s corta un ALTER de productos)."""
+        import pymysql
+
+        eng = getattr(self, "mariadb_engine", None)
+        if eng is None:
+            self.execute_non_query(sql)
+            return
+        kwargs = eng._connect_kwargs()
+        kwargs["read_timeout"] = timeout
+        kwargs["write_timeout"] = timeout
+        kwargs["connect_timeout"] = min(15, timeout)
+        raw = pymysql.connect(**kwargs)
+        try:
+            cur = raw.cursor()
+            cur.execute(sql.replace("?", "%s"))
+            raw.commit()
+        finally:
+            raw.close()
 
     def _ensure_test_users(self):
         """Garantiza que los usuarios de prueba existan para agilizar desarrollo."""

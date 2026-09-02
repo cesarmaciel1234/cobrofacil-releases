@@ -194,6 +194,13 @@ def run_store_server_app(app) -> int:
         logger.warning(f"LAN server: {e}")
 
     try:
+        from src.carteleria.creador_png.servidor import asegurar_servidor
+        asegurar_servidor()
+        logger.info("Creador PNG escuchando para esclavas (LAN).")
+    except Exception as e:
+        logger.warning(f"Creador PNG en servidor: {e}")
+
+    try:
         from src.central_red_global.master_presence import ensure_master_lan_presence
         ensure_master_lan_presence()
     except Exception as e:

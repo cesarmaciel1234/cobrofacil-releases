@@ -104,6 +104,8 @@ class MariaDBEngine:
             password=password if password is not None else self.password,
             database=self.database,
             autocommit=False,
+            charset="utf8mb4",
+            use_unicode=True,
             connect_timeout=self.CONNECT_TIMEOUT,
             read_timeout=self.IO_TIMEOUT,
             write_timeout=self.IO_TIMEOUT,

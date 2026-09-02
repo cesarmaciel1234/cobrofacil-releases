@@ -185,6 +185,22 @@ function actualizarClimaHeader(climaData) {
     }
 }
 
+function ajustarZoomTv() {
+    document.documentElement.style.zoom = "1";
+    const stage = document.querySelector(".app-container");
+    if (!stage) return;
+    const W = 1920;
+    const H = 1080;
+    const iw = Math.max(1, window.innerWidth);
+    const ih = Math.max(1, window.innerHeight);
+    const s = Math.min(iw / W, ih / H);
+    stage.style.width = `${W}px`;
+    stage.style.height = `${H}px`;
+    stage.style.transformOrigin = "0 0";
+    stage.style.transform = `scale(${s})`;
+    stage.style.margin = `${(ih - H * s) / 2}px 0 0 ${(iw - W * s) / 2}px`;
+}
+
 function setupTvKeys() {
     window.addEventListener("keydown", (event) => {
         if (event.key !== "F10" && event.key !== "F11" && event.key !== "Escape") return;
@@ -198,6 +214,11 @@ function setupTvKeys() {
 function init() {
     aplicarPerfil();
     document.body.setAttribute("data-theme", state.currentTheme);
+    ajustarZoomTv();
+    window.addEventListener("resize", ajustarZoomTv);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", ajustarZoomTv);
+    }
     actualizarReloj(els);
     setInterval(() => actualizarReloj(els), 1000);
     setupTvKeys();

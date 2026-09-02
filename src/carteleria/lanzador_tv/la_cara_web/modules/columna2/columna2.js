@@ -16,6 +16,7 @@ function nombreDepto(item) {
 function agruparPorDepartamento(productos) {
     const grupos = new Map();
     for (const item of productos) {
+        if (item.es_publicidad) continue;
         const depto = nombreDepto(item);
         if (!grupos.has(depto)) grupos.set(depto, []);
         grupos.get(depto).push(item);
@@ -66,14 +67,16 @@ function armarCiclo(productos) {
             if (vendido) ranking += 1;
             partes.push(htmlFilaPrecio(item, vendido ? ranking : 0, depto));
             enBloque += 1;
-            if (enBloque % 4 === 0 && ads.length) {
+            // Mostrar publicidad cada 2 filas para mayor impacto visual
+            if (enBloque % 2 === 0 && ads.length) {
                 const { ad, next } = siguienteAd(ads, adIndex, item);
                 partes.push(htmlTarjetaPublicidad(ad));
                 adIndex = next;
             }
         }
     }
-    if (ads.length && enBloque > 0 && enBloque < 4) {
+    // Asegurar que siempre haya al menos una publicidad si hay disponibles
+    if (ads.length && enBloque > 0 && enBloque < 2) {
         const { ad } = siguienteAd(ads, 0, null);
         partes.push(htmlTarjetaPublicidad(ad));
     }
@@ -88,8 +91,9 @@ export function renderColumna2(productos, root) {
         return;
     }
     const filas = armarCiclo(productos);
-    const duracion = Math.max(50, Math.min(productos.length * 5, 180));
-    
+    const filasCount = (filas.match(/price-row|price-dept|asian-billboard-card|price-ad/g) || []).length;
+    const duracion = Math.max(45, Math.min(filasCount * 3.2, 420));
+
     const newHtml = `
         <header class="board-head sale-head sale-head--solo">
             <p class="board-kicker">⚡ PRECIOS</p>
@@ -101,10 +105,15 @@ export function renderColumna2(productos, root) {
             </div>
         </div>
     `;
-    
-    // Solo actualizar el DOM si los productos/precios cambiaron para no resetear la animación CSS
+
     if (newHtml !== lastColumna2Html) {
         root.innerHTML = newHtml;
         lastColumna2Html = newHtml;
+    }
+    const track = root.querySelector(".price-track");
+    const cycle = root.querySelector(".price-cycle");
+    if (track && cycle) {
+        const h = cycle.scrollHeight || cycle.offsetHeight;
+        if (h > 0) track.style.setProperty("--price-cycle-h", `${h}px`);
     }
 }

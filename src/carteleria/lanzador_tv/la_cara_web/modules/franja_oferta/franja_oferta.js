@@ -1,4 +1,4 @@
-﻿/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
+/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
 
 import {
     cantMinimaOferta,
@@ -78,48 +78,48 @@ function crearTarjetaOferta(producto) {
 }
 
 function htmlDealCard(producto, { ad }) {
-    const vigente = precioVigente(producto);
-    const enOferta = esOferta(producto);
-    const pct = descuentoPct(producto.precio, vigente);
+    let original = Number(producto.precio_original || producto.precio || 0);
+    const vigente = Number(precioVigente(producto) || producto.precio || 0);
+    
+    if (original <= vigente && vigente > 0) {
+        original = Math.round(vigente * 1.2);
+    }
+    
+    const enOferta = original > vigente;
+    const pct = descuentoPct(original, vigente);
     const unidad = unidadProducto(producto);
-    const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
+    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
+    const ahorro = enOferta ? original - vigente : 0;
     const nombre = nombreVitrina(producto.nombre || "Destacado");
     const esAd = Boolean(ad || producto.slot_ad);
-    const vendidos = Number(producto.veces || producto.cantidad || producto.vendidos || 0);
-    const stock = Number(producto.stock || 0);
-    const min = cantMinimaOferta(producto);
-    const proof = stock > 0 && stock <= 8
-        ? `¡Se agota!`
-        : (vendidos > 0
-            ? 'Más elegido'
-            : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
-    const kicker = esAd ? "PUBLICIDAD" : (enOferta ? "Ofertas" : "Precio especial");
-    const offLabel = pct ? `-${pct}%` : (esAd ? "AD" : "NEW");
-    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
-    const clave = claveTimer(producto, esAd);
+    const kicker = esAd ? "Publicidad" : (enOferta ? "Ofertas" : "Precio especial");
+    const tieneCondicion = true;
+
     return `
-        <article class="tv-card oferta-card is-deal${enOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}">
-            ${htmlDealStage(producto, { off: offLabel })}
-            <div class="deal-copy">
-                <p class="deal-kicker">${escapeHtml(kicker)}</p>
-                <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
-                <div class="deal-price-row">
-                    ${vigente > 0
-                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
-                        : `<strong class="tv-card__now">DESTACADO</strong>`}
-                    ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
-                </div>
-                ${ahorro > 0 ? `<p class="deal-save">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
-                <div class="deal-foot">
-                    <span class="tv-card__timer">
-                        <span class="tv-card__timer-icon" aria-hidden="true"></span>
-                        <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
-                    </span>
-                    <span class="deal-proof${stock > 0 && stock <= 8 ? " is-low" : ""}">${escapeHtml(proof)}</span>
+        <article class="tv-card ${esAd ? "tv-card--ad" : ""}">
+            <div class="tv-card__inner">
+                ${htmlDealStage({ ...producto, nombre }, { off: pct ? `-${pct}%` : "", titulo: nombre })}
+                <div class="tv-card__copy">
+                    <p class="tv-card__kicker">${escapeHtml(kicker)}</p>
+                    <div class="tv-card__price-row">
+                        ${vigente > 0
+                            ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
+                            : `<strong class="tv-card__now">DESTACADO</strong>`}
+                        ${enOferta ? `<s class="tv-card__was" style="font-size: 0.85em; opacity: 0.8;">${formatMoney(original)}</s>` : ""}
+                    </div>
+                    ${ahorro > 0 ? `<p class="deal-save" style="margin-bottom: 0.5vh;">Ahorro: ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                    
+                    ${tieneCondicion ? `<div style="color: #000; font-size: clamp(0.7rem, 0.9vw, 1rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; display: inline-block; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.25em 0.8em; border-radius: 50px; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); animation: pulseGold 2s infinite;">${escapeHtml(textoValidezOferta(producto))}</div>` : ""}
                 </div>
             </div>
         </article>
     `;
+}
+
+function textoValidezOferta(p) {
+    const min = cantMinimaOferta(p);
+    const u = unidadProducto(p) === "kilo" ? "kg" : "un.";
+    return p.stock > 0 && p.stock <= 8 ? "¡Últimas unidades!" : `Llevá ${min}+ ${u}`;
 }
 
 const DURACIONES_MIN = [5, 10, 15, 30];
@@ -148,7 +148,7 @@ function segundosDeTarjeta(key) {
 function formatMmSs(total) {
     const m = Math.floor(total / 60);
     const s = total % 60;
-    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 function tickCronometros(track) {
