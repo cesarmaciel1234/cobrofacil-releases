@@ -195,21 +195,25 @@ jobs:
         run: |
           Move-Item -Path "dist/Creador_PNG_Worker" -Destination "dist/CobroFacil_POS/worker" -Force
 
-      - name: Asegurar cara web TV oculta en el paquete
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "dist/CobroFacil_POS/_internal" | Out-Null
-          if (Test-Path "build/tv_cara.bin") {
-            Copy-Item -Force "build/tv_cara.bin" "dist/CobroFacil_POS/_internal/tv_cara.bin"
-          }
-          python src/carteleria/lanzador_tv/tv_cara_pack.py dist dist/CobroFacil_POS
-          if (-not (Test-Path "dist/CobroFacil_POS/_internal/tv_cara.bin")) {
-            Write-Error "Falta tv_cara.bin en el paquete"
-            exit 1
-          }
-          Write-Host "OK cara web TV oculta (tv_cara.bin)"
-
-      - name: Copiar version.json y launcher autónomo
+        - name: Asegurar cara web TV oculta en el paquete
+          shell: pwsh
+          run: |
+            New-Item -ItemType Directory -Force -Path "dist/CobroFacil_POS/_internal" | Out-Null
+            if (Test-Path "build/tv_cara.bin") {
+              Copy-Item -Force "build/tv_cara.bin" "dist/CobroFacil_POS/_internal/tv_cara.bin"
+            } else {
+              python src/carteleria/lanzador_tv/tv_cara_pack.py pack "dist/CobroFacil_POS/_internal/tv_cara.bin"
+            }
+            if (-not (Test-Path "dist/CobroFacil_POS/_internal/tv_cara.bin")) {
+              Write-Error "Falta tv_cara.bin en el paquete"
+              exit 1
+            }
+            if (Test-Path "dist/CobroFacil_POS/src") {
+                Remove-Item -Recurse -Force "dist/CobroFacil_POS/src" -ErrorAction SilentlyContinue
+            }
+            Get-ChildItem -Path dist/CobroFacil_POS -Recurse -Directory -Filter la_cara_web -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+            Write-Host "OK cara web TV oculta (tv_cara.bin)"
+        - name: Copiar version.json y launcher autnomo
         shell: pwsh
         run: |
           Copy-Item version.json dist/CobroFacil_POS/version.json
