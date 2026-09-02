@@ -39,7 +39,7 @@
     "github_report_token": "",
     "carteleria_performance_mode": false,
     "carteleria_is_slave": true,
-    "auto_start_store_server": true,
+    "auto_start_store_server": false,
     "update_server_ip": "",
     "pantalla_tactil": "auto",
     "business_cuit": "CUIT: 00-00000000-0",
