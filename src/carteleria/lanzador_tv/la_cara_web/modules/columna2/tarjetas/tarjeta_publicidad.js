@@ -1,5 +1,3 @@
-/* Publicidad estilo asiático para cartelería - elementos de venta impactantes */
-
 import { escapeHtml, formatMoney, precioVigente, esOferta, textoValidezOferta } from "../../shared/plata_y_texto.js";
 
 export function htmlTarjetaPublicidad(item) {
@@ -17,145 +15,109 @@ export function htmlTarjetaPublicidad(item) {
         ? (descuento > 0 ? descuento : Math.round(((precioAnterior - precio) / precioAnterior) * 100))
         : 0;
     
-    // Forzar que TODAS las publicidades tengan el borde dorado y el estilo impactante,
-    // ya que al ser publicidades queremos que resalten y luzcan premium.
     const esHot = porcentajeVendido > 50 || descuentoPorcentaje > 15;
     const esOfertaEspecial = true; 
     
-    // Mostrar siempre la condición porque en la TV todo es precio mayorista
     const tieneCondicion = true;
     const condicion = tieneCondicion ? textoValidezOferta(item) : "";
+
+    let badgeHTML = '';
+    if (tieneDescuento) {
+        badgeHTML = `<span class="luxury-badge luxury-badge--discount">-${descuentoPorcentaje}%</span>`;
+    } else if (esHot) {
+        badgeHTML = `<span class="luxury-badge luxury-badge--hot">🔥 HOT</span>`;
+    } else if (esOfertaEspecial) {
+        badgeHTML = `<span class="luxury-badge luxury-badge--hot">⚡ OFERTA</span>`;
+    }
     
     return `
         <style>
             .luxury-ad-card {
                 background: linear-gradient(145deg, #111111 0%, #1a1a1a 100%) !important;
-                border: 2px solid #FFDF00 !important;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px rgba(255, 223, 0, 0.1) !important;
+                border: 1px solid #FFDF00 !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
                 border-radius: 12px;
                 position: relative;
                 overflow: hidden;
-                padding: 1.5vh 1.5vw;
+                padding: 2.5vh 2vw;
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
-            }
-            .luxury-ad-card::before {
-                content: '';
-                position: absolute;
-                top: 0; left: 0; right: 0;
-                height: 2px;
-                background: linear-gradient(90deg, transparent, #FFDF00, transparent);
+                justify-content: space-between;
+                min-height: 100%;
             }
             .luxury-ad-card__badges {
                 position: absolute;
-                top: 10px; right: -5px;
-                display: flex;
-                flex-direction: column;
-                gap: 5px;
-                align-items: flex-end;
+                top: 15px; right: 0;
             }
             .luxury-badge {
-                padding: 0.3vh 0.8vw;
-                font-weight: 900;
-                font-size: clamp(0.7rem, 1vw, 0.85rem);
+                padding: 0.4vh 1vw;
+                font-weight: 800;
+                font-size: clamp(0.75rem, 1.2vw, 0.9rem);
                 text-transform: uppercase;
                 border-radius: 4px 0 0 4px;
                 letter-spacing: 0.05em;
-                box-shadow: -2px 2px 5px rgba(0,0,0,0.5);
+                box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
             }
             .luxury-badge--hot {
                 background: #000; color: #FFDF00; border: 1px solid #FFDF00; border-right: none;
             }
             .luxury-badge--discount {
-                background: linear-gradient(90deg, #FFDF00, #FFA500); color: #000; border: none;
+                background: #FFDF00; color: #000; border: none;
             }
             .luxury-ad-card__title {
-                color: #FFF;
-                font-size: clamp(1.4rem, 2.2vw, 1.8rem);
-                font-weight: 800;
-                margin: 0 0 1vh 0;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-                letter-spacing: 0.02em;
+                color: #FFFFFF;
+                font-size: clamp(1.4rem, 2vw, 1.7rem);
+                font-weight: 600;
+                margin: 0 0 1.5vh 0;
+                letter-spacing: 0.01em;
+                line-height: 1.2;
+                padding-right: 4vw;
             }
             .luxury-ad-card__price-now {
                 color: #FFDF00;
-                font-size: clamp(2rem, 3.5vw, 3rem);
-                font-weight: 900;
-                text-shadow: 0 0 15px rgba(255, 223, 0, 0.4);
+                font-size: clamp(2.5rem, 4vw, 3.5rem);
+                font-weight: 800;
+                line-height: 1;
             }
             .luxury-ad-card__price-before {
-                color: #888;
-                font-size: clamp(1rem, 1.5vw, 1.2rem);
+                color: #888888;
+                font-size: clamp(1.1rem, 1.6vw, 1.4rem);
                 text-decoration: line-through;
                 margin-right: 1vw;
+                font-weight: 500;
             }
-            .luxury-ad-card__savings {
-                display: inline-block;
-                background: rgba(255, 223, 0, 0.1);
+            .luxury-ad-card__condition {
                 color: #FFDF00;
-                border: 1px solid rgba(255, 223, 0, 0.3);
-                padding: 0.3vh 0.8vw;
-                border-radius: 6px;
-                font-weight: 800;
-                font-size: clamp(0.75rem, 1.1vw, 0.9rem);
-                margin-top: 0.5vh;
-            }
-            .luxury-ad-card__footer {
+                font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+                font-weight: 600;
                 margin-top: 1.5vh;
-                background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00);
-                color: #000;
-                text-align: center;
-                padding: 0.6vh;
-                border-radius: 4px;
-                font-weight: 900;
-                font-size: clamp(0.8rem, 1.2vw, 1rem);
-                letter-spacing: 0.1em;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                letter-spacing: 0.03em;
             }
         </style>
         <article class="asian-billboard-card luxury-ad-card" ${!imagen ? 'style="grid-template-columns: 1fr;"' : ''}>
-            <!-- Corner Badges -->
             <div class="luxury-ad-card__badges">
-                ${esHot ? '<span class="luxury-badge luxury-badge--hot">🔥 HOT</span>' : ''}
-                ${esOfertaEspecial ? '<span class="luxury-badge luxury-badge--hot">⚡ OFERTA</span>' : ''}
-                ${tieneDescuento ? `<span class="luxury-badge luxury-badge--discount">-${descuentoPorcentaje}%</span>` : ''}
+                ${badgeHTML}
             </div>
             
-            <div class="asian-billboard__main" style="position: relative; z-index: 2;">
+            <div class="asian-billboard__main" style="position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; height: 100%;">
                 <div class="asian-billboard__content">
                     <h4 class="luxury-ad-card__title">${escapeHtml(nombre)}</h4>
                     
                     <div class="asian-billboard__price-section">
-                        <div style="display: flex; align-items: baseline;">
+                        <div style="display: flex; align-items: baseline; flex-wrap: wrap;">
                             ${precioAnterior > 0 && precioAnterior > precio ? `
                                 <span class="luxury-ad-card__price-before">${formatMoney(precioAnterior)}</span>
                             ` : ''}
                             <span class="luxury-ad-card__price-now">${formatMoney(precio)}</span>
                         </div>
-                        ${tieneDescuento && precioAnterior > 0 ? `
-                            <div class="luxury-ad-card__savings">AHORRÓ ${formatMoney(precioAnterior - precio)}</div>
-                        ` : ''}
                         
-                        <!-- Condiciones de oferta -->
                         ${condicion ? `
-                            <div style="margin-top: 1.2vh; color: #000; font-size: clamp(0.85rem, 1.1vw, 1.2rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; display: inline-block; align-self: flex-start; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); animation: pulseGold 2s infinite;">
+                            <div class="luxury-ad-card__condition">
                                 ${escapeHtml(condicion)}
                             </div>
                         ` : ''}
                     </div>
-                    
-                    <div class="asian-billboard__social-proof" style="margin-top: 1vh;">
-                        <div class="asian-billboard__proof-item" style="flex-direction: row; gap: 0.5vw; background: rgba(255,223,0,0.1); padding: 0.4vh 0.8vw; border-radius: 8px; border: 1px solid rgba(255,223,0,0.2);">
-                            <span style="color: #FFDF00;">⭐</span>
-                            <span style="color: #FFDF00; font-size: clamp(0.7rem, 1vw, 0.8rem); font-weight: 800;">SELECCIÓN PREMIUM</span>
-                        </div>
-                    </div>
                 </div>
-            </div>
-            
-            <div class="luxury-ad-card__footer">
-                ⚡ PRECIOS IMBATIBLES ⚡
             </div>
         </article>
     `;
