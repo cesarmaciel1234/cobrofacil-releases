@@ -188,12 +188,13 @@
 .asian-rank-progress-container {
     background: var(--rank-bar-track);
     border-radius: 999px;
-    height: 2.2cqh;
+    height: 3.5cqh;
+    min-height: 22px;
     position: relative;
     overflow: hidden;
     display: flex;
     align-items: center;
-    margin-top: 0.5cqh;
+    margin-top: 0.8cqh;
 }
 .asian-rank-progress-bar {
     background: var(--rank-bar-bg);
@@ -203,11 +204,11 @@
 }
 .asian-rank-tag {
     position: absolute;
-    left: 0.8cqw;
+    left: 1cqw;
     color: #EF4444;
-    font-size: clamp(0.7rem, 0.9cqw, 0.8rem);
+    font-size: clamp(12px, 1.1cqw, 15px);
     font-weight: 900;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     letter-spacing: 0.05em;
     z-index: 2;
 }
