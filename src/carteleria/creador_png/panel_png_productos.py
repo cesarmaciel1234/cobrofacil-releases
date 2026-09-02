@@ -308,33 +308,20 @@ class PanelPngProductos(QWidget):
                     print(f"[Cartelería] PNG {filename} enviado a maestra {url}")
                     return True, f"PNG copiado a la maestra ({db_host})."
                 last_err = f"HTTP {res.status_code} en {url}"
-                if "8000" in url: last_err_8000 = last_err
+                if "8000" in url:
+                    last_err_8000 = last_err
             except Exception as e:
                 last_err = str(e)
-                if "8000" in url: last_err_8000 = last_err
+                if "8000" in url:
+                    last_err_8000 = last_err
                 continue
                 
         err_mostrar = last_err_8000 if last_err_8000 else last_err
         return (
             False,
-            f"No se pudo enviar el PNG a la maestra {db_host}.
-"
-            "Encendé esa PC y el Servidor de Tienda (puerto 8000).
-"
-            f"{err_mostrar}",
-        )
-                if res.status_code == 200:
-                    print(f"[Cartelería] PNG {filename} enviado a maestra {url}")
-                    return True, f"PNG copiado a la maestra ({db_host})."
-                last_err = f"HTTP {res.status_code} en {url}"
-            except Exception as e:
-                last_err = str(e)
-                continue
-        return (
-            False,
             f"No se pudo enviar el PNG a la maestra {db_host}.\n"
             "Encendé esa PC y el Servidor de Tienda (puerto 8000).\n"
-            f"{last_err}",
+            f"{err_mostrar}",
         )
 
     def _actualizar_preview(self, filename):
