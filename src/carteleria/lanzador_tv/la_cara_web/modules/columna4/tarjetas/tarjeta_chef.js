@@ -116,10 +116,10 @@ function htmlCarruselOfertas(ofertas = []) {
 
         // Mostrar SIEMPRE la condición (ej. Llevando 2 kilos) porque en la TV todo es precio mayorista
         const tieneCondicion = true;
-
         if (vendidosReales > 0) {
             comprando = vendidosReales;
-            mostrarVendido = Math.round(vendidosReales);
+            mostrarVendido = Math.min(99, Math.round(vendidosReales));
+
             const stockTotal = item.stock_inicial || (vendidosReales + (item.stock || (vendidosReales < 10 ? 20 : Math.round(vendidosReales * 1.3))));
             porcentaje = Math.min(99, Math.max(5, Math.round((vendidosReales / stockTotal) * 100)));
         } else {
@@ -159,7 +159,7 @@ function htmlCarruselOfertas(ofertas = []) {
                           ${tieneCondicion ? `<div class="asian-flash-condition">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
                           <div class="asian-flash-progress card-progress">
                             <div class="asian-flash-progress-bar" style="width: ${porcentaje}%;"></div>
-                            <div class="asian-flash-progress-text">${mostrarVendido} ${unidadProducto(item) === "kilo" ? "KILOS" : "UNID."}</div>
+                            <div class="asian-flash-progress-text">${mostrarVendido}% VENDIDO</div>
                         </div>
                     </div>
                     <div>
