@@ -118,8 +118,8 @@ export function htmlTarjetaPublicidad(item) {
             <!-- Corner Badges -->
             <div class="luxury-ad-card__badges">
                 ${esHot ? '<span class="luxury-badge luxury-badge--hot">🔥 HOT</span>' : ''}
-                ${esOfertaEspecial ? '<span class="luxury-badge luxury-badge--hot">⭐ OFERTA</span>' : ''}
-                ${tieneDescuento ? `<span class="luxury-badge luxury-badge--discount">-${descuentoPorcentaje}%</span>' : ''}
+                ${esOfertaEspecial ? '<span class="luxury-badge luxury-badge--hot">⚡ OFERTA</span>' : ''}
+                ${tieneDescuento ? `<span class="luxury-badge luxury-badge--discount">-${descuentoPorcentaje}%</span>` : ''}
             </div>
             
             <div class="asian-billboard__main" style="position: relative; z-index: 2;">
