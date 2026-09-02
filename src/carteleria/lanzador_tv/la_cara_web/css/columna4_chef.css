@@ -415,33 +415,23 @@
 .asian-flash-prices {
     display: flex;
     align-items: baseline;
-    gap: 0.5cqw;
-    margin-bottom: 0.5cqh;
-    margin-left: 0;
+    gap: 0.5vw;
+    margin-bottom: 0.5vh;
 }
 
-.asian-flash-original { background: transparent !important;
-    font-size: clamp(0.65rem, 0.8cqw, 0.7rem);
-    font-weight: 600;
-    color: var(--text-muted);
-    text-decoration: line-through;
-    background: rgba(255, 71, 87, 0.05);
-    padding: 0.2cqh 0.5cqw;
-    border-radius: var(--radius-soft);
+.asian-flash-original {
+    color: #888888 !important;
+    font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
+    text-decoration: line-through !important;
+    margin-right: 1vw !important;
+    font-weight: 500 !important;
 }
 
 .asian-flash-current {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    font-size: clamp(1.2rem, 1.5cqw, 1.35rem);
-    font-weight: 900;
-    color: var(--text-price);
-    background: linear-gradient(135deg, #FFF5F7 0%, #FFE4E8 100%);
-    padding: 0.4cqh 0.8cqw;
-    border-radius: var(--radius-soft);
-    border: 2px solid var(--accent);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.15);
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
 }
 
 .asian-flash-savings {
@@ -901,8 +891,11 @@
     }
 
     .asian-flash-current {
-        font-size: clamp(1.3rem, 1.8cqw, 1.6rem);
-    }
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
 
     .asian-flash-product {
         min-width: clamp(280px, 32cqw, 380px);
@@ -916,8 +909,11 @@
     }
 
     .asian-flash-current {
-        font-size: clamp(1.2rem, 1.7cqw, 1.5rem);
-    }
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
 }
 
 /* Standard HD (1366px - 1919px) */
@@ -927,8 +923,11 @@
     }
 
     .asian-flash-current {
-        font-size: clamp(1.15rem, 1.6cqw, 1.45rem);
-    }
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
 }
 
 /* Tablet (768px - 1365px) */
@@ -1260,27 +1259,23 @@
 
 /* Caja de Precios explotada */
 .asian-flash-prices {
-    background: #FF0033 !important;
-    border: 4px dashed #FFD700 !important;
-    border-radius: 16px !important;
-    padding: 0.5cqh 1cqw !important;
-    margin: 0.5cqh 0 1.5cqh 0 !important;
-    transform: rotate(-3deg) scale(1.02) !important;
-    box-shadow: 0 12px 30px rgba(255,0,51,0.5) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5vw;
+    margin-bottom: 0.5vh;
 }
 .asian-flash-current {
-    font-size: clamp(1.8rem, 2.5cqw, 2.5rem) !important;
-    color: #FFFF00 !important;
-    text-shadow: 4px 4px 0 #000, 0 0 30px #FFD700 !important;
-    line-height: 0.9 !important;
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
 }
-.asian-flash-original { background: transparent !important;
-    color: #FFFFFF !important;
-    font-size: clamp(1rem, 1.2cqw, 1.2rem) !important; padding: 0.2cqh 0.5cqw !important; flex-shrink: 0 !important;
-    text-decoration-thickness: 3px !important;
+.asian-flash-original {
+    color: #888888 !important;
+    font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
+    text-decoration: line-through !important;
+    margin-right: 1vw !important;
+    font-weight: 500 !important;
 }
 
 /* Barra de progreso de ventas estilo cinta de peligro roja */
@@ -1427,25 +1422,23 @@
 
 /* Caja de Precios Gold Premium */
 .asian-flash-prices {
-    background: linear-gradient(90deg, #BF953F, #FCF6BA, #B38728, #FBF5B7) !important;
-    border: 2px solid #FFFFFF !important;
-    border-radius: 12px !important;
-    box-shadow: 0 15px 35px rgba(191, 149, 63, 0.4) !important;
-    transform: rotate(0deg) scale(1) !important;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5vw;
+    margin-bottom: 0.5vh;
 }
 .asian-flash-current {
-    color: #000000 !important;
-    text-shadow: none !important;
-    font-weight: 900 !important;
-    letter-spacing: -0.04em !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    box-shadow: none !important;
+    color: #FFDF00 !important;
+    font-size: clamp(2rem, 3.5vw, 3rem) !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
 }
-.asian-flash-original { background: transparent !important;
-    color: rgba(0,0,0,0.6) !important;
-    text-decoration-color: #D90429 !important;
+.asian-flash-original {
+    color: #888888 !important;
+    font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
+    text-decoration: line-through !important;
+    margin-right: 1vw !important;
+    font-weight: 500 !important;
 }
 
 /* Barra de Progreso Elegante (Neón Rojo/Oro) */
@@ -1576,4 +1569,12 @@
     background: #D4AF37 !important;
     color: #000 !important;
     border: none !important;
+}
+
+.asian-flash-condition {
+    color: #FFDF00;
+    font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+    font-weight: 600;
+    margin-top: 0.5vh;
+    letter-spacing: 0.03em;
 }

@@ -152,7 +152,7 @@ function htmlCarruselOfertas(ofertas = []) {
                               ${(precioOriginalVal > precioVigenteVal) ? `<span class="asian-flash-original">${escapeHtml(precioStr)}</span>` : ""}
                               <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
                           </div>
-                          ${tieneCondicion ? `<div style="color: #000; font-size: clamp(1rem, 1.2vw, 1.4rem); font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin: 0 auto 1.5vh; display: inline-block; background: linear-gradient(90deg, #FFDF00, #FFA500, #FFDF00); padding: 0.4em 1em; border-radius: 50px; box-shadow: 0 0 15px rgba(255, 215, 0, 0.8), inset 0 2px 4px rgba(255,255,255,0.8); border: 2px solid #FFF; text-shadow: 1px 1px 0px rgba(255,255,255,0.5); transform: scale(1.05); animation: pulseGold 2s infinite;">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
+                          ${tieneCondicion ? `<div class="asian-flash-condition">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
                           <div class="asian-flash-progress card-progress">
                             <div class="asian-flash-progress-bar" style="width: ${porcentaje}%;"></div>
                             <div class="asian-flash-progress-text">${porcentaje}% VENDIDO</div>
