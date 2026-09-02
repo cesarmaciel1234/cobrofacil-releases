@@ -106,10 +106,10 @@ function htmlCarruselOfertas(ofertas = []) {
         const descuento = descuentoPct(precioOriginalVal, precioVigenteVal);
         const unidad = unidadProducto(item);
         const ahorro = (precioOriginalVal > precioVigenteVal) ? formatMoney(precioOriginalVal - precioVigenteVal) : "";
-        const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐ NUEVO";
-
+        const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐⭐⭐⭐⭐ NUEVO";
         // Ventas dinámicas
-        const vendidosReales = item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.tickets_dia || item.volumen_dia || item.tickets || item.volumen || 0;
+        const vendidosReales = item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.volumen_dia || item.volumen || 0;
+        const ticketsReales = item.tickets || item.veces || item.tickets_dia || item.cantidad_tickets || 0;
         let porcentaje = 0;
         let comprando = 0;
         let mostrarVendido = 0;
@@ -117,8 +117,9 @@ function htmlCarruselOfertas(ofertas = []) {
         // Mostrar SIEMPRE la condición (ej. Llevando 2 kilos) porque en la TV todo es precio mayorista
         const tieneCondicion = true;
         if (vendidosReales > 0) {
-            comprando = vendidosReales;
+            comprando = ticketsReales > 0 ? ticketsReales : Math.max(1, Math.floor(vendidosReales / 2));
             mostrarVendido = Math.min(99, Math.round(vendidosReales));
+
 
             const stockTotal = item.stock_inicial || (vendidosReales + (item.stock || (vendidosReales < 10 ? 20 : Math.round(vendidosReales * 1.3))));
             porcentaje = Math.min(99, Math.max(5, Math.round((vendidosReales / stockTotal) * 100)));
