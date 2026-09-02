@@ -169,7 +169,7 @@ function htmlCarruselOfertas(ofertas = []) {
                                 <div class="asian-flash-avatar">👤</div>
                                 <div class="asian-flash-avatar">👤</div>
                             </div>
-                            <span class="asian-flash-social-text"><strong>${comprando}</strong> ${comprando === 1 ? 'FAMILIA ELIGE HOY' : 'FAMILIAS ELIGEN HOY'}</span>
+                            <span class="asian-flash-social-text"><strong>${comprando}</strong> ${comprando === 1 ? 'FAMILIA COMPRÓ HOY' : 'FAMILIAS COMPRARON HOY'}</span>
                         </div>
                     </div>
                 </div>
