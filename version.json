@@ -1,7 +1,7 @@
 {
-  "app_version": "13.2.7",
+  "app_version": "13.2.8",
   "channel": "stable",
-  "build_date": "2026-09-03 16:42:34",
+  "build_date": "2026-09-03 19:01:37",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -27,6 +27,12 @@
       "checksum": "98a0177d471d6ad4f5067da22f81ab3d",
       "channel": "stable",
       "size": 559
+    },
+    "check_exact_diff.py": {
+      "version": "1.0.0",
+      "checksum": "2ee19b90d0f814b2b3c53a3e9d340f05",
+      "channel": "stable",
+      "size": 653
     },
     "check_failed_step.py": {
       "version": "1.0.0",
@@ -165,6 +171,18 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
+    },
+    "downloaded_tv_cara.bin": {
+      "version": "1.0.0",
+      "checksum": "758d6455a7fd63612be737e8b42624c2",
+      "channel": "stable",
+      "size": 654845
+    },
+    "download_test.py": {
+      "version": "1.0.0",
+      "checksum": "a2b9eca99ad78ed690d78bed878e8d8f",
+      "channel": "stable",
+      "size": 626
     },
     "error.txt": {
       "version": "1.0.0",
@@ -424,6 +442,12 @@
       "channel": "stable",
       "size": 12942
     },
+    "inspect_bin.py": {
+      "version": "1.0.0",
+      "checksum": "8ccfe0f7a0d546ac7d3b8ac61aef55e8",
+      "channel": "stable",
+      "size": 766
+    },
     "lanzador_cerebro.py": {
       "version": "1.0.0",
       "checksum": "62ec7a63b61d5b980dd410963a26b4a7",
@@ -441,6 +465,12 @@
       "checksum": "3f426cf5a7f945205e3348314b2316bc",
       "channel": "stable",
       "size": 24068
+    },
+    "patch_blob.py": {
+      "version": "1.0.0",
+      "checksum": "b14e70f212ab63df56a2d488ceaf7d9c",
+      "channel": "stable",
+      "size": 1140
     },
     "patch_cache.py": {
       "version": "1.0.0",
@@ -570,9 +600,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "1d3ab83fccbb0fb6c229b182b3fc3161",
+      "checksum": "5eab220d50a6c53dffd896461cb751df",
       "channel": "stable",
-      "size": 977237
+      "size": 977732
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -5772,9 +5802,9 @@
     },
     "src/carteleria/lanzador_tv/tv_cara_pack.py": {
       "version": "1.0.0",
-      "checksum": "933869bef8d3ebde1084a4b5644559d5",
+      "checksum": "7d304faa0848b4e6f69a37d98217520d",
       "channel": "stable",
-      "size": 4919
+      "size": 5629
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",

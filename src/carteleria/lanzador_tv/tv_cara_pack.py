@@ -68,10 +68,25 @@ def buscar_blob() -> str:
         candidatos.append(os.path.join(get_base_path(), "_internal", BLOB_NAME))
     except Exception:
         pass
+    # Tambien buscar en la carpeta src/ actualizada por OTA
+    try:
+        from src.utils.paths import get_base_path
+        candidatos.append(os.path.join(get_base_path(), "src", "carteleria", "lanzador_tv", BLOB_NAME))
+    except Exception:
+        pass
+
+    validos = []
     for path in candidatos:
         if path and os.path.isfile(path) and os.path.getsize(path) > 32:
-            return path
-    return ""
+            validos.append(path)
+            
+    if not validos:
+        return ""
+        
+    # Devolver el blob más reciente (por fecha de modificación) para asegurar que se usa el descargado por OTA
+    import os
+    validos.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+    return validos[0]
 
 
 def cargar_cara_en_memoria() -> dict[str, bytes] | None:
