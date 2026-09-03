@@ -1,7 +1,7 @@
 {
-  "app_version": "13.2.6",
+  "app_version": "13.2.7",
   "channel": "stable",
-  "build_date": "2026-09-03 16:16:54",
+  "build_date": "2026-09-03 16:42:34",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -81,6 +81,12 @@
       "checksum": "0f79cba9985e1457d6df0bce36dc1ea8",
       "channel": "stable",
       "size": 416
+    },
+    "check_release_runs.py": {
+      "version": "1.0.0",
+      "checksum": "32d5ba4113743366930b4819f5d5844d",
+      "channel": "stable",
+      "size": 463
     },
     "check_release_run_v2.py": {
       "version": "1.0.0",
@@ -442,6 +448,18 @@
       "channel": "stable",
       "size": 950
     },
+    "patch_cache2.py": {
+      "version": "1.0.0",
+      "checksum": "76abd351caeddbc3c285c3d9dcee56c6",
+      "channel": "stable",
+      "size": 517
+    },
+    "patch_cache3.py": {
+      "version": "1.0.0",
+      "checksum": "0a2722abb697492b7284dc61da4cbd96",
+      "channel": "stable",
+      "size": 854
+    },
     "PLAN_MEJORA_CARTELERIA_HTML.md": {
       "version": "1.0.0",
       "checksum": "995161a6f13798f25a3b3d844b0d8483",
@@ -552,7 +570,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "53cc01b2fd47c0881240f3b52ddeaad0",
+      "checksum": "1d3ab83fccbb0fb6c229b182b3fc3161",
       "channel": "stable",
       "size": 977237
     },
@@ -5712,9 +5730,9 @@
     },
     "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "7c758f74e0db084cadfc76328d59ff4a",
+      "checksum": "dd63b97153124f4957ca01e0b84e52c8",
       "channel": "stable",
-      "size": 16927
+      "size": 17076
     },
     "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",

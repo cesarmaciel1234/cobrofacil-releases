@@ -267,7 +267,8 @@ class ServidorCuello:
         self.browser_process = None
         self.screen_index = None
         self.web_root, self.zip_store = cargar_web_tv()
-        self._kiosk_profile = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
+        import time
+        self._kiosk_profile = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{int(time.time())}")
         self._teclas = None
         self.last_error = ""
 
@@ -432,9 +433,11 @@ class ServidorCuello:
         try:
             self._cerrar_navegador()
             
-            # Limpiar cache de Chromium para forzar recarga de CSS y JS en cada inicio
-            if os.path.exists(self._kiosk_profile):
-                shutil.rmtree(self._kiosk_profile, ignore_errors=True)
+            # Limpiar perfiles viejos de Chromium para no llenar el disco
+            import glob
+            for old_prof in glob.glob(os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk-*")):
+                if old_prof != self._kiosk_profile:
+                    shutil.rmtree(old_prof, ignore_errors=True)
                 
             url = f"http://{self.host}:{self.port}/"
             sistema = platform.system()
