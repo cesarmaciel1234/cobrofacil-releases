@@ -18,6 +18,7 @@ import platform
 import logging
 import tempfile
 import sys
+import shutil
 from urllib.parse import parse_qs, unquote, urlparse
 
 from src.utils.paths import get_base_path, get_resource_path
@@ -430,6 +431,11 @@ class ServidorCuello:
     def _lanzar_navegador(self):
         try:
             self._cerrar_navegador()
+            
+            # Limpiar cache de Chromium para forzar recarga de CSS y JS en cada inicio
+            if os.path.exists(self._kiosk_profile):
+                shutil.rmtree(self._kiosk_profile, ignore_errors=True)
+                
             url = f"http://{self.host}:{self.port}/"
             sistema = platform.system()
             flags = self._flags_kiosk(url)

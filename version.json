@@ -1,14 +1,14 @@
 {
-  "app_version": "13.2.5",
+  "app_version": "13.2.4",
   "channel": "stable",
-  "build_date": "2026-09-02 18:50:52",
+  "build_date": "2026-09-03 16:08:43",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
       "version": "1.0.0",
-      "checksum": "1fbb452b20583c224e0e2ae73f310883",
+      "checksum": "3dcfd80769aec75a0fe9430bf95d0882",
       "channel": "stable",
-      "size": 4226
+      "size": 4267
     },
     "add_drain.py": {
       "version": "1.0.0",
@@ -28,11 +28,71 @@
       "channel": "stable",
       "size": 559
     },
+    "check_failed_step.py": {
+      "version": "1.0.0",
+      "checksum": "947f02376ea8484ffb2d75aa6c928b55",
+      "channel": "stable",
+      "size": 681
+    },
+    "check_issues.py": {
+      "version": "1.0.0",
+      "checksum": "ce6f6853b2118cf0a751cb40bb8fb021",
+      "channel": "stable",
+      "size": 482
+    },
+    "check_jobs.py": {
+      "version": "1.0.0",
+      "checksum": "95fc76fd540c7151a4fefd44e0977bf7",
+      "channel": "stable",
+      "size": 549
+    },
     "check_latest_run.py": {
       "version": "1.0.0",
       "checksum": "0f79cba9985e1457d6df0bce36dc1ea8",
       "channel": "stable",
       "size": 416
+    },
+    "check_latest_run_2.py": {
+      "version": "1.0.0",
+      "checksum": "8ecf449cc4b4d52c3078d8e88d1cba6e",
+      "channel": "stable",
+      "size": 394
+    },
+    "check_release.py": {
+      "version": "1.0.0",
+      "checksum": "fe49f6512e2603c04165777d700bfb5d",
+      "channel": "stable",
+      "size": 451
+    },
+    "check_release_all_steps.py": {
+      "version": "1.0.0",
+      "checksum": "cff6780fe5f212b73968cfddebf0c6da",
+      "channel": "stable",
+      "size": 688
+    },
+    "check_release_failed_step.py": {
+      "version": "1.0.0",
+      "checksum": "047a3102aaecfdde62801747d5f8e949",
+      "channel": "stable",
+      "size": 703
+    },
+    "check_release_run.py": {
+      "version": "1.0.0",
+      "checksum": "0f79cba9985e1457d6df0bce36dc1ea8",
+      "channel": "stable",
+      "size": 416
+    },
+    "check_release_run_v2.py": {
+      "version": "1.0.0",
+      "checksum": "0f79cba9985e1457d6df0bce36dc1ea8",
+      "channel": "stable",
+      "size": 416
+    },
+    "check_runs.py": {
+      "version": "1.0.0",
+      "checksum": "066496442766b9cb4e34fbc842370044",
+      "channel": "stable",
+      "size": 498
     },
     "check_step.py": {
       "version": "1.0.0",
@@ -51,6 +111,24 @@
       "checksum": "383aa43a706cf55b52284c853a8fd810",
       "channel": "stable",
       "size": 759
+    },
+    "check_steps_run4011.py": {
+      "version": "1.0.0",
+      "checksum": "13fe4e75f96e52b0bc4104982a8a21d1",
+      "channel": "stable",
+      "size": 666
+    },
+    "check_steps_run541.py": {
+      "version": "1.0.0",
+      "checksum": "13fe4e75f96e52b0bc4104982a8a21d1",
+      "channel": "stable",
+      "size": 666
+    },
+    "check_steps_run541_real.py": {
+      "version": "1.0.0",
+      "checksum": "cff6780fe5f212b73968cfddebf0c6da",
+      "channel": "stable",
+      "size": 688
     },
     "debug_paso5.py": {
       "version": "1.0.0",
@@ -75,6 +153,12 @@
       "checksum": "96da0963e559a1c226db3c3ba6eec8ce",
       "channel": "stable",
       "size": 362
+    },
+    "diffs.txt": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
     },
     "error.txt": {
       "version": "1.0.0",
@@ -274,6 +358,12 @@
       "channel": "stable",
       "size": 2232
     },
+    "fix_yaml.py": {
+      "version": "1.0.0",
+      "checksum": "79960955d41d2857ac37dc9ee412f29c",
+      "channel": "stable",
+      "size": 2214
+    },
     "get_commit496.py": {
       "version": "1.0.0",
       "checksum": "28a287a332f40f550d02c689141b804b",
@@ -345,6 +435,12 @@
       "checksum": "3f426cf5a7f945205e3348314b2316bc",
       "channel": "stable",
       "size": 24068
+    },
+    "patch_cache.py": {
+      "version": "1.0.0",
+      "checksum": "8acc87dd51322712d4d907709ec01c13",
+      "channel": "stable",
+      "size": 950
     },
     "PLAN_MEJORA_CARTELERIA_HTML.md": {
       "version": "1.0.0",
@@ -456,9 +552,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "7f1d1c85a0cbf71f200a9850c715f52b",
+      "checksum": "dd0fc02cc01f178383ef2d465b2c0b3e",
       "channel": "stable",
-      "size": 601219
+      "size": 856514
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -663,6 +759,3396 @@
       "checksum": "849d0a17d5abbc7ffd77dbaf4a701911",
       "channel": "stable",
       "size": 173630
+    },
+    "extract_tmp/src/config.py": {
+      "version": "1.0.0",
+      "checksum": "be9857ac4a9cd34386c598f96ae1259f",
+      "channel": "stable",
+      "size": 4731
+    },
+    "extract_tmp/src/logger.py": {
+      "version": "1.0.0",
+      "checksum": "6ddaeefe7fe183351c2393d3e6739887",
+      "channel": "stable",
+      "size": 1798
+    },
+    "extract_tmp/src/main_window.py": {
+      "version": "1.0.0",
+      "checksum": "fbf2259a45e9f0b80e3f94ea9ffce0bd",
+      "channel": "stable",
+      "size": 43413
+    },
+    "extract_tmp/src/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6d64996e93b5e633bc65c4401d10c749",
+      "channel": "stable",
+      "size": 47
+    },
+    "extract_tmp/src/admin/admin_card.py": {
+      "version": "1.0.0",
+      "checksum": "5442c23354284c045dc830c07e55ebf8",
+      "channel": "stable",
+      "size": 1662
+    },
+    "extract_tmp/src/admin/admin_importexport.py": {
+      "version": "1.0.0",
+      "checksum": "3dfe57f1328d4fad60b473e80c82bd4d",
+      "channel": "stable",
+      "size": 15313
+    },
+    "extract_tmp/src/admin/echarts.min.js": {
+      "version": "1.0.0",
+      "checksum": "334d8b37c4eed7279d054cf21637bc24",
+      "channel": "stable",
+      "size": 1029203
+    },
+    "extract_tmp/src/admin/mp_explosion.py": {
+      "version": "1.0.0",
+      "checksum": "c86a46a243056294432ecfc02811c9ca",
+      "channel": "stable",
+      "size": 2257
+    },
+    "extract_tmp/src/admin/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f2412162edb8f324c330aa58736706fe",
+      "channel": "stable",
+      "size": 78
+    },
+    "extract_tmp/src/admin/ai_boss/ai_boss_main.py": {
+      "version": "1.0.0",
+      "checksum": "99423c023f3ed810d082f8fe3733b20e",
+      "channel": "stable",
+      "size": 2634
+    },
+    "extract_tmp/src/admin/ai_boss/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/ai_boss/componentes/ai_bubble.py": {
+      "version": "1.0.0",
+      "checksum": "cf5e06fbb675e38bfe3b0e13e1c5446f",
+      "channel": "stable",
+      "size": 5780
+    },
+    "extract_tmp/src/admin/ai_boss/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/auditoria_inventario/auditoria_main.py": {
+      "version": "1.0.0",
+      "checksum": "eac4a434419e2080741a7ef8d0ab0e38",
+      "channel": "stable",
+      "size": 11150
+    },
+    "extract_tmp/src/admin/auditoria_inventario/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/cierre/cierre_main.py": {
+      "version": "1.0.0",
+      "checksum": "99b6202b0f37d61afcf5c84183efc324",
+      "channel": "stable",
+      "size": 384
+    },
+    "extract_tmp/src/admin/cierre/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/clientes/admin_clientes_main.py": {
+      "version": "1.0.0",
+      "checksum": "f00c1c19f2a91b016f0ed0366b3cf85c",
+      "channel": "stable",
+      "size": 20471
+    },
+    "extract_tmp/src/admin/clientes/theme.py": {
+      "version": "1.0.0",
+      "checksum": "c42baec35895d9a5d5230956a70a0bed",
+      "channel": "stable",
+      "size": 288
+    },
+    "extract_tmp/src/admin/clientes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/clientes/componentes/dialogo_editar_cliente.py": {
+      "version": "1.0.0",
+      "checksum": "41440e2a3bd5284e26e7e0e53d6d8ff9",
+      "channel": "stable",
+      "size": 5682
+    },
+    "extract_tmp/src/admin/clientes/componentes/dialogo_historial_cliente.py": {
+      "version": "1.0.0",
+      "checksum": "44ec63d8dd94c99691df134aed6bc8d3",
+      "channel": "stable",
+      "size": 9943
+    },
+    "extract_tmp/src/admin/clientes/componentes/dialogo_nuevo_cliente.py": {
+      "version": "1.0.0",
+      "checksum": "8a7815c66d1351cabd613803764427f5",
+      "channel": "stable",
+      "size": 4334
+    },
+    "extract_tmp/src/admin/clientes/componentes/dialogo_recalculo_fiado.py": {
+      "version": "1.0.0",
+      "checksum": "cc37031fd4b1f25bad4d47bac1d31953",
+      "channel": "stable",
+      "size": 7259
+    },
+    "extract_tmp/src/admin/clientes/componentes/metric_card.py": {
+      "version": "1.0.0",
+      "checksum": "bb61c965de5634e28c79b18b9f0dd6ab",
+      "channel": "stable",
+      "size": 2659
+    },
+    "extract_tmp/src/admin/clientes/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/configuracion/configuracion_main.py": {
+      "version": "1.0.0",
+      "checksum": "93c8dee227ce8a12916a181fcaabdd6c",
+      "channel": "stable",
+      "size": 11045
+    },
+    "extract_tmp/src/admin/configuracion/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/configuracion/componentes/configuracion_pcmaestra.py": {
+      "version": "1.0.0",
+      "checksum": "3566ca97bd26bf77e6c58b1167745f9a",
+      "channel": "stable",
+      "size": 4309
+    },
+    "extract_tmp/src/admin/configuracion/componentes/config_button.py": {
+      "version": "1.0.0",
+      "checksum": "d03294361d82050bfa5a64cfd5338b4a",
+      "channel": "stable",
+      "size": 5101
+    },
+    "extract_tmp/src/admin/configuracion/componentes/config_category.py": {
+      "version": "1.0.0",
+      "checksum": "7e973ecf8cf6187c5e6660d98f61e6ee",
+      "channel": "stable",
+      "size": 1791
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_actualizaciones.py": {
+      "version": "1.0.0",
+      "checksum": "3c146c791732cdf1b5baa4619da40613",
+      "channel": "stable",
+      "size": 5676
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_administrar_cajas.py": {
+      "version": "1.0.0",
+      "checksum": "25910095ce9ad7fe5bab5faab7e6d400",
+      "channel": "stable",
+      "size": 3211
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_alertas_efectivo.py": {
+      "version": "1.0.0",
+      "checksum": "3cfc368c7fad0d6b6ae014c0722f782d",
+      "channel": "stable",
+      "size": 3566
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_balanza.py": {
+      "version": "1.0.0",
+      "checksum": "6b88db332c6cce4f6bcd3efa204cb79d",
+      "channel": "stable",
+      "size": 9019
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_cajon.py": {
+      "version": "1.0.0",
+      "checksum": "38040ad1203b65d1dfd05878ddb34ea7",
+      "channel": "stable",
+      "size": 4392
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_dos_tiketeras.py": {
+      "version": "1.0.0",
+      "checksum": "8d5ad1d29efa2a259c08acf8bd930ff4",
+      "channel": "stable",
+      "size": 10924
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_facturacion.py": {
+      "version": "1.0.0",
+      "checksum": "614caaf94735a810577ec9df059e800e",
+      "channel": "stable",
+      "size": 12591
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_impuestos.py": {
+      "version": "1.0.0",
+      "checksum": "36050292606450f40c1a0d230708ab6a",
+      "channel": "stable",
+      "size": 9592
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_integraciones_nube.py": {
+      "version": "1.0.0",
+      "checksum": "3ad00aa24bcbb4bf1233f621f8bce1e6",
+      "channel": "stable",
+      "size": 3533
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_lector_codigos.py": {
+      "version": "1.0.0",
+      "checksum": "baebad9a0ece275f960263301abedc7d",
+      "channel": "stable",
+      "size": 2862
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_licencia.py": {
+      "version": "1.0.0",
+      "checksum": "2d8d38e69bc7888c5055e3debcc09925",
+      "channel": "stable",
+      "size": 4193
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_migracion_eleventa.py": {
+      "version": "1.0.0",
+      "checksum": "2dce6455755ef358b65e5033fde74f20",
+      "channel": "stable",
+      "size": 10145
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_notificaciones_correo.py": {
+      "version": "1.0.0",
+      "checksum": "4f703d06d933136cc0f9a2c866cdd152",
+      "channel": "stable",
+      "size": 4913
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_opciones_habilitadas.py": {
+      "version": "1.0.0",
+      "checksum": "2f0edf43613eb148b75b71695a4a5cda",
+      "channel": "stable",
+      "size": 4280
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_pin_local.py": {
+      "version": "1.0.0",
+      "checksum": "a7e1923998d7214b2b7f642f82c76ea6",
+      "channel": "stable",
+      "size": 7964
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_respaldo.py": {
+      "version": "1.0.0",
+      "checksum": "c4abb6596e1f15c00fd6f5eb262daa29",
+      "channel": "stable",
+      "size": 7558
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_simbolo_moneda.py": {
+      "version": "1.0.0",
+      "checksum": "876d4c5f1917fe965dbf5998638334ab",
+      "channel": "stable",
+      "size": 2482
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_terminal_tpv.py": {
+      "version": "1.0.0",
+      "checksum": "0eefb57461959c9e092422610da6bf7b",
+      "channel": "stable",
+      "size": 16390
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_ticket.py": {
+      "version": "1.0.0",
+      "checksum": "3eea89329a97118a9cfea89543359523",
+      "channel": "stable",
+      "size": 6591
+    },
+    "extract_tmp/src/admin/configuracion/componentes/dialogo_unidades_medida.py": {
+      "version": "1.0.0",
+      "checksum": "0e3ab1a0faba8f5e14ae2a3e4a7bd5a7",
+      "channel": "stable",
+      "size": 2605
+    },
+    "extract_tmp/src/admin/configuracion/componentes/migration_worker.py": {
+      "version": "1.0.0",
+      "checksum": "acff8479beb56bfda5d3906adda5aa63",
+      "channel": "stable",
+      "size": 2344
+    },
+    "extract_tmp/src/admin/configuracion/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/dashboard/dashboard_main.py": {
+      "version": "1.0.0",
+      "checksum": "fab1bd325a96ddcb0b6c2733eeb848c1",
+      "channel": "stable",
+      "size": 16712
+    },
+    "extract_tmp/src/admin/dashboard/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/etiquetas_panel_ui/etiquetas_panel_main.py": {
+      "version": "1.0.0",
+      "checksum": "08675c8901c487ec5bbfc6783729cb81",
+      "channel": "stable",
+      "size": 23739
+    },
+    "extract_tmp/src/admin/etiquetas_panel_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/hardware/hardware_main.py": {
+      "version": "1.0.0",
+      "checksum": "c12899c1a8da213035a77f4011b1edc3",
+      "channel": "stable",
+      "size": 40348
+    },
+    "extract_tmp/src/admin/hardware/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/hardware/componentes/hardware_card.py": {
+      "version": "1.0.0",
+      "checksum": "1d0df4d8a9f10d076fdf20a135d8f09d",
+      "channel": "stable",
+      "size": 3111
+    },
+    "extract_tmp/src/admin/hardware/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/importexport/importexport_main.py": {
+      "version": "1.0.0",
+      "checksum": "8bdbb7f691057ac361d7499122dd5430",
+      "channel": "stable",
+      "size": 15969
+    },
+    "extract_tmp/src/admin/importexport/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/legacy/admin11_proveedores.py": {
+      "version": "1.0.0",
+      "checksum": "11a5bcb03792dea166edee6a3d781367",
+      "channel": "stable",
+      "size": 2943
+    },
+    "extract_tmp/src/admin/legacy/admin12_ai_boss.py": {
+      "version": "1.0.0",
+      "checksum": "5bb1fafef66ed84f574a7efd9f3a9d3e",
+      "channel": "stable",
+      "size": 7862
+    },
+    "extract_tmp/src/admin/legacy/admin6_red_lan.py": {
+      "version": "1.0.0",
+      "checksum": "381ac3b405d33734fe08c6072c2d00a4",
+      "channel": "stable",
+      "size": 940
+    },
+    "extract_tmp/src/admin/legacy/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/mercadopago/mercadopago_main.py": {
+      "version": "1.0.0",
+      "checksum": "6779bfc90636afdb0b1c85be2517715a",
+      "channel": "stable",
+      "size": 36663
+    },
+    "extract_tmp/src/admin/mercadopago/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/mercadopago/componentes/mp_polling_thread.py": {
+      "version": "1.0.0",
+      "checksum": "523057de073e3836db1a88675c3bf4f9",
+      "channel": "stable",
+      "size": 6644
+    },
+    "extract_tmp/src/admin/mercadopago/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/motor_descuentos_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "8d6530d3913a9f5ff4399640008db987",
+      "channel": "stable",
+      "size": 99
+    },
+    "extract_tmp/src/admin/motor_descuentos_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "0389611360d3fbe1e818a13f04d3cd4a",
+      "channel": "stable",
+      "size": 37
+    },
+    "extract_tmp/src/admin/nexus_admin/nexus_admin_main.py": {
+      "version": "1.0.0",
+      "checksum": "ea996363866eb4f10fa45998ac561573",
+      "channel": "stable",
+      "size": 35125
+    },
+    "extract_tmp/src/admin/nexus_admin/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/nexus_admin/componentes/nexus_panel_cen.py": {
+      "version": "1.0.0",
+      "checksum": "59bde0a3ba1e9c6f158b0f87dac58234",
+      "channel": "stable",
+      "size": 20865
+    },
+    "extract_tmp/src/admin/nexus_admin/componentes/nexus_panel_der.py": {
+      "version": "1.0.0",
+      "checksum": "6f0411806158222578cfbb9f27a9e390",
+      "channel": "stable",
+      "size": 34395
+    },
+    "extract_tmp/src/admin/nexus_admin/componentes/nexus_panel_izq.py": {
+      "version": "1.0.0",
+      "checksum": "0bae097afa47dbe2c1bcb4b301f72184",
+      "channel": "stable",
+      "size": 14094
+    },
+    "extract_tmp/src/admin/nexus_admin/componentes/nexus_panel_vivo.py": {
+      "version": "1.0.0",
+      "checksum": "535f87aa749fa3047990d36a128b766d",
+      "channel": "stable",
+      "size": 5394
+    },
+    "extract_tmp/src/admin/nexus_admin/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/proveedores/proveedores_main.py": {
+      "version": "1.0.0",
+      "checksum": "a1072ebdabc8d23e0d0ad33e8f6eeb79",
+      "channel": "stable",
+      "size": 2926
+    },
+    "extract_tmp/src/admin/proveedores/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/red_lan/red_lan_main.py": {
+      "version": "1.0.0",
+      "checksum": "af66297daf7698688fffa56cdd62f91a",
+      "channel": "stable",
+      "size": 24801
+    },
+    "extract_tmp/src/admin/red_lan/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/admin/ventas_digitales/ventas_digitales_main.py": {
+      "version": "1.0.0",
+      "checksum": "56a32b189d75f81243642b8d75d46fa2",
+      "channel": "stable",
+      "size": 31392
+    },
+    "extract_tmp/src/admin/ventas_digitales/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/assets/candado.svg": {
+      "version": "1.0.0",
+      "checksum": "246289e0deb189fe7fb3cc81ff028623",
+      "channel": "stable",
+      "size": 302
+    },
+    "extract_tmp/src/assets/chatbot.svg": {
+      "version": "1.0.0",
+      "checksum": "54c4a54da30d27cd0bb125d6a2687c6d",
+      "channel": "stable",
+      "size": 448
+    },
+    "extract_tmp/src/assets/pos_icon.svg": {
+      "version": "1.0.0",
+      "checksum": "0b139ab2d386a31afe8cb51b12216f8e",
+      "channel": "stable",
+      "size": 5891
+    },
+    "extract_tmp/src/assets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/assets/publicidad/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/base_de_datos/autoblindaje_db.py": {
+      "version": "1.0.0",
+      "checksum": "88e3aafed62deb1912ed8be06aae3f81",
+      "channel": "stable",
+      "size": 48922
+    },
+    "extract_tmp/src/base_de_datos/database.py": {
+      "version": "1.0.0",
+      "checksum": "617d1975e5f738a599b5ca92e616283f",
+      "channel": "stable",
+      "size": 81510
+    },
+    "extract_tmp/src/base_de_datos/diario_ventas_externo.py": {
+      "version": "1.0.0",
+      "checksum": "69c3d63ee366f342502b0373868ef299",
+      "channel": "stable",
+      "size": 18884
+    },
+    "extract_tmp/src/base_de_datos/motor_flash_transacciones.py": {
+      "version": "1.0.0",
+      "checksum": "97076a69d565067fb46513c857dec04f",
+      "channel": "stable",
+      "size": 5726
+    },
+    "extract_tmp/src/base_de_datos/offline_sync.py": {
+      "version": "1.0.0",
+      "checksum": "19f0d352a2ae8b036500548c1599cef5",
+      "channel": "stable",
+      "size": 6967
+    },
+    "extract_tmp/src/base_de_datos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/cajero_activo.py": {
+      "version": "1.0.0",
+      "checksum": "00f75b96a07dedc028730b79a20223e1",
+      "channel": "stable",
+      "size": 1190
+    },
+    "extract_tmp/src/cajero/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f2412162edb8f324c330aa58736706fe",
+      "channel": "stable",
+      "size": 78
+    },
+    "extract_tmp/src/cajero/assets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/dialogo_ingreso.py": {
+      "version": "1.0.0",
+      "checksum": "a1913336044a59e7e80f2d611e57545f",
+      "channel": "stable",
+      "size": 9405
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/fiado.py": {
+      "version": "1.0.0",
+      "checksum": "a69473c4d13e7c87436cae0fe0c91ad0",
+      "channel": "stable",
+      "size": 15169
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/ingreso_efectivo.py": {
+      "version": "1.0.0",
+      "checksum": "4171349fdc9ee963a2f0a4a7c1b19886",
+      "channel": "stable",
+      "size": 1558
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/otros_ingresos.py": {
+      "version": "1.0.0",
+      "checksum": "f2723ce2fb3543485ca5522fcb8a88eb",
+      "channel": "stable",
+      "size": 2027
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "af833ef39735d392c0d0e3c789178c3f",
+      "channel": "stable",
+      "size": 161
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/componentes_paso5cobranza/logica_cobranza.py": {
+      "version": "1.0.0",
+      "checksum": "dee044d0a23c1cd63fd4379906fb82e6",
+      "channel": "stable",
+      "size": 4032
+    },
+    "extract_tmp/src/cajero/ingresar_efectivo/componentes_paso5cobranza/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f69749e6a60f247d99e0fd34a19aeb67",
+      "channel": "stable",
+      "size": 56
+    },
+    "extract_tmp/src/cajero/paso5_terminal/carlis_list.py": {
+      "version": "1.0.0",
+      "checksum": "d1fbb7eabd8d1586f39029b9d1a98934",
+      "channel": "stable",
+      "size": 4889
+    },
+    "extract_tmp/src/cajero/paso5_terminal/paso5_terminal.py": {
+      "version": "1.0.0",
+      "checksum": "6112fbd1eb9b3a11645ed503032b8fc1",
+      "channel": "stable",
+      "size": 111445
+    },
+    "extract_tmp/src/cajero/paso5_terminal/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "308043239aced672991013e744af1623",
+      "channel": "stable",
+      "size": 43
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/barra_de_herramientas_inferior.py": {
+      "version": "1.0.0",
+      "checksum": "e897b45eb864ee00a54d950a41599dfb",
+      "channel": "stable",
+      "size": 3376
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/cabecera_superior.py": {
+      "version": "1.0.0",
+      "checksum": "2d5144b89ed597f408935554a6d367b6",
+      "channel": "stable",
+      "size": 3370
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/centro_de_notificaciones.py": {
+      "version": "1.0.0",
+      "checksum": "a620c267225f042a014257e21b79eb82",
+      "channel": "stable",
+      "size": 2887
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/nav_row_border_overlay.py": {
+      "version": "1.0.0",
+      "checksum": "c749afa180bc4a717a5f5374ccff8213",
+      "channel": "stable",
+      "size": 1830
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/panel_de_totales.py": {
+      "version": "1.0.0",
+      "checksum": "5d6f95d46b514f9c1ee06feeee497ea0",
+      "channel": "stable",
+      "size": 3026
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/tabla_de_productos.py": {
+      "version": "1.0.0",
+      "checksum": "cc17f9a086d764e6211630c045278cbc",
+      "channel": "stable",
+      "size": 2282
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "292f48e72b64e78cf8cf4552a0f27179",
+      "channel": "stable",
+      "size": 42
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/botones_atajos.py": {
+      "version": "1.0.0",
+      "checksum": "35eb371fa6791b7f3d84f197168877b3",
+      "channel": "stable",
+      "size": 1973
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_bloquear.py": {
+      "version": "1.0.0",
+      "checksum": "bf23aed5242c587c2f75f63422e22324",
+      "channel": "stable",
+      "size": 695
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_chatbot.py": {
+      "version": "1.0.0",
+      "checksum": "3b779377b32fd525b812ee2ca1a9bb8e",
+      "channel": "stable",
+      "size": 687
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_espera.py": {
+      "version": "1.0.0",
+      "checksum": "7a114c0370b84a087cf064d5ca57d8e8",
+      "channel": "stable",
+      "size": 429
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_teclado.py": {
+      "version": "1.0.0",
+      "checksum": "8a052271c598eea679b831eb02365b2d",
+      "channel": "stable",
+      "size": 355
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/boton_tema.py": {
+      "version": "1.0.0",
+      "checksum": "f5822ea6fbc3b218d16030e6bbd13a29",
+      "channel": "stable",
+      "size": 348
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "4938112596c7a1147d5b8c9d677a7478",
+      "channel": "stable",
+      "size": 60
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/teclado_virtual/virtual_keyboard_paso5.py": {
+      "version": "1.0.0",
+      "checksum": "89c942b3008bac7b7bf66739c7f4ebc6",
+      "channel": "stable",
+      "size": 13962
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componentes_barra_inferior/teclado_virtual/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/mensaje_eliminacion.py": {
+      "version": "1.0.0",
+      "checksum": "4222990a0c039493a07f2348dd5b3b49",
+      "channel": "stable",
+      "size": 3468
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/suprimir_articulo.py": {
+      "version": "1.0.0",
+      "checksum": "2e7f3d8e271be9352f923b2e57b20a70",
+      "channel": "stable",
+      "size": 1244
+    },
+    "extract_tmp/src/cajero/paso5_terminal/componentes_paso5_terminal/componente_tabla_de_productos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso5_terminal/dialogos/dialogo_candado.py": {
+      "version": "1.0.0",
+      "checksum": "d0e492ac25e5aa90535b3100209270f8",
+      "channel": "stable",
+      "size": 5557
+    },
+    "extract_tmp/src/cajero/paso5_terminal/dialogos/dialogo_editar_cantidad.py": {
+      "version": "1.0.0",
+      "checksum": "1b265733db45498daddaaa2395a7819c",
+      "channel": "stable",
+      "size": 2422
+    },
+    "extract_tmp/src/cajero/paso5_terminal/dialogos/dialogo_pin.py": {
+      "version": "1.0.0",
+      "checksum": "0e9739d49c2bdb7a61d6e62f6ff9b608",
+      "channel": "stable",
+      "size": 3177
+    },
+    "extract_tmp/src/cajero/paso5_terminal/dialogos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso5_terminal/logica/terminal_controller.py": {
+      "version": "1.0.0",
+      "checksum": "fa5426a4bae9ffbe68772219eb25cc09",
+      "channel": "stable",
+      "size": 4132
+    },
+    "extract_tmp/src/cajero/paso5_terminal/logica/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso5_terminal/ventanas_emergentes/emergentes_de_caja.py": {
+      "version": "1.0.0",
+      "checksum": "4c5ddac21b51b8392ef735fa53a5becf",
+      "channel": "stable",
+      "size": 14056
+    },
+    "extract_tmp/src/cajero/paso5_terminal/ventanas_emergentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso6_cobro/paso6_cobro.py": {
+      "version": "1.0.0",
+      "checksum": "72a641d8fa519d01402de990cc086967",
+      "channel": "stable",
+      "size": 51183
+    },
+    "extract_tmp/src/cajero/paso6_cobro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e5e9b3a0cca6157a6adfce4615e887af",
+      "channel": "stable",
+      "size": 37
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/generador_iconos.py": {
+      "version": "1.0.0",
+      "checksum": "c025d4bcbd2dce875a473cf5266b9a5d",
+      "channel": "stable",
+      "size": 2640
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/mercadopago_integracion.py": {
+      "version": "1.0.0",
+      "checksum": "3bed66235fbaad453a4b67423113be33",
+      "channel": "stable",
+      "size": 24549
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/resumen_vuelto.py": {
+      "version": "1.0.0",
+      "checksum": "24baa9b4c5566a0895b63ebf58d9c606",
+      "channel": "stable",
+      "size": 1616
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/selector_metodo_pago.py": {
+      "version": "1.0.0",
+      "checksum": "37316051dd5982d55e40a35598e6b091",
+      "channel": "stable",
+      "size": 6021
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/teclado_numerico_lateral.py": {
+      "version": "1.0.0",
+      "checksum": "169fb429128ba0557b102af584f20fe2",
+      "channel": "stable",
+      "size": 4437
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/logica/cobro_controller.py": {
+      "version": "1.0.0",
+      "checksum": "5e3abd760aaec0b3ae08b9a605bb2c23",
+      "channel": "stable",
+      "size": 8755
+    },
+    "extract_tmp/src/cajero/paso6_cobro/componentes_paso6_cobro/logica/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso6_cobro/widgets/cliente_express.py": {
+      "version": "1.0.0",
+      "checksum": "4c3df0755d1c9ec233a603748a96d756",
+      "channel": "stable",
+      "size": 16990
+    },
+    "extract_tmp/src/cajero/paso6_cobro/widgets/fiado_express.py": {
+      "version": "1.0.0",
+      "checksum": "bcbae05b1b4eb5882897f257ef867fc4",
+      "channel": "stable",
+      "size": 16827
+    },
+    "extract_tmp/src/cajero/paso6_cobro/widgets/pagos_mixtos.py": {
+      "version": "1.0.0",
+      "checksum": "672d1f6bb4c6fb522be246b30fa0ab8a",
+      "channel": "stable",
+      "size": 7505
+    },
+    "extract_tmp/src/cajero/paso6_cobro/widgets/panel_cliente_fiado.py": {
+      "version": "1.0.0",
+      "checksum": "9ce00886cc92b5d7279233738d1cfe1c",
+      "channel": "stable",
+      "size": 6559
+    },
+    "extract_tmp/src/cajero/paso6_cobro/widgets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/paso8_historial/paso8_historial.py": {
+      "version": "1.0.0",
+      "checksum": "1b73430af89fa5d83267038eb14a734c",
+      "channel": "stable",
+      "size": 13860
+    },
+    "extract_tmp/src/cajero/paso8_historial/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "badf16d5c15be6dd76d4e53d931a2223",
+      "channel": "stable",
+      "size": 62
+    },
+    "extract_tmp/src/cajero/paso8_historial/componentes_paso8_historial/panel_detalle.py": {
+      "version": "1.0.0",
+      "checksum": "88183ac53c2aec2ceccd4fd7d511ee13",
+      "channel": "stable",
+      "size": 8911
+    },
+    "extract_tmp/src/cajero/paso8_historial/componentes_paso8_historial/stamp_label.py": {
+      "version": "1.0.0",
+      "checksum": "dfb412a37d0ee4c8581307068e251239",
+      "channel": "stable",
+      "size": 1129
+    },
+    "extract_tmp/src/cajero/paso8_historial/componentes_paso8_historial/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6df56f21f34d1aa09a889053d779779f",
+      "channel": "stable",
+      "size": 49
+    },
+    "extract_tmp/src/cajero/paso8_historial/logica/historial_controller.py": {
+      "version": "1.0.0",
+      "checksum": "02e8d7f08d7bb693574991d773f5e3e8",
+      "channel": "stable",
+      "size": 5360
+    },
+    "extract_tmp/src/cajero/paso8_historial/logica/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cajero/sacar_efectivo/dialogo_retiro.py": {
+      "version": "1.0.0",
+      "checksum": "acfe202fefc837cc58079abbb7ce7bff",
+      "channel": "stable",
+      "size": 5642
+    },
+    "extract_tmp/src/cajero/sacar_efectivo/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "52c66777db885c2ce494d2c85e1548e9",
+      "channel": "stable",
+      "size": 154
+    },
+    "extract_tmp/src/carteleria/admin15_carteleria.py": {
+      "version": "1.0.0",
+      "checksum": "ab229ca183933e7d1b3d0e1c644a41ec",
+      "channel": "stable",
+      "size": 16481
+    },
+    "extract_tmp/src/carteleria/assets_paths.py": {
+      "version": "1.0.0",
+      "checksum": "9df1a05dfc2a093385979639fafb45bf",
+      "channel": "stable",
+      "size": 8491
+    },
+    "extract_tmp/src/carteleria/carteleria.py": {
+      "version": "1.0.0",
+      "checksum": "11b735d2f3e4e993c532255b376f6981",
+      "channel": "stable",
+      "size": 10758
+    },
+    "extract_tmp/src/carteleria/el_cuello.py": {
+      "version": "1.0.0",
+      "checksum": "7dd7ce343f488332642d00a6a329814a",
+      "channel": "stable",
+      "size": 983
+    },
+    "extract_tmp/src/carteleria/escala_tv.py": {
+      "version": "1.0.0",
+      "checksum": "cce104245f804e5fc2f34d88c830dadf",
+      "channel": "stable",
+      "size": 3818
+    },
+    "extract_tmp/src/carteleria/ESTRUCTURA.md": {
+      "version": "1.0.0",
+      "checksum": "e32718acd42cce346f03a76cbf4f74ab",
+      "channel": "stable",
+      "size": 11417
+    },
+    "extract_tmp/src/carteleria/theme.py": {
+      "version": "1.0.0",
+      "checksum": "a11924e24ad9184551e188689493ca7d",
+      "channel": "stable",
+      "size": 3786
+    },
+    "extract_tmp/src/carteleria/utils_condiciones.py": {
+      "version": "1.0.0",
+      "checksum": "7bc9ac66ca53a60c31cca2651d4ab0d5",
+      "channel": "stable",
+      "size": 1720
+    },
+    "extract_tmp/src/carteleria/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "843f344f0166168a3b193b50e305ac6a",
+      "channel": "stable",
+      "size": 324
+    },
+    "extract_tmp/src/carteleria/assets/download_icons.py": {
+      "version": "1.0.0",
+      "checksum": "405ade3656dfd52308015b9e176c1fd3",
+      "channel": "stable",
+      "size": 481
+    },
+    "extract_tmp/src/carteleria/assets/remove_bg.py": {
+      "version": "1.0.0",
+      "checksum": "806c25c3e5e033b7cf9a9fb1f8fd1e13",
+      "channel": "stable",
+      "size": 879
+    },
+    "extract_tmp/src/carteleria/assets/tint_blue.py": {
+      "version": "1.0.0",
+      "checksum": "9f04d4e1f9eb85647abd333b5a6fcd64",
+      "channel": "stable",
+      "size": 777
+    },
+    "extract_tmp/src/carteleria/assets/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/carteleria_hub/hub_admin.py": {
+      "version": "1.0.0",
+      "checksum": "65aec52408a459667091cf7e94f31d00",
+      "channel": "stable",
+      "size": 2529
+    },
+    "extract_tmp/src/carteleria/carteleria_hub/hub_principal.py": {
+      "version": "1.0.0",
+      "checksum": "205e7f9a843a106535a7bf45b9d03922",
+      "channel": "stable",
+      "size": 3487
+    },
+    "extract_tmp/src/carteleria/carteleria_hub/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/configuraciones/indicador_red_widget.py": {
+      "version": "1.0.0",
+      "checksum": "e90e2845871822c478d1a522823357f4",
+      "channel": "stable",
+      "size": 7262
+    },
+    "extract_tmp/src/carteleria/configuraciones/info_negocio.py": {
+      "version": "1.0.0",
+      "checksum": "5ae851c9df1a3ac5426420d1a6d66993",
+      "channel": "stable",
+      "size": 2380
+    },
+    "extract_tmp/src/carteleria/configuraciones/reloj_widget.py": {
+      "version": "1.0.0",
+      "checksum": "6ed2112979f106ffbe683f6bebd75074",
+      "channel": "stable",
+      "size": 699
+    },
+    "extract_tmp/src/carteleria/configuraciones/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/creador_png/app.py": {
+      "version": "1.0.0",
+      "checksum": "dd17d3bb7832ee8565fc6810918f3224",
+      "channel": "stable",
+      "size": 14247
+    },
+    "extract_tmp/src/carteleria/creador_png/convertir_imagen.py": {
+      "version": "1.0.0",
+      "checksum": "539f46f5f3b6295845d213522a2d3234",
+      "channel": "stable",
+      "size": 25760
+    },
+    "extract_tmp/src/carteleria/creador_png/fondo_transparente.py": {
+      "version": "1.0.0",
+      "checksum": "a25b77d539865bf9e4a99c477da4e2d9",
+      "channel": "stable",
+      "size": 1585
+    },
+    "extract_tmp/src/carteleria/creador_png/panel_png_productos.py": {
+      "version": "1.0.0",
+      "checksum": "931b397ac85ea9d8768cf21b05d4a723",
+      "channel": "stable",
+      "size": 16813
+    },
+    "extract_tmp/src/carteleria/creador_png/presets.py": {
+      "version": "1.0.0",
+      "checksum": "e035cea6d3f85ab98638dd3dc0d6c55c",
+      "channel": "stable",
+      "size": 2653
+    },
+    "extract_tmp/src/carteleria/creador_png/requirements.txt": {
+      "version": "1.0.0",
+      "checksum": "2152934484963ecc8d297639d47bf1ce",
+      "channel": "stable",
+      "size": 15
+    },
+    "extract_tmp/src/carteleria/creador_png/rutas.py": {
+      "version": "1.0.0",
+      "checksum": "a91ddbad41f838d8ec418cb9521e80ae",
+      "channel": "stable",
+      "size": 1058
+    },
+    "extract_tmp/src/carteleria/creador_png/servidor.py": {
+      "version": "1.0.0",
+      "checksum": "dc6191b8a2913f0ade8bd8fa61961cd4",
+      "channel": "stable",
+      "size": 2292
+    },
+    "extract_tmp/src/carteleria/creador_png/ventana_html.py": {
+      "version": "1.0.0",
+      "checksum": "cd5e2c1d32b8af81100d3711ff9ae0a2",
+      "channel": "stable",
+      "size": 3057
+    },
+    "extract_tmp/src/carteleria/creador_png/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "238c82c33c3bf5f75045d9dd030e847a",
+      "channel": "stable",
+      "size": 615
+    },
+    "extract_tmp/src/carteleria/creador_png/static/app.js": {
+      "version": "1.0.0",
+      "checksum": "a7456fb847753a4f7174159bd4638b9d",
+      "channel": "stable",
+      "size": 7271
+    },
+    "extract_tmp/src/carteleria/creador_png/static/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "a68cc5c35ee59416779dd9651a9b1e20",
+      "channel": "stable",
+      "size": 5530
+    },
+    "extract_tmp/src/carteleria/creador_png/templates/index.html": {
+      "version": "1.0.0",
+      "checksum": "c2de0a332233a06690483e902178e59c",
+      "channel": "stable",
+      "size": 5506
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/0022eb96-5a76-4521-a1de-108cabfe7811.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/04e6af16-4bdb-43c1-bd6d-479853072efc.jpeg": {
+      "version": "1.0.0",
+      "checksum": "1ef8223b0aac866415a7d966e7171e72",
+      "channel": "stable",
+      "size": 250878
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/0619f168-9944-4277-b44e-f985f883de34.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/0a989969-1965-4836-a5ea-0660ae7f27e6.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/0ca29435-5b19-44f0-821a-5a041377627a.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/0f72badb-6b92-4c1c-bf40-db9bd00d84a3.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/1000fc58-f804-42b1-99a3-38ddce4f5136.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/13b31cec-24ba-44c7-b149-968b11862632.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/1a0014c7-155e-48fb-b580-c7238d6c862d.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/23d2ccbd-48af-4000-8fe0-226e285154fe.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/28869194-5cf5-4c21-8a89-18a4adbd3029.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/28ddbf96-d209-4e4d-aa7f-9e87234014a7.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/307ceaa4-0e56-4719-9e03-514d27e61bf3.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/34a32274-2ed2-4e82-84a9-370b04ddbf47.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/3c4c9416-5e43-4406-ac06-49f7fffca013.jpeg": {
+      "version": "1.0.0",
+      "checksum": "dd1b063914ddee95d7fd4c28011e081c",
+      "channel": "stable",
+      "size": 231444
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/3e24f67f-7b2c-42f5-aed4-74a554a0a8f8.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/4328c467-54dc-4758-8808-73069e94b049.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/48b0e04d-0d96-4471-8805-a97df8244113.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/4d1e3b35-ab8c-418a-93b3-878c4cf6fe93.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/4e91fcdd-4517-42d5-bd4e-5c32467e4670.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/53051ebb-85b2-4143-9488-e731c53b044d.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/60da9ca6-16c8-43e1-9319-838ecdfedd7c.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/62a92f22-cd48-49f2-afb9-7cd54e0dee2d.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/705835e9-b5f0-4be0-90a0-8b1aaa5d7f5e.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/74ebc8b3-611c-43c5-9175-b7ec37583338.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/7629395f-bc50-46be-babd-185573d20583.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/7e595f4b-a98b-440a-b6fb-8bdd1ce30ee7.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/80993a34-d161-4580-a98f-5d917935c8d4.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/829a529a-c733-45ae-bad8-ba2f545da2cd.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/82bd671a-bf67-4dd4-894c-2a7d0e20edd0.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/83a2dd87-e078-4a39-bbf4-bea460ddf4ca.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/88febacf-78cd-4baf-ab22-c44a364fd5f9.jpeg": {
+      "version": "1.0.0",
+      "checksum": "baec126cd930bb1e873552818f02ea11",
+      "channel": "stable",
+      "size": 75985
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/8bdf81f8-5b47-4561-80bf-a04e999aa9ac.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/8e787b1e-c724-4807-989f-f24cce4f7d0e.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/8ff11dfd-e5f6-414e-8a3f-efdfba58978f.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/908761f2-b47e-47ed-9321-edb0fd8f1c98.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/95ac242c-7abf-4016-ad2e-40da68fc3b58.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/96873657-3add-4b9c-b733-39f076d1bc76.jpeg": {
+      "version": "1.0.0",
+      "checksum": "1ef8223b0aac866415a7d966e7171e72",
+      "channel": "stable",
+      "size": 250878
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/a11bf69a-701c-432c-bdbf-7370ad808d1c.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/aaab34d2-1164-475d-9060-816b1b49e8a3.jpeg": {
+      "version": "1.0.0",
+      "checksum": "dd1b063914ddee95d7fd4c28011e081c",
+      "channel": "stable",
+      "size": 231444
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/b4170218-edf0-4831-af77-01ed5a6d7a7b.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/b4a794fa-93e1-4fc1-966c-48ffa4ad81ce.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/ba8732a2-b6b3-4a53-9116-e78e000b9822.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/bb549bfb-7b79-4e32-83dc-e4d8c5820650.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/c1d3a92b-9453-467b-89bd-5291aa877f6f.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/c2dc5621-cb66-40ac-8519-1fe313a321c6.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/ccf037af-8022-42e2-91b3-9084bbe27510.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/d235e08f-785c-491f-9fd1-d2a28960e7a4.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/d249f089-1224-4a44-ac1b-071b59905cf5.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/d3233aad-58a6-417a-9075-fead8197a436.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/d4f762b9-5d89-4114-9b0c-a652b1a709f2.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/dbeb4d02-e8bf-4cae-81cf-6b6e5a03cb11.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/e2bf80fb-1ed3-491e-913c-e9ea4391b65f.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/e80a84c5-3ef0-4747-8691-741a782c3eea.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/e9f12ab7-34f6-4729-b94d-64e81f6e0ef0.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/edcd75ee-314a-4dac-b472-e4c50040da76.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/f51e0223-0a52-47b7-aa78-26bd56b71be2.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/f8f782d5-66d6-4ceb-8b21-949343805fa4.jpeg": {
+      "version": "1.0.0",
+      "checksum": "ccc24c8ee8ed88a35ec03f8258aa8a8a",
+      "channel": "stable",
+      "size": 157350
+    },
+    "extract_tmp/src/carteleria/creador_png/uploads/f9815fcd-e784-4512-9049-1bdc357a9feb.jpeg": {
+      "version": "1.0.0",
+      "checksum": "8de77b6b0a628a7796a949fa904f2f53",
+      "channel": "stable",
+      "size": 128472
+    },
+    "extract_tmp/src/carteleria/dashboard/dashboard_main.py": {
+      "version": "1.0.0",
+      "checksum": "a4b04800a908399385b45b4f5229cdbc",
+      "channel": "stable",
+      "size": 15910
+    },
+    "extract_tmp/src/carteleria/dashboard/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "7de5df82d50cef32aa0cc81a6d80c987",
+      "channel": "stable",
+      "size": 53
+    },
+    "extract_tmp/src/carteleria/ia_chef_lobo/gemini_worker.py": {
+      "version": "1.0.0",
+      "checksum": "7ec3b6189a7c0657fc646e1deb2236f9",
+      "channel": "stable",
+      "size": 7710
+    },
+    "extract_tmp/src/carteleria/ia_chef_lobo/generar_plantillas_ia.py": {
+      "version": "1.0.0",
+      "checksum": "56d5ec2e6c40ede6d09bbbb8d7e5677d",
+      "channel": "stable",
+      "size": 5885
+    },
+    "extract_tmp/src/carteleria/ia_chef_lobo/motor_ia.py": {
+      "version": "1.0.0",
+      "checksum": "35dea07faea4466401f7ed34556f4c90",
+      "channel": "stable",
+      "size": 7955
+    },
+    "extract_tmp/src/carteleria/ia_chef_lobo/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
+      "version": "1.0.0",
+      "checksum": "679df25e585def20fc51028e23d14040",
+      "channel": "stable",
+      "size": 16667
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/generar_iconos_clima.py": {
+      "version": "1.0.0",
+      "checksum": "6d8f860e384593a92b22122b6d387f77",
+      "channel": "stable",
+      "size": 5423
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/lanzador_directo.py": {
+      "version": "1.0.0",
+      "checksum": "815bd22582c4323048d41e3a4b43e8de",
+      "channel": "stable",
+      "size": 20721
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/lanzador_tv.md": {
+      "version": "1.0.0",
+      "checksum": "75750c44674701a4a960eddc7bcb21cc",
+      "channel": "stable",
+      "size": 10766
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/navegador_kiosk.py": {
+      "version": "1.0.0",
+      "checksum": "fea4f978e1743e564521e1480354c9d1",
+      "channel": "stable",
+      "size": 6416
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/perfil_pc.py": {
+      "version": "1.0.0",
+      "checksum": "8d833bd692fdd33caef23d0a653e7505",
+      "channel": "stable",
+      "size": 2217
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/tv_cara.bin": {
+      "version": "1.0.0",
+      "checksum": "b3bf5ea484233373648fda8713038e3b",
+      "channel": "stable",
+      "size": 654418
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/tv_cara_pack.py": {
+      "version": "1.0.0",
+      "checksum": "933869bef8d3ebde1084a4b5644559d5",
+      "channel": "stable",
+      "size": 4919
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
+      "version": "1.0.0",
+      "checksum": "7c032fc6f90a414bc0b0136157895827",
+      "channel": "stable",
+      "size": 22800
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/window_manager.py": {
+      "version": "1.0.0",
+      "checksum": "1a33c12ee470e862412f0affd71c3f33",
+      "channel": "stable",
+      "size": 6353
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/_preview_tv.py": {
+      "version": "1.0.0",
+      "checksum": "960003389aad60d564bd22da75688236",
+      "channel": "stable",
+      "size": 8179
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/_smoke_tv.py": {
+      "version": "1.0.0",
+      "checksum": "63bce437c02ff67bb963d01ea30a1552",
+      "channel": "stable",
+      "size": 2785
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6a1660bcaa30f9cd9fa26449c38ac00b",
+      "channel": "stable",
+      "size": 1441
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/app.js": {
+      "version": "1.0.0",
+      "checksum": "13c9a758ad8c1e2d854678d54653fb52",
+      "channel": "stable",
+      "size": 9154
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/index.html": {
+      "version": "1.0.0",
+      "checksum": "e09c4b273b60fab0ceb07bbc801439b6",
+      "channel": "stable",
+      "size": 5957
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/base.css": {
+      "version": "1.0.0",
+      "checksum": "ba0a76a5ca7ced7c137d93dbae2244d9",
+      "channel": "stable",
+      "size": 4412
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/cards.css": {
+      "version": "1.0.0",
+      "checksum": "d27990a7fc79e27bd9a50da5021b2be3",
+      "channel": "stable",
+      "size": 24874
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/carousel.css": {
+      "version": "1.0.0",
+      "checksum": "0f8111ec2293f2da814c58309701ded8",
+      "channel": "stable",
+      "size": 12278
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/columna4_chef.css": {
+      "version": "1.0.0",
+      "checksum": "e3bd47f7876eb74e3e687ac82ce29fc6",
+      "channel": "stable",
+      "size": 44396
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/components.css": {
+      "version": "1.0.0",
+      "checksum": "addfaff99b43c24d5d69e8c1834cf701",
+      "channel": "stable",
+      "size": 12708
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/perf.css": {
+      "version": "1.0.0",
+      "checksum": "7a63898207eb08b396d9174c9e8b4738",
+      "channel": "stable",
+      "size": 1083
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/premium_black_gold.css": {
+      "version": "1.0.0",
+      "checksum": "7607bd618e0c3704bda3e0959a2f86d9",
+      "channel": "stable",
+      "size": 6209
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/responsive.css": {
+      "version": "1.0.0",
+      "checksum": "fa5f72790bb42615349a3ca2449ca76f",
+      "channel": "stable",
+      "size": 4555
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/structural_base.css": {
+      "version": "1.0.0",
+      "checksum": "7281fb48f4dad690848183985dbe9933",
+      "channel": "stable",
+      "size": 7652
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/style.css": {
+      "version": "1.0.0",
+      "checksum": "d6e92d5c49832fa9b4f4e8b597fba64a",
+      "channel": "stable",
+      "size": 236
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/tokens.css": {
+      "version": "1.0.0",
+      "checksum": "1108320fc78c2c5054debb57c81a821a",
+      "channel": "stable",
+      "size": 7671
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/apple/colores.css": {
+      "version": "1.0.0",
+      "checksum": "6a58b782fa5535575cbfdc1647f1ce81",
+      "channel": "stable",
+      "size": 3522
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/apple/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "7b31e857e736a6a70db894715305aa70",
+      "channel": "stable",
+      "size": 8393
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/colores.css": {
+      "version": "1.0.0",
+      "checksum": "8ffae7b0b95f0782752d1ec55677198c",
+      "channel": "stable",
+      "size": 3765
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "e4f847863f941ab7e20da0554f098c5c",
+      "channel": "stable",
+      "size": 8396
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/premium/colores.css": {
+      "version": "1.0.0",
+      "checksum": "3aa7c53ffc6f2288089c682a9cbfe8c4",
+      "channel": "stable",
+      "size": 4155
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/premium/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "6b4dc6e8d5ddf35bd0e73a088c9c851d",
+      "channel": "stable",
+      "size": 28020
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/colores.css": {
+      "version": "1.0.0",
+      "checksum": "5f36418efc61d4122e2a3184e4553681",
+      "channel": "stable",
+      "size": 7197
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/css/themes/temu/estilos.css": {
+      "version": "1.0.0",
+      "checksum": "9322bd1682192d9c497fbedf02607845",
+      "channel": "stable",
+      "size": 21884
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/cabecera_negociodata/cabecera_negociodata.js": {
+      "version": "1.0.0",
+      "checksum": "ba3daf87cd910a1c213cd7b05298caf2",
+      "channel": "stable",
+      "size": 2250
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna1/columna1.js": {
+      "version": "1.0.0",
+      "checksum": "e34ab19d08b05e93591175035aae2801",
+      "channel": "stable",
+      "size": 3470
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna1/tarjetas/tarjeta_ranking.js": {
+      "version": "1.0.0",
+      "checksum": "031ffa9eab971032fe7aabf4021785ad",
+      "channel": "stable",
+      "size": 4336
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna2/columna2.js": {
+      "version": "1.0.0",
+      "checksum": "07a21556c8acd1ce5b34d10d987259fb",
+      "channel": "stable",
+      "size": 4442
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna2/tarjetas/fila_precio.js": {
+      "version": "1.0.0",
+      "checksum": "09d4e9c73c1f00c3845c747fb0b0a18c",
+      "channel": "stable",
+      "size": 3306
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna2/tarjetas/tarjeta_publicidad.js": {
+      "version": "1.0.0",
+      "checksum": "c4c5c8b5942993a72e2f3309cd12af0b",
+      "channel": "stable",
+      "size": 5327
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna3/columna3.js": {
+      "version": "1.0.0",
+      "checksum": "9efb2e8c5177ca74af8bef24cf9e7994",
+      "channel": "stable",
+      "size": 4639
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_combo.js": {
+      "version": "1.0.0",
+      "checksum": "d52054b8585a4e4d6afa70fbd4ab2c0f",
+      "channel": "stable",
+      "size": 1449
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_cruzada.js": {
+      "version": "1.0.0",
+      "checksum": "c888dd027dc5ac927ae2ee114a26ac20",
+      "channel": "stable",
+      "size": 2959
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna3/tarjetas/tarjeta_relampago.js": {
+      "version": "1.0.0",
+      "checksum": "33eefaa5edc9ac1dad900dcc866e9372",
+      "channel": "stable",
+      "size": 1721
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/columna4.js": {
+      "version": "1.0.0",
+      "checksum": "e01469d2a393109fb9a4a30331b679fa",
+      "channel": "stable",
+      "size": 3811
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/badge_clima.js": {
+      "version": "1.0.0",
+      "checksum": "a94596fe2dbcddfcd5eba912307cef46",
+      "channel": "stable",
+      "size": 350
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/lobo_chef.js": {
+      "version": "1.0.0",
+      "checksum": "464ea9da99979bbace8198cf2dc1dc6b",
+      "channel": "stable",
+      "size": 298
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/mensaje_personalizado.js": {
+      "version": "1.0.0",
+      "checksum": "4cc2e43f4fd02247b78c064ee2af2d63",
+      "channel": "stable",
+      "size": 259
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/componentes/recomendacion_destacada.js": {
+      "version": "1.0.0",
+      "checksum": "d62791a099c0823b8d37b624f665ecdf",
+      "channel": "stable",
+      "size": 433
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/columna4/tarjetas/tarjeta_chef.js": {
+      "version": "1.0.0",
+      "checksum": "365701162b303e1b9ad784a131e50a79",
+      "channel": "stable",
+      "size": 10410
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/franja_oferta/franja_oferta.js": {
+      "version": "1.0.0",
+      "checksum": "cfd3000da427103dd9879e516777da1e",
+      "channel": "stable",
+      "size": 8683
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/mensaje_zocalo/mensaje_zocalo.js": {
+      "version": "1.0.0",
+      "checksum": "476a56feed81bfcc202ca412cf45283d",
+      "channel": "stable",
+      "size": 992
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/shared/plata_y_texto.js": {
+      "version": "1.0.0",
+      "checksum": "78e2bb02ed350db81cb5d497dabc58b4",
+      "channel": "stable",
+      "size": 8250
+    },
+    "extract_tmp/src/carteleria/lanzador_tv/la_cara_web/modules/shared/vfx.js": {
+      "version": "1.0.0",
+      "checksum": "da4209888b4c9d822a21712b2d1dbf63",
+      "channel": "stable",
+      "size": 3451
+    },
+    "extract_tmp/src/carteleria/modo_procesos/buscador_red_worker.py": {
+      "version": "1.0.0",
+      "checksum": "3b6d30e24736eb054b88bfedac2f54d6",
+      "channel": "stable",
+      "size": 3822
+    },
+    "extract_tmp/src/carteleria/modo_procesos/espera_conexion.py": {
+      "version": "1.0.0",
+      "checksum": "589ec6e068fa9591f073860e006a388c",
+      "channel": "stable",
+      "size": 6425
+    },
+    "extract_tmp/src/carteleria/modo_procesos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/clima_worker.py": {
+      "version": "1.0.0",
+      "checksum": "e39dcd2da157dc1990180de99bb66f18",
+      "channel": "stable",
+      "size": 1449
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/db_sync_worker.py": {
+      "version": "1.0.0",
+      "checksum": "7e71e1e8cd585a0647d10c389ce60445",
+      "channel": "stable",
+      "size": 10521
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/estado_tv.py": {
+      "version": "1.0.0",
+      "checksum": "6c9182007b687e423323f8dbb0da6414",
+      "channel": "stable",
+      "size": 21655
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/iconos_tv.py": {
+      "version": "1.0.0",
+      "checksum": "e0faf2f22c75275d0fe5faf859c4d47d",
+      "channel": "stable",
+      "size": 5262
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/layout_manager.py": {
+      "version": "1.0.0",
+      "checksum": "a69f484aebb05e02725f65b244018f8f",
+      "channel": "stable",
+      "size": 465
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/main_board.py": {
+      "version": "1.0.0",
+      "checksum": "5531885efb4bc25caee5caae13fb885b",
+      "channel": "stable",
+      "size": 187
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/motor_publicidad.py": {
+      "version": "1.0.0",
+      "checksum": "55d7157cf20575a21ffca7533fb6f13c",
+      "channel": "stable",
+      "size": 3186
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/venta_cruzada.py": {
+      "version": "1.0.0",
+      "checksum": "f9f54fb912eb85f6fbe6d71e35630bc7",
+      "channel": "stable",
+      "size": 8061
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/web_server.py": {
+      "version": "1.0.0",
+      "checksum": "25233c1c0a4e911346f2deb77eec3da3",
+      "channel": "stable",
+      "size": 305
+    },
+    "extract_tmp/src/carteleria/motor_carteleria/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/ofertas_main.py": {
+      "version": "1.0.0",
+      "checksum": "948dfb3c2d2d0c73e70469ae791e8e2e",
+      "channel": "stable",
+      "size": 175
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "8d6530d3913a9f5ff4399640008db987",
+      "channel": "stable",
+      "size": 99
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/componentes/creador_promociones.py": {
+      "version": "1.0.0",
+      "checksum": "79407f0cd294efb096e3a74d1dc1d166",
+      "channel": "stable",
+      "size": 16884
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/componentes/dialogo_combos.py": {
+      "version": "1.0.0",
+      "checksum": "0741c80d6b7d0f53744140c1913fc7c6",
+      "channel": "stable",
+      "size": 9874
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/componentes/tabla_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
+      "channel": "stable",
+      "size": 5809
+    },
+    "extract_tmp/src/carteleria/motor_descuentos_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e814d9f4229c3404898b4690a5e07b56",
+      "channel": "stable",
+      "size": 38
+    },
+    "extract_tmp/src/carteleria/red_lan/red_lan_main.py": {
+      "version": "1.0.0",
+      "checksum": "59e396643762279e228052a182e2b7d4",
+      "channel": "stable",
+      "size": 968
+    },
+    "extract_tmp/src/carteleria/red_lan/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/central_red_global/lan_server.py": {
+      "version": "1.0.0",
+      "checksum": "b5b1e65abca52f46306138e1d93b5027",
+      "channel": "stable",
+      "size": 21288
+    },
+    "extract_tmp/src/central_red_global/master_presence.py": {
+      "version": "1.0.0",
+      "checksum": "98bc9415fdd39993a0c80e266cd4ca63",
+      "channel": "stable",
+      "size": 2574
+    },
+    "extract_tmp/src/central_red_global/motor_red.py": {
+      "version": "1.0.0",
+      "checksum": "695833e27a462fe5abc1eac4bc631b7f",
+      "channel": "stable",
+      "size": 12955
+    },
+    "extract_tmp/src/central_red_global/network_engine.py": {
+      "version": "1.0.0",
+      "checksum": "23a65f9d687fb93a3046b3eb0ed78a2b",
+      "channel": "stable",
+      "size": 6175
+    },
+    "extract_tmp/src/central_red_global/store_server.py": {
+      "version": "1.0.0",
+      "checksum": "be3e9c9abcd66bff67ea8fa810847f3e",
+      "channel": "stable",
+      "size": 17082
+    },
+    "extract_tmp/src/central_red_global/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/auditoria/motor_auditoria.py": {
+      "version": "1.0.0",
+      "checksum": "91474b685b9e6ee4240ef4ae6723706b",
+      "channel": "stable",
+      "size": 3351
+    },
+    "extract_tmp/src/cerebro_global/auditoria/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/backup_cerebro/motor_backup.py": {
+      "version": "1.0.0",
+      "checksum": "b892a5ef8425489cba13d03e22c04b28",
+      "channel": "stable",
+      "size": 8566
+    },
+    "extract_tmp/src/cerebro_global/backup_cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "1e5c5de53f4b71b5113ab11d019551e0",
+      "channel": "stable",
+      "size": 107
+    },
+    "extract_tmp/src/cerebro_global/carteleria_cerebro/motor_ia_local.py": {
+      "version": "1.0.0",
+      "checksum": "d4955dc46ed5f39c3807feb55e4e252f",
+      "channel": "stable",
+      "size": 6092
+    },
+    "extract_tmp/src/cerebro_global/carteleria_cerebro/sincronizador_carteleria.py": {
+      "version": "1.0.0",
+      "checksum": "b1803072d3e3d8061f83484e862d2832",
+      "channel": "stable",
+      "size": 6069
+    },
+    "extract_tmp/src/cerebro_global/cerebro_jefe/analitica_jefe.py": {
+      "version": "1.0.0",
+      "checksum": "2ed3a0c6c49188170691e25f5f9394aa",
+      "channel": "stable",
+      "size": 3967
+    },
+    "extract_tmp/src/cerebro_global/cerebro_jefe/exportador_ganancias.py": {
+      "version": "1.0.0",
+      "checksum": "6d7cff1fe72990e427a2b038b63f6c95",
+      "channel": "stable",
+      "size": 5574
+    },
+    "extract_tmp/src/cerebro_global/cerebro_jefe/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/motor_cierre.py": {
+      "version": "1.0.0",
+      "checksum": "3ff2da7020ec8a640c3a062504f66225",
+      "channel": "stable",
+      "size": 2393
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f0fb27179f13ddddc68a842d8c7c3dea",
+      "channel": "stable",
+      "size": 576
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/cierre.py": {
+      "version": "1.0.0",
+      "checksum": "57322f7edf9c48f6f06584ae746850c6",
+      "channel": "stable",
+      "size": 2799
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/esperado.py": {
+      "version": "1.0.0",
+      "checksum": "a77836c385fd6f9ff2c3d3e96a752bf7",
+      "channel": "stable",
+      "size": 1697
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/historial_cortes.py": {
+      "version": "1.0.0",
+      "checksum": "39a3cf611bf0de29670a6d531268213c",
+      "channel": "stable",
+      "size": 5456
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/modos.py": {
+      "version": "1.0.0",
+      "checksum": "3251cdf73cf7fa6aa5c29dedde106220",
+      "channel": "stable",
+      "size": 809
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/multi_caja.py": {
+      "version": "1.0.0",
+      "checksum": "16fd2093fc7d0c8f53355b86b1e45ca1",
+      "channel": "stable",
+      "size": 4713
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/totales.py": {
+      "version": "1.0.0",
+      "checksum": "e9d5bd03a6816a69785b11515f3e896f",
+      "channel": "stable",
+      "size": 5570
+    },
+    "extract_tmp/src/cerebro_global/cierre_caja_cerebro/procesos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "35b27ba7345c3269cad31d29b7d70883",
+      "channel": "stable",
+      "size": 1016
+    },
+    "extract_tmp/src/cerebro_global/desposte/motor_rendimiento.py": {
+      "version": "1.0.0",
+      "checksum": "c15b14eab8cfcf0431a42bc60342f809",
+      "channel": "stable",
+      "size": 3911
+    },
+    "extract_tmp/src/cerebro_global/desposte/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/perfil_empleados_cerebro/gestor_perfiles.py": {
+      "version": "1.0.0",
+      "checksum": "fed2f501ba0cc5cb7857b63d810e92c8",
+      "channel": "stable",
+      "size": 3459
+    },
+    "extract_tmp/src/cerebro_global/proveedor/motor_proveedor.py": {
+      "version": "1.0.0",
+      "checksum": "5778481ac57e9e85cb47c12d24a67f1c",
+      "channel": "stable",
+      "size": 9634
+    },
+    "extract_tmp/src/cerebro_global/proveedor/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/cerebro_global/reporte_ventas_cerebro/motor_ventas.py": {
+      "version": "1.0.0",
+      "checksum": "9160c4afcff873525ed0c3f427af9200",
+      "channel": "stable",
+      "size": 6732
+    },
+    "extract_tmp/src/cerebro_global/servicios/cache_productos.py": {
+      "version": "1.0.0",
+      "checksum": "cbccc596312fce36b30067e9e1ad69f4",
+      "channel": "stable",
+      "size": 4652
+    },
+    "extract_tmp/src/cerebro_global/servicios/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/core/sincronizador.py": {
+      "version": "1.0.0",
+      "checksum": "4826a876af2ffea410f2470c5bc4614d",
+      "channel": "stable",
+      "size": 6665
+    },
+    "extract_tmp/src/core/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/creador_pdf_global/motor_pdf.py": {
+      "version": "1.0.0",
+      "checksum": "dd5f0968d2c61474beee785c09b3e967",
+      "channel": "stable",
+      "size": 69659
+    },
+    "extract_tmp/src/creador_pdf_global/motor_pdf_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "5f28fd3330c4618ea4441e8d6c51ffb5",
+      "channel": "stable",
+      "size": 7262
+    },
+    "extract_tmp/src/creador_pdf_global/motor_pdf_reportes.py": {
+      "version": "1.0.0",
+      "checksum": "74945f97b87914feb30ceece5bbaa074",
+      "channel": "stable",
+      "size": 8078
+    },
+    "extract_tmp/src/creador_pdf_global/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/db_engines/mariadb_engine.py": {
+      "version": "1.0.0",
+      "checksum": "04d96d367fbc17d72c837a307eccf73a",
+      "channel": "stable",
+      "size": 5889
+    },
+    "extract_tmp/src/db_engines/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/hardware/background_installer.py": {
+      "version": "1.0.0",
+      "checksum": "7bddc8172dd442cfc3ed916b397b4a0b",
+      "channel": "stable",
+      "size": 3781
+    },
+    "extract_tmp/src/hardware/cash_drawer.py": {
+      "version": "1.0.0",
+      "checksum": "368c5398273a5f46b3f136cb8831f09d",
+      "channel": "stable",
+      "size": 7062
+    },
+    "extract_tmp/src/hardware/printer.py": {
+      "version": "1.0.0",
+      "checksum": "08c928a6e65d28828ad2314419b7ed0a",
+      "channel": "stable",
+      "size": 36506
+    },
+    "extract_tmp/src/hardware/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/inicio_y_perfiles/apertura_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "1419a540eee9fc4559cb6bf77837d8e9",
+      "channel": "stable",
+      "size": 5793
+    },
+    "extract_tmp/src/inicio_y_perfiles/licencia_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "bafbd20c82468f4a482c7dc81dea9ef4",
+      "channel": "stable",
+      "size": 13336
+    },
+    "extract_tmp/src/inicio_y_perfiles/login_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "ec8ffd712e7472e03aa536e8690ea6ce",
+      "channel": "stable",
+      "size": 10430
+    },
+    "extract_tmp/src/inicio_y_perfiles/pantallaentrada.py": {
+      "version": "1.0.0",
+      "checksum": "084d584cfd45172a612ce653d6a62ea4",
+      "channel": "stable",
+      "size": 3391
+    },
+    "extract_tmp/src/inicio_y_perfiles/perfil_pantalla.py": {
+      "version": "1.0.0",
+      "checksum": "1f45aed6e71987ed7da8b3f60ca3fe8b",
+      "channel": "stable",
+      "size": 263
+    },
+    "extract_tmp/src/inicio_y_perfiles/smart_updater.py": {
+      "version": "1.0.0",
+      "checksum": "4d540a95671b51fe0c50d1cdc22d2d73",
+      "channel": "stable",
+      "size": 248
+    },
+    "extract_tmp/src/inicio_y_perfiles/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/inicio_y_perfiles/logica/auth_controller.py": {
+      "version": "1.0.0",
+      "checksum": "3d9de1b48c438c0629ef3dc0bd8f2b01",
+      "channel": "stable",
+      "size": 2978
+    },
+    "extract_tmp/src/inicio_y_perfiles/logica/caja_controller.py": {
+      "version": "1.0.0",
+      "checksum": "6d483a21dbe761d2f6e373c667422fd4",
+      "channel": "stable",
+      "size": 1644
+    },
+    "extract_tmp/src/inicio_y_perfiles/logica/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/jefe/jefe0_dashboard.py": {
+      "version": "1.0.0",
+      "checksum": "81f2969532390476bd940468ef638e5b",
+      "channel": "stable",
+      "size": 27918
+    },
+    "extract_tmp/src/jefe/theme_pro.py": {
+      "version": "1.0.0",
+      "checksum": "c8d1d8d2d7084248aa220cf830a7f140",
+      "channel": "stable",
+      "size": 1288
+    },
+    "extract_tmp/src/jefe/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "a4872c619215de48e70fbe37bf0c27d3",
+      "channel": "stable",
+      "size": 85
+    },
+    "extract_tmp/src/jefe/componentes_visuales/jefe_card.py": {
+      "version": "1.0.0",
+      "checksum": "c6a385702b640cb4a42ba758f063ae51",
+      "channel": "stable",
+      "size": 3942
+    },
+    "extract_tmp/src/jefe/componentes_visuales/panel_alertas_ia.py": {
+      "version": "1.0.0",
+      "checksum": "74616113aed3cdb9aa0b1bd5a545a402",
+      "channel": "stable",
+      "size": 6128
+    },
+    "extract_tmp/src/jefe/componentes_visuales/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/jefe/contabilidad/database.py": {
+      "version": "1.0.0",
+      "checksum": "ed61521f971b585dbddffac3b294e8fe",
+      "channel": "stable",
+      "size": 34344
+    },
+    "extract_tmp/src/jefe/contabilidad/jefe_contabilidad.py": {
+      "version": "1.0.0",
+      "checksum": "424d5affc7f412b55fa3dc24440af061",
+      "channel": "stable",
+      "size": 19180
+    },
+    "extract_tmp/src/jefe/contabilidad/main.py.bak": {
+      "version": "1.0.0",
+      "checksum": "4b8f565b145c1bcda0bf81cefb16806e",
+      "channel": "stable",
+      "size": 284488
+    },
+    "extract_tmp/src/jefe/contabilidad/models.py": {
+      "version": "1.0.0",
+      "checksum": "c85afb15220d9cd70bf5972409e0812f",
+      "channel": "stable",
+      "size": 5401
+    },
+    "extract_tmp/src/jefe/contabilidad/shared_globals.py": {
+      "version": "1.0.0",
+      "checksum": "4fcfc6aa73224bedbd3f12c45ee14694",
+      "channel": "stable",
+      "size": 7961
+    },
+    "extract_tmp/src/jefe/contabilidad/styles.py": {
+      "version": "1.0.0",
+      "checksum": "0e76a8301b23246fbea34b72cd9f5afd",
+      "channel": "stable",
+      "size": 2501
+    },
+    "extract_tmp/src/jefe/contabilidad/styles_light.py": {
+      "version": "1.0.0",
+      "checksum": "3e27629ab26ff6fa8ba3e3ee6ed0bb35",
+      "channel": "stable",
+      "size": 6833
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_cheques.py": {
+      "version": "1.0.0",
+      "checksum": "9d5f08821059ae512aa19a1a33da2264",
+      "channel": "stable",
+      "size": 4868
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_costos_fijos.py": {
+      "version": "1.0.0",
+      "checksum": "4a3e1a37c12313cc8b03d06e65eedaf7",
+      "channel": "stable",
+      "size": 4705
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_gastos.py": {
+      "version": "1.0.0",
+      "checksum": "e429d4e522094aafc7a1b833fe107cca",
+      "channel": "stable",
+      "size": 4142
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_historial.py": {
+      "version": "1.0.0",
+      "checksum": "d0b9dbdab191114851fa8515ef03d208",
+      "channel": "stable",
+      "size": 3600
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_ingresos.py": {
+      "version": "1.0.0",
+      "checksum": "a66304f14d016abda82368c387926874",
+      "channel": "stable",
+      "size": 3966
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_inversiones.py": {
+      "version": "1.0.0",
+      "checksum": "1422b47689dd11ef1ba6c80fbad162aa",
+      "channel": "stable",
+      "size": 5589
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_prestamos.py": {
+      "version": "1.0.0",
+      "checksum": "e2db680db78351901f657e41b901db66",
+      "channel": "stable",
+      "size": 5677
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_proveedores.py": {
+      "version": "1.0.0",
+      "checksum": "e9caf20e18fbe21bcb0fad1beebca3d9",
+      "channel": "stable",
+      "size": 970
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_reportes.py": {
+      "version": "1.0.0",
+      "checksum": "93cfb827bd13a11671214f7617fdf508",
+      "channel": "stable",
+      "size": 5124
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_resumen.py": {
+      "version": "1.0.0",
+      "checksum": "9a62f9a5c5aa778d4f50b98ece4ad67d",
+      "channel": "stable",
+      "size": 13544
+    },
+    "extract_tmp/src/jefe/contabilidad/vista_tarjetas.py": {
+      "version": "1.0.0",
+      "checksum": "17380ef2fe5ba2f02cddc4324586b3a7",
+      "channel": "stable",
+      "size": 4954
+    },
+    "extract_tmp/src/jefe/contabilidad/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/jefe/ia/jefe_ia_proactiva.py": {
+      "version": "1.0.0",
+      "checksum": "7e7275554811ea5e9f9676dca264e87b",
+      "channel": "stable",
+      "size": 22251
+    },
+    "extract_tmp/src/jefe/ia/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/jefe/nodo_portable/motor_nodo.py": {
+      "version": "1.0.0",
+      "checksum": "bbe89600981d2f0371227057ea2b6e84",
+      "channel": "stable",
+      "size": 18334
+    },
+    "extract_tmp/src/jefe/nodo_portable/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "02514a0a37eba503c454b19f08f265dc",
+      "channel": "stable",
+      "size": 348
+    },
+    "extract_tmp/src/jefe/promedios/promedios_main.py": {
+      "version": "1.0.0",
+      "checksum": "5c216ed86261adba9aa5325b96bd2c81",
+      "channel": "stable",
+      "size": 3893
+    },
+    "extract_tmp/src/jefe/promedios/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "53c1ee7042413b313d7e75c88b7c65d5",
+      "channel": "stable",
+      "size": 20
+    },
+    "extract_tmp/src/jefe/promedios/promedio_motor/cerdo.py": {
+      "version": "1.0.0",
+      "checksum": "3c9562f92d0b840e80759b95277318fe",
+      "channel": "stable",
+      "size": 315
+    },
+    "extract_tmp/src/jefe/promedios/promedio_motor/motor_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "113de449c9eff49bc84a880df861844a",
+      "channel": "stable",
+      "size": 7599
+    },
+    "extract_tmp/src/jefe/promedios/promedio_motor/pollo.py": {
+      "version": "1.0.0",
+      "checksum": "aefab9355535e5aadeb4a7cf2fd93a6d",
+      "channel": "stable",
+      "size": 218
+    },
+    "extract_tmp/src/jefe/promedios/promedio_motor/res.py": {
+      "version": "1.0.0",
+      "checksum": "61ef9cc0a196f45ad00beca3f0f1ea98",
+      "channel": "stable",
+      "size": 1344
+    },
+    "extract_tmp/src/jefe/promedios/promedio_motor/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/jefe/promedios/promedio_ui/vista_promedios.py": {
+      "version": "1.0.0",
+      "checksum": "565d6fef2aa2594510605dcb5b8195de",
+      "channel": "stable",
+      "size": 43803
+    },
+    "extract_tmp/src/jefe/promedios/promedio_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/lanzador/entry.py": {
+      "version": "1.0.0",
+      "checksum": "883ede575fbc572981d892a5533ec5f2",
+      "channel": "stable",
+      "size": 545
+    },
+    "extract_tmp/src/lanzador/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "f5d2b1cc415c302a4e33c7b65aaf6f59",
+      "channel": "stable",
+      "size": 275
+    },
+    "extract_tmp/src/lanzador/cerebro/process_spawner.py": {
+      "version": "1.0.0",
+      "checksum": "29e4305762b7f3bfde88d0a894889da1",
+      "channel": "stable",
+      "size": 978
+    },
+    "extract_tmp/src/lanzador/cerebro/updater_client.py": {
+      "version": "1.0.0",
+      "checksum": "c731f6968a04e97838a3300739a7f8d0",
+      "channel": "stable",
+      "size": 729
+    },
+    "extract_tmp/src/lanzador/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "05be049284ec358575ea0e6432504b28",
+      "channel": "stable",
+      "size": 277
+    },
+    "extract_tmp/src/lanzador/moleculas/updater_badge.py": {
+      "version": "1.0.0",
+      "checksum": "250ec350cfc72426aff529e943a45c51",
+      "channel": "stable",
+      "size": 14874
+    },
+    "extract_tmp/src/lanzador/moleculas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "baa4578fddd58f105f8c031b7445232e",
+      "channel": "stable",
+      "size": 151
+    },
+    "extract_tmp/src/lanzador/vistas/hub_main.py": {
+      "version": "1.0.0",
+      "checksum": "f9aa1e6c53d39828ce5e4ab13b04a520",
+      "channel": "stable",
+      "size": 29687
+    },
+    "extract_tmp/src/lanzador/vistas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "5f6966aa63c95f18dc32f90d58f396ff",
+      "channel": "stable",
+      "size": 117
+    },
+    "extract_tmp/src/lanzadores/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "968b6ee666508dcb58fe8a69e81f63e6",
+      "channel": "stable",
+      "size": 147
+    },
+    "extract_tmp/src/lanzadores/cerebro/run.py": {
+      "version": "1.0.0",
+      "checksum": "2f6dfc673b3dd4a8d56b5cc0ce572a2d",
+      "channel": "stable",
+      "size": 524
+    },
+    "extract_tmp/src/lanzadores/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "ad9525b0303c4888eb9ab4779c2c9de4",
+      "channel": "stable",
+      "size": 175
+    },
+    "extract_tmp/src/lanzadores/ui/run.py": {
+      "version": "1.0.0",
+      "checksum": "9fd719118e0b415da007514f52a3041e",
+      "channel": "stable",
+      "size": 627
+    },
+    "extract_tmp/src/lanzadores/ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "8145c30006566afe9e5df1720a0e3544",
+      "channel": "stable",
+      "size": 155
+    },
+    "extract_tmp/src/motor_descuentos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "2b2af2b6d5f2c355424dc9154adb7369",
+      "channel": "stable",
+      "size": 416
+    },
+    "extract_tmp/src/motor_descuentos/cerebro/motor_combos.py": {
+      "version": "1.0.0",
+      "checksum": "1203b3263c1195d6f057653650a2a508",
+      "channel": "stable",
+      "size": 2358
+    },
+    "extract_tmp/src/motor_descuentos/cerebro/motor_mayoreo.py": {
+      "version": "1.0.0",
+      "checksum": "b19623090d652f543559a5b126bea1e7",
+      "channel": "stable",
+      "size": 2913
+    },
+    "extract_tmp/src/motor_descuentos/cerebro/motor_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "ff29e12115bdeeba5e67dc45bcfd08d5",
+      "channel": "stable",
+      "size": 5729
+    },
+    "extract_tmp/src/motor_descuentos/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/motor_descuentos/moleculas/creador_promociones.py": {
+      "version": "1.0.0",
+      "checksum": "047549072b59dfd132e1e66e8b8b1b1c",
+      "channel": "stable",
+      "size": 17711
+    },
+    "extract_tmp/src/motor_descuentos/moleculas/dialogo_combos.py": {
+      "version": "1.0.0",
+      "checksum": "12de77b284e80522a2c54c166de432d1",
+      "channel": "stable",
+      "size": 9637
+    },
+    "extract_tmp/src/motor_descuentos/moleculas/tabla_ofertas.py": {
+      "version": "1.0.0",
+      "checksum": "fc5e6edd7c6d0c1c528684c809fc5cbd",
+      "channel": "stable",
+      "size": 5809
+    },
+    "extract_tmp/src/motor_descuentos/moleculas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/motor_descuentos/vistas/dialog_gestor_publicidad.py": {
+      "version": "1.0.0",
+      "checksum": "2d7f59c297e350e0278fdbd10fa3198e",
+      "channel": "stable",
+      "size": 6035
+    },
+    "extract_tmp/src/motor_descuentos/vistas/ofertas_main.py": {
+      "version": "1.0.0",
+      "checksum": "7642cca47e3037a6fd21eafbbb90d50b",
+      "channel": "stable",
+      "size": 33442
+    },
+    "extract_tmp/src/motor_descuentos/vistas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/motor_inventario/motor_catalogo.py": {
+      "version": "1.0.0",
+      "checksum": "0c54b77983c80a2e90167fcc3b95c589",
+      "channel": "stable",
+      "size": 1745
+    },
+    "extract_tmp/src/motor_inventario/motor_departamentos.py": {
+      "version": "1.0.0",
+      "checksum": "6e08239258227089ff6566880e76dbbd",
+      "channel": "stable",
+      "size": 7182
+    },
+    "extract_tmp/src/motor_inventario/motor_importacion.py": {
+      "version": "1.0.0",
+      "checksum": "8d03b7005f76a567ce13561f40d652b0",
+      "channel": "stable",
+      "size": 3539
+    },
+    "extract_tmp/src/motor_inventario/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "0191db4e579f3d6deda34a8d9977c3cb",
+      "channel": "stable",
+      "size": 236
+    },
+    "extract_tmp/src/motor_inventario/base/departamentos_db.py": {
+      "version": "1.0.0",
+      "checksum": "6d3a78cc6c2c945b63c0c8b316a35c24",
+      "channel": "stable",
+      "size": 3404
+    },
+    "extract_tmp/src/motor_inventario/base/productos_db.py": {
+      "version": "1.0.0",
+      "checksum": "7b3c04e67825b6e9035d40c9592180fa",
+      "channel": "stable",
+      "size": 4466
+    },
+    "extract_tmp/src/motor_inventario/procesos/buscador_productos.py": {
+      "version": "1.0.0",
+      "checksum": "a576dbb84546316ec32d85840f25e59d",
+      "channel": "stable",
+      "size": 2807
+    },
+    "extract_tmp/src/motor_inventario/procesos/editor_productos.py": {
+      "version": "1.0.0",
+      "checksum": "28f77e6e5954ddfaaf2cfa759c521720",
+      "channel": "stable",
+      "size": 4773
+    },
+    "extract_tmp/src/navegacion_f11/f11_escalation_manager.py": {
+      "version": "1.0.0",
+      "checksum": "39ebb96db280b69fd58df4da00aa4358",
+      "channel": "stable",
+      "size": 7554
+    },
+    "extract_tmp/src/navegacion_f11/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/navigation/screen_indices.py": {
+      "version": "1.0.0",
+      "checksum": "d91a740da82d8bfe98d4e08f544ae19d",
+      "channel": "stable",
+      "size": 1123
+    },
+    "extract_tmp/src/navigation/screen_registry.py": {
+      "version": "1.0.0",
+      "checksum": "8661db5f2fa9dac74b52762e4fb8d3b4",
+      "channel": "stable",
+      "size": 3443
+    },
+    "extract_tmp/src/navigation/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "9fcd6d0ca2cca8029ed2ce4ca00a531e",
+      "channel": "stable",
+      "size": 320
+    },
+    "extract_tmp/src/repositories/cliente_repository.py": {
+      "version": "1.0.0",
+      "checksum": "4b08d586f2802d1d78ac369f167005e8",
+      "channel": "stable",
+      "size": 6438
+    },
+    "extract_tmp/src/repositories/producto_repository.py": {
+      "version": "1.0.0",
+      "checksum": "b0be004467f85af66f45d115a9469a3c",
+      "channel": "stable",
+      "size": 2255
+    },
+    "extract_tmp/src/repositories/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/services/auto_heal.py": {
+      "version": "1.0.0",
+      "checksum": "866a34bbcc9a67f9aa80045a41601070",
+      "channel": "stable",
+      "size": 17165
+    },
+    "extract_tmp/src/services/caja_service.py": {
+      "version": "1.0.0",
+      "checksum": "53361bfbc7545a5c3a048a051eefd2c1",
+      "channel": "stable",
+      "size": 2908
+    },
+    "extract_tmp/src/services/carteleria_service.py": {
+      "version": "1.0.0",
+      "checksum": "9f5d21e1cf601b9167b7129b2de1519e",
+      "channel": "stable",
+      "size": 2744
+    },
+    "extract_tmp/src/services/email_service.py": {
+      "version": "1.0.0",
+      "checksum": "b5a144c644e935b4767d00ab6df00f92",
+      "channel": "stable",
+      "size": 14270
+    },
+    "extract_tmp/src/services/facturacion_service.py": {
+      "version": "1.0.0",
+      "checksum": "bb4006bbee430076d589a8c278658986",
+      "channel": "stable",
+      "size": 18926
+    },
+    "extract_tmp/src/services/github_error_reporter.py": {
+      "version": "1.0.0",
+      "checksum": "3476f4bc6a5f6897b6c95be22844d241",
+      "channel": "stable",
+      "size": 15597
+    },
+    "extract_tmp/src/services/inventario_service.py": {
+      "version": "1.0.0",
+      "checksum": "011e50652a3cf539e3be52ed8dcf3774",
+      "channel": "stable",
+      "size": 2546
+    },
+    "extract_tmp/src/services/mariadb_controller.py": {
+      "version": "1.0.0",
+      "checksum": "27c235c64cf2d1b6f59624660df5a466",
+      "channel": "stable",
+      "size": 16369
+    },
+    "extract_tmp/src/services/mercadopago_instore.py": {
+      "version": "1.0.0",
+      "checksum": "a48550987aad37c9280b9c70256e8f66",
+      "channel": "stable",
+      "size": 4780
+    },
+    "extract_tmp/src/services/network_service.py": {
+      "version": "1.0.0",
+      "checksum": "785e4030edbad33ea353c11861ab619e",
+      "channel": "stable",
+      "size": 5497
+    },
+    "extract_tmp/src/services/onedrive_sync_daemon.py": {
+      "version": "1.0.0",
+      "checksum": "204717b6eff2e194170c4c5db350a94a",
+      "channel": "stable",
+      "size": 6488
+    },
+    "extract_tmp/src/services/session_service.py": {
+      "version": "1.0.0",
+      "checksum": "4d81354ad5c9ec251156575c8ac71b5f",
+      "channel": "stable",
+      "size": 919
+    },
+    "extract_tmp/src/services/ventas_service.py": {
+      "version": "1.0.0",
+      "checksum": "713c37dc3dee5c05a84b0e83446a791d",
+      "channel": "stable",
+      "size": 1471
+    },
+    "extract_tmp/src/services/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/services/etiquetas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "17c4981be8d3173cf7f1709ed453be48",
+      "channel": "stable",
+      "size": 26
+    },
+    "extract_tmp/src/shared/urgencia_stock_banner.py": {
+      "version": "1.0.0",
+      "checksum": "9a81f124d53e49600cabbe51f4eb2ff6",
+      "channel": "stable",
+      "size": 1676
+    },
+    "extract_tmp/src/shared/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6770a01c67e75070cafc6e91bb62f533",
+      "channel": "stable",
+      "size": 79
+    },
+    "extract_tmp/src/tools/diagnostico_red.py": {
+      "version": "1.0.0",
+      "checksum": "e72d9f8d7b87349b1042767859f5ec13",
+      "channel": "stable",
+      "size": 4180
+    },
+    "extract_tmp/src/tools/fix_espia.py": {
+      "version": "1.0.0",
+      "checksum": "1701628b80d533646faa45132fadbc0b",
+      "channel": "stable",
+      "size": 363
+    },
+    "extract_tmp/src/tools/run_lan_server.py": {
+      "version": "1.0.0",
+      "checksum": "6ee5ed5565efcd8c46a52f8a21d31b5e",
+      "channel": "stable",
+      "size": 239
+    },
+    "extract_tmp/src/tools/setup_firewall.py": {
+      "version": "1.0.0",
+      "checksum": "a82dc18c860632e4fb80a0de17a9b462",
+      "channel": "stable",
+      "size": 7718
+    },
+    "extract_tmp/src/tools/simulador_caja.py": {
+      "version": "1.0.0",
+      "checksum": "2c7edf713aa4559fdd3644cdf5cbd833",
+      "channel": "stable",
+      "size": 726
+    },
+    "extract_tmp/src/tools/tpv_doctor.py": {
+      "version": "1.0.0",
+      "checksum": "7cb438b60bbf2da70844f2c349f3fa74",
+      "channel": "stable",
+      "size": 9337
+    },
+    "extract_tmp/src/tools/tpv_respaldos.py": {
+      "version": "1.0.0",
+      "checksum": "eddc677cf4c208c5f3efe282a9ec90c3",
+      "channel": "stable",
+      "size": 8871
+    },
+    "extract_tmp/src/tools/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui/console_widget.py": {
+      "version": "1.0.0",
+      "checksum": "465811126c1d7dae86d86610a2319499",
+      "channel": "stable",
+      "size": 2260
+    },
+    "extract_tmp/src/ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_components/alerts.py": {
+      "version": "1.0.0",
+      "checksum": "83bee89d535a248f1b90d51d072fab5f",
+      "channel": "stable",
+      "size": 2590
+    },
+    "extract_tmp/src/ui_components/backup_flash.py": {
+      "version": "1.0.0",
+      "checksum": "dbf0623c832478bb4ee785b51d12e437",
+      "channel": "stable",
+      "size": 3480
+    },
+    "extract_tmp/src/ui_components/base.qss": {
+      "version": "1.0.0",
+      "checksum": "ba060cde81e76e4c98e3a6ae28e11f0c",
+      "channel": "stable",
+      "size": 20363
+    },
+    "extract_tmp/src/ui_components/estilo_dia.qss": {
+      "version": "1.0.0",
+      "checksum": "b349f858c648eca8f4215f257c706f8f",
+      "channel": "stable",
+      "size": 59600
+    },
+    "extract_tmp/src/ui_components/estilo_noche.qss": {
+      "version": "1.0.0",
+      "checksum": "4cc13c1003218c067a0088c8eb4b6c3f",
+      "channel": "stable",
+      "size": 48365
+    },
+    "extract_tmp/src/ui_components/modificadores.py": {
+      "version": "1.0.0",
+      "checksum": "32aab93f0f1e052cd3a2922bc38ca093",
+      "channel": "stable",
+      "size": 8383
+    },
+    "extract_tmp/src/ui_components/panel_negocio.py": {
+      "version": "1.0.0",
+      "checksum": "f64908fa8a5952a265f34ac9d1b60adb",
+      "channel": "stable",
+      "size": 4075
+    },
+    "extract_tmp/src/ui_components/red_lan_panel.py": {
+      "version": "1.0.0",
+      "checksum": "bf5ecb3a4ad9f3e483feb44f4ff7762e",
+      "channel": "stable",
+      "size": 21119
+    },
+    "extract_tmp/src/ui_components/tema_estilos.py": {
+      "version": "1.0.0",
+      "checksum": "70df13bdcb6134cf447ba9ba3f849557",
+      "channel": "stable",
+      "size": 2055
+    },
+    "extract_tmp/src/ui_components/toast.py": {
+      "version": "1.0.0",
+      "checksum": "1d89943d3b12829da5c7c56a1274d23a",
+      "channel": "stable",
+      "size": 3618
+    },
+    "extract_tmp/src/ui_components/touch_feedback.py": {
+      "version": "1.0.0",
+      "checksum": "ea212fbd911f0a5699e31fab8b41be34",
+      "channel": "stable",
+      "size": 4909
+    },
+    "extract_tmp/src/ui_components/virtual_keyboard.py": {
+      "version": "1.0.0",
+      "checksum": "c56ffdbb83dc52afc6a0c4c6ae9ee8cc",
+      "channel": "stable",
+      "size": 15085
+    },
+    "extract_tmp/src/ui_components/welcome_transition.py": {
+      "version": "1.0.0",
+      "checksum": "803bdc642370f2c48449b5955070808d",
+      "channel": "stable",
+      "size": 13921
+    },
+    "extract_tmp/src/ui_components/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "8bb3a4122ebdee01f89941f569e0d6da",
+      "channel": "stable",
+      "size": 73
+    },
+    "extract_tmp/src/ui_global/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/cierre_diario_ui/cierre_main_ui.py": {
+      "version": "1.0.0",
+      "checksum": "3a4e810662c8b12096368c125ba4c17d",
+      "channel": "stable",
+      "size": 32725
+    },
+    "extract_tmp/src/ui_global/cierre_diario_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/cierre_diario_ui/componentes/metric_card.py": {
+      "version": "1.0.0",
+      "checksum": "c217d39bb3ba2b687ffd0d8c7382c12d",
+      "channel": "stable",
+      "size": 2340
+    },
+    "extract_tmp/src/ui_global/cierre_diario_ui/componentes/panel_arqueo.py": {
+      "version": "1.0.0",
+      "checksum": "87db97e1d83211ab5ebf88de7ce53f25",
+      "channel": "stable",
+      "size": 4700
+    },
+    "extract_tmp/src/ui_global/cierre_diario_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/inventario_ui/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "6d25ec2cf4e659d00ed64732521b8091",
+      "channel": "stable",
+      "size": 304
+    },
+    "extract_tmp/src/ui_global/inventario_ui/atomos/pie_inventario.py": {
+      "version": "1.0.0",
+      "checksum": "c96679a48e77d8363b18adb5e0afa35a",
+      "channel": "stable",
+      "size": 1991
+    },
+    "extract_tmp/src/ui_global/inventario_ui/atomos/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/inventario_ui/componentes/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/dialogo_galeria_iconos.py": {
+      "version": "1.0.0",
+      "checksum": "d755eed29fc78db8172d7b2648e471bf",
+      "channel": "stable",
+      "size": 18805
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/dialogo_producto.py": {
+      "version": "1.0.0",
+      "checksum": "6950a87907932e0228d89b870b10e8bc",
+      "channel": "stable",
+      "size": 20052
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/filtros_inventario.py": {
+      "version": "1.0.0",
+      "checksum": "5594d9d7a0835ca5b9dd86057d649c10",
+      "channel": "stable",
+      "size": 3988
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/panel_categorias.py": {
+      "version": "1.0.0",
+      "checksum": "859d6a720c96bfc43fd02298057b6106",
+      "channel": "stable",
+      "size": 11258
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/panel_departamentos.py": {
+      "version": "1.0.0",
+      "checksum": "5d85964b58f3a6d0ca0ba96edc26f6f4",
+      "channel": "stable",
+      "size": 12523
+    },
+    "extract_tmp/src/ui_global/inventario_ui/moleculas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/inventario_ui/paneles/catalogo_productos.py": {
+      "version": "1.0.0",
+      "checksum": "6712206e3bdf88a6b0bd5db11633fa3a",
+      "channel": "stable",
+      "size": 16299
+    },
+    "extract_tmp/src/ui_global/inventario_ui/paneles/tabla_inventario.py": {
+      "version": "1.0.0",
+      "checksum": "d566f2f7658e4e36dc82acd25d8d03cc",
+      "channel": "stable",
+      "size": 9611
+    },
+    "extract_tmp/src/ui_global/inventario_ui/paneles/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/inventario_ui/vistas/inventario_main.py": {
+      "version": "1.0.0",
+      "checksum": "f8f74e50495d53d2fef6eebd4fae193f",
+      "channel": "stable",
+      "size": 20159
+    },
+    "extract_tmp/src/ui_global/inventario_ui/vistas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/ui_global/perfil_empleados_ui/dialogo_perfiles.py": {
+      "version": "1.0.0",
+      "checksum": "7212c914c64024b0a5392577d2c86ee3",
+      "channel": "stable",
+      "size": 10347
+    },
+    "extract_tmp/src/ui_global/proveedor/vista_proveedor.py": {
+      "version": "1.0.0",
+      "checksum": "2ad4c12abf13d00456aa23affe93053c",
+      "channel": "stable",
+      "size": 18457
+    },
+    "extract_tmp/src/ui_global/proveedor/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "extract_tmp/src/updater/entry.py": {
+      "version": "1.0.0",
+      "checksum": "1d7f7163dcafb616326564dde7beaae0",
+      "channel": "stable",
+      "size": 3920
+    },
+    "extract_tmp/src/updater/github_release_url.py": {
+      "version": "1.0.0",
+      "checksum": "ddf3b5ddaac0c7af16bdf546a54fc6ad",
+      "channel": "stable",
+      "size": 3543
+    },
+    "extract_tmp/src/updater/github_updater.py": {
+      "version": "1.0.0",
+      "checksum": "a884770c4938e61a4ecdf2ff05a80b27",
+      "channel": "stable",
+      "size": 8257
+    },
+    "extract_tmp/src/updater/silent_auto_updater.py": {
+      "version": "1.0.0",
+      "checksum": "486b0eab4cfc0fa1a9aa76bdba8bd3c0",
+      "channel": "stable",
+      "size": 2519
+    },
+    "extract_tmp/src/updater/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "aad4f1da12ce781f2c510e987791cb1a",
+      "channel": "stable",
+      "size": 740
+    },
+    "extract_tmp/src/updater/cerebro/apply_update.py": {
+      "version": "1.0.0",
+      "checksum": "dcb1e81dfde47d9d2744a4f7e47cd421",
+      "channel": "stable",
+      "size": 198
+    },
+    "extract_tmp/src/updater/cerebro/background_service.py": {
+      "version": "1.0.0",
+      "checksum": "d5bf41b8b1b81200c453f0eba7d3e5aa",
+      "channel": "stable",
+      "size": 557
+    },
+    "extract_tmp/src/updater/cerebro/daemon_spawn.py": {
+      "version": "1.0.0",
+      "checksum": "dc4809f22ad4a18096d8072340c51edc",
+      "channel": "stable",
+      "size": 4077
+    },
+    "extract_tmp/src/updater/cerebro/download_fast.py": {
+      "version": "1.0.0",
+      "checksum": "d3fa9e041db4cef847b92be99749cfa6",
+      "channel": "stable",
+      "size": 8833
+    },
+    "extract_tmp/src/updater/cerebro/download_stage.py": {
+      "version": "1.0.0",
+      "checksum": "21faf7caeaf4740c4c539d81ea7e18cb",
+      "channel": "stable",
+      "size": 281
+    },
+    "extract_tmp/src/updater/cerebro/engine.py": {
+      "version": "1.0.0",
+      "checksum": "a86f9c1937bb01dd005e704eeb58ed9c",
+      "channel": "stable",
+      "size": 46713
+    },
+    "extract_tmp/src/updater/cerebro/ipc.py": {
+      "version": "1.0.0",
+      "checksum": "fa233cc93220baa1c4d049f0d2daf9f0",
+      "channel": "stable",
+      "size": 2394
+    },
+    "extract_tmp/src/updater/cerebro/process_guard.py": {
+      "version": "1.0.0",
+      "checksum": "8e6e73cbe58c088bf80f5e4b4806c06e",
+      "channel": "stable",
+      "size": 414
+    },
+    "extract_tmp/src/updater/cerebro/relaunch.py": {
+      "version": "1.0.0",
+      "checksum": "c935bc715e4f9f46b2871afc53171cce",
+      "channel": "stable",
+      "size": 248
+    },
+    "extract_tmp/src/updater/cerebro/version_compare.py": {
+      "version": "1.0.0",
+      "checksum": "39465216e57fa50b5ae43c767c811269",
+      "channel": "stable",
+      "size": 409
+    },
+    "extract_tmp/src/updater/cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "4f2b404d1bd469178460c5fbf5df2b07",
+      "channel": "stable",
+      "size": 1880
+    },
+    "extract_tmp/src/updater/moleculas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "e22ee6472904b1325dc56f25b84b5162",
+      "channel": "stable",
+      "size": 151
+    },
+    "extract_tmp/src/utils/barcode_parser.py": {
+      "version": "1.0.0",
+      "checksum": "8024bee1e9a0e90ac2e0371c815741f3",
+      "channel": "stable",
+      "size": 4959
+    },
+    "extract_tmp/src/utils/bot_state.py": {
+      "version": "1.0.0",
+      "checksum": "efaab33d6ef9092c54790ea12f81c31f",
+      "channel": "stable",
+      "size": 837
+    },
+    "extract_tmp/src/utils/candados.py": {
+      "version": "1.0.0",
+      "checksum": "a73eb72cf73697239f69b3644784ea07",
+      "channel": "stable",
+      "size": 15429
+    },
+    "extract_tmp/src/utils/db.py": {
+      "version": "1.0.0",
+      "checksum": "698b39ef73b78835b19777a1bb9c62a7",
+      "channel": "stable",
+      "size": 270
+    },
+    "extract_tmp/src/utils/floating_widgets.py": {
+      "version": "1.0.0",
+      "checksum": "701b597312f3e959ee5ba418c7daf236",
+      "channel": "stable",
+      "size": 3442
+    },
+    "extract_tmp/src/utils/parser.py": {
+      "version": "1.0.0",
+      "checksum": "afdb8b56f2afbbfb799a39e73d33251b",
+      "channel": "stable",
+      "size": 1689
+    },
+    "extract_tmp/src/utils/paths.py": {
+      "version": "1.0.0",
+      "checksum": "c57000fcfc90385fffdc72e040c37837",
+      "channel": "stable",
+      "size": 1362
+    },
+    "extract_tmp/src/utils/pin_auth.py": {
+      "version": "1.0.0",
+      "checksum": "1b5d2395c46bbe2674c11f853089cf85",
+      "channel": "stable",
+      "size": 427
+    },
+    "extract_tmp/src/utils/qt_compat.py": {
+      "version": "1.0.0",
+      "checksum": "74bec99d3daf1f4b748d613bc0dd93a5",
+      "channel": "stable",
+      "size": 10557
+    },
+    "extract_tmp/src/utils/qt_dpi.py": {
+      "version": "1.0.0",
+      "checksum": "c0b54c0fe658a849a00ce1dfbcf470f3",
+      "channel": "stable",
+      "size": 12015
+    },
+    "extract_tmp/src/utils/qt_printer.py": {
+      "version": "1.0.0",
+      "checksum": "ed7d218d44867e363e190dbe9bd8dbf4",
+      "channel": "stable",
+      "size": 1938
+    },
+    "extract_tmp/src/utils/theme_manager.py": {
+      "version": "1.0.0",
+      "checksum": "af3175f38b34166582a7fa2e222c8e26",
+      "channel": "stable",
+      "size": 9717
+    },
+    "extract_tmp/src/utils/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "3a83ccaf5bb0e582685dad212fb44128",
+      "channel": "stable",
+      "size": 17
+    },
+    "extract_tmp/src/vistas/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "c0cbbb012bf86e4e76c8bd787d946f38",
+      "channel": "stable",
+      "size": 192
     },
     "scripts/ci/auto_fix_from_issue.py": {
       "version": "1.0.0",
@@ -2226,9 +5712,9 @@
     },
     "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "679df25e585def20fc51028e23d14040",
+      "checksum": "7c758f74e0db084cadfc76328d59ff4a",
       "channel": "stable",
-      "size": 16667
+      "size": 16927
     },
     "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",
