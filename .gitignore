@@ -17,6 +17,7 @@ build/
 *.mkv
 *.iso
 *.bin
+!src/carteleria/lanzador_tv/tv_cara.bin
 *.pkg
 *.pdb
 
