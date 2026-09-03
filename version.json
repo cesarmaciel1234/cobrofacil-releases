@@ -1,7 +1,7 @@
 {
-  "app_version": "13.2.4",
+  "app_version": "13.2.6",
   "channel": "stable",
-  "build_date": "2026-09-03 16:08:43",
+  "build_date": "2026-09-03 16:16:54",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -552,9 +552,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "dd0fc02cc01f178383ef2d465b2c0b3e",
+      "checksum": "53cc01b2fd47c0881240f3b52ddeaad0",
       "channel": "stable",
-      "size": 856514
+      "size": 977237
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
