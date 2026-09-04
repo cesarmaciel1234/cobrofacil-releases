@@ -1,4 +1,4 @@
-/* Ranking TV1: puesto real + dato de ventas de la base. */
+﻿/* Ranking TV1: puesto real + dato de ventas de la base. */
 
 import { escapeHtml, nombreVitrina } from "../../shared/plata_y_texto.js";
 
@@ -23,15 +23,23 @@ function textoFamilias(item) {
 
 function formatoKilosComoPct(valor) {
     const n = Number(valor) || 0;
-    if (n <= 0) return "0 %";
-    if (Math.abs(n - Math.round(n)) < 0.05) return `${Math.round(n)} %`;
+    if (n <= 0) return "0 kg";
+    if (Math.abs(n - Math.round(n)) < 0.05) return `${Math.round(n)} kg`;
+    return `${n.toFixed(1).replace(".", ",")} kg`;
+} %`;
     return `${n.toFixed(1).replace(".", ",")} %`;
 }
 
 function formatoPlataComoPct(valor) {
     const n = Number(valor) || 0;
+    if (n <= 0) return "function formatoPlataComoPct(valor) {
+    const n = Number(valor) || 0;
     if (n <= 0) return "0.00%";
-    return `${(n / 1000).toFixed(2)}%`;
+    return `${(n / 1000).toFixed(2)}";
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+    return `${n}`;
+}%`;
 }
 
 function barraRelativa(valor, items, clave) {
@@ -113,3 +121,4 @@ export function htmlTarjetaRanking(item, i, opciones = {}) {
         </article>
     `;
 }
+

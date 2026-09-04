@@ -1,4 +1,4 @@
-/* ══════════════════════════════════════════════════
+﻿/* ══════════════════════════════════════════════════
 
    PREMIUM — Negro & Oro Lujo — estilos.css
 
@@ -1360,29 +1360,7 @@ body[data-theme="premium"] .marquee-text {
 
 /* Badges con gradiente cónico (Efecto Joya) */
 
-body[data-theme="premium"] .asian-rank-badge {
 
-    background: conic-gradient(from 0deg, #00FFFF, #FFF700, #FFFFFF, #00FFFF, #8B6508, #00FFFF);
-
-    color: #000;
-
-    font-family: var(--font-primary);
-
-    font-weight: 900;
-
-    letter-spacing: 0.05em;
-
-    border: 1px solid rgba(255, 255, 255, 0.5);
-
-    border-radius: 6px;
-
-    padding: 2px 12px;
-
-    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4), inset 0 2px 4px rgba(255,255,255,0.6);
-
-    text-shadow: none;
-
-}
 
 
 
@@ -1406,19 +1384,7 @@ body[data-theme="premium"] .asian-rank-card.top-1 {
 
 
 
-body[data-theme="premium"] .asian-rank-card.top-1 .asian-rank-badge {
 
-    background: conic-gradient(from 45deg, #FFF700, #FFD700, #FFFFFF, #FFD700, #B8860B, #FFF700);
-
-    color: #550000;
-
-    transform: scale(1.15);
-
-    box-shadow: 0 10px 25px rgba(0, 255, 255, 0.5), inset 0 2px 5px rgba(255,255,255,0.8);
-
-    border-color: #FFFFFF;
-
-}
 
 
 
@@ -1513,4 +1479,6 @@ body[data-theme="premium"] .flash-strip__cycle span:first-child {
     animation: foil-shine 3s linear infinite, platinum-sweep 2s alternate infinite ease-in-out;
 
 }
+
+
 

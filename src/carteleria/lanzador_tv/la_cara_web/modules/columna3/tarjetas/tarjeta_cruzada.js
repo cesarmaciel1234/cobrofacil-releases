@@ -1,4 +1,4 @@
-/* Venta cruzada: misma familia visual que el carrusel. */
+﻿/* Venta cruzada: misma familia visual que el carrusel. */
 
 import { escapeHtml, formatMoney, htmlDealStage, nombreVitrina, precioVigente, textoValidezOferta } from "../../shared/plata_y_texto.js";
 
@@ -43,10 +43,12 @@ export function htmlTarjetaCruzada(slide, productos = []) {
     return `
         <article class="xsell-card">
             <header class="rank-head sale-head">
-                <p class="rank-kicker">⚡ COMPRAS RELACIONADAS</p>
+                <p class="rank-kicker">🔥 COMPRAS RELACIONADAS</p>
             </header>
             <p class="xsell-ask">${escapeHtml(pregunta)}</p>
             <ul class="xsell-list">${items}</ul>
         </article>
     `;
 }
+
+

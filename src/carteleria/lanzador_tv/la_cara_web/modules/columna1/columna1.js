@@ -1,4 +1,4 @@
-/* Columna 1: ranking real de ventas (tickets, kilos y recaudación). */
+﻿/* Columna 1: ranking real de ventas (tickets, kilos y recaudación). */
 
 import { escapeHtml } from "../shared/plata_y_texto.js";
 import { htmlTarjetaRanking } from "./tarjetas/tarjeta_ranking.js";
@@ -50,7 +50,7 @@ function htmlPanel(panel, paneles, index) {
     ].filter(Boolean).join(" ");
     return `
         <header class="rank-head sale-head">
-            <p class="rank-kicker">⚡ ${escapeHtml(kickerPanel(panel))}</p>
+            <p class="rank-kicker">🔥 ${escapeHtml(kickerPanel(panel))}</p>
             <div class="rank-dots" aria-hidden="true">${dots}</div>
         </header>
         <div class="${listaClase}">${cards}</div>
@@ -94,3 +94,5 @@ export function iniciarRotacionColumna1(state, root) {
         pintar(true);
     }, ROTACION_MS);
 }
+
+
