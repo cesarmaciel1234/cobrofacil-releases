@@ -1,8 +1,8 @@
-/* ══════════════════════════════════════════════════
-   TEMU — Nivel Inalcanzable — estilos.css
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   TEMU â€” Nivel Inalcanzable â€” estilos.css
    Mismo DOM/estructura que premium/apple/blackfriday,
    solo cambia el vestuario.
-   ══════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @import url('../../structural_base.css');
 
 body[data-theme="temu"],
@@ -42,12 +42,12 @@ body {
     position: absolute;
     inset: 0 0 auto 0;
     height: 4px;
-    border-radius: 22px; /* asumo 22px porque no está en colores.css */
+    border-radius: 22px; /* asumo 22px porque no estÃ¡ en colores.css */
     background: linear-gradient(90deg, var(--accent), var(--accent-alt), var(--accent));
 }
 
 .sale-head {
-    background: linear-gradient(90deg, var(--text-main), #2A2A2A); /* #2A2A2A no está en colores.css, lo mantengo */
+    background: linear-gradient(90deg, var(--text-main), #2A2A2A); /* #2A2A2A no estÃ¡ en colores.css, lo mantengo */
     border: 0;
     border-radius: 14px;
     padding: 0.7cqh 0.9cqw;
@@ -108,7 +108,7 @@ body {
 
 .sale-head .board-kicker::before,
 .sale-head .rank-kicker::before {
-    content: '👑';
+    content: 'ðŸ‘‘';
     margin-right: 0.5cqw;
     animation: premiumCrownPulse 2s infinite;
 }
@@ -138,7 +138,7 @@ body {
     transform: scale(1.2);
 }
 
-/* Tarjeta híbrida: chrome de app + energía Temu en el precio - Premium Luxury */
+/* Tarjeta hÃ­brida: chrome de app + energÃ­a Temu en el precio - Premium Luxury */
 .tv-card {
     background: linear-gradient(180deg, var(--bg-secondary) 0%, #FFFBF0 50%, #FFF8F0 100%);
     border: 2px solid rgba(139, 0, 0, 0.12);
@@ -546,7 +546,7 @@ body {
 
 /* --- Cabeceras Globales --- */
 .board-head, .rank-head, .sale-head {
-    background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
+    background: #FFFFFF;
     border-radius: 999px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
     margin-bottom: 1.5cqh;
@@ -585,7 +585,7 @@ body {
 }
 
 .asian-rank-badge {
-    background: #1A1A1A;
+    background: #FFFFFF;
     color: var(--text-on-dark);
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
