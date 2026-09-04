@@ -1,4 +1,4 @@
-"""Empaqueta la cara web de la TV en un blob opaco (no HTML/CSS/JS sueltos)."""
+﻿"""Empaqueta la cara web de la TV en un blob opaco (no HTML/CSS/JS sueltos)."""
 
 from __future__ import annotations
 
@@ -84,7 +84,6 @@ def buscar_blob() -> str:
         return ""
         
     # Devolver el blob más reciente (por fecha de modificación) para asegurar que se usa el descargado por OTA
-    import os
     validos.sort(key=lambda p: os.path.getmtime(p), reverse=True)
     return validos[0]
 
@@ -162,3 +161,4 @@ if __name__ == "__main__":
         instalar_blob_en_dist(sys.argv[2])
     else:
         sys.exit(2)
+
