@@ -111,4 +111,8 @@ _internal/
 # ─── Creador PNG (temporales de conversión) ─────────────────────────────────
 src/carteleria/creador_png/uploads/
 src/carteleria/creador_png/converted/
+creador_png_tmp/
 carteleria_cache.json
+
+# ─── Extracciones / dumps temporales ────────────────────────────────────────
+extract_tmp/
