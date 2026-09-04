@@ -1,4 +1,4 @@
-/* ══════════════════════════════════════════════════════════
+﻿/* ══════════════════════════════════════════════════════════
    COLUMNA 1 — ESTRUCTURA BASE PERMANENTE (todos los temas)
    La estructura no cambia. Los colores se controlan con
    variables CSS que cada tema sobreescribe en su estilos.css
@@ -56,7 +56,7 @@
     position: relative;
     z-index: 2;
 }
-.rank-kicker::before { content: '👑'; margin-right: 0.4cqw; }
+
 
 /* Dots de rotación */
 .rank-dots { display: flex; gap: 0.4cqw; align-items: center; }
@@ -988,5 +988,6 @@
 .chef-lobo-img {
     image-rendering: -webkit-optimize-contrast;
 }
+
 
 

@@ -106,12 +106,7 @@ body {
     z-index: 2;
 }
 
-.sale-head .board-kicker::before,
-.sale-head .rank-kicker::before {
-    content: 'ðŸ‘‘';
-    margin-right: 0.5cqw;
-    animation: premiumCrownPulse 2s infinite;
-}
+
 
 @keyframes premiumCrownPulse {
     0%, 100% { transform: scale(1); }
@@ -817,3 +812,4 @@ body {
     text-transform: uppercase;
     margin-left: auto;
 }
+
