@@ -408,7 +408,8 @@ body[data-theme="premium"] .tv-card__timer {
 
 }
 
-.asian-rank-tag-social { color: var(--rank-social-color, #F5E17A); }
+.asian-rank-tag-social { color: var(--rank-social-color, #111111); font-weight: 800; text-shadow: none; }
+.asian-rank-card.top-1 .asian-rank-tag-social { color: var(--rank-top1-social-color, #FFFF00); }
 
 .asian-rank-progress-bar { background: var(--rank-bar-bg); }
 
@@ -1479,6 +1480,7 @@ body[data-theme="premium"] .flash-strip__cycle span:first-child {
     animation: foil-shine 3s linear infinite, platinum-sweep 2s alternate infinite ease-in-out;
 
 }
+
 
 
 

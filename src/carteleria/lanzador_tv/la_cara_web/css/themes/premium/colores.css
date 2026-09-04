@@ -1,4 +1,4 @@
-
+﻿
 :root {
     /* INTERFAZ GLOBAL PREMIUM - COLORES VENDE HUMO (Super Flashy) */
     --bg-primary:      #FF0000;
@@ -117,9 +117,11 @@
     --rank-bar-bg:           linear-gradient(90deg, #FF0000, #FFFF00);
     --rank-bar-track:        #EEEEEE;
     --rank-tag-color:        #FFFFFF;
-    --rank-social-color:     #FF0000;
+    --rank-social-color:     #111111;
+    --rank-top1-social-color: #FFFF00;
     --rank-fire-shadow:      rgba(255,0,0,0.5);
     --rank-dot-bg:           rgba(255,0,0,0.2);
     --rank-dot-active:       #FF0000;
     --rank-progress-bar:     linear-gradient(90deg, #FF0000, #FFFF00);
 }
+
