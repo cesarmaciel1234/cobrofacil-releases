@@ -1,4 +1,4 @@
-/* =====================================================
+﻿/* =====================================================
    TV4 – Premium 2026 Flash Sale Column
    Diseño contemporáneo con elegancia sofisticada
    Elementos: Premium UI, Micro-interacciones, Elegancia
@@ -399,10 +399,14 @@
 
 
 .asian-flash-product-tag {
-    background: rgba(212, 175, 55, 0.2) !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: #FFF700 !important;
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+    border-radius: 20px !important;
+    padding: 4px 12px !important;
+    font-weight: 800 !important;
+    font-size: 1.1cqw !important;
     position: absolute !important;
     bottom: 10px !important;
     left: 10px !important;
@@ -1560,10 +1564,14 @@
 /* Etiqueta NUEVO/OFERTA estilo oro */
 
 .asian-flash-product-tag {
-    background: rgba(212, 175, 55, 0.2) !important;
-    color: #D4AF37 !important;
-    border: 1px solid #D4AF37 !important;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: #FFF700 !important;
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+    border-radius: 20px !important;
+    padding: 4px 12px !important;
+    font-weight: 800 !important;
+    font-size: 1.1cqw !important;
     position: absolute !important;
     bottom: 10px !important;
     left: 10px !important;
@@ -1584,3 +1592,4 @@
     margin-top: 0.5vh;
     letter-spacing: 0.03em;
 }
+
