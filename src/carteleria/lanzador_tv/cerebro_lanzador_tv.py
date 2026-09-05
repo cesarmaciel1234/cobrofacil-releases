@@ -42,11 +42,26 @@ def _app_version_tv() -> str:
         return "0"
 
 
+def _borrar_cache_chrome(root: str) -> None:
+    """Chrome guarda el HTTP cache en Default/, no en la raíz del user-data-dir."""
+    for rel in (
+        "Cache",
+        "Code Cache",
+        "GPUCache",
+        "Service Worker",
+        os.path.join("Default", "Cache"),
+        os.path.join("Default", "Code Cache"),
+        os.path.join("Default", "GPUCache"),
+        os.path.join("Default", "Service Worker"),
+    ):
+        shutil.rmtree(os.path.join(root, rel), ignore_errors=True)
+
+
 def _perfil_kiosk_estable() -> str:
-    """Un perfil Chrome persistente; se limpia solo el cache HTTP si cambió la versión."""
-    root = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
+    """Un perfil por versión de app: update = carpeta nueva, sin CSS viejo."""
+    ver = _app_version_tv().replace(" ", "")
+    root = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{ver}")
     os.makedirs(root, exist_ok=True)
-    ver = _app_version_tv()
     marca = os.path.join(root, "ui_version.txt")
     previa = ""
     try:
@@ -55,8 +70,7 @@ def _perfil_kiosk_estable() -> str:
     except OSError:
         previa = ""
     if previa != ver:
-        for nombre in ("Cache", "Code Cache", "GPUCache", "Service Worker"):
-            shutil.rmtree(os.path.join(root, nombre), ignore_errors=True)
+        _borrar_cache_chrome(root)
         try:
             with open(marca, "w", encoding="utf-8") as fh:
                 fh.write(ver)
@@ -77,6 +91,7 @@ def cargar_web_tv():
                 return None, mem
         except Exception:
             logger.exception("No se pudo abrir el paquete oculto de la TV")
+        return "", None
 
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
@@ -156,7 +171,9 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         super().end_headers()
 
     def _serve_icono(self):

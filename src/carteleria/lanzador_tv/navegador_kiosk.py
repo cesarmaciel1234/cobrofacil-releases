@@ -86,6 +86,8 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--autoplay-policy=no-user-gesture-required",
         "--high-dpi-support=1",
         "--disable-pinch",
+        "--disable-http-cache",
+        "--disk-cache-size=1",
         "--start-fullscreen",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",

@@ -1,7 +1,7 @@
 {
-  "app_version": "14.0.2",
+  "app_version": "14.0.3",
   "channel": "stable",
-  "build_date": "2026-09-05 16:42:35",
+  "build_date": "2026-09-05 17:02:23",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "e429b106aadee36e7e142e483b37582f",
+      "checksum": "c5b5f99429730d5f4cf276312b65fe37",
       "channel": "stable",
       "size": 883231
     },
@@ -2436,9 +2436,9 @@
     },
     "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "acfb85861bdf0dc76bce16a0b7fd86f4",
+      "checksum": "dbb710f9ea472548290a8327b37bf654",
       "channel": "stable",
-      "size": 18392
+      "size": 18947
     },
     "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",
@@ -2466,9 +2466,9 @@
     },
     "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
-      "checksum": "882f7e80cc4729a98aa711721b0685b1",
+      "checksum": "8e2b9599721403b5f545e52f39ace9e4",
       "channel": "stable",
-      "size": 7222
+      "size": 7287
     },
     "src/carteleria/lanzador_tv/perfil_pc.py": {
       "version": "1.0.0",
@@ -4170,9 +4170,9 @@
     },
     "src/updater/cerebro/engine.py": {
       "version": "1.0.0",
-      "checksum": "6b8c5d235fac65a2dbdaa47c59109192",
+      "checksum": "82354a577240d716a1f0367a33d48682",
       "channel": "stable",
-      "size": 48038
+      "size": 48721
     },
     "src/updater/cerebro/ipc.py": {
       "version": "1.0.0",

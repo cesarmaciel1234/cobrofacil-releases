@@ -453,7 +453,7 @@ def _local_version_file() -> str:
 
 def read_local_version() -> str:
     try:
-        with open(_local_version_file(), encoding="utf-8") as f:
+        with open(_local_version_file(), encoding="utf-8-sig") as f:
             return str(json.load(f).get("app_version", "0"))
     except (OSError, json.JSONDecodeError, TypeError):
         return "0"
@@ -714,6 +714,24 @@ def _load_pending() -> dict:
 def _save_pending(data: dict) -> None:
     with open(_pending_path(), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def _purge_cara_tv_vieja(install_root: str) -> None:
+    """Tras update: no dejar HTML viejo ni perfil Chrome con CSS cacheado."""
+    import tempfile
+
+    for root, dirs, _files in os.walk(install_root):
+        if "la_cara_web" in dirs:
+            shutil.rmtree(os.path.join(root, "la_cara_web"), ignore_errors=True)
+            dirs.remove("la_cara_web")
+    tmp = tempfile.gettempdir()
+    try:
+        nombres = os.listdir(tmp)
+    except OSError:
+        nombres = []
+    for name in nombres:
+        if name.startswith("tpv-carteleria-kiosk"):
+            shutil.rmtree(os.path.join(tmp, name), ignore_errors=True)
 
 
 def _should_preserve(rel_path: str, install_root: str | None = None) -> bool:
@@ -1007,6 +1025,7 @@ def apply_pending_update_on_startup() -> bool:
                 os.remove(_zip_path())
         except OSError:
             pass
+        _purge_cara_tv_vieja(base)
         _save_pending({})
         end_apply_guard()
 
