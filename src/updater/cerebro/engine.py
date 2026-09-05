@@ -433,9 +433,16 @@ def _urlopen(req, timeout: float = 20):
 
 
 def _http_get_json(url: str, timeout: int = 20) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-SilentUpdater/2026"})
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "CobroFacil-SilentUpdater/2026",
+            "Accept": "application/vnd.github+json, application/json",
+        },
+    )
     with _urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        # version.json en GitHub a veces llega con BOM UTF-8; json.loads lo rechaza.
+        return json.loads(resp.read().decode("utf-8-sig"))
 
 
 def _local_version_file() -> str:
@@ -450,21 +457,51 @@ def read_local_version() -> str:
         return "0"
 
 
+def _version_from_release_tag(tag: str) -> str:
+    return str(tag or "").strip().lstrip("vV")
+
+
+def _read_remote_version_from_releases() -> str:
+    """Fallback si raw.githubusercontent.com falla o el JSON tiene BOM/basura."""
+    from src.updater.github_release_url import GITHUB_REPO
+
+    data = _http_get_json(
+        f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    )
+    if not isinstance(data, dict):
+        return ""
+    return _version_from_release_tag(str(data.get("tag_name") or data.get("name") or ""))
+
+
 def read_remote_version() -> str:
     global _last_remote_error
+    last_exc: Exception | None = None
     try:
         data = _http_get_json(REMOTE_VERSION_URL)
-        _last_remote_error = ""
-        return str(data.get("app_version", "0"))
+        ver = str((data or {}).get("app_version", "") or "").strip()
+        if ver:
+            _last_remote_error = ""
+            return ver
     except Exception as exc:
-        _last_remote_error = f"{type(exc).__name__}: {exc}"
+        last_exc = exc
+    try:
+        ver = _read_remote_version_from_releases()
+        if ver:
+            _last_remote_error = ""
+            return ver
+    except Exception as exc:
+        last_exc = exc
+    if last_exc is not None:
+        _last_remote_error = f"{type(last_exc).__name__}: {last_exc}"
         try:
             from src.services.auto_heal import try_auto_heal
 
-            try_auto_heal(f"updater remote version: {exc}", exc=exc)
+            try_auto_heal(f"updater remote version: {last_exc}", exc=last_exc)
         except Exception:
             pass
-        return ""
+    else:
+        _last_remote_error = "remote version vacía"
+    return ""
 
 
 def _clean_ver(v: str) -> tuple[int, ...]:

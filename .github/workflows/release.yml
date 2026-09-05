@@ -65,6 +65,7 @@ jobs:
           $data | ConvertTo-Json -Depth 20 | Set-Content $path -Encoding utf8
           echo "tag=v$($data.app_version)" >> $env:GITHUB_OUTPUT
           echo "app_version=$($data.app_version)" >> $env:GITHUB_OUTPUT
+          python -c "from pathlib import Path; p=Path('version.json'); p.write_text(p.read_text(encoding='utf-8-sig'), encoding='utf-8', newline='\n')"
 
       - name: Generar iconos del clima
         run: |

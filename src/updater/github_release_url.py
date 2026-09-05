@@ -72,7 +72,7 @@ def _fetch_json(url: str, timeout: int = 30) -> dict | list | None:
         },
     )
     with _urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        return json.loads(resp.read().decode("utf-8-sig"))
 
 
 def resolve_release_zip_url(timeout: int = 30) -> str | None:

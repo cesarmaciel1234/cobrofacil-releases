@@ -142,7 +142,7 @@ def _verificar_modulos_dev(dry_run=False, callback_progreso=None):
             headers={"User-Agent": "CobroFacil-Updater"},
         )
         with urllib.request.urlopen(req, timeout=15, context=ctx) as r:
-            manifest_remoto = json.loads(r.read().decode("utf-8"))
+            manifest_remoto = json.loads(r.read().decode("utf-8-sig"))
     except Exception as e:
         res.errores.append(f"No se pudo descargar version.json desde GitHub: {e}")
         return res

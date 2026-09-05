@@ -22,6 +22,7 @@ from src.updater.silent_auto_updater import (
 class SmartUpdaterSignal(QObject):
     update_found = pyqtSignal(str, str)  # remote_ver, local_ver
     check_unreachable = pyqtSignal()  # no se pudo leer version remota
+    check_current = pyqtSignal()  # remoto leído, ya al día
     download_progress = pyqtSignal(int, str)  # pct, msg
     download_complete = pyqtSignal(bool, str)  # success, msg
 
@@ -93,6 +94,7 @@ class SmartLauncherUpdater(QFrame):
     def _connect_signals(self):
         self.signals.update_found.connect(self._on_update_found)
         self.signals.check_unreachable.connect(self._on_check_unreachable)
+        self.signals.check_current.connect(self._on_check_current)
         self.signals.download_progress.connect(self._on_download_progress)
         self.signals.download_complete.connect(self._on_download_complete)
 
@@ -112,6 +114,15 @@ class SmartLauncherUpdater(QFrame):
             pass
 
     def check_for_updates_async(self):
+        try:
+            self.lbl_status.setText(f"v{self.local_ver}  ·  Consultando GitHub…")
+            self.lbl_status.setStyleSheet(
+                "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
+            )
+            self.btn_action.setEnabled(False)
+        except Exception:
+            pass
+
         def _check():
             try:
                 if is_update_staged():
@@ -125,6 +136,9 @@ class SmartLauncherUpdater(QFrame):
                 avail, local, remote = is_update_available()
                 if avail and remote:
                     self.signals.update_found.emit(remote, local)
+                    return
+                if remote:
+                    self.signals.check_current.emit()
                     return
                 if not remote:
                     # SSL/red: auto_heal puede activar ssl_relax y conviene un reintento
@@ -141,7 +155,8 @@ class SmartLauncherUpdater(QFrame):
                                     self.signals.update_found.emit(remote2, local2)
                                     return
                                 if remote2:
-                                    return  # al día tras curar SSL
+                                    self.signals.check_current.emit()
+                                    return
                     except Exception:
                         pass
                     self.signals.check_unreachable.emit()
@@ -150,6 +165,25 @@ class SmartLauncherUpdater(QFrame):
 
         import threading
         threading.Thread(target=_check, daemon=True).start()
+
+    def _on_check_current(self):
+        if self.is_downloading or is_update_staged():
+            return
+        self.lbl_status.setText(f"v{self.local_ver}  ·  Al día  ✅")
+        self.lbl_status.setStyleSheet(
+            "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
+        )
+        self.setStyleSheet("""
+            QFrame {
+                background: #F0FDF4;
+                border: 1px solid #86EFAC;
+                border-radius: 10px;
+                padding: 2px 8px;
+            }
+        """)
+        self.btn_action.hide()
+        self.btn_action.setEnabled(True)
+        self.setToolTip("")
 
     def _on_check_unreachable(self):
         if self.is_downloading or is_update_staged():
