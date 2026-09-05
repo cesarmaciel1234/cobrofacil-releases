@@ -59,6 +59,8 @@ body {
 /* ── CABECERAS (sale-head / rank-head) ── */
 .sale-head, .board-head, .rank-head, .sale-head.rank-head {
     background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-subtle);
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.06);
@@ -73,6 +75,8 @@ body {
 /* ── TARJETA GENERAL ── */
 .oferta-card, .meal-card {
     background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--card-border);
     box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
@@ -81,14 +85,12 @@ body {
     box-shadow: 0 12px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(var(--accent-rgb),0.1);
 }
 .deal-stage {
-    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
+    background: #F0F8FF; /* Celeste pastel base */
     border-right: 1px solid var(--border-subtle);
 }
-.deal-stage[data-tone="aves"]    { background: #FFF7EB; }
-.deal-stage[data-tone="cerdo"]   { background: #F8E9EB; }
-.deal-stage[data-tone="almacen"] { background: #E6F3E6; }
-
-.deal-stage__off, .tv-card__badge {
+.deal-stage[data-tone="aves"]    { background: #E1F0FF; } 
+.deal-stage[data-tone="cerdo"]   { background: #EAF4FF; } 
+.deal-stage[data-tone="almacen"] { background: #F5FAFF; }
     background: var(--badge-bg);
     color: var(--badge-color); /* asumo var(--badge-color) es blanco */
     box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.25);
@@ -117,6 +119,8 @@ body {
 /* ── COL 1 — RANKING ── */
 .rank-card, .rank-card.is-top, .asian-rank-card {
     background: var(--rank-card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--rank-card-border);
     box-shadow: var(--rank-card-shadow);
 }
@@ -168,6 +172,8 @@ body {
 }
 .price-row, .price-row.is-offer {
     background: var(--price-row-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-subtle);
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -197,7 +203,7 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 .flash-offer__stage {
-    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
+    background: #E1F0FF; /* Celeste pastel llamativo */
 }
 .xsell-card {
     background: transparent;

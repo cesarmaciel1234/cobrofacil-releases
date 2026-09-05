@@ -30,7 +30,18 @@ INCLUIR_JSON = {"version.json"}
 SKIP_ROOT_FILES = {
     "get-pip.py", "old_admin.py", "test_error.py", "stress_test.py",
     "detect_ports.py", "clean_excel.py",
+    "build_log.txt", "script_premium.py", "refactor_themes.py",
 }
+
+
+def _skip_rel(rel_path: str, fname: str) -> bool:
+    if rel_path in SKIP_ROOT_FILES or fname in SKIP_ROOT_FILES:
+        return True
+    if fname.endswith("_backup.py"):
+        return True
+    if "/" in rel_path:
+        return False
+    return fname.startswith(("temp_", "check_v", "fix_"))
 
 
 def load_manifest() -> dict:
@@ -58,7 +69,7 @@ def scan_modules() -> dict:
 
             file_path = os.path.join(root, fname)
             rel_path = os.path.relpath(file_path, REPO_ROOT).replace("\\", "/")
-            if rel_path in SKIP_ROOT_FILES:
+            if _skip_rel(rel_path, fname):
                 continue
 
             try:

@@ -1,88 +1,102 @@
 :root {
-    --bg-primary: #F8F9FA;
+    /* ── Apple Theme: Elegant Blue & White with High Energy (FOMO) ── */
+    --bg-primary: #F4F6F9;         /* Blanco plata suave */
     --bg-secondary: #FFFFFF;
     --surface-primary: rgba(255, 255, 255, 0.95);
-    --text-primary: #1A1A1A;
-    --text-secondary: #6B7280;
-    --accent-primary: #007AFF;
-    --accent-secondary: #5856D6;
-    --border-subtle: rgba(0, 0, 0, 0.08);
+    
+    --text-primary: #1D1D1F;       /* Texto negro Apple */
+    --text-secondary: #86868B;     /* Gris texto */
+    
+    --accent-primary: #0071E3;     /* Azul Apple clásico */
+    --accent-rgb: 0, 113, 227;
+    --accent-secondary: #00C6FF;   /* Cyan vibrante para gradientes de alta energía */
+    
+    --border-subtle: rgba(0, 113, 227, 0.15); /* Bordes sutiles azulados */
     --success-color: #34C759;
-    /* ── Columna 1 colores ── */
+    
+    /* ── Columna 1 colores (Ranking) ── */
     --rank-card-bg:          #FFFFFF;
-    --rank-card-border:      rgba(0,122,255,0.15);
-    --rank-card-shadow:      0 4px 15px rgba(0,0,0,0.06);
-    --rank-top1-bg:          linear-gradient(135deg, #FFFDF0, #FFF4C2);
-    --rank-top1-border:      #FFD700;
-    --rank-top1-shadow:      0 8px 25px rgba(255,215,0,0.4);
-    --rank-top2-bg:          linear-gradient(135deg, #F8F9FA, #EEF2FF);
-    --rank-top2-border:      rgba(88,86,214,0.3);
-    --rank-top3-bg:          linear-gradient(135deg, #FFFFFF, #FFF0E6);
-    --rank-top3-border:      rgba(255,149,0,0.35);
-    --rank-badge-bg:         #1C1C1E;
+    --rank-card-border:      rgba(0, 113, 227, 0.15);
+    --rank-card-shadow:      0 8px 25px rgba(0, 113, 227, 0.08); /* Sombra azulada (glow) */
+    
+    --rank-top1-bg:          linear-gradient(135deg, #F0F8FF, #E1F0FF); /* Fondo celeste pastel vibrante */
+    --rank-top1-border:      #0071E3;
+    --rank-top1-shadow:      0 12px 30px rgba(0, 113, 227, 0.25); /* Glow intenso azul */
+    
+    --rank-top2-bg:          #FFFFFF;
+    --rank-top2-border:      rgba(0, 113, 227, 0.2);
+    
+    --rank-top3-bg:          #FFFFFF;
+    --rank-top3-border:      rgba(0, 113, 227, 0.1);
+    
+    --rank-badge-bg:         #0071E3;
     --rank-badge-color:      #FFFFFF;
-    --rank-badge-top1-bg:    linear-gradient(135deg, #FF3366, #FF9933);
+    
+    --rank-badge-top1-bg:    linear-gradient(135deg, #00C6FF, #0071E3);
     --rank-badge-top1-color: #FFFFFF;
-    --rank-name-color:       #1A1A1A;
-    --rank-top1-name-color:  #1A1A1A;
-    --rank-bar-bg:           linear-gradient(90deg, #007AFF, #5856D6);
-    --rank-bar-track:        rgba(0,0,0,0.06);
+    
+    --rank-name-color:       #1D1D1F;
+    --rank-top1-name-color:  #004494; /* Azul oscuro fuerte */
+    
+    --rank-bar-bg:           linear-gradient(90deg, #00C6FF, #0071E3); /* Gradiente de alta energía */
+    --rank-bar-track:        #E5E5EA;
     --rank-tag-color:        #FFFFFF;
-    --rank-social-color:     #007AFF;
-    --rank-fire-shadow:      rgba(255,149,0,0.4);
-    --rank-dot-bg:           rgba(0,122,255,0.2);
-    --rank-dot-active:       #007AFF;
-    --rank-progress-bar:     linear-gradient(90deg, #007AFF, #5856D6);
+    --rank-social-color:     #0071E3;
+    
+    --rank-fire-shadow:      rgba(0, 198, 255, 0.5); /* Glow cyan */
+    --rank-dot-bg:           #E5F0FF;
+    --rank-dot-active:       #0071E3;
+    --rank-progress-bar:     linear-gradient(90deg, #00C6FF, #0071E3);
 
     /* ── SOBREESCRITURAS APPLE THEME ── */
-    --screen-bg:             #F8F9FA;
-    --panel-bg:              #FFFFFF;
-    --strip-bg:              #FFFFFF;
-    --strip-text:            #1A1A1A;
-    --strip-ends-text:       #6B7280;
-    --strip-dot:             #007AFF;
-    --strip-accent:          #007AFF;
-    --strip-count-bg:        #F1F5F9;
-    --strip-count-text:      #007AFF;
+    --screen-bg:             #F5F5F7; /* Fondo Apple gris clarito */
+    --panel-bg:              rgba(255, 255, 255, 0.85); /* Efecto vidrio translúcido */
     
-    --footer-bg:             linear-gradient(90deg, #F8F9FA, #E2E8F0);
-    --marquee-text:          #1A1A1A;
+    --strip-bg:              #FFFFFF;
+    --strip-text:            #1D1D1F;
+    --strip-ends-text:       #86868B;
+    --strip-dot:             #0071E3;
+    --strip-accent:          #0071E3;
+    --strip-count-bg:        #E1F0FF; /* Celeste intenso */
+    --strip-count-text:      #0071E3;
+    
+    --footer-bg:             rgba(255, 255, 255, 0.9);
+    --marquee-text:          #1D1D1F;
     
     --card-bg:               #FFFFFF;
-    --card-border:           rgba(0, 122, 255, 0.15);
+    --card-border:           rgba(0, 113, 227, 0.12);
     
-    --price-now-color:       #1A1A1A;
-    --price-now-bg:          #F1F5F9;
-    --price-deal-color:      #007AFF;
+    --price-now-color:       #0071E3; /* Precios en Azul vibrante */
+    --price-now-bg:          #E1F0FF; /* Fondo celeste para resaltar el precio (FOMO) */
+    --price-deal-color:      #00C6FF;
     --price-row-bg:          #FFFFFF;
     
-    --badge-bg:              #007AFF;
-    --badge-off-bg:          #5856D6;
-    --off-badge-bg:          #EEF2FF;
-    --off-badge-text:        #5856D6;
+    --badge-bg:              linear-gradient(135deg, #00C6FF, #0071E3);
+    --badge-off-bg:          #0071E3;
+    --off-badge-bg:          #E1F0FF;
+    --off-badge-text:        #0071E3;
     
-    --kicker-color:          #007AFF;
-    --categoria-color:       #007AFF;
-    --meta-color:            #6B7280;
-    --rule-color:            #6B7280;
+    --kicker-color:          #0071E3;
+    --categoria-color:       #0071E3;
+    --meta-color:            #86868B;
+    --rule-color:            #D1D1D6;
     
-    --timer-bg:              linear-gradient(135deg, #007AFF, #5856D6);
-    --timer-text:            #FFFFFF;
-    --timer-deal-bg:         #007AFF;
+    --timer-bg:              #E1F0FF;
+    --timer-text:            #0071E3;
+    --timer-deal-bg:         linear-gradient(135deg, #00C6FF, #0071E3);
     --timer-deal-text:       #FFFFFF;
     
-    --dept-bg:               #F8F9FA;
-    --dept-text:             #1A1A1A;
-    --ad-bg:                 #F1F5F9;
-    --ad-text:               #007AFF;
+    --dept-bg:               #F5F5F7;
+    --dept-text:             #1D1D1F;
+    --ad-bg:                 #E1F0FF;
+    --ad-text:               #0071E3;
     
     --col4-card-bg:          #FFFFFF;
-    --col4-card-border:      rgba(0, 122, 255, 0.15);
-    --col4-badge-bg:         linear-gradient(135deg, #007AFF, #5856D6);
-    --col4-price-color:      #007AFF;
-    --col4-price-bg:         linear-gradient(135deg, #F1F5F9, #E2E8F0);
-    --col4-price-text:       #1A1A1A;
-    --col4-label-color:      #007AFF;
-    --col4-prog-bar-bg:      linear-gradient(90deg, #007AFF, #5856D6);
-
+    --col4-card-border:      rgba(0, 113, 227, 0.25);
+    --col4-badge-bg:         linear-gradient(135deg, #00C6FF, #0071E3);
+    --col4-price-color:      #0071E3;
+    --col4-price-bg:         #E1F0FF;
+    --col4-price-text:       #0071E3;
+    --col4-label-color:      #0071E3;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #00C6FF, #0071E3);
 }
