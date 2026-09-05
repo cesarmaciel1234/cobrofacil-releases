@@ -29,6 +29,8 @@ REMOTE_VERSION_URL = (
 
 PRESERVE_PREFIXES = (
     "config.json",
+    # Precios/estado TV: fallback si falla la red; la cara web va en tv_cara.bin (sí se pisa).
+    "carteleria_cache.json",
     # error_report.json NO se preserva: lo inyecta cada release con el secret actual.
     "offline_queue.json",
     "logs/",

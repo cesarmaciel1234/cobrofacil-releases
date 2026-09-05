@@ -14,17 +14,21 @@
 
 html, body {
     height: 100%;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
     font-family: "Segoe UI", system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
 }
 
 .app {
-    height: 100%;
+    height: 100vh;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 20px 24px 16px;
-    gap: 14px;
+    padding: 16px 20px 12px;
+    gap: 12px;
 }
 
 .top h1 {
@@ -127,11 +131,12 @@ html, body {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 8px 16px;
+    padding: 10px 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    flex-wrap: nowrap;
+    gap: 12px 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .styles {
@@ -172,10 +177,10 @@ html, body {
 .ia input { accent-color: var(--blue); }
 
 .msg {
-    flex: 1;
+    flex: 1 1 80px;
     font-size: 13px;
     color: var(--muted);
-    min-width: 140px;
+    min-width: 80px;
 }
 
 .msg.error { color: var(--danger); }
@@ -215,7 +220,7 @@ html, body {
     .actions { width: 100%; }
     .actions .btn { flex: 1; }
 }
-.filter-carousel { display: flex; gap: 12px; align-items: center; overflow-x: auto; flex-shrink: 0; padding-bottom: 2px; }
+.filter-carousel { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex-shrink: 0; padding-bottom: 2px; }
 .filter-carousel::-webkit-scrollbar {
     display: none;
 }
@@ -239,8 +244,8 @@ html, body {
     transform: scale(1.05);
 }
 .filter-thumb {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     border: 2px solid transparent;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);

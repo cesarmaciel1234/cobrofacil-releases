@@ -26,10 +26,44 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
     TeclasTv,
     buscar_navegador,
     flags_pantalla_completa,
+    indice_monitor_tv,
     rect_monitor_nativo,
 )
 
 logger = logging.getLogger("CerebroLanzadorTV")
+
+
+def _app_version_tv() -> str:
+    try:
+        from src.updater.cerebro.engine import read_local_version
+
+        return str(read_local_version() or "0").strip() or "0"
+    except Exception:
+        return "0"
+
+
+def _perfil_kiosk_estable() -> str:
+    """Un perfil Chrome persistente; se limpia solo el cache HTTP si cambió la versión."""
+    root = os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk")
+    os.makedirs(root, exist_ok=True)
+    ver = _app_version_tv()
+    marca = os.path.join(root, "ui_version.txt")
+    previa = ""
+    try:
+        with open(marca, encoding="utf-8") as fh:
+            previa = fh.read().strip()
+    except OSError:
+        previa = ""
+    if previa != ver:
+        for nombre in ("Cache", "Code Cache", "GPUCache", "Service Worker"):
+            shutil.rmtree(os.path.join(root, nombre), ignore_errors=True)
+        try:
+            with open(marca, "w", encoding="utf-8") as fh:
+                fh.write(ver)
+        except OSError:
+            pass
+        logger.info("Cache Chrome TV refrescado por update %s → %s", previa or "?", ver)
+    return root
 
 
 def cargar_web_tv():
@@ -105,6 +139,9 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if data is None:
             self.send_error(404)
             return
+        if rel == "index.html":
+            ver = _app_version_tv().encode("ascii", "ignore")
+            data = data.replace(b"?v=tv95", b"?v=" + ver)
         ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
@@ -267,8 +304,7 @@ class ServidorCuello:
         self.browser_process = None
         self.screen_index = None
         self.web_root, self.zip_store = cargar_web_tv()
-        import time
-        self._kiosk_profile = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{int(time.time())}")
+        self._kiosk_profile = _perfil_kiosk_estable()
         self._teclas = None
         self.last_error = ""
 
@@ -277,6 +313,8 @@ class ServidorCuello:
             self.last_error = ""
             if screen_index is not None:
                 self.screen_index = screen_index
+            elif self.screen_index is None:
+                self.screen_index = indice_monitor_tv()
             self.web_root, self.zip_store = cargar_web_tv()
             tiene_mem = bool(self.zip_store and "index.html" in self.zip_store)
             tiene_disco = bool(self.web_root and os.path.isfile(os.path.join(self.web_root, "index.html")))
@@ -432,14 +470,12 @@ class ServidorCuello:
     def _lanzar_navegador(self):
         try:
             self._cerrar_navegador()
-            
-            # Limpiar perfiles viejos de Chromium para no llenar el disco
+            self._kiosk_profile = _perfil_kiosk_estable()
             import glob
             for old_prof in glob.glob(os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk-*")):
                 if old_prof != self._kiosk_profile:
                     shutil.rmtree(old_prof, ignore_errors=True)
-                
-            url = f"http://{self.host}:{self.port}/"
+            url = f"http://{self.host}:{self.port}/?v={_app_version_tv()}"
             sistema = platform.system()
             flags = self._flags_kiosk(url)
             navegador = buscar_navegador()

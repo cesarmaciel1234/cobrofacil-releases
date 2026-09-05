@@ -66,6 +66,10 @@ class LanzadorDirectoTV(QObject):
             if self._cuello:
                 self.detener()
                 self._vivo = True
+            if screen_index is None:
+                from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
+
+                screen_index = indice_monitor_tv()
             self.screen_index = screen_index
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import ServidorCuello
             self._cuello = ServidorCuello(self)

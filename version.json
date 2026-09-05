@@ -1,7 +1,7 @@
 {
-  "app_version": "14.0.0",
+  "app_version": "14.0.1",
   "channel": "stable",
-  "build_date": "2026-09-05 15:40:25",
+  "build_date": "2026-09-05 16:22:16",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -90,9 +90,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "4e658997dd1d08650169eb8563bb8069",
+      "checksum": "e58cae3946eb60c4c05d56c772cef81c",
       "channel": "stable",
-      "size": 883969
+      "size": 883231
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -2016,9 +2016,9 @@
     },
     "src/carteleria/creador_png/ventana_html.py": {
       "version": "1.0.0",
-      "checksum": "cd5e2c1d32b8af81100d3711ff9ae0a2",
+      "checksum": "d2c03ad85d7d640ae4721290eb826e18",
       "channel": "stable",
-      "size": 3057
+      "size": 4298
     },
     "src/carteleria/creador_png/__init__.py": {
       "version": "1.0.0",
@@ -2034,15 +2034,15 @@
     },
     "src/carteleria/creador_png/static/estilos.css": {
       "version": "1.0.0",
-      "checksum": "a68cc5c35ee59416779dd9651a9b1e20",
+      "checksum": "2bee82be959a023bf6fe937e620811fe",
       "channel": "stable",
-      "size": 5530
+      "size": 5684
     },
     "src/carteleria/creador_png/templates/index.html": {
       "version": "1.0.0",
-      "checksum": "c2de0a332233a06690483e902178e59c",
+      "checksum": "5a6fe7145f5062116417fe4a0f0ad8bd",
       "channel": "stable",
-      "size": 5506
+      "size": 5513
     },
     "src/carteleria/creador_png/uploads/0022eb96-5a76-4521-a1de-108cabfe7811.jpeg": {
       "version": "1.0.0",
@@ -2400,9 +2400,9 @@
     },
     "src/carteleria/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "a4b04800a908399385b45b4f5229cdbc",
+      "checksum": "0d3b056c1a63e34193c2e553de445dbf",
       "channel": "stable",
-      "size": 15910
+      "size": 15530
     },
     "src/carteleria/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -2436,9 +2436,9 @@
     },
     "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "dd63b97153124f4957ca01e0b84e52c8",
+      "checksum": "acfb85861bdf0dc76bce16a0b7fd86f4",
       "channel": "stable",
-      "size": 17076
+      "size": 18392
     },
     "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",
@@ -2448,9 +2448,9 @@
     },
     "src/carteleria/lanzador_tv/lanzador_directo.py": {
       "version": "1.0.0",
-      "checksum": "815bd22582c4323048d41e3a4b43e8de",
+      "checksum": "e8bb32f09942cdb7f3737e3159560d97",
       "channel": "stable",
-      "size": 20721
+      "size": 20903
     },
     "src/carteleria/lanzador_tv/lanzador_tv.md": {
       "version": "1.0.0",
@@ -2466,9 +2466,9 @@
     },
     "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
-      "checksum": "fea4f978e1743e564521e1480354c9d1",
+      "checksum": "882f7e80cc4729a98aa711721b0685b1",
       "channel": "stable",
-      "size": 6416
+      "size": 7222
     },
     "src/carteleria/lanzador_tv/perfil_pc.py": {
       "version": "1.0.0",
@@ -2484,15 +2484,15 @@
     },
     "src/carteleria/lanzador_tv/tv_cara_pack.py": {
       "version": "1.0.0",
-      "checksum": "cc0fb3e4149ddc501aea4219ac2858b2",
+      "checksum": "220ec57135a864032f8e54609c4600de",
       "channel": "stable",
-      "size": 5618
+      "size": 5562
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "069e903de4ee1b59cc7e28e02ec15ec1",
+      "checksum": "1a8f4324940281c359d8a2faa5487fe1",
       "channel": "stable",
-      "size": 18461
+      "size": 18926
     },
     "src/carteleria/lanzador_tv/window_manager.py": {
       "version": "1.0.0",
@@ -2604,15 +2604,15 @@
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/apple/estilos.css": {
       "version": "1.0.0",
-      "checksum": "3ad71144b7536cf0faf37001291db47e",
+      "checksum": "f0de2a4b64d40fd106f87c303a86cc00",
       "channel": "stable",
-      "size": 8587
+      "size": 9847
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/colores.css": {
       "version": "1.0.0",
-      "checksum": "8ffae7b0b95f0782752d1ec55677198c",
+      "checksum": "167713e8e86767ec20f5b026dcfde0d4",
       "channel": "stable",
-      "size": 3765
+      "size": 3727
     },
     "src/carteleria/lanzador_tv/la_cara_web/css/themes/blackfriday/estilos.css": {
       "version": "1.0.0",
@@ -4170,9 +4170,9 @@
     },
     "src/updater/cerebro/engine.py": {
       "version": "1.0.0",
-      "checksum": "96a7af26c56770ff32a8ffbfc69235fb",
+      "checksum": "6b8c5d235fac65a2dbdaa47c59109192",
       "channel": "stable",
-      "size": 47911
+      "size": 48038
     },
     "src/updater/cerebro/ipc.py": {
       "version": "1.0.0",

@@ -301,16 +301,7 @@ class CarteleriaDashboard(QWidget):
         try:
             from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
             lanzador = get_lanzador_directo()
-            idx = None
-            try:
-                from PyQt6.QtWidgets import QApplication
-                app = QApplication.instance()
-                scr = self.window().screen() if self.window() else None
-                if app and scr:
-                    idx = app.screens().index(scr)
-            except Exception:
-                idx = None
-            if not lanzador.lanzar(screen_index=idx):
+            if not lanzador.lanzar():
                 from PyQt6.QtWidgets import QMessageBox
                 detalle = getattr(lanzador, "last_error", "") or "No se pudo lanzar la cartelería TV."
                 QMessageBox.critical(self, "Error", detalle)

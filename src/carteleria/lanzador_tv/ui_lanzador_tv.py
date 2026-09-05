@@ -30,6 +30,7 @@ class CarteleriaMainTV(QWidget):
         self._cargar_cache_inicial()
         self._setup_motores()
         self._sincronizar()
+        QTimer.singleShot(400, self._arrancar_tv_monitor_grande)
 
     def _apply_theme(self):
         """Aplicar tema autnomo del sistema de cartelera (temu/apple/blackfriday)"""
@@ -294,9 +295,19 @@ class CarteleriaMainTV(QWidget):
     def _on_control_clicked(self):
         self._detener() if self._iniciado else self._iniciar()
 
+    def _arrancar_tv_monitor_grande(self):
+        if self._iniciado:
+            return
+        from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
+
+        self._iniciar(screen_index=indice_monitor_tv())
+
     def _iniciar(self, screen_index=None):
         from .cerebro_lanzador_tv import ServidorCuello
+        from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
         self._sincronizar()
+        if screen_index is None:
+            screen_index = indice_monitor_tv()
         if self._cerebro is None:
             self._cerebro = ServidorCuello(self)
         if not self._cerebro.iniciar(screen_index=screen_index):

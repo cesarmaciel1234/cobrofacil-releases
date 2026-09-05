@@ -14,6 +14,7 @@ _MAGIC = b"CFPOS1"
 _KEY = hashlib.sha256(b"cobrofacil-tv-cara-web-v1").digest()
 _SOURCE_REL = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
 _memoria: dict[str, bytes] | None = None
+_memoria_firma = ""
 
 
 def _xor(data: bytes) -> bytes:
@@ -50,52 +51,46 @@ def _bytes_desencriptados(blob_path: str) -> bytes:
 
 
 def buscar_blob() -> str:
+    """Usa el blob instalado junto al EXE (el que pisa el updater). El resto es fallback."""
     candidatos = []
     if getattr(sys, "frozen", False):
         exe_dir = os.path.dirname(sys.executable)
         meipass = getattr(sys, "_MEIPASS", "")
         candidatos.extend(
             [
-                os.path.join(meipass, BLOB_NAME) if meipass else "",
                 os.path.join(exe_dir, "_internal", BLOB_NAME),
                 os.path.join(exe_dir, BLOB_NAME),
+                os.path.join(meipass, BLOB_NAME) if meipass else "",
             ]
         )
     try:
         from src.utils.paths import get_resource_path, get_base_path
 
-        candidatos.append(get_resource_path(BLOB_NAME))
         candidatos.append(os.path.join(get_base_path(), "_internal", BLOB_NAME))
-    except Exception:
-        pass
-    # Tambien buscar en la carpeta src/ actualizada por OTA
-    try:
-        from src.utils.paths import get_base_path
+        candidatos.append(get_resource_path(BLOB_NAME))
         candidatos.append(os.path.join(get_base_path(), "src", "carteleria", "lanzador_tv", BLOB_NAME))
     except Exception:
         pass
 
-    validos = []
+    vistos = set()
     for path in candidatos:
-        if path and os.path.isfile(path) and os.path.getsize(path) > 32:
-            validos.append(path)
-            
-    if not validos:
-        return ""
-        
-    # Devolver el blob más reciente (por fecha de modificación) para asegurar que se usa el descargado por OTA
-    validos.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-    return validos[0]
+        if not path or path in vistos:
+            continue
+        vistos.add(path)
+        if os.path.isfile(path) and os.path.getsize(path) > 32:
+            return path
+    return ""
 
 
 def cargar_cara_en_memoria() -> dict[str, bytes] | None:
-    """Lee tv_cara.bin a un dict en RAM. No escribe HTML/CSS/JS en disco."""
-    global _memoria
-    if _memoria and "index.html" in _memoria:
-        return _memoria
+    """Lee tv_cara.bin a un dict en RAM. Recarga si cambió el archivo (update)."""
+    global _memoria, _memoria_firma
     blob = buscar_blob()
     if not blob:
         return None
+    firma = f"{os.path.abspath(blob)}:{os.path.getsize(blob)}:{os.path.getmtime(blob)}"
+    if _memoria and "index.html" in _memoria and firma == _memoria_firma:
+        return _memoria
     archivos: dict[str, bytes] = {}
     with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
         for info in zf.infolist():
@@ -108,6 +103,7 @@ def cargar_cara_en_memoria() -> dict[str, bytes] | None:
     if "index.html" not in archivos:
         return None
     _memoria = archivos
+    _memoria_firma = firma
     return archivos
 
 

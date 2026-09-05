@@ -49,6 +49,28 @@ def buscar_navegador():
     return None
 
 
+def indice_monitor_tv():
+    """Monitor 2: el más grande que no sea el primario (la TV). Si hay uno solo, ese."""
+    try:
+        from PyQt6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        screens = list(app.screens()) if app else []
+        if not screens:
+            return 0
+        if len(screens) == 1:
+            return 0
+        primario = app.primaryScreen() or screens[0]
+        extras = [s for s in screens if s is not primario] or screens[1:]
+        mejor = max(
+            extras,
+            key=lambda s: s.geometry().width() * s.geometry().height(),
+        )
+        return screens.index(mejor)
+    except Exception:
+        return 1
+
+
 def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
     """Fullscreen a 1 px = 1 px del monitor (sin zoom de Windows)."""
     os.makedirs(profile, exist_ok=True)
@@ -102,6 +124,8 @@ def rect_monitor_nativo(indice=None):
             return None
         if indice is not None and 0 <= int(indice) < len(monitors):
             return monitors[int(indice)]
+        if len(monitors) > 1:
+            return max(monitors[1:], key=lambda m: m[2] * m[3])
         return monitors[0]
     except Exception:
         return None
