@@ -787,39 +787,7 @@ body[data-theme="premium"] .hero-section .deal-stage__off {
 
 body[data-theme="premium"] .tv-3 .deal-stage__off,
 
-body[data-theme="premium"] .tv-4 .asian-flash-badge {
 
-    position: absolute !important;
-
-    bottom: auto !important;
-
-    left: auto !important;
-
-    top: 0 !important;
-
-    right: 0 !important;
-
-    font-size: clamp(14px, 1.2cqw, 18px) !important;
-
-    padding: 4px 12px !important;
-
-    border-radius: 0 12px 0 12px !important;
-
-    transform-origin: center !important;
-
-    background: linear-gradient(135deg, #DC2626, #991B1B) !important;
-
-    border: 2px solid #FF8A8A !important;
-
-    color: #FFFFFF !important;
-
-    box-shadow: 0 6px 15px rgba(255, 0, 0, 0.4) !important;
-
-    animation: premiumBadgePulse 1.5s infinite !important;
-
-    z-index: 10 !important;
-
-}
 
 
 
