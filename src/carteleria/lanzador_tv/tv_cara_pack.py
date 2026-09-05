@@ -50,8 +50,7 @@ def _bytes_desencriptados(blob_path: str) -> bytes:
     return raw
 
 
-def buscar_blob() -> str:
-    """Usa el blob instalado junto al EXE (el que pisa el updater). El resto es fallback."""
+def _candidatos_blob() -> list[str]:
     candidatos = []
     if getattr(sys, "frozen", False):
         exe_dir = os.path.dirname(sys.executable)
@@ -71,40 +70,55 @@ def buscar_blob() -> str:
         candidatos.append(os.path.join(get_base_path(), "src", "carteleria", "lanzador_tv", BLOB_NAME))
     except Exception:
         pass
-
     vistos = set()
+    validos = []
     for path in candidatos:
         if not path or path in vistos:
             continue
         vistos.add(path)
         if os.path.isfile(path) and os.path.getsize(path) > 32:
-            return path
-    return ""
+            validos.append(path)
+    return validos
+
+
+def buscar_blob() -> str:
+    """Usa el blob instalado junto al EXE (el que pisa el updater). El resto es fallback."""
+    validos = _candidatos_blob()
+    return validos[0] if validos else ""
+
+
+def _leer_blob(blob: str) -> dict[str, bytes] | None:
+    archivos: dict[str, bytes] = {}
+    try:
+        with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
+            for info in zf.infolist():
+                if info.is_dir():
+                    continue
+                nombre = info.filename.replace("\\", "/").lstrip("/")
+                if not nombre or ".." in nombre.split("/"):
+                    continue
+                archivos[nombre] = zf.read(info)
+    except Exception:
+        return None
+    if "index.html" not in archivos:
+        return None
+    return archivos
 
 
 def cargar_cara_en_memoria() -> dict[str, bytes] | None:
-    """Lee tv_cara.bin a un dict en RAM. Recarga si cambió el archivo (update)."""
+    """Lee tv_cara.bin a un dict en RAM. Prueba todos los blobs si uno está roto."""
     global _memoria, _memoria_firma
-    blob = buscar_blob()
-    if not blob:
-        return None
-    firma = f"{os.path.abspath(blob)}:{os.path.getsize(blob)}:{os.path.getmtime(blob)}"
-    if _memoria and "index.html" in _memoria and firma == _memoria_firma:
-        return _memoria
-    archivos: dict[str, bytes] = {}
-    with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
-        for info in zf.infolist():
-            if info.is_dir():
-                continue
-            nombre = info.filename.replace("\\", "/").lstrip("/")
-            if not nombre or ".." in nombre.split("/"):
-                continue
-            archivos[nombre] = zf.read(info)
-    if "index.html" not in archivos:
-        return None
-    _memoria = archivos
-    _memoria_firma = firma
-    return archivos
+    for blob in _candidatos_blob():
+        firma = f"{os.path.abspath(blob)}:{os.path.getsize(blob)}:{os.path.getmtime(blob)}"
+        if _memoria and "index.html" in _memoria and firma == _memoria_firma:
+            return _memoria
+        archivos = _leer_blob(blob)
+        if not archivos:
+            continue
+        _memoria = archivos
+        _memoria_firma = firma
+        return archivos
+    return None
 
 
 def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:

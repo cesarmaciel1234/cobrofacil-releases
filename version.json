@@ -1,7 +1,7 @@
 {
-  "app_version": "14.0.4",
+  "app_version": "14.0.5",
   "channel": "stable",
-  "build_date": "2026-09-05 17:08:00",
+  "build_date": "2026-09-05 17:28:17",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "830fb6175e076d8fd65d66ad30a68076",
+      "checksum": "8064b9ae53cddcd0a1221ba768f77350",
       "channel": "stable",
       "size": 883231
     },
@@ -1878,9 +1878,9 @@
     },
     "src/carteleria/ESTRUCTURA.md": {
       "version": "1.0.0",
-      "checksum": "e32718acd42cce346f03a76cbf4f74ab",
+      "checksum": "8ae3d14e6cb65e3393b6290014209c5e",
       "channel": "stable",
-      "size": 11417
+      "size": 11166
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
@@ -2410,6 +2410,12 @@
       "channel": "stable",
       "size": 53
     },
+    "src/carteleria/el_cerebro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "a34d65088b3cafcb8e28b6eda1ac952a",
+      "channel": "stable",
+      "size": 239
+    },
     "src/carteleria/ia_chef_lobo/gemini_worker.py": {
       "version": "1.0.0",
       "checksum": "7ec3b6189a7c0657fc646e1deb2236f9",
@@ -2436,9 +2442,9 @@
     },
     "src/carteleria/lanzador_tv/cerebro_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "dbb710f9ea472548290a8327b37bf654",
+      "checksum": "5f9d81ddd717f2a99ae7b19cc0dfc3f0",
       "channel": "stable",
-      "size": 18947
+      "size": 18872
     },
     "src/carteleria/lanzador_tv/generar_iconos_clima.py": {
       "version": "1.0.0",
@@ -2460,9 +2466,9 @@
     },
     "src/carteleria/lanzador_tv/logica_tv.md": {
       "version": "1.0.0",
-      "checksum": "4e2f1676433effaff094759c1f26038c",
+      "checksum": "df4e19faa72ed62900cd2016a5a195ee",
       "channel": "stable",
-      "size": 4217
+      "size": 4276
     },
     "src/carteleria/lanzador_tv/navegador_kiosk.py": {
       "version": "1.0.0",
@@ -2484,9 +2490,9 @@
     },
     "src/carteleria/lanzador_tv/tv_cara_pack.py": {
       "version": "1.0.0",
-      "checksum": "220ec57135a864032f8e54609c4600de",
+      "checksum": "eccb91488ca1844ebf677aea8ee84e77",
       "channel": "stable",
-      "size": 5562
+      "size": 5976
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
@@ -2514,9 +2520,9 @@
     },
     "src/carteleria/lanzador_tv/_smoke_tv.py": {
       "version": "1.0.0",
-      "checksum": "63bce437c02ff67bb963d01ea30a1552",
+      "checksum": "9cb7042e284e9a5e40659567a69b4211",
       "channel": "stable",
-      "size": 2785
+      "size": 2817
     },
     "src/carteleria/lanzador_tv/__init__.py": {
       "version": "1.0.0",
@@ -4170,9 +4176,9 @@
     },
     "src/updater/cerebro/engine.py": {
       "version": "1.0.0",
-      "checksum": "82354a577240d716a1f0367a33d48682",
+      "checksum": "1f0e8f0dc920462a55978a9acdf7e23d",
       "channel": "stable",
-      "size": 48721
+      "size": 49027
     },
     "src/updater/cerebro/ipc.py": {
       "version": "1.0.0",
@@ -4305,6 +4311,12 @@
       "checksum": "d6d798c1f290e7613a4a6abb69c4ae42",
       "channel": "stable",
       "size": 2616
+    },
+    "tests/test_carteleria_estructura.py": {
+      "version": "1.0.0",
+      "checksum": "625c0b2bef534c95fe1f7f566846743b",
+      "channel": "stable",
+      "size": 3506
     },
     "tests/test_cierre_z.html": {
       "version": "1.0.0",

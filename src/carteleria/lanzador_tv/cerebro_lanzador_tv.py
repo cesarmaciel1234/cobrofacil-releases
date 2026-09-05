@@ -81,17 +81,15 @@ def _perfil_kiosk_estable() -> str:
 
 
 def cargar_web_tv():
-    """En el EXE: tv_cara.bin en memoria. Si falta, la carpeta la_cara_web (dev o instalado viejo)."""
-    if getattr(sys, "frozen", False):
-        try:
-            from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
+    """Blob en memoria primero; si falta o está roto, carpeta la_cara_web (dev / fallback)."""
+    try:
+        from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
 
-            mem = cargar_cara_en_memoria()
-            if mem:
-                return None, mem
-        except Exception:
-            logger.exception("No se pudo abrir el paquete oculto de la TV")
-        return "", None
+        mem = cargar_cara_en_memoria()
+        if mem and "index.html" in mem:
+            return None, mem
+    except Exception:
+        logger.exception("No se pudo abrir el paquete oculto de la TV")
 
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
