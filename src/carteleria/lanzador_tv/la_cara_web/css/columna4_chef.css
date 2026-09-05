@@ -399,9 +399,9 @@
 
 
 .asian-flash-product-tag {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: #FFF700 !important;
-    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    background: var(--asian-flash-product-tag-bg, rgba(0, 0, 0, 0.8)) !important;
+    color: var(--asian-flash-product-tag-color, #FFF700) !important;
+    border: var(--asian-flash-product-tag-border, 1px solid rgba(255, 215, 0, 0.3)) !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
     border-radius: 20px !important;
     padding: 4px 12px !important;
@@ -423,7 +423,7 @@
 }
 
 .asian-flash-original {
-    color: #888888 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
     margin-right: 1vw !important;
@@ -431,7 +431,7 @@
 }
 
 .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
@@ -894,7 +894,7 @@
     }
 
     .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
@@ -912,7 +912,7 @@
     }
 
     .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
@@ -926,7 +926,7 @@
     }
 
     .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
@@ -1167,7 +1167,7 @@
 
 /* Fondo de la columna 4 entero: Fuego oscuro y rayos */
 .tv-4 {
-    background: radial-gradient(circle at center, #4A0000 0%, #1A0000 100%) !important;
+    background: var(--tv-4-bg, radial-gradient(circle at center, #4A0000 0%, #1A0000 100%)) !important;
     position: relative;
     overflow: hidden !important;
     border: none !important;
@@ -1177,7 +1177,7 @@
     content: '';
     position: absolute;
     top: -50%; left: -50%; width: 200%; height: 200%;
-    background: repeating-conic-gradient(from 0deg, rgba(255, 0, 0, 0.15) 0deg 15deg, transparent 15deg 30deg) !important;
+    background: var(--tv-4-bg, repeating-conic-gradient(from 0deg, rgba(255, 0, 0, 0.15) 0deg 15deg, transparent 15deg 30deg)) !important;
     animation: rotateSunburst 30s linear infinite !important;
     z-index: 0;
 }
@@ -1189,15 +1189,15 @@
     z-index: 1;
 }
 .asian-flash-container {
-    background: transparent !important;
+    background: var(--asian-flash-container-bg, transparent) !important;
     box-shadow: none !important;
     border: none !important;
 }
 
 /* Cabecera FLASH SALE */
 .asian-flash-header {
-    background: linear-gradient(90deg, #FF0033, #FF6600) !important;
-    border: 4px solid #FFD700 !important;
+    background: var(--asian-flash-header-bg, linear-gradient(90deg, #FF0033, #FF6600)) !important;
+    border: var(--asian-flash-header-border, 4px solid #FFD700) !important;
     box-shadow: 0 10px 30px rgba(255, 0, 51, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.6) !important;
     transform: skewX(-5deg) scale(1.05) !important;
     margin-bottom: 3cqh !important;
@@ -1205,7 +1205,7 @@
 }
 .asian-flash-title {
     font-size: clamp(1.5rem, 2.2cqw, 2.2rem) !important;
-    color: #FFFFFF !important;
+    color: var(--asian-flash-title-color, #FFFFFF) !important;
     text-shadow: 2px 2px 0 #FF0000, 4px 4px 0 #8B0000, 0 0 20px #FFD700 !important;
     font-style: italic !important;
     animation: pulseTitle 0.6s infinite alternate !important;
@@ -1214,9 +1214,9 @@
     100% { transform: scale(1.1); text-shadow: 2px 2px 0 #FF0000, 4px 4px 0 #8B0000, 0 0 50px #FFD700; } 
 }
 .asian-flash-timer {
-    background: #000000 !important;
-    color: #FFD700 !important;
-    border: 2px solid #FFD700 !important;
+    background: var(--asian-flash-timer-bg, #000000) !important;
+    color: var(--asian-flash-timer-color, #FFD700) !important;
+    border: var(--asian-flash-timer-border, 2px solid #FFD700) !important;
     box-shadow: 0 0 20px #FFD700 !important;
     font-size: clamp(1rem, 1.2cqw, 1.2rem) !important; padding: 0.2cqh 0.5cqw !important; flex-shrink: 0 !important;
     font-weight: 900 !important;
@@ -1224,7 +1224,7 @@
 
 /* Tarjeta del Producto */
 .asian-flash-product {
-    background: linear-gradient(180deg, #FFFFFF 0%, #FFF0D4 100%) !important;
+    background: var(--asian-flash-product-bg, linear-gradient(180deg, #FFFFFF 0%, #FFF0D4 100%)) !important;
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -1234,9 +1234,9 @@
 
 /* Etiqueta HOT flotante y agresiva */
 .asian-flash-badge {
-    background: linear-gradient(135deg, #FF0000, #FF6600) !important;
-    color: #FFFF00 !important;
-    border: 3px solid #FFFF00 !important;
+    background: var(--asian-flash-badge-bg, linear-gradient(135deg, #FF0000, #FF6600)) !important;
+    color: var(--asian-flash-badge-color, #FFFF00) !important;
+    border: var(--asian-flash-badge-border, 3px solid #FFFF00) !important;
     font-size: clamp(1.2rem, 2cqw, 1.8rem) !important;
     padding: 0.8cqh 1.5cqw !important;
     top: 10px !important;
@@ -1254,7 +1254,7 @@
 /* Nombre del producto gigante */
 .asian-flash-product-name {
     font-size: clamp(2rem, 2.5cqw, 2.5rem) !important;
-    color: #000 !important;
+    color: var(--asian-flash-product-name-color, #000) !important;
     text-shadow: 2px 2px 0px rgba(255, 255, 255, 1) !important;
     line-height: 1 !important;
     margin-bottom: 1cqh !important;
@@ -1268,13 +1268,13 @@
     margin-bottom: 0.5vh;
 }
 .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #888888 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
     margin-right: 1vw !important;
@@ -1283,8 +1283,8 @@
 
 /* Barra de progreso de ventas estilo cinta de peligro roja */
 .card-progress {
-    background: #222 !important;
-    border: 3px solid #FFD700 !important;
+    background: var(--card-progress-bg, #222) !important;
+    border: var(--card-progress-border, 3px solid #FFD700) !important;
     border-radius: 999px !important;
     height: 28px !important;
     overflow: hidden !important;
@@ -1306,10 +1306,10 @@
 @keyframes barberPole { 100% { background-position: 42px 0; } }
 
 .asian-flash-progress-text {
-    color: #FFFFFF !important;
+    color: var(--asian-flash-progress-text-color, #FFFFFF) !important;
     text-shadow: 2px 2px 4px #000000 !important;
     font-size: 1.1rem !important;
-    background: transparent !important;
+    background: var(--asian-flash-progress-text-bg, transparent) !important;
     border: none !important;
     font-style: italic !important;
     letter-spacing: 0.05em !important;
@@ -1322,9 +1322,9 @@
     text-align: center !important;
     display: flex !important;
     justify-content: center !important;
-    background: #FFFF00 !important;
-    border: 3px solid #FF0033 !important;
-    color: #FF0033 !important;
+    background: var(--asian-flash-social-bg, #FFFF00) !important;
+    border: var(--asian-flash-social-border, 3px solid #FF0033) !important;
+    color: var(--asian-flash-social-color, #FF0033) !important;
     font-size: 1.2rem !important;
     padding: 0.8cqh 1.5cqw !important;
     box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
@@ -1400,16 +1400,16 @@
 
 /* Fondo de la Tarjeta — negro lujo */
 .asian-flash-product {
-    background: linear-gradient(145deg, #1C1C1E 0%, #000000 100%) !important;
-    border: 1px solid rgba(255, 215, 0, 0.2) !important;
+    background: var(--asian-flash-product-bg, linear-gradient(145deg, #1C1C1E 0%, #000000 100%)) !important;
+    border: var(--asian-flash-product-border, 1px solid rgba(255, 215, 0, 0.2)) !important;
     box-shadow: inset 0 0 50px rgba(212, 175, 55, 0.1) !important;
 }
 
 /* Etiqueta HOT tipo Joya Rubí */
 .asian-flash-badge {
-    background: linear-gradient(135deg, #D90429 0%, #8D0801 100%) !important;
-    color: #FFDF73 !important;
-    border: 2px solid #D4AF37 !important;
+    background: var(--asian-flash-badge-bg, linear-gradient(135deg, #D90429 0%, #8D0801 100%)) !important;
+    color: var(--asian-flash-badge-color, #FFDF73) !important;
+    border: var(--asian-flash-badge-border, 2px solid #D4AF37) !important;
     box-shadow: 0 10px 30px rgba(217, 4, 41, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.4) !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
     letter-spacing: 0.1em !important;
@@ -1417,7 +1417,7 @@
 
 /* Nombre del Producto en Blanco Brillante */
 .asian-flash-product-name {
-    color: #FFFFFF !important;
+    color: var(--asian-flash-product-name-color, #FFFFFF) !important;
     text-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
     font-weight: 900 !important;
     letter-spacing: -0.02em !important;
@@ -1431,13 +1431,13 @@
     margin-bottom: 0.5vh;
 }
 .asian-flash-current {
-    color: #FFDF00 !important;
+    color: var(--asian-flash-current-color, #FFDF00) !important;
     font-size: clamp(2rem, 3.5vw, 3rem) !important;
     font-weight: 800 !important;
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #888888 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
     margin-right: 1vw !important;
@@ -1446,14 +1446,14 @@
 
 /* Barra de Progreso Elegante (Neón Rojo/Oro) */
 .card-progress {
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,215,0,0.3) !important;
+    background: var(--card-progress-bg, rgba(255,255,255,0.05)) !important;
+    border: var(--card-progress-border, 1px solid rgba(255,215,0,0.3)) !important;
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8) !important;
     border-radius: 8px !important;
     height: 20px !important;
 }
 .asian-flash-progress-bar {
-    background: linear-gradient(90deg, #D90429, #FF4D4D) !important;
+    background: var(--asian-flash-progress-bar-bg, linear-gradient(90deg, #D90429, #FF4D4D)) !important;
     box-shadow: 0 0 15px rgba(217, 4, 41, 0.8) !important;
     animation: pulseGlowBar 2s infinite alternate !important;
 }
@@ -1462,20 +1462,20 @@
     100% { filter: brightness(1.3); box-shadow: 0 0 25px rgba(217,4,41,1); }
 }
 .asian-flash-progress-text {
-    color: #FFFFFF !important;
+    color: var(--asian-flash-progress-text-color, #FFFFFF) !important;
     font-family: monospace !important;
     font-weight: 700 !important;
     letter-spacing: 0.1em !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
-    background: transparent !important;
+    background: var(--asian-flash-progress-text-bg, transparent) !important;
     border: none !important;
 }
 
 /* Comprando Hoy (Glassmorphism Gold) */
 .asian-flash-social {
-    background: rgba(212, 175, 55, 0.1) !important;
-    border: 1px solid rgba(212, 175, 55, 0.4) !important;
-    color: #D4AF37 !important;
+    background: var(--asian-flash-social-bg, rgba(212, 175, 55, 0.1)) !important;
+    border: var(--asian-flash-social-border, 1px solid rgba(212, 175, 55, 0.4)) !important;
+    color: var(--asian-flash-social-color, #D4AF37) !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
     text-transform: uppercase !important;
@@ -1496,8 +1496,8 @@
 .asian-flash-social,
 .asian-flash-social-text,
 .asian-flash-social-text strong {
-    color: #D4AF37 !important;
-    background-color: transparent !important;
+    color: var(--asian-flash-social-text-color, #D4AF37) !important;
+    background-color: var(--asian-flash-social-text-color, transparent) !important;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1556,7 +1556,7 @@
 /* Info / contenido de texto — fondo transparente sobre tarjeta negra */
 .asian-flash-product-info,
 .asian-flash-product-info > div {
-    background: transparent !important;
+    background: var(--asian-flash-product-info-bg, transparent) !important;
     border: none !important;
     box-shadow: none !important;
 }
@@ -1564,9 +1564,9 @@
 /* Etiqueta NUEVO/OFERTA estilo oro */
 
 .asian-flash-product-tag {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: #FFF700 !important;
-    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    background: var(--asian-flash-product-tag-bg, rgba(0, 0, 0, 0.8)) !important;
+    color: var(--asian-flash-product-tag-color, #FFF700) !important;
+    border: var(--asian-flash-product-tag-border, 1px solid rgba(255, 215, 0, 0.3)) !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
     border-radius: 20px !important;
     padding: 4px 12px !important;
@@ -1580,8 +1580,8 @@
 }
 
 .asian-flash-product .asian-vip-badge {
-    background: #D4AF37 !important;
-    color: #000 !important;
+    background: var(--asian-flash-product-bg, #D4AF37) !important;
+    color: var(--asian-flash-product-color, #000) !important;
     border: none !important;
 }
 
