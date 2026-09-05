@@ -32,82 +32,35 @@ class CarteleriaMainTV(QWidget):
         self._sincronizar()
 
     def _apply_theme(self):
-        """Aplicar tema autónomo del sistema de cartelería (temu/apple/blackfriday)"""
+        """Aplicar tema autnomo del sistema de cartelera (temu/apple/blackfriday)"""
         try:
             from src.config import config
-            from src.carteleria.theme import set_theme, C_THEME
+            from src.carteleria.theme import set_theme
+            from src.utils.paths import get_resource_path
+            
             self._theme_name = config.get("carteleria_theme", "temu")
             set_theme(self._theme_name)
             
-            # Aplicar estilos según el tema de cartelería
-            if self._theme_name == "temu":
-                # Tema vibrante Temu
-                self.setStyleSheet("""
-                    #CarteleriaMainTV { background: linear-gradient(135deg, #FFE500 0%, #FFCC00 50%, #FF6600 100%); }
-                    QLabel { color: #111111; background: transparent; }
-                    QFrame#hero, QFrame#metric { background: rgba(255, 255, 255, 0.95); border: 2px solid #111111; border-radius: 18px; }
-                    QLabel#eyebrow { color: #DC2626; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; }
-                    QLabel#title { color: #111111; font-size: 30px; font-weight: 900; }
-                    QLabel#muted { color: #DC2626; font-size: 13px; }
-                    QLabel#metricValue { color: #111111; font-size: 22px; font-weight: 800; }
-                    QLabel#status { color: #10B981; font-size: 13px; font-weight: 700; }
-                    QPushButton { border: 2px solid #111111; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
-                    QPushButton#start { background: #DC2626; color: white; border-color: #DC2626; }
-                    QPushButton#start:hover { background: #FF3B00; border-color: #FF3B00; }
-                    QPushButton#stop { background: #111111; color: white; }
-                    QPushButton#stop:hover { background: #333333; }
-                    QPushButton#secondary { background: rgba(255, 255, 255, 0.9); color: #111111; border: 2px solid #111111; }
-                    QPushButton#secondary:hover { background: #FFCC00; }
-                """)
-            elif self._theme_name == "blackfriday":
-                # Tema Black Friday
-                self.setStyleSheet("""
-                    #CarteleriaMainTV { background: #050507; }
-                    QLabel { color: #FFFFFF; background: transparent; }
-                    QFrame#hero, QFrame#metric { background: #1A1A1A; border: 1px solid #FF0000; border-radius: 18px; }
-                    QLabel#eyebrow { color: #FF0000; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; }
-                    QLabel#title { color: #FFFFFF; font-size: 30px; font-weight: 900; }
-                    QLabel#muted { color: #888888; font-size: 13px; }
-                    QLabel#metricValue { color: #FFFFFF; font-size: 22px; font-weight: 800; }
-                    QLabel#status { color: #00FF00; font-size: 13px; font-weight: 700; }
-                    QPushButton { border: 1px solid #FF0000; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
-                    QPushButton#start { background: #FF0000; color: white; }
-                    QPushButton#start:hover { background: #CC0000; }
-                    QPushButton#stop { background: #333333; color: white; border-color: #666666; }
-                    QPushButton#stop:hover { background: #555555; }
-                    QPushButton#secondary { background: #1A1A1A; color: #FFFFFF; border: 1px solid #FF0000; }
-                    QPushButton#secondary:hover { background: #330000; }
-                """)
-            else:
-                # Tema Apple (default)
-                self.setStyleSheet("""
-                    #CarteleriaMainTV { background: #F8F9FA; }
-                    QLabel { color: #1A1A1A; background: transparent; }
-                    QFrame#hero, QFrame#metric { background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 18px; }
-                    QLabel#eyebrow { color: #007AFF; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; }
-                    QLabel#title { color: #1A1A1A; font-size: 30px; font-weight: 900; }
-                    QLabel#muted { color: #6B7280; font-size: 13px; }
-                    QLabel#metricValue { color: #1A1A1A; font-size: 22px; font-weight: 800; }
-                    QLabel#status { color: #34C759; font-size: 13px; font-weight: 700; }
-                    QPushButton { border: none; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
-                    QPushButton#start { background: #007AFF; color: white; }
-                    QPushButton#start:hover { background: #0056CC; }
-                    QPushButton#stop { background: #FF3B30; color: white; }
-                    QPushButton#stop:hover { background: #CC2E25; }
-                    QPushButton#secondary { background: rgba(255, 255, 255, 0.9); color: #007AFF; border: 1px solid rgba(0, 122, 255, 0.2); }
-                    QPushButton#secondary:hover { background: rgba(0, 122, 255, 0.1); }
-                """)
+            # Cargar el QSS separado
+            theme_file = f"{self._theme_name}.qss"
+            qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", theme_file))
+            
+            if not os.path.exists(qss_path):
+                qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "apple.qss"))
+                
+            with open(qss_path, "r", encoding="utf-8") as f:
+                self.setStyleSheet(f.read())
+                
         except Exception as e:
-            print(f"Error aplicando tema de cartelería: {e}")
-            # Fallback a estilos básicos
-            self.setStyleSheet("""
-                #CarteleriaMainTV { background: #08111F; }
-                QLabel { color: #E5EDF8; background: transparent; }
-                QFrame#hero, QFrame#metric { background: #101D30; border: 1px solid #243654; border-radius: 18px; }
-                QPushButton { border: 0; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
-                QPushButton#start { background: #2563EB; color: white; }
-                QPushButton#stop { background: #DC2626; color: white; }
-            """)
+            print(f"Error aplicando tema de cartelera: {e}")
+            try:
+                # Fallback
+                from src.utils.paths import get_resource_path
+                fallback_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "fallback.qss"))
+                with open(fallback_path, "r", encoding="utf-8") as f:
+                    self.setStyleSheet(f.read())
+            except Exception:
+                pass
 
     def _build_ui(self):
         root = QVBoxLayout(self)

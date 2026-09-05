@@ -1,0 +1,6 @@
+#CarteleriaMainTV { background: #08111F; }
+                QLabel { color: #E5EDF8; background: transparent; }
+                QFrame#hero, QFrame#metric { background: #101D30; border: 1px solid #243654; border-radius: 18px; }
+                QPushButton { border: 0; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
+                QPushButton#start { background: #2563EB; color: white; }
+                QPushButton#stop { background: #DC2626; color: white; }

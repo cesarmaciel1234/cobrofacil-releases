@@ -1,0 +1,15 @@
+#CarteleriaMainTV { background: #050507; }
+                    QLabel { color: #FFFFFF; background: transparent; }
+                    QFrame#hero, QFrame#metric { background: #1A1A1A; border: 1px solid #FF0000; border-radius: 18px; }
+                    QLabel#eyebrow { color: #FF0000; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; }
+                    QLabel#title { color: #FFFFFF; font-size: 30px; font-weight: 900; }
+                    QLabel#muted { color: #888888; font-size: 13px; }
+                    QLabel#metricValue { color: #FFFFFF; font-size: 22px; font-weight: 800; }
+                    QLabel#status { color: #00FF00; font-size: 13px; font-weight: 700; }
+                    QPushButton { border: 1px solid #FF0000; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 800; }
+                    QPushButton#start { background: #FF0000; color: white; }
+                    QPushButton#start:hover { background: #CC0000; }
+                    QPushButton#stop { background: #333333; color: white; border-color: #666666; }
+                    QPushButton#stop:hover { background: #555555; }
+                    QPushButton#secondary { background: #1A1A1A; color: #FFFFFF; border: 1px solid #FF0000; }
+                    QPushButton#secondary:hover { background: #330000; }
