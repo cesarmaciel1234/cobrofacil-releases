@@ -33,40 +33,41 @@ class CarteleriaMainTV(QWidget):
         QTimer.singleShot(400, self._arrancar_tv_monitor_grande)
 
     def _apply_theme(self):
-        """Aplicar tema autnomo del sistema de cartelera (temu/apple/blackfriday)"""
+        """Consola Qt plana. El look luxury queda solo en la cara web de la TV."""
         try:
             from src.config import config
             from src.carteleria.theme import set_theme
-            from src.utils.paths import get_resource_path
-            
+
             self._theme_name = config.get("carteleria_theme", "temu")
             set_theme(self._theme_name)
-            
-            # Cargar el QSS separado
-            theme_file = f"{self._theme_name}.qss"
-            qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", theme_file))
-            
-            if not os.path.exists(qss_path):
-                qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "apple.qss"))
-                
-            with open(qss_path, "r", encoding="utf-8") as f:
-                self.setStyleSheet(f.read())
-                
-        except Exception as e:
-            print(f"Error aplicando tema de cartelera: {e}")
-            try:
-                # Fallback
-                from src.utils.paths import get_resource_path
-                fallback_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "fallback.qss"))
-                with open(fallback_path, "r", encoding="utf-8") as f:
-                    self.setStyleSheet(f.read())
-            except Exception:
-                pass
+        except Exception:
+            self._theme_name = "temu"
+        self.setStyleSheet("""
+            #CarteleriaMainTV { background: #F8FAFC; }
+            QLabel { color: #0F172A; background: transparent; }
+            QFrame#hero, QFrame#metric {
+                background: #FFFFFF;
+                border: 1px solid #E2E8F0;
+                border-radius: 6px;
+            }
+            QLabel#eyebrow { color: #64748B; font-size: 11px; font-weight: 700; }
+            QLabel#title { color: #0F172A; font-size: 22px; font-weight: 700; }
+            QLabel#muted { color: #64748B; font-size: 13px; }
+            QLabel#metricValue { color: #0F172A; font-size: 20px; font-weight: 700; }
+            QLabel#status { color: #166534; font-size: 13px; font-weight: 700; }
+            QPushButton { border: none; border-radius: 6px; padding: 12px 16px; font-size: 14px; font-weight: 700; }
+            QPushButton#start { background: #2563EB; color: white; }
+            QPushButton#start:hover { background: #1D4ED8; }
+            QPushButton#stop { background: #DC2626; color: white; }
+            QPushButton#stop:hover { background: #B91C1C; }
+            QPushButton#secondary { background: #FFFFFF; color: #2563EB; border: 1px solid #BFDBFE; }
+            QPushButton#secondary:hover { background: #EFF6FF; }
+        """)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(46, 38, 46, 38)
-        root.setSpacing(18)
+        root.setContentsMargins(24, 20, 24, 20)
+        root.setSpacing(12)
         hero = QFrame(objectName="hero")
         hero_lay = QVBoxLayout(hero)
         hero_lay.setContentsMargins(28, 24, 28, 24)

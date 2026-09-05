@@ -6,10 +6,10 @@ from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QFrame,
     QPushButton, QTreeWidget, QTreeWidgetItem, QHeaderView, QGridLayout,
-    QMessageBox, QGraphicsDropShadowEffect, QFileDialog,
+    QMessageBox, QFileDialog,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtGui import QPixmap
 
 # PREVENCIÓN DE CRASH: Cargar WebEngine al inicio para evitar segfault por carga perezosa
 try:
@@ -93,13 +93,9 @@ class PanelPngProductos(QWidget):
         form_frame = QFrame()
         form_frame.setObjectName("formFrame")
         form_frame.setStyleSheet(
-            "QFrame#formFrame { background: white; border-radius: 12px; border: 1px solid #E2E8F0; }"
+            "QFrame#formFrame { background: #FFFFFF; border-radius: 6px; border: 1px solid #E2E8F0; }"
         )
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        form_frame.setGraphicsEffect(shadow)
+        form_frame.setGraphicsEffect(None)
 
         form_lay = QVBoxLayout(form_frame)
         form_lay.setContentsMargins(20, 20, 20, 20)

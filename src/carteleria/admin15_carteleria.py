@@ -27,6 +27,9 @@ class CarteleriaConfigPanel(QWidget):
         self._load()
 
     def _build(self):
+        self.setObjectName("CarteleriaConfigPanel")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setStyleSheet("QWidget#CarteleriaConfigPanel { background: #F8FAFC; }")
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
@@ -35,9 +38,8 @@ class CarteleriaConfigPanel(QWidget):
         header = QFrame()
         header.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #F8FAFC, stop:0.5 #FFFFFF, stop:1 #F8FAFC);
-                border-bottom: 2px solid #E2E8F0;
+                background: #FFFFFF;
+                border-bottom: 1px solid #E2E8F0;
                 border-radius: 0px;
             }
         """)
@@ -78,16 +80,10 @@ class CarteleriaConfigPanel(QWidget):
         h.addStretch()
         root.addWidget(header)
 
-        # Contenedor principal con fondo claro moderno
-        main_container = QFrame()
-        main_container.setStyleSheet("""
-            QFrame {
-                background: #F8FAFC;
-                border: none;
-                border-radius: 0px;
-            }
-        """)
-        main_layout = QVBoxLayout(main_container)
+        wrapper = QWidget()
+        wrapper.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        wrapper.setStyleSheet("background: #F8FAFC;")
+        main_layout = QVBoxLayout(wrapper)
         main_layout.setContentsMargins(32, 32, 32, 32)
         main_layout.setSpacing(24)
 
@@ -100,9 +96,7 @@ class CarteleriaConfigPanel(QWidget):
             QFrame {
                 background: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 16px;
-                padding: 20px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                border-radius: 6px;
             }
         """)
         negocio_layout = QVBoxLayout(negocio_frame)
@@ -121,6 +115,8 @@ class CarteleriaConfigPanel(QWidget):
         negocio_layout.addWidget(lbl_negocio)
         
         self.panel_negocio = PanelDatosNegocio(self, show_save_button=False)
+        self.panel_negocio.setGraphicsEffect(None)
+        self.panel_negocio.setStyleSheet("background: transparent; border: none;")
         negocio_layout.addWidget(self.panel_negocio)
         body_local.addWidget(negocio_frame)
 
@@ -130,9 +126,7 @@ class CarteleriaConfigPanel(QWidget):
             QFrame {
                 background: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 16px;
-                padding: 20px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                border-radius: 6px;
             }
         """)
         c_layout = QVBoxLayout(carteleria_frame)
@@ -291,23 +285,16 @@ class CarteleriaConfigPanel(QWidget):
         self.btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_save.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #3B82F6, stop:1 #2563EB);
+                background: #2563EB;
                 color: white;
-                font-weight: 800;
-                padding: 16px 32px;
-                border-radius: 12px;
+                font-weight: 700;
+                padding: 12px 24px;
+                border-radius: 6px;
                 border: none;
-                font-size: 16px;
-                letter-spacing: 0.5px;
+                font-size: 15px;
             }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #2563EB, stop:1 #1D4ED8);
-            }
-            QPushButton:pressed {
-                background: #1D4ED8;
-            }
+            QPushButton:hover { background: #1D4ED8; }
+            QPushButton:pressed { background: #1E40AF; }
         """)
         self.btn_save.clicked.connect(self._save_all)
         btn_layout.addWidget(self.btn_save)
@@ -320,7 +307,7 @@ class CarteleriaConfigPanel(QWidget):
         scroll_local.setStyleSheet("""
             QScrollArea {
                 border: none;
-                background: transparent;
+                background: #F8FAFC;
             }
             QScrollBar:vertical {
                 background: #E2E8F0;
@@ -336,9 +323,6 @@ class CarteleriaConfigPanel(QWidget):
                 background: #64748B;
             }
         """)
-        
-        wrapper = QWidget()
-        wrapper.setLayout(main_layout)
         
         scroll_local.setWidgetResizable(True)
         scroll_local.setWidget(wrapper)

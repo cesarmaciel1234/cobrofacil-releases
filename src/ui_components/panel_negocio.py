@@ -1,8 +1,8 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsDropShadowEffect, QMessageBox
+    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QCursor
+from PyQt6.QtGui import QCursor
 from src.config import config
 
 class PanelDatosNegocio(QWidget):
@@ -19,13 +19,8 @@ class PanelDatosNegocio(QWidget):
         self._load_data()
 
     def _build_ui(self):
-        self.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #E2E8F0;")
-        
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        self.setGraphicsEffect(shadow)
+        self.setStyleSheet("background: #FFFFFF; border-radius: 6px; border: 1px solid #E2E8F0;")
+        self.setGraphicsEffect(None)
         
         form_layout = QVBoxLayout(self)
         form_layout.setContentsMargins(25, 25, 25, 25)

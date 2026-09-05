@@ -17,6 +17,7 @@ class CarteleriaApp(QStackedWidget):
         super().__init__()
         self.setWindowTitle("Cartelería Autónoma - Apple Style Modular")
         self.setMinimumSize(1024, 768)
+        self.setStyleSheet("QStackedWidget { background: #F8FAFC; border: none; }")
 
         self.dashboard = CarteleriaDashboard()
         self.addWidget(self.dashboard)
@@ -70,7 +71,7 @@ class CarteleriaApp(QStackedWidget):
             except Exception:
                 pass
         self.setCurrentWidget(self.dashboard)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_admin(self):
         if not self.admin:
@@ -78,9 +79,8 @@ class CarteleriaApp(QStackedWidget):
             self.admin = CarteleriaConfigPanel()
             self.addWidget(self.admin)
             self.admin.request_back.connect(self.volver_dashboard)
-            if self.estilo_completo: self.admin.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.admin)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_inv(self):
         # Siempre recrear para evitar quedar con estado roto cacheado
@@ -104,7 +104,7 @@ class CarteleriaApp(QStackedWidget):
             self.inv.catalogo.aplicar_permisos_perfil("admin")
             
         self.setCurrentWidget(self.inv)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_ofe(self):
         if not self.ofe:
@@ -124,7 +124,7 @@ class CarteleriaApp(QStackedWidget):
             if self.estilo_completo:
                 self.ofe.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.ofe)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_red(self):
         if not self.red:
@@ -134,7 +134,7 @@ class CarteleriaApp(QStackedWidget):
             self.red.request_dashboard.connect(self.volver_dashboard)
             if self.estilo_completo: self.red.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.red)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_png_productos(self):
         if self.png_prod:
@@ -148,7 +148,7 @@ class CarteleriaApp(QStackedWidget):
         if self.estilo_completo:
             self.png_prod.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.png_prod)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_prov(self):
         if not self.prov:
@@ -161,7 +161,7 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.prov)
         if hasattr(self.prov, 'cargar_datos'):
             self.prov.cargar_datos()
-        self.showNormal()
+        self.showMaximized()
 
     def toggle_carteleria_theme(self):
         from src.utils.theme_manager import theme_manager
@@ -196,7 +196,7 @@ class CarteleriaApp(QStackedWidget):
             self.estilo_completo = estilo_completo
             
             self.dashboard.setStyleSheet(estilo_completo)
-            if self.admin: self.admin.setStyleSheet(estilo_completo)
+            # Admin config es UI clara propia: el QSS noche deja marcos oscuros superpuestos.
             if self.inv: self.inv.setStyleSheet(estilo_completo)
             if self.ofe: self.ofe.setStyleSheet(estilo_completo)
             if self.red: self.red.setStyleSheet(estilo_completo)
@@ -242,7 +242,7 @@ def lanzar_app(app=None):
     # Aplicar el tema global a los módulos administrativos, excluyendo el TV (CarteleriaTV)
     window.apply_theme()
 
-    window.show()
+    window.showMaximized()
     # Guardamos referencia para que no sea destruida por el recolector de basura
     app._carteleria_window = window 
 

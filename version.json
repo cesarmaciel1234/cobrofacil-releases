@@ -1,7 +1,7 @@
 {
-  "app_version": "14.0.1",
+  "app_version": "14.0.2",
   "channel": "stable",
-  "build_date": "2026-09-05 16:22:16",
+  "build_date": "2026-09-05 16:42:35",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "e58cae3946eb60c4c05d56c772cef81c",
+      "checksum": "e429b106aadee36e7e142e483b37582f",
       "channel": "stable",
       "size": 883231
     },
@@ -1848,9 +1848,9 @@
     },
     "src/carteleria/admin15_carteleria.py": {
       "version": "1.0.0",
-      "checksum": "ab229ca183933e7d1b3d0e1c644a41ec",
+      "checksum": "8fedadf656269cf07a9a8bfd8dc4e07e",
       "channel": "stable",
-      "size": 16481
+      "size": 16046
     },
     "src/carteleria/assets_paths.py": {
       "version": "1.0.0",
@@ -1860,9 +1860,9 @@
     },
     "src/carteleria/carteleria.py": {
       "version": "1.0.0",
-      "checksum": "11b735d2f3e4e993c532255b376f6981",
+      "checksum": "4b1c3ad5c0677da9363d2212a684d778",
       "channel": "stable",
-      "size": 10758
+      "size": 10813
     },
     "src/carteleria/el_cuello.py": {
       "version": "1.0.0",
@@ -1884,9 +1884,9 @@
     },
     "src/carteleria/theme.py": {
       "version": "1.0.0",
-      "checksum": "a11924e24ad9184551e188689493ca7d",
+      "checksum": "2692242ca6c8cb97f6e6e158b32eca7c",
       "channel": "stable",
-      "size": 3786
+      "size": 2104
     },
     "src/carteleria/utils_condiciones.py": {
       "version": "1.0.0",
@@ -1950,9 +1950,9 @@
     },
     "src/carteleria/configuraciones/info_negocio.py": {
       "version": "1.0.0",
-      "checksum": "5ae851c9df1a3ac5426420d1a6d66993",
+      "checksum": "0f06ee8451b34e2b5cd2f898a044f8ec",
       "channel": "stable",
-      "size": 2380
+      "size": 2345
     },
     "src/carteleria/configuraciones/reloj_widget.py": {
       "version": "1.0.0",
@@ -1986,9 +1986,9 @@
     },
     "src/carteleria/creador_png/panel_png_productos.py": {
       "version": "1.0.0",
-      "checksum": "931b397ac85ea9d8768cf21b05d4a723",
+      "checksum": "c2763b2ce7db9563dd641bea4875367b",
       "channel": "stable",
-      "size": 16813
+      "size": 16623
     },
     "src/carteleria/creador_png/presets.py": {
       "version": "1.0.0",
@@ -2400,9 +2400,9 @@
     },
     "src/carteleria/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "0d3b056c1a63e34193c2e553de445dbf",
+      "checksum": "fb43605def7f3f7e6d1f551f21085de3",
       "channel": "stable",
-      "size": 15530
+      "size": 15473
     },
     "src/carteleria/dashboard/__init__.py": {
       "version": "1.0.0",
@@ -2490,15 +2490,15 @@
     },
     "src/carteleria/lanzador_tv/ui_lanzador_tv.py": {
       "version": "1.0.0",
-      "checksum": "1a8f4324940281c359d8a2faa5487fe1",
+      "checksum": "43830b9f4919ffe0bdf03d04549be065",
       "channel": "stable",
-      "size": 18926
+      "size": 19177
     },
     "src/carteleria/lanzador_tv/window_manager.py": {
       "version": "1.0.0",
-      "checksum": "1a33c12ee470e862412f0affd71c3f33",
+      "checksum": "02f2cf90e2fb71c77c2a5e500d1be103",
       "channel": "stable",
-      "size": 6353
+      "size": 6336
     },
     "src/carteleria/lanzador_tv/_personalizar.md": {
       "version": "1.0.0",
@@ -3894,9 +3894,9 @@
     },
     "src/ui_components/panel_negocio.py": {
       "version": "1.0.0",
-      "checksum": "f64908fa8a5952a265f34ac9d1b60adb",
+      "checksum": "fe4028418bb40cbf85c5647df98f9d48",
       "channel": "stable",
-      "size": 4075
+      "size": 3876
     },
     "src/ui_components/red_lan_panel.py": {
       "version": "1.0.0",

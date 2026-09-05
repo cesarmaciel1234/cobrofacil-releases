@@ -75,8 +75,8 @@ class CarteleriaCard(QFrame):
         self.setStyleSheet(f"""
             CarteleriaCard {{
                 background-color: {bg};
-                border: 1px solid {'rgba(255,255,255,0.1)' if is_dark else 'rgba(0,0,0,0.1)'};
-                border-radius: 12px;
+                border: 1px solid {'#334155' if is_dark else '#E2E8F0'};
+                border-radius: 6px;
             }}
             CarteleriaCard:hover {{
                 border: 2px solid {border_hover};
@@ -174,8 +174,9 @@ class CarteleriaDashboard(QWidget):
         hero.setFixedHeight(110)
         hero.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E40AF, stop:1 #3B82F6);
-                border-radius: 16px;
+                background: #2563EB;
+                border: none;
+                border-radius: 6px;
             }
         """)
         hero_lay = QVBoxLayout(hero)
