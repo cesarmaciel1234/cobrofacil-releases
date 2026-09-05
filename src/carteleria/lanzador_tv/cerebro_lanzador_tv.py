@@ -334,9 +334,13 @@ class ServidorCuello:
             tiene_mem = bool(self.zip_store and "index.html" in self.zip_store)
             tiene_disco = bool(self.web_root and os.path.isfile(os.path.join(self.web_root, "index.html")))
             if not tiene_mem and not tiene_disco:
+                from src.carteleria.lanzador_tv.tv_cara_pack import _candidatos_blob
+
+                blobs = _candidatos_blob() or ["(ningun tv_cara.bin)"]
                 self.last_error = (
                     "Falta la cara web de la TV (index.html).\n"
-                    f"Buscada en:\n{self.web_root or '(paquete en memoria)'}"
+                    f"Carpeta: {self.web_root or '(no hay la_cara_web)'}\n"
+                    "Blobs:\n" + "\n".join(blobs)
                 )
                 logger.warning("Cara web TV no encontrada")
                 return False

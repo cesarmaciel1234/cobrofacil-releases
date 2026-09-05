@@ -720,17 +720,7 @@ def _purge_cara_tv_vieja(install_root: str) -> None:
     """Tras update: limpiar perfil Chrome. No borrar la_cara_web si no hay blob usable."""
     import tempfile
 
-    blob_ok = False
-    for rel in ("_internal/tv_cara.bin", "tv_cara.bin"):
-        path = os.path.join(install_root, rel.replace("/", os.sep))
-        if os.path.isfile(path) and os.path.getsize(path) > 32:
-            blob_ok = True
-            break
-    if blob_ok:
-        for root, dirs, _files in os.walk(install_root):
-            if "la_cara_web" in dirs:
-                shutil.rmtree(os.path.join(root, "la_cara_web"), ignore_errors=True)
-                dirs.remove("la_cara_web")
+    # No borrar la_cara_web: si tv_cara.bin llega como carpeta, la carpeta salva la TV.
     tmp = tempfile.gettempdir()
     try:
         nombres = os.listdir(tmp)

@@ -76,9 +76,28 @@ def _candidatos_blob() -> list[str]:
         if not path or path in vistos:
             continue
         vistos.add(path)
-        if os.path.isfile(path) and os.path.getsize(path) > 32:
-            validos.append(path)
+        archivo = _archivo_blob(path)
+        if archivo:
+            validos.append(archivo)
     return validos
+
+
+def _archivo_blob(path: str) -> str:
+    """PyInstaller a veces copia tv_cara.bin como carpeta; adentro está el archivo real."""
+    if os.path.isfile(path) and os.path.getsize(path) > 32:
+        return path
+    if os.path.isdir(path):
+        inner = os.path.join(path, BLOB_NAME)
+        if os.path.isfile(inner) and os.path.getsize(inner) > 32:
+            return inner
+        try:
+            for name in os.listdir(path):
+                full = os.path.join(path, name)
+                if os.path.isfile(full) and os.path.getsize(full) > 32:
+                    return full
+        except OSError:
+            return ""
+    return ""
 
 
 def buscar_blob() -> str:
