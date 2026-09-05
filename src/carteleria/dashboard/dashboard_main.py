@@ -122,9 +122,17 @@ class CarteleriaDashboard(QWidget):
         nav_lay = QHBoxLayout(self.nav)
         nav_lay.setContentsMargins(32, 0, 32, 0)
 
-        self.brand_lbl = QLabel("🚀 CENTRAL DE CARTELERÍA")
+        self.brand_lbl = QLabel("CENTRAL DE CARTELERÍA")
         self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #0F172A; background: transparent; border: none;")
         nav_lay.addWidget(self.brand_lbl)
+        self.lbl_ver = QLabel("")
+        self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #2563EB; background: transparent; border: none; margin-left: 10px;")
+        try:
+            from src.updater.cerebro.engine import read_local_version
+            self.lbl_ver.setText(f"v{read_local_version()}")
+        except Exception:
+            self.lbl_ver.setText("")
+        nav_lay.addWidget(self.lbl_ver)
         nav_lay.addStretch()
 
         self.lbl_clock = QLabel()
@@ -240,6 +248,8 @@ class CarteleriaDashboard(QWidget):
         if is_dark:
             self.nav.setStyleSheet("background: #0F172A; border-bottom: 1px solid #334155;")
             self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #F8FAFC; background: transparent; border: none;")
+            if hasattr(self, "lbl_ver"):
+                self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #93C5FD; background: transparent; border: none; margin-left: 10px;")
             self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #94A3B8; background: transparent; border: none; margin-right: 16px;")
             self.btn_theme.setStyleSheet("""
                 QPushButton {
@@ -262,6 +272,8 @@ class CarteleriaDashboard(QWidget):
         else:
             self.nav.setStyleSheet("background: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
             self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #0F172A; background: transparent; border: none;")
+            if hasattr(self, "lbl_ver"):
+                self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #2563EB; background: transparent; border: none; margin-left: 10px;")
             self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #475569; background: transparent; border: none; margin-right: 16px;")
             self.btn_theme.setStyleSheet("""
                 QPushButton {

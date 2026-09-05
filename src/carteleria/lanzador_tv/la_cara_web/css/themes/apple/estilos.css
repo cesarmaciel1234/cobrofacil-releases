@@ -242,3 +242,38 @@ body {
 
 /* ── Col 4 — tarjetas asiáticas (ya estilizadas en columna4_chef.css) ── */
 /* Sin overrides necesarios — el tema apple es el default de col4 */
+
+/* ── OVERRIDES CLIMA (MÁS COLOR Y LECTURA) ── */
+.flash-strip__clima {
+    background: var(--strip-count-bg);
+    border: 1px solid var(--accent-primary);
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
+    color: var(--accent-primary) !important;
+}
+.flash-strip__clima .flash-clima-temp {
+    text-shadow: none !important;
+    font-weight: 800;
+}
+.flash-strip__clima.clima-cold {
+    background: linear-gradient(135deg, #00C6FF, #0071E3) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(0, 113, 227, 0.4) !important;
+}
+.flash-strip__clima.clima-hot {
+    background: linear-gradient(135deg, #FF9500, #FF2D55) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4) !important;
+}
+.flash-strip__clima.clima-mild {
+    background: linear-gradient(135deg, #FFCC00, #FF9500) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4) !important;
+}
+.flash-strip__clima.clima-cold .flash-clima-temp,
+.flash-strip__clima.clima-hot .flash-clima-temp,
+.flash-strip__clima.clima-mild .flash-clima-temp {
+    color: #FFFFFF !important;
+}

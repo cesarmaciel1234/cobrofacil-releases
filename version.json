@@ -1,7 +1,7 @@
 {
-  "app_version": "14.0.3",
+  "app_version": "14.0.4",
   "channel": "stable",
-  "build_date": "2026-09-05 17:02:23",
+  "build_date": "2026-09-05 17:08:00",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -90,7 +90,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "c5b5f99429730d5f4cf276312b65fe37",
+      "checksum": "830fb6175e076d8fd65d66ad30a68076",
       "channel": "stable",
       "size": 883231
     },
@@ -2400,9 +2400,9 @@
     },
     "src/carteleria/dashboard/dashboard_main.py": {
       "version": "1.0.0",
-      "checksum": "fb43605def7f3f7e6d1f551f21085de3",
+      "checksum": "87ffcb834532bc5a6421b9c99c994380",
       "channel": "stable",
-      "size": 15473
+      "size": 16300
     },
     "src/carteleria/dashboard/__init__.py": {
       "version": "1.0.0",
