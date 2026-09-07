@@ -38,7 +38,7 @@ class CarteleriaMainTV(QWidget):
             from src.config import config
             from src.carteleria.theme import set_theme
 
-            self._theme_name = config.get("carteleria_theme", "temu")
+            self._theme_name = config.get("carteleria_theme", "premium")
             set_theme(self._theme_name)
         except Exception:
             self._theme_name = "temu"

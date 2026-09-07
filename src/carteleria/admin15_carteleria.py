@@ -160,10 +160,9 @@ class CarteleriaConfigPanel(QWidget):
         c_layout.addWidget(lbl_theme)
         
         self.cmb_theme = QComboBox()
-        self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style - Premium)", "apple")
-        self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo - Alto Impacto)", "temu")
-        self.cmb_theme.addItem("🛒 Tema Black Friday (Ofertas Explosivas)", "blackfriday")
-        self.cmb_theme.addItem("🥇 Tema Premium (Negro & Oro - Lujo)", "premium")
+        self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style)", "apple")
+        self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo)", "temu")
+        self.cmb_theme.addItem("🛒 Tema Premium / Black Friday", "premium")
         self.cmb_theme.setStyleSheet("""
             QComboBox {
                 padding: 12px 16px;
@@ -343,7 +342,9 @@ class CarteleriaConfigPanel(QWidget):
                 cfg_data = json.loads(cfg_str)
                 
                 self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
-                th = cfg_data.get("carteleria_theme", "apple")
+                th = cfg_data.get("carteleria_theme", "premium")
+                if th in ("blackfriday", "negro_temu", "auto"):
+                    th = "premium"
                 index = self.cmb_theme.findData(th)
                 if index >= 0: self.cmb_theme.setCurrentIndex(index)
                 pf = cfg_data.get("carteleria_perf", "auto")
@@ -358,7 +359,9 @@ class CarteleriaConfigPanel(QWidget):
             else:
                 # Fallback a local
                 self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
-                th = config.get("carteleria_theme", "apple")
+                th = config.get("carteleria_theme", "premium")
+                if th in ("blackfriday", "negro_temu", "auto"):
+                    th = "premium"
                 index = self.cmb_theme.findData(th)
                 if index >= 0: self.cmb_theme.setCurrentIndex(index)
                 pf = config.get("carteleria_perf", "auto")

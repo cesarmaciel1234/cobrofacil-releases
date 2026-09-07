@@ -80,21 +80,11 @@ def _perfil_kiosk_estable() -> str:
     return root
 
 
-def cargar_web_tv():
-    """Blob en memoria primero; si falta o está roto, carpeta la_cara_web (dev / fallback)."""
-    try:
-        from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
-
-        mem = cargar_cara_en_memoria()
-        if mem and "index.html" in mem:
-            return None, mem
-    except Exception:
-        logger.exception("No se pudo abrir el paquete oculto de la TV")
-
+def _buscar_cara_disco():
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
-        get_resource_path(rel),
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
+        get_resource_path(rel),
         os.path.join(get_base_path(), rel),
         os.path.join(get_base_path(), "_internal", rel),
     ]
@@ -107,7 +97,23 @@ def cargar_web_tv():
         ])
     for path in candidatos:
         if path and os.path.isfile(os.path.join(path, "index.html")):
-            return path, None
+            return path
+    return ""
+
+
+def cargar_web_tv():
+    """Carpeta la_cara_web primero (así se ven los CSS nuevos). El blob es respaldo."""
+    disco = _buscar_cara_disco()
+    if disco:
+        return disco, None
+    try:
+        from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
+
+        mem = cargar_cara_en_memoria()
+        if mem and "index.html" in mem:
+            return None, mem
+    except Exception:
+        logger.exception("No se pudo abrir el paquete oculto de la TV")
     return "", None
 
 
@@ -283,7 +289,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
                     "business_name": config.get("business_name", "Cartelería"),
                     "phone": config.get("phone", ""),
                     "mensaje_zocalo": config.get("mensaje_zocalo", ""),
-                    "carteleria_theme": config.get("carteleria_theme", "temu"),
+                    "carteleria_theme": config.get("carteleria_theme", "premium"),
                     "carteleria_perf": perfil_activo(),
                 },
                 "precios": self._get_precios(),

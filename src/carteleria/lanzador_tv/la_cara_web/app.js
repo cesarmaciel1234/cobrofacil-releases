@@ -55,28 +55,28 @@ function aplicarPerfil(perfil) {
 
 function loadTheme(themeName) {
     if (!themeName) return;
-    document.body.setAttribute("data-theme", themeName);
-    if (themeName === state.currentTheme) return;
+    const alias = { auto: "premium", blackfriday: "premium", negro_temu: "premium" };
+    const nombre = alias[themeName] || themeName;
+    document.body.setAttribute("data-theme", nombre);
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
     const themePaths = {
-        apple:      "css/themes/apple/colores.css",
-        temu:       "css/themes/temu/colores.css",
-        blackfriday:"css/themes/blackfriday/colores.css",
-        premium:    "css/themes/premium/colores.css",
+        apple:   "css/themes/apple/colores.css",
+        temu:    "css/themes/temu/colores.css",
+        premium: "css/themes/premium/colores.css",
     };
     const stylePaths = {
-        apple:      "css/themes/apple/estilos.css",
-        temu:       "css/themes/temu/estilos.css",
-        blackfriday:"css/themes/blackfriday/estilos.css",
-        premium:    "css/themes/premium/estilos.css",
+        apple:   "css/themes/apple/estilos.css",
+        temu:    "css/themes/temu/estilos.css",
+        premium: "css/themes/premium/estilos.css",
     };
-    if (themePaths[themeName] && stylePaths[themeName]) {
-        const bust = `?v=${Date.now()}`;
-        themeColorsLink.href = themePaths[themeName] + bust;
-        themeStylesLink.href = stylePaths[themeName] + bust;
-        state.currentTheme = themeName;
-    }
+    if (!themePaths[nombre] || !stylePaths[nombre]) return;
+    if (nombre === state.currentTheme && themeStylesLink.dataset.loaded === nombre) return;
+    const bust = `?v=${Date.now()}`;
+    themeColorsLink.href = themePaths[nombre] + bust;
+    themeStylesLink.href = stylePaths[nombre] + bust;
+    themeStylesLink.dataset.loaded = nombre;
+    state.currentTheme = nombre;
 }
 
 async function fetchState() {
@@ -120,13 +120,8 @@ async function fetchState() {
         }
         
         // 2. Personalización Temporal (Estilo Netflix): Cambiar tema por hora del día
-        let temaDefinitivo = data.config?.carteleria_theme;
-        if (!temaDefinitivo || temaDefinitivo === "auto") {
-            const hora = new Date().getHours();
-            if (hora >= 6 && hora < 12) temaDefinitivo = "apple";       // Mañana: Limpio y claro
-            else if (hora >= 12 && hora < 19) temaDefinitivo = "temu";  // Tarde: Vibrante comercial
-            else temaDefinitivo = "premium";                            // Noche: Oscuro y elegante
-        }
+        let temaDefinitivo = data.config?.carteleria_theme || "premium";
+        if (temaDefinitivo === "auto") temaDefinitivo = "premium";
         loadTheme(temaDefinitivo);
         
         // 3-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 

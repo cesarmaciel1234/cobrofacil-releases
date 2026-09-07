@@ -383,7 +383,7 @@ class LanzadorDirectoTV(QObject):
                 "config": {
                     "business_name": business_name,
                     "phone": config.get("phone", ""),
-                    "carteleria_theme": config.get("carteleria_theme", "temu"),
+                    "carteleria_theme": config.get("carteleria_theme", "premium"),
                     "carteleria_perf": perfil_activo(),
                     "mensaje_zocalo": self._generar_mensaje_banderin(business_name),
                     "data_status": self._sync_status,

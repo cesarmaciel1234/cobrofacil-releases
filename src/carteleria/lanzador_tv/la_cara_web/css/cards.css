@@ -889,14 +889,21 @@
     flex: 0 0 auto;
     padding: 1cqh 1cqw 1.15cqh;
     justify-content: flex-end;
+    background: #0A0602 !important;
 }
 
 .flash-offer .tv-card__now,
 .chef-deal .tv-card__now {
-    color: #FF6A00;
+    color: #550000 !important;
+    -webkit-text-fill-color: #550000 !important;
     font-size: clamp(1.55rem, 2.6cqw, 2.35rem);
     font-weight: 900;
     letter-spacing: -0.04em;
+    background: linear-gradient(135deg, #FFDF00 0%, #FFA500 100%) !important;
+    border: 2px solid #FFFFFF;
+    border-radius: 8px;
+    padding: 0.08em 0.35em;
+    text-shadow: none;
 }
 
 .flash-offer .deal-save {
