@@ -29,8 +29,11 @@ def pack_source(dest_path: str, source_dir: str | None = None) -> str:
         raise FileNotFoundError(f"Falta index.html en {root}")
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for dirpath, _dirs, files in os.walk(root):
+        for dirpath, dirs, files in os.walk(root):
+            dirs[:] = [d for d in dirs if d not in ("themes_backup",) and not d.endswith("_backup")]
             for name in files:
+                if name.endswith("_backup.py") or name.endswith(".bak"):
+                    continue
                 full = os.path.join(dirpath, name)
                 arc = os.path.relpath(full, root).replace("\\", "/")
                 zf.write(full, arc)

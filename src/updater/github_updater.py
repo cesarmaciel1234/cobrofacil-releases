@@ -2,7 +2,7 @@
 github_updater.py — Fachada de actualizaciones vía GitHub
 
 - EXE congelado: delega en silent_auto_updater (ZIP de Releases).
-- Modo desarrollo: sync por archivos desde el repo fuente (cobrofacil-pro).
+- Modo desarrollo: sync por archivos desde cobrofacil-releases.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from src.utils.paths import get_base_path
 BASE_DIR = get_base_path()
 VERSION_FILE = os.path.join(BASE_DIR, "version.json")
 BACKUP_DIR = os.path.join(BASE_DIR, "reportes", "backups_actualizacion")
-RAW_BASE_URL = "https://raw.githubusercontent.com/cesarmaciel1234/cobrofacil-pro/main"
+RAW_BASE_URL = "https://raw.githubusercontent.com/cesarmaciel1234/cobrofacil-releases/main"
 MODULOS_CORE = ("main.py", "src/main_window.py", "src/config.py")
 
 
