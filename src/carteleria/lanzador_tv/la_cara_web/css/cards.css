@@ -1092,38 +1092,40 @@
     display: flex;
     flex-direction: column;
     justify-content: stretch;
-    gap: 0;
+    gap: 0.55cqh;
 }
 
 .xsell-list .xsell-item + .xsell-item {
-    border-top: 1px solid rgba(210, 206, 196, 0.28);
+    border-top: 0;
 }
 
 .xsell-item {
     display: flex;
-    align-items: stretch;
-    gap: 0.8cqw;
+    align-items: center;
+    gap: 1.25cqw;
     flex: 1 1 0;
     min-height: 0;
     min-width: 0;
-    padding: 0.45cqh 0.7cqw;
+    padding: 1.05cqh 1.2cqw;
     background: var(--price-row-bg);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .xsell-item .deal-stage,
 .xsell-item__stage {
     flex: 0 0 auto !important;
     width: auto !important;
-    height: auto !important;
     min-width: 0 !important;
-    max-width: 36% !important;
-    align-self: stretch;
+    max-width: 28% !important;
+    align-self: center !important;
     aspect-ratio: 1 / 1;
-    height: 100% !important;
-    width: unset !important;
-    border-radius: 10px;
+    height: calc(100% - 1.1em) !important;
+    margin: 0 !important;
+    padding: 0.55em !important;
+    box-sizing: border-box !important;
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
 }
@@ -1136,12 +1138,12 @@
     font-size: clamp(1.4rem, 2.4cqw, 2.2rem);
 }
 .xsell-item .deal-stage__img {
-    inset: 4%;
-    width: 92%;
-    height: 92%;
+    inset: 10% !important;
+    width: 80% !important;
+    height: 80% !important;
     transform: none;
     object-fit: contain;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28));
 }
 .xsell-item .deal-stage__off {
     top: 4px;
@@ -1161,7 +1163,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.45cqh;
+    align-items: stretch;
+    gap: 0.55cqh;
+    padding-right: 0.2cqw;
 }
 .xsell-item__price-row {
     display: flex;

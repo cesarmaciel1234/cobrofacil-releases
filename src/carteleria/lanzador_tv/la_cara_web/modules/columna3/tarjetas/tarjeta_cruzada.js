@@ -25,7 +25,7 @@ export function htmlTarjetaCruzada(slide, productos = []) {
         const tienePrecio = prod.precio > 0 || prod.precio_oferta > 0;
         const tieneOferta = prod.precio_oferta > 0 && prod.precio_oferta < prod.precio;
         const precio = tieneOferta ? precioVigente(prod) : (prod.precio || 0);
-        const regla = tieneOferta ? textoValidezOferta(prod) : "";
+        const regla = tienePrecio ? textoValidezOferta(prod) : "";
         
                 return `
             <li class="xsell-item">

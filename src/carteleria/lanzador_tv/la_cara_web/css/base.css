@@ -52,7 +52,7 @@ body {
     min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.55cqw;
+    gap: 0.22cqw;
     margin: 0.75cqh 0 0.75cqh;
     padding: 1cqh 0;
     border-top: 2px solid var(--accent-primary, #D4AF37);
@@ -211,4 +211,31 @@ body {
 @keyframes skeletonLoading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* Video wall: 4 TVs horizontales. Cada columna es una pantalla. */
+body[data-wall="4h"] .tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.22cqw;
+    margin: 0.35cqh 0.12cqw 0.25cqh;
+    padding: 0;
+    border: 0;
+}
+body[data-wall="4h"] .tv-wall::after {
+    display: none;
+}
+body[data-wall="4h"] .tv-panel,
+body[data-wall="4h"] .premium-column {
+    height: 100%;
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    padding: 0.45cqh 0.18cqw !important;
+}
+body[data-wall="4h"] .tv-panel + .tv-panel {
+    border-left: 0;
+}
+body[data-wall="4h"] .footer {
+    flex: 0 0 auto;
 }

@@ -5,15 +5,15 @@
 
 :root {
     /* PANTALLA / FONDO */
-    --screen-bg:             #F8F9FA;
+    --screen-bg:             #FFE8D2;
     --panel-bg:              #FFFFFF;
     --panel-border:          rgba(0, 0, 0, 0.05);
 
     /* TEXTO GLOBAL */
-    --text-primary:          #111111;
-    --text-secondary:        #555555;
-    --text-main:             #111111;
-    --text-sub:              #555555;
+    --text-primary:          #5C2E14;
+    --text-secondary:        #A85A2A;
+    --text-main:             #5C2E14;
+    --text-sub:              #A85A2A;
     --text-muted:            #999999;
     --text-on-dark:          #FFFFFF;
     --text-on-accent:        #FFFFFF;
@@ -38,16 +38,16 @@
     --clock-text:            #FF3300;
 
     /* ZOCALO / MARQUESINA */
-    --footer-bg:             #FFFFFF;
+    --footer-bg:             linear-gradient(90deg, #FF6A00, #FF3300, #FF8800);
     --zocalo-bg:             #F5F5F5;
     --zocalo-border:         rgba(0, 0, 0, 0.05);
-    --marquee-text:          #FF3300;
+    --marquee-text:          #FFFFFF;
 
     /* TARJETA GENERICA */
     --card-bg:               #FFFFFF;
     --card-border:           rgba(0, 0, 0, 0.05);
     --card-shadow:           0 4px 15px rgba(0, 0, 0, 0.05);
-    --card-text:             #111111;
+    --card-text:             #5C2E14;
     --card-text-sub:         #6B7280;
 
     /* CARRUSEL - deal-stage */
@@ -121,28 +121,18 @@
     --col4-prog-track:       #F0F0F0;
 
     /* STAGE NAME en CARRUSEL */
-    --stage-name-color:      #111111;
-    
-    /* Columna 1 (Ranking) */
-    --rank-card-bg:          #FFFFFF;
-    --rank-card-border:      rgba(0,0,0,0.05);
-    --rank-card-shadow:      0 4px 15px rgba(0,0,0,0.03);
-    --rank-top1-bg:          #FFF0ED;
-    --rank-top1-border:      #FF3300;
-    --rank-top1-shadow:      0 8px 25px rgba(255,51,0,0.15);
-    --rank-top2-bg:          #F8F9FA;
-    --rank-top2-border:      rgba(0,0,0,0.1);
-    --rank-top3-bg:          #F8F9FA;
-    --rank-top3-border:      rgba(0,0,0,0.05);
-    --rank-badge-bg:         #FF3300;
-    --rank-badge-color:      #FFFFFF;
-    --rank-badge-top1-bg:    #FF3300;
-    --rank-badge-top1-color: #FFFFFF;
-    --rank-name-color:       #111111;
-    --rank-top1-name-color:  #111111;
+    --stage-name-color:      #5C2E14;
+    --col4-name-color:       #5C2E14;
+    --rank-name-color:       #5C2E14;
+    --rank-top1-name-color:  #FF3300;
+    --rank-tag-color:        #FF8800;
+    --tv-4-bg:               #FFE8D2;
+    --asian-flash-container-bg: transparent;
+    --rank-card-bg:          #FFF7F0;
+    --rank-card-border:      #FF7A1A;
     --rank-bar-bg:           linear-gradient(90deg, #FF3300, #FF0055);
-    --rank-bar-track:        #F0F0F0;
-    --rank-tag-color:        #FFFFFF;
+    --rank-bar-track:        #FFE8D2;
+    --rank-tag-color:        #FF8800;
     --rank-social-color:     #FF3300;
     --rank-fire-shadow:      rgba(255,51,0,0.4);
     --rank-dot-bg:           #E5E7EB;
