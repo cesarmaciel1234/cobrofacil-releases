@@ -73,6 +73,12 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
             exito = db_manager.execute_non_query(query, valores)
 
         if exito:
+            try:
+                if not str(params.get("icono") or "").strip():
+                    from src.motor_inventario.base.productos_db import asociar_png_por_nombre
+                    asociar_png_por_nombre()
+            except Exception:
+                pass
             return True, "Producto guardado correctamente."
         else:
             err_detail = getattr(db_manager, 'last_error', None)

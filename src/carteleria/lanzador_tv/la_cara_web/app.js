@@ -55,22 +55,24 @@ function aplicarPerfil(perfil) {
 
 function loadTheme(themeName) {
     if (!themeName) return;
-    const alias = { auto: "premium", blackfriday: "premium", negro_temu: "premium" };
+    const alias = { auto: "premium", negro_temu: "premium" };
     const nombre = alias[themeName] || themeName;
     document.body.setAttribute("data-theme", nombre);
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
     const themePaths = {
-        apple:   "css/themes/apple/colores.css",
-        temu:    "css/themes/temu/colores.css",
-        premium: "css/themes/premium/colores.css",
-        black:   "css/themes/black/colores.css",
+        apple:        "css/themes/apple/colores.css",
+        temu:         "css/themes/temu/colores.css",
+        premium:      "css/themes/premium/colores.css",
+        black:        "css/themes/black/colores.css",
+        blackfriday:  "css/themes/blackfriday/colores.css",
     };
     const stylePaths = {
-        apple:   "css/themes/apple/estilos.css",
-        temu:    "css/themes/temu/estilos.css",
-        premium: "css/themes/premium/estilos.css",
-        black:   "css/themes/black/estilos.css",
+        apple:        "css/themes/apple/estilos.css",
+        temu:         "css/themes/temu/estilos.css",
+        premium:      "css/themes/premium/estilos.css",
+        black:        "css/themes/black/estilos.css",
+        blackfriday:  "css/themes/blackfriday/estilos.css",
     };
     if (!themePaths[nombre] || !stylePaths[nombre]) return;
     if (nombre === state.currentTheme && themeStylesLink.dataset.loaded === nombre) return;

@@ -216,13 +216,17 @@ export function htmlPronosticoClima(climaData) {
     let { ofertas, producto_recomendado, precio, icono_url, departamento } = climaData || {};
 
     if (!ofertas || ofertas.length === 0) {
-        ofertas = [{
-            nombre: producto_recomendado || "Súper Oferta",
-            precio: precio ? precio * 1.2 : 5500,
-            precio_oferta: precio || 4900,
-            icono_url: icono_url || "",
-            departamento: departamento || "Destacados"
-        }];
+        if (producto_recomendado && Number(precio) > 0) {
+            ofertas = [{
+                nombre: producto_recomendado,
+                precio,
+                precio_oferta: precio,
+                icono_url: icono_url || "",
+                departamento: departamento || "",
+            }];
+        } else {
+            ofertas = [];
+        }
     }
 
     // Iniciar carrusel después de renderizar

@@ -100,14 +100,18 @@ def guardar_icono_producto(producto_id, icono):
 
 def asociar_png_por_nombre():
     """Si el producto no tiene PNG y existe un archivo con ese nombre, lo asocia."""
-    from src.carteleria.motor_carteleria.iconos_tv import _png_por_nombre
+    from src.carteleria.motor_carteleria import iconos_tv
+    iconos_tv._png_nombre_cache.clear()
+    iconos_tv._png_indice_cache = None
     n = 0
     for row in listar_productos_png():
         if str(row.get("icono") or "").strip():
             continue
-        nombre = _png_por_nombre(row.get("nombre"))
+        nombre = iconos_tv._png_por_nombre(row.get("nombre"))
         pid = row.get("id")
         if not nombre or not pid:
+            continue
+        if nombre in (iconos_tv.PNG_SISTEMA,) or nombre in iconos_tv.ICONO_POR_DEPTO.values():
             continue
         ok, _msg = guardar_icono_producto(pid, nombre)
         if ok:

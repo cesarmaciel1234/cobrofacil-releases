@@ -38,6 +38,14 @@ def _terminal_window_sizes():
         return _TERMINAL_REF_W, _TERMINAL_REF_H, _TERMINAL_MIN_W, _TERMINAL_MIN_H
 
 
+def _cargar_admin15_carteleria():
+    """Recarga el módulo desde disco para que los temas nuevos aparezcan sin recompilar."""
+    import importlib
+    import src.carteleria.admin15_carteleria as admin15
+    importlib.reload(admin15)
+    return admin15.Admin15Carteleria()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -387,7 +395,7 @@ class MainWindow(QMainWindow):
             11: lambda: __import__('src.admin.proveedores.proveedores_main', fromlist=['Admin11Proveedores']).Admin11Proveedores(),
             13: lambda: __import__('src.admin.hardware.hardware_main', fromlist=['Admin13Hardware']).Admin13Hardware(),
             14: lambda: __import__('src.admin.ventas_digitales.ventas_digitales_main', fromlist=['Admin14VentasDigitales']).Admin14VentasDigitales(),
-            15: lambda: __import__('src.carteleria.admin15_carteleria', fromlist=['Admin15Carteleria']).Admin15Carteleria(),
+            15: lambda: _cargar_admin15_carteleria(),
             17: lambda: __import__('src.admin.clientes.admin_clientes_main',    fromlist=['AdminClientes']).AdminClientes(),
             18: lambda: __import__('src.admin.nexus_admin.nexus_admin_main',      fromlist=['NexusExtremeControl']).NexusExtremeControl(),
             19: lambda: __import__('src.jefe.jefe0_dashboard',    fromlist=['Jefe0Dashboard']).Jefe0Dashboard(),
@@ -784,9 +792,8 @@ class MainWindow(QMainWindow):
             self._restore_office_window()
         
         # ── Lazy Loading: instanciar el widget si es la primera visita ───────
-        if index == 21 and self.screens[21] is not None:
-            # Forzar reconstrucción de Carteleria TV para que aplique cambios de tema "Temu" al vuelo
-            self._build_lazy_screen(21)
+        if index in (15, 21) and self.screens[index] is not None:
+            self._build_lazy_screen(index)
         elif self.screens[index] is None:
             self._build_lazy_screen(index)
 

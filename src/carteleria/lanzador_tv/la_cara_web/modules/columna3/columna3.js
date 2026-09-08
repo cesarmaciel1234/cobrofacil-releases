@@ -21,26 +21,37 @@ function cruzadasDesdeProductos(productos) {
     for (const item of productos || []) {
         const nombre = String(item.nombre || "").trim();
         if (!nombre) continue;
-        const depto = String(item.departamento || item.categoria || "GENERAL").toUpperCase();
+        const depto = String(item.departamento || item.categoria || "").trim().toUpperCase();
+        if (!depto) continue;
         if (!grupos.has(depto)) grupos.set(depto, []);
-        grupos.get(depto).push(nombre);
+        grupos.get(depto).push(item);
     }
     const slides = [];
     const vistos = new Set();
-    for (const item of productos || []) {
-        const nombre = String(item.nombre || "").trim();
-        if (!nombre || vistos.has(nombre)) continue;
-        const depto = String(item.departamento || item.categoria || "GENERAL").toUpperCase();
-        const mates = (grupos.get(depto) || []).filter((n) => n !== nombre).slice(0, 3);
-        if (mates.length < 2) continue;
-        vistos.add(nombre);
-        slides.push({
-            tipo: "cruzada",
-            nombre,
-            pregunta: `¿LLEVÁS ${tituloPregunta(nombre)}?`,
-            relacionados: mates.map((n) => String(n).toUpperCase()),
+    for (const [, items] of grupos) {
+        if (items.length < 3) continue;
+        const orden = [...items].sort((a, b) => {
+            const fa = a.icono || a.icono_url ? 0 : 1;
+            const fb = b.icono || b.icono_url ? 0 : 1;
+            return fa - fb;
         });
-        if (slides.length >= 4) break;
+        for (const item of orden) {
+            const nombre = String(item.nombre || "").trim();
+            if (!nombre || vistos.has(nombre)) continue;
+            const mates = orden
+                .map((p) => String(p.nombre || "").trim())
+                .filter((n) => n && n !== nombre)
+                .slice(0, 3);
+            if (mates.length < 2) continue;
+            vistos.add(nombre);
+            slides.push({
+                tipo: "cruzada",
+                nombre,
+                pregunta: `¿LLEVÁS ${tituloPregunta(nombre)}?`,
+                relacionados: mates.map((n) => String(n).toUpperCase()),
+            });
+            if (slides.length >= 4) return slides;
+        }
     }
     return slides;
 }
@@ -71,12 +82,14 @@ function intercalar(cruzadas, ofertas) {
 
 function slidesColumna3(state) {
     const api = (state.columna3 || []).filter((item) => item && item.tipo);
-    const hayCruzada = api.some((item) => item.tipo === "cruzada");
-    const hayOferta = api.some((item) => item.tipo === "oferta");
-    if (hayCruzada && hayOferta) return api;
-    const cruzadas = hayCruzada ? api.filter((item) => item.tipo === "cruzada") : cruzadasDesdeProductos(state.productos);
-    const ofertas = hayOferta ? api.filter((item) => item.tipo === "oferta") : ofertasDesdeProductos(state.productos);
-    const mix = intercalar(cruzadas, ofertas);
+    if (api.length) {
+        const cruzadas = api.filter((item) => item.tipo === "cruzada");
+        const ofertas = api.filter((item) => item.tipo === "oferta");
+        if (cruzadas.length && ofertas.length) return api;
+        const mix = intercalar(cruzadas, ofertas);
+        return mix.length ? mix : api;
+    }
+    const mix = intercalar(cruzadasDesdeProductos(state.productos), ofertasDesdeProductos(state.productos));
     return mix.length ? mix : api;
 }
 

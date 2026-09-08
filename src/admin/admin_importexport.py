@@ -286,6 +286,13 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                f"  [+] Insertados:   {insertados}\n"
                f"  [~] Actualizados: {actualizados}\n"
                f"  [-] Errores:      {errores}")
+        try:
+            from src.motor_inventario.base.productos_db import asociar_png_por_nombre
+            n = asociar_png_por_nombre() or 0
+            if n:
+                msg += f"\n  [i] PNG enganchados por nombre: {n}"
+        except Exception:
+            pass
         return True, msg
 
     except Exception as e:

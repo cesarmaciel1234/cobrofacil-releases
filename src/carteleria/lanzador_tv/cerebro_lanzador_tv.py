@@ -11,6 +11,7 @@ import http.server
 import json
 import mimetypes
 import os
+import re
 import socketserver
 import threading
 import subprocess
@@ -160,7 +161,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             return
         if rel == "index.html":
             ver = _app_version_tv().encode("ascii", "ignore")
-            data = data.replace(b"?v=tv95", b"?v=" + ver)
+            data = re.sub(br"\?v=tv\d+", b"?v=" + ver, data)
         ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", ctype)

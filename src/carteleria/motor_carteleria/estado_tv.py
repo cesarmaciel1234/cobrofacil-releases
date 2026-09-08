@@ -271,8 +271,29 @@ def _anotar_mega_ventas(items):
     return items
 
 
+def _tiene_foto(prod):
+    return bool((prod or {}).get("icono") or (prod or {}).get("icono_url"))
+
+
+def _vitrina_desde_inventario(productos, limite=5):
+    """PC nueva: la TV muestra la lista cargada (precios y PNG), sin inventar ventas."""
+    vivos = []
+    for item in productos or []:
+        nombre = str(item.get("nombre") or "").strip()
+        if not nombre or _nombre_basura(nombre):
+            continue
+        if num(item.get("precio")) <= 0:
+            continue
+        vivos.append(item)
+    vivos.sort(key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")))
+    cards = []
+    for i, prod in enumerate(vivos[:limite]):
+        cards.append(_card_desde_catalogo(prod, "LISTA", "En tu lista", puesto=i + 1))
+    return cards
+
+
 def armar_rotacion_destacados(productos):
-    """Tres tandas reales: tickets, kilos y recaudación."""
+    """Tres tandas reales: tickets, kilos y recaudación. Sin ventas: tu inventario."""
     paneles = []
     elegidos, periodo_e = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
@@ -316,6 +337,15 @@ def armar_rotacion_destacados(productos):
             "subtitulo": "Venta premium",
             "items": plata,
         })
+    if not paneles:
+        items = _vitrina_desde_inventario(productos, limite=5)
+        if items:
+            paneles.append({
+                "id": "inventario",
+                "titulo": "Tu lista",
+                "subtitulo": "Inventario",
+                "items": items,
+            })
     return paneles
 
 
@@ -360,7 +390,13 @@ def armar_columna3(productos):
         logger.debug("Venta cruzada no disponible: %s", exc)
         cruzadas = []
     if not cruzadas:
-        cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
+        try:
+            from src.carteleria.motor_carteleria.venta_cruzada import VentaCruzadaInteligente
+            relleno = VentaCruzadaInteligente.usar_relleno_catalogo()
+        except Exception:
+            relleno = True
+        if relleno:
+            cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
     ofertas = _ofertas_flash(productos, limite=4)
     slides = []
     n = max(len(cruzadas), len(ofertas), 1)
@@ -377,36 +413,47 @@ def armar_columna3(productos):
 
 
 def _cruzadas_desde_catalogo(productos, limite=4):
+    """Solo productos de la lista cargada, agrupados por el rubro que vos definiste."""
     grupos = {}
     for item in productos or []:
         nombre = str(item.get("nombre") or "").strip()
-        if not nombre:
+        if not nombre or _nombre_basura(nombre):
             continue
-        depto = str(item.get("departamento") or item.get("categoria") or "GENERAL").upper()
-        grupos.setdefault(depto, []).append(nombre)
+        depto = str(item.get("departamento") or item.get("categoria") or "").strip().upper()
+        if not depto:
+            continue
+        grupos.setdefault(depto, []).append(item)
     slides = []
     vistos = set()
-    for item in productos or []:
-        nombre = str(item.get("nombre") or "").strip()
-        if not nombre or nombre in vistos:
+    for depto, items in grupos.items():
+        if len(items) < 3:
             continue
-        depto = str(item.get("departamento") or item.get("categoria") or "GENERAL").upper()
-        mates = [n for n in grupos.get(depto, []) if n != nombre][:3]
-        if len(mates) < 2:
-            continue
-        vistos.add(nombre)
-        titulo = nombre[7:].strip() if nombre.lower().startswith("oferta ") else nombre
-        slides.append({
-            "tipo": "cruzada",
-            "nombre": nombre,
-            "pregunta": f"¿LLEVÁS {titulo.upper()}?",
-            "relacionados": [str(n).upper() for n in mates],
-            "icono": item.get("icono") or "",
-            "icono_url": item.get("icono_url") or "",
-            "departamento": item.get("departamento") or item.get("categoria") or "",
-        })
-        if len(slides) >= limite:
-            break
+        items = sorted(items, key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")))
+        for item in items:
+            nombre = str(item.get("nombre") or "").strip()
+            if nombre in vistos:
+                continue
+            mates = [
+                str(p.get("nombre") or "").strip()
+                for p in items
+                if str(p.get("nombre") or "").strip() and str(p.get("nombre") or "").strip() != nombre
+            ][:3]
+            if len(mates) < 2:
+                continue
+            vistos.add(nombre)
+            titulo = nombre[7:].strip() if nombre.lower().startswith("oferta ") else nombre
+            slides.append({
+                "tipo": "cruzada",
+                "nombre": nombre,
+                "pregunta": f"¿LLEVÁS {titulo.upper()}?",
+                "relacionados": [n.upper() for n in mates],
+                "icono": item.get("icono") or "",
+                "icono_url": item.get("icono_url") or "",
+                "departamento": depto,
+                "fuente": "inventario",
+            })
+            if len(slides) >= limite:
+                return slides
     return slides
 
 
@@ -436,7 +483,7 @@ def _combos_del_motor(productos):
             nom = str(pieza.get("nombre") or "").strip()
             if nom:
                 etiquetas.append(f"{int(cant) if cant == int(cant) else cant}x {nom}")
-            prod = catalogo.get(nom.lower()) or _buscar_en_catalogo(catalogo, nom)
+            prod = catalogo.get(_norm_nombre(nom)) or _buscar_en_catalogo(catalogo, nom)
             if prod:
                 original += num(prod.get("precio")) * cant
         ahorro = original - precio if original > precio else 0.0
@@ -549,14 +596,18 @@ def armar_ia(productos, clima_icon="sol", clima_text=""):
         logger.debug("MotorIALocal no disponible: %s", exc)
 
     if not cards:
-        for item in productos:
-            if not es_oferta(item):
+        orden = sorted(
+            [p for p in (productos or []) if not _nombre_basura(p.get("nombre"))],
+            key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")),
+        )
+        for item in orden:
+            if num(item.get("precio")) <= 0:
                 continue
             cards.append({
-                "nombre": item.get("nombre") or "Oferta",
+                "nombre": item.get("nombre") or "",
                 "precio": precio_vigente(item),
                 "precio_lista": num(item.get("precio")),
-                "razon": "En oferta ahora",
+                "razon": "En tu lista",
                 "icono": item.get("icono") or "",
                 "icono_url": item.get("icono_url") or "",
                 "departamento": item.get("departamento") or "",

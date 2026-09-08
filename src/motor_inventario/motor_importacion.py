@@ -16,7 +16,6 @@ class MotorImportacion:
     def importar_excel(self, ruta_origen, progres_callback=None):
         """Importa un archivo Excel. Retorna (exito, mensaje)."""
         from src.admin.admin_importexport import importar_excel
-        # Note: the current importar_excel might need slightly different parameters
         return importar_excel(ruta_origen)
 
     def descargar_precarga(self):
@@ -68,6 +67,14 @@ class MotorImportacion:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             db_manager.execute_many(query, values)
-            return True, f"Se insertaron {len(values)} productos nuevos exitosamente."
+            extra = ""
+            try:
+                from src.motor_inventario.base.productos_db import asociar_png_por_nombre
+                n = asociar_png_por_nombre() or 0
+                if n:
+                    extra = f" PNG enganchados por nombre: {n}."
+            except Exception:
+                pass
+            return True, f"Se insertaron {len(values)} productos nuevos exitosamente.{extra}"
         except Exception as e:
             return False, str(e)

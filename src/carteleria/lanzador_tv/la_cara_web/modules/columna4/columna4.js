@@ -75,11 +75,19 @@ function pintar() {
     const ofertas = itemsCache.slice(0, 6).map(item => enriquecer(item, productosCache));
     
     if (!itemsCache.length) {
+        const fallback = (productosCache || []).find((p) => Number(p?.precio) > 0);
+        if (!fallback) {
+            rootRef.innerHTML = '<p class="column-empty">Sin productos en la lista todavía.</p>';
+            return;
+        }
+        const item = enriquecer(fallback, productosCache);
         rootRef.innerHTML = htmlPronosticoClima({
             ...clima,
-            producto_recomendado: "Pollo entero",
-            precio: 4900,
-            ofertas: [],
+            producto_recomendado: item.nombre,
+            precio: item.precio,
+            icono_url: item.icono_url,
+            departamento: item.departamento,
+            ofertas: [item],
         });
         return;
     }
@@ -105,7 +113,14 @@ export function iniciarRotacionColumna4(state, root) {
     const misma = firma === JSON.stringify(itemsCache.map((i) => i.nombre));
     itemsCache = items.length ? items : itemsCache;
     if (!misma) {
+        rotacionIndex = 0;
         pintar();
     }
-
+    if (rotacionTimer) return;
+    if (itemsCache.length <= 1) return;
+    rotacionTimer = setInterval(() => {
+        if (!itemsCache.length) return;
+        rotacionIndex = (rotacionIndex + 1) % itemsCache.length;
+        pintar();
+    }, ROTACION_MS);
 }

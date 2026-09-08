@@ -6,7 +6,8 @@ import socket
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QFrame, QScrollArea, QComboBox, QTabWidget
+    QTextEdit, QMessageBox, QFrame, QScrollArea, QComboBox, QTabWidget,
+    QListWidget, QListWidgetItem,
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QCursor
@@ -16,6 +17,15 @@ from src.ui_components.panel_negocio import PanelDatosNegocio
 
 def _config_path():
     return get_resource_path(os.path.join("src", "config", "carteleria_config.json"))
+
+
+TEMAS_TV = (
+    ("apple", "🍎 Tema Elegante (Apple Style)"),
+    ("temu", "🔥 Tema Temu (Vende Humo)"),
+    ("premium", "🛒 Tema Premium Mutación (Oro + Naranja + Cian)"),
+    ("black", "⬛ Black Super Premium (Oro y Plata)"),
+    ("blackfriday", "🟧 Black Friday (Negro y Naranja)"),
+)
 
 
 class CarteleriaConfigPanel(QWidget):
@@ -147,7 +157,7 @@ class CarteleriaConfigPanel(QWidget):
         
         c_layout.addSpacing(12)
         
-        lbl_theme = QLabel("Estilo Visual de la Cartelería:")
+        lbl_theme = QLabel("Estilo Visual de la Cartelería (5 temas):")
         lbl_theme.setStyleSheet("""
             QLabel {
                 font-size: 14px; 
@@ -158,39 +168,34 @@ class CarteleriaConfigPanel(QWidget):
             }
         """)
         c_layout.addWidget(lbl_theme)
-        
-        self.cmb_theme = QComboBox()
-        self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style)", "apple")
-        self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo)", "temu")
-        self.cmb_theme.addItem("🛒 Tema Premium / Black Friday", "premium")
-        self.cmb_theme.addItem("⬛ Black Super Premium (Oro y Plata)", "black")
-        self.cmb_theme.setStyleSheet("""
-            QComboBox {
-                padding: 12px 16px;
-                border: 2px solid #CBD5E1;
-                border-radius: 8px;
-                font-size: 15px;
+
+        self.lst_theme = QListWidget()
+        self.lst_theme.setObjectName("ListaTemasTv")
+        for key, label in TEMAS_TV:
+            item = QListWidgetItem(label)
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            self.lst_theme.addItem(item)
+        self.lst_theme.setMinimumHeight(220)
+        self.lst_theme.setStyleSheet("""
+            QListWidget#ListaTemasTv {
                 background: #FFFFFF;
                 color: #1E293B;
+                border: 1px solid #0F172A;
+                border-radius: 4px;
+                font-size: 15px;
                 font-weight: 600;
+                padding: 4px;
             }
-            QComboBox:hover {
-                border-color: #94A3B8;
-                background: #F8FAFC;
+            QListWidget#ListaTemasTv::item {
+                padding: 10px 8px;
+                border-bottom: 1px solid #E2E8F0;
             }
-            QComboBox::drop-down {
-                border: none;
-                background: #3B82F6;
-                width: 30px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 5px solid #1E293B;
-                border-top: 5px solid transparent;
-                border-bottom: 5px solid transparent;
+            QListWidget#ListaTemasTv::item:selected {
+                background: #DBEAFE;
+                color: #1E293B;
             }
         """)
-        c_layout.addWidget(self.cmb_theme)
+        c_layout.addWidget(self.lst_theme)
 
         c_layout.addSpacing(16)
         
@@ -329,13 +334,29 @@ class CarteleriaConfigPanel(QWidget):
         
         root.addWidget(scroll_local)
 
+    def _tema_elegido(self):
+        item = self.lst_theme.currentItem()
+        if item:
+            return item.data(Qt.ItemDataRole.UserRole) or "premium"
+        return "premium"
+
+    def _seleccionar_tema(self, th):
+        clave = str(th or "premium")
+        if clave in ("negro_temu", "auto"):
+            clave = "premium"
+        for i in range(self.lst_theme.count()):
+            if self.lst_theme.item(i).data(Qt.ItemDataRole.UserRole) == clave:
+                self.lst_theme.setCurrentRow(i)
+                return
+        self.lst_theme.setCurrentRow(2)
+
     def _load(self):
         # 1. Cargar desde la base de datos global compartida (sin pasar por HTTP firewall)
         from src.base_de_datos.database import db_manager
         from src.config import config
         
         try:
-            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
             rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
             
             if rows:
@@ -344,10 +365,7 @@ class CarteleriaConfigPanel(QWidget):
                 
                 self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
                 th = cfg_data.get("carteleria_theme", "premium")
-                if th in ("blackfriday", "negro_temu", "auto"):
-                    th = "premium"
-                index = self.cmb_theme.findData(th)
-                if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                self._seleccionar_tema(th)
                 pf = cfg_data.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
@@ -361,10 +379,7 @@ class CarteleriaConfigPanel(QWidget):
                 # Fallback a local
                 self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
                 th = config.get("carteleria_theme", "premium")
-                if th in ("blackfriday", "negro_temu", "auto"):
-                    th = "premium"
-                index = self.cmb_theme.findData(th)
-                if index >= 0: self.cmb_theme.setCurrentIndex(index)
+                self._seleccionar_tema(th)
                 pf = config.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
@@ -395,7 +410,7 @@ class CarteleriaConfigPanel(QWidget):
             "cuit": self.panel_negocio.txt_cuit.text().strip(),
             "mensaje_despedida": self.panel_negocio.txt_msg.text().strip(),
             "mensaje_zocalo": self.txt_mensaje.toPlainText().strip(),
-            "carteleria_theme": self.cmb_theme.currentData(),
+            "carteleria_theme": self._tema_elegido(),
             "carteleria_perf": self.cmb_perf.currentData(),
         }
 
@@ -403,9 +418,14 @@ class CarteleriaConfigPanel(QWidget):
         from src.base_de_datos.database import db_manager
         from src.config import config
         try:
-            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
             json_str = json.dumps(datos_guardar)
-            db_manager.execute_query("REPLACE INTO carteleria_config (id, config_json) VALUES (1, ?)", (json_str,))
+            ok = db_manager.execute_non_query(
+                "REPLACE INTO carteleria_config (id, config_json) VALUES (1, ?)",
+                (json_str,),
+            )
+            if not ok:
+                raise RuntimeError(getattr(db_manager, "last_error", "") or "REPLACE carteleria_config falló")
             QMessageBox.information(self, "Guardado Exitoso", "Configuración guardada correctamente en la Base de Datos Global.\n\nTodas las pantallas se actualizarán automáticamente en los próximos segundos.")
         except Exception as e:
             QMessageBox.critical(self, "Error de Red DB", f"No se pudo guardar la configuración global.\nDetalle: {e}")

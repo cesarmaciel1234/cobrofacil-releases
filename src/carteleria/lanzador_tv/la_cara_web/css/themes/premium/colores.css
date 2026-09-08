@@ -1,52 +1,125 @@
-
+/* Premium Mutación — negro + oro + naranja Temu + cian Apple */
 :root {
-    /* LUXURY ARABIAN STYLE - NEGRO, ORO, BLANCO */
-    --bg-primary: #050505;
-    --bg-secondary: #0A0A0A;
-    --surface-primary: rgba(10, 10, 10, 0.95);
-    
-    --text-primary: #FFFFFF;
-    --text-secondary: #E0E0E0;
-    
-    --accent-primary: #D4AF37; /* Gold */
-    --accent-secondary: #FFFFFF; /* White */
-    --accent-rgb: 212, 175, 55;
-    
-    --border-subtle: rgba(212, 175, 55, 0.25);
-    
-    --screen-bg: #030303;
-    
-    /* Rank badges (Gold & White) */
-    --rank-badge-bg: #D4AF37;
-    --rank-badge-color: #000000;
-    --rank-badge-top1-bg: linear-gradient(135deg, #FFFFFF, #D4AF37);
-    --rank-badge-top1-color: #000000;
-    
-    --rank-bar-bg: linear-gradient(90deg, #D4AF37, #FFFFFF);
-    --rank-bar-track: rgba(255,255,255,0.05);
-    --rank-progress-bar: linear-gradient(90deg, #D4AF37, #B8860B);
-    
-    --card-bg: #0A0A0A;
-    --card-border: rgba(212, 175, 55, 0.2);
-    
-    --badge-bg: #FFFFFF;
-    --badge-text: #000000;
-    --badge-off-bg: #D4AF37;
-    --badge-off-text: #000000;
-    
-    --price-now-color: #D4AF37;
-    --price-now-bg: #111111;
-    --price-now-text: #D4AF37;
-    --price-deal-color: #FFFFFF;
-    
-    --kicker-color: #D4AF37;
-    --categoria-color: #D4AF37;
-    
-    --col4-card-bg: #080808;
-    --col4-prog-bar-bg: linear-gradient(90deg, #D4AF37, #FFFFFF);
-    
-    --timer-deal-bg: #FFFFFF;
-    --timer-deal-text: #000000;
-    --timer-bg: #D4AF37;
-    --timer-text: #000000;
+    --bg-primary:      #050505;
+    --bg-secondary:    #0B0B0D;
+    --surface-primary: rgba(8, 8, 10, 0.94);
+    --text-primary:    #F8F8F8;
+    --text-secondary:  #E8C547;
+    --accent-primary:  #D4AF37;
+    --accent-secondary:#FF6A00;
+    --accent-rgb:      212, 175, 55;
+    --border-subtle:   rgba(212, 175, 55, 0.4);
+    --success-color:   #34D399;
+    --shadow-card:     0 12px 32px rgba(0, 0, 0, 0.65);
+    --shadow-soft:     0 6px 18px rgba(0, 0, 0, 0.45);
+
+    --screen-bg:             #000000;
+    --panel-bg:              #0A0A0C;
+    --strip-bg:              linear-gradient(90deg, #000000, #1A160C 50%, #000000);
+    --strip-text:            #E8D48B;
+    --strip-ends-text:       #FFB347;
+    --strip-dot:             #FF6A00;
+    --strip-accent:          #D4AF37;
+    --strip-count-bg:        #D4AF37;
+    --strip-count-text:      #111111;
+
+    --footer-bg:             linear-gradient(90deg, #C45A00, #FF7A18 40%, #FF9A2A 50%, #FF7A18 60%, #C45A00);
+    --marquee-text:          #FFFFFF;
+
+    --card-bg:               #0C0A08;
+    --card-border:           rgba(212, 175, 55, 0.45);
+    --card-shadow:           0 14px 36px rgba(0, 0, 0, 0.7);
+    --card-text:             #FFFFFF;
+    --card-text-sub:         #E8C48A;
+
+    --stage-default-bg:      radial-gradient(circle at 50% 30%, #3A3424 0%, #0A0A0C 70%);
+    --stage-aves-bg:         radial-gradient(circle at 50% 28%, #2A6A88 0%, #071018 72%);
+    --stage-cerdo-bg:        radial-gradient(circle at 50% 28%, #4A2418 0%, #0A0A0C 72%);
+    --stage-almacen-bg:      radial-gradient(circle at 50% 28%, #24282A 0%, #0A0A0C 72%);
+
+    --price-now-color:       #FFDF00;
+    --price-now-bg:          linear-gradient(135deg, #FFDF00, #C9A227);
+    --price-now-text:        #111111;
+    --price-was:             #EF4444;
+    --price-deal-color:      #D4AF37;
+    --price-row-bg:          #070707;
+
+    --badge-bg:              #DC2626;
+    --badge-text:            #FFFFFF;
+    --badge-off-bg:          #FF6A00;
+    --badge-off-text:        #000000;
+    --off-badge-bg:          #DC2626;
+    --off-badge-text:        #FFFFFF;
+
+    --kicker-color:          #D4AF37;
+    --categoria-color:       #D4AF37;
+    --meta-color:            #C0C0C8;
+    --rule-color:            #FF6A00;
+    --unit-color:            #E8C547;
+
+    --chip-bg:               #D4AF37;
+    --chip-text:             #111111;
+    --save-bg:               #1A160C;
+    --save-text:             #E8D48B;
+    --timer-bg:              #FF6A00;
+    --timer-text:            #000000;
+    --timer-deal-bg:         #D4AF37;
+    --timer-deal-text:       #111111;
+    --timer-urgent-bg:       #C41E3A;
+    --deal-save-color:       #E8D48B;
+    --proof-color:           #C0C0C8;
+    --proof-low-color:       #FF6A00;
+
+    --dept-bg:               transparent;
+    --dept-text:             #E8C48A;
+    --dept-accent:           #D4AF37;
+    --ad-bg:                 #141416;
+    --ad-text:               #E8D48B;
+    --tile-bg:               #0B0B0D;
+
+    --col4-card-bg:          #050505;
+    --col4-card-border:      rgba(255, 122, 24, 0.55);
+    --col4-badge-bg:         #DC2626;
+    --col4-badge-text:       #FFFFFF;
+    --col4-name-color:       #FFFFFF;
+    --col4-price-color:      #FFDF00;
+    --col4-price-bg:         #000000;
+    --col4-price-text:       #FFDF00;
+    --col4-label-color:      #FF7A18;
+    --col4-desc-color:       #E8C48A;
+    --col4-sold-color:       #FF7A18;
+    --col4-buyers-color:     #E8C48A;
+    --col4-img-fallback-bg:  #0A3048;
+    --col4-hot-badge-bg:     #DC2626;
+    --col4-new-badge-bg:     #FF7A18;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #DC2626, #FF6A00);
+    --col4-prog-track:       #111111;
+
+    --stage-name-color:      #FFFFFF;
+    --tv-4-bg:               #000000;
+
+    --rank-card-bg:          #111111;
+    --rank-card-border:      rgba(212, 175, 55, 0.5);
+    --rank-card-shadow:      0 10px 24px rgba(0, 0, 0, 0.55);
+    --rank-top1-bg:          linear-gradient(145deg, #1A160C 0%, #111111 100%);
+    --rank-top1-border:      #FFDF00;
+    --rank-badge-bg:         #000000;
+    --rank-badge-color:      #FFDF00;
+    --rank-badge-top1-bg:    #000000;
+    --rank-badge-top1-color: #FFDF00;
+    --rank-name-color:       #FFFFFF;
+    --rank-top1-name-color:  #FFFFFF;
+    --rank-bar-bg:           linear-gradient(90deg, #D4AF37, #FFDF00);
+    --rank-bar-track:        rgba(255, 223, 0, 0.12);
+    --rank-tag-color:        #111111;
+    --rank-social-color:     #D4AF37;
+    --rank-fire-shadow:      rgba(212, 175, 55, 0.45);
+    --rank-dot-active:       #D4AF37;
+    --rank-progress-bar:     linear-gradient(90deg, #D4AF37, #FFDF00);
+
+    --asian-flash-product-tag-bg: #000000;
+    --asian-flash-product-tag-color: #FF7A18;
+    --asian-flash-product-tag-border: 1px solid #FF7A18;
+    --card-progress-bg: #000000;
+    --card-progress-border: 1px solid #FF7A18;
 }
