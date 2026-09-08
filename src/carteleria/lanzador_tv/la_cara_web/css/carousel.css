@@ -6,14 +6,14 @@
     overflow: hidden;
     display: flex;
     align-items: stretch;
-    padding: 0.7cqh 0.35cqw 1.1cqh;
+    padding: 0.85cqh 1.15cqw 0.75cqh;
     box-sizing: border-box;
 }
 
 .carousel-track {
     display: flex;
     align-items: stretch;
-    gap: 1.4cqw;
+    gap: 1.9cqw;
     width: max-content;
     height: 100%;
     will-change: transform;
@@ -144,8 +144,13 @@
 .flash-offer__stage .deal-stage__off {
     top: auto;
     left: auto;
-    right: 8px;
-    bottom: 8px;
+    right: 10px;
+    bottom: 10px;
+    font-size: clamp(1.15rem, 2.15cqw, 1.7rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    padding: 0.38em 0.72em;
+    border-radius: 10px;
 }
 
 .deal-copy {
@@ -153,10 +158,52 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: stretch;
-    gap: 4px;
-    padding: 2px 4px 2px 0;
+    gap: 0.45em;
+    padding: 0.35em 0.45em 0.28em 0.12em;
+}
+
+.hero-section .deal-copy__head,
+.hero-section .deal-copy__mid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.hero-section .deal-copy__head {
+    gap: 0.28em;
+}
+
+.hero-section .deal-copy__mid {
+    gap: 0.42em;
+}
+
+.hero-section .deal-kicker {
+    text-align: left;
+    letter-spacing: 0.14em;
+}
+
+.hero-section .deal-price-row {
+    margin-top: 0;
+}
+
+.hero-section .deal-save {
+    font-size: clamp(0.72rem, 1cqw, 0.88rem);
+    line-height: 1.2;
+}
+
+.hero-section .deal-foot {
+    margin-top: 0;
+    gap: 0.45em;
+}
+
+.hero-section .deal-proof,
+.hero-section .oferta-card.is-deal .tv-card__timer {
+    min-height: 1.7em;
+    padding-top: 0.28em;
+    padding-bottom: 0.28em;
 }
 
 .deal-line {
@@ -586,10 +633,11 @@
 .oferta-card {
     transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
     will-change: transform;
-    transform: scale(0.9);
+    transform: scale(0.94);
+    transform-origin: center center;
 }
 .oferta-card.is-center-focus {
-    transform: scale(1.02) !important;
+    transform: scale(1) !important;
     box-shadow: 0 14px 28px rgba(0,0,0,0.32), 0 0 12px var(--kicker-color);
     z-index: 50;
     opacity: 1;
@@ -597,7 +645,7 @@
 }
 .oferta-card:not(.is-center-focus) {
     opacity: 1;
-    transform: scale(0.9);
+    transform: scale(0.94);
     filter: none;
 }
 

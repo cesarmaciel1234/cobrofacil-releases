@@ -89,12 +89,17 @@
 .rank-list {
     display: flex;
     flex-direction: column;
-    gap: 0.55cqh;
+    gap: 0;
     flex: 1;
     min-height: 0;
     height: 100%;
     overflow: hidden;
     padding: 0;
+}
+
+.rank-list .asian-rank-card + .asian-rank-card {
+    border-top: 1px solid rgba(210, 206, 196, 0.28);
+    border-radius: 0;
 }
 
 /* ── Tarjeta de ranking: producto primero ── */
@@ -834,11 +839,11 @@
 
 .price-row__prices {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     justify-content: center;
-    align-items: baseline;
-    gap: 1vw;
+    align-items: center;
+    gap: 0.35vh;
 }
 
 .price-row__off {
@@ -1087,7 +1092,11 @@
     display: flex;
     flex-direction: column;
     justify-content: stretch;
-    gap: 0.5cqh;
+    gap: 0;
+}
+
+.xsell-list .xsell-item + .xsell-item {
+    border-top: 1px solid rgba(210, 206, 196, 0.28);
 }
 
 .xsell-item {
@@ -1212,8 +1221,7 @@
 }
 
 .tv-card__now-box .tv-card__now,
-.tv-card__now-box .xsell-item__price,
-.tv-card__now-box .asian-flash-current {
+.tv-card__now-box .xsell-item__price {
     background: none !important;
     border: 0 !important;
     padding: 0 !important;
@@ -1223,9 +1231,18 @@
     flex: 0 1 auto;
 }
 
+.tv-card__now-box .asian-flash-current {
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    flex: 0 1 auto;
+}
+
 .tv-card__now-box .tv-card__was,
-.tv-card__now-box .xsell-item__was,
-.tv-card__now-box .asian-flash-original {
+.tv-card__now-box .xsell-item__was {
     display: inline-flex;
     align-items: center;
     margin: 0 !important;
@@ -1240,6 +1257,26 @@
     text-decoration-color: #111111 !important;
 }
 
+.asian-flash-prices.tv-card__now-box {
+    background: #0A0A0C;
+    border: 1px solid #D4AF37;
+}
+
+.tv-card__now-box .asian-flash-original {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0.16em 0.45em;
+    background: transparent;
+    border-radius: 6px;
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
+    font-size: clamp(0.78rem, 1.05cqw, 0.98rem);
+    font-weight: 700;
+    text-decoration: line-through !important;
+    text-decoration-color: #EF4444 !important;
+}
+
 .tv-card__was,
 .xsell-item__was,
 .asian-flash-original,
@@ -1252,7 +1289,26 @@
     text-decoration-color: #EF4444 !important;
 }
 
-.flash-offer .tv-card__now,
+.flash-offer .tv-card__now-box {
+    background: #0A0A0C;
+    border: 1px solid #D4AF37;
+}
+
+.flash-offer .tv-card__now {
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    font-size: clamp(1.55rem, 2.6cqw, 2.35rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    text-shadow: none;
+}
+
+.flash-offer .tv-card__now-box .tv-card__was {
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
+    text-decoration-color: #EF4444 !important;
+}
+
 .chef-deal .tv-card__now {
     color: #111 !important;
     -webkit-text-fill-color: #111 !important;

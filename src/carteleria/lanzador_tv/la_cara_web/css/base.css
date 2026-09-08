@@ -4,8 +4,8 @@
     --shadow-elegant: 0 4px 24px rgba(0, 0, 0, 0.06);
     
     /* Layout responsive base */
-    --footer-height: 18px;
-    --hero-height: 30%;
+    --footer-height: 26px;
+    --hero-height: 27%;
     --content-height: auto;
     --tv-safe-y: max(2.2cqh, 16px);
     --tv-safe-x: max(1.8cqw, 18px);
@@ -43,7 +43,7 @@ body {
     background: var(--bg-primary);
     box-sizing: border-box;
     overflow: hidden;
-    gap: 0.28cqh;
+    gap: 0;
     transform-origin: 0 0;
 }
 
@@ -52,7 +52,16 @@ body {
     min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.22cqw;
+    gap: 0.55cqw;
+    margin: 0.75cqh 0 0.75cqh;
+    padding: 1cqh 0;
+    border-top: 2px solid var(--accent-primary, #D4AF37);
+    border-bottom: 2px solid var(--accent-primary, #D4AF37);
+}
+
+/* Solo mantengo tu ajuste de borde izquierdo si lo querías, pero con el gap original capaz no hace falta. Lo dejo por si acaso: */
+.tv-panel + .tv-panel {
+    border-left: 1px solid rgba(210, 206, 196, 0.15);
 }
 
 .tv-panel {
@@ -62,7 +71,7 @@ body {
     min-height: 0;
     height: 100%;
     background: #FFFFFF;
-    border-radius: 10px;
+    border-radius: 10px 10px 0 0;
     overflow: hidden;
     padding: 0.5cqh 0.4cqw 0.5cqh;
     box-shadow: 0 6px 20px rgba(28, 16, 0, 0.06);
@@ -76,7 +85,7 @@ body {
 .tv-4 {
     position: relative;
     padding: 0;
-    border-radius: 12px;
+    border-radius: 12px 12px 0 0;
     border: none;
     box-shadow: none;
 }
@@ -85,8 +94,8 @@ body {
 .tv-1,
 .tv-2,
 .tv-3 {
-    border-radius: 10px;
-    padding: 0.2cqh 0.18cqw;
+    border-radius: 12px 12px 0 0;
+    padding: 0.4cqh 0.32cqw 0;
 }
 
 .tv-1 .column-body,
@@ -112,6 +121,20 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+}
+
+.tv-2 .column-body {
+    display: flex;
+    flex-direction: column;
+}
+.tv-2 .price-ticker {
+    flex: 1 1 auto;
+}
+.tv-3 .xsell-card,
+.tv-3 .flash-offer,
+.tv-4 .chef-board {
+    flex: 1 1 auto;
+    height: 100%;
 }
 
 /* Cards optimization */

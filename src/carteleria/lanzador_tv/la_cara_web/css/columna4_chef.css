@@ -415,10 +415,11 @@
 }
 
 .asian-flash-original {
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
+    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }
@@ -1267,10 +1268,11 @@
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
+    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }
@@ -1431,10 +1433,11 @@
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
+    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }

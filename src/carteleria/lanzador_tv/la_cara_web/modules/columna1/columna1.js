@@ -53,7 +53,8 @@ function ponerFoto(stage, item) {
             img.dataset.fallbacks = fallbacks;
         };
         preload.onerror = () => {
-            if (urls[1]) img.src = urls[1];
+            const resto = urls.slice(1);
+            img.src = resto[0] || urls[urls.length - 1] || img.src;
         };
         if (next) preload.src = next;
         return;

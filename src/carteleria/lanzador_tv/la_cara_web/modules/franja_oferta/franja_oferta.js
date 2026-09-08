@@ -103,17 +103,21 @@ function htmlDealCard(producto, { ad }) {
         <article class="tv-card oferta-card is-deal${enOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}">
             ${htmlDealStage(producto, { off: offLabel })}
             <div class="deal-copy">
-                <p class="deal-kicker deal-line deal-line--center">${escapeHtml(kicker)}</p>
-                <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
-                <div class="deal-price-row deal-line">
-                    <div class="tv-card__now-box">
-                    ${vigente > 0
-                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
-                        : `<strong class="tv-card__now">DESTACADO</strong>`}
-                    ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
-                    </div>
+                <div class="deal-copy__head">
+                    <p class="deal-kicker deal-line">${escapeHtml(kicker)}</p>
+                    <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
                 </div>
-                ${ahorro > 0 ? `<p class="deal-save deal-line">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                <div class="deal-copy__mid">
+                    <div class="deal-price-row deal-line">
+                        <div class="tv-card__now-box">
+                        ${vigente > 0
+                            ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
+                            : `<strong class="tv-card__now">DESTACADO</strong>`}
+                        ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
+                        </div>
+                    </div>
+                    ${ahorro > 0 ? `<p class="deal-save deal-line">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                </div>
                 <div class="deal-foot deal-line deal-line--split">
                     <span class="tv-card__timer">
                         <span class="tv-card__timer-icon" aria-hidden="true"></span>
@@ -174,7 +178,7 @@ function iniciarCarrusel(track) {
     const viewport = track.parentElement;
     iniciarCintaInfinita(track, {
         periodoMs: 4000,
-        inicio: 1,
+        inicio: 0,
         xDeCuadro(i) {
             const card = track.children[i];
             if (!card || !viewport) return 0;

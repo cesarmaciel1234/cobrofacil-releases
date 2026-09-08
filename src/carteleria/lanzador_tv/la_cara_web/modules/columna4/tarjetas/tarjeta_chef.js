@@ -3,7 +3,9 @@
 import { 
     escapeHtml, 
     formatMoney, 
-    htmlDealStage, 
+    htmlDealStage,
+    FOTO_SISTEMA,
+    urlsFotoProducto,
     nombreVitrina, 
     descuentoPct, 
     textoValidezOferta, 
@@ -138,10 +140,10 @@ function htmlCarruselOfertas(ofertas = []) {
         const fondo = PALETA_FONDOS[idx % PALETA_FONDOS.length];
 
         // Imagen PNG del producto
-        const iconoUrl = item.icono_url || "";
-        const imagenHtml = iconoUrl
-            ? `<img src="${iconoUrl}" alt="${escapeHtml(nombre)}" loading="lazy" onerror="this.style.display='none'">`
-            : `<span class="prod-emoji-fallback">🥩</span>`;
+        const fotos = urlsFotoProducto(item);
+        const iconoUrl = fotos[0] || FOTO_SISTEMA;
+        const resto = fotos.slice(1).join("|");
+        const imagenHtml = `<img src="${escapeHtml(iconoUrl)}" alt="${escapeHtml(nombre)}" loading="lazy" data-fallbacks="${escapeHtml(resto)}" onerror="const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else{this.src='${FOTO_SISTEMA}';}">`;
 
         return `
             <article class="asian-flash-product cascade-enter" style="animation-delay: ${idx * 0.2}s">
@@ -153,9 +155,9 @@ function htmlCarruselOfertas(ofertas = []) {
                 <div class="asian-flash-product-info">
                     <div>
                         <h3 class="asian-flash-product-name">${escapeHtml(nombre)}</h3>
-                          <div class="asian-flash-prices">
-                              <span class="asian-flash-original">${escapeHtml(precioStr)}</span>
+                          <div class="asian-flash-prices tv-card__now-box">
                               <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
+                              <span class="asian-flash-original">${escapeHtml(precioStr)}</span>
                           </div>
                           ${tieneCondicion ? `<div class="asian-flash-condition">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
                           <div class="asian-flash-progress card-progress">

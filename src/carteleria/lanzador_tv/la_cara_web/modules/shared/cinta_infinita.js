@@ -8,6 +8,7 @@ export function iniciarCintaInfinita(track, { xDeCuadro, periodoMs = 4000, ease 
     const mitad = Math.floor(track.children.length / 2);
     let index = Math.min(Math.max(0, inicio), track.children.length - 1);
     let enCopia = false;
+    let yaArranco = false;
 
     const anchoCopia = () => {
         const a = track.children[0];
@@ -35,8 +36,9 @@ export function iniciarCintaInfinita(track, { xDeCuadro, periodoMs = 4000, ease 
         track.style.transform = `translate3d(${matrix.m41 + delta}px, 0, 0)`;
         void track.offsetWidth;
         index -= mitad;
+        if (yaArranco && index < 1) index = 1;
         enCopia = false;
-        if (alPosar) alPosar(index, mitad);
+        pintar(index, false);
     };
 
     const onEnd = (ev) => {
@@ -45,11 +47,13 @@ export function iniciarCintaInfinita(track, { xDeCuadro, periodoMs = 4000, ease 
     };
     track.addEventListener("transitionend", onEnd);
 
-    pintar(0, false);
+    pintar(index, false);
 
     const timer = setInterval(() => {
         index += 1;
-        if (index >= track.children.length) index = mitad;
+        if (index >= track.children.length) index = Math.max(1, mitad);
+        if (yaArranco && index === 0) index = 1;
+        yaArranco = true;
         enCopia = index >= mitad;
         pintar(index, true);
         window.setTimeout(volverSinQueSeNote, 900);

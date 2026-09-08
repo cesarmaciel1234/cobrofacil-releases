@@ -168,6 +168,8 @@ export function urlIcono(item) {
     return `/iconos/${slug}.png`;
 }
 
+export const FOTO_SISTEMA = "assets/logo_sistema.svg";
+
 export function urlsFotoProducto(item) {
     const out = [];
     const push = (u) => {
@@ -191,17 +193,16 @@ export function urlsFotoProducto(item) {
         const cabeza = slug.split("_")[0];
         if (ALIAS_PNG[cabeza]) push(`/iconos/${ALIAS_PNG[cabeza]}`);
     }
+    push(FOTO_SISTEMA);
     return out;
 }
 
 export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
     const urls = urlsFotoProducto(item);
-    const url = urls[0] || "";
+    const url = urls[0] || FOTO_SISTEMA;
     const fallbacks = urls.slice(1);
     const letra = letraVitrina(item?.nombre);
-    const onerr = fallbacks.length
-        ? `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else{this.remove();}`
-        : `this.remove()`;
+    const onerr = `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else if(this.src.indexOf('logo_sistema')<0){this.src='${FOTO_SISTEMA}';}else{this.style.opacity='.85';}`;
     return `
         <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
             ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
