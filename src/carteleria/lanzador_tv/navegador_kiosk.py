@@ -88,7 +88,7 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--disable-pinch",
         "--disable-http-cache",
         "--disk-cache-size=1",
-        "--start-fullscreen",
+        "--kiosk",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
     ]

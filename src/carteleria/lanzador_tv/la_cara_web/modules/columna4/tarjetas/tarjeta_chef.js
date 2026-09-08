@@ -144,8 +144,8 @@ function htmlCarruselOfertas(ofertas = []) {
             : `<span class="prod-emoji-fallback">🥩</span>`;
 
         return `
-            <article class="asian-flash-product cascade-enter shimmer-fx" style="animation-delay: ${idx * 0.2}s">
-                <div class="asian-flash-badge">${descuento ? `-${descuento}%` : "HOT"}</div>
+            <article class="asian-flash-product cascade-enter" style="animation-delay: ${idx * 0.2}s">
+                <div class="asian-flash-badge">${esOferta(item) && descuento ? `-${descuento}%` : `TOP ${idx + 1}`}</div>
                 <div class="asian-flash-product-image" style="background:${fondo};">
                     ${imagenHtml}
                     <div class="asian-flash-product-tag">${escapeHtml(kicker)}</div>
@@ -154,7 +154,7 @@ function htmlCarruselOfertas(ofertas = []) {
                     <div>
                         <h3 class="asian-flash-product-name">${escapeHtml(nombre)}</h3>
                           <div class="asian-flash-prices">
-                              ${(precioOriginalVal > precioVigenteVal) ? `<span class="asian-flash-original">${escapeHtml(precioStr)}</span>` : ""}
+                              <span class="asian-flash-original">${escapeHtml(precioStr)}</span>
                               <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
                           </div>
                           ${tieneCondicion ? `<div class="asian-flash-condition">${escapeHtml(textoValidezOferta(item))}</div>` : ""}

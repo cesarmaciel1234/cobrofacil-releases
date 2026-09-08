@@ -15,11 +15,11 @@ export function htmlTarjetaCombo(combo) {
                 ${pct ? `<span class="tv-card__off">-${pct}%</span>` : ""}
             </div>
             <div class="tv-card__pay">
-                ${original > precio ? `<div class="tv-card__was-row"><s class="tv-card__was">${formatMoney(original)}</s>${validez ? `<span class="tv-card__rule">${escapeHtml(validez)}</span>` : ""}</div>` : ""}
-                <div class="tv-card__now-row">
+                <div class="tv-card__now-row tv-card__now-box">
                     <strong class="tv-card__now">${formatMoney(combo.precio)}</strong>
-                    ${ahorro > 0 ? `<span class="tv-card__save"><span class="tv-card__save-label">AHORRÁS</span><strong class="tv-card__save-amt">${formatMoney(ahorro)} x ${unidadProducto(combo)}</strong></span>` : ""}
+                    ${original > precio ? `<s class="tv-card__was">${formatMoney(original)}</s>` : ""}
                 </div>
+                ${validez || ahorro > 0 ? `<div class="tv-card__was-row">${validez ? `<span class="tv-card__rule">${escapeHtml(validez)}</span>` : ""}${ahorro > 0 ? `<span class="tv-card__save"><span class="tv-card__save-label">AHORRÁS</span><strong class="tv-card__save-amt">${formatMoney(ahorro)} x ${unidadProducto(combo)}</strong></span>` : ""}</div>` : ""}
             </div>
         </article>
     `;

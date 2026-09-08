@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════
-   APPLE — Alta Gama — estilos.css
-   Mismo DOM/estructura que premium/temu/blackfriday,
+   BLACK FRIDAY — estilos.css
+   Mismo DOM/estructura que premium/temu/apple,
    solo cambia el vestuario.
    ══════════════════════════════════════════════════ */
 @import url('../../structural_base.css');
@@ -11,87 +11,93 @@ body {
 
 .logo {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.25);
+    box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.3);
 }
 
 .premium-column {
     background: var(--surface-primary);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-right: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
+}
+
+.clock,
+.status-badge {
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    color: var(--accent-primary);
 }
 
 .footer {
     background: var(--footer-bg);
+    background-size: 200% 100%;
+    animation: bf-footer 4s linear infinite;
 }
 
 .zocalo-pill {
     background: var(--panel-bg);
     border: 1px solid var(--border-subtle);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
 }
 
 .marquee-text {
     color: var(--marquee-text);
 }
 
+@keyframes bf-footer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
 /* ── Franja superior (flash-strip) ── */
 .flash-strip {
     background: var(--strip-bg);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: none;
 }
-
 .flash-strip__track { color: var(--strip-text); }
-.flash-dot   { background: var(--strip-dot); }
+.flash-dot   { color: var(--strip-dot); }
 .flash-count {
     background: var(--strip-count-bg);
     color: var(--strip-count-text);
+    box-shadow: none;
 }
 .flash-strip__ends { color: var(--strip-ends-text); }
-.clock        { color: var(--strip-text); }
-.status-dot   { background: var(--success-color); box-shadow: 0 0 8px rgba(52,199,89,0.5); }
-.status-badge {
-    background: var(--strip-count-bg);
-    border: 1px solid var(--border-subtle);
-    color: var(--accent-primary);
-}
+.status-dot   { background: var(--success-color); box-shadow: 0 0 8px rgba(16,185,129,0.5); }
 
 /* ── CABECERAS (sale-head / rank-head) ── */
 .sale-head, .board-head, .rank-head, .sale-head.rank-head {
     background: var(--panel-bg);
     border: 1px solid var(--border-subtle);
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 .board-kicker, .rank-kicker, .sale-head .board-kicker, .sale-head .rank-kicker {
     color: var(--kicker-color);
 }
 .sale-head .board-title, .sale-head .rank-title { color: var(--text-primary); }
-.rank-dots .rank-dot      { background: var(--rank-dot-bg); border-color: var(--border-subtle); }
-.rank-dots .rank-dot.is-on{ background: var(--rank-dot-active); box-shadow: 0 0 12px rgba(var(--accent-rgb),0.3); }
+.rank-dots .rank-dot      { background: var(--rank-dot-bg); border-color: rgba(var(--accent-rgb),0.3); }
+.rank-dots .rank-dot.is-on{ background: var(--rank-dot-active); box-shadow: 0 0 12px rgba(var(--accent-rgb),0.4); }
 
 /* ── TARJETA GENERAL ── */
 .oferta-card, .meal-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 .oferta-card.is-flash, .meal-card.is-flash {
-    border-color: rgba(var(--accent-rgb),0.3);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(var(--accent-rgb),0.1);
+    border-color: rgba(255,204,0,0.4);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,204,0,0.15);
 }
 .deal-stage {
-    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
-    border-right: 1px solid var(--border-subtle);
+    background: #0A0A0C; /* Mantener estos porque son tonos específicos para la etapa */
+    border-right: 1px solid rgba(255,204,0,0.1);
 }
-.deal-stage[data-tone="aves"]    { background: #FFF7EB; }
-.deal-stage[data-tone="cerdo"]   { background: #F8E9EB; }
-.deal-stage[data-tone="almacen"] { background: #E6F3E6; }
+.deal-stage[data-tone="aves"]    { background: #1A0D00; }
+.deal-stage[data-tone="cerdo"]   { background: #1A000D; }
+.deal-stage[data-tone="almacen"] { background: #0D1A00; }
 
 .deal-stage__off, .tv-card__badge {
     background: var(--badge-bg);
-    color: var(--badge-color); /* asumo var(--badge-color) es blanco */
-    box-shadow: 0 4px 10px rgba(var(--accent-rgb),0.25);
+    color: var(--badge-color);
+    box-shadow: 0 4px 10px rgba(225,29,72,0.3);
 }
 .deal-kicker { color: var(--kicker-color); }
 .deal-stage__name, .tv-card__name, .oferta-card .tv-card__name, .meal-name {
@@ -121,7 +127,7 @@ body {
     box-shadow: var(--rank-card-shadow);
 }
 .rank-card::before { display: none; } /* Remover el antes */
-.rank-card.is-top::after { background: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb),0.1) 0%, transparent 70%); }
+.rank-card.is-top::after { background: radial-gradient(circle at 50% 0%, rgba(255,204,0,0.15) 0%, transparent 70%); }
 .rank-num { color: var(--accent-primary); }
 .rank-tag {
     background: var(--off-badge-bg);
@@ -158,7 +164,6 @@ body {
 .rank-name { color: var(--text-primary); }
 .rank-progress { background: var(--rank-bar-bg); }
 
-
 /* ── COL 2 — PRECIOS ── */
 .price-dept {
     background: var(--dept-bg);
@@ -169,7 +174,7 @@ body {
 .price-row, .price-row.is-offer {
     background: var(--price-row-bg);
     border: 1px solid var(--border-subtle);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .price-row__name  { color: var(--card-text, var(--text-primary)); }
 .price-row__meta, .price-row__off { color: var(--text-secondary); }
@@ -177,14 +182,14 @@ body {
 .price-row__was   { color: var(--text-secondary); }
 .price-row__now {
     background: var(--price-now-bg);
-    color: var(--price-now-color);
+    color: var(--price-now-text);
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .price-ad {
     background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
     border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.28);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
 }
 .price-ad__badge { background: #FFF7CC; color: #9F1239; }
 .price-ad__name  { color: #FFFFFF; }
@@ -194,10 +199,10 @@ body {
 .flash-offer__deal, .chef-deal {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 .flash-offer__stage {
-    background: #F0F2F5; /* Mantener estos porque son tonos específicos para la etapa */
+    background: #0A0A0C; /* Mantener estos porque son tonos específicos para la etapa */
 }
 .xsell-card {
     background: transparent;
@@ -211,7 +216,7 @@ body {
 .xsell-item {
     background: var(--panel-bg);
     border: 1px solid var(--border-subtle);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 .xsell-item:nth-child(even) {
     background: var(--panel-bg);
@@ -235,4 +240,4 @@ body {
 }
 
 /* ── Col 4 — tarjetas asiáticas (ya estilizadas en columna4_chef.css) ── */
-/* Sin overrides necesarios — el tema apple es el default de col4 */
+/* Sin overrides necesarios — el tema blackfriday es el default de col4 */

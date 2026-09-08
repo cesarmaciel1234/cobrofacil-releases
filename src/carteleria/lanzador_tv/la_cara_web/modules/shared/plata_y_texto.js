@@ -148,7 +148,13 @@ const ALIAS_PNG = {
     suprema: "suprema.png",
     pechuga: "pechuga.png",
     bife_chorizo: "bife_de_chorizo.png",
-    milanesa_de_pollo: "milanesa_pollo.png",
+    milanesa: "milanesa_de_pollo.png",
+    milanesa_de_pollo: "milanesa_de_pollo.png",
+    milanesa_pollo: "milanesa_de_pollo.png",
+    picada: "picada_comun.png",
+    picada_comun: "picada_comun.png",
+    pata_muslo: "pata_y_muslo.png",
+    pata_y_muslo: "pata_y_muslo.png",
 };
 
 export function urlIcono(item) {
@@ -162,27 +168,43 @@ export function urlIcono(item) {
     return `/iconos/${slug}.png`;
 }
 
-export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
-    const assignedRaw = String(item?.icono || "").trim();
-    let assignedUrl = "";
-    if (assignedRaw.startsWith("/iconos/")) assignedUrl = assignedRaw;
-    else if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(assignedRaw)) assignedUrl = `/iconos/${assignedRaw}`;
+export function urlsFotoProducto(item) {
+    const out = [];
+    const push = (u) => {
+        const v = String(u || "").trim();
+        if (v && !out.includes(v)) out.push(v);
+    };
+    const asUrl = (raw) => {
+        const v = String(raw || "").trim();
+        if (!v) return "";
+        if (v.startsWith("/iconos/")) return v;
+        if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(v)) return `/iconos/${v}`;
+        return "";
+    };
+    push(asUrl(item?.icono_url));
+    push(asUrl(item?.icono));
+    push(urlIcono(item));
     const slug = slugNombre(item?.nombre);
-    const slugUrl = slug ? `/iconos/${ALIAS_PNG[slug] || `${slug}.png`}` : "";
-    const computedRaw = String(item?.icono_url || "").trim();
-    let computedUrl = "";
-    if (computedRaw.startsWith("/iconos/")) computedUrl = computedRaw;
-    else if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(computedRaw)) computedUrl = `/iconos/${computedRaw}`;
-    const urls = [assignedUrl, computedUrl, slugUrl].filter((u, i, arr) => u && arr.indexOf(u) === i);
+    if (slug) {
+        if (ALIAS_PNG[slug]) push(`/iconos/${ALIAS_PNG[slug]}`);
+        push(`/iconos/${slug}.png`);
+        const cabeza = slug.split("_")[0];
+        if (ALIAS_PNG[cabeza]) push(`/iconos/${ALIAS_PNG[cabeza]}`);
+    }
+    return out;
+}
+
+export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
+    const urls = urlsFotoProducto(item);
     const url = urls[0] || "";
-    const fallback = urls[1] || "";
+    const fallbacks = urls.slice(1);
     const letra = letraVitrina(item?.nombre);
-    const onerr = fallback
-        ? `if(this.dataset.fallback){const u=this.dataset.fallback;this.removeAttribute('data-fallback');this.src=u;}else{this.remove();}`
+    const onerr = fallbacks.length
+        ? `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else{this.remove();}`
         : `this.remove()`;
     return `
         <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
-            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallback ? `data-fallback="${escapeHtml(fallback)}"` : ""} onerror="${onerr}">` : ""}
+            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
             <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
             ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
             ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}

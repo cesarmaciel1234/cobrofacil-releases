@@ -1,0 +1,601 @@
+/* Black Super Premium — negro, oro, plata. Tipografía de cartel. */
+@import url('../../structural_base.css');
+
+body[data-theme="black"] {
+    --font-primary: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
+    --font-display: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
+    font-family: var(--font-primary);
+    background: #000;
+    background-image:
+        radial-gradient(circle at 18% 0%, rgba(212, 175, 55, 0.14), transparent 42%),
+        radial-gradient(circle at 82% 8%, rgba(232, 228, 240, 0.10), transparent 38%),
+        radial-gradient(circle at 88% 100%, rgba(205, 127, 50, 0.10), transparent 46%);
+    color: #F4F4F5;
+}
+
+body[data-theme="black"] .app-container { background: transparent; }
+
+body[data-theme="black"] .tv-panel,
+body[data-theme="black"] .premium-column {
+    background: rgba(8, 8, 10, 0.55);
+    border: 1px solid rgba(192, 192, 200, 0.22);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="black"] .flash-strip {
+    background: #0A0A0A;
+    border-bottom: 1px solid rgba(160, 150, 130, 0.18);
+    box-shadow: none;
+}
+body[data-theme="black"] .flash-strip__cycle span { color: #8A8478; }
+body[data-theme="black"] .clock,
+body[data-theme="black"] .status-badge {
+    background: #0C0C0E;
+    border: 1px solid rgba(192, 192, 200, 0.4);
+    color: #E8D48B;
+}
+body[data-theme="black"] .clock-hm { color: #FFDF00; }
+
+body[data-theme="black"] .logo {
+    background: linear-gradient(135deg, #D4AF37, #C0C0C8);
+    color: #111;
+}
+
+body[data-theme="black"] .oferta-card,
+body[data-theme="black"] .meal-card {
+    background: linear-gradient(145deg, #2A2A30 0%, #0A0A0C 42%, #3A2A18 78%, #F4EEE6 160%);
+    border: 1px solid rgba(244, 238, 230, 0.45);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+}
+body[data-theme="black"] .deal-stage {
+    background: radial-gradient(circle at 50% 28%, #4A3E22 0%, #0A0A0C 72%);
+    border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+body[data-theme="black"] .tv-card__name,
+body[data-theme="black"] .deal-stage__name {
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 8px #000;
+}
+body[data-theme="black"] .tv-card__now {
+    color: #FFDF00;
+    font-weight: 800;
+}
+body[data-theme="black"] .deal-stage__off,
+body[data-theme="black"] .tv-card__badge {
+    background: linear-gradient(135deg, #8A1A1A, #C41E3A);
+    color: #FFF;
+    border: 1px solid #E8D48B;
+}
+
+body[data-theme="black"] .sale-head,
+body[data-theme="black"] .board-head,
+body[data-theme="black"] .rank-head {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(192, 192, 200, 0.28);
+}
+body[data-theme="black"] .rank-kicker,
+body[data-theme="black"] .board-kicker,
+body[data-theme="black"] .deal-kicker {
+    color: #C0C0C8;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+}
+
+body[data-theme="black"] .asian-rank-card,
+body[data-theme="black"] .rank-card {
+    background: linear-gradient(145deg, #111111 0%, #1a1a1a 100%);
+    border: 1px solid #FFDF00;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+body[data-theme="black"] .asian-rank-card.top-1 {
+    background: linear-gradient(145deg, #1A160C 0%, #111111 100%);
+    border-color: #FFDF00;
+    opacity: 1;
+    visibility: visible;
+}
+body[data-theme="black"] .asian-rank-card.top-2,
+body[data-theme="black"] .asian-rank-card.top-3 {
+    background: linear-gradient(145deg, #111111 0%, #1a1a1a 100%);
+    border-color: rgba(255, 223, 0, 0.45);
+}
+body[data-theme="black"] .asian-rank-name,
+body[data-theme="black"] .asian-rank-card.top-1 .asian-rank-name,
+body[data-theme="black"] .asian-rank-card.top-2 .asian-rank-name,
+body[data-theme="black"] .asian-rank-card.top-3 .asian-rank-name {
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+    font-weight: 600;
+    text-shadow: none;
+}
+body[data-theme="black"] .asian-rank-card .rank-stage {
+    background: radial-gradient(circle at 50% 40%, #1c1c1e 0%, #050505 78%);
+}
+body[data-theme="black"] .rank-escarapela,
+body[data-theme="black"] .asian-rank-card.top-1 .rank-escarapela,
+body[data-theme="black"] .asian-rank-card.top-2 .rank-escarapela,
+body[data-theme="black"] .asian-rank-card.top-3 .rank-escarapela {
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+body[data-theme="black"] .rank-roof-tag {
+    color: #C0C0C8;
+    -webkit-text-fill-color: #C0C0C8;
+    letter-spacing: 0.18em;
+}
+body[data-theme="black"] .rank-roof-tag.is-premium,
+body[data-theme="black"] .asian-rank-card.is-panel-premium .rank-roof-tag,
+body[data-theme="black"] .rank-roof-tag.is-premium .rank-caret {
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    text-shadow: none !important;
+}
+body[data-theme="black"] .rank-proof {
+    background: none;
+    color: #E8C547;
+    border-top: 1px solid rgba(212, 175, 55, 0.4);
+    text-shadow: none;
+    font-family: inherit;
+}
+body[data-theme="black"] .asian-rank-badge {
+    background: #000;
+    color: #FFDF00;
+    border: 1px solid #FFDF00;
+}
+body[data-theme="black"] .asian-rank-card.top-2 .asian-rank-badge { color: #C0C0C8; border-color: #C0C0C8; }
+body[data-theme="black"] .asian-rank-card.top-3 .asian-rank-badge { color: #CD7F32; border-color: #CD7F32; }
+body[data-theme="black"] .asian-rank-progress-bar {
+    background: linear-gradient(90deg, #D4AF37, #FFDF00);
+}
+body[data-theme="black"] .asian-rank-tag,
+body[data-theme="black"] .asian-rank-tag-social {
+    color: #FFDF00;
+    text-shadow: none;
+}
+
+body[data-theme="black"] .price-row,
+body[data-theme="black"] .price-row.is-offer,
+body[data-theme="black"] .price-row.is-featured {
+    background: radial-gradient(ellipse at 50% 0%, #1c1810 0%, #070707 64%);
+    border: 1px solid rgba(255, 223, 0, 0.38);
+}
+body[data-theme="black"] .price-row__was {
+    color: #EF4444;
+    -webkit-text-fill-color: #EF4444;
+    text-decoration-color: #EF4444;
+}
+body[data-theme="black"] .price-row__kicker { color: #FFDF00; }
+body[data-theme="black"] .price-row__name {
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+    font-weight: 800;
+    text-align: center;
+}
+body[data-theme="black"] .price-row__now {
+    background: none !important;
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    border: 0;
+    border-radius: 0;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    padding: 0;
+    line-height: 1;
+    box-shadow: none !important;
+    animation: none !important;
+}
+body[data-theme="black"] .price-dept {
+    color: #C0C0C8;
+    border-left: 4px solid #D4AF37;
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.18), transparent);
+}
+
+body[data-theme="black"] .flash-offer__deal,
+body[data-theme="black"] .chef-deal {
+    background: linear-gradient(180deg, #141416, #070708);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+}
+body[data-theme="black"] .flash-offer__copy { background: #070708 !important; }
+body[data-theme="black"] .flash-offer .tv-card__now-box {
+    background: linear-gradient(90deg, #7A5A12, #FFDF00, #FFF8E8, #C9A227, #7A5A12);
+    border: 1px solid #D4AF37;
+}
+
+body[data-theme="black"] .footer {
+    background: #050505;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+}
+body[data-theme="black"] .marquee-text { color: #E8D48B; font-weight: 700; }
+body[data-theme="black"] .zocalo-pill {
+    background: #0C0C0E;
+    border: 1px solid rgba(192, 192, 200, 0.4);
+}
+
+body[data-theme="black"] .deal-stage[data-tone="aves"] {
+    background: radial-gradient(circle at 50% 28%, #5A4A22 0%, #0A0A0C 72%);
+}
+body[data-theme="black"] .deal-stage[data-tone="cerdo"] {
+    background: radial-gradient(circle at 50% 28%, #4A2A1A 0%, #0A0A0C 72%);
+}
+body[data-theme="black"] .deal-stage[data-tone="almacen"] {
+    background: radial-gradient(circle at 50% 28%, #3A3A42 0%, #0A0A0C 72%);
+}
+
+body[data-theme="black"] .asian-flash-product {
+    background: linear-gradient(180deg, #141210 0%, #0A0A0C 100%) !important;
+}
+body[data-theme="black"] .asian-flash-product-image {
+    background:
+        radial-gradient(circle at 50% 40%, rgba(212, 175, 55, 0.16) 0%, transparent 55%),
+        #0A0A0C !important;
+}
+body[data-theme="black"] .asian-rank-fire {
+    font-size: 1.4rem;
+    top: 0.2cqh;
+    right: 0.4cqw;
+}
+body[data-theme="black"] .hero-section .oferta-card {
+    padding: 8px 10px 8px 8px;
+    gap: 10px;
+    overflow: hidden;
+}
+body[data-theme="black"] .hero-section .deal-stage {
+    flex: 0 0 36% !important;
+    min-width: 0 !important;
+    max-width: 38%;
+    height: auto;
+    align-self: stretch;
+    overflow: hidden;
+    border-radius: 10px;
+    border-right: 0;
+}
+body[data-theme="black"] .hero-section .deal-stage__name {
+    display: none;
+}
+body[data-theme="black"] .hero-section .deal-copy {
+    flex: 1;
+    min-width: 0;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 4px;
+    padding: 2px 6px 2px 0;
+    overflow: hidden;
+}
+body[data-theme="black"] .hero-section .tv-card__name {
+    font-size: clamp(1.15rem, 1.75cqw, 1.52rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    -webkit-line-clamp: unset;
+    padding-bottom: 0;
+    margin: 0;
+}
+body[data-theme="black"] .hero-section .tv-card__now-box {
+    padding: 0.12em 0.4em;
+}
+body[data-theme="black"] .hero-section .tv-card__now {
+    border: 0;
+    padding: 0;
+    font-size: clamp(1.15rem, 1.85cqw, 1.55rem);
+    text-shadow: none;
+}
+body[data-theme="black"] .hero-section .deal-kicker {
+    font-size: clamp(0.65rem, 0.85cqw, 0.78rem);
+    letter-spacing: 0.1em;
+}
+body[data-theme="black"] .hero-section .deal-save {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body[data-theme="black"] .hero-section .deal-proof {
+    background: rgba(20, 18, 14, 0.85);
+    border: 1px solid rgba(255, 223, 0, 0.4);
+    color: #F4EEE6;
+}
+body[data-theme="black"] .xsell-ask {
+    color: #F4EEE6;
+    letter-spacing: 0.04em;
+    font-size: clamp(1rem, 1.5cqw, 1.35rem);
+    text-align: center;
+    width: 100%;
+}
+body[data-theme="black"] .xsell-item {
+    background: linear-gradient(90deg, #101012 0%, #1A1A1E 100%);
+    border: 1px solid rgba(192, 192, 200, 0.35);
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 0.55cqh 0.65cqw;
+    gap: 0.7cqw;
+}
+body[data-theme="black"] .xsell-item:nth-child(1) {
+    border-color: #D4AF37;
+    box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.25);
+}
+body[data-theme="black"] .xsell-item:nth-child(2) {
+    border-color: #C0C0C8;
+}
+body[data-theme="black"] .xsell-item:nth-child(3) {
+    border-color: #CD7F32;
+}
+body[data-theme="black"] .xsell-item__name {
+    color: #FFF;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body[data-theme="black"] .xsell-item__price {
+    border: 0;
+    padding: 0;
+    font-weight: 800;
+    font-size: clamp(1.15rem, 1.9cqw, 1.7rem);
+}
+body[data-theme="black"] .xsell-item__was {
+    color: #EF4444;
+    -webkit-text-fill-color: #EF4444;
+}
+body[data-theme="black"] .xsell-item__rule {
+    color: #39FF14;
+    -webkit-text-fill-color: #39FF14;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body[data-theme="black"] .xsell-item__stage {
+    background: radial-gradient(circle at 50% 28%, #4A3E22 0%, #0A0A0C 75%);
+    border: 1px solid rgba(244, 238, 230, 0.35);
+}
+
+/* ── Vitrina: foil, halo y metal vivo ── */
+@keyframes black-foil {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+@keyframes black-sheen {
+    0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+    18% { opacity: 0.55; }
+    42% { opacity: 0.2; }
+    100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+@keyframes black-halo {
+    0%, 100% { box-shadow: 0 10px 28px rgba(0,0,0,.55), 0 0 0 1px rgba(212,175,55,.35), 0 0 22px rgba(212,175,55,.18); }
+    50% { box-shadow: 0 14px 36px rgba(0,0,0,.7), 0 0 0 1px rgba(255,223,0,.55), 0 0 36px rgba(212,175,55,.38); }
+}
+
+body[data-theme="black"] .tv-panel,
+body[data-theme="black"] .premium-column {
+    background: linear-gradient(180deg, rgba(18,16,12,.72) 0%, rgba(6,6,8,.82) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    box-shadow:
+        0 22px 48px rgba(0,0,0,.8),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        inset 0 -1px 0 rgba(205,127,50,.15);
+}
+
+body[data-theme="black"] .flash-strip {
+    background: #0A0A0A;
+    background-size: auto;
+    animation: none;
+    box-shadow: none;
+}
+body[data-theme="black"] .flash-strip__cycle span {
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+    color: #8A8478;
+    -webkit-text-fill-color: #8A8478;
+    animation: none;
+    font-weight: 600;
+    text-shadow: none;
+    letter-spacing: 0.06em;
+}
+body[data-theme="black"] .flash-strip__cycle {
+    gap: 4.2cqw;
+    padding: 0;
+}
+body[data-theme="black"] .flash-strip .flash-dot {
+    color: #5C5850 !important;
+    margin: 0;
+    min-width: 0;
+}
+
+body[data-theme="black"] .clock {
+    border: 1px solid #D4AF37;
+    box-shadow: 0 0 16px rgba(212,175,55,.25), inset 0 0 12px rgba(212,175,55,.08);
+}
+body[data-theme="black"] .clock-hm {
+    color: #FFDF00;
+    text-shadow: 0 0 14px rgba(255,223,0,.45);
+}
+
+body[data-theme="black"] .hero-section .oferta-card {
+    position: relative;
+    isolation: isolate;
+    animation: black-halo 5.5s ease-in-out infinite;
+}
+body[data-theme="black"] .hero-section .oferta-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.28) 50%, transparent 65%);
+    animation: black-sheen 4.8s ease-in-out infinite;
+    border-radius: inherit;
+}
+body[data-theme="black"] .footer {
+    background: transparent;
+}
+body[data-theme="black"] .zocalo-safe {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 223, 0, 0.22) 18%, rgba(255, 223, 0, 0.4) 50%, rgba(255, 223, 0, 0.22) 82%, transparent 100%);
+}
+body[data-theme="black"] .hero-section .oferta-card.is-center-focus {
+    transform: scale(1.02);
+    z-index: 2;
+    border-color: #FFDF00;
+}
+
+body[data-theme="black"] .price-row,
+body[data-theme="black"] .price-row.is-offer,
+body[data-theme="black"] .price-row.is-featured {
+    background: radial-gradient(ellipse at 50% 0%, #1c1810 0%, #070707 64%);
+    border: 1px solid rgba(255, 223, 0, 0.4);
+    border-radius: 14px;
+    box-shadow: inset 0 0 42px rgba(255, 223, 0, 0.04);
+    margin-bottom: 0.9cqh;
+}
+body[data-theme="black"] .price-row__rule {
+    color: #39FF14;
+    -webkit-text-fill-color: #39FF14;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+body[data-theme="black"] .tv-card__now-box {
+    background: #0A0A0C;
+    border-color: #D4AF37;
+    box-shadow: none;
+    animation: none;
+}
+
+body[data-theme="black"] .asian-rank-card.top-1 {
+    animation: black-halo 4s ease-in-out infinite;
+}
+body[data-theme="black"] .footer {
+    background: linear-gradient(90deg, #000, #1A160C 50%, #000);
+    background-size: 200% 100%;
+    animation: black-foil 12s linear infinite;
+}
+body[data-theme="black"] .marquee-text {
+    background: linear-gradient(90deg, #C0C0C8, #FFDF00, #E8C4A0, #C0C0C8);
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: black-foil 8s linear infinite;
+}
+
+body[data-theme="black"] .asian-flash-product {
+    box-shadow: inset 0 0 60px rgba(212,175,55,.18), 0 0 40px rgba(212,175,55,.12) !important;
+}
+body[data-theme="black"] .asian-flash-current,
+body[data-theme="black"] .price-row__now {
+    background: linear-gradient(180deg, #FFF8DC 0%, #FFDF00 42%, #C9A227 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    animation: none !important;
+}
+body[data-theme="black"] .asian-flash-original,
+body[data-theme="black"] .tv-card__now-box .asian-flash-original,
+body[data-theme="black"] .tv-card__now-box .tv-card__was,
+body[data-theme="black"] .tv-card__now-box .xsell-item__was {
+    background: transparent !important;
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
+    text-decoration-color: #EF4444 !important;
+}
+
+body[data-perf="eco"][data-theme="black"] .flash-strip,
+body[data-perf="eco"][data-theme="black"] .flash-strip__cycle span,
+body[data-perf="eco"][data-theme="black"] .price-row__now,
+body[data-perf="eco"][data-theme="black"] .tv-card__now-box,
+body[data-perf="eco"][data-theme="black"] .hero-section .tv-card__now,
+body[data-perf="eco"][data-theme="black"] .flash-offer .tv-card__now,
+body[data-perf="eco"][data-theme="black"] .xsell-item__price,
+body[data-perf="eco"][data-theme="black"] .hero-section .oferta-card,
+body[data-perf="eco"][data-theme="black"] .hero-section .oferta-card::after,
+body[data-perf="eco"][data-theme="black"] .asian-rank-card.top-1,
+body[data-perf="eco"][data-theme="black"] .footer,
+body[data-perf="eco"][data-theme="black"] .marquee-text {
+    animation: none !important;
+}
+
+/* Carrusel: sin verde. Franja amarilla + precio negro. Nombre blanco. */
+body[data-theme="black"] .hero-section .oferta-card {
+    border-color: rgba(244, 238, 230, 0.45);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+body[data-theme="black"] .hero-section .oferta-card.is-center-focus {
+    border-color: #FFDF00;
+}
+body[data-theme="black"] .hero-section .tv-card__name {
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+}
+body[data-theme="black"] .hero-section .tv-card__now-box {
+    background: linear-gradient(90deg, #7A5A12, #FFDF00, #FFF8E8, #C9A227, #7A5A12) !important;
+    border-color: #D4AF37 !important;
+}
+body[data-theme="black"] .hero-section .tv-card__now {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-shadow: none !important;
+}
+body[data-theme="black"] .hero-section .tv-card__now-box .tv-card__was {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-decoration-color: #111111 !important;
+}
+
+/* Compras relacionadas: misma franja amarilla + precio negro + nombre blanco. */
+body[data-theme="black"] .xsell-item__name {
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+}
+body[data-theme="black"] .xsell-item .tv-card__now-box {
+    background: linear-gradient(90deg, #7A5A12, #FFDF00, #FFF8E8, #C9A227, #7A5A12) !important;
+    border-color: #D4AF37 !important;
+}
+body[data-theme="black"] .xsell-item__price {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-shadow: none !important;
+}
+body[data-theme="black"] .xsell-item .tv-card__now-box .xsell-item__was {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-decoration-color: #111111 !important;
+}
+
+body[data-theme="black"] .flash-offer .tv-card__now-box {
+    background: linear-gradient(90deg, #7A5A12, #FFDF00, #FFF8E8, #C9A227, #7A5A12) !important;
+    border-color: #D4AF37 !important;
+}
+body[data-theme="black"] .flash-offer .tv-card__now {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-shadow: none !important;
+}
+body[data-theme="black"] .flash-offer .tv-card__now-box .tv-card__was {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    text-decoration-color: #111111 !important;
+}
+
+/* Condiciones verde: col 3 y 4. Carrusel de ofertas no se toca. */
+body[data-theme="black"] .flash-offer .deal-save,
+body[data-theme="black"] .meal-card .tv-card__rule,
+body[data-theme="black"] .asian-flash-condition {
+    color: #39FF14 !important;
+    -webkit-text-fill-color: #39FF14 !important;
+}

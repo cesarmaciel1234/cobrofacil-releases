@@ -17,9 +17,6 @@ export function htmlTarjetaRelampago(item) {
     const monto = precio > 0 ? formatMoney(precio).replace(/^\$\s*/, "") : "";
     return `
         <article class="flash-offer">
-            <header class="rank-head sale-head">
-                <p class="rank-kicker">OFERTAS</p>
-            </header>
             <div class="flash-offer__deal">
                 ${htmlDealStage({ ...item, nombre }, {
                     off: pct ? `-${pct}%` : "",
@@ -28,14 +25,15 @@ export function htmlTarjetaRelampago(item) {
                     bolt: false,
                 })}
                 <div class="deal-copy flash-offer__copy" style="background:#0A0602">
-                    <p class="deal-kicker">Precio de hoy</p>
-                    <div class="deal-price-row">
-                        ${precio > 0
-                            ? `<strong class="tv-card__now" style="background:linear-gradient(135deg,#FFDF00,#FFA500);color:#550000;-webkit-text-fill-color:#550000;border-radius:8px;padding:0.08em 0.35em;border:2px solid #fff"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>`
-                            : ""}
-                        ${original > precio ? `<s class="tv-card__was">${formatMoney(original)}</s>` : ""}
+                    <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
+                    <div class="deal-price-row deal-line">
+                        ${precio > 0 ? `
+                        <div class="tv-card__now-box">
+                            <strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>
+                            ${original > precio ? `<s class="tv-card__was">${formatMoney(original)}</s>` : ""}
+                        </div>` : ""}
                     </div>
-                    <p class="deal-save">${escapeHtml(textoValidezOferta(item))}</p>
+                    <p class="deal-save deal-line">${escapeHtml(textoValidezOferta(item))}</p>
                 </div>
             </div>
         </article>

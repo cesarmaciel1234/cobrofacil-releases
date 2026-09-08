@@ -89,31 +89,200 @@
 .rank-list {
     display: flex;
     flex-direction: column;
-    gap: clamp(0.3cqh, 0.8cqh, 1cqh);
+    gap: 0.55cqh;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    padding: clamp(0.3cqh, 0.5cqh, 0.8cqh) 0;
-    max-height: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
 }
 
-/* ── Tarjeta de ranking ── */
+/* ── Tarjeta de ranking: producto primero ── */
 .asian-rank-card {
     display: flex;
-    flex: 1;
-    align-items: center;
-    background: var(--rank-card-bg);
-    border-radius: clamp(12px, 2cqw, 16px);
-    padding: clamp(0.6cqh, 1cqh, 1.2cqh) clamp(0.6cqw, 0.85cqw, 1.2cqw);
+    flex: 1 1 0;
+    align-items: stretch;
+    background: #050505;
+    border-radius: 14px;
+    padding: 0;
     margin-bottom: 0;
     box-shadow: var(--rank-card-shadow);
     position: relative;
-    border: clamp(1px, 0.2cqw, 2px) solid var(--rank-card-border);
+    border: 1px solid rgba(255, 223, 0, 0.28);
     overflow: hidden;
-    gap: clamp(0.5cqw, 0.8cqw, 1.2cqw);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    gap: 0;
     min-height: 0;
-    max-height: none;
+}
+.asian-rank-card.is-photo {
+    flex-direction: column;
+}
+.asian-rank-card.is-photo.top-1 {
+    flex: 1.12 1 0;
+}
+.asian-rank-card .rank-stage,
+.asian-rank-card.is-photo .rank-stage {
+    position: absolute !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    border-radius: 0;
+    display: block !important;
+    background: radial-gradient(circle at 50% 42%, #2a2a2c 0%, #050505 70%);
+    box-shadow: none;
+}
+.asian-rank-card.is-photo .rank-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, transparent 28%, transparent 58%, rgba(0, 0, 0, 0.55) 100%);
+}
+.asian-rank-card .rank-stage .deal-stage__letter {
+    font-size: clamp(2rem, 4.2cqw, 3.4rem);
+    opacity: 0.14;
+}
+.asian-rank-card.is-photo .rank-stage .deal-stage__img {
+    position: absolute !important;
+    top: 12% !important;
+    left: 6% !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 88% !important;
+    height: 68% !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)) brightness(1.12) contrast(1.08);
+}
+.rank-roof {
+    position: absolute;
+    top: 0.85cqh;
+    right: 1cqw;
+    left: auto;
+    z-index: 4;
+    max-width: 62%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15cqh;
+    pointer-events: none;
+}
+.rank-roof-name {
+    position: static;
+    margin: 0;
+    max-width: 100%;
+    padding: 0;
+    text-align: right;
+    font-size: clamp(0.88rem, 1.25cqw, 1.15rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rank-roof-tag {
+    margin: 0;
+    padding: 0;
+    text-align: right;
+    font-size: clamp(0.58rem, 0.82cqw, 0.74rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.62);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+}
+.rank-roof-tag .rank-caret {
+    display: none;
+}
+.rank-roof-tag.is-premium,
+.asian-rank-card.is-panel-premium .rank-roof-tag {
+    color: #E8C547;
+    -webkit-text-fill-color: #E8C547;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+.rank-roof-tag.is-premium .rank-caret {
+    display: inline;
+    margin-left: 0.06em;
+    color: #FFDF00;
+    -webkit-text-fill-color: #FFDF00;
+    animation: rankCaret 1s steps(1) infinite;
+}
+@keyframes rankCaret {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+.asian-rank-card.is-photo .asian-rank-name.rank-roof-name {
+    text-align: right;
+}
+.rank-escarapela {
+    position: absolute;
+    top: 0.85cqh;
+    left: 0.95cqw;
+    z-index: 4;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: #FFDF00;
+    font-weight: 900;
+    font-size: clamp(1.2rem, 1.8cqw, 1.65rem);
+    text-align: left;
+    line-height: 1;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
+.asian-rank-card.top-1 .rank-escarapela {
+    background: none;
+    color: #FFDF00;
+    border: 0;
+    font-size: clamp(1.35rem, 2cqw, 1.85rem);
+}
+.asian-rank-card.top-2 .rank-escarapela { color: #E8E8EE; border: 0; }
+.asian-rank-card.top-3 .rank-escarapela { color: #E8B86D; border: 0; }
+.asian-rank-card.is-photo .asian-rank-info {
+    position: absolute;
+    left: 1cqw;
+    right: 1cqw;
+    bottom: 0.9cqh;
+    z-index: 4;
+    flex: none;
+    width: auto;
+    gap: 0;
+    padding: 0;
+}
+.rank-proof {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.35em 0 0;
+    border: 0;
+    border-top: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 0;
+    background: none;
+    color: #E8C547;
+    font-family: var(--font-display, inherit);
+    font-weight: 700;
+    font-size: clamp(0.62rem, 0.88cqw, 0.8rem);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.25;
+    text-shadow: none;
 }
 .asian-rank-card.top-1 {
     background: var(--rank-top1-bg);
@@ -121,8 +290,10 @@
     box-shadow: var(--rank-top1-shadow);
     transform: none;
     margin-bottom: 0;
-    z-index: 10;
-    padding: clamp(0.5cqh, 0.8cqh, 1cqh) clamp(0.6cqw, 0.85cqw, 1.2cqw);
+    z-index: 2;
+    padding: 0;
+    opacity: 1;
+    visibility: visible;
 }
 .asian-rank-card.top-2 {
     background: var(--rank-top2-bg);
@@ -138,20 +309,20 @@
     flex-shrink: 0;
     background: var(--rank-badge-bg);
     color: var(--rank-badge-color);
-    border-radius: 12px;
-    padding: 0.6cqh 0.8cqw;
-    font-size: clamp(1.1rem, 1.4cqw, 1.3rem);
-    font-weight: 900;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    padding: 0.5cqh 0.7cqw;
+    font-size: clamp(1.25rem, 1.7cqw, 1.55rem);
+    font-weight: 800;
+    box-shadow: none;
     text-align: center;
     white-space: nowrap;
 }
 .asian-rank-card.top-1 .asian-rank-badge {
     background: var(--rank-badge-top1-bg);
     color: var(--rank-badge-top1-color);
-    font-size: clamp(1.3rem, 1.8cqw, 1.6rem);
-    animation: temuPulse 2s infinite;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-size: clamp(1.4rem, 1.9cqw, 1.7rem);
+    animation: none;
+    text-shadow: none;
 }
 @keyframes temuPulse {
     0%,100% { transform: scale(1); }
@@ -161,19 +332,30 @@
 /* Info (nombre + barra de progreso) */
 .asian-rank-info {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5cqh;
+    justify-content: center;
+    gap: 0.7cqh;
 }
 .asian-rank-name {
-    font-size: clamp(1.1rem, 1.5cqw, 1.4rem);
-    font-weight: 900;
+    font-size: clamp(1.25rem, 1.85cqw, 1.6rem);
+    font-weight: 600;
     color: var(--rank-name-color);
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.15;
     text-transform: uppercase;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .asian-rank-card.top-1 .asian-rank-name { color: var(--rank-top1-name-color, #1A1A1A); }
+.asian-rank-card.is-photo .rank-roof-name,
+.asian-rank-card.top-1 .rank-roof-name {
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+}
 
 .asian-rank-card.is-ad {
     background: linear-gradient(135deg, #DC2626 0%, #9F1239 100%);
@@ -188,8 +370,8 @@
 .asian-rank-progress-container {
     background: var(--rank-bar-track);
     border-radius: 999px;
-    height: 3.5cqh;
-    min-height: 22px;
+    height: 3.2cqh;
+    min-height: 28px;
     position: relative;
     overflow: hidden;
     display: flex;
@@ -206,7 +388,7 @@
     position: absolute;
     left: 1cqw;
     color: #EF4444;
-    font-size: clamp(12px, 1.1cqw, 15px);
+    font-size: clamp(0.85rem, 1.15cqw, 1.05rem);
     font-weight: 900;
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     letter-spacing: 0.05em;
@@ -261,32 +443,36 @@
 }
 
 .price-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: clamp(0.5cqw, 0.8cqw, 1cqw);
-    padding: clamp(0.6cqh, 0.9cqh, 1.2cqh) clamp(0.6cqw, 0.9cqw, 1.2cqw);
-    background: var(--price-row-bg);
-    border: 1px solid rgba(255, 215, 0, 0.1);
-    border-radius: clamp(10px, 1.5cqw, 14px);
-    transition: all 0.3s ease;
+    gap: 1.1vh;
+    padding: 2.2vh 1.6vw 2vh;
+    min-height: 26vh;
+    background: radial-gradient(ellipse at 50% 0%, #1a1610 0%, #080808 62%);
+    border: 1px solid rgba(255, 223, 0, 0.32);
+    border-radius: 14px;
+    overflow: hidden;
+    text-align: center;
 }
-
+.price-row::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 223, 0, 0.07) 0%, transparent 38%);
+}
 .price-row:hover {
-    border-color: rgba(255, 215, 0, 0.3);
-    transform: translateX(4px);
+    border-color: rgba(255, 223, 0, 0.5);
+    transform: none;
 }
-
-.price-row.is-featured {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
-}
-
+.price-row.is-featured,
 .price-row.is-offer {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.08));
-    border: 2px solid rgba(239, 68, 68, 0.4);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    background: radial-gradient(ellipse at 50% 0%, #221c12 0%, #080808 64%);
+    border: 1px solid rgba(255, 223, 0, 0.42);
+    box-shadow: inset 0 0 40px rgba(255, 223, 0, 0.04);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -593,81 +779,144 @@
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.price-row__info {
-    min-width: 0;
+.price-row__mast {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7vh;
+    width: 100%;
+    padding: 0 3.4cqw;
 }
-
 .price-row__name {
     margin: 0;
+    padding: 0;
     font-family: var(--font-display);
-    font-size: clamp(1rem, 1.4cqw, 1.25rem);
-    font-weight: 900;
-    line-height: 1.3;
-    color: var(--card-text, var(--text-main, #111111));
+    font-size: clamp(1.55rem, 2.25vw, 1.95rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-transform: uppercase;
+    color: #FFFFFF;
     display: -webkit-box;
-    -webkit-line-clamp: 2; padding-bottom: 6px; line-height: 1.3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
-
-.price-row__meta {
-    margin: 0.25cqh 0 0;
-    font-size: clamp(0.58rem, 0.78cqw, 0.7rem);
-    font-weight: 700;
-    color: var(--meta-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.price-row__hair {
+    display: block;
+    width: min(46%, 7.5rem);
+    height: 2px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent, #FFDF00 20%, #FFF3B0 50%, #FFDF00 80%, transparent);
+}
+.price-row__bottom {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
 .price-row__rule {
-    margin: 0.2cqh 0 0;
-    font-size: clamp(0.55rem, 0.75cqw, 0.68rem);
+    margin: 1vh 0 0;
+    font-size: clamp(0.78rem, 1.05vw, 0.95rem);
     font-weight: 700;
     color: var(--rule-color);
-    line-height: 1.2;
-    text-transform: none;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .price-row__prices {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    text-align: right;
-    white-space: nowrap;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 1vw;
 }
 
 .price-row__off {
-    font-size: clamp(0.75rem, 1cqw, 0.9rem);
-    font-weight: 900;
-    color: #EF4444;
-    background: rgba(239, 68, 68, 0.1);
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    position: absolute;
+    top: 15px;
+    right: 0;
+    font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+    font-weight: 800;
+    color: #000;
+    background: #FFDF00;
+    padding: 0.4vh 1vw;
+    border-radius: 4px 0 0 4px;
+    border: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.price-row__off--hot {
+    background: #000;
+    color: #FFDF00;
+    border: 1px solid #FFDF00;
+    border-right: none;
 }
 
 .price-row__was {
-    font-size: clamp(0.6rem, 0.8cqw, 0.72rem);
-    font-weight: 600;
-    color: var(--price-was);
+    font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+    font-weight: 500;
+    color: #EF4444;
     text-decoration: line-through;
+    text-decoration-color: #EF4444;
+}
+.price-row__kicker {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    z-index: 2;
+    margin: 0;
+    font-size: clamp(0.58rem, 0.8vw, 0.72rem);
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 223, 0, 0.82);
+}
+.price-ad .price-ad__stage,
+.price-row .price-ad__stage {
+    position: relative;
+    z-index: 1;
+    width: min(42%, 7.2rem);
+    height: 7.2rem;
+    flex: 0 0 auto;
+    margin: 0.2vh 0 0.4vh;
+    border-radius: 12px;
+    background: radial-gradient(circle at 50% 35%, #2a2a2c 0%, #050505 75%);
+}
+.price-ad .price-ad__stage .deal-stage__img {
+    position: absolute;
+    inset: 8%;
+    width: 84%;
+    height: 84%;
+    object-fit: contain;
+}
+.price-ad .price-ad__stage .deal-stage__letter.has-img {
+    display: none;
 }
 
 .price-row__now {
     display: inline-block;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    border-radius: 999px;
-    padding: clamp(4px, 0.6cqh, 6px) clamp(10px, 1.2cqw, 14px);
+    background: none;
+    border-radius: 0;
+    padding: 0;
     font-family: var(--font-display);
-    font-size: clamp(1.2rem, 1.8cqw, 1.5rem);
-    font-weight: 900;
-    line-height: 1.1;
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
-    color: #000000;
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: var(--accent-primary, #FFDF00);
+    box-shadow: none;
+    border: 0;
 }
 
 .price-grid {
@@ -814,13 +1063,19 @@
 .xsell-ask {
     margin: 0;
     padding: 0.15cqh 0.15cqw;
+    text-align: center;
+    width: 100%;
     font-family: var(--font-display);
-    font-size: clamp(0.95rem, 1.4cqw, 1.22rem);
-    font-weight: 900;
-    letter-spacing: -0.03em;
+    font-size: clamp(0.85rem, 1.25cqw, 1.1rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
     line-height: 1.12;
     color: var(--card-text);
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .xsell-list {
@@ -837,34 +1092,84 @@
 
 .xsell-item {
     display: flex;
-    align-items: center;
-    gap: 0.75cqw;
+    align-items: stretch;
+    gap: 0.8cqw;
     flex: 1 1 0;
     min-height: 0;
-    padding: 0.85cqh 0.8cqw;
+    min-width: 0;
+    padding: 0.45cqh 0.7cqw;
     background: var(--price-row-bg);
-    border-radius: 14px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
+.xsell-item .deal-stage,
 .xsell-item__stage {
-    flex: 0 0 5.4cqw;
-    min-width: 56px;
-    height: clamp(56px, 10cqh, 96px);
-    border-radius: 12px;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    max-width: 36% !important;
+    align-self: stretch;
+    aspect-ratio: 1 / 1;
+    height: 100% !important;
+    width: unset !important;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.xsell-item .deal-stage__name,
+.xsell-item .deal-stage__bolt,
+.xsell-item .deal-stage__letter.has-img {
+    display: none;
+}
+.xsell-item .deal-stage__letter {
+    font-size: clamp(1.4rem, 2.4cqw, 2.2rem);
+}
+.xsell-item .deal-stage__img {
+    inset: 4%;
+    width: 92%;
+    height: 92%;
+    transform: none;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
+.xsell-item .deal-stage__off {
+    top: 4px;
+    left: auto;
+    right: 4px;
+    font-size: 11px;
+    padding: 2px 5px;
 }
 
 .xsell-item__stage .deal-stage__letter {
     font-size: clamp(1.15rem, 1.8cqw, 1.55rem);
 }
 
+.xsell-item__info {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.45cqh;
+}
+.xsell-item__price-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 .xsell-item__name {
     min-width: 0;
     font-family: var(--font-display);
-    font-size: clamp(0.95rem, 1.45cqw, 1.28rem);
-    font-weight: 900;
-    letter-spacing: -0.03em;
+    font-size: clamp(1.15rem, 1.9cqw, 1.65rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
     color: var(--card-text);
     line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .flash-offer__deal,
 .chef-deal {
@@ -892,17 +1197,68 @@
     background: #0A0602 !important;
 }
 
+.tv-card__now-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6cqw;
+    min-width: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #C9A227 0%, #FFDF00 42%, #FFF8E8 100%);
+    border: 1px solid #E8D48B;
+    border-radius: 8px;
+    padding: 0.22em 0.5em;
+    box-sizing: border-box;
+}
+
+.tv-card__now-box .tv-card__now,
+.tv-card__now-box .xsell-item__price,
+.tv-card__now-box .asian-flash-current {
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
+    flex: 0 1 auto;
+}
+
+.tv-card__now-box .tv-card__was,
+.tv-card__now-box .xsell-item__was,
+.tv-card__now-box .asian-flash-original {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0.16em 0.45em;
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 6px;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-size: clamp(0.78rem, 1.05cqw, 0.98rem);
+    font-weight: 700;
+    text-decoration: line-through !important;
+    text-decoration-color: #111111 !important;
+}
+
+.tv-card__was,
+.xsell-item__was,
+.asian-flash-original,
+.asian-billboard__price-before,
+.oferta-antes,
+.luxury-ad-card__price-before {
+    color: #EF4444 !important;
+    -webkit-text-fill-color: #EF4444 !important;
+    text-decoration: line-through !important;
+    text-decoration-color: #EF4444 !important;
+}
+
 .flash-offer .tv-card__now,
 .chef-deal .tv-card__now {
-    color: #550000 !important;
-    -webkit-text-fill-color: #550000 !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
     font-size: clamp(1.55rem, 2.6cqw, 2.35rem);
     font-weight: 900;
     letter-spacing: -0.04em;
-    background: linear-gradient(135deg, #FFDF00 0%, #FFA500 100%) !important;
-    border: 2px solid #FFFFFF;
-    border-radius: 8px;
-    padding: 0.08em 0.35em;
     text-shadow: none;
 }
 

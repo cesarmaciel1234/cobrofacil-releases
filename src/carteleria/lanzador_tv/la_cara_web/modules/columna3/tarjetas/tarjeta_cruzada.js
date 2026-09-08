@@ -14,7 +14,9 @@ function productoPorNombre(productos, nombre) {
 
 export function htmlTarjetaCruzada(slide, productos = []) {
     const ancla = nombreVitrina(slide.nombre || "");
-    const pregunta = slide.pregunta || (ancla ? `¿LLEVÁS ${ancla.toUpperCase()}?` : "¿LLEVÁS ESTO?");
+    const crudo = slide.pregunta || (ancla ? `¿LLEVÁS ${ancla.toUpperCase()}?` : "¿LLEVÁS ESTO?");
+    const cuerpo = String(crudo).replace(/^[¿?\s]+|[¿?\s]+$/g, "").trim() || "LLEVÁS ESTO";
+    const pregunta = `¿ ${cuerpo} ?`;
     const items = (slide.relacionados || []).slice(0, 3).map((nombre) => {
         const prod = productoPorNombre(productos, nombre);
         const limpio = nombreVitrina(prod.nombre || nombre);
@@ -28,23 +30,20 @@ export function htmlTarjetaCruzada(slide, productos = []) {
                 return `
             <li class="xsell-item">
                 ${htmlDealStage({ ...prod, nombre: limpio }, { extraClass: "xsell-item__stage" })}
-                <div class="xsell-item__info" style="display: flex; flex-direction: column; gap: 0.3rem;">
+                <div class="xsell-item__info">
                     <div class="xsell-item__name">${escapeHtml(limpio.toUpperCase())}</div>
                     ${tienePrecio ? `
-                    <div class="xsell-item__price-row" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div class="xsell-item__price-row tv-card__now-box">
                         <span class="xsell-item__price"><span class="deal-currency">$</span><span class="odometer-val" data-val="${precio}">${formatMoney(precio).replace(/^\$\s*/, "")}</span></span>
-                        ${tieneOferta ? `<s class="xsell-item__was" style="color: rgba(255,255,255,0.5); font-size: 0.85em;">${formatMoney(prod.precio)}</s>` : ""}
+                        ${tieneOferta ? `<s class="xsell-item__was">${formatMoney(prod.precio)}</s>` : ""}
                     </div>` : ""}
-                    ${regla ? `<div class="xsell-item__rule" style="font-size: 0.8em; color: #D4AF37;">${escapeHtml(regla)}</div>` : ""}
+                    ${regla ? `<div class="xsell-item__rule">${escapeHtml(regla)}</div>` : ""}
                 </div>
             </li>`;
 
     }).join("");
     return `
         <article class="xsell-card">
-            <header class="rank-head sale-head">
-                <p class="rank-kicker">🔥 COMPRAS RELACIONADAS</p>
-            </header>
             <p class="xsell-ask">${escapeHtml(pregunta)}</p>
             <ul class="xsell-list">${items}</ul>
         </article>

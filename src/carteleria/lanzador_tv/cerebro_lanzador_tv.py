@@ -289,6 +289,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
                     "business_name": config.get("business_name", "Cartelería"),
                     "phone": config.get("phone", ""),
                     "mensaje_zocalo": config.get("mensaje_zocalo", ""),
+                    "install_date": config.get("install_date", ""),
                     "carteleria_theme": config.get("carteleria_theme", "premium"),
                     "carteleria_perf": perfil_activo(),
                 },

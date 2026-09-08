@@ -241,16 +241,26 @@ class CarteleriaMainTV(QWidget):
             business_name, phone = config.get("business_name", "Cartelería"), config.get("phone", "")
             theme, mensaje = config.get("carteleria_theme", self._theme_name or "temu"), config.get("mensaje_zocalo", "")
             perf = perfil_activo()
+            install_date = config.get("install_date", "")
+            licencia_dias = None
+            if install_date:
+                from datetime import datetime
+                try:
+                    usados = (datetime.now() - datetime.fromisoformat(str(install_date))).days
+                    licencia_dias = 30 - usados
+                except ValueError:
+                    licencia_dias = None
         except Exception:
             business_name, phone, theme, mensaje, perf = "Cartelería", "", self._theme_name, "", "eco"
-        if not mensaje:
-            mensaje = f"{business_name} • {self._clima} • Ofertas sujetas a stock •"
+            install_date, licencia_dias = "", None
         return {
             "config": {
                 "business_name": business_name, "phone": phone,
                 "carteleria_theme": theme,
                 "carteleria_perf": perf,
                 "mensaje_zocalo": mensaje,
+                "install_date": install_date,
+                "licencia_dias": licencia_dias,
                 "data_status": self._sync_status,
             },
             "precios": self.rows_precios,

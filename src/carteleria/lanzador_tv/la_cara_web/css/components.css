@@ -245,11 +245,11 @@
     flex-direction: column;
     align-items: stretch;
     height: var(--hero-height);
-    min-height: 168px;
-    flex-shrink: 0;
-    padding: 0 0.15cqw;
+    min-height: 0;
+    flex: 0 0 var(--hero-height);
+    padding: 0 0.1cqw;
     overflow: hidden;
-    gap: 0.8cqh;
+    gap: 0.35cqh;
 }
 
 .floating-header {
@@ -334,8 +334,9 @@
 .flash-strip__cycle {
     display: flex;
     align-items: center;
-    gap: 1.2cqw;
-    padding-right: 1.2cqw;
+    gap: 4.2cqw;
+    padding: 0;
+    margin: 0;
     white-space: nowrap;
 }
 
@@ -437,15 +438,49 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* --- Mejora de Zócalo (Mensaje Publicitario) --- */
+/* Línea de seguridad TV + aviso de licencia flotante */
 .footer {
     position: relative;
-    overflow: hidden;
+    flex: 0 0 var(--footer-height);
     height: var(--footer-height);
+    min-height: var(--footer-height);
+    padding: 0 0.8cqw;
+    margin: 0;
+    overflow: visible;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 1cqw;
+    pointer-events: none;
+}
+.zocalo-safe {
+    width: 100%;
+    height: 3px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 223, 0, 0.28) 18%, rgba(255, 223, 0, 0.45) 50%, rgba(255, 223, 0, 0.28) 82%, transparent 100%);
+}
+.aviso-licencia {
+    position: fixed;
+    left: 50%;
+    bottom: 1.6cqh;
+    transform: translateX(-50%);
+    z-index: 40;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: #FFDF00;
+    font-size: clamp(0.95rem, 1.35cqw, 1.25rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.aviso-licencia[hidden] {
+    display: none !important;
 }
 
 .zocalo-pill {
@@ -536,6 +571,7 @@
 .price-cycle {
     display: flex;
     flex-direction: column;
+    gap: 0.35cqh;
     flex: none;
     width: 100%;
 }
@@ -551,6 +587,5 @@
 .tv-4 { padding: 0 !important; }
 
 .chef-carousel-track {
-    /* Ensure the cards scale to fit inside 1 TV screen perfectly */
-    gap: 1cqw !important;
+    gap: 0 !important;
 }

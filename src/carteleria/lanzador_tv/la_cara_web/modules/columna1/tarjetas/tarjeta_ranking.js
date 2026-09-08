@@ -1,116 +1,69 @@
-﻿/* Ranking TV1: puesto real + dato de ventas de la base. */
+﻿/* Ranking TV1: se ve el producto, no un renglón. Sin precio. */
 
-import { escapeHtml, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { escapeHtml, htmlDealStage, nombreVitrina } from "../../shared/plata_y_texto.js";
 
-function textoFamilias(item) {
-    const detalle = String(item.detalle || "");
-    if (detalle && !/ticket/i.test(detalle)) return detalle;
-    
-    // Primero, buscar tickets reales
-    let n = Number(item.tickets || item.veces || item.tickets_dia || item.cantidad_tickets || 0);
-    
-    // Si no hay info de tickets real, inferirlo
-    if (n < 1) {
-        let vol = Math.round(Number(item.cantidad || 0));
-        n = Math.max(1, Math.floor(vol / 2));
-        const match = detalle.match(/(\d+)/);
-        if (vol < 1 && match) n = Number(match[1]);
+function numDia(item, claves) {
+    for (const k of claves) {
+        const n = Number(item[k]);
+        if (Number.isFinite(n) && n > 0) return n;
     }
-
-    if (n <= 1) return "1 familia lo eligió";
-    return `${n}+ familias lo eligieron`;
+    return 0;
 }
 
-function formatoKilosComoPct(valor) {
-    const n = Number(valor) || 0;
-    if (n <= 0) return "0 kg";
-    if (Math.abs(n - Math.round(n)) < 0.05) return `${Math.round(n)} kg`;
-    return `${n.toFixed(1).replace(".", ",")} kg`;
+function fmtNumero(n, dec = 1) {
+    if (!Number.isFinite(n) || n <= 0) return "0";
+    if (Math.abs(n - Math.round(n)) < 0.05) return String(Math.round(n));
+    return n.toFixed(dec).replace(".", ",");
 }
 
-function formatoPlataComoPct(valor) {
-    const n = Number(valor) || 0;
-    if (n <= 0) return "$0";
-    if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`;
-    return `$${n}`;
+function humoKilos(item) {
+    const kg = numDia(item, ["cantidad", "kilos", "volumen", "vendidos"]);
+    return `${fmtNumero(kg)} % vendidos hoy`;
 }
 
-function barraRelativa(valor, items, clave) {
-    const serie = (items || []).map((row) => Math.max(0, Number(row[clave] || 0)));
-    const tope = Math.max(valor, ...serie, 1);
-    return (valor / tope) * 100;
+function fmtSocial(n) {
+    if (n >= 1000000) return `${fmtNumero(n / 1000000)}M`;
+    if (n >= 1000) return `${fmtNumero(n / 1000)}K`;
+    return fmtNumero(n, 0);
 }
 
-function megaDelItem(item, items = []) {
-    const valor = Math.max(0, Number(item.cantidad || 0));
-    const barraGuardada = Number(item.barra);
-    return {
-        texto: formatoKilosComoPct(valor),
-        barra: Number.isFinite(barraGuardada) && barraGuardada > 0
-            ? barraGuardada
-            : barraRelativa(valor, items, "cantidad"),
-    };
+function humoPremium(item) {
+    const plata = numDia(item, ["recaudacion", "total", "venta"]);
+    const tag = fmtSocial(plata);
+    return tag === "1" ? "1K lo eligió" : `${tag} lo eligieron`;
 }
 
-function premiumDelItem(item, items = []) {
-    const valor = Math.max(0, Number(item.recaudacion || 0));
-    const barraGuardada = Number(item.barra);
-    return {
-        texto: formatoPlataComoPct(valor),
-        barra: Number.isFinite(barraGuardada) && barraGuardada > 0
-            ? barraGuardada
-            : barraRelativa(valor, items, "recaudacion"),
-    };
+function textoFamiliasHoy(item) {
+    const n = Math.max(0, Math.round(numDia(item, ["tickets", "veces", "tickets_dia", "cantidad_tickets", "cantidad"])));
+    if (n <= 0) return "Hoy se elige en caja";
+    if (n === 1) return "1 familia eligió hoy";
+    return `${n} familias eligieron hoy`;
+}
+
+export function pruebaSocial(item, opciones = {}) {
+    if (opciones.premium) return humoPremium(item);
+    if (opciones.mega) return humoKilos(item);
+    return textoFamiliasHoy(item);
 }
 
 export function htmlTarjetaRanking(item, i, opciones = {}) {
     const puesto = Number(item.puesto || i + 1);
-    const nombre = nombreVitrina(item.nombre).toUpperCase();
-    
-    // Sistema de resaltado Top 3
-    let topClass = "";
-    if (puesto === 1) { topClass = "top-1"; }
-    else if (puesto === 2) { topClass = "top-2"; }
-    else if (puesto === 3) { topClass = "top-3"; }
+    const nombre = nombreVitrina(item.nombre);
+    const topClass = puesto === 1 ? "top-1" : (puesto === 2 ? "top-2" : (puesto === 3 ? "top-3" : ""));
+    const social = pruebaSocial(item, opciones);
+    const etiqueta = opciones.etiqueta || "Lo más elegido";
+    const esPremium = Boolean(opciones.premium) || /premium/i.test(etiqueta);
 
-    if (opciones.premium || opciones.mega) {
-        const dato = opciones.premium
-            ? premiumDelItem(item, opciones.items)
-            : megaDelItem(item, opciones.items);
-            
-        // Forzar porcentaje un poco más agresivo si es el top 1 para simular boom (Opcional, pero se lee del motor real)
-        const pctReal = dato.texto;
-        
-        return `
-        <article class="asian-rank-card ${topClass} cascade-enter" style="animation-delay: ${i * 0.1}s">
-            <div class="asian-rank-badge">
-                <span class="asian-rank-num">#${puesto}</span>
-            </div>
-            <div class="asian-rank-info">
-                <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
-                <div class="asian-rank-progress-container">
-                    <div class="asian-rank-progress-bar" style="width:${Math.max(15, dato.barra).toFixed(1)}%"></div>
-                    <span class="asian-rank-tag">${escapeHtml(pctReal)} VENDIDO</span>
-                </div>
-            </div>
-            ${puesto === 1 ? '<div class="asian-rank-fire" style="font-size: 2rem; filter: drop-shadow(0 0 10px #FFD700);">🔥</div>' : ''}
-        </article>
-        `;
-    }
-    
-    const tag = opciones.social
-            ? textoFamilias(item)
-            : String(item.detalle || "").toUpperCase();
-            
     return `
-        <article class="asian-rank-card ${topClass} cascade-enter" style="animation-delay: ${i * 0.1}s">
-            <div class="asian-rank-badge">
-                <span class="asian-rank-num">#${puesto}</span>
+        <article class="asian-rank-card is-photo ${topClass}${esPremium ? " is-panel-premium" : ""}">
+            <span class="rank-escarapela" aria-hidden="true">#${puesto}</span>
+            <div class="rank-roof">
+                <h4 class="asian-rank-name rank-roof-name">${escapeHtml(nombre)}</h4>
+                <p class="rank-roof-tag${esPremium ? " is-premium" : ""}">${escapeHtml(etiqueta)}<span class="rank-caret" aria-hidden="true">_</span></p>
             </div>
+            ${htmlDealStage(item, { extraClass: "rank-stage", off: "" })}
             <div class="asian-rank-info">
-                <h4 class="asian-rank-name">${escapeHtml(nombre)}</h4>
-                ${tag ? `<div class="asian-rank-tag-social">${escapeHtml(tag)}</div>` : ""}
+                <div class="rank-proof">${escapeHtml(social)}</div>
             </div>
         </article>
     `;

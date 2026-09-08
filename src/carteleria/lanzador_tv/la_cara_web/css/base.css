@@ -4,9 +4,9 @@
     --shadow-elegant: 0 4px 24px rgba(0, 0, 0, 0.06);
     
     /* Layout responsive base */
-    --footer-height: 76px;
-    --hero-height: 302px;
-    --content-height: 702px;
+    --footer-height: 18px;
+    --hero-height: 30%;
+    --content-height: auto;
     --tv-safe-y: max(2.2cqh, 16px);
     --tv-safe-x: max(1.8cqw, 18px);
 }
@@ -39,20 +39,20 @@ body {
     flex-direction: column;
     width: 1920px;
     height: 1080px;
-    padding: 0.5cqh 0.4cqw 0.5cqh;
+    padding: 0.25cqh 0.25cqw 0;
     background: var(--bg-primary);
     box-sizing: border-box;
     overflow: hidden;
-    gap: 0.5cqh;
+    gap: 0.28cqh;
     transform-origin: 0 0;
 }
 
 .tv-wall {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.3cqw;
+    gap: 0.22cqw;
 }
 
 .tv-panel {
@@ -86,7 +86,7 @@ body {
 .tv-2,
 .tv-3 {
     border-radius: 10px;
-    padding: 0.4cqh 0.3cqw 0.4cqh;
+    padding: 0.2cqh 0.18cqw;
 }
 
 .tv-1 .column-body,
@@ -97,6 +97,9 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 /* Internal containers optimization */
@@ -135,18 +138,18 @@ body {
     content: '';
     position: absolute;
     top: 0;
-    left: -150%;
-    width: 50%;
+    left: 0;
+    width: 45%;
     height: 100%;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-    transform: skewX(-25deg);
-    animation: shimmerSweep 7s infinite;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+    transform: translate3d(-180%, 0, 0) skewX(-25deg);
+    animation: shimmerSweep 4.5s ease-in-out infinite;
     z-index: 10;
     pointer-events: none;
 }
 @keyframes shimmerSweep {
-    0%, 70% { left: -150%; }
-    100% { left: 250%; }
+    0%, 40% { transform: translate3d(-180%, 0, 0) skewX(-25deg); }
+    100% { transform: translate3d(280%, 0, 0) skewX(-25deg); }
 }
 
 /* 2. Entrada Cinemática (Cascada) */

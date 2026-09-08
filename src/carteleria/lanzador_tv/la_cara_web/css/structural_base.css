@@ -206,11 +206,11 @@ body {
 
     border: 1px solid !important;
 
-    border-radius: 16px !important;
+    border-radius: 12px !important;
 
     box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
 
-    margin-bottom: 1cqh !important;
+    margin-bottom: 0 !important;
 
 }
 
@@ -318,7 +318,7 @@ body {
 
     box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
 
-    margin-bottom: 0.5cqh !important;
+    margin-bottom: 0.9cqh !important;
 
     /* background se definirá por el tema */
 

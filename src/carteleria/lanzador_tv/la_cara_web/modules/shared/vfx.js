@@ -14,14 +14,21 @@ export function initCenterFocus() {
         threshold: 0
     };
 
-    observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-center-focus');
-            } else {
-                entry.target.classList.remove('is-center-focus');
+    observer = new IntersectionObserver(() => {
+        const cards = document.querySelectorAll(".hero-section .oferta-card");
+        if (!cards.length) return;
+        const mid = window.innerWidth / 2;
+        let best = cards[0];
+        let bestDist = Infinity;
+        cards.forEach((card) => {
+            const r = card.getBoundingClientRect();
+            const dist = Math.abs(r.left + r.width / 2 - mid);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = card;
             }
         });
+        cards.forEach((card) => card.classList.toggle("is-center-focus", card === best));
     }, options);
 }
 

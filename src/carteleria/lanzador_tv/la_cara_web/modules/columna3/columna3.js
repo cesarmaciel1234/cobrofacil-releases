@@ -85,23 +85,14 @@ function htmlSlide(slide) {
     return htmlTarjetaRelampago(slide);
 }
 
-function pintar(conFade) {
+function pintar() {
     if (!rootRef) return;
     if (!slidesCache.length) {
         rootRef.innerHTML = '<p class="column-empty">Sin venta cruzada ni ofertas todavía.</p>';
         return;
     }
     const index = rotacionIndex % slidesCache.length;
-    const html = htmlSlide(slidesCache[index]);
-    if (!conFade) {
-        rootRef.innerHTML = html;
-        return;
-    }
-    rootRef.classList.add("is-fading");
-    window.setTimeout(() => {
-        rootRef.innerHTML = html;
-        rootRef.classList.remove("is-fading");
-    }, 400);
+    rootRef.innerHTML = htmlSlide(slidesCache[index]);
 }
 
 export function iniciarRotacionColumna3(state, root) {
@@ -113,13 +104,13 @@ export function iniciarRotacionColumna3(state, root) {
     slidesCache = slides;
     if (!misma) {
         rotacionIndex = 0;
-        pintar(false);
+        pintar();
     }
     if (rotacionTimer) return;
     if (slidesCache.length <= 1) return;
     rotacionTimer = setInterval(() => {
         if (!slidesCache.length) return;
         rotacionIndex = (rotacionIndex + 1) % slidesCache.length;
-        pintar(true);
+        pintar();
     }, ROTACION_MS);
 }

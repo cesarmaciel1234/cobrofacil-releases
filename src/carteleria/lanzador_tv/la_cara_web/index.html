@@ -5,25 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Cartelería Premium</title>
-    <link rel="stylesheet" href="css/tokens.css?v=tv108" />
-    <link rel="stylesheet" href="css/style.css?v=tv108" />
-    <link rel="stylesheet" href="css/columna4_chef.css?v=tv108" />
-    <link id="theme-colors" rel="stylesheet" href="css/themes/premium/colores.css?v=tv108" />
-    <link id="theme-styles" rel="stylesheet" href="css/themes/premium/estilos.css?v=tv108" />
-    <style>
-      .flash-offer__copy { background: #0A0602 !important; }
-      .flash-offer .tv-card__now {
-        background: linear-gradient(135deg, #FFDF00, #FFA500) !important;
-        color: #550000 !important;
-        -webkit-text-fill-color: #550000 !important;
-      }
-    </style>
-    
+    <link rel="stylesheet" href="css/tokens.css?v=tv158" />
+    <link rel="stylesheet" href="css/style.css?v=tv158" />
+    <link rel="stylesheet" href="css/columna4_chef.css?v=tv158" />
+    <link id="theme-colors" rel="stylesheet" href="css/themes/black/colores.css?v=tv158" />
+    <link id="theme-styles" rel="stylesheet" href="css/themes/black/estilos.css?v=tv158" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
-<body data-theme="premium" data-wall="4h">
+<body data-theme="black" data-wall="4h">
     <div class="app-container">
         <section class="hero-section" id="heroSection" data-modulo="franja_oferta" aria-label="Ofertas relámpago">
             <div class="flash-strip">
@@ -105,14 +96,8 @@
         </div>
 
         <footer class="footer" data-modulo="mensaje_zocalo">
-            <div class="zocalo-pill">
-                <div class="zocalo-icon">💎</div>
-                <div class="marquee" id="marquee">
-                    <div class="marquee-track">
-                        <span class="marquee-text">Bienvenido a nuestra tienda 💎 Los mejores precios 💎 Calidad VIP 💎</span>
-                    </div>
-                </div>
-            </div>
+            <div class="zocalo-safe" aria-hidden="true"></div>
+            <p class="aviso-licencia" id="marquee" hidden></p>
         </footer>
 
         <div class="loading" id="loading">
@@ -120,7 +105,7 @@
         </div>
     </div>
 
-    <script type="module" src="app.js?v=tv101"></script>
+    <script type="module" src="app.js?v=tv158"></script>
 </body>
 </html>
 

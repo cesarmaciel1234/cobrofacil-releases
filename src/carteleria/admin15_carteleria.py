@@ -163,6 +163,7 @@ class CarteleriaConfigPanel(QWidget):
         self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style)", "apple")
         self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo)", "temu")
         self.cmb_theme.addItem("🛒 Tema Premium / Black Friday", "premium")
+        self.cmb_theme.addItem("⬛ Black Super Premium (Oro y Plata)", "black")
         self.cmb_theme.setStyleSheet("""
             QComboBox {
                 padding: 12px 16px;

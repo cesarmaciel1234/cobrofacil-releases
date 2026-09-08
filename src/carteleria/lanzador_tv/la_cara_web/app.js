@@ -64,11 +64,13 @@ function loadTheme(themeName) {
         apple:   "css/themes/apple/colores.css",
         temu:    "css/themes/temu/colores.css",
         premium: "css/themes/premium/colores.css",
+        black:   "css/themes/black/colores.css",
     };
     const stylePaths = {
         apple:   "css/themes/apple/estilos.css",
         temu:    "css/themes/temu/estilos.css",
         premium: "css/themes/premium/estilos.css",
+        black:   "css/themes/black/estilos.css",
     };
     if (!themePaths[nombre] || !stylePaths[nombre]) return;
     if (nombre === state.currentTheme && themeStylesLink.dataset.loaded === nombre) return;
@@ -134,6 +136,7 @@ async function fetchState() {
         iniciarRotacionColumna3(state, els.content3);
         iniciarRotacionColumna4(state, els.content4);
         renderMensajeZocalo(state.config, els.marquee);
+        renderCabeceraNegocio(state.config, els);
         actualizarClimaHeader(state.climaData);
         updateVFX(); // Dispara los efectos solo cuando hay datos nuevos
 
