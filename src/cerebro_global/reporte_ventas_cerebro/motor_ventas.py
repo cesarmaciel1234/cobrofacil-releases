@@ -1,6 +1,9 @@
 import sqlite3
 import datetime
+import logging
 from src.base_de_datos.database import db_manager
+
+logger = logging.getLogger(__name__)
 
 class MotorVentas:
     """
@@ -32,7 +35,7 @@ class MotorVentas:
             if isinstance(res, dict): return int(list(res.values())[0])
             return int(res[0])
         except Exception as e:
-            print(f"Error en get_personas_viendo: {e}")
+            logger.debug("MotorVentas.get_personas_viendo: %s", e)
             return 0
 
     @staticmethod
@@ -62,7 +65,7 @@ class MotorVentas:
             val = list(res.values())[0] if isinstance(res, dict) else res[0]
             return float(val) if val else 0.0
         except Exception as e:
-            print(f"Error en get_unidades_vendidas: {e}")
+            logger.debug("MotorVentas.get_unidades_vendidas: %s", e)
             return 0.0
 
     @staticmethod
@@ -152,7 +155,7 @@ class MotorVentas:
                     })
             return results
         except Exception as e:
-            print(f"Error en get_top_ventas: {e}")
+            logger.debug("MotorVentas.get_top_ventas: %s", e)
             return []
 
 motor_ventas = MotorVentas()

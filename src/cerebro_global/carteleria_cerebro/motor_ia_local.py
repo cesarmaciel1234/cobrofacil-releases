@@ -20,7 +20,7 @@ class MotorIALocal:
             return VentaCruzadaInteligente.obtener_relacionados_para_ticket(producto_base, limit)
         except Exception as e:
             print(f"Error en obtener_relacionados: {e}")
-            return ["Carbón Premium", "Chorizo Puro Cerdo", "Provoleta Especial"][:limit]
+            return []
                 
     @staticmethod
     def _obtener_top_general(limit=3, excluir=None):
@@ -46,18 +46,9 @@ class MotorIALocal:
                 if len(resultados) == limit:
                     break
             
-            # Último fallback si la base está totalmente vacía
-            if not resultados:
-                fallbacks = ["Carbón", "Chorizo", "Morcilla", "Pan", "Bebida"]
-                for f in fallbacks:
-                    if f.lower() not in [e.lower() for e in excluir]:
-                        resultados.append(f)
-                    if len(resultados) == limit:
-                        break
-            
             return resultados
-        except:
-            return ["Carbón", "Chorizo", "Morcilla"][:limit]
+        except Exception:
+            return []
 
     @staticmethod
     def generar_recomendacion_lobo(clima_tupla, datos_destacados):

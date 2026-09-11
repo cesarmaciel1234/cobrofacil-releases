@@ -480,7 +480,7 @@
 
 .tv-card__was {
     flex-shrink: 0;
-    color: var(--price-was);
+    color: #FFFFFF;
     font-weight: 600;
     text-decoration: line-through;
     font-size: clamp(0.72rem, 0.95cqw, 0.88rem);

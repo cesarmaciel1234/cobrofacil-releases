@@ -152,6 +152,7 @@ def _card_desde_catalogo(prod, badge, detalle="", puesto=0, cantidad=0, periodo=
         "precio": num(prod.get("precio")),
         "precio_oferta": num(prod.get("precio_oferta")),
         "precio_oferta_relampago": num(prod.get("precio_oferta_relampago")),
+        "precio_oferta_promedio": num(prod.get("precio_oferta_promedio")),
         "cant_oferta": num(prod.get("cant_oferta")),
         "tipo_unidad_oferta": prod.get("tipo_unidad_oferta") or "",
         "unidad": prod.get("unidad") or "",
@@ -174,9 +175,28 @@ def _ordenar_ranking(ranking, orden):
     return sorted(ranking or [], key=lambda item: num(item.get(orden)), reverse=True)
 
 
-def _ranking_hoy_pisa_ayer(modo, limite, orden):
+def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
     """Hoy manda. Si aún no hay ventas, se muestra ayer para que la tabla no quede vacía."""
     cupo = max(limite * 4, 20)
+    if ranking_remoto:
+        clave_modo = "frecuencia" if modo == "frecuencia" else "volumen"
+        hoy = list(ranking_remoto.get(f"hoy_{clave_modo}") or [])
+        ayer = list(ranking_remoto.get(f"ayer_{clave_modo}") or [])
+        semana = list(ranking_remoto.get(f"semana_{clave_modo}") or [])
+        if not hoy and not ayer:
+            return semana, "semana"
+        mezclado = []
+        vistos = set()
+        for origen, tanda in (("hoy", hoy), ("ayer", ayer)):
+            for item in _ordenar_ranking(tanda, orden):
+                clave = _norm_nombre(item.get("nombre"))
+                if not clave or clave in vistos:
+                    continue
+                vistos.add(clave)
+                fila = dict(item)
+                fila["_periodo"] = origen
+                mezclado.append(fila)
+        return mezclado, ("hoy" if hoy else "ayer")
     try:
         from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
         hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
@@ -202,9 +222,9 @@ def _ranking_hoy_pisa_ayer(modo, limite, orden):
     return mezclado, ("hoy" if hoy else "ayer")
 
 
-def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad"):
+def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad", ranking_remoto=None):
     """Solo productos que aparecen en ventas reales, cruzados con el catálogo."""
-    ranking, periodo = _ranking_hoy_pisa_ayer(modo, limite, orden)
+    ranking, periodo = _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=ranking_remoto)
     catalogo = _catalogo_por_nombre(productos)
     cards = []
     vistos = set()
@@ -236,12 +256,12 @@ def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite
     return cards, periodo
 
 
-def armar_destacados(productos):
+def armar_destacados(productos, ranking_remoto=None):
     """Top real de tickets para el hero."""
     cards, periodo = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
         "{n} tickets hoy", "{n} tickets esta semana",
-        limite=8,
+        limite=8, ranking_remoto=ranking_remoto,
     )
     for item in cards:
         item["detalle"] = _detalle_familias(item.get("cantidad"), periodo)
@@ -292,13 +312,13 @@ def _vitrina_desde_inventario(productos, limite=5):
     return cards
 
 
-def armar_rotacion_destacados(productos):
+def armar_rotacion_destacados(productos, ranking_remoto=None):
     """Tres tandas reales: tickets, kilos y recaudación. Sin ventas: tu inventario."""
     paneles = []
     elegidos, periodo_e = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
         "{n} tickets hoy", "{n} tickets esta semana",
-        limite=5,
+        limite=5, ranking_remoto=ranking_remoto,
     )
     for item in elegidos:
         item["detalle"] = _detalle_familias(item.get("cantidad"), periodo_e)
@@ -313,7 +333,7 @@ def armar_rotacion_destacados(productos):
     volumen, _ = _top_con_precios(
         productos, "volumen", "VOLUMEN",
         "{n} vendidos hoy", "{n} vendidos esta semana",
-        limite=5,
+        limite=5, ranking_remoto=ranking_remoto,
     )
     if volumen:
         _anotar_mega_ventas(volumen)
@@ -327,7 +347,7 @@ def armar_rotacion_destacados(productos):
     plata, _ = _top_con_precios(
         productos, "volumen", "PLATA",
         "", "",
-        limite=5, orden="recaudacion",
+        limite=5, orden="recaudacion", ranking_remoto=ranking_remoto,
     )
     if plata:
         _anotar_venta_premium(plata)
@@ -626,13 +646,16 @@ def armar_hero(destacados, productos):
     return None
 
 
-def armar_paneles(productos, clima_icon="sol", clima_text=""):
+def armar_paneles(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
     from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
     from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-    productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
+    if ranking_remoto:
+        productos = enriquecer_iconos(productos)
+    else:
+        productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
     motor_publicidad.marcar_lista(productos)
-    rotacion = armar_rotacion_destacados(productos)
-    destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos)
+    rotacion = armar_rotacion_destacados(productos, ranking_remoto=ranking_remoto)
+    destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos, ranking_remoto=ranking_remoto)
     hero = armar_hero(destacados, productos)
     return {
         "hero": hero,

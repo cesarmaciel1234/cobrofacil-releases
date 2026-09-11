@@ -1,0 +1,1 @@
+from src.motor_descuentos.compartido.tarjeta_modulo import TarjetaModulo

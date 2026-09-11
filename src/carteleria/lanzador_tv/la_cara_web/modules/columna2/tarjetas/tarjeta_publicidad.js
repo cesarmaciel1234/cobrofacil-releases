@@ -1,10 +1,10 @@
-import { escapeHtml, formatMoney, htmlDealStage, nombreVitrina, precioVigente, textoValidezOferta } from "../../shared/plata_y_texto.js";
+import { escapeHtml, formatMoney, htmlDealStage, leerPrecios, nombreVitrina, textoValidezOferta } from "../../shared/plata_y_texto.js";
 
 export function htmlTarjetaPublicidad(item) {
     const nombre = nombreVitrina(item?.nombre || "Destacado");
-    const precio = precioVigente(item);
-    let anterior = Number(item?.precio_original || item?.precio_anterior || item?.precio || 0);
-    if (anterior <= precio && precio > 0) anterior = Math.round(precio * 1.2);
+    const { original, vigente, hayOferta } = leerPrecios(item);
+    const precio = vigente;
+    const anterior = hayOferta ? original : 0;
     const pct = anterior > precio && precio > 0
         ? Math.round(((anterior - precio) / anterior) * 100)
         : 0;
@@ -12,7 +12,7 @@ export function htmlTarjetaPublicidad(item) {
     const foto = item?.imagen || item?.icono_url || item?.icono || "";
 
     return `
-        <article class="price-row price-ad is-offer">
+        <article class="price-row price-ad is-offer${item?.alarma ? " is-ad-alarm" : ""}">
             <span class="price-row__kicker">Publicidad</span>
             ${pct ? `<span class="price-row__off">-${pct}%</span>` : `<span class="price-row__off price-row__off--hot">AD</span>`}
             ${foto ? htmlDealStage(item, { extraClass: "price-ad__stage", off: "" }) : ""}

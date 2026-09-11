@@ -1,0 +1,8 @@
+/* Pirámide de precios TV. Se carga al final (después del tema). */
+@import url("precio_tv/fila.css");
+@import url("precio_tv/grilla.css");
+@import url("precio_tv/ahora.css");
+@import url("precio_tv/antes.css");
+@import url("precio_tv/condicion.css");
+@import url("precio_tv/carrusel.css");
+@import url("precio_tv/alarma.css");

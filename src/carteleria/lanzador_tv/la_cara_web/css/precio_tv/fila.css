@@ -1,0 +1,29 @@
+/* Fila de precios: que el número largo no se corte. */
+
+.tv-precio,
+body .tv-panel .tv-card__now-box,
+body .tv-panel .xsell-item__price-row,
+body .tv-panel .asian-flash-prices,
+body .tv-panel .price-row__prices,
+body .tv-panel .flash-offer .tv-card__now-box,
+body .hero-section .tv-card__now-box {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 0.35em 0.7em !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body .tv-panel .flash-offer .flash-offer__copy {
+    height: auto !important;
+    flex: 0 0 auto !important;
+    min-height: 28% !important;
+    overflow: visible !important;
+    justify-content: flex-end !important;
+    gap: 0.4cqh !important;
+    padding: 1cqh 1.2cqw 1.4cqh !important;
+}

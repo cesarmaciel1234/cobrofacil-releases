@@ -264,61 +264,12 @@ class PanelPngProductos(QWidget):
                 QMessageBox.warning(self, "Envío a maestra", sync_msg)
 
     def _sincronizar_a_maestra(self, filename: str):
-        """Envía el PNG a la maestra (API :8000, luego Creador PNG :5000)."""
-        from src.config import config
-        if config.get("is_master", True) and not config.get("carteleria_is_slave"):
+        """Envía el PNG a la maestra (API :8000)."""
+        from src.central_red_global.sync_tienda import enviar_png_a_maestra, es_esclava
+
+        if not es_esclava():
             return True, ""
-
-        db_host = str(
-            config.get("preferred_master_ip")
-            or config.get("carteleria_master_ip")
-            or config.get("db_host")
-            or ""
-        ).strip()
-        if not db_host or db_host.lower() in ("127.0.0.1", "localhost"):
-            return True, ""
-
-        from src.carteleria.assets_paths import ruta_archivo_icono
-        fpath = ruta_archivo_icono(filename)
-        if not fpath or not os.path.exists(fpath):
-            return False, "No se encontró el PNG local para enviar."
-
-        import requests
-
-        urls = [
-            f"http://{db_host}:8000/api/carteleria/upload_png",
-            f"http://{db_host}:5000/upload_carteleria_png",
-            f"http://{db_host}:5055/upload_carteleria_png",
-        ]
-        last_err = ""
-        last_err_8000 = ""
-        for url in urls:
-            try:
-                with open(fpath, "rb") as f:
-                    res = requests.post(
-                        url,
-                        files={"file": (filename, f, "image/png")},
-                        timeout=8,
-                    )
-                if res.status_code == 200:
-                    print(f"[Cartelería] PNG {filename} enviado a maestra {url}")
-                    return True, f"PNG copiado a la maestra ({db_host})."
-                last_err = f"HTTP {res.status_code} en {url}"
-                if "8000" in url:
-                    last_err_8000 = last_err
-            except Exception as e:
-                last_err = str(e)
-                if "8000" in url:
-                    last_err_8000 = last_err
-                continue
-                
-        err_mostrar = last_err_8000 if last_err_8000 else last_err
-        return (
-            False,
-            f"No se pudo enviar el PNG a la maestra {db_host}.\n"
-            "Encendé esa PC y el Servidor de Tienda (puerto 8000).\n"
-            f"{err_mostrar}",
-        )
+        return enviar_png_a_maestra(filename)
 
     def _actualizar_preview(self, filename):
         self.lbl_preview_icono.setPixmap(QPixmap())

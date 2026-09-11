@@ -124,8 +124,10 @@ class CierreGlobalUI(QWidget):
         self.is_terminal = is_terminal
         self.parent_main = parent_main
         current = config.current_user or {}
-        self.user = current.get("username", "Admin")
-        self.rol = current.get("rol", "ADMIN").upper()
+        self.user = (
+            str(current.get("username") or current.get("user") or "").strip() or "cajero"
+        )
+        self.rol = str(current.get("rol") or current.get("role") or "cajero").upper()
         self.modo_vista = "cajero"
         self.datos_actuales = {}
         self._setup_ui()
@@ -442,8 +444,15 @@ class CierreGlobalUI(QWidget):
 
     def _caja_id_para_corte(self):
         if self.modo_vista == "cajero" or self.is_terminal:
-            return config.get("caja_id", 1)
-        return self.combo_caja.currentData()
+            raw = config.get("caja_id", 1)
+        else:
+            raw = self.combo_caja.currentData()
+        if raw is None:
+            return None
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
 
     def _cargar_historial_cortes(self, fecha_str: str):
         """Tabla de cortes ya hechos ese día (solo admin/jefe)."""
@@ -727,5 +736,11 @@ class CierreGlobalUI(QWidget):
                     except Exception:
                         pass
                     self._load_data()
+            else:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    "El corte no se registró en la base de datos.",
+                )
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))

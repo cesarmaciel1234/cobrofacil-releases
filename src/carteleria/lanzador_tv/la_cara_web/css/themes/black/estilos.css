@@ -199,9 +199,8 @@ body[data-theme="black"] .price-row.is-featured {
 }
 
 body[data-theme="black"] .price-row__was {
-    color: #EF4444;
-    -webkit-text-fill-color: #EF4444;
-    text-decoration-color: #EF4444;
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
 }
 
 body[data-theme="black"] .price-row__kicker { color: #FFDF00; }
@@ -386,8 +385,13 @@ body[data-theme="black"] .xsell-item__price {
 }
 
 body[data-theme="black"] .xsell-item__was {
-    color: #EF4444;
-    -webkit-text-fill-color: #EF4444;
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+    font-size: clamp(1.15rem, 1.8cqw, 1.55rem);
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: visible;
 }
 
 body[data-theme="black"] .xsell-item__rule {
@@ -585,9 +589,8 @@ body[data-theme="black"] .tv-card__now-box .tv-card__was,
 body[data-theme="black"] .tv-card__now-box .xsell-item__was,
 body[data-theme="black"] .tv-card__now-box .price-row__was {
     background: transparent !important;
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
-    text-decoration-color: #111111 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
 }
 
 
@@ -657,9 +660,11 @@ body[data-theme="black"] .xsell-item__price {
 }
 
 body[data-theme="black"] .xsell-item .tv-card__now-box .xsell-item__was {
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
-    text-decoration-color: #111111 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: clamp(1.45rem, 2.4cqw, 2.1rem) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
 }
 
 
@@ -679,10 +684,11 @@ body[data-theme="black"] .flash-offer .tv-card__now {
 
 body[data-theme="black"] .flash-offer .tv-card__now-box .tv-card__was {
     background: transparent !important;
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
-    text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: clamp(1.6rem, 2.8cqw, 2.35rem) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
 }
 
 
@@ -860,3 +866,42 @@ body[data-theme="black"] .hero-section .deal-proof {
     font-size: clamp(0.72rem, 0.98cqw, 0.88rem);
     font-weight: 800;
     letter-spacing: 0.04em;}
+
+/* Fondo PNG: marfil premium. */
+body[data-theme="black"] .deal-stage,
+body[data-theme="black"] .hero-section .deal-stage,
+body[data-theme="black"] .deal-stage[data-tone="aves"],
+body[data-theme="black"] .deal-stage[data-tone="cerdo"],
+body[data-theme="black"] .deal-stage[data-tone="almacen"],
+body[data-theme="black"] .asian-rank-card .rank-stage {
+    background: radial-gradient(circle at 50% 18%, #FFFBF4 0%, #F4E4C4 52%, #E5C99A 100%) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(212, 175, 55, 0.45),
+        inset 0 -8px 16px rgba(180, 120, 40, 0.12) !important;
+}
+
+body[data-theme="black"] .deal-stage__letter,
+body[data-theme="black"] .hero-section .deal-stage__letter {
+    color: rgba(92, 58, 18, 0.28) !important;
+    text-shadow: none !important;
+}
+
+/* El PNG trae fondo negro pintado: se recorta para que se vea el marfil. */
+body[data-theme="black"] .deal-stage__img,
+body[data-theme="black"] .hero-section .deal-stage__img,
+body[data-theme="black"] .rank-stage .deal-stage__img {
+    mix-blend-mode: screen !important;
+    filter: contrast(1.2) saturate(1.22) drop-shadow(0 8px 12px rgba(80, 40, 10, 0.28)) !important;
+}
+
+body[data-theme="black"] .tv-4 .asian-flash-original,
+body[data-theme="black"] .tv-4 .tv-card__now-box .asian-flash-original {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    text-decoration-color: #FF4D00 !important;
+}
+
+body[data-theme="black"] .tv-4 .asian-flash-condition {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}

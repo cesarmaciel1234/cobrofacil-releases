@@ -26,7 +26,7 @@ class MotorBusquedaInventario(QThread):
         
     def run(self):
         try:
-            filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=50000)
+            filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=8000)
             sin_stock = sum(1 for r in filas if (r.get('stock') or 0.0) <= 0)
             self.busqueda_terminada.emit(filas, sin_stock)
         except Exception as e:
@@ -44,6 +44,7 @@ class CatalogoProductos(QWidget):
         
         self.motor_busqueda = MotorBusquedaInventario(self)
         self.motor_busqueda.busqueda_terminada.connect(self._on_busqueda_terminada)
+        self._busqueda_pendiente = None
         
         self._setup_ui()
         self._cargar_deptos()
@@ -105,9 +106,25 @@ class CatalogoProductos(QWidget):
         # La casilla de urgencia de stock tampoco la puede cambiar un cajero
         self.filtros.chk_urgencia.setEnabled(not es_lectura_solamente)
 
-    def _apply_catalogo_theme(self):
-        # Colores del tema activo
-        is_dark = theme_manager.is_dark()
+    def _busy_widget(self, w, texto):
+        if w is None:
+            return
+        w.setEnabled(False)
+        if hasattr(w, "setText") and hasattr(w, "text"):
+            w.setProperty("_old_busy_text", w.text())
+            w.setText(texto)
+
+    def _unbusy_widget(self, w):
+        if w is None:
+            return
+        w.setEnabled(True)
+        old = w.property("_old_busy_text") if hasattr(w, "property") else None
+        if old and hasattr(w, "setText"):
+            w.setText(old)
+
+    def _apply_catalogo_theme(self, forzar_claro=False):
+        # Backoffice (admin / cartelería) siempre claro. El cajero no usa este panel.
+        is_dark = False
         bg = "#1E293B" if is_dark else "#FFFFFF"
         text = "#F8FAFC" if is_dark else "#0F172A"
         border = "#334155" if is_dark else "#E2E8F0"
@@ -159,7 +176,7 @@ class CatalogoProductos(QWidget):
         super().showEvent(event)
         self.filtros.set_chk_urgencia_state(bool(config.get("opt_stock_negativo", False)))
         self._sync_urgencia_banner()
-        self.aplicar_permisos_perfil()
+        self.aplicar_permisos_perfil(self.user_role)
 
     def _cargar_deptos(self):
         try:
@@ -173,18 +190,27 @@ class CatalogoProductos(QWidget):
     def cargar_datos(self):
         buscar = self.filtros.obtener_texto_buscar()
         depto = self.filtros.obtener_departamento_seleccionado()
-
-        self.pie.lbl_total.setText("🔄 Buscando productos... Por favor espera.")
+        if self.motor_busqueda.isRunning():
+            self._busqueda_pendiente = (buscar, depto)
+            return
+        self.pie.lbl_total.setText("🔄 Buscando productos...")
         self.pie.lbl_stock0.setText("")
-        self.tabla.setRowCount(0)
-        
         self.motor_busqueda.setup(buscar, depto)
         self.motor_busqueda.start()
 
     def _on_busqueda_terminada(self, filas, sin_stock):
+        pend = self._busqueda_pendiente
+        self._busqueda_pendiente = None
+        if pend:
+            self.motor_busqueda.setup(*pend)
+            self.motor_busqueda.start()
+            return
         self.all_rows = filas
         self.tabla.set_datos(filas)
+        extra = " (máx. 8000)" if len(filas) >= 8000 else ""
         self.pie.actualizar_totales(len(filas), sin_stock)
+        if extra:
+            self.pie.lbl_total.setText(self.pie.lbl_total.text() + extra)
 
     def _on_seleccion_cambiada(self, cantidad):
         self.pie.actualizar_seleccion(cantidad)
@@ -265,16 +291,11 @@ class CatalogoProductos(QWidget):
                 self.finished.emit(ok, msg)
                 
         self._btn_sender = self.sender()
-        if self._btn_sender:
-            self._old_text = self._btn_sender.text()
-            self._btn_sender.setText("⏳ CARGANDO...")
-            self._btn_sender.setEnabled(False)
-            
+        self._busy_widget(self._btn_sender, "⏳ CARGANDO...")
+
         self._worker_exp = WorkerExport(filepath)
         def on_fin(ok, msg):
-            if self._btn_sender:
-                self._btn_sender.setText(self._old_text)
-                self._btn_sender.setEnabled(True)
+            self._unbusy_widget(self._btn_sender)
             (QMessageBox.information if ok else QMessageBox.critical)(
                 self, "Exportación" + (" exitosa" if ok else " fallida"), msg)
         self._worker_exp.finished.connect(on_fin)
@@ -300,16 +321,11 @@ class CatalogoProductos(QWidget):
                 self.finished.emit(ok, msg)
 
         self._btn_sender_pre = self.sender()
-        if self._btn_sender_pre:
-            self._old_text_pre = self._btn_sender_pre.text()
-            self._btn_sender_pre.setText("⏳ DESCARGANDO...")
-            self._btn_sender_pre.setEnabled(False)
+        self._busy_widget(self._btn_sender_pre, "⏳ DESCARGANDO...")
 
         self._worker_pre = WorkerPrecarga()
         def on_fin_pre(ok, msg):
-            if self._btn_sender_pre:
-                self._btn_sender_pre.setText(self._old_text_pre)
-                self._btn_sender_pre.setEnabled(True)
+            self._unbusy_widget(self._btn_sender_pre)
             (QMessageBox.information if ok else QMessageBox.critical)(
                 self, "Precarga Nube" + (" completada" if ok else " fallida"), msg)
             if ok:
@@ -358,16 +374,11 @@ class CatalogoProductos(QWidget):
                 self.finished.emit(ok, msg)
 
         self._btn_sender_imp = self.sender()
-        if self._btn_sender_imp:
-            self._old_text_imp = self._btn_sender_imp.text()
-            self._btn_sender_imp.setText("⏳ CARGANDO...")
-            self._btn_sender_imp.setEnabled(False)
+        self._busy_widget(self._btn_sender_imp, "⏳ CARGANDO...")
 
         self._worker_imp = WorkerImport(filepath)
         def on_fin_imp(ok, msg):
-            if self._btn_sender_imp:
-                self._btn_sender_imp.setText(self._old_text_imp)
-                self._btn_sender_imp.setEnabled(True)
+            self._unbusy_widget(self._btn_sender_imp)
             (QMessageBox.information if ok else QMessageBox.critical)(
                 self, "Importación" + (" completada" if ok else " fallida"), msg)
             if ok:

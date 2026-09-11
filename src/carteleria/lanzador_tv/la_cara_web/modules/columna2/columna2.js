@@ -1,8 +1,9 @@
-/* Columna 2: precios por departamento + publicidad cada 4 filas. */
+﻿/* Columna 2: precios por departamento + publicidad cada 2 filas. */
 
 import { escapeHtml } from "../shared/plata_y_texto.js";
 import { htmlFilaPrecio } from "./tarjetas/fila_precio.js";
 import { htmlTarjetaPublicidad } from "./tarjetas/tarjeta_publicidad.js";
+import { alarmaPocosAds, poolAds, PUBLICIDAD_CADA, siguienteAd, tocaPublicidad } from "../shared/publicidad_tv.js";
 
 const ORDEN_DEPTO = ["CARNE", "CARNES", "AVES", "CERDO", "EMBUTIDOS", "EMBUTIDO", "FIAMBRES", "ALMACEN"];
 
@@ -16,7 +17,6 @@ function nombreDepto(item) {
 function agruparPorDepartamento(productos) {
     const grupos = new Map();
     for (const item of productos) {
-        if (item.es_publicidad) continue;
         const depto = nombreDepto(item);
         if (!grupos.has(depto)) grupos.set(depto, []);
         grupos.get(depto).push(item);
@@ -38,23 +38,9 @@ function htmlDepartamento(nombre) {
     return `<div class="price-dept">${escapeHtml(nombre)}</div>`;
 }
 
-function nombreClave(item) {
-    return String(item?.nombre || "").toLowerCase().trim();
-}
-
-function siguienteAd(ads, adIndex, evitar) {
-    const evitarClave = nombreClave(evitar);
-    for (let k = 0; k < ads.length; k += 1) {
-        const ad = ads[(adIndex + k) % ads.length];
-        if (nombreClave(ad) !== evitarClave) {
-            return { ad, next: adIndex + k + 1 };
-        }
-    }
-    return { ad: ads[adIndex % ads.length], next: adIndex + 1 };
-}
-
 function armarCiclo(productos) {
-    const ads = productos.filter((item) => item.es_publicidad);
+    const ads = poolAds(productos);
+    const alarma = alarmaPocosAds(productos);
     let adIndex = 0;
     let enBloque = 0;
     const partes = [];
@@ -67,18 +53,18 @@ function armarCiclo(productos) {
             if (vendido) ranking += 1;
             partes.push(htmlFilaPrecio(item, vendido ? ranking : 0, depto));
             enBloque += 1;
-            // Mostrar publicidad cada 2 filas para mayor impacto visual
-            if (enBloque % 2 === 0 && ads.length) {
+            if (tocaPublicidad(enBloque) && ads.length) {
                 const { ad, next } = siguienteAd(ads, adIndex, item);
-                partes.push(htmlTarjetaPublicidad(ad));
-                adIndex = next;
+                if (ad) {
+                    partes.push(htmlTarjetaPublicidad({ ...ad, alarma }));
+                    adIndex = next;
+                }
             }
         }
     }
-    // Asegurar que siempre haya al menos una publicidad si hay disponibles
-    if (ads.length && enBloque > 0 && enBloque < 2) {
+    if (ads.length && enBloque > 0 && enBloque < PUBLICIDAD_CADA) {
         const { ad } = siguienteAd(ads, 0, null);
-        partes.push(htmlTarjetaPublicidad(ad));
+        if (ad) partes.push(htmlTarjetaPublicidad({ ...ad, alarma }));
     }
     return partes.join("");
 }
@@ -86,11 +72,18 @@ function armarCiclo(productos) {
 let lastColumna2Html = "";
 
 export function renderColumna2(productos, root) {
+    if (!root) return;
     if (!productos || productos.length === 0) {
         root.innerHTML = '<p class="column-empty">Sin precios para mostrar.</p>';
+        lastColumna2Html = "";
         return;
     }
     const filas = armarCiclo(productos);
+    if (!filas) {
+        root.innerHTML = '<p class="column-empty">Sin precios para mostrar.</p>';
+        lastColumna2Html = "";
+        return;
+    }
     const filasCount = (filas.match(/price-row|price-dept|asian-billboard-card|price-ad/g) || []).length;
     const duracion = Math.max(45, Math.min(filasCount * 3.2, 420));
 
@@ -110,10 +103,13 @@ export function renderColumna2(productos, root) {
         root.innerHTML = newHtml;
         lastColumna2Html = newHtml;
     }
-    const track = root.querySelector(".price-track");
-    const cycle = root.querySelector(".price-cycle");
-    if (track && cycle) {
+    const medir = () => {
+        const track = root.querySelector(".price-track");
+        const cycle = root.querySelector(".price-cycle");
+        if (!track || !cycle) return;
         const h = cycle.scrollHeight || cycle.offsetHeight;
         if (h > 0) track.style.setProperty("--price-cycle-h", `${h}px`);
-    }
+    };
+    medir();
+    requestAnimationFrame(medir);
 }

@@ -1,7 +1,6 @@
-# Capa de compatibilidad: re-exporta desde la nueva ubicación en cerebro/
-# Esto garantiza que cualquier import antiguo siga funcionando sin romper nada.
-from src.motor_descuentos.cerebro.motor_ofertas import MotorOfertas
-from src.motor_descuentos.cerebro.motor_combos import MotorCombos
-from src.motor_descuentos.cerebro.motor_mayoreo import MotorMayoreo
+"""Motor de promociones — pirámide por módulo (hub → ofertas / combos / publicidad / imprenta / mayoreo)."""
+from src.motor_descuentos.ofertas.motor import MotorOfertas
+from src.motor_descuentos.combos.motor import MotorCombos
+from src.motor_descuentos.mayoreo.motor import MotorMayoreo
 
 __all__ = ["MotorOfertas", "MotorCombos", "MotorMayoreo"]

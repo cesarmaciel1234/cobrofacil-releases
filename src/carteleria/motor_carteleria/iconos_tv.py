@@ -204,6 +204,12 @@ def icono_filename(item, mapa_db=None):
     propio = _safe_filename(item.get("icono"))
     if propio and ruta_archivo_icono(propio):
         return propio
+    try:
+        from src.central_red_global.sync_tienda.rol import es_esclava
+        if es_esclava():
+            return propio or ""
+    except Exception:
+        pass
     por_nombre = _png_por_nombre(item.get("nombre"))
     if por_nombre:
         return por_nombre
@@ -222,9 +228,39 @@ def icono_filename(item, mapa_db=None):
     return propio or fallback
 
 
+def png_vitrina_path(item):
+    """Ruta del PNG de producto (campo icono o match por nombre). Vacío si no hay foto propia."""
+    from src.carteleria.assets_paths import ruta_archivo_icono
+    propio = _safe_filename((item or {}).get("icono"))
+    if propio:
+        hit = ruta_archivo_icono(propio)
+        if hit:
+            return hit
+    try:
+        from src.central_red_global.sync_tienda.rol import es_esclava
+        if es_esclava():
+            return ""
+    except Exception:
+        pass
+    fname = _png_por_nombre((item or {}).get("nombre"))
+    if fname:
+        return ruta_archivo_icono(fname) or ""
+    return ""
+
+
 def icono_url(item, mapa_db=None):
     name = icono_filename(item, mapa_db)
-    return f"/iconos/{name}" if name else ""
+    if not name:
+        return ""
+    from src.carteleria.assets_paths import ruta_archivo_icono
+    stamp = ""
+    path = ruta_archivo_icono(name)
+    if path:
+        try:
+            stamp = f"?v={int(os.path.getmtime(path))}"
+        except OSError:
+            stamp = ""
+    return f"/iconos/{name}{stamp}"
 
 
 def enriquecer_iconos(productos):
@@ -233,7 +269,7 @@ def enriquecer_iconos(productos):
         name = icono_filename(item, mapa)
         if not name:
             continue
-        item["icono_url"] = f"/iconos/{name}"
+        item["icono_url"] = icono_url(item, mapa)
         if not str(item.get("icono") or "").strip() and name not in (PNG_SISTEMA,) and name not in ICONO_POR_DEPTO.values():
             item["icono"] = name
     global _asocio_auto_ts
@@ -241,6 +277,9 @@ def enriquecer_iconos(productos):
     if ahora - _asocio_auto_ts > 45:
         _asocio_auto_ts = ahora
         try:
+            from src.central_red_global.sync_tienda.rol import es_esclava
+            if es_esclava():
+                return productos
             from src.motor_inventario.base.productos_db import asociar_png_por_nombre
             asociar_png_por_nombre()
         except Exception as exc:

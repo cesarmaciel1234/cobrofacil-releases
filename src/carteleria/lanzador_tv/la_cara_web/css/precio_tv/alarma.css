@@ -1,0 +1,24 @@
+/* Alarma: 1 o 2 publicidades marcadas — destello naranja ↔ amarillo. */
+
+@keyframes ad-alarm-borde {
+    0%, 49% { border-color: #FF4D00; }
+    50%, 100% { border-color: #FFE500; }
+}
+
+body .hero-section .oferta-card.is-ad-alarm,
+body .tv-panel .price-row.price-ad.is-ad-alarm {
+    border: 4px solid #FF4D00 !important;
+    animation: ad-alarm-borde 0.85s steps(1, end) infinite;
+    box-shadow: none !important;
+}
+
+body .tv-panel .price-row.price-ad.is-ad-alarm {
+    border-left: 4px solid #FF4D00 !important;
+    overflow: hidden !important;
+}
+
+/* La copia del ticker no anima: evita congelar la TV. */
+body .price-cycle[aria-hidden] .price-ad.is-ad-alarm {
+    animation: none !important;
+    border-color: #FF4D00 !important;
+}

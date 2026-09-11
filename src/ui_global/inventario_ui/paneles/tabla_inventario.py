@@ -4,6 +4,15 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 from src.utils.theme_manager import theme_manager
 
+
+def _n(v, d=0.0):
+    try:
+        if v is None:
+            return d
+        return float(v)
+    except (TypeError, ValueError):
+        return d
+
 class TablaInventario(QTableWidget):
     producto_doble_clic = pyqtSignal(str) # Emite el ID del producto
     seleccion_cambiada = pyqtSignal(int)  # Emite la cantidad de filas seleccionadas
@@ -75,7 +84,7 @@ class TablaInventario(QTableWidget):
             for i in range(inicio, fin):
                 r = self.all_rows[i]
                 dep = r.get('departamento') or ''
-                stock = r.get('stock') or 0.0
+                stock = _n(r.get('stock'))
                 uni = (r.get('unidad') or 'UN').upper()
                 tipo = "KILO" if uni == 'KG' else "UNIDAD"
                 
@@ -109,16 +118,16 @@ class TablaInventario(QTableWidget):
                     (r.get('nombre') or '',  Qt.AlignmentFlag.AlignLeft),
                     (dep,                    Qt.AlignmentFlag.AlignLeft),
                     (f"{depto_iva:.1f}%",    Qt.AlignmentFlag.AlignCenter),
-                    (f"${r.get('costo', 0.0):.2f}", Qt.AlignmentFlag.AlignRight),
-                    (f"${r.get('precio', 0.0):.2f}", Qt.AlignmentFlag.AlignRight),
-                    (f"{r.get('cant_mayoreo', 0.0):g}" if r.get('cant_mayoreo', 0.0) > 0 else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${r.get('precio_mayoreo', 0.0):.2f}" if r.get('precio_mayoreo', 0.0) > 0 else "-", Qt.AlignmentFlag.AlignRight),
-                    (f"{r.get('cant_oferta', 0.0):g} x ${r.get('precio_oferta', 0.0):.2f}" if r.get('precio_oferta', 0.0) else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${r.get('precio_oferta_relampago', 0.0):.2f}" if r.get('precio_oferta_relampago', 0.0) else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${r.get('precio_oferta_promedio', 0.0):.2f}" if r.get('precio_oferta_promedio', 0.0) else "-", Qt.AlignmentFlag.AlignCenter),
+                    (f"${_n(r.get('costo')):.2f}", Qt.AlignmentFlag.AlignRight),
+                    (f"${_n(r.get('precio')):.2f}", Qt.AlignmentFlag.AlignRight),
+                    (f"{_n(r.get('cant_mayoreo')):g}" if _n(r.get('cant_mayoreo')) > 0 else "-", Qt.AlignmentFlag.AlignCenter),
+                    (f"${_n(r.get('precio_mayoreo')):.2f}" if _n(r.get('precio_mayoreo')) > 0 else "-", Qt.AlignmentFlag.AlignRight),
+                    (f"{_n(r.get('cant_oferta')):g} x ${_n(r.get('precio_oferta')):.2f}" if _n(r.get('precio_oferta')) else "-", Qt.AlignmentFlag.AlignCenter),
+                    (f"${_n(r.get('precio_oferta_relampago')):.2f}" if _n(r.get('precio_oferta_relampago')) else "-", Qt.AlignmentFlag.AlignCenter),
+                    (f"${_n(r.get('precio_oferta_promedio')):.2f}" if _n(r.get('precio_oferta_promedio')) else "-", Qt.AlignmentFlag.AlignCenter),
                     (f"{stock:.2f}",         Qt.AlignmentFlag.AlignRight),
-                    (f"{r.get('stock_minimo', 0.0) or 0:.2f}", Qt.AlignmentFlag.AlignCenter),
-                    (f"{r.get('stock_maximo', 0.0) or 0:.2f}", Qt.AlignmentFlag.AlignCenter),
+                    (f"{_n(r.get('stock_minimo')):.2f}", Qt.AlignmentFlag.AlignCenter),
+                    (f"{_n(r.get('stock_maximo')):.2f}", Qt.AlignmentFlag.AlignCenter),
                     (tipo,                   Qt.AlignmentFlag.AlignCenter),
                 ]
 

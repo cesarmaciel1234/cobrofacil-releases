@@ -8,41 +8,23 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from src.logger import logger
 from src.base_de_datos.database import db_manager
 from src.config import config
+from src.central_red_global.sync_tienda.maestra.http import manejar_get, manejar_post, payload_ranking
+
+
+def _payload_publicidad():
+    try:
+        from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+
+        motor_publicidad.cargar_configuracion(forzar=True)
+        return motor_publicidad.as_dict()
+    except Exception:
+        return {"promocionados": [], "ids": []}
 
 API_PORT = 8000
 UDP_PORT = 37020
 
 lan_exit_event = threading.Event()
 _http_server_instance = None
-
-
-def _sanitizar_nombre_png(nombre: str) -> str:
-    raw = os.path.basename(str(nombre or "producto.png")).strip()
-    for ch in '/\\:*?"<>|':
-        raw = raw.replace(ch, "")
-    raw = raw.replace(" ", "_").strip("._") or "producto"
-    if not raw.lower().endswith(".png"):
-        raw += ".png"
-    return raw
-
-
-def _extraer_png_multipart(content_type: str, body: bytes):
-    if "multipart/form-data" not in (content_type or "").lower():
-        return None, None
-    import email
-    wrapped = (
-        f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode("utf-8")
-        + body
-    )
-    msg = email.message_from_bytes(wrapped)
-    for part in msg.walk():
-        name = part.get_filename()
-        if not name:
-            continue
-        payload = part.get_payload(decode=True)
-        if payload:
-            return name, payload
-    return None, None
 
 
 def stop_lan_server():
@@ -70,36 +52,9 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False, default=_json_safe).encode('utf-8'))
 
-    def _recibir_png_carteleria(self):
-        """Recibe un PNG de una esclava y lo guarda en Catalogos/png_productos."""
-        try:
-            length = int(self.headers.get("Content-Length", 0) or 0)
-            if length <= 0 or length > 12 * 1024 * 1024:
-                self._send_response(400, {"error": "archivo vacío o demasiado grande"})
-                return
-            body = self.rfile.read(length)
-            ctype = self.headers.get("Content-Type", "")
-            filename, payload = _extraer_png_multipart(ctype, body)
-            if not payload:
-                if "multipart" in (ctype or "").lower():
-                    self._send_response(400, {"error": "no se encontró el archivo PNG"})
-                    return
-                filename = (self.headers.get("X-Filename") or "producto.png").strip()
-                payload = body
-            filename = _sanitizar_nombre_png(filename)
-            from src.carteleria.assets_paths import png_productos_dir
-            dest_dir = png_productos_dir()
-            os.makedirs(dest_dir, exist_ok=True)
-            dest = os.path.join(dest_dir, filename)
-            with open(dest, "wb") as fh:
-                fh.write(payload)
-            logger.info("PNG cartelería recibido de esclava: %s (%s bytes)", filename, len(payload))
-            self._send_response(200, {"success": True, "filename": filename})
-        except Exception as e:
-            logger.error("upload PNG cartelería: %s", e)
-            self._send_response(500, {"error": str(e)})
-
     def do_POST(self):
+        if manejar_post(self, self.path):
+            return
         if self.path == '/api/guardar_venta':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
@@ -197,12 +152,12 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 self._send_response(500, {"error": str(e)})
 
-        elif self.path in ("/api/carteleria/upload_png", "/upload_carteleria_png"):
-            self._recibir_png_carteleria()
         else:
             self._send_response(404, {"status": "not_found"})
 
     def do_GET(self):
+        if manejar_get(self, self.path):
+            return
         if self.path == '/api/ping':
             mode = "MAESTRA" if getattr(db_manager, "is_master", True) else "ESCLAVA"
             self._send_response(200, {"status": "ok", "mode": mode, "hostname": socket.gethostname()})
@@ -271,7 +226,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 precios_query = (
                     "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, "
                     "precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, unidad, "
-                    "es_pesable, departamento, icono FROM productos WHERE precio > 0 "
+                    "es_pesable, departamento, icono, id FROM productos WHERE precio > 0 "
                     "AND LOWER(nombre) NOT LIKE '%articulo comun%' "
                     "AND LOWER(nombre) NOT LIKE '%venta libre%' "
                     "ORDER BY categoria"
@@ -342,7 +297,9 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     },
                     "sos": oferta_sos,
                     "precios": rows_precios,
-                    "top10": top_dict
+                    "top10": top_dict,
+                    "ranking": payload_ranking(),
+                    "publicidad": _payload_publicidad(),
                 }
                 
                 self._send_response(200, response_data)

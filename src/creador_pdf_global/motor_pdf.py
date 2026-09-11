@@ -1040,14 +1040,47 @@ class EtiquetaRenderer:
         self.limpiar_tmp()
         return pdf_path
 
-    def generar_pdf_catalogo_inventario(self, lote_productos, titulo_folleto="CATÁLOGO DE PRECIOS", negocio="TPV PRO", diseno_tipo="grilla"):
-        """
-        Genera un catálogo en PDF en tamaño A4 con los productos especificados.
-        Sostiene dos diseños: 'grilla' (tarjetas elegantes) o 'lista' (tabla compacta).
-        """
+    def _file_url(self, path):
+        if not path or not os.path.isfile(str(path)):
+            return ""
+        return "file:///" + os.path.abspath(path).replace("\\", "/")
+
+    def _precio_txt(self, val):
+        try:
+            n = float(str(val).replace(",", ".").replace("$", "").strip())
+        except (TypeError, ValueError):
+            n = 0.0
+        return f"{n:.2f}", n
+
+    def _html_foto(self, png_path, alto_mm="38"):
+        url = self._file_url(png_path)
+        if url:
+            return (
+                f'<div style="height:{alto_mm}mm; text-align:center; background:#F8FAFC; '
+                f'border-radius:10px; border:1px solid #E2E8F0; overflow:hidden;">'
+                f'<img src="{url}" style="max-height:{alto_mm}mm; max-width:100%;" />'
+                f"</div>"
+            )
+        return (
+            f'<div style="height:{alto_mm}mm; background:#F1F5F9; border:1px dashed #CBD5E1; '
+            f'border-radius:10px; color:#94A3B8; font-size:9pt; font-weight:700; '
+            f'text-align:center; line-height:{alto_mm}mm;">SIN FOTO</div>'
+        )
+
+    def generar_pdf_catalogo_inventario(
+        self,
+        lote_productos,
+        titulo_folleto="CATÁLOGO",
+        negocio="TPV PRO",
+        diseno_tipo="clientes",
+        contacto="",
+        nota="",
+    ):
+        """Catálogo A4 para enviar a clientes, con PNG de vitrina cuando existe."""
         base_dir = os.path.join(self.base_path, "Catalogos")
         os.makedirs(base_dir, exist_ok=True)
-        pdf_path = os.path.join(base_dir, "Catalogo_Productos.pdf")
+        stamp = datetime.now().strftime("%Y%m%d_%H%M")
+        pdf_path = os.path.join(base_dir, f"Catalogo_Clientes_{stamp}.pdf")
         
         printer = QPrinter(printer_high_resolution())
         printer.setOutputFormat(printer_pdf_format())
@@ -1063,147 +1096,146 @@ class EtiquetaRenderer:
         doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
-        
+        negocio_e = html.escape(str(negocio or "").upper())
+        titulo_e = html.escape(str(titulo_folleto or "CATÁLOGO"))
+        contacto_e = html.escape(str(contacto or "").strip())
+        nota_e = html.escape(str(nota or "").strip())
+        sub_contacto = f" &bull; {contacto_e}" if contacto_e else ""
+        pie_nota = nota_e or "Precios de mostrador. Consultá disponibilidad."
+
+        def _bloque_precio(item):
+            precio_txt, precio_n = self._precio_txt(item.get("precio"))
+            oferta_txt, oferta_n = self._precio_txt(item.get("precio_oferta"))
+            unidad = html.escape(str(item.get("unidad") or "UN").upper())
+            if oferta_n > 0 and (precio_n <= 0 or oferta_n < precio_n):
+                return (
+                    f'<div style="font-size:9pt; color:#94A3B8; text-decoration:line-through;">${precio_txt}</div>'
+                    f'<div style="font-size:18pt; font-weight:900; color:#DC2626; letter-spacing:-0.5px;">${oferta_txt}</div>'
+                    f'<div style="font-size:8pt; font-weight:700; color:#64748B;">POR {unidad}</div>'
+                )
+            entero, _, cent = precio_txt.partition(".")
+            return (
+                f'<div style="color:#0F172A;">'
+                f'<span style="font-size:12pt; font-weight:800; vertical-align:top;">$</span>'
+                f'<span style="font-size:22pt; font-weight:900;">{entero}</span>'
+                f'<span style="font-size:11pt; font-weight:700;">.{cent or "00"}</span>'
+                f'</div>'
+                f'<div style="font-size:8pt; font-weight:700; color:#64748B;">POR {unidad}</div>'
+            )
+
+        def _header(chunk_idx, total):
+            return f"""
+                <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+                  <tr>
+                    <td style="background:#0F172A; padding:16px 18px; border-radius:12px;">
+                      <div style="font-size:18pt; font-weight:900; color:#FFFFFF; letter-spacing:1.5px;">{titulo_e}</div>
+                      <div style="height:3px; width:72px; background:#C9A227; margin:8px 0;"></div>
+                      <div style="font-size:10pt; color:#E8D5A3; font-weight:700; margin-top:4px;">
+                        {negocio_e} &bull; {fecha}{sub_contacto}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+            """
+
+        def _footer(chunk_idx, total):
+            return f"""
+                <div style="text-align:center; color:#64748B; font-size:8.5pt; font-weight:700; margin-top:8px;
+                     border-top:1px solid #E2E8F0; padding-top:8px;">
+                  {pie_nota} &bull; PÁGINA {chunk_idx + 1} DE {total}
+                </div>
+            """
+
         html_pages = []
-        
-        if diseno_tipo == "grilla":
+        usar_fotos = diseno_tipo != "lista"
+        if usar_fotos:
             items_per_page = 6
             chunks = [lote_productos[i:i + items_per_page] for i in range(0, len(lote_productos), items_per_page)]
-            
+            total = max(len(chunks), 1)
             for chunk_idx, chunk in enumerate(chunks):
-                is_last_page = (chunk_idx == len(chunks) - 1)
-                page_break = "page-break-after: always;" if not is_last_page else ""
-                
+                page_break = "page-break-after: always;" if chunk_idx < total - 1 else ""
                 rows_html = ""
                 for row_idx in range(0, len(chunk), 2):
                     row_items = chunk[row_idx:row_idx + 2]
                     cols_html = ""
                     for item in row_items:
-                        nombre = html.escape(str(item.get("nombre", "")).upper())
-                        precio_reg = f"{float(item.get('precio', 0)):.2f}"
-                        unidad = html.escape(str(item.get("unidad", "UN")).upper())
-                        depto = html.escape(str(item.get("departamento", "")).upper())
-                        
-                        entero = precio_reg.split('.')[0]
-                        centavos = '.' + precio_reg.split('.')[1] if '.' in precio_reg else '.00'
-                        
-                        depto_badge = f"""
-                        <div style="font-size: 9pt; font-weight: 800; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 5px; margin-top: 8px; text-transform: uppercase;">
-                            {depto} - POR {unidad}
-                        </div>
-                        """ if depto else f"""
-                        <div style="font-size: 9pt; font-weight: 800; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 5px; margin-top: 8px; text-transform: uppercase;">
-                            POR {unidad}
-                        </div>
-                        """
-
+                        nombre = html.escape(str(item.get("nombre") or "").upper())
+                        depto = html.escape(str(item.get("departamento") or "").upper())
+                        foto = self._html_foto(item.get("png_path"))
+                        badge = (
+                            f'<div style="font-size:8pt; font-weight:800; color:#1D4ED8; background:#EFF6FF; '
+                            f'border-radius:999px; padding:3px 8px; display:inline-block; margin-bottom:6px;">{depto}</div>'
+                            if depto else ""
+                        )
                         cols_html += f"""
-                        <td style="width: 50%; padding: 8px; vertical-align: top;">
-                            <div style="border: 2px solid #fecaca; border-radius: 12px; background: #fef2f2; padding: 16px; text-align: center; font-family: Arial; min-height: 60mm; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                                <div style="color: #ef4444; font-weight: 900; font-size: 10pt; padding: 4px 12px; display: inline-block; margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase;">🔥 OFERTA ESPECIAL</div>
-                                <div style="font-size: 12pt; font-weight: 900; color: #0f172a; height: 10mm; overflow: hidden; margin-bottom: 6px; line-height: 1.2; text-transform: uppercase;">
-                                    {nombre}
-                                </div>
-                                <div style="color: #ef4444; margin-top: 2px;">
-                                    <span style="font-size: 15pt; font-weight: bold; vertical-align: top;">$</span>
-                                    <span style="font-size: 32pt; font-weight: 900; letter-spacing: -1.5px; line-height: 0.9;">{entero}</span>
-                                    <span style="font-size: 16pt; font-weight: bold;">{centavos}</span>
-                                </div>
-                                {depto_badge}
-                            </div>
+                        <td style="width:50%; padding:7px; vertical-align:top;">
+                          <div style="border:1px solid #E2E8F0; border-radius:14px; background:#FFFFFF; padding:12px;">
+                            {foto}
+                            <div style="margin-top:8px;">{badge}</div>
+                            <div style="font-size:11pt; font-weight:800; color:#0F172A; min-height:12mm;">{nombre}</div>
+                            {_bloque_precio(item)}
+                          </div>
                         </td>
                         """
                     if len(row_items) == 1:
-                        cols_html += '<td style="width: 50%; padding: 8px;"></td>'
-                        
+                        cols_html += '<td style="width:50%; padding:7px;"></td>'
                     rows_html += f"<tr>{cols_html}</tr>"
-                
-                page_html = f"""
-                <div style="width: 100%; height: 98%; box-sizing: border-box; overflow: hidden; {page_break} font-family: Arial; padding: 10px; background: #ffffff;">
-                    <!-- HEADER DEL FOLLETO -->
-                    <div style="padding: 20px 20px 5px 20px; text-align: left;">
-                        <div style="font-size: 11pt; color: #38bdf8; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-                            🛍️ {titulo_folleto} &bull; {negocio.upper()} &bull; {fecha}
-                        </div>
-                    </div>
-                    
-                    <!-- CUADRÍCULA -->
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                        {rows_html}
-                    </table>
-                    
-                    <!-- FOOTER -->
-                    <div style="text-align: center; color: #64748b; font-size: 9pt; font-weight: bold; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; letter-spacing: 1.5px;">
-                        PÁGINA {chunk_idx + 1} DE {len(chunks)}
-                    </div>
+                html_pages.append(f"""
+                <div style="width:100%; box-sizing:border-box; {page_break} font-family:Arial; padding:8px; background:#F8FAFC;">
+                    {_header(chunk_idx, total)}
+                    <table style="width:100%; border-collapse:collapse;">{rows_html}</table>
+                    {_footer(chunk_idx, total)}
                 </div>
-                """
-                html_pages.append(page_html)
-                
-        else: # Diseño "lista"
-            items_per_page = 16
+                """)
+        else:
+            items_per_page = 12
             chunks = [lote_productos[i:i + items_per_page] for i in range(0, len(lote_productos), items_per_page)]
-            
+            total = max(len(chunks), 1)
             for chunk_idx, chunk in enumerate(chunks):
-                is_last_page = (chunk_idx == len(chunks) - 1)
-                page_break = "page-break-after: always;" if not is_last_page else ""
-                
+                page_break = "page-break-after: always;" if chunk_idx < total - 1 else ""
                 rows_html = ""
                 for idx, item in enumerate(chunk):
-                    bg_row = "#f8fafc" if idx % 2 == 1 else "#ffffff"
-                    nombre = html.escape(str(item.get("nombre", "")).upper())
-                    precio_reg = f"{float(item.get('precio', 0)):.2f}"
-                    unidad = html.escape(str(item.get("unidad", "UN")).upper())
-                    depto = html.escape(str(item.get("departamento", "")).upper())
-
+                    bg_row = "#F8FAFC" if idx % 2 else "#FFFFFF"
+                    nombre = html.escape(str(item.get("nombre") or "").upper())
+                    depto = html.escape(str(item.get("departamento") or "").upper())
+                    unidad = html.escape(str(item.get("unidad") or "UN").upper())
+                    precio_txt, precio_n = self._precio_txt(item.get("precio"))
+                    oferta_txt, oferta_n = self._precio_txt(item.get("precio_oferta"))
+                    if oferta_n > 0 and (precio_n <= 0 or oferta_n < precio_n):
+                        precio_html = (
+                            f'<span style="color:#94A3B8; text-decoration:line-through; font-size:9pt;">${precio_txt}</span> '
+                            f'<span style="color:#DC2626; font-weight:900; font-size:12pt;">${oferta_txt}</span>'
+                        )
+                    else:
+                        precio_html = f'<span style="font-weight:900; font-size:12pt; color:#0F172A;">${precio_txt}</span>'
+                    thumb = self._html_foto(item.get("png_path"), alto_mm="14")
                     rows_html += f"""
-                    <tr style="background: {bg_row};">
-                        <td style="padding: 12px 10px; font-weight: bold; font-size: 11pt; color: #0f172a; border-bottom: 1px solid #e2e8f0;">
-                            {nombre}
-                        </td>
-                        <td style="padding: 12px 10px; font-size: 11pt; color: #64748b; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: bold;">
-                            {depto}
-                        </td>
-                        <td style="padding: 12px 10px; font-size: 11pt; color: #64748b; text-align: center; border-bottom: 1px solid #e2e8f0; font-weight: bold;">
-                            {unidad}
-                        </td>
-                        <td style="padding: 12px 10px; font-weight: 900; font-size: 13pt; color: #ef4444; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                            ${precio_reg}
-                        </td>
+                    <tr style="background:{bg_row};">
+                      <td style="width:18mm; padding:6px; border-bottom:1px solid #E2E8F0;">{thumb}</td>
+                      <td style="padding:8px; font-weight:800; font-size:10pt; color:#0F172A; border-bottom:1px solid #E2E8F0;">{nombre}</td>
+                      <td style="padding:8px; font-size:9pt; color:#64748B; text-align:center; border-bottom:1px solid #E2E8F0;">{depto}</td>
+                      <td style="padding:8px; font-size:9pt; color:#64748B; text-align:center; border-bottom:1px solid #E2E8F0;">{unidad}</td>
+                      <td style="padding:8px; text-align:right; border-bottom:1px solid #E2E8F0;">{precio_html}</td>
                     </tr>
                     """
-                
-                page_html = f"""
-                <div style="width: 100%; height: 98%; box-sizing: border-box; overflow: hidden; {page_break} font-family: Arial; padding: 10px; background: #ffffff;">
-                    <!-- HEADER DEL FOLLETO -->
-                    <div style="padding: 20px 20px 5px 20px; text-align: left;">
-                        <div style="font-size: 11pt; color: #38bdf8; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-                            🛍️ {titulo_folleto} &bull; {negocio.upper()} &bull; {fecha}
-                        </div>
-                    </div>
-                    
-                    <!-- TABLA -->
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                        <thead>
-                            <tr style="background: #0f172a; color: white;">
-                                <th style="padding: 12px 10px; text-align: left; font-size: 10pt; font-weight: 800;">PRODUCTO / DESCRIPCIÓN</th>
-                                <th style="padding: 12px 10px; text-align: center; font-size: 10pt; font-weight: 800; width: 150px;">DEPARTAMENTO</th>
-                                <th style="padding: 12px 10px; text-align: center; font-size: 10pt; font-weight: 800; width: 100px;">UNIDAD</th>
-                                <th style="padding: 12px 10px; text-align: center; font-size: 10pt; font-weight: 800; width: 150px;">PRECIO UNITARIO</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows_html}
-                        </tbody>
+                html_pages.append(f"""
+                <div style="width:100%; box-sizing:border-box; {page_break} font-family:Arial; padding:8px; background:#FFFFFF;">
+                    {_header(chunk_idx, total)}
+                    <table style="width:100%; border-collapse:collapse;">
+                      <thead>
+                        <tr style="background:#0F172A; color:#FFFFFF;">
+                          <th style="padding:8px; width:18mm;"></th>
+                          <th style="padding:8px; text-align:left; font-size:9pt;">PRODUCTO</th>
+                          <th style="padding:8px; text-align:center; font-size:9pt;">RUBRO</th>
+                          <th style="padding:8px; text-align:center; font-size:9pt;">UNIDAD</th>
+                          <th style="padding:8px; text-align:right; font-size:9pt;">PRECIO</th>
+                        </tr>
+                      </thead>
+                      <tbody>{rows_html}</tbody>
                     </table>
-                    
-                    <!-- FOOTER -->
-                    <div style="text-align: center; color: #64748b; font-size: 9pt; font-weight: bold; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; letter-spacing: 1.5px;">
-                        PÁGINA {chunk_idx + 1} DE {len(chunks)}
-                    </div>
+                    {_footer(chunk_idx, total)}
                 </div>
-                """
-                html_pages.append(page_html)
+                """)
 
         full_html = f"<html><head><style>body {{ margin:0; padding:0; background:white; }}</style></head><body>{''.join(html_pages)}</body></html>"
         doc.setHtml(full_html)

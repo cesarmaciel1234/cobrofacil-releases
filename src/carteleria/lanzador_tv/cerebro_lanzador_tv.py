@@ -34,6 +34,59 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
 logger = logging.getLogger("CerebroLanzadorTV")
 
 
+def _ui_stamp_tv() -> str:
+    """Cambia al editar la cara web, para tirar el cache de Chrome aunque no suba la app."""
+    marca = os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web", "ui_build.txt")
+    try:
+        with open(marca, encoding="utf-8") as fh:
+            extra = fh.read().strip()
+    except OSError:
+        extra = ""
+    index = os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web", "index.html")
+    try:
+        mtime = str(int(os.path.getmtime(index)))
+    except OSError:
+        mtime = "0"
+    return f"{extra or '0'}-{mtime}"
+
+
+def _leer_config_carteleria() -> dict:
+    """Admin15 guarda en DB; config.json es respaldo. La TV debe usar la DB."""
+    from src.config import config
+
+    out = {
+        "business_name": config.get("business_name", "Cartelería"),
+        "phone": config.get("phone", ""),
+        "mensaje_zocalo": config.get("mensaje_zocalo", ""),
+        "carteleria_theme": config.get("carteleria_theme", "premium"),
+        "carteleria_perf": config.get("carteleria_perf", "auto"),
+    }
+    try:
+        from src.base_de_datos.database import db_manager
+
+        db_manager.execute_non_query(
+            "CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)"
+        )
+        rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
+        if rows:
+            raw = rows[0][0] if isinstance(rows[0], tuple) else rows[0].get("config_json")
+            cfg = json.loads(raw or "{}")
+            for key in out:
+                if key in cfg and cfg[key] not in (None, ""):
+                    out[key] = cfg[key]
+                elif key == "mensaje_zocalo" and "mensaje_zocalo" in cfg:
+                    out[key] = cfg.get("mensaje_zocalo") or ""
+                elif key == "phone" and "phone" in cfg:
+                    out[key] = cfg.get("phone") or ""
+    except Exception:
+        pass
+    tema = str(out.get("carteleria_theme") or "premium")
+    if tema in ("auto", "negro_temu"):
+        tema = "premium"
+    out["carteleria_theme"] = tema
+    return out
+
+
 def _app_version_tv() -> str:
     try:
         from src.updater.cerebro.engine import read_local_version
@@ -59,8 +112,8 @@ def _borrar_cache_chrome(root: str) -> None:
 
 
 def _perfil_kiosk_estable() -> str:
-    """Un perfil por versión de app: update = carpeta nueva, sin CSS viejo."""
-    ver = _app_version_tv().replace(" ", "")
+    """Un perfil por versión de app + stamp de la cara web (CSS/HTML)."""
+    ver = f"{_app_version_tv().replace(' ', '')}-{_ui_stamp_tv()}"
     root = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{ver}")
     os.makedirs(root, exist_ok=True)
     marca = os.path.join(root, "ui_version.txt")
@@ -160,8 +213,8 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         if rel == "index.html":
-            ver = _app_version_tv().encode("ascii", "ignore")
-            data = re.sub(br"\?v=tv\d+", b"?v=" + ver, data)
+            ver = _ui_stamp_tv().encode("ascii", "ignore")
+            data = re.sub(br"\?v=tv\d+", b"?v=tv" + ver, data)
         ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
@@ -200,14 +253,6 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         full = ruta_archivo_icono(name)
-        if not full:
-            try:
-                from src.carteleria.motor_carteleria.iconos_tv import _png_por_nombre
-                alt = _png_por_nombre(os.path.splitext(name)[0])
-                if alt and alt != name:
-                    full = ruta_archivo_icono(alt)
-            except Exception:
-                full = ""
         if not full:
             self.send_error(404)
             return
@@ -285,13 +330,14 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
 
+            cfg = _leer_config_carteleria()
             return {
                 "config": {
-                    "business_name": config.get("business_name", "Cartelería"),
-                    "phone": config.get("phone", ""),
-                    "mensaje_zocalo": config.get("mensaje_zocalo", ""),
+                    "business_name": cfg["business_name"],
+                    "phone": cfg["phone"],
+                    "mensaje_zocalo": cfg["mensaje_zocalo"],
                     "install_date": config.get("install_date", ""),
-                    "carteleria_theme": config.get("carteleria_theme", "premium"),
+                    "carteleria_theme": cfg["carteleria_theme"],
                     "carteleria_perf": perfil_activo(),
                 },
                 "precios": self._get_precios(),

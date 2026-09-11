@@ -81,6 +81,13 @@ class OfflineSync:
             time.sleep(15)
             loop_counter += 1
             
+            if loop_counter % 8 == 0 and not db_manager.is_master:
+                try:
+                    from src.central_red_global.sync_tienda import bajar_pngs_de_maestra
+
+                    bajar_pngs_de_maestra()
+                except Exception:
+                    pass
             # --- MODO OFFLINE EXTREMO: REPLICA DE PRODUCTOS ---
             # Cada ~5 minutos (20 iteraciones) si somos esclavos y estamos ONLINE (mariadb_engine existe)
             if loop_counter >= 20:

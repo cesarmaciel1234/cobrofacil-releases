@@ -1,20 +1,12 @@
-/* Relámpago TV3: deal card vertical, igual al carrusel. */
+/* Relámpago TV3: foto + bloque único de precio/condición. */
 
-import {
-    descuentoPct,
-    escapeHtml,
-    formatMoney,
-    htmlDealStage,
-    nombreVitrina,
-    textoValidezOferta,
-} from "../../shared/plata_y_texto.js";
+import { descuentoPct, escapeHtml, htmlDealStage, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlFilaOfertaTv } from "../../shared/precio_tv.js";
 
 export function htmlTarjetaRelampago(item) {
-    const original = Number(item.precio_original || item.precio || 0);
-    const precio = Number(item.precio || 0);
+    const { original, vigente, hayOferta } = leerPrecios(item);
     const nombre = nombreVitrina(item.nombre);
-    const pct = descuentoPct(original, precio);
-    const monto = precio > 0 ? formatMoney(precio).replace(/^\$\s*/, "") : "";
+    const pct = hayOferta ? descuentoPct(original, vigente) : 0;
     return `
         <article class="flash-offer">
             <div class="flash-offer__deal">
@@ -24,16 +16,14 @@ export function htmlTarjetaRelampago(item) {
                     titulo: nombre,
                     bolt: false,
                 })}
-                <div class="deal-copy flash-offer__copy" style="background:#0A0602">
-                    <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
-                    <div class="deal-price-row deal-line">
-                        ${precio > 0 ? `
-                        <div class="tv-card__now-box">
-                            <strong class="tv-card__now"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>
-                            ${original > precio ? `<s class="tv-card__was">${formatMoney(original)}</s>` : ""}
-                        </div>` : ""}
-                    </div>
-                    <p class="deal-save deal-line">${escapeHtml(textoValidezOferta(item))}</p>
+                <div class="deal-copy flash-offer__copy">
+                    ${htmlFilaOfertaTv(item, {
+                        caja: "tv-card__now-box",
+                        ahora: "tv-card__now",
+                        antes: "tv-card__was",
+                        regla: "deal-save deal-line",
+                        reglaTag: "p",
+                    })}
                 </div>
             </div>
         </article>

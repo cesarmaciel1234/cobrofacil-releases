@@ -1,0 +1,32 @@
+/* Precio tachado: número blanco. La raya queda naranja. */
+
+body .tv-panel .tv-card__was,
+body .tv-panel .xsell-item__was,
+body .tv-panel .price-row__was,
+body .tv-panel .asian-flash-original,
+body .hero-section .tv-card__was {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    flex: 0 0 auto !important;
+    position: relative !important;
+    text-decoration: none !important;
+}
+
+body .tv-panel .tv-card__was::after,
+body .tv-panel .xsell-item__was::after,
+body .tv-panel .price-row__was::after,
+body .tv-panel .asian-flash-original::after,
+body .hero-section .tv-card__was::after {
+    content: "" !important;
+    position: absolute !important;
+    left: -4% !important;
+    top: 50% !important;
+    width: 108% !important;
+    height: 3px !important;
+    background: #FF4D00 !important;
+    transform: rotate(-12deg) !important;
+    pointer-events: none !important;
+}

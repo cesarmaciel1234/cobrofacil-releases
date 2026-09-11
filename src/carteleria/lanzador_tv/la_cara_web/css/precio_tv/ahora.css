@@ -1,0 +1,23 @@
+/* Precio vigente: naranja. No mezclar con el tachado. */
+
+body .tv-panel .tv-card__now,
+body .tv-panel .tv-card__now *,
+body .tv-panel .giant-price,
+body .tv-panel .giant-price *,
+body .tv-panel .xsell-item__price,
+body .tv-panel .xsell-item__price *,
+body .tv-panel .price-row__now,
+body .tv-panel .price-row__now *,
+body .tv-panel .asian-flash-current,
+body .tv-panel .asian-flash-current *,
+body .hero-section .tv-card__now,
+body .hero-section .tv-card__now *,
+body .hero-section .giant-price,
+body .hero-section .giant-price * {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    text-shadow: 0 2px 8px #000 !important;
+}

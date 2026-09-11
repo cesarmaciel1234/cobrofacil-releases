@@ -92,10 +92,40 @@ def guardar_icono_producto(producto_id, icono):
             "UPDATE productos SET icono = ? WHERE id = ?",
             (icono or None, producto_id),
         )
+        if icono:
+            try:
+                from src.central_red_global.sync_tienda import enviar_png_a_maestra
+
+                enviar_png_a_maestra(icono)
+            except Exception:
+                pass
         return True, "PNG guardado."
     except Exception as e:
         logger.error("Error guardando PNG del producto %s: %s", producto_id, e)
         return False, str(e)
+
+
+def asociar_png_un_producto(producto_id, nombre_producto=""):
+    """Engancha PNG por nombre solo en un producto, si todavía no tiene icono."""
+    if not producto_id:
+        return False
+    from src.carteleria.motor_carteleria import iconos_tv
+    actual = ""
+    try:
+        rows = db_manager.execute_query("SELECT icono, nombre FROM productos WHERE id=?", (producto_id,))
+        if rows:
+            actual = str((rows[0].get("icono") if isinstance(rows[0], dict) else rows[0][0]) or "").strip()
+            if not nombre_producto:
+                nombre_producto = rows[0].get("nombre") if isinstance(rows[0], dict) else (rows[0][1] if len(rows[0]) > 1 else "")
+    except Exception:
+        pass
+    if actual:
+        return False
+    archivo = iconos_tv._png_por_nombre(nombre_producto)
+    if not archivo or archivo in (iconos_tv.PNG_SISTEMA,) or archivo in iconos_tv.ICONO_POR_DEPTO.values():
+        return False
+    ok, _msg = guardar_icono_producto(producto_id, archivo)
+    return bool(ok)
 
 
 def asociar_png_por_nombre():

@@ -9,6 +9,7 @@ import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
 import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
+const TV_UI = "241";
 const API_URL = "/api/state";
 const REFRESH_INTERVAL = 15000;
 
@@ -22,7 +23,7 @@ const state = {
     ia: [],
     hero: null,
     climaData: null,
-    currentTheme: "premium",
+    currentTheme: "temu",
     isLoading: true,
     lastDataHash: null,
 };
@@ -75,11 +76,15 @@ function loadTheme(themeName) {
         blackfriday:  "css/themes/blackfriday/estilos.css",
     };
     if (!themePaths[nombre] || !stylePaths[nombre]) return;
-    if (nombre === state.currentTheme && themeStylesLink.dataset.loaded === nombre) return;
-    const bust = `?v=${Date.now()}`;
+    const bust = `?v=${TV_UI}`;
+    const ya = themeStylesLink.dataset.loaded === nombre && themeStylesLink.dataset.ui === TV_UI;
+    if (ya) return;
     themeColorsLink.href = themePaths[nombre] + bust;
     themeStylesLink.href = stylePaths[nombre] + bust;
     themeStylesLink.dataset.loaded = nombre;
+    themeStylesLink.dataset.ui = TV_UI;
+    const precioTv = document.getElementById("precio-tv");
+    if (precioTv) precioTv.href = `css/precio_tv.css${bust}`;
     state.currentTheme = nombre;
 }
 
@@ -89,6 +94,9 @@ async function fetchState() {
         if (!response.ok) throw new Error(response.statusText);
         const data = await response.json();
         aplicarPerfil(data.config?.carteleria_perf);
+        let temaDefinitivo = data.config?.carteleria_theme || "premium";
+        if (temaDefinitivo === "auto") temaDefinitivo = "premium";
+        loadTheme(temaDefinitivo);
         const newDataHash = JSON.stringify({
             config: data.config,
             precios: data.precios,
@@ -123,12 +131,7 @@ async function fetchState() {
             });
         }
         
-        // 2. Personalización Temporal (Estilo Netflix): Cambiar tema por hora del día
-        let temaDefinitivo = data.config?.carteleria_theme || "premium";
-        if (temaDefinitivo === "auto") temaDefinitivo = "premium";
-        loadTheme(temaDefinitivo);
-        
-        // 3-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
+        // 2-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
         // ya se aplican en la renderización de las columnas (shimmer-fx, rotación, etc).
         // --------------------------------------------------------
 
@@ -213,7 +216,6 @@ function setupTvKeys() {
 
 function init() {
     aplicarPerfil();
-    document.body.setAttribute("data-theme", state.currentTheme);
     ajustarZoomTv();
     window.addEventListener("resize", ajustarZoomTv);
     if (window.visualViewport) {

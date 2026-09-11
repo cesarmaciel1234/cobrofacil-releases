@@ -159,6 +159,7 @@ class CarteleriaMainTV(QWidget):
                 "id": row.get("id"), "nombre": row.get("nombre", "") or "",
                 "precio": num(row.get("precio")), "precio_oferta": num(row.get("precio_oferta")),
                 "precio_oferta_relampago": num(row.get("precio_oferta_relampago")),
+                "precio_oferta_promedio": num(row.get("precio_oferta_promedio")),
                 "cant_oferta": num(row.get("cant_oferta")),
                 "tipo_unidad_oferta": row.get("tipo_unidad_oferta", "") or "",
                 "unidad": row.get("unidad", "") or "",
@@ -185,7 +186,10 @@ class CarteleriaMainTV(QWidget):
     def _refrescar_paneles(self):
         try:
             from src.carteleria.motor_carteleria.estado_tv import armar_paneles
-            self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
+            self._paneles = armar_paneles(
+                self.rows_precios, self._clima_icon, self._clima,
+                ranking_remoto=getattr(self, "_ranking_remoto", None),
+            )
         except Exception:
             self._paneles = self._paneles or {"hero": None, "destacados": [], "rotacion": [], "combos": [], "columna3": [], "ia": []}
 
@@ -206,6 +210,22 @@ class CarteleriaMainTV(QWidget):
                 pass
         self.sos_data = data.get("sos", []) or []
         self.top10_data = data.get("top10", {}) or {}
+        try:
+            from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
+            from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra
+
+            if es_esclava():
+                data = asegurar_ranking(data, host_maestra())
+        except Exception:
+            pass
+        self._ranking_remoto = data.get("ranking") or {}
+        try:
+            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+
+            if data.get("publicidad"):
+                motor_publicidad.aplicar_remoto(data.get("publicidad"))
+        except Exception:
+            pass
         self._sync_status, self._ultima_sincro = status, datetime.now()
         self._refrescar_paneles()
         self._actualizar_resumen()
@@ -238,8 +258,12 @@ class CarteleriaMainTV(QWidget):
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
             motor_publicidad.marcar_lista(self.rows_precios)
-            business_name, phone = config.get("business_name", "Cartelería"), config.get("phone", "")
-            theme, mensaje = config.get("carteleria_theme", self._theme_name or "temu"), config.get("mensaje_zocalo", "")
+            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
+            cfg_tv = _leer_config_carteleria()
+            business_name = cfg_tv["business_name"]
+            phone = cfg_tv["phone"]
+            theme = cfg_tv["carteleria_theme"]
+            mensaje = cfg_tv["mensaje_zocalo"]
             perf = perfil_activo()
             install_date = config.get("install_date", "")
             licencia_dias = None

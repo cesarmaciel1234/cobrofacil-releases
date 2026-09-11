@@ -98,18 +98,28 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(5000, self._chequear_actualizaciones_bg)
 
     def _init_security_monitor(self):
-        """ Motor de Vigilancia Global: Monitorea el hardware 24/7 sin importar el módulo activo. """
-        # Monitor Permanente de Seguridad: Delegado al Motor Global en MainWindow
+        """Vigilancia del cajón: no rompe la UI si el hardware falla o aún no hay ticketera."""
         from src.hardware.cash_drawer import drawer_manager
-        
+
+        try:
+            drawer_manager.intrusion_detected.connect(self._on_security_breach)
+            drawer_manager.drawer_closed.connect(lambda: self.mostrar_alerta_perimetral(False))
+            drawer_manager.drawer_opened.connect(self._on_operational_opening)
+        except Exception:
+            logger.exception("No se pudieron conectar señales del cajón")
         self.security_timer = QTimer(self)
-        self.security_timer.timeout.connect(drawer_manager.check_status)
-        self.security_timer.start(1500) # Chequeo universal cada 1.5s (seguro para hardware)
-        
-        # Conexiones Reactivas de Seguridad
-        drawer_manager.intrusion_detected.connect(self._on_security_breach)
-        drawer_manager.drawer_closed.connect(lambda: self.mostrar_alerta_perimetral(False))
-        drawer_manager.drawer_opened.connect(self._on_operational_opening)
+        self.security_timer.timeout.connect(self._tick_vigilancia_cajon)
+        self.security_timer.start(3000)
+
+    def _tick_vigilancia_cajon(self):
+        try:
+            impresora = str(config.get("ticket_printer") or "").strip()
+            if not impresora:
+                return
+            from src.hardware.cash_drawer import drawer_manager
+            drawer_manager.check_status()
+        except Exception:
+            logger.debug("tick vigilancia cajón", exc_info=True)
 
     def _on_security_breach(self):
         self.mostrar_alerta_perimetral(True, modo="security")
@@ -384,7 +394,7 @@ class MainWindow(QMainWindow):
             0:  lambda: __import__('src.admin.dashboard.dashboard_main',  fromlist=['Admin0Dashboard']).Admin0Dashboard(),
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
             2:  lambda: __import__('src.ui_global.inventario_ui.vistas.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
-            3:  lambda: __import__('src.motor_descuentos.vistas.ofertas_main',    fromlist=['Admin2Ofertas']).Admin2Ofertas(),
+            3:  lambda: __import__('src.motor_descuentos.hub', fromlist=['Admin2Ofertas']).Admin2Ofertas(),
             4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
             6:  lambda: __import__('src.admin.legacy.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),

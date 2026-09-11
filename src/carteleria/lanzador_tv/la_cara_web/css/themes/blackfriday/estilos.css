@@ -1,4 +1,4 @@
-/* Black Friday — negro fuerte + naranja fuerte. Tipografía de cartel. */
+/* Black Friday â negro fuerte + naranja fuerte. TipografÃ­a de cartel. */
 @import url('../../structural_base.css');
 
 body[data-theme="blackfriday"] {
@@ -199,9 +199,8 @@ body[data-theme="blackfriday"] .price-row.is-featured {
 }
 
 body[data-theme="blackfriday"] .price-row__was {
-    color: #EF4444;
-    -webkit-text-fill-color: #EF4444;
-    text-decoration-color: #EF4444;
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
 }
 
 body[data-theme="blackfriday"] .price-row__kicker { color: #FF6A00; }
@@ -386,8 +385,13 @@ body[data-theme="blackfriday"] .xsell-item__price {
 }
 
 body[data-theme="blackfriday"] .xsell-item__was {
-    color: #EF4444;
-    -webkit-text-fill-color: #EF4444;
+    color: #FFFFFF;
+    -webkit-text-fill-color: #FFFFFF;
+    font-size: clamp(1.15rem, 1.8cqw, 1.55rem);
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: visible;
 }
 
 body[data-theme="blackfriday"] .xsell-item__rule {
@@ -404,7 +408,7 @@ body[data-theme="blackfriday"] .xsell-item__stage {
 }
 
 
-/* ── Vitrina: foil, halo y metal vivo ── */
+/* ââ Vitrina: foil, halo y metal vivo ââ */
 @keyframes bf-foil {
     0% { background-position: 0% 50%; }
 
@@ -586,9 +590,8 @@ body[data-theme="blackfriday"] .tv-card__now-box .tv-card__was,
 body[data-theme="blackfriday"] .tv-card__now-box .xsell-item__was,
 body[data-theme="blackfriday"] .tv-card__now-box .price-row__was {
     background: transparent !important;
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
-    text-decoration-color: #111111 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
 }
 
 
@@ -658,9 +661,11 @@ body[data-theme="blackfriday"] .xsell-item__price {
 }
 
 body[data-theme="blackfriday"] .xsell-item .tv-card__now-box .xsell-item__was {
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
-    text-decoration-color: #111111 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: clamp(1.45rem, 2.4cqw, 2.1rem) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
 }
 
 
@@ -680,10 +685,11 @@ body[data-theme="blackfriday"] .flash-offer .tv-card__now {
 
 body[data-theme="blackfriday"] .flash-offer .tv-card__now-box .tv-card__was {
     background: transparent !important;
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
-    text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: clamp(1.6rem, 2.8cqw, 2.35rem) !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
 }
 
 
@@ -864,7 +870,7 @@ body[data-theme="blackfriday"] .hero-section .deal-proof {
     border: 1px solid #FF4D00;}
 
 
-/* ── Armonía de la captura: negro cálido, naranja/oro, rojo ── */
+/* ââ ArmonÃ­a de la captura: negro cÃ¡lido, naranja/oro, rojo ââ */
 body[data-theme="blackfriday"] {
     --asian-flash-product-tag-bg: #000000;
     --asian-flash-product-tag-color: #FF7A18;
@@ -1089,10 +1095,10 @@ body[data-theme="blackfriday"] .asian-flash-product-name {
 
 body[data-theme="blackfriday"] .asian-flash-original,
 body[data-theme="blackfriday"] .tv-card__now-box .asian-flash-original {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
     text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
+    text-decoration-color: #FF4D00 !important;
     background: transparent !important;
 }
 
@@ -1146,4 +1152,163 @@ body[data-theme="blackfriday"] .asian-flash-social-text strong {
     background: transparent !important;
     color: #E8C48A !important;
     border-color: rgba(255, 122, 24, 0.35) !important;
+}
+
+body[data-theme="blackfriday"] .hero-section {
+    position: relative;
+    z-index: 4;
+    overflow: visible !important;
+    background:
+        linear-gradient(180deg, rgba(255, 77, 0, 0.16) 0%, rgba(0, 0, 0, 0.2) 40%, rgba(0, 0, 0, 0.55) 100%) !important;
+    box-shadow:
+        inset 0 -18px 40px rgba(0, 0, 0, 0.55),
+        0 18px 36px rgba(255, 77, 0, 0.18) !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .netflix-carousel {
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 77, 0, 0.14), transparent 62%) !important;
+    padding-bottom: 2cqh !important;
+    overflow: visible !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card {
+    overflow: visible !important;
+    isolation: isolate;
+    background: linear-gradient(165deg, #2A1608 0%, #120A06 55%, #070504 100%) !important;
+    border: 2px solid #FF6A00 !important;
+    outline: none !important;
+    animation: none !important;
+    box-shadow:
+        0 4px 0 #FF4D00,
+        0 12px 18px rgba(255, 77, 0, 1),
+        0 28px 36px rgba(255, 90, 0, 0.55),
+        0 18px 44px rgba(0, 0, 0, 0.88) !important;
+    filter:
+        drop-shadow(0 10px 8px rgba(255, 77, 0, 0.95))
+        drop-shadow(0 22px 18px rgba(255, 110, 0, 0.55)) !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card::before,
+body[data-theme="blackfriday"] .hero-section .oferta-card::after {
+    inset: auto !important;
+    top: auto !important;
+    width: auto !important;
+    animation: none !important;
+    background-image: none !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    left: 8% !important;
+    right: 8% !important;
+    bottom: -11px !important;
+    height: 18px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg, transparent 0%, #FF4D00 18%, #FFD36A 50%, #FF4D00 82%, transparent 100%) !important;
+    filter: blur(8px);
+    opacity: 0.95;
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card::after {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    left: 12% !important;
+    right: 12% !important;
+    bottom: -3px !important;
+    height: 3px !important;
+    border-radius: 999px !important;
+    background: #FFE7A8 !important;
+    box-shadow:
+        0 0 8px 2px #FF6A00,
+        0 6px 16px 4px rgba(255, 77, 0, 0.95) !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+    filter: none !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card.is-center-focus {
+    transform: translateZ(0) scale(1.04);
+    border-color: #FFB347 !important;
+    box-shadow:
+        0 5px 0 #FFB347,
+        0 16px 24px rgba(255, 179, 71, 1),
+        0 32px 44px rgba(255, 77, 0, 0.6),
+        0 22px 52px rgba(0, 0, 0, 0.92) !important;
+    filter:
+        drop-shadow(0 12px 10px rgba(255, 179, 71, 0.95))
+        drop-shadow(0 26px 22px rgba(255, 77, 0, 0.7)) !important;
+    z-index: 2;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card.is-center-focus::before {
+    bottom: -13px !important;
+    height: 22px !important;
+    opacity: 1;
+}
+
+body[data-theme="blackfriday"] .hero-section .oferta-card.is-center-focus::after {
+    height: 4px !important;
+    background: #FFF6D6 !important;
+    box-shadow:
+        0 0 10px 3px #FFD36A,
+        0 8px 20px 6px rgba(255, 77, 0, 1) !important;
+}
+
+body[data-perf="eco"][data-theme="blackfriday"] .hero-section .oferta-card::before,
+body[data-perf="eco"][data-theme="blackfriday"] .hero-section .oferta-card::after {
+    animation: none !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .deal-stage {
+    background: radial-gradient(circle at 50% 18%, #FF9A3C 0%, #C2410C 42%, #1A0A00 100%) !important;
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 179, 71, 0.55),
+        0 8px 18px rgba(0, 0, 0, 0.45) !important;
+}
+
+body[data-theme="blackfriday"] .hero-section .deal-copy {
+    background: transparent !important;
+}
+
+/* Fondo PNG: marfil premium, para que la foto se lea. */
+body[data-theme="blackfriday"] .deal-stage,
+body[data-theme="blackfriday"] .hero-section .deal-stage,
+body[data-theme="blackfriday"] .deal-stage[data-tone="aves"],
+body[data-theme="blackfriday"] .deal-stage[data-tone="cerdo"],
+body[data-theme="blackfriday"] .deal-stage[data-tone="almacen"],
+body[data-theme="blackfriday"] .asian-rank-card .rank-stage {
+    background: radial-gradient(circle at 50% 18%, #FFFBF4 0%, #F4E4C4 52%, #E5C99A 100%) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(212, 175, 55, 0.45),
+        inset 0 -8px 16px rgba(180, 120, 40, 0.12) !important;
+}
+
+body[data-theme="blackfriday"] .deal-stage__letter,
+body[data-theme="blackfriday"] .hero-section .deal-stage__letter {
+    color: rgba(92, 58, 18, 0.28) !important;
+    text-shadow: none !important;
+}
+
+body[data-theme="blackfriday"] .deal-stage__img,
+body[data-theme="blackfriday"] .hero-section .deal-stage__img,
+body[data-theme="blackfriday"] .rank-stage .deal-stage__img {
+    mix-blend-mode: screen !important;
+    filter: contrast(1.2) saturate(1.22) drop-shadow(0 8px 12px rgba(80, 40, 10, 0.28)) !important;
+}
+
+body[data-theme="blackfriday"] .tv-4 .asian-flash-original,
+body[data-theme="blackfriday"] .tv-4 .tv-card__now-box .asian-flash-original {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    text-decoration-color: #FF4D00 !important;
+}
+
+body[data-theme="blackfriday"] .tv-4 .asian-flash-condition {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
 }

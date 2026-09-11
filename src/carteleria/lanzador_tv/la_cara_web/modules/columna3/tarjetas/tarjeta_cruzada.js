@@ -1,6 +1,7 @@
 ﻿/* Venta cruzada: misma familia visual que el carrusel. */
 
-import { escapeHtml, formatMoney, htmlDealStage, nombreVitrina, precioVigente, textoValidezOferta } from "../../shared/plata_y_texto.js";
+import { escapeHtml, htmlDealStage, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlFilaOfertaTv } from "../../shared/precio_tv.js";
 
 function productoPorNombre(productos, nombre) {
     const clave = nombreVitrina(nombre).toLowerCase();
@@ -22,22 +23,21 @@ export function htmlTarjetaCruzada(slide, productos = []) {
         const limpio = nombreVitrina(prod.nombre || nombre);
         
         // Solo mostrar precio y condiciones si el producto existe realmente en BD
-        const tienePrecio = prod.precio > 0 || prod.precio_oferta > 0;
-        const tieneOferta = prod.precio_oferta > 0 && prod.precio_oferta < prod.precio;
-        const precio = tieneOferta ? precioVigente(prod) : (prod.precio || 0);
-        const regla = tienePrecio ? textoValidezOferta(prod) : "";
+        const { vigente } = leerPrecios(prod);
+        const tienePrecio = vigente > 0 || Number(prod.precio) > 0;
         
                 return `
             <li class="xsell-item">
                 ${htmlDealStage({ ...prod, nombre: limpio }, { extraClass: "xsell-item__stage" })}
                 <div class="xsell-item__info">
                     <div class="xsell-item__name">${escapeHtml(limpio.toUpperCase())}</div>
-                    ${tienePrecio ? `
-                    <div class="xsell-item__price-row tv-card__now-box">
-                        <span class="xsell-item__price"><span class="deal-currency">$</span><span class="odometer-val" data-val="${precio}">${formatMoney(precio).replace(/^\$\s*/, "")}</span></span>
-                        ${tieneOferta ? `<s class="xsell-item__was">${formatMoney(prod.precio)}</s>` : ""}
-                    </div>` : ""}
-                    ${regla ? `<div class="xsell-item__rule">${escapeHtml(regla)}</div>` : ""}
+                    ${tienePrecio ? htmlFilaOfertaTv(prod, {
+                        caja: "xsell-item__price-row tv-card__now-box",
+                        ahora: "xsell-item__price",
+                        antes: "xsell-item__was",
+                        regla: "xsell-item__rule",
+                        reglaTag: "div",
+                    }) : ""}
                 </div>
             </li>`;
 

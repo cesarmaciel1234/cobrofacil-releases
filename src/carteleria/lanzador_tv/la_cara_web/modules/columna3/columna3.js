@@ -58,10 +58,11 @@ function cruzadasDesdeProductos(productos) {
 
 function ofertasDesdeProductos(productos) {
     return (productos || []).filter(esOferta).slice(0, 4).map((item) => ({
+        ...item,
         tipo: "oferta",
-        nombre: item.nombre,
         precio: Number(item.precio_oferta),
         precio_original: Number(item.precio),
+        precio_oferta: Number(item.precio_oferta),
         cant_oferta: Number(item.cant_oferta || 0),
         tipo_unidad_oferta: item.tipo_unidad_oferta || "",
         unidad: item.unidad || "",

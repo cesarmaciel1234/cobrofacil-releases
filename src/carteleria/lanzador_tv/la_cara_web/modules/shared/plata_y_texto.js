@@ -91,26 +91,52 @@ export function cantMinimaOferta(item) {
     return 2;
 }
 
-export function textoValidezOferta(item) {
-    const n = cantMinimaOferta(item);
-    return esPorKg(item)
-        ? `Llevando ${n} kilos o más`
-        : `Llevando ${n} unidades o más`;
+export function leerPrecios(item) {
+    const num = (v) => {
+        const x = Number(v);
+        return Number.isFinite(x) ? x : 0;
+    };
+    const listaGuardada = num(item?.precio_original || item?.precio_anterior);
+    const precioCampo = num(item?.precio);
+    const candidatos = [
+        num(item?.precio_oferta),
+        num(item?.precio_oferta_relampago),
+        num(item?.precio_oferta_promedio),
+    ].filter((x) => x > 0);
+    const maxCand = candidatos.length ? Math.max(...candidatos) : 0;
+    let lista = precioCampo;
+    if (maxCand > 0 && precioCampo > 0 && maxCand > precioCampo) {
+        lista = maxCand;
+    }
+    const original = listaGuardada > lista ? listaGuardada : (lista || listaGuardada);
+    const ofertas = candidatos.filter((x) => x > 0 && original > 0 && x < original);
+    let vigente = precioCampo || original;
+    if (ofertas.length) vigente = Math.min(...ofertas);
+    else if (precioCampo > 0 && original > precioCampo) vigente = precioCampo;
+    const hayOferta = original > vigente && vigente > 0;
+    return { original, vigente, hayOferta };
 }
 
 export function esOferta(producto) {
-    const precio = Number(producto?.precio || 0);
-    const oferta = Number(producto?.precio_oferta || 0);
-    return precio > 0 && oferta > 0 && oferta < precio;
+    return leerPrecios(producto).hayOferta;
 }
 
 export function precioVigente(producto) {
     if (!producto) return 0;
-    if (esOferta(producto)) return Number(producto.precio_oferta);
+    const { vigente, hayOferta } = leerPrecios(producto);
+    if (hayOferta) return vigente;
     const relampago = Number(producto.precio_oferta_relampago || 0);
     const precio = Number(producto.precio || 0);
     if (relampago > 0 && (precio <= 0 || relampago < precio)) return relampago;
-    return precio;
+    return vigente || precio;
+}
+
+export function textoValidezOferta(item) {
+    if (!esOferta(item)) return "";
+    const n = cantMinimaOferta(item);
+    return esPorKg(item)
+        ? `Llevando ${n} kilos o más`
+        : `Llevando ${n} unidades o más`;
 }
 
 export function descuentoPct(original, vigente) {
@@ -161,11 +187,7 @@ export function urlIcono(item) {
     const raw = String(item?.icono_url || item?.icono || "").trim();
     if (raw.startsWith("/iconos/")) return raw;
     if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(raw)) return `/iconos/${raw}`;
-    const slug = slugNombre(item?.nombre || "");
-    if (!slug) return "";
-    const alias = ALIAS_PNG[slug];
-    if (alias) return `/iconos/${alias}`;
-    return `/iconos/${slug}.png`;
+    return "";
 }
 
 export const FOTO_SISTEMA = "assets/logo_sistema.svg";
@@ -185,15 +207,6 @@ export function urlsFotoProducto(item) {
     };
     push(asUrl(item?.icono_url));
     push(asUrl(item?.icono));
-    push(urlIcono(item));
-    const slug = slugNombre(item?.nombre);
-    if (slug) {
-        if (ALIAS_PNG[slug]) push(`/iconos/${ALIAS_PNG[slug]}`);
-        push(`/iconos/${slug}.png`);
-        const cabeza = slug.split("_")[0];
-        if (ALIAS_PNG[cabeza]) push(`/iconos/${ALIAS_PNG[cabeza]}`);
-    }
-    push(FOTO_SISTEMA);
     return out;
 }
 

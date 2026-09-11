@@ -56,7 +56,7 @@ class PanelCategorias(QWidget):
         tb = QFrame(); tb.setFixedHeight(50)
         tb.setStyleSheet("QFrame{background: white; border-bottom: 1px solid #cbd5e1;}")
         tl = QHBoxLayout(tb); tl.setContentsMargins(15,5,15,5); tl.setSpacing(10)
-        btn_volver = QPushButton("⬅ Volver al Catálogo"); btn_volver.setObjectName("gray")
+        btn_volver = QPushButton("← Módulos"); btn_volver.setObjectName("gray")
         btn_volver.clicked.connect(self.volver.emit)
         tl.addWidget(btn_volver); tl.addStretch()
         root.addWidget(tb)

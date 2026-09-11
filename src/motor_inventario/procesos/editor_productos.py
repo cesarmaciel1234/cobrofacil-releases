@@ -40,10 +40,17 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
     datos_producto debe ser un diccionario con los campos del producto.
     """
     try:
-        params = dict(datos_producto)
+        _CAMPOS = {
+            "codigo", "nombre", "precio", "precio_mayoreo", "cant_mayoreo",
+            "cant_oferta", "precio_oferta", "precio_oferta_relampago",
+            "precio_oferta_promedio", "limite_oferta_relampago", "tipo_unidad_oferta",
+            "costo", "stock", "stock_minimo", "stock_maximo", "unidad",
+            "es_pesable", "departamento", "categoria", "icono",
+        }
+        params = {k: v for k, v in dict(datos_producto).items() if k in _CAMPOS}
         
         # Extraer e identificar el ID correcto
-        actual_id = producto_id if producto_id is not None else params.get('id')
+        actual_id = producto_id if producto_id is not None else dict(datos_producto).get('id')
         
         if actual_id is not None and str(actual_id).strip() not in ('', '0', 'None'):
             es_actualizacion = True
@@ -74,9 +81,33 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
 
         if exito:
             try:
+                from src.cerebro_global.motor_global import invalidar_catalogo
+                invalidar_catalogo()
+            except Exception:
+                pass
+            try:
+                from src.central_red_global.sync_tienda import (
+                    empujar_producto_a_maestra,
+                    enviar_png_a_maestra,
+                )
+
+                empujar_producto_a_maestra(params if not actual_id else {**params, "id": actual_id})
+                if params.get("icono"):
+                    enviar_png_a_maestra(params.get("icono"))
+            except Exception:
+                pass
+            try:
                 if not str(params.get("icono") or "").strip():
-                    from src.motor_inventario.base.productos_db import asociar_png_por_nombre
-                    asociar_png_por_nombre()
+                    from src.motor_inventario.base.productos_db import asociar_png_un_producto
+                    pid_png = target_id
+                    if pid_png is None:
+                        last = db_manager.execute_query(
+                            "SELECT id FROM productos WHERE nombre=? ORDER BY id DESC LIMIT 1",
+                            (params.get("nombre"),),
+                        )
+                        if last:
+                            pid_png = last[0]["id"] if isinstance(last[0], dict) else last[0][0]
+                    asociar_png_un_producto(pid_png, params.get("nombre") or "")
             except Exception:
                 pass
             return True, "Producto guardado correctamente."

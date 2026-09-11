@@ -1169,8 +1169,10 @@
 }
 .xsell-item__price-row {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: baseline;
     gap: 0.5rem;
+    overflow: visible;
 }
 .xsell-item__name {
     min-width: 0;
@@ -1253,12 +1255,10 @@
     padding: 0.16em 0.45em;
     background: rgba(0, 0, 0, 0.22);
     border-radius: 6px;
-    color: #111111 !important;
-    -webkit-text-fill-color: #111111 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
     font-size: clamp(0.78rem, 1.05cqw, 0.98rem);
     font-weight: 700;
-    text-decoration: line-through !important;
-    text-decoration-color: #111111 !important;
 }
 
 .asian-flash-prices.tv-card__now-box {
@@ -1287,8 +1287,8 @@
 .asian-billboard__price-before,
 .oferta-antes,
 .luxury-ad-card__price-before {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
     text-decoration: line-through !important;
     text-decoration-color: #EF4444 !important;
 }
@@ -1308,9 +1308,11 @@
 }
 
 .flash-offer .tv-card__now-box .tv-card__was {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
-    text-decoration-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    text-decoration: none !important;
+    font-size: clamp(1.6rem, 2.8cqw, 2.35rem);
+    font-weight: 800;
 }
 
 .chef-deal .tv-card__now {

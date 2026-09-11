@@ -6,7 +6,8 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
+    QScrollArea, QListWidget, QListWidgetItem,
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
@@ -17,6 +18,51 @@ from src.ui_global.inventario_ui.moleculas.dialogo_producto import DialogoProduc
 from src.ui_global.inventario_ui.moleculas.panel_departamentos import PanelDepartamentos
 from src.ui_global.inventario_ui.moleculas.panel_categorias import PanelCategorias
 from src.ui_global.inventario_ui.paneles.catalogo_productos import CatalogoProductos
+
+_QSS_INVENTARIO = """
+QWidget#AdminInventario {
+    background: #F8FAFC;
+    font-family: 'Segoe UI', sans-serif;
+    color: #0F172A;
+}
+QWidget#AdminInventario QStackedWidget { background: #F1F5F9; border: none; }
+QWidget#AdminInventario QLabel { color: #0F172A; }
+QWidget#AdminInventario QPushButton {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 13px;
+}
+QWidget#AdminInventario QPushButton:hover {
+    background-color: #EFF6FF;
+    border-color: #60A5FA;
+    color: #1E3A8A;
+}
+QWidget#AdminInventario QPushButton#blue {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border: none;
+}
+QWidget#AdminInventario QPushButton#blue:hover { background-color: #1D4ED8; color: #FFFFFF; }
+QWidget#AdminInventario QPushButton#danger {
+    background-color: #DC2626;
+    color: #FFFFFF;
+    border: none;
+}
+QWidget#AdminInventario QPushButton#danger:hover { background-color: #B91C1C; color: #FFFFFF; }
+QWidget#AdminInventario QPushButton#btnInvBack {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 700;
+}
+"""
+
 
 class Admin1Inventario(QWidget):
     request_dashboard = pyqtSignal()
@@ -57,332 +103,285 @@ class Admin1Inventario(QWidget):
         self.btn_deptos.setEnabled(not es_lectura)
 
         # Informar también al catálogo para sus bloqueos internos
-        if hasattr(self, "catalogo"):
+        if hasattr(self, "catalogo") and self.catalogo:
             self.catalogo.aplicar_permisos_perfil(self.user_role)
+        for c in getattr(self, "_excel_cards", []):
+            c.setEnabled((not es_lectura) or c.codigo == "exportar")
 
     def _apply_inventario_theme(self):
-        """Aplica el tema dinámicamente según el theme_manager."""
-        if hasattr(self, "catalogo"):
-            self.catalogo._apply_catalogo_theme()
+        self.setObjectName("AdminInventario")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setStyleSheet(_QSS_INVENTARIO)
+        if hasattr(self, "catalogo") and self.catalogo:
+            self.catalogo._apply_catalogo_theme(forzar_claro=True)
 
     def _setup_ui(self):
-        self.setStyleSheet("""
-            QWidget { font-family: 'Segoe UI', sans-serif; }
-            QPushButton {
-                background-color: #F1F5F9; color: #1E293B; border: 1px solid #CBD5E1;
-                border-radius: 8px; padding: 10px 18px; font-weight: bold; font-size: 13px;
-            }
-            QPushButton:hover { background-color: #E2E8F0; border-color: #94A3B8; }
-            QPushButton#blue, QPushButton[objectName="blue"] {
-                background-color: #2563EB; color: #FFFFFF; border: none;
-            }
-            QPushButton#blue:hover, QPushButton[objectName="blue"]:hover {
-                background-color: #1D4ED8;
-            }
-            QPushButton#danger, QPushButton[objectName="danger"] {
-                background-color: #DC2626; color: #FFFFFF; border: none;
-            }
-            QPushButton#danger:hover, QPushButton[objectName="danger"]:hover {
-                background-color: #B91C1C;
-            }
-            QPushButton#gray, QPushButton[objectName="gray"] {
-                background-color: #64748B; color: #FFFFFF; border: none;
-            }
-            QPushButton#gray:hover, QPushButton[objectName="gray"]:hover {
-                background-color: #475569;
-            }
-        """)
+        self.setObjectName("AdminInventario")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setStyleSheet(_QSS_INVENTARIO)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Cabecera
         hdr = QFrame()
         hdr.setObjectName("header")
-        hdr.setFixedHeight(85)
+        hdr.setFixedHeight(72)
+        hdr.setStyleSheet("QFrame#header { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
         hl = QHBoxLayout(hdr)
-        hl.setContentsMargins(25, 0, 25, 0)
-        
-        btn_back = QPushButton("🔙 VOLVER AL PANEL")
-        btn_back.setCursor(Qt.PointingHandCursor)
-        btn_back.setStyleSheet("""
-            QPushButton {
-                border-radius: 10px;
-                padding: 10px 25px; border: 1px solid #CBD5E1; font-size: 11px; letter-spacing: 1px;
-            }
-        """)
-        btn_back.clicked.connect(self.request_dashboard.emit)
-        hl.addWidget(btn_back)
-        
-        hl.addSpacing(20)
-        tit = QLabel("📦 GESTIÓN DE INVENTARIO <span style='color:#64748B;'>2026</span>")
-        tit.setObjectName("titulo")
-        tit.setStyleSheet("background: transparent;")
-        hl.addWidget(tit)
+        hl.setContentsMargins(24, 0, 24, 0)
+        self.btn_back = QPushButton("← Panel admin")
+        self.btn_back.setObjectName("btnInvBack")
+        self.btn_back.setCursor(Qt.PointingHandCursor)
+        self.btn_back.clicked.connect(self._on_back)
+        hl.addWidget(self.btn_back)
+        hl.addSpacing(16)
+        col_t = QVBoxLayout()
+        col_t.setSpacing(0)
+        self.lbl_titulo = QLabel("Inventario")
+        self.lbl_titulo.setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; background: transparent;")
+        self.lbl_sub = QLabel("Catálogo, Excel y rubros")
+        self.lbl_sub.setStyleSheet("font-size: 12px; color: #64748B; background: transparent;")
+        col_t.addWidget(self.lbl_titulo)
+        col_t.addWidget(self.lbl_sub)
+        hl.addLayout(col_t)
         hl.addStretch()
         root.addWidget(hdr)
 
-        # Barra de herramientas principal (Toolbar)
+        self.stack = QStackedWidget()
+        self.catalogo = None
+        self.panel_deptos = None
+        self.panel_categorias = None
+        self.pagina_catalogo = None
+        self._idx = {"hub": 0}
+
+        self.stack.addWidget(self._armar_hub())
+        root.addWidget(self.stack)
+
         self.toolbar = QFrame()
-        self.toolbar.setFixedHeight(70)
-        self.toolbar.setObjectName("inventarioToolbar")
-        tl = QHBoxLayout(self.toolbar)
-        tl.setContentsMargins(25, 0, 25, 0)
-        tl.setSpacing(12)
-        
+        self.toolbar.hide()
         self.btn_nuevo = QPushButton("➕ NUEVO PRODUCTO")
         self.btn_nuevo.clicked.connect(self._nuevo)
-        
         self.btn_modif = QPushButton("✏️ MODIFICAR")
-        self.btn_modif.clicked.connect(lambda: self.catalogo._modificar_seleccionado())
-        
+        self.btn_modif.clicked.connect(self._modificar_sel)
         self.btn_eliminar = QPushButton("🗑️ ELIMINAR")
         self.btn_eliminar.setObjectName("danger")
         self.btn_eliminar.clicked.connect(self._borrar_desde_catalogo)
-        
         self.btn_importar = QPushButton("📥 IMPORTAR EXCEL")
-        self.btn_importar.clicked.connect(lambda: self.catalogo._importar())
-        
         self.btn_exportar = QPushButton("📤 EXPORTAR EXCEL")
-        self.btn_exportar.clicked.connect(lambda: self.catalogo._exportar())
-        
         self.btn_precarga = QPushButton("📦 PRECARGA NUBE")
-        self.btn_precarga.clicked.connect(lambda: self.catalogo._descargar_precarga())
-        
         self.btn_unificar = QPushButton("🧹 UNIFICAR DUPLICADOS")
         self.btn_unificar.setObjectName("blue")
-        self.btn_unificar.clicked.connect(lambda: self.catalogo._unificar_duplicados())
-        
         self.btn_categorias = QPushButton("📁 DEPARTAMENTOS")
-        self.btn_categorias.clicked.connect(self._mostrar_categorias)
-        
         self.btn_deptos = QPushButton("⚖️ DEP. IMPUESTOS")
-        self.btn_deptos.clicked.connect(self._mostrar_departamentos)
-        
         self.btn_catalogo = QPushButton("📰 CATÁLOGO PDF")
         self.btn_catalogo.setObjectName("blue")
         self.btn_catalogo.clicked.connect(self._dialogo_catalogo_pdf)
-        
-        for b in [
-            self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_importar, 
-            self.btn_exportar, self.btn_precarga, self.btn_unificar, 
-            self.btn_categorias, self.btn_deptos, self.btn_catalogo
-        ]:
+
+        self.sync_timer = QTimer(self)
+        self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
+        self.sync_timer.start(90000)
+
+    def _armar_hub(self):
+        from src.motor_descuentos.compartido import TarjetaModulo
+        page = QWidget()
+        page.setStyleSheet("background: #F1F5F9;")
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: #F1F5F9; border: none; }")
+        wrap = QWidget()
+        wrap.setStyleSheet("background: #F1F5F9;")
+        grid = QGridLayout(wrap)
+        grid.setContentsMargins(28, 28, 28, 28)
+        grid.setSpacing(18)
+        cards = (
+            ("catalogo", "📦", "Catálogo", "Alta, baja y precios. Acá se trabaja el producto."),
+            ("excel", "📑", "Excel y nube", "Importar, exportar, precarga y unificar duplicados."),
+            ("deptos", "📁", "Departamentos", "Rubros del catálogo."),
+            ("iva", "⚖️", "IVA por departamento", "Impuesto de cada rubro."),
+            ("pdf", "📰", "Catálogo PDF", "Para enviar a clientes: fotos, precio y WhatsApp."),
+        )
+        for i, (cod, ico, tit, sub) in enumerate(cards):
+            card = TarjetaModulo(cod, ico, tit, sub)
+            card.clicked.connect(lambda c=cod: self._abrir_modulo(c))
+            grid.addWidget(card, i // 3, i % 3)
+        grid.setRowStretch(2, 1)
+        scroll.setWidget(wrap)
+        lay.addWidget(scroll, 1)
+        return page
+
+    def _on_back(self):
+        if self.stack.currentIndex() == 0:
+            self.request_dashboard.emit()
+        else:
+            self.stack.setCurrentIndex(0)
+            self.lbl_titulo.setText("Inventario")
+            self.lbl_sub.setText("Catálogo, Excel y rubros")
+            self.btn_back.setText("← Panel admin")
+
+    def _abrir_modulo(self, codigo):
+        if codigo == "pdf":
+            self._asegurar_catalogo()
+            self.stack.setCurrentWidget(self.pagina_catalogo)
+            self.lbl_titulo.setText("Catálogo")
+            self.lbl_sub.setText("Productos, precios y stock")
+            self.btn_back.setText("← Módulos")
+            self._dialogo_catalogo_pdf()
+            return
+        if codigo == "catalogo":
+            self._asegurar_catalogo()
+            self.stack.setCurrentWidget(self.pagina_catalogo)
+            self.lbl_titulo.setText("Catálogo")
+            self.lbl_sub.setText("Productos, precios y stock")
+        elif codigo == "excel":
+            self._asegurar_catalogo()
+            self.stack.setCurrentWidget(self._pagina_excel())
+            self.lbl_titulo.setText("Excel y nube")
+            self.lbl_sub.setText("Importar, exportar y mantenimiento")
+        elif codigo == "deptos":
+            self._mostrar_categorias()
+            self.lbl_titulo.setText("Departamentos")
+            self.lbl_sub.setText("Rubros del catálogo")
+        elif codigo == "iva":
+            self._mostrar_departamentos()
+            self.lbl_titulo.setText("IVA por departamento")
+            self.lbl_sub.setText("Impuesto de cada rubro")
+        self.btn_back.setText("← Módulos")
+
+    def _asegurar_catalogo(self):
+        if self.catalogo:
+            return
+        wrap = QWidget()
+        v = QVBoxLayout(wrap)
+        v.setContentsMargins(0, 0, 0, 0)
+        v.setSpacing(0)
+        bar = QFrame()
+        bar.setFixedHeight(58)
+        bar.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
+        tl = QHBoxLayout(bar)
+        tl.setContentsMargins(16, 0, 16, 0)
+        for b in (self.btn_nuevo, self.btn_modif, self.btn_eliminar, self.btn_catalogo):
             tl.addWidget(b)
-            
         tl.addStretch()
-        root.addWidget(self.toolbar)
-
-        # Vista de paginas
-        self.stack = QStackedWidget()
+        v.addWidget(bar)
         self.catalogo = CatalogoProductos()
+        self.catalogo.aplicar_permisos_perfil(self.user_role)
+        self.catalogo._apply_catalogo_theme(forzar_claro=True)
+        v.addWidget(self.catalogo, 1)
+        self.pagina_catalogo = wrap
+        self.stack.addWidget(wrap)
 
-        self.panel_deptos = PanelDepartamentos()
-        self.panel_deptos.volver.connect(self._volver_catalogo)
-        self.panel_deptos.departamentos_cambiados.connect(self.catalogo._cargar_deptos)
-        self.panel_deptos.departamentos_cambiados.connect(self.catalogo.cargar_datos)
+    def _pagina_excel(self):
+        if getattr(self, "_excel_page", None):
+            return self._excel_page
+        self._asegurar_catalogo()
+        from src.motor_descuentos.compartido import TarjetaModulo
+        page = QWidget()
+        page.setStyleSheet("background: #F1F5F9;")
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(28, 24, 28, 24)
+        lay.setSpacing(16)
+        hint = QLabel("Cada tarjeta abre su acción. El catálogo se actualiza al terminar.")
+        hint.setStyleSheet("color: #475569; font-size: 13px; background: transparent; border: none;")
+        lay.addWidget(hint)
+        grid = QGridLayout()
+        grid.setSpacing(18)
+        acciones = (
+            ("importar", "📥", "Importar Excel", "Cargar productos desde un archivo .xlsx", self.catalogo._importar),
+            ("exportar", "📤", "Exportar Excel", "Descargar el catálogo actual a un archivo Excel.", self.catalogo._exportar),
+            ("nube", "☁️", "Precarga nube", "Sumar productos precargados si el local está vacío.", self.catalogo._descargar_precarga),
+            ("unificar", "🧹", "Unificar duplicados", "Junta códigos repetidos y suma el stock.", self.catalogo._unificar_duplicados),
+        )
+        self._excel_cards = []
+        for i, (cod, ico, tit, sub, fn) in enumerate(acciones):
+            card = TarjetaModulo(cod, ico, tit, sub)
+            card.clicked.connect(fn)
+            self._excel_cards.append(card)
+            grid.addWidget(card, i // 2, i % 2)
+        lay.addLayout(grid)
+        lay.addStretch()
+        self._excel_page = page
+        self.stack.addWidget(page)
+        self.aplicar_permisos_perfil(self.user_role)
+        return page
 
-        self.panel_categorias = PanelCategorias()
-        self.panel_categorias.volver.connect(self._volver_catalogo)
-        self.panel_categorias.categorias_cambiadas.connect(self.catalogo._cargar_deptos)
-        self.panel_categorias.categorias_cambiadas.connect(self.catalogo.cargar_datos)
-
-        self.stack.addWidget(self.catalogo)         # Index 0
-        self.stack.addWidget(self.panel_deptos)     # Index 1
-        self.stack.addWidget(self.panel_categorias) # Index 2
-
-        self.stack.setCurrentIndex(0)
-        root.addWidget(self.stack)
-        
-        # Sincronización en Tiempo Real
-        db_path = config.get("db_path", "")
-        if db_path and db_path != "":
-            self.sync_timer = QTimer(self)
-            self.sync_timer.timeout.connect(self.sincronizacion_silenciosa)
-            self.sync_timer.start(5000)
+    def _modificar_sel(self):
+        self._asegurar_catalogo()
+        self.catalogo._modificar_seleccionado()
 
     def sincronizacion_silenciosa(self):
-        if not self.isVisible(): 
+        if not self.isVisible() or not self.catalogo:
             return
-        if self.stack.currentIndex() != 0: 
+        if self.stack.currentWidget() is not self.pagina_catalogo:
             return
-        if self.catalogo.filtros.txt_buscar.hasFocus(): 
+        if self.catalogo.motor_busqueda.isRunning():
             return
-        
+        if self.catalogo.filtros.txt_buscar.hasFocus():
+            return
         bar = self.catalogo.tabla.verticalScrollBar()
         scroll_pos = bar.value() if bar else 0
         target_count = self.catalogo.tabla.loaded_count
-        
-        self.cargar_datos()
-        
-        # Mantener paginas cargadas al hacer scroll
+        self.catalogo.cargar_datos()
         if target_count > 50:
-            while self.catalogo.tabla.loaded_count < target_count and self.catalogo.tabla.loaded_count < len(self.catalogo.all_rows):
+            while (
+                self.catalogo.tabla.loaded_count < target_count
+                and self.catalogo.tabla.loaded_count < len(self.catalogo.all_rows)
+            ):
                 self.catalogo.tabla.cargar_siguiente_pagina()
-        
         if bar:
             bar.setValue(scroll_pos)
 
     def _mostrar_departamentos(self, *args, **kwargs):
-        self.toolbar.setVisible(False)
-        self.stack.setCurrentIndex(1)
+        self._asegurar_catalogo()
+        if self.panel_deptos is None:
+            self.panel_deptos = PanelDepartamentos()
+            self.panel_deptos.volver.connect(self._on_back)
+            self.panel_deptos.departamentos_cambiados.connect(self.catalogo._cargar_deptos)
+            self.panel_deptos.departamentos_cambiados.connect(self.catalogo.cargar_datos)
+            self.stack.addWidget(self.panel_deptos)
+        self.stack.setCurrentWidget(self.panel_deptos)
 
     def _mostrar_categorias(self, *args, **kwargs):
-        self.toolbar.setVisible(False)
-        self.stack.setCurrentIndex(2)
+        self._asegurar_catalogo()
+        if self.panel_categorias is None:
+            self.panel_categorias = PanelCategorias()
+            self.panel_categorias.volver.connect(self._on_back)
+            self.panel_categorias.categorias_cambiadas.connect(self.catalogo._cargar_deptos)
+            self.panel_categorias.categorias_cambiadas.connect(self.catalogo.cargar_datos)
+            self.stack.addWidget(self.panel_categorias)
+        self.stack.setCurrentWidget(self.panel_categorias)
 
     def _volver_catalogo(self):
-        self.toolbar.setVisible(True)
-        self.stack.setCurrentIndex(0)
+        self._on_back()
+
+    def _png_vitrina_producto(self, producto):
+        try:
+            from src.carteleria.motor_carteleria.iconos_tv import png_vitrina_path
+            return png_vitrina_path(producto) or ""
+        except Exception:
+            return ""
 
     def _dialogo_catalogo_pdf(self):
-        visible_rows = []
-        checked_rows = []
-        
-        # Buscar filas visibles y tildadas
-        for i in range(self.catalogo.tabla.rowCount()):
-            if not self.catalogo.tabla.isRowHidden(i):
-                item_chk = self.catalogo.tabla.item(i, 0)
-                item_id = self.catalogo.tabla.item(i, 1)
+        self._asegurar_catalogo()
+        ids_pre = set()
+        tabla = getattr(self.catalogo, "tabla", None)
+        if tabla:
+            for i in range(tabla.rowCount()):
+                item_id = tabla.item(i, 1)
+                chk = tabla.item(i, 0)
                 if not item_id:
                     continue
-                id_p = item_id.text()
-                
-                # Buscar datos originales
-                row_data = None
-                for r in self.catalogo.all_rows:
-                    if str(r.get('id')) == id_p:
-                        row_data = r
-                        break
-                        
-                if row_data:
-                    visible_rows.append(row_data)
-                    if item_chk and item_chk.checkState() == Qt.CheckState.Checked:
-                        checked_rows.append(row_data)
-
-        total_filtered = len(visible_rows)
-        has_checked = len(checked_rows) > 0
-
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Exportar Catálogo / Lista de Precios")
-        dlg.setFixedSize(500, 420)
-        dlg.setStyleSheet("""
-            QDialog { background: white; font-family: 'Segoe UI'; font-size: 13px; }
-            QPushButton { background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; }
-            QLineEdit, QComboBox, QSpinBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; }
-            QRadioButton { spacing: 8px; font-weight: bold; }
-        """)
-        lay = QVBoxLayout(dlg)
-        lay.setContentsMargins(20, 20, 20, 20)
-        lay.setSpacing(12)
-        
-        lbl_tit = QLabel("📰 CREAR CATÁLOGO DE PRECIOS (PDF)")
-        lbl_tit.setStyleSheet("font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
-        lay.addWidget(lbl_tit)
-        
-        from PyQt6.QtWidgets import QFormLayout, QRadioButton, QSpinBox
-        form = QFormLayout()
-        form.setSpacing(10)
-        
-        txt_titulo = QLineEdit("CATÁLOGO DE PRODUCTOS")
-        txt_titulo.setPlaceholderText("Título del catálogo...")
-        txt_titulo.setMinimumWidth(260)
-        
-        txt_negocio = QLineEdit("MINI-SÚPER ELITE")
-        try:
-            nombre_neg = config.get("business_name", "")
-            if nombre_neg:
-                txt_negocio.setText(nombre_neg.upper())
-        except:
-            pass
-            
-        cmb_diseno = QComboBox()
-        cmb_diseno.addItem("📋 Lista Compacta (Tabla formal)", "lista")
-        cmb_diseno.addItem("🖼️ Folleto Gráfico (Tarjetas de producto)", "grilla")
-        
-        form.addRow("<b>Título Principal:</b>", txt_titulo)
-        form.addRow("<b>Nombre del Negocio:</b>", txt_negocio)
-        form.addRow("<b>Diseño del PDF:</b>", cmb_diseno)
-        lay.addLayout(form)
-        
-        lay.addWidget(QLabel("<b>¿Qué productos incluir?</b>"))
-        lay_inc = QVBoxLayout()
-        rb_all = QRadioButton(f"Los {total_filtered} productos que estoy viendo ahora")
-        rb_all.setChecked(True)
-        
-        rb_sel = QRadioButton(f"Solo los marcados [🗹] ({len(checked_rows)} seleccionados)")
-        rb_sel.setEnabled(has_checked)
-        if has_checked:
-            rb_sel.setChecked(True)
-            
-        lay_inc.addWidget(rb_all)
-        lay_inc.addWidget(rb_sel)
-        lay.addLayout(lay_inc)
-        
-        lay_limite = QHBoxLayout()
-        lay_limite.addWidget(QLabel("<b>Limitar a los primeros:</b>"))
-        spin_limite = QSpinBox()
-        spin_limite.setRange(1, 100000)
-        spin_limite.setValue(total_filtered if total_filtered > 0 else 1)
-        spin_limite.setSuffix(" productos")
-        lay_limite.addWidget(spin_limite)
-        lay_limite.addStretch()
-        lay.addLayout(lay_limite)
-        
-        def _update_spin():
-            if rb_sel.isChecked():
-                spin_limite.setValue(len(checked_rows) if len(checked_rows) > 0 else 1)
-            else:
-                spin_limite.setValue(total_filtered if total_filtered > 0 else 1)
-        rb_all.toggled.connect(_update_spin)
-        rb_sel.toggled.connect(_update_spin)
-        
-        btn_ok = QPushButton("✔ Generar PDF y Abrir")
-        btn_ok.setCursor(Qt.PointingHandCursor)
-        btn_ok.clicked.connect(dlg.accept)
-        lay.addSpacing(10)
-        lay.addWidget(btn_ok)
-        
-        if qt_exec(dlg):
-            if rb_sel.isChecked():
-                productos_a_procesar = checked_rows
-            else:
-                productos_a_procesar = visible_rows
-                
-            limite = spin_limite.value()
-            productos_a_procesar = productos_a_procesar[:limite]
-                
-            if not productos_a_procesar:
-                QMessageBox.warning(self, "Aviso", "No hay productos para exportar.")
-                return
-                
-            lote_catalogo = []
-            for p in productos_a_procesar:
-                depto = p.get('departamento') or ''
-                uni = p.get('unidad') or 'UN'
-                
-                lote_catalogo.append({
-                    "id": str(p.get('id')),
-                    "nombre": p.get('nombre'),
-                    "precio": f"{p.get('precio', 0.0):.2f}" if p.get('precio') is not None else "0.00",
-                    "departamento": depto,
-                    "unidad": uni
-                })
-                
-            try:
-                from src.creador_pdf_global.motor_pdf import EtiquetaRenderer, abrir_archivo_pdf
-                ren = EtiquetaRenderer()
-                pdf_path = ren.generar_pdf_catalogo_inventario(
-                    lote_productos=lote_catalogo,
-                    titulo_folleto=txt_titulo.text().strip(),
-                    negocio=txt_negocio.text().strip(),
-                    diseno_tipo=cmb_diseno.currentData()
-                )
-                abrir_archivo_pdf(pdf_path)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Fallo al generar catálogo PDF: {e}")
+                pid = item_id.text()
+                if chk and chk.checkState() == Qt.CheckState.Checked:
+                    ids_pre.add(str(pid))
+        from src.ui_global.inventario_ui.moleculas.dialogo_catalogo_clientes import abrir_catalogo_clientes
+        abrir_catalogo_clientes(self, preseleccion_ids=ids_pre)
 
     def cargar_datos(self):
+        if not self.catalogo:
+            return
         self.catalogo._cargar_deptos()
         self.catalogo.cargar_datos()
 
@@ -397,6 +396,7 @@ class Admin1Inventario(QWidget):
             is_new = not bool(d.get('id'))
             ok, msg = InventarioService.guardar_producto(d, es_nuevo=is_new, producto_id=d.get('id'))
             if ok:
+                self._asegurar_catalogo()
                 self.catalogo._cargar_deptos()
                 self.catalogo.cargar_datos()
                 try:
@@ -414,7 +414,9 @@ class Admin1Inventario(QWidget):
             QMessageBox.warning(self, "Acceso Denegado", "Tu perfil de cajero no tiene permiso para eliminar productos.")
             return
 
-        # 1. Obtener todas las filas seleccionadas por checkbox
+        if not self.catalogo:
+            QMessageBox.information(self, "Aviso", "Entrá primero al catálogo.")
+            return
         filas_a_borrar = []
         for i in range(self.catalogo.tabla.rowCount()):
             chk = self.catalogo.tabla.item(i, 0)

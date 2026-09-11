@@ -1,32 +1,26 @@
-/* Grilla de precios: misma lectura que las tarjetas de publicidad. */
+/* Grilla de precios: mismo bloque de oferta que el resto de la TV. */
 
-import { descuentoPct, escapeHtml, esOferta, formatMoney, nombreVitrina, precioVigente, textoValidezOferta } from "../../shared/plata_y_texto.js";
+import { descuentoPct, escapeHtml, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlFilaOfertaTv } from "../../shared/precio_tv.js";
 
-export function htmlFilaPrecio(item, puesto = 1, depto = "") {
-    const vigente = precioVigente(item);
-    const oferta = esOferta(item);
-
-    let precioOriginal = item.precio_original || item.precio_anterior || item.precio || vigente;
-    if (precioOriginal <= vigente && vigente > 0) {
-        precioOriginal = Math.round(vigente * 1.2);
-    }
-
-    const pct = descuentoPct(precioOriginal, vigente);
-    const regla = textoValidezOferta(item);
-
+export function htmlFilaPrecio(item) {
+    const { original, vigente, hayOferta } = leerPrecios(item);
+    const pct = hayOferta ? descuentoPct(original, vigente) : 0;
     return `
-        <article class="price-row${oferta ? " is-offer" : ""}">
-            ${pct ? `<span class="price-row__off">-${pct}%</span>` : `<span class="price-row__off price-row__off--hot">OFERTA</span>`}
+        <article class="price-row${hayOferta ? " is-offer" : ""}">
+            ${hayOferta && pct ? `<span class="price-row__off">-${pct}%</span>` : ""}
             <header class="price-row__mast">
-                <h5 class="price-row__name">${escapeHtml(nombreVitrina(item.nombre) || "Oferta Especial")}</h5>
+                <h5 class="price-row__name">${escapeHtml(nombreVitrina(item.nombre) || "Producto")}</h5>
                 <span class="price-row__hair" aria-hidden="true"></span>
             </header>
             <div class="price-row__bottom">
-                <div class="price-row__prices">
-                    ${(precioOriginal > vigente) ? `<s class="price-row__was">${formatMoney(precioOriginal)}</s>` : ""}
-                    <strong class="price-row__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${formatMoney(vigente).replace(/^\$\s*/, "")}</span></strong>
-                </div>
-                ${regla ? `<div class="price-row__rule">${escapeHtml(regla)}</div>` : ""}
+                ${htmlFilaOfertaTv(item, {
+                    caja: "price-row__prices",
+                    ahora: "price-row__now",
+                    antes: "price-row__was",
+                    regla: "price-row__rule",
+                    reglaTag: "div",
+                })}
             </div>
         </article>
     `;

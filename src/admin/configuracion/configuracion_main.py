@@ -1,34 +1,55 @@
-"""Configuración del Sistema — UI premium liviana (W10 bajo recurso)."""
+"""Configuración del Sistema — hub por módulos (carga liviana)."""
 
 from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QMessageBox, QInputDialog, QLineEdit,
+    QStackedWidget, QGridLayout,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QCursor
 
-from src.admin.configuracion.componentes.dialogo_simbolo_moneda import DialogoSimboloMoneda
-from src.admin.configuracion.componentes.dialogo_unidades_medida import DialogoUnidadesMedida
-from src.admin.configuracion.componentes.dialogo_notificaciones_correo import DialogoNotificacionesCorreo
-from src.admin.configuracion.componentes.dialogo_opciones_habilitadas import DialogoOpcionesHabilitadas
-from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
-from src.admin.configuracion.componentes.dialogo_ticket import DialogoTicket
-from src.admin.configuracion.componentes.dialogo_lector_codigos import DialogoLectorCodigos
 from src.admin.configuracion.componentes.config_category import ConfigCategory
-from src.admin.configuracion.componentes.dialogo_cajon import DialogoCajon
-from src.admin.configuracion.componentes.dialogo_dos_tiketeras import DialogoDosTiketeras
-from src.admin.configuracion.componentes.dialogo_administrar_cajas import DialogoAdministrarCajas
-from src.admin.configuracion.componentes.dialogo_alertas_efectivo import DialogoAlertasEfectivo
-from src.admin.configuracion.componentes.dialogo_balanza import DialogoBalanza
-from src.admin.configuracion.componentes.dialogo_facturacion import DialogoFacturacion
-from src.admin.configuracion.componentes.dialogo_impuestos import DialogoImpuestos
-from src.admin.configuracion.componentes.dialogo_licencia import DialogoLicencia
-from src.admin.configuracion.componentes.dialogo_respaldo import DialogoRespaldo
-from src.admin.configuracion.componentes.dialogo_actualizaciones import DialogoActualizaciones
-from src.admin.configuracion.componentes.dialogo_terminal_tpv import DialogoTerminalTPV
-from src.admin.configuracion.componentes.dialogo_integraciones_nube import DialogoIntegracionesNube
-from src.admin.configuracion.componentes.dialogo_pin_local import DialogoPINLocal
+from src.motor_descuentos.compartido import TarjetaModulo
+
+
+_CATEGORIAS = (
+    ("general", "⚙️", "General", "Alertas, cajas, cajeros y facturación.", [
+        ("🚨", "Alertas de\nEfectivo"),
+        ("⚙️", "Opciones\nhabilitadas"),
+        ("👥", "Cajeros"),
+        ("🔑", "Base de datos\nPC Esclava"),
+        ("🧾", "Facturación"),
+        ("📝", "Modificar\nFolios"),
+        ("💻", "Administrar\nCajas"),
+    ]),
+    ("pers", "🎨", "Personalización", "Ticket, impuestos, moneda y unidades.", [
+        ("🖼️", "Logotipo del\nPrograma"),
+        ("🎫", "Ticket"),
+        ("💰", "Impuestos"),
+        ("✂️", "Corte"),
+        ("💲", "Símbolo de\nMoneda"),
+        ("📊", "Unidades de\nMedida"),
+    ]),
+    ("disp", "🔌", "Dispositivos", "Tiketeras, lector, cajón, báscula y TPV.", [
+        ("🖨️🖨️", "Dos Tiketeras\n2 Cajas"),
+        ("🔫", "Lector de\nCódigos"),
+        ("💵", "Cajón de\nDinero"),
+        ("⚖️", "Báscula"),
+        ("📠", "Terminal\nTPV"),
+        ("🔌", "Hardware\nIndustrial"),
+    ]),
+    ("serv", "🌐", "Servicios", "Nube, correo y app del jefe.", [
+        ("📱", "App\nCobro Fácil"),
+        ("🌐", "Integraciones\nNube"),
+        ("📧", "Notificaciones\npor Correo"),
+    ]),
+    ("mant", "🛠️", "Mantenimiento", "Respaldo, licencia y actualizaciones.", [
+        ("🔄", "Respaldo"),
+        ("🔑", "Licencia"),
+        ("⚡", "Actualizaciones"),
+    ]),
+)
 
 
 class Admin5Configuracion(QWidget):
@@ -37,6 +58,7 @@ class Admin5Configuracion(QWidget):
 
     def __init__(self):
         super().__init__()
+        self._paginas = {}
         self.setup_ui()
 
     def setup_ui(self):
@@ -50,138 +72,128 @@ class Admin5Configuracion(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
+        self.stack = QStackedWidget()
+        main_layout.addWidget(self.stack)
+        self.stack.addWidget(self._armar_hub())
 
-        # --- HEADER ---
+    def _barra(self, titulo, sub, on_back, texto_back="← Módulos"):
         header = QFrame()
-        header.setObjectName("AdminConfigHeader")
         header.setFixedHeight(72)
-        header.setStyleSheet("""
-            QFrame#AdminConfigHeader {
-                background-color: #FFFFFF;
-                border-bottom: 1px solid #E2E8F0;
-            }
-        """)
-        h_layout = QHBoxLayout(header)
-        h_layout.setContentsMargins(28, 0, 28, 0)
-        h_layout.setSpacing(16)
-
-        btn_volver = QPushButton("← Volver")
-        btn_volver.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        btn_volver.setStyleSheet("""
-            QPushButton {
-                background-color: #2563EB;
-                color: #FFFFFF;
-                font-weight: 700;
-                font-size: 13px;
-                border: none;
-                border-radius: 8px;
-                padding: 9px 18px;
-            }
-            QPushButton:hover { background-color: #1D4ED8; }
-            QPushButton:pressed { background-color: #1E40AF; }
-        """)
-        btn_volver.clicked.connect(self.request_dashboard.emit)
-        h_layout.addWidget(btn_volver)
-
-        title_col = QVBoxLayout()
-        title_col.setSpacing(2)
-        lbl_title = QLabel("Configuración del Sistema")
-        lbl_title.setStyleSheet(
-            "font-size: 20px; font-weight: 800; color: #0F172A; "
-            "background: transparent; border: none;"
+        header.setStyleSheet("QFrame { background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
+        h = QHBoxLayout(header)
+        h.setContentsMargins(28, 0, 28, 0)
+        btn = QPushButton(texto_back)
+        btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn.setStyleSheet(
+            "QPushButton { background-color: #2563EB; color: #FFFFFF; font-weight: 700;"
+            " font-size: 13px; border: none; border-radius: 8px; padding: 9px 18px; }"
+            "QPushButton:hover { background-color: #1D4ED8; }"
         )
-        lbl_sub = QLabel("Ajustes del negocio, dispositivos y mantenimiento")
-        lbl_sub.setStyleSheet(
-            "font-size: 12px; font-weight: 500; color: #64748B; "
-            "background: transparent; border: none;"
-        )
-        title_col.addWidget(lbl_title)
-        title_col.addWidget(lbl_sub)
-        h_layout.addLayout(title_col)
-        h_layout.addStretch()
-        main_layout.addWidget(header)
+        btn.clicked.connect(on_back)
+        h.addWidget(btn)
+        col = QVBoxLayout()
+        col.setSpacing(2)
+        t = QLabel(titulo)
+        t.setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; background: transparent; border: none;")
+        s = QLabel(sub)
+        s.setStyleSheet("font-size: 12px; font-weight: 500; color: #64748B; background: transparent; border: none;")
+        col.addWidget(t)
+        col.addWidget(s)
+        h.addSpacing(16)
+        h.addLayout(col)
+        h.addStretch()
+        return header
 
-        # --- SCROLL ---
+    def _armar_hub(self):
+        page = QWidget()
+        page.setStyleSheet("background: #F8FAFC;")
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self._barra(
+            "Configuración del sistema",
+            "Elegí un módulo. Los diálogos se abren al hacer clic.",
+            self.request_dashboard.emit,
+            "← Panel admin",
+        ))
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setStyleSheet("""
-            QScrollArea { background: transparent; border: none; }
-            QScrollBar:vertical {
-                background: transparent; width: 10px; margin: 4px 2px;
-            }
-            QScrollBar::handle:vertical {
-                background: #CBD5E1; border-radius: 4px; min-height: 32px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0;
-            }
-        """)
+        scroll.setStyleSheet("QScrollArea { background: transparent; border: none; }")
+        wrap = QWidget()
+        wrap.setStyleSheet("background: #F8FAFC;")
+        grid = QGridLayout(wrap)
+        grid.setContentsMargins(28, 28, 28, 28)
+        grid.setSpacing(16)
+        for i, (codigo, ico, titulo, sub, _items) in enumerate(_CATEGORIAS):
+            card = TarjetaModulo(codigo, ico, titulo, sub)
+            card.clicked.connect(lambda c=codigo: self._abrir(c))
+            grid.addWidget(card, i // 3, i % 3)
+        grid.setRowStretch(2, 1)
+        scroll.setWidget(wrap)
+        lay.addWidget(scroll, 1)
+        return page
 
-        content_widget = QWidget()
-        content_widget.setStyleSheet("background: transparent;")
-        content_layout = QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(28, 22, 28, 32)
-        content_layout.setSpacing(0)
+    def _ir_hub(self):
+        self.stack.setCurrentIndex(0)
 
-        cat_general = ConfigCategory("General", [
-            ("🚨", "Alertas de\nEfectivo"),
-            ("⚙️", "Opciones\nhabilitadas"),
-            ("👥", "Cajeros"),
-            ("🔑", "Base de datos\nPC Esclava"),
-            ("🧾", "Facturación"),
-            ("📝", "Modificar\nFolios"),
-            ("💻", "Administrar\nCajas"),
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_general)
+    def _abrir(self, codigo):
+        if codigo not in self._paginas:
+            self._paginas[codigo] = self._pagina_categoria(codigo)
+            self.stack.addWidget(self._paginas[codigo])
+        self.stack.setCurrentWidget(self._paginas[codigo])
 
-        cat_pers = ConfigCategory("Personalización", [
-            ("🖼️", "Logotipo del\nPrograma"),
-            ("🎫", "Ticket"),
-            ("💰", "Impuestos"),
-            ("✂️", "Corte"),
-            ("💲", "Símbolo de\nMoneda"),
-            ("📊", "Unidades de\nMedida"),
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_pers)
+    def _pagina_categoria(self, codigo):
+        meta = next(c for c in _CATEGORIAS if c[0] == codigo)
+        _cod, _ico, titulo, sub, items = meta
+        page = QWidget()
+        page.setStyleSheet("background: #F8FAFC;")
+        lay = QVBoxLayout(page)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self._barra(titulo, sub, self._ir_hub))
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        inner = QWidget()
+        inner.setStyleSheet("background: #F8FAFC;")
+        il = QVBoxLayout(inner)
+        il.setContentsMargins(28, 22, 28, 32)
+        il.addWidget(ConfigCategory(titulo, items, callback=self.ejecutar_accion))
+        il.addStretch()
+        scroll.setWidget(inner)
+        lay.addWidget(scroll, 1)
+        return page
 
-        cat_disp = ConfigCategory("Dispositivos", [
-            ("🖨️🖨️", "Dos Tiketeras\n2 Cajas"),
-            ("🔫", "Lector de\nCódigos"),
-            ("💵", "Cajón de\nDinero"),
-            ("⚖️", "Báscula"),
-            ("📠", "Terminal\nTPV"),
-            ("🔌", "Hardware\nIndustrial"),
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_disp)
-
-        cat_serv = ConfigCategory("Servicios", [
-            ("📱", "App\nCobro Fácil"),
-            ("🌐", "Integraciones\nNube"),
-            ("📧", "Notificaciones\npor Correo"),
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_serv)
-
-        cat_mant = ConfigCategory("Mantenimiento", [
-            ("🔄", "Respaldo"),
-            ("🔑", "Licencia"),
-            ("⚡", "Actualizaciones"),
-        ], callback=self.ejecutar_accion)
-        content_layout.addWidget(cat_mant)
-
-        content_layout.addStretch()
-        scroll.setWidget(content_widget)
-        main_layout.addWidget(scroll)
+    def _dialogo(self, modulo, clase):
+        mod = __import__(modulo, fromlist=[clase])
+        qt_exec(getattr(mod, clase)(self))
 
     def ejecutar_accion(self, opcion):
-        if opcion == "Alertas de\nEfectivo":
-            qt_exec(DialogoAlertasEfectivo(self))
-        elif opcion == "Opciones\nhabilitadas":
-            qt_exec(DialogoOpcionesHabilitadas(self))
-        elif opcion == "Cajeros":
-            qt_exec(DialogoPerfiles(self))
-        elif opcion == "Administrar\nCajas":
+        mapa = {
+            "Alertas de\nEfectivo": ("src.admin.configuracion.componentes.dialogo_alertas_efectivo", "DialogoAlertasEfectivo"),
+            "Opciones\nhabilitadas": ("src.admin.configuracion.componentes.dialogo_opciones_habilitadas", "DialogoOpcionesHabilitadas"),
+            "Cajeros": ("src.ui_global.perfil_empleados_ui.dialogo_perfiles", "DialogoPerfiles"),
+            "Ticket": ("src.admin.configuracion.componentes.dialogo_ticket", "DialogoTicket"),
+            "Logotipo del\nPrograma": ("src.admin.configuracion.componentes.dialogo_ticket", "DialogoTicket"),
+            "Lector de\nCódigos": ("src.admin.configuracion.componentes.dialogo_lector_codigos", "DialogoLectorCodigos"),
+            "Dos Tiketeras\n2 Cajas": ("src.admin.configuracion.componentes.dialogo_dos_tiketeras", "DialogoDosTiketeras"),
+            "Cajón de\nDinero": ("src.admin.configuracion.componentes.dialogo_cajon", "DialogoCajon"),
+            "Símbolo de\nMoneda": ("src.admin.configuracion.componentes.dialogo_simbolo_moneda", "DialogoSimboloMoneda"),
+            "Unidades de\nMedida": ("src.admin.configuracion.componentes.dialogo_unidades_medida", "DialogoUnidadesMedida"),
+            "Báscula": ("src.admin.configuracion.componentes.dialogo_balanza", "DialogoBalanza"),
+            "Base de datos\nPC Esclava": ("src.admin.configuracion.componentes.dialogo_pin_local", "DialogoPINLocal"),
+            "Facturación": ("src.admin.configuracion.componentes.dialogo_facturacion", "DialogoFacturacion"),
+            "Impuestos": ("src.admin.configuracion.componentes.dialogo_impuestos", "DialogoImpuestos"),
+            "Respaldo": ("src.admin.configuracion.componentes.dialogo_respaldo", "DialogoRespaldo"),
+            "Terminal\nTPV": ("src.admin.configuracion.componentes.dialogo_terminal_tpv", "DialogoTerminalTPV"),
+            "Actualizaciones": ("src.admin.configuracion.componentes.dialogo_actualizaciones", "DialogoActualizaciones"),
+            "Integraciones\nNube": ("src.admin.configuracion.componentes.dialogo_integraciones_nube", "DialogoIntegracionesNube"),
+            "Licencia": ("src.admin.configuracion.componentes.dialogo_licencia", "DialogoLicencia"),
+            "Notificaciones\npor Correo": ("src.admin.configuracion.componentes.dialogo_notificaciones_correo", "DialogoNotificacionesCorreo"),
+        }
+        if opcion == "Hardware\nIndustrial":
+            self.request_screen.emit(13)
+            return
+        if opcion == "Administrar\nCajas":
             pwd, ok = QInputDialog.getText(
                 self,
                 "Licencia Multi-Caja Requerida",
@@ -190,7 +202,10 @@ class Admin5Configuracion(QWidget):
                 QLineEdit.EchoMode.Password,
             )
             if ok and pwd == "209470":
-                qt_exec(DialogoAdministrarCajas(self))
+                self._dialogo(
+                    "src.admin.configuracion.componentes.dialogo_administrar_cajas",
+                    "DialogoAdministrarCajas",
+                )
             elif ok:
                 QMessageBox.warning(
                     self,
@@ -198,41 +213,8 @@ class Admin5Configuracion(QWidget):
                     "Clave incorrecta. Esta función será desbloqueada al adquirir "
                     "el módulo de Red en próximas actualizaciones.",
                 )
-        elif opcion in ("Ticket", "Logotipo del\nPrograma"):
-            qt_exec(DialogoTicket(self))
-        elif opcion == "Lector de\nCódigos":
-            qt_exec(DialogoLectorCodigos(self))
-        elif opcion == "Dos Tiketeras\n2 Cajas":
-            qt_exec(DialogoDosTiketeras(self))
-        elif opcion == "Cajón de\nDinero":
-            qt_exec(DialogoCajon(self))
-        elif opcion == "Símbolo de\nMoneda":
-            qt_exec(DialogoSimboloMoneda(self))
-        elif opcion == "Unidades de\nMedida":
-            qt_exec(DialogoUnidadesMedida(self))
-        elif opcion == "Báscula":
-            qt_exec(DialogoBalanza(self))
-        elif opcion == "Hardware\nIndustrial":
-            self.request_screen.emit(13)
-        elif opcion == "Base de datos\nPC Esclava":
-            qt_exec(DialogoPINLocal(self))
-        elif opcion == "Facturación":
-            qt_exec(DialogoFacturacion(self))
-        elif opcion == "Impuestos":
-            qt_exec(DialogoImpuestos(self))
-        elif opcion == "Respaldo":
-            qt_exec(DialogoRespaldo(self))
-        elif opcion == "Terminal\nTPV":
-            qt_exec(DialogoTerminalTPV(self))
-        elif opcion == "Actualizaciones":
-            qt_exec(DialogoActualizaciones(self))
-        elif opcion == "Integraciones\nNube":
-            qt_exec(DialogoIntegracionesNube(self))
-        elif opcion == "Licencia":
-            qt_exec(DialogoLicencia(self))
-        elif opcion == "Notificaciones\npor Correo":
-            qt_exec(DialogoNotificacionesCorreo(self))
-        elif opcion == "App\nCobro Fácil":
+            return
+        if opcion == "App\nCobro Fácil":
             QMessageBox.information(
                 self,
                 "App Cobro Fácil",
@@ -240,13 +222,15 @@ class Admin5Configuracion(QWidget):
                 "ver cada billete que entra en la caja o sale; tenemos alarmas de "
                 "apertura de caja sin permiso.",
             )
-        else:
-            QMessageBox.information(
-                self, "En desarrollo", f"La opción '{opcion}' está en desarrollo."
-            )
+            return
+        par = mapa.get(opcion)
+        if par:
+            self._dialogo(*par)
+            return
+        QMessageBox.information(self, "En desarrollo", f"La opción '{opcion}' está en desarrollo.")
 
     def _abrir_configuracion_carteleria(self):
-        from src.admin.configuracion.componentes.configuracion_pcmaestra import (
-            DialogoConfiguracionCarteleria,
+        self._dialogo(
+            "src.admin.configuracion.componentes.configuracion_pcmaestra",
+            "DialogoConfiguracionCarteleria",
         )
-        qt_exec(DialogoConfiguracionCarteleria(self))

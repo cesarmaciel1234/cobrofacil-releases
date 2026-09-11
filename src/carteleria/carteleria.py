@@ -93,8 +93,8 @@ class CarteleriaApp(QStackedWidget):
         self.inv = Admin1Inventario()
         self.addWidget(self.inv)
         self.inv.request_dashboard.connect(self.volver_dashboard)
-        if self.estilo_completo: self.inv.setStyleSheet(self.estilo_completo)
-        if hasattr(self.inv, "_apply_inventario_theme"): self.inv._apply_inventario_theme()
+        if hasattr(self.inv, "_apply_inventario_theme"):
+            self.inv._apply_inventario_theme()
         
         # La carteleria no tiene login → current_user es None → rol seria "cajero"
         # Forzamos admin para que los botones de edicion funcionen
@@ -107,22 +107,23 @@ class CarteleriaApp(QStackedWidget):
         self.showMaximized()
 
     def lanzar_ofe(self):
-        if not self.ofe:
-            try:
-                from src.motor_descuentos.vistas.ofertas_main import Admin2Ofertas
-                self.ofe = Admin2Ofertas()
-            except Exception as e:
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.critical(
-                    self,
-                    "Motor de Promociones",
-                    f"No se pudo abrir el módulo:\n{e}",
-                )
-                return
-            self.addWidget(self.ofe)
-            self.ofe.request_dashboard.connect(self.volver_dashboard)
-            if self.estilo_completo:
-                self.ofe.setStyleSheet(self.estilo_completo)
+        if self.ofe:
+            self.removeWidget(self.ofe)
+            self.ofe.deleteLater()
+            self.ofe = None
+        try:
+            from src.motor_descuentos.hub import Admin2Ofertas
+            self.ofe = Admin2Ofertas()
+        except Exception as e:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "Motor de Promociones",
+                f"No se pudo abrir el módulo:\n{e}",
+            )
+            return
+        self.addWidget(self.ofe)
+        self.ofe.request_dashboard.connect(self.volver_dashboard)
         self.setCurrentWidget(self.ofe)
         self.showMaximized()
 
@@ -196,18 +197,19 @@ class CarteleriaApp(QStackedWidget):
             self.estilo_completo = estilo_completo
             
             self.dashboard.setStyleSheet(estilo_completo)
-            # Admin config es UI clara propia: el QSS noche deja marcos oscuros superpuestos.
-            if self.inv: self.inv.setStyleSheet(estilo_completo)
-            if self.ofe: self.ofe.setStyleSheet(estilo_completo)
+            if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
+                self.inv._apply_inventario_theme()
+            elif self.inv:
+                self.inv.setStyleSheet(estilo_completo)
+            if self.ofe:
+                self.ofe.setStyleSheet(
+                    "QWidget#HubPromociones { background: #F8FAFC; }"
+                    "QDoubleSpinBox, QLineEdit, QComboBox {"
+                    " background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; }"
+                )
             if self.red: self.red.setStyleSheet(estilo_completo)
             if self.prov: self.prov.setStyleSheet(estilo_completo)
             if self.png_prod: self.png_prod.setStyleSheet(estilo_completo)
-            
-            # Notificar al inventario para que actualice sus colores internos
-            if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
-                self.inv._apply_inventario_theme()
-                
-            # Notificar al dashboard principal
             if hasattr(self.dashboard, "apply_dashboard_theme"):
                 self.dashboard.apply_dashboard_theme(theme_manager.is_dark())
                 

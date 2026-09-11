@@ -58,7 +58,7 @@ class PanelDepartamentos(QWidget):
         tb = QFrame(); tb.setFixedHeight(50)
         tb.setStyleSheet("QFrame{background: white; border-bottom: 1px solid #cbd5e1;}")
         tl = QHBoxLayout(tb); tl.setContentsMargins(15,5,15,5); tl.setSpacing(10)
-        btn_volver = QPushButton("⬅ Volver al Catálogo"); btn_volver.setObjectName("gray")
+        btn_volver = QPushButton("← Módulos"); btn_volver.setObjectName("gray")
         btn_volver.clicked.connect(self.volver.emit)
         self.btn_nuevo_dep = QPushButton("📁 Limpiar Formulario")
         self.btn_nuevo_dep.clicked.connect(self._iniciar_nuevo)

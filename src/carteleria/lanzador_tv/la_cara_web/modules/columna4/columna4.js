@@ -1,4 +1,4 @@
-/* Columna 4: lobo chef + clima real + rotación de lo más pedido en tickets. */
+﻿/* Columna 4: lobo chef + clima real + rotación de lo más pedido en tickets. */
 
 import { htmlPronosticoClima } from "./tarjetas/tarjeta_chef.js";
 import { nombreVitrina } from "../shared/plata_y_texto.js";
@@ -116,11 +116,6 @@ export function iniciarRotacionColumna4(state, root) {
         rotacionIndex = 0;
         pintar();
     }
-    if (rotacionTimer) return;
-    if (itemsCache.length <= 1) return;
-    rotacionTimer = setInterval(() => {
-        if (!itemsCache.length) return;
-        rotacionIndex = (rotacionIndex + 1) % itemsCache.length;
-        pintar();
-    }, ROTACION_MS);
+    // The inner carousel handles its own rotation now. No need to rebuild DOM every 8 seconds.
+    // rotacionTimer = setInterval(...) was removed to prevent interrupting the carousel.
 }

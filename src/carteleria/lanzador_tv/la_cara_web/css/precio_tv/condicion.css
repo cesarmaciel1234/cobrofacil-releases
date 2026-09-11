@@ -1,0 +1,22 @@
+/* Condición de oferta: solo si el HTML la mandó. */
+
+body .tv-panel .deal-save,
+body .tv-panel .xsell-item__rule,
+body .tv-panel .price-row__rule,
+body .tv-panel .asian-flash-condition,
+body .tv-panel .flash-offer .deal-save {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    color: #FF6600 !important;
+    -webkit-text-fill-color: #FF6600 !important;
+    font-weight: 800 !important;
+    font-size: clamp(1.05rem, 1.7cqw, 1.4rem) !important;
+    line-height: 1.2 !important;
+    margin: 0.35em 0 0 !important;
+    text-shadow: 0 2px 6px #000 !important;
+}

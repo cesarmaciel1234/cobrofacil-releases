@@ -262,6 +262,9 @@ class MotorRed:
                 except Exception:
                     pass
                 self._detener_servidor_tienda_local()
+                from src.central_red_global.sync_tienda import al_conectar_esclava
+
+                al_conectar_esclava()
                 return True, f"Conexión exitosa a la Maestra en {ip_maestra}."
 
             # Puerto abierto pero auth/DB falló: volver al estado anterior

@@ -1,0 +1,29 @@
+/* Carrusel: colores al revés + Llevando un poco más grande. */
+
+body .hero-section .oferta-card .deal-save {
+    font-size: clamp(1.05rem, 1.4cqw, 1.28rem) !important;
+    color: var(--accent-primary, #FF4D00) !important;
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+}
+
+body .hero-section .oferta-card .deal-proof {
+    font-size: clamp(0.72rem, 1cqw, 0.88rem) !important;
+    color: var(--deal-save-color, #E8D48B) !important;
+    -webkit-text-fill-color: var(--deal-save-color, #E8D48B) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+body .hero-section .oferta-card .tv-card__timer {
+    background: rgba(0, 0, 0, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 999px !important;
+}
+
+body .hero-section .oferta-card .tv-card__timer-text {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-weight: 800 !important;
+}
