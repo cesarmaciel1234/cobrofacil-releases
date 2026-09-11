@@ -1,4 +1,4 @@
-/* Floating Header Elements */
+﻿/* Floating Header Elements */
 .floating-header {
     position: fixed;
     top: calc(var(--tv-safe-y) + 8px);
@@ -12,7 +12,7 @@
     box-shadow: none;
 }
 
-/* Pronóstico del clima para columna 4 */
+/* PronÃ³stico del clima para columna 4 */
 .pronostico-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
@@ -395,7 +395,7 @@
     100% { transform: translateX(-50%); }
 }
 
-/* --- Mejora de Pronóstico (Weather Widget) --- */
+/* --- Mejora de PronÃ³stico (Weather Widget) --- */
 .flash-strip__clima {
     display: flex;
     align-items: center;
@@ -455,7 +455,7 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Piso: mensaje de zócalo arriba, barra de estado abajo. */
+/* Piso: mensaje de zÃ³calo arriba, barra de estado abajo. */
 .footer {
     position: relative;
     flex: 0 0 auto;
@@ -610,3 +610,2409 @@ body.has-aviso-licencia .footer {
 .chef-carousel-track {
     gap: 0 !important;
 }
+
+/* =====================================================================
+   OFERTA CARDS PREMIUM UPGRADE
+   ===================================================================== */
+.oferta-card {
+    position: relative;
+    overflow: hidden; /* For shimmer effect */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+}
+
+/* Glassmorphism effect on the copy section */
+.oferta-card .glass-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.35) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+    border-radius: 0 0 16px 16px;
+    z-index: 2;
+    position: relative;
+}
+
+/* Image zoom effect */
+.oferta-card .deal-stage__img {
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.oferta-card.is-center-focus .deal-stage__img {
+    transform: scale(1.08) translateY(-3%);
+}
+
+/* Massive Price Styling */
+.oferta-card .giant-price {
+    font-size: clamp(2.5rem, 4.5cqw, 3.8rem) !important;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.5);
+    background: linear-gradient(to bottom, #FFFFFF 0%, #E0E0E0 100%) !important;
+    -webkit-background-clip: text !important;
+    
+    display: inline-block;
+}
+
+/* Elegant Diagonal Strike for old price */
+.oferta-card .diagonal-strike {
+    position: relative;
+    text-decoration: none !important;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    font-size: clamp(1rem, 2cqw, 1.4rem);
+}
+.oferta-card .diagonal-strike::after {
+    content: '';
+    position: absolute;
+    left: -5%;
+    top: 50%;
+    width: 110%;
+    height: 2px;
+    background: var(--accent-primary, #FF4D00);
+    transform: rotate(-12deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+    0% { opacity: 0.8; filter: drop-shadow(0 0 2px var(--accent-primary, #FF4D00)); }
+    50% { opacity: 1; filter: drop-shadow(0 0 12px var(--accent-primary, #FF4D00)); }
+    100% { opacity: 0.8; filter: drop-shadow(0 0 2px var(--accent-primary, #FF4D00)); }
+}
+
+@keyframes pulseText {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); color: var(--accent-primary, #FF4D00); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shimmerSlide {
+    0% { transform: translateX(-150%) skewX(-15deg); }
+    100% { transform: translateX(250%) skewX(-15deg); }
+}
+
+.pulse-icon {
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.pulse-alert {
+    animation: pulseText 1.5s infinite ease-in-out;
+    font-weight: 800;
+}
+
+.pulse-save {
+    color: var(--accent-primary, #4ADE80);
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
+
+/* Shimmer effect for the card */
+.card-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+    z-index: 10;
+    pointer-events: none;
+    animation: shimmerSlide 4s infinite linear;
+    animation-delay: 2s;
+}
+
+/* Dynamic styling for center focus card */
+.oferta-card.is-center-focus {
+    z-index: 10;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.6), 0 0 0 2px var(--accent-primary, #FFF);
+}
+.oferta-card.is-center-focus .card-shimmer {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%, 
+        rgba(255, 255, 255, 0.25) 50%, 
+        rgba(255, 255, 255, 0) 100%);
+}
+
+
+/* =====================================================================
+   AI-LEVEL OFERTA CARD OVERHAUL
+   ===================================================================== */
+/* Force the card to be a stack where the image is the background and the copy is the foreground overlay */
+.hero-section .oferta-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+    position: relative !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: #000 !important; /* fallback if no image */
+}
+
+/* Make the image container fill the entire card behind the text */
+.hero-section .oferta-card .deal-stage {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    z-index: 1 !important;
+}
+
+/* Make the actual image cover the area beautifully */
+.hero-section .oferta-card .deal-stage__img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    mix-blend-mode: normal !important;
+    filter: brightness(0.9) contrast(1.1) !important;
+}
+
+/* Redesign the glass panel to be a sleek dark overlay at the bottom */
+.hero-section .oferta-card .glass-panel {
+    position: relative !important;
+    z-index: 2 !important;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 1.5cqh 1.2cqw !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.8cqh !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 50% !important;
+    justify-content: flex-end !important;
+}
+
+/* Clean up theme overrides that mess up the price box */
+.hero-section .oferta-card .tv-card__now-box {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 0.5cqw !important;
+}
+
+/* The giant price text */
+.hero-section .oferta-card .giant-price {
+    font-size: clamp(3rem, 5.5cqw, 4.5rem) !important;
+    font-weight: 900 !important;
+    line-height: 0.85 !important;
+    letter-spacing: -0.04em !important;
+    text-shadow: 0 8px 24px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8) !important;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #B0B0B0 100%) !important;
+    -webkit-background-clip: text !important;
+    
+    display: inline-block !important;
+}
+
+/* Elegant diagonal strike for old price */
+.hero-section .oferta-card .diagonal-strike {
+    position: relative !important;
+    text-decoration: none !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-weight: 700 !important;
+    font-size: clamp(1.2rem, 2.5cqw, 1.8rem) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+}
+.hero-section .oferta-card .diagonal-strike::after {
+    content: '' !important;
+    position: absolute !important;
+    left: -10% !important;
+    top: 50% !important;
+    width: 120% !important;
+    height: 3px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    transform: rotate(-15deg) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
+}
+
+/* Clean typography */
+.hero-section .oferta-card .tv-card__name {
+    color: #FFFFFF !important;
+    
+    font-size: clamp(1.5rem, 2.2cqw, 2rem) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.9) !important;
+    line-height: 1.1 !important;
+}
+.hero-section .oferta-card .deal-kicker {
+    color: var(--accent-primary, #FF4D00) !important;
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 3px !important;
+    font-size: clamp(0.7rem, 1cqw, 0.9rem) !important;
+    margin-bottom: 0.2cqh !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* Badge styling (percentage off) */
+.hero-section .oferta-card .deal-stage__off {
+    position: absolute !important;
+    top: 1cqh !important;
+    left: 1cqw !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    color: #FFF !important;
+    -webkit-text-fill-color: #FFF !important;
+    font-weight: 900 !important;
+    font-size: clamp(1rem, 1.5cqw, 1.4rem) !important;
+    padding: 0.5cqh 1cqw !important;
+    border-radius: 8px !important;
+    z-index: 5 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+/* Remove default letter fallback to avoid clutter */
+.hero-section .oferta-card .deal-stage__letter {
+    display: none !important;
+}
+
+
+/* AI Footer / Timer */
+.hero-section .oferta-card .deal-foot {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding-top: 0.8cqh !important;
+    margin-top: 0.5cqh !important;
+}
+
+.hero-section .oferta-card .tv-card__timer {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5cqw !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    padding: 0.4cqh 0.8cqw !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.hero-section .oferta-card .tv-card__timer-text {
+    color: #FFF !important;
+    -webkit-text-fill-color: #FFF !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: clamp(0.8rem, 1.2cqw, 1rem) !important;
+}
+
+.hero-section .oferta-card .deal-proof {
+    color: rgba(255, 255, 255, 0.8) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 600 !important;
+    font-size: clamp(0.7rem, 1cqw, 0.9rem) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Animations Overhaul */
+.hero-section .oferta-card .pulse-icon {
+    width: 8px !important;
+    height: 8px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    box-shadow: 0 0 8px var(--accent-primary, #FF4D00) !important;
+}
+
+/* Center focus glow */
+.hero-section .oferta-card.is-center-focus {
+    transform: scale(1.05) !important;
+    border-color: var(--accent-primary, #FFF) !important;
+    box-shadow: 0 0 30px rgba(var(--accent-primary-rgb, 255,255,255), 0.3), 0 20px 40px rgba(0,0,0,0.8) !important;
+}
+/* Spotlight behind transparent images */
+.hero-section .oferta-card {
+    background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.15) 0%, rgba(0,0,0,1) 80%) !important;
+}
+/* Fix PNG visibility in Carousel (Keep the meat visible!) */
+.hero-section .oferta-card .deal-stage {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 65% !important; /* Only take up top portion so it doesn't get covered completely by glass */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    width: auto !important;
+    height: 90% !important;
+    max-width: 90% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.8)) !important; /* Floating 3D meat */
+    mix-blend-mode: normal !important;
+}
+
+.hero-section .oferta-card {
+    background: radial-gradient(circle at 50% 20%, rgba(255,255,255,0.1) 0%, rgba(0,0,0,1) 100%) !important;
+}
+
+/* =====================================================================
+   GLOBAL AI-LEVEL STYLING FOR ALL COLUMNS (TV1, TV2, TV3, TV4)
+   ===================================================================== */
+
+/* Base Glassmorphism for all cards/rows */
+.tv-panel .price-row,
+.tv-panel .xsell-item,
+.tv-panel .asian-rank-card,
+.tv-panel .asian-flash-card,
+.tv-panel .tv-card {
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.4) 0%, rgba(10, 10, 10, 0.8) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+    position: relative !important;
+    overflow: visible !important;
+    margin-bottom: 1cqh !important;
+}
+
+/* Fix PNGs to pop beautifully in 3D (everywhere) */
+.deal-stage {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.deal-stage__img {
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.9)) drop-shadow(0 0 10px rgba(255,255,255,0.1)) !important;
+    mix-blend-mode: normal !important;
+    object-fit: contain !important;
+}
+
+/* Spotlight specifically for column cards to highlight the meat */
+.asian-rank-card.is-photo {
+    background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.8) 100%) !important;
+}
+
+/* Giant prices for TV2 and TV3 */
+.price-row .tv-card__now, 
+.xsell-item .tv-card__now, 
+.asian-flash-card .tv-card__now {
+    font-size: clamp(2rem, 3.5cqw, 3rem) !important;
+    font-weight: 900 !important;
+    background: linear-gradient(to bottom, #FFFFFF 0%, #A0A0A0 100%) !important;
+    -webkit-background-clip: text !important;
+    
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
+}
+
+/* Remove ugly yellow/orange blocks from text backgrounds */
+.price-row .tv-card__now-box, 
+.xsell-item .tv-card__now-box, 
+.asian-flash-card .tv-card__now-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Clean text colors */
+.price-row__name, .xsell-item__name, .asian-rank-name {
+    color: #FFF !important;
+    -webkit-text-fill-color: #FFF !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* Old prices / Diagonal strikes globally */
+.tv-card__was {
+    text-decoration: none !important;
+    position: relative !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+}
+.tv-card__was::after {
+    content: '' !important;
+    position: absolute !important;
+    left: -5% !important;
+    top: 50% !important;
+    width: 110% !important;
+    height: 2px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    transform: rotate(-12deg) !important;
+}
+
+/* TV1 Ranking Numbers - Make them Cyberpunk Neons */
+.rank-escarapela {
+    background: var(--accent-primary, #FF4D00) !important;
+    color: #FFF !important;
+    -webkit-text-fill-color: #FFF !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    box-shadow: 0 0 12px var(--accent-primary, #FF4D00) !important;
+}
+
+/* Headers */
+.board-head {
+    background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(30,30,30,0.6) 100%) !important;
+    backdrop-filter: blur(10px) !important;
+    border-bottom: 2px solid var(--accent-primary, #FF4D00) !important;
+}
+
+/* FIX: Restore document flow so cards don't collapse! */
+.hero-section .oferta-card {
+    min-width: 26cqw !important;
+    height: 26cqh !important; 
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+}
+
+.hero-section .oferta-card .deal-stage {
+    position: relative !important; /* Not absolute, so it pushes the card size */
+    flex-grow: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-top: 1cqh !important;
+}
+
+.hero-section .oferta-card .glass-panel {
+    position: relative !important;
+    z-index: 2 !important;
+    flex-shrink: 0 !important;
+    min-height: 12cqh !important; /* Fixed height for the text area */
+    width: 100% !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    height: 100% !important;
+    max-height: 14cqh !important; /* Ensure it fits nicely above the text */
+    width: auto !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.8)) !important;
+}
+
+
+/* FIX 1: Fix invisible/black prices caused by webkit-text-fill-color transparent failing */
+.price-row .tv-card__now, 
+.xsell-item .tv-card__now, 
+.asian-flash-card .tv-card__now,
+.hero-section .oferta-card .giant-price {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    
+    color: #FFFFFF !important;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* Let the theme color the prices in TV2 and TV4 if they want, but force white in Carousel and TV3 */
+.hero-section .oferta-card .giant-price,
+.xsell-item .tv-card__now {
+    color: #FFFFFF !important;
+    
+}
+
+/* FIX 2: Stop the Carousel glass panel from pushing text out of bounds */
+.hero-section .oferta-card {
+    min-width: 26cqw !important;
+    height: 30cqh !important; /* Made it taller to fit the name, image and giant price */
+    justify-content: space-between !important; /* distribute space */
+}
+
+.hero-section .oferta-card .deal-stage {
+    flex-grow: 1 !important;
+    height: 14cqh !important; 
+    padding-top: 0.5cqh !important;
+    position: relative !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    height: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}
+
+.hero-section .oferta-card .glass-panel {
+    min-height: max-content !important; /* Let it grow to fit the text! */
+    height: auto !important;
+    padding: 1cqh 1cqw !important;
+    flex-shrink: 0 !important;
+}
+
+/* Ensure the product name is explicitly visible and not squished */
+.hero-section .oferta-card .tv-card__name {
+    display: block !important;
+    visibility: visible !important;
+    font-size: clamp(1.4rem, 2cqw, 1.8rem) !important;
+    white-space: normal !important;
+    line-height: 1.1 !important;
+    margin-bottom: 0.5cqh !important;
+}
+
+/* Fix giant price vertical clipping */
+.hero-section .oferta-card .giant-price {
+    line-height: 1 !important; /* Prevent it from being cut off at the top */
+    display: block !important;
+}
+
+
+/* INCREASE CAROUSEL CARD SIZE */
+.hero-section .oferta-card {
+    min-width: 32cqw !important; /* Made wider (was 26) */
+    height: 33cqh !important; /* Made taller to keep proportion (was 30) */
+}
+
+/* FINAL POLISH: Exactly 3 cards, centered images, well distributed text */
+.hero-section .oferta-card {
+    min-width: 31.5cqw !important; /* Exactly 3 cards + gap will fit in 100vw */
+    width: 31.5cqw !important;
+    height: 35cqh !important; 
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+}
+
+/* Center the image properly! */
+.hero-section .oferta-card .deal-stage {
+    display: flex !important;
+    flex-grow: 1 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 18cqh !important;
+    position: relative !important;
+    width: 100% !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    height: 95% !important;
+    width: 100% !important;
+    max-width: 90% !important;
+    object-fit: contain !important;
+    object-position: center !important; /* Ensure it stays in the middle */
+    margin: 0 auto !important;
+}
+
+/* Fix the price row: put the old price right next to the giant price */
+.hero-section .oferta-card .tv-card__now-box {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important; /* Put them together! */
+    gap: 1.5cqw !important;
+    width: 100% !important;
+}
+
+/* Ensure the glass panel breathes */
+.hero-section .oferta-card .glass-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 0.8cqh !important;
+    padding: 1.2cqh 1.2cqw !important;
+}
+
+/* Force the timer/foot to distribute well */
+.hero-section .oferta-card .deal-foot {
+    margin-top: auto !important; /* Push to bottom */
+}
+
+/* OPTIMIZE SPACE: Remove 'OFERTAS' kicker */
+.hero-section .oferta-card .deal-kicker {
+    display: none !important;
+}
+
+/* Ensure bottom timer fits perfectly without cutting */
+.hero-section .oferta-card .deal-foot {
+    margin-top: 1cqh !important; /* give it space */
+    padding-bottom: 0.5cqh !important;
+}
+
+/* Make the giant price a tiny bit smaller so the bottom doesn't cut */
+.hero-section .oferta-card .giant-price {
+    font-size: clamp(2.5rem, 5cqw, 4rem) !important;
+}
+
+/* Make image even larger to fill the top space */
+.hero-section .oferta-card .deal-stage {
+    height: 20cqh !important; /* increased from 18 */
+}
+.hero-section .oferta-card .deal-stage__img {
+    height: 100% !important;
+    transform: scale(1.1) !important; /* force it to pop a bit more if PNGs have internal padding */
+}
+
+/* =====================================================================
+   NEW ARCHITECTURE: HORIZONTAL SPLIT (30% PNG | 70% INFO)
+   ===================================================================== */
+.hero-section .oferta-card {
+    display: flex !important;
+    flex-direction: row !important; /* Horizontal layout */
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    min-width: 31.5cqw !important;
+    width: 31.5cqw !important;
+    height: 24cqh !important; /* Adjusted height for horizontal layout */
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.4) 0%, rgba(10, 10, 10, 0.8) 100%) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}
+
+/* 30% Left Side - The PNG Meat */
+.hero-section .oferta-card .deal-stage {
+    position: relative !important;
+    width: 35% !important; /* Gave it 35% to ensure it looks substantial */
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%) !important;
+    border-right: 1px solid rgba(255,255,255,0.05) !important;
+    padding: 0 !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    width: 90% !important;
+    height: 90% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.8)) !important;
+    transform: scale(1.15) !important; /* Make it pop out nicely */
+}
+
+/* 70% Right Side - The Information */
+.hero-section .oferta-card .glass-panel {
+    position: relative !important;
+    width: 65% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important; /* Vertically center the text blocks */
+    padding: 1cqw !important;
+    background: transparent !important; /* No need for glass background since card has it */
+    border: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Adjust Text Sizes for Horizontal Layout */
+.hero-section .oferta-card .tv-card__name {
+    font-size: clamp(1.4rem, 2cqw, 1.8rem) !important;
+    margin-bottom: 0.5cqh !important;
+}
+
+.hero-section .oferta-card .giant-price {
+    font-size: clamp(2.5rem, 4cqw, 3.5rem) !important; /* Slightly smaller to fit side-by-side */
+}
+
+.hero-section .oferta-card .tv-card__now-box {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 1cqw !important;
+}
+
+/* Footer / Timer adjusted */
+.hero-section .oferta-card .deal-foot {
+    margin-top: 1cqh !important; /* Push timer to the bottom of the right panel */
+    padding-bottom: 0 !important;
+    border-top: none !important;
+    justify-content: flex-start !important;
+    gap: 1cqw !important;
+}
+
+/* Ensure the badge stays on top of the image */
+.hero-section .oferta-card .deal-stage__off {
+    top: 1cqh !important;
+    left: 1cqw !important;
+    font-size: clamp(0.9rem, 1.2cqw, 1.2rem) !important;
+}
+
+/* FIX 1: Make the badge float absolutely so it doesn't push the meat down */
+.hero-section .oferta-card .deal-stage__off {
+    position: absolute !important;
+    top: 1cqh !important;
+    left: 1cqw !important;
+    z-index: 10 !important;
+}
+
+/* FIX 2: Restore the Odometer numbers! Remove any weird text-fill or line-height that breaks the slot machine effect */
+.hero-section .oferta-card .giant-price,
+.hero-section .oferta-card .giant-price * {
+    
+    color: #FFFFFF !important;
+    background: transparent !important;
+    -webkit-background-clip: border-box !important;
+    line-height: normal !important; /* Let odometer handle its own line-height */
+}
+
+/* Ensure the left column (image) is truly 30% and text is 70% */
+.hero-section .oferta-card .deal-stage {
+    width: 30% !important; 
+    flex: 0 0 30% !important; /* Force it to exactly 30% */
+    padding: 0 !important;
+}
+
+.hero-section .oferta-card .glass-panel {
+    width: 70% !important;
+    flex: 0 0 70% !important; /* Force it to exactly 70% */
+}
+
+/* Reposition image cleanly in its 30% space */
+.hero-section .oferta-card .deal-stage__img {
+    height: 90% !important;
+    width: 90% !important;
+    object-position: center !important;
+}
+
+/* FINE-TUNE PROPORTION: 35% Image | 65% Info */
+.hero-section .oferta-card .deal-stage {
+    width: 35% !important; 
+    flex: 0 0 35% !important;
+}
+
+.hero-section .oferta-card .glass-panel {
+    width: 65% !important;
+    flex: 0 0 65% !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH 
+   ===================================================================== */
+
+/* 1. The Stage Separation (Laser Line between meat and text) */
+.hero-section .oferta-card .deal-stage {
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+    position: relative !important;
+}
+.hero-section .oferta-card .deal-stage::after {
+    content: '' !important;
+    position: absolute !important;
+    right: -1px !important;
+    top: 10% !important;
+    height: 80% !important;
+    width: 2px !important;
+    background: linear-gradient(to bottom, transparent, var(--accent-primary, #FF4D00), transparent) !important;
+    box-shadow: 0 0 12px var(--accent-primary, #FF4D00) !important;
+    opacity: 0.7 !important;
+}
+
+/* 2. Cyber-Badge (Dynamic Skew & Glow) */
+.hero-section .oferta-card .deal-stage__off {
+    transform: skewX(-8deg) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    font-weight: 900 !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+    padding: 0.6cqh 1.2cqw !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* 3. 3D Titanium Price (Since background-clip fails on Odometer, we use layered 3D shadows) */
+.hero-section .oferta-card .giant-price,
+.hero-section .oferta-card .giant-price * {
+    color: #FAFAFA !important;
+    text-shadow: 
+        0 1px 0 #D1D1D1,
+        0 2px 0 #B0B0B0,
+        0 3px 0 #8F8F8F,
+        0 4px 1px rgba(0,0,0,0.5),
+        0 8px 16px rgba(0,0,0,0.8),
+        0 0 20px rgba(255,255,255,0.1) !important;
+    font-weight: 900 !important;
+    letter-spacing: -2px !important;
+}
+
+/* 4. Elegant Name typography */
+.hero-section .oferta-card .tv-card__name {
+    letter-spacing: 1.5px !important;
+    color: #FFFFFF !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.2) !important;
+}
+
+/* 5. Cyber-Strike for Old Price (Glowing energy sword effect) */
+.hero-section .oferta-card .diagonal-strike::after {
+    height: 3px !important;
+    box-shadow: 0 0 8px var(--accent-primary, #FF4D00), 0 0 2px #FFF !important;
+    border-radius: 999px !important;
+    transform: rotate(-14deg) scaleX(1.1) !important;
+    opacity: 0.9 !important;
+}
+
+/* 6. Footer Layout Polish */
+.hero-section .oferta-card .deal-foot {
+    align-items: center !important;
+    padding-top: 0.5cqh !important;
+    border-top: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* 7. Timer Pill glowing border */
+.hero-section .oferta-card .tv-card__timer {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 8px rgba(0,0,0,0.5) !important;
+    background: linear-gradient(180deg, rgba(30,30,30,0.8) 0%, rgba(10,10,10,0.9) 100%) !important;
+}
+
+/* 8. Extra Meat Pop */
+.hero-section .oferta-card .deal-stage__img {
+    filter: drop-shadow(0 20px 25px rgba(0,0,0,0.95)) drop-shadow(0 0 15px rgba(255,255,255,0.15)) !important;
+}
+
+/* =====================================================================
+   PERFORMANCE OPTIMIZATION FOR LOW-END PCs & 38/62 RATIO
+   ===================================================================== */
+
+/* 1. Tweak Ratio to 38% / 62% */
+.hero-section .oferta-card .deal-stage {
+    width: 38% !important; 
+    flex: 0 0 38% !important;
+}
+
+.hero-section .oferta-card .glass-panel {
+    width: 62% !important;
+    flex: 0 0 62% !important;
+}
+
+/* 2. Hardware Acceleration to save CPU/GPU on moving elements */
+.hero-section .oferta-card {
+    /* Remove backdrop-filter because blurring a moving background (carousel) kills low-end GPUs */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* Make the background slightly darker so it still looks like dark glass without the blur penalty */
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(10, 10, 10, 0.98) 100%) !important;
+    
+    /* Hardware acceleration */
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+}
+
+.hero-section .oferta-card .deal-stage__img {
+    /* Optimize the PNG shadow to a single, cheaper drop-shadow instead of a double one */
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.85)) !important;
+    transform: scale(1.15) translateZ(0) !important; 
+    will-change: transform !important;
+}
+
+.hero-section .oferta-card .tv-card__now-box {
+    /* Hardware accelerate the odometer so the numbers slide smoothly */
+    transform: translateZ(0) !important;
+}
+
+/* =====================================================================
+   HIGH LEGIBILITY FOR DIGITAL SIGNAGE (SOLID, CRISP, FAR-READING)
+   ===================================================================== */
+
+/* 1. Giant Price: Solid white, sharp black shadows, no fuzzy metallic layers */
+.hero-section .oferta-card .giant-price,
+.hero-section .oferta-card .giant-price * {
+    color: #FFFFFF !important;
+    
+    text-shadow: 
+        0 4px 12px rgba(0,0,0,1), 
+        0 2px 4px rgba(0,0,0,1),
+        0 0 2px rgba(0,0,0,1) !important; /* Deep black separation, no fuzziness */
+    font-weight: 900 !important;
+    letter-spacing: -1px !important;
+}
+
+/* 2. Product Name: Pure white, ultra crisp */
+.hero-section .oferta-card .tv-card__name {
+    color: #FFFFFF !important;
+    
+    text-shadow: 
+        0 3px 8px rgba(0,0,0,1), 
+        0 1px 2px rgba(0,0,0,1) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px !important;
+    font-size: clamp(1.6rem, 2.2cqw, 2rem) !important; /* Slightly larger for distance */
+}
+
+/* 3. Old Price: Brighter solid grey, not transparent */
+.hero-section .oferta-card .tv-card__was {
+    color: #DDDDDD !important;
+    -webkit-text-fill-color: #DDDDDD !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* 4. Timer Text: Solid White */
+.hero-section .oferta-card .tv-card__timer-text {
+    color: #FFFFFF !important;
+    
+    font-weight: 900 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+    font-size: clamp(1rem, 1.4cqw, 1.2rem) !important;
+}
+
+/* 5. Condition (Llevando 2 kilos o más): Orange like the others */
+.hero-section .oferta-card .deal-proof {
+    color: var(--accent-primary, #FF4D00) !important;
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(255, 77, 0, 0.4) !important;
+    font-size: clamp(0.9rem, 1.2cqw, 1.1rem) !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH FOR BOTTOM COLUMNS (TV1, TV2, TV3, TV4)
+   ===================================================================== */
+
+/* Fix TV1 Ranking Cards - Images were too small */
+.tv-panel .asian-rank-card .deal-stage {
+    height: 12cqh !important; /* Give it enough space */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 1cqh 0 !important;
+}
+.tv-panel .asian-rank-card .deal-stage__img {
+    height: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.9)) !important;
+    transform: scale(1.2) !important; /* Make it pop */
+}
+
+/* Fix TV3 Flash Offer (Relampago) - Image was blowing up */
+.tv-panel .flash-offer {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+}
+.tv-panel .flash-offer__deal {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+.tv-panel .flash-offer .deal-stage {
+    flex-grow: 1 !important; /* Take remaining space */
+    height: 15cqh !important; /* Base height */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    padding: 1cqw !important;
+}
+.tv-panel .flash-offer .deal-stage__img {
+    height: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 12px 15px rgba(0,0,0,0.9)) !important;
+}
+.tv-panel .flash-offer .deal-stage__off {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important; /* Move badge to top right */
+    transform: skewX(-8deg) !important;
+    z-index: 10 !important;
+}
+
+/* TV3 Cross-sell Items (¿LLEVÁS X?) */
+.tv-panel .xsell-item .deal-stage {
+    width: 30% !important; /* Small square on the left */
+    height: 8cqh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.tv-panel .xsell-item .deal-stage__img {
+    height: 90% !important;
+    width: 90% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 5px 8px rgba(0,0,0,0.9)) !important;
+}
+
+/* High Legibility for Bottom Columns Prices */
+.tv-panel .tv-card__now,
+.tv-panel .xsell-item__price {
+    font-weight: 900 !important;
+    text-shadow: 0 3px 8px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,1) !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* TV4 Top Card Alignment */
+.tv-panel .asian-top-card .deal-stage,
+.tv-panel .tv-card.is-top .deal-stage {
+    height: 15cqh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.tv-panel .asian-top-card .deal-stage__img,
+.tv-panel .tv-card.is-top .deal-stage__img {
+    height: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.9)) !important;
+}
+
+
+/* =====================================================================
+   TV3 RELAMPAGO SUPREME FIXES 
+   ===================================================================== */
+
+/* 1. Eliminate the duplicate bottom name */
+.tv-panel .flash-offer__copy .tv-card__name {
+    display: none !important;
+}
+
+/* 2. Take the floating top name to the NEXT LEVEL */
+.tv-panel .flash-offer .deal-stage__name {
+    position: absolute !important;
+    top: 1cqh !important;
+    left: 1cqw !important;
+    font-size: clamp(1.8rem, 2.5cqw, 2.2rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 
+        0 4px 12px rgba(0,0,0,1), 
+        0 2px 4px rgba(0,0,0,1),
+        0 0 2px rgba(0,0,0,1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    z-index: 10 !important;
+    background: transparent !important;
+    margin: 0 !important;
+    display: block !important;
+}
+
+/* 3. Fix the horribly stretched -14% badge */
+.tv-panel .flash-offer .deal-stage__off {
+    position: absolute !important;
+    top: 1cqh !important;
+    right: 1cqw !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: auto !important;
+    padding: 0.6cqh 1cqw !important;
+    border-radius: 8px !important;
+    font-weight: 900 !important;
+    font-size: clamp(1.2rem, 1.5cqw, 1.5rem) !important;
+    line-height: 1 !important;
+    transform: skewX(-8deg) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5) !important;
+    background-color: var(--accent-primary, #FF4D00) !important;
+    color: #FFF !important;
+}
+
+/* 4. Fix the Price area (remove weird borders, make it Supreme) */
+.tv-panel .flash-offer .tv-card__now-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 0.4em 1cqw !important;
+    padding: 0 !important;
+    margin-top: 1cqh !important;
+    overflow: visible !important;
+}
+}
+
+.tv-panel .flash-offer .tv-card__now {
+    font-size: clamp(2rem, 3.5cqw, 3rem) !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 0 4px 12px rgba(0,0,0,1), 0 2px 4px rgba(0,0,0,1) !important;
+}
+
+/* Enlarge the image properly since the bottom name is gone */
+.tv-panel .flash-offer .deal-stage {
+    height: 20cqh !important; 
+    margin-top: 1cqh !important;
+}
+
+/* =====================================================================
+   TV3 NUCLEAR FIXES: BADGE & DISTRIBUTION
+   ===================================================================== */
+
+/* 1. Force the badge to NEVER stretch, even if Flexbox tries to kill it */
+body .tv-panel .flash-offer .deal-stage__off,
+body .tv-wall .flash-offer .deal-stage__off {
+    position: absolute !important;
+    top: 1cqh !important;
+    right: 1cqw !important;
+    height: max-content !important;
+    max-height: 4cqh !important; /* Nuclear stop to vertical stretching */
+    width: max-content !important;
+    min-height: 0 !important;
+    display: inline-block !important;
+    align-self: flex-start !important; /* Escape stretch */
+    padding: 0.5cqh 1cqw !important;
+    line-height: 1.2 !important;
+    border-radius: 6px !important;
+}
+
+/* 2. Distribute the bottom info (Price & Condition) so it looks like a premium poster */
+body .tv-panel .flash-offer .flash-offer__copy {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-evenly !important; /* Space it out nicely */
+    align-items: center !important; /* Center horizontally! */
+    padding: 2cqh 1cqw !important; /* Give it breathing room */
+    height: 100% !important;
+    flex-grow: 1 !important;
+    background: transparent !important; /* Remove the hardcoded #0A0602 */
+}
+
+/* 3. Center the price box itself */
+body .tv-panel .flash-offer .tv-card__now-box {
+    margin-top: 0 !important;
+    justify-content: center !important; /* Center the prices together */
+    width: 100% !important;
+}
+
+/* 4. Center the condition text */
+body .tv-panel .flash-offer .deal-save {
+    text-align: center !important;
+    margin: 0 !important;
+    font-size: clamp(1rem, 1.3cqw, 1.2rem) !important;
+    color: var(--accent-primary, #FF4D00) !important; /* Make it pop */
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+}
+
+/* 5. Make the image stage sit properly above the centered text */
+body .tv-panel .flash-offer .deal-stage {
+    flex-grow: 0 !important;
+    height: 16cqh !important;
+    margin-top: 2cqh !important;
+}
+
+/* =====================================================================
+   TV3 EXACT PROPORTION: 70% Image Top / 30% Info Bottom
+   ===================================================================== */
+
+body .tv-panel .flash-offer .deal-stage {
+    height: 70% !important;
+    flex: 0 0 70% !important;
+    margin-top: 0 !important; /* Reset any margins so it's purely 70/30 */
+    padding-top: 2cqh !important; /* Space for the floating name */
+}
+
+body .tv-panel .flash-offer .flash-offer__copy {
+    height: 30% !important;
+    flex: 0 0 30% !important;
+    padding: 0 1cqw 1cqh 1cqw !important;
+    justify-content: center !important; /* Keep it vertically centered in its 30% */
+}
+
+/* Make sure the image maximizes its 70% box without blowing up */
+body .tv-panel .flash-offer .deal-stage__img {
+    height: 90% !important;
+    max-height: 90% !important;
+    width: 95% !important;
+}
+
+/* Apply the Supreme Strike to TV3 old prices as well for consistency */
+body .tv-panel .flash-offer .tv-card__was {
+    text-decoration: none !important;
+    position: relative !important;
+    display: inline-block !important;
+    color: #FFFFFF !important;
+    
+    font-size: clamp(1.6rem, 2.8cqw, 2.35rem) !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9) !important;
+}
+body .tv-panel .flash-offer .tv-card__was::after {
+    content: '' !important;
+    position: absolute !important;
+    left: -5% !important;
+    top: 50% !important;
+    width: 110% !important;
+    height: 3px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    box-shadow: 0 0 8px var(--accent-primary, #FF4D00), 0 0 2px #FFF !important;
+    border-radius: 999px !important;
+    transform: rotate(-14deg) scaleX(1.1) !important;
+    opacity: 0.9 !important;
+}
+
+/* =====================================================================
+   GIVE MORE VOLUME TO INFO (60% Image / 40% Info)
+   ===================================================================== */
+
+body .tv-panel .flash-offer .deal-stage {
+    height: 55% !important; /* Reduced from 70% to give more room to info */
+    flex: 0 0 55% !important;
+    padding-top: 2cqh !important; 
+}
+
+body .tv-panel .flash-offer .flash-offer__copy {
+    height: 45% !important; /* Increased from 30% to give massive volume to text */
+    flex: 0 0 45% !important;
+    padding: 1cqh 1cqw 2cqh 1cqw !important; /* More padding at the bottom */
+    justify-content: center !important;
+    gap: 1.5cqh !important; /* Space between price and condition */
+}
+
+/* Make the text itself physically larger (Más volumen) */
+body .tv-panel .flash-offer .tv-card__now {
+    font-size: clamp(2.5rem, 4.5cqw, 4rem) !important; /* Bigger Price */
+}
+
+body .tv-panel .flash-offer .deal-save {
+    font-size: clamp(1.2rem, 1.8cqw, 1.6rem) !important; /* Bigger Condition Text */
+    letter-spacing: 0.5px !important;
+}
+
+/* Ensure the meat doesn't overflow its new 55% box */
+body .tv-panel .flash-offer .deal-stage__img {
+    height: 95% !important;
+    max-height: 95% !important;
+    width: auto !important;
+    max-width: 95% !important;
+}
+
+/* =====================================================================
+   RESTORE TEXT SIZES & ADJUST RATIO ONLY (60/40)
+   ===================================================================== */
+
+/* Revert text sizes to what they were before the inflation */
+body .tv-panel .flash-offer .tv-card__now {
+    font-size: clamp(2rem, 3.5cqw, 3rem) !important; /* Restored original size */
+}
+
+body .tv-panel .flash-offer .deal-save {
+    font-size: clamp(1rem, 1.3cqw, 1.2rem) !important; /* Restored original size */
+    letter-spacing: normal !important;
+}
+
+/* Adjust only the physical space (Volume of the box) */
+body .tv-panel .flash-offer .deal-stage {
+    height: 60% !important; 
+    flex: 0 0 60% !important;
+}
+
+body .tv-panel .flash-offer .flash-offer__copy {
+    height: 40% !important; 
+    flex: 0 0 40% !important;
+    gap: 1cqh !important; /* Restored standard gap */
+}
+
+/* =====================================================================
+   70/30 STRICT RATIO + MASSIVE TEXT SIZES 
+   ===================================================================== */
+
+/* 1. Strict 70% / 30% Box Ratio */
+body .tv-panel .flash-offer .deal-stage {
+    height: 70% !important; 
+    flex: 0 0 70% !important;
+}
+
+body .tv-panel .flash-offer .flash-offer__copy {
+    height: 30% !important; 
+    flex: 0 0 30% !important;
+    padding: 0 1cqw !1cqh !important; 
+    justify-content: center !important;
+    gap: 0.5cqh !important; /* Slight gap so it fits inside the 30% */
+}
+
+/* 2. Restore the MASSIVE text sizes the user liked! */
+body .tv-panel .flash-offer .tv-card__now {
+    font-size: clamp(2.5rem, 4.5cqw, 4rem) !important; /* Huge Price! */
+}
+
+body .tv-panel .flash-offer .deal-save {
+    font-size: clamp(1.2rem, 1.8cqw, 1.6rem) !important; /* Big Condition Text! */
+    letter-spacing: 0.5px !important;
+}
+
+/* 3. Keep the image slightly contained so it doesn't overlap the huge text */
+body .tv-panel .flash-offer .deal-stage__img {
+    height: 90% !important;
+    max-height: 90% !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH: VENTA CRUZADA (COMPRAS RELACIONADAS)
+   ===================================================================== */
+
+/* The Main Question (¿LLEVÁS X?) */
+body .tv-panel .xsell-ask {
+    font-size: clamp(1.8rem, 2.5cqw, 2.2rem) !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 0 4px 12px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.8), 0 2px 4px rgba(0,0,0,1) !important;
+    padding: 1.5cqh 0 !important;
+    margin-bottom: 1cqh !important;
+    letter-spacing: 1px !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%) !important;
+    border-bottom: 2px solid rgba(var(--accent-primary-rgb, 255, 77, 0), 0.5) !important;
+}
+
+/* Ensure the layout of each item is a perfect horizontal split */
+body .tv-panel .xsell-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 1cqh 1cqw !important;
+    margin-bottom: 1.5cqh !important;
+    /* Glassmorphism already applied globally, just fine-tuning */
+    background: linear-gradient(90deg, rgba(30,30,30,0.8) 0%, rgba(10,10,10,0.95) 100%) !important;
+}
+
+/* 30% Image Box */
+body .tv-panel .xsell-item .deal-stage {
+    width: 30% !important;
+    flex: 0 0 30% !important;
+    height: 10cqh !important; /* Slightly taller to let the meat pop */
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%) !important;
+}
+
+/* 70% Info Box */
+body .tv-panel .xsell-item .xsell-item__info {
+    width: 70% !important;
+    flex: 0 0 70% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding-left: 1.2cqw !important;
+    padding-right: 0.6cqw !important;
+}
+
+/* Product Name */
+body .tv-panel .xsell-item__name {
+    font-size: clamp(1.4rem, 2cqw, 1.8rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+    margin-bottom: 0.5cqh !important;
+}
+
+/* Price Row */
+body .tv-panel .xsell-item .tv-card__now-box,
+body .tv-panel .xsell-item .xsell-item__price-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 0.35em 0.7cqw !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Huge Price */
+body .tv-panel .xsell-item__price {
+    font-size: clamp(1.7rem, 2.4cqw, 2.3rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    text-shadow: 0 3px 8px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,1) !important;
+    letter-spacing: -1px !important;
+    white-space: normal !important; text-align: center !important; line-height: 1.1 !important;
+    overflow: visible !important;
+    flex: 0 1 auto !important;
+}
+
+/* Cyber Strike for Old Price */
+body .tv-panel .xsell-item__was {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    font-size: clamp(1.15rem, 1.8cqw, 1.55rem) !important;
+    text-decoration: none !important;
+    position: relative !important;
+    white-space: normal !important; text-align: center !important; line-height: 1.1 !important;
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+}
+body .tv-panel .xsell-item__was::after {
+    content: '' !important;
+    position: absolute !important;
+    left: -5% !important;
+    top: 50% !important;
+    width: 110% !important;
+    height: 2px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    box-shadow: 0 0 8px var(--accent-primary, #FF4D00), 0 0 2px #FFF !important;
+    border-radius: 999px !important;
+    transform: rotate(-12deg) scaleX(1.1) !important;
+}
+
+/* Condition Text (Llevando 2 kilos) */
+body .tv-panel .xsell-item__rule {
+    font-size: clamp(1rem, 1.2cqw, 1.1rem) !important;
+    color: var(--accent-primary, #FF4D00) !important;
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+    font-weight: 800 !important;
+    margin-top: 0.5cqh !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH: GRILLA DE PRECIOS (COLUMNA 2)
+   ===================================================================== */
+
+/* 1. Base Row Layout */
+body .tv-panel .price-row {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 1.5cqh 1.5cqw !important;
+    margin-bottom: 1.5cqh !important;
+    background: linear-gradient(90deg, rgba(20,20,20,0.9) 0%, rgba(5,5,5,0.95) 100%) !important;
+    border-left: 3px solid var(--accent-primary, #FF4D00) !important; /* Glowing left edge */
+    border-radius: 4px 12px 12px 4px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 1px 0 10px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.1) !important;
+    overflow: hidden !important;
+}
+
+/* 2. Cyber Badge for Discounts */
+body .tv-panel .price-row__off {
+    position: absolute !important;
+    top: 1cqh !important;
+    right: 1cqw !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    color: #FFF !important;
+    padding: 0.3cqh 0.8cqw !important;
+    font-weight: 900 !important;
+    border-radius: 4px !important;
+    transform: skewX(-8deg) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.6), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    font-size: clamp(0.9rem, 1.2cqw, 1.1rem) !important;
+    z-index: 5 !important;
+}
+
+/* 3. Product Name */
+body .tv-panel .price-row__name {
+    font-size: clamp(1.4rem, 2cqw, 1.8rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 0.5cqh !important;
+    width: 80% !important; /* Leave room for the badge */
+}
+
+/* 4. Price Layout */
+body .tv-panel .price-row__bottom {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    margin-top: 1cqh !important;
+}
+
+body .tv-panel .price-row__prices {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: center !important; /* Center the prices visually in the row */
+    gap: 1.5cqw !important;
+    width: 100% !important;
+}
+
+/* 5. Giant Solid Price */
+body .tv-panel .price-row__now {
+    font-size: clamp(2.5rem, 3.5cqw, 3.2rem) !important;
+    font-weight: 900 !important;
+    color: #FFFFFF !important; /* Force white for supreme legibility */
+    
+    text-shadow: 0 3px 8px rgba(0,0,0,1), 0 1px 2px rgba(0,0,0,1) !important;
+    letter-spacing: -1px !important;
+}
+
+/* 6. Cyber Strike for Old Price */
+body .tv-panel .price-row__was {
+    font-size: clamp(1.2rem, 1.5cqw, 1.5rem) !important;
+    font-weight: 800 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    text-decoration: none !important;
+    position: relative !important;
+}
+body .tv-panel .price-row__was::after {
+    content: '' !important;
+    position: absolute !important;
+    left: -5% !important;
+    top: 50% !important;
+    width: 110% !important;
+    height: 2px !important;
+    background: var(--accent-primary, #FF4D00) !important;
+    box-shadow: 0 0 8px var(--accent-primary, #FF4D00), 0 0 2px #FFF !important;
+    border-radius: 999px !important;
+    transform: rotate(-12deg) scaleX(1.1) !important;
+}
+
+/* 7. Condition Text */
+body .tv-panel .price-row__rule {
+    text-align: center !important;
+    font-size: clamp(1rem, 1.3cqw, 1.2rem) !important;
+    color: var(--accent-primary, #FF4D00) !important;
+    -webkit-text-fill-color: var(--accent-primary, #FF4D00) !important;
+    font-weight: 800 !important;
+    margin-top: 0.5cqh !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+}
+
+/* 8. Department Header (e.g. CARNES, ALMACEN) */
+body .tv-panel .price-dept {
+    background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-primary-rgb, 255, 77, 0), 0.2) 50%, transparent 100%) !important;
+    color: #FFFFFF !important;
+    
+    text-align: center !important;
+    font-size: clamp(1.6rem, 2.2cqw, 2rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: 4px !important;
+    padding: 1cqh 0 !important;
+    margin: 2cqh 0 !important;
+    border-bottom: 1px solid rgba(var(--accent-primary-rgb, 255, 77, 0), 0.5) !important;
+    border-top: 1px solid rgba(var(--accent-primary-rgb, 255, 77, 0), 0.5) !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,1) !important;
+}
+
+/* FORCE PRICES SIDE-BY-SIDE IN TV2 */
+body .tv-panel .price-row__prices {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 0.4em 1cqw !important;
+    width: 100% !important;
+    overflow: visible !important;
+}
+
+body .tv-panel .price-row__now,
+body .tv-panel .price-row__was {
+    display: block !important;
+    width: max-content !important;
+    flex: 0 0 auto !important;
+    white-space: normal !important; text-align: center !important; line-height: 1.1 !important;
+    overflow: visible !important;
+}
+
+/* =====================================================================
+
+/* =====================================================================
+   TV1 RANKING: "TEXTO FLOTANDO SIN FONDO" (NO CARD BACKGROUND)
+   ===================================================================== */
+
+body .tv-panel .asian-rank-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Also remove any residual line above the bottom text if they want it truly floating */
+body .tv-panel .asian-rank-card .asian-rank-info {
+    border: none !important;
+    background: transparent !important;
+}
+
+body .tv-panel .asian-rank-card * {
+    border: none !important; /* Kill the orange line separating the proof */
+}
+
+/* =====================================================================
+   TV1 RANKING: OPTIMIZE SPACE (TIGHTER VERTICAL LAYOUT)
+   ===================================================================== */
+
+/* Reduce the gap between the cards themselves */
+body .tv-panel .asian-rank-card {
+    padding: 0 !important;
+    margin-bottom: 0.5cqh !important; /* Extremely tight margin between cards */
+    height: auto !important; /* Let them shrink to fit */
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+/* Pull the #1 and Name tighter to the image */
+body .tv-panel .asian-rank-card .rank-escarapela {
+    position: absolute !important;
+    top: 0 !important; /* Flush to top */
+    left: 1cqw !important;
+    padding: 0 !important;
+}
+
+body .tv-panel .asian-rank-card .rank-roof {
+    position: absolute !important;
+    top: 0 !important; /* Flush to top */
+    right: 1cqw !important;
+    padding: 0 !important;
+}
+
+body .tv-panel .asian-rank-card .asian-rank-name {
+    margin-bottom: 0 !important;
+}
+body .tv-panel .asian-rank-card .rank-roof-tag {
+    margin-top: 0 !important;
+}
+
+/* Reduce the Image stage margins to pull everything together */
+body .tv-panel .asian-rank-card .deal-stage {
+    margin: 1cqh 0 0.5cqh 0 !important; /* Minimal gap above and below */
+    height: 14cqh !important; /* Make image bigger since we saved space! */
+}
+body .tv-panel .asian-rank-card .deal-stage__img {
+    height: 100% !important;
+    max-height: 100% !important;
+}
+
+/* Pull the bottom text tighter */
+body .tv-panel .asian-rank-card .asian-rank-info {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+}
+body .tv-panel .asian-rank-card .rank-proof {
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH: COLUMNA 4 (TOP 3 / FLASH PRODUCT) "OTRO NIVEL"
+   ===================================================================== */
+
+/* 1. The Main Card: Add a premium glowing outline and deep shadow */
+body .tv-panel .asian-flash-product {
+    background: linear-gradient(160deg, #111111 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 77, 0, 0.3) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(255, 77, 0, 0.05) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* Add a subtle sweep light effect passing over the card */
+
+
+    100% { transform: translate(30%, 30%); }
+}
+
+/* 2. The TOP 3 Badge: Make it look like a 3D glowing medal */
+body .tv-panel .asian-flash-badge {
+    background: linear-gradient(135deg, #FF4D00 0%, #D32F2F 100%) !important;
+    color: #FFF !important;
+    -webkit-text-fill-color: #FFF !important;
+    font-weight: 900 !important;
+    border: 2px solid #FF8A65 !important;
+    box-shadow: 0 4px 15px rgba(255, 77, 0, 0.6), inset 0 2px 5px rgba(255,255,255,0.5) !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+    border-radius: 8px 8px 8px 24px !important; /* Cool asymmetrical shape */
+    padding: 0.5cqh 1.5cqw !important;
+    transform: scale(1.1) rotate(3deg) !important;
+    right: -5px !important;
+    top: -5px !important;
+    z-index: 10 !important;
+}
+
+/* 3. The Image Area: Add a volumetric spotlight */
+body .tv-panel .asian-flash-product-image {
+    position: relative !important;
+    border-radius: 0 0 50% 50% / 10% 10% !important; /* Curved bottom edge */
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.8) !important;
+    overflow: visible !important; /* Let meat pop out slightly */
+}
+body .tv-panel .asian-flash-product-image::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 10% !important; left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 60% !important; height: 20% !important;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 70%) !important;
+    z-index: 0 !important;
+}
+body .tv-panel .asian-flash-product-image img {
+    z-index: 2 !important;
+    transform: scale(1.25) translateZ(0) !important;
+    filter: drop-shadow(0 15px 15px rgba(0,0,0,0.7)) !important; /* Massive 3D shadow */
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+/* Tiny pop animation on load */
+@keyframes meat-pop {
+    0% { transform: scale(0.8) translateY(10px); opacity: 0; }
+    100% { transform: scale(1.25) translateY(0); opacity: 1; }
+}
+body .tv-panel .asian-flash-product-image img {
+    animation: meat-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+}
+
+/* 4. The Price Box: Cyberpunk Neon HUD */
+body .tv-panel .asian-flash-prices.tv-card__now-box {
+    background: rgba(20, 10, 0, 0.6) !important;
+    border: 1px solid var(--accent-primary, #FF4D00) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 15px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.2), inset 0 0 10px rgba(var(--accent-primary-rgb, 255, 77, 0), 0.1) !important;
+    position: relative !important;
+    padding: 1cqh !important;
+}
+
+
+
+
+/* 5. Progress Bar: Glowing and Throbbing */
+body .tv-panel .asian-flash-progress {
+    background: rgba(0,0,0,0.8) !important;
+    border: 1px solid #333 !important;
+    border-radius: 20px !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important;
+    height: 1.5cqh !important;
+    position: relative !important;
+}
+body .tv-panel .asian-flash-progress-bar {
+    background: linear-gradient(90deg, #D32F2F 0%, #FF4D00 100%) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 0 10px #FF4D00 !important;
+    position: relative !important;
+}
+/* The throbbing red dot at the tip of the progress bar */
+body .tv-panel .asian-flash-progress-bar::after {
+    content: '' !important;
+    position: absolute !important;
+    right: 0 !important; top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 8px !important; height: 8px !important;
+    background: #FFF !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 10px #FFF, 0 0 20px #FF4D00 !important;
+    animation: throb 1s infinite alternate !important;
+}
+@keyframes throb {
+    0% { transform: translateY(-50%) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-50%) scale(1.5); opacity: 1; }
+}
+
+/* 6. Social Footer: Make it look like a sleek dashboard pill */
+body .tv-panel .asian-flash-social {
+    background: linear-gradient(90deg, rgba(255,77,0,0.1) 0%, transparent 100%) !important;
+    border: 1px solid rgba(255,77,0,0.3) !important;
+    border-left: 3px solid #FF4D00 !important;
+    border-radius: 6px !important;
+    padding: 0.5cqh 1cqw !important;
+}
+body .tv-panel .asian-flash-social-text {
+    color: #FFF !important;
+    letter-spacing: 1px !important;
+}
+body .tv-panel .asian-flash-social-text strong {
+    color: #FF4D00 !important;
+    font-size: 1.2em !important;
+    text-shadow: 0 0 10px rgba(255,77,0,0.5) !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH 2.0: COLUMNA 4 "LEVEL UP"
+   ===================================================================== */
+
+/* Add a glowing cyberpunk orb behind the product image */
+body .tv-panel .asian-flash-product-image::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important; left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 60% !important; height: 60% !important;
+    background: radial-gradient(circle, rgba(255, 77, 0, 0.4) 0%, transparent 70%) !important;
+    filter: blur(20px) !important;
+    z-index: 1 !important;
+    animation: orb-pulse 3s infinite alternate !important;
+}
+@keyframes orb-pulse {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; }
+    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+}
+
+/* Make the product name stand out more */
+body .tv-panel .asian-flash-product-name {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 77, 0, 0.3) !important;
+    letter-spacing: 2px !important;
+    transform: translateZ(0) !important;
+}
+
+/* Make the social pill (Familias compraron) look like a high-end HUD component */
+body .tv-panel .asian-flash-social {
+    background: linear-gradient(90deg, rgba(255,77,0,0.15) 0%, rgba(20,10,0,0.8) 100%) !important;
+    box-shadow: inset 0 0 10px rgba(255,77,0,0.2) !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 0.8cqh 1cqw !important;
+    margin-top: 1cqh !important;
+}
+body .tv-panel .asian-flash-social-text {
+    font-weight: 700 !important;
+    color: #F8F8F8 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+}
+body .tv-panel .asian-flash-social-text strong {
+    font-size: 1.4em !important;
+    color: #FFD700 !important; /* Gold for the number */
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+}
+
+/* Make the progress text (7 KG VENDIDOS) more impactful */
+body .tv-panel .asian-flash-progress-text {
+    font-weight: 800 !important;
+    letter-spacing: 2px !important;
+    color: #FFFFFF !important;
+    text-shadow: 0 0 8px rgba(0,0,0,1), 0 0 15px rgba(255,77,0,0.8) !important;
+    font-style: italic !important;
+}
+
+/* Polish the HUD price box */
+body .tv-panel .asian-flash-prices.tv-card__now-box {
+    background: linear-gradient(135deg, rgba(30,15,0,0.8) 0%, rgba(10,5,0,0.9) 100%) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 0 15px rgba(255, 77, 0, 0.2) !important;
+}
+
+/* =====================================================================
+   SUPREME AI POLISH 3.0: GOD TIER "OTRO NIVEL"
+   ===================================================================== */
+
+/* 1. Animated Cyber Grid Background for the Card */
+body .tv-panel .asian-flash-product {
+    background-image: 
+        linear-gradient(160deg, #111111 0%, #000000 100%),
+        linear-gradient(0deg, transparent 24%, rgba(255, 77, 0, 0.05) 25%, rgba(255, 77, 0, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 77, 0, 0.05) 75%, rgba(255, 77, 0, 0.05) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(255, 77, 0, 0.05) 25%, rgba(255, 77, 0, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 77, 0, 0.05) 75%, rgba(255, 77, 0, 0.05) 76%, transparent 77%, transparent) !important;
+    background-size: 100% 100%, 40px 40px, 40px 40px !important;
+    background-blend-mode: screen !important;
+    border: 1px solid rgba(255, 77, 0, 0.5) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.9), inset 0 0 30px rgba(255, 77, 0, 0.1) !important;
+}
+
+/* 2. Floating Fire Embers behind the meat */
+body .tv-panel .asian-flash-product-image::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -10% !important; left: -10% !important;
+    width: 120% !important; height: 120% !important;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 77, 0, 0.8) 1px, transparent 3px),
+        radial-gradient(circle at 80% 60%, rgba(255, 200, 0, 0.8) 2px, transparent 4px),
+        radial-gradient(circle at 40% 40%, rgba(255, 100, 0, 0.8) 1.5px, transparent 3px),
+        radial-gradient(circle at 70% 90%, rgba(255, 50, 0, 0.8) 1px, transparent 2px) !important;
+    background-size: 100px 100px !important;
+    animation: embers-float 10s linear infinite !important;
+    z-index: 0 !important;
+    opacity: 0.6 !important;
+}
+@keyframes embers-float {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    50% { opacity: 0.8; }
+    100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+}
+
+/* 3. Metallic Gold/Chrome text for the Product Name */
+body .tv-panel .asian-flash-product-name {
+    background: linear-gradient(to bottom, #FFFFFF 20%, #B0B0B0 50%, #FFFFFF 80%) !important;
+    -webkit-background-clip: text !important;
+    
+    filter: drop-shadow(0 2px 5px rgba(255,77,0,0.5)) !important;
+    font-weight: 900 !important;
+    font-size: clamp(2rem, 3cqw, 2.8rem) !important;
+    margin-bottom: 0.5cqh !important;
+}
+
+/* 4. Animated Energy Striping on the Progress Bar */
+body .tv-panel .asian-flash-progress-bar {
+    background: 
+        linear-gradient(90deg, #D32F2F 0%, #FF4D00 100%),
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.2),
+            rgba(255,255,255,0.2) 10px,
+            transparent 10px,
+            transparent 20px
+        ) !important;
+    background-blend-mode: overlay !important;
+    background-size: 100% 100%, 40px 40px !important;
+    animation: bar-stripes 1s linear infinite !important;
+}
+@keyframes bar-stripes {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 0 0, 40px 0; }
+}
+
+/* 5. Glowing Scanline over the Price Box */
+body .tv-panel .asian-flash-prices.tv-card__now-box {
+    overflow: hidden !important;
+}
+
+
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 150%; left: 150%; opacity: 0; }
+}
+
+/* Make the Odometer price completely POP */
+body .tv-panel .asian-flash-current {
+    font-size: clamp(2.5rem, 4cqw, 3.5rem) !important;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 5px 10px rgba(0,0,0,0.9) !important;
+}
+
+
+/* =====================================================================
+   SUPREME AI POLISH 4.0: PURE AI HOLOGRAM (CLEAN & FLOATING)
+   ===================================================================== */
+
+/* 1. Remove muddy backgrounds and sweeping lasers */
+body .tv-panel .asian-flash-product {
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 2. Floating AI Hologram effect for the image */
+body .tv-panel .asian-flash-product-image {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+body .tv-panel .asian-flash-product-image::before,
+body .tv-panel .asian-flash-product-image::after {
+    display: none !important; /* Remove embers and thick orbs */
+}
+
+/* Let the meat cast a pure, intelligent neon glow */
+body .tv-panel .asian-flash-product-image img {
+    filter: drop-shadow(0 0 20px rgba(255, 77, 0, 0.4)) !important;
+    transform: scale(1.15) !important;
+}
+
+/* 3. Pure Glowing Text instead of metallic gradient */
+body .tv-panel .asian-flash-product-name {
+    background: none !important;
+    
+    color: #FFFFFF !important;
+    text-shadow: none !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+}
+
+/* 4. Remove the invasive laser from the price box */
+
+
+/* Make the price box a clean, glowing HUD */
+body .tv-panel .asian-flash-prices.tv-card__now-box {
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(255, 77, 0, 0.4) !important;
+    box-shadow: inset 0 0 15px rgba(255, 77, 0, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+/* Ensure the top badge floats cleanly */
+body .tv-panel .asian-flash-badge {
+    background: rgba(255, 77, 0, 0.2) !important;
+    border: 1px solid #FF4D00 !important;
+    box-shadow: 0 0 15px rgba(255, 77, 0, 0.5) !important;
+    backdrop-filter: blur(4px) !important;
+    color: #FFF !important;
+    text-shadow: 0 0 10px #FF4D00 !important;
+}
+
+/* Clean up social pill */
+body .tv-panel .asian-flash-social {
+    background: transparent !important;
+    border: 1px solid rgba(255,77,0,0.3) !important;
+    border-left: 3px solid #FF4D00 !important;
+    box-shadow: none !important;
+}
+
+/* TV4: info de lejos — tipografía grande, sin HUD ni brillos */
+body .tv-4 .asian-flash-product::before,
+body .tv-4 .asian-flash-product-image::before,
+body .tv-4 .asian-flash-product-image::after,
+body .tv-4 .asian-flash-prices.tv-card__now-box::before,
+
+
+body .tv-4 .chef-board.professional,
+body .tv-4 .asian-flash-container,
+body .tv-4 .chef-carousel,
+body .tv-4 .chef-carousel-track {
+    background: #000000 !important;
+    height: 100% !important;
+}
+
+body .tv-4 .asian-flash-product {
+    background: #0A0A0A !important;
+    background-image: none !important;
+    border: 2px solid rgba(255, 77, 0, 0.5) !important;
+    box-shadow: none !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+body .tv-4 .asian-flash-product-image {
+    background: #111111 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    flex: 0 0 46% !important;
+    height: 46% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body .tv-4 .asian-flash-product-image img {
+    filter: none !important;
+    animation: none !important;
+    transform: none !important;
+    max-height: 92% !important;
+    max-width: 92% !important;
+    object-fit: contain !important;
+}
+
+body .tv-4 .asian-flash-product-info {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 0.6cqh !important;
+    padding: 1.4cqh 1.2cqw 1.8cqh 1.6cqw !important;
+    background: #0A0A0A !important;
+}
+
+body .tv-4 .asian-flash-badge {
+    transform: none !important;
+    background: #DC2626 !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    text-shadow: 0 2px 4px #000 !important;
+    color: #FFFFFF !important;
+    
+    font-size: clamp(1.15rem, 1.8cqw, 1.5rem) !important;
+    font-weight: 900 !important;
+    padding: 0.55cqh 1.3cqw !important;
+    border-radius: 10px !important;
+    right: 10px !important;
+    top: 10px !important;
+}
+
+body .tv-4 .asian-flash-product-name {
+    background: none !important;
+    filter: none !important;
+    color: #FFFFFF !important;
+    
+    text-shadow: 0 3px 10px #000 !important;
+    font-size: clamp(2.3rem, 3.8cqw, 3.3rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.04em !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+}
+
+body .tv-4 .asian-flash-prices.tv-card__now-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0.2cqh 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 0.5em 0.7cqw !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+}
+
+body .tv-4 .asian-flash-current {
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    font-size: clamp(2.4rem, 4cqw, 3.5rem) !important;
+    font-weight: 900 !important;
+    text-shadow: 0 3px 10px #000 !important;
+    line-height: 0.95 !important;
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+}
+
+body .tv-4 .asian-flash-original {
+    color: #FFFFFF !important;
+    
+    font-size: clamp(1.35rem, 2.2cqw, 1.85rem) !important;
+    font-weight: 800 !important;
+    text-decoration: line-through !important;
+    text-decoration-color: #FF4D00 !important;
+    text-decoration-thickness: 3px !important;
+    background: transparent !important;
+    flex: 0 0 auto !important;
+    white-space: normal !important; text-align: center !important; line-height: 1.1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body .tv-4 .asian-flash-condition {
+    color: #FFFFFF !important;
+    
+    background: transparent !important;
+    font-size: clamp(1.2rem, 1.9cqw, 1.55rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+}
+
+body .tv-4 .asian-flash-progress-text,
+body .tv-4 .asian-flash-social-text {
+    position: static !important;
+    transform: none !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-style: normal !important;
+    letter-spacing: 0.04em !important;
+    text-shadow: none !important;
+    color: #FFFFFF !important;
+    
+    font-weight: 800 !important;
+}
+
+body .tv-4 .asian-flash-progress-text {
+    font-size: clamp(1.15rem, 1.8cqw, 1.45rem) !important;
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+}
+
+body .tv-4 .asian-flash-social-text {
+    font-size: clamp(1.05rem, 1.65cqw, 1.35rem) !important;
+}
+
+body .tv-4 .asian-flash-social-text strong {
+    color: #FFDF00 !important;
+    -webkit-text-fill-color: #FFDF00 !important;
+    font-size: 1.12em !important;
+    text-shadow: none !important;
+}
+
+body .tv-panel .xsell-item {
+    overflow: visible !important;
+    min-width: 0 !important;
+}
+
+body .tv-panel .tv-card__was,
+body .tv-panel .xsell-item__was,
+body .tv-panel .price-row__was,
+body .tv-panel .asian-flash-original {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    white-space: normal !important; text-align: center !important; line-height: 1.1 !important;
+}
+
+
+/* El color de precios vive en css/precio_tv/ (ahora naranja, tachado blanco). */
+
+
+/* Make the stars (product tag) float without a pill background */
+body .tv-panel .asian-flash-product-tag { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; font-size: 1.5cqw !important; text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important; }
+
+
+/* SUPER PREMIUM LEVEL - PURE FLOATING HOLOGRAM */
+body .tv-4 .asian-flash-product, body .tv-panel .asian-flash-product { background: transparent !important; border: none !important; box-shadow: none !important; }
+
+/* CONDICION EN NARANJA */
+body .tv-4 .asian-flash-condition, body .tv-panel .asian-flash-condition { color: #FF6600 !important; font-weight: 800 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 15px rgba(255,102,0,0.4) !important; font-size: clamp(1.2rem, 1.8cqw, 1.6rem) !important; }
+
+/* MAKE SOCIAL PILL PREMIUM */
+body .tv-4 .asian-flash-social, body .tv-panel .asian-flash-social { background: rgba(0,0,0,0.4) !important; border: 1px solid rgba(255,255,255,0.1) !important; backdrop-filter: blur(10px) !important; padding: 1cqh 2cqw !important; border-radius: 30px !important; display: inline-flex !important; margin: 0 auto !important; }
+
+
+/* REMOVE CORNER ACCENTS AND ADJUST SIZES */
+body .tv-panel .asian-flash-prices.tv-card__now-box::before, body .tv-panel .asian-flash-prices.tv-card__now-box::after { display: none !important; }
+body .tv-panel .asian-flash-product-name, body .tv-4 .asian-flash-product-name { font-size: clamp(1.8rem, 2.5cqw, 2.5rem) !important; margin-bottom: 0.5cqh !important; }
+body .tv-panel .asian-flash-current, body .tv-4 .asian-flash-current { font-size: clamp(2rem, 3cqw, 2.8rem) !important; }
+
+
+/* ========================================= */
+/* SUPREME AI HOLOGRAM OVERRIDE 2026 */
+/* ========================================= */
+:root {
+    --asian-flash-product-bg: transparent !important;
+    --asian-flash-product-border: 1px solid rgba(0, 255, 255, 0.1) !important;
+    --asian-flash-product-name-color: #FFFFFF !important;
+}
+/* Add floating glass effect to the card itself */
+body .tv-4 .asian-flash-product, body .tv-panel .asian-flash-product {
+    background: rgba(0, 10, 20, 0.4) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.05), inset 0 0 20px rgba(0, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+}
+/* Neon Text for Product Name */
+body .tv-4 .asian-flash-product-name {
+    color: #FFFFFF !important;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.4) !important;
+    letter-spacing: 2px !important;
+}
+/* Glowing Price */
+body .tv-4 .asian-flash-current {
+    color: #FFDF00 !important;
+    text-shadow: 0 0 15px rgba(255, 223, 0, 0.6) !important;
+}
+/* Cyber-pill for Families */
+body .tv-4 .asian-flash-social {
+    background: rgba(0, 255, 255, 0.05) !important;
+    border: 1px solid rgba(0, 255, 255, 0.4) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2) !important;
+    color: #00FFFF !important;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.8) !important;
+}
+body .tv-4 .asian-flash-social strong { color: #FFFFFF !important; }
+
+/* AI Tech Badge */
+body .tv-4 .asian-flash-badge {
+    background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%) !important;
+    border: 1px solid #00FFFF !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 5px 15px rgba(0, 198, 255, 0.4) !important;
+}
+
+/* FORCE SOCIAL TEXT ON ONE LINE AND SHRINK */
+body .tv-4 .asian-flash-social, body .tv-panel .asian-flash-social { white-space: normal !important; text-align: center !important; line-height: 1.1 !important; width: fit-content !important; max-width: 95% !important; justify-content: center !important; }
+body .tv-4 .asian-flash-social-text, body .tv-panel .asian-flash-social-text { font-size: clamp(0.7rem, 1.1cqw, 1.1rem) !important; white-space: normal !important; text-align: center !important; line-height: 1.1 !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+body .tv-4 .asian-flash-social strong, body .tv-panel .asian-flash-social-text strong { font-size: 1.1em !important; }
+
+/* 60% PHOTO / 40% INFO PROPORTIONS */
+body .tv-4 .asian-flash-product-image { height: 60% !important; flex: 0 0 60% !important; }
+body .tv-4 .asian-flash-product-info { height: 40% !important; flex: 0 0 40% !important; justify-content: flex-start !important; padding-top: 1cqh !important; }
+body .tv-4 .asian-flash-product-image img { width: 95% !important; height: 95% !important; }
+
+/* SOCIAL GRID AI STYLE */
+body .tv-4 .asian-flash-social-grid { display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; margin-top: 1cqh !important; background: transparent !important; padding: 0 0.5cqw !important; }
+body .tv-4 .social-stat { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 4px !important; }
+body .tv-4 .social-icon { font-size: clamp(1.4rem, 2cqw, 1.8rem) !important; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.6)) !important; }
+body .tv-4 .social-value { color: #FFFFFF !important; font-size: clamp(0.7rem, 1.1cqw, 1rem) !important; font-weight: 800 !important; text-shadow: 0 0 8px rgba(0, 255, 255, 0.8) !important; }
+
+/* SUPREME HUD UPGRADE FOR SOCIAL GRID */
+body .tv-4 .asian-flash-social-grid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin-top: auto !important;
+    background: rgba(0, 30, 40, 0.6) !important;
+    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    padding: 0.8cqh 1cqw !important;
+    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.05) !important;
+}
+body .tv-4 .social-stat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex: 1 !important;
+}
+body .tv-4 .social-icon {
+    font-size: clamp(1.2rem, 1.8cqw, 1.5rem) !important;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8)) !important;
+    background: rgba(0, 255, 255, 0.1) !important;
+    width: 2.5cqw !important;
+    height: 2.5cqw !important;
+    min-width: 35px !important;
+    min-height: 35px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+}
+body .tv-4 .social-value {
+    color: #00FFFF !important;
+    font-size: clamp(0.9rem, 1.3cqw, 1.1rem) !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8) !important;
+}
+body .tv-4 .asian-flash-product-info { justify-content: flex-start !important; padding-bottom: 1.5cqh !important; }
+
+/* FIX DARK HUD AND PRODUCT NAME LINE */
+body .tv-4 .asian-flash-product-name { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; width: 100% !important; text-align: center !important; }
+body .tv-4 .asian-flash-social-grid {
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0, 200, 255, 0.15) 100%) !important;
+    border: 1px solid rgba(0, 255, 255, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+}
+body .tv-4 .social-icon {
+    background: transparent !important;
+    border: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    font-size: clamp(1.4rem, 2cqw, 1.8rem) !important;
+}
+body .tv-4 .social-value {
+    color: #FFFFFF !important;
+    font-size: clamp(0.95rem, 1.3cqw, 1.15rem) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* PREMIUM SVG ICONS */
+body .tv-4 .premium-icon { width: 1.5cqw !important; height: 1.5cqw !important; min-width: 24px !important; min-height: 24px !important; color: #00FFFF !important; filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8)) !important; margin-bottom: 2px !important; }
+body .tv-4 .social-icon { background: transparent !important; filter: none !important; border: none !important; }
+
+/* ULTIMATE PREMIUM ORANGE FOOTER */
+body .flash-strip {
+    background-image: linear-gradient(90deg, #000000 0%, rgba(0,0,0,0.9) 3%, rgba(0,0,0,0.7) 8%, rgba(0,0,0,0.4) 15%, rgba(0,0,0,0.1) 25%, transparent 35%, transparent 65%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.4) 85%, rgba(0,0,0,0.7) 92%, rgba(0,0,0,0.9) 97%, #000000 100%), linear-gradient(90deg, #FF3300 0%, #990000 50%, #FF3300 100%) !important;
+    background-size: 100% 100%, 200% 100% !important;
+    animation: premiumOrangeFlow 15s linear infinite !important;
+    border-top: none !important;
+    box-shadow: inset 0 2px 1px rgba(255, 140, 0, 0.5), 0 -5px 20px rgba(0, 0, 0, 0.8) !important;
+}
+@keyframes premiumOrangeFlow { 0% { background-position: 0% 0%, 0% 50%; } 100% { background-position: 0% 0%, -200% 50%; } }
+
+body .flash-strip__cycle span {
+    color: #FFFFFF !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 1), 0 0 10px rgba(255, 255, 255, 0.4) !important;
+    font-weight: 800 !important;
+    letter-spacing: 4px !important;
+    font-size: 1.4rem !important;
+}
+
+body .flash-dot {
+    color: #FFDF00 !important;
+    text-shadow: 0 0 15px #FFDF00 !important;
+    font-size: 1.5rem !important;
+    margin: 0 1cqw !important;
+}
+
+body .flash-strip__clima, body .status-badge, body .clock {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #FFFFFF !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 1), 0 0 10px rgba(255, 255, 255, 0.3) !important;
+}
+/* MAKE CLOCK AND WEATHER GLOW */
+body .clock, body .flash-clima-temp { color: #FFDF00 !important; text-shadow: 0 0 10px rgba(255, 223, 0, 0.6) !important; font-weight: 900 !important; }
+
+/* PREMIUM CLOCK UPGRADE */
+body .clock .clock-face { display: none !important; }
+body .clock .clock-digits { display: flex !important; align-items: baseline !important; gap: 2px !important; font-family: 'Oswald', sans-serif !important; }
+body .clock .clock-hm { font-size: 2rem !important; font-weight: 900 !important; color: #FFFFFF !important; text-shadow: 0 0 15px rgba(255, 255, 255, 0.8) !important; letter-spacing: 2px !important; }
+body .clock .clock-sec { font-size: 1.2rem !important; font-weight: 700 !important; color: #FFDF00 !important; text-shadow: 0 0 10px rgba(255, 223, 0, 0.8) !important; margin-left: 4px !important; }

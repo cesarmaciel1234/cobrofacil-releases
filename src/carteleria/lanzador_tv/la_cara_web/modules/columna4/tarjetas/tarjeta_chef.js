@@ -1,4 +1,4 @@
-/* TV4: Carrusel fluido de ofertas - Motor de franja_oferta */
+﻿/* TV4: Carrusel fluido de ofertas - Motor de franja_oferta */
 
 import { 
     escapeHtml, 
@@ -96,11 +96,10 @@ function htmlCarruselOfertas(ofertas = []) {
         const nombre = nombreVitrina(item.nombre);
         
         let precioVigenteVal = precioVigente(item) || item.precio;
-        let precioOriginalVal = item.precio || precioVigenteVal;
-        
-        // Si no hay descuento cargado en la base de datos, simulamos el "Precio Mostrador" agregando un 20% al precio mayorista para tacharlo.
-        if (precioOriginalVal <= precioVigenteVal && precioVigenteVal > 0) {
-            precioOriginalVal = Math.round(precioVigenteVal * 1.2);
+        let precioOriginalVal = item.precio_original || item.precio_anterior || item.precio || precioVigenteVal;
+        const esUnOfertaReal = esOferta(item);
+        if (!esUnOfertaReal) {
+            precioOriginalVal = precioVigenteVal;
         }
 
         const precioStr = formatMoney(precioOriginalVal);
@@ -108,18 +107,20 @@ function htmlCarruselOfertas(ofertas = []) {
         const descuento = descuentoPct(precioOriginalVal, precioVigenteVal);
         const unidad = unidadProducto(item);
         const ahorro = (precioOriginalVal > precioVigenteVal) ? formatMoney(precioOriginalVal - precioVigenteVal) : "";
-        const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐⭐⭐⭐⭐ NUEVO";
+        const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐⭐⭐⭐⭐";
         // Ventas dinámicas
-        const vendidosReales = item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.volumen_dia || item.volumen || 0;
-        const ticketsReales = item.tickets || item.veces || item.tickets_dia || item.cantidad_tickets || 0;
-        let porcentaje = 0;
-        let comprando = 0;
+        const vendidosReales = Number(item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.volumen_dia || item.volumen || 0);
+const ticketsReales = Number(item.tickets || item.veces || item.tickets_dia || item.cantidad_tickets || 0);
+let porcentaje = 0;
+let comprando = 0;
+const precioVigenteNum = Number(item.precio_vigente || item.precio || 0);
+const facturado = vendidosReales * precioVigenteNum;
+const formatFacturado = facturado > 1000000 ? (facturado/1000000).toFixed(1) + "M" : (facturado > 1000 ? Math.round(facturado/1000) + "K" : Math.round(facturado));
         let mostrarVendido = 0;
 
-        // Mostrar SIEMPRE la condición (ej. Llevando 2 kilos) porque en la TV todo es precio mayorista
-        const tieneCondicion = true;
+        const tieneCondicion = esUnOfertaReal && Boolean(textoValidezOferta(item));
         if (vendidosReales > 0) {
-            comprando = ticketsReales > 0 ? ticketsReales : Math.max(1, Math.floor(vendidosReales / 2));
+            comprando = ticketsReales > 0 ? ticketsReales : Math.max(1, Math.ceil(vendidosReales / 2.5));
             mostrarVendido = Math.min(99, Math.round(vendidosReales));
 
 
@@ -130,7 +131,7 @@ function htmlCarruselOfertas(ofertas = []) {
             const dia = new Date().getDate();
             const hash = pseudoRandom(nombre + dia);
             const factorHora = Math.max(1, hora - 7);
-            comprando = Math.floor((hash % 8) + (factorHora * 1.5));
+            comprando = 0;
             porcentaje = Math.min(96, 25 + (factorHora * 4.5) + (hash % 15));
             mostrarVendido = Math.floor(porcentaje * 1.2) + (hash % 10);
         }
@@ -150,29 +151,32 @@ function htmlCarruselOfertas(ofertas = []) {
                 <div class="asian-flash-badge">${esOferta(item) && descuento ? `-${descuento}%` : `TOP ${idx + 1}`}</div>
                 <div class="asian-flash-product-image" style="background:${fondo};">
                     ${imagenHtml}
-                    <div class="asian-flash-product-tag">${escapeHtml(kicker)}</div>
+                    ${kicker ? `<div class="asian-flash-product-tag">${escapeHtml(kicker)}</div>` : ""}
                 </div>
                 <div class="asian-flash-product-info">
                     <div>
                         <h3 class="asian-flash-product-name">${escapeHtml(nombre)}</h3>
                           <div class="asian-flash-prices tv-card__now-box">
                               <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
-                              <span class="asian-flash-original">${escapeHtml(precioStr)}</span>
+                              ${esUnOfertaReal ? `<span class="asian-flash-original">${escapeHtml(precioStr.replace(/\s+/g, ""))}</span>` : ""}
                           </div>
-                          ${tieneCondicion ? `<div class="asian-flash-condition">${escapeHtml(textoValidezOferta(item))}</div>` : ""}
-                          <div class="asian-flash-progress card-progress">
-                            <div class="asian-flash-progress-bar" style="width: ${porcentaje}%;"></div>
-                            <div class="asian-flash-progress-text">${mostrarVendido}% VENDIDO</div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="asian-flash-social">
-                            <div class="asian-flash-avatars">
-                                <div class="asian-flash-avatar">👤</div>
-                                <div class="asian-flash-avatar">👤</div>
-                            </div>
-                            <span class="asian-flash-social-text"><strong>${comprando}</strong> ${comprando === 1 ? 'FAMILIA COMPRÓ HOY' : 'FAMILIAS COMPRARON HOY'}</span>
-                        </div>
+                          <div class="asian-flash-condition">${tieneCondicion ? escapeHtml(textoValidezOferta(item)) : "TUS VECINOS LO ELIGIERON"}</div>
+                          
+<div class="asian-flash-social-grid">
+    <div class="social-stat">
+        <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="premium-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+        <span class="social-value">${comprando}</span>
+    </div>
+    <div class="social-stat">
+        <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="premium-icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></span>
+        <span class="social-value">${vendidosReales > 0 ? Math.min(99, Math.max(12, Math.round((vendidosReales / (vendidosReales + 8)) * 100))) : "0"}</span>
+    </div>
+    <div class="social-stat">
+        <span class="social-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="premium-icon"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10"></path><path d="M17 4v8a5 5 0 0 1-10 0V4"></path><path d="M7 9H4.5A2.5 2.5 0 0 1 2 6.5V6a1 1 0 0 1 1-1h4"></path><path d="M17 9h2.5A2.5 2.5 0 0 0 22 6.5V6a1 1 0 0 0-1-1h-4"></path></svg></span>
+        <span class="social-value">${formatFacturado}</span>
+    </div>
+</div>
+
                     </div>
                 </div>
             </article>
