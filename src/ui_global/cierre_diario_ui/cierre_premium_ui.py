@@ -30,15 +30,12 @@ class ClickableMetricCard(MetricCard):
     clicked = pyqtSignal()
     
     def __init__(self, titulo, icon, color="#3B82F6", parent=None):
-        
         super().__init__(titulo, icon, color, parent)
-        self.setStyleSheet(self.styleSheet().replace('background: white;', 'background: #1E293B;').replace('border: 1px solid #E2E8F0;', 'border: 1px solid #334155;').replace('#475569', '#94A3B8'))
-
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(self.styleSheet() + """
             QFrame#MetricCard:hover {
-                background: #0F172A; color: #94A3B8;
-                border: 1px solid #38BDF8;
+                background: #F1F5F9;
+                border: 1px solid #94A3B8;
             }
         """)
         
@@ -70,7 +67,7 @@ class DetallesDialog(QDialog):
         total = 0.0
         for desc, valor, is_negative in items:
             lbl_d = QLabel(desc)
-            lbl_d.setStyleSheet("font-size: 15px; color: #94A3B8; font-weight: bold;")
+            lbl_d.setStyleSheet("font-size: 15px; color: #475569; font-weight: bold;")
             
             val_fmt = f"{'-' if is_negative else '+'}{fmt_moneda(abs(valor))}"
             lbl_v = QLabel(val_fmt)
@@ -111,7 +108,7 @@ class DetallesDialog(QDialog):
         btn_cerrar.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cerrar.setStyleSheet("""
             QPushButton {
-                background-color: #F1F5F9; color: #94A3B8; font-weight: bold; font-size: 15px; border-radius: 8px; border: 1px solid #CBD5E1;
+                background-color: #F1F5F9; color: #475569; font-weight: bold; font-size: 15px; border-radius: 8px; border: 1px solid #CBD5E1;
             }
             QPushButton:hover { background-color: #E2E8F0; }
         """)
@@ -138,16 +135,16 @@ class CierreGlobalUI(QWidget):
 
     def _setup_ui(self):
         self.setObjectName("CierreGlobalRoot")
-        self.setStyleSheet("QWidget#CierreGlobalRoot { background: #0B1120; }") # Claro/Blanco
+        self.setStyleSheet("QWidget#CierreGlobalRoot { background: #F8FAFC; }") # Claro/Blanco
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         # ─── HEADER ESTILO PASO 7 CON CONTROLES DE DASHBOARD ───
-        header = QFrame()
+        self.header = QFrame()
         header.setFixedHeight(80)
-        header.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0F172A, stop:1 #1E293B); border-bottom: 2px solid #38BDF8;") # Azul oscuro
-        h_lay = QHBoxLayout(header)
+        header.setStyleSheet("background: #1E3A8A;") # Azul oscuro
+        h_lay = QHBoxLayout(self.header)
         h_lay.setContentsMargins(30, 0, 30, 0)
         h_lay.setSpacing(15)
         
@@ -157,7 +154,7 @@ class CierreGlobalUI(QWidget):
         self.btn_back.clicked.connect(self.request_dashboard.emit)
         h_lay.addWidget(self.btn_back)
         
-        lbl_tit = QLabel("💎 NEXUS PRO - CIERRE EJECUTIVO")
+        lbl_tit = QLabel("🛡️ NEXUS PRO - CONTROL DE CIERRE EJECUTIVO")
         lbl_tit.setStyleSheet("color: white; font-size: 20px; font-weight: 900;")
         h_lay.addWidget(lbl_tit)
         
@@ -168,7 +165,7 @@ class CierreGlobalUI(QWidget):
         self.date_picker.setDate(QDate.currentDate())
         self.date_picker.setDisplayFormat("dd/MM/yyyy")
         self.date_picker.setFixedWidth(130)
-        self.date_picker.setStyleSheet("font-size: 14px; padding: 5px; background: white; color: #0F172A; border-radius: 5px;")
+        self.date_picker.setStyleSheet("font-size: 14px; padding: 5px; background: white; color: black; border-radius: 5px;")
         self.date_picker.dateChanged.connect(self._load_data)
         h_lay.addWidget(self.date_picker)
 
@@ -176,7 +173,7 @@ class CierreGlobalUI(QWidget):
         self.btn_ayer.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_ayer.setToolTip("Ver cortes registrados de ayer por cajero")
         self.btn_ayer.setStyleSheet(
-            "background: #0B1120; color: #1E3A8A; border: none; border-radius: 5px; "
+            "background: #F8FAFC; color: #1E3A8A; border: none; border-radius: 5px; "
             "padding: 8px 12px; font-weight: bold;"
         )
         self.btn_ayer.clicked.connect(self._ir_a_ayer)
@@ -205,7 +202,7 @@ class CierreGlobalUI(QWidget):
         except Exception:
             for i in range(1, 6):
                 self.combo_caja.addItem(f"Caja {i}", i)
-        self.combo_caja.setStyleSheet("font-size: 14px; padding: 5px; background: white; color: #0F172A; border-radius: 5px;")
+        self.combo_caja.setStyleSheet("font-size: 14px; padding: 5px; background: white; color: black; border-radius: 5px;")
         self.combo_caja.currentIndexChanged.connect(self._load_data)
         self.combo_caja.setToolTip(
             "Consolidado = solo lectura (estilo cadena).\n"
@@ -295,32 +292,32 @@ class CierreGlobalUI(QWidget):
         self.panel_arq = PanelArqueo(self)
         self.panel_arq.setStyleSheet("""
             QFrame#PanelArq {
-                background: #1E293B; border: 1px solid #334155; border-radius: 16px;
+                background: white; border: 1px solid #E2E8F0; border-radius: 16px;
             }
             QLabel#PanelArqTitEsp {
-                font-weight: 900; font-size: 15px; color: #94A3B8;
+                font-weight: 900; font-size: 15px; color: #475569;
             }
             QLabel#PanelArqValEsp {
-                font-weight: 900; font-size: 36px; color: #38BDF8;
-                background: #0F172A; border: 1px solid #334155; border-radius: 12px;
+                font-weight: 900; font-size: 36px; color: #3B82F6;
+                background: #EFF6FF; border-radius: 12px;
                 padding: 14px 12px; min-height: 72px;
             }
             QLabel#PanelArqTitFis {
-                font-weight: 900; font-size: 13px; color: #94A3B8; margin-top: 4px;
+                font-weight: 900; font-size: 13px; color: #475569; margin-top: 4px;
             }
             QLineEdit#PanelArqValFis {
-                font-weight: 900; font-size: 30px; color: #F8FAFC;
-                border: 2px solid #38BDF8; background: #0F172A; border-radius: 12px;
+                font-weight: 900; font-size: 30px; color: #1E40AF;
+                border: 2px solid #60A5FA; border-radius: 12px;
                 padding: 10px 12px; min-height: 56px;
             }
-            QLineEdit#PanelArqValFis:focus { border: 2px solid #F59E0B; }
+            QLineEdit#PanelArqValFis:focus { border: 3px solid #2563EB; }
 
-            QFrame#FrameDif { border: 1px solid #334155; background: #0F172A; border-radius: 12px; margin-top: 4px; }
-            QFrame#FrameDif[estado="sobrante"] { border-color: #10B981; background: rgba(16, 185, 129, 0.1); }
-            QFrame#FrameDif[estado="faltante"] { border-color: #EF4444; background: rgba(239, 68, 68, 0.1); }
+            QFrame#FrameDif { border: 2px solid #E2E8F0; border-radius: 12px; margin-top: 4px; }
+            QFrame#FrameDif[estado="sobrante"] { border-color: #10B981; background: #ECFDF5; }
+            QFrame#FrameDif[estado="faltante"] { border-color: #EF4444; background: #FEF2F2; }
             QFrame#FrameDif[estado="sos"] { border-color: #B91C1C; background: #FCA5A5; }
 
-            QLabel#FrameDifTit { font-weight: 900; font-size: 16px; color: #E2E8F0; }
+            QLabel#FrameDifTit { font-weight: 900; font-size: 16px; color: #334155; }
             QLabel#FrameDifVal { font-weight: 900; font-size: 20px; }
             QFrame#FrameDif[estado="sobrante"] QLabel#FrameDifVal { color: #047857; }
             QFrame#FrameDif[estado="faltante"] QLabel#FrameDifVal { color: #B91C1C; }
@@ -336,11 +333,11 @@ class CierreGlobalUI(QWidget):
         self.lbl_multi_hint.hide()
 
         _tbl_css = (
-            "QTableWidget { background: #1E293B; border: 1px solid #334155; border-radius: 8px; "
-            "font-size: 12px; color: #F8FAFC; gridline-color: #E2E8F0; } "
+            "QTableWidget { background: white; border: 1px solid #E2E8F0; border-radius: 8px; "
+            "font-size: 12px; color: #0F172A; gridline-color: #E2E8F0; } "
             "QTableWidget::item { padding: 6px 8px; } "
-            "QHeaderView::section { background: #0F172A; color: #94A3B8; font-weight: 800; padding: 8px; "
-            "border: none; border-right: 1px solid #334155; }"
+            "QHeaderView::section { background: #F1F5F9; font-weight: 800; padding: 8px; "
+            "border: none; border-right: 1px solid #E2E8F0; }"
         )
 
         self.tabla_cajas = QTableWidget(0, 5)
@@ -359,7 +356,7 @@ class CierreGlobalUI(QWidget):
         self.tabla_cajas.cellDoubleClicked.connect(self._on_tabla_caja_dbl)
 
         self.lbl_hist = QLabel("Cortes registrados del día (por cajero)")
-        self.lbl_hist.setStyleSheet("font-size: 13px; font-weight: 900; color: #E2E8F0;")
+        self.lbl_hist.setStyleSheet("font-size: 13px; font-weight: 900; color: #334155;")
         self.tabla_hist = QTableWidget(0, 7)
         self.tabla_hist.setHorizontalHeaderLabels(
             ["Hora", "Cajero", "Caja", "Tipo", "Físico", "Esperado", "Dif."]
@@ -392,12 +389,14 @@ class CierreGlobalUI(QWidget):
         body.addLayout(v_arq, 7)
         
         root.addLayout(body)
+        self._aplicar_estilos(theme_manager.current_theme)
+        theme_manager.theme_changed.connect(self._aplicar_estilos)
 
         # ─── FOOTER ───
-        footer = QFrame()
+        self.footer = QFrame()
         footer.setFixedHeight(90)
-        footer.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0F172A, stop:1 #1E293B); border-top: 2px solid #38BDF8;")
-        f_lay = QHBoxLayout(footer)
+        footer.setStyleSheet("background: #1E3A8A;")
+        f_lay = QHBoxLayout(self.footer)
         f_lay.setContentsMargins(30, 0, 30, 0)
         
         self.lbl_modo_activo = QLabel("")
@@ -406,17 +405,15 @@ class CierreGlobalUI(QWidget):
         
         f_lay.addStretch()
         
-        self.btn_cierre = QPushButton("🏁 APROBAR CORTE Y ARQUEO")
+        self.btn_cierre = QPushButton("🛡️ APROBAR CORTE Y ARQUEO")
         self.btn_cierre.setFixedSize(340, 55)
         self.btn_cierre.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cierre.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F59E0B, stop:1 #D97706); color: white; border-radius: 12px; font-size: 16px; font-weight: 900;
-                border: 1px solid #B45309;
+                background-color: #10B981; color: white; font-weight: 900; font-size: 17px;
+                border-radius: 8px; border: none;
             }
-            QPushButton:hover { background: #D97706; }
-            QPushButton:pressed { background: #B45309; }
-            QPushButton:disabled { background: #334155; color: #94A3B8; border: none; }
+            QPushButton:hover { background-color: #059669; }
         """)
         self.btn_cierre.clicked.connect(self._on_click_finalizar)
         f_lay.addWidget(self.btn_cierre)
@@ -437,9 +434,9 @@ class CierreGlobalUI(QWidget):
 
     def _actualizar_texto_boton_cierre(self):
         if normalizar_modo(self.modo_vista) == "dia":
-            self.btn_cierre.setText("🏁 APROBAR CORTE GLOBAL DEL DÍA")
+            self.btn_cierre.setText("🛡️ APROBAR CORTE GLOBAL DEL DÍA")
         else:
-            self.btn_cierre.setText("🏁 APROBAR CORTE Y ARQUEO")
+            self.btn_cierre.setText("🛡️ APROBAR CORTE Y ARQUEO")
 
     def _on_click_finalizar(self):
         self._realizar_corte(self.modo_vista)
@@ -580,6 +577,75 @@ class CierreGlobalUI(QWidget):
             self.panel_arq.setEnabled(True)
             self.btn_cierre.setEnabled(True)
             self._actualizar_texto_boton_cierre()
+
+    
+    def _aplicar_estilos(self, theme="light"):
+        if theme == "dark":
+            # Dark Executive
+            bg_main = "#0B1120"
+            bg_bar = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0F172A, stop:1 #1E293B)"
+            bar_border = "2px solid #38BDF8"
+            card_bg = "#1E293B"
+            card_border = "#334155"
+            text_light = "#F8FAFC"
+            text_muted = "#94A3B8"
+            btn_gold = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F59E0B, stop:1 #D97706)"
+        else:
+            # Light Executive
+            bg_main = "#F8FAFC"
+            bg_bar = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #2563EB)"
+            bar_border = "2px solid #F59E0B"
+            card_bg = "#FFFFFF"
+            card_border = "#E2E8F0"
+            text_light = "#0F172A"
+            text_muted = "#475569"
+            btn_gold = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #F59E0B, stop:1 #D97706)"
+
+        self.setStyleSheet(f"QWidget#CierreGlobalRoot {{ background: {bg_main}; }}")
+        if hasattr(self, 'header'):
+            self.header.setStyleSheet(f"background: {bg_bar}; border-bottom: {bar_border};")
+        if hasattr(self, 'footer'):
+            self.footer.setStyleSheet(f"background: {bg_bar}; border-top: {bar_border};")
+            
+        # Re-apply for all cards
+        card_css = f"QFrame#MetricCard {{ background: {card_bg}; border: 1px solid {card_border}; border-radius: 14px; }}"
+        for card in [self.card_efec, self.card_digi, self.card_fiado, self.card_fondo, self.card_movs, self.card_gan]:
+            if hasattr(card, 'setStyleSheet'):
+                card.setStyleSheet(card_css)
+                card.lbl_tit.setStyleSheet(f"font-size: 12px; font-weight: bold; color: {text_muted};")
+
+        # Table
+        tbl_css = f"""
+            QTableWidget {{ background: {card_bg}; border: 1px solid {card_border}; border-radius: 8px; font-size: 12px; color: {text_light}; gridline-color: {card_border}; }}
+            QTableWidget::item {{ padding: 6px 8px; }}
+            QHeaderView::section {{ background: {'#0F172A' if theme=='dark' else '#F1F5F9'}; color: {'#94A3B8' if theme=='dark' else '#475569'}; font-weight: 800; padding: 8px; border: none; border-right: 1px solid {card_border}; }}
+        """
+        self.tabla_cajas.setStyleSheet(tbl_css)
+        self.tabla_hist.setStyleSheet(tbl_css)
+
+        # Panel Arqueo
+        self.panel_arq.setStyleSheet(f"""
+            QFrame#PanelArq {{ background: {card_bg}; border: 1px solid {card_border}; border-radius: 16px; }}
+            QLabel#PanelArqTitEsp, QLabel#PanelArqTitFis {{ font-weight: 900; color: {text_muted}; }}
+            QLabel#PanelArqValEsp {{ font-weight: 900; font-size: 36px; color: #38BDF8; background: {'#0F172A' if theme=='dark' else '#EFF6FF'}; border: 1px solid {card_border}; border-radius: 12px; padding: 14px 12px; min-height: 72px; }}
+            QLineEdit#PanelArqValFis {{ font-weight: 900; font-size: 30px; color: {text_light}; background: {'#0F172A' if theme=='dark' else 'white'}; border: 2px solid #38BDF8; border-radius: 12px; padding: 10px 12px; min-height: 56px; }}
+            QFrame#FrameDif {{ border: 1px solid {card_border}; background: {'#0F172A' if theme=='dark' else 'white'}; border-radius: 12px; margin-top: 4px; }}
+            QFrame#FrameDif[estado="sobrante"] {{ border-color: #10B981; background: rgba(16, 185, 129, 0.1); }}
+            QFrame#FrameDif[estado="faltante"] {{ border-color: #EF4444; background: rgba(239, 68, 68, 0.1); }}
+            QFrame#FrameDif[estado="exacto"] {{ border-color: #38BDF8; background: rgba(56, 189, 248, 0.1); }}
+            QLabel#LblDif {{ font-weight: 900; font-size: 20px; }}
+            QLabel#LblDif[estado="sobrante"] {{ color: #10B981; }}
+            QLabel#LblDif[estado="faltante"] {{ color: #EF4444; }}
+            QLabel#LblDif[estado="exacto"] {{ color: #38BDF8; }}
+        """)
+
+        # Button Cierre
+        self.btn_cierre.setStyleSheet(f"""
+            QPushButton {{ background: {btn_gold}; color: white; border-radius: 12px; font-size: 16px; font-weight: 900; border: 1px solid #B45309; }}
+            QPushButton:hover {{ background: #D97706; }}
+            QPushButton:pressed {{ background: #B45309; }}
+            QPushButton:disabled {{ background: {card_border}; color: {text_muted}; border: none; }}
+        """)
 
     def _load_data(self):
         try:
