@@ -6,26 +6,21 @@
     overflow: hidden;
     display: flex;
     align-items: stretch;
-    padding: 0.85cqh 1.15cqw 0.75cqh;
-    box-sizing: border-box;
 }
 
 .carousel-track {
     display: flex;
     align-items: stretch;
-    gap: 1.9cqw;
+    gap: 1.4cqw;
     width: max-content;
     height: 100%;
     will-change: transform;
-}
-
-.carousel-track.is-infinite {
-    animation: none;
+    contain: layout style paint;
 }
 
 .oferta-card {
     flex-shrink: 0;
-    width: clamp(300px, 26cqw, 440px);
+    width: clamp(280px, 24cqw, 400px);
     height: 100%;
     background: var(--card-bg);
     border: 0;
@@ -45,8 +40,8 @@
 
 
 .deal-stage {
-    flex: 0 0 30%;
-    min-width: 78px;
+    flex: 0 0 34%;
+    min-width: 86px;
     border-radius: 14px;
     position: relative;
     display: grid;
@@ -144,13 +139,8 @@
 .flash-offer__stage .deal-stage__off {
     top: auto;
     left: auto;
-    right: 10px;
-    bottom: 10px;
-    font-size: clamp(1.15rem, 2.15cqw, 1.7rem);
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    padding: 0.38em 0.72em;
-    border-radius: 10px;
+    right: 8px;
+    bottom: 8px;
 }
 
 .deal-copy {
@@ -158,63 +148,9 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    align-items: stretch;
-    gap: 0.45em;
-    padding: 0.35em 0.45em 0.28em 0.12em;
-}
-
-.hero-section .deal-copy__head,
-.hero-section .deal-copy__mid {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    min-width: 0;
-}
-
-.hero-section .deal-copy__head {
-    gap: 0.28em;
-}
-
-.hero-section .deal-copy__mid {
-    gap: 0.42em;
-}
-
-.hero-section .deal-kicker {
-    text-align: left;
-    letter-spacing: 0.14em;
-}
-
-.hero-section .deal-price-row {
-    margin-top: 0;
-}
-
-.hero-section .deal-save {
-    font-size: clamp(0.72rem, 1cqw, 0.88rem);
-    line-height: 1.2;
-}
-
-.hero-section .deal-foot {
-    margin-top: 0;
-    gap: 0.45em;
-}
-
-.hero-section .deal-proof,
-.hero-section .oferta-card.is-deal .tv-card__timer {
-    min-height: 1.7em;
-    padding-top: 0.28em;
-    padding-bottom: 0.28em;
-}
-
-.deal-line {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    min-width: 0;
-}
-
-.deal-line--center {
-    text-align: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 2px 4px 2px 0;
 }
 
 .deal-kicker {
@@ -233,18 +169,15 @@
 
 .oferta-card.is-deal .tv-card__name {
     margin: 0;
-    font-size: clamp(1.12rem, 1.7cqw, 1.48rem);
-    -webkit-line-clamp: 2;
-    padding-bottom: 4px;
-    max-width: 100%;
+    font-size: clamp(0.95rem, 1.45cqw, 1.25rem);
+    -webkit-line-clamp: 2; padding-bottom: 4px;
 }
 
 .deal-price-row {
     display: flex;
-    align-items: stretch;
+    align-items: baseline;
     gap: 8px;
     min-width: 0;
-    width: 100%;
     margin-top: 2px;
 }
 
@@ -272,9 +205,7 @@
     color: var(--deal-save-color);
     font-size: clamp(10px, 0.9cqw, 12px);
     font-weight: 800;
-    line-height: 1.35;
-    padding-bottom: 0;
-    text-align: left;
+    line-height: 1.35; padding-bottom: 4px;
 }
 
 .deal-foot {
@@ -282,18 +213,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 2px;
-    width: 100%;
-}
-
-.deal-line--split {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    margin-top: 4px;
 }
 
 .oferta-card.is-deal .tv-card__timer {
-    flex: 0 0 auto;
     padding: 4px 10px 4px 8px;
     gap: 5px;
     font-size: clamp(13px, 1.15cqw, 15px);
@@ -319,21 +242,10 @@
 }
 
 .deal-proof {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 8px;
-    border: 1px solid rgba(232, 212, 139, 0.45);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
     color: var(--proof-color);
     font-size: clamp(10px, 0.9cqw, 12px);
     font-weight: 700;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .deal-proof.is-low {
@@ -480,7 +392,7 @@
 
 .tv-card__was {
     flex-shrink: 0;
-    color: #FFFFFF;
+    color: var(--price-was);
     font-weight: 600;
     text-decoration: line-through;
     font-size: clamp(0.72rem, 0.95cqw, 0.88rem);
@@ -631,22 +543,19 @@
 
 /* 4. Center Focus (Mouse Imaginario en Carrusel) */
 .oferta-card {
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease, opacity 0.4s ease;
     will-change: transform;
-    transform: scale(0.94);
-    transform-origin: center center;
 }
 .oferta-card.is-center-focus {
-    transform: scale(1) !important;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.32), 0 0 12px var(--kicker-color);
+    transform: scale(1.05) !important; /* Zoom más sutil para no cortar bordes */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.25), 0 0 15px var(--kicker-color);
     z-index: 50;
     opacity: 1;
     border-color: var(--kicker-color);
 }
 .oferta-card:not(.is-center-focus) {
-    opacity: 1;
-    transform: scale(0.94);
-    filter: none;
+    opacity: 0.75;
+    transform: scale(0.92);
 }
 
 

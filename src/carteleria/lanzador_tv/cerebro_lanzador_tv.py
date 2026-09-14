@@ -11,7 +11,6 @@ import http.server
 import json
 import mimetypes
 import os
-import re
 import socketserver
 import threading
 import subprocess
@@ -27,151 +26,28 @@ from src.carteleria.lanzador_tv.navegador_kiosk import (
     TeclasTv,
     buscar_navegador,
     flags_pantalla_completa,
-    indice_monitor_tv,
     rect_monitor_nativo,
 )
 
 logger = logging.getLogger("CerebroLanzadorTV")
 
 
-def _ui_stamp_tv() -> str:
-    """Cambia al editar la cara web, para tirar el cache de Chrome aunque no suba la app."""
-    marca = os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web", "ui_build.txt")
-    try:
-        with open(marca, encoding="utf-8") as fh:
-            extra = fh.read().strip()
-    except OSError:
-        extra = ""
-    index = os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web", "index.html")
-    try:
-        mtime = str(int(os.path.getmtime(index)))
-    except OSError:
-        mtime = "0"
-    return f"{extra or '0'}-{mtime}"
-
-
-def _stamp_ascii() -> bytes:
-    return _ui_stamp_tv().encode("ascii", "ignore") or b"0"
-
-
-def _inyectar_stamp_ui(data: bytes, ext: str) -> bytes:
-    """F5 no tira el cache de módulos ES ni de @import; se versionan al servir."""
-    stamp = _stamp_ascii()
-
-    if ext == ".html":
-        return re.sub(br"\?v=tv[\w.\-]+", b"?v=tv" + stamp, data)
-
-    if ext == ".css":
-        def _css(match):
-            url = match.group(1)
-            if url.startswith(b"http") or url.startswith(b"data:"):
-                return match.group(0)
-            base = url.split(b"?")[0]
-            return b'@import url("' + base + b"?v=tv" + stamp + b'")'
-        return re.sub(br"""@import\s+url\(["']([^"']+)["']\)""", _css, data)
-
-    if ext == ".js":
-        def _js(match):
-            quote = match.group(1)
-            path = match.group(2)
-            if path.startswith(b"http") or path.startswith(b"data:"):
-                return match.group(0)
-            base = path.split(b"?")[0]
-            return b"from " + quote + base + b"?v=tv" + stamp + quote
-        return re.sub(br"""from\s+(['"])([^'"]+)['"]""", _js, data)
-
-    return data
-
-
-def _leer_config_carteleria() -> dict:
-    """Admin15 guarda en DB; config.json es respaldo. La TV debe usar la DB."""
-    from src.config import config
-
-    out = {
-        "business_name": config.get("business_name", "Cartelería"),
-        "phone": config.get("phone", ""),
-        "mensaje_zocalo": config.get("mensaje_zocalo", ""),
-        "carteleria_theme": config.get("carteleria_theme", "premium"),
-        "carteleria_perf": config.get("carteleria_perf", "auto"),
-    }
-    try:
-        from src.base_de_datos.database import db_manager
-
-        db_manager.execute_non_query(
-            "CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)"
-        )
-        rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
-        if rows:
-            raw = rows[0][0] if isinstance(rows[0], tuple) else rows[0].get("config_json")
-            cfg = json.loads(raw or "{}")
-            for key in out:
-                if key in cfg and cfg[key] not in (None, ""):
-                    out[key] = cfg[key]
-                elif key == "mensaje_zocalo" and "mensaje_zocalo" in cfg:
-                    out[key] = cfg.get("mensaje_zocalo") or ""
-                elif key == "phone" and "phone" in cfg:
-                    out[key] = cfg.get("phone") or ""
-    except Exception:
-        pass
-    tema = str(out.get("carteleria_theme") or "premium")
-    if tema in ("auto", "negro_temu"):
-        tema = "premium"
-    out["carteleria_theme"] = tema
-    return out
-
-
-def _app_version_tv() -> str:
-    try:
-        from src.updater.cerebro.engine import read_local_version
-
-        return str(read_local_version() or "0").strip() or "0"
-    except Exception:
-        return "0"
-
-
-def _borrar_cache_chrome(root: str) -> None:
-    """Chrome guarda el HTTP cache en Default/, no en la raíz del user-data-dir."""
-    for rel in (
-        "Cache",
-        "Code Cache",
-        "GPUCache",
-        "Service Worker",
-        os.path.join("Default", "Cache"),
-        os.path.join("Default", "Code Cache"),
-        os.path.join("Default", "GPUCache"),
-        os.path.join("Default", "Service Worker"),
-    ):
-        shutil.rmtree(os.path.join(root, rel), ignore_errors=True)
-
-
-def _perfil_kiosk_estable() -> str:
-    """Un perfil por versión de app + stamp de la cara web (CSS/HTML)."""
-    ver = f"{_app_version_tv().replace(' ', '')}-{_ui_stamp_tv()}"
-    root = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{ver}")
-    os.makedirs(root, exist_ok=True)
-    marca = os.path.join(root, "ui_version.txt")
-    previa = ""
-    try:
-        with open(marca, encoding="utf-8") as fh:
-            previa = fh.read().strip()
-    except OSError:
-        previa = ""
-    if previa != ver:
-        _borrar_cache_chrome(root)
+def cargar_web_tv():
+    """En el EXE: tv_cara.bin en memoria. Si falta, la carpeta la_cara_web (dev o instalado viejo)."""
+    if getattr(sys, "frozen", False):
         try:
-            with open(marca, "w", encoding="utf-8") as fh:
-                fh.write(ver)
-        except OSError:
-            pass
-        logger.info("Cache Chrome TV refrescado por update %s → %s", previa or "?", ver)
-    return root
+            from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
 
+            mem = cargar_cara_en_memoria()
+            if mem:
+                return None, mem
+        except Exception:
+            logger.exception("No se pudo abrir el paquete oculto de la TV")
 
-def _buscar_cara_disco():
     rel = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
     candidatos = [
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
         get_resource_path(rel),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "la_cara_web"),
         os.path.join(get_base_path(), rel),
         os.path.join(get_base_path(), "_internal", rel),
     ]
@@ -184,23 +60,7 @@ def _buscar_cara_disco():
         ])
     for path in candidatos:
         if path and os.path.isfile(os.path.join(path, "index.html")):
-            return path
-    return ""
-
-
-def cargar_web_tv():
-    """Carpeta la_cara_web primero (así se ven los CSS nuevos). El blob es respaldo."""
-    disco = _buscar_cara_disco()
-    if disco:
-        return disco, None
-    try:
-        from src.carteleria.lanzador_tv.tv_cara_pack import cargar_cara_en_memoria
-
-        mem = cargar_cara_en_memoria()
-        if mem and "index.html" in mem:
-            return None, mem
-    except Exception:
-        logger.exception("No se pudo abrir el paquete oculto de la TV")
+            return path, None
     return "", None
 
 
@@ -231,8 +91,6 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if self.zip_store is not None:
             self._serve_memoria()
             return
-        if self._serve_disco_con_stamp():
-            return
         return super().do_GET()
 
     def _serve_memoria(self):
@@ -247,43 +105,12 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if data is None:
             self.send_error(404)
             return
-        ext = os.path.splitext(rel)[1].lower()
-        if ext in (".html", ".css", ".js"):
-            data = _inyectar_stamp_ui(data, ext)
         ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
-
-    def _serve_disco_con_stamp(self) -> bool:
-        if not self.web_root:
-            return False
-        parsed = urlparse(self.path)
-        rel = unquote(parsed.path or "/").lstrip("/")
-        if not rel or rel.endswith("/"):
-            rel = (rel + "index.html") if rel else "index.html"
-        if ".." in rel.split("/"):
-            return False
-        ext = os.path.splitext(rel)[1].lower()
-        if ext not in (".html", ".css", ".js"):
-            return False
-        full = os.path.normpath(os.path.join(self.web_root, *rel.split("/")))
-        root = os.path.normpath(self.web_root)
-        if full != root and not full.startswith(root + os.sep):
-            return False
-        if not os.path.isfile(full):
-            return False
-        with open(full, "rb") as handle:
-            data = _inyectar_stamp_ui(handle.read(), ext)
-        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
-        self.send_response(200)
-        self.send_header("Content-Type", ctype)
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
-        return True
 
     def do_POST(self):
         if self.path.startswith("/api/control"):
@@ -292,9 +119,7 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
+        self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
     def _serve_icono(self):
@@ -316,6 +141,14 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         full = ruta_archivo_icono(name)
+        if not full:
+            try:
+                from src.carteleria.motor_carteleria.iconos_tv import _png_por_nombre
+                alt = _png_por_nombre(os.path.splitext(name)[0])
+                if alt and alt != name:
+                    full = ruta_archivo_icono(alt)
+            except Exception:
+                full = ""
         if not full:
             self.send_error(404)
             return
@@ -393,14 +226,12 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
             from src.config import config
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
 
-            cfg = _leer_config_carteleria()
             return {
                 "config": {
-                    "business_name": cfg["business_name"],
-                    "phone": cfg["phone"],
-                    "mensaje_zocalo": cfg["mensaje_zocalo"],
-                    "install_date": config.get("install_date", ""),
-                    "carteleria_theme": cfg["carteleria_theme"],
+                    "business_name": config.get("business_name", "Cartelería"),
+                    "phone": config.get("phone", ""),
+                    "mensaje_zocalo": config.get("mensaje_zocalo", ""),
+                    "carteleria_theme": config.get("carteleria_theme", "temu"),
                     "carteleria_perf": perfil_activo(),
                 },
                 "precios": self._get_precios(),
@@ -436,7 +267,8 @@ class ServidorCuello:
         self.browser_process = None
         self.screen_index = None
         self.web_root, self.zip_store = cargar_web_tv()
-        self._kiosk_profile = _perfil_kiosk_estable()
+        import time
+        self._kiosk_profile = os.path.join(tempfile.gettempdir(), f"tpv-carteleria-kiosk-{int(time.time())}")
         self._teclas = None
         self.last_error = ""
 
@@ -445,19 +277,13 @@ class ServidorCuello:
             self.last_error = ""
             if screen_index is not None:
                 self.screen_index = screen_index
-            elif self.screen_index is None:
-                self.screen_index = indice_monitor_tv()
             self.web_root, self.zip_store = cargar_web_tv()
             tiene_mem = bool(self.zip_store and "index.html" in self.zip_store)
             tiene_disco = bool(self.web_root and os.path.isfile(os.path.join(self.web_root, "index.html")))
             if not tiene_mem and not tiene_disco:
-                from src.carteleria.lanzador_tv.tv_cara_pack import _candidatos_blob
-
-                blobs = _candidatos_blob() or ["(ningun tv_cara.bin)"]
                 self.last_error = (
                     "Falta la cara web de la TV (index.html).\n"
-                    f"Carpeta: {self.web_root or '(no hay la_cara_web)'}\n"
-                    "Blobs:\n" + "\n".join(blobs)
+                    f"Buscada en:\n{self.web_root or '(paquete en memoria)'}"
                 )
                 logger.warning("Cara web TV no encontrada")
                 return False
@@ -523,7 +349,6 @@ class ServidorCuello:
             on_f11=self._tecla_salir,
             on_esc=self._tecla_salir,
             parent=parent,
-            on_f5=self._tecla_f5,
         )
         self._teclas.start()
 
@@ -532,10 +357,6 @@ class ServidorCuello:
             return
         self._teclas.stop()
         self._teclas = None
-
-    def _tecla_f5(self):
-        logger.info("F5: recargo la cara web de la TV")
-        self._lanzar_navegador()
 
     def _tecla_f10(self):
         mw = self.main_window
@@ -611,12 +432,14 @@ class ServidorCuello:
     def _lanzar_navegador(self):
         try:
             self._cerrar_navegador()
-            self._kiosk_profile = _perfil_kiosk_estable()
+            
+            # Limpiar perfiles viejos de Chromium para no llenar el disco
             import glob
             for old_prof in glob.glob(os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk-*")):
                 if old_prof != self._kiosk_profile:
                     shutil.rmtree(old_prof, ignore_errors=True)
-            url = f"http://{self.host}:{self.port}/?v={_ui_stamp_tv()}"
+                
+            url = f"http://{self.host}:{self.port}/"
             sistema = platform.system()
             flags = self._flags_kiosk(url)
             navegador = buscar_navegador()

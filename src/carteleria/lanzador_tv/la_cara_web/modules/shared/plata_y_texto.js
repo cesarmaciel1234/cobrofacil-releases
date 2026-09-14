@@ -91,52 +91,26 @@ export function cantMinimaOferta(item) {
     return 2;
 }
 
-export function leerPrecios(item) {
-    const num = (v) => {
-        const x = Number(v);
-        return Number.isFinite(x) ? x : 0;
-    };
-    const listaGuardada = num(item?.precio_original || item?.precio_anterior);
-    const precioCampo = num(item?.precio);
-    const candidatos = [
-        num(item?.precio_oferta),
-        num(item?.precio_oferta_relampago),
-        num(item?.precio_oferta_promedio),
-    ].filter((x) => x > 0);
-    const maxCand = candidatos.length ? Math.max(...candidatos) : 0;
-    let lista = precioCampo;
-    if (maxCand > 0 && precioCampo > 0 && maxCand > precioCampo) {
-        lista = maxCand;
-    }
-    const original = listaGuardada > lista ? listaGuardada : (lista || listaGuardada);
-    const ofertas = candidatos.filter((x) => x > 0 && original > 0 && x < original);
-    let vigente = precioCampo || original;
-    if (ofertas.length) vigente = Math.min(...ofertas);
-    else if (precioCampo > 0 && original > precioCampo) vigente = precioCampo;
-    const hayOferta = original > vigente && vigente > 0;
-    return { original, vigente, hayOferta };
-}
-
-export function esOferta(producto) {
-    return leerPrecios(producto).hayOferta;
-}
-
-export function precioVigente(producto) {
-    if (!producto) return 0;
-    const { vigente, hayOferta } = leerPrecios(producto);
-    if (hayOferta) return vigente;
-    const relampago = Number(producto.precio_oferta_relampago || 0);
-    const precio = Number(producto.precio || 0);
-    if (relampago > 0 && (precio <= 0 || relampago < precio)) return relampago;
-    return vigente || precio;
-}
-
 export function textoValidezOferta(item) {
-    if (!esOferta(item)) return "";
     const n = cantMinimaOferta(item);
     return esPorKg(item)
         ? `Llevando ${n} kilos o más`
         : `Llevando ${n} unidades o más`;
+}
+
+export function esOferta(producto) {
+    const precio = Number(producto?.precio || 0);
+    const oferta = Number(producto?.precio_oferta || 0);
+    return precio > 0 && oferta > 0 && oferta < precio;
+}
+
+export function precioVigente(producto) {
+    if (!producto) return 0;
+    if (esOferta(producto)) return Number(producto.precio_oferta);
+    const relampago = Number(producto.precio_oferta_relampago || 0);
+    const precio = Number(producto.precio || 0);
+    if (relampago > 0 && (precio <= 0 || relampago < precio)) return relampago;
+    return precio;
 }
 
 export function descuentoPct(original, vigente) {
@@ -174,50 +148,41 @@ const ALIAS_PNG = {
     suprema: "suprema.png",
     pechuga: "pechuga.png",
     bife_chorizo: "bife_de_chorizo.png",
-    milanesa: "milanesa_de_pollo.png",
-    milanesa_de_pollo: "milanesa_de_pollo.png",
-    milanesa_pollo: "milanesa_de_pollo.png",
-    picada: "picada_comun.png",
-    picada_comun: "picada_comun.png",
-    pata_muslo: "pata_y_muslo.png",
-    pata_y_muslo: "pata_y_muslo.png",
+    milanesa_de_pollo: "milanesa_pollo.png",
 };
 
 export function urlIcono(item) {
-    return urlsFotoProducto(item)[0] || "";
-}
-
-export const FOTO_SISTEMA = "assets/logo_sistema.svg";
-
-export function urlsFotoProducto(item) {
-    const out = [];
-    const push = (u) => {
-        const v = String(u || "").trim();
-        if (v && !out.includes(v)) out.push(v);
-    };
-    const asUrl = (raw) => {
-        const v = String(raw || "").trim();
-        if (!v) return "";
-        if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("assets/")) return v;
-        if (v.startsWith("/iconos/")) return v.replace(/\\/g, "/");
-        const base = v.replace(/\\/g, "/").split("/").pop() || "";
-        if (/\.(png|jpe?g|webp|svg)$/i.test(base)) return `/iconos/${base}`;
-        return "";
-    };
-    push(asUrl(item?.icono_url));
-    push(asUrl(item?.icono));
-    return out;
+    const raw = String(item?.icono_url || item?.icono || "").trim();
+    if (raw.startsWith("/iconos/")) return raw;
+    if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(raw)) return `/iconos/${raw}`;
+    const slug = slugNombre(item?.nombre || "");
+    if (!slug) return "";
+    const alias = ALIAS_PNG[slug];
+    if (alias) return `/iconos/${alias}`;
+    return `/iconos/${slug}.png`;
 }
 
 export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
-    const urls = urlsFotoProducto(item);
-    const url = urls[0] || FOTO_SISTEMA;
-    const fallbacks = urls.slice(1);
+    const assignedRaw = String(item?.icono || "").trim();
+    let assignedUrl = "";
+    if (assignedRaw.startsWith("/iconos/")) assignedUrl = assignedRaw;
+    else if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(assignedRaw)) assignedUrl = `/iconos/${assignedRaw}`;
+    const slug = slugNombre(item?.nombre);
+    const slugUrl = slug ? `/iconos/${ALIAS_PNG[slug] || `${slug}.png`}` : "";
+    const computedRaw = String(item?.icono_url || "").trim();
+    let computedUrl = "";
+    if (computedRaw.startsWith("/iconos/")) computedUrl = computedRaw;
+    else if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(computedRaw)) computedUrl = `/iconos/${computedRaw}`;
+    const urls = [assignedUrl, computedUrl, slugUrl].filter((u, i, arr) => u && arr.indexOf(u) === i);
+    const url = urls[0] || "";
+    const fallback = urls[1] || "";
     const letra = letraVitrina(item?.nombre);
-    const onerr = `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else if(this.src.indexOf('logo_sistema')<0){this.src='${FOTO_SISTEMA}';}else{this.style.opacity='.85';}`;
+    const onerr = fallback
+        ? `if(this.dataset.fallback){const u=this.dataset.fallback;this.removeAttribute('data-fallback');this.src=u;}else{this.remove();}`
+        : `this.remove()`;
     return `
         <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
-            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
+            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallback ? `data-fallback="${escapeHtml(fallback)}"` : ""} onerror="${onerr}">` : ""}
             <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
             ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
             ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}

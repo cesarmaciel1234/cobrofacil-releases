@@ -30,44 +30,42 @@ class CarteleriaMainTV(QWidget):
         self._cargar_cache_inicial()
         self._setup_motores()
         self._sincronizar()
-        QTimer.singleShot(400, self._arrancar_tv_monitor_grande)
 
     def _apply_theme(self):
-        """Consola Qt plana. El look luxury queda solo en la cara web de la TV."""
+        """Aplicar tema autnomo del sistema de cartelera (temu/apple/blackfriday)"""
         try:
             from src.config import config
             from src.carteleria.theme import set_theme
-
-            self._theme_name = config.get("carteleria_theme", "premium")
+            from src.utils.paths import get_resource_path
+            
+            self._theme_name = config.get("carteleria_theme", "temu")
             set_theme(self._theme_name)
-        except Exception:
-            self._theme_name = "temu"
-        self.setStyleSheet("""
-            #CarteleriaMainTV { background: #F8FAFC; }
-            QLabel { color: #0F172A; background: transparent; }
-            QFrame#hero, QFrame#metric {
-                background: #FFFFFF;
-                border: 1px solid #E2E8F0;
-                border-radius: 6px;
-            }
-            QLabel#eyebrow { color: #64748B; font-size: 11px; font-weight: 700; }
-            QLabel#title { color: #0F172A; font-size: 22px; font-weight: 700; }
-            QLabel#muted { color: #64748B; font-size: 13px; }
-            QLabel#metricValue { color: #0F172A; font-size: 20px; font-weight: 700; }
-            QLabel#status { color: #166534; font-size: 13px; font-weight: 700; }
-            QPushButton { border: none; border-radius: 6px; padding: 12px 16px; font-size: 14px; font-weight: 700; }
-            QPushButton#start { background: #2563EB; color: white; }
-            QPushButton#start:hover { background: #1D4ED8; }
-            QPushButton#stop { background: #DC2626; color: white; }
-            QPushButton#stop:hover { background: #B91C1C; }
-            QPushButton#secondary { background: #FFFFFF; color: #2563EB; border: 1px solid #BFDBFE; }
-            QPushButton#secondary:hover { background: #EFF6FF; }
-        """)
+            
+            # Cargar el QSS separado
+            theme_file = f"{self._theme_name}.qss"
+            qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", theme_file))
+            
+            if not os.path.exists(qss_path):
+                qss_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "apple.qss"))
+                
+            with open(qss_path, "r", encoding="utf-8") as f:
+                self.setStyleSheet(f.read())
+                
+        except Exception as e:
+            print(f"Error aplicando tema de cartelera: {e}")
+            try:
+                # Fallback
+                from src.utils.paths import get_resource_path
+                fallback_path = get_resource_path(os.path.join("src", "ui_components", "carteleria_tv", "fallback.qss"))
+                with open(fallback_path, "r", encoding="utf-8") as f:
+                    self.setStyleSheet(f.read())
+            except Exception:
+                pass
 
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(24, 20, 24, 20)
-        root.setSpacing(12)
+        root.setContentsMargins(46, 38, 46, 38)
+        root.setSpacing(18)
         hero = QFrame(objectName="hero")
         hero_lay = QVBoxLayout(hero)
         hero_lay.setContentsMargins(28, 24, 28, 24)
@@ -159,7 +157,6 @@ class CarteleriaMainTV(QWidget):
                 "id": row.get("id"), "nombre": row.get("nombre", "") or "",
                 "precio": num(row.get("precio")), "precio_oferta": num(row.get("precio_oferta")),
                 "precio_oferta_relampago": num(row.get("precio_oferta_relampago")),
-                "precio_oferta_promedio": num(row.get("precio_oferta_promedio")),
                 "cant_oferta": num(row.get("cant_oferta")),
                 "tipo_unidad_oferta": row.get("tipo_unidad_oferta", "") or "",
                 "unidad": row.get("unidad", "") or "",
@@ -186,34 +183,12 @@ class CarteleriaMainTV(QWidget):
     def _refrescar_paneles(self):
         try:
             from src.carteleria.motor_carteleria.estado_tv import armar_paneles
-            self._paneles = armar_paneles(
-                self.rows_precios, self._clima_icon, self._clima,
-                ranking_remoto=getattr(self, "_ranking_remoto", None),
-            )
+            self._paneles = armar_paneles(self.rows_precios, self._clima_icon, self._clima)
         except Exception:
             self._paneles = self._paneles or {"hero": None, "destacados": [], "rotacion": [], "combos": [], "columna3": [], "ia": []}
 
     def _on_sync_finished(self, data, status):
         data = data or {}
-        self.sos_data = data.get("sos", []) or []
-        self.top10_data = data.get("top10", {}) or {}
-        try:
-            from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
-            from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra
-
-            if es_esclava():
-                data = asegurar_ranking(data, host_maestra())
-        except Exception:
-            pass
-        self._ranking_remoto = data.get("ranking") or {}
-        try:
-            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-
-            pub = data.get("publicidad")
-            if pub is not None:
-                motor_publicidad.aplicar_remoto(pub)
-        except Exception:
-            pass
         productos = [self._normalizar_producto(row) for row in data.get("precios", [])]
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
@@ -227,6 +202,8 @@ class CarteleriaMainTV(QWidget):
                 enriquecer_iconos(self.rows_precios)
             except Exception:
                 pass
+        self.sos_data = data.get("sos", []) or []
+        self.top10_data = data.get("top10", {}) or {}
         self._sync_status, self._ultima_sincro = status, datetime.now()
         self._refrescar_paneles()
         self._actualizar_resumen()
@@ -259,33 +236,19 @@ class CarteleriaMainTV(QWidget):
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
             motor_publicidad.marcar_lista(self.rows_precios)
-            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
-            cfg_tv = _leer_config_carteleria()
-            business_name = cfg_tv["business_name"]
-            phone = cfg_tv["phone"]
-            theme = cfg_tv["carteleria_theme"]
-            mensaje = cfg_tv["mensaje_zocalo"]
+            business_name, phone = config.get("business_name", "Cartelería"), config.get("phone", "")
+            theme, mensaje = config.get("carteleria_theme", self._theme_name or "temu"), config.get("mensaje_zocalo", "")
             perf = perfil_activo()
-            install_date = config.get("install_date", "")
-            licencia_dias = None
-            if install_date:
-                from datetime import datetime
-                try:
-                    usados = (datetime.now() - datetime.fromisoformat(str(install_date))).days
-                    licencia_dias = 30 - usados
-                except ValueError:
-                    licencia_dias = None
         except Exception:
             business_name, phone, theme, mensaje, perf = "Cartelería", "", self._theme_name, "", "eco"
-            install_date, licencia_dias = "", None
+        if not mensaje:
+            mensaje = f"{business_name} • {self._clima} • Ofertas sujetas a stock •"
         return {
             "config": {
                 "business_name": business_name, "phone": phone,
                 "carteleria_theme": theme,
                 "carteleria_perf": perf,
                 "mensaje_zocalo": mensaje,
-                "install_date": install_date,
-                "licencia_dias": licencia_dias,
                 "data_status": self._sync_status,
             },
             "precios": self.rows_precios,
@@ -331,19 +294,9 @@ class CarteleriaMainTV(QWidget):
     def _on_control_clicked(self):
         self._detener() if self._iniciado else self._iniciar()
 
-    def _arrancar_tv_monitor_grande(self):
-        if self._iniciado:
-            return
-        from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
-
-        self._iniciar(screen_index=indice_monitor_tv())
-
     def _iniciar(self, screen_index=None):
         from .cerebro_lanzador_tv import ServidorCuello
-        from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
         self._sincronizar()
-        if screen_index is None:
-            screen_index = indice_monitor_tv()
         if self._cerebro is None:
             self._cerebro = ServidorCuello(self)
         if not self._cerebro.iniciar(screen_index=screen_index):

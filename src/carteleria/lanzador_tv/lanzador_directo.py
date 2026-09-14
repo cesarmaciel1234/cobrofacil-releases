@@ -17,21 +17,18 @@ CLIMA_MS = 15 * 60 * 1000
 class _PanelesWorker(QThread):
     listo = pyqtSignal(dict)
 
-    def __init__(self, productos, clima_icon, clima, ranking=None, parent=None):
+    def __init__(self, productos, clima_icon, clima, parent=None):
         super().__init__(parent)
         self._productos = productos
         self._clima_icon = clima_icon
         self._clima = clima
-        self._ranking = ranking or {}
 
     def run(self):
         try:
             from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
             from src.carteleria.motor_carteleria.estado_tv import armar_paneles
             enriquecer_iconos(self._productos)
-            paneles = armar_paneles(
-                self._productos, self._clima_icon, self._clima, ranking_remoto=self._ranking
-            )
+            paneles = armar_paneles(self._productos, self._clima_icon, self._clima)
             self.listo.emit({"paneles": paneles or {}, "precios": self._productos})
         except Exception:
             logger.exception("Error armando paneles TV")
@@ -55,7 +52,6 @@ class LanzadorDirectoTV(QObject):
         self.rows_precios = []
         self.sos_data = []
         self.top10_data = {}
-        self._ranking_remoto = {}
         self._paneles = {}
         self._state_cache = {"config": {}, "precios": []}
         self._huella = ""
@@ -70,10 +66,6 @@ class LanzadorDirectoTV(QObject):
             if self._cuello:
                 self.detener()
                 self._vivo = True
-            if screen_index is None:
-                from src.carteleria.lanzador_tv.navegador_kiosk import indice_monitor_tv
-
-                screen_index = indice_monitor_tv()
             self.screen_index = screen_index
             from src.carteleria.lanzador_tv.cerebro_lanzador_tv import ServidorCuello
             self._cuello = ServidorCuello(self)
@@ -248,25 +240,8 @@ class LanzadorDirectoTV(QObject):
                     self._sync_status = status
                 return
             self._sync_status = status or "online"
-            try:
-                from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
-                from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra
-
-                if es_esclava():
-                    data = asegurar_ranking(data, host_maestra())
-            except Exception:
-                pass
             self.sos_data = data.get("sos") or []
             self.top10_data = data.get("top10") or {}
-            self._ranking_remoto = data.get("ranking") or {}
-            try:
-                from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-
-                pub = data.get("publicidad")
-                if pub is not None:
-                    motor_publicidad.aplicar_remoto(pub)
-            except Exception:
-                pass
             self._aplicar_catalogo(productos)
             logger.info(
                 "Sync %s: %s productos (rotacion=%s)",
@@ -296,7 +271,6 @@ class LanzadorDirectoTV(QObject):
                     "precio": float(item.get("precio") or 0),
                     "precio_oferta": float(item.get("precio_oferta") or 0),
                     "precio_oferta_relampago": float(item.get("precio_oferta_relampago") or 0),
-                    "precio_oferta_promedio": float(item.get("precio_oferta_promedio") or 0),
                     "cant_oferta": float(item.get("cant_oferta") or 0),
                     "tipo_unidad_oferta": item.get("tipo_unidad_oferta") or "",
                     "unidad": item.get("unidad") or "",
@@ -305,7 +279,7 @@ class LanzadorDirectoTV(QObject):
                     "categoria": item.get("categoria") or "",
                     "stock": float(item.get("stock") or 0),
                     "icono": item.get("icono") or "",
-                    "es_publicidad": bool(item.get("es_publicidad")),
+                    "es_publicidad": False,
                 })
                 continue
             row = list(item) if isinstance(item, (list, tuple)) else []
@@ -325,7 +299,6 @@ class LanzadorDirectoTV(QObject):
                 "es_pesable": row[10] if len(row) > 10 else 0,
                 "departamento": (row[11] if len(row) > 11 else "") or (row[0] if row else ""),
                 "icono": row[12] if len(row) > 12 else "",
-                "id": row[13] if len(row) > 13 else None,
                 "es_publicidad": False,
             })
         return result
@@ -333,9 +306,10 @@ class LanzadorDirectoTV(QObject):
     def _marcar_publicidad(self, productos):
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-            return motor_publicidad.marcar_lista(productos)
+            motor_publicidad.marcar_lista(productos)
         except Exception:
-            return productos
+            pass
+        return productos
 
     def _huella_catalogo(self):
         h = hashlib.md5()
@@ -344,23 +318,11 @@ class LanzadorDirectoTV(QObject):
                 f"{item.get('nombre')}|{item.get('precio')}|{item.get('precio_oferta')}|"
                 f"{item.get('icono')}|{item.get('es_publicidad')}\n".encode("utf-8", "ignore")
             )
-        for clave, filas in (self._ranking_remoto or {}).items():
-            h.update(str(clave).encode())
-            for row in (filas or [])[:8]:
-                if isinstance(row, dict):
-                    h.update(f"{row.get('nombre')}|{row.get('cantidad')}\n".encode("utf-8", "ignore"))
         return h.hexdigest()
 
     def _aplicar_catalogo(self, productos):
-        try:
-            from src.carteleria.motor_carteleria import iconos_tv
-
-            iconos_tv._png_nombre_cache.clear()
-            iconos_tv._png_indice_cache = None
-        except Exception:
-            pass
         self.rows_precios = self._marcar_publicidad(self._normalizar_productos(productos))
-        self._refrescar_paneles(force=True)
+        self._refrescar_paneles()
 
     def _paneles_vacios(self):
         self._paneles = {
@@ -390,9 +352,7 @@ class LanzadorDirectoTV(QObject):
                 self._paneles_worker.listo.disconnect(self._on_paneles_listos)
             except Exception:
                 pass
-        self._paneles_worker = _PanelesWorker(
-            copia, self._clima_icon, self._clima, self._ranking_remoto, self
-        )
+        self._paneles_worker = _PanelesWorker(copia, self._clima_icon, self._clima, self)
         self._paneles_worker.listo.connect(self._on_paneles_listos)
         self._paneles_worker.start()
         self._publicar_estado()
@@ -414,16 +374,14 @@ class LanzadorDirectoTV(QObject):
             from src.carteleria.lanzador_tv.perfil_pc import perfil_activo
 
             self._marcar_publicidad(self.rows_precios)
-            from src.carteleria.lanzador_tv.cerebro_lanzador_tv import _leer_config_carteleria
-            cfg_tv = _leer_config_carteleria()
-            business_name = cfg_tv["business_name"]
+            business_name = config.get("business_name", "Cartelería")
             self._state_cache = {
                 "config": {
                     "business_name": business_name,
-                    "phone": cfg_tv["phone"],
-                    "carteleria_theme": cfg_tv["carteleria_theme"],
+                    "phone": config.get("phone", ""),
+                    "carteleria_theme": config.get("carteleria_theme", "temu"),
                     "carteleria_perf": perfil_activo(),
-                    "mensaje_zocalo": cfg_tv["mensaje_zocalo"] or self._generar_mensaje_banderin(business_name),
+                    "mensaje_zocalo": self._generar_mensaje_banderin(business_name),
                     "data_status": self._sync_status,
                 },
                 "precios": self.rows_precios,

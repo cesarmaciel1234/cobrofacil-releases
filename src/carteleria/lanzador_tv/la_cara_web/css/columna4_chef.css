@@ -317,9 +317,17 @@
     background: var(--col4-img-fallback-bg);
 }
 
-/* Destello de luz en esquina superior izquierda (efecto app asiática) - Removido a pedido del usuario */
+/* Destello de luz en esquina superior izquierda (efecto app asiática) */
 .asian-flash-product-image::after {
-    display: none;
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -20%;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* Quitar el emoji ::before — el fondo vibrante ya hace el trabajo */
@@ -415,11 +423,9 @@
 }
 
 .asian-flash-original {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }
@@ -1268,11 +1274,9 @@
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }
@@ -1433,11 +1437,9 @@
     line-height: 1 !important;
 }
 .asian-flash-original {
-    color: #EF4444 !important;
-    -webkit-text-fill-color: #EF4444 !important;
+    color: var(--asian-flash-original-color, #888888) !important;
     font-size: clamp(1.1rem, 1.6vw, 1.4rem) !important;
     text-decoration: line-through !important;
-    text-decoration-color: #EF4444 !important;
     margin-right: 1vw !important;
     font-weight: 500 !important;
 }

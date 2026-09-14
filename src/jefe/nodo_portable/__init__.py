@@ -4,7 +4,6 @@ from src.jefe.nodo_portable.motor_nodo import (
     copiar_nodo_completo,
     sincronizar_faltantes,
     promover_nodo,
-    importar_catalogo_desde_nodo,
     NODO_DIR_NAME,
 )
 
@@ -14,6 +13,5 @@ __all__ = [
     "copiar_nodo_completo",
     "sincronizar_faltantes",
     "promover_nodo",
-    "importar_catalogo_desde_nodo",
     "NODO_DIR_NAME",
 ]

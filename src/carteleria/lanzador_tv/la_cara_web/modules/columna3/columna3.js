@@ -21,48 +21,36 @@ function cruzadasDesdeProductos(productos) {
     for (const item of productos || []) {
         const nombre = String(item.nombre || "").trim();
         if (!nombre) continue;
-        const depto = String(item.departamento || item.categoria || "").trim().toUpperCase();
-        if (!depto) continue;
+        const depto = String(item.departamento || item.categoria || "GENERAL").toUpperCase();
         if (!grupos.has(depto)) grupos.set(depto, []);
-        grupos.get(depto).push(item);
+        grupos.get(depto).push(nombre);
     }
     const slides = [];
     const vistos = new Set();
-    for (const [, items] of grupos) {
-        if (items.length < 3) continue;
-        const orden = [...items].sort((a, b) => {
-            const fa = a.icono || a.icono_url ? 0 : 1;
-            const fb = b.icono || b.icono_url ? 0 : 1;
-            return fa - fb;
+    for (const item of productos || []) {
+        const nombre = String(item.nombre || "").trim();
+        if (!nombre || vistos.has(nombre)) continue;
+        const depto = String(item.departamento || item.categoria || "GENERAL").toUpperCase();
+        const mates = (grupos.get(depto) || []).filter((n) => n !== nombre).slice(0, 3);
+        if (mates.length < 2) continue;
+        vistos.add(nombre);
+        slides.push({
+            tipo: "cruzada",
+            nombre,
+            pregunta: `¿LLEVÁS ${tituloPregunta(nombre)}?`,
+            relacionados: mates.map((n) => String(n).toUpperCase()),
         });
-        for (const item of orden) {
-            const nombre = String(item.nombre || "").trim();
-            if (!nombre || vistos.has(nombre)) continue;
-            const mates = orden
-                .map((p) => String(p.nombre || "").trim())
-                .filter((n) => n && n !== nombre)
-                .slice(0, 3);
-            if (mates.length < 2) continue;
-            vistos.add(nombre);
-            slides.push({
-                tipo: "cruzada",
-                nombre,
-                pregunta: `¿LLEVÁS ${tituloPregunta(nombre)}?`,
-                relacionados: mates.map((n) => String(n).toUpperCase()),
-            });
-            if (slides.length >= 4) return slides;
-        }
+        if (slides.length >= 4) break;
     }
     return slides;
 }
 
 function ofertasDesdeProductos(productos) {
     return (productos || []).filter(esOferta).slice(0, 4).map((item) => ({
-        ...item,
         tipo: "oferta",
+        nombre: item.nombre,
         precio: Number(item.precio_oferta),
         precio_original: Number(item.precio),
-        precio_oferta: Number(item.precio_oferta),
         cant_oferta: Number(item.cant_oferta || 0),
         tipo_unidad_oferta: item.tipo_unidad_oferta || "",
         unidad: item.unidad || "",
@@ -83,14 +71,12 @@ function intercalar(cruzadas, ofertas) {
 
 function slidesColumna3(state) {
     const api = (state.columna3 || []).filter((item) => item && item.tipo);
-    if (api.length) {
-        const cruzadas = api.filter((item) => item.tipo === "cruzada");
-        const ofertas = api.filter((item) => item.tipo === "oferta");
-        if (cruzadas.length && ofertas.length) return api;
-        const mix = intercalar(cruzadas, ofertas);
-        return mix.length ? mix : api;
-    }
-    const mix = intercalar(cruzadasDesdeProductos(state.productos), ofertasDesdeProductos(state.productos));
+    const hayCruzada = api.some((item) => item.tipo === "cruzada");
+    const hayOferta = api.some((item) => item.tipo === "oferta");
+    if (hayCruzada && hayOferta) return api;
+    const cruzadas = hayCruzada ? api.filter((item) => item.tipo === "cruzada") : cruzadasDesdeProductos(state.productos);
+    const ofertas = hayOferta ? api.filter((item) => item.tipo === "oferta") : ofertasDesdeProductos(state.productos);
+    const mix = intercalar(cruzadas, ofertas);
     return mix.length ? mix : api;
 }
 
@@ -99,14 +85,23 @@ function htmlSlide(slide) {
     return htmlTarjetaRelampago(slide);
 }
 
-function pintar() {
+function pintar(conFade) {
     if (!rootRef) return;
     if (!slidesCache.length) {
         rootRef.innerHTML = '<p class="column-empty">Sin venta cruzada ni ofertas todavía.</p>';
         return;
     }
     const index = rotacionIndex % slidesCache.length;
-    rootRef.innerHTML = htmlSlide(slidesCache[index]);
+    const html = htmlSlide(slidesCache[index]);
+    if (!conFade) {
+        rootRef.innerHTML = html;
+        return;
+    }
+    rootRef.classList.add("is-fading");
+    window.setTimeout(() => {
+        rootRef.innerHTML = html;
+        rootRef.classList.remove("is-fading");
+    }, 400);
 }
 
 export function iniciarRotacionColumna3(state, root) {
@@ -118,13 +113,13 @@ export function iniciarRotacionColumna3(state, root) {
     slidesCache = slides;
     if (!misma) {
         rotacionIndex = 0;
-        pintar();
+        pintar(false);
     }
     if (rotacionTimer) return;
     if (slidesCache.length <= 1) return;
     rotacionTimer = setInterval(() => {
         if (!slidesCache.length) return;
         rotacionIndex = (rotacionIndex + 1) % slidesCache.length;
-        pintar();
+        pintar(true);
     }, ROTACION_MS);
 }

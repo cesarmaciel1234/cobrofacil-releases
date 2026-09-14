@@ -86,9 +86,7 @@ def _fmt_cantidad(valor):
 
 
 def _detalle_familias(cantidad, periodo="hoy"):
-    n = max(0, int(round(num(cantidad))))
-    if n <= 0:
-        return ""
+    n = max(1, int(round(num(cantidad))))
     if n == 1:
         return "1 familia lo eligió" if periodo == "hoy" else "1 familia esta semana"
     if periodo == "semana":
@@ -154,7 +152,6 @@ def _card_desde_catalogo(prod, badge, detalle="", puesto=0, cantidad=0, periodo=
         "precio": num(prod.get("precio")),
         "precio_oferta": num(prod.get("precio_oferta")),
         "precio_oferta_relampago": num(prod.get("precio_oferta_relampago")),
-        "precio_oferta_promedio": num(prod.get("precio_oferta_promedio")),
         "cant_oferta": num(prod.get("cant_oferta")),
         "tipo_unidad_oferta": prod.get("tipo_unidad_oferta") or "",
         "unidad": prod.get("unidad") or "",
@@ -177,27 +174,19 @@ def _ordenar_ranking(ranking, orden):
     return sorted(ranking or [], key=lambda item: num(item.get(orden)), reverse=True)
 
 
-def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
+def _ranking_hoy_pisa_ayer(modo, limite, orden):
     """Hoy manda. Si aún no hay ventas, se muestra ayer para que la tabla no quede vacía."""
     cupo = max(limite * 4, 20)
-    if ranking_remoto:
-        clave_modo = "frecuencia" if modo == "frecuencia" else "volumen"
-        hoy = list(ranking_remoto.get(f"hoy_{clave_modo}") or [])
-        ayer = list(ranking_remoto.get(f"ayer_{clave_modo}") or [])
-        semana = list(ranking_remoto.get(f"semana_{clave_modo}") or [])
-    else:
-        try:
-            from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
-            hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
-            ayer = MotorVentas.get_top_ventas(limit=cupo, periodo="ayer", modo=modo) or []
-            semana = MotorVentas.get_top_ventas(limit=cupo, periodo="semana", modo=modo) or [] if not hoy and not ayer else []
-        except Exception as exc:
-            logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
-            hoy, ayer, semana = [], [], []
-
-    if not hoy and not ayer:
-        # Aseguramos que se ordene correctamente (ej. 'plata' se ordena por 'recaudacion')
-        return _ordenar_ranking(semana, orden), "semana"
+    try:
+        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
+        hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
+        ayer = MotorVentas.get_top_ventas(limit=cupo, periodo="ayer", modo=modo) or []
+        if not hoy and not ayer:
+            semana = MotorVentas.get_top_ventas(limit=cupo, periodo="semana", modo=modo) or []
+            return semana, "semana"
+    except Exception as exc:
+        logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
+        return [], "hoy"
 
     mezclado = []
     vistos = set()
@@ -213,9 +202,9 @@ def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
     return mezclado, ("hoy" if hoy else "ayer")
 
 
-def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad", ranking_remoto=None):
+def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite=5, orden="cantidad"):
     """Solo productos que aparecen en ventas reales, cruzados con el catálogo."""
-    ranking, periodo = _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=ranking_remoto)
+    ranking, periodo = _ranking_hoy_pisa_ayer(modo, limite, orden)
     catalogo = _catalogo_por_nombre(productos)
     cards = []
     vistos = set()
@@ -247,12 +236,12 @@ def _top_con_precios(productos, modo, badge, detalle_hoy, detalle_semana, limite
     return cards, periodo
 
 
-def armar_destacados(productos, ranking_remoto=None):
+def armar_destacados(productos):
     """Top real de tickets para el hero."""
     cards, periodo = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
         "{n} tickets hoy", "{n} tickets esta semana",
-        limite=8, ranking_remoto=ranking_remoto,
+        limite=8,
     )
     for item in cards:
         item["detalle"] = _detalle_familias(item.get("cantidad"), periodo)
@@ -282,34 +271,13 @@ def _anotar_mega_ventas(items):
     return items
 
 
-def _tiene_foto(prod):
-    return bool((prod or {}).get("icono") or (prod or {}).get("icono_url"))
-
-
-def _vitrina_desde_inventario(productos, limite=5):
-    """PC nueva: la TV muestra la lista cargada (precios y PNG), sin inventar ventas."""
-    vivos = []
-    for item in productos or []:
-        nombre = str(item.get("nombre") or "").strip()
-        if not nombre or _nombre_basura(nombre):
-            continue
-        if num(item.get("precio")) <= 0:
-            continue
-        vivos.append(item)
-    vivos.sort(key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")))
-    cards = []
-    for i, prod in enumerate(vivos[:limite]):
-        cards.append(_card_desde_catalogo(prod, "LISTA", "En tu lista", puesto=i + 1))
-    return cards
-
-
-def armar_rotacion_destacados(productos, ranking_remoto=None):
-    """Tres tandas reales: tickets, kilos y recaudación. Sin ventas: tu inventario."""
+def armar_rotacion_destacados(productos):
+    """Tres tandas reales: tickets, kilos y recaudación."""
     paneles = []
     elegidos, periodo_e = _top_con_precios(
         productos, "frecuencia", "ELEGIDO",
         "{n} tickets hoy", "{n} tickets esta semana",
-        limite=5, ranking_remoto=ranking_remoto,
+        limite=5,
     )
     for item in elegidos:
         item["detalle"] = _detalle_familias(item.get("cantidad"), periodo_e)
@@ -324,7 +292,7 @@ def armar_rotacion_destacados(productos, ranking_remoto=None):
     volumen, _ = _top_con_precios(
         productos, "volumen", "VOLUMEN",
         "{n} vendidos hoy", "{n} vendidos esta semana",
-        limite=5, ranking_remoto=ranking_remoto,
+        limite=5,
     )
     if volumen:
         _anotar_mega_ventas(volumen)
@@ -338,7 +306,7 @@ def armar_rotacion_destacados(productos, ranking_remoto=None):
     plata, _ = _top_con_precios(
         productos, "volumen", "PLATA",
         "", "",
-        limite=5, orden="recaudacion", ranking_remoto=ranking_remoto,
+        limite=5, orden="recaudacion",
     )
     if plata:
         _anotar_venta_premium(plata)
@@ -348,15 +316,6 @@ def armar_rotacion_destacados(productos, ranking_remoto=None):
             "subtitulo": "Venta premium",
             "items": plata,
         })
-    if not paneles:
-        items = _vitrina_desde_inventario(productos, limite=5)
-        if items:
-            paneles.append({
-                "id": "inventario",
-                "titulo": "Tu lista",
-                "subtitulo": "Inventario",
-                "items": items,
-            })
     return paneles
 
 
@@ -401,13 +360,7 @@ def armar_columna3(productos):
         logger.debug("Venta cruzada no disponible: %s", exc)
         cruzadas = []
     if not cruzadas:
-        try:
-            from src.carteleria.motor_carteleria.venta_cruzada import VentaCruzadaInteligente
-            relleno = VentaCruzadaInteligente.usar_relleno_catalogo()
-        except Exception:
-            relleno = True
-        if relleno:
-            cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
+        cruzadas = _cruzadas_desde_catalogo(productos, limite=4)
     ofertas = _ofertas_flash(productos, limite=4)
     slides = []
     n = max(len(cruzadas), len(ofertas), 1)
@@ -424,47 +377,36 @@ def armar_columna3(productos):
 
 
 def _cruzadas_desde_catalogo(productos, limite=4):
-    """Solo productos de la lista cargada, agrupados por el rubro que vos definiste."""
     grupos = {}
     for item in productos or []:
         nombre = str(item.get("nombre") or "").strip()
-        if not nombre or _nombre_basura(nombre):
+        if not nombre:
             continue
-        depto = str(item.get("departamento") or item.get("categoria") or "").strip().upper()
-        if not depto:
-            continue
-        grupos.setdefault(depto, []).append(item)
+        depto = str(item.get("departamento") or item.get("categoria") or "GENERAL").upper()
+        grupos.setdefault(depto, []).append(nombre)
     slides = []
     vistos = set()
-    for depto, items in grupos.items():
-        if len(items) < 3:
+    for item in productos or []:
+        nombre = str(item.get("nombre") or "").strip()
+        if not nombre or nombre in vistos:
             continue
-        items = sorted(items, key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")))
-        for item in items:
-            nombre = str(item.get("nombre") or "").strip()
-            if nombre in vistos:
-                continue
-            mates = [
-                str(p.get("nombre") or "").strip()
-                for p in items
-                if str(p.get("nombre") or "").strip() and str(p.get("nombre") or "").strip() != nombre
-            ][:3]
-            if len(mates) < 2:
-                continue
-            vistos.add(nombre)
-            titulo = nombre[7:].strip() if nombre.lower().startswith("oferta ") else nombre
-            slides.append({
-                "tipo": "cruzada",
-                "nombre": nombre,
-                "pregunta": f"¿LLEVÁS {titulo.upper()}?",
-                "relacionados": [n.upper() for n in mates],
-                "icono": item.get("icono") or "",
-                "icono_url": item.get("icono_url") or "",
-                "departamento": depto,
-                "fuente": "inventario",
-            })
-            if len(slides) >= limite:
-                return slides
+        depto = str(item.get("departamento") or item.get("categoria") or "GENERAL").upper()
+        mates = [n for n in grupos.get(depto, []) if n != nombre][:3]
+        if len(mates) < 2:
+            continue
+        vistos.add(nombre)
+        titulo = nombre[7:].strip() if nombre.lower().startswith("oferta ") else nombre
+        slides.append({
+            "tipo": "cruzada",
+            "nombre": nombre,
+            "pregunta": f"¿LLEVÁS {titulo.upper()}?",
+            "relacionados": [str(n).upper() for n in mates],
+            "icono": item.get("icono") or "",
+            "icono_url": item.get("icono_url") or "",
+            "departamento": item.get("departamento") or item.get("categoria") or "",
+        })
+        if len(slides) >= limite:
+            break
     return slides
 
 
@@ -494,7 +436,7 @@ def _combos_del_motor(productos):
             nom = str(pieza.get("nombre") or "").strip()
             if nom:
                 etiquetas.append(f"{int(cant) if cant == int(cant) else cant}x {nom}")
-            prod = catalogo.get(_norm_nombre(nom)) or _buscar_en_catalogo(catalogo, nom)
+            prod = catalogo.get(nom.lower()) or _buscar_en_catalogo(catalogo, nom)
             if prod:
                 original += num(prod.get("precio")) * cant
         ahorro = original - precio if original > precio else 0.0
@@ -607,18 +549,14 @@ def armar_ia(productos, clima_icon="sol", clima_text=""):
         logger.debug("MotorIALocal no disponible: %s", exc)
 
     if not cards:
-        orden = sorted(
-            [p for p in (productos or []) if not _nombre_basura(p.get("nombre"))],
-            key=lambda p: (0 if _tiene_foto(p) else 1, str(p.get("nombre") or "")),
-        )
-        for item in orden:
-            if num(item.get("precio")) <= 0:
+        for item in productos:
+            if not es_oferta(item):
                 continue
             cards.append({
-                "nombre": item.get("nombre") or "",
+                "nombre": item.get("nombre") or "Oferta",
                 "precio": precio_vigente(item),
                 "precio_lista": num(item.get("precio")),
-                "razon": "En tu lista",
+                "razon": "En oferta ahora",
                 "icono": item.get("icono") or "",
                 "icono_url": item.get("icono_url") or "",
                 "departamento": item.get("departamento") or "",
@@ -637,16 +575,13 @@ def armar_hero(destacados, productos):
     return None
 
 
-def armar_paneles(productos, clima_icon="sol", clima_text="", ranking_remoto=None):
+def armar_paneles(productos, clima_icon="sol", clima_text=""):
     from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
     from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-    if ranking_remoto:
-        productos = enriquecer_iconos(productos)
-    else:
-        productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
+    productos = enriquecer_iconos(_enriquecer_con_ventas(productos))
     motor_publicidad.marcar_lista(productos)
-    rotacion = armar_rotacion_destacados(productos, ranking_remoto=ranking_remoto)
-    destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos, ranking_remoto=ranking_remoto)
+    rotacion = armar_rotacion_destacados(productos)
+    destacados = rotacion[0]["items"] if rotacion else armar_destacados(productos)
     hero = armar_hero(destacados, productos)
     return {
         "hero": hero,

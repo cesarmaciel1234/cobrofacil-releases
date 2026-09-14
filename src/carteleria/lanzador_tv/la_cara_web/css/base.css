@@ -1,12 +1,12 @@
 :root {
-    --font-primary: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
-    --font-display: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
+    --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
     --shadow-elegant: 0 4px 24px rgba(0, 0, 0, 0.06);
     
     /* Layout responsive base */
-    --footer-height: 26px;
-    --hero-height: 27%;
-    --content-height: auto;
+    --footer-height: 76px;
+    --hero-height: 302px;
+    --content-height: 702px;
     --tv-safe-y: max(2.2cqh, 16px);
     --tv-safe-x: max(1.8cqw, 18px);
 }
@@ -39,29 +39,20 @@ body {
     flex-direction: column;
     width: 1920px;
     height: 1080px;
-    padding: 0.25cqh 0.25cqw 0;
+    padding: 0.5cqh 0.4cqw 0.5cqh;
     background: var(--bg-primary);
     box-sizing: border-box;
     overflow: hidden;
-    gap: 0;
+    gap: 0.5cqh;
     transform-origin: 0 0;
 }
 
 .tv-wall {
-    flex: 1 1 auto;
+    flex: 1;
     min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.22cqw;
-    margin: 0.75cqh 0 0.75cqh;
-    padding: 1cqh 0;
-    border-top: 2px solid var(--accent-primary, #D4AF37);
-    border-bottom: 2px solid var(--accent-primary, #D4AF37);
-}
-
-/* Solo mantengo tu ajuste de borde izquierdo si lo querías, pero con el gap original capaz no hace falta. Lo dejo por si acaso: */
-.tv-panel + .tv-panel {
-    border-left: 1px solid rgba(210, 206, 196, 0.15);
+    gap: 0.3cqw;
 }
 
 .tv-panel {
@@ -71,7 +62,7 @@ body {
     min-height: 0;
     height: 100%;
     background: #FFFFFF;
-    border-radius: 10px 10px 0 0;
+    border-radius: 10px;
     overflow: hidden;
     padding: 0.5cqh 0.4cqw 0.5cqh;
     box-shadow: 0 6px 20px rgba(28, 16, 0, 0.06);
@@ -85,7 +76,7 @@ body {
 .tv-4 {
     position: relative;
     padding: 0;
-    border-radius: 12px 12px 0 0;
+    border-radius: 12px;
     border: none;
     box-shadow: none;
 }
@@ -94,8 +85,8 @@ body {
 .tv-1,
 .tv-2,
 .tv-3 {
-    border-radius: 12px 12px 0 0;
-    padding: 0.4cqh 0.32cqw 0;
+    border-radius: 10px;
+    padding: 0.4cqh 0.3cqw 0.4cqh;
 }
 
 .tv-1 .column-body,
@@ -106,9 +97,6 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
 }
 
 /* Internal containers optimization */
@@ -121,20 +109,6 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-}
-
-.tv-2 .column-body {
-    display: flex;
-    flex-direction: column;
-}
-.tv-2 .price-ticker {
-    flex: 1 1 auto;
-}
-.tv-3 .xsell-card,
-.tv-3 .flash-offer,
-.tv-4 .chef-board {
-    flex: 1 1 auto;
-    height: 100%;
 }
 
 /* Cards optimization */
@@ -161,18 +135,18 @@ body {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    width: 45%;
+    left: -150%;
+    width: 50%;
     height: 100%;
-    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
-    transform: translate3d(-180%, 0, 0) skewX(-25deg);
-    animation: shimmerSweep 4.5s ease-in-out infinite;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    animation: shimmerSweep 7s infinite;
     z-index: 10;
     pointer-events: none;
 }
 @keyframes shimmerSweep {
-    0%, 40% { transform: translate3d(-180%, 0, 0) skewX(-25deg); }
-    100% { transform: translate3d(280%, 0, 0) skewX(-25deg); }
+    0%, 70% { left: -150%; }
+    100% { left: 250%; }
 }
 
 /* 2. Entrada Cinemática (Cascada) */
@@ -211,31 +185,4 @@ body {
 @keyframes skeletonLoading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
-}
-
-/* Video wall: 4 TVs horizontales. Cada columna es una pantalla. */
-body[data-wall="4h"] .tv-wall {
-    flex: 1 1 auto;
-    min-height: 0;
-    gap: 0.22cqw;
-    margin: 0.35cqh 0.12cqw 0.25cqh;
-    padding: 0;
-    border: 0;
-}
-body[data-wall="4h"] .tv-wall::after {
-    display: none;
-}
-body[data-wall="4h"] .tv-panel,
-body[data-wall="4h"] .premium-column {
-    height: 100%;
-    min-height: 0;
-    border-radius: 18px;
-    overflow: hidden;
-    padding: 0.45cqh 0.18cqw !important;
-}
-body[data-wall="4h"] .tv-panel + .tv-panel {
-    border-left: 0;
-}
-body[data-wall="4h"] .footer {
-    flex: 0 0 auto;
 }

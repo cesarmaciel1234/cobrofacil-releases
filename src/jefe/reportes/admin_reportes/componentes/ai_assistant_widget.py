@@ -72,8 +72,8 @@ class AIAssistantWidget(ModernCard):
         h_lay = QHBoxLayout()
         lbl_icon = QLabel("🤖")
         lbl_icon.setStyleSheet("font-size: 24px;")
-        lbl_title = QLabel("Cerebro Jefe")
-        lbl_title.setStyleSheet("font-size: 16px; font-weight: 700; color: #4C1D95; background: transparent; border: none;")
+        lbl_title = QLabel("Antigravity AI - Análisis Estratégico")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; ")
         
         self.lbl_status = QLabel("Pensando...")
         self.lbl_status.setStyleSheet("font-size: 12px;  font-style: italic;")

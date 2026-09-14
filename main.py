@@ -181,6 +181,7 @@ def launch_app(direct_role=None):
     def _boot_db():
         from src.base_de_datos.database import db_manager
         db_manager._init_db()
+        db_manager.asegurar_lectura_tienda()
 
     if is_direct:
         _boot_db()
@@ -339,9 +340,12 @@ def launch_app(direct_role=None):
         elif step == 3:
             hizo_cierre, monto_c = verificar_y_realizar_autocierre()
             if hizo_cierre:
-                QMessageBox.information(None, "ðŸ›¡ï¸ SISTEMA DE SEGURIDAD", 
-                    f"Se detectaron ventas abiertas de dÃ­as anteriores.\n\n"
-                    f"El sistema realizÃ³ un CIERRE AUTOMÃTICO de ${monto_c:.2f}.")
+                QMessageBox.information(
+                    None,
+                    "Sistema de seguridad",
+                    f"Se detectaron ventas abiertas de días anteriores.\n\n"
+                    f"El sistema realizó un cierre automático de ${monto_c:.2f}.",
+                )
 
             apertura = AperturaCajaPantalla()
             if qt_exec(apertura):
@@ -441,6 +445,17 @@ if __name__ == "__main__":
         except Exception:
             pass
 
+        from src.central_red_global.store_server import (
+            _needs_headless_server,
+            run_store_server_app,
+            run_store_server_headless,
+        )
+
+        if _needs_headless_server():
+            code = run_store_server_headless()
+            app_exit_event.set()
+            sys.exit(code if code is not None else 0)
+
         app = QApplication.instance() or QApplication(sys.argv)
         if not getattr(app, "_network_engine_shutdown_hook", False):
             from src.central_red_global.network_engine import shutdown_network_engine
@@ -455,7 +470,6 @@ if __name__ == "__main__":
         except Exception:
             pass
 
-        from src.central_red_global.store_server import run_store_server_app
         code = run_store_server_app(app)
         app_exit_event.set()
         sys.exit(code if code is not None else 0)

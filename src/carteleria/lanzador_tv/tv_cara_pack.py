@@ -14,7 +14,6 @@ _MAGIC = b"CFPOS1"
 _KEY = hashlib.sha256(b"cobrofacil-tv-cara-web-v1").digest()
 _SOURCE_REL = os.path.join("src", "carteleria", "lanzador_tv", "la_cara_web")
 _memoria: dict[str, bytes] | None = None
-_memoria_firma = ""
 
 
 def _xor(data: bytes) -> bytes:
@@ -29,11 +28,8 @@ def pack_source(dest_path: str, source_dir: str | None = None) -> str:
         raise FileNotFoundError(f"Falta index.html en {root}")
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for dirpath, dirs, files in os.walk(root):
-            dirs[:] = [d for d in dirs if d not in ("themes_backup",) and not d.endswith("_backup")]
+        for dirpath, _dirs, files in os.walk(root):
             for name in files:
-                if name.endswith("_backup.py") or name.endswith(".bak"):
-                    continue
                 full = os.path.join(dirpath, name)
                 arc = os.path.relpath(full, root).replace("\\", "/")
                 zf.write(full, arc)
@@ -53,94 +49,66 @@ def _bytes_desencriptados(blob_path: str) -> bytes:
     return raw
 
 
-def _candidatos_blob() -> list[str]:
+def buscar_blob() -> str:
     candidatos = []
     if getattr(sys, "frozen", False):
         exe_dir = os.path.dirname(sys.executable)
         meipass = getattr(sys, "_MEIPASS", "")
         candidatos.extend(
             [
+                os.path.join(meipass, BLOB_NAME) if meipass else "",
                 os.path.join(exe_dir, "_internal", BLOB_NAME),
                 os.path.join(exe_dir, BLOB_NAME),
-                os.path.join(meipass, BLOB_NAME) if meipass else "",
             ]
         )
     try:
         from src.utils.paths import get_resource_path, get_base_path
 
-        candidatos.append(os.path.join(get_base_path(), "_internal", BLOB_NAME))
         candidatos.append(get_resource_path(BLOB_NAME))
+        candidatos.append(os.path.join(get_base_path(), "_internal", BLOB_NAME))
+    except Exception:
+        pass
+    # Tambien buscar en la carpeta src/ actualizada por OTA
+    try:
+        from src.utils.paths import get_base_path
         candidatos.append(os.path.join(get_base_path(), "src", "carteleria", "lanzador_tv", BLOB_NAME))
     except Exception:
         pass
-    vistos = set()
+
     validos = []
     for path in candidatos:
-        if not path or path in vistos:
-            continue
-        vistos.add(path)
-        archivo = _archivo_blob(path)
-        if archivo:
-            validos.append(archivo)
-    return validos
-
-
-def _archivo_blob(path: str) -> str:
-    """PyInstaller a veces copia tv_cara.bin como carpeta; adentro está el archivo real."""
-    if os.path.isfile(path) and os.path.getsize(path) > 32:
-        return path
-    if os.path.isdir(path):
-        inner = os.path.join(path, BLOB_NAME)
-        if os.path.isfile(inner) and os.path.getsize(inner) > 32:
-            return inner
-        try:
-            for name in os.listdir(path):
-                full = os.path.join(path, name)
-                if os.path.isfile(full) and os.path.getsize(full) > 32:
-                    return full
-        except OSError:
-            return ""
-    return ""
-
-
-def buscar_blob() -> str:
-    """Usa el blob instalado junto al EXE (el que pisa el updater). El resto es fallback."""
-    validos = _candidatos_blob()
-    return validos[0] if validos else ""
-
-
-def _leer_blob(blob: str) -> dict[str, bytes] | None:
-    archivos: dict[str, bytes] = {}
-    try:
-        with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
-            for info in zf.infolist():
-                if info.is_dir():
-                    continue
-                nombre = info.filename.replace("\\", "/").lstrip("/")
-                if not nombre or ".." in nombre.split("/"):
-                    continue
-                archivos[nombre] = zf.read(info)
-    except Exception:
-        return None
-    if "index.html" not in archivos:
-        return None
-    return archivos
+        if path and os.path.isfile(path) and os.path.getsize(path) > 32:
+            validos.append(path)
+            
+    if not validos:
+        return ""
+        
+    # Devolver el blob más reciente (por fecha de modificación) para asegurar que se usa el descargado por OTA
+    validos.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+    return validos[0]
 
 
 def cargar_cara_en_memoria() -> dict[str, bytes] | None:
-    """Lee tv_cara.bin a un dict en RAM. Prueba todos los blobs si uno está roto."""
-    global _memoria, _memoria_firma
-    for blob in _candidatos_blob():
-        firma = f"{os.path.abspath(blob)}:{os.path.getsize(blob)}:{os.path.getmtime(blob)}"
-        if _memoria and "index.html" in _memoria and firma == _memoria_firma:
-            return _memoria
-        archivos = _leer_blob(blob)
-        if not archivos:
-            continue
-        _memoria = archivos
-        _memoria_firma = firma
-        return archivos
-    return None
+    """Lee tv_cara.bin a un dict en RAM. No escribe HTML/CSS/JS en disco."""
+    global _memoria
+    if _memoria and "index.html" in _memoria:
+        return _memoria
+    blob = buscar_blob()
+    if not blob:
+        return None
+    archivos: dict[str, bytes] = {}
+    with zipfile.ZipFile(io.BytesIO(_bytes_desencriptados(blob))) as zf:
+        for info in zf.infolist():
+            if info.is_dir():
+                continue
+            nombre = info.filename.replace("\\", "/").lstrip("/")
+            if not nombre or ".." in nombre.split("/"):
+                continue
+            archivos[nombre] = zf.read(info)
+    if "index.html" not in archivos:
+        return None
+    _memoria = archivos
+    return archivos
 
 
 def instalar_blob_en_dist(dist_dir: str, source_dir: str | None = None) -> str:

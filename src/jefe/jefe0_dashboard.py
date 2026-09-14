@@ -24,9 +24,8 @@ except ImportError:
 
 # ── Componentes importados ────────────────────────────────────────────────────
 from src.jefe.componentes_visuales.jefe_card import JefeCard
-from src.jefe.vitrina import PanelPublicidad
+from src.jefe.componentes_visuales.panel_alertas_ia import PanelAlertasIA
 from src.cerebro_global.cerebro_jefe.analitica_jefe import WorkerAnaliticaJefe
-from src.jefe.reportes.letra import fuente_limpia
 
 # ── Módulos del Jefe ──────────────────────────────────────────────────────────
 JEFE_MODULES = [
@@ -67,10 +66,14 @@ class Jefe0Dashboard(QWidget):
         self.worker_analitica.start()
 
     def _on_analitica_lista(self, datos):
-        self.panel_pub.set_metricas(
-            float(datos.get("ventas_ganancia_real", 0.0) or 0),
-            float(datos.get("inventario_valor_costo", 0.0) or 0),
+        val_inv = datos.get("inventario_valor_costo", 0.0)
+        gan_real = datos.get("ventas_ganancia_real", 0.0)
+        
+        texto_analitica = (
+            f"📈 GANANCIA REAL DE HOY: <b>${gan_real:,.2f}</b>  |  "
+            f"📦 INVENTARIO VALORIZADO (COSTO): <b>${val_inv:,.2f}</b>"
         )
+        self.lbl_analitica.setText(texto_analitica)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -86,20 +89,21 @@ class Jefe0Dashboard(QWidget):
         nav_lay.setSpacing(16)
 
         # Brand
-        brand = QLabel("TPV PRO 2026  ·  Panel del Jefe")
-        brand.setFont(fuente_limpia(14))
-        brand.setStyleSheet(
-            "font-size: 15px; font-weight: 400; color: #334155;"
-            " letter-spacing: 0px; background: transparent; border: none;"
-            " font-family: 'Segoe UI', sans-serif;"
+        brand = QLabel()
+        brand.setText(
+            "<span style='font-size:16px; font-weight:900; letter-spacing:-0.5px;'>"
+            "TPV PRO</span>"
+            "<span style='font-size:16px; font-weight:900; color: #C084FC;'> 2026</span>"
+            "<span style='font-size:11px; font-weight:500; margin-left:12px;'>"
+            "  ·  Panel del Jefe</span>"
         )
+        brand.setStyleSheet("background: transparent; border: none;")
         nav_lay.addWidget(brand)
         nav_lay.addStretch()
 
         self.lbl_clock = QLabel()
-        self.lbl_clock.setFont(fuente_limpia(11))
         self.lbl_clock.setStyleSheet(
-            "font-size: 11px; font-weight: 400; letter-spacing: 0px;"
+            "font-size: 11px; font-weight: 600;"
             " background: transparent; border: none;")
         nav_lay.addWidget(self.lbl_clock)
         nav_lay.addSpacing(8)
@@ -111,8 +115,8 @@ class Jefe0Dashboard(QWidget):
             QPushButton {
                 background: #F1F5F9; color: #475569;
                 border: 1.5px solid #E2E8F0; border-radius: 8px;
-                padding: 0 16px; font-weight: 400; font-size: 11px;
-                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
         """)
@@ -127,8 +131,8 @@ class Jefe0Dashboard(QWidget):
             QPushButton {
                 background: transparent; color: #475569;
                 border: 1.5px solid #E2E8F0; border-radius: 8px;
-                padding: 0 16px; font-weight: 400; font-size: 11px;
-                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
@@ -141,8 +145,8 @@ class Jefe0Dashboard(QWidget):
             QPushButton {
                 background: #F1F5F9; color: #475569;
                 border: 1.5px solid #E2E8F0; border-radius: 8px;
-                padding: 0 16px; font-weight: 400; font-size: 11px;
-                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
         """)
@@ -164,8 +168,8 @@ class Jefe0Dashboard(QWidget):
             QPushButton {
                 background: #F1F5F9; color: #475569;
                 border: 1.5px solid #E2E8F0; border-radius: 8px;
-                padding: 0 16px; font-weight: 400; font-size: 11px;
-                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+                padding: 0 16px; font-weight: 700; font-size: 11px;
+                font-family: 'Segoe UI', sans-serif;
             }
             QPushButton:hover { background: #FEE2E2; color: #EF4444; border-color: #FECACA; }
         """)
@@ -183,8 +187,7 @@ class Jefe0Dashboard(QWidget):
                              "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }")
 
         page = QWidget()
-        page.setObjectName("JefePage")
-        page.setStyleSheet("#JefePage { background: transparent; }")
+        page.setStyleSheet("QWidget { background: transparent; }")
         
         main_split_lay = QHBoxLayout(page)
         main_split_lay.setContentsMargins(48, 36, 48, 48)
@@ -204,17 +207,86 @@ class Jefe0Dashboard(QWidget):
         main_split_lay.addWidget(left_col, stretch=1)
         main_split_lay.addWidget(right_col, stretch=1)
 
-        self.panel_pub = PanelPublicidad()
-        self.btn_export_ganancias = self.panel_pub.btn_export
-        self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
-        page_lay.addWidget(self.panel_pub, 1)
+        # ── HERO — gradiente muy suave, casi pastel ───────────────────────────
+        hero = QFrame()
+        hero.setFixedHeight(110)
+        hero.setObjectName("JefeHero")
 
-        lbl_sec = QLabel("Modulos gerenciales")
-        lbl_sec.setFont(fuente_limpia(11))
-        lbl_sec.setStyleSheet(
-            "font-size: 11px; font-weight: 400; color: #64748B;"
-            " letter-spacing: 0px; background: transparent; border: none;"
+        hero_lay = QHBoxLayout(hero)
+        hero_lay.setContentsMargins(36, 0, 36, 0)
+
+        hero_txt = QVBoxLayout()
+        self.lbl_greeting = QLabel("Buenos días 👑")
+        self.lbl_greeting.setStyleSheet(
+            "font-size: 26px; font-weight: 900; color: #FFFFFF;"
+            " background: transparent; border: none;"
+            " font-family: 'Inter', 'Segoe UI', sans-serif;")
+        self.lbl_sub = QLabel("PANEL DE CONTROL GERENCIAL  ·  ACCESO EXCLUSIVO")
+        self.lbl_sub.setStyleSheet(
+            "font-size: 9px; font-weight: 800; letter-spacing: 2.5px;"
+            " color: rgba(255,255,255,0.75); background: transparent; border: none;")
+        hero_txt.addWidget(self.lbl_greeting)
+        hero_txt.addSpacing(4)
+        hero_txt.addWidget(self.lbl_sub)
+        hero_lay.addLayout(hero_txt)
+        hero_lay.addStretch()
+
+        self.lbl_date = QLabel()
+        self.lbl_date.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lbl_date.setStyleSheet(
+            "font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);"
+            " background: transparent; border: none;")
+        hero_lay.addWidget(self.lbl_date)
+
+        page_lay.addWidget(hero)
+        page_lay.addSpacing(10)
+        
+        # ── PANEL ANALÍTICO ───────────────────────────────────────────────────
+        analitica_lay = QHBoxLayout()
+        analitica_lay.setContentsMargins(0, 0, 0, 0)
+        
+        self.lbl_analitica = QLabel("⚙️ Calculando métricas en segundo plano...")
+        self.lbl_analitica.setStyleSheet(
+            "font-size: 11px; font-weight: 700; color: #0284C7;"
+            " background: #E0F2FE; border-radius: 6px; padding: 10px;"
         )
+        
+        self.btn_export_ganancias = QPushButton("📥 Exportar Ganancias (Excel)")
+        self.btn_export_ganancias.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_export_ganancias.setFixedHeight(34)
+        self.btn_export_ganancias.setStyleSheet("""
+            QPushButton {
+                background: #10B981; color: white;
+                border: none; border-radius: 6px;
+                padding: 0 16px; font-weight: bold; font-size: 11px;
+            }
+            QPushButton:hover { background: #059669; }
+        """)
+        self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
+        
+        analitica_lay.addWidget(self.lbl_analitica)
+        analitica_lay.addSpacing(10)
+        analitica_lay.addWidget(self.btn_export_ganancias)
+        analitica_lay.addStretch()
+        
+        page_lay.addLayout(analitica_lay)
+        page_lay.addSpacing(26)
+
+        # ── PANEL DE IA PREDICTIVO (IZQUIERDA) ──────────────────────────────────────────
+        lbl_ia = QLabel("INTELIGENCIA ACTIVA")
+        lbl_ia.setStyleSheet("font-size: 9px; font-weight: 900; letter-spacing: 2.5px; background: transparent; border: none;")
+        page_lay.addWidget(lbl_ia)
+        page_lay.addSpacing(18)
+        
+        self.panel_ia = PanelAlertasIA()
+        page_lay.addWidget(self.panel_ia)
+        page_lay.addStretch()
+
+        # ── SECCIÓN LABEL (DERECHA) ─────────────────────────────────────────────────────
+        lbl_sec = QLabel("MÓDULOS GERENCIALES")
+        lbl_sec.setStyleSheet(
+            f"font-size: 9px; font-weight: 900; letter-spacing: 2.5px;"
+            f" background: transparent; border: none;")
         self.right_lay.addWidget(lbl_sec)
         self.right_lay.addSpacing(18)
 
@@ -249,11 +321,10 @@ class Jefe0Dashboard(QWidget):
         self.right_lay.addStretch()
 
         # ── FOOTER ────────────────────────────────────────────────────────────
-        self.lbl_footer = QLabel("Cobro Facil POS  ·  TPV Pro 2026  ·  Panel Jefe")
-        self.lbl_footer.setFont(fuente_limpia(10))
+        self.lbl_footer = QLabel("Cobro Fácil POS  ·  TPV Pro 2026  ·  Panel Exclusivo Jefe / Dueño")
         self.lbl_footer.setAlignment(Qt.AlignCenter)
         self.lbl_footer.setStyleSheet(
-            "font-size: 10px; font-weight: 400; letter-spacing: 0px; color: #94A3B8;"
+            f"font-size: 9px; letter-spacing: 2px;"
             " background: transparent; border: none;")
         page_lay.addWidget(self.lbl_footer)
 
@@ -271,7 +342,7 @@ class Jefe0Dashboard(QWidget):
         if not filepath:
             return
             
-        self.btn_export_ganancias.setText("Exportando...")
+        self.btn_export_ganancias.setText("⏳ Exportando...")
         self.btn_export_ganancias.setEnabled(False)
         
         self.worker_export = WorkerExportGanancias(filepath)
@@ -279,7 +350,7 @@ class Jefe0Dashboard(QWidget):
         self.worker_export.start()
         
     def _on_export_ganancias_listo(self, success, msg):
-        self.btn_export_ganancias.setText("Exportar ganancias")
+        self.btn_export_ganancias.setText("📥 Exportar Ganancias (Excel)")
         self.btn_export_ganancias.setEnabled(True)
         if success:
             QMessageBox.information(self, "Exportación Exitosa", msg)
@@ -288,14 +359,20 @@ class Jefe0Dashboard(QWidget):
 
     def _tick(self):
         now = datetime.datetime.now()
+        
+        dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+        fecha_esp = f"{dias[now.weekday()]} {now.day:02d} de {meses[now.month-1]}"
+        
         self.lbl_clock.setText(now.strftime("%d %b %Y  %H:%M"))
+        self.lbl_date.setText(fecha_esp)
         h = now.hour
-        greet = "Buenos dias" if 5 <= h < 12 else "Buenas tardes" if h < 20 else "Buenas noches"
+        greet = "Buenos días" if 5 <= h < 12 else "Buenas tardes" if h < 20 else "Buenas noches"
         try:
             nombre = (config.current_user or {}).get("username", "Jefe").capitalize()
         except Exception:
             nombre = "Jefe"
-        self.panel_pub.set_saludo(f"{greet}, {nombre}")
+        self.lbl_greeting.setText(f"{greet}, {nombre} 👑")
 
     def _abrir_perfiles(self):
         try:
@@ -330,7 +407,18 @@ class Jefe0Dashboard(QWidget):
             QWidget#JefeDashboard {
                 font-family: 'Inter', 'Segoe UI', sans-serif;
             }
-            QWidget#JefeDashboard QLabel { background: transparent; border: none; letter-spacing: 0px; }
+            QFrame#JefeHero {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0.00 #818CF8,
+                    stop:0.45 #C084FC,
+                    stop:0.80 #F472B6,
+                    stop:1.00 #FB923C
+                );
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+            }
+            QLabel { background: transparent; border: none; }
             QScrollArea { border: none; background: transparent; }
         """)
 
@@ -367,15 +455,13 @@ class Jefe0Dashboard(QWidget):
             box.setIcon(QMessageBox.Icon.Question)
             box.setText(
                 "Ya tenés un nodo en USB/OneDrive.\n\n"
-                "• Sincronizar hacia Nodo: Envía las nuevas ventas del negocio al USB.\n"
-                "• Importar de Nodo (Bidireccional): Trae productos/precios que editaste en tu casa.\n"
+                "• Sincronizar: solo carga datos faltantes desde la maestra / diario.\n"
                 "• Promover: usá este nodo si la PC del negocio cayó.\n"
                 "• Copiar de nuevo: elige otra carpeta y hace copia completa 0–100%."
             )
             btn_sync = box.addButton("Sincronizar", QMessageBox.ButtonRole.AcceptRole)
-            btn_import = box.addButton("Importar", QMessageBox.ButtonRole.ActionRole)
-            btn_promo = box.addButton("Promover", QMessageBox.ButtonRole.ActionRole)
-            btn_full = box.addButton("Reemplazar", QMessageBox.ButtonRole.ActionRole)
+            btn_promo = box.addButton("Promover nodo", QMessageBox.ButtonRole.ActionRole)
+            btn_full = box.addButton("Copiar de nuevo…", QMessageBox.ButtonRole.ActionRole)
             box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
             if not master_down:
                 # Promover sigue disponible siempre (contingencia)
@@ -384,8 +470,6 @@ class Jefe0Dashboard(QWidget):
             clicked = box.clickedButton()
             if clicked == btn_sync:
                 self._run_nodo_job("sync")
-            elif clicked == btn_import:
-                self._run_nodo_job("import")
             elif clicked == btn_promo:
                 self._promover_nodo_ui()
             elif clicked == btn_full:
@@ -407,7 +491,7 @@ class Jefe0Dashboard(QWidget):
         self._run_nodo_job("full")
 
     def _promover_nodo_ui(self):
-        from src.jefe.nodo_portable import get_nodo_path
+        from src.jefe.nodo_portable import promover_nodo, get_nodo_path
 
         path = get_nodo_path()
         if QMessageBox.question(
@@ -418,8 +502,19 @@ class Jefe0Dashboard(QWidget):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         ) != QMessageBox.StandardButton.Yes:
             return
-        
-        self._run_nodo_job("promote")
+        try:
+            root = promover_nodo()
+            QMessageBox.information(
+                self,
+                "Nodo promovido",
+                f"Nodo activo:\n{root}\n\n"
+                "Contabilidad y datos del negocio apuntan al pendrive/carpeta.\n"
+                "Reiniciá el perfil para aplicar del todo.",
+            )
+            self._refresh_nodo_button()
+            self.request_logout.emit()
+        except Exception as e:
+            QMessageBox.critical(self, "Error al promover", str(e))
 
     def _run_nodo_job(self, mode: str):
         """mode: 'full' | 'sync'. Muestra progreso 0–100% en hilo aparte."""
@@ -432,27 +527,12 @@ class Jefe0Dashboard(QWidget):
                 return
 
         dlg = QDialog(self)
-        from PyQt6.QtCore import Qt
-        dlg.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
         dlg.setWindowTitle("Nodo portable")
-        
-        # Prevenir que un humano impaciente cierre la ventana con Alt+F4 o la X
-        def prevent_close(event):
-            event.ignore()
-        dlg.closeEvent = prevent_close
-
         dlg.setFixedSize(460, 160)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(24, 20, 24, 20)
-        title_text = "Copiando nodo…"
-        if mode == "sync":
-            title_text = "Sincronizando hacia el nodo…"
-        elif mode == "import":
-            title_text = "Importando catálogo desde el nodo…"
-        elif mode == "promote":
-            title_text = "Promoviendo nodo (Rescatando datos)…"
-        title = QLabel(title_text)
-        title.setStyleSheet("font-size: 15px; font-weight: 400; letter-spacing: 0px; color: #0F172A;")
+        title = QLabel("Copiando nodo…" if mode == "full" else "Sincronizando faltantes…")
+        title.setStyleSheet("font-size: 15px; font-weight: 800; color: #0F172A;")
         lay.addWidget(title)
         subtitle = QLabel("Preparando…")
         subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
@@ -480,7 +560,7 @@ class Jefe0Dashboard(QWidget):
 
             def run(self):
                 try:
-                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes, importar_catalogo_desde_nodo, promover_nodo
+                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes
 
                     def cb(pct, msg):
                         self.progress.emit(pct, msg)
@@ -488,12 +568,6 @@ class Jefe0Dashboard(QWidget):
                     if self._mode == "full":
                         root = copiar_nodo_completo(self._dest, progress_cb=cb)
                         self.finished_ok.emit({"mode": "full", "root": root})
-                    elif self._mode == "import":
-                        stats = importar_catalogo_desde_nodo(progress_cb=cb)
-                        self.finished_ok.emit({"mode": "import", "stats": stats})
-                    elif self._mode == "promote":
-                        root = promover_nodo(progress_cb=cb)
-                        self.finished_ok.emit({"mode": "promote", "root": root})
                     else:
                         stats = sincronizar_faltantes(progress_cb=cb)
                         self.finished_ok.emit({"mode": "sync", "stats": stats})
@@ -518,30 +592,13 @@ class Jefe0Dashboard(QWidget):
                     f"Copia al 100%.\n\n{payload.get('root')}\n\n"
                     "La próxima vez este botón será «Sincronizar nodo».",
                 )
-            elif payload.get("mode") == "promote":
-                QMessageBox.information(
-                    self,
-                    "Nodo promovido",
-                    f"Nodo activo:\n{payload.get('root')}\n\n"
-                    "Contabilidad y datos del negocio apuntan al pendrive/carpeta.\n"
-                    "Reiniciá el perfil para aplicar del todo.",
-                )
-                self.request_logout.emit()
-            elif payload.get("mode") == "import":
-                stats = payload.get("stats") or {}
-                detail = "\n".join(f"• {k}: {v} importados" for k, v in stats.items() if v)
-                QMessageBox.information(
-                    self,
-                    "Importación Exitosa",
-                    "Catálogo fusionado desde el Nodo.\n\n" + (detail or "Sin cambios nuevos."),
-                )
             else:
                 stats = payload.get("stats") or {}
                 detail = ", ".join(f"{k}:{v}" for k, v in stats.items() if v)
                 QMessageBox.information(
                     self,
                     "Sincronizado",
-                    "Solo se enviaron datos faltantes al nodo.\n\n" + (detail or "Sin cambios nuevos."),
+                    "Solo se cargaron datos faltantes.\n\n" + (detail or "Sin cambios nuevos."),
                 )
 
         def on_fail(err):

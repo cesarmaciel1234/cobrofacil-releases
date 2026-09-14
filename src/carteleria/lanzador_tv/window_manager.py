@@ -59,26 +59,26 @@ class WindowManager:
             panel.setObjectName("SelectorMonitor")
             panel.setStyleSheet("""
                 QFrame#SelectorMonitor {
-                    background: #FFFFFF;
-                    border: 1px solid #CBD5E1;
-                    border-radius: 6px;
+                    background: rgba(15, 23, 42, 230);
+                    border: 2px solid #38BDF8;
+                    border-radius: 18px;
                 }
                 QPushButton {
-                    background: #F8FAFC;
-                    color: #0F172A;
-                    border: 1px solid #E2E8F0;
-                    border-radius: 6px;
-                    padding: 12px 18px;
-                    font-size: 14px;
-                    font-weight: 700;
+                    background: #1E3A5F;
+                    color: white;
+                    border: 1.5px solid #38BDF8;
+                    border-radius: 12px;
+                    padding: 14px 22px;
+                    font-size: 15px;
+                    font-weight: bold;
                     min-width: 120px;
                 }
                 QPushButton:hover {
-                    background: #EFF6FF;
-                    border-color: #2563EB;
+                    background: #2563EB;
+                    border-color: #7DD3FC;
                 }
                 QPushButton:pressed {
-                    background: #DBEAFE;
+                    background: #1D4ED8;
                 }
             """)
             v = QVBoxLayout(panel)
@@ -86,7 +86,7 @@ class WindowManager:
             v.setSpacing(12)
 
             titulo = QLabel(f"📺  Mover a monitor  (F10 = fullscreen aquí)")
-            titulo.setStyleSheet("color: #0F172A; font-size: 13px; font-weight: bold; border: none; background: transparent;")
+            titulo.setStyleSheet("color: #7DD3FC; font-size: 13px; font-weight: bold; border: none; background: transparent;")
             titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
             v.addWidget(titulo)
 

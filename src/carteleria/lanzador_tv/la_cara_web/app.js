@@ -9,7 +9,6 @@ import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
 import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
-const TV_UI = "259";
 const API_URL = "/api/state";
 const REFRESH_INTERVAL = 15000;
 
@@ -23,7 +22,7 @@ const state = {
     ia: [],
     hero: null,
     climaData: null,
-    currentTheme: "temu",
+    currentTheme: "premium",
     isLoading: true,
     lastDataHash: null,
 };
@@ -56,38 +55,28 @@ function aplicarPerfil(perfil) {
 
 function loadTheme(themeName) {
     if (!themeName) return;
-    const alias = { auto: "premium", negro_temu: "premium" };
-    const nombre = alias[themeName] || themeName;
-    document.body.setAttribute("data-theme", nombre);
+    document.body.setAttribute("data-theme", themeName);
+    if (themeName === state.currentTheme) return;
     const themeColorsLink = document.getElementById("theme-colors");
     const themeStylesLink = document.getElementById("theme-styles");
     const themePaths = {
-        apple:        "css/themes/apple/colores.css",
-        temu:         "css/themes/temu/colores.css",
-        premium:      "css/themes/premium/colores.css",
-        black:        "css/themes/black/colores.css",
-        blackfriday:  "css/themes/blackfriday/colores.css",
+        apple:      "css/themes/apple/colores.css",
+        temu:       "css/themes/temu/colores.css",
+        blackfriday:"css/themes/blackfriday/colores.css",
+        premium:    "css/themes/premium/colores.css",
     };
     const stylePaths = {
-        apple:        "css/themes/apple/estilos.css",
-        temu:         "css/themes/temu/estilos.css",
-        premium:      "css/themes/premium/estilos.css",
-        black:        "css/themes/black/estilos.css",
-        blackfriday:  "css/themes/blackfriday/estilos.css",
+        apple:      "css/themes/apple/estilos.css",
+        temu:       "css/themes/temu/estilos.css",
+        blackfriday:"css/themes/blackfriday/estilos.css",
+        premium:    "css/themes/premium/estilos.css",
     };
-    if (!themePaths[nombre] || !stylePaths[nombre]) return;
-    const bust = `?v=${TV_UI}`;
-    const ya = themeStylesLink.dataset.loaded === nombre && themeStylesLink.dataset.ui === TV_UI;
-    if (ya) return;
-    themeColorsLink.href = themePaths[nombre] + bust;
-    themeStylesLink.href = stylePaths[nombre] + bust;
-    themeStylesLink.dataset.loaded = nombre;
-    themeStylesLink.dataset.ui = TV_UI;
-    const precioTv = document.getElementById("precio-tv");
-    if (precioTv) precioTv.href = `css/precio_tv.css${bust}`;
-    const precioCarrusel = document.getElementById("precio-tv-carrusel");
-    if (precioCarrusel) precioCarrusel.href = `css/precio_tv/carrusel.css${bust}`;
-    state.currentTheme = nombre;
+    if (themePaths[themeName] && stylePaths[themeName]) {
+        const bust = `?v=${Date.now()}`;
+        themeColorsLink.href = themePaths[themeName] + bust;
+        themeStylesLink.href = stylePaths[themeName] + bust;
+        state.currentTheme = themeName;
+    }
 }
 
 async function fetchState() {
@@ -96,9 +85,6 @@ async function fetchState() {
         if (!response.ok) throw new Error(response.statusText);
         const data = await response.json();
         aplicarPerfil(data.config?.carteleria_perf);
-        let temaDefinitivo = data.config?.carteleria_theme || "premium";
-        if (temaDefinitivo === "auto") temaDefinitivo = "premium";
-        loadTheme(temaDefinitivo);
         const newDataHash = JSON.stringify({
             config: data.config,
             precios: data.precios,
@@ -133,22 +119,28 @@ async function fetchState() {
             });
         }
         
-        // 2-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
+        // 2. Personalización Temporal (Estilo Netflix): Cambiar tema por hora del día
+        let temaDefinitivo = data.config?.carteleria_theme;
+        if (!temaDefinitivo || temaDefinitivo === "auto") {
+            const hora = new Date().getHours();
+            if (hora >= 6 && hora < 12) temaDefinitivo = "apple";       // Mañana: Limpio y claro
+            else if (hora >= 12 && hora < 19) temaDefinitivo = "temu";  // Tarde: Vibrante comercial
+            else temaDefinitivo = "premium";                            // Noche: Oscuro y elegante
+        }
+        loadTheme(temaDefinitivo);
+        
+        // 3-8. Las demás lógicas (Precios Dinámicos, Categorización, Discovery, Combos) 
         // ya se aplican en la renderización de las columnas (shimmer-fx, rotación, etc).
         // --------------------------------------------------------
 
-        const safe = (fn) => {
-            try { fn(); } catch (err) { console.error("[Cartelería]", err); }
-        };
-        safe(() => renderFranjaOferta(state.hero, state.productos, els));
-        safe(() => iniciarRotacionColumna1(state, els.content1));
-        safe(() => renderColumna2(state.productos, els.content2));
-        safe(() => iniciarRotacionColumna3(state, els.content3));
-        safe(() => iniciarRotacionColumna4(state, els.content4));
-        safe(() => renderMensajeZocalo(state.config, els.marquee));
-        safe(() => renderCabeceraNegocio(state.config, els));
-        safe(() => actualizarClimaHeader(state.climaData));
-        safe(() => updateVFX());
+        renderFranjaOferta(state.hero, state.productos, els);
+        iniciarRotacionColumna1(state, els.content1);
+        renderColumna2(state.productos, els.content2);
+        iniciarRotacionColumna3(state, els.content3);
+        iniciarRotacionColumna4(state, els.content4);
+        renderMensajeZocalo(state.config, els.marquee);
+        actualizarClimaHeader(state.climaData);
+        updateVFX(); // Dispara los efectos solo cuando hay datos nuevos
 
         if (state.isLoading) {
             state.isLoading = false;
@@ -211,14 +203,6 @@ function ajustarZoomTv() {
 
 function setupTvKeys() {
     window.addEventListener("keydown", (event) => {
-        if (event.key === "F5") {
-            event.preventDefault();
-            event.stopPropagation();
-            const u = new URL(location.href);
-            u.searchParams.set("r", String(Date.now()));
-            location.replace(`${u.pathname}?${u.searchParams.toString()}`);
-            return;
-        }
         if (event.key !== "F10" && event.key !== "F11" && event.key !== "Escape") return;
         event.preventDefault();
         event.stopPropagation();
@@ -229,6 +213,7 @@ function setupTvKeys() {
 
 function init() {
     aplicarPerfil();
+    document.body.setAttribute("data-theme", state.currentTheme);
     ajustarZoomTv();
     window.addEventListener("resize", ajustarZoomTv);
     if (window.visualViewport) {

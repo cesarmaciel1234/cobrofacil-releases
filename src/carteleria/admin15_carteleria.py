@@ -6,8 +6,7 @@ import socket
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QTextEdit, QMessageBox, QFrame, QScrollArea, QComboBox, QTabWidget,
-    QListWidget, QListWidgetItem,
+    QTextEdit, QMessageBox, QFrame, QScrollArea, QComboBox, QTabWidget
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QCursor
@@ -19,15 +18,6 @@ def _config_path():
     return get_resource_path(os.path.join("src", "config", "carteleria_config.json"))
 
 
-TEMAS_TV = (
-    ("apple", "🍎 Tema Elegante (Apple Style)"),
-    ("temu", "🔥 Tema Temu (Vende Humo)"),
-    ("premium", "🛒 Tema Premium Mutación (Oro + Naranja + Cian)"),
-    ("black", "⬛ Black Super Premium (Oro y Plata)"),
-    ("blackfriday", "🟧 Black Friday (Negro y Naranja)"),
-)
-
-
 class CarteleriaConfigPanel(QWidget):
     request_back = pyqtSignal()
 
@@ -37,9 +27,6 @@ class CarteleriaConfigPanel(QWidget):
         self._load()
 
     def _build(self):
-        self.setObjectName("CarteleriaConfigPanel")
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet("QWidget#CarteleriaConfigPanel { background: #F8FAFC; }")
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
@@ -48,8 +35,9 @@ class CarteleriaConfigPanel(QWidget):
         header = QFrame()
         header.setStyleSheet("""
             QFrame {
-                background: #FFFFFF;
-                border-bottom: 1px solid #E2E8F0;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                    stop:0 #F8FAFC, stop:0.5 #FFFFFF, stop:1 #F8FAFC);
+                border-bottom: 2px solid #E2E8F0;
                 border-radius: 0px;
             }
         """)
@@ -90,10 +78,16 @@ class CarteleriaConfigPanel(QWidget):
         h.addStretch()
         root.addWidget(header)
 
-        wrapper = QWidget()
-        wrapper.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        wrapper.setStyleSheet("background: #F8FAFC;")
-        main_layout = QVBoxLayout(wrapper)
+        # Contenedor principal con fondo claro moderno
+        main_container = QFrame()
+        main_container.setStyleSheet("""
+            QFrame {
+                background: #F8FAFC;
+                border: none;
+                border-radius: 0px;
+            }
+        """)
+        main_layout = QVBoxLayout(main_container)
         main_layout.setContentsMargins(32, 32, 32, 32)
         main_layout.setSpacing(24)
 
@@ -106,7 +100,9 @@ class CarteleriaConfigPanel(QWidget):
             QFrame {
                 background: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 6px;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             }
         """)
         negocio_layout = QVBoxLayout(negocio_frame)
@@ -125,8 +121,6 @@ class CarteleriaConfigPanel(QWidget):
         negocio_layout.addWidget(lbl_negocio)
         
         self.panel_negocio = PanelDatosNegocio(self, show_save_button=False)
-        self.panel_negocio.setGraphicsEffect(None)
-        self.panel_negocio.setStyleSheet("background: transparent; border: none;")
         negocio_layout.addWidget(self.panel_negocio)
         body_local.addWidget(negocio_frame)
 
@@ -136,7 +130,9 @@ class CarteleriaConfigPanel(QWidget):
             QFrame {
                 background: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 6px;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             }
         """)
         c_layout = QVBoxLayout(carteleria_frame)
@@ -157,7 +153,7 @@ class CarteleriaConfigPanel(QWidget):
         
         c_layout.addSpacing(12)
         
-        lbl_theme = QLabel("Estilo Visual de la Cartelería (5 temas):")
+        lbl_theme = QLabel("Estilo Visual de la Cartelería:")
         lbl_theme.setStyleSheet("""
             QLabel {
                 font-size: 14px; 
@@ -168,34 +164,39 @@ class CarteleriaConfigPanel(QWidget):
             }
         """)
         c_layout.addWidget(lbl_theme)
-
-        self.lst_theme = QListWidget()
-        self.lst_theme.setObjectName("ListaTemasTv")
-        for key, label in TEMAS_TV:
-            item = QListWidgetItem(label)
-            item.setData(Qt.ItemDataRole.UserRole, key)
-            self.lst_theme.addItem(item)
-        self.lst_theme.setMinimumHeight(220)
-        self.lst_theme.setStyleSheet("""
-            QListWidget#ListaTemasTv {
+        
+        self.cmb_theme = QComboBox()
+        self.cmb_theme.addItem("🍎 Tema Elegante (Apple Style - Premium)", "apple")
+        self.cmb_theme.addItem("🔥 Tema Temu (Vende Humo - Alto Impacto)", "temu")
+        self.cmb_theme.addItem("🛒 Tema Black Friday (Ofertas Explosivas)", "blackfriday")
+        self.cmb_theme.addItem("🥇 Tema Premium (Negro & Oro - Lujo)", "premium")
+        self.cmb_theme.setStyleSheet("""
+            QComboBox {
+                padding: 12px 16px;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                font-size: 15px;
                 background: #FFFFFF;
                 color: #1E293B;
-                border: 1px solid #0F172A;
-                border-radius: 4px;
-                font-size: 15px;
                 font-weight: 600;
-                padding: 4px;
             }
-            QListWidget#ListaTemasTv::item {
-                padding: 10px 8px;
-                border-bottom: 1px solid #E2E8F0;
+            QComboBox:hover {
+                border-color: #94A3B8;
+                background: #F8FAFC;
             }
-            QListWidget#ListaTemasTv::item:selected {
-                background: #DBEAFE;
-                color: #1E293B;
+            QComboBox::drop-down {
+                border: none;
+                background: #3B82F6;
+                width: 30px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid #1E293B;
+                border-top: 5px solid transparent;
+                border-bottom: 5px solid transparent;
             }
         """)
-        c_layout.addWidget(self.lst_theme)
+        c_layout.addWidget(self.cmb_theme)
 
         c_layout.addSpacing(16)
         
@@ -290,16 +291,23 @@ class CarteleriaConfigPanel(QWidget):
         self.btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_save.setStyleSheet("""
             QPushButton {
-                background: #2563EB;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #3B82F6, stop:1 #2563EB);
                 color: white;
-                font-weight: 700;
-                padding: 12px 24px;
-                border-radius: 6px;
+                font-weight: 800;
+                padding: 16px 32px;
+                border-radius: 12px;
                 border: none;
-                font-size: 15px;
+                font-size: 16px;
+                letter-spacing: 0.5px;
             }
-            QPushButton:hover { background: #1D4ED8; }
-            QPushButton:pressed { background: #1E40AF; }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #2563EB, stop:1 #1D4ED8);
+            }
+            QPushButton:pressed {
+                background: #1D4ED8;
+            }
         """)
         self.btn_save.clicked.connect(self._save_all)
         btn_layout.addWidget(self.btn_save)
@@ -312,7 +320,7 @@ class CarteleriaConfigPanel(QWidget):
         scroll_local.setStyleSheet("""
             QScrollArea {
                 border: none;
-                background: #F8FAFC;
+                background: transparent;
             }
             QScrollBar:vertical {
                 background: #E2E8F0;
@@ -329,26 +337,13 @@ class CarteleriaConfigPanel(QWidget):
             }
         """)
         
+        wrapper = QWidget()
+        wrapper.setLayout(main_layout)
+        
         scroll_local.setWidgetResizable(True)
         scroll_local.setWidget(wrapper)
         
         root.addWidget(scroll_local)
-
-    def _tema_elegido(self):
-        item = self.lst_theme.currentItem()
-        if item:
-            return item.data(Qt.ItemDataRole.UserRole) or "premium"
-        return "premium"
-
-    def _seleccionar_tema(self, th):
-        clave = str(th or "premium")
-        if clave in ("negro_temu", "auto"):
-            clave = "premium"
-        for i in range(self.lst_theme.count()):
-            if self.lst_theme.item(i).data(Qt.ItemDataRole.UserRole) == clave:
-                self.lst_theme.setCurrentRow(i)
-                return
-        self.lst_theme.setCurrentRow(2)
 
     def _load(self):
         # 1. Cargar desde la base de datos global compartida (sin pasar por HTTP firewall)
@@ -356,7 +351,7 @@ class CarteleriaConfigPanel(QWidget):
         from src.config import config
         
         try:
-            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
             rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
             
             if rows:
@@ -364,8 +359,9 @@ class CarteleriaConfigPanel(QWidget):
                 cfg_data = json.loads(cfg_str)
                 
                 self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
-                th = cfg_data.get("carteleria_theme", "premium")
-                self._seleccionar_tema(th)
+                th = cfg_data.get("carteleria_theme", "apple")
+                index = self.cmb_theme.findData(th)
+                if index >= 0: self.cmb_theme.setCurrentIndex(index)
                 pf = cfg_data.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
@@ -378,8 +374,9 @@ class CarteleriaConfigPanel(QWidget):
             else:
                 # Fallback a local
                 self.txt_mensaje.setPlainText(config.get("mensaje_zocalo", ""))
-                th = config.get("carteleria_theme", "premium")
-                self._seleccionar_tema(th)
+                th = config.get("carteleria_theme", "apple")
+                index = self.cmb_theme.findData(th)
+                if index >= 0: self.cmb_theme.setCurrentIndex(index)
                 pf = config.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
@@ -410,7 +407,7 @@ class CarteleriaConfigPanel(QWidget):
             "cuit": self.panel_negocio.txt_cuit.text().strip(),
             "mensaje_despedida": self.panel_negocio.txt_msg.text().strip(),
             "mensaje_zocalo": self.txt_mensaje.toPlainText().strip(),
-            "carteleria_theme": self._tema_elegido(),
+            "carteleria_theme": self.cmb_theme.currentData(),
             "carteleria_perf": self.cmb_perf.currentData(),
         }
 
@@ -418,14 +415,9 @@ class CarteleriaConfigPanel(QWidget):
         from src.base_de_datos.database import db_manager
         from src.config import config
         try:
-            db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
+            db_manager.execute_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
             json_str = json.dumps(datos_guardar)
-            ok = db_manager.execute_non_query(
-                "REPLACE INTO carteleria_config (id, config_json) VALUES (1, ?)",
-                (json_str,),
-            )
-            if not ok:
-                raise RuntimeError(getattr(db_manager, "last_error", "") or "REPLACE carteleria_config falló")
+            db_manager.execute_query("REPLACE INTO carteleria_config (id, config_json) VALUES (1, ?)", (json_str,))
             QMessageBox.information(self, "Guardado Exitoso", "Configuración guardada correctamente en la Base de Datos Global.\n\nTodas las pantallas se actualizarán automáticamente en los próximos segundos.")
         except Exception as e:
             QMessageBox.critical(self, "Error de Red DB", f"No se pudo guardar la configuración global.\nDetalle: {e}")

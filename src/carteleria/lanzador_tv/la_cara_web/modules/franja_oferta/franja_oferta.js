@@ -1,48 +1,72 @@
-﻿/* Franja de oferta: tarjetas + publicidad cada 2. */
+/* Franja de oferta: tarjetas + publicidad cada 4 (motor_publicidad). */
 
 import {
+    cantMinimaOferta,
     descuentoPct,
     esOferta,
     escapeHtml,
-    esPorKg,
     formatMoney,
     htmlDealStage,
-    leerPrecios,
     nombreVitrina,
+    precioVigente,
+    unidadProducto,
 } from "../shared/plata_y_texto.js";
-import { htmlFilaOfertaTv } from "../shared/precio_tv.js";
-import { iniciarCintaInfinita } from "../shared/cinta_infinita.js";
-import { intercalateAds } from "../shared/publicidad_tv.js";
 
 export function renderFranjaOferta(hero, productos, els) {
     const track = document.getElementById("carouselTrack");
     if (!track) return;
 
-    const ofertas = (productos || []).filter(esOferta);
-    const tarjetas = intercalateAds(ofertas, productos);
+    const ofertas = productos.filter((p) => esOferta(p));
+    const base = ofertas.length > 0 ? ofertas : (productos.length > 0 ? productos.slice(0, 10) : []);
+    const tarjetas = inyectarPublicidad(base, productos);
 
     if (tarjetas.length === 0) {
         track.innerHTML = '<p class="no-ofertas">Sin ofertas activas</p>';
-        track.dataset.firma = "";
         return;
     }
-
-    const firma = tarjetas.map((p) => {
-        const { vigente, original, hayOferta } = leerPrecios(p);
-        return `${p.id || p.nombre}:${p.slot_ad ? "a" : "o"}:${p.alarma ? "1" : "0"}:${vigente}:${hayOferta ? original : 0}`;
-    }).join("|");
-    if (track.dataset.firma === firma && track.children.length >= 2) {
-        tickCronometros(track);
-        return;
-    }
-    track.dataset.firma = firma;
 
     const tarjetasHTML = tarjetas.map((producto) =>
         producto.slot_ad ? crearTarjetaPublicidad(producto) : crearTarjetaOferta(producto)
     ).join("");
     track.innerHTML = tarjetasHTML + tarjetasHTML;
-    track.classList.remove("is-infinite");
     iniciarCarrusel(track);
+}
+
+function nombreClave(item) {
+    return String(item?.nombre || "").toLowerCase().trim();
+}
+
+function siguienteAd(ads, adIndex, evitar) {
+    const evitarClave = nombreClave(evitar);
+    for (let k = 0; k < ads.length; k += 1) {
+        const ad = ads[(adIndex + k) % ads.length];
+        if (nombreClave(ad) !== evitarClave) {
+            return { ad, next: adIndex + k + 1 };
+        }
+    }
+    return { ad: ads[adIndex % ads.length], next: adIndex + 1 };
+}
+
+function inyectarPublicidad(ofertas, productos) {
+    const ads = (productos || []).filter((item) => item.es_publicidad);
+    if (!ads.length) return ofertas;
+    const out = [];
+    let adIndex = 0;
+    let inyectadas = 0;
+    ofertas.forEach((item, i) => {
+        out.push(item);
+        if ((i + 1) % 4 === 0) {
+            const { ad, next } = siguienteAd(ads, adIndex, item);
+            out.push({ ...ad, es_publicidad: true, slot_ad: true });
+            adIndex = next;
+            inyectadas += 1;
+        }
+    });
+    if (inyectadas === 0 && ofertas.length) {
+        const { ad } = siguienteAd(ads, 0, ofertas[ofertas.length - 1]);
+        out.push({ ...ad, es_publicidad: true, slot_ad: true });
+    }
+    return out;
 }
 
 function crearTarjetaPublicidad(producto) {
@@ -54,45 +78,46 @@ function crearTarjetaOferta(producto) {
 }
 
 function htmlDealCard(producto, { ad }) {
-    const { original, vigente, hayOferta } = leerPrecios(producto);
-    const pct = descuentoPct(original, vigente);
-    const ahorro = hayOferta ? original - vigente : 0;
+    const vigente = precioVigente(producto);
+    const enOferta = esOferta(producto);
+    const pct = descuentoPct(producto.precio, vigente);
+    const unidad = unidadProducto(producto);
+    const ahorro = enOferta ? Number(producto.precio) - vigente : 0;
     const nombre = nombreVitrina(producto.nombre || "Destacado");
     const esAd = Boolean(ad || producto.slot_ad);
+    const vendidos = Number(producto.veces || producto.cantidad || producto.vendidos || 0);
     const stock = Number(producto.stock || 0);
-    const unidadCorta = esPorKg(producto) ? "kg" : "un";
-    const ahorroTxt = ahorro > 0 ? `Ahorrás ${formatMoney(ahorro)} / ${unidadCorta}` : "";
-    const agota = stock > 0 && stock <= 8;
-    const kicker = esAd ? "PUBLICIDAD" : (hayOferta ? "Ofertas" : "Precio especial");
+    const min = cantMinimaOferta(producto);
+    const proof = stock > 0 && stock <= 8
+        ? `¡Se agota!`
+        : (vendidos > 0
+            ? 'Más elegido'
+            : (enOferta ? `Llevá ${min}+ ${unidad === "kilo" ? "kg" : "un."}` : "Destacado hoy"));
+    const kicker = esAd ? "PUBLICIDAD" : (enOferta ? "Ofertas" : "Precio especial");
     const offLabel = pct ? `-${pct}%` : (esAd ? "AD" : "NEW");
+    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
     const clave = claveTimer(producto, esAd);
     return `
-        <article class="tv-card oferta-card is-deal${hayOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}${esAd && producto.alarma ? " is-ad-alarm" : ""}">
+        <article class="tv-card oferta-card is-deal${enOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}">
             ${htmlDealStage(producto, { off: offLabel })}
-            <div class="deal-copy glass-panel">
-                <div class="deal-copy__head">
-                    <p class="deal-kicker deal-line">${escapeHtml(kicker)}</p>
-                    <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
+            <div class="deal-copy">
+                <p class="deal-kicker">${escapeHtml(kicker)}</p>
+                <h3 class="tv-card__name">${escapeHtml(nombre)}</h3>
+                <div class="deal-price-row">
+                    ${vigente > 0
+                        ? `<strong class="tv-card__now"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
+                        : `<strong class="tv-card__now">DESTACADO</strong>`}
+                    ${enOferta ? `<s class="tv-card__was">${formatMoney(producto.precio)}</s>` : ""}
                 </div>
-                <div class="deal-copy__mid">
-                    ${htmlFilaOfertaTv(producto, {
-                        caja: "tv-card__now-box price-highlight deal-price-row",
-                        ahora: "tv-card__now giant-price",
-                        antes: "tv-card__was diagonal-strike",
-                        regla: "deal-save deal-line",
-                        ahoraPrimero: true,
-                    })}
-                </div>
-                <div class="deal-foot deal-line deal-line--split">
+                ${ahorro > 0 ? `<p class="deal-save">Ahorrás ${formatMoney(ahorro)} / ${unidad}</p>` : ""}
+                <div class="deal-foot">
                     <span class="tv-card__timer">
-                        <span class="tv-card__timer-icon pulse-icon" aria-hidden="true"></span>
+                        <span class="tv-card__timer-icon" aria-hidden="true"></span>
                         <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
                     </span>
-                    ${ahorroTxt ? `<span class="deal-proof deal-ahorro">${escapeHtml(ahorroTxt)}</span>` : ""}
-                    ${agota ? `<span class="deal-proof is-low pulse-alert">¡Se agota!</span>` : ""}
+                    <span class="deal-proof${stock > 0 && stock <= 8 ? " is-low" : ""}">${escapeHtml(proof)}</span>
                 </div>
             </div>
-            ${esAd ? "" : '<div class="card-shimmer"></div>'}
         </article>
     `;
 }
@@ -136,34 +161,64 @@ function tickCronometros(track) {
 
 
 function iniciarCarrusel(track) {
+    if (track.dataset.running === "1") return;
+    track.dataset.running = "1";
+    
+    let currentIndex = 0;
+    
+    // Para que la primera tarjeta arranque en el centro (opcional, pero ayuda al efecto)
+    // Inicialmente track está a la izquierda.
+    track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+    
+    function moverSiguiente() {
+        if (!track.children.length) return;
+        
+        const container = document.querySelector(".app-container") || document.body;
+        const cw = container.offsetWidth;
+        const card = track.children[0];
+        const gap = cw * 0.014; // 1.4vw o 1.4cqw
+        const cardWidth = card.offsetWidth + gap;
+        
+        // Calculamos offset para que la tarjeta actual quede en el centro de la pantalla
+        const centerOffset = (cw / 2) - (card.offsetWidth / 2);
+        
+        currentIndex++;
+        
+        // Si llegamos a la mitad (porque el html está duplicado), reiniciamos sin transición
+        const totalOriginal = track.children.length / 2;
+        if (currentIndex > totalOriginal) {
+            track.style.transition = "none";
+            currentIndex = 1;
+            const resetPos = centerOffset - (currentIndex - 1) * cardWidth;
+            track.style.transform = `translateX(${resetPos}px)`;
+            
+            // Forzar reflow
+            void track.offsetWidth;
+            track.style.transition = "transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)";
+        }
+        
+        const position = centerOffset - (currentIndex * cardWidth);
+        track.style.transform = `translateX(${position}px)`;
+    }
+
     if (track.dataset.timer !== "1") {
         track.dataset.timer = "1";
         setInterval(() => tickCronometros(track), 1000);
     }
-    tickCronometros(track);
 
-    const viewport = track.parentElement;
-    iniciarCintaInfinita(track, {
-        periodoMs: 4000,
-        inicio: 0,
-        xDeCuadro(i) {
-            const card = track.children[i];
-            if (!card || !viewport) return 0;
-            return viewport.clientWidth / 2 - (card.offsetLeft + card.offsetWidth / 2);
-        },
-        alPosar(i, mitad) {
-            const foco = i >= mitad ? i - mitad : i;
-            const prev = track._foco;
-            if (prev === i) return;
-            track._foco = i;
-            if (typeof prev === "number") {
-                const p2 = prev >= mitad ? prev - mitad : prev;
-                track.children[prev]?.classList.remove("is-center-focus");
-                track.children[p2]?.classList.remove("is-center-focus");
-            }
-            track.children[i]?.classList.add("is-center-focus");
-            track.children[foco]?.classList.add("is-center-focus");
-        },
-    });
+    // Posicionamos la primera en el centro inmediatamente
+    setTimeout(() => {
+        if (!track.children.length) return;
+        const container = document.querySelector(".app-container") || document.body;
+        const cw = container.offsetWidth;
+        const card = track.children[0];
+        const centerOffset = (cw / 2) - (card.offsetWidth / 2);
+        track.style.transform = `translateX(${centerOffset}px)`;
+    }, 100);
+
+    // Cada 4 segundos, avanza una tarjeta y se detiene (posa)
+    setInterval(moverSiguiente, 4000);
+
+
 }
 
