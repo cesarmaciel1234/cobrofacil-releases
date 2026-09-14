@@ -12,6 +12,7 @@ from PyQt6.QtCore import QObject, QTimer
 logger = logging.getLogger("NavegadorKiosk")
 
 VK_ESCAPE = 0x1B
+VK_F5 = 0x74
 VK_F10 = 0x79
 VK_F11 = 0x7A
 _TV_EXE = frozenset({"chrome.exe", "msedge.exe", "brave.exe", "chromium.exe"})
@@ -49,6 +50,28 @@ def buscar_navegador():
     return None
 
 
+def indice_monitor_tv():
+    """Monitor 2: el más grande que no sea el primario (la TV). Si hay uno solo, ese."""
+    try:
+        from PyQt6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        screens = list(app.screens()) if app else []
+        if not screens:
+            return 0
+        if len(screens) == 1:
+            return 0
+        primario = app.primaryScreen() or screens[0]
+        extras = [s for s in screens if s is not primario] or screens[1:]
+        mejor = max(
+            extras,
+            key=lambda s: s.geometry().width() * s.geometry().height(),
+        )
+        return screens.index(mejor)
+    except Exception:
+        return 1
+
+
 def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
     """Fullscreen a 1 px = 1 px del monitor (sin zoom de Windows)."""
     os.makedirs(profile, exist_ok=True)
@@ -64,7 +87,9 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--autoplay-policy=no-user-gesture-required",
         "--high-dpi-support=1",
         "--disable-pinch",
-        "--start-fullscreen",
+        "--disable-http-cache",
+        "--disk-cache-size=1",
+        "--kiosk",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
     ]
@@ -102,6 +127,8 @@ def rect_monitor_nativo(indice=None):
             return None
         if indice is not None and 0 <= int(indice) < len(monitors):
             return monitors[int(indice)]
+        if len(monitors) > 1:
+            return max(monitors[1:], key=lambda m: m[2] * m[3])
         return monitors[0]
     except Exception:
         return None
@@ -135,11 +162,12 @@ def _foco_es_navegador_tv():
 class TeclasTv(QObject):
     """F10/F11/Esc con QTimer (sin WH_KEYBOARD_LL: en Windows 10 congelaba todo el PC)."""
 
-    def __init__(self, on_f10, on_f11, on_esc, parent=None):
+    def __init__(self, on_f10, on_f11, on_esc, parent=None, on_f5=None):
         super().__init__(parent)
         self.on_f10 = on_f10
         self.on_f11 = on_f11
         self.on_esc = on_esc
+        self.on_f5 = on_f5
         self._last = 0.0
         self._timer = QTimer(self)
         self._timer.setInterval(80)
@@ -150,7 +178,7 @@ class TeclasTv(QObject):
             return
         if not self._timer.isActive():
             self._timer.start()
-            logger.info("Teclas TV (sondeo): F10 monitor · F11/Esc salir")
+            logger.info("Teclas TV (sondeo): F5 recargar · F10 monitor · F11/Esc salir")
 
     def stop(self):
         self._timer.stop()
@@ -163,10 +191,19 @@ class TeclasTv(QObject):
             user32 = ctypes.windll.user32
         except Exception:
             return
+        f5 = bool(user32.GetAsyncKeyState(VK_F5) & 0x8000)
         f10 = bool(user32.GetAsyncKeyState(VK_F10) & 0x8000)
         f11 = bool(user32.GetAsyncKeyState(VK_F11) & 0x8000)
         esc = bool(user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000)
-        if not (f10 or f11 or esc):
+        if not (f5 or f10 or f11 or esc):
+            return
+        if f5:
+            self._last = ahora
+            if self.on_f5:
+                try:
+                    self.on_f5()
+                except Exception as exc:
+                    logger.warning("Tecla TV F5: %s", exc)
             return
         if not _foco_es_navegador_tv():
             return

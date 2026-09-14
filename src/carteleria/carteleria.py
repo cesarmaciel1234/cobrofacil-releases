@@ -17,6 +17,7 @@ class CarteleriaApp(QStackedWidget):
         super().__init__()
         self.setWindowTitle("Cartelería Autónoma - Apple Style Modular")
         self.setMinimumSize(1024, 768)
+        self.setStyleSheet("QStackedWidget { background: #F8FAFC; border: none; }")
 
         self.dashboard = CarteleriaDashboard()
         self.addWidget(self.dashboard)
@@ -70,7 +71,7 @@ class CarteleriaApp(QStackedWidget):
             except Exception:
                 pass
         self.setCurrentWidget(self.dashboard)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_admin(self):
         if not self.admin:
@@ -78,9 +79,8 @@ class CarteleriaApp(QStackedWidget):
             self.admin = CarteleriaConfigPanel()
             self.addWidget(self.admin)
             self.admin.request_back.connect(self.volver_dashboard)
-            if self.estilo_completo: self.admin.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.admin)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_inv(self):
         # Siempre recrear para evitar quedar con estado roto cacheado
@@ -93,8 +93,8 @@ class CarteleriaApp(QStackedWidget):
         self.inv = Admin1Inventario()
         self.addWidget(self.inv)
         self.inv.request_dashboard.connect(self.volver_dashboard)
-        if self.estilo_completo: self.inv.setStyleSheet(self.estilo_completo)
-        if hasattr(self.inv, "_apply_inventario_theme"): self.inv._apply_inventario_theme()
+        if hasattr(self.inv, "_apply_inventario_theme"):
+            self.inv._apply_inventario_theme()
         
         # La carteleria no tiene login → current_user es None → rol seria "cajero"
         # Forzamos admin para que los botones de edicion funcionen
@@ -104,27 +104,28 @@ class CarteleriaApp(QStackedWidget):
             self.inv.catalogo.aplicar_permisos_perfil("admin")
             
         self.setCurrentWidget(self.inv)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_ofe(self):
-        if not self.ofe:
-            try:
-                from src.motor_descuentos.vistas.ofertas_main import Admin2Ofertas
-                self.ofe = Admin2Ofertas()
-            except Exception as e:
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.critical(
-                    self,
-                    "Motor de Promociones",
-                    f"No se pudo abrir el módulo:\n{e}",
-                )
-                return
-            self.addWidget(self.ofe)
-            self.ofe.request_dashboard.connect(self.volver_dashboard)
-            if self.estilo_completo:
-                self.ofe.setStyleSheet(self.estilo_completo)
+        if self.ofe:
+            self.removeWidget(self.ofe)
+            self.ofe.deleteLater()
+            self.ofe = None
+        try:
+            from src.motor_descuentos.hub import Admin2Ofertas
+            self.ofe = Admin2Ofertas()
+        except Exception as e:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self,
+                "Motor de Promociones",
+                f"No se pudo abrir el módulo:\n{e}",
+            )
+            return
+        self.addWidget(self.ofe)
+        self.ofe.request_dashboard.connect(self.volver_dashboard)
         self.setCurrentWidget(self.ofe)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_red(self):
         if not self.red:
@@ -134,7 +135,7 @@ class CarteleriaApp(QStackedWidget):
             self.red.request_dashboard.connect(self.volver_dashboard)
             if self.estilo_completo: self.red.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.red)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_png_productos(self):
         if self.png_prod:
@@ -148,7 +149,7 @@ class CarteleriaApp(QStackedWidget):
         if self.estilo_completo:
             self.png_prod.setStyleSheet(self.estilo_completo)
         self.setCurrentWidget(self.png_prod)
-        self.showNormal()
+        self.showMaximized()
 
     def lanzar_prov(self):
         if not self.prov:
@@ -161,7 +162,7 @@ class CarteleriaApp(QStackedWidget):
         self.setCurrentWidget(self.prov)
         if hasattr(self.prov, 'cargar_datos'):
             self.prov.cargar_datos()
-        self.showNormal()
+        self.showMaximized()
 
     def toggle_carteleria_theme(self):
         from src.utils.theme_manager import theme_manager
@@ -196,18 +197,19 @@ class CarteleriaApp(QStackedWidget):
             self.estilo_completo = estilo_completo
             
             self.dashboard.setStyleSheet(estilo_completo)
-            if self.admin: self.admin.setStyleSheet(estilo_completo)
-            if self.inv: self.inv.setStyleSheet(estilo_completo)
-            if self.ofe: self.ofe.setStyleSheet(estilo_completo)
+            if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
+                self.inv._apply_inventario_theme()
+            elif self.inv:
+                self.inv.setStyleSheet(estilo_completo)
+            if self.ofe:
+                self.ofe.setStyleSheet(
+                    "QWidget#HubPromociones { background: #F8FAFC; }"
+                    "QDoubleSpinBox, QLineEdit, QComboBox {"
+                    " background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; }"
+                )
             if self.red: self.red.setStyleSheet(estilo_completo)
             if self.prov: self.prov.setStyleSheet(estilo_completo)
             if self.png_prod: self.png_prod.setStyleSheet(estilo_completo)
-            
-            # Notificar al inventario para que actualice sus colores internos
-            if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
-                self.inv._apply_inventario_theme()
-                
-            # Notificar al dashboard principal
             if hasattr(self.dashboard, "apply_dashboard_theme"):
                 self.dashboard.apply_dashboard_theme(theme_manager.is_dark())
                 
@@ -218,11 +220,15 @@ def lanzar_app(app=None):
     if app is None:
         app = QApplication(sys.argv)
         
-    # LAN solo si no hay Servidor de Tienda (él ya tiene :8000 / UDP :37020)
+    # Misma red que el jefe: si esta PC es maestra y no hay Servidor de Tienda
+    # aparte, arranca MariaDB/API. Si es TV esclava, no se anuncia.
     try:
         from src.utils.candados import is_store_server_running
-        if not is_store_server_running():
+        from src.central_red_global.sync_tienda.rol import es_esclava
+
+        if not is_store_server_running() and not es_esclava():
             from src.central_red_global.lan_server import init_lan_server
+
             init_lan_server()
     except Exception:
         pass
@@ -242,7 +248,7 @@ def lanzar_app(app=None):
     # Aplicar el tema global a los módulos administrativos, excluyendo el TV (CarteleriaTV)
     window.apply_theme()
 
-    window.show()
+    window.showMaximized()
     # Guardamos referencia para que no sea destruida por el recolector de basura
     app._carteleria_window = window 
 

@@ -26,7 +26,7 @@ Para que el sistema sea seguro, no se rompa por accidente y sea fácil de editar
 *   **Regla:** Acá **no hay nada de diseño ni de colores**.
 
 ### Capa 2: Estructura Visual (El Esqueleto)
-*   **Archivos clave:** index.html, ase.css, columna4_chef.css, cards.css.
+*   **Archivos clave:** index.html, style.css (importa base.css y cards.css), columna4_chef.css. Cada tema importa structural_base.css.
 *   **¿Qué hace?:** Define los tamaños de las cajas, en qué parte de la pantalla va cada cosa, cómo se hacen más grandes o más chicas según el tamaño del televisor (zoom automático).
 *   **Regla:** Acá **no hay nada de colores ni diseño visual puro**. El esqueleto es "daltónico". Solo usa variables vacías esperando que un tema las llene.
 

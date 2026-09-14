@@ -43,7 +43,9 @@ class BuscadorDeRed(QThread):
                     try:
                         data, addr = sock.recvfrom(2048)
                         info = json.loads(data.decode("utf-8"))
-                        if str(info.get("mode", "")).upper() != "MAESTRA":
+                        from src.central_red_global.lan_server import es_anuncio_tienda
+
+                        if not es_anuncio_tienda(info):
                             continue
                         ip = info.get("server_ip") or addr[0]
                         hostname = str(info.get("hostname") or ip)

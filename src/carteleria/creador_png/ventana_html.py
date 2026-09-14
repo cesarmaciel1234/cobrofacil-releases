@@ -11,8 +11,8 @@ try:
 except ImportError:
     pass
 
-from PyQt6.QtCore import QUrl, Qt
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel
+from PyQt6.QtCore import QUrl, Qt, QTimer
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QSizePolicy
 
 
 class DialogoCreadorPNG(QDialog):
@@ -29,11 +29,15 @@ class DialogoCreadorPNG(QDialog):
         else:
             self._nombre = ""
         self.setWindowTitle("Creador PNG")
-        # Habilitar botones de maximizar y minimizar
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
-        self.resize(1080, 720)
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.WindowMaximizeButtonHint
+            | Qt.WindowType.WindowMinimizeButtonHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
         self.setMinimumSize(880, 600)
         self.setStyleSheet("QDialog { background: #F8FAFC; }")
+        self._zoom_listo = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -56,9 +60,12 @@ class DialogoCreadorPNG(QDialog):
         try:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
             view = QWebEngineView(self)
+            view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            view.setZoomFactor(1.0)
             view.setUrl(QUrl(url))
             view.titleChanged.connect(self._on_title)
-            layout.addWidget(view)
+            view.loadFinished.connect(self._on_loaded)
+            layout.addWidget(view, 1)
             self._view = view
         except Exception:
             from PyQt6.QtGui import QDesktopServices
@@ -70,6 +77,34 @@ class DialogoCreadorPNG(QDialog):
             aviso.setAlignment(Qt.AlignmentFlag.AlignCenter)
             aviso.setStyleSheet("color: #334155; font-size: 14px; padding: 40px;")
             layout.addWidget(aviso)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self.showMaximized)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self._view and self._zoom_listo:
+            self._ajustar_zoom()
+
+    def _on_loaded(self, _ok):
+        self._zoom_listo = True
+        self._ajustar_zoom()
+        if self._view:
+            self._view.page().runJavaScript(
+                "document.documentElement.style.height='100%';"
+                "document.body.style.height='100%';"
+                "document.body.style.overflow='hidden';"
+            )
+
+    def _ajustar_zoom(self):
+        if not self._view:
+            return
+        w = max(self._view.width(), 1)
+        # Diseño ~1280px: en monitor grande o DPI alto la UI deja de verse mini.
+        zoom = max(1.0, min(1.75, w / 1280.0))
+        if abs(self._view.zoomFactor() - zoom) > 0.04:
+            self._view.setZoomFactor(zoom)
 
     def _on_title(self, title):
         if not title:

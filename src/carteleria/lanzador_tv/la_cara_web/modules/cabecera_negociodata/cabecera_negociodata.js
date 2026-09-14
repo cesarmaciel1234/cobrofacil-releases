@@ -1,16 +1,37 @@
 /* Cabecera: logo, nombre, teléfono, estado y reloj. */
 
 export function renderCabeceraNegocio(config, els) {
-    if (config?.business_name) els.brandName.textContent = config.business_name;
-    if (config?.phone && config.phone !== "No disponible") {
+    if (config?.business_name && els.brandName) els.brandName.textContent = config.business_name;
+    if (config?.phone && config.phone !== "No disponible" && els.brandPhone) {
         els.brandPhone.textContent = config.phone;
-    } else {
+    } else if (els.brandPhone) {
         els.brandPhone.textContent = "---";
     }
+    
+    // Inyectar el nombre del negocio automáticamente en las marquesinas de ofertas relámpago
+    if (config?.business_name) {
+        const nombreNegocio = config.business_name.toUpperCase();
+        const marqueeCycles = document.querySelectorAll(".flash-strip__cycle");
+        marqueeCycles.forEach(cycle => {
+            const unidad = `<span>${nombreNegocio}</span><span class="flash-dot">·</span>`;
+            cycle.innerHTML = unidad.repeat(6);
+        });
+
+        // Actualizar marquesina inferior (zocalo) si existe
+        if (els.marquee) {
+            const marqueeText = els.marquee.querySelector(".marquee-text");
+            if (marqueeText) {
+                marqueeText.textContent = `Bienvenido a ${nombreNegocio} 💎 Los mejores precios 💎 Calidad VIP 💎`;
+            }
+        }
+    }
+
     const offline = config?.data_status === "offline";
-    els.statusText.textContent = offline ? "Caché local" : "En línea";
-    const dot = els.statusText.parentElement?.querySelector(".status-dot");
-    if (dot) dot.style.background = offline ? "#FCD34D" : "var(--success-color)";
+    if (els.statusText) {
+        els.statusText.textContent = offline ? "Caché local" : "En línea";
+        const dot = els.statusText.parentElement?.querySelector(".status-dot");
+        if (dot) dot.style.background = offline ? "#FCD34D" : "var(--success-color)";
+    }
 }
 
 export function marcarCabeceraDesconectada(els) {

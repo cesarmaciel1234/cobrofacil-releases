@@ -30,16 +30,16 @@ src/carteleria/
 │       ├── app.js                       # Core de lógica empresarial en el lado del cliente (JS). Recibe datos del servidor local.
 │       └── css/                         # Hojas de estilo y temas (Apple, Temu, BlackFriday).
 │
-├── motor_carteleria/                     # Motor principal backend (Backend / Servidor Local).
-│   ├── main_board.py                     # Tablero principal de estado, organiza la carga y distribución de productos.
-│   ├── web_server.py                     # Servidor HTTP local que expone una API (`/api/state`) para que `app.js` la consuma.
+├── motor_carteleria/                     # Motor principal backend (datos / sync).
+│   ├── main_board.py                     # Alias de CarteleriaMainTV.
+│   ├── web_server.py                     # Compat: reexporta ServidorCuello de cerebro_lanzador_tv.
 │   ├── db_sync_worker.py                 # Hilo de fondo (worker) que sincroniza cambios desde el Inventario (SQLite/MariaDB) hacia la memoria.
 │   ├── clima_worker.py                   # Worker encargado de consultar y actualizar el estado del clima.
 │   ├── estado_tv.py                      # Gestor del estado actual de lo que debe mostrar la TV.
 │   ├── layout_manager.py                 # Gestor de distribución (layouts), decide qué diseño de pantalla usar basado en los productos.
 │   └── motor_publicidad.py               # Motor encargado de inyectar anuncios o promociones rotativas.
 │
-├── el_cerebro/                           # Lógica central adicional. Orquesta la toma de decisiones complejas no cubiertas por los motores básicos.
+├── el_cerebro/                           # Compat vacío: reexporta estado_tv. No agregar lógica acá.
 │
 ├── assets/                               # Recursos estáticos globales (fondos, iconos como clima y mascotas).
 ├── creador_png/                          # Creador PNG: panel Qt + UI HTML. Salida en Catalogos/png_productos/.
@@ -92,8 +92,8 @@ El sistema funciona con un esquema de **Servidor Local (Motor Backend)** + **Cli
 
 1. **Sincronización de Base de Datos**: `db_sync_worker.py` lee constantemente (o mediante eventos) la base de datos principal del sistema (MariaDB/SQLite) y extrae los productos actualizados.
 2. **Tablero y Estado**: `main_board.py` y `estado_tv.py` procesan y estructuran los datos extraídos en un formato JSON listo para consumo del frontend.
-3. **API Local**: `web_server.py` levanta un servidor ligero en `localhost` que sirve los recursos web estáticos (HTML/CSS) y provee la ruta API de estado de los productos y promociones.
-4. **Cliente Web (Navegador)**: `cerebro_lanzador_tv.py` abre una ventana web a pantalla completa (kiosk mode). El archivo `app.js` hace peticiones periódicas (polling) contra el servidor local para obtener la última información.
+3. **API Local**: `cerebro_lanzador_tv.py` (`ServidorCuello`) sirve la cara TV desde `tv_cara.bin` (o `la_cara_web` en dev) y expone `/api/state`. `web_server.py` solo reexporta esas clases.
+4. **Cliente Web (Navegador)**: el mismo cerebro abre Chrome/Edge en kiosk. `app.js` hace polling a `/api/state`.
 5. **Renderizado**: `app.js` recibe el JSON con el estado de la TV e inyecta la información dinámicamente en el DOM de `index.html`.
 
 ## 🧠 Lógica Empresarial en el Cliente (`app.js`)

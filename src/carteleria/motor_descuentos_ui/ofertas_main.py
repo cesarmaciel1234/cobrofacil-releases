@@ -1,4 +1,2 @@
-"""Compat: el Motor de Promociones vive en src.motor_descuentos.vistas."""
-from src.motor_descuentos.vistas.ofertas_main import Admin2Ofertas
-
-__all__ = ["Admin2Ofertas"]
+"""Compat: el hub vive en src.motor_descuentos.hub."""
+from src.motor_descuentos.hub import Admin2Ofertas

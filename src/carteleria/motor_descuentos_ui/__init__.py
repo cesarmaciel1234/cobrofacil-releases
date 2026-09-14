@@ -1,3 +1,3 @@
-from src.motor_descuentos.vistas.ofertas_main import Admin2Ofertas
+from src.motor_descuentos.hub import Admin2Ofertas
 
 __all__ = ["Admin2Ofertas"]

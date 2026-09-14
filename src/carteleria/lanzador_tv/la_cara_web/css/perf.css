@@ -21,6 +21,11 @@ body[data-perf="eco"] .is-center-focus .deal-stage__img {
     filter: none !important;
 }
 
+body[data-perf="eco"] .card-shimmer {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
 body[data-perf="eco"] .tv-card__timer,
 body[data-perf="eco"] .deal-save,
 body[data-perf="eco"] .tv-card__save,

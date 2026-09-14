@@ -75,8 +75,8 @@ class CarteleriaCard(QFrame):
         self.setStyleSheet(f"""
             CarteleriaCard {{
                 background-color: {bg};
-                border: 1px solid {'rgba(255,255,255,0.1)' if is_dark else 'rgba(0,0,0,0.1)'};
-                border-radius: 12px;
+                border: 1px solid {'#334155' if is_dark else '#E2E8F0'};
+                border-radius: 6px;
             }}
             CarteleriaCard:hover {{
                 border: 2px solid {border_hover};
@@ -122,9 +122,17 @@ class CarteleriaDashboard(QWidget):
         nav_lay = QHBoxLayout(self.nav)
         nav_lay.setContentsMargins(32, 0, 32, 0)
 
-        self.brand_lbl = QLabel("🚀 CENTRAL DE CARTELERÍA")
+        self.brand_lbl = QLabel("CENTRAL DE CARTELERÍA")
         self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #0F172A; background: transparent; border: none;")
         nav_lay.addWidget(self.brand_lbl)
+        self.lbl_ver = QLabel("")
+        self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #2563EB; background: transparent; border: none; margin-left: 10px;")
+        try:
+            from src.updater.cerebro.engine import read_local_version
+            self.lbl_ver.setText(f"v{read_local_version()}")
+        except Exception:
+            self.lbl_ver.setText("")
+        nav_lay.addWidget(self.lbl_ver)
         nav_lay.addStretch()
 
         self.lbl_clock = QLabel()
@@ -174,8 +182,9 @@ class CarteleriaDashboard(QWidget):
         hero.setFixedHeight(110)
         hero.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E40AF, stop:1 #3B82F6);
-                border-radius: 16px;
+                background: #2563EB;
+                border: none;
+                border-radius: 6px;
             }
         """)
         hero_lay = QVBoxLayout(hero)
@@ -239,6 +248,8 @@ class CarteleriaDashboard(QWidget):
         if is_dark:
             self.nav.setStyleSheet("background: #0F172A; border-bottom: 1px solid #334155;")
             self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #F8FAFC; background: transparent; border: none;")
+            if hasattr(self, "lbl_ver"):
+                self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #93C5FD; background: transparent; border: none; margin-left: 10px;")
             self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #94A3B8; background: transparent; border: none; margin-right: 16px;")
             self.btn_theme.setStyleSheet("""
                 QPushButton {
@@ -261,6 +272,8 @@ class CarteleriaDashboard(QWidget):
         else:
             self.nav.setStyleSheet("background: #FFFFFF; border-bottom: 1px solid #E2E8F0;")
             self.brand_lbl.setStyleSheet("font-weight: bold; font-size: 16px; color: #0F172A; background: transparent; border: none;")
+            if hasattr(self, "lbl_ver"):
+                self.lbl_ver.setStyleSheet("font-size: 12px; font-weight: 700; color: #2563EB; background: transparent; border: none; margin-left: 10px;")
             self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #475569; background: transparent; border: none; margin-right: 16px;")
             self.btn_theme.setStyleSheet("""
                 QPushButton {
@@ -301,16 +314,7 @@ class CarteleriaDashboard(QWidget):
         try:
             from src.carteleria.lanzador_tv.lanzador_directo import get_lanzador_directo
             lanzador = get_lanzador_directo()
-            idx = None
-            try:
-                from PyQt6.QtWidgets import QApplication
-                app = QApplication.instance()
-                scr = self.window().screen() if self.window() else None
-                if app and scr:
-                    idx = app.screens().index(scr)
-            except Exception:
-                idx = None
-            if not lanzador.lanzar(screen_index=idx):
+            if not lanzador.lanzar():
                 from PyQt6.QtWidgets import QMessageBox
                 detalle = getattr(lanzador, "last_error", "") or "No se pudo lanzar la cartelería TV."
                 QMessageBox.critical(self, "Error", detalle)

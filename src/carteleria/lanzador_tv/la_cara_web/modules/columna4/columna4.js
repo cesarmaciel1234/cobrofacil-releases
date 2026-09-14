@@ -1,7 +1,7 @@
-/* Columna 4: lobo chef + clima real + rotación de lo más pedido en tickets. */
+﻿/* Columna 4: lobo chef + clima real + rotación de lo más pedido en tickets. */
 
 import { htmlPronosticoClima } from "./tarjetas/tarjeta_chef.js";
-import { nombreVitrina, precioVigente } from "../shared/plata_y_texto.js";
+import { nombreVitrina } from "../shared/plata_y_texto.js";
 
 const ROTACION_MS = 8000;
 
@@ -50,7 +50,8 @@ function enriquecer(item, productos) {
     return {
         ...base,
         nombre: nombreVitrina(base.nombre),
-        precio: precioVigente(base) || Number(base.precio) || 0,
+        precio: Number(base.precio) || 0,
+        precio_oferta: Number(base.precio_oferta) || 0,
         icono_url: base.icono_url || item?.icono_url || "",
         departamento: base.departamento || base.categoria || item?.departamento || "",
     };
@@ -66,7 +67,7 @@ function climaVisible(climaData) {
     };
 }
 
-function pintar(conFade) {
+function pintar() {
     if (!rootRef) return;
     const clima = climaVisible(climaCache);
     
@@ -74,11 +75,19 @@ function pintar(conFade) {
     const ofertas = itemsCache.slice(0, 6).map(item => enriquecer(item, productosCache));
     
     if (!itemsCache.length) {
+        const fallback = (productosCache || []).find((p) => Number(p?.precio) > 0);
+        if (!fallback) {
+            rootRef.innerHTML = '<p class="column-empty">Sin productos en la lista todavía.</p>';
+            return;
+        }
+        const item = enriquecer(fallback, productosCache);
         rootRef.innerHTML = htmlPronosticoClima({
             ...clima,
-            producto_recomendado: "Pollo entero",
-            precio: 4900,
-            ofertas: [],
+            producto_recomendado: item.nombre,
+            precio: item.precio,
+            icono_url: item.icono_url,
+            departamento: item.departamento,
+            ofertas: [item],
         });
         return;
     }
@@ -92,15 +101,7 @@ function pintar(conFade) {
         departamento: item.departamento,
         ofertas: ofertas,
     });
-    if (!conFade) {
-        rootRef.innerHTML = html;
-        return;
-    }
-    rootRef.classList.add("is-fading");
-    window.setTimeout(() => {
-        rootRef.innerHTML = html;
-        rootRef.classList.remove("is-fading");
-    }, 400);
+    rootRef.innerHTML = html;
 }
 
 export function iniciarRotacionColumna4(state, root) {
@@ -112,7 +113,9 @@ export function iniciarRotacionColumna4(state, root) {
     const misma = firma === JSON.stringify(itemsCache.map((i) => i.nombre));
     itemsCache = items.length ? items : itemsCache;
     if (!misma) {
-        pintar(false);
+        rotacionIndex = 0;
+        pintar();
     }
-
+    // The inner carousel handles its own rotation now. No need to rebuild DOM every 8 seconds.
+    // rotacionTimer = setInterval(...) was removed to prevent interrupting the carousel.
 }
