@@ -225,6 +225,15 @@ jobs:
       # -----------------------------------------------------------------------
       # 4b. MariaDB portable + ZIP del release (POS + mariadb_server)
       # -----------------------------------------------------------------------
+
+      - name: Limpiar codigo fuente expuesto
+        shell: pwsh
+        run: |
+          if (Test-Path "dist/CobroFacil_POS/_internal/src") {
+              Get-ChildItem -Path "dist/CobroFacil_POS/_internal/src" -Filter *.py -Recurse | Remove-Item -Force
+              Get-ChildItem -Path "dist/CobroFacil_POS/_internal/src" -Filter __pycache__ -Recurse -Directory | Remove-Item -Force -Recurse
+          }
+
       - name: Preparar MariaDB portable
         run: python 01_Compiladores_y_Ejecutables/prepare_mariadb_release.py
 
