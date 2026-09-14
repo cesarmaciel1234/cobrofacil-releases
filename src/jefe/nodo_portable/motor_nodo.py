@@ -92,6 +92,34 @@ def _emit(cb: ProgressCb | None, pct: int, msg: str) -> None:
             pass
 
 
+
+def _sync_catalogos_dir(progress_cb, root_nodo: str, upload: bool = True):
+    try:
+        from src.carteleria.assets_paths import catalogos_dir
+        import shutil
+        local_cat = catalogos_dir()
+        nodo_cat = os.path.join(root_nodo, "Catalogos")
+        
+        src, dst = (local_cat, nodo_cat) if upload else (nodo_cat, local_cat)
+        if not os.path.isdir(src):
+            return
+            
+        os.makedirs(dst, exist_ok=True)
+        _emit(progress_cb, 95, "Sincronizando imágenes (PNGs)...")
+        for root_dir, _, files in os.walk(src):
+            rel = os.path.relpath(root_dir, src)
+            target_dir = dst if rel in (".", "") else os.path.join(dst, rel)
+            os.makedirs(target_dir, exist_ok=True)
+            for file in files:
+                if not file.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".webp")): continue
+                sf = os.path.join(root_dir, file)
+                df = os.path.join(target_dir, file)
+                if not os.path.exists(df) or os.path.getmtime(sf) > os.path.getmtime(df):
+                    try: shutil.copy2(sf, df)
+                    except Exception: pass
+    except Exception:
+        pass
+
 def _load_meta(root: str) -> dict:
     try:
         with open(_nodo_json_path(root), encoding="utf-8") as f:
@@ -245,11 +273,6 @@ def _upsert_rows(conn: sqlite3.Connection, table: str, rows: list[dict], only_mi
         data = {k: row.get(k) for k in cols if k in row}
         if not data:
             continue
-        rid = data.get("id")
-        if only_missing and rid is not None:
-            cur.execute(f"SELECT 1 FROM {table} WHERE id = ? LIMIT 1", (rid,))
-            if cur.fetchone():
-                continue
         keys = list(data.keys())
         placeholders = ",".join("?" * len(keys))
         col_sql = ",".join(keys)
@@ -320,6 +343,8 @@ def copiar_nodo_completo(dest_folder: str, progress_cb: ProgressCb | None = None
         _merge_diario_into_nodo(conn)
     finally:
         conn.close()
+
+    _sync_catalogos_dir(progress_cb, root, upload=True)
 
     meta = {
         "version": 1,
@@ -456,6 +481,7 @@ def sincronizar_faltantes(progress_cb: ProgressCb | None = None, path: str | Non
             stats[table] = _upsert_rows(conn, table, rows, only_missing=True)
         _emit(progress_cb, 90, "Diario externo…")
         stats["diario"] = _merge_diario_into_nodo(conn)
+        _sync_catalogos_dir(progress_cb, root, upload=True)
     finally:
         conn.close()
 
@@ -468,7 +494,7 @@ def sincronizar_faltantes(progress_cb: ProgressCb | None = None, path: str | Non
     return stats
 
 
-def promover_nodo(path: str | None = None) -> str:
+def promover_nodo(progress_cb=None, path: str | None = None) -> str:
     """
     Si cae la PC del negocio: usa el nodo en esta notebook.
     - Apunta contabilidad al nodo
@@ -492,15 +518,28 @@ def promover_nodo(path: str | None = None) -> str:
     src = sqlite3.connect(_negocio_db_path(root))
     src.row_factory = sqlite3.Row
     imported = 0
+    _emit(progress_cb, 5, "Conectando al Nodo...")
     try:
-        for table in TABLAS_NEGOCIO:
+        total = len(TABLAS_NEGOCIO)
+        for i, table in enumerate(TABLAS_NEGOCIO):
+            base_pct = 10 + int((i / max(total, 1)) * 80)
+            next_pct = 10 + int(((i + 1) / max(total, 1)) * 80)
+            
+            _emit(progress_cb, base_pct, f"Promoviendo tabla: {table}...")
             try:
                 cur = src.cursor()
                 cur.execute(f"SELECT * FROM {table}")
                 rows = [dict(r) for r in cur.fetchall()]
             except Exception:
                 continue
-            for row in rows:
+                
+            total_rows = len(rows)
+            for row_idx, row in enumerate(rows):
+                # Emitir progreso interno cada 100 filas para que la barra se mueva fluidamente
+                if row_idx % 100 == 0 and total_rows > 0:
+                    current_pct = base_pct + int((row_idx / total_rows) * (next_pct - base_pct))
+                    _emit(progress_cb, current_pct, f"Promoviendo tabla: {table} ({row_idx}/{total_rows})...")
+
                 rid = row.get("id")
                 if rid is None:
                     continue
@@ -547,6 +586,70 @@ def promover_nodo(path: str | None = None) -> str:
 
     meta = _load_meta(root)
     meta["promoted_at"] = datetime.now().isoformat(timespec="seconds")
+    _sync_catalogos_dir(progress_cb, root, upload=False)
     meta["promoted_imported"] = imported
     _save_meta(root, meta)
+    _emit(progress_cb, 100, "¡Restauración exitosa!")
     return root
+
+def importar_catalogo_desde_nodo(progress_cb=None, path: str | None = None) -> dict:
+    """Lee el catalogo del nodo y hace MERGE (INSERT/UPDATE) en la Maestra."""
+    from src.base_de_datos.database import db_manager
+    import sqlite3
+    import os
+
+    root = (path or get_nodo_path() or "").strip()
+    if estado_nodo(root) != "ready":
+        raise RuntimeError("No hay nodo configurado. Primero crea el nodo.")
+
+    _emit(progress_cb, 5, "Conectando al Nodo...")
+    db_nodo_path = _negocio_db_path(root)
+    if not os.path.exists(db_nodo_path):
+        raise RuntimeError("No se encontro la base de datos en el nodo.")
+
+    src_conn = sqlite3.connect(db_nodo_path)
+    src_conn.row_factory = sqlite3.Row
+    src_cur = src_conn.cursor()
+
+    tablas_catalogo = ["departamentos", "categorias", "proveedores", "productos", "combos", "clientes"]
+    stats = {t: 0 for t in tablas_catalogo}
+
+    is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+
+    try:
+        total = len(tablas_catalogo)
+        for i, table in enumerate(tablas_catalogo):
+            _emit(progress_cb, 10 + int((i / total) * 80), f"Fusionando {table}...")
+            try:
+                src_cur.execute(f"SELECT * FROM {table}")
+                rows = [dict(r) for r in src_cur.fetchall()]
+            except Exception:
+                continue
+
+            if not rows:
+                continue
+            
+            for row in rows:
+                keys = list(row.keys())
+                vals = [row[k] for k in keys]
+                col_str = ",".join(keys)
+                ph_str = ",".join(["?"] * len(keys))
+                
+                if is_mariadb:
+                    update_str = ", ".join([f"{k}=VALUES({k})" for k in keys if k != "id"])
+                    if not update_str: update_str = "id=id"
+                    q = f"INSERT INTO {table} ({col_str}) VALUES ({ph_str}) ON DUPLICATE KEY UPDATE {update_str}"
+                else:
+                    q = f"INSERT OR REPLACE INTO {table} ({col_str}) VALUES ({ph_str})"
+
+                try:
+                    db_manager.execute_non_query(q, tuple(vals))
+                    stats[table] += 1
+                except Exception as e:
+                    pass
+    finally:
+        src_conn.close()
+
+    _sync_catalogos_dir(progress_cb, root, upload=False)
+    _emit(progress_cb, 100, "Catalogo fusionado con exito!")
+    return stats

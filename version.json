@@ -1,5 +1,5 @@
 {
-  "app_version": "15.1.1",
+  "app_version": "v16",
   "channel": "stable",
   "build_date": "2026-09-08 14:49:01",
   "server_host": "cesar",
@@ -244,7 +244,7 @@
       "channel": "stable",
       "size": 1267
     },
-    "02_Soporte_y_Mantenimiento/Restaurar_Contraseña.py": {
+    "02_Soporte_y_Mantenimiento/Restaurar_Contrase\u00f1a.py": {
       "version": "1.0.0",
       "checksum": "4febf0aaed6b9370893016fa818915cf",
       "channel": "stable",

@@ -23,6 +23,7 @@ export function htmlTarjetaRelampago(item) {
                         antes: "tv-card__was",
                         regla: "deal-save deal-line",
                         reglaTag: "p",
+                        ahoraPrimero: true,
                     })}
                 </div>
             </div>

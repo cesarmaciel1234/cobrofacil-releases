@@ -41,6 +41,9 @@ function textoFamiliasHoy(item) {
 }
 
 export function pruebaSocial(item, opciones = {}) {
+    const detalle = String(item?.detalle || "").trim();
+    if (detalle) return detalle;
+    if (opciones.inventario) return "En tu lista";
     if (opciones.premium) return humoPremium(item);
     if (opciones.mega) return humoKilos(item);
     return textoFamiliasHoy(item);

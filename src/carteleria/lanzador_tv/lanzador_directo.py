@@ -262,8 +262,9 @@ class LanzadorDirectoTV(QObject):
             try:
                 from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
-                if data.get("publicidad"):
-                    motor_publicidad.aplicar_remoto(data.get("publicidad"))
+                pub = data.get("publicidad")
+                if pub is not None:
+                    motor_publicidad.aplicar_remoto(pub)
             except Exception:
                 pass
             self._aplicar_catalogo(productos)

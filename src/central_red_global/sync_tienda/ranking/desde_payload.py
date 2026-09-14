@@ -48,16 +48,18 @@ def _rec_fila(row) -> float:
 
 def ranking_desde_filas(rows) -> list[dict]:
     out = []
-    total = len(rows or [])
-    for i, row in enumerate(rows or []):
+    for row in rows or []:
         nombre = _nombre_fila(row)
         if not nombre:
             continue
-        peso = float(total - i)
+        cant = _cant_fila(row, 0.0)
+        rec = _rec_fila(row)
+        if cant <= 0 and rec <= 0:
+            continue
         out.append({
             "nombre": nombre,
-            "cantidad": _cant_fila(row, peso) or peso,
-            "recaudacion": _rec_fila(row) or peso * 1000,
+            "cantidad": cant,
+            "recaudacion": rec,
         })
     return out
 

@@ -99,15 +99,16 @@ class CashDrawerManager(QObject):
                     status = self._opos.DrawerOpened
                     self._process_status_change(status)
                     return status
-                except: 
+                except Exception:
                     self._opos_active = False
 
-            # 2. Intento Genérico/Serial
             p1 = _impresora_cajero_activo()
             status = printer_manager.check_drawer_status(p1) if p1 else False
-            
-            self._process_status_change(status)
-            return status
+            self._process_status_change(bool(status))
+            return bool(status)
+        except Exception:
+            logger.debug("check_status cajón", exc_info=True)
+            return self._last_status
         finally:
             self._is_checking = False
 

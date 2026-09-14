@@ -4,14 +4,13 @@ import {
     descuentoPct,
     esOferta,
     escapeHtml,
+    esPorKg,
     formatMoney,
     htmlDealStage,
     leerPrecios,
     nombreVitrina,
-    precioVigente,
-    textoValidezOferta,
-    unidadProducto,
 } from "../shared/plata_y_texto.js";
+import { htmlFilaOfertaTv } from "../shared/precio_tv.js";
 import { iniciarCintaInfinita } from "../shared/cinta_infinita.js";
 import { intercalateAds } from "../shared/publicidad_tv.js";
 
@@ -28,9 +27,10 @@ export function renderFranjaOferta(hero, productos, els) {
         return;
     }
 
-    const firma = tarjetas.map((p) =>
-        `${p.id || p.nombre}:${p.slot_ad ? "a" : "o"}:${p.alarma ? "1" : "0"}:${precioVigente(p)}`
-    ).join("|");
+    const firma = tarjetas.map((p) => {
+        const { vigente, original, hayOferta } = leerPrecios(p);
+        return `${p.id || p.nombre}:${p.slot_ad ? "a" : "o"}:${p.alarma ? "1" : "0"}:${vigente}:${hayOferta ? original : 0}`;
+    }).join("|");
     if (track.dataset.firma === firma && track.children.length >= 2) {
         tickCronometros(track);
         return;
@@ -56,18 +56,15 @@ function crearTarjetaOferta(producto) {
 function htmlDealCard(producto, { ad }) {
     const { original, vigente, hayOferta } = leerPrecios(producto);
     const pct = descuentoPct(original, vigente);
-    const unidad = unidadProducto(producto);
     const ahorro = hayOferta ? original - vigente : 0;
     const nombre = nombreVitrina(producto.nombre || "Destacado");
     const esAd = Boolean(ad || producto.slot_ad);
     const stock = Number(producto.stock || 0);
-    const condicion = textoValidezOferta(producto);
-    const pie = stock > 0 && stock <= 8
-        ? "¡Se agota!"
-        : (ahorro > 0 ? `Ahorrás ${formatMoney(ahorro)} / ${unidad}` : "");
+    const unidadCorta = esPorKg(producto) ? "kg" : "un";
+    const ahorroTxt = ahorro > 0 ? `Ahorrás ${formatMoney(ahorro)} / ${unidadCorta}` : "";
+    const agota = stock > 0 && stock <= 8;
     const kicker = esAd ? "PUBLICIDAD" : (hayOferta ? "Ofertas" : "Precio especial");
     const offLabel = pct ? `-${pct}%` : (esAd ? "AD" : "NEW");
-    const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
     const clave = claveTimer(producto, esAd);
     return `
         <article class="tv-card oferta-card is-deal${hayOferta ? " is-flash" : ""}${esAd ? " is-ad" : ""}${esAd && producto.alarma ? " is-ad-alarm" : ""}">
@@ -78,22 +75,21 @@ function htmlDealCard(producto, { ad }) {
                     <h3 class="tv-card__name deal-line">${escapeHtml(nombre)}</h3>
                 </div>
                 <div class="deal-copy__mid">
-                    <div class="deal-price-row deal-line">
-                        <div class="tv-card__now-box price-highlight">
-                        ${vigente > 0
-                            ? `<strong class="tv-card__now giant-price"><span class="deal-currency">$</span><span class="odometer-val" data-val="${vigente}">${escapeHtml(monto)}</span></strong>`
-                            : `<strong class="tv-card__now giant-price">DESTACADO</strong>`}
-                        ${hayOferta ? `<s class="tv-card__was diagonal-strike">${formatMoney(original)}</s>` : ""}
-                        </div>
-                    </div>
-                    ${condicion ? `<p class="deal-save deal-line">${escapeHtml(condicion)}</p>` : ""}
+                    ${htmlFilaOfertaTv(producto, {
+                        caja: "tv-card__now-box price-highlight deal-price-row",
+                        ahora: "tv-card__now giant-price",
+                        antes: "tv-card__was diagonal-strike",
+                        regla: "deal-save deal-line",
+                        ahoraPrimero: true,
+                    })}
                 </div>
                 <div class="deal-foot deal-line deal-line--split">
                     <span class="tv-card__timer">
                         <span class="tv-card__timer-icon pulse-icon" aria-hidden="true"></span>
                         <span class="tv-card__timer-text" data-deal-timer="${escapeHtml(clave)}">${formatMmSs(segundosDeTarjeta(clave))}</span>
                     </span>
-                    ${pie ? `<span class="deal-proof${stock > 0 && stock <= 8 ? " is-low pulse-alert" : ""}">${escapeHtml(pie)}</span>` : ""}
+                    ${ahorroTxt ? `<span class="deal-proof deal-ahorro">${escapeHtml(ahorroTxt)}</span>` : ""}
+                    ${agota ? `<span class="deal-proof is-low pulse-alert">¡Se agota!</span>` : ""}
                 </div>
             </div>
             ${esAd ? "" : '<div class="card-shimmer"></div>'}

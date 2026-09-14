@@ -11,6 +11,35 @@ from src.config import config
 from src.central_red_global.sync_tienda.maestra.http import manejar_get, manejar_post, payload_ranking
 
 
+def es_anuncio_tienda(info: dict) -> bool:
+    """PC maestra con MariaDB (caja o cartelería en la misma máquina). No TV esclava."""
+    if not isinstance(info, dict):
+        return False
+    if str(info.get("mode") or "").upper() != "MAESTRA":
+        return False
+    if str(info.get("esclava") or "").lower() in ("1", "true", "si"):
+        return False
+    eng = str(info.get("db_engine") or "").lower()
+    if eng and eng != "mariadb":
+        return False
+    serv = str(info.get("servicio") or "").lower()
+    if serv in ("esclava", "tv_esclava"):
+        return False
+    return True
+
+
+def _esta_pc_anuncia_tienda() -> bool:
+    """Misma regla que el jefe: maestra + MariaDB. Esclava (TV sola) no se anuncia."""
+    try:
+        if config.get("carteleria_is_slave") or config.get("is_master") is False:
+            return False
+    except Exception:
+        pass
+    if not getattr(db_manager, "is_master", False):
+        return False
+    return getattr(db_manager, "db_engine_type", "") == "mariadb"
+
+
 def _payload_publicidad():
     try:
         from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
@@ -19,6 +48,16 @@ def _payload_publicidad():
         return motor_publicidad.as_dict()
     except Exception:
         return {"promocionados": [], "ids": []}
+
+
+def _payload_reporte():
+    try:
+        from src.jefe.reportes.financiero.consulta import payload_reporte_global
+
+        return payload_reporte_global()
+    except Exception:
+        return {}
+
 
 API_PORT = 8000
 UDP_PORT = 37020
@@ -300,6 +339,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     "top10": top_dict,
                     "ranking": payload_ranking(),
                     "publicidad": _payload_publicidad(),
+                    "reporte": _payload_reporte(),
                 }
                 
                 self._send_response(200, response_data)
@@ -346,10 +386,9 @@ def start_udp_discovery_server():
                 
             try:
                 if data == b"PUNPRO_DISCOVER":
-                    db_engine = getattr(db_manager, 'db_engine_type', 'sqlite')
-                    if db_engine == 'sqlite' and not os.path.exists(db_manager.db_path):
+                    if not _esta_pc_anuncia_tienda():
                         continue
-                        
+                    db_engine = getattr(db_manager, "db_engine_type", "sqlite")
                     try:
                         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                         s.connect(("8.8.8.8", 80))
@@ -357,19 +396,19 @@ def start_udp_discovery_server():
                         s.close()
                     except Exception:
                         local_ip = socket.gethostbyname(socket.gethostname())
-                    
+
                     pass_hash = hashlib.sha256(config.get("server_password", "1234").encode()).hexdigest()
-                    is_master = getattr(db_manager, "is_master", True)
-                    
                     response = {
                         "hostname": socket.gethostname(),
                         "server_ip": local_ip,
-                        "db_path": db_manager.db_path,
+                        "db_path": getattr(db_manager, "db_path", ""),
                         "pass_hash": pass_hash,
-                        "mode": "MAESTRA" if is_master else "ESCLAVA",
-                        "api_url": f"http://{local_ip}:{API_PORT}"
+                        "mode": "MAESTRA",
+                        "servicio": "tienda",
+                        "db_engine": db_engine,
+                        "api_url": f"http://{local_ip}:{API_PORT}",
                     }
-                    sock.sendto(json.dumps(response).encode('utf-8'), addr)
+                    sock.sendto(json.dumps(response).encode("utf-8"), addr)
             except Exception as e:
                 logger.error(f"Error parseando peticion UDP: {e}")
     except Exception as e:

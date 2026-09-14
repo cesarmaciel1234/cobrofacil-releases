@@ -21,11 +21,12 @@ class CajaController:
             (c_id,),
         )
         if mov and mov[0]["tipo"] == "APERTURA":
-            # Caja ya abierta (reinicio/crash): actualizar fondo, no duplicar
+            # Caja ya abierta (reinicio/crash): NO TOCAR LA FECHA ORIGINAL
+            # Si actualizamos la fecha, todas las ventas anteriores al reinicio quedan excluidas del corte.
             last_id = mov[0]["id"]
             db_manager.execute_non_query(
-                "UPDATE movimientos_caja SET fecha = ?, monto = ?, usuario = ?, observaciones = 'Reapertura por reinicio/crash' WHERE id = ?",
-                (fecha, monto, usuario, last_id),
+                "UPDATE movimientos_caja SET monto = ?, usuario = ?, observaciones = 'Reapertura por reinicio/crash' WHERE id = ?",
+                (monto, usuario, last_id),
             )
         else:
             db_manager.execute_non_query(

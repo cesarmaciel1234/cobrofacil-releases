@@ -718,6 +718,11 @@ class MainWindow(QMainWindow):
           - Los slots libres (6, 12, 15, 16) redirigen al home del rol.
         """
         from src.config import config
+        try:
+            from src.base_de_datos.database import db_manager
+            db_manager.asegurar_lectura_tienda()
+        except Exception:
+            pass
         role = config.current_role
         escalando = getattr(self, '_escalando', False)
 

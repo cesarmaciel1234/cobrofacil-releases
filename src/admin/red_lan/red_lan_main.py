@@ -446,6 +446,10 @@ class Admin6RedLan(QWidget):
                     try:
                         data, addr = sock.recvfrom(1024)
                         info = json.loads(data.decode('utf-8'))
+                        from src.central_red_global.lan_server import es_anuncio_tienda
+
+                        if not es_anuncio_tienda(info):
+                            continue
                         ip = info.get('server_ip') or addr[0]
                         hostname = info.get('hostname', ip)
                         found[ip] = f"{hostname} ({ip})"
@@ -472,7 +476,7 @@ class Admin6RedLan(QWidget):
                 threads = []
 
                 def check_host(ip):
-                    for port in (3306, 8000):
+                    for port in (3306,):
                         try:
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                             s.settimeout(0.3)

@@ -220,11 +220,15 @@ def lanzar_app(app=None):
     if app is None:
         app = QApplication(sys.argv)
         
-    # LAN solo si no hay Servidor de Tienda (él ya tiene :8000 / UDP :37020)
+    # Misma red que el jefe: si esta PC es maestra y no hay Servidor de Tienda
+    # aparte, arranca MariaDB/API. Si es TV esclava, no se anuncia.
     try:
         from src.utils.candados import is_store_server_running
-        if not is_store_server_running():
+        from src.central_red_global.sync_tienda.rol import es_esclava
+
+        if not is_store_server_running() and not es_esclava():
             from src.central_red_global.lan_server import init_lan_server
+
             init_lan_server()
     except Exception:
         pass

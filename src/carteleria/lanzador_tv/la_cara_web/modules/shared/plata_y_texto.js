@@ -184,10 +184,7 @@ const ALIAS_PNG = {
 };
 
 export function urlIcono(item) {
-    const raw = String(item?.icono_url || item?.icono || "").trim();
-    if (raw.startsWith("/iconos/")) return raw;
-    if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(raw)) return `/iconos/${raw}`;
-    return "";
+    return urlsFotoProducto(item)[0] || "";
 }
 
 export const FOTO_SISTEMA = "assets/logo_sistema.svg";
@@ -201,8 +198,10 @@ export function urlsFotoProducto(item) {
     const asUrl = (raw) => {
         const v = String(raw || "").trim();
         if (!v) return "";
-        if (v.startsWith("/iconos/")) return v;
-        if (/^[\w.\- ]+\.(png|jpe?g|webp|svg)$/i.test(v)) return `/iconos/${v}`;
+        if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("assets/")) return v;
+        if (v.startsWith("/iconos/")) return v.replace(/\\/g, "/");
+        const base = v.replace(/\\/g, "/").split("/").pop() || "";
+        if (/\.(png|jpe?g|webp|svg)$/i.test(base)) return `/iconos/${base}`;
         return "";
     };
     push(asUrl(item?.icono_url));

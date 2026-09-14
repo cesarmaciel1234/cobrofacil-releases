@@ -13,6 +13,10 @@ from __future__ import annotations
 import os
 import sys
 
+# Desactiva aceleración por hardware en QtWebEngine (Chromium) para evitar 
+# pantallazos o errores "Failed to create GLES3 context" en Windows/Máquinas virtuales.
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
+
 from PyQt6 import QtCore, QtGui, QtWidgets  # noqa: F401
 
 QT_VERSION = 6
@@ -138,6 +142,9 @@ def qt_exec(obj, *args, **kwargs):
 
 def configure_qt_application_attributes() -> None:
     """Atributos de app antes del primer QApplication()."""
+    import os
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
+    
     if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
         try:
             policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough

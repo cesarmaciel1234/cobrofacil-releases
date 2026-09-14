@@ -1,0 +1,17 @@
+# Base de datos — esclava lee a la maestra
+
+Vale para **cualquier perfil**: cajero, jefe, admin, cartelería, lanzador.
+
+## Regla
+
+Si `config.json` dice esclava (`is_master: false` o `db_host` de otra PC):
+
+- Toda lectura y toda venta van a MariaDB de esa IP (`3306`).
+- `punpro.db` local **no** es la tienda. Es solo respaldo si la maestra no responde.
+- Cuando la maestra vuelve, `asegurar_lectura_tienda()` deja SQLite y engancha otra vez.
+
+## Dónde está el gancho
+
+`database.py`: `get_connection`, `execute_query`, arranque en `main.py`, cada cambio de pantalla en `main_window.switch_tab`.
+
+No abras `punpro.db` a mano en un perfil esclavo. Usá `db_manager`.

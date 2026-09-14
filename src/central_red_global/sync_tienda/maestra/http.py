@@ -17,6 +17,11 @@ def manejar_get(handler, path: str) -> bool:
     if path in ("/api/carteleria/ranking", "/api/carteleria/top_ventas"):
         handler._send_response(200, {"ranking": ranking_carteleria()})
         return True
+    if path in ("/api/carteleria/reporte", "/api/tienda/reporte"):
+        from src.jefe.reportes.financiero.consulta import payload_reporte_global
+
+        handler._send_response(200, {"reporte": payload_reporte_global()})
+        return True
     if path in ("/api/carteleria/publicidad",):
         from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 

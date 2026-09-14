@@ -9,11 +9,7 @@ body .tv-panel .xsell-item__price *,
 body .tv-panel .price-row__now,
 body .tv-panel .price-row__now *,
 body .tv-panel .asian-flash-current,
-body .tv-panel .asian-flash-current *,
-body .hero-section .tv-card__now,
-body .hero-section .tv-card__now *,
-body .hero-section .giant-price,
-body .hero-section .giant-price * {
+body .tv-panel .asian-flash-current * {
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
     background: none !important;

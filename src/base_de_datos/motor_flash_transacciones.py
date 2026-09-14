@@ -66,6 +66,10 @@ class MotorFlashTransacciones:
             logger.info(f"⚡ Ejecutando commit atómico bancario para {len(self._buffer_modificaciones)} operaciones en ciclo Flash...")
 
             try:
+                try:
+                    db_manager.asegurar_lectura_tienda()
+                except Exception:
+                    pass
                 # 1. Modo MariaDB o SQLite
                 if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" and hasattr(db_manager, "mariadb_engine"):
                     conn = db_manager.mariadb_engine.get_connection()

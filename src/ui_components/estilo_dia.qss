@@ -158,6 +158,21 @@ QLabel {
     color: #1E3A8A;
 }
 
+QMessageBox {
+    background-color: #FFFFFF;
+}
+QMessageBox QLabel {
+    color: #1C1917;
+    background: transparent;
+}
+QMessageBox QPushButton {
+    background-color: #3B82F6;
+    color: #FFFFFF;
+    min-width: 80px;
+    padding: 6px 16px;
+    border-radius: 6px;
+}
+
 
 /* --- QCheckBox --- */
 QCheckBox {
@@ -1489,9 +1504,11 @@ QFrame#TerminalCabecera[estado="alerta"] {
 /* =========================================
    CALENDARIO TEMA DIA
    ========================================= */
-QCalendarWidget QWidget {
-    alternate-background-color: #F8FAFC;
+QCalendarWidget {
     background-color: #FFFFFF;
+    color: #0F172A;
+    letter-spacing: 0px;
+    font-weight: 400;
 }
 
 
@@ -1505,8 +1522,10 @@ QCalendarWidget QWidget#qt_calendar_navigationbar {
 
 /* Botones de navegación (mes anterior/siguiente) */
 QCalendarWidget QToolButton {
-    color: #1E3A8A !important;
-    background-color: transparent;
+    color: #0F172A !important;
+    background-color: #F1F5F9;
+    font-weight: 400;
+    letter-spacing: 0px;
 }
 
 QCalendarWidget QToolButton:hover {
@@ -1516,26 +1535,35 @@ QCalendarWidget QToolButton:hover {
 
 /* Spinbox de año y mes */
 QCalendarWidget QSpinBox {
-    background-color: transparent !important;
-    color: #1E3A8A !important;
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    font-weight: 400;
 }
 
 
 /* Grilla del calendario (los días) */
+QCalendarWidget QAbstractItemView,
 QCalendarWidget QTableView {
     background-color: #FFFFFF !important;
     selection-background-color: #3B82F6 !important;
     selection-color: #FFFFFF !important;
     border: 1px solid #E2E8F0;
-    color: #1E3A8A;
+    color: #0F172A;
+    alternate-background-color: #F8FAFC;
+    font-weight: 400;
+    letter-spacing: 0px;
 }
 
 
 /* Encabezado de los días de la semana */
+QCalendarWidget QHeaderView::section,
 QCalendarWidget QTableView QHeaderView::section {
     background-color: #F8FAFC !important;
-    color: #475569 !important;
+    color: #334155 !important;
+    border: none;
     border-bottom: 1px solid #E2E8F0;
+    font-weight: 400;
+    letter-spacing: 0px;
 }
 
 

@@ -91,7 +91,11 @@ class MotorIALocal:
             elif clima == "nube": clima = "un día nublado"
             elif clima == "lluvia": clima = "la lluvia"
             
-            localidad = clima_tupla[1].split()[-1] if clima_tupla and len(clima_tupla) > 1 else "tu barrio"
+            localidad = "tu barrio"
+            if clima_tupla and len(clima_tupla) > 1 and clima_tupla[1]:
+                partes = str(clima_tupla[1]).split()
+                if partes:
+                    localidad = partes[-1]
             
             plantilla_elegida = random.choice(plantillas)
             mensaje = plantilla_elegida.format(

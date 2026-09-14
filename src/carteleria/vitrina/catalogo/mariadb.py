@@ -60,14 +60,6 @@ def leer_catalogo_db(db_manager) -> dict:
     oferta_sos = to_serializable(_q(db_manager, sql_sos(rand_func), rand_func))
     rows_precios = to_serializable(_q(db_manager, PRECIOS_SELECT, rand_func))
     top_hoy = to_serializable(_q(db_manager, sql_top_fallback(rand_func), rand_func))
-    publicidad = {}
-    try:
-        from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-
-        motor_publicidad.cargar_configuracion(forzar=True)
-        publicidad = motor_publicidad.as_dict()
-    except Exception:
-        pass
     return {
         "config": {
             "business_name": cfg_data.get("business_name", "Carnicería"),
@@ -80,5 +72,4 @@ def leer_catalogo_db(db_manager) -> dict:
         "sos": oferta_sos,
         "precios": rows_precios,
         "top10": {"hoy": top_hoy, "semana": top_hoy, "mes": top_hoy},
-        "publicidad": publicidad,
     }

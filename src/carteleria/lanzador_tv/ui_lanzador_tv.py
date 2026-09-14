@@ -195,19 +195,6 @@ class CarteleriaMainTV(QWidget):
 
     def _on_sync_finished(self, data, status):
         data = data or {}
-        productos = [self._normalizar_producto(row) for row in data.get("precios", [])]
-        try:
-            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
-            motor_publicidad.marcar_lista(productos)
-        except Exception:
-            pass
-        if productos:
-            self.rows_precios = productos
-            try:
-                from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
-                enriquecer_iconos(self.rows_precios)
-            except Exception:
-                pass
         self.sos_data = data.get("sos", []) or []
         self.top10_data = data.get("top10", {}) or {}
         try:
@@ -222,10 +209,24 @@ class CarteleriaMainTV(QWidget):
         try:
             from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
 
-            if data.get("publicidad"):
-                motor_publicidad.aplicar_remoto(data.get("publicidad"))
+            pub = data.get("publicidad")
+            if pub is not None:
+                motor_publicidad.aplicar_remoto(pub)
         except Exception:
             pass
+        productos = [self._normalizar_producto(row) for row in data.get("precios", [])]
+        try:
+            from src.carteleria.motor_carteleria.motor_publicidad import motor_publicidad
+            motor_publicidad.marcar_lista(productos)
+        except Exception:
+            pass
+        if productos:
+            self.rows_precios = productos
+            try:
+                from src.carteleria.motor_carteleria.iconos_tv import enriquecer_iconos
+                enriquecer_iconos(self.rows_precios)
+            except Exception:
+                pass
         self._sync_status, self._ultima_sincro = status, datetime.now()
         self._refrescar_paneles()
         self._actualizar_resumen()

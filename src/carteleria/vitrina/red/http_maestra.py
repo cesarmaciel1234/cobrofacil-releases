@@ -9,6 +9,40 @@ import urllib.request
 logger = logging.getLogger("Carteleria_Autonoma")
 
 
+def leer_publicidad_maestra(master_ip: str) -> dict | None:
+    """Lista de ads de la maestra. No depende del catálogo."""
+    if not master_ip:
+        return None
+    try:
+        from src.central_red_global.sync_tienda.rol import url_maestra
+
+        url = url_maestra("/api/carteleria/publicidad", master_ip)
+    except Exception:
+        url = f"http://{master_ip}:8000/api/carteleria/publicidad"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "CobroFacil-Carteleria"})
+        with urllib.request.urlopen(req, timeout=4) as response:
+            if response.status != 200:
+                return None
+            data = json.loads(response.read().decode("utf-8"))
+        if not isinstance(data, dict):
+            return None
+        pub = data.get("publicidad")
+        if isinstance(pub, dict):
+            return pub
+        if "promocionados" in data or "ids" in data or "nombres" in data:
+            return data
+    except Exception as exc:
+        logger.debug("Sync publicidad HTTP %s: %s", url, exc)
+    return None
+
+
+def leer_reporte_maestra(master_ip: str) -> dict | None:
+    from src.carteleria.vitrina.red.reporte import leer_reporte_maestra as _leer
+
+    return _leer(master_ip)
+
+
 def leer_http_maestra(master_ip: str, abortar=None) -> dict | None:
     if not master_ip:
         return None

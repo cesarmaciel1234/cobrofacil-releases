@@ -9,9 +9,36 @@ class ReportesMain(QWidget):
     
     def __init__(self):
         super().__init__()
+        self.setObjectName("JefeReportesPage")
+        try:
+            from src.base_de_datos.database import db_manager
+            db_manager.asegurar_lectura_tienda()
+        except Exception:
+            pass
         self.setup_ui()
 
     def setup_ui(self):
+        self.setStyleSheet(f"""
+            QWidget#JefeReportesPage {{
+                background: {_FIN['bg_page']};
+                color: {_FIN['text']};
+                letter-spacing: 0px;
+                font-family: 'Segoe UI';
+                font-weight: 400 !important;
+            }}
+            QWidget#JefeReportesPage QLabel,
+            QWidget#JefeReportesPage QPushButton,
+            QWidget#JefeReportesPage QCheckBox,
+            QWidget#JefeReportesPage QComboBox,
+            QWidget#JefeReportesPage QLineEdit,
+            QWidget#JefeReportesPage QDateEdit,
+            QWidget#JefeReportesPage QTimeEdit,
+            QWidget#JefeReportesPage QHeaderView::section,
+            QWidget#JefeReportesPage QTableWidget,
+            QWidget#JefeReportesPage QTableWidget::item {{
+                letter-spacing: 0px;
+            }}
+        """)
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(0, 0, 0, 0)
         main_lay.setSpacing(0)
@@ -20,32 +47,32 @@ class ReportesMain(QWidget):
         top_bar = QWidget()
         top_bar.setFixedHeight(55)
         top_bar.setStyleSheet(
-            f"background-color: {_FIN['card']}; border-bottom: 1px solid {_FIN['card_border']};"
+            f"background-color: {_FIN['card']}; border-bottom: 1px solid {_FIN['card_border']}; letter-spacing: 0px;"
         )
         top_lay = QHBoxLayout(top_bar)
         top_lay.setContentsMargins(20, 0, 20, 0)
         top_lay.setSpacing(15)
 
-        self.btn_volver = QPushButton("← VOLVER")
+        self.btn_volver = QPushButton("Volver")
         self.btn_volver.setCursor(Qt.PointingHandCursor)
         self.btn_volver.clicked.connect(self.request_dashboard.emit)
         top_lay.addWidget(self.btn_volver)
         top_lay.addSpacing(15)
 
-        self.btn_ventas = QPushButton("📉 REPORTE FINANCIERO")
-        self.btn_auditoria = QPushButton("🔍 AUDITORÍA DE VENTAS")
-        self.btn_historial = QPushButton("🕰️ HISTORIAL")
+        self.btn_ventas = QPushButton("Reporte financiero")
+        self.btn_auditoria = QPushButton("Auditoría de ventas")
+        self.btn_historial = QPushButton("Historial")
 
         # Styling
         btn_style = f"""
             QPushButton {{
                 background: transparent;
-                font-weight: 700;
+                font-weight: 400 !important;
                 border-radius: 12px;
                 padding: 8px 18px;
-                font-size: 12px;
+                font-size: 13px;
                 border: none;
-                color: {_FIN['text']};
+                letter-spacing: 0px;
             }}
             QPushButton:hover {{
                 background-color: {_FIN['accent_light']};
@@ -92,11 +119,12 @@ class ReportesMain(QWidget):
             QPushButton {{
                 background: {_FIN['accent']};
                 color: white;
-                font-weight: 700;
+                font-weight: 400 !important;
                 border-radius: 10px;
                 padding: 8px 18px;
-                font-size: 12px;
+                font-size: 13px;
                 border: none;
+                letter-spacing: 0px;
             }}
             QPushButton:hover {{
                 background: {_FIN['accent_hover']};
@@ -106,11 +134,12 @@ class ReportesMain(QWidget):
             QPushButton {{
                 background: white;
                 color: {_FIN['text_soft']};
-                font-weight: 600;
+                font-weight: 400 !important;
                 border-radius: 10px;
                 padding: 8px 18px;
-                font-size: 12px;
+                font-size: 13px;
                 border: 1px solid {_FIN['card_border']};
+                letter-spacing: 0px;
             }}
             QPushButton:hover {{
                 background-color: {_FIN['accent_light']};
@@ -129,7 +158,7 @@ class ReportesMain(QWidget):
         self.stack_views.addWidget(self.tab_ventas)
 
     def setup_audit_ui(self):
-        from src.jefe.reportes.vista_auditoria import VistaAuditoria
+        from src.jefe.reportes.auditoria import VistaAuditoria
         self.tab_auditoria = VistaAuditoria()
         self.stack_views.addWidget(self.tab_auditoria)
 

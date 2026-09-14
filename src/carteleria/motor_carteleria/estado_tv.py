@@ -86,7 +86,9 @@ def _fmt_cantidad(valor):
 
 
 def _detalle_familias(cantidad, periodo="hoy"):
-    n = max(1, int(round(num(cantidad))))
+    n = max(0, int(round(num(cantidad))))
+    if n <= 0:
+        return ""
     if n == 1:
         return "1 familia lo eligió" if periodo == "hoy" else "1 familia esta semana"
     if periodo == "semana":
@@ -183,30 +185,19 @@ def _ranking_hoy_pisa_ayer(modo, limite, orden, ranking_remoto=None):
         hoy = list(ranking_remoto.get(f"hoy_{clave_modo}") or [])
         ayer = list(ranking_remoto.get(f"ayer_{clave_modo}") or [])
         semana = list(ranking_remoto.get(f"semana_{clave_modo}") or [])
-        if not hoy and not ayer:
-            return semana, "semana"
-        mezclado = []
-        vistos = set()
-        for origen, tanda in (("hoy", hoy), ("ayer", ayer)):
-            for item in _ordenar_ranking(tanda, orden):
-                clave = _norm_nombre(item.get("nombre"))
-                if not clave or clave in vistos:
-                    continue
-                vistos.add(clave)
-                fila = dict(item)
-                fila["_periodo"] = origen
-                mezclado.append(fila)
-        return mezclado, ("hoy" if hoy else "ayer")
-    try:
-        from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
-        hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
-        ayer = MotorVentas.get_top_ventas(limit=cupo, periodo="ayer", modo=modo) or []
-        if not hoy and not ayer:
-            semana = MotorVentas.get_top_ventas(limit=cupo, periodo="semana", modo=modo) or []
-            return semana, "semana"
-    except Exception as exc:
-        logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
-        return [], "hoy"
+    else:
+        try:
+            from src.cerebro_global.reporte_ventas_cerebro.motor_ventas import MotorVentas
+            hoy = MotorVentas.get_top_ventas(limit=cupo, periodo="hoy", modo=modo) or []
+            ayer = MotorVentas.get_top_ventas(limit=cupo, periodo="ayer", modo=modo) or []
+            semana = MotorVentas.get_top_ventas(limit=cupo, periodo="semana", modo=modo) or [] if not hoy and not ayer else []
+        except Exception as exc:
+            logger.debug("MotorVentas (%s) no disponible: %s", modo, exc)
+            hoy, ayer, semana = [], [], []
+
+    if not hoy and not ayer:
+        # Aseguramos que se ordene correctamente (ej. 'plata' se ordena por 'recaudacion')
+        return _ordenar_ranking(semana, orden), "semana"
 
     mezclado = []
     vistos = set()

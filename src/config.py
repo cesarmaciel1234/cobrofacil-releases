@@ -51,6 +51,7 @@ class Config:
 
     _instance = None
     current_user = None  # To store the logged-in user
+    _last_mtime = 0.0
 
     def __new__(cls):
         if cls._instance is None:
@@ -62,6 +63,7 @@ class Config:
         from src.utils.paths import get_base_path
         self.config_path = os.path.join(get_base_path(), "config.json")
         if os.path.exists(self.config_path):
+            self._last_mtime = os.path.getmtime(self.config_path)
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
@@ -91,11 +93,25 @@ class Config:
             self.save()
             logger.info("New configuration file created with defaults.")
 
+    def reload(self):
+        """Reloads the configuration from disk if it has been modified by another process."""
+        if not hasattr(self, 'config_path') or not self.config_path: return
+        if os.path.exists(self.config_path):
+            current_mtime = os.path.getmtime(self.config_path)
+            if current_mtime > getattr(self, '_last_mtime', 0):
+                try:
+                    with open(self.config_path, 'r', encoding='utf-8') as f:
+                        self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
+                    self._last_mtime = current_mtime
+                except Exception:
+                    pass
+
     def save(self):
         """Saves current configuration to disk."""
         try:
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, indent=4)
+            self._last_mtime = os.path.getmtime(self.config_path)
             logger.info("Configuration saved successfully.")
         except Exception as e:
             logger.error(f"Error saving config.json: {e}")

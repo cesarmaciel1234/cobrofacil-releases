@@ -339,37 +339,39 @@ class MariaDBController:
             logger.error(f"Excepcion al inicializar DB: {e}")
 
     def stop_server(self):
-        """Detiene el servidor MariaDB limpiamente."""
-        if self._process is None:
-            return
-            
+        """Detiene MariaDB portable (aunque lo haya arrancado otro proceso PunPro)."""
         logger.info("Apagando MariaDB Portable...")
-        
-        server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
+        _server_dir, _data_dir, mysqld_exe, _install = self._get_server_paths()
         mysqladmin_exe = os.path.join(os.path.dirname(mysqld_exe), "mysqladmin.exe")
-        
-        # Primero intentamos un apagado limpio con mysqladmin
+        creationflags = 0x08000000
         try:
-            creationflags = 0x08000000
-            subprocess.run(
-                [mysqladmin_exe, "-u", "root", "shutdown"],
-                cwd=os.path.dirname(mysqladmin_exe),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=creationflags,
-                timeout=5
-            )
-            
-            # Esperar a que el proceso muera naturalmente
+            if os.path.isfile(mysqladmin_exe):
+                for args in (
+                    [mysqladmin_exe, "-u", "root", "-p1234", "shutdown"],
+                    [mysqladmin_exe, "-u", "root", "shutdown"],
+                ):
+                    r = subprocess.run(
+                        args,
+                        cwd=os.path.dirname(mysqladmin_exe),
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        creationflags=creationflags,
+                        timeout=8,
+                    )
+                    if r.returncode == 0:
+                        break
             if self._process:
-                self._process.wait(timeout=5)
+                try:
+                    self._process.wait(timeout=5)
+                except Exception:
+                    self._process.kill()
         except Exception as e:
             logger.warning(f"Apagado suave falló, forzando kill: {e}")
             if self._process:
                 try:
                     self._process.kill()
-                except: pass
-                
+                except Exception:
+                    pass
         self._process = None
         self._initialized = False
 

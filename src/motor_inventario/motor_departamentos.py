@@ -15,50 +15,77 @@ class MotorDepartamentos:
             MotorDepartamentos._tablas_inicializadas = True
             
     def _inicializar_tablas(self):
-        db_manager.execute_non_query('''
-            CREATE TABLE IF NOT EXISTS departamentos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT UNIQUE NOT NULL,
-                iva REAL DEFAULT 0.0,
-                icono TEXT
-            )
-        ''')
+        maria = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+        if maria:
+            db_manager.execute_non_query('''
+                CREATE TABLE IF NOT EXISTS departamentos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    nombre VARCHAR(255) UNIQUE NOT NULL,
+                    iva DOUBLE DEFAULT 0,
+                    icono VARCHAR(255) NULL
+                )
+            ''')
+            db_manager.execute_non_query('''
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    nombre VARCHAR(255) UNIQUE NOT NULL,
+                    icono VARCHAR(255) NULL
+                )
+            ''')
+        else:
+            db_manager.execute_non_query('''
+                CREATE TABLE IF NOT EXISTS departamentos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    iva REAL DEFAULT 0.0,
+                    icono TEXT
+                )
+            ''')
+            db_manager.execute_non_query('''
+                CREATE TABLE IF NOT EXISTS categorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre TEXT UNIQUE NOT NULL,
+                    icono TEXT
+                )
+            ''')
         try:
-            # Verificar si la columna icono ya existe (MariaDB vs SQLite)
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+            if maria:
                 cols = db_manager.execute_query("SHOW COLUMNS FROM departamentos") or []
                 col_names = [c.get('Field', '') if isinstance(c, dict) else c[0] for c in cols]
             else:
                 cols = db_manager.execute_query("PRAGMA table_info(departamentos)") or []
                 col_names = [c.get('name', '') if isinstance(c, dict) else c[1] for c in cols]
-                
             if "icono" not in col_names:
-                db_manager.execute_non_query("ALTER TABLE departamentos ADD COLUMN icono TEXT")
+                db_manager.execute_non_query(
+                    "ALTER TABLE departamentos ADD COLUMN icono VARCHAR(255)" if maria
+                    else "ALTER TABLE departamentos ADD COLUMN icono TEXT"
+                )
         except Exception:
             pass
 
-        db_manager.execute_non_query('''
-            CREATE TABLE IF NOT EXISTS categorias (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT UNIQUE NOT NULL,
-                icono TEXT
-            )
-        ''')
         try:
-            if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb":
+            if maria:
                 cols_cat = db_manager.execute_query("SHOW COLUMNS FROM categorias") or []
                 cat_col_names = [c.get('Field', '') if isinstance(c, dict) else c[0] for c in cols_cat]
             else:
                 cols_cat = db_manager.execute_query("PRAGMA table_info(categorias)") or []
                 cat_col_names = [c.get('name', '') if isinstance(c, dict) else c[1] for c in cols_cat]
-                
             if "icono" not in cat_col_names:
-                db_manager.execute_non_query("ALTER TABLE categorias ADD COLUMN icono TEXT")
+                db_manager.execute_non_query(
+                    "ALTER TABLE categorias ADD COLUMN icono VARCHAR(255)" if maria
+                    else "ALTER TABLE categorias ADD COLUMN icono TEXT"
+                )
         except Exception:
             pass
 
-        # Auto-poblar categorías desde productos si está vacío
-        db_manager.execute_non_query("INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''")
+        if maria:
+            db_manager.execute_non_query(
+                "INSERT IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''"
+            )
+        else:
+            db_manager.execute_non_query(
+                "INSERT OR IGNORE INTO categorias (nombre) SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria != ''"
+            )
 
     def obtener_departamentos(self):
         """Devuelve una lista de diccionarios con los departamentos, su IVA e ícono."""

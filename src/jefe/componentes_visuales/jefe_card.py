@@ -56,19 +56,20 @@ class JefeCard(QFrame):
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setWordWrap(True)
         self.lbl_title.setStyleSheet(f"""
-            font-size: 13px; font-weight: 800;
+            font-size: 13px; font-weight: 400; color: {text_dark};
+            letter-spacing: 0px;
             font-family: 'Segoe UI', sans-serif;
-            background: none; border: none;
+            background: transparent; border: none;
         """)
         layout.addWidget(self.lbl_title)
         layout.addStretch()
 
-        # Link acento
-        self.lbl_link = QLabel(
-            f"<span style='color:{accent}; font-size:9px; font-weight:900;"
-            f" letter-spacing:1px;'>ABRIR  →</span>")
+        self.lbl_link = QLabel("Abrir →")
         self.lbl_link.setAlignment(Qt.AlignCenter)
-        self.lbl_link.setStyleSheet("background: none; border: none;")
+        self.lbl_link.setStyleSheet(
+            f"color: {accent}; font-size: 11px; font-weight: 400;"
+            " letter-spacing: 0px; background: transparent; border: none;"
+        )
         layout.addWidget(self.lbl_link)
 
         # Animación eliminada para PCs de bajos recursos

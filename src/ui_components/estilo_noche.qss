@@ -158,6 +158,21 @@ QLabel {
     color: #1E293B;
 }
 
+QMessageBox {
+    background-color: #FFFFFF;
+}
+QMessageBox QLabel {
+    color: #1C1917;
+    background: transparent;
+}
+QMessageBox QPushButton {
+    background-color: #3B82F6;
+    color: #FFFFFF;
+    min-width: 80px;
+    padding: 6px 16px;
+    border-radius: 6px;
+}
+
 
 /* --- QCheckBox --- */
 QCheckBox {

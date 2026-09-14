@@ -12,7 +12,7 @@ export function htmlFilaOfertaTv(item, opts = {}) {
     const reglaTag = opts.reglaTag || "p";
     const monto = vigente > 0 ? formatMoney(vigente).replace(/^\$\s*/, "") : "";
     const tachado = hayOferta
-        ? `<s class="${antesClase}">${escapeHtml(formatMoney(original).replace(/\s+/g, ""))}</s>`
+        ? `<s class="${antesClase}">${escapeHtml(formatMoney(original))}</s>`
         : "";
     const condicion = regla
         ? `<${reglaTag} class="${reglaClase}">${escapeHtml(regla)}</${reglaTag}>`
@@ -21,10 +21,10 @@ export function htmlFilaOfertaTv(item, opts = {}) {
         ? `<strong class="${ahoraClase}"><span class="deal-currency">$</span>${escapeHtml(monto)}</strong>`
         : "";
     if (!ahora && !tachado) return "";
+    const fila = opts.ahoraPrimero ? `${ahora}${tachado}` : `${tachado}${ahora}`;
     return `
         <div class="${caja} tv-precio">
-            ${ahora}
-            ${tachado}
+            ${fila}
         </div>
         ${condicion}
     `;

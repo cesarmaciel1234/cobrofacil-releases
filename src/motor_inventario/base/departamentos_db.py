@@ -4,21 +4,46 @@ from src.base_de_datos.database import db_manager
 
 logger = logging.getLogger("departamentos_db")
 
+def _preparar_tablas():
+    try:
+        from src.motor_inventario.motor_departamentos import MotorDepartamentos
+        MotorDepartamentos()
+    except Exception:
+        pass
+
+
 def obtener_departamentos():
     """Trae la lista de todos los departamentos registrados."""
+    _preparar_tablas()
     try:
         return db_manager.execute_query("SELECT id, nombre, iva, icono FROM departamentos ORDER BY nombre") or []
-    except Exception as e:
-        logger.error(f"Error al obtener departamentos: {e}")
-        return []
+    except Exception:
+        try:
+            rows = db_manager.execute_query("SELECT id, nombre, iva FROM departamentos ORDER BY nombre") or []
+            for row in rows:
+                if isinstance(row, dict):
+                    row.setdefault("icono", "")
+            return rows
+        except Exception as e:
+            logger.error(f"Error al obtener departamentos: {e}")
+            return []
+
 
 def obtener_categorias():
     """Trae la lista de todas las categorias registradas."""
+    _preparar_tablas()
     try:
         return db_manager.execute_query("SELECT id, nombre, icono FROM categorias ORDER BY nombre") or []
-    except Exception as e:
-        logger.error(f"Error al obtener categorias: {e}")
-        return []
+    except Exception:
+        try:
+            rows = db_manager.execute_query("SELECT id, nombre FROM categorias ORDER BY nombre") or []
+            for row in rows:
+                if isinstance(row, dict):
+                    row.setdefault("icono", "")
+            return rows
+        except Exception as e:
+            logger.error(f"Error al obtener categorias: {e}")
+            return []
 
 def obtener_iva_de_departamento(nombre):
     """Devuelve el numero de IVA de un departamento buscandolo por su nombre."""

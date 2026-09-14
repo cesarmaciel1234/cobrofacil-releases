@@ -12,6 +12,7 @@ from PyQt6.QtCore import QObject, QTimer
 logger = logging.getLogger("NavegadorKiosk")
 
 VK_ESCAPE = 0x1B
+VK_F5 = 0x74
 VK_F10 = 0x79
 VK_F11 = 0x7A
 _TV_EXE = frozenset({"chrome.exe", "msedge.exe", "brave.exe", "chromium.exe"})
@@ -161,11 +162,12 @@ def _foco_es_navegador_tv():
 class TeclasTv(QObject):
     """F10/F11/Esc con QTimer (sin WH_KEYBOARD_LL: en Windows 10 congelaba todo el PC)."""
 
-    def __init__(self, on_f10, on_f11, on_esc, parent=None):
+    def __init__(self, on_f10, on_f11, on_esc, parent=None, on_f5=None):
         super().__init__(parent)
         self.on_f10 = on_f10
         self.on_f11 = on_f11
         self.on_esc = on_esc
+        self.on_f5 = on_f5
         self._last = 0.0
         self._timer = QTimer(self)
         self._timer.setInterval(80)
@@ -176,7 +178,7 @@ class TeclasTv(QObject):
             return
         if not self._timer.isActive():
             self._timer.start()
-            logger.info("Teclas TV (sondeo): F10 monitor · F11/Esc salir")
+            logger.info("Teclas TV (sondeo): F5 recargar · F10 monitor · F11/Esc salir")
 
     def stop(self):
         self._timer.stop()
@@ -189,10 +191,19 @@ class TeclasTv(QObject):
             user32 = ctypes.windll.user32
         except Exception:
             return
+        f5 = bool(user32.GetAsyncKeyState(VK_F5) & 0x8000)
         f10 = bool(user32.GetAsyncKeyState(VK_F10) & 0x8000)
         f11 = bool(user32.GetAsyncKeyState(VK_F11) & 0x8000)
         esc = bool(user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000)
-        if not (f10 or f11 or esc):
+        if not (f5 or f10 or f11 or esc):
+            return
+        if f5:
+            self._last = ahora
+            if self.on_f5:
+                try:
+                    self.on_f5()
+                except Exception as exc:
+                    logger.warning("Tecla TV F5: %s", exc)
             return
         if not _foco_es_navegador_tv():
             return

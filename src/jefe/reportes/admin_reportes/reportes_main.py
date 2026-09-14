@@ -200,7 +200,8 @@ class Admin3Reportes(QWidget):
         filters_layout = QHBoxLayout()
         filters_layout.setSpacing(20)
         self.period_buttons = {}
-        for f_text in ["Semana Actual", "Mes Actual", "Mes Anterior", "Año actual", "Periodo..."]:
+        from src.jefe.reportes.periodo import PERIODOS_FILTRO
+        for f_text in PERIODOS_FILTRO:
             f_btn = QPushButton(f_text)
             f_btn.setCursor(Qt.PointingHandCursor)
             f_btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; } QPushButton:hover {  }")
@@ -368,40 +369,17 @@ class Admin3Reportes(QWidget):
     def cargar_datos(self, periodo="Mes Actual"):
         self.current_period = periodo
         try:
-            if periodo == "Periodo...":
-                try:
-                    dialog = DialogoSeleccionPeriodo(self)
-                    if qt_exec(dialog) == QDialog.Accepted:
-                        start_str, end_str = dialog.get_fechas()
-                    else:
-                        return
-                except NameError:
-                    return # Not implemented yet
-            else:
-                import datetime
-                hoy = datetime.date.today()
-                if periodo == "Semana Actual":
-                    start_date = hoy - datetime.timedelta(days=hoy.weekday())
-                    start_str = start_date.strftime("%Y-%m-%d 00:00:00")
-                    end_str = hoy.strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Mes Actual":
-                    import calendar
-                    start_str = hoy.replace(day=1).strftime("%Y-%m-%d 00:00:00")
-                    last_day = calendar.monthrange(hoy.year, hoy.month)[1]
-                    end_str = hoy.replace(day=last_day).strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Mes Anterior":
-                    first_day_this_month = hoy.replace(day=1)
-                    last_day_prev = first_day_this_month - datetime.timedelta(days=1)
-                    start_str = last_day_prev.replace(day=1).strftime("%Y-%m-%d 00:00:00")
-                    end_str = last_day_prev.strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Año actual":
-                    start_str = hoy.replace(month=1, day=1).strftime("%Y-%m-%d 00:00:00")
-                    end_str = hoy.strftime("%Y-%m-%d 23:59:59")
-                else:
-                    start_str, end_str = hoy.strftime("%Y-%m-%d 00:00:00"), hoy.strftime("%Y-%m-%d 23:59:59")
-                    
+            from src.jefe.reportes.periodo import resolver_rango_periodo
+
+            rango = resolver_rango_periodo(periodo, self)
+            if rango is None:
+                return
+            start_str, end_str, etiqueta = rango
             self.current_start_str = start_str
             self.current_end_str = end_str
+            btn_rango = self.period_buttons.get("Periodo...")
+            if btn_rango:
+                btn_rango.setText(etiqueta if periodo == "Periodo..." else "Periodo...")
             for text, btn in self.period_buttons.items():
                 if text == periodo:
                     btn.setStyleSheet("QPushButton {  font-size: 13px; font-weight: bold; border: none; background: transparent; text-decoration: underline; }")
@@ -417,9 +395,9 @@ class Admin3Reportes(QWidget):
                         meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
                         m_name = meses[m_idx]
                         lbl_title.setText(f"Resumen de Ventas de {m_name}")
-                    except: lbl_title.setText(f"Resumen de Ventas ({periodo})")
+                    except: lbl_title.setText(f"Resumen de Ventas ({etiqueta})")
                 else:
-                    lbl_title.setText(f"Resumen de Ventas ({periodo})")
+                    lbl_title.setText(f"Resumen de Ventas ({etiqueta})")
 
             lbl_vtas_tiempo = self.card_vtas_tiempo.findChild(QLabel, "lbl_tit_tabla")
             if lbl_vtas_tiempo:
@@ -520,9 +498,11 @@ class Admin3Reportes(QWidget):
                     for i, m in enumerate(meses_nombres):
                         chart_data[f"{i+1:02d}"] = {'ventas': 0.0, 'ganancia': 0.0, 'label': m}
                 else:
+                    dias_abr = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
                     for i in range(days_diff):
                         curr_d = s_dt_c + datetime.timedelta(days=i)
-                        chart_data[curr_d.strftime("%Y-%m-%d")] = {'ventas': 0.0, 'ganancia': 0.0, 'label': curr_d.strftime("%d")}
+                        nombre_dia = dias_abr[curr_d.weekday()]
+                        chart_data[curr_d.strftime("%Y-%m-%d")] = {'ventas': 0.0, 'ganancia': 0.0, 'label': f"{nombre_dia} {curr_d.strftime('%d')}"}
                         
             if period_type == "month":
                 res_tot = db_manager.execute_query(
@@ -573,7 +553,7 @@ class Admin3Reportes(QWidget):
                 elif period_type == "week":
                     res_diario.append({'dia': v['label'], 'tot': v['ventas'], 'label': v['label']})
                 else:
-                    res_diario.append({'dia': f"Día {v['label']}", 'tot': v['ventas'], 'label': v['label']})
+                    res_diario.append({'dia': v['label'], 'tot': v['ventas'], 'label': v['label']})
 
             chart_data_prev = None
             display_chart_data_prev = None
@@ -767,7 +747,7 @@ class Admin3Reportes(QWidget):
                             prev_end = e_dt - datetime.timedelta(days=365)
                         
                     res_depto_prev = db_manager.execute_query(
-                        "SELECT COALESCE(p.departamento, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
+                        "SELECT COALESCE(p.departamento, p.categoria, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                         "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                         "LEFT JOIN productos p ON dv.id_producto = p.id "
                         "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
@@ -802,7 +782,7 @@ class Admin3Reportes(QWidget):
                 self.tabla_vtas_depto.horizontalHeader().setVisible(False)
                 
             res_depto = db_manager.execute_query(
-                "SELECT COALESCE(p.departamento, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
+                "SELECT COALESCE(p.departamento, p.categoria, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                 "LEFT JOIN productos p ON dv.id_producto = p.id "
                 "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
@@ -1121,46 +1101,65 @@ class Admin3Reportes(QWidget):
         lay.setContentsMargins(24, 24, 24, 24)
         lay.setSpacing(20)
         
+        self._FIN = {
+            "accent": "#2563EB",
+            "accent_light": "#EFF6FF",
+            "accent_hover": "#1D4ED8",
+            "text_soft": "#64748B",
+            "card_border": "#E2E8F0"
+        }
+        self._period_btn_active = (
+            f"QPushButton {{ color: white; font-size: 13px; font-weight: 600; "
+            f"border: none; background: {self._FIN['accent']}; border-radius: 10px; padding: 8px 16px; }}"
+            f"QPushButton:hover {{ background: {self._FIN['accent_hover']}; }}"
+        )
+        self._period_btn_idle = (
+            f"QPushButton {{ color: {self._FIN['text_soft']}; font-size: 13px; font-weight: 600; "
+            f"background: white; padding: 8px 16px; border-radius: 10px; "
+            f"border: 1px solid {self._FIN['card_border']}; }}"
+            f"QPushButton:hover {{ color: {self._FIN['accent']}; background: {self._FIN['accent_light']}; "
+            f"border-color: #BFDBFE; }}"
+        )
+        
+        from src.jefe.reportes.admin_reportes.componentes.modern_card import ModernCard
         filter_card = ModernCard()
-        fl = QHBoxLayout(filter_card)
-        fl.setContentsMargins(25, 18, 25, 18)
+        fv_lay = QVBoxLayout(filter_card)
+        fv_lay.setContentsMargins(25, 18, 25, 18)
+        fv_lay.setSpacing(15)
+        
+        # 1. Filtros de Periodo
+        period_lay = QHBoxLayout()
+        from src.jefe.reportes.periodo import montar_botones_periodo
+        self.period_buttons = montar_botones_periodo(
+            period_lay, self.cargar_datos_audit, self._period_btn_idle, self._period_btn_active
+        )
+        period_lay.addStretch()
+        fv_lay.addLayout(period_lay)
+        
+        # 2. Buscador y exportar
+        fl = QHBoxLayout()
         fl.setSpacing(15)
         
         self.txt_audit_prod = QLineEdit()
         self.txt_audit_prod.setPlaceholderText("🔎 Buscar producto o código...")
         
-        self.cmb_audit_mes = QComboBox()
-        self.cmb_audit_mes.addItems(["Todos los Meses", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"])
-        
-        self.cmb_audit_anio = QComboBox()
-        self.cmb_audit_anio.addItem("Todos los Años")
-        for y in range(2025, 2031):
-            self.cmb_audit_anio.addItem(str(y))
-            
         input_style = """
-            QLineEdit, QComboBox {
-                
+            QLineEdit {
                 border: 1px solid #E2E8F0;
                 border-radius: 10px;
                 padding: 8px 12px;
                 font-size: 13px;
-                
                 font-family: 'Segoe UI';
             }
-            QLineEdit:focus, QComboBox:focus {
-                border-
-                
-            }
+            QLineEdit:focus { border-color: #3B82F6; }
         """
         self.txt_audit_prod.setStyleSheet(input_style)
-        self.cmb_audit_mes.setStyleSheet(input_style)
-        self.cmb_audit_anio.setStyleSheet(input_style)
         
         self.btn_audit_buscar = QPushButton("🔎 FILTRAR")
         self.btn_audit_buscar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_buscar.setStyleSheet("""
             QPushButton {
-                
+                background-color: #3B82F6;
                 color: white;
                 font-weight: 700;
                 border-radius: 10px;
@@ -1168,36 +1167,31 @@ class Admin3Reportes(QWidget):
                 font-size: 13px;
                 border: none;
             }
-            QPushButton:hover {
-                
-            }
+            QPushButton:hover { background-color: #2563EB; }
         """)
         self.btn_audit_buscar.clicked.connect(self._buscar_auditoria)
         
-        self.btn_audit_limpiar = QPushButton("🧹 REINICIAR")
+        self.btn_audit_limpiar = QPushButton("🔄 REINICIAR")
         self.btn_audit_limpiar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_limpiar.setStyleSheet("""
             QPushButton {
-                
-                
+                background-color: #F1F5F9;
+                color: #475569;
                 font-weight: 700;
                 border-radius: 10px;
-                padding: 10px 16px;
+                padding: 10px 20px;
                 font-size: 13px;
                 border: none;
             }
-            QPushButton:hover {
-                
-                
-            }
+            QPushButton:hover { background-color: #E2E8F0; }
         """)
         self.btn_audit_limpiar.clicked.connect(self._limpiar_filtros_audit)
         
-        self.btn_audit_exportar = QPushButton("📤 EXPORTAR")
+        self.btn_audit_exportar = QPushButton("📊 EXPORTAR")
         self.btn_audit_exportar.setCursor(Qt.PointingHandCursor)
         self.btn_audit_exportar.setStyleSheet("""
             QPushButton {
-                
+                background-color: #10B981;
                 color: white;
                 font-weight: 700;
                 border-radius: 10px;
@@ -1205,28 +1199,20 @@ class Admin3Reportes(QWidget):
                 font-size: 13px;
                 border: none;
             }
-            QPushButton:hover {
-                
-            }
+            QPushButton:hover { background-color: #059669; }
         """)
         self.btn_audit_exportar.clicked.connect(self._exportar_auditoria)
         
         lbl_prod = QLabel("Producto:")
         lbl_prod.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
-        lbl_mes = QLabel("Mes:")
-        lbl_mes.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
-        lbl_anio = QLabel("Año:")
-        lbl_anio.setStyleSheet("font-weight: 700;  font-size: 12px; border: none; background: transparent;")
         
         fl.addWidget(lbl_prod, 0)
-        fl.addWidget(self.txt_audit_prod, 3)
-        fl.addWidget(lbl_mes, 0)
-        fl.addWidget(self.cmb_audit_mes, 2)
-        fl.addWidget(lbl_anio, 0)
-        fl.addWidget(self.cmb_audit_anio, 2)
+        fl.addWidget(self.txt_audit_prod, 1)
         fl.addWidget(self.btn_audit_buscar, 0)
         fl.addWidget(self.btn_audit_limpiar, 0)
         fl.addWidget(self.btn_audit_exportar, 0)
+        
+        fv_lay.addLayout(fl)
         
         lay.addWidget(filter_card)
         
@@ -1241,17 +1227,20 @@ class Admin3Reportes(QWidget):
         ])
         self.table_audit.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table_audit.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table_audit.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_audit.verticalHeader().setVisible(False)
+        self.table_audit.setAlternatingRowColors(False)
         self.table_audit.setStyleSheet("""
             QTableWidget {
                 background-color: white;
-                border: none;
-                font-size: 12px;
-                border-radius: 16px;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                font-size: 13px;
+                font-family: 'Segoe UI';
                 gridline-color: #F1F5F9;
             }
             QTableWidget::item {
-                padding: 10px;
+                padding: 12px 8px;
                 border-bottom: 1px solid #F1F5F9;
             }
             QTableWidget::item:selected {
@@ -1262,95 +1251,69 @@ class Admin3Reportes(QWidget):
                 background-color: #F8FAFC;
                 color: #4F46E5;
                 font-weight: 800;
+                padding: 12px 8px;
                 border: none;
                 border-bottom: 2px solid #E2E8F0;
-                padding: 10px;
-                font-size: 12px;
+                font-size: 11px;
             }
+            QScrollBar:vertical { background: #F1F5F9; width: 8px; border-radius: 4px; }
+            QScrollBar::handle:vertical { background: #CBD5E1; border-radius: 4px; }
         """)
-        self.table_audit.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table_audit.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.table_audit.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table_audit.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.table_audit.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        self.table_audit.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
-        self.table_audit.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)
+        
+        hh = self.table_audit.horizontalHeader()
+        hh.setSectionResizeMode(QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(4, QHeaderView.Stretch)
         
         self.audit_footer = QScrollArea()
         self.audit_footer.setWidgetResizable(True)
-        self.audit_footer.setFixedHeight(140)
-        self.audit_footer.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background: transparent;
-            }
-            QScrollBar:horizontal {
-                border: none;
-                
-                height: 8px;
-                margin: 0px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:horizontal {
-                
-                min-width: 20px;
-                border-radius: 4px;
-            }
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-                width: 0px;
-            }
-        """)
+        self.audit_footer.setMinimumHeight(150)
+        self.audit_footer.setMaximumHeight(150)
+        self.audit_footer.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         
         container = QWidget()
         container.setStyleSheet("background: transparent;")
         foot_main_lay = QHBoxLayout(container)
-        foot_main_lay.setContentsMargins(10, 10, 10, 15)
-        foot_main_lay.setSpacing(15)
+        foot_main_lay.setContentsMargins(0,0,0,0)
+        foot_main_lay.setSpacing(20)
         
-        def make_card(title, widgets, border_color="#E2E8F0"):
-            card = QFrame()
-            card.setStyleSheet(f"""
-                QFrame {{
-                    background-color: white;
-                    border-radius: 12px;
-                    border: 1px solid {border_color};
+        def make_card(t, items, border_color="#E2E8F0"):
+            c = QFrame()
+            c.setObjectName("statCard")
+            c.setStyleSheet(f"""
+                QFrame#statCard {{
+                    background: white; border-radius: 12px; border: 1px solid {border_color};
                 }}
             """)
+            l = QVBoxLayout(c)
+            l.setContentsMargins(15, 15, 15, 15)
+            lbl_t = QLabel(t.upper())
+            lbl_t.setStyleSheet("font-weight: 800; color: #64748B; font-size: 11px; border: none;")
+            l.addWidget(lbl_t)
+            for it in items: l.addWidget(it)
+            l.addStretch()
+            return c
             
-            c_lay = QVBoxLayout(card)
-            c_lay.setContentsMargins(15, 10, 15, 10)
-            c_lay.setSpacing(6)
-            
-            lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-weight: 800;  font-size: 11px; text-transform: uppercase; border: none; background: transparent;")
-            c_lay.addWidget(lbl_title)
-            
-            for w in widgets:
-                c_lay.addWidget(w)
-            c_lay.addStretch()
-            return card
-
         self.lbl_foot_regs = QLabel("Total Transacciones: 0")
-        self.lbl_foot_regs.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
+        self.lbl_foot_regs.setStyleSheet("font-weight: 700; font-size: 13px; background: none; border: none;")
         
         self.lbl_foot_unidades = QLabel("Unidades Vendidas: 0.00 ud")
         self.lbl_foot_unidades.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
-        self.lbl_foot_kilos = QLabel("Peso Carne/Aves (Kilos): 0.000 kg")
+        self.lbl_foot_kilos = QLabel("Volumen Pesable (Kilos): 0.000 kg")
         self.lbl_foot_kilos.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
         
-        self.lbl_foot_carnes = QLabel("🥩 Carnes: $0.00")
-        self.lbl_foot_carnes.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
-        self.lbl_foot_aves = QLabel("🍗 Aves: $0.00")
-        self.lbl_foot_aves.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
-        self.lbl_foot_almacen = QLabel("🥫 Almacén: $0.00")
-        self.lbl_foot_almacen.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none;")
+        self.lbl_foot_depto1 = QLabel("🔹 Depto 1: $0.00")
+        self.lbl_foot_depto1.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none; color: #DC2626;")
+        self.lbl_foot_depto2 = QLabel("🔹 Depto 2: $0.00")
+        self.lbl_foot_depto2.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none; color: #D97706;")
+        self.lbl_foot_depto3 = QLabel("🔹 Otros: $0.00")
+        self.lbl_foot_depto3.setStyleSheet("font-weight: 700;  font-size: 13px; background: none; border: none; color: #2563EB;")
         
         self.lbl_foot_monto = QLabel("Facturado Total: $0.00")
         self.lbl_foot_monto.setStyleSheet("font-weight: 900;  font-size: 15px; background: none; border: none;")
 
         foot_main_lay.addWidget(make_card("Transacciones", [self.lbl_foot_regs]))
         foot_main_lay.addWidget(make_card("Volumen", [self.lbl_foot_unidades, self.lbl_foot_kilos]))
-        foot_main_lay.addWidget(make_card("Ingresos por Área", [self.lbl_foot_carnes, self.lbl_foot_aves, self.lbl_foot_almacen]))
+        foot_main_lay.addWidget(make_card("Top Ingresos por Área", [self.lbl_foot_depto1, self.lbl_foot_depto2, self.lbl_foot_depto3]))
         foot_main_lay.addWidget(make_card("Recaudación", [self.lbl_foot_monto], border_color="#10B981"))
         
         foot_main_lay.addStretch()
@@ -1359,141 +1322,150 @@ class Admin3Reportes(QWidget):
         lay.addWidget(self.table_audit)
         lay.addWidget(self.audit_footer)
         self.table_audit.verticalScrollBar().valueChanged.connect(self._on_audit_scroll)
-
+        
+        self.cargar_datos_audit("Mes Actual")
     def _limpiar_filtros_audit(self):
         self.txt_audit_prod.clear()
-        self.cmb_audit_mes.setCurrentIndex(0)
-        self.cmb_audit_anio.setCurrentIndex(0)
+        self.cargar_datos_audit("Mes Actual")
+
+    def cargar_datos_audit(self, periodo="Mes Actual"):
+        from src.jefe.reportes.periodo import pintar_activo, resolver_rango_periodo
+        self.current_audit_period = periodo
+        rango = resolver_rango_periodo(periodo, self)
+        if rango is None:
+            return
+        start_str, end_str, etiqueta = rango
+        self.current_audit_start_str = start_str
+        self.current_audit_end_str = end_str
+        pintar_activo(
+            self.period_buttons,
+            periodo,
+            self._period_btn_active,
+            self._period_btn_idle,
+            etiqueta,
+        )
         self._buscar_auditoria()
 
     def _buscar_auditoria(self):
         prod = self.txt_audit_prod.text().strip()
-        idx_mes = self.cmb_audit_mes.currentIndex()
-        anio_sel = self.cmb_audit_anio.currentText()
         
-        query = """
-            SELECT 
-                v.id AS id_venta,
-                v.fecha,
-                v.usuario,
-                dv.id_producto,
-                dv.nombre_producto,
-                dv.cantidad,
-                dv.precio_unitario,
-                dv.subtotal,
-                v.metodo_pago,
-                v.estado
-            FROM detalles_ventas dv
-            JOIN ventas v ON dv.id_venta = v.id
-            WHERE 1=1
-        """
+        where_clause = "WHERE 1=1"
         params = []
         
         if prod:
-            query += " AND (dv.nombre_producto LIKE ? OR dv.id_producto LIKE ?)"
+            where_clause += " AND (dv.nombre_producto LIKE ? OR dv.id_producto LIKE ?)"
             params.extend([f"%{prod}%", f"%{prod}%"])
             
-        if idx_mes > 0:
-            query += " AND strftime('%m', v.fecha) = ?"
-            params.append(f"{idx_mes:02d}")
+        start_str = getattr(self, 'current_audit_start_str', getattr(self, 'current_start_str', None))
+        end_str = getattr(self, 'current_audit_end_str', getattr(self, 'current_end_str', None))
             
-        if anio_sel.isdigit():
-            query += " AND strftime('%Y', v.fecha) = ?"
-            params.append(anio_sel)
+        if start_str and end_str:
+            where_clause += " AND v.fecha >= ? AND v.fecha <= ?"
+            params.extend([start_str, end_str])
             
-        query += " ORDER BY v.fecha DESC"
-        
-        raw_rows = db_manager.execute_query(query, tuple(params)) or []
-        
-        self.audit_all_rows = []
-        # Populate missing data from memory cache to avoid freezing the database
-        if Admin3Reportes._prod_map_cache is None:
-            # Fallback if cache not loaded yet (should rarely happen)
-            res_prod = db_manager.execute_query("SELECT id, codigo, nombre, departamento, categoria, unidad FROM productos")
-            prod_map = {}
-            if res_prod:
-                for p in res_prod:
-                    pid = str(p['id'])
-                    pcod = str(p['codigo'] or '')
-                    data = {'departamento': p['departamento'] or 'ALMACEN', 'categoria': p['categoria'] or 'GENERAL', 'unidad': p['unidad'] or 'UN'}
-                    prod_map[pid] = data
-                    if pcod: prod_map[pcod] = data
-            Admin3Reportes._prod_map_cache = prod_map
+        try:
+            from src.base_de_datos.database import db_manager
+        except ImportError:
+            from src.utils.db import db_manager
 
-        for r in raw_rows:
-            pid = str(r['id_producto'])
-            base = Admin3Reportes._prod_map_cache.get(pid, {})
-            self.audit_all_rows.append({
-                'id_venta': r['id_venta'],
-                'fecha': r['fecha'],
-                'usuario': r['usuario'],
-                'nombre_producto': r['nombre_producto'],
-                'depto': base.get('departamento', 'ALMACEN'),
-                'categoria': base.get('categoria', 'GENERAL'),
-                'cantidad': r['cantidad'],
-                'precio_unitario': r['precio_unitario'],
-                'subtotal': r['subtotal'],
-                'metodo_pago': r['metodo_pago'],
-                'estado': r['estado'],
-                'unidad': base.get('unidad', 'UN')
-            })
-        self.audit_offset = 0
-        self.table_audit.setRowCount(0)
-        
+        kpi_query = f"""
+            SELECT 
+                SUM(dv.subtotal) as tot_monto,
+                SUM(CASE WHEN (p.unidad = 'KG' OR p.es_pesable) THEN 0 ELSE dv.cantidad END) as tot_unidades,
+                SUM(CASE WHEN (p.unidad = 'KG' OR p.es_pesable) THEN dv.cantidad ELSE 0 END) as tot_kilos,
+                COUNT(dv.id_producto) as count_filas
+            FROM detalles_ventas dv
+            JOIN ventas v ON dv.id_venta = v.id
+            LEFT JOIN productos p ON dv.id_producto = p.id
+            {where_clause}
+        """
+        kpi_res = db_manager.execute_query(kpi_query, tuple(params))
         tot_monto = 0.0
         tot_unidades = 0.0
         tot_kilos = 0.0
-        monto_carnes = 0.0
-        monto_aves = 0.0
-        monto_almacen = 0.0
+        total_rows = 0
+        if kpi_res and kpi_res[0]:
+            tot_monto = float(kpi_res[0]['tot_monto'] or 0.0)
+            tot_unidades = float(kpi_res[0]['tot_unidades'] or 0.0)
+            tot_kilos = float(kpi_res[0]['tot_kilos'] or 0.0)
+            total_rows = int(kpi_res[0]['count_filas'] or 0)
+            
+        depto_query = f"""
+            SELECT 
+                COALESCE(p.departamento, p.categoria, 'General') as depto,
+                SUM(dv.subtotal) as subt
+            FROM detalles_ventas dv
+            JOIN ventas v ON dv.id_venta = v.id
+            LEFT JOIN productos p ON dv.id_producto = p.id
+            {where_clause}
+            GROUP BY depto
+            ORDER BY subt DESC
+            LIMIT 3
+        """
+        depto_res = db_manager.execute_query(depto_query, tuple(params)) or []
+        top1_name, top1_val = (depto_res[0]['depto'], depto_res[0]['subt']) if len(depto_res) > 0 else ("N/A", 0.0)
+        top2_name, top2_val = (depto_res[1]['depto'], depto_res[1]['subt']) if len(depto_res) > 1 else ("N/A", 0.0)
+        top3_name, top3_val = (depto_res[2]['depto'], depto_res[2]['subt']) if len(depto_res) > 2 else ("N/A", 0.0)
         
-        for r in self.audit_all_rows:
-            depto = (r['depto'] or 'ALMACEN').strip().upper()
-            cant = r['cantidad'] if r['cantidad'] is not None else 0.0
-            subt = r['subtotal'] if r['subtotal'] is not None else 0.0
-            unidad = (r['unidad'] or 'UN').strip().upper()
-            
-            tot_monto += subt
-            
-            if unidad == 'KG':
-                tot_kilos += cant
-            else:
-                tot_unidades += cant
-                
-            if "CARNE" in depto or "RES" in depto or "CERDO" in depto or "VACUNO" in depto:
-                monto_carnes += subt
-            elif "AVE" in depto or "POLLO" in depto or "GRANJA" in depto:
-                monto_aves += subt
-            else:
-                monto_almacen += subt
-                
-        self.lbl_foot_regs.setText(f"Total Transacciones: {len(self.audit_all_rows)}")
-        self.lbl_foot_unidades.setText(f"Unidades Vendidas: {tot_unidades:,.2f} ud")
-        self.lbl_foot_kilos.setText(f"Peso Carne/Aves (Kilos): {tot_kilos:,.3f} kg")
-        self.lbl_foot_carnes.setText(f"🥩 Carnes: ${monto_carnes:,.2f}")
-        self.lbl_foot_aves.setText(f"🍗 Aves: ${monto_aves:,.2f}")
-        self.lbl_foot_almacen.setText(f"🥫 Almacén: ${monto_almacen:,.2f}")
-        self.lbl_foot_monto.setText(f"Facturado Total: ${tot_monto:,.2f}")
+        if hasattr(self, 'lbl_foot_regs'):
+            self.lbl_foot_regs.setText(f"Total Transacciones: {total_rows}")
+            self.lbl_foot_unidades.setText(f"Unidades Vendidas: {tot_unidades:,.2f} ud")
+            self.lbl_foot_kilos.setText(f"Volumen Pesable (Kilos): {tot_kilos:,.3f} kg")
+            self.lbl_foot_depto1.setText(f"🔹 {str(top1_name)[:12]}: ${top1_val:,.2f}")
+            self.lbl_foot_depto2.setText(f"🔹 {str(top2_name)[:12]}: ${top2_val:,.2f}")
+            self.lbl_foot_depto3.setText(f"🔹 {str(top3_name)[:12]}: ${top3_val:,.2f}")
+            self.lbl_foot_monto.setText(f"Facturado Total: ${tot_monto:,.2f}")
         
         self._actualizar_audit_kpis(tot_monto, tot_unidades, tot_kilos)
+        
+        self.audit_where_clause = where_clause
+        self.audit_params = params
+        self.audit_offset = 0
+        self.audit_total_rows = total_rows
+        self.table_audit.setRowCount(0)
+        
         self._load_more_audit_rows()
+
 
     def _load_more_audit_rows(self):
         if getattr(self, 'is_loading_audit', False): return
-        if not hasattr(self, 'audit_all_rows') or not self.audit_all_rows: return
-        if self.audit_offset >= len(self.audit_all_rows): return
+        if not hasattr(self, 'audit_where_clause'): return
+        if getattr(self, 'audit_offset', 0) >= getattr(self, 'audit_total_rows', 0): return
         
         self.is_loading_audit = True
         limit = 100
-        batch = self.audit_all_rows[self.audit_offset : self.audit_offset + limit]
+        
+        query = f"""
+            SELECT 
+                v.id AS id_venta, v.fecha, v.usuario,
+                dv.id_producto, dv.nombre_producto, dv.cantidad,
+                dv.precio_unitario, dv.subtotal, v.metodo_pago, v.estado,
+                COALESCE(p.departamento, p.categoria) as departamento, p.unidad AS unidad_medida, p.es_pesable
+            FROM detalles_ventas dv
+            JOIN ventas v ON dv.id_venta = v.id
+            LEFT JOIN productos p ON dv.id_producto = p.id
+            {self.audit_where_clause}
+            ORDER BY v.fecha DESC
+            LIMIT {limit} OFFSET {self.audit_offset}
+        """
+        try:
+            from src.base_de_datos.database import db_manager
+        except ImportError:
+            from src.utils.db import db_manager
+            
+        rows = db_manager.execute_query(query, tuple(self.audit_params)) or []
         
         current_rows = self.table_audit.rowCount()
-        self.table_audit.setRowCount(current_rows + len(batch))
+        self.table_audit.setRowCount(current_rows + len(rows))
         
-        for i, r in enumerate(batch):
+        from PyQt6.QtWidgets import QTableWidgetItem
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QColor, QFont
+        import datetime
+        
+        for i, r in enumerate(rows):
             row_idx = current_rows + i
             id_v = str(r['id_venta'])
-            import datetime
             fecha_val = r['fecha']
             if isinstance(fecha_val, datetime.datetime):
                 fecha = fecha_val.strftime("%Y-%m-%d %H:%M:%S")
@@ -1501,42 +1473,63 @@ class Admin3Reportes(QWidget):
                 fecha = str(fecha_val) if fecha_val else ""
             cajero = r['usuario'] or ''
             prod_name = r['nombre_producto'] or ''
-            depto = (r['depto'] or 'ALMACEN').strip().upper()
+            depto = (r['departamento'] or 'ALMACEN').strip().upper()
             cant = r['cantidad'] if r['cantidad'] is not None else 0.0
             precio = r['precio_unitario'] if r['precio_unitario'] is not None else 0.0
             subt = r['subtotal'] if r['subtotal'] is not None else 0.0
             pago = r['metodo_pago'] or 'Efectivo'
             estado = r['estado'] or 'COMPLETADA'
-            unidad = (r['unidad'] or 'UN').strip().upper()
+            unidad = (r['unidad_medida'] or 'UN').strip().upper()
             
-            if unidad == 'KG':
-                uni_str = "KG"
-                item_cant = QTableWidgetItem(f"{cant:,.3f}")
-            else:
-                uni_str = "UN"
-                item_cant = QTableWidgetItem(f"{cant:,.2f}")
-            item_cant.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            
-            item_id = QTableWidgetItem(id_v); item_id.setTextAlignment(Qt.AlignCenter)
-            item_fec = QTableWidgetItem(fecha)
-            item_caj = QTableWidgetItem(cajero)
-            item_dep = QTableWidgetItem(depto)
-            item_prod = QTableWidgetItem(prod_name)
-            item_uni = QTableWidgetItem(uni_str); item_uni.setTextAlignment(Qt.AlignCenter)
-            item_prec = QTableWidgetItem(f"${precio:,.2f}"); item_prec.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            item_subt = QTableWidgetItem(f"${subt:,.2f}"); item_subt.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            item_pago = QTableWidgetItem(pago)
-            item_est = QTableWidgetItem(estado); item_est.setTextAlignment(Qt.AlignCenter)
-            
-            bg = QColor("#ffffff") if row_idx % 2 == 0 else QColor("#F8FAFC")
-            for col, item in enumerate([item_id, item_fec, item_caj, item_dep, item_prod, item_cant, item_uni, item_prec, item_subt, item_pago, item_est]):
-                item.setBackground(bg)
-                item.setForeground(QColor("#1E293B"))
-                item.setFont(QFont("Segoe UI", 9))
-                self.table_audit.setItem(row_idx, col, item)
+            def create_item(text, is_bold=False, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter):
+                it = QTableWidgetItem(str(text))
+                it.setTextAlignment(alignment)
+                if is_bold:
+                    f = QFont()
+                    f.setBold(True)
+                    it.setFont(f)
+                return it
                 
-        self.audit_offset += limit
+            self.table_audit.setItem(row_idx, 0, create_item(id_v, is_bold=True, alignment=Qt.AlignmentFlag.AlignCenter))
+            self.table_audit.setItem(row_idx, 1, create_item(fecha))
+            self.table_audit.setItem(row_idx, 2, create_item(cajero))
+            
+            # depto icon logic copied safely
+            if "CARNE" in depto: ic = "🥩"
+            elif "POLLO" in depto or "AVE" in depto: ic = "🍗"
+            elif "CERDO" in depto: ic = "🥓"
+            elif "BEBIDA" in depto: ic = "🥤"
+            elif "ALMAC" in depto: ic = "🥫"
+            else: ic = "📦"
+            
+            self.table_audit.setItem(row_idx, 3, create_item(f"{ic} {depto}"))
+            self.table_audit.setItem(row_idx, 4, create_item(prod_name))
+            
+            val_cant = f"{cant:.3f}" if unidad == "KG" else f"{cant:.0f}"
+            self.table_audit.setItem(row_idx, 5, create_item(val_cant, is_bold=True, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
+            self.table_audit.setItem(row_idx, 6, create_item(unidad, alignment=Qt.AlignmentFlag.AlignCenter))
+            self.table_audit.setItem(row_idx, 7, create_item(f"${precio:,.2f}", alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
+            
+            it_sub = create_item(f"${subt:,.2f}", is_bold=True, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            it_sub.setForeground(QColor("#059669"))
+            self.table_audit.setItem(row_idx, 8, it_sub)
+            
+            self.table_audit.setItem(row_idx, 9, create_item(pago, alignment=Qt.AlignmentFlag.AlignCenter))
+            
+            it_est = create_item(estado, is_bold=True, alignment=Qt.AlignmentFlag.AlignCenter)
+            if estado in ("COMPLETADA", "COMPLETADO", "CERRADA", "CERRADO"):
+                it_est.setForeground(QColor("#059669"))
+            elif estado in ("CANCELADA", "CANCELADO", "ANULADA", "ANULADO"):
+                it_est.setForeground(QColor("#DC2626"))
+            else:
+                it_est.setForeground(QColor("#D97706"))
+                
+            self.table_audit.setItem(row_idx, 10, it_est)
+            
+        self.audit_offset += len(rows)
         self.is_loading_audit = False
+
+    
 
     def _on_audit_scroll(self, value):
         scrollbar = self.table_audit.verticalScrollBar()
@@ -1544,56 +1537,30 @@ class Admin3Reportes(QWidget):
             self._load_more_audit_rows()
 
     def _calcular_comparativa(self):
-        idx_mes = self.cmb_audit_mes.currentIndex()
-        anio_sel = self.cmb_audit_anio.currentText()
-        
-        now = datetime.datetime.now()
-        
-        if idx_mes > 0:
-            mes_eval = idx_mes
-        else:
-            mes_eval = now.month
+        try:
+            from src.jefe.reportes.financiero import rango_igual_anterior
+            prev_s, prev_e = rango_igual_anterior(getattr(self, 'current_audit_start_str', ''), getattr(self, 'current_audit_end_str', ''))
             
-        if anio_sel.isdigit():
-            anio_eval = int(anio_sel)
-        else:
-            anio_eval = now.year
+            query = """
+                SELECT SUM(dv.subtotal) as tot
+                FROM detalles_ventas dv
+                JOIN ventas v ON dv.id_venta = v.id
+                WHERE v.fecha >= ? AND v.fecha <= ? AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA'))
+            """
+            res_prev = db_manager.execute_query(query, (prev_s, prev_e))
+            prev_monto = float(res_prev[0]['tot']) if res_prev and res_prev[0]['tot'] else 0.0
             
-        if mes_eval == 1:
-            mes_prev = 12
-            anio_prev = anio_eval - 1
-        else:
-            mes_prev = mes_eval - 1
-            anio_prev = anio_eval
+            res_curr = db_manager.execute_query(query, (getattr(self, 'current_audit_start_str', ''), getattr(self, 'current_audit_end_str', '')))
+            curr_monto = float(res_curr[0]['tot']) if res_curr and res_curr[0]['tot'] else 0.0
             
-        start_eval = f"{anio_eval:04d}-{mes_eval:02d}-01 00:00:00"
-        if mes_eval == 12:
-            end_eval = f"{anio_eval+1:04d}-01-01 00:00:00"
-        else:
-            end_eval = f"{anio_eval:04d}-{mes_eval+1:02d}-01 00:00:00"
-            
-        start_prev = f"{anio_prev:04d}-{mes_prev:02d}-01 00:00:00"
-        if mes_prev == 12:
-            end_prev = f"{anio_prev+1:04d}-01-01 00:00:00"
-        else:
-            end_prev = f"{anio_prev:04d}-{mes_prev+1:02d}-01 00:00:00"
-            
-        monto_eval = db_manager.execute_scalar(
-            "SELECT SUM(total) FROM ventas WHERE fecha >= ? AND fecha < ? AND estado IN ('COMPLETADA','COMPLETADO','CERRADA','CERRADO')",
-            (start_eval, end_eval)
-        ) or 0.0
-        
-        monto_prev = db_manager.execute_scalar(
-            "SELECT SUM(total) FROM ventas WHERE fecha >= ? AND fecha < ? AND estado IN ('COMPLETADA','COMPLETADO','CERRADA','CERRADO')",
-            (start_prev, end_prev)
-        ) or 0.0
-        
-        if monto_prev > 0:
-            diff = ((monto_eval - monto_prev) / monto_prev) * 100
-        else:
-            diff = 100.0 if monto_eval > 0 else 0.0
-            
-        return monto_eval, diff
+            if prev_monto == 0:
+                diff = 100.0 if curr_monto > 0 else 0.0
+            else:
+                diff = ((curr_monto - prev_monto) / prev_monto) * 100.0
+                
+            return curr_monto, diff
+        except Exception:
+            return 0.0, 0.0
 
     def _actualizar_audit_kpis(self, tot_monto, tot_unidades, tot_kilos):
         while self.audit_kpi_layout.count():
@@ -1666,8 +1633,7 @@ class Admin3Reportes(QWidget):
             
         self.audit_kpi_layout.addWidget(build_kpi_card("Facturado Filtrado", f"${tot_monto:,.2f}", "green"))
         
-        idx_mes = self.cmb_audit_mes.currentIndex()
-        mes_nombre = self.cmb_audit_mes.currentText() if idx_mes > 0 else "Este Mes"
+        mes_nombre = getattr(self, "current_audit_period", "Periodo Actual")
         self.audit_kpi_layout.addWidget(build_kpi_card(
             "Comparativa vs Mes Anterior", 
             comp_text, 
@@ -1872,7 +1838,7 @@ class Admin3Reportes(QWidget):
 
     def _cargar_historial_tickets(self):
         query = """
-            SELECT v.id, v.fecha, v.usuario, p.departamento, dv.nombre_producto,
+            SELECT v.id, v.fecha, v.usuario, COALESCE(p.departamento, p.categoria) as departamento, dv.nombre_producto,
                    dv.cantidad, p.unidad AS unidad_medida, dv.precio_unitario, dv.subtotal,
                    v.metodo_pago, v.estado
             FROM ventas v

@@ -9,7 +9,7 @@ from src.carteleria.vitrina.fuente import contexto_sync
 from src.carteleria.vitrina.catalogo.mariadb import leer_catalogo_db
 from src.carteleria.vitrina.red.http_maestra import leer_http_maestra
 from src.carteleria.vitrina.red.cache import guardar_cache, leer_cache
-from src.carteleria.vitrina.aplicar import aplicar_publicidad, fusionar_http
+from src.carteleria.vitrina.aplicar import fusionar_http
 
 logger = logging.getLogger("Carteleria_Autonoma")
 
@@ -36,7 +36,7 @@ def pulso_vitrina(abortar=None) -> tuple[dict, str]:
         from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
 
         data = asegurar_ranking(http_data, ctx["master_ip"])
-        aplicar_publicidad(data)
+        data = fusionar_http(data, http_data, ctx["master_ip"])
         guardar_cache(data)
         _bajar_pngs()
         return data, "online"

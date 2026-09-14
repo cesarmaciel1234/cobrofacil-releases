@@ -46,12 +46,29 @@ class MotorPublicidad:
                 self._ids.add(int(pid))
             except (TypeError, ValueError):
                 pass
-        self._mtime = 0
         try:
+            os.makedirs(os.path.dirname(self.config_path) or ".", exist_ok=True)
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.as_dict(), f, ensure_ascii=False, indent=4)
+            self._mtime = os.path.getmtime(self.config_path)
         except OSError:
-            pass
+            self._mtime = 0
+        self._guardar_db()
+        self._last_load = time.monotonic()
+
+    def _traer_de_maestra(self):
+        try:
+            from src.central_red_global.sync_tienda.rol import es_esclava, host_maestra
+            from src.carteleria.vitrina.red.http_maestra import leer_publicidad_maestra
+
+            if not es_esclava():
+                return None
+            host = host_maestra()
+            if not host:
+                return None
+            return leer_publicidad_maestra(host)
+        except Exception:
+            return None
 
     def _cargar_db(self) -> dict | None:
         try:
@@ -121,6 +138,10 @@ class MotorPublicidad:
             and mtime == getattr(self, "_mtime", 0)
             and ahora - getattr(self, "_last_load", 0) < 12
         ):
+            return
+        http_pub = self._traer_de_maestra()
+        if http_pub is not None:
+            self.aplicar_remoto(http_pub)
             return
         remoto = self._cargar_db()
         self._last_load = ahora

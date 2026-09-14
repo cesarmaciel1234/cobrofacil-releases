@@ -27,7 +27,10 @@ class PanelAlertasIA(QFrame):
         h_head.addWidget(lbl_ico)
 
         lbl_tit = QLabel("ASESOR DE I.A. PREDICTIVO")
-        lbl_tit.setStyleSheet("font-size: 14px; font-weight: 900; letter-spacing: 2px; background: transparent; border: none;")
+        lbl_tit.setStyleSheet(
+            "font-size: 14px; font-weight: 700; color: #334155;"
+            " background: transparent; border: none;"
+        )
         h_head.addWidget(lbl_tit)
         h_head.addStretch()
 
@@ -35,7 +38,7 @@ class PanelAlertasIA(QFrame):
         self.btn_recalcular.setCursor(Qt.PointingHandCursor)
         self.btn_recalcular.setStyleSheet("""
             QPushButton {
-                background: transparent; color: #818CF8; border: 1px solid #818CF8; border-radius: 8px; padding: 6px 12px; font-weight: 900; font-size: 10px;
+                background: transparent; color: #818CF8; border: 1px solid #818CF8; border-radius: 8px; padding: 6px 12px; font-weight: 700; font-size: 10px;
             }
             QPushButton:hover { background: #818CF8; color: white; }
         """)
@@ -138,7 +141,7 @@ class PanelAlertasIA(QFrame):
         lay.setSpacing(5)
 
         lbl_t = QLabel(f"{icon_txt} {alerta['titulo']}")
-        lbl_t.setStyleSheet("font-weight: 900; font-size: 13px; background: transparent; border: none;")
+        lbl_t.setStyleSheet("font-weight: 700; font-size: 13px; color: #334155; background: transparent; border: none;")
         lay.addWidget(lbl_t)
 
         lbl_d = QLabel(alerta['desc'])

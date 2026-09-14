@@ -37,6 +37,7 @@ export function htmlTarjetaCruzada(slide, productos = []) {
                         antes: "xsell-item__was",
                         regla: "xsell-item__rule",
                         reglaTag: "div",
+                        ahoraPrimero: true,
                     }) : ""}
                 </div>
             </li>`;

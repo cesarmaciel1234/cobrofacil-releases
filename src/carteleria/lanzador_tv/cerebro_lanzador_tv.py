@@ -50,6 +50,39 @@ def _ui_stamp_tv() -> str:
     return f"{extra or '0'}-{mtime}"
 
 
+def _stamp_ascii() -> bytes:
+    return _ui_stamp_tv().encode("ascii", "ignore") or b"0"
+
+
+def _inyectar_stamp_ui(data: bytes, ext: str) -> bytes:
+    """F5 no tira el cache de módulos ES ni de @import; se versionan al servir."""
+    stamp = _stamp_ascii()
+
+    if ext == ".html":
+        return re.sub(br"\?v=tv[\w.\-]+", b"?v=tv" + stamp, data)
+
+    if ext == ".css":
+        def _css(match):
+            url = match.group(1)
+            if url.startswith(b"http") or url.startswith(b"data:"):
+                return match.group(0)
+            base = url.split(b"?")[0]
+            return b'@import url("' + base + b"?v=tv" + stamp + b'")'
+        return re.sub(br"""@import\s+url\(["']([^"']+)["']\)""", _css, data)
+
+    if ext == ".js":
+        def _js(match):
+            quote = match.group(1)
+            path = match.group(2)
+            if path.startswith(b"http") or path.startswith(b"data:"):
+                return match.group(0)
+            base = path.split(b"?")[0]
+            return b"from " + quote + base + b"?v=tv" + stamp + quote
+        return re.sub(br"""from\s+(['"])([^'"]+)['"]""", _js, data)
+
+    return data
+
+
 def _leer_config_carteleria() -> dict:
     """Admin15 guarda en DB; config.json es respaldo. La TV debe usar la DB."""
     from src.config import config
@@ -198,6 +231,8 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if self.zip_store is not None:
             self._serve_memoria()
             return
+        if self._serve_disco_con_stamp():
+            return
         return super().do_GET()
 
     def _serve_memoria(self):
@@ -212,15 +247,43 @@ class CarteleriaWebHandler(http.server.SimpleHTTPRequestHandler):
         if data is None:
             self.send_error(404)
             return
-        if rel == "index.html":
-            ver = _ui_stamp_tv().encode("ascii", "ignore")
-            data = re.sub(br"\?v=tv\d+", b"?v=tv" + ver, data)
+        ext = os.path.splitext(rel)[1].lower()
+        if ext in (".html", ".css", ".js"):
+            data = _inyectar_stamp_ui(data, ext)
         ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    def _serve_disco_con_stamp(self) -> bool:
+        if not self.web_root:
+            return False
+        parsed = urlparse(self.path)
+        rel = unquote(parsed.path or "/").lstrip("/")
+        if not rel or rel.endswith("/"):
+            rel = (rel + "index.html") if rel else "index.html"
+        if ".." in rel.split("/"):
+            return False
+        ext = os.path.splitext(rel)[1].lower()
+        if ext not in (".html", ".css", ".js"):
+            return False
+        full = os.path.normpath(os.path.join(self.web_root, *rel.split("/")))
+        root = os.path.normpath(self.web_root)
+        if full != root and not full.startswith(root + os.sep):
+            return False
+        if not os.path.isfile(full):
+            return False
+        with open(full, "rb") as handle:
+            data = _inyectar_stamp_ui(handle.read(), ext)
+        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+        return True
 
     def do_POST(self):
         if self.path.startswith("/api/control"):
@@ -460,6 +523,7 @@ class ServidorCuello:
             on_f11=self._tecla_salir,
             on_esc=self._tecla_salir,
             parent=parent,
+            on_f5=self._tecla_f5,
         )
         self._teclas.start()
 
@@ -468,6 +532,10 @@ class ServidorCuello:
             return
         self._teclas.stop()
         self._teclas = None
+
+    def _tecla_f5(self):
+        logger.info("F5: recargo la cara web de la TV")
+        self._lanzar_navegador()
 
     def _tecla_f10(self):
         mw = self.main_window
@@ -548,7 +616,7 @@ class ServidorCuello:
             for old_prof in glob.glob(os.path.join(tempfile.gettempdir(), "tpv-carteleria-kiosk-*")):
                 if old_prof != self._kiosk_profile:
                     shutil.rmtree(old_prof, ignore_errors=True)
-            url = f"http://{self.host}:{self.port}/?v={_app_version_tv()}"
+            url = f"http://{self.host}:{self.port}/?v={_ui_stamp_tv()}"
             sistema = platform.system()
             flags = self._flags_kiosk(url)
             navegador = buscar_navegador()

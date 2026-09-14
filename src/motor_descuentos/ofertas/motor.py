@@ -144,36 +144,68 @@ class MotorOfertas:
             return False
 
     def aplicar_oferta_por_nombre(self, nombre, cant_oferta, precio_oferta_promedio):
-        """Aplica una oferta promedio a un producto buscándolo por su nombre exacto."""
+        """Aplica una oferta promedio a un producto buscándolo por su nombre exacto y sincroniza."""
         try:
-            return db_manager.execute_non_query(
+            ok = db_manager.execute_non_query(
                 "UPDATE productos SET cant_oferta=?, precio_oferta_promedio=? WHERE nombre=?",
                 (cant_oferta, precio_oferta_promedio, nombre)
             )
+            if ok:
+                try:
+                    res = db_manager.execute_query("SELECT id FROM productos WHERE nombre=?", (nombre,))
+                    if res:
+                        pid = res[0][0] if isinstance(res[0], tuple) else res[0].get("id")
+                        from src.central_red_global.sync_tienda import empujar_producto_a_maestra
+                        empujar_producto_a_maestra({
+                            "id": pid, "cant_oferta": cant_oferta, "precio_oferta_promedio": precio_oferta_promedio
+                        })
+                except Exception:
+                    pass
+            return ok
         except Exception as e:
             self.logger.error(f"Error aplicando oferta por nombre ({nombre}): {e}")
             return False
 
     def limpiar_oferta(self, id_p):
-        """Limpia la oferta de un producto específico."""
+        """Limpia la oferta de un producto especfico y sincroniza."""
         try:
-            return db_manager.execute_non_query(
+            ok = db_manager.execute_non_query(
                 "UPDATE productos SET cant_oferta=0, precio_oferta=0, precio_oferta_relampago=0, precio_oferta_promedio=0, limite_oferta_relampago=0 WHERE id=?",
                 (id_p,)
             )
+            if ok:
+                try:
+                    from src.central_red_global.sync_tienda import empujar_producto_a_maestra
+                    empujar_producto_a_maestra({
+                        "id": id_p, "cant_oferta": 0, "precio_oferta": 0,
+                        "precio_oferta_relampago": 0, "precio_oferta_promedio": 0
+                    })
+                except Exception:
+                    pass
+            return ok
         except Exception as e:
             self.logger.error(f"Error limpiando oferta del producto {id_p}: {e}")
             return False
 
     def limpiar_multiples_ofertas(self, ids):
-        """Limpia las ofertas de una lista de IDs."""
+        """Limpia las ofertas de una lista de IDs y sincroniza."""
         if not ids: return True
         placeholders = ",".join("?" * len(ids))
         try:
-            db_manager.execute_non_query(
+            ok = db_manager.execute_non_query(
                 f"UPDATE productos SET cant_oferta=0, precio_oferta=0, precio_oferta_relampago=0, precio_oferta_promedio=0, limite_oferta_relampago=0 WHERE id IN ({placeholders})",
                 tuple(ids)
             )
+            if ok:
+                try:
+                    from src.central_red_global.sync_tienda import empujar_producto_a_maestra
+                    for pid in ids:
+                        empujar_producto_a_maestra({
+                            "id": pid, "cant_oferta": 0, "precio_oferta": 0,
+                            "precio_oferta_relampago": 0, "precio_oferta_promedio": 0
+                        })
+                except Exception:
+                    pass
             return True
         except Exception as e:
             self.logger.error(f"Error limpiando multiples ofertas: {e}")

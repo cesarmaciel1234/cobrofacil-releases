@@ -10,9 +10,9 @@ import os
 import sys
 import subprocess
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                              QFrame, QGraphicsDropShadowEffect, QPushButton, QMessageBox)
+                              QFrame, QPushButton, QMessageBox)
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint, QEvent, QTimer
-from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QKeyEvent
+from PyQt6.QtGui import QKeyEvent
 
 # PyQt6 Enum compatibility aliases
 if hasattr(Qt, 'AlignmentFlag'):
@@ -92,7 +92,7 @@ class ProfileCard(QFrame):
         self.tag.setAlignment(Qt.AlignCenter)
         self.tag.setFixedHeight(20)
         self.tag.setStyleSheet(f"""
-            font-size: 8px; font-weight: 900; letter-spacing: 2px;
+            font-size: 8px; font-weight: 800;
             color: {tag_fg};
             background: {bg_pill};
             border: none; border-radius: 6px;
@@ -119,7 +119,7 @@ class ProfileCard(QFrame):
         self.lbl_title = QLabel(title)
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setStyleSheet(f"""
-            font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
+            font-size: 13px; font-weight: 800;
             color: {WC['text']}; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
         """)
@@ -151,7 +151,7 @@ class ProfileCard(QFrame):
             }}
         """)
         self.lbl_title.setText(self._original_title)
-        self.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 900; color: {WC['text']}; background: transparent; border: none;")
+        self.lbl_title.setStyleSheet(f"font-size: 13px; font-weight: 800; color: {WC['text']}; background: transparent; border: none;")
         self.lbl_desc.setText(self._original_desc)
         self.lbl_desc.setStyleSheet(f"font-size: 10px; font-weight: 500; color: {WC['text2']}; background: transparent; border: none;")
 
@@ -249,9 +249,14 @@ class PerfilPantalla(QDialog):
         self.selected_index = 0
         self._roles_bloqueados = set()
 
+        self.setObjectName("PerfilPantalla")
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.setFixedSize(1080, 480)
+        self.setStyleSheet(
+            "QDialog#PerfilPantalla { background: #FEF8EF; border-radius: 28px; }"
+            "QDialog#PerfilPantalla QLabel { background: transparent; }"
+        )
         from src.utils.candados import MASTER_WINDOW_TITLE
         self.setWindowTitle(MASTER_WINDOW_TITLE)
 
@@ -266,8 +271,8 @@ class PerfilPantalla(QDialog):
             self._timer_monitor.start()
 
         self._check_locked_profiles()
-        QTimer.singleShot(300, self._refresh_server_badge)
-        # Tras update el servidor a veces tarda: reintentar solo si sigue OFFLINE
+        QTimer.singleShot(200, self._refresh_server_badge)
+        QTimer.singleShot(400, self._auto_ensure_server_if_offline)
         QTimer.singleShot(8000, self._auto_ensure_server_if_offline)
 
     def _setup_ui(self):
@@ -276,18 +281,14 @@ class PerfilPantalla(QDialog):
 
         # Contenedor principal con borde redondeado y sombra doble
         card = QFrame()
+        card.setObjectName("PerfilContainer")
         card.setStyleSheet(f"""
-            QFrame {{
+            QFrame#PerfilContainer {{
                 background: {WC['bg']};
                 border-radius: 28px;
                 border: 1.5px solid {WC['border']};
             }}
         """)
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(36)
-        shadow.setColor(QColor(217, 119, 6, 25))
-        shadow.setOffset(0, 8)
-        card.setGraphicsEffect(shadow)
 
         main_lay.addWidget(card)
 
@@ -300,30 +301,19 @@ class PerfilPantalla(QDialog):
         sub = QLabel("✦  LANZADOR MAESTRO AUTÓNOMO DE ENTORNO  ✦")
         sub.setAlignment(Qt.AlignLeft)
         sub.setStyleSheet(f"""
-            font-size: 9px; font-weight: 800; letter-spacing: 3px;
+            font-size: 9px; font-weight: 800;
             color: #D97706; background: transparent; border: none;
             font-family: 'Segoe UI', sans-serif;
         """)
         top_bar.addWidget(sub)
         top_bar.addStretch()
 
-        # Badge Servidor de Tienda (proceso dedicado)
-        self.lbl_server_badge = QLabel("Servidor: …")
-        self.lbl_server_badge.setStyleSheet(
-            "font-size: 10px; font-weight: 800; color: #64748B; background: #F1F5F9; "
-            "border: 1px solid #E2E8F0; border-radius: 8px; padding: 4px 10px;"
-        )
-        self.lbl_server_badge.setCursor(Qt.PointingHandCursor)
-        self.lbl_server_badge.setToolTip("Clic: mostrar / asegurar Servidor de Tienda")
-        self.lbl_server_badge.mousePressEvent = lambda e: self._on_server_badge_click()
+        from src.lanzador.servidor import crear_badge, crear_interruptor
+
+        self.lbl_server_badge = crear_badge(self, self._on_server_badge_click)
         top_bar.addWidget(self.lbl_server_badge)
         top_bar.addSpacing(6)
-
-        self.btn_autostart = QPushButton("Win: OFF")
-        self.btn_autostart.setFixedHeight(26)
-        self.btn_autostart.setCursor(Qt.PointingHandCursor)
-        self.btn_autostart.setToolTip("Arrancar Servidor de Tienda con Windows (tras corte de luz)")
-        self.btn_autostart.clicked.connect(self._toggle_windows_autostart)
+        self.btn_autostart = crear_interruptor(self._toggle_windows_autostart)
         top_bar.addWidget(self.btn_autostart)
         top_bar.addSpacing(8)
 
@@ -358,9 +348,9 @@ class PerfilPantalla(QDialog):
         title = QLabel("Bienvenido a CobroFacil PRO 2026")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(f"""
-            font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+            font-size: 26px; font-weight: 800;
             color: {WC['text']}; background: transparent; border: none;
-            font-family: 'Segoe UI Black', 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         """)
         content.addWidget(title)
         content.addSpacing(4)
@@ -407,8 +397,6 @@ class PerfilPantalla(QDialog):
         """)
         content.addWidget(hint)
 
-        main_lay.addWidget(card)
-
     def _select_and_choose(self, idx: int):
         self.selected_index = idx
         self.update_selection_ui()
@@ -424,59 +412,19 @@ class PerfilPantalla(QDialog):
         if not hasattr(self, "lbl_server_badge"):
             return
         try:
-            from src.central_red_global.store_server import (
-                is_store_server_online,
-                is_windows_autostart_enabled,
-            )
-            from src.utils.candados import get_store_server_pid
+            from src.lanzador.servidor import pintar_badge, pintar_interruptor
 
-            online = is_store_server_online()
-            pid = get_store_server_pid()
-            if online:
-                self.lbl_server_badge.setText(f"Servidor: ONLINE" + (f" · {pid}" if pid else ""))
-                self.lbl_server_badge.setStyleSheet(
-                    "font-size: 10px; font-weight: 800; color: #15803D; background: #DCFCE7; "
-                    "border: 1px solid #86EFAC; border-radius: 8px; padding: 4px 10px;"
-                )
-            else:
-                self.lbl_server_badge.setText("Servidor: OFFLINE")
-                self.lbl_server_badge.setStyleSheet(
-                    "font-size: 10px; font-weight: 800; color: #B91C1C; background: #FEE2E2; "
-                    "border: 1px solid #FECACA; border-radius: 8px; padding: 4px 10px;"
-                )
+            pintar_badge(self.lbl_server_badge)
             if hasattr(self, "btn_autostart"):
-                on = is_windows_autostart_enabled()
-                self.btn_autostart.setText("Win: ON" if on else "Win: OFF")
-                self.btn_autostart.setStyleSheet(
-                    "QPushButton { font-size: 10px; font-weight: 800; border-radius: 8px; "
-                    "padding: 4px 10px; border: 1px solid %s; background: %s; color: %s; }"
-                    % (
-                        ("#86EFAC", "#DCFCE7", "#15803D") if on else ("#E2E8F0", "#F8FAFC", "#64748B")
-                    )
-                )
+                pintar_interruptor(self.btn_autostart)
         except Exception:
             self.lbl_server_badge.setText("Servidor: ?")
 
     def _auto_ensure_server_if_offline(self):
-        """Si quedó OFFLINE (p.ej. tras update), un reintento silencioso."""
         try:
-            from src.config import config
-            from src.central_red_global.master_presence import es_pc_maestra_local
-            from src.central_red_global.store_server import (
-                ensure_store_server_process,
-                is_store_server_online,
-            )
-            from src.updater.silent_auto_updater import end_apply_guard
+            from src.lanzador.servidor import asegurar_servidor_si_maestra
 
-            if not config.get("auto_start_store_server", True):
-                return
-            if not es_pc_maestra_local():
-                return
-            if is_store_server_online():
-                self._refresh_server_badge()
-                return
-            end_apply_guard()
-            ensure_store_server_process(timeout_sec=40.0)
+            asegurar_servidor_si_maestra()
             self._refresh_server_badge()
         except Exception:
             try:
@@ -486,52 +434,25 @@ class PerfilPantalla(QDialog):
 
     def _on_server_badge_click(self):
         try:
-            from src.central_red_global.store_server import (
-                ensure_store_server_process,
-                is_store_server_online,
-            )
-            from src.utils.candados import focus_existing_store_server
-            from src.updater.silent_auto_updater import end_apply_guard
+            from src.lanzador.servidor import al_clic_badge
 
-            if is_store_server_online():
-                if not focus_existing_store_server():
-                    QMessageBox.information(
-                        self,
-                        "Servidor",
-                        "El servidor ya está encendido (PID en la pastilla verde).\n\n"
-                        "No aparece junto a WhatsApp: está en una ventana propia "
-                        "o en la bandeja, abajo a la derecha junto al reloj.\n\n"
-                        "Doble clic en el icono de la bandeja para mostrarlo.",
-                    )
-            else:
-                end_apply_guard()
-                self.lbl_server_badge.setText("Servidor: arrancando…")
-                ensure_store_server_process(timeout_sec=40.0)
-            self._refresh_server_badge()
+            al_clic_badge(self, self.lbl_server_badge)
         except Exception as e:
             QMessageBox.warning(self, "Servidor", f"No se pudo asegurar el servidor:\n{e}")
 
     def _toggle_windows_autostart(self):
         try:
-            from src.config import config
-            from src.central_red_global.store_server import (
-                is_windows_autostart_enabled,
-                set_windows_autostart,
-            )
-            new_state = not is_windows_autostart_enabled()
-            ok = set_windows_autostart(new_state)
-            config.set("auto_start_store_server", new_state)
-            if not ok and new_state:
-                QMessageBox.warning(
-                    self, "Windows",
-                    "No se pudo crear el acceso de inicio. Probá ejecutar como Administrador.",
-                )
+            from src.lanzador.servidor import al_toggle_interruptor
+
+            al_toggle_interruptor(self, self.btn_autostart)
             self._refresh_server_badge()
         except Exception as e:
-            QMessageBox.warning(self, "Windows", str(e))
+            QMessageBox.warning(self, "Inicio automático", str(e))
 
     def _check_locked_profiles(self):
         try:
+            from src.config import config
+            config.reload()
             self._apply_locked_profiles_ui()
             self._refresh_server_badge()
         except Exception:

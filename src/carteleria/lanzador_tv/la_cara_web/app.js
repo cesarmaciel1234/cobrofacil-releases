@@ -9,7 +9,7 @@ import { iniciarRotacionColumna3 } from "./modules/columna3/columna3.js";
 import { iniciarRotacionColumna4 } from "./modules/columna4/columna4.js";
 import { renderMensajeZocalo } from "./modules/mensaje_zocalo/mensaje_zocalo.js";
 
-const TV_UI = "241";
+const TV_UI = "259";
 const API_URL = "/api/state";
 const REFRESH_INTERVAL = 15000;
 
@@ -85,6 +85,8 @@ function loadTheme(themeName) {
     themeStylesLink.dataset.ui = TV_UI;
     const precioTv = document.getElementById("precio-tv");
     if (precioTv) precioTv.href = `css/precio_tv.css${bust}`;
+    const precioCarrusel = document.getElementById("precio-tv-carrusel");
+    if (precioCarrusel) precioCarrusel.href = `css/precio_tv/carrusel.css${bust}`;
     state.currentTheme = nombre;
 }
 
@@ -135,15 +137,18 @@ async function fetchState() {
         // ya se aplican en la renderización de las columnas (shimmer-fx, rotación, etc).
         // --------------------------------------------------------
 
-        renderFranjaOferta(state.hero, state.productos, els);
-        iniciarRotacionColumna1(state, els.content1);
-        renderColumna2(state.productos, els.content2);
-        iniciarRotacionColumna3(state, els.content3);
-        iniciarRotacionColumna4(state, els.content4);
-        renderMensajeZocalo(state.config, els.marquee);
-        renderCabeceraNegocio(state.config, els);
-        actualizarClimaHeader(state.climaData);
-        updateVFX(); // Dispara los efectos solo cuando hay datos nuevos
+        const safe = (fn) => {
+            try { fn(); } catch (err) { console.error("[Cartelería]", err); }
+        };
+        safe(() => renderFranjaOferta(state.hero, state.productos, els));
+        safe(() => iniciarRotacionColumna1(state, els.content1));
+        safe(() => renderColumna2(state.productos, els.content2));
+        safe(() => iniciarRotacionColumna3(state, els.content3));
+        safe(() => iniciarRotacionColumna4(state, els.content4));
+        safe(() => renderMensajeZocalo(state.config, els.marquee));
+        safe(() => renderCabeceraNegocio(state.config, els));
+        safe(() => actualizarClimaHeader(state.climaData));
+        safe(() => updateVFX());
 
         if (state.isLoading) {
             state.isLoading = false;
@@ -206,6 +211,14 @@ function ajustarZoomTv() {
 
 function setupTvKeys() {
     window.addEventListener("keydown", (event) => {
+        if (event.key === "F5") {
+            event.preventDefault();
+            event.stopPropagation();
+            const u = new URL(location.href);
+            u.searchParams.set("r", String(Date.now()));
+            location.replace(`${u.pathname}?${u.searchParams.toString()}`);
+            return;
+        }
         if (event.key !== "F10" && event.key !== "F11" && event.key !== "Escape") return;
         event.preventDefault();
         event.stopPropagation();

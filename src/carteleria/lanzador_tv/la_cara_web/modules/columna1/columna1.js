@@ -21,11 +21,12 @@ function panelesRotacion(state) {
 
 function metaPanel(panel) {
     const firma = `${panel.id || ""} ${panel.titulo || ""} ${panel.subtitulo || ""}`;
-    const premium = panel.id === "plata" || /premium|plata|recaud/i.test(firma);
-    const social = panel.id === "elegidos" || /elegid|pedido/i.test(firma);
-    const mega = panel.id === "volumen" || /mega|kilo|volumen/i.test(firma);
-    const etiqueta = premium ? "Venta premium" : (mega ? "Mega ventas" : "Lo más elegido");
-    return { premium, social, mega, etiqueta };
+    const inventario = panel.id === "inventario" || /lista|inventario/i.test(firma);
+    const premium = !inventario && (panel.id === "plata" || /premium|plata|recaud/i.test(firma));
+    const social = !inventario && (panel.id === "elegidos" || /elegid|pedido/i.test(firma));
+    const mega = !inventario && (panel.id === "volumen" || /mega|kilo|volumen/i.test(firma));
+    const etiqueta = inventario ? "Tu lista" : (premium ? "Venta premium" : (mega ? "Mega ventas" : "Lo más elegido"));
+    return { premium, social, mega, inventario, etiqueta };
 }
 
 function htmlPanel(panel) {
@@ -100,21 +101,25 @@ function aplicarTarjeta(card, item, i, meta) {
 }
 
 function pintar(recrear) {
-    if (!rootRef) return;
-    if (!panelesCache.length) {
-        rootRef.innerHTML = '<p class="column-empty">Sin ventas todavía.</p>';
-        return;
+    try {
+        if (!rootRef) return;
+        if (!panelesCache.length) {
+            rootRef.innerHTML = '<p class="column-empty">Sin ventas todavía.</p>';
+            return;
+        }
+        const panel = panelesCache[rotacionIndex % panelesCache.length];
+        const meta = metaPanel(panel);
+        const items = (panel.items || []).slice(0, 4);
+        let list = rootRef.querySelector(".rank-list");
+        const cards = list ? [...list.querySelectorAll(".asian-rank-card")] : [];
+        if (recrear || !list || cards.length !== items.length) {
+            rootRef.innerHTML = htmlPanel(panel);
+            return;
+        }
+        items.forEach((item, i) => aplicarTarjeta(cards[i], { ...item, puesto: i + 1 }, i, meta));
+    } catch (err) {
+        console.error("[TV1] pintar:", err);
     }
-    const panel = panelesCache[rotacionIndex % panelesCache.length];
-    const meta = metaPanel(panel);
-    const items = (panel.items || []).slice(0, 4);
-    let list = rootRef.querySelector(".rank-list");
-    const cards = list ? [...list.querySelectorAll(".asian-rank-card")] : [];
-    if (recrear || !list || cards.length !== items.length) {
-        rootRef.innerHTML = htmlPanel(panel);
-        return;
-    }
-    items.forEach((item, i) => aplicarTarjeta(cards[i], { ...item, puesto: i + 1 }, i, meta));
 }
 
 export function iniciarRotacionColumna1(state, root) {
@@ -127,11 +132,22 @@ export function iniciarRotacionColumna1(state, root) {
     if (!misma || !habia) {
         pintar(!habia);
     }
+    const n = panelesCache.length;
+    if (n <= 1) {
+        if (rotacionTimer) {
+            clearInterval(rotacionTimer);
+            rotacionTimer = null;
+        }
+        return;
+    }
     if (rotacionTimer) return;
-    if (panelesCache.length <= 1) return;
     rotacionTimer = setInterval(() => {
-        if (!panelesCache.length) return;
-        rotacionIndex = (rotacionIndex + 1) % panelesCache.length;
-        pintar(false);
+        try {
+            if (!panelesCache.length) return;
+            rotacionIndex = (rotacionIndex + 1) % panelesCache.length;
+            pintar(false);
+        } catch (err) {
+            console.error("[TV1] rotación:", err);
+        }
     }, ROTACION_MS);
 }

@@ -18,98 +18,32 @@ try:
 except ImportError:
     from database import db_manager
 
-# Paleta 2026 — claros, contraste marcado, profundidad 3D suave
-_FIN = {
-    "bg_page": "#F0F4F8",
-    "card": "#FFFFFF",
-    "card_border": "#E2E8F0",
-    "row_white": "#FFFFFF",
-    "row_gray": "#F1F5F9",
-    "text_on_white": "#0F172A",
-    "text_on_gray": "#1E293B",
-    "muted_on_white": "#64748B",
-    "muted_on_gray": "#475569",
-    "text": "#0F172A",
-    "text_soft": "#475569",
-    "text_muted": "#94A3B8",
-    "header_bg": "#E8EEF4",
-    "header_text": "#334155",
-    "accent": "#3B82F6",
-    "accent_light": "#EFF6FF",
-    "accent_hover": "#2563EB",
-    "border_row": "#E2E8F0",
-    "green": "#10B981",
-    "red": "#EF4444",
-}
-
-_KEEP_FG = frozenset({"#10b981", "#059669", "#ef4444", "#dc2626"})
+from src.jefe.reportes.periodo import montar_botones_periodo, pintar_activo, resolver_rango_periodo
+from src.jefe.reportes.financiero import (
+    fmt_entero,
+    fmt_plata,
+    maximo_eje,
+    pct_vs,
+    rango_igual_anterior,
+    texto_insights,
+)
+from src.jefe.reportes.financiero.paleta import (
+    _FIN,
+    _KEEP_FG,
+    _aplicar_paleta_tabla,
+    _estilo_tabla_financiera,
+    _fmt_cant,
+    _pintar_filas_tabla,
+    _unidad_clara,
+)
+from src.jefe.reportes.letra import fuente_limpia
 
 
-def _estilo_tabla_financiera() -> str:
-    return f"""
-        QTableWidget {{
-            background-color: {_FIN['row_white']};
-            border: 1px solid {_FIN['card_border']};
-            border-radius: 12px;
-            gridline-color: transparent;
-            font-size: 13px;
-            color: {_FIN['text_on_white']};
-            outline: none;
-        }}
-        QTableWidget::item {{
-            padding: 11px 10px;
-            border-bottom: 1px solid {_FIN['border_row']};
-        }}
-        QTableWidget::item:selected {{
-            background-color: {_FIN['accent_light']};
-            color: #1E40AF;
-        }}
-        QHeaderView::section {{
-            background-color: {_FIN['header_bg']};
-            color: {_FIN['header_text']};
-            font-weight: 800;
-            font-size: 11px;
-            padding: 12px 10px;
-            border: none;
-            border-bottom: 2px solid {_FIN['accent']};
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }}
-    """
-
-
-def _aplicar_paleta_tabla(tabla: QTableWidget):
-    from PyQt6.QtGui import QPalette
-    tabla.setAlternatingRowColors(False)
-    pal = tabla.palette()
-    pal.setColor(QPalette.ColorRole.Base, QColor(_FIN["row_white"]))
-    pal.setColor(QPalette.ColorRole.AlternateBase, QColor(_FIN["row_gray"]))
-    pal.setColor(QPalette.ColorRole.Text, QColor(_FIN["text_on_white"]))
-    pal.setColor(QPalette.ColorRole.Window, QColor(_FIN["row_white"]))
-    tabla.setPalette(pal)
-    tabla.setStyleSheet(_estilo_tabla_financiera())
-    tabla.viewport().setStyleSheet(f"background-color: {_FIN['row_white']};")
-
-
-def _pintar_filas_tabla(tabla: QTableWidget):
-    """Filas alternadas blanco / gris claro — texto oscuro bien marcado en ambas."""
-    for row in range(tabla.rowCount()):
-        es_gris = (row % 2) == 1
-        bg = QColor(_FIN["row_gray"] if es_gris else _FIN["row_white"])
-        fg = QColor(_FIN["text_on_gray"] if es_gris else _FIN["text_on_white"])
-        fg_muted = QColor(_FIN["muted_on_gray"] if es_gris else _FIN["muted_on_white"])
-        for col in range(tabla.columnCount()):
-            item = tabla.item(row, col)
-            if not item:
-                continue
-            item.setBackground(bg)
-            cur = item.foreground().color().name().lower()
-            if cur in _KEEP_FG:
-                continue
-            if cur in ("#94a3b8", "#64748b", "#9ca3af", "#cbd5e1"):
-                item.setForeground(fg_muted)
-            else:
-                item.setForeground(fg)
+def _nombre_depto(raw) -> str:
+    n = str(raw or "").strip().upper()
+    if n in ("", "S/D", "SD", "NONE", "NULL"):
+        return "SIN DEPARTAMENTO"
+    return n
 
 def get_depto_icon(depto_name):
     if not depto_name:
@@ -213,13 +147,11 @@ class StockAreaChartWidget(QWidget):
             painter.drawText(self.rect(), Qt.AlignCenter, "Sin datos")
             return
             
-        max_val = max(max([d.get('ventas', 0) for d in self.data.values()]), 1)
+        vals = [d.get('ventas', 0) for d in self.data.values()]
+        vals += [d.get('ganancia', 0) for d in self.data.values()]
         if self.data_prev:
-            max_prev = max(max([d.get('ventas', 0) for d in self.data_prev.values()]), 1)
-            max_val = max(max_val, max_prev)
-            
-        magnitude = 10**(len(str(int(max_val))) - 1) if max_val >= 10 else 1
-        max_val = ((int(max_val) // magnitude) + 1) * magnitude
+            vals += [d.get('ventas', 0) for d in self.data_prev.values()]
+        max_val = maximo_eje(vals)
         
         for i in range(6):
             y = h - padding_b - (i * chart_h / 5)
@@ -253,12 +185,8 @@ class StockAreaChartWidget(QWidget):
             if pts_prev:
                 path_prev = QPainterPath()
                 path_prev.moveTo(pts_prev[0])
-                for i in range(1, len(pts_prev)):
-                    p1 = pts_prev[i - 1]
-                    p2 = pts_prev[i]
-                    c1 = QPointF((p1.x() + p2.x()) / 2, p1.y())
-                    c2 = QPointF((p1.x() + p2.x()) / 2, p2.y())
-                    path_prev.cubicTo(c1, c2, p2)
+                for p in pts_prev[1:]:
+                    path_prev.lineTo(p)
                     
                 pen_prev = QPen(QColor("#94A3B8"), 3, Qt.DashLine)
                 painter.setPen(pen_prev)
@@ -282,12 +210,8 @@ class StockAreaChartWidget(QWidget):
             painter.setBrush(QColor(59, 130, 246))
             painter.drawEllipse(pts_v[0], 5, 5)
         else:
-            for i in range(1, len(pts_v)):
-                p1 = pts_v[i - 1]
-                p2 = pts_v[i]
-                c1 = QPointF((p1.x() + p2.x()) / 2, p1.y())
-                c2 = QPointF((p1.x() + p2.x()) / 2, p2.y())
-                path_v.cubicTo(c1, c2, p2)
+            for p in pts_v[1:]:
+                path_v.lineTo(p)
                 
             fill_path = QPainterPath(path_v)
             fill_path.lineTo(padding_l + (len(keys) - 1) * step, h - padding_b)
@@ -299,8 +223,25 @@ class StockAreaChartWidget(QWidget):
             grad_v.setColorAt(1, QColor(59, 130, 246, 0))
             painter.fillPath(fill_path, QBrush(grad_v))
             
-            painter.setPen(QPen(QColor(59, 130, 246), 4))
+            painter.setPen(QPen(QColor(59, 130, 246), 3))
             painter.drawPath(path_v)
+
+        pts_g = []
+        for i, key in enumerate(keys):
+            g = float(self.data[key].get("ganancia") or 0)
+            if g <= 0:
+                continue
+            x = padding_l + i * step
+            y = h - padding_b - (g / max_val) * chart_h
+            pts_g.append(QPointF(x, y))
+        if len(pts_g) >= 2:
+            path_g = QPainterPath()
+            path_g.moveTo(pts_g[0])
+            for p in pts_g[1:]:
+                path_g.lineTo(p)
+            painter.setPen(QPen(QColor("#059669"), 2))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawPath(path_g)
         
         # Hover
         if self.hover_index != -1 and self.hover_index < len(keys):
@@ -524,92 +465,42 @@ class DonutChartWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        from PyQt6.QtGui import QPainter, QColor, QFont, QPen, QBrush
-        from PyQt6.QtCore import QPoint, QRect, QRectF, Qt
-        import math
+        from PyQt6.QtGui import QPainter, QColor, QPen
+        from PyQt6.QtCore import QRect
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        # Leave enough horizontal space (80px on each side) for the text labels
-        avail_w = self.width() - 180
-        avail_h = self.height() - 40
-        size = min(avail_w, avail_h)
-        if size < 80: size = 80
-        
+        size = min(self.width(), self.height()) - 16
+        if size < 80:
+            size = 80
         rect = QRect(int((self.width() - size) / 2), int((self.height() - size) / 2), size, size)
-        
         total = sum(self.data.values())
         if total <= 0:
             painter.setBrush(QColor("#EEF2F8"))
-            painter.drawEllipse(rect); return
-            
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(rect)
+            return
         start_angle = 90 * 16
-        for i, (cat, val) in enumerate(self.data.items()):
-            if val <= 0: continue
+        for i, (_cat, val) in enumerate(self.data.items()):
+            if val <= 0:
+                continue
             span_angle = int((val / total) * 360 * 16)
-            color = QColor(self.colors[i % len(self.colors)])
-            painter.setBrush(color)
+            painter.setBrush(QColor(self.colors[i % len(self.colors)]))
             painter.setPen(QPen(QColor("#FFFFFF"), 2))
             painter.drawPie(rect, start_angle, -span_angle)
-            
-            # Draw outside line and label for top 5
-            pct = (val / total) * 100
-            if i < 5 and pct >= 2.0:
-                mid_angle = (start_angle - span_angle / 2) / 16.0
-                rad = math.radians(mid_angle)
-                
-                cx = rect.center().x()
-                cy = rect.center().y()
-                outer_radius = size / 2.0
-                
-                edge_x = cx + outer_radius * math.cos(rad)
-                edge_y = cy - outer_radius * math.sin(rad)
-                
-                line_len = 15
-                end_x = cx + (outer_radius + line_len) * math.cos(rad)
-                end_y = cy - (outer_radius + line_len) * math.sin(rad)
-                
-                is_right = math.cos(rad) >= 0
-                horiz_len = 10
-                text_x = end_x + horiz_len if is_right else end_x - horiz_len
-                
-                painter.setPen(QPen(color, 2))
-                painter.drawLine(int(edge_x), int(edge_y), int(end_x), int(end_y))
-                painter.drawLine(int(end_x), int(end_y), int(text_x), int(end_y))
-                
-                painter.setPen(QColor("#1E293B"))
-                painter.setFont(QFont("Segoe UI", 8, QFont.Bold))
-                cat_str = str(cat)
-                if len(cat_str) > 12: cat_str = cat_str[:10] + ".."
-                label_text = f"{cat_str} {pct:.0f}%"
-                
-                if is_right:
-                    text_rect = QRectF(text_x + 4, end_y - 10, 100, 20)
-                    painter.drawText(text_rect, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextDontClip, label_text)
-                else:
-                    text_rect = QRectF(text_x - 104, end_y - 10, 100, 20)
-                    painter.drawText(text_rect, Qt.AlignRight | Qt.AlignVCenter | Qt.TextDontClip, label_text)
-            
             start_angle -= span_angle
-            
-        # Center hole
-        inner_size = int(size * 0.60)
-        inner_rect = QRect(int((self.width() - inner_size) / 2), int((self.height() - inner_size) / 2), inner_size, inner_size)
-        painter.setBrush(QColor("#F1F5F9"))
-        painter.setPen(Qt.NoPen)
+        inner_size = int(size * 0.58)
+        inner_rect = QRect(
+            int((self.width() - inner_size) / 2),
+            int((self.height() - inner_size) / 2),
+            inner_size,
+            inner_size,
+        )
+        painter.setBrush(QColor("#FFFFFF"))
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(inner_rect)
-        
-        painter.setPen(QColor("#1E293B"))
-        
-        # Format total to fit
-        if total >= 1_000_000:
-            t_str = f"${total/1_000_000:.1f}M"
-        elif total >= 1_000:
-            t_str = f"${total/1_000:.1f}K"
-        else:
-            t_str = f"${total:,.0f}"
-            
-        painter.setFont(QFont("Segoe UI", 13, QFont.Bold))
-        painter.drawText(inner_rect, Qt.AlignCenter | Qt.TextDontClip, t_str)
+        painter.setPen(QColor("#0F172A"))
+        painter.setFont(fuente_limpia(12))
+        painter.drawText(inner_rect, Qt.AlignmentFlag.AlignCenter, fmt_plata(total))
 
 
 class AIAssistantWidget(ModernCard):
@@ -631,8 +522,8 @@ class AIAssistantWidget(ModernCard):
         h_lay = QHBoxLayout()
         lbl_icon = QLabel("🤖")
         lbl_icon.setStyleSheet("font-size: 24px;")
-        lbl_title = QLabel("Antigravity AI - Análisis Estratégico")
-        lbl_title.setStyleSheet("font-size: 18px; font-weight: 900; ")
+        lbl_title = QLabel("Cerebro Jefe")
+        lbl_title.setStyleSheet("font-size: 16px; font-weight: 700; color: #4C1D95; background: transparent; border: none;")
         
         self.lbl_status = QLabel("Pensando...")
         self.lbl_status.setStyleSheet("font-size: 12px;  font-style: italic;")
@@ -657,37 +548,13 @@ class AIAssistantWidget(ModernCard):
         self.full_text = ""
         self.current_char = 0
 
-    def update_insights(self, chart_data, pago_sum, donut_data):
+    def update_insights(self, chart_data, pago_sum, donut_data, kpis=None):
         try:
             self.lbl_status.show()
             self.lbl_content.setText("")
         except RuntimeError:
-            return  # Widget ya fue destruido (usuario cambió de pestaña)
-        
-        # Generar texto de insights
-        total_ventas = sum([d.get('ventas', 0) for d in chart_data.values()])
-        if total_ventas == 0:
-            self.full_text = "No hay datos suficientes en este periodo para generar un análisis."
-        else:
-            # Insight 1: Mejor día
-            mejor_dia = max(chart_data.items(), key=lambda x: x[1].get('ventas', 0))[0]
-            val_mejor_dia = chart_data[mejor_dia].get('ventas', 0)
-            
-            # Insight 2: Depto estrella
-            mejor_depto = "N/A"
-            if donut_data:
-                mejor_depto = max(donut_data.items(), key=lambda x: x[1])[0]
-                
-            # Insight 3: Forma de pago
-            mejor_forma = "N/A"
-            if pago_sum:
-                mejor_forma = max(pago_sum.items(), key=lambda x: x[1])[0]
-                
-            self.full_text = f"""<ul>
-                <li style='margin-bottom: 8px;'>📈 <b>Pico de Ventas:</b> El mejor desempeño fue el día <b>{mejor_dia}</b> con <b>${val_mejor_dia:,.2f}</b>. Asegúrate de replicar la estrategia de ese día.</li>
-                <li style='margin-bottom: 8px;'>🏆 <b>Departamento Estrella:</b> <b>{mejor_depto}</b> está liderando en volumen. Considera ubicar promociones cruzadas cerca de esta sección.</li>
-                <li style='margin-bottom: 8px;'>💳 <b>Preferencia de Pago:</b> La mayoría de tus clientes prefiere usar <b>{mejor_forma}</b>. Analiza si las comisiones de este método están optimizadas.</li>
-            </ul>"""
+            return
+        self.full_text = texto_insights(kpis or {}, chart_data or {}, pago_sum or {}, donut_data or {})
             
         self.current_char = 0
         self.anim_timer.start(10) # 10ms por caracter HTML (approx)
@@ -773,7 +640,7 @@ class DataLoaderThread(QThread):
             # KPIs
             res_kpi = db_manager.execute_query(
                 "SELECT SUM(total) as v_bruta, SUM(total - descuento + recargo) as v_neta, COUNT(id) as cant "
-                "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA')", 
+                "FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))", 
                 (self.start_str, self.end_str)
             )
             v_bruta = float(res_kpi[0]['v_bruta'] or 0.0) if res_kpi and res_kpi[0] else 0.0
@@ -783,7 +650,7 @@ class DataLoaderThread(QThread):
                 "SELECT SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                 "LEFT JOIN productos p ON dv.id_producto = p.id "
-                "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA')",
+                "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))",
                 (self.start_str, self.end_str)
             )
             costo = float(res_costo[0]['costo'] or 0.0) if res_costo and res_costo[0] else 0.0
@@ -796,17 +663,17 @@ class DataLoaderThread(QThread):
             
             display_chart_data = {}
             if self.period_type == "day":
-                query_chart = "SELECT substr(fecha, 12, 2) as hora, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY hora"
+                query_chart = "SELECT substr(fecha, 12, 2) as hora, SUM(total) as tot FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY hora"
                 res = db_manager.execute_query(query_chart, (self.start_str, self.end_str))
                 for r in (res or []): display_chart_data[f"{r['hora']}:00"] = float(r['tot'] or 0)
             elif self.period_type == "week" or days_diff <= 31:
-                query_chart = "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY dia"
+                query_chart = "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY dia"
                 res = db_manager.execute_query(query_chart, (self.start_str, self.end_str))
                 for r in (res or []):
                     dt_obj = datetime.datetime.strptime(r['dia'], "%Y-%m-%d")
                     display_chart_data[dt_obj.strftime("%d/%m")] = float(r['tot'] or 0)
             else:
-                query_chart = "SELECT substr(fecha, 1, 7) as mes, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY mes"
+                query_chart = "SELECT substr(fecha, 1, 7) as mes, SUM(total) as tot FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY mes"
                 res = db_manager.execute_query(query_chart, (self.start_str, self.end_str))
                 for r in (res or []):
                     try:
@@ -817,19 +684,19 @@ class DataLoaderThread(QThread):
             
             # Tablas Varias
             res_diario = db_manager.execute_query(
-                "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY dia ORDER BY dia DESC", (self.start_str, self.end_str)
+                "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY dia ORDER BY dia DESC", (self.start_str, self.end_str)
             )
             res_depto = db_manager.execute_query(
-                "SELECT COALESCE(p.departamento, 'General') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id LEFT JOIN productos p ON dv.id_producto = p.id WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') GROUP BY depto ORDER BY tot DESC", (self.start_str, self.end_str)
+                "SELECT COALESCE(p.departamento, p.categoria, 'General') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id LEFT JOIN productos p ON dv.id_producto = p.id WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY depto ORDER BY tot DESC", (self.start_str, self.end_str)
             )
             res_pago = db_manager.execute_query(
-                "SELECT substr(fecha, 1, 10) as dia, COALESCE(metodo_pago, 'Efectivo') as m_pago, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY dia, m_pago", (self.start_str, self.end_str)
+                "SELECT substr(fecha, 1, 10) as dia, COALESCE(NULLIF(metodo_pago, ''), 'Efectivo') as m_pago, SUM(total) as tot FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY dia, m_pago", (self.start_str, self.end_str)
             )
             res_cajeros = db_manager.execute_query(
-                "SELECT COALESCE(v.usuario, 'Desconocido') as cajero, COUNT(v.id) as cant, SUM(v.total) as tot FROM ventas v WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') GROUP BY cajero ORDER BY tot DESC LIMIT 5", (self.start_str, self.end_str)
+                "SELECT COALESCE(v.usuario, 'Desconocido') as cajero, COUNT(v.id) as cant, SUM(v.total) as tot FROM ventas v WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY cajero ORDER BY tot DESC LIMIT 5", (self.start_str, self.end_str)
             )
             res_productos = db_manager.execute_query(
-                "SELECT dv.nombre_producto as nombre, SUM(dv.cantidad) as cant, SUM(dv.subtotal) as tot FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') GROUP BY dv.nombre_producto ORDER BY tot DESC LIMIT 5", (self.start_str, self.end_str)
+                "SELECT dv.nombre_producto as nombre, SUM(dv.cantidad) as cant, SUM(dv.subtotal) as tot FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) GROUP BY dv.nombre_producto ORDER BY tot DESC LIMIT 5", (self.start_str, self.end_str)
             )
 
             self.data_loaded.emit({
@@ -855,7 +722,7 @@ class VistaFinanciero(QWidget):
     def __init__(self):
         super().__init__()
         self.setup_ui()
-        self.cargar_datos("Semana Actual")
+        self.cargar_datos("Hoy")
         
         # Sincronización en Tiempo Real (Solo para Modo Espectador / Red)
         from src.config import config
@@ -872,8 +739,10 @@ class VistaFinanciero(QWidget):
         # Si estamos en la pestaña 1 (Gráficos), animamos también la actualización de gráficos
         if hasattr(self, 'stack_views') and self.stack_views.currentIndex() == 1:
             self._renderizar_graficos()
-            if self.txt_audit_prod.hasFocus(): return
-            self._buscar_auditoria()
+            if hasattr(self, "txt_audit_prod") and self.txt_audit_prod.hasFocus():
+                return
+            if hasattr(self, "_buscar_auditoria"):
+                self._buscar_auditoria()
         else:
             periodo = getattr(self, "current_period", "Semana Actual")
             self.cargar_datos(periodo)
@@ -887,8 +756,8 @@ class VistaFinanciero(QWidget):
         lbl_tit = QLabel(titulo)
         lbl_tit.setObjectName("lbl_tit_tabla")
         lbl_tit.setStyleSheet(
-            f"font-size: 17px; font-weight: 800; color: {_FIN['text']}; "
-            "background: transparent; border: none; letter-spacing: -0.3px;"
+            f"font-size: 16px; font-weight: 400; letter-spacing: 0px; color: {_FIN['text']}; "
+            "background: transparent; border: none;"
         )
         lay.addWidget(lbl_tit)
         
@@ -917,12 +786,18 @@ class VistaFinanciero(QWidget):
         return card, tabla, lbl_total
 
     def setup_ui(self):
-        self.setObjectName("Admin3Reportes")
+        self.setObjectName("JefeFinanciero")
         self.setStyleSheet(f"""
-            QWidget#Admin3Reportes {{
+            QWidget#JefeFinanciero {{
                 background: {_FIN['bg_page']};
                 font-family: 'Segoe UI', sans-serif;
-                color: {_FIN['text']};
+                font-weight: 400;
+                letter-spacing: 0px;
+            }}
+            QWidget#JefeFinanciero QLabel {{
+                background: transparent;
+                font-weight: 400;
+                letter-spacing: 0px;
             }}
             QScrollArea {{ border: none; background: transparent; }}
             QWidget#ScrollContainer {{ background: transparent; }}
@@ -948,32 +823,28 @@ class VistaFinanciero(QWidget):
         lbl_main = QLabel("Resumen de Ventas de Mayo")
         lbl_main.setObjectName("lbl_main_title_financial")
         lbl_main.setStyleSheet(
-            f"font-size: 24px; font-weight: 800; color: {_FIN['text']}; margin-bottom: 5px; border: none;"
+            f"font-size: 22px; font-weight: 400; letter-spacing: 0px; color: {_FIN['text']}; "
+            "margin-bottom: 5px; border: none; background: transparent;"
         )
         self.content_layout.addWidget(lbl_main)
         
         filters_layout = QHBoxLayout()
         filters_layout.setSpacing(12)
-        self.period_buttons = {}
         self._period_btn_active = (
-            f"QPushButton {{ color: white; font-size: 13px; font-weight: 800; "
+            f"QPushButton {{ color: white; font-size: 13px; font-weight: 400; letter-spacing: 0px; "
             f"border: none; background: {_FIN['accent']}; border-radius: 10px; padding: 8px 16px; }}"
             f"QPushButton:hover {{ background: {_FIN['accent_hover']}; }}"
         )
         self._period_btn_idle = (
-            f"QPushButton {{ color: {_FIN['text_soft']}; font-size: 13px; font-weight: 600; "
+            f"QPushButton {{ color: {_FIN['text_soft']}; font-size: 13px; font-weight: 400; letter-spacing: 0px; "
             f"background: white; padding: 8px 16px; border-radius: 10px; "
             f"border: 1px solid {_FIN['card_border']}; }}"
             f"QPushButton:hover {{ color: {_FIN['accent']}; background: {_FIN['accent_light']}; "
             f"border-color: #BFDBFE; }}"
         )
-        for f_text in ["Semana Actual", "Mes Actual", "Mes Anterior", "Año actual", "Periodo..."]:
-            f_btn = QPushButton(f_text)
-            f_btn.setCursor(Qt.PointingHandCursor)
-            f_btn.setStyleSheet(self._period_btn_idle)
-            f_btn.clicked.connect(lambda checked, t=f_text: self.cargar_datos(t))
-            self.period_buttons[f_text] = f_btn
-            filters_layout.addWidget(f_btn)
+        self.period_buttons = montar_botones_periodo(
+            filters_layout, self.cargar_datos, self._period_btn_idle, self._period_btn_active
+        )
         filters_layout.addStretch()
         
         from PyQt6.QtWidgets import QCheckBox
@@ -1001,10 +872,10 @@ class VistaFinanciero(QWidget):
         # Legend
         legend_layout = QHBoxLayout()
         legend_layout.addStretch()
-        lbl_v = QLabel("■ Ventas")
-        lbl_v.setStyleSheet(" font-weight: bold; font-size: 12px;")
-        lbl_g = QLabel("■ Ganancia")
-        lbl_g.setStyleSheet(" font-weight: bold; font-size: 12px;")
+        lbl_v = QLabel("Ventas")
+        lbl_v.setStyleSheet("font-weight: 700; font-size: 12px; color: #2563EB; background: transparent; border: none;")
+        lbl_g = QLabel("Ganancia (si hay costo)")
+        lbl_g.setStyleSheet("font-weight: 700; font-size: 12px; color: #059669; background: transparent; border: none;")
         legend_layout.addWidget(lbl_v)
         legend_layout.addWidget(lbl_g)
         chart_layout.addLayout(legend_layout)
@@ -1062,104 +933,122 @@ class VistaFinanciero(QWidget):
         
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
-        self.cargar_datos("Semana Actual")
+        self.cargar_datos("Hoy")
 
 
-    def cargar_datos(self, periodo="Mes Actual"):
+    def cargar_datos(self, periodo="Hoy"):
         self.current_period = periodo
         try:
-            if periodo == "Periodo...":
-                try:
-                    dialog = DialogoSeleccionPeriodo(self)
-                    if qt_exec(dialog) == QDialog.Accepted:
-                        start_str, end_str = dialog.get_fechas()
-                    else:
-                        return
-                except NameError:
-                    return # Not implemented yet
-            else:
-                import datetime
-                hoy = datetime.date.today()
-                if periodo == "Semana Actual":
-                    start_date = hoy - datetime.timedelta(days=hoy.weekday())
-                    start_str = start_date.strftime("%Y-%m-%d 00:00:00")
-                    end_str = hoy.strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Mes Actual":
-                    import calendar
-                    start_str = hoy.replace(day=1).strftime("%Y-%m-%d 00:00:00")
-                    last_day = calendar.monthrange(hoy.year, hoy.month)[1]
-                    end_str = hoy.replace(day=last_day).strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Mes Anterior":
-                    first_day_this_month = hoy.replace(day=1)
-                    last_day_prev = first_day_this_month - datetime.timedelta(days=1)
-                    start_str = last_day_prev.replace(day=1).strftime("%Y-%m-%d 00:00:00")
-                    end_str = last_day_prev.strftime("%Y-%m-%d 23:59:59")
-                elif periodo == "Año actual":
-                    start_str = hoy.replace(month=1, day=1).strftime("%Y-%m-%d 00:00:00")
-                    end_str = hoy.strftime("%Y-%m-%d 23:59:59")
-                else:
-                    start_str, end_str = hoy.strftime("%Y-%m-%d 00:00:00"), hoy.strftime("%Y-%m-%d 23:59:59")
-                    
+            rango = resolver_rango_periodo(periodo, self)
+            if rango is None:
+                return
+            start_str, end_str, etiqueta = rango
             self.current_start_str = start_str
             self.current_end_str = end_str
-            for text, btn in self.period_buttons.items():
-                btn.setStyleSheet(self._period_btn_active if text == periodo else self._period_btn_idle)
+            pintar_activo(
+                self.period_buttons,
+                periodo,
+                self._period_btn_active,
+                self._period_btn_idle,
+                etiqueta,
+            )
             
             lbl_title = self.findChild(QLabel, "lbl_main_title_financial")
             if lbl_title:
                 m_name = ""
-                if "Mes" in periodo:
+                if periodo in ("Mes Actual", "Mes Anterior"):
                     try:
                         m_idx = int(start_str[5:7])
                         meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
                         m_name = meses[m_idx]
                         lbl_title.setText(f"Resumen de Ventas de {m_name}")
-                    except: lbl_title.setText(f"Resumen de Ventas ({periodo})")
+                    except Exception:
+                        lbl_title.setText(f"Resumen de Ventas ({etiqueta})")
                 else:
-                    lbl_title.setText(f"Resumen de Ventas ({periodo})")
+                    lbl_title.setText(f"Resumen de Ventas ({etiqueta})")
 
             lbl_vtas_tiempo = self.card_vtas_tiempo.findChild(QLabel, "lbl_tit_tabla")
             if lbl_vtas_tiempo:
-                if "Mes" in periodo:
-                    lbl_vtas_tiempo.setText("Ventas por mes")
+                if "Hoy" in periodo:
+                    lbl_vtas_tiempo.setText("Ventas por hora")
+                elif "Mes" in periodo:
+                    lbl_vtas_tiempo.setText("Ventas por día")
                 elif "Año" in periodo:
-                    lbl_vtas_tiempo.setText("Ventas por año")
-                else:
+                    lbl_vtas_tiempo.setText("Ventas por mes")
+                elif "Semana" in periodo:
                     lbl_vtas_tiempo.setText("Ventas por semana")
+                else:
+                    lbl_vtas_tiempo.setText("Ventas en el periodo")
 
             # FETCH DATA
             # 1. Ventas Totales y KPIs
             res_kpi = db_manager.execute_query(
                 "SELECT SUM(total) as v_bruta, SUM(total - descuento + recargo) as v_neta, COUNT(id) as cant "
-                "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA')", 
+                "FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))", 
                 (start_str, end_str)
             )
             v_bruta = 0.0
             t_cant = 0
             t_promedio = 0.0
             if res_kpi and res_kpi[0]:
-                v_bruta = float(res_kpi[0]['v_bruta'] or 0.0)
-                t_cant = int(res_kpi[0]['cant'] or 0)
+                fila = res_kpi[0]
+                try:
+                    v_bruta = float((fila["v_bruta"] if not isinstance(fila, dict) else fila.get("v_bruta")) or 0.0)
+                    t_cant = int((fila["cant"] if not isinstance(fila, dict) else fila.get("cant")) or 0)
+                except Exception:
+                    v_bruta = float(fila[0] or 0) if not isinstance(fila, dict) else 0.0
+                    t_cant = int(fila[2] or 0) if not isinstance(fila, dict) and len(fila) > 2 else 0
                 t_promedio = v_bruta / t_cant if t_cant > 0 else 0.0
+            if v_bruta == 0:
+                like_desde = start_str[:10] + "%"
+                like_hasta = end_str[:10] + "%"
+                res_kpi = db_manager.execute_query(
+                    "SELECT SUM(total) as v_bruta, COUNT(id) as cant FROM ventas "
+                    "WHERE (CAST(fecha AS CHAR) LIKE ? OR CAST(fecha AS CHAR) LIKE ?) "
+                    "AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))",
+                    (like_desde, like_hasta),
+                )
+                if res_kpi and res_kpi[0]:
+                    fila = res_kpi[0]
+                    try:
+                        v_bruta = float(fila["v_bruta"] or 0.0)
+                        t_cant = int(fila["cant"] or 0)
+                    except Exception:
+                        v_bruta = 0.0
+                    t_promedio = v_bruta / t_cant if t_cant > 0 else 0.0
 
             # 2. Ganancia Total y Costos
             res_costo = db_manager.execute_query(
                 "SELECT SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                 "LEFT JOIN productos p ON dv.id_producto = p.id "
-                "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA')",
+                "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))",
                 (start_str, end_str)
             )
             costo = float(res_costo[0]['costo'] or 0.0) if res_costo and res_costo[0] else 0.0
-            ganancia = v_bruta - costo
-            margen = (ganancia / v_bruta * 100) if v_bruta > 0 else 0.0
-            
-            # Limpiar KPIs previos
-            for i in reversed(range(self.kpi_layout.count())): 
+            hay_costo = costo > 0.009
+            ganancia = (v_bruta - costo) if hay_costo else None
+            margen = (ganancia / v_bruta * 100) if hay_costo and v_bruta > 0 else None
+
+            ventas_prev = None
+            tickets_prev = None
+            if hasattr(self, "chk_comparativa") and self.chk_comparativa.isChecked():
+                prev_s, prev_e = rango_igual_anterior(start_str, end_str)
+                res_prev_kpi = db_manager.execute_query(
+                    "SELECT SUM(total) as v_bruta, COUNT(id) as cant FROM ventas "
+                    "WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO'))",
+                    (prev_s, prev_e),
+                )
+                if res_prev_kpi and res_prev_kpi[0]:
+                    ventas_prev = float(res_prev_kpi[0]["v_bruta"] or 0)
+                    tickets_prev = int(res_prev_kpi[0]["cant"] or 0)
+
+            for i in reversed(range(self.kpi_layout.count())):
                 w = self.kpi_layout.itemAt(i).widget()
-                if w: w.deleteLater()
-            
-            def create_kpi(title, value, color=None, align="left"):
+                if w:
+                    w.deleteLater()
+
+            def create_kpi(title, value, sub="", color=None):
                 if color is None:
                     color = _FIN["text"]
                 w = QFrame()
@@ -1168,31 +1057,62 @@ class VistaFinanciero(QWidget):
                     f"border: 1px solid {_FIN['card_border']};"
                 )
                 l = QVBoxLayout(w)
-                l.setContentsMargins(20, 18, 20, 18)
-                l.setSpacing(6)
-                t = QLabel(title.upper())
+                l.setContentsMargins(20, 16, 20, 16)
+                l.setSpacing(4)
+                t = QLabel(title)
                 t.setStyleSheet(
-                    f"font-size: 11px; font-weight: 800; letter-spacing: 0.8px; "
-                    f"color: {_FIN['muted_on_white']}; border: none;"
+                    f"font-size: 11px; font-weight: 400; letter-spacing: 0px; "
+                    f"color: {_FIN['muted_on_white']}; border: none; background: transparent;"
                 )
                 v = QLabel(value)
-                v.setStyleSheet(f"color: {color}; font-size: 26px; font-weight: 800; border: none;")
-                
+                v.setStyleSheet(
+                    f"color: {color}; font-size: 22px; font-weight: 400; letter-spacing: 0px; "
+                    f"border: none; background: transparent;"
+                )
                 t.setAlignment(Qt.AlignCenter)
                 v.setAlignment(Qt.AlignCenter)
                 l.addWidget(t)
                 l.addWidget(v)
+                if sub:
+                    s = QLabel(sub)
+                    s.setStyleSheet(
+                        f"font-size: 11px; font-weight: 400; letter-spacing: 0px; color: {_FIN['text_soft']}; "
+                        "border: none; background: transparent;"
+                    )
+                    s.setAlignment(Qt.AlignCenter)
+                    l.addWidget(s)
                 return w
-                
-            self.kpi_layout.addWidget(create_kpi("Ventas Totales", f"${v_bruta:,.2f}"), 0, 0)
-            self.kpi_layout.addWidget(create_kpi("Ganancia Neta", f"${ganancia:,.2f}"), 0, 2)
-            self.kpi_layout.addWidget(create_kpi("Número de Ventas", f"{t_cant}"), 1, 0)
-            self.kpi_layout.addWidget(create_kpi("Ticket Promedio", f"${t_promedio:,.2f}"), 2, 0)
-            self.kpi_layout.addWidget(create_kpi("Margen de utilidad promedio", f"{margen:,.0f}%", _FIN["green"]), 1, 2, 2, 1)
+
+            vs_v = f"vs anterior {pct_vs(v_bruta, ventas_prev)}" if ventas_prev is not None else ""
+            vs_t = f"vs anterior {pct_vs(t_cant, tickets_prev or 0)}" if tickets_prev is not None else ""
+            self.kpi_layout.addWidget(create_kpi("Ventas totales", fmt_plata(v_bruta), vs_v), 0, 0)
+            if hay_costo:
+                self.kpi_layout.addWidget(
+                    create_kpi("Ganancia neta", fmt_plata(ganancia), f"margen {margen:.0f}%", _FIN["green"]),
+                    0, 1,
+                )
+            else:
+                self.kpi_layout.addWidget(
+                    create_kpi("Ganancia neta", "Sin costo", "Cargá inventario y precio de costo"),
+                    0, 1,
+                )
+            self.kpi_layout.addWidget(create_kpi("Tickets", fmt_entero(t_cant), vs_t), 1, 0)
+            self.kpi_layout.addWidget(create_kpi("Ticket medio", fmt_plata(t_promedio)), 1, 1)
+            self._kpis_firma = {
+                "ventas": v_bruta,
+                "tickets": t_cant,
+                "ticket_medio": t_promedio,
+                "costo": costo,
+                "ganancia": ganancia if hay_costo else 0,
+                "margen": margen if hay_costo else 0,
+                "ventas_prev": ventas_prev,
+            }
             
             # 3. Main Chart Data (Agrupacion inteligente)
             period_type = "day"
-            if "Año" in self.current_period:
+            if self.current_period == "Hoy":
+                period_type = "hours"
+            elif "Año" in self.current_period:
                 period_type = "month"
             elif "Semana" in self.current_period:
                 period_type = "week"
@@ -1208,7 +1128,10 @@ class VistaFinanciero(QWidget):
                 e_dt_c = datetime.datetime.now()
                 
             chart_data = {}
-            if period_type == "month":
+            if period_type == "hours":
+                for h in range(24):
+                    chart_data[f"{h:02d}"] = {"ventas": 0.0, "ganancia": 0.0, "label": f"{h:02d}h"}
+            elif period_type == "month":
                 meses_nombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
                 for i, m in enumerate(meses_nombres):
                     chart_data[f"{i+1:02d}"] = {'ventas': 0.0, 'ganancia': 0.0, 'label': m}
@@ -1225,49 +1148,77 @@ class VistaFinanciero(QWidget):
                     for i, m in enumerate(meses_nombres):
                         chart_data[f"{i+1:02d}"] = {'ventas': 0.0, 'ganancia': 0.0, 'label': m}
                 else:
+                    dias_abr = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
                     for i in range(days_diff):
                         curr_d = s_dt_c + datetime.timedelta(days=i)
-                        chart_data[curr_d.strftime("%Y-%m-%d")] = {'ventas': 0.0, 'ganancia': 0.0, 'label': curr_d.strftime("%d")}
+                        nombre_dia = dias_abr[curr_d.weekday()]
+                        chart_data[curr_d.strftime("%Y-%m-%d")] = {'ventas': 0.0, 'ganancia': 0.0, 'label': f"{nombre_dia} {curr_d.strftime('%d')}"}
                         
-            if period_type == "month":
+            if period_type == "hours":
+                res_tot = db_manager.execute_query(
+                    "SELECT substr(fecha, 12, 2) as key_val, SUM(total) as tot "
+                    "FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
+                    "GROUP BY key_val", (start_str, end_str)
+                )
+                res_cost = db_manager.execute_query(
+                    "SELECT substr(v.fecha, 12, 2) as key_val, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
+                    "FROM ventas v JOIN detalles_ventas dv ON v.id = dv.id_venta "
+                    "LEFT JOIN productos p ON dv.id_producto = p.id "
+                    "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
+                    "GROUP BY key_val", (start_str, end_str)
+                )
+            elif period_type == "month":
                 res_tot = db_manager.execute_query(
                     "SELECT substr(fecha, 6, 2) as key_val, SUM(total) as tot "
-                    "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') "
+                    "FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                     "GROUP BY key_val", (start_str, end_str)
                 )
                 res_cost = db_manager.execute_query(
                     "SELECT substr(v.fecha, 6, 2) as key_val, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                     "FROM ventas v JOIN detalles_ventas dv ON v.id = dv.id_venta "
                     "LEFT JOIN productos p ON dv.id_producto = p.id "
-                    "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                    "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                     "GROUP BY key_val", (start_str, end_str)
                 )
             else:
                 res_tot = db_manager.execute_query(
                     "SELECT substr(fecha, 1, 10) as key_val, SUM(total) as tot "
-                    "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') "
+                    "FROM ventas WHERE (fecha >= ? AND fecha <= ?) AND (estado IS NULL OR UPPER(TRIM(estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                     "GROUP BY key_val", (start_str, end_str)
                 )
                 res_cost = db_manager.execute_query(
                     "SELECT substr(v.fecha, 1, 10) as key_val, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                     "FROM ventas v JOIN detalles_ventas dv ON v.id = dv.id_venta "
                     "LEFT JOIN productos p ON dv.id_producto = p.id "
-                    "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                    "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                     "GROUP BY key_val", (start_str, end_str)
                 )
                 
             if res_tot:
                 for r in res_tot:
-                    k = str(r['key_val'])
+                    k = str(r["key_val"] or "").strip()
+                    if period_type == "hours":
+                        k = k.zfill(2)
                     if k in chart_data:
                         chart_data[k]['ventas'] = float(r['tot'] or 0.0)
                         chart_data[k]['ganancia'] = float(r['tot'] or 0.0)
             if res_cost:
                 for r in res_cost:
-                    k = str(r['key_val'])
+                    k = str(r["key_val"] or "").strip()
+                    if period_type == "hours":
+                        k = k.zfill(2)
                     if k in chart_data:
                         c = float(r['costo'] or 0.0)
                         chart_data[k]['ganancia'] = chart_data[k]['ventas'] - c
+
+            if period_type == "hours":
+                vivos = [k for k, v in chart_data.items() if v["ventas"] > 0]
+                if vivos:
+                    ks = list(chart_data.keys())
+                    chart_data = {
+                        k: chart_data[k]
+                        for k in ks[ks.index(vivos[0]): ks.index(vivos[-1]) + 1]
+                    }
 
             display_chart_data = {v['label']: {'ventas': v['ventas'], 'ganancia': v['ganancia']} for k, v in chart_data.items()}
             
@@ -1277,80 +1228,66 @@ class VistaFinanciero(QWidget):
                     res_diario.append({'dia': v['label'], 'tot': v['ventas'], 'label': v['label']})
                 elif period_type == "week":
                     res_diario.append({'dia': v['label'], 'tot': v['ventas'], 'label': v['label']})
+                elif period_type == "hours":
+                    res_diario.append({'dia': f"Hora {v['label']}", 'tot': v['ventas'], 'label': v['label']})
                 else:
-                    res_diario.append({'dia': f"Día {v['label']}", 'tot': v['ventas'], 'label': v['label']})
+                    res_diario.append({'dia': v['label'], 'tot': v['ventas'], 'label': v['label']})
 
             chart_data_prev = None
             display_chart_data_prev = None
             if hasattr(self, 'chk_comparativa') and self.chk_comparativa.isChecked():
                 try:
-                    if "Año" in self.current_period:
-                        try:
-                            from dateutil.relativedelta import relativedelta
-                            prev_start_dt = s_dt_c - relativedelta(years=1)
-                            prev_end_dt = s_dt_c - datetime.timedelta(days=1)
-                        except:
-                            prev_start_dt = s_dt_c - datetime.timedelta(days=365)
-                            prev_end_dt = s_dt_c - datetime.timedelta(days=1)
-                    elif "Mes" in self.current_period:
-                        try:
-                            from dateutil.relativedelta import relativedelta
-                            prev_start_dt = s_dt_c - relativedelta(months=1)
-                            prev_end_dt = s_dt_c - datetime.timedelta(days=1)
-                        except:
-                            diff = e_dt_c - s_dt_c
-                            prev_end_dt = s_dt_c - datetime.timedelta(days=1)
-                            prev_start_dt = prev_end_dt - diff
-                    elif "Semana" in self.current_period:
-                        prev_start_dt = s_dt_c - datetime.timedelta(days=7)
-                        prev_end_dt = s_dt_c - datetime.timedelta(days=1)
-                    else:
-                        try:
-                            from dateutil.relativedelta import relativedelta
-                            prev_start_dt = s_dt_c - relativedelta(years=1)
-                            prev_end_dt = e_dt_c - relativedelta(years=1)
-                        except:
-                            prev_start_dt = s_dt_c - datetime.timedelta(days=365)
-                            prev_end_dt = e_dt_c - datetime.timedelta(days=365)
-                        
-                    prev_start = prev_start_dt.strftime("%Y-%m-%d 00:00:00")
-                    prev_end = prev_end_dt.strftime("%Y-%m-%d 23:59:59")
+                    prev_start, prev_end = rango_igual_anterior(start_str, end_str)
+                    prev_start_dt = datetime.datetime.strptime(prev_start[:19], "%Y-%m-%d %H:%M:%S")
+                    prev_end_dt = datetime.datetime.strptime(prev_end[:19], "%Y-%m-%d %H:%M:%S")
                     
-                    if period_type == "month":
+                    if period_type == "hours":
+                        res_prev = db_manager.execute_query(
+                            "SELECT substr(v.fecha, 12, 2) as key_val, SUM(v.total) as tot "
+                            "FROM ventas v WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
+                            "GROUP BY key_val", (prev_start, prev_end)
+                        )
+                    elif period_type == "month":
                         res_prev = db_manager.execute_query(
                             "SELECT substr(v.fecha, 6, 2) as key_val, SUM(v.total) as tot "
-                            "FROM ventas v WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                            "FROM ventas v WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                             "GROUP BY key_val", (prev_start, prev_end)
                         )
                     else:
                         res_prev = db_manager.execute_query(
                             "SELECT substr(v.fecha, 1, 10) as key_val, SUM(v.total) as tot "
-                            "FROM ventas v WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                            "FROM ventas v WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                             "GROUP BY key_val", (prev_start, prev_end)
                         )
                         
                     display_chart_data_prev = {v['label']: {'ventas': 0.0} for k, v in chart_data.items()}
                     
                     if res_prev:
-                        prev_keys_sorted = []
-                        if period_type == "month":
-                            prev_keys_sorted = [f"{i+1:02d}" for i in range(12)]
+                        if period_type == "hours":
+                            for r in res_prev:
+                                pk = str(r["key_val"] or "").strip().zfill(2)
+                                if pk in chart_data:
+                                    label = chart_data[pk]["label"]
+                                    display_chart_data_prev[label]["ventas"] = float(r["tot"] or 0)
                         else:
-                            days_diff_prev = (prev_end_dt - prev_start_dt).days + 1
-                            for i in range(days_diff_prev):
-                                d = prev_start_dt + datetime.timedelta(days=i)
-                                prev_keys_sorted.append(d.strftime("%Y-%m-%d"))
-                        
-                        curr_keys = list(chart_data.keys())
-                        for r in res_prev:
-                            pk = str(r['key_val'])
-                            v = float(r['tot'] or 0.0)
-                            if pk in prev_keys_sorted:
-                                idx = prev_keys_sorted.index(pk)
-                                if idx < len(curr_keys):
-                                    ck = curr_keys[idx]
-                                    label = chart_data[ck]['label']
-                                    display_chart_data_prev[label]['ventas'] += v
+                            prev_keys_sorted = []
+                            if period_type == "month":
+                                prev_keys_sorted = [f"{i+1:02d}" for i in range(12)]
+                            else:
+                                days_diff_prev = (prev_end_dt - prev_start_dt).days + 1
+                                for i in range(days_diff_prev):
+                                    d = prev_start_dt + datetime.timedelta(days=i)
+                                    prev_keys_sorted.append(d.strftime("%Y-%m-%d"))
+                            curr_keys = list(chart_data.keys())
+                            for r in res_prev:
+                                pk = str(r['key_val'])
+                                v = float(r['tot'] or 0.0)
+                                if pk in prev_keys_sorted:
+                                    idx = prev_keys_sorted.index(pk)
+                                    if idx < len(curr_keys):
+                                        ck = curr_keys[idx]
+                                        label = chart_data[ck]['label']
+                                        display_chart_data_prev[label]['ventas'] += v
                                     
                     chart_data_prev = display_chart_data_prev
                 except Exception as e:
@@ -1465,22 +1402,22 @@ class VistaFinanciero(QWidget):
                             prev_end = e_dt - datetime.timedelta(days=365)
                         
                     res_depto_prev = db_manager.execute_query(
-                        "SELECT COALESCE(p.departamento, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
+                        "SELECT COALESCE(p.departamento, p.categoria, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                         "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                         "LEFT JOIN productos p ON dv.id_producto = p.id "
-                        "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                        "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                         "GROUP BY depto",
                         (prev_start.strftime("%Y-%m-%d 00:00:00"), prev_end.strftime("%Y-%m-%d 23:59:59"))
                     )
                     if res_depto_prev:
                         for r in res_depto_prev:
-                            nom = str(r['depto'] or 'S/D').upper()
+                            nom = _nombre_depto(r['depto'])
                             depto_prev_map[nom] = {'tot': float(r['tot'] or 0.0), 'costo': float(r['costo'] or 0.0)}
                             
                     res_pago_prev = db_manager.execute_query(
                         "SELECT COALESCE(v.metodo_pago, 'Efectivo') as pago, SUM(v.total) as tot "
                         "FROM ventas v "
-                        "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                        "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                         "GROUP BY pago",
                         (prev_start.strftime("%Y-%m-%d 00:00:00"), prev_end.strftime("%Y-%m-%d 23:59:59"))
                     )
@@ -1500,16 +1437,16 @@ class VistaFinanciero(QWidget):
                 self.tabla_vtas_depto.horizontalHeader().setVisible(False)
                 
             res_depto = db_manager.execute_query(
-                "SELECT COALESCE(p.departamento, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
+                "SELECT COALESCE(p.departamento, p.categoria, 'S/D') as depto, SUM(dv.subtotal) as tot, SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
                 "LEFT JOIN productos p ON dv.id_producto = p.id "
-                "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                 "GROUP BY depto ORDER BY tot DESC", (start_str, end_str)
             )
             donut_data = {}
             if res_depto:
                 for i, r in enumerate(res_depto):
-                    nom = str(r['depto'] or 'S/D').upper()
+                    nom = _nombre_depto(r['depto'])
                     v = float(r['tot'] or 0.0)
                     donut_data[nom] = v
                     self.tabla_vtas_depto.insertRow(i)
@@ -1519,13 +1456,12 @@ class VistaFinanciero(QWidget):
                     
                     it_nom = QTableWidgetItem(f"● {nom}")
                     it_nom.setForeground(QBrush(QColor(c_hex)))
-                    font_nom = QFont("Segoe UI", 10, QFont.Bold)
-                    it_nom.setFont(font_nom)
+                    it_nom.setFont(fuente_limpia(10))
                     
                     self.tabla_vtas_depto.setItem(i, 0, it_nom)
-                    it_v = QTableWidgetItem(f"${v:,.2f}")
+                    it_v = QTableWidgetItem(fmt_plata(v))
                     it_v.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                    it_v.setFont(QFont("Segoe UI", 10, QFont.Bold))
+                    it_v.setFont(fuente_limpia(10))
                     
                     if is_comp:
                         v_prev = depto_prev_map.get(nom, {}).get('tot', 0)
@@ -1551,15 +1487,15 @@ class VistaFinanciero(QWidget):
                 
             if res_depto:
                 for i, r in enumerate(res_depto):
-                    nom = str(r['depto'] or 'S/D').upper()
+                    nom = _nombre_depto(r['depto'])
                     v = float(r['tot'] or 0.0)
                     c = float(r['costo'] or 0.0)
                     g = v - c
                     self.tabla_gan_depto.insertRow(i)
                     self.tabla_gan_depto.setItem(i, 0, QTableWidgetItem(nom))
-                    it_v = QTableWidgetItem(f"${g:,.2f}")
+                    it_v = QTableWidgetItem(fmt_plata(g))
                     it_v.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                    it_v.setFont(QFont("Segoe UI", 10, QFont.Bold))
+                    it_v.setFont(fuente_limpia(10))
                     
                     if is_comp:
                         p_t = depto_prev_map.get(nom, {}).get('tot', 0)
@@ -1584,9 +1520,9 @@ class VistaFinanciero(QWidget):
                 self.tabla_pago.horizontalHeader().setVisible(False)
                 
             res_pago = db_manager.execute_query(
-                "SELECT COALESCE(v.metodo_pago, 'Efectivo') as pago, substr(v.fecha, 1, 10) as dia, SUM(v.total) as tot "
+                "SELECT COALESCE(NULLIF(v.metodo_pago, ''), 'Efectivo') as pago, substr(v.fecha, 1, 10) as dia, SUM(v.total) as tot "
                 "FROM ventas v "
-                "WHERE (v.fecha BETWEEN ? AND ?) AND v.estado IN ('COMPLETADA', 'CERRADA') "
+                "WHERE (v.fecha >= ? AND v.fecha <= ?) AND (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) "
                 "GROUP BY pago, dia ORDER BY dia ASC", (start_str, end_str)
             )
             pago_sum = {}
@@ -1633,7 +1569,13 @@ class VistaFinanciero(QWidget):
                 
             # Rendimiento de Productos
             if VistaFinanciero._prod_map_cache is None:
-                res_prod = db_manager.execute_query("SELECT id, codigo, nombre, departamento, categoria, unidad FROM productos")
+                res_prod = db_manager.execute_query(
+                    "SELECT id, codigo, nombre, departamento, categoria, unidad, es_pesable FROM productos"
+                )
+                if not res_prod:
+                    res_prod = db_manager.execute_query(
+                        "SELECT id, codigo, nombre, departamento, categoria, unidad FROM productos"
+                    )
                 prod_map = {}
                 if res_prod:
                     for p in res_prod:
@@ -1644,7 +1586,8 @@ class VistaFinanciero(QWidget):
                             'codigo': pcod,
                             'departamento': p['departamento'] or 'ALMACEN',
                             'categoria': p['categoria'] or 'GENERAL',
-                            'unidad': p['unidad'] or 'UN'
+                            "unidad": p["unidad"] or "UN",
+                            "es_pesable": (p.get("es_pesable") if isinstance(p, dict) else (p["es_pesable"] if "es_pesable" in p.keys() else 0)),
                         }
                         prod_map[pid] = data
                         if pcod: prod_map[pcod] = data
@@ -1662,7 +1605,7 @@ class VistaFinanciero(QWidget):
             res_vtas_rend = db_manager.execute_query(
                 "SELECT dv.id_producto, SUM(dv.subtotal) as rec, SUM(dv.cantidad) as vol "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
-                "WHERE v.estado IN ('COMPLETADA', 'CERRADA') AND (v.fecha BETWEEN ? AND ?) "
+                "WHERE (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) AND (v.fecha >= ? AND v.fecha <= ?) "
                 "GROUP BY dv.id_producto", (start_str, end_str)
             )
             
@@ -1671,7 +1614,7 @@ class VistaFinanciero(QWidget):
                 res_prev_prod = db_manager.execute_query(
                     "SELECT dv.id_producto, SUM(dv.subtotal) as rec, SUM(dv.cantidad) as vol "
                     "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
-                    "WHERE v.estado IN ('COMPLETADA', 'CERRADA') AND (v.fecha BETWEEN ? AND ?) "
+                    "WHERE (v.estado IS NULL OR UPPER(TRIM(v.estado)) NOT IN ('CANCELADA','ANULADA','CANCELADO','ANULADO')) AND (v.fecha >= ? AND v.fecha <= ?) "
                     "GROUP BY dv.id_producto", (prev_start.strftime("%Y-%m-%d 00:00:00"), prev_end.strftime("%Y-%m-%d 23:59:59"))
                 )
                 if res_prev_prod:
@@ -1686,7 +1629,15 @@ class VistaFinanciero(QWidget):
                     sold_ids.add(pid)
                     base = VistaFinanciero._prod_map_cache.get(pid)
                     if base:
-                        top_sold.append({'pid': pid, 'nombre': base['nombre'], 'codigo': base['codigo'], 'rec': float(v['rec'] or 0.0), 'vol': float(v['vol'] or 0.0)})
+                        top_sold.append({
+                            "pid": pid,
+                            "nombre": base["nombre"],
+                            "codigo": base["codigo"],
+                            "unidad": base.get("unidad") or "UN",
+                            "es_pesable": base.get("es_pesable"),
+                            "rec": float(v["rec"] or 0.0),
+                            "vol": float(v["vol"] or 0.0),
+                        })
             
             unsold_base = []
             for base in VistaFinanciero._unique_prods_base:
@@ -1694,7 +1645,18 @@ class VistaFinanciero(QWidget):
                     unsold_base.append(base)
                     if len(unsold_base) >= 100: break
                     
-            bottom_sold = [{'pid': b['codigo'], 'nombre': b['nombre'], 'codigo': b['codigo'], 'rec': 0.0, 'vol': 0.0} for b in unsold_base]
+            bottom_sold = [
+                {
+                    "pid": b["codigo"],
+                    "nombre": b["nombre"],
+                    "codigo": b["codigo"],
+                    "unidad": b.get("unidad") or "UN",
+                    "es_pesable": b.get("es_pesable"),
+                    "rec": 0.0,
+                    "vol": 0.0,
+                }
+                for b in unsold_base
+            ]
             
             # Top Recaudación
             top_sold.sort(key=lambda x: x['rec'], reverse=True)
@@ -1703,14 +1665,14 @@ class VistaFinanciero(QWidget):
             self.tabla_rec.setColumnCount(5 if is_comp else 3)
             self.tabla_rec.horizontalHeader().setVisible(True)
             if is_comp:
-                self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)", "Cant. ant.", "Monto ant. ($)"])
+                self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cantidad", "Monto ($)", "Cant. anterior", "Monto ant. ($)"])
             else:
-                self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)"])
+                self.tabla_rec.setHorizontalHeaderLabels(["Producto", "Cantidad", "Monto ($)"])
             _aplicar_paleta_tabla(self.tabla_rec)
                 
             for row, p in enumerate(display_rec):
                 self.tabla_rec.setItem(row, 0, QTableWidgetItem(p['nombre']))
-                it_vol = QTableWidgetItem(f"{p['vol']:,.0f}")
+                it_vol = QTableWidgetItem(_fmt_cant(p["vol"], p.get("unidad"), p.get("es_pesable")))
                 it_vol.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.tabla_rec.setItem(row, 1, it_vol)
                 it_rec = QTableWidgetItem(f"${p['rec']:,.0f}")
@@ -1718,7 +1680,7 @@ class VistaFinanciero(QWidget):
                 if is_comp:
                     prev = prev_prod_stats.get(p['pid'], {'vol': 0.0, 'rec': 0.0})
                     
-                    it_p_vol = QTableWidgetItem(f"{prev['vol']:,.0f}")
+                    it_p_vol = QTableWidgetItem(_fmt_cant(prev["vol"], p.get("unidad"), p.get("es_pesable")))
                     it_p_vol.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     it_p_vol.setForeground(QBrush(QColor("#94A3B8")))
                     
@@ -1739,14 +1701,14 @@ class VistaFinanciero(QWidget):
             self.tabla_vol.setColumnCount(5 if is_comp else 3)
             self.tabla_vol.horizontalHeader().setVisible(True)
             if is_comp:
-                self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)", "Cant. ant.", "Monto ant. ($)"])
+                self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cantidad", "Monto ($)", "Cant. anterior", "Monto ant. ($)"])
             else:
-                self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cant. act.", "Monto act. ($)"])
+                self.tabla_vol.setHorizontalHeaderLabels(["Producto", "Cantidad", "Monto ($)"])
             _aplicar_paleta_tabla(self.tabla_vol)
                 
             for row, p in enumerate(display_vol):
                 self.tabla_vol.setItem(row, 0, QTableWidgetItem(p['nombre']))
-                it_vol = QTableWidgetItem(f"{p['vol']:,.0f}")
+                it_vol = QTableWidgetItem(_fmt_cant(p["vol"], p.get("unidad"), p.get("es_pesable")))
                 it_vol.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 self.tabla_vol.setItem(row, 1, it_vol)
                 it_rec = QTableWidgetItem(f"${p['rec']:,.0f}")
@@ -1754,7 +1716,7 @@ class VistaFinanciero(QWidget):
                 if is_comp:
                     prev = prev_prod_stats.get(p['pid'], {'vol': 0.0, 'rec': 0.0})
                     
-                    it_p_vol = QTableWidgetItem(f"{prev['vol']:,.0f}")
+                    it_p_vol = QTableWidgetItem(_fmt_cant(prev["vol"], p.get("unidad"), p.get("es_pesable")))
                     it_p_vol.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
                     it_p_vol.setForeground(QBrush(QColor("#94A3B8")))
                     
@@ -1795,7 +1757,17 @@ class VistaFinanciero(QWidget):
                 from PyQt6.QtCore import QTimer
                 self.ai_assistant.lbl_status.show()
                 self.ai_assistant.lbl_content.setText("")
-                QTimer.singleShot(800, lambda: self.ai_assistant.update_insights(chart_data, pago_sum, donut_data))
+                kpis = dict(getattr(self, "_kpis_firma", {}) or {})
+                if display_chart_data:
+                    pico = max(display_chart_data.items(), key=lambda x: float(x[1].get("ventas") or 0))
+                    kpis["pico_label"] = str(pico[0])
+                    kpis["pico_val"] = float(pico[1].get("ventas") or 0)
+                QTimer.singleShot(
+                    200,
+                    lambda: self.ai_assistant.update_insights(
+                        display_chart_data, pago_sum, donut_data, kpis
+                    ),
+                )
                 
         except Exception as e:
             import traceback
@@ -2062,7 +2034,7 @@ class VistaFinanciero(QWidget):
 
     def _cargar_historial_tickets(self):
         query = """
-            SELECT v.id, v.fecha, v.usuario, p.departamento, dv.nombre_producto,
+            SELECT v.id, v.fecha, v.usuario, COALESCE(p.departamento, p.categoria) as departamento, dv.nombre_producto,
                    dv.cantidad, p.unidad AS unidad_medida, dv.precio_unitario, dv.subtotal,
                    v.metodo_pago, v.estado
             FROM ventas v
