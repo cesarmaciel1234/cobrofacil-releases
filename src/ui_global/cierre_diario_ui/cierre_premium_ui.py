@@ -142,8 +142,8 @@ class CierreGlobalUI(QWidget):
 
         # ─── HEADER ESTILO PASO 7 CON CONTROLES DE DASHBOARD ───
         self.header = QFrame()
-        header.setFixedHeight(80)
-        header.setStyleSheet("background: #1E3A8A;") # Azul oscuro
+        self.header.setFixedHeight(80)
+        self.header.setStyleSheet("background: #1E3A8A;") # Azul oscuro
         h_lay = QHBoxLayout(self.header)
         h_lay.setContentsMargins(30, 0, 30, 0)
         h_lay.setSpacing(15)
@@ -222,7 +222,7 @@ class CierreGlobalUI(QWidget):
         self.btn_imprimir.clicked.connect(self._imprimir_reporte)
         h_lay.addWidget(self.btn_imprimir)
         
-        root.addWidget(header)
+        root.addWidget(self.header)
 
         # ─── MAIN BODY ───
         body = QHBoxLayout()
@@ -389,13 +389,11 @@ class CierreGlobalUI(QWidget):
         body.addLayout(v_arq, 7)
         
         root.addLayout(body)
-        self._aplicar_estilos(theme_manager.current_theme)
-        theme_manager.theme_changed.connect(self._aplicar_estilos)
 
         # ─── FOOTER ───
         self.footer = QFrame()
-        footer.setFixedHeight(90)
-        footer.setStyleSheet("background: #1E3A8A;")
+        self.footer.setFixedHeight(90)
+        self.footer.setStyleSheet("background: #1E3A8A;")
         f_lay = QHBoxLayout(self.footer)
         f_lay.setContentsMargins(30, 0, 30, 0)
         
@@ -419,7 +417,10 @@ class CierreGlobalUI(QWidget):
         f_lay.addWidget(self.btn_cierre)
         self._actualizar_texto_boton_cierre()
         
-        root.addWidget(footer)
+        root.addWidget(self.footer)
+
+        self._aplicar_estilos(theme_manager.current_theme)
+        theme_manager.theme_changed.connect(self._aplicar_estilos)
         
         QTimer.singleShot(100, self.panel_arq.focus_fisico)
 
@@ -609,7 +610,7 @@ class CierreGlobalUI(QWidget):
             
         # Re-apply for all cards
         card_css = f"QFrame#MetricCard {{ background: {card_bg}; border: 1px solid {card_border}; border-radius: 14px; }}"
-        for card in [self.card_efec, self.card_digi, self.card_fiado, self.card_fondo, self.card_movs, self.card_gan]:
+        for card in [self.card_efec, self.card_tarj, self.card_fiado, self.card_fondo, self.card_movs, self.card_totales]:
             if hasattr(card, 'setStyleSheet'):
                 card.setStyleSheet(card_css)
                 card.lbl_tit.setStyleSheet(f"font-size: 12px; font-weight: bold; color: {text_muted};")
