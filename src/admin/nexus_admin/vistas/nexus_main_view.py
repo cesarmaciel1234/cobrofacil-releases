@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt
-from src.admin.nexus_admin.vistas.componentes.nexus_panel_izq import NexusPanelIzq
-from src.admin.nexus_admin.vistas.componentes.nexus_panel_cen import NexusPanelCen
+from src.admin.nexus_admin.vistas.componentes.panel_izquierdo.nexus_panel_izq import NexusPanelIzq
+from src.admin.nexus_admin.vistas.componentes.panel_central.nexus_panel_cen import NexusPanelCen
 from src.admin.nexus_admin.vistas.componentes.panel_derecho.nexus_panel_der import NexusPanelDer
 from src.utils.theme_manager import theme_manager
 
