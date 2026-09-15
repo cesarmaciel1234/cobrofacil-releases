@@ -50,7 +50,21 @@ class CyberFeedItem(QFrame):
         elif "VENTA" in tipo.upper():
             icon = "💵"
             color = "#10B981"
-            
+        self.setStyleSheet(f"""
+            CyberFeedItem {{
+                background-color: #1E293B; 
+                border: 1px solid #0F172A;
+                border-left: 4px solid {color};
+                border-radius: 6px; 
+                margin-bottom: 6px;
+            }}
+            CyberFeedItem:hover {{
+                background-color: #283548;
+                border: 1px solid #334155;
+                border-left: 6px solid {color};
+            }}
+        """)
+        
         lbl_title = QLabel(f"<b><span style='color: {color}; font-size: 14px;'>{icon} [{pc}] {tipo}</span></b>")
         lbl_title.setTextFormat(Qt.TextFormat.RichText)
         
@@ -59,13 +73,13 @@ class CyberFeedItem(QFrame):
         except:
             time_str = str(fecha)
             
-        lbl_time = QLabel(f"<span style='color: #64748B; font-size: 11px;'>{time_str}</span>")
+        lbl_time = QLabel(f"<span style='background-color: #0F172A; color: #94A3B8; font-size: 11px; padding: 2px 6px; border-radius: 4px;'>&nbsp;{time_str}&nbsp;</span>")
         lbl_time.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         
         t_lay.addWidget(lbl_title, 1)
         t_lay.addWidget(lbl_time)
         
-        lbl_desc = QLabel(f"<span style='color: #475569; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
+        lbl_desc = QLabel(f"<span style='color: #94A3B8; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
         lbl_desc.setWordWrap(True)
         lbl_desc.setTextFormat(Qt.TextFormat.RichText)
         lbl_desc.setContentsMargins(25, 0, 0, 0)
