@@ -213,18 +213,36 @@ class NexusController(QObject):
         except Exception as e:
             pass
 
+
     def _registrar_evento_caja(self, origen_id, cat, msg, sale_date=None):
         if hasattr(self.view, '_play_sound'):
             self.view._play_sound("sale" if cat == "VENTA" else "alert")
         
         CerebroNexus.registrar_evento_caja(origen_id, cat, msg, sale_date)
         
-        if cat != "VENTA" and hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
-            self.view.panel_izq.add_log(f"[{cat}] {msg} (ORG: {origen_id})")
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'inject_ai_log'):
+            time_str = datetime.now().strftime("%H:%M:%S")
+            
+            if cat == "VENTA":
+                if "EFECTIVO" in msg.upper():
+                    # msg generally looks like "EFECTIVO - $ 18,900"
+                    self.view.panel_izq.inject_ai_log("VENTA_EFECTIVO", str(origen_id), msg, time_str)
+                    # Automatically log a software opening if it's cash
+                    self.view.panel_izq.inject_ai_log("APERTURA_SOFTWARE", str(origen_id), "Apertura autorizada por venta", time_str)
+                else:
+                    self.view.panel_izq.inject_ai_log("VENTA_DIGITAL", str(origen_id), msg, time_str)
+            
+            elif cat == "ALERTA_SEGURIDAD":
+                self.view.panel_izq.inject_ai_log("ALARMA_CRITICA", str(origen_id), msg, time_str)
+                
+            elif cat == "INTERVENCION":
+                self.view.panel_izq.inject_ai_log("INTERVENCION", str(origen_id), msg, time_str)
+                
+            else:
+                self.view.panel_izq.inject_ai_log("INFO", str(origen_id), msg, time_str)
             
         if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'filtrar_auditoria'):
             self.view.panel_der.filtrar_auditoria()
-
     def _inyectar_ruido_red(self):
         eventos = [
             ("SYNC", "Protocolo DB Sincronizado"),

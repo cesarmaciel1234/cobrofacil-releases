@@ -56,15 +56,67 @@ class NexusPanelIzq(QWidget):
             self.terminal_output.setStyleSheet("QTextEdit { background-color: #F8FAFC; color: #065F46; border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px; }")
             self.txt_topo.setStyleSheet("QTextEdit { background-color: #F1F5F9; color: #0369A1; border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px; }")
 
+
     def add_log(self, text):
+        # Fallback for old logs
         self.terminal_output.append(f"> {text}")
-        if self.terminal_output.document().lineCount() > 100:
+        self._trim_terminal()
+
+    def inject_ai_log(self, category, origin, message, time_str):
+        """ Inyector de Logs HTML de alta visibilidad para CCTV / Auditoria """
+        
+        # Limpiar el origin para que sea legible (ej: "caja1" en vez de "LAPTOP|CAJERO|caja1")
+        clean_org = origin.split('|')[-1].upper() if '|' in str(origin) else f"CAJA {origin}"
+        
+        if category == "VENTA_EFECTIVO":
+            color = "#10B981" # Verde
+            icon = "💵" # Billete
+            title = "VENTA EFECTIVO"
+        elif category == "VENTA_DIGITAL":
+            color = "#3B82F6" # Azul
+            icon = "💳" # Tarjeta
+            title = "VENTA DIGITAL"
+        elif category == "APERTURA_SOFTWARE":
+            color = "#8B5CF6" # Morado
+            icon = "🔑" # Llave
+            title = "CAJON ABIERTO (SOFTWARE)"
+        elif category == "APERTURA_HARDWARE_OK":
+            color = "#10B981" 
+            icon = "🔓" # Candado abierto
+            title = "CAJON ABIERTO (VALIDADO)"
+        elif category == "ALARMA_CRITICA":
+            color = "#EF4444" # Rojo
+            icon = "🚨" # Sirena
+            title = "VIOLACION DE GAVETA"
+        elif category == "INTERVENCION":
+            color = "#F59E0B" # Naranja
+            icon = "🔧" # Llave inglesa
+            title = "INTERVENCION ADMIN"
+        else:
+            color = "#94A3B8"
+            icon = "ℹ️"
+            title = category
+
+        html = f"""
+        <div style="margin-bottom: 8px; font-family: Consolas;">
+            <span style="color: #64748B;">[{time_str}]</span> 
+            <span style="color: {color}; font-weight: bold;">{icon} [{clean_org}] {title}:</span> 
+            <span style="color: #E2E8F0;">{message}</span>
+        </div>
+        """
+        
+        self.terminal_output.insertHtml(html)
+        self.terminal_output.insertPlainText("\n")
+        self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
+        self._trim_terminal()
+
+    def _trim_terminal(self):
+        if self.terminal_output.document().lineCount() > 150:
             cursor = self.terminal_output.textCursor()
             cursor.movePosition(cursor.MoveOperation.Start)
             cursor.select(cursor.SelectionType.LineUnderCursor)
             cursor.removeSelectedText()
             cursor.deleteChar()
-
     def log_udp(self, text):
         self.txt_topo.append(f"~ {text}")
         if self.txt_topo.document().lineCount() > 50:
