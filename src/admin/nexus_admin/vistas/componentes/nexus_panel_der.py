@@ -94,7 +94,7 @@ class NexusPanelDer(QFrame):
         self.btn_tab4 = QPushButton("👤 CONTROL")
         self.btn_tab5 = QPushButton("💰 CAJONES")
         
-        self.tabs = [self.btn_tab1, self.btn_tab2, self.btn_tab3, self.btn_tab4, self.btn_tab5]
+        self.tabs = [self.btn_tab2, self.btn_tab3, self.btn_tab4, self.btn_tab5]
         for idx, btn in enumerate(self.tabs):
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
@@ -116,6 +116,51 @@ class NexusPanelDer(QFrame):
             header_layout.addWidget(btn)
             
         header_layout.addStretch()
+        
+
+        
+        
+        self.cmb_fecha = QComboBox()
+        self.cmb_fecha.addItems(["Hoy", "Ayer", "Esta Semana", "Este Mes", "Todos los Tiempos"])
+        self.cmb_fecha.setMinimumWidth(150)
+        self.cmb_fecha.setStyleSheet("""
+            QComboBox {
+                background: #1E293B;
+                border: 1px solid #334155;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #F8FAFC;
+            }
+            QComboBox:focus {
+                border-color: #38BDF8;
+                background: #0F172A;
+            }
+        """)
+        self.cmb_fecha.currentIndexChanged.connect(self.filtrar_auditoria)
+        header_layout.addWidget(self.cmb_fecha)
+
+        
+        btn_exportar = QPushButton("📥 EXPORTAR BITÁCORA")
+
+        btn_exportar.setCursor(Qt.PointingHandCursor)
+        btn_exportar.setStyleSheet("""
+            QPushButton {
+                background: #10B981;
+                color: white;
+                font-weight: 700;
+                border-radius: 10px;
+                padding: 8px 20px;
+                font-size: 13px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #059669;
+            }
+        """)
+        btn_exportar.clicked.connect(self._exportar_auditoria_excel)
+        header_layout.addWidget(btn_exportar)
+
         main_layout.addLayout(header_layout)
         
         # --- CONTENIDO (QStackedWidget) ---
@@ -185,47 +230,6 @@ class NexusPanelDer(QFrame):
         """)
         self.cmb_tipo_evento.currentIndexChanged.connect(self.filtrar_auditoria)
         filt_bar.addWidget(self.cmb_tipo_evento)
-        
-        
-        self.cmb_fecha = QComboBox()
-        self.cmb_fecha.addItems(["Hoy", "Ayer", "Esta Semana", "Este Mes", "Todos los Tiempos"])
-        self.cmb_fecha.setMinimumWidth(150)
-        self.cmb_fecha.setStyleSheet("""
-            QComboBox {
-                background: #1E293B;
-                border: 1px solid #334155;
-                border-radius: 10px;
-                padding: 8px 12px;
-                font-size: 13px;
-                color: #F8FAFC;
-            }
-            QComboBox:focus {
-                border-color: #38BDF8;
-                background: #0F172A;
-            }
-        """)
-        self.cmb_fecha.currentIndexChanged.connect(self.filtrar_auditoria)
-        filt_bar.addWidget(self.cmb_fecha)
-        
-        btn_exportar = QPushButton("📥 EXPORTAR BITÁCORA")
-
-        btn_exportar.setCursor(Qt.PointingHandCursor)
-        btn_exportar.setStyleSheet("""
-            QPushButton {
-                background: #10B981;
-                color: white;
-                font-weight: 700;
-                border-radius: 10px;
-                padding: 8px 20px;
-                font-size: 13px;
-                border: none;
-            }
-            QPushButton:hover {
-                background: #059669;
-            }
-        """)
-        btn_exportar.clicked.connect(self._exportar_auditoria_excel)
-        filt_bar.addWidget(btn_exportar)
         
         layout_inf.addLayout(filt_bar)
         
