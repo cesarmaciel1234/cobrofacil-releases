@@ -113,11 +113,12 @@ class NexusPanelCen(QWidget):
             
             # Reposition all
             for i in reversed(range(self.grid_layout.count())): 
-                self.grid_layout.itemAt(i).widget().setParent(None)
+                item = self.grid_layout.takeAt(i)
                 
             row, col = 0, 0
             for w in self.node_widgets.values():
                 self.grid_layout.addWidget(w, row, col)
+                w.show()
                 col += 1
                 if col > 3:
                     col = 0
