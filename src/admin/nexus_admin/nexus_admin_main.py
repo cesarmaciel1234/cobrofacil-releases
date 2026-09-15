@@ -439,124 +439,24 @@ class NexusExtremeControl(QWidget):
         self.glitch_count += 1
 
     def _force_z_close(self):
-        # Esta función fue adaptada porque panel_cen ha sido removido
-        # TODO: Implementar un nuevo diálogo para Cierre Z Global
-        self._play_sound("alert")
-        QMessageBox.warning(self, "Aviso", "El panel central manual fue removido. Usa el panel de auditoría o los comandos de consola para realizar cierres globales.")
-        return
+        self._force_z_close_from_panel(0.0)
 
     def _force_z_close_from_panel(self, monto_fisico):
-        if monto_fisico < 0:
-            self._play_sound("alert")
-            QMessageBox.critical(self, "ERROR CRÍTICO", "INPUT FÍSICO CORRUPTO.")
-            return
-        self._ejecutar_cierre_z_db(monto_fisico)
-
-    def _ejecutar_cierre_z_db(self, monto_fisico):
-        # ── Guard: el Cierre Z solo puede ejecutarlo el MAESTRO ────────────────────
-        if not getattr(db_manager, 'is_master', True):
-            self._append_terminal(
-                "> [BLOCKED] CIERRE Z DENEGADO: esta terminal corre en modo ESCLAVO."
-                " Solo el servidor maestro puede ejecutar cierres fiscales.", "#F43F5E")
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self, "Operación No Permitida",
-                "El Cierre Z solo puede ejecutarse desde la PC MAESTRA.\n"
-                "Esta terminal está conectada como ESCLAVA a la red."
-            )
-            return
-
-        caja_num = 0
-        if self.current_caja_filter != "todas":
-            try:
-                import re
-                num_match = re.search(r'\d+', str(self.current_caja_filter))
-                caja_num = int(num_match.group()) if num_match else 0
-            except:
-                caja_num = 0
-
-        if caja_num <= 0:
-            self._append_terminal("> [ERROR] NO SE PUEDE FORZAR CIERRE GLOBAL. SELECCIONA UNA CAJA ESPECÍFICA PRIMERO.", "#E11D48")
-            self._play_sound("error")
-            return
-
-        # Calcular si hay descuadre en la caja seleccionada
-        # Misma semántica que cierre: fondo + (pago_efectivo − vuelto) + ingresos − retiros
-        total_efectivo = 0.0
-        fondo_inicial = 0.0
-        esperado = 0.0
-        diferencia = monto_fisico
-        try:
-            esperado = float(db_manager.get_efectivo_en_caja(caja_num) or 0.0)
-            fondo_inicial = float(db_manager.execute_scalar(
-                "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                (caja_num,)
-            ) or 0.0)
-            total_efectivo = max(0.0, esperado - fondo_inicial)
-            diferencia = monto_fisico - esperado
-            
-            if diferencia < 0:
-                self._append_terminal(
-                    f"> [FATAL] DESCUADRE CRÍTICO EN CAJA {caja_num}"
-                    f" DE ${diferencia:.2f}. INICIANDO PROTOCOLOS DE AUDITORÍA.")
-            elif diferencia > 1000.0:
-                self._play_sound("alert")
-                self._append_terminal(
-                    f"> [WARN] EXCESO NO JUSTIFICADO EN CAJA {caja_num}"
-                    f" DE ${diferencia:.2f}.")
-        except Exception as e:
-            print(f"Error calculando cuadre en F12: {e}")
-
-        self._append_terminal(
-            f"> [CRITICAL] SECUENCIA F12 INICIADA. EJECUTANDO CIERRE Z "
-            f"CAJA {caja_num} (FÍSICO: {monto_fisico})")
-
-        # Confirmar y ejecutar
-        try:
-            from PyQt6.QtWidgets import QMessageBox
-            reply = QMessageBox.question(
-                self,
-                "Confirmación Crítica — NEXUS OVERRIDE",
-                f"¿Estás seguro de emitir el CIERRE Z DEFINITIVO para la CAJA {caja_num}?\n"
-                f"Monto Físico Declarado: ${monto_fisico:,.2f}",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
-            if reply == QMessageBox.No:
-                self._append_terminal("> [ABORT] SECUENCIA DE CIERRE Z ABORTADA POR EL USUARIO.")
-                return
-
-            db_manager.execute_non_query(
-                "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id)"
-                " VALUES (?, ?, ?, ?, ?)",
-                ("CIERRE_Z", diferencia, "nexus_admin",
-                 f"Modo:global | Fis:${monto_fisico:.2f} | Esp:${esperado:.2f}",
-                 caja_num)
-            )
-            db_manager.execute_non_query(
-                "UPDATE ventas SET estado='CERRADA' WHERE estado='COMPLETADA' AND caja_id=?",
-                (caja_num,)
-            )
-
-            # Imprimir ticket Z
-            try:
-                from src.hardware.printer import printer_manager
-                printer_manager.imprimir_control_x({
-                    "fondo": fondo_inicial, "t_efec": total_efectivo, "t_tarj": 0,
-                    "t_total": total_efectivo, "esperado": esperado, "alertas": 0,
-                    "dia_tarjeta": 0, "dia_total": total_efectivo,
-                    "efectivo_esperado": esperado, "segunda_tiketera": False
-                })
-            except Exception as e_print:
-                self._append_terminal(f"> [WARN] Error de impresión: {e_print}", "#F59E0B")
-
-            QMessageBox.information(
-                self, "Cierre Exitoso",
-                f"Cierre Z completado para Caja {caja_num}.")
-            self._append_terminal("> [OK] CIERRE Z EJECUTADO Y SESIÓN FINALIZADA.", "#10B981")
-
-        except Exception as e:
-            self._append_terminal(f"> [FATAL] ERROR EN DB DURANTE CIERRE Z: {e}", "#E11D48")
+        from src.admin.cierre.cierre_main import Admin7Cierre
+        from PyQt6.QtCore import Qt
+        
+        self._play_sound("alert")
+        
+        if not hasattr(self, 'ventana_cierre') or not self.ventana_cierre.isVisible():
+            self.ventana_cierre = Admin7Cierre(parent_main=self)
+            self.ventana_cierre.setWindowFlags(Qt.WindowType.Window)
+            self.ventana_cierre.resize(1100, 750)
+            self.ventana_cierre.setWindowTitle("NEXUS PRO - Control de Cierre Ejecutivo")
+            self.ventana_cierre.request_dashboard.connect(self.ventana_cierre.close)
+            self.ventana_cierre.turno_cerrado.connect(self._sync_live_data)
+            self.ventana_cierre.show()
+            self.ventana_cierre.raise_()
+            self.ventana_cierre.activateWindow()
 
     def _mostrar_reporte_rapido(self):
         try:

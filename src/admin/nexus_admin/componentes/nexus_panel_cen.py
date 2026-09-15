@@ -255,7 +255,7 @@ class NexusPanelCen(QFrame):
         main_layout.addWidget(row_bot_cards)
         
         # Boton Forzar Z
-        btn_forzar = QPushButton("F12 // FORZAR CIERRE Z")
+        btn_forzar = QPushButton("F12 // ABRIR CONTROL DE CIERRE EJECUTIVO")
         btn_forzar.setCursor(Qt.PointingHandCursor)
         btn_forzar.setStyleSheet("""
             QPushButton {
@@ -272,9 +272,9 @@ class NexusPanelCen(QFrame):
     def _force_z_close(self):
         try:
             monto_fisico = float(self.txt_fisico.text().replace(',', '.'))
-            self.request_z_close.emit(monto_fisico)
+            self.request_z_close.emit(0.0)
         except ValueError:
-            self.request_z_close.emit(-1.0) # Error code
+            self.request_z_close.emit(0.0) # Error code
 
     def registrar_nodo_dinamico(self, origen, guardar=True):
         if origen == "todas": return
