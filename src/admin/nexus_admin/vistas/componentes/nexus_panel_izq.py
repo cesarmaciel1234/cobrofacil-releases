@@ -45,7 +45,7 @@ class NexusPanelIzq(QWidget):
     def _boot_sequence(self):
         self.terminal_output.append("[SYSTEM] INICIANDO ENTORNO SEGURO...")
         self.terminal_output.append("[SYSTEM] CONECTANDO A MOTOR NEXUS_GLOBAL_CEREBRO...")
-        self.terminal_output.append("[SYSTEM] ESTADO: ONLINE")
+        self.terminal_output.append("[SYSTEM] ESTADO: ONLINE\n")
         self.txt_topo.append("--- INICIANDO RASTREO UDP ---")
 
     def update_theme(self, theme):
@@ -59,7 +59,10 @@ class NexusPanelIzq(QWidget):
 
     def add_log(self, text):
         # Fallback for old logs
-        self.terminal_output.append(f"> {text}")
+        html = f'<div style="color: #64748B; font-family: Consolas; font-size: 11px; margin-bottom: 4px; font-style: italic;">&gt; {text}</div>'
+        self.terminal_output.insertHtml(html)
+        self.terminal_output.insertPlainText("\n")
+        self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
         self._trim_terminal()
 
     def inject_ai_log(self, category, origin, message, time_str):
@@ -98,10 +101,14 @@ class NexusPanelIzq(QWidget):
             title = category
 
         html = f"""
-        <div style="margin-bottom: 8px; font-family: Consolas;">
-            <span style="color: #64748B;">[{time_str}]</span> 
-            <span style="color: {color}; font-weight: bold;">{icon} [{clean_org}] {title}:</span> 
-            <span style="color: #E2E8F0;">{message}</span>
+        <div style="margin-bottom: 12px; font-family: Consolas;">
+            <div style="color: {color}; font-weight: 900; font-size: 13px;">
+                <span style="color: #475569; font-size: 11px;">[{time_str}]</span> 
+                {icon} [{clean_org}] {title}
+            </div>
+            <div style="color: #64748B; font-size: 11px; margin-top: 2px; padding-left: 65px; font-style: italic;">
+                {message}
+            </div>
         </div>
         """
         
