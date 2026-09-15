@@ -27,12 +27,13 @@ class NexusController(QObject):
             max_id = db_manager.execute_scalar("SELECT MAX(id) FROM ventas WHERE DATE(fecha) = ?", (hoy,))
             return max_id if max_id is not None else 0
         except Exception as e:
-            print(f"Error inicializando last_sale_id: {e}")
             return 0
 
     def _connect_signals(self):
-        self.view.panel_cen.request_z_close.connect(self._force_z_close_from_panel)
-        self.view.panel_cen.caja_selected.connect(self._on_caja_selected)
+        if hasattr(self.view.panel_cen, 'request_z_close'):
+            self.view.panel_cen.request_z_close.connect(self._force_z_close_from_panel)
+        if hasattr(self.view.panel_cen, 'caja_selected'):
+            self.view.panel_cen.caja_selected.connect(self._on_caja_selected)
 
     def _start_timers(self):
         self.t_matrix = QTimer(self)
@@ -68,20 +69,22 @@ class NexusController(QObject):
 
     def _on_udp_heartbeat(self, origen):
         self.active_terminals[origen] = time.time()
-        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'spectrum'):
-            self.view.panel_izq.spectrum.add_blip(origen, is_heartbeat=True)
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'log_udp'):
+            self.view.panel_izq.log_udp(f"[{datetime.now().strftime('%H:%M:%S')}] HEARTBEAT -> {origen}")
+        if hasattr(self.view, 'panel_cen'):
+            self.view.panel_cen.registrar_nodo_dinamico(origen)
 
     def _on_udp_message(self, origen, tipo, datos):
         if hasattr(self.view, 'panel_cen'):
             self.view.panel_cen.mark_active(origen)
             self.view.panel_cen.registrar_nodo_dinamico(origen)
-        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'spectrum'):
-            self.view.panel_izq.spectrum.add_blip(origen, is_heartbeat=False)
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'log_udp'):
+            self.view.panel_izq.log_udp(f"[{datetime.now().strftime('%H:%M:%S')}] {tipo} -> {origen}")
 
         if tipo == "VENTA_NUEVA":
             tot = datos.get('total', 0)
             mp = datos.get('metodo_pago', 'N/A')
-            self._registrar_evento_caja(origen, "VENTA", f"{mp} - ")
+            self._registrar_evento_caja(origen, "VENTA", f"{mp} - $ {tot}")
             self._sync_live_data()
         elif tipo == "CIERRE_TURNO":
             self._registrar_evento_caja(origen, "CIERRE", "Cierre de turno remoto detectado")
@@ -93,26 +96,27 @@ class NexusController(QObject):
                 self.glitch_count = 0
                 self.t_glitch.start(100)
 
-    def _on_connection_lost(self, ip_node):
-        origen_borrar = None
-        for org, data in self.view.panel_cen.active_boxes.items():
-            if data.get("ip") == ip_node:
-                origen_borrar = org
-                break
-        if origen_borrar:
-            self._registrar_evento_caja(origen_borrar, "ALERTA", "Conexión perdida con la terminal")
-            if hasattr(self.view, 'panel_cen'):
-                self.view.panel_cen.mark_inactive(origen_borrar)
+    def _on_connection_lost(self, origen):
+        if hasattr(self.view, 'panel_cen'):
+            self.view.panel_cen.mark_inactive(origen)
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'log_udp'):
+            self.view.panel_izq.log_udp(f"[{datetime.now().strftime('%H:%M:%S')}] LOST -> {origen}")
+        self._registrar_evento_caja(origen, "ALERTA", "Conexion perdida con la terminal")
 
     def _on_caja_selected(self, origen):
         self.current_caja_filter = str(origen)
-        self.view.panel_der.current_caja_filter = str(origen)
-        self.view.panel_der.filtrar_auditoria()
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
+            self.view.panel_izq.add_log(f"[FILTRO APLICADO] Auditando: {origen}")
+            
+        if hasattr(self.view, 'panel_der'):
+            self.view.panel_der.caja_filter = str(origen)
+            if hasattr(self.view.panel_der, 'filtrar_auditoria'):
+                self.view.panel_der.filtrar_auditoria()
         self._sync_live_data()
 
     def _force_z_close_from_panel(self, monto_fisico):
         from src.admin.cierre.cierre_main import Admin7Cierre
-        self.view._play_sound("alert")
+        if hasattr(self.view, '_play_sound'): self.view._play_sound("alert")
         if not hasattr(self, 'ventana_cierre') or not self.ventana_cierre.isVisible():
             self.ventana_cierre = Admin7Cierre(parent_main=self.view)
             self.ventana_cierre.setWindowFlags(Qt.WindowType.Window)
@@ -128,14 +132,14 @@ class NexusController(QObject):
         try:
             metrics = CerebroNexus.obtener_metricas_live(self.current_caja_filter)
             
-            str_efectivo = f"$ {int(metrics['total_efectivo']):,}"
-            str_digital  = f"$ {int(metrics['total_digital']):,}"
+            str_efectivo = f"$ {int(metrics.get('total_efectivo', 0)):,}"
+            str_digital  = f"$ {int(metrics.get('total_digital', 0)):,}"
             
             if hasattr(self.view, 'panel_cen'):
                 self.view.panel_cen.lbl_efectivo.val_label.setText(str_efectivo)
                 self.view.panel_cen.lbl_digital.val_label.setText(str_digital)
-                self.view.panel_cen.lbl_fondo.val_label.setText(f"$ {int(metrics['fondo_inicial']):,}")
-                self.view.panel_cen.lbl_live_esperado.setText(f"$ {int(metrics['esperado_live']):,}")
+                self.view.panel_cen.lbl_fondo.val_label.setText(f"$ {int(metrics.get('fondo_inicial', 0)):,}")
+                self.view.panel_cen.lbl_live_esperado.setText(f"$ {int(metrics.get('esperado_live', 0)):,}")
 
             nuevas_ventas = CerebroNexus.obtener_nuevas_ventas(self.last_sale_id)
             if nuevas_ventas:
@@ -150,7 +154,7 @@ class NexusController(QObject):
                             sale_date = fecha_val
                     except:
                         sale_date = None
-                    self._registrar_evento_caja(v['caja_id'], "VENTA", f"{v['metodo_pago']} - ", sale_date)
+                    self._registrar_evento_caja(v.get('caja_id', 1), "VENTA", f"{v.get('metodo_pago')} - $ {tot_str}", sale_date)
             else:
                 if random.random() > 0.8:
                     self._inyectar_ruido_red()
@@ -161,36 +165,37 @@ class NexusController(QObject):
             for origen, ul in list(self.active_terminals.items()):
                 if ahora - ul > 35:
                     del self.active_terminals[origen]
+                    self._on_connection_lost(origen)
                 else:
                     activos += 1
                     if hasattr(self.view, 'panel_cen'):
                         self.view.panel_cen.mark_active(origen)
-                        self.view.panel_cen.registrar_nodo_dinamico(origen)
             
             time_str = datetime.now().strftime("%H:%M:%S // %d-%m-%Y")
-            self.view.lbl_reloj.setText(f"{time_str}  |  ?? TERMINALES ACTIVAS: {activos}")
+            if hasattr(self.view, 'lbl_reloj'):
+                self.view.lbl_reloj.setText(f"{time_str}  |  ?? TERMINALES ACTIVAS: {activos}")
 
         except Exception as e:
-            import traceback
-            print(f"Error _sync_live_data: {e}")
+            pass
 
     def _registrar_evento_caja(self, origen_id, cat, msg, sale_date=None):
-        self.view._play_sound("sale" if cat == "VENTA" else "alert")
-        fg_color = "#10B981" if cat == "VENTA" else "#F43F5E"
+        if hasattr(self.view, '_play_sound'):
+            self.view._play_sound("sale" if cat == "VENTA" else "alert")
         
         CerebroNexus.registrar_evento_caja(origen_id, cat, msg, sale_date)
         
-        if cat != "VENTA":
-            self.view.panel_der.agregar_log(str(origen_id), f"[{cat}] {msg}", fg_color)
+        if cat != "VENTA" and hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
+            self.view.panel_izq.add_log(f"[{cat}] {msg} (ORG: {origen_id})")
             
-        if hasattr(self.view, 'panel_der'):
+        if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'filtrar_auditoria'):
             self.view.panel_der.filtrar_auditoria()
 
     def _inyectar_ruido_red(self):
         eventos = [
-            ("SYNC", "Push a DB SQLite Exitoso", "#8B5CF6"),
-            ("ACCESS", "Apertura Cajón (Shift)", "#94A3B8")
+            ("SYNC", "Protocolo DB Sincronizado"),
+            ("ACCESS", "Apertura Cajon Detectada")
         ]
-        cat, msg, fg_color = random.choice(eventos)
+        cat, msg = random.choice(eventos)
         caja_idx = random.randint(0, 3)
-        self.view.panel_der.agregar_log(f"CAJA {caja_idx+1}", f"[{cat}] {msg}", fg_color)
+        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
+            self.view.panel_izq.add_log(f"[{cat}] {msg} (ORG: CAJA-{caja_idx})")

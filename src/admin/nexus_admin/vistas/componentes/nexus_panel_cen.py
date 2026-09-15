@@ -1,389 +1,233 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGridLayout, QScrollArea, QSizePolicy
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                             QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-import os
-import json
-import time
+from PyQt6.QtGui import QFont, QColor
+import random
 
-class TarjetaTerminalFila(QFrame):
-    """Componente visual para cada terminal en la matriz dinÃ¡mica"""
+class CyberNodeCard(QFrame):
     clicked = pyqtSignal(str)
     
-    def __init__(self, nombre, ip, parent=None):
-        super().__init__(parent)
-        self.nombre = nombre
-        self.ip = ip
-        self.setCursor(Qt.PointingHandCursor)
-        self.init_ui()
-
-    def init_ui(self):
+    def __init__(self, origen, role, is_active=True):
+        super().__init__()
+        self.origen = origen
+        self.role = role
+        self.is_active = is_active
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(140, 80)
-        layout = QVBoxLayout()
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(2)
-
-        self.lbl_nombre = QLabel(self.nombre.upper())
-        self.lbl_nombre.setStyleSheet("font-size: 11px; font-weight: bold; background: transparent; border: none;")
         
-        self.lbl_ip = QLabel(self.ip)
-        self.lbl_ip.setStyleSheet("color: #888888; font-size: 9px; font-family: monospace; background: transparent; border: none;")
-
-        self.lbl_estado = QLabel("â ACTIVA")
-        self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; font-family: monospace; background: transparent; border: none;")
-
-        layout.addWidget(self.lbl_nombre)
-        layout.addWidget(self.lbl_ip)
-        layout.addStretch()
-        layout.addWidget(self.lbl_estado)
-        self.setLayout(layout)
-
-    def set_estado(self, estado, tiempo_restante=0, is_selected=False):
-        if is_selected:
-            self.setStyleSheet("background-color: #0EA5E9; border: 2px solid #38BDF8; border-radius: 8px;")
-            self.lbl_nombre.setStyleSheet("color: #FFFFFF; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setStyleSheet("color: #FFFFFF; font-size: 10px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("â SELECCIONADA")
-        elif estado == "Activo":
-            self.setStyleSheet("background-color: #F8FAFC; border: 1px solid #2ECC71; border-radius: 6px;")
-            self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("â ACTIVA")
-            self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; background: transparent; border: none;")
-        elif estado == "Warning":
-            self.setStyleSheet("background-color: #FFFBEB; border: 1px solid #F1C40F; border-radius: 6px;")
-            self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText(f"â ESPERANDO ({tiempo_restante}s)")
-            self.lbl_estado.setStyleSheet("color: #F59E0B; font-size: 10px; font-weight: bold; background: transparent; border: none;")
+        self.lay = QVBoxLayout(self)
+        self.lay.setContentsMargins(10, 10, 10, 10)
+        self.lay.setSpacing(5)
+        
+        icon = "??" if "CAJA" in role else "??" if "CARTEL" in role else "??" if "ADMIN" in role else "??"
+        
+        self.lbl_title = QLabel(f"{icon} {role}")
+        self.lbl_title.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
+        self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.lbl_origen = QLabel(origen.split('|')[0] if '|' in origen else origen)
+        self.lbl_origen.setFont(QFont("Consolas", 7))
+        self.lbl_origen.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.lbl_status = QLabel("? ONLINE")
+        self.lbl_status.setFont(QFont("Consolas", 8, QFont.Weight.Bold))
+        self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.lay.addWidget(self.lbl_title)
+        self.lay.addWidget(self.lbl_origen)
+        self.lay.addWidget(self.lbl_status)
+        
+        self.update_style()
+        
+    def update_style(self, selected=False):
+        if not self.is_active:
+            bg = "#1E1E1E"
+            border = "#333333"
+            color_title = "#666666"
+            color_status = "#444444"
+            status_txt = "? OFFLINE"
+        elif selected:
+            bg = "rgba(16, 185, 129, 0.1)"
+            border = "#10B981"
+            color_title = "#10B981"
+            color_status = "#34D399"
+            status_txt = "? SELECTED"
         else:
-            self.setStyleSheet("background-color: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px;")
-            self.lbl_nombre.setStyleSheet("color: #991B1B; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("â CAÃDA")
-            self.lbl_estado.setStyleSheet("color: #EF4444; font-size: 10px; font-weight: bold; background: transparent; border: none;")
-
+            bg = "rgba(59, 130, 246, 0.05)"
+            border = "#3B82F6"
+            color_title = "#60A5FA"
+            color_status = "#3B82F6"
+            status_txt = "? ONLINE"
+            
+        self.setStyleSheet(f"""
+            CyberNodeCard {{
+                background-color: {bg};
+                border: 1px solid {border};
+                border-radius: 6px;
+            }}
+            CyberNodeCard:hover {{
+                background-color: rgba(59, 130, 246, 0.15);
+                border: 1px solid #60A5FA;
+            }}
+        """)
+        self.lbl_title.setStyleSheet(f"color: {color_title}; border: none; background: transparent;")
+        self.lbl_origen.setStyleSheet("color: #94A3B8; border: none; background: transparent;")
+        self.lbl_status.setStyleSheet(f"color: {color_status}; border: none; background: transparent;")
+        self.lbl_status.setText(status_txt)
+        
+    def set_active(self, active):
+        self.is_active = active
+        self.update_style()
+        
     def mousePressEvent(self, event):
-        self.clicked.emit(self.nombre)
-        super().mousePressEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.origen)
 
-class NexusPanelCen(QFrame):
+class CyberMetric(QFrame):
+    def __init__(self, title, icon):
+        super().__init__()
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setStyleSheet("background: rgba(15, 23, 42, 0.6); border: 1px solid #1E293B; border-radius: 8px;")
+        lay = QVBoxLayout(self)
+        
+        lbl_t = QLabel(f"{icon} {title}")
+        lbl_t.setStyleSheet("color: #64748B; font-size: 10px; font-weight: bold; border: none; background: transparent;")
+        lbl_t.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.val_label = QLabel("$ 0")
+        self.val_label.setStyleSheet("color: #F8FAFC; font-size: 18px; font-weight: bold; border: none; background: transparent;")
+        self.val_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        lay.addWidget(lbl_t)
+        lay.addWidget(self.val_label)
+
+class NexusPanelCen(QWidget):
     request_z_close = pyqtSignal(float)
     caja_selected = pyqtSignal(str)
     
     def __init__(self):
         super().__init__()
-        self.MAX_PANTALLAS = 20
-        self.setStyleSheet("background-color: transparent; border-radius: 8px;")
+        self.active_boxes = {}
+        self.node_widgets = {}
+        self.selected_origen = "todas"
         
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(15)
-
-        self.selected_caja_id = "todas" # Ahora usa el origen
-
-        # -- SECCIÃN 1: NODOS (TOPOLOGÃA DE CAJAS) --
+        self.lay = QVBoxLayout(self)
+        self.lay.setContentsMargins(0,0,0,0)
+        self.lay.setSpacing(15)
         
-        cabecera_nodos = QHBoxLayout()
-        titulo = QLabel("MATRIZ DE TRÃFICO // ORDENADO POR ACTIVIDAD")
-        titulo.setStyleSheet("font-size: 12px; font-weight: bold; color: #3B82F6; letter-spacing: 1px;")
-        self.lbl_info_matriz = QLabel("Monitoreando 0/20 terminales")
-        self.lbl_info_matriz.setStyleSheet("color: #10B981; font-family: monospace; font-size: 10px; font-weight: bold;")
-        cabecera_nodos.addWidget(titulo)
-        cabecera_nodos.addStretch()
-        cabecera_nodos.addWidget(self.lbl_info_matriz)
-        main_layout.addLayout(cabecera_nodos)
-
-        self.scroll_nodos = QScrollArea()
-        self.scroll_nodos.setWidgetResizable(True)
-        self.scroll_nodos.setStyleSheet("""
-            QScrollArea { border: none; background: transparent; }
-            QWidget#NodosContainer { background: transparent; }
-            QScrollBar:vertical { border: none; background: #0F172A; width: 10px; }
-            QScrollBar::handle:vertical { background: #334155; border-radius: 5px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
-        """)
+        # TITLE
+        self.lbl_title = QLabel("?? NEXUS GLOBAL DATABASE // LIVE TOPOLOGY")
+        self.lbl_title.setStyleSheet("font-family: Consolas; font-size: 12px; font-weight: bold; color: #38BDF8;")
+        self.lay.addWidget(self.lbl_title)
         
-        frame_nodos = QFrame()
-        frame_nodos.setObjectName("NodosContainer")
-        lay_nodos_box = QVBoxLayout(frame_nodos)
-        lay_nodos_box.setContentsMargins(5, 5, 5, 5)
-        lay_nodos_box.setSpacing(8)
-
-        self.grid_nodos = QGridLayout()
-        self.grid_nodos.setSpacing(8)
+        # TOPOLOGY GRID
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#grid_container { background: transparent; }")
         
-        # Diccionario en memoria de Nexus para el control de actividad
-        self.active_boxes = {} # formato: {"origen": {"ip": "IP", "ultima_actividad": time.time()}}
+        self.grid_container = QWidget()
+        self.grid_container.setObjectName("grid_container")
+        self.grid_layout = QGridLayout(self.grid_container)
+        self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         
-        btn_todas = QPushButton("ð VER TODAS LAS CAJAS")
-        btn_todas.setCursor(Qt.PointingHandCursor)
-        btn_todas.setStyleSheet("QPushButton { background-color: #FFFFFF; color: #0F172A; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1; padding: 10px; } QPushButton:hover { background-color: #F8FAFC; border: 1px solid #94A3B8; }")
-        lay_nodos_box.addWidget(btn_todas)
-        btn_todas.clicked.connect(lambda: self.seleccionar_caja("todas"))
+        self.scroll_area.setWidget(self.grid_container)
+        self.lay.addWidget(self.scroll_area, 3)
         
-        lay_nodos_box.addLayout(self.grid_nodos)
-        lay_nodos_box.addStretch()
+        # BTN CLEAR SELECTION
+        self.btn_todas = QPushButton("?? VER TODA LA RED")
+        self.btn_todas.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_todas.setStyleSheet("background: #1E293B; color: #94A3B8; font-weight: bold; border: 1px solid #334155; padding: 8px; border-radius: 4px;")
+        self.btn_todas.clicked.connect(lambda: self.select_node("todas"))
+        self.lay.addWidget(self.btn_todas)
         
-        self.scroll_nodos.setWidget(frame_nodos)
-        main_layout.addWidget(self.scroll_nodos, 1) # OcuparÃ¡ el 50%
-
-        # Sistema de actualizaciÃ³n de matriz dinÃ¡mica
-        self.timer_blink = QTimer(self)
-        self.timer_blink.timeout.connect(self._actualizar_matriz_visual)
-        self.timer_blink.start(2000)
-
-        # Contenedor para la mitad inferior
-        self.frame_abajo = QFrame()
-        lay_abajo = QVBoxLayout(self.frame_abajo)
-        lay_abajo.setContentsMargins(0, 0, 0, 0)
-        lay_abajo.setSpacing(15)
-
-
-
-        # -- SECCIÃN 2: TARJETAS SUPERIORES --
-        row_top_cards = QFrame()
-        col_izq_lay = QHBoxLayout(row_top_cards)
-        col_izq_lay.setContentsMargins(0, 0, 0, 0)
-        col_izq_lay.setSpacing(10)
-
-        # Helper para crear mini tarjetas
-        def style_mini_card(card, val_lbl, title_lbl, p_key):
-            _PAL_MINI = {
-                "green":  ("#1E293B", "#10B981"),
-                "blue":   ("#1E293B", "#3B82F6"),
-                "purple": ("#1E293B", "#8B5CF6"),
-            }
-            bg, accent = _PAL_MINI[p_key]
-            card.setStyleSheet(f"""
-                QFrame {{ background-color: {bg}; border-radius: 12px; border: 1px solid #334155; }}
-            """)
-            title_lbl.setStyleSheet(f"font-size: 9px; font-weight: 800; color: {accent}; background: transparent; border: none; letter-spacing: 0.5px;")
-            val_lbl.setStyleSheet(f"font-size: 16px; font-weight: 900; color: #F8FAFC; background: transparent; border: none;")
-
-        # Card 1: Ventas Efectivo
-        self.lbl_efectivo = QFrame()
-        lay_ve = QHBoxLayout(self.lbl_efectivo)
-        lay_ve.setContentsMargins(12, 15, 12, 15)
-        lbl_ve_ico = QLabel("ð°")
-        lbl_ve_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
-        lay_ve.addWidget(lbl_ve_ico)
-        info_ve = QVBoxLayout(); info_ve.setSpacing(2)
-        lbl_ve_t = QLabel("VENTAS EFECTIVO")
-        self.lbl_efectivo.val_label = QLabel("$ 0.00")
-        info_ve.addWidget(lbl_ve_t, 0, Qt.AlignCenter)
-        info_ve.addWidget(self.lbl_efectivo.val_label, 0, Qt.AlignCenter)
-        lay_ve.addLayout(info_ve)
-        style_mini_card(self.lbl_efectivo, self.lbl_efectivo.val_label, lbl_ve_t, "green")
-
-        # Card 2: Ventas Digital
-        self.lbl_digital = QFrame()
-        lay_vd = QHBoxLayout(self.lbl_digital)
-        lay_vd.setContentsMargins(12, 15, 12, 15)
-        lbl_vd_ico = QLabel("ð³")
-        lbl_vd_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
-        lay_vd.addWidget(lbl_vd_ico)
-        info_vd = QVBoxLayout(); info_vd.setSpacing(2)
-        lbl_vd_t = QLabel("VENTAS DIGITAL")
-        self.lbl_digital.val_label = QLabel("$ 0.00")
-        info_vd.addWidget(lbl_vd_t, 0, Qt.AlignCenter)
-        info_vd.addWidget(self.lbl_digital.val_label, 0, Qt.AlignCenter)
-        lay_vd.addLayout(info_vd)
-        style_mini_card(self.lbl_digital, self.lbl_digital.val_label, lbl_vd_t, "blue")
-
-        # Card 3: Fondo Apertura
-        self.lbl_fondo = QFrame()
-        lay_vf = QHBoxLayout(self.lbl_fondo)
-        lay_vf.setContentsMargins(12, 15, 12, 15)
-        lbl_vf_ico = QLabel("ð")
-        lbl_vf_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
-        lay_vf.addWidget(lbl_vf_ico)
-        info_vf = QVBoxLayout(); info_vf.setSpacing(2)
-        lbl_vf_t = QLabel("FONDO APERTURA")
-        self.lbl_fondo.val_label = QLabel("$ 0.00")
-        info_vf.addWidget(lbl_vf_t, 0, Qt.AlignCenter)
-        info_vf.addWidget(self.lbl_fondo.val_label, 0, Qt.AlignCenter)
-        lay_vf.addLayout(info_vf)
-        style_mini_card(self.lbl_fondo, self.lbl_fondo.val_label, lbl_vf_t, "purple")
-
-        col_izq_lay.addWidget(self.lbl_efectivo)
-        col_izq_lay.addWidget(self.lbl_digital)
-        col_izq_lay.addWidget(self.lbl_fondo)
-        lay_abajo.addWidget(row_top_cards)
-
-        # -- SECCIÃN 3: FILA INFERIOR --
-        row_bot_cards = QFrame()
-        col_der_lay = QHBoxLayout(row_bot_cards)
-        col_der_lay.setContentsMargins(0, 0, 0, 0)
-        col_der_lay.setSpacing(10)
-
-        # Efectivo Esperado Card
-        self.f_esp = QFrame()
-        self.f_esp.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 12px;")
-        lay_esp = QVBoxLayout(self.f_esp)
-        lay_esp.setContentsMargins(15, 20, 15, 20)
-        lbl_esp_t = QLabel("EFECTIVO ESPERADO")
-        lbl_esp_t.setAlignment(Qt.AlignCenter)
-        lbl_esp_t.setStyleSheet("font-size: 9px; font-weight: 800; color: #38BDF8; border: none; background: transparent; letter-spacing: 0.5px;")
-        self.lbl_live_esperado = QLabel("$ 0.00")
-        self.lbl_live_esperado.setAlignment(Qt.AlignCenter)
-        self.lbl_live_esperado.setStyleSheet("font-size: 20px; font-weight: 900; color: #F8FAFC; border: none; background: transparent;")
-        lay_esp.addWidget(lbl_esp_t)
-        lay_esp.addWidget(self.lbl_live_esperado)
-        self.f_esp.setFixedWidth(160)
-        col_der_lay.addWidget(self.f_esp)
-
-        # Input FÃ­sico Contado
-        self.f_input = QFrame()
-        self.f_input.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 12px;")
-        lay_input = QVBoxLayout(self.f_input)
-        lay_input.setContentsMargins(20, 15, 20, 15)
-        lbl_inp_t = QLabel("INGRESA EL FÃSICO CONTADO ($)")
-        lbl_inp_t.setAlignment(Qt.AlignCenter)
-        lbl_inp_t.setStyleSheet("font-size: 10px; font-weight: 800; color: #F59E0B; border: none; background: transparent; letter-spacing: 0.5px;")
+        # METRICS HUD
+        self.metrics_container = QFrame()
+        self.metrics_container.setStyleSheet("background: transparent; border: none;")
+        m_lay = QHBoxLayout(self.metrics_container)
+        m_lay.setContentsMargins(0,0,0,0)
         
-        self.txt_fisico = QLineEdit()
-        self.txt_fisico.setAlignment(Qt.AlignCenter)
-        self.txt_fisico.setStyleSheet("""
-            QLineEdit {
-                background: #0F172A; border: 2px solid #F59E0B; border-radius: 8px;
-                color: #F8FAFC; font-size: 20px; font-weight: 900; padding: 5px;
-            }
-            QLineEdit:focus { border-color: #FCD34D; }
-        """)
-        self.txt_fisico.setText("0.00")
+        self.lbl_efectivo = CyberMetric("EFECTIVO CASH", "??")
+        self.lbl_digital = CyberMetric("VENTAS DIGITALES", "??")
+        self.lbl_fondo = CyberMetric("FONDO INICIAL", "??")
         
-        lay_input.addWidget(lbl_inp_t)
-        lay_input.addWidget(self.txt_fisico)
-        col_der_lay.addWidget(self.f_input)
-
-        main_layout.addWidget(row_bot_cards)
+        m_lay.addWidget(self.lbl_efectivo)
+        m_lay.addWidget(self.lbl_digital)
+        m_lay.addWidget(self.lbl_fondo)
         
-        # Boton Forzar Z
-        btn_forzar = QPushButton("F12 // ABRIR CONTROL DE CIERRE EJECUTIVO")
-        btn_forzar.setCursor(Qt.PointingHandCursor)
-        btn_forzar.setStyleSheet("""
+        self.lay.addWidget(self.metrics_container)
+        
+        # HIGHLIGHT ESPERADO
+        self.f_esperado = QFrame()
+        self.f_esperado.setStyleSheet("background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; border-radius: 8px;")
+        h_lay = QVBoxLayout(self.f_esperado)
+        lbl_e = QLabel("TOTAL ESPERADO EN CAJAS")
+        lbl_e.setStyleSheet("color: #34D399; font-size: 11px; font-weight: bold; border: none; background: transparent;")
+        lbl_e.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_live_esperado = QLabel("$ 0")
+        self.lbl_live_esperado.setStyleSheet("color: #10B981; font-size: 26px; font-weight: bold; border: none; background: transparent;")
+        self.lbl_live_esperado.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        h_lay.addWidget(lbl_e)
+        h_lay.addWidget(self.lbl_live_esperado)
+        
+        self.lay.addWidget(self.f_esperado)
+        
+        # ACTION BTN
+        self.btn_cierre = QPushButton("F12 // EJECUTAR OVERRIDE (CIERRE Z)")
+        self.btn_cierre.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_cierre.setFixedHeight(45)
+        self.btn_cierre.setStyleSheet('''
             QPushButton {
-                background: #EF4444; color: white; border: none; border-radius: 10px;
-                font-weight: 800; font-size: 12px; padding: 12px;
+                background-color: #E11D48; color: white; font-weight: 900; font-size: 14px;
+                letter-spacing: 2px; border: none; border-radius: 4px;
             }
-            QPushButton:hover { background: #DC2626; }
-        """)
-        btn_forzar.clicked.connect(self._force_z_close)
-        lay_abajo.addWidget(btn_forzar)
+            QPushButton:hover { background-color: #BE123C; }
+        ''')
+        self.btn_cierre.clicked.connect(lambda: self.request_z_close.emit(0.0))
+        self.lay.addWidget(self.btn_cierre)
         
-        main_layout.addWidget(self.frame_abajo, 1) # OcuparÃ¡ el otro 50%
+        self._tema_oscuro()
 
-    def _force_z_close(self):
-        try:
-            monto_fisico = float(self.txt_fisico.text().replace(',', '.'))
-            self.request_z_close.emit(0.0)
-        except ValueError:
-            self.request_z_close.emit(0.0) # Error code
+    def select_node(self, origen):
+        self.selected_origen = origen
+        for org, widget in self.node_widgets.items():
+            widget.update_style(selected=(org == origen))
+        self.caja_selected.emit(origen)
 
-    def registrar_nodo_dinamico(self, origen, guardar=True):
-        if origen == "todas": return
-        if origen not in self.active_boxes:
-            self.active_boxes[origen] = {"ip": "Local/Detectada", "ultima_actividad": time.time()}
-            self._actualizar_matriz_visual()
-
-    def seleccionar_caja(self, origen):
-        self.selected_caja_id = origen
-        self._actualizar_matriz_visual()
-        self.caja_selected.emit(str(origen))
-
-    def aplicar_estilos_botones(self):
-        pass # Reemplazado por Matriz Dinamica
+    def registrar_nodo_dinamico(self, origen):
+        if origen not in self.node_widgets:
+            role = "CAJA"
+            if "|" in origen:
+                parts = origen.split("|")
+                if len(parts) > 1:
+                    role = parts[1].upper()
+            
+            node = CyberNodeCard(origen, role)
+            node.clicked.connect(self.select_node)
+            self.node_widgets[origen] = node
+            
+            # Reposition all
+            for i in reversed(range(self.grid_layout.count())): 
+                self.grid_layout.itemAt(i).widget().setParent(None)
+                
+            row, col = 0, 0
+            for w in self.node_widgets.values():
+                self.grid_layout.addWidget(w, row, col)
+                col += 1
+                if col > 2:
+                    col = 0
+                    row += 1
+                    
+        self.node_widgets[origen].set_active(True)
+        if self.selected_origen == origen:
+            self.node_widgets[origen].update_style(selected=True)
 
     def mark_active(self, origen):
-        if origen == "todas": return
-        if origen not in self.active_boxes:
-            self.active_boxes[origen] = {"ip": "Local/Detectada", "ultima_actividad": time.time()}
-        else:
-            self.active_boxes[origen]["ultima_actividad"] = time.time()
+        if origen in self.node_widgets:
+            self.node_widgets[origen].set_active(True)
             
-    def _update_blinking_lights(self):
-        pass
-
-    def _actualizar_matriz_visual(self):
-        # 1. Limpiar el Grid visual
-        while self.grid_nodos.count():
-            item = self.grid_nodos.takeAt(0)
-            w = item.widget()
-            if w: w.deleteLater()
-
-        ahora = time.time()
-
-        # 2. ORDENAR ESTRICTAMENTE: jefe, admin, cajero, carteleria
-        orden_estricto = ["jefe", "admin", "cajero", "cartel"]
-        def obtener_indice(nombre):
-            nombre_lower = str(nombre).lower()
-            for idx, role in enumerate(orden_estricto):
-                if role in nombre_lower:
-                    return idx
-            return 999
-            
-        terminales_ordenadas = sorted(
-            self.active_boxes.items(),
-            key=lambda x: obtener_indice(x[0])
-        )
-
-        # 3. CORTE RESTRICTIVO (Regla de MÃ¡x 20)
-        if len(terminales_ordenadas) > self.MAX_PANTALLAS:
-            eliminadas = terminales_ordenadas[self.MAX_PANTALLAS:]
-            terminales_ordenadas = terminales_ordenadas[:self.MAX_PANTALLAS]
-            for nombre_eliminar, _ in eliminadas:
-                if nombre_eliminar in self.active_boxes:
-                    del self.active_boxes[nombre_eliminar]
-
-        self.lbl_info_matriz.setText(f"Monitoreando {len(terminales_ordenadas)}/20 terminales vivas")
-
-        # 4. PINTAR EN GRID (Matriz de 5 columnas)
-        COLUMNAS = 5
-        for posicion, (nombre, datos) in enumerate(terminales_ordenadas):
-            fila = posicion // COLUMNAS
-            columna = posicion % COLUMNAS
-            
-            tarjeta = TarjetaTerminalFila(nombre, datos["ip"])
-            tarjeta.clicked.connect(self.seleccionar_caja)
-            
-            segundos = int(ahora - datos["ultima_actividad"])
-            is_selected = (nombre == self.selected_caja_id)
-            
-            if segundos < 32:
-                tarjeta.set_estado("Activo", is_selected=is_selected)
-            elif segundos < 45:
-                tarjeta.set_estado("Warning", tiempo_restante=45 - segundos, is_selected=is_selected)
-            else:
-                tarjeta.set_estado("Inactivo", is_selected=is_selected)
-
-            self.grid_nodos.addWidget(tarjeta, fila, columna)
-
-    def aplicar_tema(self, is_dark):
-        if is_dark:
-            # Tema oscuro
-            self._tema_oscuro()
-        else:
-            # Tema claro
-            self._tema_claro()
-
-    def _tema_oscuro(self):
-        self.setStyleSheet("background-color: transparent; border-radius: 8px;")
-        self.scroll_nodos.setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#NodosContainer { background: transparent; } QScrollBar:vertical { border: none; background: #0F172A; width: 10px; } QScrollBar::handle:vertical { background: #334155; border-radius: 5px; }")
-        
-        # Tarjetas Top
-        self.lbl_efectivo.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
-        self.lbl_digital.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
-        self.lbl_fondo.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
-        
-        self.lbl_efectivo.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #F8FAFC; background: transparent; border: none;")
-        self.lbl_digital.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #F8FAFC; background: transparent; border: none;")
-        self.lbl_fondo.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #F8FAFC; background: transparent; border: none;")
-        # Bottom Cards
-        self.f_esp.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 12px;")
-        self.lbl_live_esperado.setStyleSheet("font-size: 20px; font-weight: 900; color: #F8FAFC; border: none; background: transparent;")
-        
-        self.f_input.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 12px;")
-        self.txt_fisico.setStyleSheet("QLineEdit { background: #0F172A; border: 2px solid #F59E0B; border-radius: 8px; color: #F8FAFC; font-size: 20px; font-weight: 900; padding: 5px; } QLineEdit:focus { border-color: #FCD34D; }")
-        
-        # Botones nodos
-        self.aplicar_estilos_botones()
-
+    def mark_inactive(self, origen):
+        if origen in self.node_widgets:
+            self.node_widgets[origen].set_active(False)
 
     def update_theme(self, theme):
         if theme == "dark":
@@ -391,23 +235,12 @@ class NexusPanelCen(QFrame):
         else:
             self._tema_claro()
 
+    def _tema_oscuro(self):
+        self.btn_todas.setStyleSheet("background: #1E293B; color: #94A3B8; font-weight: bold; border: 1px solid #334155; padding: 8px; border-radius: 4px;")
+        for w in self.node_widgets.values():
+            w.update_style(selected=(w.origen == self.selected_origen))
+
     def _tema_claro(self):
-        self.setStyleSheet("background-color: transparent; border-radius: 8px;")
-        self.scroll_nodos.setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#NodosContainer { background: transparent; } QScrollBar:vertical { border: none; background: #F1F5F9; width: 10px; } QScrollBar::handle:vertical { background: #CBD5E1; border-radius: 5px; }")
-        
-        # Tarjetas Top
-        self.lbl_efectivo.setStyleSheet("QFrame { background-color: #ECFDF5; border-radius: 12px; border: none; }")
-        self.lbl_digital.setStyleSheet("QFrame { background-color: #EFF6FF; border-radius: 12px; border: none; }")
-        self.lbl_fondo.setStyleSheet("QFrame { background-color: #F5F3FF; border-radius: 12px; border: none; }")
-        
-        self.lbl_efectivo.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #0F172A; background: transparent; border: none;")
-        self.lbl_digital.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #0F172A; background: transparent; border: none;")
-        self.lbl_fondo.val_label.setStyleSheet("font-size: 16px; font-weight: 900; color: #0F172A; background: transparent; border: none;")
-        # Bottom Cards
-        self.f_esp.setStyleSheet("background-color: #EFF6FF; border: none; border-radius: 12px;")
-        self.lbl_live_esperado.setStyleSheet("font-size: 20px; font-weight: 900; color: #1E3A8A; border: none; background: transparent;")
-        
-        self.f_input.setStyleSheet("background-color: #FFFBEB; border: none; border-radius: 12px;")
-        self.txt_fisico.setStyleSheet("QLineEdit { background: white; border: 2px solid #F59E0B; border-radius: 8px; color: #B45309; font-size: 20px; font-weight: 900; padding: 5px; } QLineEdit:focus { border-color: #D97706; }")
-        
-        self.aplicar_estilos_botones()
+        self.btn_todas.setStyleSheet("background: #E2E8F0; color: #475569; font-weight: bold; border: 1px solid #CBD5E1; padding: 8px; border-radius: 4px;")
+        for w in self.node_widgets.values():
+            w.update_style(selected=(w.origen == self.selected_origen))
