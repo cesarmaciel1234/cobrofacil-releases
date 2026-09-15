@@ -15,13 +15,13 @@ class CyberFeedItem(QFrame):
         super().__init__()
         self.setStyleSheet("""
             CyberFeedItem {
-                background-color: #0F172A; 
-                border: 1px solid #1E293B; 
+                background-color: #FFFFFF; 
+                border: 1px solid #E2E8F0; 
                 border-radius: 8px; 
                 margin-bottom: 5px;
             }
             CyberFeedItem:hover {
-                background-color: #1E293B;
+                background-color: #F8FAFC;
                 border: 1px solid #38BDF8;
             }
         """)
@@ -65,7 +65,7 @@ class CyberFeedItem(QFrame):
         t_lay.addWidget(lbl_title, 1)
         t_lay.addWidget(lbl_time)
         
-        lbl_desc = QLabel(f"<span style='color: #94A3B8; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
+        lbl_desc = QLabel(f"<span style='color: #475569; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
         lbl_desc.setWordWrap(True)
         lbl_desc.setTextFormat(Qt.TextFormat.RichText)
         lbl_desc.setContentsMargins(25, 0, 0, 0)
@@ -100,7 +100,7 @@ class NexusPanelDer(QFrame):
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: #1E293B;
-                    color: #94A3B8;
+                    color: #475569;
                     border: none;
                     border-top-left-radius: 8px;
                     border-top-right-radius: 8px;
@@ -161,7 +161,8 @@ class NexusPanelDer(QFrame):
             "Intervenciones Supervisor",
             "Turnos y Aperturas",
             "Cancelaciones de Tickets",
-            "Ingresos y Retiros de Efectivo"
+            "Ingresos y Retiros de Efectivo",
+            "Ventas y Cobros"
         ])
         self.cmb_tipo_evento.setStyleSheet("""
             QComboBox {
@@ -185,7 +186,29 @@ class NexusPanelDer(QFrame):
         self.cmb_tipo_evento.currentIndexChanged.connect(self.filtrar_auditoria)
         filt_bar.addWidget(self.cmb_tipo_evento)
         
+        
+        self.cmb_fecha = QComboBox()
+        self.cmb_fecha.addItems(["Hoy", "Ayer", "Esta Semana", "Este Mes", "Todos los Tiempos"])
+        self.cmb_fecha.setMinimumWidth(150)
+        self.cmb_fecha.setStyleSheet("""
+            QComboBox {
+                background: #1E293B;
+                border: 1px solid #334155;
+                border-radius: 10px;
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #F8FAFC;
+            }
+            QComboBox:focus {
+                border-color: #38BDF8;
+                background: #0F172A;
+            }
+        """)
+        self.cmb_fecha.currentIndexChanged.connect(self.filtrar_auditoria)
+        filt_bar.addWidget(self.cmb_fecha)
+        
         btn_exportar = QPushButton("📥 EXPORTAR BITÁCORA")
+
         btn_exportar.setCursor(Qt.PointingHandCursor)
         btn_exportar.setStyleSheet("""
             QPushButton {
@@ -457,7 +480,7 @@ class NexusPanelDer(QFrame):
         # Tabs
         for btn in self.tabs:
             btn.setStyleSheet("""
-                QPushButton { background-color: #1E293B; color: #94A3B8; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px; font-weight: bold; }
+                QPushButton { background-color: #1E293B; color: #475569; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px; font-weight: bold; }
                 QPushButton:hover { background-color: #334155; color: white; }
             """)
         
@@ -578,7 +601,20 @@ class NexusPanelDer(QFrame):
             # Excluir tickets de ventas si vemos "Todos los Eventos" para limpiar el ruido
             q += " AND observaciones NOT LIKE '[TICKET]%' AND tipo NOT LIKE '[TICKET]%' AND tipo != 'VENTA'"
             
+
+        if hasattr(self, 'cmb_fecha'):
+            f_val = self.cmb_fecha.currentText()
+            if f_val == "Hoy":
+                q += " AND DATE(fecha) = CURDATE()"
+            elif f_val == "Ayer":
+                q += " AND DATE(fecha) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)"
+            elif f_val == "Esta Semana":
+                q += " AND YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)"
+            elif f_val == "Este Mes":
+                q += " AND YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())"
+                
         if self.caja_filter > 0:
+
             q += " AND caja_id=?"
             p.append(self.caja_filter)
 
