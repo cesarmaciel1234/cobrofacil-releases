@@ -103,12 +103,12 @@ class NexusPanelDer(QFrame):
         
         # Pestañas (Las 5 juntas)
         self.btn_tab1 = QPushButton("👁️ EN VIVO")
-        self.btn_tab2 = QPushButton("🏁 CIERRES")
-        self.btn_tab3 = QPushButton("🚨 ALERTAS")
-        self.btn_tab4 = QPushButton("👤 CONTROL")
-        self.btn_tab5 = QPushButton("💰 CAJONES")
+        self.btn_tab_cobros = QPushButton("💵 COBROS")
+        self.btn_tab_cajones = QPushButton("💰 CAJONES")
+        self.btn_tab_alertas = QPushButton("🚨 ALERTAS")
+        self.btn_tab_acciones = QPushButton("👤 ACCIONES")
         
-        self.tabs = [self.btn_tab2, self.btn_tab3, self.btn_tab4, self.btn_tab5]
+        self.tabs = [self.btn_tab_cobros, self.btn_tab_cajones, self.btn_tab_alertas, self.btn_tab_acciones]
         for idx, btn in enumerate(self.tabs):
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet("""
@@ -539,65 +539,61 @@ class NexusPanelDer(QFrame):
         """)
 
     def agregar_log(self, src, payload, fg_color):
-        # Esta funcion es llamada desde admin7_nexus por el motor en vivo
-        # Como es una tabla estructurada de 6 columnas, vamos a insertar el log
-        # en la fila 0 simulando la vista
-        row = 0
-        self.tabla_eventos.insertRow(row)
-        ts = datetime.now().strftime("%m-%d %H:%M")
+        # Inyecta eventos EN VIVO directamente al Feed (Columna 3)
+        # Actúa como un filtro en vivo basado en la pestaña activa
         
-        # Parseamos el payload básico: ej. "[VENTA] Cobro Efectivo - $100.00"
-        tipo_evento = "📝 EVENTO"
-        icon = "📝"
+        # 1. Determinar tipo lógico
+        tipo = "EVENTO"
         if "[VENTA]" in payload:
-            tipo_evento = "💰 VENTA"
-            icon = "💰"
+            tipo = "VENTA"
         elif "ALERTA" in payload or "CRITICAL" in payload:
-            tipo_evento = "🚨 SEGURIDAD"
-            icon = "🚨"
-
-        # Col 0: PC
-        pc_clean = src
+            tipo = "ALERTA_SEGURIDAD"
+        elif "INTERVENCION" in payload or "INTERVENCIÓN" in payload:
+            tipo = "INTERVENCION"
+        elif "APERTURA" in payload:
+            tipo = "APERTURA"
+            
+        # 2. Comprobar Filtro Activo
+        # 0=COBROS, 1=CAJONES, 2=ALERTAS, 3=ACCIONES
+        # O también si está en "Todos los Eventos" (0)
+        idx = self.cmb_tipo_evento.currentIndex()
+        if idx != 0: # Si NO es "Todos los Eventos", filtramos
+            if idx == 6 and tipo != "VENTA": return # COBROS
+            if idx == 3 and tipo != "APERTURA": return # CAJONES
+            if idx == 1 and tipo != "ALERTA_SEGURIDAD": return # ALERTAS
+            if idx == 2 and tipo != "INTERVENCION": return # ACCIONES
+            
         import re
+        from datetime import datetime
+        
+        # Parse PC
+        pc_clean = src
         match = re.search(r'PC-(\d+)', src)
-        if match:
-            pc_clean = f"PC-{match.group(1)}"
-        else:
-            match_digit = re.search(r'\d+', src)
-            if match_digit:
-                c_num = int(match_digit.group())
-                pc_clean = f"PC-0{c_num}" if c_num < 10 else f"PC-{c_num}"
-            else:
-                pc_clean = "PC-01"
-
-        it_pc = QTableWidgetItem(pc_clean)
-        it_pc.setTextAlignment(Qt.AlignCenter)
-        it_pc.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        self.tabla_eventos.setItem(row, 0, it_pc)
-
-        # Col 1: Fecha/Hora
-        it_f = QTableWidgetItem(ts)
-        it_f.setTextAlignment(Qt.AlignCenter)
-        self.tabla_eventos.setItem(row, 1, it_f)
-
-        # Col 2: Evento
-        it_ev = QTableWidgetItem(f"{icon} {tipo_evento}")
-        it_ev.setTextAlignment(Qt.AlignCenter)
-        it_ev.setForeground(QColor(fg_color))
-        it_ev.setFont(QFont("Segoe UI", 9, QFont.Bold))
-        self.tabla_eventos.setItem(row, 2, it_ev)
-
-        # Col 3: Usuario
-        it_u = QTableWidgetItem("SISTEMA")
-        it_u.setTextAlignment(Qt.AlignCenter)
-        self.tabla_eventos.setItem(row, 3, it_u)
-
-        # Col 4: Payload
-        self.tabla_eventos.setItem(row, 4, QTableWidgetItem(payload))
-
-        if self.tabla_eventos.rowCount() > 100:
-            self.tabla_eventos.removeRow(100)
-
+        if match: pc_clean = f"PC-{match.group(1)}"
+            
+        # Parse User and Obs
+        partes = payload.split("-", 1)
+        obs = partes[1].strip() if len(partes) > 1 else payload
+        
+        usr = "SISTEMA"
+        if "cajero" in src.lower() or "caja" in src.lower(): usr = "CAJERO"
+        if "jefe" in src.lower() or "admin" in src.lower(): usr = "JEFE"
+            
+        item = CyberFeedItem(
+            pc=pc_clean, 
+            fecha=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+            tipo=tipo, 
+            usuario=usr, 
+            obs=obs
+        )
+        self.feed_layout.insertWidget(0, item)
+        
+        # Mantener un máximo de 100 items vivos para no saturar memoria
+        while self.feed_layout.count() > 100:
+            w = self.feed_layout.takeAt(self.feed_layout.count()-1)
+            if w.widget():
+                w.widget().deleteLater()
+                
     def filtrar_auditoria(self):
         buscar = self.txt_buscar.text().strip()
         idx_tipo = self.cmb_tipo_evento.currentIndex()

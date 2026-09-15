@@ -241,8 +241,8 @@ class NexusController(QObject):
             else:
                 self.view.panel_izq.inject_ai_log("INFO", str(origen_id), msg, time_str)
             
-        if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'filtrar_auditoria'):
-            self.view.panel_der.filtrar_auditoria()
+        if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'agregar_log'):
+            self.view.panel_der.agregar_log(f"PC-{origen_id}", f"[{cat}] {msg}", None)
     def _inyectar_ruido_red(self):
         eventos = [
             ("SYNC", "Protocolo DB Sincronizado"),
