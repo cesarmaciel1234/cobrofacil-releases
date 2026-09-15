@@ -156,8 +156,7 @@ class NexusController(QObject):
                         sale_date = None
                     self._registrar_evento_caja(v.get('caja_id', 1), "VENTA", f"{v.get('metodo_pago')} - $ {tot_str}", sale_date)
             else:
-                if random.random() > 0.8:
-                    self._inyectar_ruido_red()
+                pass
                     
             # Actualizar reloj y contadores
             ahora = time.time()

@@ -19,7 +19,7 @@ class CyberNodeCard(QFrame):
         self.lay.setContentsMargins(10, 10, 10, 10)
         self.lay.setSpacing(5)
         
-        icon = "??" if "CAJA" in role else "??" if "CARTEL" in role else "??" if "ADMIN" in role else "??"
+        icon = "🛒" if "CAJA" in role else "📺" if "CARTEL" in role else "💻" if "ADMIN" in role else "⚙️"
         
         self.lbl_title = QLabel(f"{icon} {role}")
         self.lbl_title.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
@@ -29,7 +29,7 @@ class CyberNodeCard(QFrame):
         self.lbl_origen.setFont(QFont("Consolas", 7))
         self.lbl_origen.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        self.lbl_status = QLabel("? ONLINE")
+        self.lbl_status = QLabel("● ONLINE")
         self.lbl_status.setFont(QFont("Consolas", 8, QFont.Weight.Bold))
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -45,19 +45,19 @@ class CyberNodeCard(QFrame):
             border = "#333333"
             color_title = "#666666"
             color_status = "#444444"
-            status_txt = "? OFFLINE"
+            status_txt = "○ OFFLINE"
         elif selected:
             bg = "rgba(16, 185, 129, 0.1)"
             border = "#10B981"
             color_title = "#10B981"
             color_status = "#34D399"
-            status_txt = "? SELECTED"
+            status_txt = "● SELECTED"
         else:
             bg = "rgba(59, 130, 246, 0.05)"
             border = "#3B82F6"
             color_title = "#60A5FA"
             color_status = "#3B82F6"
-            status_txt = "? ONLINE"
+            status_txt = "● ONLINE"
             
         self.setStyleSheet(f"""
             CyberNodeCard {{
@@ -116,7 +116,7 @@ class NexusPanelCen(QWidget):
         self.lay.setSpacing(15)
         
         # TITLE
-        self.lbl_title = QLabel("?? NEXUS GLOBAL DATABASE // LIVE TOPOLOGY")
+        self.lbl_title = QLabel("📡 NEXUS GLOBAL DATABASE // LIVE TOPOLOGY")
         self.lbl_title.setStyleSheet("font-family: Consolas; font-size: 12px; font-weight: bold; color: #38BDF8;")
         self.lay.addWidget(self.lbl_title)
         
@@ -134,7 +134,7 @@ class NexusPanelCen(QWidget):
         self.lay.addWidget(self.scroll_area, 3)
         
         # BTN CLEAR SELECTION
-        self.btn_todas = QPushButton("?? VER TODA LA RED")
+        self.btn_todas = QPushButton("🌐 VER TODA LA RED")
         self.btn_todas.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_todas.setStyleSheet("background: #1E293B; color: #94A3B8; font-weight: bold; border: 1px solid #334155; padding: 8px; border-radius: 4px;")
         self.btn_todas.clicked.connect(lambda: self.select_node("todas"))
@@ -146,9 +146,9 @@ class NexusPanelCen(QWidget):
         m_lay = QHBoxLayout(self.metrics_container)
         m_lay.setContentsMargins(0,0,0,0)
         
-        self.lbl_efectivo = CyberMetric("EFECTIVO CASH", "??")
-        self.lbl_digital = CyberMetric("VENTAS DIGITALES", "??")
-        self.lbl_fondo = CyberMetric("FONDO INICIAL", "??")
+        self.lbl_efectivo = CyberMetric("EFECTIVO CASH", "💵")
+        self.lbl_digital = CyberMetric("VENTAS DIGITALES", "💳")
+        self.lbl_fondo = CyberMetric("FONDO INICIAL", "💰")
         
         m_lay.addWidget(self.lbl_efectivo)
         m_lay.addWidget(self.lbl_digital)

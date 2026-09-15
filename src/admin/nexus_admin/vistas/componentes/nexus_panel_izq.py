@@ -9,7 +9,7 @@ class NexusPanelIzq(QWidget):
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.lay.setSpacing(10)
 
-        self.lbl_title = QLabel("?? TERMINAL SYS.OP")
+        self.lbl_title = QLabel("💻 TERMINAL SYS.OP")
         self.lbl_title.setStyleSheet("font-family: Consolas; font-size: 12px; font-weight: bold; color: #F59E0B;")
         self.lay.addWidget(self.lbl_title)
 
@@ -24,7 +24,7 @@ class NexusPanelIzq(QWidget):
         ''')
         self.lay.addWidget(self.terminal_output, 1)
 
-        self.lbl_topo = QLabel("?? TOPOLOGIA DE RED // LOGS DE TRAFICO UDP")
+        self.lbl_topo = QLabel("📡 TOPOLOGIA DE RED // LOGS DE TRAFICO UDP")
         self.lbl_topo.setStyleSheet("font-family: Consolas; font-size: 11px; font-weight: bold; color: #38BDF8; margin-top: 10px;")
         self.lay.addWidget(self.lbl_topo)
 
