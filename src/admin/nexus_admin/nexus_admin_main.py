@@ -312,6 +312,34 @@ class NexusExtremeControl(QWidget):
         else:
             super().keyPressEvent(event)
 
+    def _aplicar_estilos(self, theme="light"):
+        if theme == "dark":
+            bg_main = "#0F172A"
+            text_color = "#F8FAFC"
+            header_bg = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1E3A8A, stop:1 #3B82F6)"
+        else:
+            bg_main = "#F8FAFC"
+            text_color = "#1E293B"
+            header_bg = "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #D97706, stop:1 #3B82F6)"
+
+        self.setStyleSheet(f"QWidget#NexusExtremeControl {{ background: {bg_main}; }}")
+        
+        if hasattr(self, 'lbl_titulo'):
+            self.lbl_titulo.setStyleSheet(f"""
+                font-size: 18px; font-weight: 900; letter-spacing: 5px;
+                background: {header_bg}; color: white; padding: 5px 15px; border-radius: 5px;
+            """)
+        if hasattr(self, 'lbl_reloj'):
+            self.lbl_reloj.setStyleSheet(f"font-size: 14px; font-weight: 700; color: {text_color}; background: transparent; border: none;")
+
+        # Apply to sub-panels if they have an update_theme method
+        if hasattr(self, 'panel_cen') and hasattr(self.panel_cen, 'update_theme'):
+            self.panel_cen.update_theme(theme)
+        if hasattr(self, 'panel_izq') and hasattr(self.panel_izq, 'update_theme'):
+            self.panel_izq.update_theme(theme)
+        if hasattr(self, 'panel_der') and hasattr(self.panel_der, 'update_theme'):
+            self.panel_der.update_theme(theme)
+
     def _setup_ui(self):
         self.is_dark_mode = False
         self.setStyleSheet("")
@@ -329,8 +357,8 @@ class NexusExtremeControl(QWidget):
         self.btn_abort.setObjectName("BtnCritical")
         self.btn_abort.clicked.connect(self.request_dashboard.emit)
 
-        lbl_titulo = QLabel("N E X U S  //  CONTROL CENTER")
-        lbl_titulo.setStyleSheet("""
+        self.lbl_titulo = QLabel("N E X U S  //  CONTROL CENTER")
+        self.lbl_titulo.setStyleSheet("""
             font-size: 16px; font-weight: 900; letter-spacing: 5px;
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #D97706, stop:0.5 #6366F1, stop:1 #0284C7);
@@ -347,7 +375,7 @@ class NexusExtremeControl(QWidget):
 
         lay_h.addWidget(self.btn_abort)
         lay_h.addStretch()
-        lay_h.addWidget(lbl_titulo)
+        lay_h.addWidget(self.lbl_titulo)
         lay_h.addStretch()
         lay_h.addWidget(self.lbl_reloj)
         main_layout.addWidget(hdr)
@@ -358,6 +386,9 @@ class NexusExtremeControl(QWidget):
         layout_paneles.setContentsMargins(0, 0, 0, 0)
 
         # Importar paneles modulares originales
+        from src.admin.nexus_admin.componentes.nexus_panel_izq import NexusPanelIzq
+        from src.admin.nexus_admin.componentes.nexus_panel_cen import NexusPanelCen
+        from src.utils.theme_manager import theme_manager
         from src.admin.nexus_admin.componentes.nexus_panel_izq import NexusPanelIzq
         from src.admin.nexus_admin.componentes.nexus_panel_cen import NexusPanelCen
         from src.admin.nexus_admin.componentes.nexus_panel_der import NexusPanelDer
@@ -378,7 +409,9 @@ class NexusExtremeControl(QWidget):
         self.panel_der = NexusPanelDer()
         layout_paneles.addWidget(self.panel_der, 40) # 40% del ancho
 
-        main_layout.addLayout(layout_paneles, 1) # Ocupará el resto del espacio
+        main_layout.addLayout(layout_paneles, 1)
+        self._aplicar_estilos(theme_manager.current_theme)
+        theme_manager.theme_changed.connect(self._aplicar_estilos) # Ocupará el resto del espacio
         
         # Diccionario local en memoria para monitoreo de cajas
         self.active_terminals = {}
@@ -530,93 +563,29 @@ class NexusExtremeControl(QWidget):
 
     def _sync_live_data(self):
         try:
-            hoy = datetime.now().strftime("%Y-%m-%d")
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            from datetime import datetime
+            import random
 
-            # 1. Actualizar métricas (Globales o por Caja)
-            # DATE(fecha) = ? funciona en SQLite y MariaDB (columna DATETIME)
-            params_totales = [hoy]
-            filtro_caja_sql = ""
-            if self.current_caja_filter != "todas":
-                import re
-                num_match = re.search(r'\d+', str(self.current_caja_filter))
-                caja_num = int(num_match.group()) if num_match else 1
-                filtro_caja_sql = " AND caja_id = ?"
-                params_totales.append(caja_num)
-
-            # Ventas efectivo neto (bruto − vuelto), alineado con cierre de caja
-            total_efectivo = db_manager.execute_scalar(
-                f"""SELECT SUM(
-                    CASE
-                        WHEN metodo_pago IN ('Efectivo', 'Mixto')
-                             OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
-                        THEN COALESCE(pago_efectivo, 0)
-                             - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
-                        ELSE 0
-                    END
-                ) FROM ventas
-                WHERE DATE(fecha) = ? AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')
-                {filtro_caja_sql}""",
-                tuple(params_totales)
-            ) or 0.0
-            total_digital = db_manager.execute_scalar(
-                f"SELECT SUM(total) FROM ventas"
-                f" WHERE DATE(fecha) = ? AND metodo_pago NOT IN ('Efectivo', 'Mixto')"
-                f" AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')"
-                f"{filtro_caja_sql}",
-                tuple(params_totales)
-            ) or 0.0
-
-            self.total_esperado_cache = total_efectivo
-
-            str_efectivo = f"$ {int(total_efectivo):,}"
-            str_digital  = f"$ {int(total_digital):,}"
-
-            # Actualizar tarjetas métricas del panel central
+            # 1. Actualizar metricas
+            metrics = CerebroNexus.obtener_metricas_live(self.current_caja_filter)
+            
+            str_efectivo = f"$ {int(metrics['total_efectivo']):,}"
+            str_digital  = f"$ {int(metrics['total_digital']):,}"
+            
             if hasattr(self, 'panel_cen'):
                 self.panel_cen.lbl_efectivo.val_label.setText(str_efectivo)
                 self.panel_cen.lbl_digital.val_label.setText(str_digital)
-                
-                # Esperado = misma cadena que get_efectivo_en_caja / panel de cierre
-                fondo_inicial = 0.0
-                esperado_live = float(total_efectivo or 0)
-                if self.current_caja_filter != "todas":
-                    import re
-                    num_match = re.search(r'\d+', str(self.current_caja_filter))
-                    caja_num = int(num_match.group()) if num_match else 1
-                    fondo_inicial = float(db_manager.execute_scalar(
-                        "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                        (caja_num,)
-                    ) or 0.0)
-                    esperado_live = float(db_manager.get_efectivo_en_caja(caja_num) or 0.0)
-                else:
-                    # Sumar fondos de todas las terminales activas hoy
-                    fondo_inicial = float(db_manager.execute_scalar(
-                        "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='APERTURA' AND DATE(fecha) = ?",
-                        (hoy,)
-                    ) or 0.0)
-                    esperado_live = float(fondo_inicial or 0) + float(total_efectivo or 0)
-                
-                self.panel_cen.lbl_fondo.val_label.setText(f"$ {int(fondo_inicial):,}")
-                self.panel_cen.lbl_live_esperado.setText(f"$ {int(esperado_live):,}")
+                self.panel_cen.lbl_fondo.val_label.setText(f"$ {int(metrics['fondo_inicial']):,}")
+                self.panel_cen.lbl_live_esperado.setText(f"$ {int(metrics['esperado_live']):,}")
 
-            # 2. Buscar ventas nuevas desde la última consulta
-            query_nuevas = (
-                "SELECT id, caja_id, metodo_pago, total, usuario, fecha"
-                " FROM ventas WHERE DATE(fecha) = ?"
-            )
-            params_nuevas = [hoy]
-            if self.last_sale_id:
-                query_nuevas += " AND id > ?"
-                params_nuevas.append(self.last_sale_id)
-            query_nuevas += " ORDER BY id ASC LIMIT 5"
-
-            nuevas_ventas = db_manager.execute_query(query_nuevas, tuple(params_nuevas))
+            # 2. Buscar ventas nuevas
+            nuevas_ventas = CerebroNexus.obtener_nuevas_ventas(self.last_sale_id)
             
             if nuevas_ventas:
                 for v in nuevas_ventas:
                     self.last_sale_id = v['id']
                     tot_str = f"{int(v['total']):,}"
-                    # Parsear la fecha del registro en ventas
                     try:
                         fecha_val = v['fecha']
                         if isinstance(fecha_val, str):
@@ -625,79 +594,24 @@ class NexusExtremeControl(QWidget):
                             sale_date = fecha_val
                     except:
                         sale_date = None
-                    self._registrar_evento_caja(v['caja_id'], "VENTA", f"{v['metodo_pago']} - ${tot_str}", sale_date)
+                    self._registrar_evento_caja(v['caja_id'], "VENTA", f"{v['metodo_pago']} - ", sale_date)
             else:
                 if random.random() > 0.8:
                     self._inyectar_ruido_red()
         except Exception as e:
             import traceback
-            with open("error_sync.log", "w") as f:
-                f.write(traceback.format_exc())
             print(f"Error _sync_live_data: {e}")
 
     def _registrar_evento_caja(self, origen_id, cat, msg, sale_date=None):
         self._play_sound("sale" if cat == "VENTA" else "alert")
-        
         fg_color = "#10B981" if cat == "VENTA" else "#F43F5E"
-        bg_color = "#065F46" if cat == "VENTA" else "#991B1B"
         
-        origen = str(origen_id)
-        src = origen.upper()
+        from src.cerebro_global.nexus_cerebro import CerebroNexus
+        CerebroNexus.registrar_evento_caja(origen_id, cat, msg, sale_date)
         
-        # Intentamos extraer el ID de caja numérico (ej. de 'CAJERO-PC-02' -> 2)
-        c_id = 1
-        try:
-            import re
-            match = re.search(r'\d+', src)
-            if match:
-                c_id = int(match.group())
-        except:
-            pass
-
-        # Formatear tipo y observaciones para la BD
-        if cat == "VENTA":
-            tipo_db = "[TICKET] Venta Remota"
-            obs_db = f"[TICKET] {msg}"
-        else:
-            tipo_db = "ALERTA_SEGURIDAD" if cat == "ALERTA" else cat.upper()
-            obs_db = f"[{cat}] {msg}"
-
-        # Guardar en la base de datos para persistencia total y bitácora
-        try:
-            ts_now = datetime.now()
-            # Usar fecha exacta de venta si viene del sync de DB para mantener orden cronológico
-            ref_date = sale_date if sale_date is not None else ts_now
-            ts = ref_date.strftime("%Y-%m-%d %H:%M:%S")
-
-            # Chequeo de duplicados robusto
-            if cat == "VENTA":
-                # Validar en un rango de +/- 60 segundos alrededor de la fecha de la venta
-                ts_min = (ref_date - timedelta(seconds=60)).strftime("%Y-%m-%d %H:%M:%S")
-                ts_max = (ref_date + timedelta(seconds=60)).strftime("%Y-%m-%d %H:%M:%S")
-                existe = db_manager.execute_scalar(
-                    "SELECT COUNT(id) FROM movimientos_caja WHERE observaciones = ? AND caja_id = ? AND fecha BETWEEN ? AND ?",
-                    (obs_db, c_id, ts_min, ts_max)
-                )
-            else:
-                ts_limite = (ts_now - timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
-                existe = db_manager.execute_scalar(
-                    "SELECT COUNT(id) FROM movimientos_caja WHERE observaciones = ? AND tipo = ? AND caja_id = ? AND fecha >= ?",
-                    (obs_db, tipo_db, c_id, ts_limite)
-                )
-
-            if not existe or existe == 0:
-                db_manager.execute_non_query(
-                    "INSERT INTO movimientos_caja (fecha, tipo, observaciones, caja_id, usuario, monto) VALUES (?, ?, ?, ?, ?, ?)",
-                    (ts, tipo_db, obs_db, c_id, "SISTEMA", 0.0)
-                )
-        except Exception as e:
-            print(f"Error insertando evento de caja en DB: {e}")
-
-        # Si el evento no es una venta, o si es para actualizar la tabla del panel derecho
         if cat != "VENTA":
-            self._agregar_log_tabla(src, f"[{cat}] {msg}", fg_color)
+            self._agregar_log_tabla(str(origen_id), f"[{cat}] {msg}", fg_color)
             
-        # Refrescar la tabla de auditoría del panel derecho directamente desde la base de datos
         if hasattr(self, 'panel_der'):
             self.panel_der.filtrar_auditoria()
 
