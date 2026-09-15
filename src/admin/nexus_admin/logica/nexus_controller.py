@@ -15,6 +15,8 @@ class NexusController(QObject):
         self.last_sale_id = self._get_initial_max_id()
         self.current_caja_filter = "todas"
         self.glitch_count = 0
+        self.last_cash_sales = {}  # AI Security: origen -> timestamp
+
         
         self._connect_signals()
         self._start_timers()
@@ -84,8 +86,15 @@ class NexusController(QObject):
         if tipo == "VENTA_NUEVA":
             tot = datos.get('total', 0)
             mp = datos.get('metodo_pago', 'N/A')
+            if "EFECTIVO" in str(mp).upper():
+                self.last_cash_sales[origen] = time.time()
+                
             self._registrar_evento_caja(origen, "VENTA", f"{mp} - $ {tot}")
             self._sync_live_data()
+            
+        elif tipo == "HARDWARE_SENSOR" and datos.get("evento") == "DRAWER_OPEN":
+            self._evaluate_smart_drawer(origen)
+            
         elif tipo == "CIERRE_TURNO":
             self._registrar_evento_caja(origen, "CIERRE", "Cierre de turno remoto detectado")
             self._sync_live_data()
@@ -95,6 +104,33 @@ class NexusController(QObject):
             if "CRITICO" in msg.upper():
                 self.glitch_count = 0
                 self.t_glitch.start(100)
+
+
+    def _evaluate_smart_drawer(self, origen):
+        """ AI Security Matrix for Hardware Drawer Detection """
+        role = "CAJERO"
+        if "|" in origen:
+            parts = origen.split("|")
+            if len(parts) > 1:
+                role = parts[1].upper()
+                
+        last_sale = self.last_cash_sales.get(origen, 0)
+        time_since_sale = time.time() - last_sale
+        
+        if role in ["ADMIN", "JEFE"]:
+            self._registrar_evento_caja(origen, "INTERVENCION", "[TEST] Cajon fisico abierto por Admin/Jefe")
+            if hasattr(self.view, 'panel_izq'):
+                self.view.panel_izq.add_log(f"?? [AI MATRIX] Bypass Autorizado para {role} en {origen}")
+        else:
+            if time_since_sale <= 7.0: # 7 seconds window
+                if hasattr(self.view, 'panel_izq'):
+                    self.view.panel_izq.add_log(f"? [AI MATRIX] Apertura de cajon justificada (Venta Efectivo) en {origen}")
+            else:
+                self._registrar_evento_caja(origen, "ALERTA_SEGURIDAD", "[CRITICO] CAJON FISICO ABIERTO SIN VENTA")
+                self.glitch_count = 0
+                self.t_glitch.start(100)
+                if hasattr(self.view, 'panel_izq'):
+                    self.view.panel_izq.add_log(f"?? [AI THREAT DETECTED] Intento de Robo/Fraude en {origen}")
 
     def _on_connection_lost(self, origen):
         if hasattr(self.view, 'panel_cen'):
