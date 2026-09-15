@@ -57,14 +57,14 @@ class CyberFeedItem(QFrame):
         except:
             time_str = str(fecha)
             
-        lbl_time = QLabel(f"<span style='background-color: #0F172A; color: #94A3B8; font-size: 11px; padding: 2px 6px; border-radius: 4px;'>&nbsp;{time_str}&nbsp;</span>")
+        lbl_time = QLabel(f"<span style='background-color: #F1F5F9; color: #475569; font-size: 11px; padding: 2px 6px; border-radius: 4px;'>&nbsp;{time_str}&nbsp;</span>")
         lbl_time.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         
         t_lay.addWidget(lbl_title)
         t_lay.addStretch()
         t_lay.addWidget(lbl_time)
         
-        lbl_desc = QLabel(f"<span style='color: #94A3B8; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
+        lbl_desc = QLabel(f"<span style='color: #475569; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
         lbl_desc.setWordWrap(True)
         lbl_desc.setTextFormat(Qt.TextFormat.RichText)
         lbl_desc.setContentsMargins(25, 0, 0, 0)
@@ -129,9 +129,9 @@ class NexusPanelDer(QFrame):
         main_layout.addLayout(header_layout)
         
         # --- BODY CONTENEDOR PRINCIPAL ---
-        body_container = QWidget()
-        body_container.setStyleSheet("background-color: #0F172A; border-radius: 8px; border-top-left-radius: 0px;")
-        body_layout = QVBoxLayout(body_container)
+        self.body_container = QWidget()
+        self.body_container.setStyleSheet("background-color: #F8FAFC; border-radius: 8px; border-top-left-radius: 0px; border: 1px solid #E2E8F0;")
+        body_layout = QVBoxLayout(self.body_container)
         body_layout.setContentsMargins(15, 15, 15, 15)
         
         # Ocultamos la logica de cmb_tipo_evento para que siga funcionando silenciosamente
@@ -157,7 +157,7 @@ class NexusPanelDer(QFrame):
         self.scroll_eventos.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
         
         body_layout.addWidget(self.scroll_eventos)
-        main_layout.addWidget(body_container)
+        main_layout.addWidget(self.body_container)
 
         self.caja_filter = 0
         self.active_query = ""
@@ -168,11 +168,19 @@ class NexusPanelDer(QFrame):
         self.cambiar_pestana(0) # Iniciar en COBROS
         
     def cambiar_pestana(self, index):
+        self.active_tab_index = index
+        is_dark = getattr(self, 'is_dark_theme', False)
         for i, btn in enumerate(self.tabs):
             if i == index:
-                btn.setStyleSheet(btn.styleSheet().replace("color: #475569;", "color: #F8FAFC; background-color: #0F172A;"))
+                if is_dark:
+                    btn.setStyleSheet("QPushButton { background-color: #0F172A; color: #F8FAFC; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px 20px; font-weight: bold; font-size: 13px; }")
+                else:
+                    btn.setStyleSheet("QPushButton { background-color: #FFFFFF; color: #0F172A; border: 1px solid #E2E8F0; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px 20px; font-weight: bold; font-size: 13px; }")
             else:
-                btn.setStyleSheet(btn.styleSheet().replace("color: #F8FAFC; background-color: #0F172A;", "color: #475569;"))
+                if is_dark:
+                    btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #475569; border: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px 20px; font-weight: bold; font-size: 13px; } QPushButton:hover { color: #38BDF8; }")
+                else:
+                    btn.setStyleSheet("QPushButton { background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px 20px; font-weight: bold; font-size: 13px; } QPushButton:hover { color: #3B82F6; }")
                 
         # 0=COBROS, 1=CAJONES, 2=ALERTAS, 3=ACCIONES
         if index == 0:
@@ -306,7 +314,19 @@ class NexusPanelDer(QFrame):
             self._cargar_siguiente_pagina()
 
     def update_theme(self, theme):
-        pass
+        self.is_dark_theme = (theme == 'dark')
+        if theme == 'dark':
+            self.body_container.setStyleSheet("background-color: #0F172A; border-radius: 8px; border-top-left-radius: 0px; border: 1px solid #1E293B;")
+            self.cmb_fecha.setStyleSheet("QComboBox { background: #1E293B; border: 1px solid #334155; border-radius: 6px; padding: 5px 10px; font-size: 13px; color: #F8FAFC; } QComboBox:focus { border-color: #38BDF8; background: #0F172A; }")
+        else:
+            self.body_container.setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border-top-left-radius: 0px; border: 1px solid #E2E8F0;")
+            self.cmb_fecha.setStyleSheet("QComboBox { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 5px 10px; font-size: 13px; color: #0F172A; } QComboBox:focus { border-color: #38BDF8; }")
+            
+        if hasattr(self, 'active_tab_index'):
+            self.cambiar_pestana(self.active_tab_index)
+        else:
+            self.cambiar_pestana(0)
+
 
     def _exportar_auditoria_excel(self):
         try:
