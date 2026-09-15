@@ -7,7 +7,7 @@ from PyQt6.QtGui import QColor, QPainter, QBrush, QPen
 from src.base_de_datos.database import db_manager
 
 class CyberRadar(QWidget):
-    """Grafo de topología de red en tiempo real (Reemplaza al viejo Radar)"""
+    """Grafo de topologÃ­a de red en tiempo real (Reemplaza al viejo Radar)"""
     def __init__(self):
         super().__init__()
         self.setFixedHeight(120)
@@ -16,8 +16,8 @@ class CyberRadar(QWidget):
         self.center_pulse = 0
         self.angle_offset = 0
         self.port_leds = [0 for _ in range(20)] # LEDs del router (0=off, 1=green, 2=orange, 3=red)
-        self.node_activity = [0 for _ in range(20)] # Última actividad de cada nodo
-        self.node_mapping = {} # Mapea 'origen' -> índice 0-19
+        self.node_activity = [0 for _ in range(20)] # Ãltima actividad de cada nodo
+        self.node_mapping = {} # Mapea 'origen' -> Ã­ndice 0-19
         self.next_node_idx = 0
         
         self.timer = QTimer(self)
@@ -35,7 +35,7 @@ class CyberRadar(QWidget):
             
         self.packets = [p for p in self.packets if p['progress'] < 1.0]
         
-        # Lógica de LEDs de conexión (Sincronizado con PCs activas)
+        # LÃ³gica de LEDs de conexiÃ³n (Sincronizado con PCs activas)
         now = time.time()
         for i in range(20):
             if i < self.next_node_idx:
@@ -45,7 +45,7 @@ class CyberRadar(QWidget):
                 elif segundos < 45:
                     self.port_leds[i] = 2 # Esperando (Amarillo)
                 else:
-                    self.port_leds[i] = 3 # Caída (Rojo)
+                    self.port_leds[i] = 3 # CaÃ­da (Rojo)
             else:
                 self.port_leds[i] = 0 # Puerto Libre/Apagado
 
@@ -57,7 +57,7 @@ class CyberRadar(QWidget):
                 self.node_mapping[origen] = self.next_node_idx
                 self.next_node_idx += 1
             else:
-                return # Máximo 20 nodos visuales en el radar
+                return # MÃ¡ximo 20 nodos visuales en el radar
                 
         idx = self.node_mapping[origen]
         self.packets.append({'node': idx, 'progress': 0.0, 'is_heartbeat': is_heartbeat})
@@ -77,11 +77,11 @@ class CyberRadar(QWidget):
         cx = w // 2
         cy = (h - 25) // 2 
         
-        # Posición del Servidor (Izquierda)
+        # PosiciÃ³n del Servidor (Izquierda)
         sx = 40
         sy = cy
         
-        # Dibujar Panel de Switch/Router en la base (para llenar el vacío)
+        # Dibujar Panel de Switch/Router en la base (para llenar el vacÃ­o)
         panel_y = h - 22
         
         # Ancho del switch para 20 LEDs (8px ancho + 2px gap = 10px por LED) -> 200px
@@ -105,7 +105,7 @@ class CyberRadar(QWidget):
                 painter.setPen(Qt.NoPen)
                 painter.drawRect(lx-1, ly-1, 8, 10)
             elif self.port_leds[i] == 3:
-                color = QColor(239, 68, 68) # Rojo (Caída)
+                color = QColor(239, 68, 68) # Rojo (CaÃ­da)
                 painter.setBrush(QColor(239, 68, 68, 80))
                 painter.setPen(Qt.NoPen)
                 painter.drawRect(lx-1, ly-1, 8, 10)
@@ -116,7 +116,7 @@ class CyberRadar(QWidget):
             painter.setPen(Qt.NoPen)
             painter.drawRect(lx, ly, 6, 8)
         
-        # Calcular posiciones de los nodos periféricos (Derecha, en 2 columnas de 10)
+        # Calcular posiciones de los nodos perifÃ©ricos (Derecha, en 2 columnas de 10)
         node_pos = []
         for i in range(20):
             col = i // 10  # 0 a 1
@@ -127,7 +127,7 @@ class CyberRadar(QWidget):
             ny = 10 + (row * ((h - 45) / 9)) if h > 45 else 10 + (row * 8)
             node_pos.append((nx, ny))
             
-            # Dibujar cable de fibra óptica al centro
+            # Dibujar cable de fibra Ã³ptica al centro
             painter.setPen(QPen(QColor(51, 65, 85, 100), 1))
             painter.drawLine(sx + 15, int(sy), int(nx), int(ny))
             
@@ -136,7 +136,7 @@ class CyberRadar(QWidget):
             painter.setBrush(QColor(56, 189, 248))
             painter.drawRect(int(nx) - 3, int(ny) - 3, 6, 6)
             
-        # Dibujar paquetes de datos en tránsito
+        # Dibujar paquetes de datos en trÃ¡nsito
         for p in self.packets:
             idx = p['node']
             prog = p['progress']
@@ -160,9 +160,9 @@ class CyberRadar(QWidget):
         painter.setBrush(QColor(15, 23, 42))
         painter.drawRect(sx - 15, int(sy - 30), 30, 60) # Rack
         
-        # Pulso de recepción de datos (Luces del rack)
+        # Pulso de recepciÃ³n de datos (Luces del rack)
         glow = min(255, max(40, self.center_pulse))
-        for i in range(4): # 4 bahías/discos
+        for i in range(4): # 4 bahÃ­as/discos
             slot_y = int(sy - 22 + (i * 13))
             painter.setBrush(QColor(16, 185, 129, glow))
             painter.setPen(Qt.NoPen)
@@ -180,7 +180,7 @@ class LiveTicketsWorker(QThread):
     def run(self):
         while self.running:
             try:
-                # Inicializar al id máximo para no cargar histórico enorme
+                # Inicializar al id mÃ¡ximo para no cargar histÃ³rico enorme
                 if self.last_id == -1:
                     max_row = db_manager.execute_query("SELECT MAX(id) as max_id FROM movimientos_caja")
                     if max_row and max_row[0]['max_id'] is not None:
@@ -225,10 +225,10 @@ class BurbujaTicket(QFrame):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 8)
         
-        lbl_head = QLabel(f"🕒 {hora}  |  💻 {caja}")
+        lbl_head = QLabel(f"ð {hora}  |  ð» {caja}")
         lbl_head.setStyleSheet("color: #94A3B8; font-size: 11px; font-weight: bold; border: none; background: transparent;")
         
-        lbl_det = QLabel(f"👉 {detalle}")
+        lbl_det = QLabel(f"ð {detalle}")
         lbl_det.setWordWrap(True)
         lbl_det.setStyleSheet("color: #E2E8F0; font-size: 13px; font-weight: bold; margin-top: 4px; border: none; background: transparent;")
         
@@ -257,7 +257,7 @@ class NexusPanelIzq(QFrame):
         lay_diag.setContentsMargins(12, 12, 12, 12)
         lay_diag.setSpacing(10)
 
-        lbl_term = QLabel("▶  TERMINAL SYS.OP")
+        lbl_term = QLabel("â¶  TERMINAL SYS.OP")
         lbl_term.setStyleSheet("""
             font-size: 12px; font-weight: 900; letter-spacing: 2px;
             color: #D97706;
@@ -300,7 +300,7 @@ class NexusPanelIzq(QFrame):
         """)
         lay_diag.addWidget(self.terminal)
 
-        lbl_radar = QLabel("▶  TOPOLOGÍA DE RED  //  LIVE")
+        lbl_radar = QLabel("â¶  TOPOLOGÃA DE RED  //  LIVE")
         lbl_radar.setStyleSheet("""
             font-size: 12px; font-weight: 900; letter-spacing: 2px;
             color: #0284C7;
@@ -351,6 +351,13 @@ class NexusPanelIzq(QFrame):
             self.worker.wait()
         super().closeEvent(event)
 
-    def aplicar_tema(self, is_dark):
-        # Mantenemos firma por compatibilidad, no hace falta hacer nada ya que los colores son oscuros estilizados
-        pass
+    def update_theme(self, theme):
+        if theme == "dark":
+            self.setStyleSheet("background-color: transparent;")
+            if hasattr(self, 'terminal_output'):
+                self.terminal_output.setStyleSheet("QTextEdit { background-color: #0B1120; color: #10B981; font-family: 'Consolas', monospace; font-size: 11px; border: 2px solid #334155; border-radius: 8px; padding: 10px; }")
+        else:
+            self.setStyleSheet("background-color: transparent;")
+            if hasattr(self, 'terminal_output'):
+                self.terminal_output.setStyleSheet("QTextEdit { background-color: #F1F5F9; color: #0F172A; font-family: 'Consolas', monospace; font-size: 11px; border: 2px solid #CBD5E1; border-radius: 8px; padding: 10px; }")
+

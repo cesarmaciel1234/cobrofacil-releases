@@ -5,7 +5,7 @@ from src.base_de_datos.database import db_manager
 import time
 
 class LiveTicketsWorker(QThread):
-    # Emitirá el ID, caja, fecha, observaciones (el string de ticket formateado)
+    # EmitirÃ¡ el ID, caja, fecha, observaciones (el string de ticket formateado)
     new_ticket_signal = pyqtSignal(int, str, str, str)
 
     def __init__(self, parent=None):
@@ -16,7 +16,7 @@ class LiveTicketsWorker(QThread):
     def run(self):
         while self.running:
             try:
-                # Buscamos registros de tickets/ventas (excluimos corazón y alertas puras aquí)
+                # Buscamos registros de tickets/ventas (excluimos corazÃ³n y alertas puras aquÃ­)
                 query = "SELECT id, caja_id, fecha, observaciones FROM movimientos_caja WHERE observaciones LIKE '[TICKET]%' OR tipo LIKE '[TICKET]%' OR tipo='VENTA' ORDER BY id ASC"
                 rows = db_manager.execute_query(query)
                 
@@ -55,10 +55,10 @@ class BurbujaTicket(QFrame):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 8)
         
-        lbl_head = QLabel(f"🕒 {hora}  |  💻 {caja}")
+        lbl_head = QLabel(f"ð {hora}  |  ð» {caja}")
         lbl_head.setStyleSheet("color: #94A3B8; font-size: 11px; font-weight: bold; border: none; background: transparent;")
         
-        lbl_det = QLabel(f"👉 {detalle}")
+        lbl_det = QLabel(f"ð {detalle}")
         lbl_det.setWordWrap(True)
         lbl_det.setStyleSheet("color: #E2E8F0; font-size: 13px; font-weight: bold; margin-top: 4px; border: none; background: transparent;")
         
@@ -73,7 +73,7 @@ class NexusPanelVivo(QFrame):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         
-        lbl_titulo = QLabel("📡 FLUJO DE VENTAS EN VIVO")
+        lbl_titulo = QLabel("ð¡ FLUJO DE VENTAS EN VIVO")
         lbl_titulo.setStyleSheet("color: #10B981; font-weight: 900; font-size: 14px; letter-spacing: 2px;")
         lbl_titulo.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(lbl_titulo)

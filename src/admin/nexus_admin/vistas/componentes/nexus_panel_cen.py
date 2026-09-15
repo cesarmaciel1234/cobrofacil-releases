@@ -5,7 +5,7 @@ import json
 import time
 
 class TarjetaTerminalFila(QFrame):
-    """Componente visual para cada terminal en la matriz dinámica"""
+    """Componente visual para cada terminal en la matriz dinÃ¡mica"""
     clicked = pyqtSignal(str)
     
     def __init__(self, nombre, ip, parent=None):
@@ -27,7 +27,7 @@ class TarjetaTerminalFila(QFrame):
         self.lbl_ip = QLabel(self.ip)
         self.lbl_ip.setStyleSheet("color: #888888; font-size: 9px; font-family: monospace; background: transparent; border: none;")
 
-        self.lbl_estado = QLabel("● ACTIVA")
+        self.lbl_estado = QLabel("â ACTIVA")
         self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; font-family: monospace; background: transparent; border: none;")
 
         layout.addWidget(self.lbl_nombre)
@@ -41,21 +41,21 @@ class TarjetaTerminalFila(QFrame):
             self.setStyleSheet("background-color: #0EA5E9; border: 2px solid #38BDF8; border-radius: 8px;")
             self.lbl_nombre.setStyleSheet("color: #FFFFFF; font-size: 11px; font-weight: bold; background: transparent; border: none;")
             self.lbl_estado.setStyleSheet("color: #FFFFFF; font-size: 10px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("● SELECCIONADA")
+            self.lbl_estado.setText("â SELECCIONADA")
         elif estado == "Activo":
             self.setStyleSheet("background-color: #F8FAFC; border: 1px solid #2ECC71; border-radius: 6px;")
             self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("● ACTIVA")
+            self.lbl_estado.setText("â ACTIVA")
             self.lbl_estado.setStyleSheet("color: #2ECC71; font-size: 10px; font-weight: bold; background: transparent; border: none;")
         elif estado == "Warning":
             self.setStyleSheet("background-color: #FFFBEB; border: 1px solid #F1C40F; border-radius: 6px;")
             self.lbl_nombre.setStyleSheet("color: #0F172A; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText(f"● ESPERANDO ({tiempo_restante}s)")
+            self.lbl_estado.setText(f"â ESPERANDO ({tiempo_restante}s)")
             self.lbl_estado.setStyleSheet("color: #F59E0B; font-size: 10px; font-weight: bold; background: transparent; border: none;")
         else:
             self.setStyleSheet("background-color: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px;")
             self.lbl_nombre.setStyleSheet("color: #991B1B; font-size: 11px; font-weight: bold; background: transparent; border: none;")
-            self.lbl_estado.setText("● CAÍDA")
+            self.lbl_estado.setText("â CAÃDA")
             self.lbl_estado.setStyleSheet("color: #EF4444; font-size: 10px; font-weight: bold; background: transparent; border: none;")
 
     def mousePressEvent(self, event):
@@ -77,10 +77,10 @@ class NexusPanelCen(QFrame):
 
         self.selected_caja_id = "todas" # Ahora usa el origen
 
-        # -- SECCIÓN 1: NODOS (TOPOLOGÍA DE CAJAS) --
+        # -- SECCIÃN 1: NODOS (TOPOLOGÃA DE CAJAS) --
         
         cabecera_nodos = QHBoxLayout()
-        titulo = QLabel("MATRIZ DE TRÁFICO // ORDENADO POR ACTIVIDAD")
+        titulo = QLabel("MATRIZ DE TRÃFICO // ORDENADO POR ACTIVIDAD")
         titulo.setStyleSheet("font-size: 12px; font-weight: bold; color: #3B82F6; letter-spacing: 1px;")
         self.lbl_info_matriz = QLabel("Monitoreando 0/20 terminales")
         self.lbl_info_matriz.setStyleSheet("color: #10B981; font-family: monospace; font-size: 10px; font-weight: bold;")
@@ -111,7 +111,7 @@ class NexusPanelCen(QFrame):
         # Diccionario en memoria de Nexus para el control de actividad
         self.active_boxes = {} # formato: {"origen": {"ip": "IP", "ultima_actividad": time.time()}}
         
-        btn_todas = QPushButton("🌐 VER TODAS LAS CAJAS")
+        btn_todas = QPushButton("ð VER TODAS LAS CAJAS")
         btn_todas.setCursor(Qt.PointingHandCursor)
         btn_todas.setStyleSheet("QPushButton { background-color: #FFFFFF; color: #0F172A; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1; padding: 10px; } QPushButton:hover { background-color: #F8FAFC; border: 1px solid #94A3B8; }")
         lay_nodos_box.addWidget(btn_todas)
@@ -121,9 +121,9 @@ class NexusPanelCen(QFrame):
         lay_nodos_box.addStretch()
         
         self.scroll_nodos.setWidget(frame_nodos)
-        main_layout.addWidget(self.scroll_nodos, 1) # Ocupará el 50%
+        main_layout.addWidget(self.scroll_nodos, 1) # OcuparÃ¡ el 50%
 
-        # Sistema de actualización de matriz dinámica
+        # Sistema de actualizaciÃ³n de matriz dinÃ¡mica
         self.timer_blink = QTimer(self)
         self.timer_blink.timeout.connect(self._actualizar_matriz_visual)
         self.timer_blink.start(2000)
@@ -136,7 +136,7 @@ class NexusPanelCen(QFrame):
 
 
 
-        # -- SECCIÓN 2: TARJETAS SUPERIORES --
+        # -- SECCIÃN 2: TARJETAS SUPERIORES --
         row_top_cards = QFrame()
         col_izq_lay = QHBoxLayout(row_top_cards)
         col_izq_lay.setContentsMargins(0, 0, 0, 0)
@@ -160,7 +160,7 @@ class NexusPanelCen(QFrame):
         self.lbl_efectivo = QFrame()
         lay_ve = QHBoxLayout(self.lbl_efectivo)
         lay_ve.setContentsMargins(12, 15, 12, 15)
-        lbl_ve_ico = QLabel("💰")
+        lbl_ve_ico = QLabel("ð°")
         lbl_ve_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_ve.addWidget(lbl_ve_ico)
         info_ve = QVBoxLayout(); info_ve.setSpacing(2)
@@ -175,7 +175,7 @@ class NexusPanelCen(QFrame):
         self.lbl_digital = QFrame()
         lay_vd = QHBoxLayout(self.lbl_digital)
         lay_vd.setContentsMargins(12, 15, 12, 15)
-        lbl_vd_ico = QLabel("💳")
+        lbl_vd_ico = QLabel("ð³")
         lbl_vd_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_vd.addWidget(lbl_vd_ico)
         info_vd = QVBoxLayout(); info_vd.setSpacing(2)
@@ -190,7 +190,7 @@ class NexusPanelCen(QFrame):
         self.lbl_fondo = QFrame()
         lay_vf = QHBoxLayout(self.lbl_fondo)
         lay_vf.setContentsMargins(12, 15, 12, 15)
-        lbl_vf_ico = QLabel("🏁")
+        lbl_vf_ico = QLabel("ð")
         lbl_vf_ico.setStyleSheet("font-size: 20px; border: none; background: transparent;")
         lay_vf.addWidget(lbl_vf_ico)
         info_vf = QVBoxLayout(); info_vf.setSpacing(2)
@@ -206,7 +206,7 @@ class NexusPanelCen(QFrame):
         col_izq_lay.addWidget(self.lbl_fondo)
         lay_abajo.addWidget(row_top_cards)
 
-        # -- SECCIÓN 3: FILA INFERIOR --
+        # -- SECCIÃN 3: FILA INFERIOR --
         row_bot_cards = QFrame()
         col_der_lay = QHBoxLayout(row_bot_cards)
         col_der_lay.setContentsMargins(0, 0, 0, 0)
@@ -228,12 +228,12 @@ class NexusPanelCen(QFrame):
         self.f_esp.setFixedWidth(160)
         col_der_lay.addWidget(self.f_esp)
 
-        # Input Físico Contado
+        # Input FÃ­sico Contado
         self.f_input = QFrame()
         self.f_input.setStyleSheet("background-color: #1E293B; border: 1px solid #334155; border-radius: 12px;")
         lay_input = QVBoxLayout(self.f_input)
         lay_input.setContentsMargins(20, 15, 20, 15)
-        lbl_inp_t = QLabel("INGRESA EL FÍSICO CONTADO ($)")
+        lbl_inp_t = QLabel("INGRESA EL FÃSICO CONTADO ($)")
         lbl_inp_t.setAlignment(Qt.AlignCenter)
         lbl_inp_t.setStyleSheet("font-size: 10px; font-weight: 800; color: #F59E0B; border: none; background: transparent; letter-spacing: 0.5px;")
         
@@ -267,7 +267,7 @@ class NexusPanelCen(QFrame):
         btn_forzar.clicked.connect(self._force_z_close)
         lay_abajo.addWidget(btn_forzar)
         
-        main_layout.addWidget(self.frame_abajo, 1) # Ocupará el otro 50%
+        main_layout.addWidget(self.frame_abajo, 1) # OcuparÃ¡ el otro 50%
 
     def _force_z_close(self):
         try:
@@ -323,7 +323,7 @@ class NexusPanelCen(QFrame):
             key=lambda x: obtener_indice(x[0])
         )
 
-        # 3. CORTE RESTRICTIVO (Regla de Máx 20)
+        # 3. CORTE RESTRICTIVO (Regla de MÃ¡x 20)
         if len(terminales_ordenadas) > self.MAX_PANTALLAS:
             eliminadas = terminales_ordenadas[self.MAX_PANTALLAS:]
             terminales_ordenadas = terminales_ordenadas[:self.MAX_PANTALLAS]
@@ -383,6 +383,13 @@ class NexusPanelCen(QFrame):
         
         # Botones nodos
         self.aplicar_estilos_botones()
+
+
+    def update_theme(self, theme):
+        if theme == "dark":
+            self._tema_oscuro()
+        else:
+            self._tema_claro()
 
     def _tema_claro(self):
         self.setStyleSheet("background-color: transparent; border-radius: 8px;")

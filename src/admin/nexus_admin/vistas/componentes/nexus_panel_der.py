@@ -329,7 +329,8 @@ class NexusPanelDer(QFrame):
 
     def update_historical_z_combo(self):
         # Recargar fechas únicas de cortes Z
-        fechas = db_manager.execute_query("SELECT DISTINCT DATE(fecha) as d FROM cortes_z ORDER BY d DESC")
+        from src.cerebro_global.nexus_cerebro import CerebroNexus
+        fechas = CerebroNexus.ejecutar_query("SELECT DISTINCT DATE(fecha) as d FROM movimientos_caja WHERE tipo='CIERRE_Z' ORDER BY d DESC")
         self.combo_fecha.clear()
         if fechas:
             for f in fechas:
@@ -338,7 +339,8 @@ class NexusPanelDer(QFrame):
             self.combo_fecha.addItem(datetime.now().strftime("%Y-%m-%d"))
             
         try:
-            cierres = db_manager.execute_query("""
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            cierres = CerebroNexus.ejecutar_query("""
                 SELECT 
                     c.id, 
                     c.fecha as fecha_cierre, 
@@ -564,7 +566,8 @@ class NexusPanelDer(QFrame):
 
         q_count = "SELECT COUNT(*) " + q[q.find("FROM movimientos_caja"):]
         try:
-            self.total_logs_count = db_manager.execute_scalar(q_count, tuple(p)) or 0
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            self.total_logs_count = CerebroNexus.ejecutar_escalar(q_count, tuple(p)) or 0
         except Exception as e:
             print(f"Error contando registros: {e}")
             self.total_logs_count = 0
@@ -598,7 +601,8 @@ class NexusPanelDer(QFrame):
             
         q_paginated = f"{self.active_query} LIMIT 50 OFFSET {self.offset}"
         try:
-            page_logs = db_manager.execute_query(q_paginated, tuple(self.active_params)) or []
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            page_logs = CerebroNexus.ejecutar_query(q_paginated, tuple(self.active_params)) or []
         except Exception as e:
             print(f"Error cargando página de auditoría: {e}")
             return
@@ -706,7 +710,8 @@ class NexusPanelDer(QFrame):
 
     def _exportar_auditoria_excel(self):
         try:
-            all_matching_logs = db_manager.execute_query(self.active_query, tuple(self.active_params)) or []
+            from src.cerebro_global.nexus_cerebro import CerebroNexus
+            all_matching_logs = CerebroNexus.ejecutar_query(self.active_query, tuple(self.active_params)) or []
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo consultar el log completo para exportar: {e}")
             return
@@ -795,3 +800,19 @@ class NexusPanelDer(QFrame):
             )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo exportar a Excel: {e}")
+
+    def update_theme(self, theme):
+        bg = "#1E293B" if theme == "dark" else "white"
+        border = "#334155" if theme == "dark" else "#E2E8F0"
+        text = "#F8FAFC" if theme == "dark" else "#0F172A"
+        header_bg = "#0F172A" if theme == "dark" else "#F8FAFC"
+        
+        table_css = f"""
+            QTableWidget {{ background-color: {bg}; color: {text}; border: 1px solid {border}; border-radius: 8px; gridline-color: {border}; font-size: 11px; }}
+            QHeaderView::section {{ background-color: {header_bg}; color: {text}; font-weight: bold; border: none; border-bottom: 1px solid {border}; padding: 8px; font-size: 10px; }}
+            QTableWidget::item:selected {{ background-color: {'#3B82F6' if theme == 'dark' else '#BFDBFE'}; color: {'white' if theme == 'dark' else '#1E3A8A'}; }}
+        """
+        if hasattr(self, 'tabla_eventos'):
+            self.tabla_eventos.setStyleSheet(table_css)
+        if hasattr(self, 'tabla_cierres'):
+            self.tabla_cierres.setStyleSheet(table_css)
