@@ -2,14 +2,79 @@ import os
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox, 
     QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, 
-    QAbstractItemView, QFrame, QMessageBox, QFileDialog, QStackedWidget
+    QAbstractItemView, QFrame, QMessageBox, QFileDialog, QStackedWidget, QScrollArea, QSizePolicy
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
 from datetime import datetime
 from src.base_de_datos.database import db_manager
 
+
+class CyberFeedItem(QFrame):
+    def __init__(self, pc, fecha, tipo, usuario, obs):
+        super().__init__()
+        self.setStyleSheet("""
+            CyberFeedItem {
+                background-color: #0F172A; 
+                border: 1px solid #1E293B; 
+                border-radius: 8px; 
+                margin-bottom: 5px;
+            }
+            CyberFeedItem:hover {
+                background-color: #1E293B;
+                border: 1px solid #38BDF8;
+            }
+        """)
+        
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(12, 10, 12, 10)
+        lay.setSpacing(4)
+        
+        t_lay = QHBoxLayout()
+        t_lay.setContentsMargins(0,0,0,0)
+        
+        icon = "📝"
+        color = "#38BDF8"
+        if "SEGURIDAD" in tipo.upper() or "ALERTA" in tipo.upper() or "CRITICO" in obs.upper():
+            icon = "🚨"
+            color = "#EF4444"
+        elif "INTERVENCION" in tipo.upper():
+            icon = "🔧"
+            color = "#F59E0B"
+        elif "APERTURA" in tipo.upper():
+            icon = "🔑"
+            color = "#8B5CF6"
+        elif "CIERRE" in tipo.upper():
+            icon = "🏁"
+            color = "#10B981"
+        elif "VENTA" in tipo.upper():
+            icon = "💵"
+            color = "#10B981"
+            
+        lbl_title = QLabel(f"<b><span style='color: {color}; font-size: 14px;'>{icon} [{pc}] {tipo}</span></b>")
+        lbl_title.setTextFormat(Qt.TextFormat.RichText)
+        
+        try:
+            time_str = str(fecha)[5:16]
+        except:
+            time_str = str(fecha)
+            
+        lbl_time = QLabel(f"<span style='color: #64748B; font-size: 11px;'>{time_str}</span>")
+        lbl_time.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        
+        t_lay.addWidget(lbl_title, 1)
+        t_lay.addWidget(lbl_time)
+        
+        lbl_desc = QLabel(f"<span style='color: #94A3B8; font-size: 12px; font-style: italic;'><b>Usuario:</b> {usuario} &nbsp;//&nbsp; <b>Detalle:</b> {obs}</span>")
+        lbl_desc.setWordWrap(True)
+        lbl_desc.setTextFormat(Qt.TextFormat.RichText)
+        lbl_desc.setContentsMargins(25, 0, 0, 0)
+        
+        lay.addLayout(t_lay)
+        lay.addWidget(lbl_desc)
+
 class NexusPanelDer(QFrame):
+
     def __init__(self):
         super().__init__()
         self.setStyleSheet("background-color: transparent;")
@@ -141,63 +206,20 @@ class NexusPanelDer(QFrame):
         
         layout_inf.addLayout(filt_bar)
         
-        self.tabla_eventos = QTableWidget()
-        self.tabla_eventos.setColumnCount(5)
-        self.tabla_eventos.setHorizontalHeaderLabels(["💻 PC", "📅 FECHA / HORA", "🚨 EVENTO DE AUDITORÍA", "👤 USUARIO", "📝 DETALLE / OBSERVACIONES"])
-        self.tabla_eventos.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tabla_eventos.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.tabla_eventos.verticalHeader().setVisible(False)
+        self.scroll_eventos = QScrollArea()
+        self.scroll_eventos.setWidgetResizable(True)
+        self.scroll_eventos.setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#feed_container { background: transparent; }")
         
-        self.tabla_eventos.setStyleSheet("""
-            QTableWidget {
-                background-color: #0F172A;
-                border: none;
-                gridline-color: #1E293B;
-                font-size: 12px;
-                border-radius: 16px;
-                color: #F8FAFC;
-            }
-            QTableWidget::item {
-                padding: 10px;
-                border-bottom: 1px solid #1E293B;
-            }
-            QHeaderView::section {
-                background-color: #1E293B;
-                color: #38BDF8;
-                font-weight: bold;
-                padding: 12px;
-                border: none;
-                border-bottom: 2px solid #334155;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #0F172A;
-                width: 10px;
-                margin: 0px 0px 0px 0px;
-            }
-            QScrollBar::handle:vertical {
-                background: #334155;
-                min-height: 20px;
-                border-radius: 5px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
+        self.feed_container = QWidget()
+        self.feed_container.setObjectName("feed_container")
+        self.feed_layout = QVBoxLayout(self.feed_container)
+        self.feed_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.feed_layout.setContentsMargins(5, 5, 5, 5)
         
-        hh_e = self.tabla_eventos.horizontalHeader()
-        hh_e.setSectionResizeMode(0, QHeaderView.Interactive)
-        self.tabla_eventos.setColumnWidth(0, 90)
-        hh_e.setSectionResizeMode(1, QHeaderView.Interactive)
-        self.tabla_eventos.setColumnWidth(1, 170)
-        hh_e.setSectionResizeMode(2, QHeaderView.Interactive)
-        self.tabla_eventos.setColumnWidth(2, 220)
-        hh_e.setSectionResizeMode(3, QHeaderView.Interactive)
-        self.tabla_eventos.setColumnWidth(3, 110)
-        hh_e.setSectionResizeMode(4, QHeaderView.Stretch)
+        self.scroll_eventos.setWidget(self.feed_container)
+        self.scroll_eventos.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
         
-        self.tabla_eventos.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
-        layout_inf.addWidget(self.tabla_eventos)
+        layout_inf.addWidget(self.scroll_eventos)
 
         self.stack.addWidget(tab_auditoria)
 
@@ -577,7 +599,11 @@ class NexusPanelDer(QFrame):
         self.active_query = q
         self.active_params = p
         self.offset = 0
-        self.tabla_eventos.setRowCount(0)
+        while self.feed_layout.count():
+            item = self.feed_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
         self._cargar_siguiente_pagina()
         
     def set_caja_filter(self, caja_id):
@@ -595,7 +621,7 @@ class NexusPanelDer(QFrame):
         # Opcional: También filtrar Cierres Z por caja si se desea (por ahora solo auditoria)
 
     def _cargar_siguiente_pagina(self):
-        current_rows = self.tabla_eventos.rowCount()
+        current_rows = self.feed_layout.count()
         if current_rows >= self.total_logs_count:
             return
             
@@ -604,19 +630,13 @@ class NexusPanelDer(QFrame):
             from src.cerebro_global.nexus_cerebro import CerebroNexus
             page_logs = CerebroNexus.ejecutar_query(q_paginated, tuple(self.active_params)) or []
         except Exception as e:
-            print(f"Error cargando página de auditoría: {e}")
+            print(f"Error cargando pagina de auditoria: {e}")
             return
             
         if not page_logs:
             return
 
-        self.tabla_eventos.blockSignals(True)
-        inicio = current_rows
-        fin = inicio + len(page_logs)
-        self.tabla_eventos.setRowCount(fin)
-        
-        for i_idx, r in enumerate(page_logs):
-            i = inicio + i_idx
+        for r in page_logs:
             tipo = str(r['tipo']).upper()
             obs = str(r['observaciones'] or '')
             usuario = str(r['usuario'] or '').upper()
@@ -624,87 +644,17 @@ class NexusPanelDer(QFrame):
                 c_id = int(r['caja_id']) if r['caja_id'] is not None else 1
             except:
                 c_id = 1
-            pc_name = f"0{c_id}" if c_id < 10 else str(c_id)
-
-            icon = "📝"
-            badge = tipo
-            fg_color = "#1e293b"
-            bg_color = "white"
-
-            if tipo == 'ALERTA_SEGURIDAD':
-                icon = "🚨"
-                badge = "SEGURIDAD"
-                fg_color = "#dc2626"
-                bg_color = "#fef2f2"
-            elif tipo == 'INTERVENCION':
-                icon = "🔑"
-                badge = "INTERVENCIÓN"
-                fg_color = "#d97706"
-                bg_color = "#fffbeb"
-            elif tipo == 'CANCELACION':
-                icon = "❌"
-                badge = "CANCELACIÓN"
-                fg_color = "#7c3aed"
-                bg_color = "#f5f3ff"
-            elif tipo == 'APERTURA':
-                icon = "👤"
-                badge = "APERTURA CAJA"
-                fg_color = "#2563eb"
-                bg_color = "#eff6ff"
-            elif tipo == 'CIERRE_Z' or tipo == 'CIERRE_AUTO':
-                icon = "🏁"
-                badge = "CIERRE DE CAJA"
-                fg_color = "#059669"
-                bg_color = "#f0fdf4"
-            elif tipo == 'RETIRO':
-                icon = "💸"
-                badge = "RETIRO EFECTIVO"
-                fg_color = "#ea580c"
-                bg_color = "#fff7ed"
-            elif tipo == 'INGRESO':
-                icon = "💸"
-                badge = "INGRESO CAPITAL"
-                fg_color = "#0d9488"
-                bg_color = "#f0fdfa"
-
-            item_pc = QTableWidgetItem(f"PC-{pc_name}")
-            item_pc.setTextAlignment(Qt.AlignCenter)
-            item_pc.setFont(QFont("Segoe UI", 9, QFont.Bold))
-            self.tabla_eventos.setItem(i, 0, item_pc)
-
-            fecha_str = str(r['fecha'])
-            try:
-                if len(fecha_str) >= 16:
-                    fecha_str = fecha_str[5:16]
-            except:
-                pass
-            item_f = QTableWidgetItem(fecha_str)
-            item_f.setTextAlignment(Qt.AlignCenter)
-            self.tabla_eventos.setItem(i, 1, item_f)
-
-            it_ev = QTableWidgetItem(f"{icon} {badge}")
-            it_ev.setTextAlignment(Qt.AlignCenter)
-            it_ev.setForeground(QColor(fg_color))
-            it_ev.setBackground(QColor(bg_color))
-            it_ev.setFont(QFont("Segoe UI", 9, QFont.Bold))
-            self.tabla_eventos.setItem(i, 2, it_ev)
-
-            it_u = QTableWidgetItem(usuario)
-            it_u.setFont(QFont("Segoe UI", 9, QFont.Bold))
-            it_u.setTextAlignment(Qt.AlignCenter)
-            self.tabla_eventos.setItem(i, 3, it_u)
-
-            self.tabla_eventos.setItem(i, 4, QTableWidgetItem(obs))
-
-            if tipo not in ('ALERTA_SEGURIDAD', 'INTERVENCION', 'CANCELACION') and i % 2 == 1:
-                for col in (0, 1, 3, 4):
-                    self.tabla_eventos.item(i, col).setBackground(QColor("#f8fafc"))
+            pc_name = f"CAJA-{c_id}"
+            
+            feed_item = CyberFeedItem(pc_name, r['fecha'], tipo, usuario, obs)
+            self.feed_layout.addWidget(feed_item)
 
         self.offset += 50
-        self.tabla_eventos.blockSignals(False)
+        
+    def _al_hacer_scroll_old(self): pass
 
     def _al_hacer_scroll(self, value):
-        bar = self.tabla_eventos.verticalScrollBar()
+        bar = self.scroll_eventos.verticalScrollBar()
         if bar.maximum() > 0 and value >= bar.maximum() - 15:
             self._cargar_siguiente_pagina()
 
@@ -796,7 +746,7 @@ class NexusPanelDer(QFrame):
             ws.freeze_panes = "A2"
             wb.save(filepath)
             QMessageBox.information(
-                self, "Exportación Exitosa", f"Se exportaron {len(all_matching_logs)} registros de auditoría a:\n{filepath}"
+                self, "Exportacion Exitosa", f"Se exportaron {len(all_matching_logs)} registros de auditoria a:\n{filepath}"
             )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo exportar a Excel: {e}")
@@ -812,7 +762,6 @@ class NexusPanelDer(QFrame):
             QHeaderView::section {{ background-color: {header_bg}; color: {text}; font-weight: bold; border: none; border-bottom: 1px solid {border}; padding: 8px; font-size: 10px; }}
             QTableWidget::item:selected {{ background-color: {'#3B82F6' if theme == 'dark' else '#BFDBFE'}; color: {'white' if theme == 'dark' else '#1E3A8A'}; }}
         """
-        if hasattr(self, 'tabla_eventos'):
-            self.tabla_eventos.setStyleSheet(table_css)
+        
         if hasattr(self, 'tabla_cierres'):
             self.tabla_cierres.setStyleSheet(table_css)
