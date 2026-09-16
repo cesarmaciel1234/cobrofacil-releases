@@ -54,9 +54,6 @@ class NexusPanelDer(QFrame):
         body_layout = QVBoxLayout(self.body_container)
         body_layout.setContentsMargins(10, 10, 10, 10)
         
-        self.cmb_tipo_evento = QComboBox()
-        self.cmb_tipo_evento.addItems(["Todos los Eventos", "Brechas de Seguridad", "Intervenciones Supervisor", "Turnos y Aperturas", "Cancelaciones de Tickets", "Ingresos y Retiros de Efectivo", "Ventas y Cobros"])
-        self.cmb_tipo_evento.hide() 
         
         self.scroll_eventos = QScrollArea()
         self.scroll_eventos.setWidgetResizable(True)
@@ -115,10 +112,7 @@ class NexusPanelDer(QFrame):
                     btn.setStyleSheet("QPushButton { background-color: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 8px 15px; font-weight: 600; font-size: 11px; } QPushButton:hover { color: #3B82F6; background-color: #E2E8F0; }")
                 
         # 0=COBROS, 1=CAJONES, 2=ALERTAS, 3=ACCIONES
-        if index == 0: self.cmb_tipo_evento.setCurrentIndex(6)
-        elif index == 1: self.cmb_tipo_evento.setCurrentIndex(3)
-        elif index == 2: self.cmb_tipo_evento.setCurrentIndex(1)
-        elif index == 3: self.cmb_tipo_evento.setCurrentIndex(2)
+
             
         self.filtrar_auditoria()
 
@@ -167,17 +161,13 @@ class NexusPanelDer(QFrame):
         self.filtrar_auditoria()
 
     def filtrar_auditoria(self):
-        idx_tipo = self.cmb_tipo_evento.currentIndex()
+        tab = getattr(self, 'active_tab_index', 0)
         q = "SELECT id, fecha, tipo, usuario, observaciones, monto, caja_id FROM movimientos_caja WHERE 1=1"
         p = []
-        if idx_tipo == 1: q += " AND tipo='ALERTA_SEGURIDAD'"
-        elif idx_tipo == 2: q += " AND tipo='INTERVENCION'"
-        elif idx_tipo == 3: q += " AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO')"
-        elif idx_tipo == 4: q += " AND tipo='CANCELACION'"
-        elif idx_tipo == 5: q += " AND tipo IN ('INGRESO', 'RETIRO')"
-        elif idx_tipo == 6: q += " AND (tipo='VENTA' OR tipo LIKE '[TICKET]%')"
-        else:
-            q += " AND observaciones NOT LIKE '[TICKET]%' AND tipo NOT LIKE '[TICKET]%' AND tipo != 'VENTA'"
+        if tab == 0: q += " AND (tipo='VENTA' OR tipo LIKE '[TICKET]%')"
+        elif tab == 1: q += " AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO')"
+        elif tab == 2: q += " AND tipo='ALERTA_SEGURIDAD'"
+        elif tab == 3: q += " AND tipo='INTERVENCION'"
             
         f_val = self.cmb_fecha.currentText()
         if f_val == "Hoy": q += " AND DATE(fecha) = CURDATE()"
