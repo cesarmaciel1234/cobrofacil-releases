@@ -88,10 +88,10 @@ class NexusPanelDer(QFrame):
         self.is_dark_theme = (theme == 'dark')
         if theme == 'dark':
             self.body_container.setStyleSheet("background-color: #0F172A; border-radius: 8px; border-top-left-radius: 0px; border: 1px solid #1E293B;")
-            self.cmb_fecha.setStyleSheet("QComboBox { background: #1E293B; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #F8FAFC; } QComboBox:focus { border-color: #38BDF8; background: #0F172A; }")
+            self.cmb_fecha.setStyleSheet("QComboBox { background: #1E293B; border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #F8FAFC; } QComboBox:focus { border-color: #38BDF8; background: #0F172A; } QComboBox QAbstractItemView { background-color: #1E293B; color: #F8FAFC; selection-background-color: #38BDF8; selection-color: white; }")
         else:
             self.body_container.setStyleSheet("background-color: #FFFFFF; border-radius: 8px; border-top-left-radius: 0px; border: 1px solid #E2E8F0;")
-            self.cmb_fecha.setStyleSheet("QComboBox { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #0F172A; font-weight: 500; } QComboBox:focus { border-color: #38BDF8; }")
+            self.cmb_fecha.setStyleSheet("QComboBox { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 11px; color: #0F172A; font-weight: 500; } QComboBox:focus { border-color: #38BDF8; } QComboBox QAbstractItemView { background-color: #FFFFFF; color: #0F172A; selection-background-color: #38BDF8; selection-color: white; }")
             
         if hasattr(self, 'active_tab_index'):
             self.cambiar_pestana(self.active_tab_index)
