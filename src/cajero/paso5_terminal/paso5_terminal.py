@@ -428,8 +428,8 @@ class Paso5Terminal(QWidget):
         self.list_results.installEventFilter(self)
         self.list_results.setStyleSheet("""
             QListWidget {
-                border: 2px solid #3B82F6;
-                border-radius: 8px;
+                border: 4px solid #3B82F6;
+                border-radius: 12px;
                 background-color: #F8FAFC;
                 color: #0F172A;
             }
@@ -1055,16 +1055,20 @@ class Paso5Terminal(QWidget):
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "list_results") or not hasattr(self, "dashboard_frame"):
             return
-        from src.utils.qt_dpi import terminal_layout_metrics, scale_px
-        if metrics is None:
-            metrics = terminal_layout_metrics()
-        popup_y = self.dashboard_frame.y() - int(metrics["list_results_h"] * 2.0) - scale_px(8, metrics["layout_scale"])
-        self.list_results.setGeometry(
-            self.dashboard_frame.x() + 10,
-            max(0, popup_y),
-            int(metrics["list_results_w"] * 1.5),
-            int(metrics["list_results_h"] * 2.0),
-        )
+        
+        # Hacemos que sea el centro de atención (enfoque total) sobre la tabla principal
+        db = self.dashboard_frame
+        w = int(db.width() * 0.8)
+        h = int(db.height() * 0.7)
+        
+        # Validar tamanos minimos
+        if w < 500: w = 500
+        if h < 300: h = 300
+        
+        x = db.x() + int((db.width() - w) / 2)
+        y = db.y() + int((db.height() - h) / 2)
+        
+        self.list_results.setGeometry(x, max(0, y), w, h)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1235,7 +1239,8 @@ class Paso5Terminal(QWidget):
                 # Truco para que el widget pase los eventos de click al ListWidget
                 w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 lay = QHBoxLayout(w)
-                lay.setContentsMargins(10, 2, 10, 2)
+                lay.setContentsMargins(15, 12, 15, 12)
+                w.setMinimumHeight(60)
                 
                 lbl_n = QLabel(str(r['nombre']))
                 lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: inherit;")
