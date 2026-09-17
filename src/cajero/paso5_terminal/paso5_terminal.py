@@ -426,11 +426,25 @@ class Paso5Terminal(QWidget):
         self.list_results.hide()
         self.list_results.itemClicked.connect(self.seleccionar_item_busqueda)
         self.list_results.installEventFilter(self)
+        
+        # Sombra premium para elevarlo a otro nivel
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        shadow = QGraphicsDropShadowEffect(self.list_results)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(10)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        self.list_results.setGraphicsEffect(shadow)
+        
+        # Filas alternadas para mejor lectura
+        self.list_results.setAlternatingRowColors(True)
+        self.list_results.itemSelectionChanged.connect(self._update_search_colors)
         self.list_results.setStyleSheet("""
             QListWidget {
                 border: 4px solid #3B82F6;
                 border-radius: 12px;
                 background-color: #F8FAFC;
+                alternate-background-color: #F1F5F9;
                 color: #0F172A;
             }
             QListWidget::item {
@@ -1052,6 +1066,30 @@ class Paso5Terminal(QWidget):
         # Delegamos la responsabilidad nativamente a Qt usando QHeaderView
         pass
 
+    def _update_search_colors(self):
+        if not hasattr(self, "list_results"): return
+        
+        # Cambiamos los colores de los QLabels para que contrasten bien cuando la fila se selecciona (azul)
+        for i in range(self.list_results.count()):
+            item = self.list_results.item(i)
+            w = self.list_results.itemWidget(item)
+            if not w: continue
+            
+            lbl_n = w.findChild(QLabel, "lbl_n")
+            lbl_p = w.findChild(QLabel, "lbl_p")
+            lbl_s = w.findChild(QLabel, "lbl_s")
+            
+            if not (lbl_n and lbl_p and lbl_s): continue
+            
+            if item.isSelected():
+                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: white;")
+                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: white;")
+                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; background: transparent; color: #E2E8F0;")
+            else:
+                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #0F172A;")
+                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #059669;")
+                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; background: transparent; color: #64748B;")
+
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "list_results") or not hasattr(self, "txt_scan"):
             return
@@ -1248,23 +1286,27 @@ class Paso5Terminal(QWidget):
                 w.setMinimumHeight(60)
                 
                 lbl_n = QLabel(str(r['nombre']))
-                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: inherit;")
+                lbl_n.setObjectName("lbl_n")
+                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #0F172A;")
                 
                 lbl_p = QLabel(f"${r['precio']:.2f}")
+                lbl_p.setObjectName("lbl_p")
                 lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; color: #059669; background: transparent;")
                 lbl_p.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
                 
                 lbl_s = QLabel(f"📦 {stk_str}")
+                lbl_s.setObjectName("lbl_s")
                 lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; color: #64748B; background: transparent;")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 
                 lay.addWidget(lbl_n, 5)  # 5 partes para el nombre (Izquierda)
                 lay.addWidget(lbl_p, 2)  # 2 partes para el precio (Medio)
-                lay.addWidget(lbl_s, 2)  # 2 partes para el stock (Derecha)
+                lay.addWidget(lbl_s, 2)  # 2 partes para el stock (Derecha)  # 2 partes para el stock (Derecha)
                 
                 item.setSizeHint(w.sizeHint())
                 self.list_results.setItemWidget(item, w)
             self.list_results.setCurrentRow(0)
+            self._update_search_colors()
             self.list_results.show()
             self.list_results.raise_()
         else:
