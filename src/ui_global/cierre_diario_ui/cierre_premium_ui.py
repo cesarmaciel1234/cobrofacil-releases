@@ -128,7 +128,10 @@ class CierreGlobalUI(QWidget):
             str(current.get("username") or current.get("user") or "").strip() or "cajero"
         )
         self.rol = str(current.get("rol") or current.get("role") or "cajero").upper()
-        self.modo_vista = "cajero"
+        if self.rol in ["ADMIN", "JEFE"] and not self.is_terminal:
+            self.modo_vista = "dia"
+        else:
+            self.modo_vista = "cajero"
         self.datos_actuales = {}
         self._setup_ui()
         self._load_data()
