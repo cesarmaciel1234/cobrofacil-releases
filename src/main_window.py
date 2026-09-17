@@ -128,11 +128,21 @@ class MainWindow(QMainWindow):
 
     def _on_security_breach(self):
         self.mostrar_alerta_perimetral(True, modo="security")
+        from src.central_red_global.network_engine import get_network_engine
+        engine = get_network_engine()
+        if engine:
+            engine.broadcast("ALERTA_SEGURIDAD", {"mensaje": "[CRITICO] CAJON FORZADO / INTRUSION DETECTADA"})
+
         # Sonido de alerta (opcional, beep del sistema)
         QApplication.beep()
 
     def _on_operational_opening(self):
         from src.hardware.cash_drawer import drawer_manager
+        from src.central_red_global.network_engine import get_network_engine
+        engine = get_network_engine()
+        if engine:
+            engine.broadcast("HARDWARE_SENSOR", {"evento": "DRAWER_OPEN"})
+
         if drawer_manager.is_authorized:
             self.mostrar_alerta_perimetral(True, modo="info")
 
