@@ -359,7 +359,7 @@ class CierreGlobalUI(QWidget):
         self.lbl_hist.setStyleSheet("font-size: 13px; font-weight: 900; color: #334155;")
         self.tabla_hist = QTableWidget(0, 7)
         self.tabla_hist.setHorizontalHeaderLabels(
-            ["Hora", "Cajero", "Caja", "Tipo", "Físico", "Esperado", "Dif."]
+            ["Hora", "Usuario", "Caja", "Tipo", "Físico", "Esperado", "Dif."]
         )
         self.tabla_hist.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.tabla_hist.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -441,6 +441,32 @@ class CierreGlobalUI(QWidget):
 
     def _on_click_finalizar(self):
         self._realizar_corte(self.modo_vista)
+
+    def _resaltar_dias_trabajados(self):
+        try:
+            from src.base_de_datos.database import db_manager
+            from PyQt6.QtGui import QTextCharFormat, QColor, QFont
+            from PyQt6.QtCore import QDate
+            
+            rows = db_manager.execute_query(
+                "SELECT DISTINCT DATE(fecha) as d FROM movimientos_caja WHERE tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'CIERRE_TURNO') OR tipo='VENTA'"
+            )
+            if not rows:
+                return
+                
+            fmt = QTextCharFormat()
+            fmt.setBackground(QColor("#E0F2FE"))
+            fmt.setForeground(QColor("#0369A1"))
+            fmt.setFontWeight(QFont.Weight.Bold)
+            
+            cal = self.date_picker.calendarWidget()
+            for r in rows:
+                d_str = r.get("d")
+                if d_str:
+                    q_date = QDate.fromString(str(d_str).split(" ")[0], "yyyy-MM-dd")
+                    cal.setDateTextFormat(q_date, fmt)
+        except Exception as e:
+            print("Error resaltando dias:", e)
 
     def _ir_a_ayer(self):
         self.date_picker.setDate(QDate.currentDate().addDays(-1))
