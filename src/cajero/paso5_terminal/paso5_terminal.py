@@ -1252,17 +1252,15 @@ class Paso5Terminal(QWidget):
                 
                 lbl_p = QLabel(f"${r['precio']:.2f}")
                 lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; color: #059669; background: transparent;")
-                lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                lbl_p.setMinimumWidth(120)
+                lbl_p.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
                 
                 lbl_s = QLabel(f"📦 {stk_str}")
                 lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; color: #64748B; background: transparent;")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                lbl_s.setMinimumWidth(100)
                 
-                lay.addWidget(lbl_n, 1)
-                lay.addWidget(lbl_p)
-                lay.addWidget(lbl_s)
+                lay.addWidget(lbl_n, 5)  # 5 partes para el nombre (Izquierda)
+                lay.addWidget(lbl_p, 2)  # 2 partes para el precio (Medio)
+                lay.addWidget(lbl_s, 2)  # 2 partes para el stock (Derecha)
                 
                 item.setSizeHint(w.sizeHint())
                 self.list_results.setItemWidget(item, w)
