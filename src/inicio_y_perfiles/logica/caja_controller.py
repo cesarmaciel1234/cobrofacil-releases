@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from src.base_de_datos.database import db_manager
-from src import config
+from src.config import config
 
 logger = logging.getLogger("PunPro.CajaController")
 

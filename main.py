@@ -327,9 +327,18 @@ def launch_app(direct_role=None):
             if qt_exec(login_dlg):
                 login_dlg.hide()
                 app.processEvents()
-                if role_selected == "cajero":
+                
+                from src.config import config
+                from src.motor_turnos.nucleo.gestor_turnos import GestorTurnos
+                
+                user = config.current_user.get("username", "cajero") if config.current_user else "cajero"
+                c_id = config.get("caja_id", 1)
+                
+                necesita_abrir = GestorTurnos.iniciar_o_reanudar_turno(user, role_selected, c_id)
+                
+                if role_selected == "cajero" and necesita_abrir:
                     step = 3
-                else:  # admin o jefe van directo sin apertura de caja
+                else:
                     step = 4
             else:
                 login_dlg.hide()
