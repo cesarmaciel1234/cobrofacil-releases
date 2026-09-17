@@ -592,6 +592,9 @@ class MainWindow(QMainWindow):
         """Conecta las señales de navegación de un widget recién creado."""
         if hasattr(s, 'request_dashboard'):
             s.request_dashboard.connect(self._handle_global_dashboard_return)
+        if hasattr(s, 'turno_cerrado'):
+            s.turno_cerrado.connect(self._on_turno_cerrado_global)
+
 
         if hasattr(s, 'request_screen'):
             s.request_screen.connect(self.switch_tab)
@@ -971,3 +974,8 @@ if __name__ == "__main__":
                     self.switch_tab(7)
                     from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.warning(self, "Orden de Cierre", "El Centro de Control (NEXUS) ordenó un cierre Z inmediato.")
+
+    def _on_turno_cerrado_global(self):
+        from PyQt6.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Sistema Bloqueado", "El turno ha sido cerrado exitosamente. El sistema se cerrará por seguridad para evitar ventas huérfanas.")
+        self._logout_to_selector()
