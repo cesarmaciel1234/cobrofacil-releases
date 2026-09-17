@@ -1226,14 +1226,36 @@ class Paso5Terminal(QWidget):
             for r in res:
                 stk = float(r['stock'] or 0.0)
                 stk_str = f'{int(stk)}' if stk.is_integer() else f'{stk:.2f}'
-                item = QListWidgetItem(f"{r['nombre']} - ${r['precio']:.2f}  [Stock: {stk_str}]")
-                # Hacemos la fuente mas grande para enfoque total
-                font = item.font()
-                font.setPointSize(18)
-                font.setBold(True)
-                item.setFont(font)
+                
+                item = QListWidgetItem()
                 item.setData(Qt.UserRole, r)
                 self.list_results.addItem(item)
+                
+                w = QWidget()
+                # Truco para que el widget pase los eventos de click al ListWidget
+                w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+                lay = QHBoxLayout(w)
+                lay.setContentsMargins(10, 2, 10, 2)
+                
+                lbl_n = QLabel(str(r['nombre']))
+                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: inherit;")
+                
+                lbl_p = QLabel(f"${r['precio']:.2f}")
+                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; color: #059669; background: transparent;")
+                lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                lbl_p.setMinimumWidth(120)
+                
+                lbl_s = QLabel(f"📦 {stk_str}")
+                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; color: #64748B; background: transparent;")
+                lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                lbl_s.setMinimumWidth(100)
+                
+                lay.addWidget(lbl_n, 1)
+                lay.addWidget(lbl_p)
+                lay.addWidget(lbl_s)
+                
+                item.setSizeHint(w.sizeHint())
+                self.list_results.setItemWidget(item, w)
             self.list_results.setCurrentRow(0)
             self.list_results.show()
             self.list_results.raise_()
