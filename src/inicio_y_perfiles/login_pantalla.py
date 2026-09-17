@@ -248,16 +248,10 @@ class LoginPantalla(QDialog):
         target_role = str(self.role).strip().lower()
         
         if user_role != target_role:
-            QMessageBox.warning(
-                self, 
-                "Perfil Incorrecto", 
-                f"Estas credenciales pertenecen al perfil '{user_role.upper()}'.
-"
-                f"Estás intentando ingresar al panel de '{target_role.upper()}'.
-
-"
-                "Por favor, regresa al selector de perfiles y elige la tarjeta correcta."
-            )
+            msg = (f"Estas credenciales pertenecen al perfil '{user_role.upper()}'.\n"
+                   f"Estás intentando ingresar al panel de '{target_role.upper()}'.\n\n"
+                   "Por favor, regresa al selector de perfiles y elige la tarjeta correcta.")
+            QMessageBox.warning(self, "Perfil Incorrecto", msg)
             self.txt_pass.clear()
             self.txt_pass.setFocus()
             return
