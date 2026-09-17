@@ -958,11 +958,15 @@ if __name__ == "__main__":
 
     def _on_udp_message_received(self, origen, tipo, datos):
         if tipo == "FORCE_Z_CUT":
-            caja_id = datos.get("caja_id")
+            caja_id_raw = str(datos.get("caja_id", "todas")).lower()
             from src.config import config
-            current_caja = config.get("caja_id", 1)
-            if str(caja_id) == "all" or str(caja_id) == str(current_caja):
-                # Trigger industrial Z CUT
+            current_caja = str(config.get("caja_id", 1))
+            
+            import re
+            match = re.search(r'\d+', caja_id_raw)
+            caja_num = match.group() if match else None
+            
+            if "all" in caja_id_raw or "todas" in caja_id_raw or caja_num == current_caja:
                 if hasattr(self, 'switch_tab'):
                     self.switch_tab(7)
                     from PyQt6.QtWidgets import QMessageBox
