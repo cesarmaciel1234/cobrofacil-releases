@@ -239,8 +239,27 @@ class LoginPantalla(QDialog):
         user_dict = auth_controller.authenticate(user, pwd)
         
         if not user_dict:
-            QMessageBox.critical(self, "Error", "Credenciales inválidas.")
+            QMessageBox.critical(self, "Acceso Denegado", "Usuario o contraseña incorrectos.")
             self.txt_pass.clear(); self.txt_pass.setFocus()
+            return
+            
+        # Validación Estricta de Perfil (Lógica Modular Blindada)
+        user_role = str(user_dict.get("rol") or user_dict.get("role") or "").strip().lower()
+        target_role = str(self.role).strip().lower()
+        
+        if user_role != target_role:
+            QMessageBox.warning(
+                self, 
+                "Perfil Incorrecto", 
+                f"Estas credenciales pertenecen al perfil '{user_role.upper()}'.
+"
+                f"Estás intentando ingresar al panel de '{target_role.upper()}'.
+
+"
+                "Por favor, regresa al selector de perfiles y elige la tarjeta correcta."
+            )
+            self.txt_pass.clear()
+            self.txt_pass.setFocus()
             return
             
         # Si es correcto
