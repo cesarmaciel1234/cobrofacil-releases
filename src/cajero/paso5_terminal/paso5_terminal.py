@@ -426,6 +426,22 @@ class Paso5Terminal(QWidget):
         self.list_results.hide()
         self.list_results.itemClicked.connect(self.seleccionar_item_busqueda)
         self.list_results.installEventFilter(self)
+        self.list_results.setStyleSheet("""
+            QListWidget {
+                border: 2px solid #3B82F6;
+                border-radius: 8px;
+                background-color: #F8FAFC;
+                color: #0F172A;
+            }
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #E2E8F0;
+            }
+            QListWidget::item:selected {
+                background-color: #3B82F6;
+                color: white;
+            }
+        """)
         
         # Mapeo de etiquetas numéricas
         self.lbl_cant_val = self.panel_totales.valor_cant
@@ -775,6 +791,16 @@ class Paso5Terminal(QWidget):
                 elif key == Qt.Key_F11:
                     self.llamar_supervisor()
                     return True
+                elif key == Qt.Key_Down:
+                    if self.list_results.isVisible() and self.list_results.count() > 0:
+                        self.list_results.setFocus()
+                        self.list_results.setCurrentRow(0)
+                        return True
+                elif key == Qt.Key_Up:
+                    if self.list_results.isVisible() and self.list_results.count() > 0:
+                        self.list_results.setFocus()
+                        self.list_results.setCurrentRow(self.list_results.count() - 1)
+                        return True
                 elif key == Qt.Key_Escape:
                     self.txt_scan.clear()
                     self.list_results.hide()
@@ -1032,12 +1058,12 @@ class Paso5Terminal(QWidget):
         from src.utils.qt_dpi import terminal_layout_metrics, scale_px
         if metrics is None:
             metrics = terminal_layout_metrics()
-        popup_y = self.dashboard_frame.y() - metrics["list_results_h"] - scale_px(8, metrics["layout_scale"])
+        popup_y = self.dashboard_frame.y() - int(metrics["list_results_h"] * 2.0) - scale_px(8, metrics["layout_scale"])
         self.list_results.setGeometry(
             self.dashboard_frame.x() + 10,
             max(0, popup_y),
-            metrics["list_results_w"],
-            metrics["list_results_h"],
+            int(metrics["list_results_w"] * 1.5),
+            int(metrics["list_results_h"] * 2.0),
         )
 
     def resizeEvent(self, event):
@@ -1200,7 +1226,12 @@ class Paso5Terminal(QWidget):
             for r in res:
                 stk = float(r['stock'] or 0.0)
                 stk_str = f'{int(stk)}' if stk.is_integer() else f'{stk:.2f}'
-                item = QListWidgetItem(f"📦 Stock: {stk_str}  |  {r['id']} - {r['nombre']} - ${r['precio']:.2f}")
+                item = QListWidgetItem(f"{r['nombre']} - ${r['precio']:.2f}  [Stock: {stk_str}]")
+                # Hacemos la fuente mas grande para enfoque total
+                font = item.font()
+                font.setPointSize(18)
+                font.setBold(True)
+                item.setFont(font)
                 item.setData(Qt.UserRole, r)
                 self.list_results.addItem(item)
             self.list_results.setCurrentRow(0)
