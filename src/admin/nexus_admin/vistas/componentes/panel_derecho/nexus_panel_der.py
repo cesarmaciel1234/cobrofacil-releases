@@ -72,7 +72,7 @@ class NexusPanelDer(QFrame):
         body_layout.addWidget(self.scroll_eventos)
         main_layout.addWidget(self.body_container)
 
-        self.caja_filter = 0
+        self.caja_filter = 0  # Asegurar que sea int desde el inicio
         self.active_query = ""
         self.active_params = []
         self.offset = 0
@@ -118,16 +118,18 @@ class NexusPanelDer(QFrame):
 
     def agregar_log(self, src, payload, fg_color):
         tipo = "EVENTO"
-        if "[VENTA]" in payload: tipo = "VENTA"
-        elif "ALERTA" in payload or "CRITICAL" in payload: tipo = "ALERTA_SEGURIDAD"
-        elif "INTERVENCION" in payload or "INTERVENCIÓN" in payload: tipo = "INTERVENCION"
-        elif "APERTURA" in payload: tipo = "APERTURA"
+        payload_upper = payload.upper()
+        if "[VENTA]" in payload_upper: tipo = "VENTA"
+        elif "ALERTA" in payload_upper or "CRITIC" in payload_upper: tipo = "ALERTA_SEGURIDAD"
+        elif "INTERVENCION" in payload_upper or "INTERVENCI" in payload_upper: tipo = "INTERVENCION"
+        elif "APERTURA" in payload_upper: tipo = "APERTURA"
+        elif "CIERRE" in payload_upper: tipo = "CIERRE_Z"
             
         tab = getattr(self, 'active_tab_index', 0)
         # 0=COBROS, 1=CAJONES, 2=ALERTAS, 3=ACCIONES
         if tab == 0 and tipo != "VENTA":
             return
-        if tab == 1 and tipo not in ["APERTURA", "CIERRE_Z"]:
+        if tab == 1 and tipo not in ["APERTURA", "CIERRE_Z", "CIERRE_AUTO", "CIERRE_TURNO"]:
             return
         if tab == 2 and tipo != "ALERTA_SEGURIDAD":
             return
@@ -156,12 +158,14 @@ class NexusPanelDer(QFrame):
         self.admin_master = admin_window
 
     def set_caja_filter(self, caja_id):
-        if caja_id == "todas": self.caja_filter = 0
+        if caja_id == "todas": 
+            self.caja_filter = 0
         else:
             try:
                 num_match = re.search(r'\d+', str(caja_id))
                 self.caja_filter = int(num_match.group()) if num_match else 0
-            except: self.caja_filter = 0
+            except: 
+                self.caja_filter = 0
         self.filtrar_auditoria()
 
     def filtrar_auditoria(self):
@@ -174,10 +178,23 @@ class NexusPanelDer(QFrame):
         elif tab == 3: q += " AND tipo='INTERVENCION'"
             
         f_val = self.cmb_fecha.currentText()
-        if f_val == "Hoy": q += " AND DATE(fecha) = CURDATE()"
-        elif f_val == "Ayer": q += " AND DATE(fecha) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)"
-        elif f_val == "Esta Semana": q += " AND YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)"
-        elif f_val == "Este Mes": q += " AND YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())"
+        from datetime import datetime, timedelta
+        hoy = datetime.now()
+        
+        if f_val == "Hoy":
+            q += " AND fecha >= ? AND fecha <= ?"
+            p.extend([hoy.strftime("%Y-%m-%d 00:00:00"), hoy.strftime("%Y-%m-%d 23:59:59")])
+        elif f_val == "Ayer":
+            ayer = hoy - timedelta(days=1)
+            q += " AND fecha >= ? AND fecha <= ?"
+            p.extend([ayer.strftime("%Y-%m-%d 00:00:00"), ayer.strftime("%Y-%m-%d 23:59:59")])
+        elif f_val == "Esta Semana":
+            inicio_sem = hoy - timedelta(days=hoy.weekday())
+            q += " AND fecha >= ? AND fecha <= ?"
+            p.extend([inicio_sem.strftime("%Y-%m-%d 00:00:00"), hoy.strftime("%Y-%m-%d 23:59:59")])
+        elif f_val == "Este Mes":
+            q += " AND fecha >= ? AND fecha <= ?"
+            p.extend([hoy.strftime("%Y-%m-01 00:00:00"), hoy.strftime("%Y-%m-31 23:59:59")])
                 
         if self.caja_filter > 0:
             q += " AND caja_id=?"
