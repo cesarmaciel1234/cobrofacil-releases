@@ -1082,13 +1082,13 @@ class Paso5Terminal(QWidget):
             if not (lbl_n and lbl_p and lbl_s): continue
             
             if item.isSelected():
-                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: white;")
-                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: white;")
-                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; background: transparent; color: #E2E8F0;")
+                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: white;")
+                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: white;")
+                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #E2E8F0;")
             else:
-                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #0F172A;")
-                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #059669;")
-                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; background: transparent; color: #64748B;")
+                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: #0F172A;")
+                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: #059669;")
+                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #64748B;")
 
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "list_results") or not hasattr(self, "txt_scan"):
@@ -1283,20 +1283,20 @@ class Paso5Terminal(QWidget):
                 w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 lay = QHBoxLayout(w)
                 lay.setContentsMargins(15, 12, 15, 12)
-                w.setMinimumHeight(60)
+                w.setMinimumHeight(75)
                 
                 lbl_n = QLabel(str(r['nombre']))
                 lbl_n.setObjectName("lbl_n")
-                lbl_n.setStyleSheet("font-size: 18px; font-weight: bold; background: transparent; color: #0F172A;")
+                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: #0F172A;")
                 
                 lbl_p = QLabel(f"${r['precio']:.2f}")
                 lbl_p.setObjectName("lbl_p")
-                lbl_p.setStyleSheet("font-size: 18px; font-weight: bold; color: #059669; background: transparent;")
+                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: #059669;")
                 lbl_p.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
                 
                 lbl_s = QLabel(f"📦 {stk_str}")
                 lbl_s.setObjectName("lbl_s")
-                lbl_s.setStyleSheet("font-size: 16px; font-weight: bold; color: #64748B; background: transparent;")
+                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #64748B;")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 
                 lay.addWidget(lbl_n, 5)  # 5 partes para el nombre (Izquierda)
