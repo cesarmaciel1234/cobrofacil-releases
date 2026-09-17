@@ -1053,20 +1053,25 @@ class Paso5Terminal(QWidget):
         pass
 
     def _layout_list_results_popup(self, metrics=None):
-        if not hasattr(self, "list_results") or not hasattr(self, "dashboard_frame"):
+        if not hasattr(self, "list_results") or not hasattr(self, "txt_scan"):
             return
         
-        # Hacemos que sea el centro de atención (enfoque total) sobre la tabla principal
-        db = self.dashboard_frame
-        w = int(db.width() * 0.8)
-        h = int(db.height() * 0.7)
+        # Ancho 75% de la pantalla para buena lectura, Alto 65% de la tabla
+        w = int(self.width() * 0.75)
+        h = int(self.dashboard_frame.height() * 0.65) if hasattr(self, "dashboard_frame") else 350
         
-        # Validar tamanos minimos
-        if w < 500: w = 500
+        if w < 600: w = 600
         if h < 300: h = 300
         
-        x = db.x() + int((db.width() - w) / 2)
-        y = db.y() + int((db.height() - h) / 2)
+        from PyQt6.QtCore import QPoint
+        # Mapeamos las coordenadas de la caja de texto (txt_scan) hacia la ventana (self)
+        pos = self.txt_scan.mapTo(self, QPoint(0, 0))
+        
+        # Alineamos el borde izquierdo del popup con el borde izquierdo del buscador
+        x = pos.x()
+        
+        # El borde inferior del popup debe estar justo encima del buscador (pos.y() - altura - 5px margen)
+        y = pos.y() - h - 5
         
         self.list_results.setGeometry(x, max(0, y), w, h)
 
