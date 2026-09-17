@@ -1251,7 +1251,7 @@ class Paso5Terminal(QWidget):
     def actualizar_busqueda(self):
         # En lugar de buscar en cada tecla, esperamos 250ms.
         # Si entra otra tecla (como hace un escáner), el timer se reinicia.
-        self.search_timer.start(250)
+        self.search_timer.start(40)  # Ultra responsivo
         
     def _do_busqueda(self):
         txt = self.txt_scan.text().strip()
@@ -1307,8 +1307,31 @@ class Paso5Terminal(QWidget):
                 self.list_results.setItemWidget(item, w)
             self.list_results.setCurrentRow(0)
             self._update_search_colors()
-            self.list_results.show()
-            self.list_results.raise_()
+            
+            # Fluid animation (despliegue suave tipo acordeón ascendente ya que está anclado abajo)
+            if not self.list_results.isVisible():
+                from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, QRect
+                
+                # Configurar geometría final
+                self._layout_list_results_popup()
+                final_geo = self.list_results.geometry()
+                
+                # Iniciar con altura 0, alineado al fondo (pegado a la caja de texto)
+                start_geo = QRect(final_geo.x(), final_geo.y() + final_geo.height(), final_geo.width(), 0)
+                self.list_results.setGeometry(start_geo)
+                self.list_results.show()
+                self.list_results.raise_()
+                
+                # Animar altura y posición Y simultáneamente para efecto de "crecimiento hacia arriba"
+                self.anim = QPropertyAnimation(self.list_results, b"geometry")
+                self.anim.setDuration(200)  # 200ms de pura suavidad
+                self.anim.setStartValue(start_geo)
+                self.anim.setEndValue(final_geo)
+                self.anim.setEasingCurve(QEasingCurve.Type.OutQuart) # Aceleración suave
+                self.anim.start()
+            else:
+                self.list_results.show()
+                self.list_results.raise_()
         else:
             item = QListWidgetItem(f"🚫 No hay resultados para '{txt}'")
             item.setData(Qt.UserRole, None)
