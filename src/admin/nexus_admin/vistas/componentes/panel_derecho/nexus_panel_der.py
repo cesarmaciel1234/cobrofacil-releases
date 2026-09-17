@@ -125,12 +125,16 @@ class NexusPanelDer(QFrame):
             
         tab = getattr(self, 'active_tab_index', 0)
         # 0=COBROS, 1=CAJONES, 2=ALERTAS, 3=ACCIONES
-        if tab == 0 and tipo != "VENTA": return
-        if tab == 1 and tipo not in ["APERTURA", "CIERRE_Z"]: return
-        if tab == 2 and tipo != "ALERTA_SEGURIDAD": return
-        if tab == 3 and tipo != "INTERVENCION": return
+        if tab == 0 and tipo != "VENTA":
+            return
+        if tab == 1 and tipo not in ["APERTURA", "CIERRE_Z"]:
+            return
+        if tab == 2 and tipo != "ALERTA_SEGURIDAD":
+            return
+        if tab == 3 and tipo != "INTERVENCION":
+            return
         
-pc_clean = src
+        pc_clean = src
         match = re.search(r'PC-(\d+)', src)
         if match: pc_clean = f"PC-{match.group(1)}"
             
