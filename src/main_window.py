@@ -80,6 +80,11 @@ class MainWindow(QMainWindow):
         # Llamarlo en __init__ era un doble-procesamiento innecesario.
         self._init_global_alarm()
         self._init_security_monitor()
+        from src.central_red_global.network_engine import get_network_engine
+        engine = get_network_engine()
+        if engine:
+            engine.message_received.connect(self._on_udp_message_received)
+
         self._init_update_banner()
 
         # ChatBot: Pre-cargado aquí para evitar parpadeos/reseteos del sistema en pantalla completa por Chromium.
@@ -950,3 +955,15 @@ if __name__ == "__main__":
     win.show()
     sys.exit(qt_exec(app))
 
+
+    def _on_udp_message_received(self, origen, tipo, datos):
+        if tipo == "FORCE_Z_CUT":
+            caja_id = datos.get("caja_id")
+            from src.config import config
+            current_caja = config.get("caja_id", 1)
+            if str(caja_id) == "all" or str(caja_id) == str(current_caja):
+                # Trigger industrial Z CUT
+                if hasattr(self, 'switch_tab'):
+                    self.switch_tab(7)
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Orden de Cierre", "El Centro de Control (NEXUS) ordenó un cierre Z inmediato.")

@@ -5,56 +5,19 @@ import re
 class CerebroNexus:
     @staticmethod
     def obtener_metricas_live(caja_filter="todas"):
-        hoy = datetime.now().strftime("%Y-%m-%d")
-        params_totales = [hoy]
-        filtro_caja_sql = ""
-        
-        caja_num = 1
+        from src.cerebro_global.cierre_caja_cerebro.motor_cierre import MotorCierre
+        caja_num = None
         if caja_filter != "todas":
+            import re
             num_match = re.search(r'\d+', str(caja_filter))
             caja_num = int(num_match.group()) if num_match else 1
-            filtro_caja_sql = " AND caja_id = ?"
-            params_totales.append(caja_num)
-
-        total_efectivo = db_manager.execute_scalar(
-            f'''SELECT SUM(
-                CASE
-                    WHEN metodo_pago IN ('Efectivo', 'Mixto')
-                         OR UPPER(COALESCE(metodo_pago, '')) LIKE '%EFECTIVO%'
-                    THEN COALESCE(pago_efectivo, 0)
-                         - CASE WHEN COALESCE(cambio, 0) > 0 THEN COALESCE(cambio, 0) ELSE 0 END
-                    ELSE 0
-                END
-            ) FROM ventas
-            WHERE DATE(fecha) = ? AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')
-            {filtro_caja_sql}''',
-            tuple(params_totales)
-        ) or 0.0
-
-        total_digital = db_manager.execute_scalar(
-            f"SELECT SUM(total) FROM ventas"
-            f" WHERE DATE(fecha) = ? AND metodo_pago NOT IN ('Efectivo', 'Mixto')"
-            f" AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')"
-            f"{filtro_caja_sql}",
-            tuple(params_totales)
-        ) or 0.0
+            
+        datos = MotorCierre.obtener_datos_cierre_diario(caja_id=caja_num)
         
-        fondo_inicial = 0.0
-        esperado_live = float(total_efectivo or 0)
-        
-        if caja_filter != "todas":
-            fondo_inicial = float(db_manager.execute_scalar(
-                "SELECT monto FROM movimientos_caja WHERE tipo='APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                (caja_num,)
-            ) or 0.0)
-            esperado = db_manager.get_efectivo_en_caja(caja_num)
-            esperado_live = float(esperado) if esperado else 0.0
-        else:
-            fondo_inicial = float(db_manager.execute_scalar(
-                "SELECT SUM(monto) FROM movimientos_caja WHERE tipo='APERTURA' AND DATE(fecha) = ?",
-                (hoy,)
-            ) or 0.0)
-            esperado_live = float(fondo_inicial or 0) + float(total_efectivo or 0)
+        total_efectivo = datos.get("v_efectivo", 0)
+        total_digital = datos.get("v_tarjeta", 0) + datos.get("v_trans", 0) + datos.get("v_vales", 0) + datos.get("v_cheque", 0)
+        fondo_inicial = datos.get("fondo", 0)
+        esperado_live = datos.get("v_caja_total", 0)
 
         return {
             "total_efectivo": total_efectivo,

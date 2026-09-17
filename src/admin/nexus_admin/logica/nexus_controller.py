@@ -151,18 +151,22 @@ class NexusController(QObject):
         self._sync_live_data()
 
     def _force_z_close_from_panel(self, monto_fisico):
-        from src.admin.cierre.cierre_main import Admin7Cierre
         if hasattr(self.view, '_play_sound'): self.view._play_sound("alert")
-        if not hasattr(self, 'ventana_cierre') or not self.ventana_cierre.isVisible():
-            self.ventana_cierre = Admin7Cierre(parent_main=self.view)
-            self.ventana_cierre.setWindowFlags(Qt.WindowType.Window)
-            self.ventana_cierre.resize(1100, 750)
-            self.ventana_cierre.setWindowTitle("NEXUS PRO - Control de Cierre Ejecutivo")
-            self.ventana_cierre.request_dashboard.connect(self.ventana_cierre.close)
-            self.ventana_cierre.turno_cerrado.connect(self._sync_live_data)
-            self.ventana_cierre.show()
-            self.ventana_cierre.raise_()
-            self.ventana_cierre.activateWindow()
+        
+        # Logica Industrial: Enviar comando remoto al cajero en lugar de abrir popup local
+        try:
+            from src.central_red_global.network_engine import get_network_engine
+            engine = get_network_engine()
+            if engine:
+                if self.current_caja_filter == "todas":
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": "all"})
+                else:
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter})
+                
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.information(self.view, "Cierre Remoto Enviado", "Orden de Cierre Z enviada a la terminal. El cajero procederá con el arqueo.")
+        except Exception as e:
+            print("Error enviando comando de cierre remoto:", e)
 
     def _sync_live_data(self):
         try:

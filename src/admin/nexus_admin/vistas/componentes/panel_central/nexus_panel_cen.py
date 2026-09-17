@@ -78,7 +78,7 @@ class NexusPanelCen(QWidget):
         self.lay.addWidget(self.f_esperado)
         
         # ACTION BTN
-        self.btn_cierre = QPushButton("F12 // EJECUTAR OVERRIDE (CIERRE Z)")
+        self.btn_cierre = QPushButton("F4 // ENVIAR ORDEN DE CIERRE (CAJA ACTIVA)")
         self.btn_cierre.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cierre.setFixedHeight(45)
         self.btn_cierre.setStyleSheet('''
