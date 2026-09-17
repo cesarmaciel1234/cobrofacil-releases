@@ -15,11 +15,12 @@ class NexusPanelIzq(QWidget):
 
         self.terminal_output = QTextEdit()
         self.terminal_output.setReadOnly(True)
-        self.terminal_output.setFont(QFont("Consolas", 10))
+        self.terminal_output.setFont(QFont("Consolas", 11))
         self.terminal_output.setStyleSheet('''
             QTextEdit {
-                background-color: #0B1120; color: #10B981; 
-                border: 1px solid #1E293B; border-radius: 6px; padding: 5px;
+                background-color: #FFFFFF; color: #000000; 
+                border: 1px solid #000000; border-radius: 0px; padding: 4px;
+                font-family: Consolas; font-size: 11px;
             }
         ''')
         self.lay.addWidget(self.terminal_output, 1)
@@ -49,71 +50,45 @@ class NexusPanelIzq(QWidget):
         self.txt_topo.append("--- INICIANDO RASTREO UDP ---")
 
     def update_theme(self, theme):
-        if theme == "dark":
-            self.terminal_output.setStyleSheet("QTextEdit { background-color: #0B1120; color: #10B981; border: 1px solid #1E293B; border-radius: 6px; padding: 5px; }")
-            self.txt_topo.setStyleSheet("QTextEdit { background-color: #0F172A; color: #38BDF8; border: 1px solid #1E293B; border-radius: 6px; padding: 5px; }")
-        else:
-            self.terminal_output.setStyleSheet("QTextEdit { background-color: #F8FAFC; color: #065F46; border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px; }")
-            self.txt_topo.setStyleSheet("QTextEdit { background-color: #F1F5F9; color: #0369A1; border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px; }")
+        # Terminal siempre estilo blanco minimalista para vigilancia
+        self.terminal_output.setStyleSheet("QTextEdit { background-color: #FFFFFF; color: #000000; border: 1px solid #000000; border-radius: 0px; padding: 4px; font-family: Consolas; font-size: 11px; }")
+        self.txt_topo.setStyleSheet("QTextEdit { background-color: #FFFFFF; color: #000000; border: 1px solid #000000; border-radius: 0px; padding: 4px; font-family: Consolas; font-size: 10px; }")
 
 
     def add_log(self, text):
-        # Fallback for old logs
-        html = f'<div style="color: #64748B; font-family: Consolas; font-size: 11px; margin-bottom: 4px; font-style: italic;">&gt; {text}</div>'
-        self.terminal_output.insertHtml(html)
-        self.terminal_output.insertPlainText("\n")
+        self.terminal_output.append(f"> {text}")
+        self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
+        self._trim_terminal()
+
+    def add_structured_log(self, titulo, accion, descripcion, color_titulo="#000000", color_accion="#000000"):
+        self.terminal_output.append("")
+        titulo_html = f'<b style="font-size: 12px;">=== {titulo.upper()} ===</b>'
+        self.terminal_output.insertHtml(titulo_html + "<br>")
+        self.terminal_output.append("-" * (len(titulo) + 10))
+        self.terminal_output.append(f"• {accion}")
+        self.terminal_output.append(f"  {descripcion}")
         self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
         self._trim_terminal()
 
     def inject_ai_log(self, category, origin, message, time_str):
-        """ Inyector de Logs HTML de alta visibilidad para CCTV / Auditoria """
-        
-        # Limpiar el origin para que sea legible (ej: "caja1" en vez de "LAPTOP|CAJERO|caja1")
         clean_org = origin.split('|')[-1].upper() if '|' in str(origin) else f"CAJA {origin}"
         
-        if category == "VENTA_EFECTIVO":
-            color = "#10B981" # Verde
-            icon = "💵" # Billete
-            title = "VENTA EFECTIVO"
-        elif category == "VENTA_DIGITAL":
-            color = "#3B82F6" # Azul
-            icon = "💳" # Tarjeta
-            title = "VENTA DIGITAL"
-        elif category == "APERTURA_SOFTWARE":
-            color = "#8B5CF6" # Morado
-            icon = "🔑" # Llave
-            title = "CAJON ABIERTO (SOFTWARE)"
-        elif category == "APERTURA_HARDWARE_OK":
-            color = "#10B981" 
-            icon = "🔓" # Candado abierto
-            title = "CAJON ABIERTO (VALIDADO)"
-        elif category == "ALARMA_CRITICA":
-            color = "#EF4444" # Rojo
-            icon = "🚨" # Sirena
-            title = "VIOLACION DE GAVETA"
-        elif category == "INTERVENCION":
-            color = "#F59E0B" # Naranja
-            icon = "🔧" # Llave inglesa
-            title = "INTERVENCION ADMIN"
-        else:
-            color = "#94A3B8"
-            icon = "ℹ️"
-            title = category
+        if category == "VENTA_EFECTIVO": tipo = "VENTA EFECTIVO"; color = None
+        elif category == "VENTA_DIGITAL": tipo = "VENTA DIGITAL"; color = None
+        elif category == "APERTURA_SOFTWARE": tipo = "APERTURA CAJON (SOFTWARE)"; color = None
+        elif category == "APERTURA_HARDWARE_OK": tipo = "APERTURA CAJON (VALIDADO)"; color = None
+        elif category == "ALARMA_CRITICA": tipo = "ALERTA CRITICA"; color = "#FF0000"
+        elif category == "INTERVENCION": tipo = "INTERVENCION ADMIN"; color = "#FF6600"
+        else: tipo = category; color = None
 
-        html = f"""
-        <div style="margin-bottom: 12px; font-family: Consolas;">
-            <div style="color: {color}; font-weight: 900; font-size: 13px;">
-                <span style="color: #475569; font-size: 11px;">[{time_str}]</span> 
-                {icon} [{clean_org}] {title}
-            </div>
-            <div style="color: #64748B; font-size: 11px; margin-top: 2px; padding-left: 65px; font-style: italic;">
-                {message}
-            </div>
-        </div>
-        """
+        if color:
+            log_html = f'<span style="color: {color}; font-weight: bold;">[{time_str}] [{clean_org}] {tipo}:</span> {message}'
+            self.terminal_output.append(log_html)
+        else:
+            log_text = f"[{time_str}] [{clean_org}] {tipo}: {message}"
+            self.terminal_output.append(log_text)
         
-        self.terminal_output.insertHtml(html)
-        self.terminal_output.insertPlainText("\n")
+        self.terminal_output.append("") # Pequeña separación
         self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
         self._trim_terminal()
 

@@ -60,12 +60,22 @@ class NexusController(QObject):
 
     def _connect_to_network(self):
         try:
-            from src.central_red_global.network_engine import get_network_engine
-            engine = get_network_engine()
+            from src.central_red_global.network_engine import get_network_engine, init_network_engine
+            from src.config import config
+            
+            # Determinar rol para Network Engine en Nexus
+            user = config.current_user or {}
+            role = (user.get("role") or user.get("rol") or "admin").lower()
+            
+            # Inicializar Network Engine con rol específico para Nexus
+            engine = init_network_engine(role)
             if engine:
                 engine.message_received.connect(self._on_udp_message)
                 engine.heartbeat_received.connect(self._on_udp_heartbeat)
                 engine.connection_lost.connect(self._on_connection_lost)
+                print(f"[NEXUS] NetworkEngine inicializado con rol: {role}")
+            else:
+                print(f"[NEXUS] ERROR: NetworkEngine no se pudo inicializar")
         except Exception as e:
             print(f"Error conectando Nexus Controller a Network Engine: {e}")
 
@@ -140,8 +150,11 @@ class NexusController(QObject):
         self._registrar_evento_caja(origen, "ALERTA", "Conexion perdida con la terminal")
 
     def _on_caja_selected(self, origen):
+        # Evitar spam si se hace clic repetido en el mismo filtro
+        is_new_filter = getattr(self, "current_caja_filter", None) != str(origen)
         self.current_caja_filter = str(origen)
-        if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
+        
+        if is_new_filter and hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
             self.view.panel_izq.add_log(f"[FILTRO APLICADO] Auditando: {origen}")
             
         if hasattr(self.view, 'panel_der'):
@@ -157,16 +170,37 @@ class NexusController(QObject):
         try:
             from src.central_red_global.network_engine import get_network_engine
             engine = get_network_engine()
+            target = "todas las cajas" if self.current_caja_filter == "todas" else f"caja {self.current_caja_filter}"
+            
             if engine:
                 if self.current_caja_filter == "todas":
                     engine.broadcast("FORCE_Z_CUT", {"caja_id": "all"})
                 else:
                     engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter})
                 
+                # Registrar en Terminal SYS.OP con formato estructurado
+                if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_structured_log'):
+                    self.view.panel_izq.add_structured_log(
+                        titulo="CIERRE REMOTO ACTIVADO",
+                        accion=f"Enviando orden FORCE_Z_CUT a {target}",
+                        descripcion=f"Orden de cierre Z enviada desde Nexus Control Center. El cajero procederá con el arqueo físico.",
+                        color_titulo="#EF4444",  # Rojo para acción crítica
+                        color_accion="#F59E0B"   # Naranja para acción en proceso
+                    )
+                
                 from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.information(self.view, "Cierre Remoto Enviado", "Orden de Cierre Z enviada a la terminal. El cajero procederá con el arqueo.")
         except Exception as e:
             print("Error enviando comando de cierre remoto:", e)
+            # Registrar error en terminal
+            if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_structured_log'):
+                self.view.panel_izq.add_structured_log(
+                    titulo="ERROR DE COMUNICACIÓN",
+                    accion="Fallo al enviar orden FORCE_Z_CUT",
+                    descripcion=f"Error: {str(e)}",
+                    color_titulo="#EF4444",
+                    color_accion="#EF4444"
+                )
 
     def _sync_live_data(self):
         try:
