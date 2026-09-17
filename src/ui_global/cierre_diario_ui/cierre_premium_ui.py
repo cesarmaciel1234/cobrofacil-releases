@@ -359,7 +359,7 @@ class CierreGlobalUI(QWidget):
         self.lbl_hist.setStyleSheet("font-size: 13px; font-weight: 900; color: #334155;")
         self.tabla_hist = QTableWidget(0, 7)
         self.tabla_hist.setHorizontalHeaderLabels(
-            ["Hora", "Usuario", "Caja", "Tipo", "Físico", "Esperado", "Dif."]
+            ["Horario (Turno)", "Usuario", "Caja", "Tipo", "Físico", "Esperado", "Dif."]
         )
         self.tabla_hist.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.tabla_hist.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)

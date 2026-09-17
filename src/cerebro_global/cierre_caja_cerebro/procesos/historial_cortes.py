@@ -53,11 +53,22 @@ def listar_cortes_del_dia(
         obs = str(r.get("observaciones") or "")
         esperado, dif, t_ventas = _parse_obs(obs)
         tipo = str(r.get("tipo") or "")
+        
+        # Buscar la apertura correspondiente
+        caja_id = r.get("caja_id")
+        fecha_cierre = str(r.get("fecha") or "")
+        apertura_row = db.execute_query(
+            "SELECT fecha FROM movimientos_caja WHERE tipo = 'APERTURA' AND caja_id = ? AND fecha <= ? ORDER BY id DESC LIMIT 1",
+            (caja_id, fecha_cierre)
+        )
+        hora_apertura = _hora(str(apertura_row[0]['fecha'])) if apertura_row else "--:--"
+        hora_cierre_fmt = _hora(fecha_cierre)
+        
         out.append(
             {
                 "id": r.get("id"),
-                "fecha": str(r.get("fecha") or ""),
-                "hora": _hora(str(r.get("fecha") or "")),
+                "fecha": fecha_cierre,
+                "hora": f"{hora_apertura} a {hora_cierre_fmt}",
                 "tipo": tipo,
                 "tipo_label": _label_tipo(tipo),
                 "usuario": str(r.get("usuario") or "—"),
