@@ -1023,7 +1023,12 @@ QDialog[theme="dark"] QLabel#LoginFieldLbl { color: #64748B; }
 
 
 QComboBox#LoginUserCb, QLineEdit#LoginPass {
-    background: #F8FAFC; border: 2px solid #E2E8F0;
+    background: #FFFFFF; border: 2px solid #E2E8F0; color: #0F172A;
+}
+
+QComboBox#LoginUserCb QAbstractItemView {
+    background: #FFFFFF; color: #0F172A;
+    selection-background-color: #2563EB; selection-color: #FFFFFF;
 }
 
 QDialog[theme="dark"] QComboBox#LoginUserCb, QDialog[theme="dark"] QLineEdit#LoginPass {
