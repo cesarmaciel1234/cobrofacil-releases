@@ -1,0 +1,234 @@
+/* Plata y texto: formatea $ , detecta oferta, arma el precio vigente y limpia nombres. */
+
+export function nombreVitrina(nombre) {
+    const original = String(nombre || "").trim();
+    const limpio = original.replace(/^oferta\s+(?:de\s+)?/i, "").trim() || original;
+    if (!limpio) return original;
+    
+    // Corrección de errores comunes en nombres de productos
+    const corregido = corregirErroresComunes(limpio);
+    
+    return corregido.replace(/^\p{L}/u, (ch) => ch.toUpperCase());
+}
+
+function corregirErroresComunes(nombre) {
+    const correcciones = {
+        'asadc': 'asado',
+        'asado c': 'asado',
+        'asadoc': 'asado',
+        'pollo entero c': 'pollo entero',
+        'pollo c': 'pollo entero',
+        'bondiola c': 'bondiola',
+        'bife c': 'bife',
+        'milanesa c': 'milanesa',
+    };
+    
+    const nombreLower = nombre.toLowerCase();
+    for (const [error, correcto] of Object.entries(correcciones)) {
+        if (nombreLower === error || nombreLower.endsWith(' ' + error)) {
+            return nombreLower.replace(error, correcto);
+        }
+    }
+    
+    return nombre;
+}
+
+export function formatMoney(value) {
+    const n = Number(value) || 0;
+    const conDecimales = Math.abs(n - Math.round(n)) > 0.001;
+    return new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: conDecimales ? 2 : 0,
+        maximumFractionDigits: conDecimales ? 2 : 0,
+    }).format(n);
+}
+
+export function esPorKg(item) {
+    // 1. Prioridad máxima: lo que dicte el motor del inventario (es_pesable)
+    if (Number(item?.es_pesable || 0) === 1) return true;
+    
+    // 2. Revisar si la cantidad de oferta es fraccional
+    const cant = Number(item?.cant_oferta || 0);
+    if (cant > 0 && cant < 1) return true;
+    
+    // 3. Revisar el tipo de unidad de oferta
+    const tipo = String(item?.tipo_unidad_oferta || "").trim().toLowerCase();
+    if (tipo.includes("kilo") || tipo === "kg") return true;
+    if (tipo.includes("unidad") || tipo === "un" || tipo === "u") return false;
+    
+    // 4. Inferir por nombre de corte de carne (muy preciso)
+    const nombre = String(item?.nombre || "").toLowerCase();
+    const pesables = ["asado", "vacio", "vacío", "costilla", "matambre", "falda", "tapa", "nalga", "cuadril", "cadril", "peceto", "bola de lomo", "bife", "entraña", "chorizo", "morcilla", "chinchulin", "bondiola", "pechito", "pollo", "pata", "muslo", "alita", "suprema", "milanesa", "picada", "roast beef", "aguja", "paleta", "osobuco", "molida", "chuleta", "lomo", "tortuguita"];
+    if (pesables.some(c => nombre.includes(c))) return true;
+
+    // 5. Revisar la unidad general (suele estar mal configurada como UN)
+    const unidad = String(item?.unidad || "").trim().toUpperCase();
+    if (unidad === "KG") return true;
+    if (unidad === "UN" || unidad === "U" || unidad === "UNIDAD") return false;
+    
+    // 6. Inferir por departamento/rubro
+    const rubro = String(item?.departamento || item?.categoria || item?.rubro || "").trim().toLowerCase();
+    if (rubro.includes("carne") || rubro.includes("pollo") || rubro.includes("cerdo") || rubro.includes("pescado") || rubro.includes("fiambre") || rubro.includes("queso") || rubro.includes("fruta") || rubro.includes("verdura") || rubro.includes("achura") || rubro.includes("granja")) {
+        return true;
+    }
+    
+    return false;
+}
+
+export function unidadProducto(item) {
+    return esPorKg(item) ? "kilo" : "unidad";
+}
+
+export function cantMinimaOferta(item) {
+    const directa = Number(item?.cant_oferta || 0);
+    if (directa >= 1) return Math.round(directa);
+    const match = String(item?.productos || "").match(/llev[aá]\s+(\d+(?:[.,]\d+)?)/i);
+    if (match) {
+        const n = Number(match[1].replace(",", "."));
+        if (n >= 1) return Math.round(n);
+    }
+    return 2;
+}
+
+export function leerPrecios(item) {
+    const num = (v) => {
+        const x = Number(v);
+        return Number.isFinite(x) ? x : 0;
+    };
+    const listaGuardada = num(item?.precio_original || item?.precio_anterior);
+    const precioCampo = num(item?.precio);
+    const candidatos = [
+        num(item?.precio_oferta),
+        num(item?.precio_oferta_relampago),
+        num(item?.precio_oferta_promedio),
+    ].filter((x) => x > 0);
+    const maxCand = candidatos.length ? Math.max(...candidatos) : 0;
+    let lista = precioCampo;
+    if (maxCand > 0 && precioCampo > 0 && maxCand > precioCampo) {
+        lista = maxCand;
+    }
+    const original = listaGuardada > lista ? listaGuardada : (lista || listaGuardada);
+    const ofertas = candidatos.filter((x) => x > 0 && original > 0 && x < original);
+    let vigente = precioCampo || original;
+    if (ofertas.length) vigente = Math.min(...ofertas);
+    else if (precioCampo > 0 && original > precioCampo) vigente = precioCampo;
+    const hayOferta = original > vigente && vigente > 0;
+    return { original, vigente, hayOferta };
+}
+
+export function esOferta(producto) {
+    return leerPrecios(producto).hayOferta;
+}
+
+export function precioVigente(producto) {
+    if (!producto) return 0;
+    const { vigente, hayOferta } = leerPrecios(producto);
+    if (hayOferta) return vigente;
+    const relampago = Number(producto.precio_oferta_relampago || 0);
+    const precio = Number(producto.precio || 0);
+    if (relampago > 0 && (precio <= 0 || relampago < precio)) return relampago;
+    return vigente || precio;
+}
+
+export function textoValidezOferta(item) {
+    if (!esOferta(item)) return "";
+    const n = cantMinimaOferta(item);
+    return esPorKg(item)
+        ? `Llevando ${n} kilos o más`
+        : `Llevando ${n} unidades o más`;
+}
+
+export function descuentoPct(original, vigente) {
+    const antes = Number(original) || 0;
+    const ahora = Number(vigente) || 0;
+    if (antes <= 0 || ahora <= 0 || ahora >= antes) return 0;
+    return Math.max(1, Math.round((1 - ahora / antes) * 100));
+}
+
+export function letraVitrina(nombre) {
+    const texto = nombreVitrina(nombre);
+    return (texto.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/) || ["•"])[0].toUpperCase();
+}
+
+export function tonoDepto(item) {
+    const d = `${item?.departamento || ""} ${item?.categoria || ""} ${item?.nombre || ""}`.toLowerCase();
+    if (/ave|pollo|pavo|gallina|alita|suprema|pechuga/.test(d)) return "aves";
+    if (/cerdo|bondiola|chorizo|lech[oó]n|jam[oó]n/.test(d)) return "cerdo";
+    if (/almac[eé]n|fideo|aceite|arroz|bebida|l[aá]cteo/.test(d)) return "almacen";
+    return "carnes";
+}
+
+export function slugNombre(nombre) {
+    return nombreVitrina(nombre)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_|_$/g, "")
+        .slice(0, 60);
+}
+
+const ALIAS_PNG = {
+    suprema: "suprema.png",
+    pechuga: "pechuga.png",
+    bife_chorizo: "bife_de_chorizo.png",
+    milanesa: "milanesa_de_pollo.png",
+    milanesa_de_pollo: "milanesa_de_pollo.png",
+    milanesa_pollo: "milanesa_de_pollo.png",
+    picada: "picada_comun.png",
+    picada_comun: "picada_comun.png",
+    pata_muslo: "pata_y_muslo.png",
+    pata_y_muslo: "pata_y_muslo.png",
+};
+
+export function urlIcono(item) {
+    return urlsFotoProducto(item)[0] || "";
+}
+
+export const FOTO_SISTEMA = "assets/logo_sistema.svg";
+
+export function urlsFotoProducto(item) {
+    const out = [];
+    const push = (u) => {
+        const v = String(u || "").trim();
+        if (v && !out.includes(v)) out.push(v);
+    };
+    const asUrl = (raw) => {
+        const v = String(raw || "").trim();
+        if (!v) return "";
+        if (/^https?:\/\//i.test(v) || v.startsWith("data:") || v.startsWith("assets/")) return v;
+        if (v.startsWith("/iconos/")) return v.replace(/\\/g, "/");
+        const base = v.replace(/\\/g, "/").split("/").pop() || "";
+        if (/\.(png|jpe?g|webp|svg)$/i.test(base)) return `/iconos/${base}`;
+        return "";
+    };
+    push(asUrl(item?.icono_url));
+    push(asUrl(item?.icono));
+    return out;
+}
+
+export function htmlDealStage(item, { off = "", extraClass = "", titulo = "", bolt = true } = {}) {
+    const urls = urlsFotoProducto(item);
+    const url = urls[0] || FOTO_SISTEMA;
+    const fallbacks = urls.slice(1);
+    const letra = letraVitrina(item?.nombre);
+    const onerr = `const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else if(this.src.indexOf('logo_sistema')<0){this.src='${FOTO_SISTEMA}';}else{this.style.opacity='.85';}`;
+    return `
+        <div class="deal-stage${extraClass ? ` ${extraClass}` : ""}" data-tone="${escapeHtml(tonoDepto(item))}">
+            ${url ? `<img class="deal-stage__img" src="${escapeHtml(url)}" alt="" ${fallbacks.length ? `data-fallbacks="${escapeHtml(fallbacks.join("|"))}"` : ""} onerror="${onerr}">` : ""}
+            <span class="deal-stage__letter${url ? " has-img" : ""}">${escapeHtml(letra)}</span>
+            ${titulo ? `<span class="deal-stage__name">${escapeHtml(titulo)}</span>` : ""}
+            ${off ? `<span class="deal-stage__off">${escapeHtml(off)}</span>` : ""}
+        </div>
+    `;
+}
+
+export function escapeHtml(text) {
+    return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}

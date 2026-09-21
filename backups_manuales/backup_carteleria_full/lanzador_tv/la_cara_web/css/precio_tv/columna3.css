@@ -1,0 +1,52 @@
+/* Columna 3: precio vigente y, a la derecha, el tachado. */
+
+html body .tv-3 .flash-offer .tv-card__now-box,
+html body .tv-3 .flash-offer .tv-precio,
+html body .tv-3 .xsell-item__price-row,
+html body .tv-3 .xsell-item .tv-card__now-box {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    gap: 0.75em !important;
+    width: auto !important;
+    max-width: 100% !important;
+    background: transparent !important;
+}
+
+html body .tv-3 .flash-offer .tv-card__now,
+html body .tv-3 .flash-offer .tv-card__now *,
+html body .tv-3 .xsell-item__price,
+html body .tv-3 .xsell-item__price * {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .tv-3 .flash-offer .tv-card__was,
+html body .tv-3 .xsell-item__was {
+    display: inline-block !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    position: relative !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-size: clamp(1.05rem, 1.55cqw, 1.4rem) !important;
+    text-decoration: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+html body[data-theme="premium"] .tv-3 .flash-offer .tv-card__was,
+html body[data-theme="black"] .tv-3 .flash-offer .tv-card__was,
+html body[data-theme="blackfriday"] .tv-3 .flash-offer .tv-card__was,
+html body[data-theme="premium"] .tv-3 .xsell-item__was,
+html body[data-theme="black"] .tv-3 .xsell-item__was,
+html body[data-theme="blackfriday"] .tv-3 .xsell-item__was {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}

@@ -176,7 +176,7 @@ class VentasRepoMixin:
             for det in detalles:
                 prod_id = det['id_producto']
                 if prod_id and str(prod_id).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ? OR codigo = ?", (det['cantidad'], prod_id, prod_id))
+                    cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ?", (det['cantidad'], prod_id))
             
             try:
                 cursor.execute(

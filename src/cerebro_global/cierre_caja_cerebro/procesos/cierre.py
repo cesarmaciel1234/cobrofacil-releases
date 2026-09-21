@@ -114,11 +114,96 @@ def cerrar_caja(
     c_id = _caja_int(caja_id)
     user = str(username or "cajero").strip() or "cajero"
 
-    if not _insertar_movimiento(db, fecha, tipo_cierre, float(fisico or 0), user, obs, c_id):
-        err = getattr(db, "last_error", None) or "no se pudo grabar movimientos_caja"
-        logger.error("Corte cajero NO registrado (caja=%s user=%s): %s", c_id, user, err)
-        raise RuntimeError(f"El corte no se grabó en la base.\n{err}")
+    # VALIDACIÓN DE DOBLE CIERRE (P2)
+    # Validamos que el último movimiento no haya sido ya un cierre.
+    last_mov = db.execute_query(
+        "SELECT tipo FROM movimientos_caja WHERE caja_id = ? ORDER BY id DESC LIMIT 1",
+        (c_id,)
+    )
+    if last_mov:
+        tipo_last = _celda(last_mov[0], "tipo", 0)
+        if tipo_last in ["CIERRE_TURNO", "CIERRE_Z"]:
+            logger.error("Caja %s ya se encuentra cerrada.", c_id)
+            raise RuntimeError(f"La caja {c_id} ya se encuentra cerrada (Último mov: {tipo_last}). No hay turno activo.")
 
+    desde = _apertura_fecha(db, c_id, user if modo_n == "cajero" else None)
+    if not desde:
+        desde = datetime.now().strftime("%Y-%m-%d") + " 00:00:00"
+
+    # OPERACIONES ATÓMICAS (P1)
+    conn = None
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # INSERTAR MOVIMIENTO
+        query_insert = "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, ?, ?, ?, ?, ?)"
+        cursor.execute(db._normalize_query(query_insert), (fecha, tipo_cierre, float(fisico or 0), user, obs, c_id))
+        
+        # ACTUALIZAR VENTAS
+        if modo_n == "cajero":
+            query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
+            cursor.execute(db._normalize_query(query_update), (user, c_id, desde))
+        else:
+            query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
+            cursor.execute(db._normalize_query(query_update), (c_id, desde))
+            
+        conn.commit()
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except: pass
+            
+        err = str(e)
+        logger.error("Error atómico en cierre (caja=%s user=%s): %s", c_id, user, err)
+        
+        # Fallback de compatibilidad MariaDB antigua (sin caja_id)
+        if "caja_id" in err.lower() or "unknown column" in err.lower():
+            try:
+                cursor = conn.cursor()
+                query_insert_fallback = "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones) VALUES (?, ?, ?, ?, ?)"
+                cursor.execute(db._normalize_query(query_insert_fallback), (fecha, tipo_cierre, float(fisico or 0), user, obs))
+                
+                if modo_n == "cajero":
+                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
+                    cursor.execute(db._normalize_query(query_update), (user, c_id, desde))
+                else:
+                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
+                    cursor.execute(db._normalize_query(query_update), (c_id, desde))
+                
+                conn.commit()
+            except Exception as e2:
+                if conn:
+                    try: conn.rollback()
+                    except: pass
+                logger.error("Fallback también falló: %s", str(e2))
+                raise RuntimeError(f"El corte no se grabó en la base.\n{str(e2)}")
+        elif "data truncated" in err.lower() or "enum" in err.lower() or "incorrect" in err.lower():
+            try:
+                cursor = conn.cursor()
+                cursor.execute(db._normalize_query("ALTER TABLE movimientos_caja MODIFY COLUMN tipo VARCHAR(64)"))
+                cursor.execute(db._normalize_query(query_insert), (fecha, tipo_cierre, float(fisico or 0), user, obs, c_id))
+                
+                if modo_n == "cajero":
+                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
+                    cursor.execute(db._normalize_query(query_update), (user, c_id, desde))
+                else:
+                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
+                    cursor.execute(db._normalize_query(query_update), (c_id, desde))
+                
+                conn.commit()
+            except Exception as e3:
+                if conn:
+                    try: conn.rollback()
+                    except: pass
+                raise RuntimeError(f"El corte no se grabó en la base.\n{str(e3)}")
+        else:
+            raise RuntimeError(f"El corte no se grabó en la base.\n{err}")
+    finally:
+        if conn:
+            conn.close()
+
+    # Comprobación final de lectura (SQLite local vs MariaDB)
     check = db.execute_query(
         "SELECT id FROM movimientos_caja WHERE tipo = ? AND usuario = ? AND fecha = ? "
         "ORDER BY id DESC LIMIT 1",
@@ -139,22 +224,5 @@ def cerrar_caja(
         user,
         fisico,
     )
-
-    desde = _apertura_fecha(db, c_id, user if modo_n == "cajero" else None)
-    if not desde:
-        desde = datetime.now().strftime("%Y-%m-%d") + " 00:00:00"
-
-    if modo_n == "cajero":
-        db.execute_non_query(
-            "UPDATE ventas SET estado = 'CERRADA' "
-            "WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?",
-            (user, c_id, desde),
-        )
-    else:
-        db.execute_non_query(
-            "UPDATE ventas SET estado = 'CERRADA' "
-            "WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?",
-            (c_id, desde),
-        )
 
     return True

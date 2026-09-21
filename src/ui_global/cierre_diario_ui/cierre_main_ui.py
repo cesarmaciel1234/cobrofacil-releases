@@ -119,7 +119,7 @@ class CierreGlobalUI(QWidget):
     request_dashboard = pyqtSignal()
     turno_cerrado = pyqtSignal()
 
-    def __init__(self, parent_main=None, is_terminal=False):
+    def __init__(self, parent_main=None, is_terminal=False, force_z=False):
         super().__init__(parent_main)
         self.is_terminal = is_terminal
         self.parent_main = parent_main
@@ -128,7 +128,7 @@ class CierreGlobalUI(QWidget):
             str(current.get("username") or current.get("user") or "").strip() or "cajero"
         )
         self.rol = str(current.get("rol") or current.get("role") or "cajero").upper()
-        self.modo_vista = "cajero"
+        self.modo_vista = "admin" if force_z else "cajero"
         self.datos_actuales = {}
         self._setup_ui()
         self._load_data()

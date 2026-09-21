@@ -1,0 +1,124 @@
+:root {
+    --bg-primary:      #050505;
+    --bg-secondary:    #0B0B0D;
+    --surface-primary: rgba(8, 8, 10, 0.92);
+    --text-primary:    #F4F4F5;
+    --text-secondary:  #C9A227;
+    --accent-primary:  #D4AF37;
+    --accent-secondary:#C0C0C8;
+    --accent-rgb:      212, 175, 55;
+    --border-subtle:   rgba(192, 192, 200, 0.35);
+    --success-color:   #34D399;
+    --shadow-card:     0 12px 32px rgba(0, 0, 0, 0.65);
+    --shadow-soft:     0 6px 18px rgba(0, 0, 0, 0.45);
+
+    --screen-bg:             #000000;
+    --panel-bg:              rgba(10, 10, 12, 0.72);
+    --strip-bg:              linear-gradient(90deg, #000000, #1A160C 45%, #0A0A0C);
+    --strip-text:            #E8D48B;
+    --strip-ends-text:       #C0C0C8;
+    --strip-dot:             #D4AF37;
+    --strip-accent:          #C0C0C8;
+    --strip-count-bg:        #D4AF37;
+    --strip-count-text:      #111111;
+
+    --footer-bg:             linear-gradient(90deg, #050505, #16120A, #050505);
+    --marquee-text:          #E8D48B;
+
+    --card-bg:               linear-gradient(145deg, #141416, #070708);
+    --card-border:           rgba(212, 175, 55, 0.45);
+    --card-shadow:           0 14px 36px rgba(0, 0, 0, 0.7);
+    --card-text:             #F8F8F8;
+    --card-text-sub:         #C0C0C8;
+
+    --stage-default-bg:      radial-gradient(circle at 50% 30%, #3A3424 0%, #0A0A0C 70%);
+    --stage-aves-bg:         radial-gradient(circle at 50% 30%, #4A3A18 0%, #0A0A0C 70%);
+    --stage-cerdo-bg:        radial-gradient(circle at 50% 30%, #3A2418 0%, #0A0A0C 70%);
+    --stage-almacen-bg:      radial-gradient(circle at 50% 30%, #24282A 0%, #0A0A0C 70%);
+
+    --price-now-color:       #111111;
+    --price-now-bg:          linear-gradient(135deg, #FFDF00, #C9A227);
+    --price-now-text:        #111111;
+    --price-was:             #8A8A92;
+    --price-deal-color:      #D4AF37;
+    --price-row-bg:          transparent;
+
+    --badge-bg:              linear-gradient(135deg, #8A1A1A, #C41E3A);
+    --badge-text:            #FFFFFF;
+    --badge-off-bg:          #C41E3A;
+    --badge-off-text:        #FFFFFF;
+    --off-badge-bg:          #C41E3A;
+    --off-badge-text:        #FFFFFF;
+
+    --kicker-color:          #C0C0C8;
+    --categoria-color:       #D4AF37;
+    --meta-color:            #C0C0C8;
+    --rule-color:            #D4AF37;
+    --unit-color:            #C0C0C8;
+
+    --chip-bg:               #D4AF37;
+    --chip-text:             #111111;
+    --save-bg:               #1A160C;
+    --save-text:             #E8D48B;
+    --timer-bg:              #C0C0C8;
+    --timer-text:            #111111;
+    --timer-deal-bg:         #D4AF37;
+    --timer-deal-text:       #111111;
+    --timer-urgent-bg:       #C41E3A;
+    --deal-save-color:       #E8D48B;
+    --proof-color:           #C0C0C8;
+    --proof-low-color:       #D4AF37;
+
+    --dept-bg:               transparent;
+    --dept-text:             #C0C0C8;
+    --dept-accent:           #D4AF37;
+    --ad-bg:                 #141416;
+    --ad-text:               #E8D48B;
+    --tile-bg:               #0B0B0D;
+
+    --col4-card-bg:          #0B0B0D;
+    --col4-card-border:      rgba(192, 192, 200, 0.35);
+    --col4-badge-bg:         #C41E3A;
+    --col4-badge-text:       #FFFFFF;
+    --col4-name-color:       #FFFFFF;
+    --col4-price-color:      #111111;
+    --col4-price-bg:         linear-gradient(135deg, #FFDF00, #C9A227);
+    --col4-price-text:       #111111;
+    --col4-label-color:      #D4AF37;
+    --col4-desc-color:       #C0C0C8;
+    --col4-sold-color:       #D4AF37;
+    --col4-buyers-color:     #C0C0C8;
+    --col4-img-fallback-bg:  #1A160C;
+    --col4-hot-badge-bg:     #C41E3A;
+    --col4-new-badge-bg:     #C0C0C8;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #D4AF37, #C0C0C8);
+    --col4-prog-track:       #1A1A1E;
+
+    --stage-name-color:      #FFFFFF;
+
+    --rank-card-bg:          linear-gradient(90deg, #121214 0%, #F4EEE6 48%, #E8E4F0 100%);
+    --rank-card-border:      rgba(232, 228, 240, 0.45);
+    --rank-card-shadow:      0 10px 24px rgba(0, 0, 0, 0.55);
+    --rank-top1-bg:          linear-gradient(90deg, #3A2E10 0%, #D4AF37 50%, #FFF4C2 100%);
+    --rank-top1-border:      #E8D48B;
+    --rank-top1-shadow:      0 12px 28px rgba(212, 175, 55, 0.45);
+    --rank-top2-bg:          linear-gradient(90deg, #1A1A1E 0%, #C0C0C8 55%, #F2F2F6 100%);
+    --rank-top2-border:      #C0C0C8;
+    --rank-top3-bg:          linear-gradient(90deg, #1A120C 0%, #CD7F32 55%, #E8C4A0 100%);
+    --rank-top3-border:      #CD7F32;
+    --rank-badge-bg:         #111111;
+    --rank-badge-color:      #D4AF37;
+    --rank-badge-top1-bg:    #111111;
+    --rank-badge-top1-color: #FFDF00;
+    --rank-name-color:       #FFFFFF;
+    --rank-top1-name-color:  #111111;
+    --rank-bar-bg:           linear-gradient(90deg, #D4AF37, #C0C0C8);
+    --rank-bar-track:        rgba(0, 0, 0, 0.35);
+    --rank-tag-color:        #111111;
+    --rank-social-color:     #C0C0C8;
+    --rank-top1-social-color:#3A2E10;
+    --rank-fire-shadow:      rgba(212, 175, 55, 0.5);
+    --rank-dot-bg:           #2A2A30;
+    --rank-dot-active:       #D4AF37;
+    --rank-progress-bar:     linear-gradient(90deg, #D4AF37, #C0C0C8);
+}

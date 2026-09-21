@@ -207,10 +207,20 @@ QFrame#Paso6Main[theme="dark"] QFrame#KbFrame { background-color: #1E293B; borde
 
 
 QFrame#Paso6Main[theme="dark"] QLineEdit#InputPago {
-    background: #1E293B; border: 1.5px solid #334155; border-radius: 16px; padding: 10px 16px; font-size: 28px; font-weight: 900; color: #38BDF8; font-family: 'Segoe UI', sans-serif;
+    background-color: #0F172A !important;
+    border: 2px solid #334155 !important;
+    border-radius: 20px !important;
+    padding: 15px 20px !important;
+    font-size: 38px !important;
+    font-weight: 900 !important;
+    color: #F8FAFC !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    selection-background-color: #3B82F6 !important;
 }
 
-QFrame#Paso6Main[theme="dark"] QLineEdit#InputPago:focus { border: 2px solid #3B82F6; background: #0F172A; color: #F8FAFC; }
+
+
+
 
 
 QFrame#Paso6Main[theme="dark"] QLineEdit#InputDesc {
@@ -240,11 +250,21 @@ QFrame#Paso6Main[theme="light"] QFrame#RightPanel { background-color: #F8FAFC; b
 QFrame#Paso6Main[theme="light"] QFrame#KbFrame { background-color: #F1F5F9; border-radius: 20px; border: 1px solid #E2E8F0; }
 
 
-QFrame#Paso6Main[theme="light"] QLineEdit#InputPago {
-    background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 10px 16px; font-size: 28px; font-weight: 900; color: #1E3A8A; font-family: 'Segoe UI', sans-serif;
+QFrame#Paso6Main[theme="dark"] QLineEdit#InputPago {
+    background-color: #0F172A !important;
+    border: 2px solid #334155 !important;
+    border-radius: 20px !important;
+    padding: 15px 20px !important;
+    font-size: 38px !important;
+    font-weight: 900 !important;
+    color: #F8FAFC !important;
+    font-family: 'Segoe UI', sans-serif !important;
+    selection-background-color: #3B82F6 !important;
 }
 
-QFrame#Paso6Main[theme="light"] QLineEdit#InputPago:focus { border: 2px solid #3B82F6; background: rgba(59, 130, 246, 0.04); color: #0F172A; }
+
+
+
 
 
 QFrame#Paso6Main[theme="light"] QLineEdit#InputDesc {

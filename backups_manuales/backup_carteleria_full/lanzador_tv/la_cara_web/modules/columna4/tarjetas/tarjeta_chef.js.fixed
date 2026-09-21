@@ -1,0 +1,96 @@
+﻿function htmlCarruselOfertas(ofertas = []) {
+    const items = ofertas.slice(0, 6);
+
+    const itemsHtml = items.map((item, idx) => {
+        const nombre = nombreVitrina(item.nombre);
+        
+        let precioVigenteVal = precioVigente(item) || item.precio;
+        let precioOriginalVal = item.precio_original || item.precio_anterior || item.precio || precioVigenteVal;
+        
+        const precioStr = formatMoney(precioOriginalVal);
+        const precioVigenteStr = formatMoney(precioVigenteVal);
+        const descuento = descuentoPct(precioOriginalVal, precioVigenteVal);
+        const kicker = esOferta(item) ? "🔥 OFERTA" : "⭐⭐⭐⭐⭐";
+        
+        const vendidosReales = Number(item.cantidad || item.vendidos || item.cantidad_vendida || item.ventas_dia || item.ventas || item.volumen_dia || item.volumen || 0);
+        const ticketsReales = Number(item.tickets || item.veces || item.tickets_dia || item.cantidad_tickets || 0);
+        
+        let porcentajeVisual = 0;
+        let comprando = ticketsReales;
+        let textoProgreso = "";
+        let textoSocial = "";
+
+        if (vendidosReales > 0) {
+            const stockTotal = Number(item.stock_inicial || item.stock || (vendidosReales * 5)); // Estimate stock if missing so bar looks decent
+            porcentajeVisual = Math.min(100, Math.max(5, Math.round((vendidosReales / Math.max(vendidosReales, stockTotal)) * 100)));
+            
+            // "5 KG VENDIDOS" en lugar de "5% VENDIDO"
+            const kilosMostrables = vendidosReales % 1 !== 0 ? vendidosReales.toFixed(2) : vendidosReales;
+            textoProgreso = kilosMostrables + " KG VENDIDOS";
+            
+            textoSocial = "<strong>" + comprando + "</strong> " + (comprando === 1 ? "FAMILIA COMPRÓ HOY" : "FAMILIAS COMPRARON HOY");
+        } else {
+            porcentajeVisual = 0; 
+            textoProgreso = "STOCK DISPONIBLE";
+            textoSocial = "<strong>NUEVO</strong> INGRESO EN LOCAL";
+        }
+
+        const fondo = PALETA_FONDOS[idx % PALETA_FONDOS.length];
+
+        const fotos = urlsFotoProducto(item);
+        const iconoUrl = fotos[0] || FOTO_SISTEMA;
+        const resto = fotos.slice(1).join("|");
+        const imagenHtml = `<img src="${escapeHtml(iconoUrl)}" alt="${escapeHtml(nombre)}" loading="lazy" data-fallbacks="${escapeHtml(resto)}" onerror="const q=(this.dataset.fallbacks||'').split('|').filter(Boolean);if(q.length){this.src=q.shift();this.dataset.fallbacks=q.join('|');}else{this.src='${FOTO_SISTEMA}';}">`;
+
+        // Solo mostrar precio tachado si de verdad hay oferta real
+        const htmlPrecioViejo = (precioOriginalVal > precioVigenteVal) ? `<span class="asian-flash-original">${escapeHtml(precioStr)}</span>` : "";
+        
+        // Mostrar condicion solo si existe
+        const regla = textoValidezOferta(item);
+        const htmlCondicion = regla ? `<div class="asian-flash-condition">${escapeHtml(regla)}</div>` : `<div class="asian-flash-condition" style="visibility:hidden">Sin condición</div>`;
+
+        return `
+            <article class="asian-flash-product cascade-enter" style="animation-delay: ${idx * 0.2}s">
+                <div class="asian-flash-badge">${esOferta(item) && descuento ? `-${descuento}%` : `TOP ${idx + 1}`}</div>
+                <div class="asian-flash-product-image" style="background:${fondo};">
+                    ${imagenHtml}
+                    <div class="asian-flash-product-tag">${escapeHtml(kicker)}</div>
+                </div>
+                <div class="asian-flash-product-info">
+                    <div>
+                        <h3 class="asian-flash-product-name">${escapeHtml(nombre)}</h3>
+                          <div class="asian-flash-prices tv-card__now-box">
+                              <strong class="asian-flash-current">$${escapeHtml(precioVigenteStr.replace(/^\$\s*/, ""))}</strong>
+                              ${htmlPrecioViejo}
+                          </div>
+                          ${htmlCondicion}
+                          <div class="asian-flash-progress card-progress">
+                            <div class="asian-flash-progress-bar" style="width: ${porcentajeVisual}%;"></div>
+                            <div class="asian-flash-progress-text">${textoProgreso}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="asian-flash-social">
+                            <div class="asian-flash-avatars">
+                                <div class="asian-flash-avatar">🔥</div>
+                            </div>
+                            <span class="asian-flash-social-text">${textoSocial}</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
+    
+    const infiniteScroll = itemsHtml.repeat(3); 
+    
+    return `
+        <div class="asian-flash-container">
+            <div class="chef-carousel">
+                <div class="chef-carousel-track" id="columna4CarouselTrack">
+                    ${infiniteScroll}
+                </div>
+            </div>
+        </div>
+    `;
+}

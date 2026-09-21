@@ -174,9 +174,9 @@ class NexusController(QObject):
             
             if engine:
                 if self.current_caja_filter == "todas":
-                    engine.broadcast("FORCE_Z_CUT", {"caja_id": "all"})
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": "all", "token": "nexus_admin_5544"})
                 else:
-                    engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter})
+                    engine.broadcast("FORCE_Z_CUT", {"caja_id": self.current_caja_filter, "token": "nexus_admin_5544"})
                 
                 # Registrar en Terminal SYS.OP con formato estructurado
                 if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_structured_log'):
@@ -246,7 +246,7 @@ class NexusController(QObject):
             
             time_str = datetime.now().strftime("%H:%M:%S // %d-%m-%Y")
             if hasattr(self.view, 'lbl_reloj'):
-                self.view.lbl_reloj.setText(f"{time_str}  |  ?? TERMINALES ACTIVAS: {activos}")
+                self.view.lbl_reloj.setText(f"{time_str}  |  TERMINALES ACTIVAS: {activos}")
 
         except Exception as e:
             pass
@@ -281,6 +281,7 @@ class NexusController(QObject):
             
         if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'agregar_log'):
             self.view.panel_der.agregar_log(f"PC-{origen_id}", f"[{cat}] {msg}", None)
+
     def _inyectar_ruido_red(self):
         eventos = [
             ("SYNC", "Protocolo DB Sincronizado"),

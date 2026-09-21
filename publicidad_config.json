@@ -1,16 +1,8 @@
 {
     "promocionados": [
-        "Cadril",
-        "Falda",
-        "Oferta Picada Comun",
-        "Pollo Trozado",
-        "Vacio"
+        "hamburguesa"
     ],
     "ids": [
-        2147483647,
-        80,
-        310,
-        720,
-        20
+        950
     ]
 }

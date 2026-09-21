@@ -80,10 +80,8 @@ class MainWindow(QMainWindow):
         # Llamarlo en __init__ era un doble-procesamiento innecesario.
         self._init_global_alarm()
         self._init_security_monitor()
-        from src.central_red_global.network_engine import get_network_engine
-        engine = get_network_engine()
-        if engine:
-            engine.message_received.connect(self._on_udp_message_received)
+        
+        # Network Engine se conectará más tarde, después de definir todos los métodos
 
         self._init_update_banner()
 
@@ -101,6 +99,9 @@ class MainWindow(QMainWindow):
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(5000, self._chequear_actualizaciones_bg)
+        
+        # Inicializar Network Engine al final del constructor (después de definir todos los métodos)
+        self._init_network_engine()
 
     def _init_security_monitor(self):
         """Vigilancia del cajón: no rompe la UI si el hardware falla o aún no hay ticketera."""
@@ -125,6 +126,26 @@ class MainWindow(QMainWindow):
             drawer_manager.check_status()
         except Exception:
             logger.debug("tick vigilancia cajón", exc_info=True)
+
+    def _init_network_engine(self):
+        """Inicializa Network Engine con rol específico y conecta señales UDP"""
+        try:
+            from src.central_red_global.network_engine import get_network_engine, init_network_engine
+            from src.config import config
+            
+            # Determinar rol para Network Engine
+            user = config.current_user or {}
+            role = (user.get("role") or user.get("rol") or "cajero").lower()
+            
+            # Inicializar Network Engine con rol específico
+            engine = init_network_engine(role)
+            if engine:
+                engine.message_received.connect(self._on_udp_message_received)
+                print(f"[DEBUG] NetworkEngine inicializado con rol: {role}")
+            else:
+                print(f"[DEBUG] ERROR: NetworkEngine no se pudo inicializar")
+        except Exception as e:
+            print(f"[DEBUG] Error inicializando Network Engine: {e}")
 
     def _on_security_breach(self):
         self.mostrar_alerta_perimetral(True, modo="security")
@@ -962,30 +983,74 @@ class MainWindow(QMainWindow):
         
         self.marco_alerta.raise_()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    win = MainWindow()
-    win.show()
-    sys.exit(qt_exec(app))
-
-
     def _on_udp_message_received(self, origen, tipo, datos):
+        print(f"[DEBUG] UDP recibido: origen={origen}, tipo={tipo}, datos={datos}")
+        
+        # Validación de seguridad básica (Autenticación)
+        token = datos.get("token")
+        if token != "nexus_admin_5544":
+            print("[DEBUG] UDP rechazado: Token inválido o ausente.")
+            return
+
         if tipo == "FORCE_Z_CUT":
             caja_id_raw = str(datos.get("caja_id", "todas")).lower()
             from src.config import config
             current_caja = str(config.get("caja_id", 1))
             
+            print(f"[DEBUG] FORCE_Z_CUT: caja_id_raw={caja_id_raw}, current_caja={current_caja}")
+            
             import re
             match = re.search(r'\d+', caja_id_raw)
             caja_num = match.group() if match else None
             
+            print(f"[DEBUG] caja_num extraído: {caja_num}")
+            
             if "all" in caja_id_raw or "todas" in caja_id_raw or caja_num == current_caja:
-                if hasattr(self, 'switch_tab'):
-                    self.switch_tab(7)
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Orden de Cierre", "El Centro de Control (NEXUS) ordenó un cierre Z inmediato.")
+                print(f"[DEBUG] Condición cumplida, procesando orden de CIERRE_Z forzado...")
+                # Ignorar el rol para forzar CIERRE_Z en terminal
+                from PyQt6.QtWidgets import QMessageBox
+                
+                print(f"[DEBUG] Navegando a pantalla de cierre en modo admin...")
+                # Forzar la apertura del diálogo en modo Z
+                self._open_cierre_dialog_directly(force_z=True)
+            else:
+                print(f"[DEBUG] Condición NO cumplida, ignorando orden")
+
+    def _open_cierre_dialog_directly(self, force_z=False):
+        """Abre directamente el diálogo de cierre sin pasar por pantalla_ventas"""
+        try:
+            from PyQt6.QtWidgets import QDialog, QVBoxLayout, QMessageBox
+            from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
+            
+            print(f"[DEBUG] Abriendo diálogo de cierre directamente...")
+            
+            dlg = QDialog(self)
+            dlg.setWindowTitle("Cierre de Caja - Orden NEXUS")
+            dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+            dlg.setFixedSize(1200, 900)
+            lay = QVBoxLayout(dlg)
+            lay.setContentsMargins(0, 0, 0, 0)
+            
+            cierre = CierreGlobalUI(self, is_terminal=True, force_z=force_z)
+            cierre.btn_back.setText("❌ Cerrar")
+            cierre.request_dashboard.connect(dlg.reject)
+            lay.addWidget(cierre)
+            
+            QMessageBox.warning(self, "Orden de Cierre", "El Centro de Control (NEXUS) ordenó un cierre Z inmediato.")
+            dlg.exec()
+            
+        except Exception as e:
+            print(f"[DEBUG] Error abriendo diálogo directamente: {e}")
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Error", f"No se pudo abrir el cierre de caja: {e}")
 
     def _on_turno_cerrado_global(self):
         from PyQt6.QtWidgets import QMessageBox
         QMessageBox.information(self, "Sistema Bloqueado", "El turno ha sido cerrado exitosamente. El sistema se cerrará por seguridad para evitar ventas huérfanas.")
         self._logout_to_selector()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    win = MainWindow()
+    win.show()
+    sys.exit(qt_exec(app))

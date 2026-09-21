@@ -1,0 +1,27 @@
+/* Condición de oferta: naranja y grande. */
+
+body .tv-panel .deal-save,
+body .tv-panel .xsell-item__rule,
+body .tv-panel .price-row__rule,
+body .tv-panel .asian-flash-condition,
+body .tv-panel .flash-offer .deal-save,
+html body .hero-section .oferta-card .deal-save {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    color: #FF3300 !important;
+    -webkit-text-fill-color: #FF3300 !important;
+    font-weight: 900 !important;
+    font-size: clamp(0.95rem, 1.35cqw, 1.2rem) !important;
+    line-height: 1.15 !important;
+    margin: 0.35em 0 0 !important;
+    text-shadow: none !important;
+}
+
+html body .hero-section .oferta-card .deal-save {
+    font-size: clamp(1.05rem, 1.5cqw, 1.28rem) !important;
+}

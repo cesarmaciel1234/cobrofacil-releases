@@ -28,8 +28,6 @@ class SelectorMetodoPago(QWidget):
             ("💳", "Crédito", "Tarjeta"), 
             ("🏦", "Transf.", "Transferencia"),
             ("📱", "QR", "QR"),
-            ("👥", "Fiado", "Fiado"),
-            ("👤", "Clientes", "Clientes"),
             ("🔀", "Mixto", "Mixto")
         ]
         
@@ -64,11 +62,11 @@ class SelectorMetodoPago(QWidget):
                         border: 2.5px solid #3B82F6;
                     }
                     QFrame:hover {
-                        background: #334155;
-                        border-color: #3B82F6;
-                        margin-top: 0px;
-                        margin-bottom: 4px;
-                    }
+                    background: #334155;
+                    border-color: #475569;
+                    margin-top: 0px;
+                    margin-bottom: 4px;
+                }
                 """)
             else:
                 container.setStyleSheet("""
@@ -87,11 +85,11 @@ class SelectorMetodoPago(QWidget):
                         border: 2.5px solid #3B82F6;
                     }
                     QFrame:hover {
-                        background: #F8FAFC;
-                        border-color: #3B82F6;
-                        margin-top: 0px;
-                        margin-bottom: 4px;
-                    }
+                    background: #F8FAFC;
+                    border-color: #E2E8F0;
+                    margin-top: 0px;
+                    margin-bottom: 4px;
+                }
                 """)
             container.setProperty("active", False)
             
@@ -136,7 +134,7 @@ class SelectorMetodoPago(QWidget):
             self.grid_layout.addWidget(container, row, col)
             
             col += 1
-            if col > 3:
+            if col > 4:
                 col = 0
                 row += 1
 

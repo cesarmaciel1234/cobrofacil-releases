@@ -1,0 +1,141 @@
+﻿/* 
+   TEMA TEMU - ESTILO LIMPIO Y MODERNO
+   Fondo claro, detalles en rojo/naranja vibrante.
+*/
+
+:root {
+    /* PANTALLA / FONDO */
+    --screen-bg:             #FFE8D2;
+    --panel-bg:              #FFFFFF;
+    --panel-border:          rgba(0, 0, 0, 0.05);
+
+    /* TEXTO GLOBAL */
+    --text-primary:          #5C2E14;
+    --text-secondary:        #A85A2A;
+    --text-main:             #5C2E14;
+    --text-sub:              #A85A2A;
+    --text-muted:            #999999;
+    --text-on-dark:          #FFFFFF;
+    --text-on-accent:        #FFFFFF;
+
+    /* ACENTO / BRAND */
+    --accent:                #FF3300;
+    --accent-alt:            #FF0055;
+    --accent-2:              #FF8800;
+
+    /* FRANJA SUPERIOR (flash-strip) - Rojo vibrante */
+    --strip-bg:              linear-gradient(90deg, #FF3300, #FF0055);
+    --strip-text:            #FFFFFF;
+    --strip-ends-text:       #FFFFFF;
+    --strip-dot:             #FFFFFF;
+    --strip-accent:          #FFD700;
+    --strip-count-bg:        #FFFFFF;
+    --strip-count-text:      #FF3300;
+
+    /* RELOJ / BADGE DE ESTADO */
+    --badge-surface:         #FFFFFF;
+    --clock-bg:              #FFFFFF;
+    --clock-text:            #FF3300;
+
+    /* ZOCALO / MARQUESINA */
+    --footer-bg:             linear-gradient(90deg, #FF6A00, #FF3300, #FF8800);
+    --zocalo-bg:             #F5F5F5;
+    --zocalo-border:         rgba(0, 0, 0, 0.05);
+    --marquee-text:          #FFFFFF;
+
+    /* TARJETA GENERICA */
+    --card-bg:               #FFFFFF;
+    --card-border:           rgba(0, 0, 0, 0.05);
+    --card-shadow:           0 4px 15px rgba(0, 0, 0, 0.05);
+    --card-text:             #5C2E14;
+    --card-text-sub:         #6B7280;
+
+    /* CARRUSEL - deal-stage */
+    --stage-default-bg:      #FFFFFF;
+    --stage-aves-bg:         #FFFFFF;
+    --stage-cerdo-bg:        #FFFFFF;
+    --stage-almacen-bg:      #FFFFFF;
+
+    /* PRECIOS / DESCUENTOS */
+    --price-now-color:       #FF3300;
+    --price-now-bg:          #FF3300;
+    --price-now-text:        #FFFFFF;
+    --price-was:             #9CA3AF;
+    --price-deal-color:      #FF3300;
+    --price-row-bg:          #FFFFFF;
+
+    /* BADGES */
+    --badge-bg:              linear-gradient(135deg, #FF3300, #FF0055);
+    --badge-text:            #FFFFFF;
+    --badge-off-bg:          #FF3300;
+    --badge-off-text:        #FFFFFF;
+    --off-badge-bg:          #FF3300;
+    --off-badge-text:        #FFFFFF;
+
+    /* KICKER / CATEGORIA */
+    --kicker-color:          #FF3300;
+    --categoria-color:       #FF3300;
+    --meta-color:            #FF3300;
+    --rule-color:            #FF8800;
+    --unit-color:            #FF3300;
+
+    /* CHIP / AHORRO / TIMER */
+    --chip-bg:               #FFF0ED;
+    --chip-text:             #FF3300;
+    --save-bg:               #FFF0ED;
+    --save-text:             #FF3300;
+    --timer-bg:              #FF3300;
+    --timer-text:            #FFFFFF;
+    --timer-deal-bg:         #FF3300;
+    --timer-deal-text:       #FFFFFF;
+    --timer-urgent-bg:       #E11D48;
+    --deal-save-color:       #FF3300;
+    --proof-color:           #777777;
+    --proof-low-color:       #FF3300;
+
+    /* COLUMNA 2 - PRECIOS */
+    --dept-bg:               #FF3300;
+    --dept-text:             #FFFFFF;
+    --dept-accent:           #FFFFFF;
+    --ad-bg:                 #FF3300;
+    --ad-text:               #FFFFFF;
+    --tile-bg:               #FFFFFF;
+
+    /* COLUMNA 4 - TARJETA CHEF */
+    --col4-card-bg:          #FFFFFF;
+    --col4-card-border:      rgba(0, 0, 0, 0.08);
+    --col4-badge-bg:         #FF3300;
+    --col4-badge-text:       #FFFFFF;
+    --col4-name-color:       #111111;
+    --col4-price-color:      #FFFFFF;
+    --col4-price-bg:         #FF3300;
+    --col4-price-text:       #FFFFFF;
+    --col4-label-color:      #FF3300;
+    --col4-desc-color:       #666666;
+    --col4-sold-color:       #FF3300;
+    --col4-buyers-color:     #666666;
+    --col4-img-fallback-bg:  #F8F9FA;
+    --col4-hot-badge-bg:     #FF8800;
+    --col4-new-badge-bg:     #00C9FF;
+    --col4-prog-bar-bg:      linear-gradient(90deg, #FF3300, #FF0055);
+    --col4-prog-track:       #F0F0F0;
+
+    /* STAGE NAME en CARRUSEL */
+    --stage-name-color:      #5C2E14;
+    --col4-name-color:       #5C2E14;
+    --rank-name-color:       #5C2E14;
+    --rank-top1-name-color:  #FF3300;
+    --rank-tag-color:        #FF8800;
+    --tv-4-bg:               #FFE8D2;
+    --asian-flash-container-bg: transparent;
+    --rank-card-bg:          #FFF7F0;
+    --rank-card-border:      #FF7A1A;
+    --rank-bar-bg:           linear-gradient(90deg, #FF3300, #FF0055);
+    --rank-bar-track:        #FFE8D2;
+    --rank-tag-color:        #FF8800;
+    --rank-social-color:     #FF3300;
+    --rank-fire-shadow:      rgba(255,51,0,0.4);
+    --rank-dot-bg:           #E5E7EB;
+    --rank-dot-active:       #FF3300;
+    --rank-progress-bar:     linear-gradient(90deg, #FF3300, #FF0055);
+}

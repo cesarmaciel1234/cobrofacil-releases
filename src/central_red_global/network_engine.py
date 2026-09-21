@@ -129,7 +129,7 @@ class NetworkEngine(QObject):
                     continue
 
                 origen = str(payload.get("origen", ""))
-                if not origen or origen == self._origen:
+                if not origen:
                     continue
 
                 tipo = str(payload.get("tipo", "MENSAJE"))

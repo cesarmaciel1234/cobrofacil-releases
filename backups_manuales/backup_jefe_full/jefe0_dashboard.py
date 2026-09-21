@@ -1,0 +1,556 @@
+"""
+jefe0_dashboard.py — Dashboard exclusivo del JEFE / DUEÑO
+Paleta: Light Soft 2026 — blanco puro, acentos suaves, tarjetas con gradientes claros.
+"""
+import datetime
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QFrame, QScrollArea, QGridLayout,
+    QFileDialog, QMessageBox, QSizePolicy, QProgressBar, QDialog,
+)
+from PyQt6.QtCore import (
+    Qt, pyqtSignal, QTimer, QPropertyAnimation, QEasingCurve, QPoint, QSize, QThread,
+)
+from PyQt6.QtGui import QColor, QFont
+from src.utils.qt_compat import qt_exec
+
+try:
+    from src.base_de_datos.database import db_manager
+    from src.config import config
+except ImportError:
+    config = None
+
+# ── Paleta global Light Soft ──────────────────────────────────────────────────
+
+# ── Componentes importados ────────────────────────────────────────────────────
+from src.jefe.componentes_visuales.jefe_card import JefeCard
+from src.jefe.vitrina import PanelPublicidad
+from src.cerebro_global.cerebro_jefe.analitica_jefe import WorkerAnaliticaJefe
+from src.jefe.reportes.letra import fuente_limpia
+
+# ── Módulos del Jefe ──────────────────────────────────────────────────────────
+JEFE_MODULES = [
+    ("reportes",     "Reportes\ny Ventas",       "📊", "#10B981", "#D1FAE5", "#065F46", 20,  None),
+    ("nexus_pro",    "Nexus Pro\nControl",        "🌌", "#6366F1", "#EEF2FF", "#3730A3", 18, None),
+    ("corte_caja",   "Corte y\nCierre Global",    "💵", "#34D399", "#ECFDF5", "#047857", 7,  None),
+    ("red_lan",      "Servidor LAN\nMaestra/Esclava", "🌐", "#0EA5E9", "#E0F2FE", "#075985", 6, None),
+    ("contabilidad", "Contabilidad\nERP",         "💹", "#F59E0B", "#FEF3C7", "#92400E", 9,  None),
+    ("proveedores",  "Proveedores\nERP",          "🚚", "#0EA5E9", "#E0F2FE", "#075985", 9,  3),
+    ("promedios",    "Costos y\nPromedios",       "⚖️", "#EC4899", "#FDF2F8", "#831843", 24, None),
+    ("ia_proactiva", "IA\nProactiva",             "🧠", "#8B5CF6", "#F5F3FF", "#4C1D95", 23, None),
+    ("personal",     "Personal y\nUsuarios",      "👥", "#F43F5E", "#FFE4E6", "#9F1239", -1, None),
+]
+# (id, título, icon, accent_hex, bg_suave, text_dark, screen, tab)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  DASHBOARD PRINCIPAL
+# ─────────────────────────────────────────────────────────────────────────────
+class Jefe0Dashboard(QWidget):
+    request_screen = pyqtSignal(int)
+    request_tab    = pyqtSignal(int)
+    request_logout = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.setObjectName("JefeDashboard")
+        self._build_ui()
+        self._apply_theme()
+        self._clock = QTimer(self)
+        self._clock.timeout.connect(self._tick)
+        self._clock.start(60000)
+        self._tick()
+        
+        # Iniciar Cerebro del Jefe en Segundo Plano
+        self.worker_analitica = WorkerAnaliticaJefe()
+        self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
+        self.worker_analitica.start()
+
+    def _on_analitica_lista(self, datos):
+        self.panel_pub.set_metricas(
+            float(datos.get("ventas_ganancia_real", 0.0) or 0),
+            float(datos.get("inventario_valor_costo", 0.0) or 0),
+        )
+
+    def _build_ui(self):
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+
+        # ── NAV BAR ──────────────────────────────────────────────────────────
+        self.nav = QFrame()
+        self.nav.setObjectName("JefeNav")
+        self.nav.setFixedHeight(64)
+        nav_lay = QHBoxLayout(self.nav)
+        nav_lay.setContentsMargins(32, 0, 32, 0)
+        nav_lay.setSpacing(16)
+
+        # Brand
+        brand = QLabel("TPV PRO 2026  ·  Panel del Jefe")
+        brand.setFont(fuente_limpia(14))
+        brand.setStyleSheet(
+            "font-size: 15px; font-weight: 400; color: #334155;"
+            " letter-spacing: 0px; background: transparent; border: none;"
+            " font-family: 'Segoe UI', sans-serif;"
+        )
+        nav_lay.addWidget(brand)
+        nav_lay.addStretch()
+
+        self.lbl_clock = QLabel()
+        self.lbl_clock.setFont(fuente_limpia(11))
+        self.lbl_clock.setStyleSheet(
+            "font-size: 11px; font-weight: 400; letter-spacing: 0px;"
+            " background: transparent; border: none;")
+        nav_lay.addWidget(self.lbl_clock)
+        nav_lay.addSpacing(8)
+
+        self.btn_portabilidad = QPushButton("Copiar nodo (USB / OneDrive)")
+        self.btn_portabilidad.setCursor(Qt.PointingHandCursor)
+        self.btn_portabilidad.setFixedHeight(34)
+        self.btn_portabilidad.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 400; font-size: 11px;
+                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+        """)
+        self.btn_portabilidad.clicked.connect(self._on_nodo_portable)
+        nav_lay.addWidget(self.btn_portabilidad)
+        QTimer.singleShot(0, self._refresh_nodo_button)
+
+        self.btn_tema = QPushButton("🌙 Noche")
+        self.btn_tema.setCursor(Qt.PointingHandCursor)
+        self.btn_tema.setFixedHeight(34)
+        self.btn_tema.setStyleSheet("""
+            QPushButton {
+                background: transparent; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 400; font-size: 11px;
+                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E2E8F0; color: #0F172A; }
+        """)
+        self.btn_tema.clicked.connect(self._toggle_theme)
+        
+        self.btn_perfiles = QPushButton("👥 Personal")
+        self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_perfiles.setFixedHeight(34)
+        self.btn_perfiles.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 400; font-size: 11px;
+                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+        """)
+        self.btn_perfiles.clicked.connect(self._abrir_perfiles)
+        nav_lay.addWidget(self.btn_perfiles)
+        
+        try:
+            from src.config import config
+            if config and config.get("theme", "light") == "dark":
+                self.btn_tema.setText("☀️ Día")
+        except: pass
+        
+        nav_lay.addWidget(self.btn_tema)
+
+        self.btn_logout = QPushButton("Cerrar Sesión")
+        self.btn_logout.setCursor(Qt.PointingHandCursor)
+        self.btn_logout.setFixedHeight(34)
+        self.btn_logout.setStyleSheet("""
+            QPushButton {
+                background: #F1F5F9; color: #475569;
+                border: 1.5px solid #E2E8F0; border-radius: 8px;
+                padding: 0 16px; font-weight: 400; font-size: 11px;
+                letter-spacing: 0px; font-family: 'Segoe UI', sans-serif;
+            }
+            QPushButton:hover { background: #FEE2E2; color: #EF4444; border-color: #FECACA; }
+        """)
+        self.btn_logout.clicked.connect(self.request_logout.emit)
+        nav_lay.addWidget(self.btn_logout)
+        root.addWidget(self.nav)
+
+        # ── SCROLL ───────────────────────────────────────────────────────────
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }"
+                             "QScrollBar:vertical { background: transparent; width: 4px; }"
+                             "QScrollBar::handle:vertical { background: #E2E8F0; border-radius: 2px; }"
+                             "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }")
+
+        page = QWidget()
+        page.setObjectName("JefePage")
+        page.setStyleSheet("#JefePage { background: transparent; }")
+        
+        main_split_lay = QHBoxLayout(page)
+        main_split_lay.setContentsMargins(48, 36, 48, 48)
+        main_split_lay.setSpacing(40)
+        
+        left_col = QWidget()
+        left_col.setStyleSheet("background: transparent;")
+        page_lay = QVBoxLayout(left_col)
+        page_lay.setContentsMargins(0, 0, 0, 0)
+        page_lay.setSpacing(0)
+        
+        right_col = QWidget()
+        right_col.setStyleSheet("background: transparent;")
+        self.right_lay = QVBoxLayout(right_col)
+        self.right_lay.setContentsMargins(0, 0, 0, 0)
+        
+        main_split_lay.addWidget(left_col, stretch=1)
+        main_split_lay.addWidget(right_col, stretch=1)
+
+        self.panel_pub = PanelPublicidad()
+        self.btn_export_ganancias = self.panel_pub.btn_export
+        self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
+        page_lay.addWidget(self.panel_pub, 1)
+
+        lbl_sec = QLabel("Modulos gerenciales")
+        lbl_sec.setFont(fuente_limpia(11))
+        lbl_sec.setStyleSheet(
+            "font-size: 11px; font-weight: 400; color: #64748B;"
+            " letter-spacing: 0px; background: transparent; border: none;"
+        )
+        self.right_lay.addWidget(lbl_sec)
+        self.right_lay.addSpacing(18)
+
+        # ── GRID ─────────────────────────────────────────────────────────────
+        self.cards = {}
+        grid_container = QHBoxLayout()
+        grid_container.addStretch()
+        self.grid = QGridLayout()
+        self.grid.setSpacing(20)
+
+        cols = 2
+        for idx, (m_id, title, icon, accent, bg_soft, text_dark, screen_idx, tab_idx) in enumerate(JEFE_MODULES):
+            card = JefeCard(title, icon, accent, bg_soft, text_dark)
+            if screen_idx == -1:
+                card.clicked.connect(self._abrir_perfiles)
+            elif tab_idx is not None:
+                card.clicked.connect(
+                    lambda si=screen_idx, ti=tab_idx: (
+                        self.request_screen.emit(si),
+                        QTimer.singleShot(200, lambda ti=ti: self.request_tab.emit(ti))
+                    )
+                )
+            else:
+                card.clicked.connect(lambda si=screen_idx: self.request_screen.emit(si))
+
+            self.cards[m_id] = card
+            self.grid.addWidget(card, idx // cols, idx % cols)
+
+        grid_container.addLayout(self.grid)
+        grid_container.addStretch()
+        self.right_lay.addLayout(grid_container)
+        self.right_lay.addStretch()
+
+        # ── FOOTER ────────────────────────────────────────────────────────────
+        self.lbl_footer = QLabel("Cobro Facil POS  ·  TPV Pro 2026  ·  Panel Jefe")
+        self.lbl_footer.setFont(fuente_limpia(10))
+        self.lbl_footer.setAlignment(Qt.AlignCenter)
+        self.lbl_footer.setStyleSheet(
+            "font-size: 10px; font-weight: 400; letter-spacing: 0px; color: #94A3B8;"
+            " background: transparent; border: none;")
+        page_lay.addWidget(self.lbl_footer)
+
+        scroll.setWidget(page)
+        root.addWidget(scroll)
+
+    def _exportar_ganancias(self):
+        from src.cerebro_global.cerebro_jefe.exportador_ganancias import WorkerExportGanancias
+        from datetime import datetime
+        
+        nombre_def = f"Reporte_Ganancias_Netas_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        filepath, _ = QFileDialog.getSaveFileName(
+            self, "Guardar Reporte de Ganancias", nombre_def, "Excel (*.xlsx);;Todos los archivos (*)"
+        )
+        if not filepath:
+            return
+            
+        self.btn_export_ganancias.setText("Exportando...")
+        self.btn_export_ganancias.setEnabled(False)
+        
+        self.worker_export = WorkerExportGanancias(filepath)
+        self.worker_export.finished.connect(self._on_export_ganancias_listo)
+        self.worker_export.start()
+        
+    def _on_export_ganancias_listo(self, success, msg):
+        self.btn_export_ganancias.setText("Exportar ganancias")
+        self.btn_export_ganancias.setEnabled(True)
+        if success:
+            QMessageBox.information(self, "Exportación Exitosa", msg)
+        else:
+            QMessageBox.critical(self, "Error al Exportar", msg)
+
+    def _tick(self):
+        now = datetime.datetime.now()
+        self.lbl_clock.setText(now.strftime("%d %b %Y  %H:%M"))
+        h = now.hour
+        greet = "Buenos dias" if 5 <= h < 12 else "Buenas tardes" if h < 20 else "Buenas noches"
+        try:
+            nombre = (config.current_user or {}).get("username", "Jefe").capitalize()
+        except Exception:
+            nombre = "Jefe"
+        self.panel_pub.set_saludo(f"{greet}, {nombre}")
+
+    def _abrir_perfiles(self):
+        try:
+            from src.ui_global.perfil_empleados_ui.dialogo_perfiles import DialogoPerfiles
+            from src.utils.qt_compat import qt_exec
+            dlg = DialogoPerfiles(self)
+            qt_exec(dlg)
+        except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error abriendo perfiles: {e}")
+            print(f"Error abriendo perfiles: {e}")
+
+    def _toggle_theme(self):
+        try:
+            from src.config import config
+            from src.ui_components.tema_estilos import aplicar_tema
+            from PyQt6.QtWidgets import QApplication
+            current = config.get("theme", "light")
+            nuevo = "dark" if current == "light" else "light"
+            config.set("theme", nuevo)
+            
+            qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
+            aplicar_tema(QApplication.instance(), qss)
+            
+            self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
+        except Exception as e:
+            from src.logger import logger
+            logger.error(f"Error alternando tema en Jefe: {e}")
+
+    def _apply_theme(self):
+        self.setStyleSheet("""
+            QWidget#JefeDashboard {
+                font-family: 'Inter', 'Segoe UI', sans-serif;
+            }
+            QWidget#JefeDashboard QLabel { background: transparent; border: none; letter-spacing: 0px; }
+            QScrollArea { border: none; background: transparent; }
+        """)
+
+    def cargar_datos(self):
+        self._tick()
+
+    def _refresh_nodo_button(self):
+        try:
+            from src.jefe.nodo_portable import estado_nodo
+
+            if estado_nodo() == "ready":
+                self.btn_portabilidad.setText("Sincronizar nodo")
+            else:
+                self.btn_portabilidad.setText("Copiar nodo (USB / OneDrive)")
+        except Exception:
+            self.btn_portabilidad.setText("Copiar nodo (USB / OneDrive)")
+
+    def _on_nodo_portable(self):
+        """Nodo multi-dispositivo: copiar 100% / sincronizar faltantes / promover si cae el negocio."""
+        from src.jefe.nodo_portable import estado_nodo
+
+        ready = estado_nodo() == "ready"
+        master_down = False
+        try:
+            from src.base_de_datos.database import db_manager
+
+            master_down = bool(getattr(db_manager, "_forced_local_offline", False))
+        except Exception:
+            pass
+
+        if ready:
+            box = QMessageBox(self)
+            box.setWindowTitle("Nodo portable")
+            box.setIcon(QMessageBox.Icon.Question)
+            box.setText(
+                "Ya tenés un nodo en USB/OneDrive.\n\n"
+                "• Sincronizar hacia Nodo: Envía las nuevas ventas del negocio al USB.\n"
+                "• Importar de Nodo (Bidireccional): Trae productos/precios que editaste en tu casa.\n"
+                "• Promover: usá este nodo si la PC del negocio cayó.\n"
+                "• Copiar de nuevo: elige otra carpeta y hace copia completa 0–100%."
+            )
+            btn_sync = box.addButton("Sincronizar", QMessageBox.ButtonRole.AcceptRole)
+            btn_import = box.addButton("Importar", QMessageBox.ButtonRole.ActionRole)
+            btn_promo = box.addButton("Promover", QMessageBox.ButtonRole.ActionRole)
+            btn_full = box.addButton("Reemplazar", QMessageBox.ButtonRole.ActionRole)
+            box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+            if not master_down:
+                # Promover sigue disponible siempre (contingencia)
+                pass
+            qt_exec(box)
+            clicked = box.clickedButton()
+            if clicked == btn_sync:
+                self._run_nodo_job("sync")
+            elif clicked == btn_import:
+                self._run_nodo_job("import")
+            elif clicked == btn_promo:
+                self._promover_nodo_ui()
+            elif clicked == btn_full:
+                self._run_nodo_job("full")
+            return
+
+        msg = (
+            "Se creará un NODO portable (carpeta CobroFacil_Nodo) en USB u OneDrive:\n"
+            "• Contabilidad del jefe\n"
+            "• Espejo del negocio (ventas, productos, clientes…)\n\n"
+            "Mostrará progreso hasta 100%. Después este botón pasará a «Sincronizar».\n"
+            "Conectate antes como Esclava (Servidor LAN) para copiar la DB de la maestra.\n\n"
+            "¿Continuar?"
+        )
+        if QMessageBox.question(
+            self, "Copiar nodo", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        self._run_nodo_job("full")
+
+    def _promover_nodo_ui(self):
+        from src.jefe.nodo_portable import get_nodo_path
+
+        path = get_nodo_path()
+        if QMessageBox.question(
+            self,
+            "Promover nodo",
+            f"¿Usar el nodo como base local?\n\n{path}\n\n"
+            "Sirve si la PC del negocio está caída. Se importarán tickets faltantes.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        ) != QMessageBox.StandardButton.Yes:
+            return
+        
+        self._run_nodo_job("promote")
+
+    def _run_nodo_job(self, mode: str):
+        """mode: 'full' | 'sync'. Muestra progreso 0–100% en hilo aparte."""
+        dest = None
+        if mode == "full":
+            dest = QFileDialog.getExistingDirectory(
+                self, "Elegir carpeta USB / OneDrive para el nodo"
+            )
+            if not dest:
+                return
+
+        dlg = QDialog(self)
+        from PyQt6.QtCore import Qt
+        dlg.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
+        dlg.setWindowTitle("Nodo portable")
+        
+        # Prevenir que un humano impaciente cierre la ventana con Alt+F4 o la X
+        def prevent_close(event):
+            event.ignore()
+        dlg.closeEvent = prevent_close
+
+        dlg.setFixedSize(460, 160)
+        lay = QVBoxLayout(dlg)
+        lay.setContentsMargins(24, 20, 24, 20)
+        title_text = "Copiando nodo…"
+        if mode == "sync":
+            title_text = "Sincronizando hacia el nodo…"
+        elif mode == "import":
+            title_text = "Importando catálogo desde el nodo…"
+        elif mode == "promote":
+            title_text = "Promoviendo nodo (Rescatando datos)…"
+        title = QLabel(title_text)
+        title.setStyleSheet("font-size: 15px; font-weight: 400; letter-spacing: 0px; color: #0F172A;")
+        lay.addWidget(title)
+        subtitle = QLabel("Preparando…")
+        subtitle.setStyleSheet("font-size: 12px; color: #64748B;")
+        subtitle.setWordWrap(True)
+        lay.addWidget(subtitle)
+        bar = QProgressBar()
+        bar.setRange(0, 100)
+        bar.setValue(0)
+        bar.setFixedHeight(12)
+        bar.setStyleSheet(
+            "QProgressBar { background:#E2E8F0; border:none; border-radius:6px; }"
+            "QProgressBar::chunk { background:#0284C7; border-radius:6px; }"
+        )
+        lay.addWidget(bar)
+
+        class _Worker(QThread):
+            progress = pyqtSignal(int, str)
+            finished_ok = pyqtSignal(object)
+            failed = pyqtSignal(str)
+
+            def __init__(self, mode, dest):
+                super().__init__()
+                self._mode = mode
+                self._dest = dest
+
+            def run(self):
+                try:
+                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes, importar_catalogo_desde_nodo, promover_nodo
+
+                    def cb(pct, msg):
+                        self.progress.emit(pct, msg)
+
+                    if self._mode == "full":
+                        root = copiar_nodo_completo(self._dest, progress_cb=cb)
+                        self.finished_ok.emit({"mode": "full", "root": root})
+                    elif self._mode == "import":
+                        stats = importar_catalogo_desde_nodo(progress_cb=cb)
+                        self.finished_ok.emit({"mode": "import", "stats": stats})
+                    elif self._mode == "promote":
+                        root = promover_nodo(progress_cb=cb)
+                        self.finished_ok.emit({"mode": "promote", "root": root})
+                    else:
+                        stats = sincronizar_faltantes(progress_cb=cb)
+                        self.finished_ok.emit({"mode": "sync", "stats": stats})
+                except Exception as e:
+                    self.failed.emit(str(e))
+
+        worker = _Worker(mode, dest)
+
+        def on_prog(pct, msg):
+            bar.setValue(pct)
+            subtitle.setText(msg)
+            title.setText(f"{pct}%")
+
+        def on_ok(payload):
+            bar.setValue(100)
+            self._refresh_nodo_button()
+            dlg.accept()
+            if payload.get("mode") == "full":
+                QMessageBox.information(
+                    self,
+                    "Nodo listo",
+                    f"Copia al 100%.\n\n{payload.get('root')}\n\n"
+                    "La próxima vez este botón será «Sincronizar nodo».",
+                )
+            elif payload.get("mode") == "promote":
+                QMessageBox.information(
+                    self,
+                    "Nodo promovido",
+                    f"Nodo activo:\n{payload.get('root')}\n\n"
+                    "Contabilidad y datos del negocio apuntan al pendrive/carpeta.\n"
+                    "Reiniciá el perfil para aplicar del todo.",
+                )
+                self.request_logout.emit()
+            elif payload.get("mode") == "import":
+                stats = payload.get("stats") or {}
+                detail = "\n".join(f"• {k}: {v} importados" for k, v in stats.items() if v)
+                QMessageBox.information(
+                    self,
+                    "Importación Exitosa",
+                    "Catálogo fusionado desde el Nodo.\n\n" + (detail or "Sin cambios nuevos."),
+                )
+            else:
+                stats = payload.get("stats") or {}
+                detail = ", ".join(f"{k}:{v}" for k, v in stats.items() if v)
+                QMessageBox.information(
+                    self,
+                    "Sincronizado",
+                    "Solo se enviaron datos faltantes al nodo.\n\n" + (detail or "Sin cambios nuevos."),
+                )
+
+        def on_fail(err):
+            dlg.reject()
+            QMessageBox.critical(self, "Error de nodo", err)
+
+        worker.progress.connect(on_prog)
+        worker.finished_ok.connect(on_ok)
+        worker.failed.connect(on_fail)
+        worker.start()
+        qt_exec(dlg)
+        worker.wait(120000)

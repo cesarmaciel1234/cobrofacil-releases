@@ -1,0 +1,54 @@
+﻿/* Venta cruzada: misma familia visual que el carrusel. */
+
+import { escapeHtml, htmlDealStage, leerPrecios, nombreVitrina } from "../../shared/plata_y_texto.js";
+import { htmlFilaOfertaTv } from "../../shared/precio_tv.js";
+
+function productoPorNombre(productos, nombre) {
+    const clave = nombreVitrina(nombre).toLowerCase();
+    const encontrado = (productos || []).find((item) => nombreVitrina(item.nombre).toLowerCase() === clave);
+    if (encontrado) {
+        return encontrado;
+    }
+    // Si no se encuentra, devuelve objeto básico solo con nombre
+    return { nombre, precio: 0, precio_oferta: 0, cant_oferta: 0, tipo_unidad_oferta: "", unidad: "", es_pesable: 0 };
+}
+
+export function htmlTarjetaCruzada(slide, productos = []) {
+    const ancla = nombreVitrina(slide.nombre || "");
+    const crudo = slide.pregunta || (ancla ? `¿LLEVÁS ${ancla.toUpperCase()}?` : "¿LLEVÁS ESTO?");
+    const cuerpo = String(crudo).replace(/^[¿?\s]+|[¿?\s]+$/g, "").trim() || "LLEVÁS ESTO";
+    const pregunta = `¿ ${cuerpo} ?`;
+    const items = (slide.relacionados || []).slice(0, 3).map((nombre) => {
+        const prod = productoPorNombre(productos, nombre);
+        const limpio = nombreVitrina(prod.nombre || nombre);
+        
+        // Solo mostrar precio y condiciones si el producto existe realmente en BD
+        const { vigente } = leerPrecios(prod);
+        const tienePrecio = vigente > 0 || Number(prod.precio) > 0;
+        
+                return `
+            <li class="xsell-item">
+                ${htmlDealStage({ ...prod, nombre: limpio }, { extraClass: "xsell-item__stage" })}
+                <div class="xsell-item__info">
+                    <div class="xsell-item__name">${escapeHtml(limpio.toUpperCase())}</div>
+                    ${tienePrecio ? htmlFilaOfertaTv(prod, {
+                        caja: "xsell-item__price-row tv-card__now-box",
+                        ahora: "xsell-item__price",
+                        antes: "xsell-item__was",
+                        regla: "xsell-item__rule",
+                        reglaTag: "div",
+                        ahoraPrimero: true,
+                    }) : ""}
+                </div>
+            </li>`;
+
+    }).join("");
+    return `
+        <article class="xsell-card">
+            <p class="xsell-ask">${escapeHtml(pregunta)}</p>
+            <ul class="xsell-list">${items}</ul>
+        </article>
+    `;
+}
+
+

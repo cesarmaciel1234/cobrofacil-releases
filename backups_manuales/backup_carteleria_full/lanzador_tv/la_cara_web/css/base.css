@@ -1,0 +1,241 @@
+:root {
+    --font-primary: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
+    --font-display: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
+    --shadow-elegant: 0 4px 24px rgba(0, 0, 0, 0.06);
+    
+    /* Layout responsive base */
+    --footer-height: 26px;
+    --hero-height: 27%;
+    --content-height: auto;
+    --tv-safe-y: max(2.2cqh, 16px);
+    --tv-safe-x: max(1.8cqw, 18px);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+body {
+    font-family: var(--font-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
+.app-container {
+    container-type: size;
+    display: flex;
+    flex-direction: column;
+    width: 1920px;
+    height: 1080px;
+    padding: 0.25cqh 0.25cqw 0;
+    background: var(--bg-primary);
+    box-sizing: border-box;
+    overflow: hidden;
+    gap: 0;
+    transform-origin: 0 0;
+}
+
+.tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.22cqw;
+    margin: 0.75cqh 0 0.75cqh;
+    padding: 1cqh 0;
+    border-top: 2px solid var(--accent-primary, #D4AF37);
+    border-bottom: 2px solid var(--accent-primary, #D4AF37);
+}
+
+/* Solo mantengo tu ajuste de borde izquierdo si lo querías, pero con el gap original capaz no hace falta. Lo dejo por si acaso: */
+.tv-panel + .tv-panel {
+    border-left: 1px solid rgba(210, 206, 196, 0.15);
+}
+
+.tv-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    background: #FFFFFF;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    padding: 0.5cqh 0.4cqw 0.5cqh;
+    box-shadow: 0 6px 20px rgba(28, 16, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.tv-1 {
+    gap: 0.5cqh;
+}
+
+.tv-4 {
+    position: relative;
+    padding: 0;
+    border-radius: 12px 12px 0 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* Full width optimization for all columns */
+.tv-1,
+.tv-2,
+.tv-3 {
+    border-radius: 12px 12px 0 0;
+    padding: 0.4cqh 0.32cqw 0;
+}
+
+.tv-1 .column-body,
+.tv-2 .column-body,
+.tv-3 .column-body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Internal containers optimization */
+.rank-list,
+.xsell-list,
+.flash-list,
+.combo-list {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tv-2 .column-body {
+    display: flex;
+    flex-direction: column;
+}
+.tv-2 .price-ticker {
+    flex: 1 1 auto;
+}
+.tv-3 .xsell-card,
+.tv-3 .flash-offer,
+.tv-4 .chef-board {
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+/* Cards optimization */
+.rank-card,
+.xsell-card,
+.flash-offer,
+.combo-card {
+    width: 100%;
+    margin: 0;
+    padding: 0.4cqh 0.3cqw;
+    box-sizing: border-box;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VFX ALTA GAMA — Shimmer, Cascade & Center Focus
+   ══════════════════════════════════════════════════════════ */
+
+/* 1. Shimmer Effect (Reflejo de Cristal) */
+.shimmer-fx {
+    position: relative;
+    overflow: hidden;
+}
+.shimmer-fx::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+    transform: translate3d(-180%, 0, 0) skewX(-25deg);
+    animation: shimmerSweep 4.5s ease-in-out infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+@keyframes shimmerSweep {
+    0%, 40% { transform: translate3d(-180%, 0, 0) skewX(-25deg); }
+    100% { transform: translate3d(280%, 0, 0) skewX(-25deg); }
+}
+
+/* 2. Entrada Cinemática (Cascada) */
+.cascade-enter {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Transición Cinemática de los Motores JS */
+.tv-panel, .premium-column {
+    transition: opacity 0.4s ease-in-out, filter 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+
+.is-fading {
+    opacity: 0 !important;
+    filter: blur(8px) !important;
+    transform: scale(0.98) !important;
+    pointer-events: none;
+}
+
+/* 3. Skeleton Loading */
+.skeleton-box {
+    background: linear-gradient(90deg, var(--card-bg) 25%, rgba(255,255,255,0.1) 50%, var(--card-bg) 75%);
+    background-size: 400% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 8px;
+    opacity: 0.7;
+}
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Video wall: 4 TVs horizontales. Cada columna es una pantalla. */
+body[data-wall="4h"] .tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.22cqw;
+    margin: 0.35cqh 0.12cqw 0.25cqh;
+    padding: 0;
+    border: 0;
+}
+body[data-wall="4h"] .tv-wall::after {
+    display: none;
+}
+body[data-wall="4h"] .tv-panel,
+body[data-wall="4h"] .premium-column {
+    height: 100%;
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    padding: 0.45cqh 0.18cqw !important;
+}
+body[data-wall="4h"] .tv-panel + .tv-panel {
+    border-left: 0;
+}
+body[data-wall="4h"] .footer {
+    flex: 0 0 auto;
+}
