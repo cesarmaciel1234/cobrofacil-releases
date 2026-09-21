@@ -607,7 +607,7 @@ Paso5Terminal[theme="light"] QFrame#PanelTotales QLineEdit { background: #FFFFFF
 
 Paso5Terminal[theme="light"] QFrame#PanelTotales QLineEdit:focus { background: #F8FAFF; border: 2px solid #2563EB; }
 
-Paso5Terminal[theme="light"] QLabel#TotalGrande { background-color: #F0FDF4; border: 2px solid #22C55E; color: #166534; font-size: 55px; font-weight: 900; padding: 0 15px; border-radius: 6px; }
+Paso5Terminal[theme="light"] QLabel#TotalGrande { background-color: #16A34A; border: 3px solid #15803D; color: #FFFFFF; font-size: 55px; font-weight: 900; padding: 0 15px; border-radius: 8px; }
 
 Paso5Terminal[theme="light"] QFrame#CajaResumen { background: #FFFFFF; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; }
 

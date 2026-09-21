@@ -142,8 +142,8 @@ Paso5Terminal[theme="dark"] QLabel#TerminalAhorroVal {
  font-size: 42px; color: #F43F5E; font-weight: 900; border: none; background: transparent; 
 }
 
-Paso5Terminal[theme="dark"] QLabel#TerminalTotalVal {
- font-size: 75px; color: #34D399; font-weight: 900; border: none; background: transparent; 
+Paso5Terminal[theme="dark"] QLabel#TerminalTotalVal, Paso5Terminal[theme="dark"] QLabel#TotalGrande {
+ font-size: 75px; color: #FFFFFF; font-weight: 900; border: 3px solid #15803D; background: #16A34A; border-radius: 8px;
 }
 
 Paso5Terminal[theme="dark"] QFrame#TerminalSideBox QLabel {
@@ -158,8 +158,8 @@ Paso5Terminal[theme="light"] QLabel#TerminalAhorroVal {
  font-size: 42px; color: #FF4500; font-weight: 900; border: none; background: transparent; 
 }
 
-Paso5Terminal[theme="light"] QLabel#TerminalTotalVal {
- font-size: 75px; color: #059669; font-weight: 900; border: none; background: transparent; 
+Paso5Terminal[theme="light"] QLabel#TerminalTotalVal, Paso5Terminal[theme="light"] QLabel#TotalGrande {
+ font-size: 75px; color: #FFFFFF; font-weight: 900; border: 3px solid #15803D; background: #16A34A; border-radius: 8px;
 }
 
 Paso5Terminal[theme="light"] QFrame#TerminalSideBox QLabel {

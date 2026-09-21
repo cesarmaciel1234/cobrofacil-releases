@@ -82,6 +82,14 @@ class PanelDeTotales(QFrame):
         self.etiqueta_total_grande.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.etiqueta_total_grande.setMinimumWidth(280)
         self.etiqueta_total_grande.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.etiqueta_total_grande.setAutoFillBackground(True)
+        self.etiqueta_total_grande.setStyleSheet(
+            "QLabel#TotalGrande {"
+            " background-color: #16A34A; color: #FFFFFF;"
+            " border: 3px solid #15803D; border-radius: 8px;"
+            " font-size: 48px; font-weight: 900; padding: 0 18px;"
+            "}"
+        )
 
         layout_totales = QHBoxLayout()
         layout_totales.addWidget(self.etiqueta_total_grande, 1)

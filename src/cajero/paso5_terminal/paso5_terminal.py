@@ -683,7 +683,7 @@ class Paso5Terminal(QWidget):
         if hasattr(self, 'txt_scan') and self.txt_scan: self.txt_scan.setObjectName("TerminalScan")
         if hasattr(self, 'list_results') and self.list_results: self.list_results.setObjectName("TerminalListResults")
         if hasattr(self, 'lbl_ahorro_val'): self.lbl_ahorro_val.setObjectName("TerminalAhorroVal")
-        if hasattr(self, 'lbl_total_val'): self.lbl_total_val.setObjectName("TerminalTotalVal")
+        if hasattr(self, 'lbl_total_val'): self.lbl_total_val.setObjectName("TotalGrande")
         if hasattr(self, 'side_box'): self.side_box.setObjectName("TerminalSideBox")
         if hasattr(self, 'status_bar'): self.status_bar.setObjectName("TerminalStatusBar")
         if hasattr(self, 'btn_teclado'): self.btn_teclado.setObjectName("BtnTeclado")
@@ -1063,7 +1063,7 @@ class Paso5Terminal(QWidget):
 
         self.lbl_terminal_title.setObjectName("TerminalTitle")
         self.lbl_terminal_title.setStyleSheet(f"font-size: {title_px}px; font-weight: 900; color: white; letter-spacing: 2px;")
-        self.lbl_total_val.setObjectName("TerminalTotalVal")
+        self.lbl_total_val.setObjectName("TotalGrande")
         self.txt_scan.setObjectName("TerminalScan")
         self.panel_totales.actualizar_estilo_cambio(False)
         self.tabla.verticalHeader().setDefaultSectionSize(row_h)
