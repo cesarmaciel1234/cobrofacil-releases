@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton,
-                              QMessageBox, QFrame, QComboBox, QHBoxLayout, QCompleter)
-from PyQt6.QtCore import Qt, QEvent
+                              QMessageBox, QFrame, QHBoxLayout, QCompleter)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPalette
 
 if hasattr(Qt, 'AlignmentFlag'):
     Qt.AlignCenter = Qt.AlignmentFlag.AlignCenter
@@ -18,40 +19,21 @@ from src.inicio_y_perfiles.logica.auth_controller import AuthController
 
 
 _ESTILO_CAMPOS = """
-QComboBox#LoginUserCb, QLineEdit#LoginPass {
+QLineEdit#LoginUserCb, QLineEdit#LoginPass {
     background: #FFFFFF;
     color: #0F172A;
     border: 2px solid #E2E8F0;
     border-radius: 12px;
-    padding: 10px 16px;
-    min-height: 48px;
-    font-size: 15px;
+    padding: 12px 16px;
+    min-height: 52px;
+    font-size: 16px;
     font-weight: 600;
-}
-QComboBox#LoginUserCb:focus, QLineEdit#LoginPass:focus {
-    border: 2px solid #3B82F6;
-    background: #FFFFFF;
-}
-QComboBox#LoginUserCb::drop-down {
-    border: none;
-    width: 36px;
-}
-QComboBox#LoginUserCb QLineEdit {
-    background: transparent;
-    border: none;
-    color: #0F172A;
     selection-background-color: #DBEAFE;
     selection-color: #0F172A;
-    padding: 0px;
 }
-QComboBox#LoginUserCb QAbstractItemView {
+QLineEdit#LoginUserCb:focus, QLineEdit#LoginPass:focus {
+    border: 2px solid #3B82F6;
     background: #FFFFFF;
-    color: #0F172A;
-    selection-background-color: #2563EB;
-    selection-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    outline: none;
-    padding: 4px;
 }
 QLabel#LoginFieldLbl {
     color: #64748B;
@@ -66,53 +48,61 @@ QLabel#LoginFieldLbl {
 """
 
 
-class UsuarioCombo(QComboBox):
-    """Editable: escribe, completer y Tab completa + salta a contraseña."""
+class UsuarioCampo(QLineEdit):
+    """Campo de texto + Tab completa el usuario y salta a contraseña."""
 
     def __init__(self, on_tab_siguiente, parent=None):
         super().__init__(parent)
         self._on_tab = on_tab_siguiente
-        self.setEditable(True)
-        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        le = self.lineEdit()
-        if le:
-            le.setPlaceholderText("Escribí o elegí usuario")
-            le.installEventFilter(self)
+        self._usuarios = []
+        self.setPlaceholderText("Escribí el usuario")
 
     def set_usuarios(self, users):
-        self.clear()
-        self.addItems(users or [])
-        completer = QCompleter(users or [], self)
+        self._usuarios = list(users or [])
+        completer = QCompleter(self._usuarios, self)
         completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         completer.setFilterMode(Qt.MatchFlag.MatchContains)
         completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        popup = completer.popup()
+        popup.setStyleSheet(
+            "QAbstractItemView { background: #FFFFFF; color: #0F172A; "
+            "selection-background-color: #DBEAFE; selection-color: #0F172A; "
+            "border: 1px solid #E2E8F0; outline: none; }"
+        )
+        pal = popup.palette()
+        pal.setColor(QPalette.ColorRole.Base, QColor("#FFFFFF"))
+        pal.setColor(QPalette.ColorRole.Text, QColor("#0F172A"))
+        pal.setColor(QPalette.ColorRole.Highlight, QColor("#DBEAFE"))
+        pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#0F172A"))
+        popup.setPalette(pal)
         self.setCompleter(completer)
+        if len(self._usuarios) == 1:
+            self.setText(self._usuarios[0])
 
     def completar(self):
-        txt = (self.currentText() or "").strip()
+        txt = (self.text() or "").strip()
         if not txt:
             return
         bajos = txt.lower()
-        exactos = [self.itemText(i) for i in range(self.count()) if self.itemText(i).lower() == bajos]
+        exactos = [u for u in self._usuarios if u.lower() == bajos]
         if exactos:
-            self.setEditText(exactos[0])
+            self.setText(exactos[0])
             return
-        prefijos = [self.itemText(i) for i in range(self.count()) if self.itemText(i).lower().startswith(bajos)]
+        prefijos = [u for u in self._usuarios if u.lower().startswith(bajos)]
         if len(prefijos) == 1:
-            self.setEditText(prefijos[0])
+            self.setText(prefijos[0])
             return
-        contiene = [self.itemText(i) for i in range(self.count()) if bajos in self.itemText(i).lower()]
+        contiene = [u for u in self._usuarios if bajos in u.lower()]
         if len(contiene) == 1:
-            self.setEditText(contiene[0])
+            self.setText(contiene[0])
 
-    def eventFilter(self, obj, event):
-        if obj == self.lineEdit() and event.type() == QEvent.Type.KeyPress:
-            if event.key() == Qt.Key.Key_Tab:
-                self.completar()
-                if self._on_tab:
-                    self._on_tab()
-                return True
-        return super().eventFilter(obj, event)
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Tab:
+            self.completar()
+            if self._on_tab:
+                self._on_tab()
+            return
+        super().keyPressEvent(event)
 
 
 class LoginPantalla(QDialog):
@@ -123,7 +113,12 @@ class LoginPantalla(QDialog):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setProperty("theme", "light")
-        self.setFixedSize(520, 720)
+        if parent is not None:
+            w = min(max(560, int(parent.width() * 0.32)), 720)
+            h = min(max(640, int(parent.height() * 0.72)), 860)
+        else:
+            w, h = 600, 760
+        self.setFixedSize(w, h)
         self._setup_ui()
         try:
             from src.utils.bot_state import update_bot_state
@@ -233,19 +228,16 @@ class LoginPantalla(QDialog):
         lbl_user.setObjectName("LoginFieldLbl")
         campos_lay.addWidget(lbl_user)
 
-        self.txt_user = UsuarioCombo(on_tab_siguiente=self._foco_password)
+        self.txt_user = UsuarioCampo(on_tab_siguiente=self._foco_password)
         self.txt_user.setObjectName("LoginUserCb")
-        self.txt_user.setCursor(Qt.PointingHandCursor)
         try:
             users = auth_controller.get_users_by_role(self.role)
             self.txt_user.set_usuarios(users)
         except Exception as e:
             print(f"Error cargando usuarios: {e}")
             self.txt_user.set_usuarios([])
-        if self.txt_user.count() > 0:
-            self.txt_user.setCurrentIndex(0)
-            if self.txt_user.lineEdit():
-                self.txt_user.lineEdit().selectAll()
+        if self.txt_user.text():
+            self.txt_user.selectAll()
         campos_lay.addWidget(self.txt_user)
 
         lbl_pass = QLabel("CONTRASEÑA")
@@ -283,7 +275,7 @@ class LoginPantalla(QDialog):
         self.txt_pass.selectAll()
 
     def verificar(self):
-        user = self.txt_user.currentText().strip()
+        user = self.txt_user.text().strip()
         pwd = self.txt_pass.text().strip()
         if not user:
             QMessageBox.warning(self, "Acceso", "Seleccioná un usuario.")
