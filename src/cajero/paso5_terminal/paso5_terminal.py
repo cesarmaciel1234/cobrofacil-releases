@@ -433,20 +433,20 @@ class Paso5Terminal(QWidget):
         bus_lay.setSpacing(0)
 
         cab = QWidget()
-        cab.setFixedHeight(38)
+        cab.setFixedHeight(48)
         cab.setStyleSheet("background: #F1F5F9; border: none; border-bottom: 1px solid #E2E8F0;")
         cab_l = QHBoxLayout(cab)
-        cab_l.setContentsMargins(22, 0, 22, 0)
-        cab_l.setSpacing(20)
-        _hstyle = "font-size: 11px; font-weight: 800; color: #64748B; background: transparent; letter-spacing: 0.6px;"
+        cab_l.setContentsMargins(28, 0, 28, 0)
+        cab_l.setSpacing(28)
+        _hstyle = "font-size: 14px; font-weight: 800; color: #64748B; background: transparent; letter-spacing: 0.8px;"
         h_nom = QLabel("PRODUCTO")
         h_nom.setStyleSheet(_hstyle)
         h_pre = QLabel("PRECIO")
-        h_pre.setFixedWidth(130)
+        h_pre.setFixedWidth(180)
         h_pre.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         h_pre.setStyleSheet(_hstyle)
         h_stk = QLabel("STOCK")
-        h_stk.setFixedWidth(100)
+        h_stk.setFixedWidth(140)
         h_stk.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         h_stk.setStyleSheet(_hstyle)
         cab_l.addWidget(h_nom, 1)
@@ -477,7 +477,7 @@ class Paso5Terminal(QWidget):
                 padding: 0px;
                 border: none;
                 border-bottom: 1px solid #F1F5F9;
-                min-height: 56px;
+                min-height: 72px;
             }
             QListWidget#TerminalListResults::item:selected {
                 background-color: #2563EB;
@@ -487,10 +487,10 @@ class Paso5Terminal(QWidget):
         bus_lay.addWidget(self.list_results, 1)
 
         self.lbl_busqueda_pie = QLabel("Enter agregar   ·   Esc cerrar")
-        self.lbl_busqueda_pie.setFixedHeight(30)
+        self.lbl_busqueda_pie.setFixedHeight(36)
         self.lbl_busqueda_pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_busqueda_pie.setStyleSheet(
-            "font-size: 11px; font-weight: 600; color: #64748B; background: #F8FAFC; "
+            "font-size: 13px; font-weight: 600; color: #64748B; background: #F8FAFC; "
             "border: none; border-top: 1px solid #E2E8F0;"
         )
         bus_lay.addWidget(self.lbl_busqueda_pie)
@@ -1146,12 +1146,12 @@ class Paso5Terminal(QWidget):
             stk = 0.0
         col_s = self._color_stock_busqueda(selected, stk)
         if selected:
-            lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #FFFFFF;")
-            lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #FFFFFF;")
+            lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #FFFFFF;")
+            lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #FFFFFF;")
         else:
-            lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #0F172A;")
-            lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #047857;")
-        lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
+            lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #0F172A;")
+            lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #047857;")
+        lbl_s.setStyleSheet(f"font-size: 18px; font-weight: 600; background: transparent; color: {col_s};")
 
     def _update_search_colors(self):
         if not hasattr(self, "list_results"):
@@ -1167,24 +1167,23 @@ class Paso5Terminal(QWidget):
     def _layout_list_results_popup(self, metrics=None):
         if not hasattr(self, "panel_busqueda") or not hasattr(self, "txt_scan"):
             return
-        scan_w = max(self.txt_scan.width(), 420)
-        w = max(scan_w, 640)
-        w = min(w, max(640, int(self.width() * 0.78)))
+        w = max(int(self.width() * 0.72), 980)
+        w = min(w, max(720, self.width() - 48))
         n = max(1, self.list_results.count())
-        vis = min(n, 7)
-        row_h = 56
-        h = 38 + vis * row_h + 30
-        max_h = max(200, int(self.height() * 0.52))
+        vis = min(n, 10)
+        row_h = 72
+        h = 48 + vis * row_h + 36
+        max_h = max(360, int(self.height() * 0.68))
         h = min(h, max_h)
         from PyQt6.QtCore import QPoint
         pos = self.txt_scan.mapTo(self, QPoint(0, 0))
         x = pos.x()
         if x + w > self.width() - 16:
             x = max(16, self.width() - w - 16)
-        y = pos.y() - h - 8
+        y = pos.y() - h - 10
         if y < 8:
             y = 8
-            h = max(160, pos.y() - 16)
+            h = max(280, pos.y() - 18)
         self.panel_busqueda.setGeometry(x, y, w, h)
 
     def resizeEvent(self, event):
@@ -1355,24 +1354,24 @@ class Paso5Terminal(QWidget):
                 w = QWidget()
                 w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 lay = QHBoxLayout(w)
-                lay.setContentsMargins(22, 12, 22, 12)
-                lay.setSpacing(20)
-                w.setFixedHeight(56)
+                lay.setContentsMargins(28, 14, 28, 14)
+                lay.setSpacing(28)
+                w.setFixedHeight(72)
                 
                 lbl_n = QLabel(str(r['nombre']))
                 lbl_n.setObjectName("lbl_n")
-                lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #0F172A;")
+                lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #0F172A;")
                 lbl_n.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
                 
                 lbl_p = QLabel(f"${r['precio']:.2f}")
                 lbl_p.setObjectName("lbl_p")
-                lbl_p.setFixedWidth(130)
-                lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #047857;")
+                lbl_p.setFixedWidth(180)
+                lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #047857;")
                 lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 
                 lbl_s = QLabel(stk_str)
                 lbl_s.setObjectName("lbl_s")
-                lbl_s.setFixedWidth(100)
+                lbl_s.setFixedWidth(140)
                 col_s = self._color_stock_busqueda(False, stk)
                 lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
