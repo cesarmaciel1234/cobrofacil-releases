@@ -3,7 +3,7 @@
     "inventario": 46,
     "etiquetas": 10,
     "clientes": 28,
-    "red_lan": 37,
+    "red_lan": 38,
     "nexus_pro": 25,
     "configuracion": 21,
     "hardware": 6,
@@ -11,5 +11,5 @@
     "proveedores": 12,
     "cierre": 30,
     "mercadopago": 3,
-    "auditoria": 27
+    "auditoria": 28
 }

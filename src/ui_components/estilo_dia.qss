@@ -501,7 +501,7 @@ QDialog#TerminalDialogoEditarCantidad { background: transparent; }
 
 QFrame#EditCantDialog { background: #FFFFFF; border: 4px solid #437EE8; border-radius: 12px; }
 
-QFrame#EditCantDialog QLabel { background: transparent; border: none; color: #FFFFFF; font-family: 'Segoe UI'; font-weight: 800; }
+QFrame#EditCantDialog QLabel { background: transparent; border: none; color: #1E293B; font-family: 'Segoe UI'; font-weight: 800; }
 
 QPushButton#EditCantOk { background: #10B981; color: white; border: none; }
 
