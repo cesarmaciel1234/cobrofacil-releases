@@ -91,7 +91,17 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False, default=_json_safe).encode('utf-8'))
 
+    def _check_auth(self):
+        expected_token = config.get("local_pin", "1234")
+        auth_header = self.headers.get('Authorization', '')
+        if auth_header != f"Bearer {expected_token}":
+            self._send_response(401, {"status": "error", "message": "Acceso denegado. Token LAN inv\u00e1lido."})
+            return False
+        return True
+
     def do_POST(self):
+        if not self._check_auth():
+            return
         if manejar_post(self, self.path):
             return
         if self.path == '/api/guardar_venta':

@@ -1631,7 +1631,10 @@ class DatabaseManager:
                         "venta_data": venta_data,
                         "items": items
                     }
-                    response = requests.post(f"{api_url}/api/guardar_venta", json=payload, timeout=5.0)
+                    from src.config import config
+                    token = config.get("local_pin", "1234")
+                    headers = {"Authorization": f"Bearer {token}"}
+                    response = requests.post(f"{api_url}/api/guardar_venta", json=payload, headers=headers, timeout=5.0)
                     if response.status_code == 200:
                         res_data = response.json()
                         if res_data.get("status") == "success":
