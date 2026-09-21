@@ -517,7 +517,16 @@ class MainWindow(QMainWindow):
         return self.screens[1]
 
     def _apply_theme_for_index(self, index: int):
-        """Solo reaplica QSS al cambiar oscuro↔claro; evita repintar todo en cada tab admin."""
+        """Reaplica el QSS global (Día/Noche) y sincroniza los paneles administrativos."""
+        from src.config import config
+        from src.utils.theme_manager import theme_manager
+        
+        # 1. Asegurar que theme_manager esté sincronizado con config.json
+        theme_manager.refresh_from_config()
+        theme = config.get("theme", "light")
+        theme_file = "estilo_dia.qss" if theme == "light" else "estilo_noche.qss"
+        
+        # 2. Si estamos en Cajero, avisarle a la pantalla de ventas
         if index == 1:
             if hasattr(self, 'pantalla_ventas') and hasattr(self.pantalla_ventas, 'apply_theme'):
                 self.setUpdatesEnabled(False)
@@ -528,16 +537,13 @@ class MainWindow(QMainWindow):
                 finally:
                     self.setUpdatesEnabled(True)
                     self.repaint()
-            self._active_theme_file = "terminal_theme"
-            return
-
-        theme_file = "styles_light.qss"
-        if theme_file == self._active_theme_file:
-            return
-        css = _QSS_CACHE.get(theme_file, "")
-        if css:
-            QApplication.instance().setStyleSheet(css)
-        self._active_theme_file = theme_file
+        
+        # 3. Aplicar globalmente el stylesheet de la app
+        if theme_file != self._active_theme_file:
+            css = _QSS_CACHE.get(theme_file, "")
+            if css:
+                QApplication.instance().setStyleSheet(css)
+            self._active_theme_file = theme_file
 
     def _schedule_cargar_datos(self, index: int):
         """Evita encolar cargar_datos() duplicados al hacer clic rápido entre módulos."""

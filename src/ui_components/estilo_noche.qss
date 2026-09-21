@@ -344,7 +344,7 @@ Paso5Terminal[theme="dark"] QLineEdit#TerminalScan { background: #0F172A; border
 
 Paso5Terminal[theme="dark"] QLineEdit#TerminalScan:focus { border: 2px solid #3B82F6; }
 
-Paso5Terminal[theme="dark"] QListWidget#TerminalListResults { background: #0F172A; border: 2px solid #38BDF8; color: #F8FAFC; font-size: 22px; font-weight: bold; }
+Paso5Terminal[theme="dark"] QListWidget#TerminalListResults { background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
 
 Paso5Terminal[theme="dark"] QFrame#TerminalSideBox { background-color: #0F172A; border: 1px solid #334155; border-radius: 12px; }
 
@@ -392,7 +392,7 @@ Paso5Terminal[theme="light"] QLineEdit#TerminalScan { background: #F1F5F9; borde
 
 Paso5Terminal[theme="light"] QLineEdit#TerminalScan:focus { border: 2px solid #3b82f6; }
 
-Paso5Terminal[theme="light"] QListWidget#TerminalListResults { background: white; border: 2px solid #437EE8; color: #333333; font-size: 22px; font-weight: bold; }
+Paso5Terminal[theme="light"] QListWidget#TerminalListResults { background: white; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
 
 Paso5Terminal[theme="light"] QFrame#TerminalSideBox { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
 
@@ -579,7 +579,7 @@ QPushButton#DialogoCandadoBtnAuxiliar:pressed { background: #D1FAE5; }
 /* Main Paso5Terminal Widgets */
 QFrame#TerminalCentralFrame { background-color: transparent; border: none; }
 
-QListWidget#TerminalListResults { background: white; border: 2px solid #437EE8; color: #333333; font-size: 22px; font-weight: bold; }
+QListWidget#TerminalListResults { background: white; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
 
 
 /* Panel de Totales */

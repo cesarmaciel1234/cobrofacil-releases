@@ -346,6 +346,22 @@ def focus_existing_store_server() -> bool:
     return False
 
 
+def _pid_es_perfil(pid: int, role: str) -> bool:
+    """True solo si ese PID es un --role/--profile de este perfil (no el hub/consola)."""
+    role = (role or "").strip().lower()
+    try:
+        import psutil
+
+        cmd = [str(c).lower() for c in (psutil.Process(int(pid)).cmdline() or [])]
+        for i, part in enumerate(cmd):
+            if part in ("--role", "--profile") and i + 1 < len(cmd):
+                return cmd[i + 1].strip() == role
+        joined = " ".join(cmd)
+        return f"--role {role}" in joined or f"--profile {role}" in joined
+    except Exception:
+        return False
+
+
 class PerfilLocker:
     _held: str | None = None
 
@@ -359,7 +375,12 @@ class PerfilLocker:
             with open(path, "r", encoding="utf-8") as f:
                 pid_val = int(f.read().strip() or "0")
                 if pid_val > 0 and pid_val != os.getpid() and _pid_alive(pid_val):
-                    return pid_val
+                    if _pid_es_perfil(pid_val, role):
+                        return pid_val
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        pass
         except Exception:
             pass
         return None
@@ -383,10 +404,14 @@ class PerfilLocker:
         pid = os.getpid()
         if other == pid:
             return False
-        if _pid_alive(other):
+        if _pid_alive(other) and _pid_es_perfil(other, role):
             return True
 
         _purge_stale_lock(path, other)
+        try:
+            os.remove(path)
+        except OSError:
+            pass
         return False
 
     @classmethod
@@ -401,7 +426,12 @@ class PerfilLocker:
             except Exception:
                 pass
 
-        if pid_to_kill and pid_to_kill != os.getpid() and _pid_alive(pid_to_kill):
+        if (
+            pid_to_kill
+            and pid_to_kill != os.getpid()
+            and _pid_alive(pid_to_kill)
+            and _pid_es_perfil(pid_to_kill, role)
+        ):
             if sys.platform == "win32":
                 try:
                     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -434,9 +464,13 @@ class PerfilLocker:
                     other = int(f.read().strip() or "0")
             except Exception:
                 other = 0
-            if other != pid and _pid_alive(other):
+            if other != pid and _pid_alive(other) and _pid_es_perfil(other, role):
                 return False
             _purge_stale_lock(path, other)
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
         try:
             with open(path, "w", encoding="utf-8") as f:

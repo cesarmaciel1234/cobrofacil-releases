@@ -1,4 +1,4 @@
-﻿from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional
 from src.cajero.paso6_cobro.motor_pagos.dtos.orden_cobro import OrdenCobroDTO
 from src.cajero.paso6_cobro.motor_pagos.procesos.base_proceso import BaseProcesoPago
 
@@ -65,6 +65,7 @@ class MotorPrincipalCobros:
             nombre_pendiente=datos_ui.get("nombre_pendiente"),
             cliente_id=datos_ui.get("cliente_id"),
             imprimir=datos_ui.get("imprimir", True),
-            force_fiscal=datos_ui.get("force_fiscal", False)
+            force_fiscal=datos_ui.get("force_fiscal", False),
+            request_id=datos_ui.get("request_id")
         )
         return exito, msg or "Transacción delegada al motor Legacy."

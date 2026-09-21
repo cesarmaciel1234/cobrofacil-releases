@@ -5,7 +5,7 @@ import time
 from src.config import config
 from src.central_red_global.servidor.rol.apagar import detener_servidor_tienda_local
 from src.central_red_global.servidor.rol.constantes import SLAVE_FAIL_COOLDOWN_SEC
-from src.central_red_global.servidor.rol.ip import normalizar_ip, probe_mariadb
+from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc, normalizar_ip, probe_mariadb
 
 try:
     from src.base_de_datos.database import db_manager
@@ -20,6 +20,11 @@ def convertir_en_esclava(logger, ip_maestra):
 
     if not ip_maestra or ip_maestra.lower() in ("localhost", "127.0.0.1"):
         return False, "Debes ingresar una IP válida de red (ej: 192.168.0.100)."
+    if es_ip_de_esta_pc(ip_maestra):
+        return False, (
+            "Esa IP es esta misma PC. La esclava tiene que ser otra máquina.\n"
+            "En esta PC dejá el modo MAESTRA o usá la IP de la caja servidor."
+        )
 
     now = time.time()
     last_fail = _last_slave_fail_at.get(ip_maestra, 0)
@@ -65,22 +70,37 @@ def convertir_en_esclava(logger, ip_maestra):
                 config.set("carteleria_master_ip", ip_maestra)
                 config.set("carteleria_is_slave", True)
                 config.set("auto_start_store_server", False)
+                config.set("api_url", f"http://{ip_maestra}:8000")
                 config.data["preferred_master_ip"] = ip_maestra
                 config.data["is_master"] = False
                 config.data["db_host"] = ip_maestra
                 config.save()
             except Exception:
                 pass
-            detener_servidor_tienda_local()
+            def _apagar_servidor_local():
+                try:
+                    detener_servidor_tienda_local()
+                except Exception:
+                    pass
+                try:
+                    from src.central_red_global.servidor.autostart import set_os_autostart
+
+                    set_os_autostart(False)
+                except Exception:
+                    pass
+
             try:
-                from src.central_red_global.servidor.autostart import set_os_autostart
+                from PyQt6.QtCore import QTimer
 
-                set_os_autostart(False)
+                QTimer.singleShot(500, _apagar_servidor_local)
             except Exception:
-                pass
-            from src.central_red_global.sync_tienda import al_conectar_esclava
+                _apagar_servidor_local()
+            try:
+                from src.central_red_global.sync_tienda import al_conectar_esclava
 
-            al_conectar_esclava()
+                al_conectar_esclava()
+            except Exception as e_sync:
+                logger.warning(f"Sync al conectar esclava (se ignora): {e_sync}")
             return True, f"Conexión exitosa a la Maestra en {ip_maestra}."
 
         _last_slave_fail_at[ip_maestra] = time.time()

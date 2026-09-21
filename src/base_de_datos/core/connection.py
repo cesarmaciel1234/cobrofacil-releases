@@ -287,6 +287,7 @@ class ConnectionMixin:
                                     from src.config import config
                                     config.set("db_host", host)
                                     config.set("is_master", False)
+                                    config.set("api_url", f"http://{host}:8000")
                                     config.save()
                                     self.mariadb_engine = MariaDBEngine(host=host)
                                     try:

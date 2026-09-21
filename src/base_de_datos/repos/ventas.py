@@ -2,17 +2,53 @@ from typing import List, Tuple, Any, Optional
 import sqlite3
 import os
 import sys
+import uuid
 from src.logger import logger
+
+
+def _id_fila(row):
+    if row is None:
+        return None
+    try:
+        return row["id"]
+    except Exception:
+        return row[0]
+
+
+def _buscar_por_request(cursor, request_id):
+    if not request_id:
+        return None
+    try:
+        cursor.execute("SELECT id FROM ventas WHERE request_id = ?", (request_id,))
+        return _id_fila(cursor.fetchone())
+    except Exception:
+        return None
+
+
+def _es_duplicado(err) -> bool:
+    msg = str(err or "").lower()
+    return "unique" in msg or "duplicate" in msg or "idx_ventas_request_id" in msg
+
 
 class VentasRepoMixin:
     def guardar_venta_completa(self, venta_data, items):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
         
-        # Intercept for LAN API (Nivel 2)
+        request_id = venta_data.get('request_id')
+        if not request_id:
+            request_id = str(uuid.uuid4())
+            venta_data['request_id'] = request_id
+
+        # Esclava: si ya hay MariaDB de la maestra, guardar ahí (misma BD).
+        # La API LAN solo se usa si NO hay motor MariaDB (offline / mal cableada).
         if not self.is_master:
             from src.config import config
-            api_url = config.get("api_url", "")
-            if api_url:
+            mariadb_ok = (
+                str(getattr(self, "db_engine_type", "")).lower() == "mariadb"
+                and getattr(self, "mariadb_engine", None) is not None
+            )
+            api_url = str(config.get("api_url", "") or "").rstrip("/")
+            if api_url and not mariadb_ok:
                 try:
                     import requests
                     payload = {
@@ -28,43 +64,56 @@ class VentasRepoMixin:
                     logger.warning(f"Error del Servidor API LAN: HTTP {response.status_code}")
                 except Exception as e:
                     logger.error(f"Fallo de conexión a la API LAN: {e}")
-                
-                # If API fails, fall back to offline sync (it acts like network drop)
-                logger.warning("Fallo en API LAN detectado. Guardando offline.")
-                try:
-                    from src.base_de_datos.offline_sync import offline_sync_manager
-                    offline_sync_manager.guardar_venta_offline(venta_data, items)
-                    return 9999999
-                except Exception as ex:
-                    logger.error(f"Fallo crítico offline tras error API: {ex}")
-                    return None
+                logger.warning("Fallo en API LAN y sin MariaDB de maestra. Cancelando venta.")
+                return None
 
         conn = None
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            existente = _buscar_por_request(cursor, request_id)
+            if existente:
+                logger.info(f"Venta ignorada por idempotencia (request_id: {request_id})")
+                return existente
             
-            # Generar la hora local real en Python en lugar de usar CURRENT_TIMESTAMP de SQLite (que es UTC)
             from datetime import datetime
             fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # 1. Insertar Cabecera
             from src.config import config
             c_id = config.get("caja_id", 1)
-            cursor.execute("""
-                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
+            vals_base = (
                 venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                 venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
-            ))
+                venta_data.get('cliente_nombre', ''),
+            )
+            try:
+                cursor.execute("""
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, vals_base + (request_id,))
+            except Exception as e:
+                if conn:
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass
+                    cursor = conn.cursor()
+                if _es_duplicado(e):
+                    existente = _buscar_por_request(cursor, request_id)
+                    if existente:
+                        return existente
+                if "request_id" in str(e).lower() or "unknown column" in str(e).lower():
+                    cursor.execute("""
+                        INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, vals_base)
+                else:
+                    raise
             
             id_venta = cursor.lastrowid
             
-            # 2. Insertar Detalles y Actualizar Stock
             for it in items:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
@@ -78,40 +127,58 @@ class VentasRepoMixin:
             return id_venta
         except Exception as e:
             if conn: conn.rollback()
-            # Derivar al Buffer Offline si falla la conexión a la base de datos de red
-            logger.warning(f"Fallo de red detectado al guardar venta. Guardando offline: {e}")
+            existente = None
             try:
-                from src.base_de_datos.offline_sync import offline_sync_manager
-                offline_sync_manager.guardar_venta_offline(venta_data, items)
-                return 9999999 # Retornar un ID falso para simular éxito en la UI
-            except Exception as ex:
-                logger.error(f"Fallo crítico: No se pudo guardar ni online ni offline: {ex}")
-                return None
+                if conn:
+                    existente = _buscar_por_request(conn.cursor(), request_id)
+            except Exception:
+                existente = None
+            if existente:
+                return existente
+            logger.warning(f"Error al guardar venta en base de datos: {e}")
+            return None
         finally:
             if conn: conn.close()
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
         conn = None
+        request_id = (venta_data or {}).get("request_id")
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+            if request_id and _buscar_por_request(cursor, request_id):
+                return True
             
             from datetime import datetime
             fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             c_id = venta_data.get('caja_id', 1)
-            
-            cursor.execute("""
-                INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
-                                   usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
+            vals = (
                 venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
                 venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
                 venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
-                venta_data.get('cliente_nombre', '')
-            ))
+                venta_data.get('cliente_nombre', ''),
+            )
+            try:
+                cursor.execute("""
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                                       usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, vals + (request_id,))
+            except Exception as e:
+                if request_id and _es_duplicado(e):
+                    if conn:
+                        conn.rollback()
+                    return True
+                if "request_id" in str(e).lower() or "unknown column" in str(e).lower():
+                    cursor.execute("""
+                        INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                                           usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, vals)
+                else:
+                    raise
             id_venta = cursor.lastrowid
             
             for it in items:
@@ -127,6 +194,12 @@ class VentasRepoMixin:
             return True
         except Exception as e:
             if conn: conn.rollback()
+            if request_id:
+                try:
+                    if conn and _buscar_por_request(conn.cursor(), request_id):
+                        return True
+                except Exception:
+                    pass
             logger.warning(f"Fallo en sync_venta_to_master: {e}")
             return False
         finally:

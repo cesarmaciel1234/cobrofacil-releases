@@ -105,6 +105,7 @@ def launch_app(direct_role=None):
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
+        app.setStyle('Fusion')
     if not getattr(app, "_network_engine_shutdown_hook", False):
         from src.central_red_global.network_engine import shutdown_network_engine
         app.aboutToQuit.connect(shutdown_network_engine)
@@ -466,6 +467,7 @@ if __name__ == "__main__":
             sys.exit(code if code is not None else 0)
 
         app = QApplication.instance() or QApplication(sys.argv)
+        app.setStyle('Fusion')
         if not getattr(app, "_network_engine_shutdown_hook", False):
             from src.central_red_global.network_engine import shutdown_network_engine
             app.aboutToQuit.connect(shutdown_network_engine)
@@ -486,6 +488,7 @@ if __name__ == "__main__":
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
+        app.setStyle('Fusion')
     if not getattr(app, "_network_engine_shutdown_hook", False):
         from src.central_red_global.network_engine import shutdown_network_engine
         app.aboutToQuit.connect(shutdown_network_engine)

@@ -4,36 +4,20 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.utils.paths import get_base_path
 
-THEME_FILE = os.path.join(get_base_path(), "theme_prefs.json")
+from src.config import config
 
 class ThemeManager(QObject):
     theme_changed = pyqtSignal(str) # "light" o "dark"
 
     def __init__(self):
         super().__init__()
-        self.current_theme = "light"
-        self._load_theme()
-        self._load_theme()
-
-    def _load_theme(self):
-        if os.path.exists(THEME_FILE):
-            try:
-                with open(THEME_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    self.current_theme = data.get("theme", "light")
-            except Exception:
-                pass
+        self.current_theme = config.get("theme", "light")
 
     def _load_prefs(self):
-        # Modo oscuro deshabilitado globalmente en perfil admin
         pass
 
     def _save_theme(self):
-        try:
-            with open(THEME_FILE, "w", encoding="utf-8") as f:
-                json.dump({"theme": self.current_theme}, f)
-        except Exception:
-            pass
+        config.set("theme", self.current_theme)
 
     def toggle_theme(self):
         new_theme = "dark" if self.current_theme == "light" else "light"
@@ -43,6 +27,12 @@ class ThemeManager(QObject):
         if theme in ["light", "dark"]:
             self.current_theme = theme
             self._save_theme()
+            self.theme_changed.emit(self.current_theme)
+
+    def refresh_from_config(self):
+        theme = config.get("theme", "light")
+        if self.current_theme != theme:
+            self.current_theme = theme
             self.theme_changed.emit(self.current_theme)
 
     def is_dark(self):

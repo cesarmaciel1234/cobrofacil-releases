@@ -815,6 +815,13 @@ class DatabaseManager:
         add_column_if_not_exists('ventas', 'fecha_cancel', 'TEXT')
         add_column_if_not_exists('ventas', 'perfil_cancel', 'TEXT')
         add_column_if_not_exists('ventas', 'caja_cancel', 'INTEGER')
+        add_column_if_not_exists('ventas', 'request_id', 'TEXT')
+        try:
+            cursor.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_ventas_request_id ON ventas(request_id)"
+            )
+        except Exception:
+            pass
         try:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS auditoria_cancelaciones (
@@ -1090,7 +1097,8 @@ class DatabaseManager:
                     metodo_pago TEXT DEFAULT 'Efectivo',
                     caja_id INTEGER DEFAULT 1,
                     descuento REAL DEFAULT 0,
-                    recargo REAL DEFAULT 0
+                    recargo REAL DEFAULT 0,
+                    request_id TEXT UNIQUE
                 )
             """)
             

@@ -420,42 +420,80 @@ class Paso5Terminal(QWidget):
         self.txt_scan.textChanged.connect(self.actualizar_busqueda)
         self.txt_scan.returnPressed.connect(self.procesar_scan)
         
-        # --- Overlay de Resultados de Búsqueda (Flotante) ---
-        self.list_results = QListWidget(self)
+        # --- Overlay de Resultados de Búsqueda (Flotante, plano) ---
+        self.panel_busqueda = QFrame(self)
+        self.panel_busqueda.setObjectName("TerminalBusquedaPanel")
+        self.panel_busqueda.hide()
+        self.panel_busqueda.setGraphicsEffect(None)
+        self.panel_busqueda.setStyleSheet(
+            "QFrame#TerminalBusquedaPanel { background: #FFFFFF; border: 1px solid #2563EB; }"
+        )
+        bus_lay = QVBoxLayout(self.panel_busqueda)
+        bus_lay.setContentsMargins(0, 0, 0, 0)
+        bus_lay.setSpacing(0)
+
+        cab = QWidget()
+        cab.setFixedHeight(38)
+        cab.setStyleSheet("background: #F1F5F9; border: none; border-bottom: 1px solid #E2E8F0;")
+        cab_l = QHBoxLayout(cab)
+        cab_l.setContentsMargins(22, 0, 22, 0)
+        cab_l.setSpacing(20)
+        _hstyle = "font-size: 11px; font-weight: 800; color: #64748B; background: transparent; letter-spacing: 0.6px;"
+        h_nom = QLabel("PRODUCTO")
+        h_nom.setStyleSheet(_hstyle)
+        h_pre = QLabel("PRECIO")
+        h_pre.setFixedWidth(130)
+        h_pre.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        h_pre.setStyleSheet(_hstyle)
+        h_stk = QLabel("STOCK")
+        h_stk.setFixedWidth(100)
+        h_stk.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        h_stk.setStyleSheet(_hstyle)
+        cab_l.addWidget(h_nom, 1)
+        cab_l.addWidget(h_pre)
+        cab_l.addWidget(h_stk)
+        bus_lay.addWidget(cab)
+
+        self.list_results = QListWidget()
         self.list_results.setObjectName("TerminalListResults")
-        self.list_results.hide()
         self.list_results.itemClicked.connect(self.seleccionar_item_busqueda)
         self.list_results.installEventFilter(self)
-        
-        # Sombra premium para elevarlo a otro nivel
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-        shadow = QGraphicsDropShadowEffect(self.list_results)
-        shadow.setBlurRadius(25)
-        shadow.setXOffset(0)
-        shadow.setYOffset(10)
-        shadow.setColor(QColor(0, 0, 0, 80))
-        self.list_results.setGraphicsEffect(shadow)
-        
-        # Filas alternadas para mejor lectura
-        self.list_results.setAlternatingRowColors(True)
+        self.list_results.setGraphicsEffect(None)
+        self.list_results.setUniformItemSizes(True)
+        self.list_results.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerItem)
+        self.list_results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._search_sel_row = -1
+        self.list_results.setAlternatingRowColors(False)
         self.list_results.itemSelectionChanged.connect(self._update_search_colors)
+        self.list_results.setSpacing(0)
         self.list_results.setStyleSheet("""
-            QListWidget {
-                border: 4px solid #3B82F6;
-                border-radius: 12px;
-                background-color: #F8FAFC;
-                alternate-background-color: #F1F5F9;
+            QListWidget#TerminalListResults {
+                border: none;
+                background-color: #FFFFFF;
                 color: #0F172A;
+                outline: none;
             }
-            QListWidget::item {
-                padding: 8px;
-                border-bottom: 1px solid #E2E8F0;
+            QListWidget#TerminalListResults::item {
+                padding: 0px;
+                border: none;
+                border-bottom: 1px solid #F1F5F9;
+                min-height: 56px;
             }
-            QListWidget::item:selected {
-                background-color: #3B82F6;
-                color: white;
+            QListWidget#TerminalListResults::item:selected {
+                background-color: #2563EB;
+                color: #FFFFFF;
             }
         """)
+        bus_lay.addWidget(self.list_results, 1)
+
+        self.lbl_busqueda_pie = QLabel("Enter agregar   ·   Esc cerrar")
+        self.lbl_busqueda_pie.setFixedHeight(30)
+        self.lbl_busqueda_pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_busqueda_pie.setStyleSheet(
+            "font-size: 11px; font-weight: 600; color: #64748B; background: #F8FAFC; "
+            "border: none; border-top: 1px solid #E2E8F0;"
+        )
+        bus_lay.addWidget(self.lbl_busqueda_pie)
         
         # Mapeo de etiquetas numéricas
         self.lbl_cant_val = self.panel_totales.valor_cant
@@ -531,7 +569,7 @@ class Paso5Terminal(QWidget):
         elif k == Qt.Key_F11: self.llamar_supervisor()
         elif k == Qt.Key_Escape:
             if getattr(self, 'list_results', None) is not None and not self.list_results.isHidden():
-                self.list_results.hide()
+                self._ocultar_busqueda()
             self.txt_scan.setFocus()
 
     def toggle_chatbot(self):
@@ -605,7 +643,7 @@ class Paso5Terminal(QWidget):
     def mousePressEvent(self, event):
         # Al hacer click en cualquier parte, el cursor vuelve al buscador y se oculta la lista
         if getattr(self, 'list_results', None) is not None and not self.list_results.isHidden():
-            self.list_results.hide()
+            self._ocultar_busqueda()
         if getattr(self, 'txt_scan', None) is not None:
             self.txt_scan.setFocus()
         super().mousePressEvent(event)
@@ -817,7 +855,7 @@ class Paso5Terminal(QWidget):
                         return True
                 elif key == Qt.Key_Escape:
                     self.txt_scan.clear()
-                    self.list_results.hide()
+                    self._ocultar_busqueda()
                     return True
                 elif key == Qt.Key_Down:
                     if not self.list_results.isHidden() and self.list_results.count() > 0:
@@ -1066,52 +1104,88 @@ class Paso5Terminal(QWidget):
         # Delegamos la responsabilidad nativamente a Qt usando QHeaderView
         pass
 
+    def _ocultar_busqueda(self):
+        if getattr(self, "list_results", None) is not None:
+            self.list_results.hide()
+        if getattr(self, "panel_busqueda", None) is not None:
+            self.panel_busqueda.hide()
+
+    def _mostrar_busqueda(self):
+        self._layout_list_results_popup()
+        if getattr(self, "panel_busqueda", None) is not None:
+            self.panel_busqueda.show()
+            self.panel_busqueda.raise_()
+        if getattr(self, "list_results", None) is not None:
+            self.list_results.show()
+
+    def _color_stock_busqueda(self, selected, stock_val):
+        if selected:
+            return "#DBEAFE"
+        if stock_val <= 0:
+            return "#B91C1C"
+        if stock_val <= 5:
+            return "#C2410C"
+        return "#64748B"
+
+    def _pintar_fila_busqueda(self, row, selected):
+        item = self.list_results.item(row)
+        if not item:
+            return
+        w = self.list_results.itemWidget(item)
+        if not w:
+            return
+        lbl_n = w.findChild(QLabel, "lbl_n")
+        lbl_p = w.findChild(QLabel, "lbl_p")
+        lbl_s = w.findChild(QLabel, "lbl_s")
+        if not (lbl_n and lbl_p and lbl_s):
+            return
+        prod = item.data(Qt.UserRole) or {}
+        try:
+            stk = float(prod.get("stock") or 0)
+        except Exception:
+            stk = 0.0
+        col_s = self._color_stock_busqueda(selected, stk)
+        if selected:
+            lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #FFFFFF;")
+            lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #FFFFFF;")
+        else:
+            lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #0F172A;")
+            lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #047857;")
+        lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
+
     def _update_search_colors(self):
-        if not hasattr(self, "list_results"): return
-        
-        # Cambiamos los colores de los QLabels para que contrasten bien cuando la fila se selecciona (azul)
-        for i in range(self.list_results.count()):
-            item = self.list_results.item(i)
-            w = self.list_results.itemWidget(item)
-            if not w: continue
-            
-            lbl_n = w.findChild(QLabel, "lbl_n")
-            lbl_p = w.findChild(QLabel, "lbl_p")
-            lbl_s = w.findChild(QLabel, "lbl_s")
-            
-            if not (lbl_n and lbl_p and lbl_s): continue
-            
-            if item.isSelected():
-                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: white;")
-                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: white;")
-                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #E2E8F0;")
-            else:
-                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: #0F172A;")
-                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: #059669;")
-                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #64748B;")
+        if not hasattr(self, "list_results"):
+            return
+        row = self.list_results.currentRow()
+        prev = getattr(self, "_search_sel_row", -1)
+        if prev >= 0 and prev != row:
+            self._pintar_fila_busqueda(prev, False)
+        if row >= 0:
+            self._pintar_fila_busqueda(row, True)
+        self._search_sel_row = row
 
     def _layout_list_results_popup(self, metrics=None):
-        if not hasattr(self, "list_results") or not hasattr(self, "txt_scan"):
+        if not hasattr(self, "panel_busqueda") or not hasattr(self, "txt_scan"):
             return
-        
-        # Ancho 75% de la pantalla para buena lectura, Alto 65% de la tabla
-        w = int(self.width() * 0.75)
-        h = int(self.dashboard_frame.height() * 0.65) if hasattr(self, "dashboard_frame") else 350
-        
-        if w < 600: w = 600
-        if h < 300: h = 300
-        
+        scan_w = max(self.txt_scan.width(), 420)
+        w = max(scan_w, 640)
+        w = min(w, max(640, int(self.width() * 0.78)))
+        n = max(1, self.list_results.count())
+        vis = min(n, 7)
+        row_h = 56
+        h = 38 + vis * row_h + 30
+        max_h = max(200, int(self.height() * 0.52))
+        h = min(h, max_h)
         from PyQt6.QtCore import QPoint
-        # Mapeamos las coordenadas de la caja de texto (txt_scan) hacia la ventana (self)
         pos = self.txt_scan.mapTo(self, QPoint(0, 0))
-        
-        # Alineamos el borde izquierdo del popup con el borde izquierdo del buscador
         x = pos.x()
-        
-        # El borde inferior del popup debe estar justo encima del buscador (pos.y() - altura - 5px margen)
-        y = pos.y() - h - 5
-        
-        self.list_results.setGeometry(x, max(0, y), w, h)
+        if x + w > self.width() - 16:
+            x = max(16, self.width() - w - 16)
+        y = pos.y() - h - 8
+        if y < 8:
+            y = 8
+            h = max(160, pos.y() - 16)
+        self.panel_busqueda.setGeometry(x, y, w, h)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1251,19 +1325,19 @@ class Paso5Terminal(QWidget):
     def actualizar_busqueda(self):
         # En lugar de buscar en cada tecla, esperamos 250ms.
         # Si entra otra tecla (como hace un escáner), el timer se reinicia.
-        self.search_timer.start(40)  # Ultra responsivo
+        self.search_timer.start(80)
         
     def _do_busqueda(self):
         txt = self.txt_scan.text().strip()
         if not txt or txt.startswith('+'):
-            self.list_results.hide()
+            self._ocultar_busqueda()
             return
             
         if '*' in txt:
             partes = txt.split('*', 1)
             txt = partes[1].strip()
             if not txt:
-                self.list_results.hide()
+                self._ocultar_busqueda()
                 return
                 
         res = self.controller.buscar_productos(txt)
@@ -1279,68 +1353,57 @@ class Paso5Terminal(QWidget):
                 self.list_results.addItem(item)
                 
                 w = QWidget()
-                # Truco para que el widget pase los eventos de click al ListWidget
                 w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 lay = QHBoxLayout(w)
-                lay.setContentsMargins(15, 12, 15, 12)
-                w.setMinimumHeight(75)
+                lay.setContentsMargins(22, 12, 22, 12)
+                lay.setSpacing(20)
+                w.setFixedHeight(56)
                 
                 lbl_n = QLabel(str(r['nombre']))
                 lbl_n.setObjectName("lbl_n")
-                lbl_n.setStyleSheet("font-size: 26px; font-weight: 900; background: transparent; color: #0F172A;")
+                lbl_n.setStyleSheet("font-size: 18px; font-weight: 700; background: transparent; color: #0F172A;")
+                lbl_n.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
                 
                 lbl_p = QLabel(f"${r['precio']:.2f}")
                 lbl_p.setObjectName("lbl_p")
-                lbl_p.setStyleSheet("font-size: 22px; font-weight: bold; background: transparent; color: #059669;")
-                lbl_p.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
+                lbl_p.setFixedWidth(130)
+                lbl_p.setStyleSheet("font-size: 17px; font-weight: 700; background: transparent; color: #047857;")
+                lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 
-                lbl_s = QLabel(f"📦 {stk_str}")
+                lbl_s = QLabel(stk_str)
                 lbl_s.setObjectName("lbl_s")
-                lbl_s.setStyleSheet("font-size: 18px; font-weight: normal; background: transparent; color: #64748B;")
+                lbl_s.setFixedWidth(100)
+                col_s = self._color_stock_busqueda(False, stk)
+                lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
                 
-                lay.addWidget(lbl_n, 5)  # 5 partes para el nombre (Izquierda)
-                lay.addWidget(lbl_p, 2)  # 2 partes para el precio (Medio)
-                lay.addWidget(lbl_s, 2)  # 2 partes para el stock (Derecha)  # 2 partes para el stock (Derecha)
+                lay.addWidget(lbl_n, 1)
+                lay.addWidget(lbl_p)
+                lay.addWidget(lbl_s)
                 
                 item.setSizeHint(w.sizeHint())
                 self.list_results.setItemWidget(item, w)
+            self._search_sel_row = -1
             self.list_results.setCurrentRow(0)
             self._update_search_colors()
-            
-            # Fluid animation (despliegue suave tipo acordeón ascendente ya que está anclado abajo)
-            if not self.list_results.isVisible():
-                from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, QRect
-                
-                # Configurar geometría final
-                self._layout_list_results_popup()
-                final_geo = self.list_results.geometry()
-                
-                # Iniciar con altura 0, alineado al fondo (pegado a la caja de texto)
-                start_geo = QRect(final_geo.x(), final_geo.y() + final_geo.height(), final_geo.width(), 0)
-                self.list_results.setGeometry(start_geo)
-                self.list_results.show()
-                self.list_results.raise_()
-                
-                # Animar altura y posición Y simultáneamente para efecto de "crecimiento hacia arriba"
-                self.anim = QPropertyAnimation(self.list_results, b"geometry")
-                self.anim.setDuration(200)  # 200ms de pura suavidad
-                self.anim.setStartValue(start_geo)
-                self.anim.setEndValue(final_geo)
-                self.anim.setEasingCurve(QEasingCurve.Type.OutQuart) # Aceleración suave
-                self.anim.start()
-            else:
-                self.list_results.show()
-                self.list_results.raise_()
+            nres = self.list_results.count()
+            if hasattr(self, "lbl_busqueda_pie"):
+                self.lbl_busqueda_pie.setText(f"{nres} resultado{'s' if nres != 1 else ''}   ·   Enter agregar   ·   Esc cerrar")
+            self._mostrar_busqueda()
         else:
-            item = QListWidgetItem(f"🚫 No hay resultados para '{txt}'")
+            item = QListWidgetItem()
             item.setData(Qt.UserRole, None)
-            from PyQt6.QtGui import QColor
-            item.setForeground(QColor('#FF0000'))
+            vacio = QLabel(f"Sin resultados para «{txt}»")
+            vacio.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            vacio.setStyleSheet("font-size: 16px; font-weight: 700; color: #B91C1C; background: transparent;")
+            vacio.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            item.setSizeHint(vacio.sizeHint())
             self.list_results.addItem(item)
+            self.list_results.setItemWidget(item, vacio)
             self.list_results.clearSelection()
-            self.list_results.show()
-            self.list_results.raise_()
+            if hasattr(self, "lbl_busqueda_pie"):
+                self.lbl_busqueda_pie.setText("Esc cerrar")
+            self._mostrar_busqueda()
 
     def seleccionar_item_busqueda(self):
         current = self.list_results.currentItem()
@@ -1355,7 +1418,7 @@ class Paso5Terminal(QWidget):
                     except: pass
                 self.agregar_a_tabla(p, cant_multi)
                 self.txt_scan.clear()
-                self.list_results.hide()
+                self._ocultar_busqueda()
                 self.txt_scan.setFocus()
 
     def procesar_scan(self):
@@ -1370,7 +1433,7 @@ class Paso5Terminal(QWidget):
                     _, cantidad = BarcodeParser.parse_scan_text(txt_raw)
                     self.agregar_a_tabla(p, cantidad)
                     self.txt_scan.clear()
-                    self.list_results.hide()
+                    self._ocultar_busqueda()
                     self.txt_scan.setFocus()
                     return
 
@@ -1383,7 +1446,7 @@ class Paso5Terminal(QWidget):
         if success and p:
             self.agregar_a_tabla(p, cantidad)
             self.txt_scan.clear()
-            self.list_results.hide()
+            self._ocultar_busqueda()
             self.txt_scan.setFocus()
             return
             
@@ -1402,7 +1465,7 @@ class Paso5Terminal(QWidget):
                 if p:
                     self.agregar_a_tabla(p, cantidad_multiplicador)
                     self.txt_scan.clear()
-                    self.list_results.hide()
+                    self._ocultar_busqueda()
                     self.txt_scan.setFocus()
                     return
 
@@ -1413,7 +1476,7 @@ class Paso5Terminal(QWidget):
             p = res_direct[0]
             self.agregar_a_tabla(p, cantidad_multiplicador)
             self.txt_scan.clear()
-            self.list_results.hide()
+            self._ocultar_busqueda()
             self.txt_scan.setFocus()
             return
 
@@ -1428,7 +1491,7 @@ class Paso5Terminal(QWidget):
                 if cantidad_balanza is not None and cantidad_balanza > 0:
                     self.agregar_a_tabla(p, cantidad_balanza)
                     self.txt_scan.clear()
-                    self.list_results.hide()
+                    self._ocultar_busqueda()
                     self.txt_scan.setFocus()
                     return
             else:
@@ -1450,7 +1513,7 @@ class Paso5Terminal(QWidget):
             p = res[0]
             self.agregar_a_tabla(p, cantidad_multiplicador)
             self.txt_scan.clear()
-            self.list_results.hide()
+            self._ocultar_busqueda()
             self.txt_scan.setFocus()
         else:
             from PyQt6.QtWidgets import QMessageBox

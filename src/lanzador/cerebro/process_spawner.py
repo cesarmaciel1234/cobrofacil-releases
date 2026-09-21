@@ -18,7 +18,12 @@ def build_role_command(rol: str) -> list[str]:
 def spawn_role_process(rol: str) -> subprocess.Popen:
     """Lanza un perfil en proceso aparte (cajero/admin/jefe/carteleria)."""
     cmd = build_role_command(rol)
-    return subprocess.Popen(cmd)
+    kwargs = {}
+    if sys.platform == "win32":
+        flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200)
+        kwargs["creationflags"] = flags
+        kwargs["close_fds"] = True
+    return subprocess.Popen(cmd, **kwargs)
 
 
 def ensure_hub_services() -> None:

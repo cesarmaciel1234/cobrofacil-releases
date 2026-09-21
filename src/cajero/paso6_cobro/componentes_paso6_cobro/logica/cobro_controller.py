@@ -48,7 +48,8 @@ class CobroController:
         monto_descuento=0.0,
         monto_recargo=0.0,
         descuentaso_oferta=0.0,
-        nombre_pendiente=None
+        nombre_pendiente=None,
+        request_id=None
     ):
         """
         Prepara el diccionario de venta y lo guarda en la base de datos.
@@ -84,7 +85,8 @@ class CobroController:
             'estado': estado_venta,
             'cliente_nombre': nombre_cliente_guardar,
             'descuento': descuento_total,
-            'recargo': monto_recargo
+            'recargo': monto_recargo,
+            'request_id': request_id
         }
 
         # Guardar en base de datos
@@ -167,7 +169,8 @@ class CobroController:
         nombre_pendiente, 
         cliente_id, 
         imprimir, 
-        force_fiscal
+        force_fiscal,
+        request_id=None
     ):
         """
         Orquesta el guardado de la venta, el fiado, la apertura del cajón y la impresión.
@@ -184,7 +187,8 @@ class CobroController:
                 descuento,
                 recargo,
                 oferta,
-                nombre_pendiente
+                nombre_pendiente,
+                request_id=request_id
             )
             
             if not id_v:

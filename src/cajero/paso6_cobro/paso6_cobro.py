@@ -39,6 +39,8 @@ class Paso6Cobro(QDialog):
     """
     def __init__(self, total, items_carrito, parent=None):
         super().__init__(parent)
+        import uuid
+        self.request_id = str(uuid.uuid4())
         self.total_original = total
         self.total_final = total
         self.items_carrito = items_carrito
@@ -978,7 +980,8 @@ class Paso6Cobro(QDialog):
                 "nombre_pendiente": getattr(self, 'nombre_pendiente', None),
                 "cliente_id": cliente_id,
                 "imprimir": imprimir,
-                "force_fiscal": force_fiscal
+                "force_fiscal": force_fiscal,
+                "request_id": getattr(self, "request_id", None)
             }
             
             exito, mensaje = MotorPrincipalCobros.iniciar_transaccion(
