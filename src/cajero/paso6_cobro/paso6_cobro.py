@@ -1021,26 +1021,26 @@ class Paso6Cobro(QDialog):
         if not hasattr(self, 'txt_pago') or not hasattr(self, 'txt_otro') or not hasattr(self, 'txt_desc') or not hasattr(self, 'txt_rec'):
             return super().eventFilter(watched, event)
 
-        if watched in [self.txt_pago, self.txt_otro, self.txt_desc, self.txt_rec] and event.type() == QEvent.KeyPress:
+        if watched in [self.txt_pago, self.txt_otro, self.txt_desc, self.txt_rec] and event.type() == QEvent.Type.KeyPress:
             k = event.key()
-            if event.isAutoRepeat() and k in (Qt.Key_Enter, Qt.Key_Return):
+            if event.isAutoRepeat() and k in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
                 return True # Bloquear auto-repeat ENTER en los campos de texto
 
             # LAS FLECHAS YA NO CAMBIAN EL MÉTODO (Lógica nueva)
             # Solo permiten moverse dentro del QLineEdit
-            elif event.type() == QEvent.FocusOut:
+            elif event.type() == QEvent.Type.FocusOut:
                 # Si pierde el foco hacia algo que no sea un botón interno, no ocultar
                 pass
                 return False
 
             # Asegurarnos de que las teclas de función (F1-F12) se procesen siempre, aunque el cursor esté en el casillero
-            if k == Qt.Key_F11:
+            if k == Qt.Key.Key_F11:
                 self.procesar_pago_mercadopago_point()
                 return True
-            elif k == Qt.Key_F12:
+            elif k == Qt.Key.Key_F12:
                 self.verificar_transferencia_mp()
                 return True
-            elif k == Qt.Key_F1:
+            elif k == Qt.Key.Key_F1:
                 self.finalizar(True)
                 return True
 
@@ -1069,29 +1069,29 @@ class Paso6Cobro(QDialog):
         k = event.key()
         # Si estamos en la página de selección, permitimos ENTER, flechas y ESC, y bloqueamos el resto
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0:
-            if k in (Qt.Key_Enter, Qt.Key_Return):
+            if k in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
                 if self.current_metodo:
                     self.procesar_click_metodo(self.current_metodo)
                 event.accept()
                 return
 
-            if k in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
+            if k in (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down):
                 methods = list(self.btns.keys())
                 try:
                     curr_idx = methods.index(self.current_metodo)
                 except ValueError:
                     curr_idx = 0
 
-                if k == Qt.Key_Left: next_idx = (curr_idx - 1) % len(methods)
-                elif k == Qt.Key_Right: next_idx = (curr_idx + 1) % len(methods)
-                elif k == Qt.Key_Up: next_idx = (curr_idx - 5) % len(methods)
-                elif k == Qt.Key_Down: next_idx = (curr_idx + 5) % len(methods)
+                if k == Qt.Key.Key_Left: next_idx = (curr_idx - 1) % len(methods)
+                elif k == Qt.Key.Key_Right: next_idx = (curr_idx + 1) % len(methods)
+                elif k == Qt.Key.Key_Up: next_idx = (curr_idx - 5) % len(methods)
+                elif k == Qt.Key.Key_Down: next_idx = (curr_idx + 5) % len(methods)
 
                 self.set_metodo(methods[next_idx])
                 event.accept()
                 return
 
-            if k == Qt.Key_Escape:
+            if k == Qt.Key.Key_Escape:
                 self.reject()
                 return
 
@@ -1102,15 +1102,15 @@ class Paso6Cobro(QDialog):
         # A partir de aquí, solo se ejecuta si estamos en la Página 1
         # =========================================================
 
-        if k == Qt.Key_F1: self.finalizar(True)
-        elif k == Qt.Key_F2: self.finalizar(False)
-        elif k == Qt.Key_F3: self.abrir_descuento()
-        elif k == Qt.Key_F4: self.abrir_recargo()
-        elif k == Qt.Key_F10: self.finalizar_fiscal_efectivo()
-        elif k == Qt.Key_F11: self.procesar_pago_mercadopago_point()
-        elif k == Qt.Key_F12: self.verificar_transferencia_mp()
-        elif k == Qt.Key_Escape: self.reject()
-        elif k in (Qt.Key_Return, Qt.Key_Enter):
+        if k == Qt.Key.Key_F1: self.finalizar(True)
+        elif k == Qt.Key.Key_F2: self.finalizar(False)
+        elif k == Qt.Key.Key_F3: self.abrir_descuento()
+        elif k == Qt.Key.Key_F4: self.abrir_recargo()
+        elif k == Qt.Key.Key_F10: self.finalizar_fiscal_efectivo()
+        elif k == Qt.Key.Key_F11: self.procesar_pago_mercadopago_point()
+        elif k == Qt.Key.Key_F12: self.verificar_transferencia_mp()
+        elif k == Qt.Key.Key_Escape: self.reject()
+        elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
             if self.current_metodo in ("Fiado", "Clientes"):
                 if getattr(self, "_fiado_flujo_activo", False):
@@ -1146,25 +1146,25 @@ class Paso6Cobro(QDialog):
             focused = self.txt_pago
 
         if key == "⌫":
-            event_press = QKeyEvent(QEvent.KeyPress, Qt.Key_Backspace, Qt.NoModifier, "")
+            event_press = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Backspace, Qt.NoModifier, "")
             QApplication.sendEvent(focused, event_press)
-            event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Backspace, Qt.NoModifier, "")
+            event_release = QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Backspace, Qt.NoModifier, "")
             QApplication.sendEvent(focused, event_release)
         elif key == "ENTER":
-            event_press = QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier, "\n")
+            event_press = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.NoModifier, "\n")
             QApplication.sendEvent(focused, event_press)
-            event_release = QKeyEvent(QEvent.KeyRelease, Qt.Key_Return, Qt.NoModifier, "\n")
+            event_release = QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Return, Qt.NoModifier, "\n")
             QApplication.sendEvent(focused, event_release)
         elif key in ("ESC", "Salir"):
             self.reject()
         else:
             teclado_key_map = {
-                '0': Qt.Key_0, '1': Qt.Key_1, '2': Qt.Key_2, '3': Qt.Key_3, '4': Qt.Key_4,
-                '5': Qt.Key_5, '6': Qt.Key_6, '7': Qt.Key_7, '8': Qt.Key_8, '9': Qt.Key_9,
-                ',': Qt.Key_Comma
+                '0': Qt.Key.Key_0, '1': Qt.Key.Key_1, '2': Qt.Key.Key_2, '3': Qt.Key.Key_3, '4': Qt.Key.Key_4,
+                '5': Qt.Key.Key_5, '6': Qt.Key.Key_6, '7': Qt.Key.Key_7, '8': Qt.Key.Key_8, '9': Qt.Key.Key_9,
+                ',': Qt.Key.Key_Comma
             }
-            key_code = teclado_key_map.get(key, Qt.Key_unknown)
-            event_press = QKeyEvent(QEvent.KeyPress, key_code, Qt.NoModifier, key)
+            key_code = teclado_key_map.get(key, Qt.Key.Key_unknown)
+            event_press = QKeyEvent(QEvent.Type.KeyPress, key_code, Qt.NoModifier, key)
             QApplication.sendEvent(focused, event_press)
-            event_release = QKeyEvent(QEvent.KeyRelease, key_code, Qt.NoModifier, key)
+            event_release = QKeyEvent(QEvent.Type.KeyRelease, key_code, Qt.NoModifier, key)
             QApplication.sendEvent(focused, event_release)

@@ -36,7 +36,7 @@ class SmartLauncherUpdater(QFrame):
         self.signals = SmartUpdaterSignal()
         self.remote_ver = ""
         try:
-            self.local_ver = read_local_version()
+            self.local_ver = read_local_version().lstrip('vV')
         except Exception:
             self.local_ver = "?"
         self.is_downloading = False
@@ -71,7 +71,7 @@ class SmartLauncherUpdater(QFrame):
         lay.setContentsMargins(8, 4, 8, 4)
         lay.setSpacing(8)
 
-        self.lbl_status = QLabel(f"v{self.local_ver}  ·  Al día  ✅")
+        self.lbl_status = QLabel(f"vv{self.local_ver}  ·  Al día  ✅")
         self.lbl_status.setStyleSheet(
             "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
         )
@@ -115,7 +115,7 @@ class SmartLauncherUpdater(QFrame):
 
     def check_for_updates_async(self):
         try:
-            self.lbl_status.setText(f"v{self.local_ver}  ·  Consultando GitHub…")
+            self.lbl_status.setText(f"vv{self.local_ver}  ·  Consultando GitHub…")
             self.lbl_status.setStyleSheet(
                 "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
             )
@@ -169,7 +169,7 @@ class SmartLauncherUpdater(QFrame):
     def _on_check_current(self):
         if self.is_downloading or is_update_staged():
             return
-        self.lbl_status.setText(f"v{self.local_ver}  ·  Al día  ✅")
+        self.lbl_status.setText(f"vv{self.local_ver}  ·  Al día  ✅")
         self.lbl_status.setStyleSheet(
             "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
         )
@@ -188,7 +188,7 @@ class SmartLauncherUpdater(QFrame):
     def _on_check_unreachable(self):
         if self.is_downloading or is_update_staged():
             return
-        self.lbl_status.setText(f"v{self.local_ver}  ·  Sin red GitHub  ⚠")
+        self.lbl_status.setText(f"vv{self.local_ver}  ·  Sin red GitHub  ⚠")
         self.lbl_status.setStyleSheet(
             "font-size: 11px; font-weight: 700; color: #9A3412; border: none; background: transparent;"
         )
@@ -250,7 +250,7 @@ class SmartLauncherUpdater(QFrame):
         resp = QMessageBox.question(
             self,
             "🚀 Actualización Inteligente",
-            f"Se encontró la versión v{self.remote_ver} en GitHub.\n\n"
+            f"Se encontró la versión vv{self.remote_ver} en GitHub.\n\n"
             "El paquete pesa ~300 MB (incluye el sistema completo).\n"
             "La descarga la hace el actualizador autónomo (proceso aparte):\n"
             "si falla, el lanzador y los perfiles siguen trabajando.\n\n"
@@ -279,7 +279,7 @@ class SmartLauncherUpdater(QFrame):
         self.is_downloading = True
         self.btn_action.setEnabled(False)
         self.btn_action.setText("⏳ 0%")
-        self.lbl_status.setText(f"⏳ Descargando v{self.remote_ver} (~300 MB)...")
+        self.lbl_status.setText(f"⏳ Descargando vv{self.remote_ver} (~300 MB)...")
 
         try:
             request_download(force=True, remote_version=self.remote_ver)
@@ -318,7 +318,7 @@ class SmartLauncherUpdater(QFrame):
 
     def _on_download_progress(self, pct: int, msg: str):
         self.btn_action.setText(f"⏳ {pct}%")
-        self.lbl_status.setText(msg or f"⏳ Descargando v{self.remote_ver}: {pct}%")
+        self.lbl_status.setText(msg or f"⏳ Descargando vv{self.remote_ver}: {pct}%")
 
     def _on_download_complete(self, success: bool, msg: str):
         if self._poll_timer is not None:
@@ -331,7 +331,7 @@ class SmartLauncherUpdater(QFrame):
         if success or is_update_staged():
             self._show_ready_to_apply(ask_dialog=success)
         else:
-            self.btn_action.setText(f"⚡ Reintentar v{self.remote_ver}")
+            self.btn_action.setText(f"⚡ Reintentar vv{self.remote_ver}")
             self.lbl_status.setText("⚠️ Error al descargar (lanzador sigue OK).")
             QMessageBox.warning(self, "Error", f"No se pudo completar la descarga:\n{msg}")
 
@@ -339,7 +339,7 @@ class SmartLauncherUpdater(QFrame):
         ver = self.remote_ver or ((_load_pending() or {}).get("remote_version") or "")
         self.remote_ver = str(ver)
         self.btn_action.setText("🔄 Reiniciar y Aplicar")
-        self.lbl_status.setText(f"✅ Versión v{self.remote_ver} lista — reiniciá para instalar.")
+        self.lbl_status.setText(f"✅ Versión vv{self.remote_ver} lista — reiniciá para instalar.")
         self.setStyleSheet(
             "QFrame { background: #EFF6FF; border: 1.5px solid #3B82F6; border-radius: 10px; }"
         )
@@ -361,7 +361,7 @@ class SmartLauncherUpdater(QFrame):
             resp = QMessageBox.information(
                 self,
                 "✅ Actualización Descargada",
-                f"La versión v{self.remote_ver} ya está descargada.\n\n"
+                f"La versión vv{self.remote_ver} ya está descargada.\n\n"
                 "Se van a cerrar Cajero / Admin / Cartelería / Servidor "
                 "porque bloquean el instalador si siguen abiertos.\n\n"
                 "¿Reiniciar e instalar ahora?",
