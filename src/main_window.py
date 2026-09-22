@@ -2,8 +2,7 @@ from src.utils.qt_compat import qt_exec
 import src.utils.qt_compat  # noqa: F401 — enums Qt6 antes de widgets
 from PyQt6.QtWidgets import (
 
-    QMainWindow, QWidget, QStackedWidget, QLabel, QFrame,
-    QGraphicsDropShadowEffect, QApplication, QMessageBox, QPushButton,
+    QMainWindow, QWidget, QStackedWidget, QLabel, QFrame, QApplication, QMessageBox, QPushButton,
     QHBoxLayout, QVBoxLayout
 )
 import sys
@@ -189,11 +188,7 @@ class MainWindow(QMainWindow):
             border: none;
             letter-spacing: 5px;
         """)
-        # Sombra de impacto
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20); shadow.setColor(QColor(0,0,0,200)); shadow.setOffset(5,5)
-        self.lbl_watermark.setGraphicsEffect(shadow)
-        self.layout_alerta.addWidget(self.lbl_watermark)
+        # Sombra de impacto        self.        self.layout_alerta.addWidget(self.lbl_watermark)
 
         self.lbl_timestamp = QLabel("00/00/0000 00:00:00")
         self.lbl_timestamp.setAlignment(Qt.AlignCenter)

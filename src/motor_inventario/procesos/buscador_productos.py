@@ -16,13 +16,13 @@ def buscar_productos_en_db(buscar="", depto="", limite=50, offset=0):
         "WHERE 1=1"
     )
     params = []
-    
+
     # Filtro de busqueda de texto
     if buscar:
         # Nota: Evitamos CAST AS TEXT para que no falle en MariaDB. Usamos CAST AS CHAR.
         query += " AND (p.nombre LIKE ? OR CAST(p.id AS CHAR) LIKE ? OR COALESCE(p.codigo,'') LIKE ?)"
         params += [f"%{buscar}%"] * 3
-        
+
     # Filtro de departamento
     if depto:
         query += " AND UPPER(p.departamento) = UPPER(?)"
@@ -36,7 +36,7 @@ def buscar_productos_en_db(buscar="", depto="", limite=50, offset=0):
         resultados = db_manager.execute_query(query, params) or []
         # Convertimos las filas a diccionarios estándar de inmediato
         resultados_dict = [dict(r) for r in resultados]
-        
+
         if len(resultados_dict) > limite:
             return resultados_dict[:limite], True
         return resultados_dict, False

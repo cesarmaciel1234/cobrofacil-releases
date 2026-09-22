@@ -31,7 +31,7 @@ class DialogoCandado(QDialog):
         container.setFixedSize(w, h)
         container.move((self.width() - w) // 2, (self.height() - h) // 2)
         container.setObjectName("DialogoCandadoContenedor")
-        
+
         # Se elimina el efecto de sombra (QGraphicsDropShadowEffect) para mejorar rendimiento en equipos de bajos recursos.
 
         main_lay = QVBoxLayout(container)
@@ -63,7 +63,7 @@ class DialogoCandado(QDialog):
         self.btn_cajero.setObjectName("DialogoCandadoBtnCajero")
         lay_c1 = QVBoxLayout(self.btn_cajero)
         lay_c1.setContentsMargins(15, 20, 15, 20)
-        
+
         lbl_t1 = QLabel(f"🔵  [1]  {name_c1.upper()}")
         lbl_t1.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_t1.setObjectName("DialogoCandadoCajeroT1")
@@ -81,7 +81,7 @@ class DialogoCandado(QDialog):
         self.btn_auxiliar.setObjectName("DialogoCandadoBtnAuxiliar")
         lay_c2 = QVBoxLayout(self.btn_auxiliar)
         lay_c2.setContentsMargins(15, 20, 15, 20)
-        
+
         lbl_t2 = QLabel(f"🟢  [2]  {name_c2.upper()}")
         lbl_t2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_t2.setObjectName("DialogoCandadoAuxiliarT2")
@@ -95,7 +95,7 @@ class DialogoCandado(QDialog):
         cards_lay.addWidget(self.btn_cajero)
         cards_lay.addWidget(self.btn_auxiliar)
         main_lay.addLayout(cards_lay)
-        
+
         main_lay.addStretch()
 
         # Mensaje IA / Aprendizaje

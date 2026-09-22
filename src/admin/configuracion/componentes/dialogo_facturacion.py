@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -34,7 +34,7 @@ class DialogoFacturacion(QDialog):
         header = QLabel("🧾 Facturación Electrónica & Fiscal")
         header.setStyleSheet("font-size: 20px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
-        
+
         lbl_desc = QLabel("Configura la integración con ARCA (ex-AFIP) o tu ticketera fiscal física.")
         lbl_desc.setStyleSheet(" font-size: 13px; margin-bottom: 5px; border:none;")
         main_lay.addWidget(lbl_desc)
@@ -44,7 +44,7 @@ class DialogoFacturacion(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setStyleSheet("background: transparent;")
-        
+
         scroll_content = QWidget()
         scroll_lay = QVBoxLayout(scroll_content)
         scroll_lay.setContentsMargins(0, 0, 0, 0)
@@ -55,14 +55,14 @@ class DialogoFacturacion(QDialog):
         box_arca.setStyleSheet("""
             QFrame {  border: 1px solid #E2E8F0; border-radius: 12px; }
             QLabel { border: none; font-weight: bold;  font-size: 11px; }
-            QLineEdit, QComboBox { 
-                background: white; border: 1px solid #CBD5E1; border-radius: 6px; 
+            QLineEdit, QComboBox {
+                background: white; border: 1px solid #CBD5E1; border-radius: 6px;
                 padding: 8px; font-weight: normal;  font-size: 13px;
             }
         """)
         arca_lay = QVBoxLayout(box_arca)
         arca_lay.setSpacing(10)
-        
+
         lbl_arca_title = QLabel("🌐 FACTURA ELECTRÓNICA ARCA (AFIP Web Services)")
         lbl_arca_title.setStyleSheet("font-size: 12px; font-weight: bold;  border-bottom: 1px solid #CBD5E1; padding-bottom: 5px;")
         arca_lay.addWidget(lbl_arca_title)
@@ -143,7 +143,7 @@ class DialogoFacturacion(QDialog):
         self.chk_fiscal_enabled.setChecked(config.get("fiscal_printer_mode", False))
         self.chk_fiscal_enabled.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")
         fiscal_lay.addWidget(self.chk_fiscal_enabled)
-        
+
         lbl_info_excl = QLabel("⚠️ Si se activa, las ventas digitales irán al controlador fiscal físico,\ny las ventas en Efectivo continuarán imprimiendo de forma no-fiscal.")
         lbl_info_excl.setStyleSheet(" font-size: 10.5px; border: none; font-weight: normal;")
         lbl_info_excl.setWordWrap(True)
@@ -167,22 +167,22 @@ class DialogoFacturacion(QDialog):
 
         h_checks = QHBoxLayout()
         h_checks.setSpacing(15)
-        
+
         # Obtener métodos configurados
         metodos_activos = config.get("fiscal_payment_methods", ["Tarjeta", "Transferencia", "Mixto"])
-        
+
         self.chk_met_efectivo = QCheckBox("Efectivo")
         self.chk_met_efectivo.setChecked("Efectivo" in metodos_activos)
         self.chk_met_efectivo.setStyleSheet("font-size: 12px;  border: none;")
-        
+
         self.chk_met_tarjeta = QCheckBox("Tarjeta")
         self.chk_met_tarjeta.setChecked("Tarjeta" in metodos_activos)
         self.chk_met_tarjeta.setStyleSheet("font-size: 12px;  border: none;")
-        
+
         self.chk_met_transf = QCheckBox("Transferencia")
         self.chk_met_transf.setChecked("Transferencia" in metodos_activos)
         self.chk_met_transf.setStyleSheet("font-size: 12px;  border: none;")
-        
+
         self.chk_met_mixto = QCheckBox("Mixto")
         self.chk_met_mixto.setChecked("Mixto" in metodos_activos)
         self.chk_met_mixto.setStyleSheet("font-size: 12px;  border: none;")
@@ -194,7 +194,7 @@ class DialogoFacturacion(QDialog):
         pago_lay.addLayout(h_checks)
 
         scroll_lay.addWidget(box_pago)
-        
+
         scroll.setWidget(scroll_content)
         main_lay.addWidget(scroll)
 
@@ -204,12 +204,12 @@ class DialogoFacturacion(QDialog):
         btn_cancel.setStyleSheet("padding: 12px; font-weight: bold;   border-radius: 8px; border: none;")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)
-        
+
         btn_save = QPushButton("💾 Guardar Cambios")
         btn_save.setStyleSheet("padding: 12px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
-        
+
         h_btns.addWidget(btn_cancel)
         h_btns.addStretch()
         h_btns.addWidget(btn_save)
@@ -222,7 +222,7 @@ class DialogoFacturacion(QDialog):
             config.set("cert_key_path", self.txt_key.text().strip())
             config.set("cert_crt_path", self.txt_crt.text().strip())
             config.set("arca_sandbox_mode", self.chk_sandbox.isChecked())
-            
+
             try:
                 pto = int(self.txt_pto_venta.text().strip())
                 if pto <= 0: raise ValueError()
@@ -232,7 +232,7 @@ class DialogoFacturacion(QDialog):
                 return
 
             config.set("fiscal_printer_mode", self.chk_fiscal_enabled.isChecked())
-            
+
             # Guardar ruteo de formas de pago
             metodos_sel = []
             if self.chk_met_efectivo.isChecked(): metodos_sel.append("Efectivo")
@@ -240,7 +240,7 @@ class DialogoFacturacion(QDialog):
             if self.chk_met_transf.isChecked(): metodos_sel.append("Transferencia")
             if self.chk_met_mixto.isChecked(): metodos_sel.append("Mixto")
             config.set("fiscal_payment_methods", metodos_sel)
-            
+
             QMessageBox.information(self, "Configuración Actualizada", "Los parámetros de facturación y ruteo fiscal han sido guardados correctamente.")
             self.accept()
         except Exception as e:

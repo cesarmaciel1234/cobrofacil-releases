@@ -53,7 +53,7 @@ def listar_cortes_del_dia(
         obs = str(r.get("observaciones") or "")
         esperado, dif, t_ventas = _parse_obs(obs)
         tipo = str(r.get("tipo") or "")
-        
+
         # Buscar la apertura correspondiente
         caja_id = r.get("caja_id")
         fecha_cierre = str(r.get("fecha") or "")
@@ -63,7 +63,7 @@ def listar_cortes_del_dia(
         )
         hora_apertura = _hora(str(apertura_row[0]['fecha'])) if apertura_row else "--:--"
         hora_cierre_fmt = _hora(fecha_cierre)
-        
+
         out.append(
             {
                 "id": r.get("id"),

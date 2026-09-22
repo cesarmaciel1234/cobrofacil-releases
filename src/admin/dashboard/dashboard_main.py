@@ -102,13 +102,13 @@ class Admin0Dashboard(QWidget):
             QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
-        
+
         try:
             from src.config import config
             if config and config.get("theme", "light") == "dark":
                 self.btn_tema.setText("☀️ Día")
         except: pass
-        
+
         nav_lay.addWidget(self.btn_tema)
 
         self.btn_out = QPushButton("Cerrar sesión")
@@ -258,11 +258,11 @@ class Admin0Dashboard(QWidget):
             current = config.get("theme", "light")
             nuevo = "dark" if current == "light" else "light"
             config.set("theme", nuevo)
-            
+
             qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
             aplicar_tema(QApplication.instance(), qss)
             theme_manager.set_theme(nuevo)
-            
+
             self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
         except Exception as e:
             from src.logger import logger
@@ -305,21 +305,21 @@ class Admin0Dashboard(QWidget):
 
     def _tick_hero(self):
         now = datetime.datetime.now()
-        
+
         dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
         fecha_esp = f"{dias[now.weekday()]} {now.day:02d} de {meses[now.month-1]}"
         self.lbl_hero_date.setText(fecha_esp)
-        
+
         h = now.hour
         g = "Buenos días" if 5 <= h < 12 else "Buenas tardes" if h < 20 else "Buenas noches"
-        
+
         from src.config import config
         try:
             nombre = (config.current_user or {}).get("username", "Admin").capitalize()
         except Exception:
             nombre = "Admin"
-            
+
         self.greeting.setText(f"{g}, {nombre} 👋")
 
     def _on_card_clicked(self, module_id, screen_idx):

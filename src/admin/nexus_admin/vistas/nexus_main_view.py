@@ -32,22 +32,22 @@ class NexusMainView(QWidget):
             self.btn_abort.clicked.connect(self.parent_main.request_dashboard.emit)
 
         layout_hud.addWidget(self.btn_abort)
-        
+
         self.lbl_reloj = QLabel("00:00:00  //  00-00-0000")
         self.lbl_reloj.setStyleSheet("color: #64748B; font-weight: bold; font-size: 13px; margin-left: 15px;")
         layout_hud.addWidget(self.lbl_reloj)
-        
+
         layout_hud.addStretch()
 
         self.lbl_titulo = QLabel("N E X U S  //  CONTROL CENTER")
         layout_hud.addWidget(self.lbl_titulo)
-        
+
         layout_hud.addStretch()
         # Para mantener el equilibrio del stretch de la derecha
         right_spacer = QLabel("")
         right_spacer.setFixedWidth(300)
         layout_hud.addWidget(right_spacer)
-        
+
         main_layout.addLayout(layout_hud)
 
         # --- PANELES ---

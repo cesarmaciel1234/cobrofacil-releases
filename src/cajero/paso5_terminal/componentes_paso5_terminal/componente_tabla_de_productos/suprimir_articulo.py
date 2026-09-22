@@ -10,7 +10,7 @@ def suprimir_articulo(terminal, row):
     """
     if row == -1:
         return False
-        
+
     nombre_articulo = ""
     try:
         item_nombre = terminal.tabla.item(row, 1)
@@ -20,7 +20,7 @@ def suprimir_articulo(terminal, row):
         pass
 
     dlg = MensajeEliminacion(nombre_articulo=nombre_articulo, parent=terminal)
-    
+
     # En PyQt6, qt_exec retorna Enum o int con comportamiento booleano
     if qt_exec(dlg):
         try:
@@ -28,9 +28,9 @@ def suprimir_articulo(terminal, row):
             terminal.actualizar_totales()
         except Exception as e:
             print(f"Error eliminando fila: {e}")
-        
+
         QTimer.singleShot(50, terminal.txt_scan.setFocus)
         return True
-        
+
     QTimer.singleShot(50, terminal.txt_scan.setFocus)
     return False

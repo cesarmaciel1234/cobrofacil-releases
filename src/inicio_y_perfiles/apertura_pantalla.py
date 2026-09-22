@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont
 from src.base_de_datos.database import db_manager
@@ -33,18 +33,18 @@ class AperturaCajaPantalla(QDialog):
     def setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
-        
+
         self.container = QFrame()
         # Contenedor blanco premium sin bordes
         self.container.setStyleSheet("""
             QFrame {
                 background: #FFFFFF;
-                border-radius: 28px; 
+                border-radius: 28px;
                 border: none;
             }
         """)
         layout.addWidget(self.container)
-        
+
         main_lay = QVBoxLayout(self.container)
         main_lay.setContentsMargins(0, 0, 0, 0)
         main_lay.setSpacing(0)
@@ -53,7 +53,7 @@ class AperturaCajaPantalla(QDialog):
         header = QLabel("💰 CONTROL DE APERTURA")
         header.setStyleSheet("""
             background: transparent;
-            color: #10B981; font-size: 11px; 
+            color: #10B981; font-size: 11px;
             font-weight: 900; letter-spacing: 4px; padding: 24px 0 8px 0;
             border: none;
         """)
@@ -75,14 +75,14 @@ class AperturaCajaPantalla(QDialog):
                 background: #F8FAFC;
                 border: 2px solid #E2E8F0;
                 border-radius: 20px;
-                color: #10B981; 
-                font-size: 44px; 
-                font-weight: 900; 
+                color: #10B981;
+                font-size: 44px;
+                font-weight: 900;
                 padding: 12px;
                 font-family: 'Segoe UI', sans-serif;
             }
-            QLineEdit:focus { 
-                border: 2px solid #10B981; 
+            QLineEdit:focus {
+                border: 2px solid #10B981;
                 background: rgba(16, 185, 129, 0.04);
                 color: #059669;
             }
@@ -97,17 +97,17 @@ class AperturaCajaPantalla(QDialog):
         btn.setFixedHeight(50)
         btn.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #10B981, 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #10B981,
                     stop:1 #059669
                 );
                 color: white; font-size: 12px; font-weight: 900; letter-spacing: 2.5px;
                 border-radius: 25px; border: none;
                 font-family: 'Segoe UI', sans-serif;
             }
-            QPushButton:hover { 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #059669, 
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #059669,
                     stop:1 #047857
                 );
             }
@@ -115,11 +115,7 @@ class AperturaCajaPantalla(QDialog):
                 background: #047857;
             }
         """)
-        btn_shadow = QGraphicsDropShadowEffect(btn)
-        btn_shadow.setBlurRadius(15)
-        btn_shadow.setColor(QColor(16, 185, 129, 60))
-        btn_shadow.setOffset(0, 4)
-        btn.setGraphicsEffect(btn_shadow)
+        btn_        btn_        btn_        btn_        btn.setGraphicsEffect(btn_shadow)
         btn.clicked.connect(self.guardar_y_seguir)
         content.addWidget(btn)
 
@@ -138,16 +134,16 @@ class AperturaCajaPantalla(QDialog):
         content.addWidget(btn_cancel)
 
         main_lay.addLayout(content)
-        
+
         QTimer.singleShot(100, self.txt_saldo.setFocus)
         QTimer.singleShot(120, self.txt_saldo.selectAll)
 
     def guardar_y_seguir(self):
         from src.utils.parser import parse_float_regional
         monto = parse_float_regional(self.txt_saldo.text())
-        
+
         from src.inicio_y_perfiles.logica.caja_controller import CajaController
         caja_ctrl = CajaController()
         caja_ctrl.abrir_caja(monto)
-        
+
         self.accept()

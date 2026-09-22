@@ -16,32 +16,32 @@ class ProductCard(QFrame):
     def setup_ui(self):
         self.setFixedHeight(80)
         self.update_style()
-        
+
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 5, 20, 5)
-        
+
         # Info Izquierda (Nombre y Cantidad)
         info_v = QVBoxLayout()
         self.lbl_nombre = QLabel(self.data['nombre'].upper())
         self.lbl_nombre.setObjectName("CarlisName")
-        
+
         self.lbl_detalles = QLabel(f"Código: {self.data['id']} | Cantidad: {self.data['cant']:.3f}")
         self.lbl_detalles.setObjectName("CarlisDetails")
-        
+
         info_v.addWidget(self.lbl_nombre)
         info_v.addWidget(self.lbl_detalles)
         layout.addLayout(info_v)
-        
+
         layout.addStretch()
-        
+
         # Info Derecha (Precio y Subtotal)
         precio_v = QVBoxLayout()
         self.lbl_precio = QLabel(f"${self.data['precio']:.2f}")
         self.lbl_precio.setObjectName("CarlisPrice")
-        
+
         self.lbl_subtotal = QLabel(f"${self.data['subtotal']:.2f}")
         self.lbl_subtotal.setObjectName("CarlisSubtotal")
-        
+
         precio_v.addWidget(self.lbl_precio)
         precio_v.addWidget(self.lbl_subtotal)
         layout.addLayout(precio_v)
@@ -72,14 +72,14 @@ class CarlisList(QScrollArea):
     def setup_ui(self):
         self.setWidgetResizable(True)
         self.setObjectName("CarlisScroll")
-        
+
         self.container = QWidget()
         self.container.setObjectName("CarlisContainer")
         self.layout = QVBoxLayout(self.container)
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.layout.setSpacing(10)
         self.layout.addStretch()
-        
+
         self.setWidget(self.container)
 
     def add_product(self, product_data):
@@ -99,15 +99,15 @@ class CarlisList(QScrollArea):
 
     def move_selection(self, delta):
         if not self.cards: return
-        
+
         # Desmarcar anterior
         if 0 <= self.current_index < len(self.cards):
             self.cards[self.current_index].set_selected(False)
-            
+
         self.current_index += delta
         if self.current_index < 0: self.current_index = 0
         if self.current_index >= len(self.cards): self.current_index = len(self.cards) - 1
-        
+
         # Marcar nuevo
         self.cards[self.current_index].set_selected(True)
         self.ensureWidgetVisible(self.cards[self.current_index])
@@ -122,10 +122,10 @@ class CarlisList(QScrollArea):
             card = self.cards.pop(self.current_index)
             self.layout.removeWidget(card)
             card.deleteLater()
-            
+
             # Ajustar indice
             if not self.cards: self.current_index = -1
             elif self.current_index >= len(self.cards): self.current_index = len(self.cards) - 1
-            
+
             if self.current_index != -1:
                 self.cards[self.current_index].set_selected(True)

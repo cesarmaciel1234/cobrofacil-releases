@@ -25,25 +25,25 @@ class GestorTurnos:
             except Exception as e:
                 logger.error(f"Error registrando intervención de jefe: {e}")
             return False # No requiere pedir saldo inicial
-            
+
         # Lógica para Cajeros (Buscar si tienen turno abierto HOY)
         hoy_inicio = datetime.now().strftime('%Y-%m-%d 00:00:00')
-        
+
         mov = db_manager.execute_query(
             "SELECT id, tipo, usuario FROM movimientos_caja "
             "WHERE caja_id = ? AND tipo IN ('APERTURA', 'CIERRE_Z', 'CIERRE_AUTO', 'CIERRE_TURNO') "
             "AND fecha >= ? ORDER BY id DESC LIMIT 1",
             (caja_id, hoy_inicio)
         )
-        
+
         if mov and mov[0]['tipo'] == 'APERTURA':
             if mov[0]['usuario'].lower() == usuario.lower():
                 logger.info(f"Reanudando turno abierto para el cajero {usuario} en caja {caja_id}")
                 return False
             else:
                 logger.warning(f"La caja {caja_id} está abierta por {mov[0]['usuario']}. {usuario} está entrando.")
-                return True 
-                
+                return True
+
         return True
 
     @staticmethod

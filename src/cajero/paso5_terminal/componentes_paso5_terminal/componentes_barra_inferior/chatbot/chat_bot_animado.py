@@ -318,18 +318,18 @@ function hablar(on) {
 
 function toggleBubble() {
   bubbleOpen = !bubbleOpen;
-  if(bubbleOpen) { 
-      bubble.classList.add("active"); dots.classList.remove("active"); 
+  if(bubbleOpen) {
+      bubble.classList.add("active"); dots.classList.remove("active");
       console.log("resize://expand");
   }
-  else { 
-      bubble.classList.remove("active"); 
+  else {
+      bubble.classList.remove("active");
       console.log("resize://shrink");
   }
 }
-function cerrar() { 
-    bubbleOpen=false; 
-    bubble.classList.remove("active"); 
+function cerrar() {
+    bubbleOpen=false;
+    bubble.classList.remove("active");
     console.log("resize://shrink");
 }
 
@@ -388,8 +388,8 @@ function enviar() {
   preguntar(txt);
 }
 function preguntar(txt) {
-  if(!bubbleOpen) { 
-      bubbleOpen=true; bubble.classList.add("active"); 
+  if(!bubbleOpen) {
+      bubbleOpen=true; bubble.classList.add("active");
       console.log("resize://expand");
   }
   addMsg(txt, false);
@@ -401,8 +401,8 @@ function preguntar(txt) {
 function iniciarTutor() {
   tutorRunning = true; tutorIdx = 0;
   tutorBar.classList.add("active");
-  if(!bubbleOpen){ 
-      bubbleOpen=true; bubble.classList.add("active"); 
+  if(!bubbleOpen){
+      bubbleOpen=true; bubble.classList.add("active");
       console.log("resize://expand");
   }
   nextTutorStep();
@@ -451,12 +451,12 @@ class ChatAnimadoStandalone(QWidget):
         self._tutor_timer = QTimer(self)
         self._tutor_timer.setSingleShot(True)
         self._tutor_timer.timeout.connect(self._tutor_avanzar)
-        
+
         # UDP listener para F10
         self.udp_socket = QUdpSocket(self)
         self.udp_socket.bind(QHostAddress.AnyIPv4, 45680, QUdpSocket.ShareAddress | QUdpSocket.ReuseAddressHint)
         self.udp_socket.readyRead.connect(self._process_udp)
-        
+
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
@@ -466,12 +466,12 @@ class ChatAnimadoStandalone(QWidget):
         self.web.page().setBackgroundColor(Qt.transparent)
         self.web.setHtml(HTML_CHAT, QUrl("about:blank"))
         lay.addWidget(self.web, 1)
-        
+
         # En lugar de hide() que congela Chromium, lo enviamos fuera de pantalla
         screen = QApplication.primaryScreen().geometry()
         self.pos_oculta = (-2000, -2000)
         self.pos_visible = (screen.right() - 170, screen.bottom() - 170)
-        
+
         self.move(self.pos_oculta[0], self.pos_oculta[1])
         QTimer.singleShot(500, lambda: self.web.page().runJavaScript("cerrar();"))
 
@@ -549,7 +549,7 @@ class ChatAnimadoStandalone(QWidget):
             self._tutor_activo = False
             self.web.page().runJavaScript("tutorFin();")
             return
-        
+
         paso = PASOS_TUTOR[self._tutor_idx]
         msg_json = json.dumps(paso["msg"])
         self.web.page().runJavaScript(f"recibirPasoTutor({msg_json}, {self._tutor_idx + 1}, {len(PASOS_TUTOR)});")

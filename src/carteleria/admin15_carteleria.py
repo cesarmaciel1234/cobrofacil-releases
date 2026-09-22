@@ -79,9 +79,9 @@ class CarteleriaConfigPanel(QWidget):
         title = QLabel("📺 Configuración de Cartelería")
         title.setStyleSheet("""
             QLabel {
-                font-size: 24px; 
-                font-weight: 800; 
-                color: #1E293B; 
+                font-size: 24px;
+                font-weight: 800;
+                color: #1E293B;
                 border: none;
                 letter-spacing: 0.5px;
             }
@@ -111,19 +111,19 @@ class CarteleriaConfigPanel(QWidget):
         """)
         negocio_layout = QVBoxLayout(negocio_frame)
         negocio_layout.setContentsMargins(20, 20, 20, 20)
-        
+
         lbl_negocio = QLabel("🏢 Datos del Negocio")
         lbl_negocio.setStyleSheet("""
             QLabel {
-                font-size: 20px; 
-                font-weight: 800; 
-                color: #3B82F6; 
+                font-size: 20px;
+                font-weight: 800;
+                color: #3B82F6;
                 border: none;
                 margin-bottom: 10px;
             }
         """)
         negocio_layout.addWidget(lbl_negocio)
-        
+
         self.panel_negocio = PanelDatosNegocio(self, show_save_button=False)
         self.panel_negocio.setGraphicsEffect(None)
         self.panel_negocio.setStyleSheet("background: transparent; border: none;")
@@ -146,23 +146,23 @@ class CarteleriaConfigPanel(QWidget):
         lbl_c_title = QLabel("🎨 Mensajes y Estilo")
         lbl_c_title.setStyleSheet("""
             QLabel {
-                font-size: 20px; 
-                font-weight: 800; 
-                color: #3B82F6; 
+                font-size: 20px;
+                font-weight: 800;
+                color: #3B82F6;
                 border: none;
                 margin-bottom: 12px;
             }
         """)
         c_layout.addWidget(lbl_c_title)
-        
+
         c_layout.addSpacing(12)
-        
+
         lbl_theme = QLabel("Estilo Visual de la Cartelería (5 temas):")
         lbl_theme.setStyleSheet("""
             QLabel {
-                font-size: 14px; 
-                font-weight: 600; 
-                color: #64748B; 
+                font-size: 14px;
+                font-weight: 600;
+                color: #64748B;
                 border: none;
                 margin-bottom: 6px;
             }
@@ -198,19 +198,19 @@ class CarteleriaConfigPanel(QWidget):
         c_layout.addWidget(self.lst_theme)
 
         c_layout.addSpacing(16)
-        
+
         lbl_perf = QLabel("Potencia de la PC de la TV:")
         lbl_perf.setStyleSheet("""
             QLabel {
-                font-size: 14px; 
-                font-weight: 600; 
-                color: #64748B; 
+                font-size: 14px;
+                font-weight: 600;
+                color: #64748B;
                 border: none;
                 margin-bottom: 6px;
             }
         """)
         c_layout.addWidget(lbl_perf)
-        
+
         self.cmb_perf = QComboBox()
         self.cmb_perf.addItem("⚡ Automático (mide RAM y núcleos)", "auto")
         self.cmb_perf.addItem("💻 PC de bajo recurso (fluida, sin blur)", "eco")
@@ -248,15 +248,15 @@ class CarteleriaConfigPanel(QWidget):
         lbl_mensaje = QLabel("Mensaje principal (Zócalo / Banner animado):")
         lbl_mensaje.setStyleSheet("""
             QLabel {
-                font-size: 14px; 
-                font-weight: 600; 
-                color: #64748B; 
+                font-size: 14px;
+                font-weight: 600;
+                color: #64748B;
                 border: none;
                 margin-bottom: 6px;
             }
         """)
         c_layout.addWidget(lbl_mensaje)
-        
+
         self.txt_mensaje = QTextEdit()
         self.txt_mensaje.setMinimumHeight(100)
         self.txt_mensaje.setStyleSheet("""
@@ -285,7 +285,7 @@ class CarteleriaConfigPanel(QWidget):
         btn_container.setStyleSheet("background: transparent; border: none;")
         btn_layout = QHBoxLayout(btn_container)
         btn_layout.addStretch()
-        
+
         self.btn_save = QPushButton("💾 Guardar Cambios")
         self.btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_save.setStyleSheet("""
@@ -304,7 +304,7 @@ class CarteleriaConfigPanel(QWidget):
         self.btn_save.clicked.connect(self._save_all)
         btn_layout.addWidget(self.btn_save)
         btn_layout.addStretch()
-        
+
         main_layout.addWidget(btn_container)
         main_layout.addStretch()
 
@@ -328,10 +328,10 @@ class CarteleriaConfigPanel(QWidget):
                 background: #64748B;
             }
         """)
-        
+
         scroll_local.setWidgetResizable(True)
         scroll_local.setWidget(wrapper)
-        
+
         root.addWidget(scroll_local)
 
     def _tema_elegido(self):
@@ -354,22 +354,22 @@ class CarteleriaConfigPanel(QWidget):
         # 1. Cargar desde la base de datos global compartida (sin pasar por HTTP firewall)
         from src.base_de_datos.database import db_manager
         from src.config import config
-        
+
         try:
             db_manager.execute_non_query("CREATE TABLE IF NOT EXISTS carteleria_config (id INT PRIMARY KEY, config_json TEXT)")
             rows = db_manager.execute_query("SELECT config_json FROM carteleria_config WHERE id = 1")
-            
+
             if rows:
                 cfg_str = rows[0][0] if isinstance(rows[0], tuple) else rows[0].get("config_json")
                 cfg_data = json.loads(cfg_str)
-                
+
                 self.txt_mensaje.setPlainText(cfg_data.get("mensaje_zocalo", ""))
                 th = cfg_data.get("carteleria_theme", "premium")
                 self._seleccionar_tema(th)
                 pf = cfg_data.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
-                
+
                 self.panel_negocio.txt_name.setText(cfg_data.get("business_name", ""))
                 self.panel_negocio.txt_addr.setText(cfg_data.get("address", ""))
                 self.panel_negocio.txt_phone.setText(cfg_data.get("phone", ""))
@@ -383,7 +383,7 @@ class CarteleriaConfigPanel(QWidget):
                 pf = config.get("carteleria_perf", "auto")
                 ip = self.cmb_perf.findData(pf)
                 if ip >= 0: self.cmb_perf.setCurrentIndex(ip)
-                
+
         except Exception as e:
             print(f"Error al cargar config de DB: {e}")
 
@@ -430,7 +430,7 @@ class CarteleriaConfigPanel(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error de Red DB", f"No se pudo guardar la configuración global.\nDetalle: {e}")
             return
-        
+
         # 3. Guardar localmente de todas formas (para fallback)
         for k, v in datos_guardar.items():
             config.set(k, v)
@@ -445,9 +445,9 @@ class Admin15Carteleria(QStackedWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         self.config_panel = CarteleriaConfigPanel()
         self.addWidget(self.config_panel)
         self.setCurrentIndex(0)
-        
+
         self.config_panel.request_back.connect(self.request_dashboard.emit)

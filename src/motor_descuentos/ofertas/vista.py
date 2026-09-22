@@ -104,7 +104,7 @@ class TallerOfertas(QWidget):
     def _apply_ofertas_theme(self):
         self.tabla.aplicar_tema()
         self.panel_control.aplicar_tema()
-        
+
         self.txt_buscar.setStyleSheet(
             "QLineEdit { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; }"
             "QLineEdit:focus { border: 2px solid #3B82F6; }"
@@ -128,14 +128,14 @@ class TallerOfertas(QWidget):
         # ── HEADER ────────────────────────────────────────
         hdr = QFrame(); hdr.setObjectName("header"); hdr.setFixedHeight(85)
         hl = QHBoxLayout(hdr); hl.setContentsMargins(25, 0, 25, 0)
-        
+
         btn_back = QPushButton("← Módulos")
         btn_back.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_back.setStyleSheet("QPushButton { background: #FFFFFF; color: #0F172A; font-weight: 800; border-radius: 10px; padding: 10px 25px; border: 1px solid #CBD5E1; font-size: 11px; letter-spacing: 1px; } QPushButton:hover { background: #EFF6FF; border-color: #3B82F6; color: #1D4ED8; }")
         btn_back.clicked.connect(self.request_back.emit)
         hl.addWidget(btn_back)
         hl.addSpacing(20)
-        
+
         tit = QLabel("Ofertas por producto")
         tit.setObjectName("titulo")
         hl.addWidget(tit); hl.addStretch()
@@ -145,12 +145,12 @@ class TallerOfertas(QWidget):
         fb = QFrame(); fb.setFixedHeight(60)
         fb.setStyleSheet("QFrame { background: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
         fl = QHBoxLayout(fb); fl.setContentsMargins(15, 6, 15, 6); fl.setSpacing(12)
-        
+
         ico_search = QLabel("🔍")
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("Buscar por nombre, código o ID...")
         self.txt_buscar.setMinimumWidth(350)
-        
+
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.cargar_datos)
@@ -166,25 +166,25 @@ class TallerOfertas(QWidget):
         fl.addWidget(self.txt_buscar)
         fl.addSpacing(15)
         fl.addWidget(lbl_dep); fl.addWidget(self.cmb_depto)
-        
+
         fl.addSpacing(15)
         self.chk_ver_promos = QCheckBox("🔥 Ver Solo Promos")
         self.chk_ver_promos.stateChanged.connect(self.cargar_datos)
         fl.addWidget(self.chk_ver_promos)
-        
+
         fl.addSpacing(15)
         self.btn_imprimir_masivo = QPushButton("📚 IMPRIMIR MASIVO (A4)")
         self.btn_imprimir_masivo.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_imprimir_masivo.setEnabled(False)
         self.btn_imprimir_masivo.clicked.connect(self._imprimir_cartelera_masiva)
         fl.addWidget(self.btn_imprimir_masivo)
-        
+
         self.btn_asistente_promo = QPushButton("🔥 ASISTENTE PROMO (A4)")
         self.btn_asistente_promo.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_asistente_promo.setEnabled(False)
         self.btn_asistente_promo.clicked.connect(self._configurar_ofertas_secuencial)
         fl.addWidget(self.btn_asistente_promo)
-        
+
         fl.addStretch()
         root.addWidget(fb)
 
@@ -211,7 +211,7 @@ class TallerOfertas(QWidget):
         self.panel_control.quitar_promo.connect(self._on_quitar_promo)
         self.panel_control.imprimir_cartel.connect(self._on_imprimir_cartel_rapido)
         splitter.addWidget(self.panel_control)
-        
+
         splitter.setSizes([720, 480])
         lay_body.addWidget(splitter)
         root.addWidget(cuerpo)
@@ -229,7 +229,7 @@ class TallerOfertas(QWidget):
         fl2.addSpacing(20); fl2.addWidget(self.lbl_stock0)
         fl2.addStretch();   fl2.addWidget(self.lbl_sel)
         root.addWidget(ft)
-        
+
         self.setObjectName("TallerOfertas")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(
@@ -291,10 +291,10 @@ class TallerOfertas(QWidget):
     def _cargar_siguiente_pagina(self):
         if self.loaded_count >= len(self.all_rows):
             return
-            
+
         inicio = self.loaded_count
         fin = min(inicio + 50, len(self.all_rows))
-        
+
         filas_nuevas = self.all_rows[inicio:fin]
         self.tabla.popular_datos(filas_nuevas, inicio, self.checked_product_ids)
         self.loaded_count = fin
@@ -304,7 +304,7 @@ class TallerOfertas(QWidget):
             self.checked_product_ids.add(id_p)
         else:
             self.checked_product_ids.discard(id_p)
-            
+
         num_sel = len(self.checked_product_ids)
         self.btn_imprimir_masivo.setEnabled(num_sel > 0)
         self.btn_asistente_promo.setEnabled(num_sel > 0)
@@ -366,7 +366,7 @@ class TallerOfertas(QWidget):
                                          QMessageBox.StandardButton.No)
             if reply == QMessageBox.StandardButton.No:
                 return
-            
+
         motor = MotorOfertas()
         ok = motor.aplicar_oferta(
             data['id'],
@@ -444,11 +444,11 @@ class TallerOfertas(QWidget):
         motor = MotorOfertas()
         p = motor.obtener_producto(id_p)
         if not p: return
-        
+
         if cant_oferta <= 0 or precio_oferta <= 0:
             QMessageBox.warning(self, "Aviso", "⚠️ Para imprimir un cartel, el producto debe tener una promoción activa (Cantidad y Precio de Oferta mayores a cero).")
             return
-            
+
         t_u = "Kilos" if _unidad_oferta_producto(p) == "kilos" else "Unidades"
         if t_u.lower() == "kilos":
             if 0.15 < cant_oferta < 1:
@@ -471,7 +471,7 @@ class TallerOfertas(QWidget):
         dlg.setStyleSheet("QDialog { background: white; font-family: 'Segoe UI'; font-size: 13px; } QPushButton { background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; } QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; }")
         lay = QVBoxLayout(dlg)
         lay.addWidget(QLabel(f"<b>Producto:</b> {p['nombre']}"))
-        
+
         cmb_formato = QComboBox()
         cmb_formato.addItem("🎴 A6 Chico (4 por hoja - Recomendado)", "a6_grid")
         cmb_formato.addItem("🏷️ A8 Mini (8 por hoja - Especial Góndola)", "a8_grid")
@@ -479,12 +479,12 @@ class TallerOfertas(QWidget):
         cmb_formato.addItem("📄 A4 Grande (1 por hoja)", "a4_vertical")
         lay.addWidget(QLabel("<b>Tamaño / Distribución (Ahorro de papel):</b>"))
         lay.addWidget(cmb_formato)
-        
+
         lay.addWidget(QLabel("<b>Leyenda de Promoción:</b>"))
         sug_leyenda = "¡OFERTA X KILO!" if es_kilos else (f"x{int(cant_oferta)}" if cant_oferta >= 2 else "¡OFERTA ESPECIAL!")
         txt_leyenda = QLineEdit(sug_leyenda)
         lay.addWidget(txt_leyenda)
-        
+
         btn_ok = QPushButton("✔ Generar y Abrir Cartel")
         btn_ok.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_ok.clicked.connect(dlg.accept)
@@ -509,7 +509,7 @@ class TallerOfertas(QWidget):
                 "precio_oferta": _format_precio_pdf(precio_oferta),
                 "formato": formato_sel
             }
-            
+
             try:
                 ren = EtiquetaRenderer()
                 pdf_path = ren.generar_pdf_ofertas([item_oferta] * repeticiones)
@@ -519,13 +519,13 @@ class TallerOfertas(QWidget):
 
     def _imprimir_cartelera_masiva(self):
         if not self.checked_product_ids: return QMessageBox.warning(self, "Aviso", "Por favor, marque al menos un producto.")
-            
+
         motor = MotorOfertas()
         productos_promos = motor.obtener_productos_por_ids(list(self.checked_product_ids))
-                        
+
         if not productos_promos:
             return QMessageBox.warning(self, "Aviso", "⚠️ Ninguno de los productos marcados tiene una promoción activa en la base de datos.")
-            
+
         dlg = QDialog(self)
         dlg.setWindowTitle("Impresión de Cartelera Masiva (Libro)")
         dlg.setFixedSize(450, 320)
@@ -534,7 +534,7 @@ class TallerOfertas(QWidget):
         lbl_info = QLabel(f"📚 <b>Se detectaron {len(productos_promos)} promociones activas</b> de los productos seleccionados.")
         lbl_info.setWordWrap(True)
         lay.addWidget(lbl_info)
-        
+
         lay.addWidget(QLabel("<b>Tamaño y Distribución de los Carteles:</b>"))
         cmb_formato = QComboBox()
         cmb_formato.addItem("🎴 A6 Chico (4 por hoja - Recomendado)", "a6_grid")
@@ -542,19 +542,19 @@ class TallerOfertas(QWidget):
         cmb_formato.addItem("📑 A5 Mediano (2 por hoja)", "a5_horizontal")
         cmb_formato.addItem("📄 A4 Grande (1 por hoja)", "a4_vertical")
         lay.addWidget(cmb_formato)
-        
+
         lay.addWidget(QLabel("<b>Leyenda Comercial por Defecto:</b>"))
         txt_leyenda = QLineEdit("🔥 SUPER OFERTA")
         lay.addWidget(txt_leyenda)
-        
+
         btn_ok = QPushButton(f"✔ Generar Libro de {len(productos_promos)} Páginas y Abrir")
         btn_ok.clicked.connect(dlg.accept)
         lay.addWidget(btn_ok)
-        
+
         if qt_exec(dlg):
             try: from src.creador_pdf_global.motor_pdf import EtiquetaRenderer, abrir_archivo_pdf
             except ImportError: return
-            
+
             formato_sel = cmb_formato.currentData()
             lote_ofertas = []
             for p in productos_promos:
@@ -579,17 +579,17 @@ class TallerOfertas(QWidget):
         motor = MotorOfertas()
         rows_db = motor.obtener_productos_en_oferta()
         has_checked = len(self.checked_product_ids) > 0
-        
+
         dlg = QDialog(self)
         dlg.setWindowTitle("Creación de Folleto de Ofertas (PDF)")
         dlg.setFixedSize(480, 360)
         dlg.setStyleSheet("QDialog { background: white; font-family: 'Segoe UI'; font-size: 13px; } QPushButton { background-color: #3b82f6; color: white; font-weight: bold; padding: 10px; border-radius: 6px; border: none; font-size: 12px; } QLineEdit, QComboBox { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; } QRadioButton { spacing: 8px; font-weight: bold; }")
         lay = QVBoxLayout(dlg)
-        
+
         lbl_tit = QLabel("📰 CREAR VOLANTE PUBLICITARIO (PDF)")
         lbl_tit.setStyleSheet(" font-size: 15px; font-weight: 900; letter-spacing: 0.5px;")
         lay.addWidget(lbl_tit)
-        
+
         form = QFormLayout()
         txt_titulo = QLineEdit("🔥 GRAN BARATILLO DE OFERTAS 🔥")
         txt_negocio = QLineEdit("MINI-SÚPER ELITE")
@@ -597,38 +597,38 @@ class TallerOfertas(QWidget):
             from src.config import config as _cfg
             if _cfg.get("business_name", ""): txt_negocio.setText(_cfg.get("business_name", "").upper())
         except: pass
-            
+
         cmb_diseno = QComboBox()
         cmb_diseno.addItem("🖼️ Grilla de Tarjetas (6 por Pág.)", "grilla")
         cmb_diseno.addItem("📋 Lista de Precios Compacta", "lista")
-        
+
         form.addRow("<b>Título Principal:</b>", txt_titulo)
         form.addRow("<b>Nombre del Negocio:</b>", txt_negocio)
         form.addRow("<b>Diseño del PDF:</b>", cmb_diseno)
         lay.addLayout(form)
-        
+
         lay.addWidget(QLabel("<b>¿Qué productos incluir?</b>"))
         rb_all = QRadioButton(f"Todas las promociones vigentes ({len(rows_db)} detectadas)")
         rb_all.setChecked(True)
         rb_sel = QRadioButton(f"Solo los productos marcados [🗹] ({len(self.checked_product_ids)} seleccionados)")
         rb_sel.setEnabled(has_checked)
         if has_checked: rb_sel.setChecked(True)
-            
+
         lay.addWidget(rb_all)
         lay.addWidget(rb_sel)
-        
+
         btn_ok = QPushButton("✔ Generar Volante PDF y Abrir")
         btn_ok.clicked.connect(dlg.accept)
         lay.addWidget(btn_ok)
-        
+
         if qt_exec(dlg):
             if rb_sel.isChecked():
                 productos_a_procesar = motor.obtener_productos_por_ids(list(self.checked_product_ids))
             else:
                 productos_a_procesar = rows_db
-                
+
             if not productos_a_procesar: return QMessageBox.warning(self, "Aviso", "⚠️ No hay productos con ofertas activas.")
-                
+
             lote_ofertas = []
             for p in productos_a_procesar:
                 lote_ofertas.append({
@@ -638,7 +638,7 @@ class TallerOfertas(QWidget):
                     "condicion_venta": _condicion_venta_texto(p, float(p['cant_oferta'] or 0.0)),
                     "precio_oferta": _format_precio_pdf(p['precio_oferta'])
                 })
-                
+
             try:
                 from src.creador_pdf_global.motor_pdf import EtiquetaRenderer, abrir_archivo_pdf
                 ren = EtiquetaRenderer()
@@ -654,10 +654,10 @@ class TallerOfertas(QWidget):
 
     def _configurar_ofertas_secuencial(self):
         if not self.checked_product_ids: return QMessageBox.warning(self, "Aviso", "Por favor, marque al menos un producto.")
-            
+
         motor = MotorOfertas()
         seleccionados = motor.obtener_productos_por_ids(list(self.checked_product_ids))
-        
+
         if not seleccionados: return QMessageBox.warning(self, "Aviso", "No se encontraron los productos seleccionados.")
 
         LIMIT_MAX = 50
@@ -684,9 +684,9 @@ class TallerOfertas(QWidget):
         btn_m_ok = QPushButton("✔ Siguiente")
         btn_m_ok.clicked.connect(dlg_marca.accept)
         lay_m.addWidget(btn_m_ok)
-        
+
         if not qt_exec(dlg_marca): return
-            
+
         rubro = txt_rub.text().strip().upper() or "CARNICERÍA"
         negocio = txt_neg.text().strip().upper() or "MACIEL"
 
@@ -696,35 +696,35 @@ class TallerOfertas(QWidget):
             dlg.setWindowTitle(f"Calibrador de Oferta ({idx}/{len(seleccionados)})")
             dlg.setFixedSize(480, 360)
             dlg.setStyleSheet("QDialog { font-family: 'Segoe UI', sans-serif; } QLineEdit, QComboBox { background-color: white; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; } QLineEdit:focus, QComboBox:focus { border: 2px solid #ea580c; } QPushButton { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ea580c, stop:1 #f97316); color: white; font-weight: bold; padding: 12px 24px; border-radius: 8px; border: none; font-size: 13px; }")
-            
+
             lay = QVBoxLayout(dlg)
             hf_lay = QVBoxLayout(QFrame())
             lbl_prod = QLabel(f"<span style='font-size:16px; font-weight:900;'>{prod['nombre']}</span>")
             hf_lay.addWidget(lbl_prod)
             lay.addWidget(hf_lay.parentWidget())
-            
+
             from PyQt6.QtWidgets import QFormLayout
             form = QFormLayout()
             cmb_tipo = QComboBox()
             cmb_tipo.addItems(["OFERTA", "SUPER OFERTA", "x2", "x3", "LLEVAS 2 PAGAS 1", "LLEVAS 3 PAGAS 2", "PROMO ESPECIAL"])
             cmb_tipo.setEditable(True)
-            
+
             sug_p = prod['precio_oferta'] if (prod['precio_oferta'] and prod['precio_oferta'] > 0) else prod['precio']
             txt_precio_of = QLineEdit(f"{sug_p:.2f}")
-            
+
             cmb_formato = QComboBox()
             cmb_formato.addItem("🎴 A6 Chico (4 por hoja - Recomendado)", "a6_grid")
             cmb_formato.addItem("📄 A4 Grande (1 por hoja)", "a4_vertical")
-            
+
             form.addRow("Tipo de Promoción:", cmb_tipo)
             form.addRow("Precio de Oferta ($):", txt_precio_of)
             form.addRow("Tamaño / Distribución:", cmb_formato)
             lay.addLayout(form)
-            
+
             btn_ok = QPushButton("Calibrar Siguiente ➡" if idx < len(seleccionados) else "🏭 Iniciar Prensa PDF")
             btn_ok.clicked.connect(dlg.accept)
             lay.addWidget(btn_ok)
-            
+
             if qt_exec(dlg):
                 precio_of = _parse_precio_texto(txt_precio_of.text(), default=float(prod['precio'] or 0))
                 if precio_of <= 0: return QMessageBox.warning(self, "Precio inválido", "Use solo números, por ejemplo: 1299.50")
@@ -738,7 +738,7 @@ class TallerOfertas(QWidget):
                     "formato": cmb_formato.currentData()
                 })
             else: return
-            
+
         if lote_ofertas:
             try:
                 from src.creador_pdf_global.motor_pdf import EtiquetaRenderer, abrir_archivo_pdf

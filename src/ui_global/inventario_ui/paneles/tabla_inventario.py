@@ -19,7 +19,7 @@ class TablaInventario(QTableWidget):
 
     HEADERS = [
         "", "ID/Cod", "Descripcion del Producto", "Departamento", "IVA (%)",
-        "Costo", "P. Venta", "C. Mayoreo", "P. Mayoreo", "Regla Promo", 
+        "Costo", "P. Venta", "C. Mayoreo", "P. Mayoreo", "Regla Promo",
         "Of. Relampago", "Of. Promedio", "Existencia", "Inv. Minimo", "Inv. Maximo", "Tipo de Venta"
     ]
 
@@ -74,20 +74,20 @@ class TablaInventario(QTableWidget):
         try:
             if self.loaded_count >= len(self.all_rows):
                 return
-                
+
             inicio = self.loaded_count
             fin = min(inicio + 50, len(self.all_rows))
-            
+
             self.blockSignals(True)
             self.setRowCount(fin)
-            
+
             for i in range(inicio, fin):
                 r = self.all_rows[i]
                 dep = r.get('departamento') or ''
                 stock = _n(r.get('stock'))
                 uni = (r.get('unidad') or 'UN').upper()
                 tipo = "KILO" if uni == 'KG' else "UNIDAD"
-                
+
                 depto_iva = r.get('depto_iva')
                 if depto_iva is None:
                     from src.config import config
@@ -100,11 +100,11 @@ class TablaInventario(QTableWidget):
                     idx = len(self._depto_color_map) % len(self.DEPTO_COLORS)
                     self._depto_color_map[dep_key] = self.DEPTO_COLORS[idx]
                 base_hex = self._depto_color_map[dep_key]
-                
+
                 if i % 2 == 1 and base_hex == "#FFFFFF":
                     base_hex = theme_manager.get_color("bg_fila_impar")
                 row_bg = QColor(base_hex)
-                
+
                 # Checkbox item (columna 0)
                 chk = QTableWidgetItem()
                 chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
@@ -159,7 +159,7 @@ class TablaInventario(QTableWidget):
                         it.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
 
                     self.setItem(i, j, it)
-                    
+
             self.loaded_count = fin
         finally:
             self.blockSignals(False)

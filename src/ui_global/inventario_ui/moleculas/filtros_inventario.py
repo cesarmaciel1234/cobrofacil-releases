@@ -83,12 +83,12 @@ class FiltrosInventario(QFrame):
 
     def aplicar_tema(self, bg, text, border):
         self.txt_buscar.setStyleSheet(f"""
-            QLineEdit {{ background: {bg}; color: {text}; border: 1px solid {border}; 
+            QLineEdit {{ background: {bg}; color: {text}; border: 1px solid {border};
             border-radius: 8px; padding: 10px 14px; font-size: 13px; }}
             QLineEdit:focus {{ border: 2px solid #3B82F6; }}
         """)
         self.cmb_depto.setStyleSheet(f"""
-            QComboBox {{ background: {bg}; color: {text}; border: 1px solid {border}; 
+            QComboBox {{ background: {bg}; color: {text}; border: 1px solid {border};
             border-radius: 8px; padding: 8px 12px; }}
             QComboBox:focus {{ border: 2px solid #3B82F6; }}
         """)

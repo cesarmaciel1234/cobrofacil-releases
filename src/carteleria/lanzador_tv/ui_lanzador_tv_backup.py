@@ -38,7 +38,7 @@ class CarteleriaMainTV(QWidget):
             from src.carteleria.theme import set_theme, C_THEME
             self._theme_name = config.get("carteleria_theme", "temu")
             set_theme(self._theme_name)
-            
+
             # Aplicar estilos según el tema de cartelería
             if self._theme_name == "temu":
                 # Tema vibrante Temu

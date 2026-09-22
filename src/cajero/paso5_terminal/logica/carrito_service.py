@@ -35,7 +35,7 @@ class CarritoService:
         Retorna un tuple: (éxito: bool, producto: dict, cantidad: float, mensaje_error: str)
         """
         txt, cantidad_multiplicador = BarcodeParser.parse_scan_text(txt_raw)
-        
+
         if not txt:
             return False, None, 0, "FINALIZAR_VENTA"
 

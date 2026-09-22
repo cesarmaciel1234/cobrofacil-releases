@@ -6,7 +6,7 @@ except ImportError:
 
 class MotorOfertas:
     """Motor central para la gestión de ofertas, promociones y folletos."""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
@@ -41,9 +41,9 @@ class MotorOfertas:
                 " AND (COALESCE(cant_oferta,0) > 0 OR COALESCE(precio_oferta,0) > 0"
                 " OR COALESCE(precio_oferta_relampago,0) > 0 OR COALESCE(precio_oferta_promedio,0) > 0)"
             )
-            
+
         q += " ORDER BY nombre LIMIT 800"
-        
+
         try:
             return db_manager.execute_query(q, tuple(p)) or []
         except Exception as e:

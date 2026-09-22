@@ -13,9 +13,9 @@ class CajaRepoMixin:
         """
         # 1. Encontrar el último movimiento de apertura para esta caja
         query_apertura = """
-            SELECT fecha, monto 
-            FROM movimientos_caja 
-            WHERE caja_id = ? AND tipo = 'APERTURA' 
+            SELECT fecha, monto
+            FROM movimientos_caja
+            WHERE caja_id = ? AND tipo = 'APERTURA'
             ORDER BY id DESC LIMIT 1
         """
         aperturas = self.execute_query(query_apertura, (caja_id,))
@@ -39,10 +39,10 @@ class CajaRepoMixin:
             v = self.execute_scalar(query_ventas, (caja_id,)) or 0.0
             r = self.execute_scalar(query_retiros, (caja_id,)) or 0.0
             return float(v) - float(r)
-            
+
         apertura_fecha = aperturas[0]['fecha']
         fondo_apertura = float(aperturas[0]['monto'] or 0.0)
-        
+
         # 2. Efectivo neto del turno: bruto recibido − vuelto (solo medios que mueven cajón)
         query_ventas = """
             SELECT SUM(
@@ -54,32 +54,32 @@ class CajaRepoMixin:
                     ELSE 0
                 END
             )
-            FROM ventas 
-            WHERE caja_id = ? 
-              AND fecha >= ? 
+            FROM ventas
+            WHERE caja_id = ?
+              AND fecha >= ?
               AND estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')
         """
         ventas_efectivo = float(self.execute_scalar(query_ventas, (caja_id, apertura_fecha)) or 0.0)
-        
+
         # 3. Sumar otros ingresos manuales en este turno
         query_ingresos = """
-            SELECT SUM(monto) 
-            FROM movimientos_caja 
-            WHERE caja_id = ? 
-              AND fecha >= ? 
+            SELECT SUM(monto)
+            FROM movimientos_caja
+            WHERE caja_id = ?
+              AND fecha >= ?
               AND tipo = 'INGRESO'
         """
         ingresos_manuales = float(self.execute_scalar(query_ingresos, (caja_id, apertura_fecha)) or 0.0)
-        
+
         # 4. Restar retiros en este turno
         query_retiros = """
-            SELECT SUM(monto) 
-            FROM movimientos_caja 
-            WHERE caja_id = ? 
-              AND fecha >= ? 
+            SELECT SUM(monto)
+            FROM movimientos_caja
+            WHERE caja_id = ?
+              AND fecha >= ?
               AND tipo = 'RETIRO'
         """
         retiros = float(self.execute_scalar(query_retiros, (caja_id, apertura_fecha)) or 0.0)
-        
+
         return fondo_apertura + ventas_efectivo + ingresos_manuales - retiros
 

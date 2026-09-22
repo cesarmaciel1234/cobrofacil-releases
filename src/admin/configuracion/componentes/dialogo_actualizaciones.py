@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -25,44 +25,44 @@ class DialogoActualizaciones(QDialog):
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
-        
+
         lbl_title = QLabel("ACTUALIZACIONES AUTOMATICAS")
         lbl_title.setStyleSheet(" font-size: 13px; font-weight: bold;")
         layout.addWidget(lbl_title)
-        
+
         # Fila de Auto-Check
         row1 = QHBoxLayout()
         self.chk_auto = QCheckBox("Checar si hay actualizaciones disponibles automáticamente al")
         self.chk_auto.setChecked(config.get('auto_update_check', True))
-        
+
         self.cmb_when = QComboBox()
         self.cmb_when.addItems(["Salir del programa", "Iniciar el programa"])
         self.cmb_when.setCurrentText(config.get('auto_update_when', "Salir del programa"))
-        
+
         lbl_icon = QLabel("🔄")
         lbl_icon.setStyleSheet("font-size: 20px; ")
-        
+
         row1.addWidget(self.chk_auto)
         row1.addWidget(self.cmb_when)
         row1.addWidget(lbl_icon)
         row1.addStretch()
         layout.addLayout(row1)
-        
+
         # Botón de Chequeo Manual
         self.btn_check = QPushButton("📦 Checar si hay una actualización disponible ...")
         self.btn_check.setStyleSheet("""
             QPushButton {
-                 
-                border: 1px solid #CBD5E1; 
-                padding: 8px 15px; 
+
+                border: 1px solid #CBD5E1;
+                padding: 8px 15px;
                 border-radius: 4px;
-                
+
             }
             QPushButton:hover {  border- }
         """)
         self.btn_check.clicked.connect(self.checar_actualizacion)
         layout.addWidget(self.btn_check, alignment=Qt.AlignLeft)
-        
+
         # Mensaje de Información (Firewall)
         frame_info = QFrame()
         frame_info.setStyleSheet(" border: 1px solid #FDE047; border-radius: 4px;")
@@ -71,9 +71,9 @@ class DialogoActualizaciones(QDialog):
         lbl_info.setStyleSheet(" font-size: 11px; border: none;")
         lay_info.addWidget(lbl_info)
         layout.addWidget(frame_info)
-        
+
         layout.addStretch()
-        
+
         # Guardar al cerrar
         self.chk_auto.toggled.connect(self.guardar_estado)
         self.cmb_when.currentTextChanged.connect(self.guardar_estado)

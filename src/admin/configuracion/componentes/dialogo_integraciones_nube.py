@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor

@@ -179,25 +179,25 @@ def smart_sharpen(img, amount=1.5, radius=2, threshold=3):
     # Convertir a RGB si es necesario para asegurar el procesamiento correcto de los colores
     if img.mode != 'RGB':
         img = img.convert('RGB')
-    
+
     # Aplicar desenfoque Gaussiano para obtener una versión suavizada de la imagen
     blurred = img.filter(ImageFilter.GaussianBlur(radius=radius))
-    
+
     # Calcular la diferencia entre la imagen original y la desenfocada para encontrar los bordes
     diff = ImageChops.subtract(img, blurred)
-    
+
     # Función para aplicar un umbral a la diferencia y controlar la amplificación del ruido
     def threshold_func(x):
         if x <= threshold:
             return 0  # No enfocar si la diferencia es pequeña (posible ruido)
         return int((x - threshold) * amount) # Amplificar la diferencia (bordes) por el factor 'amount'
-    
+
     # Aplicar la función de umbral a cada píxel de la diferencia
     diff = diff.point(threshold_func)
-    
+
     # Sumar los bordes enfocados de vuelta a la imagen original
     result = ImageChops.add(img, diff)
-    
+
     return result
 
 def enhance_colors(img, saturation=1.2, brightness=1.05, temperature=0):
@@ -239,10 +239,10 @@ def denoise_image(img, strength=5):
     """
     # Aplicar filtro de mediana para reducir el ruido
     denoised = img.filter(ImageFilter.MedianFilter(size=strength))
-    
+
     # Mezclar la imagen denoised con la original para preservar la nitidez de los detalles
     result = Image.blend(img, denoised, 0.3)
-    
+
     return result
 
 def edge_preserve_smooth(img, radius=2):
@@ -253,16 +253,16 @@ def edge_preserve_smooth(img, radius=2):
     blurred = img.filter(ImageFilter.GaussianBlur(radius=radius))
     # Encontrar los bordes en la imagen original
     edges = img.filter(ImageFilter.FIND_EDGES)
-    
+
     # Crear una máscara de bordes: blanco donde hay bordes fuertes, negro en otro lugar
     # Convertir a escala de grises y luego aplicar un umbral para binarizar los bordes
     edge_mask = edges.convert('L').point(lambda x: 255 if x > 50 else 0)
-    
+
     # Mezclar la imagen original con la desenfocada usando la máscara de bordes.
     # Donde hay bordes (blanco en edge_mask), se mantiene la imagen original.
     # Donde no hay bordes (negro en edge_mask), se usa la imagen desenfocada.
     result = Image.composite(img, blurred, edge_mask)
-    
+
     return result
 
 def _intensidad_rocio(density):
@@ -410,14 +410,14 @@ def _capa_plato(width, height, alpha_producto):
 
 def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), dpi=150,
                              sharpness_factor=SHARPNESS_FACTOR, contrast_factor=CONTRAST_FACTOR,
-                             saturation_factor=COLOR_FACTOR, brightness_factor=1.05, 
-                             shadow_offset=SHADOW_OFFSET, shadow_blur_radius=SHADOW_BLUR_RADIUS, 
-                             highlight_alpha_start=HIGHLIGHT_ALPHA_START, 
+                             saturation_factor=COLOR_FACTOR, brightness_factor=1.05,
+                             shadow_offset=SHADOW_OFFSET, shadow_blur_radius=SHADOW_BLUR_RADIUS,
+                             highlight_alpha_start=HIGHLIGHT_ALPHA_START,
                              depth_alpha_start=DEPTH_ALPHA_START, depth_outline_width=DEPTH_OUTLINE_WIDTH, depth_blur_radius=DEPTH_BLUR_RADIUS,
                              rim_light_alpha_start=RIM_LIGHT_ALPHA_START, rim_light_iterations=RIM_LIGHT_ITERATIONS, rim_light_offset_multiplier=RIM_LIGHT_OFFSET_MULTIPLIER, rim_light_alpha_decrement=RIM_LIGHT_ALPHA_DECREMENT, rim_light_outline_width=RIM_LIGHT_OUTLINE_WIDTH, rim_light_blur_radius=RIM_LIGHT_BLUR_RADIUS,
                              vignette_alpha_start=VIGNETTE_ALPHA_START, vignette_outline_width=VIGNETTE_OUTLINE_WIDTH, vignette_blur_radius=VIGNETTE_BLUR_RADIUS,
                              unsharp_mask_radius=UNSHARP_MASK_RADIUS, unsharp_mask_percent=UNSHARP_MASK_PERCENT, unsharp_mask_threshold=UNSHARP_MASK_THRESHOLD,
-                             shadow_alpha_start=SHADOW_COLOR_ALPHA[3], black_threshold=BLACK_THRESHOLD, 
+                             shadow_alpha_start=SHADOW_COLOR_ALPHA[3], black_threshold=BLACK_THRESHOLD,
                              white_threshold=WHITE_THRESHOLD,
                              denoise_strength=3, smart_sharpen_amount=1.5, smart_sharpen_radius=2, smart_sharpen_threshold=3,
                              edge_preserve_smooth_radius=1,
@@ -441,36 +441,36 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             if use_ai and _tiene_transparencia(img):
                 img.save(cutout_path)
         import time; time.sleep(0.02); print('INFO: Fondo removido/cargado.')
-        
+
         # Redimensionar a tamaño objetivo con alta calidad (si se especifica)
         if target_size:
             original_width, original_height = img.size
             target_width, target_height = target_size
-            
+
             # Calcular ratio para mantener aspect ratio
             ratio = min(target_width / original_width, target_height / original_height)
             new_width = int(original_width * ratio)
             new_height = int(original_height * ratio)
-            
+
             # Redimensionar manteniendo aspect ratio
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            
+
             # Crear canvas transparente del tamaño objetivo
             canvas = Image.new('RGBA', target_size, (0, 0, 0, 0))
-            
+
             # Centrar la imagen en el canvas
             offset_x = (target_width - new_width) // 2
             offset_y = (target_height - new_height) // 2
-            
+
             # Pegar la imagen en el canvas con el canal alpha como máscara
             if img.mode != 'RGBA':
                 img = img.convert('RGBA')
-            
+
             # Usar el canal alpha de la imagen como máscara
             canvas.paste(img, (offset_x, offset_y), img)
-            
+
             img = canvas
-        
+
         import time; time.sleep(0.02); print("INFO: Aplicando color y nitidez...")
         has_alpha = img.mode == 'RGBA'
         alpha_channel = None
@@ -482,7 +482,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         img = ImageEnhance.Contrast(img).enhance(contrast_factor)
         if sharpness_factor and sharpness_factor != 1:
             img = ImageEnhance.Sharpness(img).enhance(sharpness_factor)
-        
+
         # Restaurar canal alpha para aplicar rocío solo sobre el producto
         if has_alpha and alpha_channel is not None:
             img = img.convert('RGBA')
@@ -497,15 +497,15 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
         if water_droplets_density > 0:
             import time; time.sleep(0.02); print("INFO: Agregando rocío / sudor de agua...")
             img = add_water_droplets(img, density=water_droplets_density)
-        
+
         # Crear imagen base para efectos 3D
         width, height = img.size
         result = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-        
+
         # Asegurarse de que la imagen tenga canal alpha para alpha_composite
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
-        
+
         alpha = img.split()[3]
         shadow = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         shadow.paste((20, 20, 20, shadow_alpha_start), (shadow_offset, shadow_offset), alpha)
@@ -525,7 +525,7 @@ def crear_efecto_3d_realista(input_path, output_path, target_size=(2048, 2048), 
             result = Image.alpha_composite(result, _capa_plato(width, height, alpha))
         result = Image.alpha_composite(result, img)
         result = Image.alpha_composite(result, highlight)
- 
+
         # Guardar resultado
         result.save(output_path, 'PNG', dpi=(dpi, dpi))
         print(f"INFO: Imagen procesada guardada en: {output_path}")
@@ -559,12 +559,12 @@ def main():
     parser.add_argument('--enable_rim_light_effect', action='store_true')
     parser.add_argument('--use_cached_cutout', action='store_true')
     args = parser.parse_args()
-    
+
     target_size = (args.output_size, args.output_size)
-    
+
     success = crear_efecto_3d_realista(
-        args.input, 
-        args.output, 
+        args.input,
+        args.output,
         target_size=target_size,
         black_threshold=args.black_threshold,
         white_threshold=args.white_threshold,
@@ -582,7 +582,7 @@ def main():
         enable_rim_light_effect=args.enable_rim_light_effect,
         use_cached_cutout=args.use_cached_cutout,
     )
-    
+
     if success:
         print("SUCCESS: Imagen procesada exitosamente.")
         sys.exit(0)

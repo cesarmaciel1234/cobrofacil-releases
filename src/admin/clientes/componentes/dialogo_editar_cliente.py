@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-                             QPushButton, QTableWidget, QTableWidgetItem, 
-                             QHeaderView, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QLineEdit, QMessageBox, QDialog,
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager

@@ -26,7 +26,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QFileDialog, QMessageBox, QTabWidget, QGraphicsDropShadowEffect,
+    QFileDialog, QMessageBox, QTabWidget,
     QComboBox, QLineEdit, QDateEdit, QCheckBox
 )
 from PyQt6.QtCore import Qt, QDate
@@ -106,7 +106,7 @@ def load_bank_dataframe(path: str):
                     if matches > max_keywords and matches >= 2:
                         max_keywords = matches
                         header_idx = i
-            
+
             # Ahora leemos el CSV saltando las lineas previas al encabezado
             # Usamos separador dinámico (; o ,) leyendo la linea del header
             sep = ';'
@@ -117,7 +117,7 @@ def load_bank_dataframe(path: str):
                         elif ',' in line: sep = ','
                         elif '\t' in line: sep = '\t'
                         break
-            
+
             df = pd.read_csv(path, header=None, skiprows=header_idx, encoding="utf-8-sig", on_bad_lines="skip", sep=sep, engine='python')
             header_idx = 0 # Relativo al nuevo df
 
@@ -135,7 +135,7 @@ def load_bank_dataframe(path: str):
         if len(df) > header_idx:
             df.columns = [str(c).strip().lower() for c in df.iloc[header_idx].values]
             df = df.iloc[header_idx+1:].reset_index(drop=True)
-            
+
         return df
     except Exception as e:
         print(f"Error load_bank_dataframe {path}: {e}")
@@ -152,14 +152,14 @@ def parsear_csv_mercado_pago(path: str) -> list:
     df = load_bank_dataframe(path)
     if df.empty:
         return []
-    
+
     def col(names):
         for fn in df.columns:
             for n in names:
                 if n in fn:
                     return fn
         return None
-        
+
     col_fecha  = col(["fecha", "date"])
     col_id     = col(["id", "referencia", "operacion"])
     col_bruto  = col(["bruto", "amount", "monto"])
@@ -175,7 +175,7 @@ def parsear_csv_mercado_pago(path: str) -> list:
         neto   = limpiar_monto(str(row.get(col_neto, "0")) if col_neto and pd.notna(row.get(col_neto)) else "0")
         cargo  = limpiar_monto(str(row.get(col_cargo, "0")) if col_cargo and pd.notna(row.get(col_cargo)) else "0")
         estado = str(row.get(col_estado, "approved") if col_estado and pd.notna(row.get(col_estado)) else "approved").upper()
-        
+
         # En extracts de MP (account_statement), la desc es el TIPO DE TRANSACCION
         desc = ""
         if col_desc and pd.notna(row.get(col_desc)):
@@ -184,16 +184,16 @@ def parsear_csv_mercado_pago(path: str) -> list:
             col_type = col(["transaction_type", "tipo", "type"])
             if col_type and pd.notna(row.get(col_type)):
                 desc = str(row.get(col_type, "")).strip()
-        
+
         if bruto == 0 and neto == 0:
             continue
         # Sólo guardamos ventas, no transferencias enviadas/retiros
         if bruto < 0:
             continue
-            
+
         if not id_p:
             id_p = f"MP-{fecha}-{bruto}"
-        
+
         filas.append({
             "fecha": fecha, "id": id_p, "bruto": bruto,
             "neto": neto if neto else bruto - cargo,
@@ -214,30 +214,30 @@ def parsear_csv_banco_provincia(path: str) -> list:
     df = load_bank_dataframe(path)
     if df.empty:
         return []
-        
+
     def col(names):
         for fn in df.columns:
             for n in names:
                 if n in fn:
                     return fn
         return None
-        
+
     col_fecha  = col(["fecha", "date"])
     col_id     = col(["numero", "id", "referencia", "operacion", "n°", "nro"])
     col_importe= col(["importe", "credito", "monto", "amount", "cobro", "haber"])
     col_desc   = col(["descripcion", "concepto", "detalle", "movimiento"])
-    
+
     for _, row in df.iterrows():
         fecha   = normalizar_fecha(str(row.get(col_fecha, "")) if pd.notna(row.get(col_fecha)) else "")
         id_p    = str(row.get(col_id, "")).strip() if pd.notna(row.get(col_id)) else ""
         importe = limpiar_monto(str(row.get(col_importe, "0")) if pd.notna(row.get(col_importe)) else "0")
         desc    = str(row.get(col_desc, "")).strip() if pd.notna(row.get(col_desc)) else ""
-        
+
         if importe <= 0:
             continue
         if not id_p:
             id_p = f"BP-{fecha}-{importe}"
-        
+
         filas.append({
             "fecha": fecha, "id": id_p, "bruto": importe,
             "neto": importe,
@@ -569,7 +569,7 @@ class Admin14VentasDigitales(QWidget):
     def aplicar_filtros(self):
         texto   = self.txt_buscar.text().lower().strip()
         fuente_sel = self.cmb_fuente.currentText()
-        
+
         fd = self.dt_desde.date().toString("yyyy-MM-dd")
         fh = self.dt_hasta.date().toString("yyyy-MM-dd") + " 23:59:59"
 
@@ -644,7 +644,7 @@ class Admin14VentasDigitales(QWidget):
     def exportar_consolidado(self):
         fd = self.dt_desde.date().toString("yyyy-MM-dd")
         fh = self.dt_hasta.date().toString("yyyy-MM-dd")
-        
+
         filtrados = [m for m in self.todos_los_movs if fd <= m["fecha"] <= fh + " 23:59:59"]
         if not filtrados:
             QMessageBox.warning(self, "Sin datos",

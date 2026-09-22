@@ -86,7 +86,7 @@ class MariaDBEngine:
     # Timeouts cortos: en notebook esclava un host caído no debe congelar la UI
     CONNECT_TIMEOUT = 2
     IO_TIMEOUT = 3
-    
+
     def __init__(self, host="127.0.0.1", port=3306, user="root", password="1234", database="punpro_db"):
         self.host = host
         self.port = port
@@ -110,13 +110,13 @@ class MariaDBEngine:
             read_timeout=self.IO_TIMEOUT,
             write_timeout=self.IO_TIMEOUT,
         )
-        
+
     def _create_connection(self):
         # --- Circuit Breaker ---
         # Si falló hace menos de 5 segundos, fallar rápido para no colgar la UI/hilos
         if time.time() - getattr(self, "_last_fail_time", 0) < 5:
             raise Exception("Circuit breaker: MariaDB is currently unreachable (cooldown)")
-            
+
         try:
             conn = pymysql.connect(**self._connect_kwargs())
             self._last_fail_time = 0
@@ -130,7 +130,7 @@ class MariaDBEngine:
                     return MariaDBConnectionWrapper(conn, engine=self)
                 except Exception:
                     pass
-                    
+
             # Fallback 2: intentar con host="localhost" si falló 127.0.0.1
             if self.host == "127.0.0.1":
                 try:
@@ -139,11 +139,11 @@ class MariaDBEngine:
                     return MariaDBConnectionWrapper(conn, engine=self)
                 except Exception:
                     pass
-                    
+
             self._last_fail_time = time.time()
             logger.error(f"Fallo al conectar a MariaDB en {self.host}:{self.port} - {e}")
             raise
-            
+
     def get_connection(self):
         conn = getattr(self._local_connections, "conn", None)
         if conn is not None:

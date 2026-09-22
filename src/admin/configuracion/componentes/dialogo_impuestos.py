@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -41,14 +41,14 @@ class DialogoImpuestos(QDialog):
         general_box.setStyleSheet(" border: 1px solid #E2E8F0; border-radius: 8px;")
         gen_lay = QHBoxLayout(general_box)
         gen_lay.setContentsMargins(15, 12, 15, 12)
-        
+
         lbl_gen = QLabel("Tasa de IVA General por defecto (%):")
         lbl_gen.setStyleSheet("font-size: 13px;  font-weight: bold; border:none;")
-        
+
         self.txt_iva_gen = QLineEdit(str(config.get("tax_percentage", 21.0)))
         self.txt_iva_gen.setFixedWidth(80)
         self.txt_iva_gen.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 4px; padding: 6px; font-size: 13px;")
-        
+
         gen_lay.addWidget(lbl_gen)
         gen_lay.addWidget(self.txt_iva_gen)
         gen_lay.addStretch()
@@ -79,7 +79,7 @@ class DialogoImpuestos(QDialog):
         btn_add.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_add.setCursor(Qt.PointingHandCursor)
         btn_add.clicked.connect(self._agregar_departamento)
-        
+
         btn_del = QPushButton("🗑️ Eliminar Seleccionado")
         btn_del.setStyleSheet(" background-color: #3B82F6; color: white; font-weight: bold; padding: 8px 12px; border-radius: 6px; border: none;")
         btn_del.setCursor(Qt.PointingHandCursor)
@@ -96,12 +96,12 @@ class DialogoImpuestos(QDialog):
         btn_cancel.setStyleSheet("padding: 10px 18px; font-weight: bold;   border-radius: 8px; border: none;")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)
-        
+
         btn_save = QPushButton("💾 Guardar Todo")
         btn_save.setStyleSheet("padding: 10px 18px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px; border: none;")
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.clicked.connect(self._guardar)
-        
+
         h_btns.addWidget(btn_cancel)
         h_btns.addStretch()
         h_btns.addWidget(btn_save)
@@ -115,26 +115,26 @@ class DialogoImpuestos(QDialog):
             for r in rows:
                 row_idx = self.table.rowCount()
                 self.table.insertRow(row_idx)
-                
+
                 # ID (No editable)
                 id_item = QTableWidgetItem(str(r['id']))
                 id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable)
                 self.table.setItem(row_idx, 0, id_item)
-                
+
                 # Nombre
                 self.table.setItem(row_idx, 1, QTableWidgetItem(r['nombre']))
-                
+
                 # IVA (%)
                 self.table.setItem(row_idx, 2, QTableWidgetItem(f"{r['iva']:.1f}"))
 
     def _agregar_departamento(self):
         row_idx = self.table.rowCount()
         self.table.insertRow(row_idx)
-        
+
         id_item = QTableWidgetItem("NUEVO")
         id_item.setFlags(id_item.flags() & ~Qt.ItemIsEditable)
         self.table.setItem(row_idx, 0, id_item)
-        
+
         self.table.setItem(row_idx, 1, QTableWidgetItem("NUEVO_DEP"))
         self.table.setItem(row_idx, 2, QTableWidgetItem("21.0"))
 
@@ -143,12 +143,12 @@ class DialogoImpuestos(QDialog):
         if curr_row < 0:
             QMessageBox.warning(self, "Eliminar", "Por favor selecciona un departamento en la tabla.")
             return
-            
+
         id_val = self.table.item(curr_row, 0).text()
         nombre_val = self.table.item(curr_row, 1).text()
-        
+
         confirm = QMessageBox.question(
-            self, "Confirmar", 
+            self, "Confirmar",
             f"¿Estás seguro de que deseas eliminar el departamento '{nombre_val}'?\n"
             f"Los productos asociados a este departamento quedarán sin asignación.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
@@ -172,25 +172,25 @@ class DialogoImpuestos(QDialog):
 
             # 2. Guardar departamentos en la base de datos
             from src.base_de_datos.database import db_manager
-            
+
             for row in range(self.table.rowCount()):
                 id_item = self.table.item(row, 0)
                 name_item = self.table.item(row, 1)
                 iva_item = self.table.item(row, 2)
-                
+
                 if not name_item or not iva_item:
                     continue
-                    
+
                 id_val = id_item.text()
                 name_val = name_item.text().strip().upper()
-                
+
                 try:
                     iva_val = float(iva_item.text().strip())
                     if iva_val < 0: raise ValueError()
                 except ValueError:
                     QMessageBox.warning(self, "Error", f"Tasa de IVA inválida para el departamento '{name_val}'. Debe ser un número positivo.")
                     return
-                
+
                 if id_val == "NUEVO":
                     # Insertar nuevo
                     insert_keyword = "INSERT IGNORE INTO" if getattr(db_manager, "db_engine_type", "sqlite") == "mariadb" else "INSERT OR IGNORE INTO"

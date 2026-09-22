@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -43,7 +43,7 @@ class DialogoLicencia(QDialog):
         frame_status.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
         f_lay = QVBoxLayout(frame_status)
         f_lay.setContentsMargins(15, 15, 15, 15)
-        
+
         # Leemos el estado (por ahora simulado si no hay logica real aun)
         estado_lic = "Licencia Activa: Demo / Básica"
         lbl_st_title = QLabel("ESTADO DE LICENCIA ACTUAL:")
@@ -87,10 +87,10 @@ class DialogoLicencia(QDialog):
         elif self.rbtn_multicaja.isChecked(): opcion = "Licencia Multicaja"
 
         mensaje = f"Hola, deseo más información y los pasos para adquirir la {opcion} para el sistema TPV PRO."
-        
+
         # Reemplazar con el número de teléfono deseado, sin el +
-        numero = "5491135627803" 
-        
+        numero = "5491135627803"
+
         url = f"https://wa.me/{numero}?text={urllib.parse.quote(mensaje)}"
         QDesktopServices.openUrl(QUrl(url))
         self.accept()

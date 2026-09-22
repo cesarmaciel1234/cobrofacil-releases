@@ -16,17 +16,17 @@ class GestorEscaladaF11(QObject):
     def __init__(self, main_window):
         super().__init__(main_window)
         self.main_window = main_window
-        
+
         # Crear botón flotante
         self.btn_flotante = BotonFlotanteRegreso(self.main_window)
         self.btn_flotante.clicked_return.connect(self.return_to_terminal_refresh)
         self.btn_flotante.hide()
-        
+
         # Registrar atajo global F11
         self._sc_f11 = QShortcut(QKeySequence("F11"), self.main_window)
         self._sc_f11.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self._sc_f11.activated.connect(self.handle_f11_global)
-        
+
         self._last_f11_ts = 0.0
 
     def update_floating_button_visibility(self, index: int, hay_venta: bool, is_supervisor: bool):
@@ -85,7 +85,7 @@ class GestorEscaladaF11(QObject):
                         " VALUES ('INTERVENCION', 0, ?, ?)",
                         (supervisor, f"Supervisor {supervisor} asiste a {cajero} (F11)")
                     )
-                    
+
                     self.main_window._came_from_cajero  = True
                     self.main_window._supervisor_mode   = True
                     self.main_window._escalando = True
@@ -100,7 +100,7 @@ class GestorEscaladaF11(QObject):
 
         if role == "admin":
             self.main_window._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
-            
+
             dlg = LoginPantalla(role="jefe", parent=self.main_window)
             if qt_exec(dlg):
                 self.main_window.setUpdatesEnabled(False)
@@ -132,11 +132,11 @@ class GestorEscaladaF11(QObject):
                     config.current_user = self.main_window._admin_user_before_escalation.copy()
                 else:
                     self.main_window._restore_user_role(0)
-                    
+
                 self.main_window._escalando = True
                 self.main_window.apply_roles()
                 self.main_window._escalando = False
-                
+
                 if getattr(self.main_window, '_came_from_cajero', False):
                     self.main_window.switch_tab(1)
                 else:
@@ -151,13 +151,13 @@ class GestorEscaladaF11(QObject):
                 self.main_window._came_from_cajero  = False
                 self.main_window._supervisor_mode   = False
                 self.btn_flotante.hide()
-                
+
                 if hasattr(self.main_window, '_prev_user_before_escalation') and self.main_window._prev_user_before_escalation:
                     config.current_user = self.main_window._prev_user_before_escalation.copy()
-                    
+
                 if hasattr(self.main_window, 'pantalla_ventas'):
                     self.main_window.pantalla_ventas.refresh_terminal_data()
-                
+
                 self.main_window.apply_roles()
             finally:
                 self.main_window.setUpdatesEnabled(True)

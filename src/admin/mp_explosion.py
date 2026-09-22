@@ -11,12 +11,12 @@ def show_explosion(nombre, monto_str):
 
     root = tk.Tk()
     root.withdraw() # Oculta la ventana principal
-    
+
     overlay = tk.Toplevel()
     overlay.attributes('-topmost', True)
     overlay.overrideredirect(True)
     overlay.configure(bg='#070b12')
-    
+
     # Dimensiones y posicionamiento en la esquina inferior derecha (estilo Toast)
     sw = overlay.winfo_screenwidth()
     sh = overlay.winfo_screenheight()
@@ -24,9 +24,9 @@ def show_explosion(nombre, monto_str):
     height = 110
     x = sw - width - 20
     y = sh - height - 60 # Encima de la barra de tareas
-    
+
     overlay.geometry(f"{width}x{height}+{x}+{y}")
-    
+
     # Elevar ventana pero SIN forzar foco para mantener la operación del cajero en segundo plano
     overlay.lift()
 

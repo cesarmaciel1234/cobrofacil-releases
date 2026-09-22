@@ -19,7 +19,7 @@ class PromediosMain(QWidget, VistaPromediosMixin):
         super().__init__(parent)
         self.setObjectName("PromediosMain")
         self.setStyleSheet(f"QWidget#PromediosMain {{ background: {PAL['bg']}; }}")
-        
+
         self._build_ui()
 
     def _build_ui(self):
@@ -61,7 +61,7 @@ class PromediosMain(QWidget, VistaPromediosMixin):
         lbl_title = QLabel("⚖️  Costos y Promedios")
         lbl_title.setStyleSheet(f"font-size: 18px; font-weight: 800; color: {PAL['text']};")
         nav_lay.addWidget(lbl_title)
-        
+
         nav_lay.addStretch()
 
         root.addWidget(self.nav)
@@ -71,9 +71,9 @@ class PromediosMain(QWidget, VistaPromediosMixin):
         self._content_area = QWidget()
         self._content_lay = QVBoxLayout(self._content_area)
         self._content_lay.setContentsMargins(0, 0, 0, 0)
-        
+
         root.addWidget(self._content_area)
-        
+
         # Iniciar la construcción de la pestaña heredada del mixin
         self._build_tab_promedios()
 
@@ -92,10 +92,10 @@ class PromediosMain(QWidget, VistaPromediosMixin):
         lay.setContentsMargins(28, 24, 28, 28)
         lay.setSpacing(20)
         scroll.setWidget(inner)
-        
+
         # Añadir el scroll al área de contenido de esta ventana
         self._content_lay.addWidget(scroll)
-        
+
         return lay, scroll
 
     def cargar_datos(self):

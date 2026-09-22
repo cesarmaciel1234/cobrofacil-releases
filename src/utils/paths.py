@@ -16,7 +16,7 @@ def get_base_path():
         if os.path.basename(exe_dir).lower() == 'bin':
             return os.path.dirname(exe_dir)
         return exe_dir
-    
+
     # Running from source: main.py is in the root
     # This file is in src/utils/paths.py, so root is two levels up.
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,6 +28,6 @@ def get_resource_path(relative_path):
     """
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
-    
+
     # When running from source, resources are relative to the project root.
     return os.path.join(get_base_path(), relative_path)

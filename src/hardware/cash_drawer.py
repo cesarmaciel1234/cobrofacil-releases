@@ -23,14 +23,14 @@ class CashDrawerManager(QObject):
     Módulo Centralizado de Gestión del Cajón de Dinero (Elite 2026).
     Maneja la apertura, el sensado de estado y la lógica de seguridad operativa.
     """
-    
+
     drawer_opened = pyqtSignal()
     drawer_closed = pyqtSignal()
     intrusion_detected = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-        self._last_status = False 
+        self._last_status = False
         self._apertura_autorizada = False
         self._is_checking = False
         self._opos_active = False
@@ -45,7 +45,7 @@ class CashDrawerManager(QObject):
             # Nombres lógicos: Prioridad al configurado, luego búsqueda genérica industrial
             custom_ldn = config.get("opos_drawer_name", "")
             ldns = [custom_ldn] if custom_ldn else OPOS_LDNS
-            
+
             for ldn in ldns:
                 if not ldn: continue
                 try:
@@ -73,7 +73,7 @@ class CashDrawerManager(QObject):
         """ Envía la señal física de apertura (OPOS o ESC/POS). """
         self._apertura_autorizada = autorizada
         logger.info(f"Abriendo cajón de dinero ({'Autorizada' if autorizada else 'FORZADA'}).")
-        
+
         # 1. Intento vía OPOS si está activo
         if self._opos_active:
             try:
@@ -82,7 +82,7 @@ class CashDrawerManager(QObject):
             except Exception as e:
                 logger.error(f"Fallo al abrir vía OPOS: {e}")
                 self._opos_active = False # Fallback al motor genérico
-        
+
         # 2. Fallback a motor genérico (Printer Manager)
         return printer_manager.abrir_cajon()
 
@@ -90,7 +90,7 @@ class CashDrawerManager(QObject):
         """ Consulta el estado físico de TODOS los cajones de forma segura. """
         locker = QMutexLocker(self._lock)
         if self._is_checking: return self._last_status
-        
+
         self._is_checking = True
         try:
             # 1. Intento vía OPOS
@@ -122,7 +122,7 @@ class CashDrawerManager(QObject):
             else:
                 self.drawer_closed.emit()
                 self._apertura_autorizada = False
-                
+
             self._last_status = status
 
     def reset_all(self):
@@ -159,31 +159,31 @@ reset_drawer_manager()
 if __name__ == "__main__":
     import sys
     from PyQt6.QtWidgets import QApplication
-    
+
     # Configuración de log para el test
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger("DrawerTest")
-    
+
     app = QApplication(sys.argv)
-    
+
     def on_opened(): logger.info("📢 SEÑAL RECIBIDA: Cajón ABIERTO")
     def on_closed(): logger.info("📢 SEÑAL RECIBIDA: Cajón CERRADO")
     def on_intrusion(): logger.warning("⚠️ ALERTA: Apertura NO AUTORIZADA (Intrusión)")
-    
+
     # Conectar señales para el test
     drawer_manager.drawer_opened.connect(on_opened)
     drawer_manager.drawer_closed.connect(on_closed)
     drawer_manager.intrusion_detected.connect(on_intrusion)
-    
+
     logger.info("🔧 Iniciando Test de Hardware...")
-    
+
     # Intentar apertura autorizada
     drawer_manager.abrir(autorizada=True)
-    
+
     # Polling de estado cada 2 segundos para monitorear el sensor
     timer = QTimer()
     timer.timeout.connect(lambda: logger.info(f"📊 Estado actual: {'ABIERTO' if drawer_manager.check_status() else 'CERRADO'}"))
     timer.start(2000)
-    
+
     logger.info("📡 Monitoreando señales. Cierre la ventana o Ctrl+C para terminar.")
     sys.exit(qt_exec(app))

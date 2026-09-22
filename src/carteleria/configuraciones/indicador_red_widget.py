@@ -5,13 +5,13 @@ from src.carteleria.theme import C_THEME
 class IndicadorRedWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         self._red_estado = "offline"   # "offline" | "online" | "lost"
         self._red_timeout = 0          # segundos desde el último heartbeat
 
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        
+
         self.lbl_red_dot = QLabel("⚫")
         self.lbl_red_dot.setToolTip("Estado conexión con Terminal de Ventas")
         self.lbl_red_dot.setStyleSheet("font-size: 14px; background: transparent;")
@@ -32,7 +32,7 @@ class IndicadorRedWidget(QWidget):
     def _show_connection_info(self, event):
         try:
             from src.config import config as _c
-            
+
             def get_local_ip():
                 try:
                     import socket
@@ -43,24 +43,24 @@ class IndicadorRedWidget(QWidget):
                     return ip
                 except:
                     return "127.0.0.1"
-                    
+
             local_ip = get_local_ip()
-            
+
             db_engine = _c.get("db_engine", "Desconocido")
             db_host = _c.get("db_host", "").strip()
             if not db_host or db_host.lower() == "localhost":
                 db_host = f"Local ({local_ip})"
-                
+
             caja_id = _c.get("caja_id", "1")
-            
+
             carteleria_ip = _c.get("carteleria_master_ip", "").strip()
             if not carteleria_ip or carteleria_ip.lower() == "localhost":
                 carteleria_ip = f"Local ({local_ip})"
-            
+
             from src.central_red_global.network_engine import get_network_engine
             engine = get_network_engine()
             rol = getattr(engine, '_origen', 'Desconocido') if engine else 'Desconocido'
-            
+
             pings = ""
             if engine and hasattr(engine, '_active_ips'):
                 pings = "<br><b>Ping detectados (Red):</b><br>"
@@ -70,7 +70,7 @@ class IndicadorRedWidget(QWidget):
                 pings = "<br><b>Ping detectados:</b> Ninguno (Sólo local)<br>"
 
             color = "#10B981" if self._red_estado == "online" else ("#EF4444" if self._red_estado == "lost" else "#94A3B8")
-            
+
             from src.central_red_global.motor_red import MotorRed
             motor_red = MotorRed()
             es_maestra = motor_red.obtener_estado_red()["is_master"]
@@ -85,7 +85,7 @@ class IndicadorRedWidget(QWidget):
             <b>Motor BD:</b> {db_engine} en {db_host}<br>
             {pings}
             """
-            
+
             from PyQt6.QtWidgets import QMessageBox
             msg_box = QMessageBox(self)
             msg_box.setWindowTitle("Diagnóstico de Red Cartelería")
@@ -93,7 +93,7 @@ class IndicadorRedWidget(QWidget):
             msg_box.setText(msg)
             msg_box.setStyleSheet("QLabel { font-size: 13px; }")
             msg_box.exec()
-            
+
         except Exception as e:
             import logging
             logging.error(f"Error mostrando conexión: {e}")
@@ -131,7 +131,7 @@ class IndicadorRedWidget(QWidget):
         # (antes solo el cajero lo hacía → a los 30s marcaba offline sin caja)
         if estado == "online":
             self._red_timeout = 0
-        
+
         from src.central_red_global.motor_red import MotorRed
         import datetime
         motor = MotorRed()

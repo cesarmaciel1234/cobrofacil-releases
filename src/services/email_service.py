@@ -23,7 +23,7 @@ def obtener_datos_semana_anterior():
     dias_para_domingo_pasado = hoy.weekday() + 1
     fin_sem = hoy - datetime.timedelta(days=dias_para_domingo_pasado)
     inicio_sem = fin_sem - datetime.timedelta(days=6)
-    
+
     # Formato para la query (inicio del lunes hasta el final del domingo)
     fecha_ini = inicio_sem.strftime('%Y-%m-%d 00:00:00')
     fecha_fin = fin_sem.strftime('%Y-%m-%d 23:59:59')
@@ -31,8 +31,8 @@ def obtener_datos_semana_anterior():
     # Total de ventas de la semana
     q_ventas = """
         SELECT SUM(total) as total
-        FROM ventas 
-        WHERE estado = 'COMPLETADA' 
+        FROM ventas
+        WHERE estado = 'COMPLETADA'
           AND fecha >= ? AND fecha <= ?
     """
     res_ventas = db_manager.execute_query(q_ventas, (fecha_ini, fecha_fin))
@@ -73,7 +73,7 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
     moneda = config.get("currency_symbol", "$")
     nombre_negocio = config.get("business_name", "Mi Negocio")
     fecha_str = f"Del {inicio.strftime('%d/%m/%Y')} al {fin.strftime('%d/%m/%Y')}"
-    
+
     html = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px;">
@@ -83,12 +83,12 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
             </h2>
             <h3 style="color: #4b5563; text-align: center; margin-top: 5px;">{nombre_negocio}</h3>
             <p style="text-align: center; color: #6b7280; font-size: 14px;">{fecha_str}</p>
-            
+
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
                 <p style="margin: 0; color: #065f46; font-size: 16px;">Ventas Totales de la Semana:</p>
                 <h1 style="margin: 5px 0 0 0; color: #047857; font-size: 28px;">{moneda} {total:,.2f}</h1>
             </div>
-            
+
             <h3 style="color: #374151; margin-top: 30px;">🏆 Top 7: Productos Más Vendidos (Por Cantidad)</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <tr style="background-color: #f9fafb; text-align: left;">
@@ -96,7 +96,7 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
                     <th style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">Cantidad</th>
                 </tr>
     """
-    
+
     for row in top7_cant:
         html += f"""
                 <tr>
@@ -104,10 +104,10 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
                     <td style="padding: 10px; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: bold; color: #111827;">{row['total_cant']:.2f}</td>
                 </tr>
         """
-        
+
     html += f"""
             </table>
-            
+
             <h3 style="color: #374151; margin-top: 30px;">💰 Top 7: Productos de Mayor Recaudación</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <tr style="background-color: #f9fafb; text-align: left;">
@@ -115,7 +115,7 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
                     <th style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">Recaudación</th>
                 </tr>
     """
-    
+
     for row in top7_rec:
         html += f"""
                 <tr>
@@ -123,7 +123,7 @@ def generar_html_reporte(total, top7_cant, top7_rec, inicio, fin):
                     <td style="padding: 10px; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: bold; color: #047857;">{moneda} {row['total_rec']:.2f}</td>
                 </tr>
         """
-        
+
     html += """
             </table>
             <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -143,12 +143,12 @@ def enviar_reporte_semanal_si_es_necesario(forzar_envio=False):
     Retorna True si envió exitosamente, False de lo contrario.
     """
     activo = config.get("email_report_active", False)
-    
+
     # CONFIGURACIÓN MAESTRA DEL CORREO DE ENVÍO
     # TODO: Cuando crees tu correo de Gmail para el sistema, colócalo aquí abajo
     email_origen = "cesarjaviermaciel@gmail.com"
     pwd_origen = "mtcy kfyh ekwx lqjl"
-    
+
     email_destino = config.get("email_dest", "")
 
     if not activo or not email_origen or not pwd_origen or not email_destino:
@@ -159,7 +159,7 @@ def enviar_reporte_semanal_si_es_necesario(forzar_envio=False):
     # year_week es algo como "2026-W42"
     año, semana, _ = (hoy - datetime.timedelta(days=hoy.weekday())).isocalendar() # Tomar isocalendar del lunes de esta semana
     semana_id = f"{año}-W{semana}"
-    
+
     ultimo_enviado = config.get("last_weekly_report_sent", "")
 
     # No enviar si no estamos forzando y ya se envió esta semana
@@ -203,7 +203,7 @@ def generar_html_cierre_z(datos_cierre):
     moneda = config.get("currency_symbol", "$")
     nombre_negocio = config.get("business_name", "Mi Negocio")
     fecha_str = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
-    
+
     # Extraer datos con defaults seguros
     caja_id = datos_cierre.get('caja_id', 'Global')
     usuario = datos_cierre.get('usuario', 'SISTEMA')
@@ -212,7 +212,7 @@ def generar_html_cierre_z(datos_cierre):
     efectivo_fis = datos_cierre.get('efectivo_fisico', 0.0)
     diferencia = datos_cierre.get('diferencia', 0.0)
     total_ventas = datos_cierre.get('total_ventas', 0.0)
-    
+
     color_diferencia = "#10b981" # Verde ok
     if diferencia < 0: color_diferencia = "#ef4444" # Rojo faltante
     elif diferencia > 0: color_diferencia = "#f59e0b" # Amarillo sobrante
@@ -226,7 +226,7 @@ def generar_html_cierre_z(datos_cierre):
             </h2>
             <h3 style="color: #4b5563; text-align: center; margin-top: 5px;">{nombre_negocio} - Caja {caja_id}</h3>
             <p style="text-align: center; color: #6b7280; font-size: 14px;">{fecha_str}</p>
-            
+
             <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                 <tr>
                     <td style="padding: 10px; border-bottom: 1px solid #f3f4f6; color: #4b5563;">Operador:</td>
@@ -250,7 +250,7 @@ def generar_html_cierre_z(datos_cierre):
                 <p style="margin: 0; color: #374151; font-size: 14px;">Diferencia (Descuadre):</p>
                 <h2 style="margin: 5px 0 0 0; color: {color_diferencia}; font-size: 24px;">{moneda} {diferencia:,.2f}</h2>
             </div>
-            
+
             <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                 <p style="color: #9ca3af; font-size: 12px;">Generado automáticamente por TPV PRO.</p>
             </div>
@@ -269,7 +269,7 @@ def enviar_reporte_cierre_z(datos_cierre):
     }
     """
     activo = config.get("email_report_active", False)
-    
+
     email_origen = "notificaciones.tpvpro@gmail.com"
     pwd_origen = "TU_CONTRASENA_DE_APLICACION_AQUI"
     email_destino = config.get("email_dest", "")
@@ -281,7 +281,7 @@ def enviar_reporte_cierre_z(datos_cierre):
     try:
         html_content = generar_html_cierre_z(datos_cierre)
         caja = datos_cierre.get('caja_id', '?')
-        
+
         msg = MIMEMultipart("alternative")
         msg['Subject'] = Header(f"🔒 TPV PRO: Cierre de Caja {caja} - {datetime.datetime.now().strftime('%d/%m')}", "utf-8")
         msg['From'] = email_origen

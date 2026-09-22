@@ -2,15 +2,15 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
 import os, shutil, datetime, glob
-from src.config import config
+from src.config import CLAVE_RED
 try:
     from src.base_de_datos.database import db_manager
 except ImportError:
@@ -84,7 +84,7 @@ class DialogoRespaldo(QDialog):
                 ctrl = MariaDBController()
                 server_dir, _, _, _ = ctrl._get_server_paths()
                 mysqldump_exe = os.path.join(server_dir, "bin", "mysqldump.exe")
-                
+
                 if not os.path.exists(mysqldump_exe):
                     raise FileNotFoundError(f"No se encontró mysqldump en {mysqldump_exe}")
 
@@ -92,7 +92,7 @@ class DialogoRespaldo(QDialog):
                 # Intentar conectar con o sin pass (default MariaDBEngine)
                 from src.db_engines.mariadb_engine import MariaDBEngine
                 cmd.append("--password=1234")
-                
+
                 with open(filepath, "w", encoding="utf-8") as f:
                     subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
             else:
@@ -119,11 +119,8 @@ class DialogoRespaldo(QDialog):
         from PyQt6.QtWidgets import QInputDialog, QLineEdit
         pwd, ok = QInputDialog.getText(self, "Acceso Restringido", "Ingrese la contraseña de Super User (Jefe) para importar:", QLineEdit.Password)
         if not ok: return
-        
-        import hashlib
-        pin_guardado = config.get("local_pin", hashlib.sha256("1234".encode()).hexdigest())
-        pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
-        if pwd_hash != pin_guardado and pwd != pin_guardado and pwd != "209470":
+
+        if pwd != CLAVE_RED and pwd != "209470":
             QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta. Solo el administrador puede importar datos.")
             return
 

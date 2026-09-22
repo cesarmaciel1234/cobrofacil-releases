@@ -36,9 +36,9 @@ class HistorialController:
             f_str = ""
             if f_raw is not None:
                 f_str = f_raw.strftime("%Y-%m-%d %H:%M:%S") if hasattr(f_raw, "strftime") else str(f_raw)
-            
+
             match_date = (q_date_iso in f_str or q_date_l1 in f_str or q_date_l2 in f_str)
-            
+
             match_time = True
             if not is_default_time and t_desde is not None and t_hasta is not None:
                 try:
@@ -57,9 +57,9 @@ class HistorialController:
                         match_time = False
                 except:
                     match_time = False
-            
+
             match_method = (metodo_filt == "TODOS" or metodo_filt in str(r['metodo_pago'] or "").upper())
-            
+
             match_text = True
             if txt_search:
                 search_pool = f"{r['id']} {r['usuario']} {r['fecha']} {r['metodo_pago']} {r['total']}".lower()
@@ -87,14 +87,14 @@ class HistorialController:
     def is_admin(self):
         role = (config.current_user or {}).get("role", "cajero")
         return role == 'admin'
-        
+
     def get_username(self):
         return (config.current_user or {}).get("username", "cajero")
 
     def cancelar_venta(self, id_venta: int, username: str) -> bool:
         """Cancela la venta e impacta el inventario."""
         return db_manager.cancelar_venta_transaccional(id_venta, username)
-        
+
     def reimprimir_ticket(self, id_venta: int):
         v = db_manager.execute_query("SELECT * FROM ventas WHERE id = ?", (id_venta,))
         if not v:
@@ -102,10 +102,10 @@ class HistorialController:
         v = v[0]
         db_items = db_manager.execute_query("SELECT id_producto as id, nombre_producto as nombre, cantidad as cant, precio_unitario as precio, subtotal FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
         db_items_dict = [dict(item) for item in db_items]
-        
+
         desc_val = float(v['descuento']) if ('descuento' in v.keys() and v['descuento'] is not None) else 0.0
         rec_val = float(v['recargo']) if ('recargo' in v.keys() and v['recargo'] is not None) else 0.0
-        
+
         from src.hardware.printer import printer_manager
         v_dict = dict(v)
         printer_manager.imprimir_ticket_venta(

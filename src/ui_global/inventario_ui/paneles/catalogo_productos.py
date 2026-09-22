@@ -13,17 +13,17 @@ from src.ui_global.inventario_ui.atomos.pie_inventario import PieInventario
 
 class MotorBusquedaInventario(QThread):
     busqueda_terminada = pyqtSignal(list, int)
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.buscar = ""
         self.depto = None
         self._motor = None
-        
+
     def setup(self, buscar, depto):
         self.buscar = buscar
         self.depto = depto
-        
+
     def run(self):
         try:
             filas, _ = InventarioService.obtener_lista_de_productos(self.buscar, self.depto, limite=8000)
@@ -41,11 +41,11 @@ class CatalogoProductos(QWidget):
         super().__init__(parent)
         self.all_rows = []
         self.user_role = SessionService.obtener_rol_usuario()
-        
+
         self.motor_busqueda = MotorBusquedaInventario(self)
         self.motor_busqueda.busqueda_terminada.connect(self._on_busqueda_terminada)
         self._busqueda_pendiente = None
-        
+
         self._setup_ui()
         self._cargar_deptos()
         self.cargar_datos()
@@ -89,7 +89,7 @@ class CatalogoProductos(QWidget):
 
         # Si es cajero, no puede alterar el inventario (es de solo lectura)
         es_lectura_solamente = (self.user_role == "cajero")
-        
+
         # Deshabilitar edicion por doble click si es cajero
         if es_lectura_solamente:
             try:
@@ -134,7 +134,7 @@ class CatalogoProductos(QWidget):
         header_bg = "#0F172A" if is_dark else "#F8FAFC"
         header_text = "#94A3B8" if is_dark else "#64748B"
         main_bg = "#0F172A" if is_dark else "#F8FAFC"
-        
+
         self.setStyleSheet(f"background-color: {main_bg};")
         self.filtros.aplicar_tema(bg, text, border)
         self.tabla.aplicar_tema(bg, text, border, hover, sel_bg, sel_text, header_bg, header_text)
@@ -217,31 +217,31 @@ class CatalogoProductos(QWidget):
 
     def _modificar_por_id(self, id_p):
         r = InventarioService.buscar_producto_por_id(id_p)
-        if not r: 
+        if not r:
             return
-            
+
         def get_val(col, default=0.0):
             return r.get(col) if r.get(col) is not None else default
 
         datos = {
-            'id': r.get('id'), 
-            'codigo': r.get('codigo') or '', 
+            'id': r.get('id'),
+            'codigo': r.get('codigo') or '',
             'nombre': r.get('nombre') or '',
-            'precio': get_val('precio', 0.0), 
+            'precio': get_val('precio', 0.0),
             'precio_mayoreo': get_val('precio_mayoreo', 0.0),
             'cant_mayoreo': get_val('cant_mayoreo', 0.0),
-            'cant_oferta': get_val('cant_oferta', 0.0), 
+            'cant_oferta': get_val('cant_oferta', 0.0),
             'precio_oferta': get_val('precio_oferta', 0.0),
-            'costo': get_val('costo', 0.0), 
+            'costo': get_val('costo', 0.0),
             'stock': get_val('stock', 0.0),
-            'stock_minimo': get_val('stock_minimo', 0.0), 
+            'stock_minimo': get_val('stock_minimo', 0.0),
             'stock_maximo': get_val('stock_maximo', 0.0),
-            'unidad': r.get('unidad') or 'UN', 
+            'unidad': r.get('unidad') or 'UN',
             'es_pesable': get_val('es_pesable', 0),
-            'departamento': r.get('departamento') or '', 
+            'departamento': r.get('departamento') or '',
             'categoria': r.get('categoria') or 'GENERAL'
         }
-        
+
         from src.ui_global.inventario_ui.moleculas.dialogo_producto import DialogoProducto
         dlg = DialogoProducto(datos, self)
         if qt_exec(dlg):
@@ -253,9 +253,9 @@ class CatalogoProductos(QWidget):
                 try:
                     from src.central_red_global.network_engine import get_network_engine
                     e = get_network_engine()
-                    if e: 
+                    if e:
                         e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
-                except: 
+                except:
                     pass
             else:
                 QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
@@ -278,9 +278,9 @@ class CatalogoProductos(QWidget):
         filepath, _ = QFileDialog.getSaveFileName(
             self, "Exportar productos", nombre_def,
             "Excel (*.xlsx);;Todos los archivos (*)")
-        if not filepath: 
+        if not filepath:
             return
-        
+
         class WorkerExport(QThread):
             finished = pyqtSignal(bool, str)
             def __init__(self, path):
@@ -289,7 +289,7 @@ class CatalogoProductos(QWidget):
             def run(self):
                 ok, msg = InventarioService.exportar_a_excel(self.path)
                 self.finished.emit(ok, msg)
-                
+
         self._btn_sender = self.sender()
         self._busy_widget(self._btn_sender, "⏳ CARGANDO...")
 
@@ -311,7 +311,7 @@ class CatalogoProductos(QWidget):
             "¿Deseas descargar y sumar ~12,800 productos precargados desde la nube a tu base de datos?\n(Esto tomará un par de segundos)",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes
         )
-        if respuesta != QMessageBox.StandardButton.Yes: 
+        if respuesta != QMessageBox.StandardButton.Yes:
             return
 
         class WorkerPrecarga(QThread):
@@ -345,9 +345,9 @@ class CatalogoProductos(QWidget):
             "¿Deseas buscar y unificar automáticamente todos los productos repetidos (con el mismo código)?\n\nEl sistema acumulará el stock en el producto principal y eliminará las copias vacías o basura.\nEste proceso no se puede deshacer.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No
         )
-        if respuesta != QMessageBox.StandardButton.Yes: 
+        if respuesta != QMessageBox.StandardButton.Yes:
             return
-        
+
         ok, msg = InventarioService.unificar_duplicados()
         QMessageBox.information(self, "Unificación Completada", msg)
         self.filtros.txt_buscar.clear()
@@ -361,7 +361,7 @@ class CatalogoProductos(QWidget):
         filepath, _ = QFileDialog.getOpenFileName(
             self, "Importar productos", "",
             "Excel (*.xlsx *.xls);;Todos los archivos (*)")
-        if not filepath: 
+        if not filepath:
             return
 
         class WorkerImport(QThread):

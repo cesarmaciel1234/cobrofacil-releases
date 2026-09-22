@@ -4,8 +4,8 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -60,7 +60,7 @@ class BarChartWidget(QWidget):
         self.setAttribute(Qt.WA_Hover, True)
         self.hover_index = -1
         self.setMouseTracking(True)
-        
+
     def update_data(self, data):
         self.data = data
         self.update()
@@ -93,19 +93,19 @@ class BarChartWidget(QWidget):
         from PyQt6.QtCore import QPoint, QRect, Qt
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         w = self.width()
         h = self.height()
         padding_l, padding_r, padding_t, padding_b = 80, 40, 40, 60
         chart_w, chart_h = w - padding_l - padding_r, h - padding_t - padding_b
-        
+
         max_total = 0
         for day, methods in self.data.items():
             max_total = max(max_total, sum(methods.values()))
         if max_total == 0: max_total = 1000
         magnitude = 10**(len(str(int(max_total))) - 1) if max_total >= 10 else 1
         max_total = ((int(max_total) // magnitude) + 1) * magnitude
-        
+
         # Grid lines
         painter.setPen(QPen(QColor("#F1F5F9"), 1, Qt.DashLine))
         painter.setFont(QFont("Segoe UI", 9))
@@ -121,37 +121,37 @@ class BarChartWidget(QWidget):
         if not days: return
         bar_w = min(40, (chart_w / len(days)) * 0.6)
         spacing = chart_w / len(days)
-        
+
         methods_list = ["Efectivo", "Tarjeta", "Transferencia", "Vales", "Crédito", "Cheque"]
-        
+
         for i, day in enumerate(days):
             x = padding_l + (i * spacing) + (spacing - bar_w) / 2
             current_y = h - padding_b
-            
+
             day_values = []
             for j, m in enumerate(methods_list):
                 val = self.data[day].get(m, 0)
                 if val > 0: day_values.append((j, m, val))
-                
+
             for j, m, value in day_values:
                 bar_h = (value / max_total) * chart_h
-                
+
                 rect_y = current_y - bar_h
                 # Gap between segments
                 if current_y < h - padding_b:
                     rect_y -= 2
-                    
+
                 color = self.colors[j % len(self.colors)]
                 if self.hover_index != -1 and self.hover_index != i:
                     # dim non-hovered
                     color = "#E2E8F0"
-                
+
                 painter.setBrush(QColor(color))
                 painter.setPen(Qt.NoPen)
                 painter.drawRoundedRect(int(x), int(rect_y), int(bar_w), int(bar_h), 4, 4)
-                
+
                 current_y = rect_y
-                
+
             # X Label
             painter.setPen(QColor("#64748B"))
             painter.setFont(QFont("Segoe UI", 9, QFont.Bold))
@@ -162,26 +162,26 @@ class BarChartWidget(QWidget):
         painter.setFont(QFont("Segoe UI", 16, QFont.Bold))
         painter.setPen(QColor("#64748B"))
         painter.drawText(QRect(w - 250, 10, 230, 30), Qt.AlignRight | Qt.AlignVCenter, f"${total_val:,.2f}")
-        
+
         # Hover Tooltip
         if self.hover_index != -1 and self.hover_index < len(days):
             day = days[self.hover_index]
             tt_w, tt_h = 220, 30 + len(methods_list)*20
             x = padding_l + (self.hover_index * spacing) + spacing/2
             y = padding_t
-            
+
             tt_rect = QRect(int(x) - tt_w//2, int(y), tt_w, tt_h)
             if tt_rect.right() > w: tt_rect.moveRight(w - 10)
             if tt_rect.left() < padding_l: tt_rect.moveLeft(padding_l + 10)
-            
+
             painter.setBrush(QColor(255, 255, 255, 245))
             painter.setPen(QPen(QColor("#E2E8F0"), 1))
             painter.drawRoundedRect(tt_rect, 8, 8)
-            
+
             painter.setPen(QColor("#1E293B"))
             painter.setFont(QFont("Segoe UI", 10, QFont.Bold))
             painter.drawText(QRect(tt_rect.x(), tt_rect.y()+5, tt_rect.width(), 20), Qt.AlignCenter, str(day))
-            
+
             painter.setFont(QFont("Segoe UI", 9))
             cy = tt_rect.y() + 30
             for j, m in enumerate(methods_list):

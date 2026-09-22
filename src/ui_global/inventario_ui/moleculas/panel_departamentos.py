@@ -6,8 +6,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
-    QGraphicsDropShadowEffect
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
@@ -89,29 +88,21 @@ class PanelDepartamentos(QWidget):
         right = QWidget()
         rl_main = QVBoxLayout(right)
         rl_main.setContentsMargins(20, 20, 20, 20)
-        
+
         form_card = QFrame()
         form_card.setObjectName("formCard")
-        form_card.setStyleSheet("QFrame#formCard { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }")
-        
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        form_card.setGraphicsEffect(shadow)
-        
-        rl = QVBoxLayout(form_card)
+        form_card.setStyleSheet("QFrame#formCard { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }")        rl = QVBoxLayout(form_card)
         rl.setContentsMargins(20, 20, 20, 20)
         rl.setSpacing(15)
-        
+
         self.lbl_titulo_form = QLabel("NUEVO DEPARTAMENTO E IMPUESTOS")
         self.lbl_titulo_form.setStyleSheet("font-weight: 900; font-size: 15px; border: none;")
-        
+
         lbl_n = QLabel("Nombre de la categoría/departamento:")
         lbl_n.setStyleSheet("font-weight: bold; border: none;")
         self.txt_nombre_dep = QLineEdit()
         self.txt_nombre_dep.setStyleSheet("border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; background: #F8FAFC; font-size: 14px; font-weight: bold;")
-        
+
         lbl_iva = QLabel("Tasa de IVA (%):")
         lbl_iva.setStyleSheet("font-weight: bold; border: none;")
         self.txt_iva_dep = QLineEdit("21.0")
@@ -120,7 +111,7 @@ class PanelDepartamentos(QWidget):
         # ── Ícono de Rubro / Cartelería ────────────────────────────────────────
         lbl_ico = QLabel("Ícono visual (Cartelería y POS):")
         lbl_ico.setStyleSheet("font-weight: bold; border: none;")
-        
+
         ico_lay = QHBoxLayout()
         ico_lay.setSpacing(10)
 
@@ -143,7 +134,7 @@ class PanelDepartamentos(QWidget):
         ico_lay.addWidget(self.lbl_preview_icono)
         ico_lay.addWidget(self.btn_sel_icono)
         ico_lay.addStretch()
-        
+
         bx2 = QHBoxLayout()
         self.btn_guardar_dep = QPushButton("✔ Guardar Configuración")
         self.btn_guardar_dep.setObjectName("blue")
@@ -151,10 +142,10 @@ class PanelDepartamentos(QWidget):
         self.btn_cancelar_dep.setObjectName("gray")
         self.btn_guardar_dep.clicked.connect(self._guardar)
         self.btn_cancelar_dep.clicked.connect(self._iniciar_nuevo)
-        
+
         bx2.addWidget(self.btn_guardar_dep)
         bx2.addWidget(self.btn_cancelar_dep)
-        
+
         rl.addWidget(self.lbl_titulo_form)
         rl.addWidget(lbl_n)
         rl.addWidget(self.txt_nombre_dep)
@@ -164,7 +155,7 @@ class PanelDepartamentos(QWidget):
         rl.addLayout(ico_lay)
         rl.addLayout(bx2)
         rl.addStretch()
-        
+
         rl_main.addWidget(form_card)
         sp.addWidget(right)
         sp.setSizes([350, 650])

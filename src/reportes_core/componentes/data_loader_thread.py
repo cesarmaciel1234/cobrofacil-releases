@@ -4,8 +4,8 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -65,16 +65,16 @@ class DataLoaderThread(QThread):
         try:
             from src.utils.db import db_manager
             import datetime
-            
+
             # KPIs
             res_kpi = db_manager.execute_query(
                 "SELECT SUM(total) as v_bruta, SUM(total - descuento + recargo) as v_neta, COUNT(id) as cant "
-                "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA')", 
+                "FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA')",
                 (self.start_str, self.end_str)
             )
             v_bruta = float(res_kpi[0]['v_bruta'] or 0.0) if res_kpi and res_kpi[0] else 0.0
             t_cant = int(res_kpi[0]['cant'] or 0) if res_kpi and res_kpi[0] else 0
-            
+
             res_costo = db_manager.execute_query(
                 "SELECT SUM(dv.cantidad * COALESCE(p.costo, 0)) as costo "
                 "FROM detalles_ventas dv JOIN ventas v ON dv.id_venta = v.id "
@@ -84,12 +84,12 @@ class DataLoaderThread(QThread):
             )
             costo = float(res_costo[0]['costo'] or 0.0) if res_costo and res_costo[0] else 0.0
             ganancia = v_bruta - costo
-            
+
             # Chart Data
             s_dt_c = datetime.datetime.strptime(self.start_str, "%Y-%m-%d %H:%M:%S")
             e_dt_c = datetime.datetime.strptime(self.end_str, "%Y-%m-%d %H:%M:%S")
             days_diff = (e_dt_c - s_dt_c).days + 1
-            
+
             display_chart_data = {}
             if self.period_type == "day":
                 query_chart = "SELECT substr(fecha, 12, 2) as hora, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY hora"
@@ -110,7 +110,7 @@ class DataLoaderThread(QThread):
                         meses = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
                         display_chart_data[meses[m_idx]] = float(r['tot'] or 0)
                     except: display_chart_data[r['mes']] = float(r['tot'] or 0)
-            
+
             # Tablas Varias
             res_diario = db_manager.execute_query(
                 "SELECT substr(fecha, 1, 10) as dia, SUM(total) as tot FROM ventas WHERE (fecha BETWEEN ? AND ?) AND estado IN ('COMPLETADA', 'CERRADA') GROUP BY dia ORDER BY dia DESC", (self.start_str, self.end_str)

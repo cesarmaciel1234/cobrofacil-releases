@@ -87,16 +87,6 @@ class Admin6RedLan(QWidget):
         btn_cajas.clicked.connect(self._open_administrar_cajas)
         btn_row.addWidget(btn_cajas)
 
-        btn_pin = QPushButton("🔑 Contraseña PC esclava")
-        btn_pin.setCursor(QCursor(Qt.PointingHandCursor))
-        btn_pin.setStyleSheet(
-            "QPushButton { background: #0D9488; color: white; font-weight: bold; "
-            "padding: 12px 20px; border-radius: 8px; border: none; }"
-            "QPushButton:hover { background: #0F766E; }"
-        )
-        btn_pin.clicked.connect(self._open_pin_esclava)
-        btn_row.addWidget(btn_pin)
-
         btn_cfg = QPushButton("⚙️ Configuración completa")
         btn_cfg.setCursor(QCursor(Qt.PointingHandCursor))
         btn_cfg.setStyleSheet(
@@ -119,7 +109,7 @@ class Admin6RedLan(QWidget):
     def _build_card_estado(self) -> QFrame:
         motor = MotorRed()
         estado = motor.obtener_estado_red()
-        
+
         is_master      = estado["is_master"]
         caja_id        = estado["caja_id"]
         db_engine      = estado["db_engine"]
@@ -420,10 +410,6 @@ class Admin6RedLan(QWidget):
         from src.admin.configuracion.componentes.dialogo_administrar_cajas import DialogoAdministrarCajas
         qt_exec(DialogoAdministrarCajas(self))
 
-    def _open_pin_esclava(self):
-        from src.admin.configuracion.componentes.dialogo_pin_local import DialogoPINLocal
-        qt_exec(DialogoPINLocal(self))
-
     def _escanear_red_maestras(self):
         """Escanea la red local por UDP Broadcast + TCP Sweep para encontrar PCs Maestras."""
         self.btn_scan_lan.setEnabled(False)
@@ -440,7 +426,7 @@ class Admin6RedLan(QWidget):
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                 sock.settimeout(1.5)
                 sock.sendto(b"PUNPRO_DISCOVER", ('255.255.255.255', 37020))
-                
+
                 t_end = time.time() + 1.5
                 while time.time() < t_end:
                     try:

@@ -1,9 +1,9 @@
 import sys
 import os
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QFrame, QGridLayout, 
-    QLineEdit, QComboBox, QPushButton, QMessageBox, QGraphicsDropShadowEffect
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
+    QTableWidgetItem, QHeaderView, QFrame, QGridLayout,
+    QLineEdit, QComboBox, QPushButton, QMessageBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
@@ -17,11 +17,11 @@ class DialogoPerfiles(QDialog):
         self.setWindowTitle("👥 Gestión de Personal - Cobro Fácil POS")
         self.setFixedSize(700, 600)
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI', sans-serif;")
-        
+
         # Determinar jerarquía del usuario logueado
         user_info = getattr(config, 'current_user', {})
         self.rol_actual = user_info.get('rol', 'cajero').lower()
-        
+
         self.setup_ui()
 
     def setup_ui(self):
@@ -33,11 +33,11 @@ class DialogoPerfiles(QDialog):
         header_text = "👥 Gestión de Perfiles"
         if self.rol_actual == 'admin':
             header_text = "👥 Gestión de Cajeros y Auxiliares"
-            
+
         header = QLabel(header_text)
         header.setStyleSheet("font-size: 22px; font-weight: bold; border:none;")
         main_lay.addWidget(header)
-        
+
         lbl_info = QLabel("Administra los accesos y roles del personal de tu negocio.")
         lbl_info.setStyleSheet("font-size: 13px; margin-bottom: 5px; border:none; color: gray;")
         main_lay.addWidget(lbl_info)
@@ -50,16 +50,16 @@ class DialogoPerfiles(QDialog):
         self.tabla.setShowGrid(False)
         self.tabla.setAlternatingRowColors(True)
         self.tabla.setStyleSheet("""
-            QTableWidget { 
-                background-color: white; border: 1px solid #E2E8F0; border-radius: 12px; 
+            QTableWidget {
+                background-color: white; border: 1px solid #E2E8F0; border-radius: 12px;
                 gridline-color: transparent;
             }
             QTableWidget::item:selected {
                 background-color: #EFF6FF;
                 color: black;
             }
-            QHeaderView::section { 
-                 padding: 15px; border: none; 
+            QHeaderView::section {
+                 padding: 15px; border: none;
                 font-weight: 900; font-size: 11px; text-transform: uppercase;
             }
         """)
@@ -71,15 +71,7 @@ class DialogoPerfiles(QDialog):
 
         # --- CARD DE EDICIÓN ---
         card = QFrame()
-        card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 16px;")
-        
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 20))
-        shadow.setOffset(0, 5)
-        card.setGraphicsEffect(shadow)
-        
-        card_lay = QVBoxLayout(card)
+        card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 16px;")        card_lay = QVBoxLayout(card)
         card_lay.setContentsMargins(25, 25, 25, 25)
         card_lay.setSpacing(15)
 
@@ -94,21 +86,21 @@ class DialogoPerfiles(QDialog):
         self.txt_user = QLineEdit()
         self.txt_user.setPlaceholderText("Nombre de Usuario...")
         self.txt_user.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; font-weight: bold;")
-        
+
         self.txt_pass = QLineEdit()
         self.txt_pass.setPlaceholderText("Contraseña (vacío para no cambiar)")
         self.txt_pass.setEchoMode(QLineEdit.EchoMode.Password)
         self.txt_pass.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px;")
-        
+
         self.cmb_rol = QComboBox()
         # JERARQUÍA: Jefe puede crear jefes. Admin solo cajeros/auxiliares.
         roles_permitidos = ["cajero", "auxiliar"]
         if self.rol_actual == 'jefe':
             roles_permitidos.extend(["admin", "jefe"])
-            
+
         self.cmb_rol.addItems(roles_permitidos)
         self.cmb_rol.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; font-weight: bold;")
-        
+
         self.txt_pin = QLineEdit()
         self.txt_pin.setPlaceholderText("PIN (vacío = no cambiar)")
         self.txt_pin.setMaxLength(6)
@@ -132,12 +124,12 @@ class DialogoPerfiles(QDialog):
         btn_del.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_del.setStyleSheet("border: 1px solid #FECACA; padding: 12px; border-radius: 10px; font-weight: bold; color: #EF4444;")
         btn_del.clicked.connect(self.eliminar_usuario)
-        
+
         btn_save = QPushButton("💾 Guardar Usuario")
         btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_save.setStyleSheet("background-color: #3B82F6; color: white; padding: 12px; border-radius: 10px; font-weight: bold; border: none;")
         btn_save.clicked.connect(self.guardar_usuario)
-        
+
         b_lay.addWidget(btn_del, 1)
         b_lay.addStretch()
         b_lay.addWidget(btn_save, 2)
@@ -148,24 +140,24 @@ class DialogoPerfiles(QDialog):
     def cargar_usuarios(self):
         self.tabla.setRowCount(0)
         usuarios = GestorPerfiles.obtener_usuarios_permitidos(self.rol_actual)
-        
+
         for i, u in enumerate(usuarios):
             self.tabla.insertRow(i)
             self.tabla.setRowHeight(i, 45)
-            
+
             id_it = QTableWidgetItem(str(u['id']))
             id_it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.tabla.setItem(i, 0, id_it)
-            
+
             usr_it = QTableWidgetItem(u['username'])
             usr_it.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             self.tabla.setItem(i, 1, usr_it)
-            
+
             rol = u['rol'].upper()
             rol_it = QTableWidgetItem(rol)
             rol_it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             rol_it.setFont(QFont("Segoe UI", 9, QFont.Weight.Black))
-            
+
             if rol == "JEFE": rol_it.setForeground(QColor("#B45309")) # Naranja oscuro
             elif rol == "ADMIN": rol_it.setForeground(QColor("#1E3A8A"))
             elif rol == "AUXILIAR": rol_it.setForeground(QColor("#059669"))
@@ -174,7 +166,7 @@ class DialogoPerfiles(QDialog):
 
             pin_val = str(u['pin'] or '')
             pin_es_hash = len(pin_val) == 64
-            
+
             if pin_es_hash:
                 pin_it = QTableWidgetItem("🔒 Configurado")
                 pin_it.setForeground(QColor("#16A34A"))
@@ -185,7 +177,7 @@ class DialogoPerfiles(QDialog):
             else:
                 pin_it = QTableWidgetItem("Sin PIN")
                 pin_it.setForeground(QColor("#94A3B8"))
-                
+
             pin_it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.tabla.setItem(i, 3, pin_it)
 
@@ -204,9 +196,9 @@ class DialogoPerfiles(QDialog):
         pwd = self.txt_pass.text().strip()
         rol = self.cmb_rol.currentText()
         pin = self.txt_pin.text().strip()
-        if not usr: 
+        if not usr:
             return
-            
+
         try:
             GestorPerfiles.crear_o_actualizar_usuario(self.current_user_id, usr, pwd, rol, pin)
             QMessageBox.information(self, "Éxito", "Usuario guardado correctamente.")
@@ -222,7 +214,7 @@ class DialogoPerfiles(QDialog):
         if not self.current_user_id:
             QMessageBox.warning(self, "Aviso", "Selecciona un usuario de la lista.")
             return
-            
+
         ans = QMessageBox.question(self, "Confirmar", "¿Eliminar este usuario?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if ans == QMessageBox.StandardButton.Yes:
             try:

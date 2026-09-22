@@ -29,7 +29,7 @@ class AuthController:
 
         db_user = res[0]
         hashed_input = hashlib.sha256(password_plain.encode()).hexdigest()
-        
+
         if hashed_input != db_user['password_hash']:
             return None
 
@@ -52,7 +52,7 @@ class AuthController:
         """Crea el administrador inicial si la base de datos de usuarios está vacía."""
         pwd_hash = hashlib.sha256(admin_pass.encode()).hexdigest()
         db_manager.execute_non_query(
-            "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
+            "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)",
             ("admin", pwd_hash, "admin")
         )
 
@@ -62,6 +62,6 @@ class AuthController:
         if res and res[0]['count'] == 0:
             pwd_hash = hashlib.sha256("jefe1".encode()).hexdigest()
             db_manager.execute_non_query(
-                "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)", 
+                "INSERT INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)",
                 ("jefe1", pwd_hash, "jefe")
             )

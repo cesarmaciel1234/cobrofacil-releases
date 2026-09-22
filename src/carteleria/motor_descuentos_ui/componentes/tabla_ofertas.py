@@ -6,7 +6,7 @@ from PyQt6.QtGui import QColor, QFont
 class TablaOfertas(QTableWidget):
     item_checked = pyqtSignal(str, bool)
     necesita_mas_datos = pyqtSignal()
-    
+
     HEADERS = ["🗹", "ID / Cód.", "Producto", "Departamento", "Costo", "Precio Reg.", "Stock", "U. Oferta", "Cant. Promo", "Precio Promo"]
 
     def __init__(self, parent=None):
@@ -19,7 +19,7 @@ class TablaOfertas(QTableWidget):
         self.setAlternatingRowColors(False)
         self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
-                
+
         col_widths = [35, 120, -1, 110, 80, 80, 80, 80, 80, 80]
         hh = self.horizontalHeader()
         for i, w in enumerate(col_widths):
@@ -49,13 +49,13 @@ class TablaOfertas(QTableWidget):
         bar = self.verticalScrollBar()
         if bar.maximum() > 0 and value >= bar.maximum() - 15:
             self.necesita_mas_datos.emit()
-            
+
     def popular_datos(self, filas_nuevas, inicio, checked_ids):
         self.blockSignals(True)
         fin = inicio + len(filas_nuevas)
         if self.rowCount() < fin:
             self.setRowCount(fin)
-            
+
         for i, r in enumerate(filas_nuevas, start=inicio):
             dep   = r['departamento'] or ''
             stock = r['stock'] or 0.0
@@ -115,7 +115,7 @@ class TablaOfertas(QTableWidget):
                         it.setForeground(QColor("#059669"))
 
                 self.setItem(i, j, it)
-                
+
         self.blockSignals(False)
 
     def select_product_by_id(self, prod_id):

@@ -460,14 +460,14 @@ class PerfilPantalla(QDialog):
 
     def _apply_locked_profiles_ui(self):
         from src.utils.candados import PerfilLocker
-        
+
         buttons_map = {
             "cajero": self.btn_cajero,
             "admin": self.btn_admin,
             "jefe": self.btn_jefe,
             "carteleria": self.btn_carteleria
         }
-        
+
         self._roles_bloqueados = set()
         for i, rol in enumerate(self._ROLES):
             btn = buttons_map[rol]

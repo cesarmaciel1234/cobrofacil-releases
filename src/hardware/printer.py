@@ -73,7 +73,7 @@ class PosPrinter:
     def _send_raw_data(self, raw_data, printer_name_override=None):
         """ Envía bytes RAW a la impresora (Windows Spooler o Serial Directo). """
         p_name = printer_name_override if printer_name_override else config.get('ticket_printer', config.get('printer_name', ''))
-        
+
         if not p_name:
             logger.info("Impresora no configurada. Simulando impresión.")
             return True
@@ -119,26 +119,26 @@ class PosPrinter:
         logger.info("Enviando comando de pitido (Buzzer)...")
         # Comando estándar: ESC B n t
         # n = número de veces, t = tiempo (t * 100ms)
-        comando = ESC + b'\x42\x02\x01' 
+        comando = ESC + b'\x42\x02\x01'
         return self._send_raw_data(comando)
 
     def abrir_cajon(self, printer_name_override=None):
         """ Envía el comando ESC/POS estándar para patear el cajón de dinero. """
         p_name = printer_name_override or _impresora_cajero_activo()
         logger.info(f"Enviando señal de apertura a {p_name}...")
-        
+
         # Seleccionar pin (0=Pin 2, 1=Pin 5)
         pin = config.get("drawer_kick_pin", 0)
         comando = KICK_DRAWER_P5 if pin == 1 else KICK_DRAWER
-        
+
         # Si es 3nstar o requiere reporte proactivo, enviamos GS a 1
         if config.get("printer_3nstar_mode", False):
             comando = GS_A_1 + comando
-            
+
         return self._send_raw_data(comando, printer_name_override=p_name)
 
     def check_drawer_status(self, printer_name_override=None):
-        """ 
+        """
         Consulta el estado del cajón vía Serial Directo o Windows Spooler.
         """
         # Evitar saturar el puerto COM si hubo un error reciente (ej: puerto ocupado por Spooler)
@@ -157,16 +157,16 @@ class PosPrinter:
                         for attempt in range(3):
                             ser.reset_input_buffer()
                             ser.reset_output_buffer()
-                            
+
                             # RÁFAGA DE CAJÓN
                             ser.write(b'\x10\x04\x04\x1D\x72\x02')
                             time.sleep(0.1)
-                            
+
                             res = ser.read(ser.in_waiting or 3)
                             if res:
                                 # Detección inicial
                                 is_open = any(bool(b & 0x01) or bool(b & 0x04) or bool(b & 0x08) for b in res)
-                                
+
                                 # Filtro de confirmación inmediata (Debounce)
                                 if is_open:
                                     time.sleep(0.05)
@@ -174,14 +174,14 @@ class PosPrinter:
                                     res2 = ser.read(ser.in_waiting or 1)
                                     if res2:
                                         is_open = any(bool(b & 0x01) or bool(b & 0x04) or bool(b & 0x08) for b in res2)
-                                
+
                                 if config.get("drawer_sensor_inverted", False): is_open = not is_open
-                                
+
                                 logger.info(f"🛰️ HARDWARE STATUS: Pack={res.hex().upper()} (Intento {attempt+1}) -> {'ABIERTO' if is_open else 'CERRADO'}")
                                 return is_open
-                            
+
                         time.sleep(0.05) # Pequeña espera entre reintentos
-                    
+
                     return False
             except Exception as e:
                 logger.info(f"⚠️ SERIAL [{p_name}]: Error al intentar abrir el puerto: {e}")
@@ -191,7 +191,7 @@ class PosPrinter:
         # --- PRIORIDAD 2: MODO WINDOWS SPOOLER (DESACTIVADO POR BLOQUEOS) ---
         # Se ha detectado que StartDocPrinter puede congelar la app en impresoras USB.
         # Desactivado en favor de OPOS y Serial Directo.
-        
+
         # --- PRIORIDAD 3: FALLBACK SERIAL (CON LOCK DE SEGURIDAD) ---
         # Si la ticketera principal es USB/Spooler pero el sensor está conectado a un puerto COM (configurado en printer_name)
         fallback_com = config.get('printer_name', '')
@@ -224,7 +224,7 @@ class PosPrinter:
         if not printer_name:
             # Modo Simulación: No es un error, es un estado válido
             return True, "Modo Simulación (Impresora no configurada)."
-            
+
         if not WIN32_AVAILABLE:
             return False, "win32print no disponible (Instala pywin32)."
 
@@ -255,18 +255,18 @@ class PosPrinter:
         definidas en los departamentos de cada producto de la base de datos.
         """
         from src.base_de_datos.database import db_manager
-        
+
         neto_total = 0.0
         iva_total = 0.0
         iva_por_tasa = {}
-        
+
         # Factor de ajuste para prorratear descuentos y recargos globales
         factor_ajuste = 1.0
         if total > 0:
             original_subtotal = sum(float(it.get('subtotal', 0.0)) for it in items)
             if original_subtotal > 0:
                 factor_ajuste = total / original_subtotal
-                
+
         for it in items:
             p_id = it.get('id')
             tasa_iva = float(config.get("tax_percentage", 21.0)) # Default
@@ -280,23 +280,23 @@ class PosPrinter:
                         tasa_iva = float(res[0]['iva'])
                 except Exception:
                     pass
-            
+
             subt_item_ajustado = float(it.get('subtotal', 0.0)) * factor_ajuste
             neto_item = subt_item_ajustado / (1 + tasa_iva / 100)
             iva_item = subt_item_ajustado - neto_item
-            
+
             neto_total += neto_item
             iva_total += iva_item
             iva_por_tasa[tasa_iva] = iva_por_tasa.get(tasa_iva, 0.0) + iva_item
-            
+
         return neto_total, iva_total, iva_por_tasa
 
     def imprimir_ticket_venta(self, num_venta, items, total, pago, cambio, abrir_cajon=True, estado='COMPLETADA', discount_amount=0, surcharge_amount=0, cajero='', cajero_secundario='', segunda_tiketera=False, metodo_pago='Efectivo', force_fiscal=False):
         """ Formatea e imprime un ticket de venta. Soporta dos cajeros y dos tiketeras. """
-        
+
         afip_global_enabled = config.get("facturacion_afip_global", False)
         should_use_afip = afip_global_enabled and (force_fiscal or self._should_route_fiscal(metodo_pago))
-        
+
         # 1. ROUTING FISCAL HARDWARE: Si el modo fiscal real está activo Y el método de pago está habilitado
         if self._is_fiscal_mode() and should_use_afip:
             return self.imprimir_ticket_fiscal(
@@ -331,7 +331,7 @@ class PosPrinter:
 
         data = bytearray()
         data.extend(ESC + b'\x40') # Reset
-        
+
         # Header
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
@@ -339,12 +339,12 @@ class PosPrinter:
         data.extend(BOLD_OFF)
         data.extend(f"{self.header_cuit}\n".encode('cp850', errors='replace'))
         data.extend(f"{self.header_dir}\n".encode('cp850', errors='replace'))
-        
+
         if str(estado).upper() == "CANCELADA":
             data.extend(BOLD_ON)
             data.extend(b"*** VENTA CANCELADA ***\n")
             data.extend(BOLD_OFF)
-            
+
         data.extend(b"--------------------------------\n")
 
         # Cabecera de Factura Electrónica Oficial si corresponde
@@ -354,7 +354,7 @@ class PosPrinter:
             data.extend(b"    COMPROBANTE AUTORIZADO   \n")
             data.extend(BOLD_OFF)
             data.extend(b"--------------------------------\n")
-        
+
         data.extend(f"Ticket Nro: {num_venta:08d}\n".encode('cp850'))
         data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode('cp850'))
         if cajero:
@@ -362,43 +362,43 @@ class PosPrinter:
         if cajero_secundario:
             data.extend(f"Cobro:   {cajero_secundario}\n".encode('cp850', errors='replace'))
         data.extend(b"--------------------------------\n")
-        
+
         # Items
         data.extend(ALIGN_LEFT)
         data.extend(b"Detalle / Cant x Unit.      Total\n")
         for it in items:
             clean_name = it['nombre'].replace("🏷️ ", "*OFER* ").replace("🔥 [OFERTA] ", "*OFER* ")
             data.extend(f"{clean_name}\n".encode('cp850', errors='replace'))
-            
+
             cant_str = f"{it['cant']:g}"
             unit_price = it.get('precio', 0.0)
             if not unit_price and it['cant'] > 0:
                 unit_price = it['subtotal'] / it['cant']
-                
+
             calc_str = f"  {cant_str} x ${unit_price:.2f}"
             subt_str = f"${it['subtotal']:.2f}"
-            
+
             espacios = 32 - len(calc_str) - len(subt_str)
             if espacios < 1:
                 espacios = 1
             linea_detalle = calc_str + (" " * espacios) + subt_str + "\n"
             data.extend(linea_detalle.encode('cp850'))
-            
+
         data.extend(b"--------------------------------\n")
-        
+
         # Totales
         data.extend(ALIGN_CENTER)
-        
+
         # Mostrar Descuento si existe
         if (discount_amount and discount_amount > 0) or (surcharge_amount and surcharge_amount > 0):
             total_bruto = total + (discount_amount or 0) - (surcharge_amount or 0)
             data.extend(f"TOTAL BRUTO:   ${total_bruto:.2f}\n".encode('cp850'))
-            
+
             if discount_amount and discount_amount > 0:
                 data.extend(BOLD_ON)
                 data.extend(f"REDONDEO:     -${discount_amount:.2f}\n".encode('cp850'))
                 data.extend(BOLD_OFF)
-                
+
             if surcharge_amount and surcharge_amount > 0:
                 data.extend(f"RECARGO:      +${surcharge_amount:.2f}\n".encode('cp850'))
 
@@ -418,7 +418,7 @@ class PosPrinter:
         data.extend(f"Pago: ${pago:.2f}\n".encode('cp850'))
         data.extend(f"Vuelto: ${cambio:.2f}\n".encode('cp850'))
         data.extend(f"Forma Pago: {metodo_pago}\n".encode('cp850', errors='replace'))
-        
+
         # Footer y Firma Fiscal Electrónica ARCA
         data.extend(ALIGN_CENTER)
         if factura_electronica_data:
@@ -436,9 +436,9 @@ class PosPrinter:
             data.extend(b"\n")
             data.extend(b"  NO VALIDO COMO FACTURA  \n")
             data.extend(b"*** GRACIAS POR SU COMPRA ***\n")
-            
+
         data.extend(b"\n\n\n\n\n")
-        
+
         # Cortar papel y opcionalmente abrir cajón
         data.extend(CUT_PAPER)
         if abrir_cajon:
@@ -447,16 +447,16 @@ class PosPrinter:
             if config.get("printer_3nstar_mode", False):
                 data.extend(GS_A_1)
             data.extend(kick)
-        
+
         p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
-        
+
         # Copia en la otra estación solo si se pidió explícitamente (no duplicar al cobrar auxiliar)
         if segunda_tiketera:
             otra = config.get('ticket_printer_2', '') if p_principal == config.get('ticket_printer', '') else config.get('ticket_printer', '')
             if otra and otra != p_principal:
                 self._send_raw_data(bytes(data), printer_name_override=otra)
-        
+
         return result
 
     def imprimir_movimiento_caja(self, tipo, monto, motivo, usuario, caja_id):
@@ -472,7 +472,7 @@ class PosPrinter:
         data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n".encode('cp850'))
         data.extend(f"Operador: {usuario}\n".encode('cp850', errors='replace'))
         data.extend(b"--------------------------------\n")
-        
+
         data.extend(ALIGN_LEFT)
         data.extend(BOLD_ON)
         data.extend(f"MONTO: ${monto:,.2f}\n".encode('cp850'))
@@ -481,7 +481,7 @@ class PosPrinter:
         data.extend(b"--------------------------------\n")
         data.extend(b"\n\n\n\n\n")
         data.extend(CUT_PAPER)
-        
+
         p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
@@ -498,13 +498,13 @@ class PosPrinter:
         data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n".encode('cp850'))
         data.extend(f"Operador: {usuario}\n".encode('cp850', errors='replace'))
         data.extend(b"--------------------------------\n")
-        
+
         data.extend(ALIGN_LEFT)
         data.extend(f"CLIENTE: {cliente_nombre}\n".encode('cp850', errors='replace'))
         if dni:
             data.extend(f"DNI/CUIT: {dni}\n".encode('cp850', errors='replace'))
         data.extend(b"\n")
-        
+
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         data.extend(f"DEUDA ACTUAL: ${deuda_actual:,.2f}\n".encode('cp850'))
@@ -512,7 +512,7 @@ class PosPrinter:
         data.extend(b"--------------------------------\n")
         data.extend(b"\n\n\n\n\n")
         data.extend(CUT_PAPER)
-        
+
         p_principal = _impresora_cajero_activo()
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
@@ -524,10 +524,10 @@ class PosPrinter:
         t_efec = float(datos_z.get('turno_efectivo') or datos_z.get('t_efec') or 0.0)
         t_tarj = float(datos_z.get('turno_tarjeta') or datos_z.get('t_tarj') or 0.0)
         t_tot = float(datos_z.get('turno_total') or datos_z.get('t_total') or 0.0)
-        
+
         d_tarj = float(datos_z.get('dia_tarjeta') or datos_z.get('d_tarj') or 0.0)
         d_tot = float(datos_z.get('dia_total') or datos_z.get('d_total') or 0.0)
-        
+
         esp = float(datos_z.get('efectivo_esperado') or datos_z.get('esperado') or 0.0)
         modo = datos_z.get('modo', 'turno')
 
@@ -535,17 +535,17 @@ class PosPrinter:
         data.extend(ESC + b'\x40')
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
-        
+
         if modo == 'turno':
             data.extend(b"REPORTE DE TURNO - CIERRE DE CAJA\n")
         else:
             data.extend(b"REPORTE Z - CIERRE DE CAJA\n")
-            
+
         data.extend(BOLD_OFF)
         data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n".encode('cp850'))
         data.extend(f"Cajero: {usuario}\n".encode('cp850'))
         data.extend(b"--------------------------------\n")
-        
+
         data.extend(ALIGN_LEFT)
         data.extend(b"--- TURNO CAJERO ---\n")
         data.extend(f"Fondo Inicial:     ${fondo:.2f}\n".encode('cp850'))
@@ -563,28 +563,28 @@ class PosPrinter:
             data.extend(f"TOTAL DIA:         ${d_tot:.2f}\n".encode('cp850'))
             data.extend(BOLD_OFF)
             data.extend(b"--------------------------------\n")
-        
+
         data.extend(b"--- CUADRE FISICO ---\n")
         data.extend(f"Efectivo Esperado: ${esp:.2f}\n".encode('cp850'))
         data.extend(f"Efectivo Contado:  ${fisico:.2f}\n".encode('cp850'))
-        
+
         if abs(dif) < 0.01: dif_txt = "CUADRE PERFECTO"
         elif dif > 0: dif_txt = f"SOBRANTE: +${dif:.2f}"
         else: dif_txt = f"FALTANTE: -${abs(dif):.2f}"
-            
+
         data.extend(f"Diferencia: {dif_txt}\n".encode('cp850'))
         data.extend(b"\n\n\n\n\n")
         data.extend(CUT_PAPER)
-        
+
         p_principal = config.get('ticket_printer', config.get('printer_name', ''))
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
-        
+
         # Copia de seguridad en la Segunda Tiketera (Control de Cajeros Simultáneos)
         if datos_z.get('segunda_tiketera', False):
             printer2 = config.get('ticket_printer_2', '')
             if printer2:
                 self._send_raw_data(bytes(data), printer_name_override=printer2)
-                
+
         return result
 
     # ══════════════════════════════════════════════════════════════════════
@@ -652,15 +652,15 @@ class PosPrinter:
         for it in items:
             clean_name = it['nombre'].replace("🏷️ ", "*OFER* ").replace("🔥 [OFERTA] ", "*OFER* ")
             data.extend(f"{clean_name}\n".encode('cp850', errors='replace'))
-            
+
             cant_str = f"{it['cant']:g}"
             unit_price = it.get('precio', 0.0)
             if not unit_price and it['cant'] > 0:
                 unit_price = it['subtotal'] / it['cant']
-                
+
             calc_str = f"  {cant_str} x ${unit_price:.2f}"
             subt_str = f"${it['subtotal']:.2f}"
-            
+
             espacios = 32 - len(calc_str) - len(subt_str)
             if espacios < 1:
                 espacios = 1
@@ -675,12 +675,12 @@ class PosPrinter:
         if (discount_amount and discount_amount > 0) or (surcharge_amount and surcharge_amount > 0):
             total_bruto = total + (discount_amount or 0) - (surcharge_amount or 0)
             data.extend(f"TOTAL BRUTO:  ${total_bruto:.2f}\n".encode('cp850'))
-            
+
             if discount_amount and discount_amount > 0:
                 data.extend(BOLD_ON)
                 data.extend(f"USTED AHORRO:-${discount_amount:.2f}\n".encode('cp850'))
                 data.extend(BOLD_OFF)
-                
+
             if surcharge_amount and surcharge_amount > 0:
                 data.extend(f"RECARGO:     +${surcharge_amount:.2f}\n".encode('cp850'))
 

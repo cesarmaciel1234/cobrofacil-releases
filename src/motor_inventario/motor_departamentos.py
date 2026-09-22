@@ -13,7 +13,7 @@ class MotorDepartamentos:
         if not MotorDepartamentos._tablas_inicializadas:
             self._inicializar_tablas()
             MotorDepartamentos._tablas_inicializadas = True
-            
+
     def _inicializar_tablas(self):
         maria = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
         if maria:
@@ -110,12 +110,12 @@ class MotorDepartamentos:
         try:
             if depto_id:
                 db_manager.execute_non_query(
-                    "UPDATE departamentos SET nombre=?, iva=?, icono=? WHERE id=?", 
+                    "UPDATE departamentos SET nombre=?, iva=?, icono=? WHERE id=?",
                     (nombre, iva, icono, depto_id)
                 )
             else:
                 db_manager.execute_non_query(
-                    "INSERT INTO departamentos (nombre, iva, icono) VALUES (?, ?, ?)", 
+                    "INSERT INTO departamentos (nombre, iva, icono) VALUES (?, ?, ?)",
                     (nombre, iva, icono)
                 )
             return True, "Departamento guardado."
@@ -143,10 +143,10 @@ class MotorDepartamentos:
     def obtener_categorias_con_conteo(self):
         """Devuelve categorías, su ícono y la cantidad de productos en cada una."""
         query = '''
-            SELECT c.id, c.nombre, c.icono, COUNT(p.id) as qty 
-            FROM categorias c 
-            LEFT JOIN productos p ON UPPER(p.categoria) = UPPER(c.nombre) 
-            GROUP BY c.id, c.nombre, c.icono 
+            SELECT c.id, c.nombre, c.icono, COUNT(p.id) as qty
+            FROM categorias c
+            LEFT JOIN productos p ON UPPER(p.categoria) = UPPER(c.nombre)
+            GROUP BY c.id, c.nombre, c.icono
             ORDER BY c.nombre
         '''
         try:
@@ -167,12 +167,12 @@ class MotorDepartamentos:
         try:
             if cat_id:
                 db_manager.execute_non_query(
-                    "UPDATE categorias SET nombre=?, icono=? WHERE id=?", 
+                    "UPDATE categorias SET nombre=?, icono=? WHERE id=?",
                     (nombre, icono, cat_id)
                 )
             else:
                 db_manager.execute_non_query(
-                    "INSERT INTO categorias (nombre, icono) VALUES (?, ?)", 
+                    "INSERT INTO categorias (nombre, icono) VALUES (?, ?)",
                     (nombre, icono)
                 )
             return True, "Categoría guardada."

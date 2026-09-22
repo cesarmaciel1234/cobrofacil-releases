@@ -29,7 +29,7 @@ class DialogoIngresoEfectivo(QDialog):
         self._ancho = 500
         self._altura = 500
         self.setFixedSize(self._ancho, self._altura)
-        
+
         self._build()
 
     def _build(self):
@@ -79,11 +79,11 @@ class DialogoIngresoEfectivo(QDialog):
         self.panel_cambio = PanelIngresoEfectivo()
         if hasattr(self.panel_cambio, 'txt_monto'):
             self.panel_cambio.txt_monto.returnPressed.connect(self._procesar)
-        
+
         self.panel_fiado = CentroCobranzasPanel()
         if hasattr(self.panel_fiado, 'txt_monto') and self.panel_fiado.txt_monto is not None:
             self.panel_fiado.txt_monto.returnPressed.connect(self._procesar)
-            
+
         self.panel_otros = PanelOtrosIngresos()
         if hasattr(self.panel_otros, 'txt_monto'):
             self.panel_otros.txt_monto.returnPressed.connect(self._procesar)
@@ -162,7 +162,7 @@ class DialogoIngresoEfectivo(QDialog):
         self.btn_otros.setChecked(modo == "OTROS")
 
         self.lbl_err.setText("")
-        
+
         if modo == "CAMBIO":
             self.stack.setCurrentIndex(0)
             self.panel_cambio.reset()
@@ -182,7 +182,7 @@ class DialogoIngresoEfectivo(QDialog):
                     return
                 self.monto_ingresado = self.panel_cambio.monto()
                 self.motivo = "Ingreso de Cambio / Fondo Fijo"
-                
+
             elif self.tipo_ingreso == "FIADO":
                 ok, err = self.panel_fiado.validar()
                 if not ok:
@@ -194,7 +194,7 @@ class DialogoIngresoEfectivo(QDialog):
                 self.cliente_id = data["id"]
                 self.cliente_nombre = data["nombre"]
                 self.motivo = f"Abono Fiado: {self.cliente_nombre}"
-                
+
             elif self.tipo_ingreso == "OTROS":
                 ok, err = self.panel_otros.validar()
                 if not ok:

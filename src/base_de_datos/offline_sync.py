@@ -12,7 +12,7 @@ class OfflineSync:
         self.base_path = get_base_path()
         self.queue_file = os.path.join(self.base_path, "offline_queue.json")
         self._ensure_queue_file()
-        
+
         self.sync_worker = threading.Thread(target=self._sync_loop, daemon=True)
         self.sync_worker.start()
 
@@ -29,13 +29,13 @@ class OfflineSync:
         try:
             with open(self.queue_file, "r", encoding="utf-8") as f:
                 queue = json.load(f)
-            
+
             queue.append({
                 "venta_data": venta_data,
                 "items": items,
                 "timestamp": time.time()
             })
-            
+
             with open(self.queue_file, "w", encoding="utf-8") as f:
                 json.dump(queue, f, indent=4)
             logger.info("Venta guardada en BUFFER OFFLINE.")
@@ -74,13 +74,13 @@ class OfflineSync:
     def _sync_loop(self):
         """Intenta sincronizar cada 15 segundos si hay red."""
         from src.base_de_datos.database import db_manager
-        
+
         loop_counter = 0
-        
+
         while True:
             time.sleep(15)
             loop_counter += 1
-            
+
             if loop_counter % 8 == 0 and not db_manager.is_master:
                 try:
                     from src.central_red_global.sync_tienda import bajar_pngs_de_maestra
@@ -102,17 +102,17 @@ class OfflineSync:
                             local_db_path = os.path.join(self.base_path, "punpro.db")
                             conn_loc = sqlite3.connect(local_db_path)
                             c_loc = conn_loc.cursor()
-                            
+
                             c_loc.execute("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY AUTOINCREMENT, codigo TEXT, nombre TEXT, precio REAL, stock REAL, categoria TEXT, es_pesable INTEGER, cant_oferta REAL, precio_oferta REAL, tipo_unidad_oferta TEXT)")
                             c_loc.execute("DELETE FROM productos")
-                            
+
                             reg_prods = [
-                                (p.get('id'), p.get('codigo'), p.get('nombre'), p.get('precio', 0), 
+                                (p.get('id'), p.get('codigo'), p.get('nombre'), p.get('precio', 0),
                                  p.get('stock', 0), p.get('categoria', 'General'), p.get('es_pesable', 0),
                                  p.get('cant_oferta', 0), p.get('precio_oferta', 0), p.get('tipo_unidad_oferta', 'Kilos'))
                                 for p in prods
                             ]
-                            
+
                             c_loc.executemany("INSERT INTO productos (id, codigo, nombre, precio, stock, categoria, es_pesable, cant_oferta, precio_oferta, tipo_unidad_oferta) VALUES (?,?,?,?,?,?,?,?,?,?)", reg_prods)
                             conn_loc.commit()
                             conn_loc.close()
@@ -125,17 +125,17 @@ class OfflineSync:
                     queue = json.load(f)
             except:
                 queue = []
-                
+
             if not queue:
                 continue
-                
+
             logger.info(f"Intentando sincronizar {len(queue)} ventas offline...")
-            
+
             exitosas = []
             for i, record in enumerate(queue):
                 venta = record["venta_data"]
                 items = record["items"]
-                
+
                 # Intentar sincronizar usando la abstracción de base de datos
                 success = db_manager.sync_venta_to_master(venta, items)
                 if success:
@@ -143,7 +143,7 @@ class OfflineSync:
                 else:
                     logger.warning("Fallo en sincronización. Se reintentará en el próximo ciclo.")
                     break # Si falla una, detenemos y reintentamos luego para mantener orden
-            
+
             if exitosas:
                 queue = [q for idx, q in enumerate(queue) if idx not in exitosas]
                 try:

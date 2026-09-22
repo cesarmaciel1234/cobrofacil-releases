@@ -124,11 +124,11 @@ def cerrar_caja(
     try:
         conn = db.get_connection()
         cursor = conn.cursor()
-        
+
         # INSERTAR MOVIMIENTO
         query_insert = "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) VALUES (?, ?, ?, ?, ?, ?)"
         cursor.execute(db._normalize_query(query_insert), (fecha, tipo_cierre, float(fisico or 0), user, obs, c_id))
-        
+
         # ACTUALIZAR VENTAS
         if modo_n == "cajero":
             query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
@@ -136,30 +136,30 @@ def cerrar_caja(
         else:
             query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
             cursor.execute(db._normalize_query(query_update), (c_id, desde))
-            
+
         conn.commit()
     except Exception as e:
         if conn:
             try: conn.rollback()
             except: pass
-            
+
         err = str(e)
         logger.error("Error atómico en cierre (caja=%s user=%s): %s", c_id, user, err)
-        
+
         # Fallback de compatibilidad MariaDB antigua (sin caja_id)
         if "caja_id" in err.lower() or "unknown column" in err.lower():
             try:
                 cursor = conn.cursor()
                 query_insert_fallback = "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones) VALUES (?, ?, ?, ?, ?)"
                 cursor.execute(db._normalize_query(query_insert_fallback), (fecha, tipo_cierre, float(fisico or 0), user, obs))
-                
+
                 if modo_n == "cajero":
                     query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
                     cursor.execute(db._normalize_query(query_update), (user, c_id, desde))
                 else:
                     query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
                     cursor.execute(db._normalize_query(query_update), (c_id, desde))
-                
+
                 conn.commit()
             except Exception as e2:
                 if conn:

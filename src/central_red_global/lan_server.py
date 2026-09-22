@@ -147,7 +147,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 data = json.loads(post_data.decode('utf-8'))
 
                 auth_token = data.get('token', '')
-                expected_upd = str(config.get("update_auth_token") or "").strip()
+                expected_upd = config.token_api_lan()
                 if not expected_upd or auth_token != expected_upd:
                     self._send_response(401, {"status": "error", "message": "Acceso denegado: Token inválido."})
                     return

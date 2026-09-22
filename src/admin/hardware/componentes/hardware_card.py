@@ -5,9 +5,9 @@ import time
 import webbrowser
 import subprocess
 import datetime
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout, 
-                             QMessageBox, QComboBox, QPlainTextEdit, QGroupBox, QGraphicsDropShadowEffect)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+                             QPushButton, QFrame, QLineEdit, QScrollArea, QGridLayout,
+                             QMessageBox, QComboBox, QPlainTextEdit, QGroupBox)
 from src.utils.qt_compat import invoke_method, pyqtSlot
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QColor, QIcon
@@ -34,38 +34,33 @@ class HardwareCard(QFrame):
             }
             QFrame:hover {
                 border: 2px solid #6366f1;
-                
+
             }
         """)
-        
-        # Sombra de impacto suave
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(15); shadow.setXOffset(0); shadow.setYOffset(4); shadow.setColor(QColor(0,0,0,30))
-        self.setGraphicsEffect(shadow)
-        
-        layout = QVBoxLayout(self); layout.setContentsMargins(20,20,20,20); layout.setSpacing(8)
-        
+
+        # Sombra de impacto suave        layout = QVBoxLayout(self); layout.setContentsMargins(20,20,20,20); layout.setSpacing(8)
+
         lbl_icon = QLabel(icon)
         lbl_icon.setStyleSheet("font-size: 32px; border: none; background: transparent;")
         layout.addWidget(lbl_icon)
-        
+
         lbl_title = QLabel(title)
         lbl_title.setStyleSheet("font-weight: 900; font-size: 15px;  border: none; background: transparent;")
         layout.addWidget(lbl_title)
-        
+
         lbl_desc = QLabel(description)
         lbl_desc.setWordWrap(True)
         lbl_desc.setStyleSheet(" font-size: 11px; border: none; background: transparent; line-height: 14px;")
         layout.addWidget(lbl_desc)
-        
+
         layout.addStretch()
-        
+
         if action_callback or download_url:
             btn = QPushButton(btn_text)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setStyleSheet(f"""
                 QPushButton {{
-                    background: {btn_color}; color: white; border: none; padding: 10px; 
+                    background: {btn_color}; color: white; border: none; padding: 10px;
                     border-radius: 12px; font-weight: 800; font-size: 10px;
                 }}
                 QPushButton:hover {{ background: {hover_color}; }}

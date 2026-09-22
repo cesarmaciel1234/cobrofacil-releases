@@ -60,12 +60,12 @@ def guardar_departamento_en_db(nombre, iva, depto_id=None, icono=None):
     try:
         if depto_id:
             db_manager.execute_non_query(
-                "UPDATE departamentos SET nombre=?, iva=?, icono=? WHERE id=?", 
+                "UPDATE departamentos SET nombre=?, iva=?, icono=? WHERE id=?",
                 (nombre, iva, icono, depto_id)
             )
         else:
             db_manager.execute_non_query(
-                "INSERT INTO departamentos (nombre, iva, icono) VALUES (?, ?, ?)", 
+                "INSERT INTO departamentos (nombre, iva, icono) VALUES (?, ?, ?)",
                 (nombre, iva, icono)
             )
         return True, "Departamento guardado con exito."
@@ -87,12 +87,12 @@ def guardar_categoria_en_db(nombre, cat_id=None, icono=None):
     try:
         if cat_id:
             db_manager.execute_non_query(
-                "UPDATE categorias SET nombre=?, icono=? WHERE id=?", 
+                "UPDATE categorias SET nombre=?, icono=? WHERE id=?",
                 (nombre, icono, cat_id)
             )
         else:
             db_manager.execute_non_query(
-                "INSERT INTO categorias (nombre, icono) VALUES (?, ?)", 
+                "INSERT INTO categorias (nombre, icono) VALUES (?, ?)",
                 (nombre, icono)
             )
         return True, "Categoria guardada con exito."

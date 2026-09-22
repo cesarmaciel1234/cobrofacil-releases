@@ -6,7 +6,7 @@ class MotorProveedor:
     Contiene la lógica agnóstica de UI para interactuar con la Base de Datos.
     Soporta operaciones tanto para SQLite (Jefe) como MariaDB (Admin/Red).
     """
-    
+
     @staticmethod
     def _get_db(perfil, db_jefe=None):
         if perfil == "jefe" and db_jefe:
@@ -24,7 +24,7 @@ class MotorProveedor:
         nombres = set()
         db = MotorProveedor._get_db(perfil, db_jefe)
         if not db: return []
-        
+
         if perfil == "jefe" and db_jefe:
             try:
                 rows = db.get_general_debts()
@@ -42,7 +42,7 @@ class MotorProveedor:
                 if res_r:
                     for r in res_r:
                         nombres.add(r['proveedor'] if isinstance(r, dict) else r[0])
-                
+
                 # Y desde gastos por las dudas
                 res_g = db.execute_query("SELECT descripcion FROM gastos WHERE categoria = 'Mercadería / Stock'")
                 if res_g:
@@ -52,7 +52,7 @@ class MotorProveedor:
                         if prov_match:
                             nombres.add(prov_match.group(1).split('\n')[0].strip())
             except Exception: pass
-            
+
         return sorted(list(nombres))
 
     @staticmethod
@@ -60,7 +60,7 @@ class MotorProveedor:
         """Devuelve una lista de diccionarios unificada con el historial de compras."""
         db = MotorProveedor._get_db(perfil, db_jefe)
         if not db: return []
-        
+
         parsed_rows = []
         if perfil == "jefe" and db_jefe:
             try:
@@ -72,10 +72,10 @@ class MotorProveedor:
                     rest    = monto - pagado
                     status  = str(row[5] or "pending")
                     desc_full = str(row[1] or "")
-                    
+
                     prov_match = re.search(r"Proveedor:\s*(.*)", desc_full)
                     prov_show = prov_match.group(1).strip() if prov_match else "Proveedor General"
-                    
+
                     parsed_rows.append({
                         "id": row[0],
                         "proveedor": prov_show,
@@ -97,17 +97,17 @@ class MotorProveedor:
                     desc_full = str(r["descripcion"] if isinstance(r, dict) else r[2])
                     monto = float(r["monto"] if isinstance(r, dict) else r[3])
                     status = str(r["status"] if isinstance(r, dict) else (r[4] if len(r) > 4 else "Pagado"))
-                    
+
                     prov_match = re.search(r"Proveedor:\s*(.*)", desc_full)
                     prov_show = prov_match.group(1).strip() if prov_match else "Proveedor General"
-                    
+
                     if status in ("Pendiente", "pending"):
                         rest = monto
                         pagado = 0.0
                     else:
                         rest = 0.0
                         pagado = monto
-                        
+
                     parsed_rows.append({
                         "id": gid,
                         "proveedor": prov_show,
@@ -120,7 +120,7 @@ class MotorProveedor:
                     })
             except Exception as e:
                 print(f"Error load_proveedores (admin): {e}")
-                
+
         return parsed_rows
 
     @staticmethod
@@ -139,12 +139,12 @@ class MotorProveedor:
         try:
             from src.base_de_datos.database import db_manager
             from src.cerebro_global.desposte.motor_rendimiento import MotorRendimiento
-            
+
             if db_manager and hasattr(db_manager, "execute_non_query"):
                 for (merc, precio), items in grupos.items():
                     total_kilos = sum([p for n, p in items])
                     monto_grupo = total_kilos * precio
-                    
+
                     db_manager.execute_non_query(
                         "INSERT INTO romaneos (fecha, proveedor, tropa, tipo_carne, precio_unitario, total_kilos, monto_total, estado_pago, registrado_por) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (date, prov_name, tropa, merc, precio, total_kilos, monto_grupo, payment, perfil)
@@ -157,13 +157,13 @@ class MotorProveedor:
                                 "INSERT INTO romaneo_items (romaneo_id, nro_garrote, peso) VALUES (?, ?, ?)",
                                 (romaneo_id, nro, peso)
                             )
-                            
+
                     # Desposte Automático: Inyectar proporción de kilos al inventario base usando db_manager
                     # (Tanto admin como jefe deben intentar actualizar el stock de la receta)
                     MotorRendimiento.aplicar_desposte_a_stock(merc, total_kilos, db_manager, db_jefe)
         except Exception as e:
             print(f"Error DB central romaneos: {e}")
-        
+
         # 2. Generar descripción estructurada
         desc = f"Proveedor: {prov_name}\nTropa: {tropa}\n\n--- DETALLE DE COMPRA ---\n"
         for (merc, precio), items in grupos.items():
@@ -174,7 +174,7 @@ class MotorProveedor:
                 pesos_str = ", ".join(pesos_list[:20]) + f" ... (y {len(pesos_list)-20} más)"
             else:
                 pesos_str = ", ".join(pesos_list)
-                
+
             desc += f"• {merc} ({len(items)} ítems):\n"
             desc += f"  ↳ Pesos: [{pesos_str}]\n"
             desc += f"  ↳ Total Kg/Cajas: {total_kilos:.2f} | Precio Unit: ${precio:,.2f} | Subtotal: ${monto_grupo:,.2f}\n\n"

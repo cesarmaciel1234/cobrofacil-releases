@@ -12,11 +12,11 @@ class PieInventario(QFrame):
     def _setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 0, 12, 0)
-        
+
         self.lbl_total = QLabel("0 productos")
         self.lbl_stock0 = QLabel("")
         self.lbl_sel = QLabel("")
-        
+
         for lbl in [self.lbl_total, self.lbl_stock0, self.lbl_sel]:
             lbl.setStyleSheet("font-size: 11px; background: transparent;")
             layout.addWidget(lbl)
@@ -32,10 +32,10 @@ class PieInventario(QFrame):
         """Actualiza las etiquetas con la informacion de conteo y stock critico."""
         self.lbl_total.setText(f"📦 {total} PRODUCTOS EN INVENTARIO")
         self.lbl_total.setStyleSheet("font-weight: 800; background: transparent;")
-        
+
         color_agotado = theme_manager.get_color("stock_agotado")
         color_saludable = theme_manager.get_color("stock_saludable")
-        
+
         self.lbl_stock0.setText(
             f"⚠️ Stock Crítico: {sin_stock}" if sin_stock else "✅ Stock Saludable"
         )

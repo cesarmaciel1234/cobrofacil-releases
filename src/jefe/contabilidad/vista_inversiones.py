@@ -34,7 +34,7 @@ class VistaInversionesMixin:
         btn_add = btn_primary("➕   Registrar Inversión")
         btn_add.clicked.connect(self._add_inversion)
         fl.addWidget(btn_add, 3, 0, 1, 4)
-        
+
         self._inv_monto.textChanged.connect(self._calc_inversion_from_monto)
         self._inv_cuotas.valueChanged.connect(self._calc_inversion_from_monto)
         self._inv_valor_cuota.textChanged.connect(self._calc_inversion_from_cuota)

@@ -12,7 +12,7 @@ class QueryExecutorMixin:
         import re
         # Escapar caracteres % literales para que el conector MariaDB no los confunda con formato
         query = query.replace('%', '%%')
-        
+
         # 1. Placeholders: ? → %s  (solo los ? sueltos, no dentro de strings)
         query = re.sub(r'(?<![\w\'"\\])\?(?![\w\'"\\])', '%s', query)
         # 2. CAST(expr AS TEXT) → CAST(expr AS CHAR)

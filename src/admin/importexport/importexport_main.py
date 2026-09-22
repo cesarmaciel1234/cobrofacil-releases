@@ -137,14 +137,14 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
 
         for row in ws.iter_rows(min_row=1, max_row=20):
             row_vals = [str(c.value or '').strip().lower() for c in row]
-            
+
             # Intento de mapeo para esta fila
             temp_map = {}
             for col_idx, cell_val in enumerate(row_vals):
                 if not cell_val: continue
                 # Limpiar saltos de linea y espacios multiples
                 cell_val = ' '.join(cell_val.split())
-                
+
                 # Buscar a qué campo lógico pertenece esta columna
                 for campo, keywords in alias_map.items():
                     if campo not in temp_map: # Solo tomar el primero que coincida por campo
@@ -152,7 +152,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                         if any(kw == cell_val or kw in cell_val or cell_val.startswith(kw) for kw in keywords):
                             temp_map[campo] = col_idx
                             break
-            
+
             # Consideramos que es la fila de encabezado si encontramos al menos 'nombre' o 'codigo' y 'precio'
             if ('nombre' in temp_map or 'codigo' in temp_map) and ('precio' in temp_map or 'costo' in temp_map or 'stock' in temp_map):
                 header_row = row[0].row
@@ -213,10 +213,10 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                 codigo_val = codigo_val[:-2]
 
             nombre = str(get_val('nombre', '') or '').strip()
-            
+
             if not nombre and codigo_val:
                 nombre = "Producto " + codigo_val
-            
+
             if not nombre and not codigo_val: continue
 
             costo       = parse_float(get_val('costo'))
@@ -227,7 +227,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
             stock       = parse_float(get_val('stock'))
             minimo      = parse_float(get_val('minimo'))
             maximo      = parse_float(get_val('maximo'))
-            
+
             # --- VALIDACIONES ---
             if 'oferta' in nombre.lower():
                 warnings.append(f"Fila {row_idx}: El nombre '{nombre}' contiene 'oferta'. Se recomienda usar nombres base.")
@@ -258,7 +258,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                         (nombre, precio, costo, stock, mayoreo, minimo, maximo, unidad, es_pes, depto, cat, cant_of, precio_of, existe_id))
                     actualizados += 1
                 else:
-                    if not nombre: 
+                    if not nombre:
                         nombre = "Producto " + codigo_val
                     params = (codigo_val if not codigo_val.isdigit() else None,
                               nombre, precio or 0.0, costo or 0.0, stock or 0.0, mayoreo or 0.0, minimo or 0.0, maximo or 0.0, unidad, es_pes, depto, cat, cant_of or 0.0, precio_of or 0.0)
@@ -296,7 +296,7 @@ def importar_excel(filepath: str) -> tuple[bool, str]:
                f"  [+] Insertados:   {insertados}\n"
                f"  [~] Actualizados: {actualizados}\n"
                f"  [-] Errores:      {errores}")
-        
+
         if warnings:
             msg += "\n\nSe detectaron las siguientes advertencias:\n" + "\n".join(f"  - {w}" for w in warnings)
 

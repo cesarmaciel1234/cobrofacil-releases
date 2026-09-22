@@ -338,7 +338,7 @@ HTML_CHAT = r"""
     .tutor-label { font-size:11px; font-weight:700; color:#64748B; white-space:nowrap; }
     .btn-tutor-skip { background:transparent; border:1.5px solid #CBD5E1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; color:#94A3B8; cursor:pointer; }
     .btn-tutor-skip:hover { color:#EF4444; border-color:#EF4444; }
-    
+
     /* Keycap */
     .keycap { background:#F8FAFC; border:1.5px solid #0F172A; border-radius:4px; box-shadow:1px 1px 0 #0F172A; padding:1px 5px; font-family:monospace; font-size:13px; font-weight:900; color:#0F172A; display:inline-block; vertical-align:middle; }
 </style>
@@ -644,7 +644,7 @@ class ChatManualWidget(QWidget):
         pw = self.parent_window or self.parent()
         if not pw:
             return
-        
+
         # Ajustar alto dinamicamente para evitar recortes en monitores pequeos (ej. 768p)
         # Dejamos ~220px libres en la parte inferior para evitar tapar el panel de totales y la botonera
         margen_inferior = 220

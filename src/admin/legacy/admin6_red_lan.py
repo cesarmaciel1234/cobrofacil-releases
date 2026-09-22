@@ -16,12 +16,12 @@ class Admin6RedLan(QWidget):
     def _build(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
-        
+
         # Instanciar el panel compartido indicando que se deben mostrar los botones de administrador
         self.panel = SharedRedLanPanel(self, show_admin_buttons=True)
-        
+
         # Reconectar señales
         self.panel.request_dashboard.connect(self.request_dashboard.emit)
         self.panel.request_screen.connect(self.request_screen.emit)
-        
+
         root.addWidget(self.panel)

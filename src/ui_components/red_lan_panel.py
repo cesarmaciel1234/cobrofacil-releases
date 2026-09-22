@@ -86,16 +86,6 @@ class SharedRedLanPanel(QWidget):
             btn_cajas.clicked.connect(self._open_administrar_cajas)
             btn_row.addWidget(btn_cajas)
 
-            btn_pin = QPushButton("🔑 Contraseña PC esclava")
-            btn_pin.setCursor(QCursor(Qt.PointingHandCursor))
-            btn_pin.setStyleSheet(
-                "QPushButton { background: #0D9488; color: white; font-weight: bold; "
-                "padding: 12px 20px; border-radius: 8px; border: none; }"
-                "QPushButton:hover { background: #0F766E; }"
-            )
-            btn_pin.clicked.connect(self._open_pin_esclava)
-            btn_row.addWidget(btn_pin)
-
             btn_cfg = QPushButton("⚙️ Configuración completa")
             btn_cfg.setCursor(QCursor(Qt.PointingHandCursor))
             btn_cfg.setStyleSheet(
@@ -117,7 +107,7 @@ class SharedRedLanPanel(QWidget):
     # ──────────────────────────────────────────────────────────────────────────
     def _build_card_estado(self) -> QFrame:
         estado = RedLanService.obtener_estado_red()
-        
+
         is_master      = estado["es_maestra"]
         caja_id        = estado["caja_id"]
         db_engine      = estado["motor_datos"]
@@ -245,17 +235,17 @@ class SharedRedLanPanel(QWidget):
             "border: 1.5px solid #93C5FD; border-radius: 8px; padding: 8px 12px; "
             "font-size: 13px; background: white;"
         )
-        
+
         # Precargar la IP guardada si ya era esclava
         estado = RedLanService.obtener_estado_red()
         ip_guardada = estado["ip_maestra_conectada"]
         if ip_guardada and ip_guardada not in ("localhost", "127.0.0.1", ""):
             self.combo_ip_maestra.setEditText(ip_guardada)
-            
+
         # Add scan button
         scan_row = QHBoxLayout()
         scan_row.addWidget(self.combo_ip_maestra, 1)
-        
+
         btn_scan = QPushButton("🔍 Buscar")
         btn_scan.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn_scan.setStyleSheet(
@@ -264,7 +254,7 @@ class SharedRedLanPanel(QWidget):
         )
         btn_scan.clicked.connect(self._scan_network)
         scan_row.addWidget(btn_scan)
-        
+
         lay_e.addLayout(scan_row)
 
         self.btn_hacer_esclava = QPushButton("🔗 Convertir en ESCLAVA")
@@ -356,10 +346,10 @@ class SharedRedLanPanel(QWidget):
         maestras = RedLanService.buscar_computadoras_maestras()
         for m in maestras:
             self.combo_ip_maestra.addItem(f"{m['ip']} ({m['nombre']})", m['ip'])
-            
+
         if not maestras:
             QMessageBox.information(
-                self, "Búsqueda", 
+                self, "Búsqueda",
                 "No se detectaron otras PCs maestras en la red de forma automática. "
                 "Podés escribir la IP manualmente."
             )
@@ -373,7 +363,7 @@ class SharedRedLanPanel(QWidget):
             ip = self.combo_ip_maestra.itemData(idx)
         else:
             ip = self.combo_ip_maestra.currentText().strip()
-            
+
         if not ip:
             QMessageBox.warning(self, "Falta la IP", "Ingresá la IP de la PC Maestra.")
             self.combo_ip_maestra.setFocus()
@@ -412,13 +402,13 @@ class SharedRedLanPanel(QWidget):
             f"font-size: 14px; font-weight: bold; color: {color_modo}; "
             f"background: {bg_modo}; border-radius: 8px; padding: 4px 12px; border: none;"
         )
-        
+
         # Actualizar detalles técnicos reemplazando la widget vieja por una nueva
         self.body_layout.removeWidget(self._card_estado)
         self._card_estado.deleteLater()
         self._card_estado = self._build_card_estado()
         self.body_layout.insertWidget(0, self._card_estado)
-        
+
         self._actualizar_botones()
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -428,6 +418,3 @@ class SharedRedLanPanel(QWidget):
         from src.admin.configuracion.componentes.dialogo_administrar_cajas import DialogoAdministrarCajas
         qt_exec(DialogoAdministrarCajas(self))
 
-    def _open_pin_esclava(self):
-        from src.admin.configuracion.componentes.dialogo_pin_local import DialogoPINLocal
-        qt_exec(DialogoPINLocal(self))

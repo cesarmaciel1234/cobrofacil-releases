@@ -4,7 +4,7 @@ from PyQt6.QtGui import QFont, QColor, QIcon, QPixmap
 
 class CyberNodeCard(QFrame):
     clicked = pyqtSignal(str)
-    
+
     def __init__(self, origen, role, is_active=True):
         super().__init__()
         self.origen = origen
@@ -12,31 +12,31 @@ class CyberNodeCard(QFrame):
         self.is_active = is_active
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(140, 80)
-        
+
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(10, 10, 10, 10)
         self.lay.setSpacing(5)
-        
+
         icon = "🛒" if "CAJA" in role else "📺" if "CARTEL" in role else "💻" if "ADMIN" in role else "⚙️"
-        
+
         self.lbl_title = QLabel(f"{icon} {role}")
         self.lbl_title.setFont(QFont("Consolas", 10, QFont.Weight.Bold))
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.lbl_origen = QLabel(origen.split('|')[0] if '|' in origen else origen)
         self.lbl_origen.setFont(QFont("Consolas", 7))
         self.lbl_origen.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.lbl_status = QLabel("● ONLINE")
         self.lbl_status.setFont(QFont("Consolas", 8, QFont.Weight.Bold))
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.lay.addWidget(self.lbl_title)
         self.lay.addWidget(self.lbl_origen)
         self.lay.addWidget(self.lbl_status)
-        
+
         self.update_style()
-        
+
     def update_style(self, selected=False):
         if not self.is_active:
             bg = "#1E1E1E"
@@ -56,7 +56,7 @@ class CyberNodeCard(QFrame):
             color_title = "#60A5FA"
             color_status = "#3B82F6"
             status_txt = "● ONLINE"
-            
+
         self.setStyleSheet(f"""
             CyberNodeCard {{
                 background-color: {bg};
@@ -72,11 +72,11 @@ class CyberNodeCard(QFrame):
         self.lbl_origen.setStyleSheet("color: #94A3B8; border: none; background: transparent;")
         self.lbl_status.setStyleSheet(f"color: {color_status}; border: none; background: transparent;")
         self.lbl_status.setText(status_txt)
-        
+
     def set_active(self, active):
         self.is_active = active
         self.update_style()
-        
+
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.origen)

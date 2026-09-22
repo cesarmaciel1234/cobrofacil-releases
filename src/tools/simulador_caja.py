@@ -15,7 +15,7 @@ for p in productos:
             json.dump({"ultimo_escaneo": p}, f)
     except Exception as e:
         print("Error escribiendo archivo:", e)
-    
+
     # Esperamos 10 segundos para dejar que la alerta se muestre y termine
     time.sleep(12)
 

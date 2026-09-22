@@ -2,9 +2,12 @@ import json
 import os
 from src.logger import logger
 
+# Misma llave en todas las cajas. No se cambia desde la pantalla.
+CLAVE_RED = "1234"
+
 class Config:
     """Handles application settings and business information."""
-    
+
     DEFAULT_CONFIG = {
         "caja_id": 1,
         "business_name": "PUNPRO BUSINESS",
@@ -68,7 +71,7 @@ class Config:
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
                     self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
-                
+
                 # --- AUTO-LIMPIEZA DE RED SI SE COPIÓ A OTRA PC ---
                 import socket
                 current_host = socket.gethostname()
@@ -82,7 +85,7 @@ class Config:
                     self.data["machine_hostname"] = current_host
                     self.save()
                 # --------------------------------------------------
-                
+
                 logger.info("Configuration loaded from file.")
             except Exception as e:
                 logger.error(f"Error loading config.json: {e}")
@@ -120,19 +123,9 @@ class Config:
     def get(self, key, default=None):
         return self.data.get(key, default)
 
-    def pin_es_hash(self, valor: str) -> bool:
-        t = str(valor or "").strip().lower()
-        return len(t) == 64 and all(c in "0123456789abcdef" for c in t)
-
     def token_api_lan(self) -> str:
-        """Secreto compartido de la API LAN. El hash del PIN local no sirve de llave."""
-        tok = str(self.data.get("lan_api_token") or "").strip()
-        if tok:
-            return tok
-        pin = str(self.data.get("local_pin") or "").strip()
-        if pin and not self.pin_es_hash(pin):
-            return pin
-        return "1234"
+        """Llave fija de la red. Ignora lo guardado en config para que las cajas no se desconecten."""
+        return CLAVE_RED
 
     def set(self, key, value):
         self.data[key] = value
@@ -141,7 +134,7 @@ class Config:
     @property
     def current_role(self) -> str:
         """Devuelve el rol del usuario activo (lee tanto 'role' como 'rol' de la BD).
-        
+
         La BD guarda el campo como 'rol', pero algunas partes del código lo seteaban
         como 'role'. Esta propiedad normaliza ambas variantes.
         """

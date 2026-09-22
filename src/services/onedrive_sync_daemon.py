@@ -28,7 +28,7 @@ class OneDriveSyncDaemon(threading.Thread):
             if "jefe_db_path" in cfg and cfg["jefe_db_path"]:
                 return cfg["jefe_db_path"]
         except: pass
-        
+
         # Fallback a una carpeta por defecto de OneDrive en Windows
         try:
             user_home = os.path.expanduser("~")
@@ -48,27 +48,27 @@ class OneDriveSyncDaemon(threading.Thread):
             try:
                 # Prioridad ultra-baja: dormir mucho tiempo
                 time.sleep(10)
-                
+
                 # Si el sistema actual no es el maestro MariaDB, no sincronizamos (solo el Maestro absorbe)
                 if getattr(db_manager, "db_engine_type", "sqlite") != "mariadb" or not getattr(db_manager, "is_master", False):
                     continue
 
                 if not os.path.exists(self.sync_path):
                     continue
-                
+
                 current_mtime = os.path.getmtime(self.sync_path)
-                
+
                 if self.last_mtime == 0:
                     self.last_mtime = current_mtime
                     continue
-                    
+
                 if current_mtime > self.last_mtime:
                     # El archivo cambió (OneDrive lo descargó o el jefe lo editó)
                     logger.info("[OneDriveSync] Detectado cambio en base portátil. Iniciando volcado a MariaDB...")
                     self._sync_databases()
                     self.last_mtime = current_mtime
                     logger.info("[OneDriveSync] Volcado completado exitosamente.")
-                    
+
             except Exception as e:
                 logger.error(f"[OneDriveSync] Error en el bucle principal: {e}")
 
@@ -78,25 +78,25 @@ class OneDriveSyncDaemon(threading.Thread):
             sqlite_conn = sqlite3.connect(self.sync_path, timeout=5)
             sqlite_conn.row_factory = sqlite3.Row
             sq_cursor = sqlite_conn.cursor()
-            
+
             # Extraemos productos
             sq_cursor.execute("SELECT * FROM productos")
             productos = [dict(row) for row in sq_cursor.fetchall()]
-            
+
             # Extraemos clientes
             sq_cursor.execute("SELECT * FROM clientes")
             clientes = [dict(row) for row in sq_cursor.fetchall()]
-            
+
             # Extraemos departamentos
             sq_cursor.execute("SELECT * FROM departamentos")
             departamentos = [dict(row) for row in sq_cursor.fetchall()]
-            
+
             sqlite_conn.close()
 
             # 2. Conectar a MariaDB e inyectar (ON DUPLICATE KEY UPDATE)
             mariadb_conn = db_manager.get_connection()
             m_cursor = mariadb_conn.cursor()
-            
+
             # Inyectar productos
             if productos:
                 # Asumimos que los campos coinciden. Construimos query dinámica basada en las keys del primer producto
@@ -104,36 +104,36 @@ class OneDriveSyncDaemon(threading.Thread):
                 cols = ", ".join(keys)
                 placeholders = ", ".join(["?"] * len(keys)) if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite" else ", ".join(["%s"] * len(keys))
                 update_str = ", ".join([f"{k}=VALUES({k})" for k in keys])
-                
+
                 query = f"INSERT INTO productos ({cols}) VALUES ({placeholders}) ON DUPLICATE KEY UPDATE {update_str}"
-                
+
                 datos_productos = [tuple(p[k] for k in keys) for p in productos]
                 m_cursor.executemany(query, datos_productos)
-                
+
             # Inyectar clientes
             if clientes:
                 keys = list(clientes[0].keys())
                 cols = ", ".join(keys)
                 placeholders = ", ".join(["?"] * len(keys)) if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite" else ", ".join(["%s"] * len(keys))
                 update_str = ", ".join([f"{k}=VALUES({k})" for k in keys])
-                
+
                 query = f"INSERT INTO clientes ({cols}) VALUES ({placeholders}) ON DUPLICATE KEY UPDATE {update_str}"
-                
+
                 datos_clientes = [tuple(c[k] for k in keys) for c in clientes]
                 m_cursor.executemany(query, datos_clientes)
-                
+
             # Inyectar departamentos
             if departamentos:
                 keys = list(departamentos[0].keys())
                 cols = ", ".join(keys)
                 placeholders = ", ".join(["?"] * len(keys)) if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite" else ", ".join(["%s"] * len(keys))
                 update_str = ", ".join([f"{k}=VALUES({k})" for k in keys])
-                
+
                 query = f"INSERT INTO departamentos ({cols}) VALUES ({placeholders}) ON DUPLICATE KEY UPDATE {update_str}"
-                
+
                 datos_deptos = [tuple(d[k] for k in keys) for d in departamentos]
                 m_cursor.executemany(query, datos_deptos)
-                
+
             mariadb_conn.commit()
             mariadb_conn.close()
 

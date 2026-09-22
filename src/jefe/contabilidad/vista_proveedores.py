@@ -7,7 +7,7 @@ class VistaProveedoresMixin:
     """
     def _build_tab_proveedores(self):
         lay, _ = self._page()
-        
+
         # Instanciar el módulo unificado pasándole el perfil y la BD del Jefe
         # self._db es el engine SQLite de JefeContabilidad
         modulo = VistaProveedor(parent=self, perfil="jefe", db_jefe=self._db)

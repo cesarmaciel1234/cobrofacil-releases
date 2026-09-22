@@ -12,11 +12,11 @@ class MPPollingDialog(QDialog):
         self.intent_id = intent_id
         self.monto_original = monto_original
         self.aprobado = False
-        
+
         self.setWindowTitle("Esperando Pago...")
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint) 
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
         self.setFixedSize(350, 150)
-        
+
         layout = QVBoxLayout(self)
         if modo == "QR":
             msg_label = f"📱 Mostre el QR de la terminal al cliente.\nEsperando pago QR por:\n${monto_original:,.2f}"
@@ -26,16 +26,16 @@ class MPPollingDialog(QDialog):
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_status.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(self.lbl_status)
-        
+
         self.btn_cancel = QPushButton("Cancelar Cobro en la Terminal")
         self.btn_cancel.setStyleSheet("background-color: #EF4444; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
         self.btn_cancel.clicked.connect(self.cancelar_cobro)
         layout.addWidget(self.btn_cancel)
-        
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_status)
-        self.timer.start(2500) 
-        
+        self.timer.start(2500)
+
     def check_status(self):
         poll_url = f"https://api.mercadopago.com/point/integration-api/payment-intents/{self.intent_id}"
         try:
@@ -51,19 +51,19 @@ class MPPollingDialog(QDialog):
                     QMessageBox.warning(self, "Cobro Cancelado", f"El cobro fue cancelado o rechazado en la terminal (Estado: {state}).")
                     self.reject()
         except:
-            pass 
-            
+            pass
+
     def cancelar_cobro(self):
         self.btn_cancel.setEnabled(False)
         self.btn_cancel.setText("Cancelando...")
         self.timer.stop()
-        
+
         cancel_url = f"https://api.mercadopago.com/point/integration-api/devices/{self.device_id}/payment-intents/{self.intent_id}"
         try:
             MPApiClient.delete(cancel_url, self.token, timeout=5)
         except:
             pass
-        
+
         self.reject()
 
 class QRDialog(QDialog):
@@ -78,7 +78,7 @@ class QRDialog(QDialog):
         self.ref = ref
         self.url_crear_qr_func = url_crear_qr
         self.headers_mp = headers_mp
-        
+
         self.setWindowTitle("Cobro QR - Mercado Pago")
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
         self.setFixedSize(700, 700)

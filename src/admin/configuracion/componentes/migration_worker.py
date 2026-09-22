@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -43,7 +43,7 @@ class MigrationWorker(QThread):
                 errors='replace',
                 bufsize=1
             )
-            
+
             # Leer salida en tiempo real
             stdout_lines = []
             while True:
@@ -53,11 +53,11 @@ class MigrationWorker(QThread):
                 if line:
                     stdout_lines.append(line)
                     self.progreso.emit(line.strip())
-            
+
             # Leer stderr restante
             stderr = proc.stderr.read()
             proc.wait()
-            
+
             stdout = "".join(stdout_lines)
             self.terminado.emit(proc.returncode, stdout, stderr)
         except Exception as e:

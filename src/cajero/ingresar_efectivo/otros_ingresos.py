@@ -10,7 +10,7 @@ class PanelOtrosIngresos(QWidget):
     def _build(self):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(20, 20, 20, 20)
-        
+
         self.lbl_titulo_monto = QLabel("Monto a ingresar ($):")
         self.lbl_titulo_monto.setStyleSheet("font-size: 13px; color: #334155; font-weight: bold; border: none;")
         lay.addWidget(self.lbl_titulo_monto)

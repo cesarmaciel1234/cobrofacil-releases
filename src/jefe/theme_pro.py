@@ -15,7 +15,7 @@ THEME_PRO = {
     "danger":      "#EF4444",   # Vibrant Red
     "warning":     "#F59E0B",   # Vibrant Amber
     "info":        "#0EA5E9",   # Vibrant Sky Blue
-    
+
     # Specific elements
     "sidebar_bg":  "#FFFFFF",   # Pure white sidebar
     "sidebar_sel": "#EEF2FF",   # Very light indigo for selection

@@ -7,7 +7,7 @@ def ensure_icons():
         assets_dir = os.path.join(base_dir, "assets")
         if not os.path.exists(assets_dir):
             os.makedirs(assets_dir)
-            
+
         required = ["tarjeta.png", "mixto.png", "transferencia.png", "efectivo.png"]
         missing = [r for r in required if not os.path.exists(os.path.join(assets_dir, r))]
         if not missing:
@@ -33,7 +33,7 @@ def ensure_icons():
             bbox = diff_rgb.getbbox()
             if bbox:
                 img = img.crop(bbox)
-            
+
             datas = img.getdata()
             newData = []
             for item in datas:

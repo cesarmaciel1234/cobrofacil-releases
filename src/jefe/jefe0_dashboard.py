@@ -60,7 +60,7 @@ class Jefe0Dashboard(QWidget):
         self._clock.timeout.connect(self._tick)
         self._clock.start(60000)
         self._tick()
-        
+
         # Iniciar Cerebro del Jefe en Segundo Plano
         self.worker_analitica = WorkerAnaliticaJefe()
         self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
@@ -133,7 +133,7 @@ class Jefe0Dashboard(QWidget):
             QPushButton:hover { background: #E2E8F0; color: #0F172A; }
         """)
         self.btn_tema.clicked.connect(self._toggle_theme)
-        
+
         self.btn_perfiles = QPushButton("👥 Personal")
         self.btn_perfiles.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_perfiles.setFixedHeight(34)
@@ -148,13 +148,13 @@ class Jefe0Dashboard(QWidget):
         """)
         self.btn_perfiles.clicked.connect(self._abrir_perfiles)
         nav_lay.addWidget(self.btn_perfiles)
-        
+
         try:
             from src.config import config
             if config and config.get("theme", "light") == "dark":
                 self.btn_tema.setText("☀️ Día")
         except: pass
-        
+
         nav_lay.addWidget(self.btn_tema)
 
         self.btn_logout = QPushButton("Cerrar Sesión")
@@ -185,22 +185,22 @@ class Jefe0Dashboard(QWidget):
         page = QWidget()
         page.setObjectName("JefePage")
         page.setStyleSheet("#JefePage { background: transparent; }")
-        
+
         main_split_lay = QHBoxLayout(page)
         main_split_lay.setContentsMargins(48, 36, 48, 48)
         main_split_lay.setSpacing(40)
-        
+
         left_col = QWidget()
         left_col.setStyleSheet("background: transparent;")
         page_lay = QVBoxLayout(left_col)
         page_lay.setContentsMargins(0, 0, 0, 0)
         page_lay.setSpacing(0)
-        
+
         right_col = QWidget()
         right_col.setStyleSheet("background: transparent;")
         self.right_lay = QVBoxLayout(right_col)
         self.right_lay.setContentsMargins(0, 0, 0, 0)
-        
+
         main_split_lay.addWidget(left_col, stretch=1)
         main_split_lay.addWidget(right_col, stretch=1)
 
@@ -263,21 +263,21 @@ class Jefe0Dashboard(QWidget):
     def _exportar_ganancias(self):
         from src.cerebro_global.cerebro_jefe.exportador_ganancias import WorkerExportGanancias
         from datetime import datetime
-        
+
         nombre_def = f"Reporte_Ganancias_Netas_{datetime.now().strftime('%Y%m%d')}.xlsx"
         filepath, _ = QFileDialog.getSaveFileName(
             self, "Guardar Reporte de Ganancias", nombre_def, "Excel (*.xlsx);;Todos los archivos (*)"
         )
         if not filepath:
             return
-            
+
         self.btn_export_ganancias.setText("Exportando...")
         self.btn_export_ganancias.setEnabled(False)
-        
+
         self.worker_export = WorkerExportGanancias(filepath)
         self.worker_export.finished.connect(self._on_export_ganancias_listo)
         self.worker_export.start()
-        
+
     def _on_export_ganancias_listo(self, success, msg):
         self.btn_export_ganancias.setText("Exportar ganancias")
         self.btn_export_ganancias.setEnabled(True)
@@ -316,10 +316,10 @@ class Jefe0Dashboard(QWidget):
             current = config.get("theme", "light")
             nuevo = "dark" if current == "light" else "light"
             config.set("theme", nuevo)
-            
+
             qss = "estilo_noche.qss" if nuevo == "dark" else "estilo_dia.qss"
             aplicar_tema(QApplication.instance(), qss)
-            
+
             self.btn_tema.setText("☀️ Día" if nuevo == "dark" else "🌙 Noche")
         except Exception as e:
             from src.logger import logger
@@ -418,7 +418,7 @@ class Jefe0Dashboard(QWidget):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         ) != QMessageBox.StandardButton.Yes:
             return
-        
+
         self._run_nodo_job("promote")
 
     def _run_nodo_job(self, mode: str):
@@ -435,7 +435,7 @@ class Jefe0Dashboard(QWidget):
         from PyQt6.QtCore import Qt
         dlg.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
         dlg.setWindowTitle("Nodo portable")
-        
+
         # Prevenir que un humano impaciente cierre la ventana con Alt+F4 o la X
         def prevent_close(event):
             event.ignore()

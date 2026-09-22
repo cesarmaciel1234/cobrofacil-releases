@@ -452,5 +452,5 @@ def abrir_cliente_express(parent_widget, monto_total: float):
 
     if dlg2.confirmado:
         return cliente_seleccionado
-    
+
     return None

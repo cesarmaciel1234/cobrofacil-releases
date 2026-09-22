@@ -14,13 +14,13 @@ class TecladoNumericoLateral(QFrame):
         self.setObjectName("KeyboardFrame")
         self.setMinimumHeight(330)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        
+
         self.apply_theme()
-        
+
         kb_layout = QVBoxLayout(self)
         kb_layout.setContentsMargins(0, 0, 0, 0)
         kb_layout.setSpacing(5)
-        
+
         rows = [
             ["1", "2", "3"],
             ["4", "5", "6"],
@@ -28,7 +28,7 @@ class TecladoNumericoLateral(QFrame):
             [",", "0", "⌫"],
             ["Salir", "ENTER"]
         ]
-        
+
         theme = config.get("theme", "light")
         if theme == "dark":
             btn_style = """
@@ -72,21 +72,21 @@ class TecladoNumericoLateral(QFrame):
             color_backspace = "#EF4444"
             bg_esc = "#EF4444"
             color_esc = "#FFFFFF"
-        
+
         for row in rows:
             if row == ["Salir", "ENTER"]:
                 kb_layout.addStretch()
-                
+
             row_lay = QHBoxLayout()
             row_lay.setSpacing(5)
             row_lay.setContentsMargins(0, 0, 0, 0)
-            
+
             for key in row:
                 btn = QPushButton(key)
                 btn.setStyleSheet(btn_style)
                 btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
-                
+
                 # Estilos específicos para teclas especiales
                 if key == "⌫":
                     btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_backspace}; color: {color_backspace}; }}")
@@ -94,10 +94,10 @@ class TecladoNumericoLateral(QFrame):
                     btn.setStyleSheet(btn_style + f"QPushButton {{ background-color: {bg_esc}; color: {color_esc}; }}")
                 elif key == "ENTER":
                     btn.setStyleSheet(btn_style + "QPushButton { background-color: #3B82F6; color: white; }")
-                
+
                 btn.clicked.connect(lambda checked, k=key: self.key_clicked.emit(k))
                 row_lay.addWidget(btn, 1)
-                
+
             kb_layout.addLayout(row_lay)
 
     def apply_theme(self):

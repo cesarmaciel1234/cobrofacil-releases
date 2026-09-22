@@ -13,27 +13,27 @@ class MensajeAtencion(QDialog):
     def setup_ui(self):
         # VOLVEMOS AL ESTILO INDUSTRIAL (Cian oscuro / Rojo)
         self.setStyleSheet("background-color: #008080; border: 4px solid #FFFFFF;")
-        
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(10)
-        
+
         header_lbl = QLabel("Mensaje de Atención")
         header_lbl.setAlignment(Qt.AlignCenter)
         header_lbl.setStyleSheet("color: #FF0000; font-size: 24px; font-weight: bold; border: none;")
         layout.addWidget(header_lbl)
-        
+
         msg_lbl = QLabel(self.mensaje)
         msg_lbl.setWordWrap(True)
         msg_lbl.setAlignment(Qt.AlignCenter)
         msg_lbl.setStyleSheet("color: #FFFFFF; font-size: 20px; font-weight: bold; border: none; padding: 20px;")
         layout.addWidget(msg_lbl)
-        
+
         layout.addStretch()
-        
+
         footer_layout = QHBoxLayout()
         footer_layout.addStretch()
-        
+
         btn_ok = QPushButton("ENT=Sí")
         btn_ok.setStyleSheet("""
             QPushButton {
@@ -47,7 +47,7 @@ class MensajeAtencion(QDialog):
         """)
         btn_ok.clicked.connect(self.accept)
         footer_layout.addWidget(btn_ok)
-        
+
         btn_esc = QPushButton("✖ ESC=NO")
         btn_esc.setStyleSheet("""
             QPushButton {
@@ -61,7 +61,7 @@ class MensajeAtencion(QDialog):
         """)
         btn_esc.clicked.connect(self.reject)
         footer_layout.addWidget(btn_esc)
-        
+
         layout.addLayout(footer_layout)
 
     def keyPressEvent(self, event):

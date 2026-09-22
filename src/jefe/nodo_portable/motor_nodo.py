@@ -99,11 +99,11 @@ def _sync_catalogos_dir(progress_cb, root_nodo: str, upload: bool = True):
         import shutil
         local_cat = catalogos_dir()
         nodo_cat = os.path.join(root_nodo, "Catalogos")
-        
+
         src, dst = (local_cat, nodo_cat) if upload else (nodo_cat, local_cat)
         if not os.path.isdir(src):
             return
-            
+
         os.makedirs(dst, exist_ok=True)
         _emit(progress_cb, 95, "Sincronizando imágenes (PNGs)...")
         for root_dir, _, files in os.walk(src):
@@ -524,7 +524,7 @@ def promover_nodo(progress_cb=None, path: str | None = None) -> str:
         for i, table in enumerate(TABLAS_NEGOCIO):
             base_pct = 10 + int((i / max(total, 1)) * 80)
             next_pct = 10 + int(((i + 1) / max(total, 1)) * 80)
-            
+
             _emit(progress_cb, base_pct, f"Promoviendo tabla: {table}...")
             try:
                 cur = src.cursor()
@@ -532,7 +532,7 @@ def promover_nodo(progress_cb=None, path: str | None = None) -> str:
                 rows = [dict(r) for r in cur.fetchall()]
             except Exception:
                 continue
-                
+
             total_rows = len(rows)
             for row_idx, row in enumerate(rows):
                 # Emitir progreso interno cada 100 filas para que la barra se mueva fluidamente
@@ -628,13 +628,13 @@ def importar_catalogo_desde_nodo(progress_cb=None, path: str | None = None) -> d
 
             if not rows:
                 continue
-            
+
             for row in rows:
                 keys = list(row.keys())
                 vals = [row[k] for k in keys]
                 col_str = ",".join(keys)
                 ph_str = ",".join(["?"] * len(keys))
-                
+
                 if is_mariadb:
                     update_str = ", ".join([f"{k}=VALUES({k})" for k in keys if k != "id"])
                     if not update_str: update_str = "id=id"

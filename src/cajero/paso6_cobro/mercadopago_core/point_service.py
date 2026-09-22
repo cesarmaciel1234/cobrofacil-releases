@@ -30,7 +30,7 @@ class PointService:
 
         if self.parent.current_metodo not in ["Tarjeta", "Mixto", "QR"]:
             self.parent.set_metodo("Tarjeta")
-            
+
         if self.parent.current_metodo == "Mixto":
             if getattr(self.parent, 'valores_mixtos', None):
                 monto = self.parent.valores_mixtos.get("tarjeta", 0.0)
@@ -56,7 +56,7 @@ class PointService:
         url = f"https://api.mercadopago.com/point/integration-api/devices/{device_id}/payment-intents"
         intent_id = str(uuid.uuid4())
         monto_centavos = int(round(monto * 100))
-        
+
         payload = {
             "amount": monto_centavos,
             "additional_info": {
@@ -67,20 +67,20 @@ class PointService:
         msg_progreso = "Enviando monto a la Terminal Point (modo QR)..." if self.parent.current_metodo == "QR" else "Enviando monto a la Terminal Point..."
         if self.parent.current_metodo == "QR":
             payload["payment_mode"] = "qr"
-        
+
         progreso = QProgressDialog(msg_progreso, "Cancelar", 0, 0, self.parent)
         progreso.setWindowTitle("Mercado Pago Point")
         progreso.setWindowModality(Qt.WindowModality.WindowModal)
         progreso.show()
-        
+
         try:
             response = MPApiClient.post(url, payload, token, timeout=10)
             progreso.close()
-            
+
             if response.status_code in [200, 201]:
                 data = response.json()
                 mp_intent_id = data.get("id")
-                
+
                 dialog = MPPollingDialog(self.parent, token, device_id, mp_intent_id, monto, modo=self.parent.current_metodo)
                 if qt_exec(dialog) == QDialog.DialogCode.Accepted:
                     self.parent.txt_pago.setText(str(monto))

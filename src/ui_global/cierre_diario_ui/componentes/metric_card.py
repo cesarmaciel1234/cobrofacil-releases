@@ -61,7 +61,7 @@ class MetricCard(QFrame):
             if formato: self.lbl_val.setText(f"$ {v:,.2f}")
             else: self.lbl_val.setText(f"{int(v)}")
             if self._curr_step < steps: QTimer.singleShot(30, tick)
-            else: 
+            else:
                 if formato: self.lbl_val.setText(f"$ {final:,.2f}")
                 else: self.lbl_val.setText(f"{int(final)}")
         tick()

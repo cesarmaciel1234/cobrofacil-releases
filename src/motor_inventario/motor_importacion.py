@@ -22,26 +22,26 @@ class MotorImportacion:
         """Descarga e inserta datos desde el JSON de la nube."""
         import urllib.request
         import json
-        
+
         url = "https://firebasestorage.googleapis.com/v0/b/cajafacil-pro-updates.firebasestorage.app/o/inventario_precargado.json?alt=media"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=15) as response:
                 data = json.loads(response.read().decode('utf-8'))
-                
+
             if not data:
                 return False, "El archivo JSON está vacío."
-            
+
             existing_res = db_manager.execute_query("SELECT codigo FROM productos WHERE codigo IS NOT NULL AND codigo != ''")
             existing_codes = set(str(row['codigo']).strip() for row in (existing_res or []))
-            
+
             values = []
             for item in data:
                 codigo = str(dict(item).get("codigo", "") or "").strip()
                 nombre = str(dict(item).get("descripcion", "") or "").strip()
                 if not codigo or not nombre: continue
                 if codigo in existing_codes: continue
-                    
+
                 values.append((
                     codigo,
                     nombre,
@@ -55,7 +55,7 @@ class MotorImportacion:
                     1 if str(dict(item).get("tipo_venta", "")).strip().lower() in ("granel", "a granel") else 0
                 ))
                 existing_codes.add(codigo)
-            
+
             if not values:
                 return True, "Tu inventario ya está actualizado. No se encontraron productos nuevos en la nube."
 

@@ -10,58 +10,58 @@ from src.admin.nexus_admin.vistas.componentes.panel_central.cyber_metric import 
 class NexusPanelCen(QWidget):
     request_z_close = pyqtSignal(float)
     caja_selected = pyqtSignal(str)
-    
+
     def __init__(self):
         super().__init__()
         self.active_boxes = {}
         self.node_widgets = {}
         self.selected_origen = "todas"
-        
+
         self.lay = QVBoxLayout(self)
         self.lay.setContentsMargins(0,0,0,0)
         self.lay.setSpacing(15)
-        
+
         # TITLE
         self.lbl_title = QLabel("📡 NEXUS GLOBAL DATABASE // LIVE TOPOLOGY")
         self.lbl_title.setStyleSheet("font-family: Consolas; font-size: 12px; font-weight: bold; color: #38BDF8;")
         self.lay.addWidget(self.lbl_title)
-        
+
         # TOPOLOGY GRID
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; } QWidget#grid_container { background: transparent; }")
-        
+
         self.grid_container = QWidget()
         self.grid_container.setObjectName("grid_container")
         self.grid_layout = QGridLayout(self.grid_container)
         self.grid_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        
+
         self.scroll_area.setWidget(self.grid_container)
         self.lay.addWidget(self.scroll_area, 3)
-        
+
         # BTN CLEAR SELECTION
         self.btn_todas = QPushButton("🌐 VER TODA LA RED")
         self.btn_todas.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_todas.setStyleSheet("background: #1E293B; color: #94A3B8; font-weight: bold; border: 1px solid #334155; padding: 8px; border-radius: 4px;")
         self.btn_todas.clicked.connect(lambda: self.select_node("todas"))
         self.lay.addWidget(self.btn_todas)
-        
+
         # METRICS HUD
         self.metrics_container = QFrame()
         self.metrics_container.setStyleSheet("background: transparent; border: none;")
         m_lay = QHBoxLayout(self.metrics_container)
         m_lay.setContentsMargins(0,0,0,0)
-        
+
         self.lbl_efectivo = CyberMetric("EFECTIVO CASH", "💵")
         self.lbl_digital = CyberMetric("VENTAS DIGITALES", "💳")
         self.lbl_fondo = CyberMetric("FONDO INICIAL", "💰")
-        
+
         m_lay.addWidget(self.lbl_efectivo)
         m_lay.addWidget(self.lbl_digital)
         m_lay.addWidget(self.lbl_fondo)
-        
+
         self.lay.addWidget(self.metrics_container)
-        
+
         # HIGHLIGHT ESPERADO
         self.f_esperado = QFrame()
         self.f_esperado.setStyleSheet("background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; border-radius: 8px;")
@@ -74,9 +74,9 @@ class NexusPanelCen(QWidget):
         self.lbl_live_esperado.setAlignment(Qt.AlignmentFlag.AlignCenter)
         h_lay.addWidget(lbl_e)
         h_lay.addWidget(self.lbl_live_esperado)
-        
+
         self.lay.addWidget(self.f_esperado)
-        
+
         # ACTION BTN
         self.btn_cierre = QPushButton("F4 // ENVIAR ORDEN DE CIERRE (CAJA ACTIVA)")
         self.btn_cierre.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -90,7 +90,7 @@ class NexusPanelCen(QWidget):
         ''')
         self.btn_cierre.clicked.connect(lambda: self.request_z_close.emit(0.0))
         self.lay.addWidget(self.btn_cierre)
-        
+
         self._tema_oscuro()
 
     def select_node(self, origen):
@@ -106,15 +106,15 @@ class NexusPanelCen(QWidget):
                 parts = origen.split("|")
                 if len(parts) > 1:
                     role = parts[1].upper()
-            
+
             node = CyberNodeCard(origen, role)
             node.clicked.connect(self.select_node)
             self.node_widgets[origen] = node
-            
+
             # Reposition all
-            for i in reversed(range(self.grid_layout.count())): 
+            for i in reversed(range(self.grid_layout.count())):
                 item = self.grid_layout.takeAt(i)
-                
+
             row, col = 0, 0
             for w in self.node_widgets.values():
                 self.grid_layout.addWidget(w, row, col)
@@ -123,7 +123,7 @@ class NexusPanelCen(QWidget):
                 if col > 3:
                     col = 0
                     row += 1
-                    
+
         self.node_widgets[origen].set_active(True)
         if self.selected_origen == origen:
             self.node_widgets[origen].update_style(selected=True)
@@ -131,7 +131,7 @@ class NexusPanelCen(QWidget):
     def mark_active(self, origen):
         if origen in self.node_widgets:
             self.node_widgets[origen].set_active(True)
-            
+
     def mark_inactive(self, origen):
         if origen in self.node_widgets:
             self.node_widgets[origen].set_active(False)

@@ -7,18 +7,18 @@ class ResumenVuelto(QWidget):
     """
     def __init__(self, parent=None):
         super().__init__(parent)
-        
+
         vuelto_lay = QHBoxLayout(self)
         vuelto_lay.setContentsMargins(0, 0, 0, 0)
         vuelto_lay.setSpacing(15)
-        
+
         self.lbl_vuelto_tit = QLabel("SU CAMBIO:")
         self.lbl_vuelto_tit.setStyleSheet("font-weight: 900; color: #64748B; font-size: 20px;")
         self.lbl_vuelto_tit.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        
+
         self.lbl_vuelto_val = QLabel("$0.00")
         self.lbl_vuelto_val.setStyleSheet("color: #10B981; font-size: 36px; font-weight: 900;")
-        
+
         vuelto_lay.addStretch()
         vuelto_lay.addWidget(self.lbl_vuelto_tit)
         vuelto_lay.addWidget(self.lbl_vuelto_val)

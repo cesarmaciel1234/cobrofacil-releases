@@ -37,27 +37,27 @@ class CarteleriaCard(QFrame):
         super().__init__(parent)
         self.color_bg_light = color_bg
         self.color_txt_light = color_txt
-        
+
         self.color_bg_dark = "#1E293B"
         self.color_txt_dark = "#F8FAFC"
-        
+
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(220, 150)
 
         lay = QVBoxLayout(self)
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lbl_icon = QLabel(icon)
         lbl_icon.setStyleSheet("font-size: 38px; background: transparent; border: none;")
         lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.lbl_title = QLabel(title)
         self.lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         self.lbl_sub = QLabel(desc)
         self.lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_sub.setWordWrap(True)
-        
+
         lay.addWidget(lbl_icon)
         lay.addWidget(self.lbl_title)
         lay.addWidget(self.lbl_sub)
@@ -66,12 +66,12 @@ class CarteleriaCard(QFrame):
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
-        
+
     def apply_theme(self, is_dark):
         bg = self.color_bg_dark if is_dark else self.color_bg_light
         txt = self.color_txt_dark if is_dark else self.color_txt_light
         border_hover = "#3B82F6" if is_dark else self.color_txt_light
-        
+
         self.setStyleSheet(f"""
             CarteleriaCard {{
                 background-color: {bg};
@@ -82,7 +82,7 @@ class CarteleriaCard(QFrame):
                 border: 2px solid {border_hover};
             }}
         """)
-        
+
         self.lbl_title.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {txt}; background: transparent; border: none;")
         self.lbl_sub.setStyleSheet(f"font-size: 11px; color: {txt}; opacity: 0.8; background: transparent; border: none;")
 
@@ -138,7 +138,7 @@ class CarteleriaDashboard(QWidget):
         self.lbl_clock = QLabel()
         self.lbl_clock.setStyleSheet("font-size: 12px; font-weight: 600; color: #475569; background: transparent; border: none; margin-right: 16px;")
         nav_lay.addWidget(self.lbl_clock)
-        
+
         self.btn_theme = QPushButton("☀️ / 🌙 Tema")
         self.btn_theme.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_theme.setFixedHeight(34)
@@ -190,13 +190,13 @@ class CarteleriaDashboard(QWidget):
         hero_lay = QVBoxLayout(hero)
         hero_lay.setContentsMargins(32, 0, 32, 0)
         hero_lay.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        
+
         lbl_welcome = QLabel("Módulo Autónomo")
         lbl_welcome.setStyleSheet("color: #93C5FD; font-size: 12px; font-weight: bold; background: transparent;")
-        
+
         lbl_hero = QLabel("Control de Cartelería Digital")
         lbl_hero.setStyleSheet("color: white; font-size: 24px; font-weight: bold; background: transparent;")
-        
+
         hero_lay.addWidget(lbl_welcome)
         hero_lay.addWidget(lbl_hero)
         page_lay.addWidget(hero)
@@ -211,7 +211,7 @@ class CarteleriaDashboard(QWidget):
         # Tarjetas de cartelería
         self.card_tv = CarteleriaCard("Lanzar TV Directo", "📺", "#EFF6FF", "#1D4ED8", "Abre cartelería en modo kiosk (sin consola)")
         self.card_admin = CarteleriaCard("Admin TV (Avanzado)", "⚙️", "#FEF2F2", "#B91C1C", "Modo consola Qt con control avanzado")
-        
+
         self.card_inv = CarteleriaCard("Inventario", "📦", "#FDF4FF", "#A21CAF", "Gestión local de productos y stock")
         self.card_png = CarteleriaCard("PNG Productos", "🖼️", "#ECFDF5", "#047857", "Foto PNG de cada corte en la TV")
         self.card_ofe = CarteleriaCard("Ofertas", "🏷️", "#FFFBEB", "#D97706", "Crear promos y ofertas de TV")
@@ -233,13 +233,13 @@ class CarteleriaDashboard(QWidget):
         grid.addWidget(self.card_ofe, 1, 1)
         grid.addWidget(self.card_red, 1, 2)
         grid.addWidget(self.card_prov, 2, 0)
-        
+
         page_lay.addLayout(grid)
         page_lay.addStretch()
 
         self.scroll_area.setWidget(self.page)
         root.addWidget(self.scroll_area)
-        
+
         # Apply initial theme
         from src.utils.theme_manager import theme_manager
         self.apply_dashboard_theme(theme_manager.is_dark())
@@ -293,7 +293,7 @@ class CarteleriaDashboard(QWidget):
             """)
             self.scroll_area.setStyleSheet("QScrollArea { border: none; background: #F8FAFC; }")
             self.lbl_modulos.setStyleSheet("font-size: 18px; font-weight: bold; color: #1E293B;")
-            
+
         self.card_tv.apply_theme(is_dark)
         self.card_admin.apply_theme(is_dark)
         self.card_inv.apply_theme(is_dark)

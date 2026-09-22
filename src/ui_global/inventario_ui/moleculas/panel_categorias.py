@@ -6,8 +6,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
-    QGraphicsDropShadowEffect
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
@@ -70,22 +69,14 @@ class PanelCategorias(QWidget):
         # Formulario
         form_frame = QFrame()
         form_frame.setObjectName("formFrame")
-        form_frame.setStyleSheet("QFrame#formFrame { background: white; border-radius: 12px; border: 1px solid #E2E8F0; }")
-        
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        form_frame.setGraphicsEffect(shadow)
-        
-        form_lay = QVBoxLayout(form_frame)
+        form_frame.setStyleSheet("QFrame#formFrame { background: white; border-radius: 12px; border: 1px solid #E2E8F0; }")        form_lay = QVBoxLayout(form_frame)
         form_lay.setContentsMargins(20, 20, 20, 20)
         form_lay.setSpacing(15)
-        
+
         self.lbl_titulo_form = QLabel("NUEVO DEPARTAMENTO")
         self.lbl_titulo_form.setStyleSheet("font-weight: 800; font-size: 14px; border: none;")
         form_lay.addWidget(self.lbl_titulo_form)
-        
+
         lbl_n = QLabel("Nombre del departamento:")
         lbl_n.setStyleSheet("border: none; font-weight: bold;")
         self.txt_nombre_cat = QLineEdit()
@@ -97,7 +88,7 @@ class PanelCategorias(QWidget):
         # ── Ícono de Rubro / Cartelería ────────────────────────────────────────
         lbl_ico = QLabel("Ícono visual (Cartelería y POS):")
         lbl_ico.setStyleSheet("border: none; font-weight: bold;")
-        
+
         ico_lay = QHBoxLayout()
         ico_lay.setSpacing(10)
 
@@ -176,13 +167,13 @@ class PanelCategorias(QWidget):
         from src.motor_inventario.motor_departamentos import MotorDepartamentos
         motor = MotorDepartamentos()
         self.tree.clear()
-        
+
         # Calcular productos sin departamento asignado (General o nulo)
         sd_qty = motor.obtener_conteo_sin_categoria()
-            
+
         sd = QTreeWidgetItem(self.tree, ["- Sin Departamento -", str(sd_qty)])
         sd.setForeground(0, QBrush(QColor("#64748b")))
-        
+
         rows = motor.obtener_categorias_con_conteo()
         for r in rows:
             it = QTreeWidgetItem(self.tree, [r['nombre'], str(r['qty'])])

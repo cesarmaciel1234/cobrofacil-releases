@@ -214,7 +214,7 @@ class CentroCobranzasPanel(QWidget):
         row_center.addWidget(self.card, stretch=0)
         row_center.addStretch(1)
         outer.addLayout(row_center)
-        
+
         btn_lay = QHBoxLayout()
         btn_lay.addStretch(1)
         self.btn_imprimir = QPushButton("🖨 IMPRIMIR TICKET DEUDA")
@@ -274,10 +274,10 @@ class CentroCobranzasPanel(QWidget):
 
     def _ejecutar_busqueda(self):
         consulta = self.txt_buscar.text().strip()
-        
+
         self.lista.clear()
         self.lista.show()
-        
+
         if not consulta:
             self.lbl_modo.setText("Escriba para buscar por privacidad...")
             self.lbl_cliente.setText("Esperando búsqueda...")
@@ -360,7 +360,7 @@ class CentroCobranzasPanel(QWidget):
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
         self.txt_monto.setText(f"{self._deuda_actual:.2f}")
         self.lista.hide()
-        
+
         if hasattr(self, 'btn_imprimir'):
             self.btn_imprimir.setVisible(True)
 

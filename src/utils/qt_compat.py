@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 import sys
 
-# Desactiva aceleración por hardware en QtWebEngine (Chromium) para evitar 
+# Desactiva aceleración por hardware en QtWebEngine (Chromium) para evitar
 # pantallazos o errores "Failed to create GLES3 context" en Windows/Máquinas virtuales.
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
 
@@ -107,12 +107,12 @@ def _patch_widget_enums() -> None:
         cls = getattr(QtWidgets, name, None)
         if cls is not None:
             _patch_class_enums(cls)
-            
+
     for name in _CORE_ENUM_CLASSES:
         cls = getattr(QtCore, name, None)
         if cls is not None:
             _patch_class_enums(cls)
-            
+
     for name in _GUI_ENUM_CLASSES:
         cls = getattr(QtGui, name, None)
         if cls is not None:
@@ -144,7 +144,7 @@ def configure_qt_application_attributes() -> None:
     """Atributos de app antes del primer QApplication()."""
     import os
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu"
-    
+
     if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
         try:
             policy = Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -237,7 +237,7 @@ def create_webengine_page(parent, callback):
     class HookedPage(QWebEnginePage):
         def javaScriptConsoleMessage(self, level, message, line, source):
             callback(level, message, line, source)
-    
+
     return HookedPage(parent)
 
 def webengine_page_transparent(page) -> None:

@@ -34,12 +34,12 @@ class BarcodeParser:
     @staticmethod
     def parse_scan_text(txt_raw: str):
         """
-        Analiza el texto escaneado y extrae multiplicadores (ej. 5*123) 
+        Analiza el texto escaneado y extrae multiplicadores (ej. 5*123)
         y el código limpio.
         """
         txt = txt_raw.strip()
         cantidad_multiplicador = 1.0
-        
+
         if not txt:
             return None, 1.0
 
@@ -48,11 +48,11 @@ class BarcodeParser:
             try:
                 cantidad_multiplicador = float(partes[0].replace(',', '.'))
                 txt = partes[1].strip()
-                if not txt: 
+                if not txt:
                     return None, cantidad_multiplicador
             except ValueError:
                 pass
-                
+
         return txt, cantidad_multiplicador
 
     @staticmethod

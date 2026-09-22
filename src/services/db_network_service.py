@@ -29,7 +29,7 @@ class NetworkDBService:
                     AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
                 except Exception as e:
                     logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
-                
+
                 try:
                     from src.cerebro_global.backup_cerebro import cerebro_backup
                     cerebro_backup.start("mariadb", host)
@@ -59,7 +59,7 @@ class NetworkDBService:
                         s_self.close()
                     except Exception:
                         mi_ip = ""
-                    
+
                     from src.config import config
                     old_host = config.get("db_host", "")
                     if discovered_host and discovered_host not in (mi_ip, "127.0.0.1", "localhost", old_host):
@@ -68,14 +68,14 @@ class NetworkDBService:
                         config.set("is_master", False)
                         config.set("api_url", f"http://{discovered_host}:8000")
                         config.save()
-                        
+
                         from src.db_engines.mariadb_engine import MariaDBEngine
                         new_engine = MariaDBEngine(host=discovered_host)
                         try:
                             conn = new_engine.get_connection()
                             conn._conn.ping()
                             master_ok = True
-                            
+
                             db_manager.db_path = "mariadb://" + discovered_host
                             db_manager.db_engine_type = "mariadb"
                             db_manager._forced_local_offline = False
@@ -96,7 +96,7 @@ class NetworkDBService:
                     if not host_to_retry:
                         # Fallback for host
                         host_to_retry = getattr(db_manager, "db_path", "").replace("mariadb://", "")
-                    
+
                     if host_to_retry:
                         def _retry_mariadb_connection():
                             try:
@@ -105,7 +105,7 @@ class NetworkDBService:
                                     db_manager.reconectar_mariadb(host_to_retry)
                             except Exception as retry_e:
                                 logger.debug(f"Reintento conexión falló: {retry_e}")
-                        
+
                         QTimer.singleShot(30000, _retry_mariadb_connection)
                 except Exception as timer_e:
                     logger.warning(f"No se pudo programar reintento: {timer_e}")

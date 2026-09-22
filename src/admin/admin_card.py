@@ -22,19 +22,19 @@ class AdminCard(QFrame):
 
         lay = QVBoxLayout(self)
         lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lbl_icon = QLabel(icon)
         lbl_icon.setStyleSheet("font-size: 32px; background: transparent; border: none;")
         lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lbl_title = QLabel(title)
         lbl_title.setStyleSheet("font-weight: bold; font-size: 13px; color: #1E293B; background: transparent; border: none;")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lbl_sub = QLabel(sub)
         lbl_sub.setStyleSheet("font-size: 10px; color: #64748B; background: transparent; border: none;")
         lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         lay.addWidget(lbl_icon)
         lay.addWidget(lbl_title)
         lay.addWidget(lbl_sub)

@@ -25,17 +25,17 @@ class MotorPromedios:
         """
         pct = 0.0
         precio_venta = 0.0
-        
+
         if columna_editada == 3: # % Ganancia
             pct = nuevo_valor
             if costo_real_kg > 0:
                 precio_venta = costo_real_kg * (1 + pct / 100.0)
-                
+
         elif columna_editada == 4: # Precio Venta
             precio_venta = nuevo_valor
             if costo_real_kg > 0:
                 pct = ((precio_venta / costo_real_kg) - 1) * 100.0
-                
+
         return pct, precio_venta
 
     @staticmethod
@@ -45,7 +45,7 @@ class MotorPromedios:
         """
         estado = estado_promedios.get(tipo_promedio)
         if not estado: return 0
-        
+
         actualizados = 0
         filas = estado.get("filas", [])
         for row_data in filas:
@@ -55,15 +55,15 @@ class MotorPromedios:
                 precio_base_str = str(row_data[4]).replace(',', '').strip()
                 oferta_str = str(row_data[5]).replace(',', '').strip()
                 cant_str = str(row_data[6]).replace(',', '').strip()
-                
+
                 precio = 0.0
                 precio_oferta = 0.0
                 cant_oferta = 0.0
                 costo = 0.0
-                
+
                 if not corte: continue
 
-                
+
                 try:
                     if precio_base_str: precio = float(precio_base_str)
                 except: pass
@@ -76,13 +76,13 @@ class MotorPromedios:
                 try:
                     if costo_str: costo = float(costo_str)
                 except: pass
-                
+
                 if precio > 0 or precio_oferta > 0:
                     # Verificar si existe
                     res = db.execute_query("SELECT id FROM productos WHERE nombre = ?", (corte,))
                     if res:
                         db.execute_non_query(
-                            "UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ?, costo = ? WHERE nombre = ?", 
+                            "UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ?, costo = ? WHERE nombre = ?",
                             (precio, precio_oferta, cant_oferta, costo, corte)
                         )
                     else:
@@ -93,7 +93,7 @@ class MotorPromedios:
                             (corte, precio, precio_oferta, cant_oferta, tipo_promedio.upper(), cod, costo)
                         )
                     actualizados += 1
-                        
+
         return actualizados
 
     @staticmethod
@@ -103,7 +103,7 @@ class MotorPromedios:
         """
         estado = estado_promedios.get(tipo_promedio)
         if not estado: return 0
-        
+
         actualizados = 0
         filas = estado.get("filas", [])
         for r_idx, row_data in enumerate(filas):
@@ -114,7 +114,7 @@ class MotorPromedios:
                     p_normal = float(res[0]['precio'] or 0)
                     p_oferta = float(res[0]['precio_oferta_promedio'] or 0)
                     c_oferta = float(res[0]['cant_oferta'] or 0)
-                    
+
                     if p_normal > 0:
                         filas[r_idx][4] = f"{p_normal:,.2f}"
                         actualizados += 1
@@ -122,9 +122,9 @@ class MotorPromedios:
                         filas[r_idx][5] = f"{p_oferta:,.2f}"
                     if c_oferta > 0:
                         filas[r_idx][6] = str(c_oferta)
-                        
+
         return actualizados
-        
+
     @staticmethod
     def guardar_historial(db, tipo_carne: str, estado_promedio: dict, prov: str, fecha_str: str):
         """
@@ -136,9 +136,9 @@ class MotorPromedios:
             precio = float(estado_promedio.get("precio") or 0)
             if kilos == 0 or precio == 0:
                 return False
-                
+
             datos_json = json.dumps(estado_promedio.get("filas", []))
-            
+
             db.execute_non_query(
                 "INSERT INTO historial_promedios (tipo_carne, fecha_guardado, proveedor, kilos_base, precio_kg_base, datos_json) VALUES (?, ?, ?, ?, ?, ?)",
                 (tipo_carne, fecha_str, prov, kilos, precio, datos_json)
@@ -154,7 +154,7 @@ class MotorPromedios:
         Lee el historial de la BD.
         """
         import json
-        
+
         try:
             # Create table if not exists just in case (hot patch)
             db.execute_non_query("""
@@ -163,12 +163,12 @@ class MotorPromedios:
                     tipo_carne TEXT, fecha_guardado TEXT, proveedor TEXT, kilos_base REAL, precio_kg_base REAL, datos_json TEXT
                 )
             """)
-            
+
             historial = db.execute_query(
                 "SELECT id, fecha_guardado as fecha, proveedor, kilos_base as kilos, precio_kg_base as precio, datos_json FROM historial_promedios WHERE tipo_carne = ? ORDER BY id DESC LIMIT 50",
                 (tipo_carne,)
             )
-            
+
             resultados = []
             if historial:
                 for row in historial:

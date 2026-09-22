@@ -5,7 +5,7 @@ class ProductoRepository:
     Capa de acceso a datos para la tabla 'productos'.
     Aísla las consultas SQL de la Interfaz Gráfica.
     """
-    
+
     @staticmethod
     def obtener_por_id(producto_id: str) -> dict:
         """Devuelve un producto por su ID (código de barras) o None si no existe."""

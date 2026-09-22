@@ -33,16 +33,16 @@ ICONOS_CONFIG = {
 def crear_icono_clima(nombre: str, output_path: str, size: tuple = (64, 64)):
     """Crea un icono PNG del clima con diseño básico."""
     config = ICONOS_CONFIG.get(nombre, ICONOS_CONFIG["sol"])
-    
+
     # Crear imagen con fondo degradado
     img = Image.new('RGBA', size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(img)
-    
+
     # Fondo circular con color del clima
     margin = 4
     circle_bbox = (margin, margin, size[0] - margin, size[1] - margin)
     draw.ellipse(circle_bbox, fill=config["bg_color"] + (255,))
-    
+
     # Intentar usar emoji del sistema
     try:
         # Buscar fuente que soporte emojis
@@ -56,7 +56,7 @@ def crear_icono_clima(nombre: str, output_path: str, size: tuple = (64, 64)):
                 font = ImageFont.truetype("arial.ttf", font_size)
             except:
                 font = ImageFont.load_default()
-        
+
         # Centrar emoji
         text_bbox = draw.textbbox((0, 0), config["emoji"], font=font)
         text_width = text_bbox[2] - text_bbox[0]
@@ -64,7 +64,7 @@ def crear_icono_clima(nombre: str, output_path: str, size: tuple = (64, 64)):
         text_x = (size[0] - text_width) // 2
         text_y = (size[1] - text_height) // 2 - 2
         draw.text((text_x, text_y), config["emoji"], font=font, fill=(255, 255, 255, 255))
-        
+
     except Exception as e:
         logger.warning(f"No se pudo usar emoji para {nombre}: {e}")
         # Fallback: dibujar icono geométrico simple
@@ -72,7 +72,7 @@ def crear_icono_clima(nombre: str, output_path: str, size: tuple = (64, 64)):
             # Dibujar sol simple
             center = size[0] // 2
             radius = size[0] // 4
-            draw.ellipse((center - radius, center - radius, center + radius, center + radius), 
+            draw.ellipse((center - radius, center - radius, center + radius, center + radius),
                         fill=(255, 255, 0, 255))
         elif nombre == "nube":
             # Dibujar nube simple (círculos superpuestos)
@@ -89,7 +89,7 @@ def crear_icono_clima(nombre: str, output_path: str, size: tuple = (64, 64)):
                 x = center - 10 + (i * 10)
                 y = center + 5
                 draw.ellipse((x, y, x + 3, y + 8), fill=(100, 150, 255, 255))
-    
+
     # Guardar imagen
     img.save(output_path, 'PNG')
     logger.info(f"Icono creado: {output_path}")
@@ -104,13 +104,13 @@ def generar_todos_los_iconos():
         # Fallback si no podemos importar paths
         current_dir = os.path.dirname(os.path.abspath(__file__))
         assets_dir = os.path.join(current_dir, "la_cara_web", "assets")
-    
+
     os.makedirs(assets_dir, exist_ok=True)
-    
+
     iconos_creados = []
     for nombre in ICONOS_CONFIG.keys():
         output_path = os.path.join(assets_dir, f"{nombre}.png")
-        
+
         # Solo crear si no existe o está corrupto
         crear = True
         if os.path.exists(output_path):
@@ -122,14 +122,14 @@ def generar_todos_los_iconos():
                 logger.info(f"Icono existente válido: {output_path}")
             except Exception:
                 logger.warning(f"Icono corrupto, reemplazando: {output_path}")
-        
+
         if crear:
             try:
                 crear_icono_clima(nombre, output_path)
                 iconos_creados.append(output_path)
             except Exception as e:
                 logger.error(f"Error creando icono {nombre}: {e}")
-    
+
     return iconos_creados
 
 def main():

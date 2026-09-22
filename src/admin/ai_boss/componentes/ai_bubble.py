@@ -35,7 +35,7 @@ class Admin12AIBoss(QWidget):
         btn_back.setStyleSheet("  font-weight: 800; border-radius: 8px; padding: 10px;")
         btn_back.clicked.connect(self.request_dashboard.emit)
         header.addWidget(btn_back)
-        
+
         lbl_title = QLabel("🧠 MENTOR ESTRATÉGICO <span style=''>AI BOSS 2026</span>")
         lbl_title.setStyleSheet("font-size: 24px; font-weight: 900; margin-left: 15px;")
         header.addWidget(lbl_title)
@@ -80,7 +80,7 @@ class Admin12AIBoss(QWidget):
 
     def load_insights(self):
         # Limpiar previos
-        for i in reversed(range(self.insights_layout.count())): 
+        for i in reversed(range(self.insights_layout.count())):
             self.insights_layout.itemAt(i).widget().setParent(None)
 
         # Simulación de datos reales para el Boss
@@ -106,7 +106,7 @@ class Admin12AIBoss(QWidget):
         if not query: return
         self.txt_cmd.clear()
         self.add_log(query, False)
-        
+
         # Inteligencia Estratégica (Lógica sin humo)
         if "venta" in query.lower():
             res = "La tendencia indica que el pico de ventas ocurre entre las 18:00 y 20:00. Sugiero reforzar personal en ese horario."
@@ -116,6 +116,6 @@ class Admin12AIBoss(QWidget):
             res = "Su margen operativo promedio es del 28%. Optimizar el inventario de cárnicos podría subirlo al 31%."
         else:
             res = "Analizando datos globales... Mi recomendación es mantener el nivel de inversión actual y vigilar el stock de los 5 productos más vendidos."
-        
+
         QTimer.singleShot(500, lambda: self.add_log(res))
 

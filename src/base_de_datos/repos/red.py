@@ -26,7 +26,7 @@ class RedRepoMixin:
             row = cursor.fetchone()
             if getattr(self, "db_engine_type", "sqlite") == "sqlite":
                 conn.close()
-            
+
             if row:
                 if isinstance(row, dict):
                     return list(row.values())[0]
@@ -86,4 +86,4 @@ class RedRepoMixin:
         limite = (datetime.now() - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
         res = self.execute_scalar("SELECT COUNT(*) FROM terminales_activos WHERE last_seen >= ?", (limite,))
         return int(res) if res is not None else 1
-
+

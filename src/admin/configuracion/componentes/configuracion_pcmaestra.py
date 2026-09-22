@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                              QLineEdit, QPushButton, QMessageBox, QFormLayout, QSpinBox)
 from PyQt6.QtCore import Qt
 from src.config import config
@@ -8,7 +8,7 @@ class DialogoConfiguracionCarteleria(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Configuración de Cartelería (PC Maestra)")
         self.setFixedSize(450, 350)
-        
+
         self.setStyleSheet("""
             QDialog {
                 background-color: #f0f4f8;
@@ -37,24 +37,24 @@ class DialogoConfiguracionCarteleria(QDialog):
         """)
 
         layout = QVBoxLayout(self)
-        
+
         titulo = QLabel("Ajustes Globales de Cartelería")
         titulo.setStyleSheet("font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(titulo)
 
         form = QFormLayout()
-        
+
         # Nombre del Negocio
         self.txt_nombre = QLineEdit()
         self.txt_nombre.setText(config.get("business_name", "Carnicería"))
         form.addRow("Nombre del Negocio:", self.txt_nombre)
-        
+
         # Teléfono
         self.txt_telefono = QLineEdit()
         self.txt_telefono.setText(config.get("phone", "No disponible"))
         form.addRow("Teléfono de Contacto:", self.txt_telefono)
-        
+
         # IP Maestra
         self.txt_ip = QLineEdit()
         self.txt_ip.setText(config.get("carteleria_master_ip", ""))
@@ -83,18 +83,18 @@ class DialogoConfiguracionCarteleria(QDialog):
         form.addRow("Frecuencia SOS:", self.spin_sos_frec)
 
         layout.addLayout(form)
-        
+
         btn_layout = QHBoxLayout()
         btn_guardar = QPushButton("Guardar Cambios")
         btn_guardar.clicked.connect(self._guardar)
         btn_cancelar = QPushButton("Cancelar")
         btn_cancelar.setStyleSheet("background-color: #95a5a6;")
         btn_cancelar.clicked.connect(self.reject)
-        
+
         btn_layout.addStretch()
         btn_layout.addWidget(btn_cancelar)
         btn_layout.addWidget(btn_guardar)
-        
+
         layout.addLayout(btn_layout)
 
     def _guardar(self):
@@ -105,6 +105,6 @@ class DialogoConfiguracionCarteleria(QDialog):
         config.set("carteleria_tiempo_sos", self.spin_sos_tiempo.value())
         config.set("carteleria_frec_sos", self.spin_sos_frec.value())
         config.save()
-        
+
         QMessageBox.information(self, "Guardado", "La configuración de la cartelería se ha guardado correctamente.\n(Los cambios se reflejarán instantáneamente en la pantalla).")
         self.accept()

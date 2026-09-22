@@ -33,7 +33,7 @@ class Database:
                     type TEXT DEFAULT 'variable'
                 )
             ''')
-            
+
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS activity_log (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,7 +43,7 @@ class Database:
                     details TEXT
                 )
             ''')
-            
+
             # Migration check for 'type'
             cursor.execute("PRAGMA table_info(expenses)")
             columns = [col[1] for col in cursor.fetchall()]
@@ -60,7 +60,7 @@ class Database:
                     due_day INTEGER DEFAULT 1
                 )
             ''')
-            
+
             # Migration check for 'due_day' in fixed_costs
             cursor.execute("PRAGMA table_info(fixed_costs)")
             columns = [col[1] for col in cursor.fetchall()]
@@ -79,7 +79,7 @@ class Database:
                     status TEXT DEFAULT 'active'
                 )
             ''')
-            
+
             # Migration check for 'capital' and 'interest'
             cursor.execute("PRAGMA table_info(loans)")
             columns = [col[1] for col in cursor.fetchall()]
@@ -187,12 +187,12 @@ class Database:
     def add_expense(self, date: str, category: str, amount: float, description: str, expense_type: str = 'variable', cursor: sqlite3.Cursor = None):
         """Registra un nuevo gasto en la base de datos y lo anota en el historial de actividad."""
         if cursor:
-            cursor.execute('INSERT INTO expenses (date, category, amount, description, type) VALUES (?, ?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO expenses (date, category, amount, description, type) VALUES (?, ?, ?, ?, ?)',
                            (date, category, amount, description, expense_type))
         else:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute('INSERT INTO expenses (date, category, amount, description, type) VALUES (?, ?, ?, ?, ?)', 
+                cursor.execute('INSERT INTO expenses (date, category, amount, description, type) VALUES (?, ?, ?, ?, ?)',
                                (date, category, amount, description, expense_type))
                 cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
                                (self.db_name.replace(".db", "").upper(), "GASTO", f"${amount:,.2f} - {category}"))
@@ -217,14 +217,14 @@ class Database:
     def update_expense(self, id, amount, description, category):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('UPDATE expenses SET amount = ?, description = ?, category = ? WHERE id = ?', 
+            cursor.execute('UPDATE expenses SET amount = ?, description = ?, category = ? WHERE id = ?',
                            (amount, description, category, id))
             conn.commit()
 
     def add_income(self, date, amount, description, source):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO income (date, amount, description, source) VALUES (?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO income (date, amount, description, source) VALUES (?, ?, ?, ?)',
                            (date, amount, description, source))
             cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
                            (self.db_name.replace(".db", "").upper(), "INGRESO", f"${amount:,.2f} - {source}"))
@@ -249,14 +249,14 @@ class Database:
     def update_income(self, id, amount, description, source):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('UPDATE income SET amount = ?, description = ?, source = ? WHERE id = ?', 
+            cursor.execute('UPDATE income SET amount = ?, description = ?, source = ? WHERE id = ?',
                            (amount, description, source, id))
             conn.commit()
 
     def add_investment(self, date, name, amount, category):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO investments (date, name, amount, category) VALUES (?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO investments (date, name, amount, category) VALUES (?, ?, ?, ?)',
                            (date, name, amount, category))
             cursor.execute('INSERT INTO activity_log (company, action, details) VALUES (?, ?, ?)',
                            (self.db_name.replace(".db", "").upper(), "INVERSIÓN", f"${amount:,.2f} - {name}"))
@@ -296,12 +296,12 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO loans (name, total_amount, capital, interest, category) 
+                INSERT INTO loans (name, total_amount, capital, interest, category)
                 VALUES (?, ?, ?, ?, ?)
             ''', (name, total_amount, capital, interest, category))
             loan_id = cursor.lastrowid
             inst_amount = total_amount / installments_count
-            
+
             if first_due_date:
                 start_date = datetime.datetime.strptime(first_due_date, "%Y-%m-%d").date()
             else:
@@ -314,8 +314,8 @@ class Database:
                 month = month % 12 + 1
                 day = min(start_date.day, calendar.monthrange(year, month)[1])
                 due_date = datetime.date(year, month, day).strftime("%Y-%m-%d")
-                
-                cursor.execute('INSERT INTO installments (loan_id, number, amount, due_date) VALUES (?, ?, ?, ?)', 
+
+                cursor.execute('INSERT INTO installments (loan_id, number, amount, due_date) VALUES (?, ?, ?, ?)',
                                (loan_id, i, inst_amount, due_date))
             conn.commit()
 
@@ -336,10 +336,10 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT i.*, l.name, l.capital, l.interest, l.total_amount, 
+                SELECT i.*, l.name, l.capital, l.interest, l.total_amount,
                        (SELECT COUNT(*) FROM installments WHERE loan_id = l.id) as total_inst
-                FROM installments i 
-                JOIN loans l ON i.loan_id = l.id 
+                FROM installments i
+                JOIN loans l ON i.loan_id = l.id
                 WHERE i.status IN ('pending', 'partial') ORDER BY i.due_date
             ''')
             return cursor.fetchall()
@@ -362,20 +362,20 @@ class Database:
                     cursor.execute('SELECT name, category FROM loans WHERE id = ?', (loan_id,))
                     loan = cursor.fetchone()
                     today = datetime.date.today().strftime("%Y-%m-%d")
-                    
+
                     total = inst['amount']
                     already_paid = inst['paid_amount'] if 'paid_amount' in inst.keys() else 0.0
                     remaining = total - already_paid
-                    
+
                     amount = float(payment_amount) if payment_amount is not None else remaining
                     if amount <= 0: return
-                    
+
                     new_paid = already_paid + amount
                     status = 'paid' if new_paid >= total else 'partial'
-                    
-                    cursor.execute("UPDATE installments SET status = ?, paid_amount = ?, paid_date = ? WHERE id = ?", 
+
+                    cursor.execute("UPDATE installments SET status = ?, paid_amount = ?, paid_date = ? WHERE id = ?",
                                    (status, new_paid, today, inst_id))
-                    
+
                     desc = f"Pago {'Parcial ' if status == 'partial' else ''}Cuota {inst['number']} - {loan['name']}"
                     self.add_expense(today, loan['category'], amount, desc, 'tesoreria', cursor=cursor)
                     conn.commit()
@@ -387,7 +387,7 @@ class Database:
     def add_check(self, bank, number, amount, due_date, recipient):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO checks (bank, number, amount, due_date, recipient) VALUES (?, ?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO checks (bank, number, amount, due_date, recipient) VALUES (?, ?, ?, ?, ?)',
                            (bank, number, amount, due_date, recipient))
             conn.commit()
 
@@ -407,13 +407,13 @@ class Database:
                 total = check['amount']
                 already_paid = check['paid_amount'] if 'paid_amount' in check.keys() else 0.0
                 remaining = total - already_paid
-                
+
                 amount = float(payment_amount) if payment_amount is not None else remaining
                 if amount <= 0: return
-                
+
                 new_paid = already_paid + amount
                 status = 'paid' if new_paid >= total else 'partial'
-                
+
                 cursor.execute("UPDATE checks SET status = ?, paid_amount = ? WHERE id = ?", (status, new_paid, check_id))
                 desc = f"Cobro {'Parcial ' if status == 'partial' else ''}Cheque {check['number']} - {check['bank']}"
                 self.add_expense(today, "Cheques", amount, desc, 'tesoreria', cursor=cursor)
@@ -422,7 +422,7 @@ class Database:
     def add_general_debt(self, name, category, amount, due_date):
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('INSERT INTO general_debts (name, category, amount, due_date) VALUES (?, ?, ?, ?)', 
+            cursor.execute('INSERT INTO general_debts (name, category, amount, due_date) VALUES (?, ?, ?, ?)',
                            (name, category, amount, due_date))
             conn.commit()
 
@@ -442,13 +442,13 @@ class Database:
                 total = debt['amount']
                 already_paid = debt['paid_amount'] if 'paid_amount' in debt.keys() else 0.0
                 remaining = total - already_paid
-                
+
                 amount = float(payment_amount) if payment_amount is not None else remaining
                 if amount <= 0: return
-                
+
                 new_paid = already_paid + amount
                 status = 'paid' if new_paid >= total else 'partial'
-                
+
                 cursor.execute("UPDATE general_debts SET status = ?, paid_amount = ? WHERE id = ?", (status, new_paid, debt_id))
                 desc = f"Pago {'Parcial ' if status == 'partial' else ''}{debt['category']} - {debt['name']}"
                 self.add_expense(today, debt['category'], amount, desc, 'tesoreria', cursor=cursor)
@@ -495,8 +495,8 @@ class Database:
             cursor = conn.cursor()
             search = f"%{query}%"
             cursor.execute('''
-                SELECT * FROM expenses 
-                WHERE category LIKE ? OR description LIKE ? 
+                SELECT * FROM expenses
+                WHERE category LIKE ? OR description LIKE ?
                 ORDER BY date DESC
             ''', (search, search))
             return cursor.fetchall()
@@ -527,7 +527,7 @@ class Database:
             'fijos': 0.0,
             'total': 0.0
         }
-        
+
         def days_until(target_date_str):
             if not target_date_str: return 1
             try:
@@ -539,7 +539,7 @@ class Database:
 
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # 1. Prestamos (cuotas pendientes)
             cursor.execute("SELECT amount, due_date, paid_amount FROM installments WHERE status != 'paid'")
             for row in cursor.fetchall():
@@ -549,7 +549,7 @@ class Database:
                 if rem > 0:
                     d = days_until(row[1])
                     drain['prestamos'] += (rem / d)
-                    
+
             # 2. General Debts
             cursor.execute("SELECT amount, due_date, paid_amount FROM general_debts WHERE status != 'paid'")
             for row in cursor.fetchall():
@@ -559,7 +559,7 @@ class Database:
                 if rem > 0:
                     d = days_until(row[1])
                     drain['tarjetas_prov'] += (rem / d)
-                    
+
             # 3. Checks
             cursor.execute("SELECT amount, due_date, paid_amount FROM checks WHERE status != 'paid'")
             for row in cursor.fetchall():
@@ -569,7 +569,7 @@ class Database:
                 if rem > 0:
                     d = days_until(row[1])
                     drain['cheques'] += (rem / d)
-                    
+
             # 4. Fixed Costs
             cursor.execute("SELECT amount, due_day FROM fixed_costs")
             for row in cursor.fetchall():
@@ -579,7 +579,7 @@ class Database:
                     due_day = int(due_day)
                 except:
                     due_day = 1
-                    
+
                 if due_day < today.day:
                     if today.month == 12:
                         y = today.year + 1
@@ -590,7 +590,7 @@ class Database:
                 else:
                     y = today.year
                     m = today.month
-                    
+
                 try:
                     target = datetime.date(y, m, due_day)
                 except ValueError:
@@ -598,11 +598,11 @@ class Database:
                         target = datetime.date(y+1, 1, 1)
                     else:
                         target = datetime.date(y, m+1, 1)
-                
+
                 diff = (target - today).days
                 d = max(1, diff)
                 drain['fijos'] += (amount / d)
-                
+
         drain['total'] = drain['prestamos'] + drain['tarjetas_prov'] + drain['cheques'] + drain['fijos']
         return drain
 
@@ -613,31 +613,31 @@ class Database:
             if not month or not year:
                 today = datetime.date.today()
                 month, year = today.month, today.year
-            
+
             period_str = f"{year}-{month:02d}"
-            
+
             # Expenses for the period (excluding debt payments to keep P&L accurate)
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type != 'tesoreria'", (f"{period_str}-%",))
             total_expenses = cursor.fetchone()[0] or 0.0
-            
+
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'fijo'", (f"{period_str}-%",))
             fixed_expenses = cursor.fetchone()[0] or 0.0
-            
+
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'variable'", (f"{period_str}-%",))
             variable_expenses = cursor.fetchone()[0] or 0.0
-            
+
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ? AND type = 'tesoreria'", (f"{period_str}-%",))
             financial_expenses = cursor.fetchone()[0] or 0.0
-            
+
             # Income for the period
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{period_str}-%",))
             total_income = cursor.fetchone()[0] or 0.0
-            
+
             # Category Breakdown (OPEX only)
             cursor.execute('''
-                SELECT category, SUM(amount) FROM expenses 
+                SELECT category, SUM(amount) FROM expenses
                 WHERE date LIKE ? AND type != 'tesoreria'
-                GROUP BY category 
+                GROUP BY category
                 ORDER BY SUM(amount) DESC
             ''', (f"{period_str}-%",))
             categories = cursor.fetchall()
@@ -651,7 +651,7 @@ class Database:
             card_balance = cursor.fetchone()[0] or 0.0
             cursor.execute("SELECT SUM(amount) FROM general_debts WHERE category = 'Proveedor' AND status = 'pending'")
             prov_balance = cursor.fetchone()[0] or 0.0
-            
+
             cursor.execute("SELECT SUM(amount) FROM investments")
             inv_balance = cursor.fetchone()[0] or 0.0
 
@@ -675,32 +675,32 @@ class Database:
         """Obtiene métricas de contabilidad pura: Total del día, mes y año acumulado."""
         if not date_obj:
             date_obj = datetime.date.today()
-        
+
         day_str = date_obj.strftime("%Y-%m-%d")
         month_str = date_obj.strftime("%Y-%m")
         year_str = date_obj.strftime("%Y")
-        
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
+
             # --- DAILY ---
             cursor.execute("SELECT SUM(amount) FROM income WHERE date = ?", (day_str,))
             daily_inc = cursor.fetchone()[0] or 0.0
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date = ?", (day_str,))
             daily_exp = cursor.fetchone()[0] or 0.0
-            
+
             # --- MONTHLY ---
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{month_str}-%",))
             monthly_inc = cursor.fetchone()[0] or 0.0
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ?", (f"{month_str}-%",))
             monthly_exp = cursor.fetchone()[0] or 0.0
-            
+
             # --- ANNUAL ---
             cursor.execute("SELECT SUM(amount) FROM income WHERE date LIKE ?", (f"{year_str}-%",))
             annual_inc = cursor.fetchone()[0] or 0.0
             cursor.execute("SELECT SUM(amount) FROM expenses WHERE date LIKE ?", (f"{year_str}-%",))
             annual_exp = cursor.fetchone()[0] or 0.0
-            
+
             return {
                 "day": {"inc": daily_inc, "exp": daily_exp, "net": daily_inc - daily_exp},
                 "month": {"inc": monthly_inc, "exp": monthly_exp, "net": monthly_inc - monthly_exp},
@@ -711,29 +711,29 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             period_str = f"{year}-{month:02d}-%" if month and year else "%"
-            
+
             cursor.execute('''
-                SELECT date, 'INGRESO' as type, source as cat, description, amount, id, 'Pagado' as status FROM income 
+                SELECT date, 'INGRESO' as type, source as cat, description, amount, id, 'Pagado' as status FROM income
                 WHERE date LIKE ?
                 UNION ALL
                 SELECT date, 'EGRESO' as type, category as cat, description, -amount as amount, id, 'Pagado' as status FROM expenses
                 WHERE date LIKE ?
                 UNION ALL
-                SELECT due_date as date, 'DEUDA' as type, category as cat, name as description, -amount as amount, id, 
-                       CASE WHEN status = 'pending' THEN 'Pendiente' 
+                SELECT due_date as date, 'DEUDA' as type, category as cat, name as description, -amount as amount, id,
+                       CASE WHEN status = 'pending' THEN 'Pendiente'
                             WHEN status = 'partial' THEN 'Parcial'
                             ELSE 'Pagado' END as status
                 FROM general_debts
                 WHERE due_date LIKE ? AND status != 'paid'
                 UNION ALL
-                SELECT due_date as date, 'CHEQUE' as type, 'Cheque' as cat, bank || ' - ' || recipient as description, -amount as amount, id, 
-                       CASE WHEN status = 'pending' THEN 'Pendiente' 
+                SELECT due_date as date, 'CHEQUE' as type, 'Cheque' as cat, bank || ' - ' || recipient as description, -amount as amount, id,
+                       CASE WHEN status = 'pending' THEN 'Pendiente'
                             ELSE 'Pagado' END as status
                 FROM checks
                 WHERE due_date LIKE ? AND status != 'paid'
                 UNION ALL
-                SELECT i.due_date as date, 'PRÉSTAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id, 
-                       CASE WHEN i.status = 'pending' THEN 'Pendiente' 
+                SELECT i.due_date as date, 'PRÉSTAMO' as type, l.category as cat, 'Cuota ' || i.number || ' - ' || l.name as description, -i.amount as amount, i.id,
+                       CASE WHEN i.status = 'pending' THEN 'Pendiente'
                             WHEN i.status = 'partial' THEN 'Parcial'
                             ELSE 'Pagado' END as status
                 FROM installments i

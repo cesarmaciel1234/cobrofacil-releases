@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-                             QPushButton, QTableWidget, QTableWidgetItem, 
-                             QHeaderView, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QLineEdit, QMessageBox, QDialog,
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
@@ -25,16 +25,16 @@ class AdminClientes(QWidget):
         super().__init__()
         self.db = db_manager
         self.initUI()
-        
+
     def initUI(self):
         self.setStyleSheet(f"background: {_CLI['bg']};")
         lay = QVBoxLayout(self)
         lay.setContentsMargins(30, 30, 30, 30)
         lay.setSpacing(20)
-        
+
         # Header
         header_lay = QHBoxLayout()
-        
+
         btn_back = QPushButton("🔙 VOLVER AL PANEL")
         btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet(f"""
@@ -45,15 +45,15 @@ class AdminClientes(QWidget):
             QPushButton:hover {{ background: {_CLI['accent_light']}; color: {_CLI['accent']}; border-color: #BFDBFE; }}
         """)
         btn_back.clicked.connect(self.request_dashboard.emit)
-        
+
         header_lay.addWidget(btn_back)
         header_lay.addSpacing(15)
-        
+
         lbl_titulo = QLabel("💎 CARTERA DE CLIENTES Y CRÉDITO")
         lbl_titulo.setStyleSheet(
             f"font-size: 22px; font-weight: 900; color: {_CLI['text']}; letter-spacing: 0.5px; border: none;"
         )
-        
+
         self.btn_nuevo = QPushButton("+ NUEVO CLIENTE")
         self.btn_nuevo.setCursor(Qt.PointingHandCursor)
         self.btn_nuevo.setStyleSheet(f"""
@@ -66,7 +66,7 @@ class AdminClientes(QWidget):
             QPushButton:hover {{ background: {_CLI['accent_hover']}; }}
         """)
         self.btn_nuevo.clicked.connect(self.nuevo_cliente)
-        
+
         header_lay.addWidget(lbl_titulo)
         header_lay.addSpacing(12)
 
@@ -88,7 +88,7 @@ class AdminClientes(QWidget):
         header_lay.addStretch()
         header_lay.addWidget(self.btn_nuevo)
         lay.addLayout(header_lay)
-        
+
         # Tarjetas 3D
         cards_lay = QHBoxLayout()
         cards_lay.setSpacing(20)
@@ -99,20 +99,16 @@ class AdminClientes(QWidget):
         cards_lay.addWidget(self.card_activos)
         cards_lay.addWidget(self.card_mayor)
         lay.addLayout(cards_lay)
-        
+
         # Tabla
         panel_tabla = QFrame()
         panel_tabla.setStyleSheet(
             f"background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px;"
         )
-        tbl_shadow = QGraphicsDropShadowEffect(panel_tabla)
-        tbl_shadow.setBlurRadius(36)
-        tbl_shadow.setOffset(0, 8)
-        tbl_shadow.setColor(QColor(15, 23, 42, 16))
-        panel_tabla.setGraphicsEffect(tbl_shadow)
+        tbl_        tbl_        tbl_        tbl_        panel_tabla.setGraphicsEffect(tbl_shadow)
         pt_lay = QVBoxLayout(panel_tabla)
         pt_lay.setContentsMargins(20, 20, 20, 20)
-        
+
         self.txt_buscar = QLineEdit()
         self.txt_buscar.setPlaceholderText("🔍 Buscar por nombre o DNI...")
         self.txt_buscar.setStyleSheet(f"""
@@ -126,7 +122,7 @@ class AdminClientes(QWidget):
         """)
         self.txt_buscar.textChanged.connect(self.cargar_clientes)
         pt_lay.addWidget(self.txt_buscar)
-        
+
         self.tabla = QTableWidget()
         self.tabla.setColumnCount(10)
         self.tabla.setHorizontalHeaderLabels([
@@ -166,23 +162,23 @@ class AdminClientes(QWidget):
         self.tabla.cellClicked.connect(self._on_fila_cliente_clic)
         pt_lay.addWidget(self.tabla)
         lay.addWidget(panel_tabla)
-        
+
         self.cargar_clientes()
-        
+
     def cargar_clientes(self):
         self.tabla.setRowCount(0)
         busqueda = self.txt_buscar.text().strip()
-        
+
         clientes = self.db.execute_query(
             "SELECT * FROM clientes WHERE nombre LIKE ? OR COALESCE(dni, '') LIKE ? "
             "ORDER BY deuda_actual DESC, nombre ASC",
             (f"%{busqueda}%", f"%{busqueda}%"),
         )
-        
+
         total_deuda = 0
         deudores = 0
         max_deuda = 0
-        
+
         if clientes:
             for i, c in enumerate(clientes):
                 deuda = float(dict(c).get('deuda_actual') or 0)
@@ -199,7 +195,7 @@ class AdminClientes(QWidget):
                     deudores += 1
                     if deuda > max_deuda:
                         max_deuda = deuda
-                    
+
                 self.tabla.insertRow(i)
                 self.tabla.setRowHeight(i, 58)
                 it_id = QTableWidgetItem(str(c['id']))
@@ -213,7 +209,7 @@ class AdminClientes(QWidget):
                     it_tipo.setFont(QFont("Arial", 10, QFont.Bold))
                 self.tabla.setItem(i, 3, it_tipo)
                 self.tabla.setItem(i, 4, QTableWidgetItem(f"${limite:,.2f}"))
-                
+
                 it_deuda = QTableWidgetItem(f"${deuda:,.2f}")
                 if deuda > 0:
                     it_deuda.setForeground(QColor("#EF4444"))
@@ -226,7 +222,7 @@ class AdminClientes(QWidget):
                 elif disponible < limite * 0.2:
                     it_disp.setForeground(QColor("#F59E0B"))
                 self.tabla.setItem(i, 6, it_disp)
-                
+
                 dias_atraso = 0
                 if deuda > 0:
                     ultima_compra = self.db.execute_scalar(
@@ -239,13 +235,13 @@ class AdminClientes(QWidget):
                             dias_atraso = (datetime.now() - dt).days
                         except Exception:
                             pass
-                        
+
                 it_dias = QTableWidgetItem(f"{dias_atraso} días")
                 if dias_atraso > 30:
                     it_dias.setForeground(QColor("#DC2626"))
                     it_dias.setFont(QFont("Arial", 10, QFont.Bold))
                 self.tabla.setItem(i, 7, it_dias)
-                
+
                 btn_sim = QPushButton("🔄 Recalcular")
                 btn_sim.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn_sim.setFixedHeight(32)
@@ -261,7 +257,7 @@ class AdminClientes(QWidget):
                     btn_sim.setEnabled(False)
                     btn_sim.setStyleSheet("background: transparent; color: transparent; border: none;")
                 self.tabla.setCellWidget(i, 8, btn_sim)
-                
+
                 acc_w = QWidget()
                 acc_lay = QHBoxLayout(acc_w)
                 acc_lay.setContentsMargins(4, 2, 4, 2)
@@ -316,7 +312,7 @@ class AdminClientes(QWidget):
                 acc_lay.addWidget(btn_editar)
 
                 self.tabla.setCellWidget(i, 9, acc_w)
-                
+
         self.card_deuda.set_valor(total_deuda, True)
         self.card_activos.set_valor(deudores)
         self.card_mayor.set_valor(max_deuda, True)

@@ -19,7 +19,7 @@ class LiveTicketsWorker(QThread):
                 # Buscamos registros de tickets/ventas (excluimos corazÃ³n y alertas puras aquÃ­)
                 query = "SELECT id, caja_id, fecha, observaciones FROM movimientos_caja WHERE observaciones LIKE '[TICKET]%' OR tipo LIKE '[TICKET]%' OR tipo='VENTA' ORDER BY id ASC"
                 rows = db_manager.execute_query(query)
-                
+
                 if rows:
                     for row in rows:
                         row_id = row['id']
@@ -27,7 +27,7 @@ class LiveTicketsWorker(QThread):
                             c_id = row['caja_id']
                             caja_str = f"PC-0{c_id}" if c_id and int(c_id) < 10 else f"PC-{c_id}"
                             obs = str(row['observaciones'])
-                            
+
                             # Limpiar tag para mostrar amigable
                             obs_clean = obs.replace("[TICKET]", "").replace("[VENTA]", "").strip()
                             fecha_corta = str(row['fecha'])[11:16] if row['fecha'] and len(str(row['fecha'])) >= 16 else "00:00"
@@ -54,14 +54,14 @@ class BurbujaTicket(QFrame):
         """)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 8)
-        
+
         lbl_head = QLabel(f"ð {hora}  |  ð» {caja}")
         lbl_head.setStyleSheet("color: #94A3B8; font-size: 11px; font-weight: bold; border: none; background: transparent;")
-        
+
         lbl_det = QLabel(f"ð {detalle}")
         lbl_det.setWordWrap(True)
         lbl_det.setStyleSheet("color: #E2E8F0; font-size: 13px; font-weight: bold; margin-top: 4px; border: none; background: transparent;")
-        
+
         lay.addWidget(lbl_head)
         lay.addWidget(lbl_det)
 
@@ -72,7 +72,7 @@ class NexusPanelVivo(QFrame):
         self.setStyleSheet("background-color: #0F172A; border-radius: 8px;")
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
-        
+
         lbl_titulo = QLabel("ð¡ FLUJO DE VENTAS EN VIVO")
         lbl_titulo.setStyleSheet("color: #10B981; font-weight: 900; font-size: 14px; letter-spacing: 2px;")
         lbl_titulo.setAlignment(Qt.AlignCenter)
@@ -86,21 +86,21 @@ class NexusPanelVivo(QFrame):
             QScrollBar::handle:vertical { background: #334155; border-radius: 4px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
         """)
-        
+
         self.content_widget = QWidget()
         self.content_widget.setStyleSheet("background: transparent;")
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setAlignment(Qt.AlignTop)
         self.content_layout.setContentsMargins(0,0,10,0)
         self.content_layout.addStretch()
-        
+
         self.scroll.setWidget(self.content_widget)
         main_layout.addWidget(self.scroll)
-        
+
         self.worker = LiveTicketsWorker()
         self.worker.new_ticket_signal.connect(self._add_ticket)
         self.worker.start()
-        
+
         # Auto-scroll flag
         self.scroll.verticalScrollBar().rangeChanged.connect(self._scroll_down)
 
@@ -109,7 +109,7 @@ class NexusPanelVivo(QFrame):
         # Insertar justo antes del stretch
         count = self.content_layout.count()
         self.content_layout.insertWidget(count - 1, burbuja)
-        
+
         # Mantener solo los ultimos 50 tickets para no saturar memoria
         if count > 50:
             item = self.content_layout.takeAt(0)

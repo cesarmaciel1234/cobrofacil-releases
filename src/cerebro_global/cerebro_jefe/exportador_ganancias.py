@@ -27,7 +27,7 @@ class WorkerExportGanancias(QThread):
             # Extraemos Año y Mes usando strftime (SQLite) o DATE_FORMAT (MariaDB)
             # Para ser compatibles con ambos motores, extraemos los primeros 7 caracteres de la fecha: 'YYYY-MM'
             query = """
-                SELECT 
+                SELECT
                     SUBSTR(v.fecha, 1, 7) as mes,
                     SUM(dv.cantidad * dv.precio_unitario) as total_ingreso,
                     SUM(dv.cantidad * COALESCE(p.costo, 0)) as total_costo
@@ -46,13 +46,13 @@ class WorkerExportGanancias(QThread):
 
             # ── Encabezados ─────────────────────────
             headers = ["Mes (Año-Mes)", "Total Ingresos", "Total Costos", "Ganancia Neta", "Margen %"]
-            
+
             fill_header = PatternFill("solid", fgColor="4F46E5") # Indigo
             font_header = Font(bold=True, color="FFFFFF")
             border = Border(
-                left=Side(style='thin', color="DDDDDD"), 
+                left=Side(style='thin', color="DDDDDD"),
                 right=Side(style='thin', color="DDDDDD"),
-                top=Side(style='thin', color="DDDDDD"),  
+                top=Side(style='thin', color="DDDDDD"),
                 bottom=Side(style='thin', color="DDDDDD")
             )
 
@@ -74,7 +74,7 @@ class WorkerExportGanancias(QThread):
                 costo = float(r.get("total_costo") or 0.0)
                 ganancia = ingreso - costo
                 margen = (ganancia / ingreso * 100) if ingreso > 0 else 0.0
-                
+
                 total_ingreso_global += ingreso
                 total_costo_global += costo
                 total_ganancia_global += ganancia
@@ -84,7 +84,7 @@ class WorkerExportGanancias(QThread):
                 for col_idx, val in enumerate(valores, 1):
                     cell = ws.cell(row=row_idx, column=col_idx, value=val)
                     cell.border = border
-                    
+
                     if col_idx in (2, 3, 4):  # Moneda
                         cell.number_format = '"$"#,##0.00'
                         cell.alignment = Alignment(horizontal="right")
@@ -99,11 +99,11 @@ class WorkerExportGanancias(QThread):
             # ── Fila de Totales Generales ─────────────
             last_row = len(rows) + 2
             ws.cell(row=last_row, column=1, value="TOTAL GENERAL").font = Font(bold=True)
-            
+
             c_ing = ws.cell(row=last_row, column=2, value=total_ingreso_global)
             c_ing.number_format = '"$"#,##0.00'
             c_ing.font = Font(bold=True)
-            
+
             c_cost = ws.cell(row=last_row, column=3, value=total_costo_global)
             c_cost.number_format = '"$"#,##0.00'
             c_cost.font = Font(bold=True)

@@ -4,8 +4,8 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -63,10 +63,10 @@ class DialogoVentasPorHora(QDialog):
         tabla.setHorizontalHeaderLabels(["Hora del Día", "Cantidad de Transacciones"])
         tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         tabla.setStyleSheet("QTableWidget { background: white; border: 1px solid #e2e8f0; border-radius: 8px; }")
-        
+
         from src.utils.db import db_manager
         res = db_manager.execute_query("""
-            SELECT substr(fecha, 12, 2) as hora, COUNT(id) as cant 
+            SELECT substr(fecha, 12, 2) as hora, COUNT(id) as cant
             FROM ventas
             WHERE estado IN ('COMPLETADA', 'COMPLETADO', 'CERRADA', 'CERRADO')
             GROUP BY hora

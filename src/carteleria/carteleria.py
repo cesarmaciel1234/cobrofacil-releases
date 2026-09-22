@@ -30,7 +30,7 @@ class CarteleriaApp(QStackedWidget):
         self.red = None
         self.prov = None
         self.png_prod = None
-        
+
         self.estilo_completo = ""  # Cacheamos el estilo para aplicarlo on-demand
 
         # Conectar Dashboard
@@ -45,7 +45,7 @@ class CarteleriaApp(QStackedWidget):
         self.dashboard.request_toggle_theme.connect(self.toggle_carteleria_theme)
 
         # Conectar Admin (Volver al dashboard) - Solo si existieran (se conectan en el lazy load)
-        
+
         from PyQt6.QtGui import QShortcut, QKeySequence
         self.shortcut = QShortcut(QKeySequence("Esc"), self)
         self.shortcut.activated.connect(self.volver_dashboard)
@@ -88,21 +88,21 @@ class CarteleriaApp(QStackedWidget):
             self.removeWidget(self.inv)
             self.inv.deleteLater()
             self.inv = None
-            
+
         from src.ui_global.inventario_ui.vistas.inventario_main import Admin1Inventario
         self.inv = Admin1Inventario()
         self.addWidget(self.inv)
         self.inv.request_dashboard.connect(self.volver_dashboard)
         if hasattr(self.inv, "_apply_inventario_theme"):
             self.inv._apply_inventario_theme()
-        
+
         # La carteleria no tiene login → current_user es None → rol seria "cajero"
         # Forzamos admin para que los botones de edicion funcionen
         if hasattr(self.inv, "aplicar_permisos_perfil"):
             self.inv.aplicar_permisos_perfil("admin")
         if hasattr(self.inv, "catalogo") and hasattr(self.inv.catalogo, "aplicar_permisos_perfil"):
             self.inv.catalogo.aplicar_permisos_perfil("admin")
-            
+
         self.setCurrentWidget(self.inv)
         self.showMaximized()
 
@@ -158,7 +158,7 @@ class CarteleriaApp(QStackedWidget):
             self.addWidget(self.prov)
             # Para proveedor, no hay señal back al dashboard estándar, usan su propio btn cerrar
             if self.estilo_completo: self.prov.setStyleSheet(self.estilo_completo)
-        
+
         self.setCurrentWidget(self.prov)
         if hasattr(self.prov, 'cargar_datos'):
             self.prov.cargar_datos()
@@ -175,11 +175,11 @@ class CarteleriaApp(QStackedWidget):
             from src.utils.paths import get_resource_path
             from src.utils.theme_manager import theme_manager
             import os
-            
+
             tema_actual = theme_manager.current_theme
             qss_filename = "estilo_dia.qss" if tema_actual == "light" else "estilo_noche.qss"
             qss_path = get_resource_path(os.path.join("src", "ui_components", qss_filename))
-            
+
             if not os.path.exists(qss_path):
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 qss_path = os.path.join(os.path.dirname(os.path.dirname(current_dir)), "src", "ui_components", qss_filename)
@@ -195,7 +195,7 @@ class CarteleriaApp(QStackedWidget):
 
             estilo_completo = estilo_base + "\n" + estilo_tema
             self.estilo_completo = estilo_completo
-            
+
             self.dashboard.setStyleSheet(estilo_completo)
             if self.inv and hasattr(self.inv, "_apply_inventario_theme"):
                 self.inv._apply_inventario_theme()
@@ -212,14 +212,14 @@ class CarteleriaApp(QStackedWidget):
             if self.png_prod: self.png_prod.setStyleSheet(estilo_completo)
             if hasattr(self.dashboard, "apply_dashboard_theme"):
                 self.dashboard.apply_dashboard_theme(theme_manager.is_dark())
-                
+
         except Exception as e:
             print("Error aplicando tema global a los paneles de cartelería:", e)
 
 def lanzar_app(app=None):
     if app is None:
         app = QApplication(sys.argv)
-        
+
     # Misma red que el jefe: si esta PC es maestra y no hay Servidor de Tienda
     # aparte, arranca MariaDB/API. Si es TV esclava, no se anuncia.
     try:
@@ -242,15 +242,15 @@ def lanzar_app(app=None):
         except Exception:
             pass
         app._carteleria_window = None
-        
+
     window = CarteleriaApp()
-    
+
     # Aplicar el tema global a los módulos administrativos, excluyendo el TV (CarteleriaTV)
     window.apply_theme()
 
     window.showMaximized()
     # Guardamos referencia para que no sea destruida por el recolector de basura
-    app._carteleria_window = window 
+    app._carteleria_window = window
 
     # Siempre poseer el event loop en este perfil (--role carteleria).
     # Antes: si _is_running quedaba True tras exit(888), se devolvía la ventana

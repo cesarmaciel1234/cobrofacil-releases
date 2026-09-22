@@ -19,7 +19,7 @@ class RedLanService:
         """Devuelve un resumen simple del estado de la red actual."""
         motor = MotorRed()
         estado = motor.obtener_estado_red()
-        
+
         # Obtener IP local de forma simple
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -28,7 +28,7 @@ class RedLanService:
             s.close()
         except Exception:
             local_ip = "127.0.0.1"
-            
+
         return {
             "es_maestra": estado["is_master"],
             "ip_local": local_ip,
@@ -130,6 +130,6 @@ class RedLanService:
             match = re.search(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', ip_maestra)
             if match:
                 ip_maestra = match.group(0)
-                
+
         motor = MotorRed()
         return motor.convertir_en_esclava(ip_maestra)

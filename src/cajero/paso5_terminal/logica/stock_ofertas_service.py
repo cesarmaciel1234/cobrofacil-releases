@@ -4,7 +4,7 @@ class StockOfertasService:
     def stock_disponible(self, p, p_id):
         """Calcula el stock real en base de datos para un producto, o infinito si es servicio/artículo común."""
         if p_id == "000": return float('inf')
-        
+
         # En el futuro, aquí se consultaría la BD en tiempo real para evitar condiciones de carrera,
         # pero por rendimiento en cajas, se usa el stock del diccionario provisto si está actualizado.
         try:

@@ -45,7 +45,7 @@ TERMINAL_CENTRAL_STRETCH = 2
 def configure_process_dpi() -> None:
     # Apaga el auto-escalado de Windows para que Qt no herede el zoom del sistema (125%, 150%)
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
-    
+
     scale_factor = 1.0
     try:
         import ctypes
@@ -55,9 +55,9 @@ def configure_process_dpi() -> None:
         width_mm = ctypes.windll.gdi32.GetDeviceCaps(hdc, 4)
         height_mm = ctypes.windll.gdi32.GetDeviceCaps(hdc, 6)
         ctypes.windll.user32.ReleaseDC(0, hdc)
-        
+
         diag_in = ((width_mm**2 + height_mm**2)**0.5) / 25.4
-        
+
         # En caso de que se necesite, un pequeño bump para que no sea excesivamente diminuto
         # pero que permita encajar en pantallas chicas
         scale_factor = compute_layout_scale(width_px, height_px, diag_in)
@@ -194,7 +194,7 @@ def screen_info(screen=None, app=None) -> dict:
     geo = screen_geometry(screen, app)
     ls = layout_scale(screen, app)
     diag = physical_diagonal_inches(screen)
-    
+
     if geo is None:
         return {
             "width": REF_WIDTH,
@@ -256,13 +256,13 @@ def terminal_layout_metrics(screen=None, app=None) -> dict:
 def profile_selector_size(screen=None, app=None) -> tuple[int, int, int, int]:
     screen, app = _resolve_screen_app(screen, app)
     geo = screen_geometry(screen, app)
-    
+
     if geo is None:
         return 1100, 500, PROFILE_CARD_W_MAX, 215
 
     return compute_profile_selector_size(
-        geo.width(), 
-        geo.height(), 
+        geo.width(),
+        geo.height(),
         physical_diagonal_inches(screen)
     )
 
@@ -312,13 +312,13 @@ def present_client_window(window, app=None) -> bool:
         if geo:
             # Movemos la ventana a la esquina superior izquierda del monitor 2
             window.move(geo.topLeft())
-            
+
             # Aplicamos la escala correspondiente a ese monitor específico
             ls = layout_scale(sec_screen, app)
             min_w = max(scale_px(800, ls), min(scale_px(1024, ls), geo.width()))
             min_h = max(scale_px(600, ls), min(scale_px(720, ls), geo.height()))
             window.setMinimumSize(min(min_w, geo.width()), min(min_h, geo.height()))
-            
+
             if getattr(window, "_kiosk_mode", False):
                 window.showFullScreen()
             else:

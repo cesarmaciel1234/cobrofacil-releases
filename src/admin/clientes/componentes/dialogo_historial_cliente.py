@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-                             QPushButton, QTableWidget, QTableWidgetItem, 
-                             QHeaderView, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QLineEdit, QMessageBox, QDialog,
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
@@ -37,11 +37,7 @@ class DialogoHistorialCliente(QDialog):
         panel.setStyleSheet(
             f"QFrame {{ background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px; }}"
         )
-        p_shadow = QGraphicsDropShadowEffect(panel)
-        p_shadow.setBlurRadius(32)
-        p_shadow.setOffset(0, 8)
-        p_shadow.setColor(QColor(15, 23, 42, 16))
-        panel.setGraphicsEffect(p_shadow)
+        p_        p_        p_        p_        panel.setGraphicsEffect(p_shadow)
         p_lay = QVBoxLayout(panel)
         p_lay.setContentsMargins(22, 20, 22, 20)
         p_lay.setSpacing(12)

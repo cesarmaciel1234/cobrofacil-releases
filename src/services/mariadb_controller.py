@@ -6,9 +6,9 @@ from src.logger import logger
 
 class MariaDBController:
     """Controlador para administrar el ciclo de vida del servidor MariaDB Portable."""
-    
+
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(MariaDBController, cls).__new__(cls)
@@ -25,15 +25,15 @@ class MariaDBController:
         server_dir = os.path.join(base_dir, "mariadb_server")
         bin_dir = os.path.join(server_dir, "bin")
         data_dir = os.path.join(server_dir, "data")
-        
+
         mysqld_exe = os.path.join(bin_dir, "mysqld.exe")
         mysql_install_db_exe = os.path.join(bin_dir, "mysql_install_db.exe")
-        
+
         return server_dir, data_dir, mysqld_exe, mysql_install_db_exe
 
     def _init_database_if_needed(self):
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
-        
+
         if not os.path.exists(mysqld_exe):
             logger.error(f"No se encontro el motor MariaDB en {mysqld_exe}")
             return False
@@ -42,7 +42,7 @@ class MariaDBController:
         if not os.path.exists(data_dir) or len(os.listdir(data_dir)) == 0:
             logger.info("Inicializando bases de datos del sistema MariaDB por primera vez...")
             os.makedirs(data_dir, exist_ok=True)
-            
+
             try:
                 # mysql_install_db inicializa las tablas core de mysql
                 subprocess.run(
@@ -56,7 +56,7 @@ class MariaDBController:
             except Exception as e:
                 logger.error(f"Error al inicializar MariaDB: {e}")
                 return False
-                
+
         return True
 
     def _ensure_firewall(self):
@@ -89,7 +89,7 @@ class MariaDBController:
     def start_server(self):
         """Inicia el servidor MariaDB en segundo plano si no está corriendo."""
         self._ensure_firewall()
-        
+
         if self._process is not None and self._process.poll() is None:
             logger.info("MariaDB ya está corriendo en este proceso.")
             return True
@@ -135,16 +135,16 @@ class MariaDBController:
             return False
 
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
-        
+
         logger.info("Arrancando servidor MariaDB Portable en puerto 3306...")
         try:
             # Asegurar que no hay un mysqld.exe zombie colgando del puerto 3306
             subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            
+
             # Iniciamos mysqld apuntando a nuestro datadir
             # Evitamos que se abra una ventana de comandos en Windows usando CREATE_NO_WINDOW
             creationflags = 0x08000000  # CREATE_NO_WINDOW
-            
+
             # Firewall real (con UAC) — el netsh sin admin fallaba en silencio
             self._ensure_firewall()
 
@@ -162,23 +162,23 @@ class MariaDBController:
                 stderr=subprocess.DEVNULL,
                 creationflags=creationflags
             )
-            
+
             # Verificar si el proceso murió inmediatamente
             if self._process.poll() is not None:
                 logger.error("El proceso mysqld.exe se cerro inesperadamente tras iniciar.")
                 return False
-                
+
             # Esperar a que el puerto 3306 este listo usando un polling inteligente
             import time
             import socket
-            
+
             max_retries = 40 # 20 segundos máximo para evitar bloqueos (en PCs lentas MariaDB tarda en iniciar)
             connected = False
             for i in range(max_retries):
                 try:
                     # Mantenemos viva la animación (el event loop corre en main)
                     pass
-                    
+
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.settimeout(0.5)
                     result = s.connect_ex(("127.0.0.1", 3306))
@@ -190,7 +190,7 @@ class MariaDBController:
                 except:
                     pass
                 time.sleep(0.5)
-            
+
             if not connected:
                 logger.error("MariaDB no abrio el puerto a tiempo. Abortando inicializacion.")
                 # Autoreparación por corrupción de InnoDB / Tablespace
@@ -215,7 +215,7 @@ class MariaDBController:
                                     func(path)
                                 except:
                                     pass
-                            
+
                             # Forzar kill de mysqld para liberar locks antes de borrar
                             subprocess.run(["taskkill", "/F", "/IM", "mysqld.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                             time.sleep(1.5)
@@ -245,14 +245,14 @@ class MariaDBController:
                     except Exception as ex:
                         logger.error(f"Error durante auto-reparacion de base de datos: {ex}")
                 return False
-                
+
             self._initialized = True
-            
+
             # Aqui creamos la base de datos 'punpro_db' si no existe, a través de mysql.exe
             self._create_punpro_db()
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Fallo al iniciar MariaDB: {e}")
             return False
@@ -261,7 +261,7 @@ class MariaDBController:
         """Crea la base de datos principal si no existe en el motor local recién iniciado."""
         server_dir, data_dir, mysqld_exe, mysql_install_db_exe = self._get_server_paths()
         mysql_exe = os.path.join(os.path.dirname(mysqld_exe), "mysql.exe")
-        
+
         # Rápido-Retorno: Si ya podemos conectar con '1234' a 'punpro_db', no hacemos nada
         try:
             import pymysql
@@ -292,9 +292,9 @@ class MariaDBController:
             "ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '1234';"
             "FLUSH PRIVILEGES;"
         )
-        
+
         creationflags = 0x08000000
-        
+
         def _wait_responsive(proc, timeout_sec):
             import time
             start = time.time()
@@ -320,7 +320,7 @@ class MariaDBController:
                 return
         except Exception:
             pass
-            
+
         # Intentar con la contraseña por defecto '1234'
         try:
             process = subprocess.Popen(

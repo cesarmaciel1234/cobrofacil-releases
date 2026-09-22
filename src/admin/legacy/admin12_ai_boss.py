@@ -34,7 +34,7 @@ class Admin12AIBoss(QWidget):
         btn_back.setStyleSheet("  font-weight: 800; border-radius: 8px; padding: 10px;")
         btn_back.clicked.connect(self.request_dashboard.emit)
         header.addWidget(btn_back)
-        
+
         lbl_title = QLabel("🧠 MENTOR ESTRATÉGICO <span style=''>AI BOSS 2026</span>")
         lbl_title.setStyleSheet("font-size: 24px; font-weight: 900; margin-left: 15px;")
         header.addWidget(lbl_title)
@@ -79,7 +79,7 @@ class Admin12AIBoss(QWidget):
 
     def load_insights(self):
         # Limpiar previos
-        for i in reversed(range(self.insights_layout.count())): 
+        for i in reversed(range(self.insights_layout.count())):
             self.insights_layout.itemAt(i).widget().setParent(None)
 
         # Simulación de datos reales para el Boss
@@ -105,7 +105,7 @@ class Admin12AIBoss(QWidget):
         if not query: return
         self.txt_cmd.clear()
         self.add_log(query, False)
-        
+
         # Inteligencia Estratégica (Lógica sin humo)
         if "venta" in query.lower():
             res = "La tendencia indica que el pico de ventas ocurre entre las 18:00 y 20:00. Sugiero reforzar personal en ese horario."
@@ -115,7 +115,7 @@ class Admin12AIBoss(QWidget):
             res = "Su margen operativo promedio es del 28%. Optimizar el inventario de cárnicos podría subirlo al 31%."
         else:
             res = "Analizando datos globales... Mi recomendación es mantener el nivel de inversión actual y vigilar el stock de los 5 productos más vendidos."
-        
+
         QTimer.singleShot(500, lambda: self.add_log(res))
 
 class AIBubble(QPushButton):
@@ -131,27 +131,22 @@ class AIBubble(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("""
             QPushButton {
-                
+
                 color: #1e293b;
                 font-size: 30px;
                 border-radius: 30px;
                 border: 2px solid #a855f7;
             }
             QPushButton:hover {
-                
+
                 border-
             }
         """)
-        
+
         # Efecto de sombra/resplandor
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-        from PyQt6.QtGui import QColor
-        self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(15)
-        self.shadow.setColor(QColor(168, 85, 247, 150))
-        self.shadow.setOffset(0, 0)
-        self.setGraphicsEffect(self.shadow)
-        
+                from PyQt6.QtGui import QColor
+        self.        self.        self.        self.        self.setGraphicsEffect(self.shadow)
+
         # Timer para animación de pulsación sutil
         self.pulse_timer = QTimer(self)
         self.pulse_timer.timeout.connect(self.animate_pulse)
@@ -166,9 +161,8 @@ class AIBubble(QPushButton):
         else:
             self.pulse_scale -= 0.05
             if self.pulse_scale <= 1.0: self.growing = True
-        
-        self.shadow.setBlurRadius(int(15 * self.pulse_scale))
-        self.update()
+
+        self.        self.update()
 
     def mousePressEvent(self, event):
         # Permitir que el botón sea arrastrable en el futuro (opcional)

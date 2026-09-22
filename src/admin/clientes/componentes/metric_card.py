@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-                             QPushButton, QTableWidget, QTableWidgetItem, 
-                             QHeaderView, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QLineEdit, QMessageBox, QDialog,
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import DatabaseManager
@@ -18,18 +18,10 @@ class MetricCard(QFrame):
         self.setFixedHeight(108)
         self.setStyleSheet(
             f"background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px;"
-        )
-        
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(32)
-        shadow.setColor(QColor(15, 23, 42, 18))
-        shadow.setOffset(0, 8)
-        self.setGraphicsEffect(shadow)
-        
-        lay = QHBoxLayout(self)
+        )        lay = QHBoxLayout(self)
         lay.setContentsMargins(20, 10, 20, 10)
         lay.setSpacing(15)
-        
+
         icon_frame = QFrame()
         icon_frame.setFixedSize(50, 50)
         icon_frame.setStyleSheet(f"background: {color}20; border-radius: 25px; border: none;")
@@ -40,7 +32,7 @@ class MetricCard(QFrame):
         icon_lbl.setStyleSheet(f"font-size: 24px; color: {color}; background: transparent; border: none;")
         i_lay.addWidget(icon_lbl)
         lay.addWidget(icon_frame)
-        
+
         v_lay = QVBoxLayout()
         v_lay.setSpacing(2)
         v_lay.setAlignment(Qt.AlignVCenter)
@@ -50,7 +42,7 @@ class MetricCard(QFrame):
             "letter-spacing: 1px; border: none;"
         )
         v_lay.addWidget(self.lbl_tit)
-        
+
         self.lbl_val = QLabel("0")
         self.lbl_val.setStyleSheet(f"color: {color}; font-size: 24px; font-weight: 900; border: none;")
         v_lay.addWidget(self.lbl_val)

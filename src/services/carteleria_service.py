@@ -17,7 +17,7 @@ class CarteleriaService:
     def _get_live_scan_path():
         from src.utils.paths import get_base_path
         return os.path.join(get_base_path(), "live_scan.json")
-        
+
     @staticmethod
     def _enviar_udp_broadcast(payload: dict):
         try:
@@ -35,7 +35,7 @@ class CarteleriaService:
         """Envía la señal a la Cartelería para que aborte la pantalla espía y vuelva al carrusel."""
         payload = {"carrito": [], "ahorro": 0.0, "timestamp": time.time(), "limpiar": True}
         CarteleriaService._enviar_udp_broadcast(payload)
-        
+
         # Opcional: mantener el archivo por compatibilidad con código antiguo
         path = CarteleriaService._get_live_scan_path()
         for attempt in range(2):
@@ -58,7 +58,7 @@ class CarteleriaService:
             "ultimo_escaneado": ultimo_producto
         }
         CarteleriaService._enviar_udp_broadcast(payload)
-        
+
         # Opcional: mantener el archivo por compatibilidad
         path = CarteleriaService._get_live_scan_path()
         for attempt in range(2):

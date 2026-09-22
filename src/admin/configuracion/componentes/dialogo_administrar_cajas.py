@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -43,7 +43,7 @@ class DialogoAdministrarCajas(QDialog):
         # Caja ID Input
         h_lay = QHBoxLayout()
         h_lay.addWidget(QLabel("ID de Caja Física:", styleSheet="font-weight: bold; font-size: 13px; "))
-        
+
         self.txt_caja_id = QLineEdit()
         self.txt_caja_id.setText(str(config.get("caja_id", 1)))
         self.txt_caja_id.setStyleSheet("padding: 8px; border: 2px solid #CBD5E1; border-radius: 6px; font-weight: bold; font-size: 15px;")
@@ -65,7 +65,7 @@ class DialogoAdministrarCajas(QDialog):
                 raise ValueError()
             config.set("caja_id", val)
             QMessageBox.information(
-                self, "ID de Caja Registrado", 
+                self, "ID de Caja Registrado",
                 f"Esta computadora ha sido guardada permanentemente como la CAJA {val:02d}.\n"
                 "Los cierres y auditorías de esta terminal se filtrarán bajo esta firma."
             )

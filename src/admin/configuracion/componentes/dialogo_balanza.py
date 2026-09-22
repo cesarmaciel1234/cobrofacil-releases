@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -35,7 +35,7 @@ class DialogoBalanza(QDialog):
         header = QLabel("⚖️ Configuración de Balanza")
         header.setStyleSheet("font-size: 20px; font-weight: bold;  border:none;")
         main_lay.addWidget(header)
-        
+
         lbl_desc = QLabel("Ajusta cómo el sistema lee tus etiquetas EAN-13.")
         lbl_desc.setStyleSheet(" font-size: 13px; margin-bottom: 5px; border:none;")
         main_lay.addWidget(lbl_desc)
@@ -45,8 +45,8 @@ class DialogoBalanza(QDialog):
         card.setStyleSheet("""
             QFrame {  border: 1px solid #E2E8F0; border-radius: 12px; }
             QLabel { border: none; font-weight: bold;  font-size: 11px; }
-            QLineEdit, QComboBox { 
-                background: white; border: 1px solid #CBD5E1; border-radius: 6px; 
+            QLineEdit, QComboBox {
+                background: white; border: 1px solid #CBD5E1; border-radius: 6px;
                 padding: 10px; font-weight: normal;  font-size: 13px;
             }
         """)
@@ -106,7 +106,7 @@ class DialogoBalanza(QDialog):
         sim_card.setStyleSheet(" border: 1px solid #BFDBFE; border-radius: 12px;")
         sim_lay = QVBoxLayout(sim_card)
         sim_lay.setContentsMargins(15, 15, 15, 15)
-        
+
         lbl_sim = QLabel("🧪 PROBADOR DE CÓDIGOS")
         lbl_sim.setStyleSheet(" font-weight: 900; border: none; font-size: 11px;")
         sim_lay.addWidget(lbl_sim)
@@ -135,11 +135,11 @@ class DialogoBalanza(QDialog):
         btn_cancel = QPushButton("Cancelar")
         btn_cancel.setStyleSheet("padding: 12px; font-weight: bold;   border-radius: 8px;")
         btn_cancel.clicked.connect(self.reject)
-        
+
         btn_save = QPushButton("💾 Guardar Configuración")
         btn_save.setStyleSheet("padding: 12px; font-weight: bold;  background-color: #3B82F6; color: white; border-radius: 8px;")
         btn_save.clicked.connect(self._guardar)
-        
+
         h_btns.addWidget(btn_cancel)
         h_btns.addStretch()
         h_btns.addWidget(btn_save)
@@ -155,12 +155,12 @@ class DialogoBalanza(QDialog):
             p_start = int(self.txt_plu_start.text()) - 1
             p_len = int(self.txt_plu_largo.text()) if hasattr(self, 'txt_plu_largo') else int(self.txt_plu_len.text())
             plu = txt[p_start : p_start + p_len]
-            
+
             v_start = int(self.txt_val_start.text()) - 1
             v_len = int(self.txt_val_largo.text()) if hasattr(self, 'txt_val_largo') else int(self.txt_val_len.text())
             v_raw = txt[v_start : v_start + v_len]
             divisor = int(self.txt_divisor.text())
-            
+
             valor = int(v_raw) / divisor
             modo = self.cmb_modo.currentText()
             simb = "$" if "Importe" in modo else "Kg"

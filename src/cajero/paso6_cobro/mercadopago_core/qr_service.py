@@ -25,9 +25,9 @@ class QRService:
             return
 
         ref = str(uuid.uuid4())
-        
+
         url_crear_qr = lambda: f"https://api.mercadopago.com/instore/orders/qr/seller/collectors/{user_id}/pos/{external_pos_id}/qrs"
-        
+
         payload_mp = {
             "external_reference": ref,
             "title": "Compra en Punto de Venta",

@@ -13,7 +13,7 @@ class CajaController:
         """Registra la apertura de caja en la base de datos a través del Motor de Turnos."""
         usuario = config.current_user.get("username", "cajero") if config.current_user else "cajero"
         c_id = config.get("caja_id", 1)
-        
+
         from src.motor_turnos.nucleo.gestor_turnos import GestorTurnos
         GestorTurnos.registrar_apertura_caja(usuario, c_id, monto)
         return True

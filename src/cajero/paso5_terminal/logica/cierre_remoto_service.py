@@ -9,7 +9,7 @@ class CierreRemotoService:
         ult_apertura = "1970-01-01 00:00:00"
         if res_ap:
             ult_apertura = res_ap[0]['fecha']
-            
+
         res = db_manager.execute_query(
             "SELECT id, observaciones FROM movimientos_caja WHERE tipo = 'SOLICITUD_CIERRE' AND caja_id = ? AND observaciones NOT LIKE '%PROCESADO%' AND fecha >= ? ORDER BY id DESC LIMIT 1",
             (c_id, ult_apertura)

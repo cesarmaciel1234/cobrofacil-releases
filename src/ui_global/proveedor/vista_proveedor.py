@@ -6,7 +6,7 @@ from PyQt6.QtGui import *
 
 # Utilidades visuales importadas desde el módulo del Jefe
 from src.jefe.contabilidad.shared_globals import (
-    section_title, date_field, input_field, build_table, 
+    section_title, date_field, input_field, build_table,
     btn_primary, btn_ghost, PAL
 )
 
@@ -21,12 +21,12 @@ class VistaProveedor(QWidget):
         super().__init__(parent)
         self.perfil = perfil.lower()
         self._db_jefe = db_jefe
-        
+
         # Layout principal
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(20)
-        
+
         self.lay_container = lay
         self._build_ui()
         self.cargar_datos()
@@ -46,12 +46,7 @@ class VistaProveedor(QWidget):
                 border: 1px solid {PAL['border']};
                 border-radius: 16px;
             }}
-        """)
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20); shadow.setColor(QColor(0,0,0,30)); shadow.setOffset(0, 4)
-        left_panel.setGraphicsEffect(shadow)
-        
-        fl = QGridLayout(left_panel)
+        """)        fl = QGridLayout(left_panel)
         fl.setContentsMargins(25, 25, 25, 25); fl.setSpacing(15)
 
         title_lbl = QLabel("🧾 DATOS DEL REMITO")
@@ -66,7 +61,7 @@ class VistaProveedor(QWidget):
         lbl_prov = QLabel("Proveedor:")
         lbl_prov.setStyleSheet(f"QLabel {{ color: {PAL['text']}; font-weight: bold; }}")
         fl.addWidget(lbl_prov, 1, 2)
-        
+
         self._prov_nombre = QComboBox()
         self._prov_nombre.setEditable(True)
         self._prov_nombre.setPlaceholderText("Ej: Frigorífico Rioplatense")
@@ -103,7 +98,7 @@ class VistaProveedor(QWidget):
         self._lbl_carga = QLabel("⚡ CARGA RÁPIDA (PESO + ENTER):")
         self._lbl_carga.setStyleSheet("QLabel { color: #EF4444; font-weight: 900; font-size: 13px; text-transform: uppercase; }")
         fl.addWidget(self._lbl_carga, 3, 2)
-        
+
         self._romaneo_input = input_field("Ej: 80.5 y Enter")
         self._romaneo_input.setStyleSheet(f"QLineEdit {{ background: #ECFDF5; border: 2px solid #10B981; padding: 12px; border-radius: 8px; color: #065F46; font-weight: 900; font-size: 16px; }}")
         self._romaneo_input.returnPressed.connect(self._add_romaneo_item)
@@ -124,9 +119,7 @@ class VistaProveedor(QWidget):
         totals_card.setStyleSheet(f"""
             QFrame {{ background: #0F172A; border-radius: 16px; border: 2px solid #1E293B; }}
             QLabel {{ color: white; background: transparent; }}
-        """)
-        totals_card.setGraphicsEffect(shadow)
-        t_lay = QVBoxLayout(totals_card)
+        """)        t_lay = QVBoxLayout(totals_card)
         t_lay.setContentsMargins(20, 20, 20, 20)
 
         lbl_t1 = QLabel("RESUMEN DE ROMANEO")
@@ -154,7 +147,7 @@ class VistaProveedor(QWidget):
         action_card.setStyleSheet(f"QFrame {{ background: {PAL['surface']}; border: 1px solid {PAL['border']}; border-radius: 16px; }}")
         a_lay = QVBoxLayout(action_card)
         a_lay.setContentsMargins(20, 20, 20, 20)
-        
+
         lbl_pago = QLabel("💳 CONDICIÓN DE PAGO:")
         lbl_pago.setStyleSheet(f"QLabel {{ color: {PAL['text']}; font-weight: bold; }}")
         a_lay.addWidget(lbl_pago)
@@ -162,7 +155,7 @@ class VistaProveedor(QWidget):
         self._prov_payment.addItems(["A Pagar (Deuda en Cta. Cte.)", "Contado (Pago Inmediato)"])
         self._prov_payment.setStyleSheet(f"QComboBox {{ background: {PAL.get('surface2', '#E2E8F0')}; border: 1px solid {PAL['border']}; padding: 12px; border-radius: 8px; color: {PAL['text']}; font-weight: 800; font-size: 13px; }}")
         a_lay.addWidget(self._prov_payment)
-        
+
         a_lay.addSpacing(15)
         btn_add = QPushButton("✅ PROCESAR COMPRA")
         btn_add.setStyleSheet(f"""
@@ -209,47 +202,47 @@ class VistaProveedor(QWidget):
             QMessageBox.warning(self, "Error", "Debe ingresar el Precio Unitario antes de cargar pesos.")
             self._prov_precio.setFocus()
             return
-            
+
         try:
             val_float = float(val)
             precio_float = float(precio_val)
             subtotal = val_float * precio_float
-            
+
             row = self._romaneo_table.rowCount()
             self._romaneo_table.insertRow(row)
-            
+
             nro_item = QTableWidgetItem(f"#{row+1}")
             nro_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 0, nro_item)
-            
+
             merc_item = QTableWidgetItem(self._prov_type.currentText())
             merc_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 1, merc_item)
-            
+
             pu_item = QTableWidgetItem(f"${precio_float:,.2f}")
             pu_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 2, pu_item)
-            
+
             peso_item = QTableWidgetItem(f"{val_float:.2f}")
             peso_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 3, peso_item)
-            
+
             sub_item = QTableWidgetItem(f"${subtotal:,.2f}")
             sub_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setItem(row, 4, sub_item)
-            
+
             btn_del = QPushButton("X")
             btn_del.setFixedSize(24, 24)
             btn_del.setStyleSheet("QPushButton { background-color: #ef4444; color: white; border-radius: 4px; font-weight: bold; }")
             btn_del.clicked.connect(lambda _, r=row: self._remove_romaneo_item(r))
-            
+
             widget = QWidget()
             l = QHBoxLayout(widget)
             l.setContentsMargins(0,0,0,0)
             l.addWidget(btn_del)
             l.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self._romaneo_table.setCellWidget(row, 5, widget)
-            
+
             self._romaneo_input.clear()
             self._romaneo_input.setFocus()
             self._romaneo_table.scrollToBottom()
@@ -276,7 +269,7 @@ class VistaProveedor(QWidget):
         for i in range(items_count):
             sub_str = self._romaneo_table.item(i, 4).text().replace('$','').replace(',','')
             monto_total += float(sub_str)
-            
+
         self._lbl_romaneo_totals.setText(f"{items_count} items - ${monto_total:,.2f}")
         self._prov_amount.setText(f"{monto_total:.2f}")
 
@@ -284,11 +277,11 @@ class VistaProveedor(QWidget):
         """Carga el historial de compras utilizando el motor."""
         rows = MotorProveedor.load_proveedores(self.perfil, self._db_jefe)
         self._tbl_prov.setRowCount(0)
-        
+
         for r in rows:
             row = self._tbl_prov.rowCount()
             self._tbl_prov.insertRow(row)
-            
+
             vals = [
                 str(r["id"]),
                 r["proveedor"],
@@ -298,7 +291,7 @@ class VistaProveedor(QWidget):
                 r["fecha"],
                 "✅ Pagado" if r["estado"] not in ("Pendiente", "pending") else "⏳ Pendiente"
             ]
-            
+
             for c, v in enumerate(vals):
                 it = QTableWidgetItem(v)
                 if c == 6 and "Pendiente" in v:
@@ -319,18 +312,18 @@ class VistaProveedor(QWidget):
         dlg.setWindowTitle("📄 Detalle de Remito")
         dlg.setMinimumWidth(400)
         dlg.setStyleSheet(f"QDialog {{ background: {PAL['bg']}; }} QLabel {{ color: {PAL['text']}; font-size: 14px; }}")
-        
+
         lay = QVBoxLayout(dlg)
         lbl_desc = QLabel(desc.replace("\n", "<br>"))
         lbl_desc.setWordWrap(True)
         lay.addWidget(lbl_desc)
         lay.addSpacing(20)
-        
+
         if restante > 0:
             btn_pagar = btn_primary(f"💳 Pagar Deuda (Falta ${restante:,.2f})")
             btn_pagar.clicked.connect(lambda: [dlg.accept(), self._pagar_proveedor(debt_id, restante)])
             lay.addWidget(btn_pagar)
-            
+
         btn_cerrar = btn_ghost("Cerrar")
         btn_cerrar.clicked.connect(dlg.reject)
         lay.addWidget(btn_cerrar)
@@ -354,13 +347,13 @@ class VistaProveedor(QWidget):
         if not amount_text or self._romaneo_table.rowCount() == 0:
             QMessageBox.warning(self, "Error", "Debe cargar ítems y un monto total.")
             return
-            
+
         try:
             amount = float(amount_text)
             date = self._prov_date.date().toString("yyyy-MM-dd")
             prov_name = self._prov_nombre.currentText().strip() or "Proveedor General"
             tropa = self._prov_tropa.text() or "-"
-            
+
             grupos = {}
             for i in range(self._romaneo_table.rowCount()):
                 nro = self._romaneo_table.item(i, 0).text()
@@ -372,11 +365,11 @@ class VistaProveedor(QWidget):
                 grupos[key].append((nro, peso))
 
             payment = self._prov_payment.currentText()
-            
+
             success, msg = MotorProveedor.save_proveedor(
                 date, prov_name, tropa, grupos, payment, amount, self.perfil, self._db_jefe
             )
-            
+
             if success:
                 QMessageBox.information(self, "Exito", "Compra registrada correctamente.")
                 self._romaneo_table.setRowCount(0)
@@ -390,6 +383,6 @@ class VistaProveedor(QWidget):
                 self.cargar_datos()
             else:
                 QMessageBox.warning(self, "Error", f"Error guardando proveedor: {msg}")
-                
+
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Error procesando la compra: {e}")

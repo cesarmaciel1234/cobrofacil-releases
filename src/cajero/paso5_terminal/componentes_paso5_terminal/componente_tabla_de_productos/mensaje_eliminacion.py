@@ -41,7 +41,7 @@ class MensajeEliminacion(QDialog):
         body_text = "¿Desea eliminar el artículo del carrito?"
         if nombre_articulo:
             body_text = f"¿Desea eliminar '{nombre_articulo}' del carrito?"
-            
+
         body = QLabel(body_text)
         body.setObjectName("MensajeEliminacionBody")
         body.setStyleSheet(

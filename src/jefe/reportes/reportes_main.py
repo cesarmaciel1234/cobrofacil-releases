@@ -1,12 +1,12 @@
 import sys
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QStackedWidget, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.jefe.reportes.vista_financiero import _FIN
 
 class ReportesMain(QWidget):
     request_dashboard = pyqtSignal()
-    
+
     def __init__(self):
         super().__init__()
         self.setObjectName("JefeReportesPage")
@@ -82,7 +82,7 @@ class ReportesMain(QWidget):
         for btn in [self.btn_volver, self.btn_ventas, self.btn_auditoria, self.btn_historial]:
             btn.setStyleSheet(btn_style)
             top_lay.addWidget(btn)
-        
+
         top_lay.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         main_lay.addWidget(top_bar)
 

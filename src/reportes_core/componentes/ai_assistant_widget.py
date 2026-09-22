@@ -4,8 +4,8 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -58,39 +58,39 @@ class AIAssistantWidget(ModernCard):
         super().__init__(parent)
         self.setStyleSheet("""
             #card {
-                
+
                 border: 2px solid #8B5CF6;
                 border-radius: 20px;
             }
         """)
-        
+
         lay = QVBoxLayout(self)
         lay.setContentsMargins(25, 20, 25, 20)
         lay.setSpacing(10)
-        
+
         # Header
         h_lay = QHBoxLayout()
         lbl_icon = QLabel("🤖")
         lbl_icon.setStyleSheet("font-size: 24px;")
         lbl_title = QLabel("Cerebro Jefe")
         lbl_title.setStyleSheet("font-size: 16px; font-weight: 700; color: #4C1D95; background: transparent; border: none;")
-        
+
         self.lbl_status = QLabel("Pensando...")
         self.lbl_status.setStyleSheet("font-size: 12px;  font-style: italic;")
         self.lbl_status.hide()
-        
+
         h_lay.addWidget(lbl_icon)
         h_lay.addWidget(lbl_title)
         h_lay.addStretch()
         h_lay.addWidget(self.lbl_status)
         lay.addLayout(h_lay)
-        
+
         # Content
         self.lbl_content = QLabel("Recopilando datos para generar insights...")
         self.lbl_content.setWordWrap(True)
         self.lbl_content.setStyleSheet("font-size: 14px;  line-height: 1.5;")
         lay.addWidget(self.lbl_content)
-        
+
         # Timer for animation
         from PyQt6.QtCore import QTimer
         self.anim_timer = QTimer(self)
@@ -101,7 +101,7 @@ class AIAssistantWidget(ModernCard):
     def update_insights(self, chart_data, pago_sum, donut_data):
         self.lbl_status.show()
         self.lbl_content.setText("")
-        
+
         # Generar texto de insights
         total_ventas = sum([d.get('ventas', 0) for d in chart_data.values()])
         if total_ventas == 0:
@@ -110,23 +110,23 @@ class AIAssistantWidget(ModernCard):
             # Insight 1: Mejor día
             mejor_dia = max(chart_data.items(), key=lambda x: x[1].get('ventas', 0))[0]
             val_mejor_dia = chart_data[mejor_dia].get('ventas', 0)
-            
+
             # Insight 2: Depto estrella
             mejor_depto = "N/A"
             if donut_data:
                 mejor_depto = max(donut_data.items(), key=lambda x: x[1])[0]
-                
+
             # Insight 3: Forma de pago
             mejor_forma = "N/A"
             if pago_sum:
                 mejor_forma = max(pago_sum.items(), key=lambda x: x[1])[0]
-                
+
             self.full_text = f"""<ul>
                 <li style='margin-bottom: 8px;'>📈 <b>Pico de Ventas:</b> El mejor desempeño fue el día <b>{mejor_dia}</b> con <b>${val_mejor_dia:,.2f}</b>. Asegúrate de replicar la estrategia de ese día.</li>
                 <li style='margin-bottom: 8px;'>🏆 <b>Departamento Estrella:</b> <b>{mejor_depto}</b> está liderando en volumen. Considera ubicar promociones cruzadas cerca de esta sección.</li>
                 <li style='margin-bottom: 8px;'>💳 <b>Preferencia de Pago:</b> La mayoría de tus clientes prefiere usar <b>{mejor_forma}</b>. Analiza si las comisiones de este método están optimizadas.</li>
             </ul>"""
-            
+
         self.current_char = 0
         self.anim_timer.start(10) # 10ms por caracter HTML (approx)
 

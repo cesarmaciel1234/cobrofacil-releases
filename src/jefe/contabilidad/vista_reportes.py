@@ -50,10 +50,10 @@ class VistaReportesMixin:
             if not path: return
 
             stats = self._db.get_stats(self._mes, self._año)
-            
+
             from src.creador_pdf_global.motor_pdf_reportes import generar_pdf_mensual_stats
             generar_pdf_mensual_stats(path, stats, self._mes, self._año, MESES[self._mes-1])
-            
+
             QMessageBox.information(self.window(), "PDF Generado", f"Guardado en:\n{path}")
         except Exception as e:
             QMessageBox.critical(self.window(), "Error", str(e))

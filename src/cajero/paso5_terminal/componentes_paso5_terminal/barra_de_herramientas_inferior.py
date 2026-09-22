@@ -21,10 +21,10 @@ class BarraDeHerramientasInferior(QFrame):
     def __init__(self, mostrar_teclado=True, version_sistema="COBRO FACIL", parent=None):
         super().__init__(parent)
         self.setFixedHeight(55)
-        
+
         layout_principal = QHBoxLayout(self)
         layout_principal.setContentsMargins(15, 0, 5, 0)
-        
+
         # --- Botón Teclado Virtual ---
         if mostrar_teclado:
             self.boton_teclado = BotonTeclado()
@@ -44,14 +44,14 @@ class BarraDeHerramientasInferior(QFrame):
         self.etiqueta_version.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
         layout_principal.addWidget(self.etiqueta_version)
         layout_principal.addSpacing(10)
-        
+
         layout_principal.addStretch(1)
 
         # --- Botón Espera ---
         self.boton_espera = BotonEspera()
         self.boton_espera.clicked.connect(self.espera_presionado.emit)
         layout_principal.addWidget(self.boton_espera)
-        
+
         layout_principal.addStretch(1)
 
         # --- Botones de atajos (F1, F2...) en scroll area ---
@@ -59,12 +59,12 @@ class BarraDeHerramientasInferior(QFrame):
         self.scroll_atajos.tecla_f_presionada.connect(self.tecla_f_presionada.emit)
         layout_principal.addWidget(self.scroll_atajos, stretch=2)
         layout_principal.addSpacing(10)
-        
+
         # --- Botón Bloquear ---
         self.boton_bloquear = BotonBloquear()
         self.boton_bloquear.clicked.connect(self.bloquear_presionado.emit)
         layout_principal.addWidget(self.boton_bloquear)
-        
+
         # --- Botón Chatbot ---
         self.boton_chatbot = BotonChatbot()
         self.boton_chatbot.clicked.connect(self.chatbot_presionado.emit)

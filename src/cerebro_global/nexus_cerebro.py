@@ -11,9 +11,9 @@ class CerebroNexus:
             import re
             num_match = re.search(r'\d+', str(caja_filter))
             caja_num = int(num_match.group()) if num_match else 1
-            
+
         datos = MotorCierre.obtener_datos_cierre_diario(caja_id=caja_num)
-        
+
         total_efectivo = datos.get("v_efectivo", 0)
         total_digital = datos.get("v_tarjeta", 0) + datos.get("v_trans", 0) + datos.get("v_vales", 0) + datos.get("v_cheque", 0)
         fondo_inicial = datos.get("fondo", 0)
@@ -38,7 +38,7 @@ class CerebroNexus:
             query += " AND id > ?"
             params.append(last_id)
         query += " ORDER BY id ASC LIMIT 5"
-        
+
         return db_manager.execute_query(query, tuple(params)) or []
 
     @staticmethod
@@ -111,17 +111,17 @@ class CerebroNexus:
             q += " AND (usuario LIKE ? OR observaciones LIKE ?)"
             p.append(f"%{search_term}%")
             p.append(f"%{search_term}%")
-            
+
         from src.base_de_datos.database import db_manager
         q_count = "SELECT COUNT(id) FROM (" + q + ")"
         total = db_manager.execute_scalar(q_count, tuple(p)) or 0
-        
+
         q_paginated = q + " ORDER BY id DESC LIMIT ? OFFSET ?"
         p.extend([limit, offset])
         logs = db_manager.execute_query(q_paginated, tuple(p)) or []
-        
+
         all_logs = db_manager.execute_query(q + " ORDER BY id DESC", tuple(p[:-2])) or [] if not limit else []
-        
+
         return total, logs, all_logs
 
     @staticmethod
@@ -136,7 +136,7 @@ class CerebroNexus:
         if date_filter and date_filter != 'Todas las Fechas':
             q += " AND DATE(c.fecha) = ?"
             p.append(date_filter)
-            
+
         q += " ORDER BY c.id DESC LIMIT ? OFFSET ?"
         p.extend([limit, offset])
         from src.base_de_datos.database import db_manager

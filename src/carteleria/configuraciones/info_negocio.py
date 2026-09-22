@@ -11,28 +11,28 @@ class InfoNegocio(QWidget):
     Logo + Indicador de Red + Reloj + Botón Vista
     """
     config_requested = pyqtSignal()
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setStyleSheet(f"background: {C_THEME['surface']}; border: 1px solid {C_THEME['border']}; border-radius: 6px;")
-        
+
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(20, 10, 20, 10)
-        
+
         # Logo / Título
         self.logo = QLabel("Cargando...")
         self.logo.setStyleSheet(f"font-family: -apple-system; font-size: 26px; font-weight: 800; color: {C_THEME['text']}; background: transparent;")
-        
+
         # Bloques de Lego extraidos
         self.indicador_red = IndicadorRedWidget(self)
         self.reloj = RelojWidget(self)
-        
+
         # Botón estilo Apple
         self.btn_modo = QPushButton("    Siguiente Vista    ")
         self.btn_modo.setFixedSize(180, 40)
         self.btn_modo.setStyleSheet(f"background: #FFFFFF; color: {C_THEME['text']}; font-weight: 600; border-radius: 6px; border: 1px solid {C_THEME['border']};")
         apply_apple_shadow(self.btn_modo)
-        
+
         # Ensamblaje Visual
         self.layout.addWidget(self.logo)
         self.layout.addStretch()
@@ -47,7 +47,7 @@ class InfoNegocio(QWidget):
 
     def on_heartbeat_terminal(self, origen):
         self.indicador_red.on_heartbeat_terminal(origen)
-        
+
     def set_estado_red(self, estado: str, txt: str = ""):
         self.indicador_red.set_estado_red(estado, txt)
 

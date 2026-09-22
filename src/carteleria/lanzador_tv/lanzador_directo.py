@@ -94,7 +94,7 @@ class LanzadorDirectoTV(QObject):
             self.last_error = str(e)
             logger.error("Error lanzando cartelería directa: %s", e)
             return False
-    
+
     def _cargar_datos_iniciales(self):
         """Carga datos iniciales desde la base de datos."""
         try:
@@ -102,7 +102,7 @@ class LanzadorDirectoTV(QObject):
             import json
             import os
             from src.utils.paths import get_base_path
-            
+
             # Primero intentar desde caché local
             cache_path = os.path.join(get_base_path(), "carteleria_cache.json")
             if os.path.exists(cache_path):
@@ -116,15 +116,15 @@ class LanzadorDirectoTV(QObject):
                             return
                 except Exception as e:
                     logger.warning(f"Error leyendo caché: {e}")
-            
+
             # Si no hay caché, cargar directamente desde DB
             q = """
-                SELECT 
-                    id, 
-                    nombre, 
-                    precio, 
-                    precio_oferta, 
-                    cant_oferta, 
+                SELECT
+                    id,
+                    nombre,
+                    precio,
+                    precio_oferta,
+                    cant_oferta,
                     tipo_unidad_oferta,
                     departamento,
                     categoria,
@@ -132,7 +132,7 @@ class LanzadorDirectoTV(QObject):
                     unidad,
                     es_pesable,
                     icono
-                FROM productos 
+                FROM productos
                 WHERE COALESCE(stock, 0) > 0
                 ORDER BY nombre
             """
@@ -155,13 +155,13 @@ class LanzadorDirectoTV(QObject):
                             'es_pesable': r.get('es_pesable') or 0,
                             'icono': r.get('icono') or '',
                         })
-            
+
             if productos:
                 self._aplicar_catalogo(productos)
                 logger.info(f"Cargados {len(self.rows_precios)} productos desde DB")
             else:
                 logger.warning("No se encontraron productos en la base de datos")
-                
+
         except Exception as e:
             logger.error(f"Error cargando datos iniciales: {e}")
 
@@ -222,7 +222,7 @@ class LanzadorDirectoTV(QObject):
             self.detener()
         elif action in ("monitor", "f10"):
             self._handle_f10()
-    
+
     def _handle_f10(self):
         """Maneja F10: cambiar monitor."""
         logger.info("F10 presionado - cambiando monitor")
@@ -276,7 +276,7 @@ class LanzadorDirectoTV(QObject):
             )
         except Exception as e:
             logger.warning(f"Error procesando sync: {e}")
-    
+
     def _on_clima_actualizado(self, icon_name, text):
         if not self._vivo:
             return
@@ -284,7 +284,7 @@ class LanzadorDirectoTV(QObject):
         self._clima = text
         if self.rows_precios:
             self._refrescar_paneles(force=True)
-    
+
     def _normalizar_productos(self, productos):
         """Dict de MariaDB/HTTP o tupla del SELECT de sync."""
         result = []
@@ -443,18 +443,18 @@ class LanzadorDirectoTV(QObject):
     def get_web_state(self):
         """Snapshot ya armado; el HTTP no recalcula paneles ni íconos."""
         return self._state_cache or {"config": {}, "precios": []}
-    
+
     def _generar_datos_clima(self):
         """Genera datos del clima para la columna 4 con PNG y mensaje."""
         try:
             # Determinar icono y mensaje según el clima
             icono = self._clima_icon or "sol"
             temperatura = self._clima or "22°C"
-            
+
             # Mensaje según el clima y hora (noche/día)
             import datetime
             hora_actual = datetime.datetime.now().hour
-            
+
             clima = str(self._clima or "").lower()
             if 18 <= hora_actual or hora_actual < 6:
                 mensaje = "PARA ESTE MOMENTO DE LA NOCHE, TE RECOMENDAMOS LLEVAR"
@@ -469,14 +469,14 @@ class LanzadorDirectoTV(QObject):
                 else:
                     mensaje = "Día soleado, perfecto para la parrilla"
                     producto_recomendado = "POLLO ENTERO"
-            
+
             # Buscar precio del producto recomendado
             precio = 4900  # Precio default
             for prod in self.rows_precios:
                 if producto_recomendado.lower() in prod.get('nombre', '').lower():
                     precio = prod.get('precio', 4900)
                     break
-            
+
             return {
                 "icono": icono,
                 "temperatura": temperatura,
@@ -494,7 +494,7 @@ class LanzadorDirectoTV(QObject):
                 "producto_recomendado": "POLLO ENTERO",
                 "precio": 4900
             }
-    
+
     def _generar_mensaje_banderin(self, business_name):
         """Genera mensaje dinámico para el banderín según clima y ofertas."""
         mensajes_base = [
@@ -502,18 +502,18 @@ class LanzadorDirectoTV(QObject):
             f"Calidad garantizada en {business_name} • Precios competitivos • Atención personalizada",
             f"{business_name} • Frescura garantizada • Productos de primera calidad"
         ]
-        
+
         # Agregar mensaje basado en clima
         if self._clima and "nublado" in self._clima.lower():
             mensajes_base.append("Día ideal para compras en abrigo • Calidez en cada producto")
         elif self._clima and "sol" in self._clima.lower():
             mensajes_base.append("Día perfecto para la parrilla • Disfruta el buen clima")
-        
+
         # Agregar mensaje basado en ofertas activas
         ofertas_activas = [p for p in self.rows_precios if p.get('precio_oferta', 0) > 0 and p.get('precio_oferta', 0) < p.get('precio', 0)]
         if ofertas_activas:
             mensajes_base.append(f"• {len(ofertas_activas)} ofertas activas hoy • Aprovechá las promociones")
-        
+
         return " • ".join(mensajes_base)
 
 

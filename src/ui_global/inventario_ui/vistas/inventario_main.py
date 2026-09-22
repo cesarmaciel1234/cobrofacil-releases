@@ -402,9 +402,9 @@ class Admin1Inventario(QWidget):
                 try:
                     from src.central_red_global.network_engine import get_network_engine
                     e = get_network_engine()
-                    if e: 
+                    if e:
                         e.broadcast_message("PRECIOS_ACTUALIZADOS", {})
-                except: 
+                except:
                     pass
             else:
                 QMessageBox.warning(self, "Error", f"No se pudo guardar.\n\nDetalle técnico:\n{msg}")
@@ -422,17 +422,17 @@ class Admin1Inventario(QWidget):
             chk = self.catalogo.tabla.item(i, 0)
             if chk and chk.checkState() == Qt.CheckState.Checked:
                 filas_a_borrar.append(i)
-                
+
         # 2. Si no hay checkboxes marcados, usar las seleccionadas
         if not filas_a_borrar:
             for item in self.catalogo.tabla.selectedItems():
                 if item.row() not in filas_a_borrar:
                     filas_a_borrar.append(item.row())
-                
+
         if not filas_a_borrar:
             QMessageBox.information(self, "Aviso", "Seleccioná al menos un producto (usando las casillas o seleccionando filas) para eliminar.")
             return
-            
+
         nombres = []
         ids_a_borrar = []
         for row in filas_a_borrar:
@@ -441,14 +441,14 @@ class Admin1Inventario(QWidget):
             if item_id and item_nom:
                 ids_a_borrar.append(item_id.text())
                 nombres.append(item_nom.text())
-                
+
         if not ids_a_borrar:
             return
-            
+
         mensaje = f"¿Estás seguro de eliminar {len(ids_a_borrar)} producto(s)?"
         if len(ids_a_borrar) == 1:
             mensaje = f"¿Borrar producto: {nombres[0]}?"
-            
+
         if QMessageBox.question(self, "Confirmar Eliminación", mensaje, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             eliminados = 0
             for id_p in ids_a_borrar:
@@ -457,7 +457,7 @@ class Admin1Inventario(QWidget):
                 ok = resultado[0] if isinstance(resultado, tuple) else bool(resultado)
                 if ok:
                     eliminados += 1
-                    
+
             if eliminados > 0:
                 self.catalogo._cargar_deptos()
                 self.catalogo.cargar_datos()

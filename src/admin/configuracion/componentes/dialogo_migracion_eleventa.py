@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -25,44 +25,44 @@ class DialogoMigracionEleventa(QDialog):
         self.setStyleSheet("background-color: white; font-family: 'Segoe UI';")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(30, 25, 30, 25)
-        
+
         lbl_title = QLabel("📦 Importar Datos de Eleventa")
         lbl_title.setStyleSheet("font-size: 20px; font-weight: bold; ")
         layout.addWidget(lbl_title)
-        
+
         lbl_info = QLabel("Este proceso se conectará a tu base de datos anterior y copiará de manera segura:\n✔️ Catálogo de Productos  |  ✔️ Clientes y Deudas  |  ✔️ Historial de Ventas")
         lbl_info.setWordWrap(True)
         lbl_info.setStyleSheet("font-size: 13px; ")
         layout.addWidget(lbl_info)
-        
+
         path_lay = QHBoxLayout()
         self.txt_path = QLineEdit("")
         self.txt_path.setPlaceholderText("Selecciona el archivo PDVDATA.FDB desde tu pendrive o la carpeta actual")
         self.txt_path.setStyleSheet(" border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
-        
+
         btn_browse = QPushButton("📁 Buscar Archivo")
         btn_browse.setStyleSheet("  padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_browse.setCursor(QCursor(Qt.PointingHandCursor))
         btn_browse.clicked.connect(self._seleccionar_archivo)
-        
+
         path_lay.addWidget(self.txt_path)
         path_lay.addWidget(btn_browse)
         layout.addLayout(path_lay)
-        
+
         isql_lay = QHBoxLayout()
         self.txt_isql_path = QLineEdit("")
         self.txt_isql_path.setPlaceholderText("Opcional: selecciona isql.exe si no está en PATH o ruta estándar")
         self.txt_isql_path.setStyleSheet(" border: 1px solid #CBD5E1; padding: 10px; border-radius: 6px;")
-        
+
         btn_isql = QPushButton("📁 Buscar isql.exe")
         btn_isql.setStyleSheet("  padding: 10px; border-radius: 6px; font-weight: bold;")
         btn_isql.setCursor(QCursor(Qt.PointingHandCursor))
         btn_isql.clicked.connect(self._seleccionar_isql)
-        
+
         isql_lay.addWidget(self.txt_isql_path)
         isql_lay.addWidget(btn_isql)
         layout.addLayout(isql_lay)
-        
+
         self.txt_log = QTextEdit()
         self.txt_log.setReadOnly(True)
         self.txt_log.setStyleSheet(
@@ -71,20 +71,20 @@ class DialogoMigracionEleventa(QDialog):
         )
         self.txt_log.hide()
         layout.addWidget(self.txt_log)
-        
+
         layout.addSpacing(10)
-        
+
         self.btn_run = QPushButton("🚀 Iniciar Migración Total Ahora")
         self.btn_run.setCursor(QCursor(Qt.PointingHandCursor))
         self.btn_run.setStyleSheet(" background-color: #3B82F6; color: white; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px;")
         self.btn_run.clicked.connect(self.ejecutar_migracion)
         layout.addWidget(self.btn_run)
-        
+
         self.lbl_status = QLabel("")
         self.lbl_status.setStyleSheet(" font-weight: bold; font-size: 12px;")
         self.lbl_status.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.lbl_status)
-        
+
         self.worker = None
 
     def _seleccionar_archivo(self):
@@ -154,7 +154,7 @@ class DialogoMigracionEleventa(QDialog):
             "04_Respaldos_y_Migraciones",
             "importar_eleventa.py"
         )
-        
+
         if not os.path.exists(script_path):
             QMessageBox.critical(self, "Error", f"No se encontró el script de migración en:\n{script_path}")
             return

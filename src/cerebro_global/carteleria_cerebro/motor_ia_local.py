@@ -7,7 +7,7 @@ class MotorIALocal:
     Cerebro de Cartelería 100% Offline.
     Aprende de los tickets de los clientes y genera recomendaciones y combos.
     """
-    
+
     @staticmethod
     def obtener_relacionados(producto_base, limit=3):
         """
@@ -21,7 +21,7 @@ class MotorIALocal:
         except Exception as e:
             print(f"Error en obtener_relacionados: {e}")
             return []
-                
+
     @staticmethod
     def _obtener_top_general(limit=3, excluir=None):
         if excluir is None:
@@ -45,7 +45,7 @@ class MotorIALocal:
                     resultados.append(nombre)
                 if len(resultados) == limit:
                     break
-            
+
             return resultados
         except Exception:
             return []
@@ -61,50 +61,50 @@ class MotorIALocal:
             hoy = datetime.datetime.now()
             hora = hoy.hour
             dia_idx = hoy.weekday() # 0 = Lunes, 6 = Domingo
-            
+
             if 6 <= hora < 12: momento = "mañana"
             elif 12 <= hora < 19: momento = "tarde"
             else: momento = "noche"
-            
+
             # Obtener top venta global para usar como estrella
             estrella = "nuestros mejores cortes"
             estrella_precio = 0
             estrella_oferta = 0
-            
+
             top = MotorIALocal._obtener_top_general(limit=5)
             if top:
                 estrella = random.choice(top)
-            
+
             # 2. Plantillas dinámicas (sin depender de motor_ia de NLP)
             plantillas = [
                 "¡Salió {clima} en {localidad}! Los vecinos están llevando mucho {estrella}, ideal para hoy.",
                 "Para este momento de la {momento}, te recomendamos llevar {estrella}.",
                 "¡Aprovechá la frescura de hoy! {estrella} es el corte más elegido de la semana."
             ]
-            
+
             # Finde (Viernes a Domingo)
             if dia_idx >= 4:
                 plantillas.append("¡Fin de semana de asado! No te olvides del {estrella} y el carbón.")
-                
+
             clima = clima_tupla[0] if clima_tupla else "el día"
             if clima == "sol": clima = "el sol"
             elif clima == "nube": clima = "un día nublado"
             elif clima == "lluvia": clima = "la lluvia"
-            
+
             localidad = "tu barrio"
             if clima_tupla and len(clima_tupla) > 1 and clima_tupla[1]:
                 partes = str(clima_tupla[1]).split()
                 if partes:
                     localidad = partes[-1]
-            
+
             plantilla_elegida = random.choice(plantillas)
             mensaje = plantilla_elegida.format(
-                clima=clima, 
-                localidad=localidad, 
-                estrella=estrella, 
+                clima=clima,
+                localidad=localidad,
+                estrella=estrella,
                 momento=momento
             )
-            
+
             # 3. Datos del producto para mostrar
             query2 = "SELECT precio, precio_oferta FROM productos WHERE LOWER(nombre) = LOWER(?)"
             rows = db_manager.execute_query(query2, (estrella,))
@@ -116,7 +116,7 @@ class MotorIALocal:
                 else:
                     estrella_precio = float(res[0] or 0)
                     estrella_oferta = float(res[1] or 0)
-                
+
             # Si encontramos datos en datos_destacados (preferimos sugerir cosas que están en la cartelería global)
             if datos_destacados and not res:
                 p = random.choice(datos_destacados)
@@ -124,9 +124,9 @@ class MotorIALocal:
                     estrella = p[0]
                     estrella_precio = p[1]
                     estrella_oferta = p[2]
-            
+
             return mensaje, estrella, estrella_precio, estrella_oferta
-            
+
         except Exception as e:
             print(f"Error en generar_recomendacion_lobo: {e}")
             return "¡Llevá la mejor calidad al mejor precio!", "Oferta Especial", 0, 0

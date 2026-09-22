@@ -69,7 +69,6 @@ class ConfigButton(QFrame):
             "Alertas de\nEfectivo": "Te avisa si hay mucho dinero en la caja para que lo guardes (evita robos).",
             "Opciones\nhabilitadas": "Activa o desactiva módulos clave como vender sin stock, fiar, imprimir solo, etc.",
             "Cajeros": "Crea usuarios y contraseñas para tus empleados.",
-            "Base de datos\nPC Esclava": "Cambia la contraseña maestra usada para conectar computadoras secundarias por red.",
             "Administrar\nCajas": "Conecta varias computadoras para que cobren juntas en red.",
             "Logotipo del\nPrograma": "Cambia el nombre de tu negocio y el diseño del ticket.",
             "Ticket": "Diseña cómo sale el ticket impreso para el cliente.",

@@ -2,10 +2,10 @@ from src.utils.qt_compat import qt_exec
 from src.utils.theme_manager import theme_manager
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QScrollArea, QPushButton, QGridLayout, QSizePolicy,
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
-    QFileDialog, QTextEdit, QGraphicsDropShadowEffect
+    QFileDialog, QTextEdit
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
@@ -27,7 +27,7 @@ class DialogoTerminalTPV(QDialog):
 
     def _build(self):
         from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QPushButton, QMessageBox
-        
+
         main_lay = QVBoxLayout(self)
         main_lay.setContentsMargins(20, 20, 20, 20)
         main_lay.setSpacing(15)
@@ -123,7 +123,7 @@ class DialogoTerminalTPV(QDialog):
         box_clover = QFrame()
         box_clover.setStyleSheet(" border: 1px solid #CBD5E1; border-radius: 8px;")
         clover_lay = QVBoxLayout(box_clover)
-        
+
         clover_header_lay = QHBoxLayout()
         lbl_clover = QLabel("🍀 Terminales Clover Posnet (WIFI / IP)")
         lbl_clover.setStyleSheet("font-weight: bold; font-size: 13px;  border: none;")

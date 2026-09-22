@@ -1,5 +1,5 @@
 import src.utils.qt_compat  # noqa: F401 — enums Qt6 en namespace Qt
-from PyQt6.QtWidgets import QPushButton, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QPushButton
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QPropertyAnimation, QRect, QEasingCurve, QTimer
 from PyQt6.QtGui import QColor, QCursor
 
@@ -15,18 +15,11 @@ class BotonFlotanteRegreso(QPushButton):
         self.setFixedSize(65, 65)
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         self.setCursor(Qt.PointingHandCursor)
-        
-        # Sombra profunda para estética Midnight Premium
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(25)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        shadow.setOffset(0, 6)
-        self.setGraphicsEffect(shadow)
 
-        self.old_pos = None
+        # Sombra profunda para estética Midnight Premium        self.old_pos = None
         self.press_pos = None
         self._emergency_state = False
-        
+
         # Timer de Parpadeo "Bombero" (Frecuencia de sirena)
         self.timer_flash = QTimer(self)
         self.timer_flash.timeout.connect(self._toggle_flash)
@@ -40,7 +33,7 @@ class BotonFlotanteRegreso(QPushButton):
         else:
             # Azul Policial
             style = "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #3B82F6, stop:1 #1E40AF); border: 3px solid #60A5FA;"
-        
+
         self.setStyleSheet(f"""
             QPushButton {{
                 {style}

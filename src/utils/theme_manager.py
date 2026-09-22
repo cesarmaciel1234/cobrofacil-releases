@@ -98,7 +98,7 @@ class ThemeManager(QObject):
     def get_depto_colors(self):
         if self.current_theme == "light":
             return [
-                "#FFFFFF", "#F8FAFC", "#F0FDF4", "#EFF6FF", 
+                "#FFFFFF", "#F8FAFC", "#F0FDF4", "#EFF6FF",
                 "#FEF2F2", "#FFFBEB", "#FDF4FF", "#F0FDFA"
             ]
         else:

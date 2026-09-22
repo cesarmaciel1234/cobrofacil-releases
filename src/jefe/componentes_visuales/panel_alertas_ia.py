@@ -60,7 +60,7 @@ class PanelAlertasIA(QFrame):
             item = self.alertas_lay.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-                
+
         if not db_manager:
             return
 
@@ -98,7 +98,7 @@ class PanelAlertasIA(QFrame):
             if vel_diaria > 0:
                 stock = float(stock_actual.get(nombre, 0.0))
                 dias_restantes = stock / vel_diaria
-                
+
                 # Quiebre inminente (< 2 días)
                 if dias_restantes < 2.0 and stock > 0:
                     alertas_generadas.append({

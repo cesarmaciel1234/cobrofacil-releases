@@ -28,7 +28,7 @@ plantillas = [
     ("¡Aprovechá la frescura de nuestra carne para esta tarde soleada!", "sol", "tarde", "indiferente"),
     ("¡No te quedes sin fuego hoy! Llevate esta promo espectacular.", "sol", "indiferente", "indiferente"),
     ("¡Un día así se festeja con la mejor carne en el plato!", "sol", "indiferente", "indiferente"),
-    
+
     # FRIO / LLUVIOSO
     ("¡Que el frío no te asuste! Un buen estofado con este corte te revive.", "frio", "indiferente", "indiferente"),
     ("¡Día ideal para prender el horno o comer a la cacerola! Mirá qué ofertón.", "frio", "indiferente", "indiferente"),
@@ -37,7 +37,7 @@ plantillas = [
     ("Esta noche fría pide un plato calentito con nuestra mejor calidad.", "frio", "noche", "indiferente"),
     ("Para este mediodía gris, ponele color a la mesa con esta promo.", "lluvioso", "mañana", "indiferente"),
     ("¡Que la lluvia no te quite las ganas de comer bien!", "lluvioso", "indiferente", "indiferente"),
-    
+
     # FIN DE SEMANA
     ("¡Salió juntada de fin de semana! Llevate este corte premium para quedar como un rey.", "indiferente", "indiferente", "finde"),
     ("¡El asadito del domingo ya está acá! No te olvides del carbón y llevate esta belleza.", "indiferente", "mañana", "finde"),
@@ -46,14 +46,14 @@ plantillas = [
     ("¡Fin de semana de locos! Aprovechá este precio antes de que vuele el stock.", "indiferente", "indiferente", "finde"),
     ("¡Tu familia merece lo mejor este finde! Llevate nuestra sugerencia estrella.", "indiferente", "indiferente", "finde"),
     ("¡El permitido del finde está acá! Mirá qué corte espectacular.", "indiferente", "indiferente", "finde"),
-    
+
     # SEMANA
     ("¡Cortá la semana con la mejor calidad y al mejor precio!", "indiferente", "indiferente", "semana"),
     ("¡Llegar de trabajar y tener esta carne lista para cocinar no tiene precio!", "indiferente", "tarde", "semana"),
     ("¡Para un martes o miércoles distinto, probá esta promo imbatible!", "indiferente", "indiferente", "semana"),
     ("¡Ahorrá en la semana sin resignar sabor! Mirá este ofertón.", "indiferente", "indiferente", "semana"),
     ("Para este almuerzo rápido en la semana, ¡llevate la mejor opción!", "indiferente", "mañana", "semana"),
-    
+
     # INDIFERENTE (Generales)
     ("¡Calidad indiscutible al precio más bajo! El Chef Lobo recomienda.", "indiferente", "indiferente", "indiferente"),
     ("¡Directo de la carnicería a tu mesa! Llevate esta súper oferta.", "indiferente", "indiferente", "indiferente"),

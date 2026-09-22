@@ -18,7 +18,7 @@ class NexusPanelIzq(QWidget):
         self.terminal_output.setFont(QFont("Consolas", 11))
         self.terminal_output.setStyleSheet('''
             QTextEdit {
-                background-color: #FFFFFF; color: #000000; 
+                background-color: #FFFFFF; color: #000000;
                 border: 1px solid #000000; border-radius: 0px; padding: 4px;
                 font-family: Consolas; font-size: 11px;
             }
@@ -35,7 +35,7 @@ class NexusPanelIzq(QWidget):
         self.txt_topo.setFixedHeight(120)
         self.txt_topo.setStyleSheet('''
             QTextEdit {
-                background-color: #0F172A; color: #38BDF8; 
+                background-color: #0F172A; color: #38BDF8;
                 border: 1px solid #1E293B; border-radius: 6px; padding: 5px;
             }
         ''')
@@ -72,7 +72,7 @@ class NexusPanelIzq(QWidget):
 
     def inject_ai_log(self, category, origin, message, time_str):
         clean_org = origin.split('|')[-1].upper() if '|' in str(origin) else f"CAJA {origin}"
-        
+
         if category == "VENTA_EFECTIVO": tipo = "VENTA EFECTIVO"; color = None
         elif category == "VENTA_DIGITAL": tipo = "VENTA DIGITAL"; color = None
         elif category == "APERTURA_SOFTWARE": tipo = "APERTURA CAJON (SOFTWARE)"; color = None
@@ -87,7 +87,7 @@ class NexusPanelIzq(QWidget):
         else:
             log_text = f"[{time_str}] [{clean_org}] {tipo}: {message}"
             self.terminal_output.append(log_text)
-        
+
         self.terminal_output.append("") # Pequeña separación
         self.terminal_output.verticalScrollBar().setValue(self.terminal_output.verticalScrollBar().maximum())
         self._trim_terminal()

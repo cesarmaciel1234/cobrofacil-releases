@@ -4,8 +4,8 @@ from src.utils.theme_manager import theme_manager
 import json
 from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton, 
-    QScrollArea, QGridLayout, QGraphicsDropShadowEffect, QStackedWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QPushButton,
+    QScrollArea, QGridLayout, QStackedWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
@@ -62,7 +62,7 @@ class DialogoInventarioBajo(QDialog):
         tabla.setColumnCount(3)
         tabla.setHorizontalHeaderLabels(["Código", "Producto", "Stock Actual"])
         tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
+
         from src.utils.db import db_manager
         res = db_manager.execute_query("SELECT codigo, nombre, stock FROM productos WHERE stock <= 5 ORDER BY stock ASC")
         if res:

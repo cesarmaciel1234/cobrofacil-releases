@@ -7,7 +7,7 @@ except ImportError:
 
 class MotorCombos:
     """Motor central para la gestión de combos."""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 

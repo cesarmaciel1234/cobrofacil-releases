@@ -26,19 +26,19 @@ def abrir_archivo_pdf(pdf_path):
     import sys
     import subprocess
     from src.logger import logger
-    
+
     # Normalizar la ruta con las diagonales correctas de Windows (\)
     pdf_path = os.path.normpath(os.path.abspath(pdf_path))
     logger.info(f"🛰️ SOLICITUD DE APERTURA PDF: {pdf_path}")
-    
+
     if not os.path.exists(pdf_path):
         logger.error(f"❌ ERROR: El archivo PDF no existe físicamente en el disco: {pdf_path}")
         return False
-        
+
     try:
         from PyQt6.QtGui import QDesktopServices
         from PyQt6.QtCore import QUrl
-        
+
         # 1. Intentar abrir con Chrome explícitamente (solicitado por el usuario)
         if sys.platform == 'win32':
             try:
@@ -58,7 +58,7 @@ def abrir_archivo_pdf(pdf_path):
                 return True
         except Exception as e:
             logger.warning(f"⚠️ Fallo QDesktopServices: {e}")
-            
+
         if sys.platform == 'win32':
             # 2. Intentar abrir con el explorador nativo (os.startfile) como respaldo
             try:
@@ -67,7 +67,7 @@ def abrir_archivo_pdf(pdf_path):
                 return True
             except Exception as e:
                 logger.warning(f"⚠️ Fallo os.startfile: {e}")
-                
+
             # 3. Intentar comando shell 'start' directo de Windows
             try:
                 os.system(f'start "" "{pdf_path}"')
@@ -75,7 +75,7 @@ def abrir_archivo_pdf(pdf_path):
                 return True
             except Exception as e:
                 logger.warning(f"⚠️ Fallo os.system start: {e}")
-                
+
             # 4. Intentar lanzar con subprocess Popen
             try:
                 subprocess.Popen([pdf_path], shell=True)
@@ -115,7 +115,7 @@ class EtiquetaRenderer:
         # ── CARPETA CENTRALIZADA Y ARCHIVO CON TIMESTAMP PARA EVITAR BLOQUEOS ──
         base_dir = os.path.join(self.base_path, "Etiquetas_Impresas")
         os.makedirs(base_dir, exist_ok=True)
-        
+
         import time
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Gondola_{timestamp}.pdf")
@@ -129,11 +129,11 @@ class EtiquetaRenderer:
         set_page_margins_mm(printer, 2, 2, 2, 2)
 
         print_document(doc, printer)
-        
+
         # ── LIBERACIÓN EXPLÍCITA DE MANEJADORES DE ARCHIVO ──
         del printer
         del doc
-        
+
         self.limpiar_tmp()
         return pdf_path
 
@@ -146,41 +146,41 @@ class EtiquetaRenderer:
         @page {{ size: A4; margin: 2mm; }}
         body {{ margin: 0; padding: 0; font-family: Arial; background: white; }}
         table.grid {{ width: 100%; border-collapse: collapse; table-layout: fixed; }}
-        
+
         /* CONTENEDOR FIJO PARA EVITAR QUE SE ROMPA EL DISEÑO */
         td.label {{
-            width: 69mm; 
-            height: 48mm; 
-            padding: 0; 
+            width: 69mm;
+            height: 48mm;
+            padding: 0;
             border: 1px dashed #b8b8b8;
-            vertical-align: top; 
+            vertical-align: top;
             overflow: hidden;
             page-break-inside: avoid;
         }}
 
         /* CABECERA FIJA (15mm) */
-        .header {{ 
-            background: #082c63; 
-            height: 15mm; 
-            padding-left: 3mm; 
+        .header {{
+            background: #082c63;
+            height: 15mm;
+            padding-left: 3mm;
             padding-right: 3mm;
-            padding-top: 1mm; 
+            padding-top: 1mm;
             color: white;
             overflow: hidden;
         }}
-        .super {{ 
-            font-size: 9pt; 
-            font-weight: bold; 
+        .super {{
+            font-size: 9pt;
+            font-weight: bold;
             height: 5mm;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }}
-        .product {{ 
-            font-size: 10pt; 
-            font-weight: 900; 
-            color: white; 
-            text-transform: uppercase; 
+        .product {{
+            font-size: 10pt;
+            font-weight: 900;
+            color: white;
+            text-transform: uppercase;
             line-height: 1.1;
             height: 8mm;
             overflow: hidden;
@@ -190,29 +190,29 @@ class EtiquetaRenderer:
         }}
 
         /* CAJA DE PRECIO FIJA (20mm) */
-        .price-box {{ 
-            background: #f4511e; 
-            height: 20mm; 
-            text-align: center; 
-            padding-top: 1mm; 
+        .price-box {{
+            background: #f4511e;
+            height: 20mm;
+            text-align: center;
+            padding-top: 1mm;
             overflow: hidden;
         }}
         .currency {{ color: white; font-size: 22pt; font-weight: bold; vertical-align: top; }}
         .price {{ color: white; font-size: 54pt; font-weight: 900; letter-spacing: -4px; line-height: 0.9; }}
 
         /* PIE FIJO (13mm) */
-        .footer {{ 
-            background: #082c63; 
-            height: 13mm; 
+        .footer {{
+            background: #082c63;
+            height: 13mm;
             color: white;
             text-align: center;
             overflow: hidden;
         }}
         .barcode {{ width: 42mm; height: 9mm; margin-top: 0.5mm; }}
-        .meta {{ 
-            font-size: 6.5pt; 
-            font-weight: bold; 
-            color: white; 
+        .meta {{
+            font-size: 6.5pt;
+            font-weight: bold;
+            color: white;
             margin-top: 0.2mm;
             white-space: nowrap;
         }}
@@ -240,18 +240,18 @@ class EtiquetaRenderer:
     def generar_etiqueta(self, producto, fecha, rubro, negocio):
         codigo_real = str(producto["id"]).strip()
         if not codigo_real: return ""
-        
+
         # Sanitizamos solo el nombre de archivo, preservando el código real para el código de barras
         filename_seguro = "".join(c for c in codigo_real if c.isalnum() or c in "-_")
         if not filename_seguro: filename_seguro = "temp_code"
-        
+
         barcode_url = self.generar_barcode(codigo_real, filename_seguro)
-        
+
         try:
             precio_float = float(str(producto["precio"]).replace("$", "").replace(",", ""))
         except:
             precio_float = 0.0
-            
+
         precio = f"{precio_float:.2f}"
         enteros = precio.split(".")[0]
         nombre = html.escape(str(producto["nombre"]).upper())
@@ -296,14 +296,14 @@ class EtiquetaRenderer:
     def generar_barcode(self, codigo, filename_seguro=None):
         if not os.path.exists(self.tmp_dir):
             os.makedirs(self.tmp_dir, exist_ok=True)
-            
+
         nombre_archivo = filename_seguro if filename_seguro else "".join(filter(str.isalnum, codigo))
         barcode_path = os.path.join(self.tmp_dir, nombre_archivo)
         CODE128 = barcode.get_barcode_class("code128")
         barcode_img = CODE128(codigo, writer=ImageWriter())
         filename = barcode_img.save(barcode_path, {
-            "write_text": True, 
-            "module_height": 2.5, 
+            "write_text": True,
+            "module_height": 2.5,
             "module_width": 0.16,
             "quiet_zone": 0.5,
             "font_size": 5.5,
@@ -316,7 +316,7 @@ class EtiquetaRenderer:
         c.saveState()
         c.translate(fx, fy)
         c.scale(scale, scale)
-        
+
         # Flama Externa (Rojo Fuego)
         c.setFillColor(HexColor("#ef4444"))
         p1 = c.beginPath()
@@ -327,7 +327,7 @@ class EtiquetaRenderer:
         p1.curveTo(18, 15, 10, 5, 0, 0)
         p1.close()
         c.drawPath(p1, fill=1, stroke=0)
-        
+
         # Flama Media (Naranja Brillante)
         c.setFillColor(HexColor("#f97316"))
         p2 = c.beginPath()
@@ -338,7 +338,7 @@ class EtiquetaRenderer:
         p2.curveTo(11, 17, 7, 10, 0, 5)
         p2.close()
         c.drawPath(p2, fill=1, stroke=0)
-        
+
         # Flama Interna (Amarillo Fuego)
         c.setFillColor(HexColor("#facc15"))
         p3 = c.beginPath()
@@ -349,7 +349,7 @@ class EtiquetaRenderer:
         p3.curveTo(7, 20, 4, 16, 0, 12)
         p3.close()
         c.drawPath(p3, fill=1, stroke=0)
-        
+
         c.restoreState()
 
     def generar_pdf_ofertas(self, lote_ofertas, rubro="CARNICERÍA", negocio="MACIEL"):
@@ -374,13 +374,13 @@ class EtiquetaRenderer:
 
         base_dir = os.path.join(self.base_path, "Carteles_Oferta")
         os.makedirs(base_dir, exist_ok=True)
-        
+
         nombre_safe = "PRODUCTOS"
         if lote_ofertas and "nombre" in lote_ofertas[0]:
             nombre_safe = "".join([char if char.isalnum() else "_" for char in str(lote_ofertas[0]["nombre"])]).strip("_").upper()
-            
+
         pdf_path = os.path.join(base_dir, f"Cartel_Oferta_{nombre_safe}.pdf")
-        
+
         c = canvas.Canvas(pdf_path, pagesize=A4)
         PAGE_W, PAGE_H = A4
 
@@ -391,7 +391,7 @@ class EtiquetaRenderer:
             "a6_grid": [],
             "a8_grid": []
         }
-        
+
         for oferta in lote_ofertas:
             fmt = oferta.get("formato")
             if not fmt:
@@ -400,7 +400,7 @@ class EtiquetaRenderer:
                     fmt = "a5_horizontal"
                 else:
                     fmt = "a4_vertical"
-            
+
             if fmt in ofertas_por_formato:
                 ofertas_por_formato[fmt].append(oferta)
             else:
@@ -429,16 +429,16 @@ class EtiquetaRenderer:
         for i in range(0, len(items_a5), 2):
             oferta1 = items_a5[i]
             oferta2 = items_a5[i + 1] if i + 1 < len(items_a5) else None
-            
+
             mitad_h = PAGE_H / 2
-            
+
             # Oferta Superior
             self.dibujar_oferta_horizontal(c, oferta1, 0, mitad_h, PAGE_W, mitad_h, rubro, negocio)
-            
+
             # Oferta Inferior
             if oferta2:
                 self.dibujar_oferta_horizontal(c, oferta2, 0, 0, PAGE_W, mitad_h, rubro, negocio)
-                
+
             # Línea guía de corte central
             if oferta2:
                 c.setDash(3, 3)
@@ -446,7 +446,7 @@ class EtiquetaRenderer:
                 c.setLineWidth(1)
                 c.line(0, mitad_h, PAGE_W, mitad_h)
                 c.setDash()
-                
+
             c.showPage()
 
         # -------------------------------------------------------------
@@ -455,26 +455,26 @@ class EtiquetaRenderer:
         items_a6 = ofertas_por_formato["a6_grid"]
         for i in range(0, len(items_a6), 4):
             chunk = items_a6[i:i+4]
-            
+
             quad_w = PAGE_W / 2
             quad_h = PAGE_H / 2
-            
+
             coordenadas = [
                 (0, quad_h),       # Top-Left
                 (quad_w, quad_h),  # Top-Right
                 (0, 0),            # Bottom-Left
                 (quad_w, 0)        # Bottom-Right
             ]
-            
+
             for idx, oferta in enumerate(chunk):
                 qx, qy = coordenadas[idx]
-                
+
                 c.saveState()
                 c.translate(qx, qy)
                 c.scale(0.5, 0.5)
                 self.dibujar_oferta_vertical(c, oferta, 0, 0, PAGE_W, PAGE_H, rubro, negocio)
                 c.restoreState()
-                
+
             # Líneas guía de corte
             c.setDash(3, 3)
             c.setStrokeColor(HexColor("#cbd5e1"))
@@ -482,7 +482,7 @@ class EtiquetaRenderer:
             c.line(0, quad_h, PAGE_W, quad_h)  # Horizontal
             c.line(quad_w, 0, quad_w, PAGE_H)  # Vertical
             c.setDash()
-            
+
             c.showPage()
 
         # -------------------------------------------------------------
@@ -491,10 +491,10 @@ class EtiquetaRenderer:
         items_a8 = ofertas_por_formato["a8_grid"]
         for i in range(0, len(items_a8), 8):
             chunk = items_a8[i:i+8]
-            
+
             cell_w = PAGE_W / 2
             cell_h = PAGE_H / 4
-            
+
             coordenadas = [
                 (0, cell_h * 3),       # Fila 4, Col 1
                 (cell_w, cell_h * 3),  # Fila 4, Col 2
@@ -505,16 +505,16 @@ class EtiquetaRenderer:
                 (0, 0),                # Fila 1, Col 1
                 (cell_w, 0)            # Fila 1, Col 2
             ]
-            
+
             for idx, oferta in enumerate(chunk):
                 cx, cy = coordenadas[idx]
-                
+
                 c.saveState()
                 c.translate(cx, cy)
                 c.scale(0.5, 0.5)
                 self.dibujar_oferta_horizontal(c, oferta, 0, 0, PAGE_W, PAGE_H / 2, rubro, negocio)
                 c.restoreState()
-                
+
             # Líneas guía de corte
             c.setDash(3, 3)
             c.setStrokeColor(HexColor("#cbd5e1"))
@@ -524,7 +524,7 @@ class EtiquetaRenderer:
             c.line(0, cell_h * 2, PAGE_W, cell_h * 2)  # Horizontal 2
             c.line(0, cell_h * 3, PAGE_W, cell_h * 3)  # Horizontal 3
             c.setDash()
-            
+
             c.showPage()
 
         c.save()
@@ -557,7 +557,7 @@ class EtiquetaRenderer:
         c.setStrokeColor(amarillo_accent)
         c.setLineWidth(1.5)
         c.roundRect(x + (w - 280)/2, y + h - 75, 280, 40, 20, fill=1, stroke=1)
-        
+
         c.setFillColor(white)
         c.setFont("Helvetica-Bold", 18)
         # Asegurar un texto llamativo
@@ -589,13 +589,13 @@ class EtiquetaRenderer:
         linea1 = []
         linea2 = []
         limite_caracteres = 15
-        
+
         for p in palabras:
             if len(" ".join(linea1 + [p])) <= limite_caracteres:
                 linea1.append(p)
             else:
                 linea2.append(p)
-                
+
         txt_linea1 = " ".join(linea1)
         txt_linea2 = " ".join(linea2)
 
@@ -615,7 +615,7 @@ class EtiquetaRenderer:
         p_reg_txt = f"ANTES PRECIO RAYADO: ${oferta['precio_regular']}"
         w_reg = stringWidth(p_reg_txt, "Helvetica-Bold", 16)
         c.drawCentredString(x + w / 2, y_precio_base + 110, p_reg_txt)
-        
+
         # Línea de tachado roja gruesa sobre el precio regular
         c.setStrokeColor(rojo_accent)
         c.setLineWidth(2.5)
@@ -668,7 +668,7 @@ class EtiquetaRenderer:
             c.setStrokeColor(naranja_accent)
             c.setLineWidth(1)
             c.roundRect(x + (w - 320)/2, y_precio_base - 110, 320, 35, 8, fill=1, stroke=1)
-            
+
             c.setFillColor(HexColor("#9a3412")) # Orange-brown
             c.setFont("Helvetica-Bold", 14)
             c.drawCentredString(x + w / 2, y_precio_base - 98, condicion)
@@ -715,7 +715,7 @@ class EtiquetaRenderer:
         c.roundRect(x + 30, y + h - 55, 180, 25, 12, fill=1, stroke=1)
         c.setFillColor(white)
         c.setFont("Helvetica-Bold", 12)
-        
+
         texto_promo = str(oferta["tipo_promo"]).upper().strip()
         if not texto_promo:
             texto_promo = "¡SUPER OFERTA!"
@@ -776,7 +776,7 @@ class EtiquetaRenderer:
             c.setStrokeColor(naranja_accent)
             c.setLineWidth(0.8)
             c.roundRect(x + 35, y + h / 2 - 95, 230, 25, 6, fill=1, stroke=1)
-            
+
             c.setFillColor(HexColor("#9a3412"))
             c.setFont("Helvetica-Bold", 10)
             c.drawString(x + 45, y + h / 2 - 87, condicion)
@@ -845,7 +845,7 @@ class EtiquetaRenderer:
         base_dir = os.path.join(self.base_path, "Folletos_Oferta")
         os.makedirs(base_dir, exist_ok=True)
         pdf_path = os.path.join(base_dir, "Folleto_Ofertas.pdf")
-        
+
         printer = QPrinter(printer_high_resolution())
         printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
@@ -860,33 +860,33 @@ class EtiquetaRenderer:
         doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
-        
+
         html_pages = []
-        
+
         if diseno_tipo == "grilla":
             # Agrupar ofertas de 6 en 6 para paginado
             items_per_page = 6
             chunks = [lote_ofertas[i:i + items_per_page] for i in range(0, len(lote_ofertas), items_per_page)]
-            
+
             for chunk_idx, chunk in enumerate(chunks):
                 is_last_page = (chunk_idx == len(chunks) - 1)
                 page_break = "page-break-after: always;" if not is_last_page else ""
-                
+
                 # Armar filas de la grilla (de a 2 columnas)
                 rows_html = ""
                 for row_idx in range(0, len(chunk), 2):
                     row_items = chunk[row_idx:row_idx + 2]
-                    
+
                     cols_html = ""
                     for item in row_items:
                         nombre = html.escape(str(item["nombre"]).upper())
                         precio_reg = str(item["precio_regular"])
                         precio_of = str(item["precio_oferta"])
                         cond_v = html.escape(str(item.get("condicion_venta", "")).upper())
-                        
+
                         entero = precio_of.split('.')[0]
                         centavos = '.' + precio_of.split('.')[1] if '.' in precio_of else '.00'
-                        
+
                         cond_badge_html = f"""
                         <div style="font-size: 9pt; font-weight: 800; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 5px; margin-top: 8px; text-transform: uppercase;">
                             {cond_v}
@@ -915,9 +915,9 @@ class EtiquetaRenderer:
                     # Si la fila tiene solo 1 producto, rellenar el otro con una celda vacía estética
                     if len(row_items) == 1:
                         cols_html += '<td style="width: 50%; padding: 8px;"></td>'
-                        
+
                     rows_html += f"<tr>{cols_html}</tr>"
-                
+
                 page_html = f"""
                 <div style="width: 100%; height: 98%; box-sizing: border-box; overflow: hidden; {page_break} font-family: Arial; padding: 10px; background: #f8fafc;">
                     <!-- HEADER DEL FOLLETO -->
@@ -933,12 +933,12 @@ class EtiquetaRenderer:
                             </td>
                         </tr>
                     </table>
-                    
+
                     <!-- CUADRÍCULA -->
                     <table style="width: 100%; border-collapse: collapse;">
                         {rows_html}
                     </table>
-                    
+
                     <!-- FOOTER DEL FOLLETO -->
                     <div style="text-align: center; color: #64748b; font-size: 9pt; font-weight: bold; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 10px; letter-spacing: 2px;">
                         ¡APROVECHA NUESTRAS MEJORES OFERTAS! &bull; PÁGINA {chunk_idx + 1} DE {len(chunks)}
@@ -946,15 +946,15 @@ class EtiquetaRenderer:
                 </div>
                 """
                 html_pages.append(page_html)
-                
+
         else: # Diseño "lista" (Tabla de promociones compacta)
             items_per_page = 14
             chunks = [lote_ofertas[i:i + items_per_page] for i in range(0, len(lote_ofertas), items_per_page)]
-            
+
             for chunk_idx, chunk in enumerate(chunks):
                 is_last_page = (chunk_idx == len(chunks) - 1)
                 page_break = "page-break-after: always;" if not is_last_page else ""
-                
+
                 rows_html = ""
                 for idx, item in enumerate(chunk):
                     bg_row = "#f8fafc" if idx % 2 == 1 else "#ffffff"
@@ -962,7 +962,7 @@ class EtiquetaRenderer:
                     precio_reg = str(item["precio_regular"])
                     precio_of = str(item["precio_oferta"])
                     cond_v = html.escape(str(item.get("condicion_venta", "")).upper())
-                    
+
                     cond_td_html = f"""
                     <span style="background: #fffbeb; padding: 4px 12px; border-radius: 9999px; border: 1px solid #fde68a; color: #b45309; text-transform: uppercase;">
                         {cond_v}
@@ -985,7 +985,7 @@ class EtiquetaRenderer:
                         </td>
                     </tr>
                     """
-                
+
                 page_html = f"""
                 <div style="width: 100%; height: 98%; box-sizing: border-box; overflow: hidden; {page_break} font-family: Arial; padding: 10px; background: #ffffff;">
                     <!-- HEADER DEL FOLLETO -->
@@ -1001,7 +1001,7 @@ class EtiquetaRenderer:
                             </td>
                         </tr>
                     </table>
-                    
+
                     <!-- TABLA -->
                     <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
                         <thead>
@@ -1016,7 +1016,7 @@ class EtiquetaRenderer:
                             {rows_html}
                         </tbody>
                     </table>
-                    
+
                     <!-- FOOTER -->
                     <div style="text-align: center; color: #64748b; font-size: 9pt; font-weight: bold; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; letter-spacing: 1.5px;">
                         ¡COMPRA INTELIGENTE, AHORRA SIEMPRE! &bull; PÁGINA {chunk_idx + 1} DE {len(chunks)}
@@ -1031,10 +1031,10 @@ class EtiquetaRenderer:
         <body>{''.join(html_pages)}</body>
         </html>
         """
-        
+
         doc.setHtml(full_html)
         print_document(doc, printer)
-        
+
         del printer
         del doc
         self.limpiar_tmp()
@@ -1081,7 +1081,7 @@ class EtiquetaRenderer:
         os.makedirs(base_dir, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M")
         pdf_path = os.path.join(base_dir, f"Catalogo_Clientes_{stamp}.pdf")
-        
+
         printer = QPrinter(printer_high_resolution())
         printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
@@ -1240,7 +1240,7 @@ class EtiquetaRenderer:
         full_html = f"<html><head><style>body {{ margin:0; padding:0; background:white; }}</style></head><body>{''.join(html_pages)}</body></html>"
         doc.setHtml(full_html)
         print_document(doc, printer)
-        
+
         del printer
         del doc
         self.limpiar_tmp()
@@ -1256,11 +1256,11 @@ class EtiquetaRenderer:
         """
         base_dir = os.path.join(self.base_path, "Etiquetas_Impresas")
         os.makedirs(base_dir, exist_ok=True)
-        
+
         import time
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Personalizadas_{timestamp}.pdf")
-        
+
         printer = QPrinter(printer_high_resolution())
         printer.setOutputFormat(printer_pdf_format())
         printer.setOutputFileName(pdf_path)
@@ -1276,7 +1276,7 @@ class EtiquetaRenderer:
         doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
         doc.setDocumentMargin(0)
         fecha = datetime.now().strftime("%d/%m/%Y")
-        
+
         # Determinar dimensiones de la grilla
         if grilla_tipo == "3x7":
             cols = 3; rows = 7; cell_w = "33.3%"; cell_h = "40.5mm"
@@ -1286,15 +1286,15 @@ class EtiquetaRenderer:
             cols = 4; rows = 10; cell_w = "25%"; cell_h = "28.1mm"
         else:
             cols = 3; rows = 7; cell_w = "33.3%"; cell_h = "40.5mm"
-            
+
         items_per_page = cols * rows
         chunks = [productos[i:i + items_per_page] for i in range(0, len(productos), items_per_page)]
-        
+
         html_pages = []
         for chunk_idx, chunk in enumerate(chunks):
             is_last_page = (chunk_idx == len(chunks) - 1)
             page_break = "page-break-after: always;" if not is_last_page else ""
-            
+
             grid_html = '<table style="width:100%; height:99%; border-collapse:separate; border-spacing:6px; table-layout:fixed; background-color:#ffffff;">'
             for r in range(rows):
                 grid_html += '<tr>'
@@ -1308,13 +1308,13 @@ class EtiquetaRenderer:
                             filename_seguro = "".join(c for c in codigo_real if c.isalnum() or c in "-_")
                             if not filename_seguro: filename_seguro = "temp_code"
                             barcode_img_url = self.generar_barcode(codigo_real, filename_seguro)
-                        
+
                         nombre = html.escape(str(p['nombre']).upper())
                         precio = f"{float(p['precio']):.2f}"
                         unidad = html.escape(str(p.get('unidad', 'UN')).upper())
-                        
+
                         is_oferta = p.get("is_oferta", False)
-                        
+
                         # Generar condición de promoción si existe cant_oferta
                         condicion = ""
                         if is_oferta:
@@ -1328,7 +1328,7 @@ class EtiquetaRenderer:
                                         condicion = f"LLEVANDO {cant_of:g} KG"
                                 else:
                                     condicion = f"LLEVANDO {int(cant_of)} UN"
-                                    
+
                         condicion_html = ""
                         if condicion:
                             bc_margin = "1px" if grilla_tipo == "3x7" else "0px"
@@ -1351,7 +1351,7 @@ class EtiquetaRenderer:
                                 border_style = "1px solid #cbd5e1; border-radius: 4px;"
                             else: # clasico
                                 border_style = "1px solid #94a3b8;"
-                            
+
                         # Encabezado comercial de la tarjeta
                         brand_header = ""
                         if mostrar_marca:
@@ -1371,13 +1371,13 @@ class EtiquetaRenderer:
                                     brand_header = f'<div style="background:#1e3a8a; color:white; font-size:7pt; font-weight:bold; height:5.5mm; line-height:5.5mm; border-top-left-radius:6px; border-top-right-radius:6px; overflow:hidden; text-align:center; white-space:nowrap; text-overflow:ellipsis;">{brand_text}</div>'
                                 else: # minimalista
                                     brand_header = f'<div style="color:#64748b; font-size:6.5pt; font-weight:bold; height:4.5mm; line-height:4.5mm; border-bottom:1px solid #f1f5f9; overflow:hidden; text-align:center; white-space:nowrap; text-overflow:ellipsis;">{brand_text}</div>'
-                        
+
                         # Imagen del código de barras
                         barcode_html = ""
                         if mostrar_barcode and barcode_img_url:
                             bc_h = "7.5mm" if grilla_tipo == "3x7" else "5.5mm"
                             barcode_html = f'<div style="text-align:center; margin-top:2px;"><img src="{barcode_img_url}" style="height:{bc_h}; width:88%;"></div>'
-                            
+
                         meta_html = ""
                         if is_oferta and p.get("precio_regular"):
                             try:
@@ -1385,15 +1385,15 @@ class EtiquetaRenderer:
                                 meta_html = f'<div style="font-size:6.5pt; color:#475569; text-align:center; margin-top:2px; font-weight:bold;">PLU: {p["id"]} &bull; Antes: <span style="text-decoration: line-through; color: #ef4444; font-weight:normal;">${p_reg_val:.2f}</span></div>'
                             except Exception:
                                 pass
-                        
+
                         if not meta_html and mostrar_fecha:
                             meta_html = f'<div style="font-size:5.5pt; color:#64748b; text-align:center; margin-top:2px;">PLU:{p["id"]} &bull; {fecha}</div>'
-                        
+
                         # Tamaño de fuente del precio adaptativo
                         price_font = "26pt" if grilla_tipo == "3x7" else "18pt"
                         if len(precio.split('.')[0]) >= 4:
                             price_font = "20pt" if grilla_tipo == "3x7" else "14pt"
-                        
+
                         if is_oferta:
                             price_color = "#dc2626"
                         else:
@@ -1403,13 +1403,13 @@ class EtiquetaRenderer:
                                 price_color = "#2563eb" # Royal Blue
                             else: # minimalista
                                 price_color = "#1e293b" # Slate
-                        
+
                         # Altura máxima del nombre
                         name_h = "8mm" if grilla_tipo == "3x7" else "6mm"
                         name_font = "8.5pt" if grilla_tipo == "3x7" else "7.5pt"
-                        
+
                         display_nombre = f"🔥 {nombre}" if is_oferta else nombre
-                        
+
                         grid_html += f"""
                         <td style="width:{cell_w}; height:{cell_h}; border:{border_style} background-color:{bg_color}; vertical-align:top; padding:0; box-sizing:border-box;">
                             {brand_header}
@@ -1435,14 +1435,14 @@ class EtiquetaRenderer:
                         grid_html += f'<td style="width:{cell_w}; height:{cell_h}; border:none; background:transparent;"></td>'
                 grid_html += '</tr>'
             grid_html += '</table>'
-            
+
             page_html = f"""
             <div style="width:100%; height:99%; box-sizing:border-box; overflow:hidden; {page_break} background-color:#ffffff; padding:5px;">
                 {grid_html}
             </div>
             """
             html_pages.append(page_html)
-            
+
         full_html = f"""
         <html>
         <head>
@@ -1455,10 +1455,10 @@ class EtiquetaRenderer:
         <body>{''.join(html_pages)}</body>
         </html>
         """
-        
+
         doc.setHtml(full_html)
         print_document(doc, printer)
-        
+
         del printer
         del doc
         self.limpiar_tmp()

@@ -6,8 +6,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QPushButton, QAbstractItemView, QMessageBox, QDialog,
     QFormLayout, QTreeWidget, QTreeWidgetItem, QSplitter,
-    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout,
-    QGraphicsDropShadowEffect
+    QComboBox, QCheckBox, QStackedWidget, QFileDialog, QGridLayout
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QColor, QFont, QBrush
@@ -38,24 +37,17 @@ class DialogoProducto(QDialog):
 
         # --- SECCIÓN: CÓDIGO DE BARRAS (ALTA VISIBILIDAD) ---
         barcode_frame = QFrame()
-        barcode_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #CBD5E1;")
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 15))
-        shadow.setOffset(0, 4)
-        barcode_frame.setGraphicsEffect(shadow)
-        
-        bar_lay = QVBoxLayout(barcode_frame)
+        barcode_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #CBD5E1;")        bar_lay = QVBoxLayout(barcode_frame)
         bar_lay.setContentsMargins(20, 15, 20, 15)
-        
+
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
         lbl_bc.setStyleSheet("font-weight: bold; font-size: 11px; border: none; color: #64748B;")
         self.txt_codigo = QLineEdit(dict(datos).get('codigo', '') if datos else '')
         self.txt_codigo.setPlaceholderText("Escanea o escribe el código...")
         self.txt_codigo.setStyleSheet("""
-            QLineEdit { 
-                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px; 
-                padding: 15px; font-size: 24px; font-weight: 900;  
+            QLineEdit {
+                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px;
+                padding: 15px; font-size: 24px; font-weight: 900;
                 font-family: 'Consolas', monospace; color: #1E3A8A;
             }
             QLineEdit:focus {
@@ -63,13 +55,13 @@ class DialogoProducto(QDialog):
                 border: 2px solid #3B82F6;
             }
         """)
-        
+
         self._barcode_timer = QTimer(self)
         self._barcode_timer.setSingleShot(True)
         self._barcode_timer.timeout.connect(self._verificar_codigo)
         self.txt_codigo.textChanged.connect(lambda: self._barcode_timer.start(400))
         self.txt_codigo.returnPressed.connect(self._verificar_codigo)
-        
+
         bar_lay.addWidget(lbl_bc)
         bar_lay.addWidget(self.txt_codigo)
         main_lay.addWidget(barcode_frame)
@@ -96,7 +88,7 @@ class DialogoProducto(QDialog):
             cats_names = [c['nombre'] for c in cats] if cats else []
             self.cmb_cat.addItems(cats_names)
         except: pass
-        
+
         idx_cat = self.cmb_cat.findText(dict(datos).get('categoria', 'GENERAL') if datos else 'GENERAL')
         if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
 
@@ -119,17 +111,17 @@ class DialogoProducto(QDialog):
         lbl_depto.setStyleSheet("font-weight: bold; font-size: 12px; border: none;")
         v_depto.addWidget(lbl_depto)
         v_depto.addWidget(self.cmb_depto)
-        
+
         self.lbl_iva_info = QLabel("ℹ️ IVA Aplicado: 21.0% (tasa general)")
         self.lbl_iva_info.setStyleSheet("font-size: 11px; font-weight: bold; color: #64748B; border: none;")
         v_depto.addWidget(self.lbl_iva_info)
         col_izq.addLayout(v_depto)
-        
+
         self.cmb_depto.currentIndexChanged.connect(self._actualizar_info_iva)
 
         depto_actual = dict(datos).get('departamento', '') if datos else ''
         idx_dep = self.cmb_depto.findText(depto_actual)
-        if idx_dep >= 0: 
+        if idx_dep >= 0:
             self.cmb_depto.setCurrentIndex(idx_dep)
         else:
             self._actualizar_info_iva()
@@ -149,32 +141,24 @@ class DialogoProducto(QDialog):
 
         # Tarjeta Finanzas (Derecha)
         price_card = QFrame()
-        price_card.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 16px; padding: 15px;")
-        
-        shadow2 = QGraphicsDropShadowEffect()
-        shadow2.setBlurRadius(20)
-        shadow2.setColor(QColor(0, 0, 0, 15))
-        shadow2.setOffset(0, 4)
-        price_card.setGraphicsEffect(shadow2)
-        
-        p_lay = QFormLayout(price_card)
+        price_card.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 16px; padding: 15px;")        p_lay = QFormLayout(price_card)
         p_lay.setSpacing(12)
 
         self.txt_costo = self.create_price_input(str(dict(datos).get('costo', '0.00')) if datos else '0.00')
         self.txt_precio = self.create_price_input(str(dict(datos).get('precio', '0.00')) if datos else '0.00', bold=True)
         self.txt_mayoreo = self.create_price_input(str(dict(datos).get('precio_mayoreo', '0.00')) if datos else '0.00')
         self.txt_cant_mayoreo = self.create_price_input(str(dict(datos).get('cant_mayoreo', '0')) if datos else '0')
-        
+
         lbl_costo = QLabel("Costo Compra ($):"); lbl_costo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
         lbl_precio = QLabel("Precio Venta ($) *:"); lbl_precio.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
         lbl_mayoreo = QLabel("Precio Mayoreo ($):"); lbl_mayoreo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
         lbl_cant_mayoreo = QLabel("Cant. para Mayoreo:"); lbl_cant_mayoreo.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
-        
+
         p_lay.addRow(lbl_costo, self.txt_costo)
         p_lay.addRow(lbl_precio, self.txt_precio)
         p_lay.addRow(lbl_mayoreo, self.txt_mayoreo)
         p_lay.addRow(lbl_cant_mayoreo, self.txt_cant_mayoreo)
-        
+
         col_der.addWidget(price_card)
 
         # Stock Info
@@ -183,15 +167,15 @@ class DialogoProducto(QDialog):
         self.txt_stock = self.create_price_input(str(dict(datos).get('stock', '0')) if datos else '0')
         self.txt_min = self.create_price_input(str(dict(datos).get('stock_minimo', '0')) if datos else '0')
         self.txt_max = self.create_price_input(str(dict(datos).get('stock_maximo', '0')) if datos else '0')
-        
+
         def _lbl(t):
             l = QLabel(t); l.setStyleSheet("border: none; font-weight: bold; font-size: 12px;")
             return l
-            
+
         v_stock = QVBoxLayout(); v_stock.addWidget(_lbl("Stock Act.")); v_stock.addWidget(self.txt_stock)
         v_min = QVBoxLayout(); v_min.addWidget(_lbl("Min.")); v_min.addWidget(self.txt_min)
         v_max = QVBoxLayout(); v_max.addWidget(_lbl("Max.")); v_max.addWidget(self.txt_max)
-        
+
         stock_lay.addLayout(v_stock); stock_lay.addLayout(v_min); stock_lay.addLayout(v_max)
         col_der.addLayout(stock_lay)
         col_der.addStretch()
@@ -213,7 +197,7 @@ class DialogoProducto(QDialog):
         btn_save.setCursor(Qt.PointingHandCursor)
         btn_save.setStyleSheet("""
             QPushButton {
-                background-color: #2563EB; color: white; border: none; 
+                background-color: #2563EB; color: white; border: none;
                 border-radius: 10px; padding: 15px 30px; font-weight: bold; font-size: 14px;
             }
             QPushButton:hover { background-color: #1D4ED8; }
@@ -239,10 +223,10 @@ class DialogoProducto(QDialog):
         inp = QLineEdit(val)
         inp.setStyleSheet("""
             QLineEdit {
-                background: #F1F5F9; 
-                border: 1px solid #CBD5E1; 
-                border-radius: 8px; 
-                padding: 10px; 
+                background: #F1F5F9;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                padding: 10px;
                 font-size: 14px;
                 color: #1E293B;
             }
@@ -252,14 +236,14 @@ class DialogoProducto(QDialog):
             }
         """)
         return inp
-        
+
     def style_combo(self, cmb):
         cmb.setStyleSheet("""
             QComboBox {
-                background: #F1F5F9; 
-                border: 1px solid #CBD5E1; 
-                border-radius: 8px; 
-                padding: 8px 12px; 
+                background: #F1F5F9;
+                border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                padding: 8px 12px;
                 font-size: 14px;
                 color: #1E293B;
             }
@@ -298,12 +282,12 @@ class DialogoProducto(QDialog):
         color = "#1E40AF" if bold else "#1E293B"
         inp.setStyleSheet(f"""
             QLineEdit {{
-                background: #F1F5F9; 
-                border: 2px solid transparent; 
-                border-radius: 8px; 
-                padding: 10px; 
+                background: #F1F5F9;
+                border: 2px solid transparent;
+                border-radius: 8px;
+                padding: 10px;
                 font-size: 16px;
-                font-weight: {weight}; 
+                font-weight: {weight};
                 color: {color};
             }}
             QLineEdit:focus {{
@@ -317,10 +301,10 @@ class DialogoProducto(QDialog):
         if hasattr(self, '_barcode_timer'):
             self._barcode_timer.stop()
         cod = self.txt_codigo.text().strip()
-        if not cod: 
+        if not cod:
             self._reset_barcode_style()
             return
-            
+
         # Prevenir recarga si ya estamos editando este mismo producto
         if getattr(self, '_id', None) and getattr(self, '_last_loaded_codigo', None) == cod:
             return
@@ -328,7 +312,7 @@ class DialogoProducto(QDialog):
         from src.motor_inventario.motor_catalogo import MotorCatalogo
         motor = MotorCatalogo()
         prod = motor.obtener_producto_por_codigo(cod)
-        
+
         if prod:
             # Producto encontrado: Auto-rellenar y pasar a modo Edición
             self.setWindowTitle("📦 Editar Producto")
@@ -338,33 +322,33 @@ class DialogoProducto(QDialog):
             self._precio_oferta = prod.get('precio_oferta', 0.0)
 
             self.txt_nombre.setText(prod.get('nombre', ''))
-            
+
             idx_cat = self.cmb_cat.findText(prod.get('categoria', 'GENERAL') or 'GENERAL')
             if idx_cat >= 0: self.cmb_cat.setCurrentIndex(idx_cat)
-            
+
             idx_dep = self.cmb_depto.findText(prod.get('departamento', '') or '')
             if idx_dep >= 0: self.cmb_depto.setCurrentIndex(idx_dep)
-            
+
             idx_uni = self.cmb_uni.findText(prod.get('unidad', 'UN') or 'UN')
             if idx_uni >= 0: self.cmb_uni.setCurrentIndex(idx_uni)
-            
+
             def fstr(v): return f"{v:.2f}" if v is not None else "0.00"
             def istr(v): return str(int(v)) if v is not None and int(v) == v else fstr(v)
-            
+
             self.txt_costo.setText(fstr(prod.get('costo')))
             self.txt_precio.setText(fstr(prod.get('precio')))
             self.txt_mayoreo.setText(fstr(prod.get('precio_mayoreo')))
             self.txt_cant_mayoreo.setText(istr(prod.get('cant_mayoreo')))
-            
+
             self.txt_stock.setText(istr(prod.get('stock')))
             self.txt_min.setText(istr(prod.get('stock_minimo')))
             self.txt_max.setText(istr(prod.get('stock_maximo')))
-            
+
             # Feedback visual verde para indicar carga exitosa
             self.txt_codigo.setStyleSheet("""
-                QLineEdit { 
-                    background: #F0FDF4; border: 2px solid #22C55E; border-radius: 8px; 
-                    padding: 15px; font-size: 24px; font-weight: 900;  
+                QLineEdit {
+                    background: #F0FDF4; border: 2px solid #22C55E; border-radius: 8px;
+                    padding: 15px; font-size: 24px; font-weight: 900;
                     font-family: 'Consolas', monospace; color: #166534;
                 }
             """)
@@ -377,9 +361,9 @@ class DialogoProducto(QDialog):
 
     def _reset_barcode_style(self):
         self.txt_codigo.setStyleSheet("""
-            QLineEdit { 
-                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px; 
-                padding: 15px; font-size: 24px; font-weight: 900;  
+            QLineEdit {
+                background: #F8FAFC; border: 2px solid transparent; border-bottom: 2px solid #CBD5E1; border-radius: 8px;
+                padding: 15px; font-size: 24px; font-weight: 900;
                 font-family: 'Consolas', monospace; color: #1E3A8A;
             }
             QLineEdit:focus {
@@ -397,7 +381,7 @@ class DialogoProducto(QDialog):
     def _ok(self):
         nom = self.txt_nombre.text().strip()
         cod = self.txt_codigo.text().strip()
-        
+
         if not nom:
             QMessageBox.warning(self, "Requerido", "El nombre es obligatorio.")
             return
@@ -430,7 +414,7 @@ class DialogoProducto(QDialog):
         if not dep:
             self.lbl_iva_info.setText(f"ℹ️ IVA Aplicado: {iva_gen:.1f}% (tasa general)")
             return
-            
+
         try:
             from src.motor_inventario.motor_departamentos import MotorDepartamentos
             iva_val = MotorDepartamentos().obtener_iva_departamento(dep)

@@ -55,17 +55,17 @@ class Admin11Proveedores(QWidget):
         lbl_title.setStyleSheet("font-size: 15px; font-weight: 900; color: #0F172A; background: transparent; border: none;")
         nl.addWidget(lbl_title)
         nl.addStretch()
-        
+
         root.addWidget(nav)
 
         # ── MÓDULO UNIFICADO ───────────────────────────────────────────────────
         self.modulo_unificado = ModuloProveedoresUnificado(perfil="admin", db_jefe=None)
-        
+
         # Le damos un layout con márgenes a la vista unificada
         content_area = QWidget()
         content_area.setStyleSheet("background: #F8FAFC;")
         c_lay = QVBoxLayout(content_area)
         c_lay.setContentsMargins(30, 30, 30, 30)
         c_lay.addWidget(self.modulo_unificado)
-        
+
         root.addWidget(content_area)

@@ -25,7 +25,7 @@ def exportar_pdf_interno(tabla, proveedor, fecha, kilos_media, merma, precio, pa
         # Datos de la media res
         kilos_utiles = kilos_media - merma
         costo_real_kg = (precio * kilos_media) / kilos_utiles if kilos_utiles > 0 else 0
-        
+
         datos_media_res = [
             [Paragraph("<b>Proveedor:</b>", styles['Normal']), proveedor, Paragraph("<b>Fecha:</b>", styles['Normal']), fecha],
             [Paragraph("<b>Kilos Media Res:</b>", styles['Normal']), f"{kilos_media:,.2f} kg", Paragraph("<b>Precio Compra/kg:</b>", styles['Normal']), f"${precio:,.2f}"],
@@ -39,7 +39,7 @@ def exportar_pdf_interno(tabla, proveedor, fecha, kilos_media, merma, precio, pa
         ]))
         elements.append(tbl_media_res)
         elements.append(Spacer(1, 0.3*inch))
-        
+
         # Tabla de cortes
         data = [["Descripción", "Kilos", "Costo $/kg", "% Gan.", "Precio/kg", "Oferta", "Venta total", "Ganancia"]]
         total_venta_final = 0
@@ -67,7 +67,7 @@ def exportar_pdf_interno(tabla, proveedor, fecha, kilos_media, merma, precio, pa
         ]))
         elements.append(table)
         elements.append(Spacer(1, 0.3*inch))
-        
+
         # Totales
         totales_data = [
             [Paragraph(f"<b>TOTAL VENTA:</b> ${total_venta_final:,.2f}", styles['Normal']),
@@ -96,7 +96,7 @@ def exportar_pdf_clientes(tabla, proveedor, fecha, parent=None):
     try:
         mensaje, ok = QInputDialog.getText(parent, "Mensaje para Clientes", "Ingrese un mensaje opcional para el encabezado (ej: Ofertas de la semana):")
         if not ok: return
-        
+
         ruta, _ = QFileDialog.getSaveFileName(parent, "Guardar PDF Clientes", "", "Archivo PDF (*.pdf)")
         if not ruta:
             return
@@ -125,7 +125,7 @@ def exportar_pdf_clientes(tabla, proveedor, fecha, parent=None):
         for h, x in zip(headers, x_positions):
             c.drawString(x, y, h)
         y -= 15
-        
+
         c.setLineWidth(1)
         c.line(40, y+5, width-40, y+5)
         y -= 15
@@ -148,12 +148,12 @@ def exportar_pdf_clientes(tabla, proveedor, fecha, parent=None):
                 c.setFont("Helvetica", 11)
 
             corte = tabla.item(r,0).text()
-            
+
             # Priorizar oferta
             oferta_str = tabla.item(r,5).text().replace(',','').strip()
             precio_base = tabla.item(r,4).text().replace(',','').strip()
             precio = oferta_str if oferta_str else precio_base
-            
+
             try:
                 if float(precio) <= 0: continue
             except: continue

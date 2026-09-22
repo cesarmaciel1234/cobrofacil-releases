@@ -23,12 +23,12 @@ def unificar_productos_duplicados():
             codigo = d['codigo']
             keep_id = d['keep_id']
             total_stock = d['total_stock'] or 0.0
-            
+
             # Actualizamos stock del que nos quedamos
             db_manager.execute_non_query("UPDATE productos SET stock = ? WHERE id = ?", (total_stock, keep_id))
             # Borramos los demas con el mismo codigo
             db_manager.execute_non_query("DELETE FROM productos WHERE codigo = ? AND id != ?", (codigo, keep_id))
-            
+
         return True, f"Se han unificado {len(dups)} codigos de barra duplicados con exito."
     except Exception as e:
         logger.error(f"Error al unificar duplicados: {e}")
@@ -48,10 +48,10 @@ def guardar_producto_en_db(datos_producto, es_nuevo=True, producto_id=None):
             "es_pesable", "departamento", "categoria", "icono",
         }
         params = {k: v for k, v in dict(datos_producto).items() if k in _CAMPOS}
-        
+
         # Extraer e identificar el ID correcto
         actual_id = producto_id if producto_id is not None else dict(datos_producto).get('id')
-        
+
         if actual_id is not None and str(actual_id).strip() not in ('', '0', 'None'):
             es_actualizacion = True
             target_id = actual_id

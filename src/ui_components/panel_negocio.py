@@ -21,21 +21,21 @@ class PanelDatosNegocio(QWidget):
     def _build_ui(self):
         self.setStyleSheet("background: #FFFFFF; border-radius: 6px; border: 1px solid #E2E8F0;")
         self.setGraphicsEffect(None)
-        
+
         form_layout = QVBoxLayout(self)
         form_layout.setContentsMargins(25, 25, 25, 25)
-        
+
         lbl_title = QLabel("📝 Datos del Negocio")
         lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; border: none;")
         form_layout.addWidget(lbl_title)
         form_layout.addSpacing(10)
-        
+
         self.txt_name = QLineEdit()
         self.txt_addr = QLineEdit()
         self.txt_phone = QLineEdit()
         self.txt_cuit = QLineEdit()
         self.txt_msg = QLineEdit()
-        
+
         for txt, lbl in [
             (self.txt_name, "Nombre Comercial (Logotipo):"),
             (self.txt_addr, "Dirección Comercial:"),
@@ -50,9 +50,9 @@ class PanelDatosNegocio(QWidget):
             form_layout.addWidget(l)
             form_layout.addWidget(txt)
             form_layout.addSpacing(5)
-            
+
         form_layout.addStretch()
-        
+
         if self.show_save_button:
             self.btn_save = QPushButton("💾 Guardar y Aplicar")
             self.btn_save.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -77,7 +77,7 @@ class PanelDatosNegocio(QWidget):
         config.set('business_cuit', self.txt_cuit.text().strip())
         config.set('footer_message', self.txt_msg.text().strip())
         config.save()
-        
+
         QMessageBox.information(self, "Guardado", "Datos del negocio actualizados correctamente.")
 
     def get_data(self):

@@ -1,9 +1,9 @@
 from src.utils.qt_compat import qt_exec
 from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
-                             QPushButton, QTableWidget, QTableWidgetItem, 
-                             QHeaderView, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDoubleSpinBox, QGraphicsDropShadowEffect, QComboBox)
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QLineEdit, QMessageBox, QDialog,
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import DatabaseManager
@@ -40,7 +40,7 @@ class DialogoNuevoCliente(QDialog):
             }}
             QPushButton#btn_cancel:hover {{ background: #E2E8F0; }}
         """)
-        
+
         lay = QVBoxLayout(self)
         lay.setContentsMargins(28, 24, 28, 24)
         lay.setSpacing(16)
@@ -52,10 +52,10 @@ class DialogoNuevoCliente(QDialog):
         form = QFormLayout()
         form.setSpacing(14)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        
+
         self.txt_nombre = QLineEdit()
         self.txt_nombre.setPlaceholderText("Ej: Juan Pérez")
-        
+
         self.txt_dni = QLineEdit()
         self.txt_dni.setPlaceholderText("Opcional — 7+ dígitos")
 
@@ -66,15 +66,15 @@ class DialogoNuevoCliente(QDialog):
         self.spin_limite.setMaximum(9999999)
         self.spin_limite.setValue(10000.00)
         self.spin_limite.setPrefix("$ ")
-        
+
         form.addRow("Nombre *:", self.txt_nombre)
         form.addRow("DNI:", self.txt_dni)
         form.addRow("Teléfono:", self.txt_telefono)
         form.addRow("Límite Crédito:", self.spin_limite)
-        
+
         lay.addLayout(form)
         lay.addStretch()
-        
+
         btn_lay = QHBoxLayout()
         btn_lay.setSpacing(12)
 
@@ -91,9 +91,9 @@ class DialogoNuevoCliente(QDialog):
         btn_lay.addWidget(btn_cancel)
         btn_lay.addStretch()
         btn_lay.addWidget(btn_guardar)
-        
+
         lay.addLayout(btn_lay)
-        
+
     def get_data(self):
         dni_raw = self.txt_dni.text().strip()
         dni = ClienteRepository.normalizar_dni(dni_raw) if dni_raw else ""

@@ -10,11 +10,11 @@ class TouchFeedbackManager(QObject):
     def __init__(self, parent_app):
         super().__init__(parent_app)
         self._active_buttons = {}
-        
+
         # Interceptar eventos a nivel de aplicación (Global)
         if parent_app:
             parent_app.installEventFilter(self)
-            
+
             # Inyectar el destello/iluminación suave para las filas de las tablas
             # Estilo 'glow' elegante para las tablas
             glow_css = """
@@ -30,7 +30,7 @@ class TouchFeedbackManager(QObject):
 
     def eventFilter(self, obj, event):
         EventType = QEvent.Type
-            
+
         # Capturar clics de ratón
         if event.type() == EventType.MouseButtonPress:
             if isinstance(obj, QPushButton):
@@ -38,7 +38,7 @@ class TouchFeedbackManager(QObject):
         elif event.type() == EventType.MouseButtonRelease:
             if isinstance(obj, QPushButton):
                 self.release_button_feedback(obj)
-                
+
         # Capturar pulsaciones de teclado (Enter/Espacio en botón con foco)
         elif event.type() == EventType.KeyPress:
             if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key.Key_Space):
@@ -46,31 +46,31 @@ class TouchFeedbackManager(QObject):
         elif event.type() == EventType.KeyRelease:
             if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key.Key_Space):
                 self.release_button_feedback(obj)
-                
+
         # Capturar atajos de teclado globales (ej. F1, F4 ligados a botones)
         elif event.type() == EventType.Shortcut:
             if isinstance(obj, QPushButton):
                 self.trigger_button_feedback(obj)
                 # Liberación automática para atajos (no hay evento de soltar atajo confiable)
                 QTimer.singleShot(150, lambda: self.release_button_feedback(obj))
-                
+
         return False # Nunca consumir el evento, dejar que el botón original funcione
 
     def trigger_button_feedback(self, btn):
         if btn in self._active_buttons:
             return
-            
+
         original_style = btn.styleSheet()
         self._active_buttons[btn] = {
             'original_style': original_style,
             'press_time': time.time(),
             'released': False
         }
-        
+
         # Efecto visual táctil: Color azul vibrante + sombra interna simulada + encogimiento
         press_style = original_style + """
             QPushButton {
-                background-color: #2563eb !important; 
+                background-color: #2563eb !important;
                 color: white !important;
                 border: 2px inset #1e40af !important;
                 padding-top: 2px !important;
@@ -83,9 +83,9 @@ class TouchFeedbackManager(QObject):
         if btn in self._active_buttons:
             state = self._active_buttons[btn]
             state['released'] = True
-            
+
             elapsed_ms = (time.time() - state['press_time']) * 1000
-            
+
             # Si soltó el botón antes de los 150ms, forzar el retraso de la animación
             # Si lo soltó después de 150ms, revertir inmediatamente
             if elapsed_ms >= 150:

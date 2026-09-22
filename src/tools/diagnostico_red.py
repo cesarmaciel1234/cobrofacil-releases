@@ -8,7 +8,7 @@ class HiloEscuchaDiagnostico(QThread):
     # Señal que envía el texto recibido y la IP de origen a la UI
     paquete_recibido = pyqtSignal(str, str)
     error_conexion = pyqtSignal(str)
-    
+
     def run(self):
         self.socket = QUdpSocket()
         # Intentamos bindear con reutilización de puerto para evitar bloqueos locales
@@ -16,9 +16,9 @@ class HiloEscuchaDiagnostico(QThread):
         if not exito:
             self.error_conexion.emit("ERROR: No se pudo bindear el puerto 38000. ¿Ya está en uso por el Nexus?")
             return
-            
+
         self.paquete_recibido.emit("SISTEMA", "Escuchando en puerto 38000 UDP de forma sólida...")
-        
+
         while not self.isInterruptionRequested():
             if self.socket.hasPendingDatagrams():
                 try:
@@ -34,27 +34,27 @@ class VentanaDiagnosticoNexus(QWidget):
         super().__init__()
         self.init_ui()
         self.iniciar_hilo()
-        
+
     def init_ui(self):
         self.setWindowTitle("Nexus Central - Consola de Diagnóstico de Red")
         self.resize(700, 500)
         self.setStyleSheet("background-color: #121212; color: #FFFFFF; font-family: 'Consolas', monospace;")
-        
+
         layout = QVBoxLayout(self)
-        
+
         # Indicadores de Estado de Hardware/Software
         self.lbl_estado_hilo = QLabel("ESTADO DEL HILO: INICIANDO...")
         self.lbl_estado_hilo.setStyleSheet("color: #FFB86C; font-weight: bold; font-size: 14px;")
         layout.addWidget(self.lbl_estado_hilo)
-        
+
         layout.addWidget(QLabel("Tráfico de Red Entrante (Puerto 38000):"))
-        
+
         # Consola de datos crudos
         self.consola = QTextEdit()
         self.consola.setReadOnly(True)
         self.consola.setStyleSheet("background-color: #1E1E1E; border: 1px solid #333; color: #50FA7B; font-size: 12px;")
         layout.addWidget(self.consola)
-        
+
         # Botones
         btn_limpiar = QPushButton("Limpiar Consola")
         btn_limpiar.setStyleSheet("background-color: #44475A; padding: 10px; border-radius: 5px;")

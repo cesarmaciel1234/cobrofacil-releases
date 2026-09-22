@@ -6,7 +6,7 @@ from src.utils.qt_compat import qt_exec
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QScrollArea, QWidget, QGridLayout, QFrame,
-    QFileDialog, QMessageBox, QGraphicsDropShadowEffect, QToolButton
+    QFileDialog, QMessageBox, QToolButton
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QPixmap, QColor, QIcon
@@ -286,7 +286,7 @@ class DialogoGaleriaIconos(QDialog):
         self.grid_lay = QGridLayout(self.grid_widget)
         self.grid_lay.setContentsMargins(16, 16, 16, 16)
         self.grid_lay.setSpacing(14)
-        
+
         self.scroll.setWidget(self.grid_widget)
         main_lay.addWidget(self.scroll)
 

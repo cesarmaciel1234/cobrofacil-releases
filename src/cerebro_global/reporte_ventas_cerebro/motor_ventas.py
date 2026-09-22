@@ -11,7 +11,7 @@ class MotorVentas:
     Sirve tanto para la UI del Jefe (Reportes) como para la Cartelería Inteligente.
     Extrae datos REALES de la base de datos sin sobrecargar la interfaz gráfica.
     """
-    
+
     @staticmethod
     def get_personas_viendo(periodo="hoy"):
         """
@@ -27,7 +27,7 @@ class MotorVentas:
             else:
                 # Ventana móvil de 30 días reales
                 start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
-                
+
             query = "SELECT COUNT(*) FROM ventas WHERE fecha >= ? AND COALESCE(estado, '') != 'CANCELADA'"
             rows = db_manager.execute_query(query, (start_date,))
             if not rows: return 0
@@ -51,9 +51,9 @@ class MotorVentas:
                 start_date = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             else:
                 start_date = (today - datetime.timedelta(days=30)).strftime('%Y-%m-%d 00:00:00')
-                
+
             query = """
-                SELECT SUM(dv.cantidad) 
+                SELECT SUM(dv.cantidad)
                 FROM detalles_ventas dv
                 JOIN ventas v ON dv.id_venta = v.id
                 WHERE v.fecha >= ? AND COALESCE(v.estado, '') != 'CANCELADA'
@@ -133,10 +133,10 @@ class MotorVentas:
                 """
 
             rows = db_manager.execute_query(query, (start_date, end_date, limit))
-            
+
             results = []
             if not rows: return results
-            
+
             for row in rows:
                 if isinstance(row, dict):
                     nombre = row.get("nombre_producto") or row.get("nombre") or list(row.values())[0]
