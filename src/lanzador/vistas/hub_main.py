@@ -30,10 +30,10 @@ if hasattr(Qt, 'WidgetAttribute'):
 if hasattr(Qt, 'MouseButton'):
     Qt.LeftButton = Qt.MouseButton.LeftButton
 if hasattr(Qt, 'Key'):
-    Qt.Key.Key_Left = Qt.Key.Key_Left
-    Qt.Key.Key_Right = Qt.Key.Key_Right
-    Qt.Key.Key_Return = Qt.Key.Key_Return
-    Qt.Key.Key_Enter = Qt.Key.Key_Enter
+    Qt.Key_Left = Qt.Key.Key_Left
+    Qt.Key_Right = Qt.Key.Key_Right
+    Qt.Key_Return = Qt.Key.Key_Return
+    Qt.Key_Enter = Qt.Key.Key_Enter
 if hasattr(Qt, 'KeyboardModifier'):
     Qt.NoModifier = Qt.KeyboardModifier.NoModifier
 
@@ -345,7 +345,7 @@ class PerfilPantalla(QDialog):
         content.addSpacing(6)
 
         # Título principal
-        title = QLabel("Bienvenido a CobroFacil PRO 2026 (v17.4)")
+        title = QLabel("Bienvenido a CobroFacil PRO 2026 (v17.4) (v17.4)")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(f"""
             font-size: 26px; font-weight: 800;
