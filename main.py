@@ -111,6 +111,11 @@ def launch_app(direct_role=None):
     if not app:
         app = QApplication(sys.argv)
         app.setStyle('Fusion')
+        try:
+            from src.utils.premium_styles import apply_global_premium_css
+            apply_global_premium_css(app)
+        except Exception:
+            pass
     if not getattr(app, "_network_engine_shutdown_hook", False):
         from src.central_red_global.network_engine import shutdown_network_engine
         app.aboutToQuit.connect(shutdown_network_engine)
