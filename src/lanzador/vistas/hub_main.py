@@ -345,8 +345,8 @@ class PerfilPantalla(QDialog):
         content.addSpacing(6)
 
         # Título principal
-        title = QLabel("Bienvenido a CobroFacil PRO 2026 (v17.4) (v17.4)")
-        title.setAlignment(Qt.AlignCenter)
+        title = QLabel("Bienvenido a CobroFacil PRO 2026 (v17.4)")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(f"""
             font-size: 26px; font-weight: 800;
             color: {WC['text']}; background: transparent; border: none;
