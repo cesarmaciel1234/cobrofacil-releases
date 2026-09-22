@@ -25,6 +25,9 @@ class TerminalController:
     def get_terminales_activos_count(self):
         return db_manager.get_terminales_activos_count()
 
+    def verificar_solicitud_cierre_remoto(self, c_id):
+        return self.cierre_remoto.verificar_solicitud_cierre_remoto(c_id)
+
     def get_db_engine_info(self):
         engine = getattr(db_manager, "db_engine_type", "mariadb") or "mariadb"
         host = getattr(getattr(db_manager, "mariadb_engine", None), "host", None) or "localhost"

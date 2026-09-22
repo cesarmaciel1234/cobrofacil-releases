@@ -164,9 +164,27 @@ class Paso5Terminal(QWidget):
         return formatear_stock(p, stk)
 
     def _validar_stock(self, p, p_id, cantidad_necesaria):
-        from src.motor_inventario.unidad_medida import permitir_cobro_sin_stock
+        from PyQt6.QtWidgets import QMessageBox
+        from src.motor_inventario.unidad_medida import (
+            alcanza_stock,
+            permitir_cobro_sin_stock,
+        )
 
-        return permitir_cobro_sin_stock()
+        permitir = permitir_cobro_sin_stock()
+        disp = self._stock_disponible(p, p_id)
+        if alcanza_stock(disp, cantidad_necesaria, permitir):
+            return True
+        nombre = ""
+        try:
+            nombre = str(p["nombre"] or "").strip()
+        except Exception:
+            nombre = str(p_id)
+        QMessageBox.warning(
+            self,
+            "Sin stock",
+            f"No hay stock suficiente de {nombre or p_id}. Disponible: {disp:g}.",
+        )
+        return False
 
 
 
@@ -1714,9 +1732,14 @@ class Paso5Terminal(QWidget):
         for i in range(self.tabla.rowCount()):
             self._reaplicar_estilo_fila(i)
 
-        total = sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
+        from src.utils.dinero import redondear_dinero
+        total = redondear_dinero(
+            sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
+        )
         cant = sum(float(self.tabla.item(i, 3).text()) for i in range(self.tabla.rowCount()))
-        total_desc = sum(abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount()))
+        total_desc = redondear_dinero(
+            sum(abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount()))
+        )
 
         # El total grande vuelve a usar el formato sin centavos con comas de miles
         total_str = fmt_moneda_sin_centavos(total)
@@ -2093,7 +2116,10 @@ class Paso5Terminal(QWidget):
         try:
             # Como ahora el total visual no tiene decimales ni comas de miles (son puntos),
             # lo calculamos directamente de la tabla para no perder precisión
-            total = sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
+            from src.utils.dinero import redondear_dinero, redondear_items_carrito
+            total = redondear_dinero(
+                sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
+            )
         except: return
         if total <= 0: return
 
@@ -2107,6 +2133,7 @@ class Paso5Terminal(QWidget):
                 "cant": float(self.tabla.item(i, 3).text().replace(",", ".")),
                 "subtotal": parse_float_safe(self.tabla.item(i, 5).text())
             })
+        items = redondear_items_carrito(items)
 
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
         from PyQt6.QtWidgets import QGraphicsBlurEffect

@@ -1632,7 +1632,7 @@ class DatabaseManager:
                         "items": items
                     }
                     from src.config import config
-                    token = config.get("local_pin", "1234")
+                    token = config.token_api_lan()
                     headers = {"Authorization": f"Bearer {token}"}
                     response = requests.post(f"{api_url}/api/guardar_venta", json=payload, headers=headers, timeout=5.0)
                     if response.status_code == 200:
@@ -1687,7 +1687,8 @@ class DatabaseManager:
                 """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
                 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
+                    from src.base_de_datos.repos.stock_descuento import descontar_stock
+                    descontar_stock(cursor, it['id'], it['cant'])
             
             conn.commit()
             return id_venta
@@ -1736,7 +1737,8 @@ class DatabaseManager:
                 """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
                 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
+                    from src.base_de_datos.repos.stock_descuento import descontar_stock
+                    descontar_stock(cursor, it.get('id'), it.get('cant', 1))
             
             conn.commit()
             return True

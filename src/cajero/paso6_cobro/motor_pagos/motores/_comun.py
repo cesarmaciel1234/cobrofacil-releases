@@ -12,7 +12,7 @@ def ejecutar_comun(datos, extra_validar=None):
             return False, err
     id_v, resultado = persistir_cobro(datos)
     if not id_v:
-        return False, "Error al guardar la venta en la base de datos."
+        return False, (resultado or {}).get("error") or "Error al guardar la venta en la base de datos."
     if resultado.get("cliente_nombre"):
         datos["cliente_nombre"] = resultado["cliente_nombre"]
     post_cobro(datos, id_v, resultado)

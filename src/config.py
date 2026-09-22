@@ -29,6 +29,7 @@ class Config:
         "update_auth_token": "1234",
         "shared_folder_name": "tpv pro 2026",
         "local_pin": "1234",
+        "lan_api_token": "",
         "machine_hostname": "",
         "install_date": "",
         "auto_virtual_keyboard": True,
@@ -118,6 +119,20 @@ class Config:
 
     def get(self, key, default=None):
         return self.data.get(key, default)
+
+    def pin_es_hash(self, valor: str) -> bool:
+        t = str(valor or "").strip().lower()
+        return len(t) == 64 and all(c in "0123456789abcdef" for c in t)
+
+    def token_api_lan(self) -> str:
+        """Secreto compartido de la API LAN. El hash del PIN local no sirve de llave."""
+        tok = str(self.data.get("lan_api_token") or "").strip()
+        if tok:
+            return tok
+        pin = str(self.data.get("local_pin") or "").strip()
+        if pin and not self.pin_es_hash(pin):
+            return pin
+        return "1234"
 
     def set(self, key, value):
         self.data[key] = value

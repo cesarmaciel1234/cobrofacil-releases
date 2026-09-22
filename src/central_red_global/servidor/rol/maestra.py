@@ -4,13 +4,10 @@ from src.config import config
 from src.central_red_global.servidor.rol.ip import probe_mariadb
 from src.central_red_global.servidor.rol.mariadb_local import intentar_arrancar_mariadb_local
 
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
-
 
 def convertir_en_maestra(logger):
+    from src.base_de_datos.database import db_manager
+
     prev_engine = getattr(db_manager, "db_engine_type", "sqlite")
     prev_host = (config.get("db_host") or "").strip() or "localhost"
     prev_cfg_engine = config.get("db_engine", "sqlite")

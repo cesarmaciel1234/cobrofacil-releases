@@ -459,18 +459,8 @@ def _insertar_faltante(payload: dict) -> bool:
                 cant = it.get("cant") or 0
                 if prod_id and str(prod_id).strip() not in ("000", ""):
                     try:
-                        from src.config import config
-                        opt_negativo = config.get("opt_stock_negativo", False)
-                        if opt_negativo:
-                            cur.execute(
-                                "UPDATE productos SET stock = stock - ? WHERE id = ?",
-                                (cant, prod_id),
-                            )
-                        else:
-                            cur.execute(
-                                "UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?",
-                                (cant, cant, prod_id),
-                            )
+                        from src.base_de_datos.repos.stock_descuento import descontar_stock
+                        descontar_stock(cur, prod_id, cant)
                         rc = getattr(cur, "rowcount", None)
                         _anotar_medicion_stock(
                             {
@@ -484,6 +474,9 @@ def _insertar_faltante(payload: dict) -> bool:
                             }
                         )
                     except Exception as e_stk:
+                        from src.base_de_datos.repos.stock_descuento import SinStock
+                        if isinstance(e_stk, SinStock):
+                            raise
                         _anotar_medicion_stock(
                             {
                                 "origen": "hidratacion",

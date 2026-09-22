@@ -289,6 +289,21 @@ def easing_sine_curve():
         return QEasingCurve.SineCurve
 
 
+class _Avisos:
+    """connect/emit sin pyqtSignal: en PyQt6 `finished()` no se registra."""
+
+    def __init__(self):
+        self._slots = []
+
+    def connect(self, fn):
+        if fn not in self._slots:
+            self._slots.append(fn)
+
+    def emit(self, *args):
+        for fn in list(self._slots):
+            fn(*args) if args else fn()
+
+
 class VariantFloatAnimation(QObject):
     """
     Animación de float para PyQt6 (usa QPropertyAnimation).
@@ -297,10 +312,10 @@ class VariantFloatAnimation(QObject):
     """
 
     valueChanged = pyqtSignal(object)
-    finished = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.finished = _Avisos()
         self._duration = 250
         self._easing = _easing_linear()
         self._loop_count = 1

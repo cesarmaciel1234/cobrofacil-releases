@@ -1,5 +1,4 @@
 from src.config import config
-from src.base_de_datos.database import db_manager
 
 class CobroController:
     """
@@ -55,71 +54,24 @@ class CobroController:
         Prepara el diccionario de venta y lo guarda en la base de datos.
         Retorna el id_venta generado, o None si falló.
         """
-        estado_venta = 'COMPLETADA'
-        nombre_cliente_guardar = ''
-        if nombre_pendiente:
-            estado_venta = 'TRANSF_PENDIENTE'
-            nombre_cliente_guardar = nombre_pendiente
+        from src.cajero.paso6_cobro.motor_pagos.comandos.persistir_cobro import persistir_cobro
 
-        # Efectivo/Mixto: p1 = efectivo (+USD) recibido (bruto). El vuelto sale del cajón.
-        # Otros medios: no mueven efectivo → cambio de arqueo = 0 (evita bajar monto esperado).
-        es_caja = metodo_pago in ("Efectivo", "Mixto")
-        pago_efectivo = float(p1 or 0) if es_caja else 0.0
-        pago_otro = float(p2 or 0) if metodo_pago == "Mixto" else (
-            float(p1 or 0) if metodo_pago != "Efectivo" else 0.0
-        )
-        overpay = (float(p1 or 0) + float(p2 or 0)) - float(total_final or 0)
-        cambio = max(0.0, overpay) if es_caja else 0.0
-
-        descuento_total = monto_descuento + descuentaso_oferta
-
-        resultado_venta = {
-            'total': total_final,
-            'pago_con': float(p1 or 0) + float(p2 or 0),
-            'cambio': cambio,
-            'pago_efectivo': pago_efectivo,
-            'pago_otro': pago_otro,
-            'usuario': cajero_actual,
-            'usuario_secundario': cajero_secundario,
-            'metodo_pago': metodo_pago,
-            'estado': estado_venta,
-            'cliente_nombre': nombre_cliente_guardar,
-            'descuento': descuento_total,
-            'recargo': monto_recargo,
-            'request_id': request_id
+        datos = {
+            "metodo": metodo_pago,
+            "total_final": total_final,
+            "p1": p1,
+            "p2": p2,
+            "items_carrito": items_carrito,
+            "cajero": cajero_actual,
+            "cajero_sec": cajero_secundario,
+            "descuento": monto_descuento,
+            "recargo": monto_recargo,
+            "oferta": descuentaso_oferta,
+            "nombre_pendiente": nombre_pendiente,
+            "cliente_id": None,
+            "request_id": request_id,
         }
-
-        # Guardar en base de datos
-        id_v = db_manager.guardar_venta_completa(resultado_venta, items_carrito)
-        return id_v, resultado_venta
-
-    @staticmethod
-    def procesar_fiado(cliente_id, total_final, id_v):
-        """
-        Registra la deuda del cliente por una venta Fiada.
-        """
-        from src.repositories.cliente_repository import ClienteRepository
-
-        if not cliente_id:
-            return False, "No se pudo identificar al cliente del fiado."
-
-        c = ClienteRepository.obtener_por_id(cliente_id)
-        if not c:
-            return False, "Cliente no encontrado en la base de datos."
-
-        nueva_deuda = float(dict(c).get("deuda_actual", 0)) + total_final
-        nombre_cli = dict(c).get("nombre", "")
-
-        db_manager.execute_non_query(
-            "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
-            (nueva_deuda, cliente_id),
-        )
-        db_manager.execute_non_query(
-            "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (cliente_id, "CARGO", total_final, nueva_deuda, f"Venta a crédito Ticket #{id_v}", id_v),
-        )
-        return True, nombre_cli
+        return persistir_cobro(datos)
 
     @staticmethod
     def procesar_cajon_impresion(metodo_pago, imprimir, id_v, items_carrito, total_final, resultado_venta, cajero_nombre, descuento_total, monto_recargo, force_fiscal=False):

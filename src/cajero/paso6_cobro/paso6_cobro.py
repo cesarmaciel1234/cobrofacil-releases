@@ -872,7 +872,8 @@ class Paso6Cobro(QDialog):
         monto_desc = getattr(self, 'descuento_monto', 0.0)
         monto_rec = getattr(self, 'recargo_monto', 0.0)
 
-        self.total_final = max(0.0, self.total_original - monto_desc + monto_rec)
+        from src.utils.dinero import redondear_dinero
+        self.total_final = redondear_dinero(max(0.0, self.total_original - monto_desc + monto_rec))
 
         # El total de arriba sigue mostrando el original fijo
         self.lbl_total.setText(f"${self.total_original:,.2f}")

@@ -92,12 +92,15 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data, ensure_ascii=False, default=_json_safe).encode('utf-8'))
 
     def _check_auth(self):
-        expected_token = config.get("local_pin", "1234")
-        auth_header = self.headers.get('Authorization', '')
-        if auth_header != f"Bearer {expected_token}":
-            self._send_response(401, {"status": "error", "message": "Acceso denegado. Token LAN inv\u00e1lido."})
-            return False
-        return True
+        expected_token = config.token_api_lan()
+        auth_header = self.headers.get("Authorization", "")
+        presented = ""
+        if auth_header.startswith("Bearer "):
+            presented = auth_header[7:].strip()
+        if presented and presented == expected_token:
+            return True
+        self._send_response(401, {"status": "error", "message": "Acceso denegado. Token LAN inválido."})
+        return False
 
     def do_POST(self):
         if not self._check_auth():
@@ -144,7 +147,8 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 data = json.loads(post_data.decode('utf-8'))
 
                 auth_token = data.get('token', '')
-                if auth_token != config.get("update_auth_token", "1234"):
+                expected_upd = str(config.get("update_auth_token") or "").strip()
+                if not expected_upd or auth_token != expected_upd:
                     self._send_response(401, {"status": "error", "message": "Acceso denegado: Token inválido."})
                     return
 
@@ -154,21 +158,20 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     return
                 logger.info(f"Petición remota para cambiar a rol ESCLAVA con Maestra en {master_ip}")
 
-                # Test connection to master on 3306 using '1234' then fallback to ''
                 import pymysql
                 try:
-                    conn = pymysql.connect(host=master_ip, port=3306, user="root", password="1234", connect_timeout=3)
+                    from src.db_engines.mariadb_engine import MariaDBEngine
+                    pwd = getattr(MariaDBEngine, "password", None) or "1234"
+                    engine = MariaDBEngine(host=master_ip)
+                    pwd = engine.password
+                    conn = pymysql.connect(host=master_ip, port=3306, user="root", password=pwd, connect_timeout=3)
                     conn.close()
-                except Exception:
-                    try:
-                        conn = pymysql.connect(host=master_ip, port=3306, user="root", password="", connect_timeout=3)
-                        conn.close()
-                    except Exception as e:
-                        self._send_response(500, {
-                            "status": "error",
-                            "message": f"No se pudo establecer conexión TCP/MariaDB con {master_ip}:3306. Detalle: {str(e)}"
-                        })
-                        return
+                except Exception as e:
+                    self._send_response(500, {
+                        "status": "error",
+                        "message": f"No se pudo establecer conexión TCP/MariaDB con {master_ip}:3306. Detalle: {str(e)}"
+                    })
+                    return
 
                 # Reconexión en caliente (sin matar el proceso). Cartelería y
                 # terminales deben seguir abiertos al pasar a ESCLAVA.

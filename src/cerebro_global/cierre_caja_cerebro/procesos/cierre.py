@@ -73,17 +73,6 @@ def _insertar_movimiento(db: Any, fecha, tipo_cierre, fisico, username, obs, c_i
         )
         if ok:
             return True
-    if "data truncated" in err.lower() or "enum" in err.lower() or "incorrect" in err.lower():
-        db.execute_non_query(
-            "ALTER TABLE movimientos_caja MODIFY COLUMN tipo VARCHAR(64)"
-        )
-        ok = db.execute_non_query(
-            "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (fecha, tipo_cierre, fisico, username, obs, c_id),
-        )
-        if ok:
-            return True
     return False
 
 
@@ -178,25 +167,6 @@ def cerrar_caja(
                     except: pass
                 logger.error("Fallback también falló: %s", str(e2))
                 raise RuntimeError(f"El corte no se grabó en la base.\n{str(e2)}")
-        elif "data truncated" in err.lower() or "enum" in err.lower() or "incorrect" in err.lower():
-            try:
-                cursor = conn.cursor()
-                cursor.execute(db._normalize_query("ALTER TABLE movimientos_caja MODIFY COLUMN tipo VARCHAR(64)"))
-                cursor.execute(db._normalize_query(query_insert), (fecha, tipo_cierre, float(fisico or 0), user, obs, c_id))
-                
-                if modo_n == "cajero":
-                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND usuario = ? AND caja_id = ? AND fecha >= ?"
-                    cursor.execute(db._normalize_query(query_update), (user, c_id, desde))
-                else:
-                    query_update = "UPDATE ventas SET estado = 'CERRADA' WHERE estado = 'COMPLETADA' AND caja_id = ? AND fecha >= ?"
-                    cursor.execute(db._normalize_query(query_update), (c_id, desde))
-                
-                conn.commit()
-            except Exception as e3:
-                if conn:
-                    try: conn.rollback()
-                    except: pass
-                raise RuntimeError(f"El corte no se grabó en la base.\n{str(e3)}")
         else:
             raise RuntimeError(f"El corte no se grabó en la base.\n{err}")
     finally:

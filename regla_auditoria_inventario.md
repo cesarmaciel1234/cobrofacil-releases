@@ -9,6 +9,9 @@ El recuento físico no es una venta. Hay que **poner** el stock en el número co
 3. Al confirmar, `solicitar_ajuste_stock` hace **un** `UPDATE productos SET stock = ? WHERE id = ?` y **después** un INSERT en `auditorias_inventario`.
 4. El log **nunca** vuelve a escribir `productos.stock`.
 
+## Venta y la opción de stock negativo
+El descuento de una venta vive en `descontar_stock`. Si `opt_stock_negativo` está apagado, el `UPDATE` exige `stock >= cantidad`. Si otra caja se llevó el resto, la venta entera se deshace (`SinStock`). Si está prendido, la venta sigue y el stock puede quedar negativo. No volver a ignorar esa opción ni a restar stock sin esa condición.
+
 ## Qué no hay que romper
 - No usar `guardar_producto` para un ajuste de auditoría: ese UPDATE parcial puede pisar departamento u otros campos.
 - No llamar `MotorAuditoria.procesar_auditoria` después de haber actualizado el stock (eso duplicaba el SET y podía pisar una venta en el medio).

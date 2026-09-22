@@ -7,15 +7,12 @@ from src.central_red_global.servidor.rol.apagar import detener_servidor_tienda_l
 from src.central_red_global.servidor.rol.constantes import SLAVE_FAIL_COOLDOWN_SEC
 from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc, normalizar_ip, probe_mariadb
 
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
-
 _last_slave_fail_at: dict[str, float] = {}
 
 
 def convertir_en_esclava(logger, ip_maestra):
+    from src.base_de_datos.database import db_manager
+
     ip_maestra = normalizar_ip(ip_maestra)
 
     if not ip_maestra or ip_maestra.lower() in ("localhost", "127.0.0.1"):

@@ -45,8 +45,21 @@ def _aplicar_fiado(cursor, fiado, id_venta):
     except Exception:
         deuda = float(row[0] or 0)
         nombre = row[1] or ""
-    nueva = deuda + total
-    cursor.execute("UPDATE clientes SET deuda_actual = ? WHERE id = ?", (nueva, cid))
+    cursor.execute(
+        "UPDATE clientes SET deuda_actual = COALESCE(deuda_actual, 0) + ? WHERE id = ?",
+        (total, cid),
+    )
+    cursor.execute("SELECT deuda_actual, nombre FROM clientes WHERE id = ?", (cid,))
+    row2 = cursor.fetchone()
+    if row2:
+        try:
+            nueva = float(row2["deuda_actual"] or 0)
+            nombre = row2["nombre"] or nombre
+        except Exception:
+            nueva = float(row2[0] or 0)
+            nombre = row2[1] or nombre
+    else:
+        nueva = deuda + total
     cursor.execute(
         "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
         "VALUES (?, ?, ?, ?, ?, ?)",
@@ -82,7 +95,7 @@ class VentasRepoMixin:
                         "fiado": fiado,
                     }
                     from src.config import config
-                    token = config.get("local_pin", "1234")
+                    token = config.token_api_lan()
                     headers = {"Authorization": f"Bearer {token}"}
                     response = requests.post(f"{api_url}/api/guardar_venta", json=payload, headers=headers, timeout=5.0)
                     if response.status_code == 200:
@@ -148,7 +161,7 @@ class VentasRepoMixin:
                         INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, vals_base + (request_id,))
-                elif "request_id" in err or "unknown column" in err:
+                elif "request_id" in err:
                     cursor.execute("""
                         INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -165,11 +178,8 @@ class VentasRepoMixin:
                 """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
 
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
-                    from src.config import config
-                    if config.get("opt_stock_negativo", False):
-                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
-                    else:
-                        cursor.execute("UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?", (it['cant'], it['cant'], it['id']))
+                    from src.base_de_datos.repos.stock_descuento import descontar_stock
+                    descontar_stock(cursor, it['id'], it['cant'])
                     try:
                         from src.base_de_datos.diario_ventas_externo import _anotar_medicion_stock
 
@@ -211,6 +221,9 @@ class VentasRepoMixin:
             if existente:
                 return existente
             logger.warning(f"Error al guardar venta en base de datos: {e}")
+            from src.base_de_datos.repos.stock_descuento import SinStock
+            if isinstance(e, SinStock):
+                raise
             return None
         finally:
             if conn: conn.close()
@@ -246,7 +259,7 @@ class VentasRepoMixin:
                     if conn:
                         conn.rollback()
                     return True
-                if "request_id" in str(e).lower() or "unknown column" in str(e).lower():
+                if "request_id" in str(e).lower():
                     cursor.execute("""
                         INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro,
                                            usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
@@ -263,11 +276,8 @@ class VentasRepoMixin:
                 """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
 
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
-                    from src.config import config
-                    if config.get("opt_stock_negativo", False):
-                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
-                    else:
-                        cursor.execute("UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?", (it.get('cant', 1), it.get('cant', 1), it.get('id')))
+                    from src.base_de_datos.repos.stock_descuento import descontar_stock
+                    descontar_stock(cursor, it.get('id'), it.get('cant', 1))
 
             conn.commit()
             return True

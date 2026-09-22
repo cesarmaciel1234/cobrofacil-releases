@@ -68,6 +68,30 @@ class MigratorMixin:
             logger.error(f"Error migrando datos SQLite a MariaDB: {e}")
             return False
 
+    def _ampliar_tipo_movimiento_caja(self, cursor) -> None:
+        """El cierre no altera la tabla. Si tipo es ENUM o VARCHAR corto, se ensancha al arrancar."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return
+        try:
+            cursor.execute("SHOW COLUMNS FROM movimientos_caja LIKE 'tipo'")
+            row = cursor.fetchone()
+            if not row:
+                return
+            if isinstance(row, dict):
+                tipo = str(row.get("Type") or row.get("type") or "")
+            else:
+                tipo = str(row[1] if len(row) > 1 else "")
+            bajo = tipo.lower()
+            corto = False
+            if "varchar" in bajo:
+                import re
+                hallado = re.search(r"varchar\((\d+)\)", bajo)
+                corto = bool(hallado and int(hallado.group(1)) < 64)
+            if "enum" in bajo or corto:
+                cursor.execute("ALTER TABLE movimientos_caja MODIFY COLUMN tipo VARCHAR(64)")
+        except Exception as e:
+            logger.warning(f"No se pudo ampliar movimientos_caja.tipo: {e}")
+
     def _migrate_db(self):
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
@@ -178,6 +202,7 @@ class MigratorMixin:
         except Exception as e:
             logger.warning(f"No se pudo crear auditoria_cancelaciones: {e}")
         add_column_if_not_exists('movimientos_caja', 'caja_id', 'INTEGER DEFAULT 1')
+        self._ampliar_tipo_movimiento_caja(cursor)
         add_column_if_not_exists('usuarios', 'pin', 'TEXT DEFAULT \'1234\'')
         add_column_if_not_exists('clientes', 'dni', 'TEXT')
         add_column_if_not_exists('clientes', 'tipo_cliente', "TEXT DEFAULT 'regular'")

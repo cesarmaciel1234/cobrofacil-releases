@@ -185,10 +185,17 @@ class DialogoPINLocal(QDialog):
             QMessageBox.critical(self, "No Coinciden", "La nueva contraseña y su confirmación no coinciden.")
             return
             
-        # Guardar el PIN como HASH en la configuración
+        # El PIN local queda hasheado. La llave LAN no se pisa con ese hash.
+        viejo = str(config.get("local_pin") or "").strip()
+        if not str(config.get("lan_api_token") or "").strip() and viejo and not config.pin_es_hash(viejo):
+            config.data["lan_api_token"] = viejo
         nuevo_hash = hashlib.sha256(nuevo.encode()).hexdigest()
         config.set("local_pin", nuevo_hash)
-        QMessageBox.information(self, "Contraseña Actualizada", "La llave de red se ha guardado exitosamente.")
+        QMessageBox.information(
+            self,
+            "Contraseña Actualizada",
+            "La contraseña local se actualizó. La llave de red entre cajas no cambió.",
+        )
         self.accept()
 
     def showEvent(self, event):

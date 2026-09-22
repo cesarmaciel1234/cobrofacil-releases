@@ -4,10 +4,12 @@ from src.config import config
 from src.central_red_global.servidor.rol.esclava import convertir_en_esclava
 from src.central_red_global.servidor.rol.maestra import convertir_en_maestra
 
-try:
+
+def _db_manager():
+    """Import perezoso: este módulo se carga mientras la base todavía arranca."""
     from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
+
+    return db_manager
 
 
 class MotorRed:
@@ -17,6 +19,7 @@ class MotorRed:
         self.logger = logging.getLogger(__name__)
 
     def obtener_estado_red(self):
+        db_manager = _db_manager()
         return {
             "is_master": getattr(db_manager, "is_master", True),
             "caja_id": config.get("caja_id", 1),
