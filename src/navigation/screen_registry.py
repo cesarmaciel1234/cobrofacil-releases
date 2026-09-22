@@ -22,8 +22,8 @@ def build_screen_factories(main_window):
             "src.motor_descuentos.hub", fromlist=["Admin2Ofertas"]
         ).Admin2Ofertas(),
         Screen.REPORTES: lambda: _imp(
-            "src.jefe.reportes.admin_reportes.reportes_main", fromlist=["Admin3Reportes"]
-        ).Admin3Reportes(),
+            "src.jefe.reportes.jefe_reportes", fromlist=["JefeReportes"]
+        ).JefeReportes(),
         Screen.CONFIGURACION: lambda: _imp(
             "src.admin.configuracion.configuracion_main", fromlist=["Admin5Configuracion"]
         ).Admin5Configuracion(),

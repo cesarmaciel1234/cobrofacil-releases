@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget); self.main_layout.setContentsMargins(0, 0, 0, 0)
-        
+
         self.stacked_widget = QStackedWidget()
         self.main_layout.addWidget(self.stacked_widget)
 
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         # Llamarlo en __init__ era un doble-procesamiento innecesario.
         self._init_global_alarm()
         self._init_security_monitor()
-        
+
         # Network Engine se conectará más tarde, después de definir todos los métodos
 
         self._init_update_banner()
@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         self.chatbot_overlay = ChatBotWidget(self)
         self.chatbot_overlay.hide()
         self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
-        
+
         self._chatbot_active = False
         self._active_theme_file = None
         self._cargar_datos_timer = QTimer(self)
@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
 
         # Chequear actualizaciones 10 segundos después de que arranque la UI
         QTimer.singleShot(5000, self._chequear_actualizaciones_bg)
-        
+
         # Inicializar Network Engine al final del constructor (después de definir todos los métodos)
         self._init_network_engine()
 
@@ -132,11 +132,11 @@ class MainWindow(QMainWindow):
         try:
             from src.central_red_global.network_engine import get_network_engine, init_network_engine
             from src.config import config
-            
+
             # Determinar rol para Network Engine
             user = config.current_user or {}
             role = (user.get("role") or user.get("rol") or "cajero").lower()
-            
+
             # Inicializar Network Engine con rol específico
             engine = init_network_engine(role)
             if engine:
@@ -174,16 +174,16 @@ class MainWindow(QMainWindow):
         self.marco_alerta.setAttribute(Qt.WA_TransparentForMouseEvents)
         self.marco_alerta.setStyleSheet("border: 30px solid #B91C1C; background: transparent;")
         self.marco_alerta.hide()
-        
+
         # Innovación: Marca de Agua de Seguridad
         self.layout_alerta = QVBoxLayout(self.marco_alerta)
         self.layout_alerta.setAlignment(Qt.AlignCenter)
-        
+
         self.lbl_watermark = QLabel("⚠️ CAJÓN ABIERTO ⚠️\nSIN AUTORIZACIÓN")
         self.lbl_watermark.setAlignment(Qt.AlignCenter)
         self.lbl_watermark.setStyleSheet("""
-            font-size: 80px; 
-            font-weight: 900; 
+            font-size: 80px;
+            font-weight: 900;
             color: rgba(255, 255, 255, 200);
             background: transparent;
             border: none;
@@ -194,12 +194,12 @@ class MainWindow(QMainWindow):
         shadow.setBlurRadius(20); shadow.setColor(QColor(0,0,0,200)); shadow.setOffset(5,5)
         self.lbl_watermark.setGraphicsEffect(shadow)
         self.layout_alerta.addWidget(self.lbl_watermark)
-        
+
         self.lbl_timestamp = QLabel("00/00/0000 00:00:00")
         self.lbl_timestamp.setAlignment(Qt.AlignCenter)
         self.lbl_timestamp.setStyleSheet("font-size: 30px; font-weight: bold; color: white; background: transparent; border: none; margin-top: 20px;")
         self.layout_alerta.addWidget(self.lbl_timestamp)
-        
+
         self.blink_timer = QTimer(self)
         self.blink_timer.timeout.connect(self._toggle_blink_alerta)
         self._blink_state = False
@@ -305,7 +305,7 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 from src.logger import logger
                 logger.error(f"Error buscando actualizaciones bg: {e}")
-                
+
         threading.Thread(target=_check, daemon=True).start()
 
     def _mostrar_banner_update(self, mensaje: str):
@@ -401,7 +401,7 @@ class MainWindow(QMainWindow):
             None,    # 1  — Cajero                   (lazy)
             None,    # 2  — Admin1Inventario         (lazy)
             None,    # 3  — Admin2Ofertas            (lazy)
-            None,    # 4  — Admin3Reportes           (lazy)
+            None,    # 4  — JefeReportes           (lazy)
             None,    # 5  — Admin5Configuracion      (lazy)
             None,    # 6  — Admin6RedLan             (lazy)
             None,    # 7  — Admin7Cierre             (lazy)
@@ -431,7 +431,7 @@ class MainWindow(QMainWindow):
             1:  lambda: __import__('src.cajero.paso5_terminal', fromlist=['Paso5Terminal']).Paso5Terminal(),
             2:  lambda: __import__('src.ui_global.inventario_ui.vistas.inventario_main', fromlist=['Admin1Inventario']).Admin1Inventario(),
             3:  lambda: __import__('src.motor_descuentos.hub', fromlist=['Admin2Ofertas']).Admin2Ofertas(),
-            4:  lambda: __import__('src.admin.reportes.reportes_main', fromlist=['Admin3Reportes']).Admin3Reportes(),
+            4:  lambda: __import__('src.jefe.reportes.jefe_reportes', fromlist=['JefeReportes']).JefeReportes(),
             5:  lambda: __import__('src.admin.configuracion.configuracion_main', fromlist=['Admin5Configuracion']).Admin5Configuracion(),
             6:  lambda: __import__('src.admin.legacy.admin6_red_lan',    fromlist=['Admin6RedLan']).Admin6RedLan(),
             7:  lambda: __import__('src.admin.cierre.cierre_main',     fromlist=['Admin7Cierre']).Admin7Cierre(self),
@@ -520,12 +520,12 @@ class MainWindow(QMainWindow):
         """Reaplica el QSS global (Día/Noche) y sincroniza los paneles administrativos."""
         from src.config import config
         from src.utils.theme_manager import theme_manager
-        
+
         # 1. Asegurar que theme_manager esté sincronizado con config.json
         theme_manager.refresh_from_config()
         theme = config.get("theme", "light")
         theme_file = "estilo_dia.qss" if theme == "light" else "estilo_noche.qss"
-        
+
         # 2. Si estamos en Cajero, avisarle a la pantalla de ventas
         if index == 1:
             if hasattr(self, 'pantalla_ventas') and hasattr(self.pantalla_ventas, 'apply_theme'):
@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
                 finally:
                     self.setUpdatesEnabled(True)
                     self.repaint()
-        
+
         # 3. Aplicar globalmente el stylesheet de la app
         if theme_file != self._active_theme_file:
             css = _QSS_CACHE.get(theme_file, "")
@@ -635,10 +635,10 @@ class MainWindow(QMainWindow):
 
         if hasattr(s, 'request_screen'):
             s.request_screen.connect(self.switch_tab)
-            
+
         if hasattr(s, 'request_carteleria'):
             s.request_carteleria.connect(lambda: self.switch_tab(22)) # Carteleria entra al Dashboard 22, no directo a TV
-            
+
         if index == 15: # Admin Carteleria
             if hasattr(s, 'request_dashboard'):
                 try: s.request_dashboard.disconnect()
@@ -792,7 +792,7 @@ class MainWindow(QMainWindow):
                 except Exception:
                     hay_venta = False
         is_supervisor = getattr(self, '_supervisor_mode', False)
-        
+
         if index == 1:
             if self.screens[1] is None:
                 self._build_lazy_screen(1)
@@ -811,7 +811,7 @@ class MainWindow(QMainWindow):
         elif index == 21:
             self._kiosk_mode = False
             self.btn_flotante.hide()
-            
+
             # --- MODO VENTANA NORMAL (PANTALLA SECUNDARIA) ---
             # Removemos FramelessWindowHint para que tenga barra de titulo y se pueda mover
             self.setWindowFlags(Qt.WindowType.Window)
@@ -823,10 +823,10 @@ class MainWindow(QMainWindow):
                 screen_rect = screen_geometry_at(0)
             if screen_rect is not None:
                 self.setGeometry(screen_rect)
-                
+
             self.showNormal()
             self.show()
-            
+
             if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
                 self.chatbot_overlay.cerrar_chat()
@@ -843,14 +843,14 @@ class MainWindow(QMainWindow):
         else:
             # Mostrar si estamos fuera de ventas y HAY UNA VENTA PENDIENTE o es INTERVENCIÓN DE SUPERVISOR
             self.gestor_f11.update_floating_button_visibility(index, hay_venta, is_supervisor)
-                
+
             # Ocultar chatbot en las demás pantallas
             if self.chatbot_overlay is not None:
                 self.chatbot_overlay.hide()
                 self.chatbot_overlay.cerrar_chat()  # Cerrar burbuja si quedó abierta
 
             self._restore_office_window()
-        
+
         # ── Lazy Loading: instanciar el widget si es la primera visita ───────
         if index in (15, 21) and self.screens[index] is not None:
             self._build_lazy_screen(index)
@@ -939,7 +939,7 @@ class MainWindow(QMainWindow):
         if visible:
             import datetime
             ahora = datetime.datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
-            
+
             if modo == "security":
                 self.lbl_watermark.setText("⚠️ CAJÓN ABIERTO ⚠️\nSIN AUTORIZACIÓN")
                 self.lbl_watermark.setStyleSheet("font-size: 80px; font-weight: 900; color: rgba(255, 255, 255, 200); background: transparent; border: none; letter-spacing: 5px;")
@@ -953,7 +953,7 @@ class MainWindow(QMainWindow):
                 self.lbl_timestamp.setText(f"Operación: {ahora}")
                 self.marco_alerta.setStyleSheet("border: none; background: rgba(248, 250, 252, 100);")
                 self.blink_timer.stop() # Sin parpadeo en modo info
-            
+
             self.marco_alerta.show()
             self.marco_alerta.raise_()
         else:
@@ -986,12 +986,12 @@ class MainWindow(QMainWindow):
             self.marco_alerta.setStyleSheet("border: 40px solid #EF4444; background: transparent;")
             if hasattr(self.pantalla_ventas, 'lbl_terminal_title'):
                 self.pantalla_ventas.lbl_terminal_title.setText("⚠️ SEGURIDAD ACTIVA ⚠️")
-        
+
         self.marco_alerta.raise_()
 
     def _on_udp_message_received(self, origen, tipo, datos):
         print(f"[DEBUG] UDP recibido: origen={origen}, tipo={tipo}, datos={datos}")
-        
+
         # Validación de seguridad básica (Autenticación)
         token = datos.get("token")
         if token != "nexus_admin_5544":
@@ -1002,20 +1002,20 @@ class MainWindow(QMainWindow):
             caja_id_raw = str(datos.get("caja_id", "todas")).lower()
             from src.config import config
             current_caja = str(config.get("caja_id", 1))
-            
+
             print(f"[DEBUG] FORCE_Z_CUT: caja_id_raw={caja_id_raw}, current_caja={current_caja}")
-            
+
             import re
             match = re.search(r'\d+', caja_id_raw)
             caja_num = match.group() if match else None
-            
+
             print(f"[DEBUG] caja_num extraído: {caja_num}")
-            
+
             if "all" in caja_id_raw or "todas" in caja_id_raw or caja_num == current_caja:
                 print(f"[DEBUG] Condición cumplida, procesando orden de CIERRE_Z forzado...")
                 # Ignorar el rol para forzar CIERRE_Z en terminal
                 from PyQt6.QtWidgets import QMessageBox
-                
+
                 print(f"[DEBUG] Navegando a pantalla de cierre en modo admin...")
                 # Forzar la apertura del diálogo en modo Z
                 self._open_cierre_dialog_directly(force_z=True)
@@ -1027,24 +1027,24 @@ class MainWindow(QMainWindow):
         try:
             from PyQt6.QtWidgets import QDialog, QVBoxLayout, QMessageBox
             from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
-            
+
             print(f"[DEBUG] Abriendo diálogo de cierre directamente...")
-            
+
             dlg = QDialog(self)
             dlg.setWindowTitle("Cierre de Caja - Orden NEXUS")
             dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
             dlg.setFixedSize(1200, 900)
             lay = QVBoxLayout(dlg)
             lay.setContentsMargins(0, 0, 0, 0)
-            
+
             cierre = CierreGlobalUI(self, is_terminal=True, force_z=force_z)
             cierre.btn_back.setText("❌ Cerrar")
             cierre.request_dashboard.connect(dlg.reject)
             lay.addWidget(cierre)
-            
+
             QMessageBox.warning(self, "Orden de Cierre", "El Centro de Control (NEXUS) ordenó un cierre Z inmediato.")
             dlg.exec()
-            
+
         except Exception as e:
             print(f"[DEBUG] Error abriendo diálogo directamente: {e}")
             from PyQt6.QtWidgets import QMessageBox

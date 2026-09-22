@@ -30,10 +30,35 @@ def _es_duplicado(err) -> bool:
     return "unique" in msg or "duplicate" in msg or "idx_ventas_request_id" in msg
 
 
+def _aplicar_fiado(cursor, fiado, id_venta):
+    cid = (fiado or {}).get("cliente_id")
+    total = float((fiado or {}).get("total") or 0)
+    if not cid:
+        raise ValueError("Fiado sin cliente")
+    cursor.execute("SELECT deuda_actual, nombre FROM clientes WHERE id = ?", (cid,))
+    row = cursor.fetchone()
+    if not row:
+        raise ValueError("Cliente no encontrado")
+    try:
+        deuda = float(row["deuda_actual"] or 0)
+        nombre = row["nombre"] or ""
+    except Exception:
+        deuda = float(row[0] or 0)
+        nombre = row[1] or ""
+    nueva = deuda + total
+    cursor.execute("UPDATE clientes SET deuda_actual = ? WHERE id = ?", (nueva, cid))
+    cursor.execute(
+        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (cid, "CARGO", total, nueva, f"Venta a crédito Ticket #{id_venta}", id_venta),
+    )
+    return nombre
+
+
 class VentasRepoMixin:
-    def guardar_venta_completa(self, venta_data, items):
+    def guardar_venta_completa(self, venta_data, items, fiado=None):
         """ Guarda la cabecera de venta y sus detalles en una sola transacción. """
-        
+
         request_id = venta_data.get('request_id')
         if not request_id:
             request_id = str(uuid.uuid4())
@@ -53,7 +78,8 @@ class VentasRepoMixin:
                     import requests
                     payload = {
                         "venta_data": venta_data,
-                        "items": items
+                        "items": items,
+                        "fiado": fiado,
                     }
                     from src.config import config
                     token = config.get("local_pin", "1234")
@@ -78,12 +104,21 @@ class VentasRepoMixin:
             if existente:
                 logger.info(f"Venta ignorada por idempotencia (request_id: {request_id})")
                 return existente
-            
+
             from datetime import datetime
             fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             from src.config import config
             c_id = config.get("caja_id", 1)
+            usr_sec = venta_data.get("usuario_secundario") or ""
+            vals_ext = (
+                venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
+                venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
+                usr_sec,
+                venta_data['estado'], venta_data['metodo_pago'], fecha_local, c_id,
+                venta_data.get('descuento', 0.0), venta_data.get('recargo', 0.0),
+                venta_data.get('cliente_nombre', ''),
+            )
             vals_base = (
                 venta_data['total'], venta_data['pago_con'], venta_data['cambio'],
                 venta_data['pago_efectivo'], venta_data['pago_otro'], venta_data['usuario'],
@@ -93,9 +128,9 @@ class VentasRepoMixin:
             )
             try:
                 cursor.execute("""
-                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, vals_base + (request_id,))
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, usuario_secundario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, vals_ext + (request_id,))
             except Exception as e:
                 if conn:
                     try:
@@ -107,25 +142,62 @@ class VentasRepoMixin:
                     existente = _buscar_por_request(cursor, request_id)
                     if existente:
                         return existente
-                if "request_id" in str(e).lower() or "unknown column" in str(e).lower():
+                err = str(e).lower()
+                if "usuario_secundario" in err:
+                    cursor.execute("""
+                        INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, vals_base + (request_id,))
+                elif "request_id" in err or "unknown column" in err:
                     cursor.execute("""
                         INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, vals_base)
                 else:
                     raise
-            
+
             id_venta = cursor.lastrowid
-            
+
             for it in items:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, (id_venta, it['id'], it['nombre'], it['cant'], it['precio'], it['subtotal']))
-                
+
                 if it['id'] and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
-            
+                    from src.config import config
+                    if config.get("opt_stock_negativo", False):
+                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it['cant'], it['id']))
+                    else:
+                        cursor.execute("UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?", (it['cant'], it['cant'], it['id']))
+                    try:
+                        from src.base_de_datos.diario_ventas_externo import _anotar_medicion_stock
+
+                        _anotar_medicion_stock(
+                            {
+                                "origen": "cobro",
+                                "venta_id": id_venta,
+                                "producto_id": it["id"],
+                                "nombre": it.get("nombre") or "",
+                                "cantidad": it.get("cant") or 0,
+                                "ok": getattr(cursor, "rowcount", None) != 0,
+                            }
+                        )
+                    except Exception:
+                        pass
+
+            if fiado:
+                nombre_cli = _aplicar_fiado(cursor, fiado, id_venta)
+                if nombre_cli:
+                    venta_data["cliente_nombre"] = nombre_cli
+                    try:
+                        cursor.execute(
+                            "UPDATE ventas SET cliente_nombre = ? WHERE id = ?",
+                            (nombre_cli, id_venta),
+                        )
+                    except Exception:
+                        pass
+
             conn.commit()
             return id_venta
         except Exception as e:
@@ -152,7 +224,7 @@ class VentasRepoMixin:
             cursor = conn.cursor()
             if request_id and _buscar_por_request(cursor, request_id):
                 return True
-            
+
             from datetime import datetime
             fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             c_id = venta_data.get('caja_id', 1)
@@ -165,7 +237,7 @@ class VentasRepoMixin:
             )
             try:
                 cursor.execute("""
-                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                    INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro,
                                        usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, vals + (request_id,))
@@ -176,23 +248,27 @@ class VentasRepoMixin:
                     return True
                 if "request_id" in str(e).lower() or "unknown column" in str(e).lower():
                     cursor.execute("""
-                        INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro, 
+                        INSERT INTO ventas (total, pago_con, cambio, pago_efectivo, pago_otro,
                                            usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, vals)
                 else:
                     raise
             id_venta = cursor.lastrowid
-            
+
             for it in items:
                 cursor.execute("""
                     INSERT INTO detalles_ventas (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, (id_venta, it.get('id', ''), it.get('nombre', ''), it.get('cant', 1), it.get('precio', 0), it.get('subtotal', 0)))
-                
+
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
-                    cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
-            
+                    from src.config import config
+                    if config.get("opt_stock_negativo", False):
+                        cursor.execute("UPDATE productos SET stock = stock - ? WHERE id = ?", (it.get('cant', 1), it.get('id')))
+                    else:
+                        cursor.execute("UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?", (it.get('cant', 1), it.get('cant', 1), it.get('id')))
+
             conn.commit()
             return True
         except Exception as e:
@@ -218,7 +294,7 @@ class VentasRepoMixin:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
             cursor.execute(
                 "SELECT estado, caja_id, usuario, total FROM ventas WHERE id = ?",
                 (id_venta,),
@@ -227,7 +303,7 @@ class VentasRepoMixin:
             if not venta:
                 logger.error(f"Venta {id_venta} no encontrada para cancelar.")
                 return False
-                
+
             estado = venta['estado']
             if estado == 'CANCELADA':
                 logger.warning(f"Venta {id_venta} ya está cancelada.")
@@ -246,14 +322,14 @@ class VentasRepoMixin:
             caja_origen = venta["caja_id"] if "caja_id" in venta.keys() else 1
             usuario_venta = venta["usuario"] if "usuario" in venta.keys() else ""
             monto = float(venta["total"] or 0) if "total" in venta.keys() else 0.0
-                
+
             cursor.execute("SELECT id_producto, cantidad FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
             detalles = cursor.fetchall()
             for det in detalles:
                 prod_id = det['id_producto']
                 if prod_id and str(prod_id).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ?", (det['cantidad'], prod_id))
-            
+
             try:
                 cursor.execute(
                     """UPDATE ventas SET estado = 'CANCELADA',

@@ -13,36 +13,36 @@ class MigratorMixin:
         sqlite_path = os.path.join(base_app_path, "punpro.db")
         if not os.path.exists(sqlite_path):
             return False
-            
+
         logger.info("⚡ Iniciando migración de SQLite a MariaDB para restaurar consistencia...")
         try:
             sq_conn = sqlite3.connect(sqlite_path)
             sq_conn.row_factory = sqlite3.Row
             sq_cur = sq_conn.cursor()
-            
+
             # Obtener tablas de SQLite
             sq_cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
             tables = [r['name'] for r in sq_cur.fetchall()]
-            
+
             # Garantizar que las tablas existen en MariaDB antes de migrar
             self.db_engine_type = "mariadb"
             self._create_tables()
-            
+
             m_conn = self.get_connection()
             m_cur = m_conn.cursor()
-            
+
             for table in tables:
                 try:
                     sq_cur.execute(f"SELECT * FROM {table}")
                     rows = sq_cur.fetchall()
                     if not rows:
                         continue
-                        
+
                     # Obtener columnas
                     columns = list(rows[0].keys())
                     cols_str = ", ".join(columns)
                     placeholders = ", ".join(["?"] * len(columns))
-                    
+
                     # Limpiar tabla en MariaDB primero para evitar duplicados / duplicación de PKs
                     try:
                         m_cur.execute(f"TRUNCATE TABLE {table}")
@@ -51,7 +51,7 @@ class MigratorMixin:
                             m_cur.execute(f"DELETE FROM {table}")
                         except:
                             pass
-                            
+
                     # Insertar en lotes
                     insert_query = f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})"
                     data_lote = [[r[col] for col in columns] for r in rows]
@@ -60,7 +60,7 @@ class MigratorMixin:
                     logger.info(f"Migrados {len(rows)} registros de la tabla '{table}' a MariaDB.")
                 except Exception as ex_t:
                     logger.warning(f"No se pudo migrar la tabla {table}: {ex_t}")
-                    
+
             sq_conn.close()
             logger.info("✅ Migración de SQLite a MariaDB completada con éxito.")
             return True
@@ -72,7 +72,7 @@ class MigratorMixin:
         """ Agrega columnas que falten en bases de datos viejas e inyecta alto rendimiento """
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         # MODO RED / MULTICAJA SEGURO (Evitar 'Database is Locked' en LAN)
         if getattr(self, "db_engine_type", "sqlite") == "sqlite":
             try:
@@ -89,7 +89,7 @@ class MigratorMixin:
         except Exception:
             pass
 
-        
+
         def add_column_if_not_exists(table, col_name, col_type):
             try:
                 if getattr(self, 'db_engine_type', 'sqlite') == 'mariadb':
@@ -102,7 +102,7 @@ class MigratorMixin:
                 else:
                     cursor.execute(f"PRAGMA table_info({table})")
                     columns = [col[1] for col in cursor.fetchall()]
-                
+
                 if col_name not in columns:
                     cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}")
             except Exception as e:
@@ -131,7 +131,7 @@ class MigratorMixin:
         add_column_if_not_exists('productos', 'ventas_oferta_relampago', 'REAL DEFAULT 0')
         add_column_if_not_exists('productos', 'tipo_unidad_oferta', 'TEXT DEFAULT \'Unidades\'')
         add_column_if_not_exists('productos', 'icono', 'TEXT')
-        
+
         # Verificar columnas de ventas
         add_column_if_not_exists('ventas', 'pago_con', 'REAL DEFAULT 0')
         add_column_if_not_exists('ventas', 'cambio', 'REAL DEFAULT 0')
@@ -149,6 +149,7 @@ class MigratorMixin:
         add_column_if_not_exists('ventas', 'perfil_cancel', 'TEXT')
         add_column_if_not_exists('ventas', 'caja_cancel', 'INTEGER')
         add_column_if_not_exists('ventas', 'request_id', 'TEXT')
+        add_column_if_not_exists('ventas', 'usuario_secundario', "TEXT DEFAULT ''")
         try:
             cursor.execute(
                 "CREATE UNIQUE INDEX IF NOT EXISTS idx_ventas_request_id ON ventas(request_id)"
@@ -181,7 +182,7 @@ class MigratorMixin:
         add_column_if_not_exists('clientes', 'dni', 'TEXT')
         add_column_if_not_exists('clientes', 'tipo_cliente', "TEXT DEFAULT 'regular'")
         add_column_if_not_exists('clientes', 'direccion', 'TEXT')
-        
+
         # Crear tabla departamentos si no existe (migración)
         try:
             cursor.execute("""
@@ -311,7 +312,7 @@ class MigratorMixin:
                 cursor.execute(q_idx)
             except Exception:
                 pass
-            
+
         # Crear tablas para módulo de clientes
         try:
             cursor.execute("""
@@ -339,7 +340,7 @@ class MigratorMixin:
             """)
         except Exception as e:
             logger.warning(f"Error creando tablas de clientes: {e}")
-            
+
         try:
             conn.commit()
         except Exception as e:
@@ -355,7 +356,7 @@ class MigratorMixin:
                 offline_sync_manager.sync_pendientes()
             except Exception as e:
                 logger.warning(f"No se pudo sincronizar cola offline post-migración: {e}")
-        
+
         import threading
         threading.Thread(target=trigger_sync, daemon=True).start()
 
@@ -364,7 +365,7 @@ class MigratorMixin:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
             # 1. USUARIOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
@@ -375,7 +376,7 @@ class MigratorMixin:
                     pin TEXT DEFAULT '1234'
                 )
             """)
-            
+
             # Mercado Pago Transferencias
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS mp_transferencias_usadas (
@@ -384,7 +385,7 @@ class MigratorMixin:
                     fecha DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # 2. PRODUCTOS (Stock Industrial)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS carteleria_global (
@@ -397,7 +398,7 @@ class MigratorMixin:
                     ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS productos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -419,7 +420,7 @@ class MigratorMixin:
                     tipo_unidad_oferta TEXT DEFAULT 'Unidades'
                 )
             """)
-            
+
             # 3. VENTAS (Cabecera)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS ventas (
@@ -439,7 +440,7 @@ class MigratorMixin:
                     request_id TEXT UNIQUE
                 )
             """)
-            
+
             # 4. DETALLES VENTAS (Items)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS detalles_ventas (
@@ -453,7 +454,7 @@ class MigratorMixin:
                     FOREIGN KEY(id_venta) REFERENCES ventas(id)
                 )
             """)
-            
+
             # 5. GASTOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS gastos (
@@ -466,7 +467,7 @@ class MigratorMixin:
                     status TEXT DEFAULT 'APROBADO'
                 )
             """)
-            
+
             # 6. DEPARTAMENTOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS departamentos (
@@ -475,7 +476,7 @@ class MigratorMixin:
                     iva REAL DEFAULT 21.0
                 )
             """)
-            
+
             # 7. MOVIMIENTOS CAJA
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS movimientos_caja (
@@ -488,7 +489,7 @@ class MigratorMixin:
                     caja_id INTEGER DEFAULT 1
                 )
             """)
-            
+
             # 8. TERMINALES ACTIVOS (Para conteo en red)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS terminales_activos (
@@ -497,7 +498,7 @@ class MigratorMixin:
                     last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # 9. ESTADO SISTEMA (Heartbeat Offline-First)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sistema_estado (
@@ -505,7 +506,7 @@ class MigratorMixin:
                     ultimo_latido DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
             # 10. CLIENTES (Para fiado y cuenta corriente)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS clientes (
@@ -532,7 +533,7 @@ class MigratorMixin:
                     FOREIGN KEY(cliente_id) REFERENCES clientes(id)
                 )
             """)
-            
+
             # 12. ROMANEOS (Cabecera de ingresos de mercadería)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS romaneos (
@@ -573,7 +574,7 @@ class MigratorMixin:
                     datos_json TEXT
                 )
             """)
-            
+
             # 15. COMBOS
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS combos (
@@ -583,7 +584,7 @@ class MigratorMixin:
                     productos_json TEXT NOT NULL
                 )
             """)
-            
+
             conn.commit()
             self._aplicar_sharding_franquicias(cursor)
             conn.close()
@@ -605,7 +606,7 @@ class MigratorMixin:
 
         base_id = sucursal_id * 1000000000
         tablas_sharding = ["ventas", "detalles_ventas", "movimientos_caja", "historial_cierres", "auditoria_precios", "auditoria_eliminaciones", "auditoria_cancelaciones", "cuenta_corriente", "pagos"]
-        
+
         engine = getattr(self, "db_engine_type", "sqlite")
         try:
             if engine == "sqlite":
@@ -692,7 +693,7 @@ class MigratorMixin:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            
+
             # Asegurar tabla usuarios por si acaso
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
@@ -703,22 +704,22 @@ class MigratorMixin:
                     pin TEXT DEFAULT '1234'
                 )
             """)
-            
+
             # Insertar usuarios de prueba (password hash de 'admin' y 'cajero')
             import hashlib
             h_admin = hashlib.sha256("admin".encode()).hexdigest()
             h_cajero = hashlib.sha256("cajero".encode()).hexdigest()
-            
+
             # Compatible query for SQLite and MariaDB
             insert_query = "INSERT IGNORE INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)"
             if getattr(self, "db_engine_type", "sqlite") == "sqlite":
                 insert_query = "INSERT OR IGNORE INTO usuarios (username, password_hash, rol) VALUES (?, ?, ?)"
-            
+
             cursor.execute(insert_query, ('admin', h_admin, 'admin'))
             cursor.execute(insert_query, ('cajero', h_cajero, 'cajero'))
             h_jefe = hashlib.sha256("jefe".encode()).hexdigest()
             cursor.execute(insert_query, ('jefe', h_jefe, 'jefe'))
-            
+
             conn.commit()
             if getattr(self, "db_engine_type", "sqlite") == "sqlite":
                 conn.close()

@@ -20,10 +20,10 @@ class CobroController:
             else:
                 p1 = float(p1_t) if p1_t else 0.0
                 p2 = float(p2_t) if p2_t and metodo == "Mixto" else 0.0
-            
+
             if (p1 + p2) < total_final:
                 return None, None
-            
+
             return p1, p2
         except ValueError:
             return None, None
@@ -38,12 +38,12 @@ class CobroController:
 
     @staticmethod
     def procesar_y_guardar_venta(
-        total_final, 
-        metodo_pago, 
-        p1, 
-        p2, 
-        items_carrito, 
-        cajero_actual, 
+        total_final,
+        metodo_pago,
+        p1,
+        p2,
+        items_carrito,
+        cajero_actual,
         cajero_secundario,
         monto_descuento=0.0,
         monto_recargo=0.0,
@@ -99,14 +99,14 @@ class CobroController:
         Registra la deuda del cliente por una venta Fiada.
         """
         from src.repositories.cliente_repository import ClienteRepository
-        
+
         if not cliente_id:
             return False, "No se pudo identificar al cliente del fiado."
-            
+
         c = ClienteRepository.obtener_por_id(cliente_id)
         if not c:
             return False, "Cliente no encontrado en la base de datos."
-            
+
         nueva_deuda = float(dict(c).get("deuda_actual", 0)) + total_final
         nombre_cli = dict(c).get("nombre", "")
 
@@ -128,7 +128,7 @@ class CobroController:
         """
         from src.hardware.printer import printer_manager
         from src.hardware.cash_drawer import drawer_manager
-        
+
         debe_abrir = False
         if metodo_pago == "Efectivo": debe_abrir = config.get("drawer_open_cash", True)
         elif metodo_pago == "Mixto": debe_abrir = config.get("drawer_open_mixed", True)
@@ -142,7 +142,7 @@ class CobroController:
         if imprimir:
             try:
                 printer_manager.imprimir_ticket_venta(
-                    id_v, items_carrito, total_final, 
+                    id_v, items_carrito, total_final,
                     resultado_venta['pago_con'], resultado_venta['cambio'],
                     abrir_cajon=debe_abrir, discount_amount=descuento_total, surcharge_amount=monto_recargo,
                     cajero=cajero_nombre, metodo_pago=metodo_pago,
@@ -156,19 +156,19 @@ class CobroController:
 
     @staticmethod
     def completar_transaccion(
-        total_final, 
-        metodo, 
-        p1, 
-        p2, 
-        items_carrito, 
-        cajero, 
-        cajero_sec, 
-        descuento, 
-        recargo, 
-        oferta, 
-        nombre_pendiente, 
-        cliente_id, 
-        imprimir, 
+        total_final,
+        metodo,
+        p1,
+        p2,
+        items_carrito,
+        cajero,
+        cajero_sec,
+        descuento,
+        recargo,
+        oferta,
+        nombre_pendiente,
+        cliente_id,
+        imprimir,
         force_fiscal,
         request_id=None
     ):
@@ -177,54 +177,27 @@ class CobroController:
         Retorna (True, None) si tiene éxito, o (False, "mensaje de error").
         """
         try:
-            id_v, resultado_venta = CobroController.procesar_y_guardar_venta(
-                total_final,
+            from src.cajero.paso6_cobro.motor_pagos.motor_principal import MotorPrincipalCobros
+
+            return MotorPrincipalCobros.iniciar_transaccion(
                 metodo,
-                p1, p2,
-                items_carrito,
-                cajero,
-                cajero_sec,
-                descuento,
-                recargo,
-                oferta,
-                nombre_pendiente,
-                request_id=request_id
+                {
+                    "total_final": total_final,
+                    "p1": p1,
+                    "p2": p2,
+                    "items_carrito": items_carrito,
+                    "cajero": cajero,
+                    "cajero_sec": cajero_sec,
+                    "descuento": descuento,
+                    "recargo": recargo,
+                    "oferta": oferta,
+                    "nombre_pendiente": nombre_pendiente,
+                    "cliente_id": cliente_id,
+                    "imprimir": imprimir,
+                    "force_fiscal": force_fiscal,
+                    "request_id": request_id,
+                },
             )
-            
-            if not id_v:
-                return False, "Error al guardar la venta en la base de datos."
-                
-            # Si fue fiado o clientes, actualizar la deuda
-            if metodo in ("Fiado", "Clientes"):
-                exito, cli_res = CobroController.procesar_fiado(cliente_id, total_final, id_v)
-                if not exito:
-                    return False, cli_res
-                resultado_venta["cliente_nombre"] = cli_res
-
-            descuento_total = descuento + oferta
-            CobroController.procesar_cajon_impresion(
-                metodo, 
-                imprimir, 
-                id_v, 
-                items_carrito, 
-                total_final, 
-                resultado_venta, 
-                cajero, 
-                descuento_total, 
-                recargo, 
-                force_fiscal
-            )
-
-            # Nube local: solo encola (hilo worker persiste fuera del install)
-            try:
-                from src.base_de_datos.diario_ventas_externo import encolar_venta
-
-                encolar_venta(id_v, resultado_venta, items_carrito)
-            except Exception:
-                pass
-            
-            return True, None
-            
         except Exception as e:
             import traceback
             tb = traceback.format_exc()

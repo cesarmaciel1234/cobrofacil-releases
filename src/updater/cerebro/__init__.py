@@ -16,7 +16,7 @@ from src.updater.cerebro.engine import (
     prepare_update_restart,
     exit_and_relaunch_for_update,
     get_status_message,
-    SilentUpdateWorker,
+
     _load_pending,
     _save_pending,
 )
@@ -54,7 +54,6 @@ __all__ = [
     "exit_and_relaunch_for_update",
     "start_background_update_service",
     "get_status_message",
-    "SilentUpdateWorker",
     "_load_pending",
     "_save_pending",
     "request_download",

@@ -4,8 +4,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 
 import src.utils.qt_compat  # noqa: F401 — enums Qt6 (Qt + widgets)
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
-    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, 
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
     QAbstractItemView, QListWidget, QListWidgetItem, QDialog, QPushButton, QGridLayout,
     QComboBox, QDoubleSpinBox, QMessageBox, QScrollArea, QSizePolicy,
 )
@@ -16,10 +16,6 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-try:
-    from src.base_de_datos.database import db_manager
-except ImportError:
-    from database import db_manager
 from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
 from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
@@ -29,7 +25,7 @@ from src.cajero.sacar_efectivo import DialogoRetiroEfectivo
 from src.cajero.ingresar_efectivo import DialogoIngresoEfectivo
 from src.cajero.paso5_terminal.dialogos.dialogo_candado import DialogoCandado
 from src.cajero.paso5_terminal.logica.terminal_controller import TerminalController
-from src.hardware.printer import printer_manager
+
 from src.hardware.cash_drawer import drawer_manager
 try:
     import winsound
@@ -112,24 +108,24 @@ class Paso5Terminal(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.actualizar_reloj)
         self.timer.start(1000)
-        
+
         # Timer para evitar que el buscador se trabe al leer códigos rápido
         self.search_timer = QTimer(self)
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self._do_busqueda)
-        
+
         # Timer de alta velocidad (150ms) para auto-foco instantáneo en el escáner (haga click donde haga, vuelve al instante)
         self.autofocus_timer = QTimer(self)
         self.autofocus_timer.timeout.connect(self.asegurar_foco_escaner)
         self.autofocus_timer.start(150)
-        
+
         # Timer de stock crítico (cada 5 minutos)
         if config.get("stock_alerta_activa", True):
             self.stock_timer = QTimer(self)
             self.stock_timer.timeout.connect(self.verificar_stock_minimo)
             self.stock_timer.start(300000) # 300,000 ms = 5 mins
             QTimer.singleShot(2000, self.verificar_stock_minimo)
-            
+
         # Timer de autocierre (cada 60 segundos)
         if config.get("cierre_auto_activo", False):
             self.autoclose_timer = QTimer(self)
@@ -160,23 +156,17 @@ class Paso5Terminal(QWidget):
                 return float(p["stock"] or 0)
         except (TypeError, ValueError):
             pass
-        res = db_manager.execute_query("SELECT stock FROM productos WHERE id=?", (p_id,))
-        return float(res[0]["stock"] or 0) if res else 0.0
+        return self.controller.stock_ofertas.obtener_stock_db(p_id)
+
+    def _fmt_stock_mostrar(self, p, stk):
+        from src.motor_inventario.unidad_medida import formatear_stock
+
+        return formatear_stock(p, stk)
 
     def _validar_stock(self, p, p_id, cantidad_necesaria):
-        if p_id == "000" or config.get("opt_stock_negativo", False):
-            return True
-        stock = self._stock_disponible(p, p_id)
-        if stock is None:
-            return True
-        if cantidad_necesaria > stock + 1e-9:
-            QMessageBox.warning(
-                self,
-                "Sin stock",
-                f"Stock insuficiente.\n\nDisponible: {stock:g}\nSolicitado: {cantidad_necesaria:g}",
-            )
-            return False
-        return True
+        from src.motor_inventario.unidad_medida import permitir_cobro_sin_stock
+
+        return permitir_cobro_sin_stock()
 
 
 
@@ -194,18 +184,18 @@ class Paso5Terminal(QWidget):
         import socket, uuid
         from src.utils.paths import get_base_path
         base_path = get_base_path().lower()
-        db_path = db_manager.db_path.lower()
-        
+        db_path = self.controller.get_db_path()
+
         # Determinar si la base de datos es local (Maestra) o remota (Cliente)
         is_local = base_path in db_path or not db_path or db_path == "punpro.db"
         estado_text = "Estado:           MAESTRA" if is_local else "Estado:           CLIENTE"
         self.lbl_estado.setText(estado_text)
-        
+
         # Generar código de instalación único a partir de la dirección MAC
         mac_str = f"{uuid.getnode():012X}"
         formatted_mac = f"№ {mac_str[:4]}-{mac_str[4:8]}-{mac_str[8:]}"
         self.lbl_instalacion.setText(formatted_mac)
-        
+
         # Iniciar latido de red y conteo dinámico si no existe el timer
         if not hasattr(self, 'red_timer'):
             self.red_timer = QTimer(self)
@@ -213,7 +203,7 @@ class Paso5Terminal(QWidget):
             self.red_timer.start(15000) # Latido cada 15 segundos
             # Ejecutar una vez al inicio
             QTimer.singleShot(500, self.actualizar_red_heartbeat)
-            
+
         from src.cajero.cajero_activo import CajeroActivo
         perfil = "auxiliar" if CajeroActivo.numero == 2 else "cajero"
         if self.property("cajero_perfil") != perfil:
@@ -226,16 +216,16 @@ class Paso5Terminal(QWidget):
             import socket
             caja_id = config.get("caja_id", 1)
             hostname = socket.gethostname().upper()
-            
+
             # Registrar presencia de este terminal
-            db_manager.registrar_heartbeat(caja_id, hostname)
-            
+            self.controller.registrar_heartbeat(caja_id, hostname)
+
             # Obtener cantidad de terminales activos
-            total_activos = db_manager.get_terminales_activos_count()
-            
+            total_activos = self.controller.get_terminales_activos_count()
+
             # Actualizar etiqueta
             self.lbl_caja_num.setText(f"Caja №:        [{caja_id:02d}]{hostname}  ({total_activos} PC(s) online)")
-            
+
             # Efecto Destello (Flash LED Blanco a Verde estilo router)
             self.led_status.setProperty("estado", "parpadeo"); self.led_status.style().unpolish(self.led_status); self.led_status.style().polish(self.led_status)
             QTimer.singleShot(400, lambda: (self.led_status.setProperty("estado", "normal"), self.led_status.style().unpolish(self.led_status), self.led_status.style().polish(self.led_status)))
@@ -251,10 +241,8 @@ class Paso5Terminal(QWidget):
 
     def verificar_stock_minimo(self):
         try:
-            # Productos donde stock es igual o menor al stock minimo, y minimo es mayor a 0
-            query = "SELECT COUNT(*) FROM productos WHERE stock <= stock_minimo AND stock_minimo > 0"
-            bajos = db_manager.execute_scalar(query) or 0
-            
+            bajos = self.controller.stock_ofertas.get_stock_critico_count()
+
             if bajos > 0:
                 self.lbl_stock_alert.setText(f"🔔 ALERTA DE INVENTARIO: Hay {bajos} productos con stock crítico/debajo del mínimo.")
                 if self.stock_alert_bar.isHidden():
@@ -269,7 +257,7 @@ class Paso5Terminal(QWidget):
         try:
             hora_target = config.get("cierre_auto_hora", "00:00")
             hora_actual = datetime.now().strftime("%H:%M")
-            
+
             # Solo intentamos ejecutar si coincide el minuto exacto
             if hora_actual == hora_target:
                 from src.services.caja_service import verificar_y_realizar_autocierre
@@ -281,33 +269,32 @@ class Paso5Terminal(QWidget):
             logger.error(f"Autoclose error: {e}")
 
     def refresh_terminal_data(self):
-        """ 
-        REFRESCO TOTAL (F11 Back): Actualiza precios de la tabla, ofertas y config. 
+        """
+        REFRESCO TOTAL (F11 Back): Actualiza precios de la tabla, ofertas y config.
         Evita que el cajero use precios viejos tras una intervención de supervisor.
         """
         logger.info("Refrescando datos del terminal post-intervención...")
         # 1. Recargar Configuración (Por si cambiaron balanza, impresora, etc.)
         from src.config import config as _c
-        _c._load_config() 
-        
+        _c._load_config()
+
         # Recargar título y barra de estado dinámicamente
         self.refresh_terminal_title()
         self.refresh_status_bar()
         self._refresh_urgencia_stock_banner()
-        
+
         # 2. Actualizar ítems en la tabla
         for i in range(self.tabla.rowCount()):
             p_id = self.tabla.item(i, 0).text()
-            res = db_manager.execute_query("SELECT nombre, precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
-            if res:
-                p = res[0]
+            p = self.controller.stock_ofertas.obtener_producto_para_refresh(p_id)
+            if p:
                 p_base = float(p['precio'])
                 cant = float(self.tabla.item(i, 3).text())
                 c_of = float(p['cant_oferta'] or 0)
                 p_of = float(p['precio_oferta'] or 0)
                 c_may = float(p['cant_mayoreo'] or 0)
                 p_may = float(p['precio_mayoreo'] or 0)
-                
+
                 if c_may > 0 and p_may > 0 and cant >= c_may:
                     p_final = p_may
                     desc = (p_base - p_may) * cant
@@ -320,13 +307,13 @@ class Paso5Terminal(QWidget):
                     p_final = p_base
                     desc = 0.0
                     nombre = p['nombre']
-                
+
                 self.tabla.item(i, 1).setText(nombre)
                 self.tabla.item(i, 2).setText(fmt_moneda_sin_centavos(p_final))
                 self.tabla.item(i, 4).setText(fmt_moneda_sin_centavos(desc))
                 self.tabla.item(i, 5).setText(fmt_moneda_sin_centavos(cant * p_final))
                 self._reaplicar_estilo_fila(i)
-        
+
         self.actualizar_totales()
         if hasattr(self, 'txt_scan') and self.txt_scan:
             self.txt_scan.setFocus()
@@ -344,7 +331,7 @@ class Paso5Terminal(QWidget):
         parent = self.window()
         if hasattr(parent, 'mostrar_alerta_perimetral'):
             parent.mostrar_alerta_perimetral(visible, modo=modo)
-        
+
         # Efecto local en dashboard_frame solo en modo seguridad
         if visible and modo == "security":
             if not hasattr(self, '_orig_style'): self._orig_style = self.dashboard_frame.styleSheet()
@@ -363,7 +350,7 @@ class Paso5Terminal(QWidget):
         title = config.get('business_name', 'Punto de Venta [20.09.02]')
         self.cabecera = CabeceraSuperior(titulo_inicial=title)
         self.main_layout.addWidget(self.cabecera)
-        
+
         # Mapeo de variables anteriores a la cabecera (compatibilidad con lógica actual)
         self.header_frame = self.cabecera
         self.lbl_estado = self.cabecera.etiqueta_estado
@@ -377,7 +364,7 @@ class Paso5Terminal(QWidget):
         # 2. Centro de Notificaciones (Reemplaza banner y alertas de stock)
         self.notificador = CentroDeNotificaciones()
         self.main_layout.addWidget(self.notificador)
-        
+
         # Mapeo de alertas
         self.stock_alert_bar = self.notificador.alerta_stock
         self.lbl_stock_alert = self.notificador.etiqueta_alerta_stock
@@ -385,23 +372,23 @@ class Paso5Terminal(QWidget):
         # Parche para que el método .set_active() antiguo de UrgenciaStockBanner funcione
         self.urgencia_stock_banner.set_active = lambda activo: self.urgencia_stock_banner.show() if activo else self.urgencia_stock_banner.hide()
         self._refresh_urgencia_stock_banner()
-        
+
         # Inicializar datos en la barra y cabecera
         self.refresh_status_bar()
 
         # 3. Tabla de Productos (Centro)
         self.componente_tabla = TablaDeProductos()
         self.tabla = self.componente_tabla.get_tabla()
-        
+
         self.central_frame = QFrame()
         self.central_frame.setObjectName("TerminalCentralFrame")
         central_layout = QVBoxLayout(self.central_frame)
         central_layout.setContentsMargins(0,0,0,0)
         central_layout.addWidget(self.componente_tabla)
         self.main_layout.addWidget(self.central_frame, 2)
-        
+
         # Binding industrial para la tabla
-        self.tabla.installEventFilter(self) 
+        self.tabla.installEventFilter(self)
         self._nav_border_overlay = NavRowBorderOverlay(self.tabla)
         self.tabla.viewport().installEventFilter(self)
         self.tabla.verticalScrollBar().valueChanged.connect(lambda *_: self._sync_nav_border_overlay())
@@ -409,17 +396,17 @@ class Paso5Terminal(QWidget):
         self.tabla.currentCellChanged.connect(self._on_tabla_nav_changed)
         self.tabla.itemSelectionChanged.connect(self._on_tabla_nav_row_only)
         self._nav_prev_row = -1
-        
+
         # 4. Panel de Totales (Bottom Dashboard)
         self.panel_totales = PanelDeTotales()
         self.main_layout.addWidget(self.panel_totales)
-        
+
         # Mapeo del panel de totales
         self.dashboard_frame = self.panel_totales # Para alertas perimetrales
         self.txt_scan = self.panel_totales.entrada_codigo
         self.txt_scan.textChanged.connect(self.actualizar_busqueda)
         self.txt_scan.returnPressed.connect(self.procesar_scan)
-        
+
         # --- Overlay de Resultados de Búsqueda (Flotante, plano) ---
         self.panel_busqueda = QFrame(self)
         self.panel_busqueda.setObjectName("TerminalBusquedaPanel")
@@ -446,7 +433,7 @@ class Paso5Terminal(QWidget):
         h_pre.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         h_pre.setStyleSheet(_hstyle)
         h_stk = QLabel("STOCK")
-        h_stk.setFixedWidth(140)
+        h_stk.setFixedWidth(170)
         h_stk.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         h_stk.setStyleSheet(_hstyle)
         cab_l.addWidget(h_nom, 1)
@@ -494,7 +481,7 @@ class Paso5Terminal(QWidget):
             "border: none; border-top: 1px solid #E2E8F0;"
         )
         bus_lay.addWidget(self.lbl_busqueda_pie)
-        
+
         # Mapeo de etiquetas numéricas
         self.lbl_cant_val = self.panel_totales.valor_cant
         self.lbl_total_val = self.panel_totales.etiqueta_total_grande
@@ -509,7 +496,7 @@ class Paso5Terminal(QWidget):
         self.lbl_side_pagos = self.panel_totales.valor_pagos
         self.lbl_side_cambio_t = self.panel_totales.titulo_cambio
         self.lbl_side_cambio = self.panel_totales.valor_cambio
-        
+
         self.en_venta = False
 
         # 5. Barra de Herramientas Inferior
@@ -517,14 +504,14 @@ class Paso5Terminal(QWidget):
         v_local = get_local_version()
         self.barra_herramientas = BarraDeHerramientasInferior(mostrar_teclado=HAS_KEYBOARD, version_sistema=f"COBRO FACIL {v_local}")
         self.main_layout.addWidget(self.barra_herramientas)
-        
+
         # Conectar señales a funciones existentes
         self.barra_herramientas.teclado_presionado.connect(self.toggle_keyboard)
         self.barra_herramientas.tema_presionado.connect(self.toggle_theme)
         self.barra_herramientas.espera_presionado.connect(self._swap_ticket_espera)
         self.barra_herramientas.bloquear_presionado.connect(self.bloquear_terminal)
         self.barra_herramientas.chatbot_presionado.connect(self.toggle_chatbot)
-        
+
         # Enrutador de teclas F
         def enrutar_f(tecla_str):
             if tecla_str == "F1": self._do_busqueda()
@@ -537,9 +524,9 @@ class Paso5Terminal(QWidget):
             elif tecla_str == "F8": self._swap_ticket_espera()
             elif tecla_str == "F4": self.abrir_cierre_caja()
             elif tecla_str == "F11": self.llamar_supervisor()
-            
+
         self.barra_herramientas.tecla_f_presionada.connect(enrutar_f)
-        
+
         # Mapeo de botones de la barra inferior
         self.status_bar = self.barra_herramientas
         self.btn_teclado = getattr(self.barra_herramientas, 'boton_teclado', None)
@@ -598,7 +585,7 @@ class Paso5Terminal(QWidget):
             sock.close()
         except Exception:
             pass
-            
+
     def _leer_bascula(self):
         try:
             import serial
@@ -611,7 +598,7 @@ class Paso5Terminal(QWidget):
             time.sleep(0.2)
             respuesta = ser.readline().decode('ascii', errors='ignore').strip()
             ser.close()
-            
+
             if respuesta:
                 # Extraer solo numeros
                 peso_match = re.search(r'([0-9]+\.[0-9]+)', respuesta)
@@ -652,7 +639,7 @@ class Paso5Terminal(QWidget):
         current = config.get("theme", "light")
         new_theme = "dark" if current == "light" else "light"
         config.set("theme", new_theme)
-        
+
         # OPTIMIZACION: Pausar el renderizado mientras se inyectan multiples hojas de estilo
         self.setUpdatesEnabled(False)
         try:
@@ -668,15 +655,15 @@ class Paso5Terminal(QWidget):
         theme = config.get("theme", "light")
         if hasattr(self, 'barra_herramientas') and hasattr(self.barra_herramientas, 'boton_tema'):
             self.barra_herramientas.boton_tema.setText("☀️ TEMAS" if theme == "dark" else "🌙 TEMAS")
-            
+
         self.setProperty("theme", theme)
-        
+
         # Aplicar el tema globalmente
         from src.ui_components.tema_estilos import aplicar_tema
         from PyQt6.QtWidgets import QApplication
         qss_filename = "estilo_dia.qss" if theme == "light" else "estilo_noche.qss"
         aplicar_tema(QApplication.instance(), qss_filename)
-        
+
         # Asignar objectNames a los componentes principales para el QSS
         if hasattr(self, 'central_frame'): self.central_frame.setObjectName("TerminalCentralFrame")
         if hasattr(self, 'dashboard_frame'): self.dashboard_frame.setObjectName("TerminalDashboard")
@@ -690,17 +677,17 @@ class Paso5Terminal(QWidget):
         if hasattr(self, 'btn_theme'): self.btn_theme.setObjectName("BtnTheme")
         if hasattr(self, 'icon_lbl'): self.icon_lbl.setObjectName("TerminalIconLbl")
         if hasattr(self, 'tabla'): self.tabla.setObjectName("TerminalTabla")
-        
+
         if hasattr(self, 'shortcut_buttons'):
             for btn in self.shortcut_buttons:
                 btn.setProperty("is_shortcut", True)
                 btn.style().unpolish(btn)
                 btn.style().polish(btn)
-                
+
         # Refrescar los estilos
         self.style().unpolish(self)
         self.style().polish(self)
-        
+
         if hasattr(self, 'lbl_side_cant'):
             self.panel_totales.actualizar_estilo_cambio(False)
 
@@ -713,12 +700,12 @@ class Paso5Terminal(QWidget):
         elif self.teclado_virtual.parent() != active_win:
             self.teclado_virtual.setParent(active_win)
             self.teclado_virtual.setWindowFlags(
-                Qt.Tool | 
-                Qt.FramelessWindowHint | 
-                Qt.WindowStaysOnTopHint | 
+                Qt.Tool |
+                Qt.FramelessWindowHint |
+                Qt.WindowStaysOnTopHint |
                 Qt.WindowDoesNotAcceptFocus
             )
-            
+
         if self.teclado_virtual.isVisible():
             self.teclado_virtual.hide()
         else:
@@ -733,25 +720,25 @@ class Paso5Terminal(QWidget):
     def on_focus_changed(self, old_widget, new_widget):
         if not HAS_KEYBOARD:
             return
-            
+
         from src.config import config
         if not config.get("auto_virtual_keyboard", True):
             return
-            
+
         # Sanitizar referencia de teclado virtual si el objeto C++ subyacente fue eliminado
         if hasattr(self, 'teclado_virtual') and self.teclado_virtual is not None:
             try:
                 self.teclado_virtual.parent()
             except RuntimeError:
                 self.teclado_virtual = None
-                
-        # Si la terminal de venta principal no está visible, permitir que el teclado flote 
+
+        # Si la terminal de venta principal no está visible, permitir que el teclado flote
         # globalmente si un QLineEdit tiene foco (para el panel admin).
         pass
-            
+
         from PyQt6.QtWidgets import QLineEdit, QApplication
         from PyQt6.QtCore import Qt
-        
+
         # Si el foco entra a una caja de texto (QLineEdit)
         if new_widget and isinstance(new_widget, QLineEdit):
             # 1. Ya no se bloquea en Panel Admin para soportar pantallas táctiles completas
@@ -771,24 +758,24 @@ class Paso5Terminal(QWidget):
             active_win = new_widget.window()
             if not active_win:
                 active_win = self.window()
-                
+
             # 2. Protección Cambio de Ventana: ocultar antes si la ventana de destino cambió
             # Esto previene congelamientos y asegura que la nueva ventana inicie con un teclado limpio
             if getattr(self, 'teclado_virtual', None) is not None and self.teclado_virtual.isVisible():
                 if self.teclado_virtual.parent() != active_win:
                     self.teclado_virtual.hide()
-                    
+
             if getattr(self, 'teclado_virtual', None) is None:
                 self.teclado_virtual = VirtualKeyboard(active_win)
             elif self.teclado_virtual.parent() != active_win:
                 self.teclado_virtual.setParent(active_win)
                 self.teclado_virtual.setWindowFlags(
-                    Qt.Tool | 
-                    Qt.FramelessWindowHint | 
-                    Qt.WindowStaysOnTopHint | 
+                    Qt.Tool |
+                    Qt.FramelessWindowHint |
+                    Qt.WindowStaysOnTopHint |
                     Qt.WindowDoesNotAcceptFocus
                 )
-                
+
             # En el buscador principal usamos layout alfabético por defecto (abc)
             self.teclado_virtual.set_layout_mode("abc")
             self.teclado_virtual.reposition_keyboard()
@@ -800,7 +787,7 @@ class Paso5Terminal(QWidget):
 
     def eventFilter(self, obj, event):
         from PyQt6.QtCore import QEvent
-        
+
         if getattr(self, 'list_results', None) is not None and obj == self.list_results:
             if event.type() == QEvent.KeyPress:
                 if event.key() == Qt.Key_Up and self.list_results.currentRow() == 0:
@@ -914,22 +901,22 @@ class Paso5Terminal(QWidget):
                     if row != -1:
                         nombre = self.tabla.item(row, 1).text()
                         cant_actual = float(self.tabla.item(row, 3).text())
-                        
+
                         dlg = DialogoEditarCantidad(cant_actual, nombre, self)
                         if qt_exec(dlg):
                             new_cant = dlg.get_value()
                             self.tabla.item(row, 3).setText(
                                 f"{new_cant:.2f}" if new_cant % 1 != 0 else f"{int(new_cant)}"
                             )
-                            
+
                             # Verificación dinámica de ofertas al ingresar con el Enter
                             p_id = self.tabla.item(row, 0).text()
-                            res_of = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta FROM productos WHERE id=?", (p_id,))
+                            res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
                             if res_of and p_id != "000":
                                 p_base = float(res_of[0]['precio'])
                                 c_of = float(res_of[0]['cant_oferta'] or 0.0)
                                 p_of = float(res_of[0]['precio_oferta'] or 0.0)
-                                
+
                                 if c_of > 0 and p_of > 0 and new_cant >= c_of:
                                     p_ap = p_of
                                     desc_t = (p_base - p_of) * new_cant
@@ -943,18 +930,18 @@ class Paso5Terminal(QWidget):
                                     if "🔥 [OFERTA]" in nombre_txt:
                                         clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
                                         self.tabla.item(row, 1).setText(clean_name)
-                                        
+
                                 self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                                 self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                                 p_unit = p_ap
                             else:
                                 p_unit = parse_float_safe(self.tabla.item(row, 2).text())
-                            
+
                             # Actualizar Subtotal
                             self.tabla.item(row, 5).setText(fmt_moneda_sin_centavos(new_cant * p_unit))
                             self._reaplicar_estilo_fila(row)
                             self.actualizar_totales()
-                        
+
                         QTimer.singleShot(50, self.txt_scan.setFocus)
                     return True # Consumido incondicionalmente
                 elif event.key() == Qt.Key_Delete:
@@ -971,32 +958,32 @@ class Paso5Terminal(QWidget):
     def flash_feedback(self, success=True):
         color = "#10B981" if success else "#EF4444"
         estado_str = "exito" if success else "alerta"
-        
+
         self.dashboard_frame.setProperty("estado", estado_str)
         self.dashboard_frame.style().unpolish(self.dashboard_frame)
         self.dashboard_frame.style().polish(self.dashboard_frame)
-        
+
         self.setProperty("estado", estado_str)
         self.style().unpolish(self)
         self.style().polish(self)
-        
+
         self.cabecera.setProperty("estado", estado_str)
         self.cabecera.style().unpolish(self.cabecera)
         self.cabecera.style().polish(self.cabecera)
-        
+
         def reset_style():
             self.dashboard_frame.setProperty("estado", "normal")
             self.dashboard_frame.style().unpolish(self.dashboard_frame)
             self.dashboard_frame.style().polish(self.dashboard_frame)
-            
+
             self.setProperty("estado", "normal")
             self.style().unpolish(self)
             self.style().polish(self)
-            
+
             self.cabecera.setProperty("estado", "normal")
             self.cabecera.style().unpolish(self.cabecera)
             self.cabecera.style().polish(self.cabecera)
-            
+
         QTimer.singleShot(10000, reset_style) # Duración a 10 segundos
     def bloquear_terminal(self):
         """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo."""
@@ -1004,10 +991,10 @@ class Paso5Terminal(QWidget):
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(15)
         self.setGraphicsEffect(blur_effect)
-        
+
         dlg = DialogoCandado(parent=self)
         qt_exec(dlg)   # Si no se desbloquea, la terminal queda bloqueada
-        
+
         self.setGraphicsEffect(None)
 
         # Actualizar barra de estado según el cajero activo
@@ -1022,7 +1009,7 @@ class Paso5Terminal(QWidget):
             self.lbl_version.setText(f"🟢 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setObjectName("VersionLabel"); self.lbl_version.setProperty("estado", "normal"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
             self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
-            
+
             # Activar el tema rosado para el auxiliar
             self.setProperty("cajero_perfil", "auxiliar")
             self.apply_theme()
@@ -1031,7 +1018,7 @@ class Paso5Terminal(QWidget):
             self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
             self.lbl_version.setProperty("estado", "offline"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
             self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
-            
+
             # Volver al tema azul para cajero normal
             self.setProperty("cajero_perfil", "principal")
             self.apply_theme()
@@ -1196,15 +1183,15 @@ class Paso5Terminal(QWidget):
     def actualizar_reloj(self):
         ahora = datetime.now()
         self.lbl_fecha.setText(f"Fecha:  {ahora.strftime('%Y-%m-%d %H:%M:%S')}")
-        
+
         # Cada 5 segundos verificamos los niveles de efectivo en caja para activar alertas SOS
         if ahora.second % 5 == 0:
             self.check_alertas_efectivo()
-            
+
         # Cada 3 segundos verificamos si el Administrador ha solicitado un arqueo remoto (Señal de Cierre)
         if ahora.second % 3 == 0:
             self.check_solicitud_cierre_remoto()
-        
+
         # Si es el inicio de un nuevo día (Medianoche exacta), forzamos el cierre automático
         if ahora.hour == 0 and ahora.minute == 0 and ahora.second == 1:
             self.check_midnight_closure()
@@ -1232,30 +1219,30 @@ class Paso5Terminal(QWidget):
             return
         from src.config import config
         c_id = config.get("caja_id", 1)
-        efectivo = db_manager.get_efectivo_en_caja(c_id)
-        
+        efectivo = self.controller.movimientos_caja.obtener_efectivo_caja(c_id)
+
         # Obtener los umbrales configurados por el administrador (o usar defaults industriales)
         from src.config import config as _c
         umbral_naranja = float(_c.get("limite_efectivo_naranja", 50000.0))
         umbral_rojo    = float(_c.get("limite_efectivo_rojo",    70000.0))
-        
+
         color_borde = None
         if efectivo >= umbral_rojo:
             color_borde = "#F97316"  # NARANJA (Crítico - Retiro Urgente)
         elif efectivo >= umbral_naranja:
             color_borde = "#EAB308"  # AMARILLO (Advertencia - Retiro Próximo)
-            
+
         if color_borde:
             self._parpadeo_activo = True
             estilo_orig = self.dashboard_frame.styleSheet()
-            
+
             # Parpadeo: encender borde grueso
             self.dashboard_frame.setProperty("modo_cobro", "true"); self.dashboard_frame.style().unpolish(self.dashboard_frame); self.dashboard_frame.style().polish(self.dashboard_frame)
-            
+
             def apagar():
                 self.dashboard_frame.setProperty("modo_cobro", "false"); self.dashboard_frame.style().unpolish(self.dashboard_frame); self.dashboard_frame.style().polish(self.dashboard_frame)
                 self._parpadeo_activo = False
-                
+
             # Apagar el borde en 800ms para crear el efecto intermitente
             QTimer.singleShot(800, apagar)
 
@@ -1263,10 +1250,10 @@ class Paso5Terminal(QWidget):
         """ Verifica si hay ventas del día anterior y reinicia la app si es necesario """
         from src.services.caja_service import verificar_y_realizar_autocierre
         from PyQt6.QtWidgets import QMessageBox, QApplication
-        
+
         hizo, monto = verificar_y_realizar_autocierre()
         if hizo:
-             QMessageBox.warning(self, "🌙 CIERRE AUTOMÁTICO DIARIO", 
+             QMessageBox.warning(self, "🌙 CIERRE AUTOMÁTICO DIARIO",
                 f"El sistema ha realizado el cierre automático del día anterior por valor de ${monto:.2f}.\n\n"
                 "Para continuar, la aplicación se reiniciará para que inicies el nuevo turno del día.")
              QApplication.exit(888) # Código de reinicio en main.py
@@ -1274,38 +1261,17 @@ class Paso5Terminal(QWidget):
     def check_solicitud_cierre_remoto(self):
         if not self.isVisible():
             return
-            
+
         if getattr(self, '_cierre_en_progreso', False):
             return
- 
+
         try:
             from src.config import config
             c_id = config.get("caja_id", 1)
-            
-            # 1. Obtener la fecha del último inicio de turno (APERTURA) de esta caja
-            res_ap = db_manager.execute_query(
-                "SELECT fecha FROM movimientos_caja WHERE tipo = 'APERTURA' AND caja_id = ? ORDER BY id DESC LIMIT 1",
-                (c_id,)
-            )
-            ult_apertura = "1970-01-01 00:00:00"
-            if res_ap:
-                ult_apertura = res_ap[0]['fecha']
-                
-            # 2. Consultar si el supervisor ha enviado una SOLICITUD_CIERRE creada DURANTE este turno
-            res = db_manager.execute_query(
-                "SELECT id, observaciones FROM movimientos_caja WHERE tipo = 'SOLICITUD_CIERRE' AND caja_id = ? AND observaciones NOT LIKE '%%PROCESADO%%' AND fecha >= ? ORDER BY id DESC LIMIT 1",
-                (c_id, ult_apertura)
-            )
-            if res:
+            if self.controller.cierre_remoto.verificar_solicitud_cierre_remoto(c_id):
                 self._cierre_en_progreso = True
-                
-                # Marcar todas las solicitudes pendientes de este turno como PROCESADO para que no se vuelvan a gatillar
-                db_manager.execute_non_query(
-                    "UPDATE movimientos_caja SET observaciones = 'PROCESADO' WHERE tipo = 'SOLICITUD_CIERRE' AND caja_id = ? AND fecha >= ?",
-                    (c_id, ult_apertura)
-                )
-                
-                # Mostrar cuadro de diálogo informativo industrial alertando del Cierre Remoto
+
+                # Mostrar cuadro de dialogo informativo industrial alertando del Cierre Remoto
                 from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.warning(
                     self, "⚠️ ARQUEO DE CAJA REQUERIDO",
@@ -1313,7 +1279,7 @@ class Paso5Terminal(QWidget):
                     "Por favor, proceda a ingresar el efectivo contado físico para finalizar la sesión.",
                     QMessageBox.Ok
                 )
-                
+
                 # Gatillar la ventana de cierre (Paso 7)
                 self.abrir_cierre_caja()
                 self._cierre_en_progreso = False
@@ -1325,61 +1291,61 @@ class Paso5Terminal(QWidget):
         # En lugar de buscar en cada tecla, esperamos 250ms.
         # Si entra otra tecla (como hace un escáner), el timer se reinicia.
         self.search_timer.start(80)
-        
+
     def _do_busqueda(self):
         txt = self.txt_scan.text().strip()
         if not txt or txt.startswith('+'):
             self._ocultar_busqueda()
             return
-            
+
         if '*' in txt:
             partes = txt.split('*', 1)
             txt = partes[1].strip()
             if not txt:
                 self._ocultar_busqueda()
                 return
-                
-        res = self.controller.buscar_productos(txt)
+
+        res = self.controller.carrito.buscar_productos(txt)
         self.list_results.clear()
-        
+
         if res:
             for r in res:
                 stk = float(r['stock'] or 0.0)
-                stk_str = f'{int(stk)}' if stk.is_integer() else f'{stk:.2f}'
-                
+                stk_str = self._fmt_stock_mostrar(r, stk)
+
                 item = QListWidgetItem()
                 item.setData(Qt.UserRole, r)
                 self.list_results.addItem(item)
-                
+
                 w = QWidget()
                 w.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
                 lay = QHBoxLayout(w)
                 lay.setContentsMargins(28, 14, 28, 14)
                 lay.setSpacing(28)
                 w.setFixedHeight(72)
-                
+
                 lbl_n = QLabel(str(r['nombre']))
                 lbl_n.setObjectName("lbl_n")
                 lbl_n.setStyleSheet("font-size: 22px; font-weight: 700; background: transparent; color: #0F172A;")
                 lbl_n.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-                
+
                 lbl_p = QLabel(f"${r['precio']:.2f}")
                 lbl_p.setObjectName("lbl_p")
                 lbl_p.setFixedWidth(180)
                 lbl_p.setStyleSheet("font-size: 21px; font-weight: 700; background: transparent; color: #047857;")
                 lbl_p.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                
+
                 lbl_s = QLabel(stk_str)
                 lbl_s.setObjectName("lbl_s")
-                lbl_s.setFixedWidth(140)
+                lbl_s.setFixedWidth(170)
                 col_s = self._color_stock_busqueda(False, stk)
                 lbl_s.setStyleSheet(f"font-size: 15px; font-weight: 600; background: transparent; color: {col_s};")
                 lbl_s.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                
+
                 lay.addWidget(lbl_n, 1)
                 lay.addWidget(lbl_p)
                 lay.addWidget(lbl_s)
-                
+
                 item.setSizeHint(w.sizeHint())
                 self.list_results.setItemWidget(item, w)
             self._search_sel_row = -1
@@ -1423,7 +1389,7 @@ class Paso5Terminal(QWidget):
     def procesar_scan(self):
         from src.utils.barcode_parser import BarcodeParser
         txt_raw = self.txt_scan.text()
-        
+
         if not self.list_results.isHidden():
             current = self.list_results.currentItem()
             if current:
@@ -1436,26 +1402,26 @@ class Paso5Terminal(QWidget):
                     self.txt_scan.setFocus()
                     return
 
-        success, p, cantidad, error_msg = self.controller.procesar_codigo_escaneado(txt_raw)
-        
+        success, p, cantidad, error_msg = self.controller.carrito.procesar_codigo_escaneado(txt_raw)
+
         if error_msg == 'FINALIZAR_VENTA':
             self.finalizar_venta()
             return
-            
+
         if success and p:
             self.agregar_a_tabla(p, cantidad)
             self.txt_scan.clear()
             self._ocultar_busqueda()
             self.txt_scan.setFocus()
             return
-            
+
         if error_msg:
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, 'Atención', error_msg)
             self.txt_scan.selectAll()
             self.txt_scan.setFocus()
             return
-        
+
         # Si hay lista de búsqueda abierta
         if not self.list_results.isHidden():
             current = self.list_results.currentItem()
@@ -1470,7 +1436,7 @@ class Paso5Terminal(QWidget):
 
         # --- BUSQUEDA DE PRODUCTO ---
         # 1. Intentar búsqueda por ID exacto (Barcode completo) primero
-        res_direct = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta FROM productos WHERE id = ?", (txt,))
+        res_direct = [self.controller.carrito.buscar_producto_exacto(txt)] if self.controller.carrito.buscar_producto_exacto(txt) else []
         if res_direct:
             p = res_direct[0]
             self.agregar_a_tabla(p, cantidad_multiplicador)
@@ -1506,7 +1472,7 @@ class Paso5Terminal(QWidget):
                 return
 
         # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
-        res = db_manager.execute_query("SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR nombre LIKE ?", (txt, f"%{txt}%"))
+        res = self.controller.carrito.buscar_productos(txt)
 
         if res:
             p = res[0]
@@ -1526,7 +1492,7 @@ class Paso5Terminal(QWidget):
         self.en_venta = True
         p_id = str(p['id'])
         precio_base = float(p['precio'])
-        
+
         cant_of = 0.0
         precio_of = 0.0
         cant_may = 0.0
@@ -1536,7 +1502,7 @@ class Paso5Terminal(QWidget):
             if 'precio_oferta' in p.keys(): precio_of = float(p['precio_oferta'] or 0.0)
             if 'cant_mayoreo' in p.keys(): cant_may = float(p['cant_mayoreo'] or 0.0)
             if 'precio_mayoreo' in p.keys(): precio_may = float(p['precio_mayoreo'] or 0.0)
-        
+
         # 1. Agrupar si el producto ya existe en la tabla (Auto-Suma), excepto Artículos Comunes
         if p_id != "000":
             for i in range(self.tabla.rowCount()):
@@ -1546,7 +1512,7 @@ class Paso5Terminal(QWidget):
                     if not self._validar_stock(p, p_id, new_cant):
                         self.setUpdatesEnabled(True)
                         return
-                    
+
                     # Verificamos si alcanza o supera la cantidad de mayoreo u oferta
                     if cant_may > 0 and precio_may > 0 and new_cant >= cant_may:
                         p_aplicar = precio_may
@@ -1560,7 +1526,7 @@ class Paso5Terminal(QWidget):
                         p_aplicar = precio_base
                         desc_total = 0.0
                         display_name = str(p['nombre'])
-                        
+
                     # Actualizar Nombre con el distintivo
                     self.tabla.item(i, 1).setText(display_name)
                     # Actualizar Precio Unitario Aplicado
@@ -1573,7 +1539,7 @@ class Paso5Terminal(QWidget):
                     self.tabla.item(i, 5).setText(fmt_moneda_sin_centavos(new_cant * p_aplicar))
                     self.last_active_row = i
                     self._reaplicar_estilo_fila(i)
-                    
+
                     # Foco visual sutil centrado en el duplicado
                     self.tabla.selectRow(i)
                     self.actualizar_totales()
@@ -1601,39 +1567,39 @@ class Paso5Terminal(QWidget):
 
         row = self.tabla.rowCount()
         self.tabla.insertRow(row)
-        
+
         items = [p_id, display_name, fmt_moneda_sin_centavos(p_aplicar), f"{cantidad:.2f}" if cantidad % 1 != 0 else f"{int(cantidad)}", fmt_moneda_sin_centavos(desc_total), fmt_moneda_sin_centavos(p_aplicar * cantidad)]
         for idx, v in enumerate(items):
             it = QTableWidgetItem(v)
             it.setTextAlignment(Qt.AlignCenter)
-            
+
             font = it.font()
             font.setBold(True) # Inquebrantable para toda la fila
             it.setFont(font)
-            
+
             if idx == 1:
                 it.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             elif idx in (2, 3, 4, 5):
                 it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            
-            if idx == 5: 
+
+            if idx == 5:
                 it.setForeground(QColor("#059669")) # Esmeralda fuerte
                 it.setFlags(it.flags() & ~Qt.ItemIsSelectable) # Deshabilitar selección para blindar su fondo verde agua
-            
+
             self.tabla.setItem(row, idx, it)
 
         self.last_active_row = row
         self._reaplicar_estilo_fila(row)
         self.tabla.selectRow(row)
         self.actualizar_totales()
-        
+
         # Sonido BEEP de Escáner ultra rápido
         if AUDIO_ENABLED:
             def fast_beep():
                 try: import winsound; winsound.Beep(2500, 50)
                 except: pass
             threading.Thread(target=fast_beep, daemon=True).start()
-            
+
         # OPTIMIZACION: Liberar la pantalla para que dibuje el resultado final en 1 solo cuadro
         self.setUpdatesEnabled(True)
         self.repaint()
@@ -1649,7 +1615,7 @@ class Paso5Terminal(QWidget):
                     self.tabla.removeRow(i)
                 else:
                     i += 1
-                    
+
             # 2. Recolectar stock virtual en la canasta actual
             canasta = {}
             for row in range(self.tabla.rowCount()):
@@ -1659,13 +1625,13 @@ class Paso5Terminal(QWidget):
                 if id_p not in canasta:
                     canasta[id_p] = {"cant": 0, "precio": precio}
                 canasta[id_p]["cant"] += cant
-                
+
             # 3. Buscar combos en BD
-            from src.base_de_datos.database import db_manager
+
             import json, socket
             combos_activos = []
             try:
-                res = db_manager.execute_query("SELECT id, nombre, precio_combo, productos_json FROM combos")
+                res = self.controller.stock_ofertas.obtener_combos()
                 if res:
                     for r in res:
                         try:
@@ -1678,7 +1644,7 @@ class Paso5Terminal(QWidget):
                             })
                         except: pass
             except: pass
-            
+
             # 4. Aplicar Combos
             combos_aplicados_ahora = []
             for combo in combos_activos:
@@ -1693,21 +1659,21 @@ class Paso5Terminal(QWidget):
                         veces = int(disp["cant"] // req_cant)
                         if veces < veces_aplicable: veces_aplicable = veces
                     costo_original_por_combo += (disp["precio"] * req_cant)
-                    
+
                 if veces_aplicable > 0 and veces_aplicable < 999999:
                     for req in combo["reqs"]:
                         req_id = str(req["id_producto"])
                         req_cant = float(req["cantidad"])
                         canasta[req_id]["cant"] -= (req_cant * veces_aplicable)
-                        
+
                     precio_final_combo = combo["precio_combo"]
                     ahorro_unitario = costo_original_por_combo - precio_final_combo
                     if ahorro_unitario > 0:
                         ahorro_total_desc = ahorro_unitario * veces_aplicable
-                        
+
                         r = self.tabla.rowCount()
                         self.tabla.insertRow(r)
-                        
+
                         from src.cajero.paso5_terminal.paso5_terminal import fmt_moneda_sin_centavos
                         items = [f"COMBO-{combo['id']}", f"🎁 [COMBO] {combo['nombre']}", fmt_moneda_sin_centavos(-ahorro_unitario), str(veces_aplicable), "0", fmt_moneda_sin_centavos(-ahorro_total_desc)]
                         for idx, v in enumerate(items):
@@ -1720,9 +1686,9 @@ class Paso5Terminal(QWidget):
                                 it.setForeground(QColor("#059669"))
                                 it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsSelectable)
                             self.tabla.setItem(r, idx, it)
-                            
+
                         combos_aplicados_ahora.append(combo["nombre"])
-                        
+
                         # Emitir señal UDP
                         try:
                             udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -1743,20 +1709,20 @@ class Paso5Terminal(QWidget):
 
     def actualizar_totales(self):
         self._evaluar_combos()
-        
+
         # Refrescar en cascada los estilos para que el destaque azul y el subtotal verde agua se muevan dinámicamente
         for i in range(self.tabla.rowCount()):
             self._reaplicar_estilo_fila(i)
-            
+
         total = sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
         cant = sum(float(self.tabla.item(i, 3).text()) for i in range(self.tabla.rowCount()))
         total_desc = sum(abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount()))
-        
+
         # El total grande vuelve a usar el formato sin centavos con comas de miles
         total_str = fmt_moneda_sin_centavos(total)
         self.lbl_total_val.setText(total_str)
         self.lbl_cant_val.setText(f"{int(cant)}")
-        
+
         # Si estamos agregando items, limpiamos los "Pagos" y "Cambio" de la venta anterior
         if self.en_venta:
             cant_txt = f"{cant:.2f}" if cant % 1 != 0 else f"{int(cant):,}"
@@ -1774,90 +1740,85 @@ class Paso5Terminal(QWidget):
             self.lbl_side_pagos.setText("0")
             self.lbl_side_cambio.setText("0")
             self.panel_totales.actualizar_estilo_cambio(False)
-            
+
         # Gatillar la animación interactiva de ahorro total
         self.animar_ahorro(total_desc)
 
     def animar_ahorro(self, nuevo_ahorro):
-        """ 
-        Animación interactiva premium tipo 'saldo ascendente' (+100).
-        Incrementa el valor del ahorro de forma asíncrona y fluida.
+        """
+        Animación interactiva premium tipo 'saldo ascendente'.
+        Incrementa el valor del ahorro de forma asíncrona y fluida sin parpadeos de tamaño.
         """
         if not hasattr(self, 'current_ahorro'):
             self.current_ahorro = 0.0
-            
-        # Detener respiración si el ahorro es 0 o está cambiando
+
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             self._respiracion_anim.stop()
             self._respiracion_anim = None
-            
+
+        if hasattr(self, '_ahorro_anim') and self._ahorro_anim:
+            self._ahorro_anim.stop()
+            self._ahorro_anim = None
+
         if nuevo_ahorro <= 0:
             self.current_ahorro = 0.0
             self.lbl_ahorro_val.hide()
             return
-            
+
         self.lbl_ahorro_val.show()
-        
-        # Color y tamaño de impacto (Naranja vibrante para el incremento)
         self.lbl_ahorro_val.setObjectName("AhorroVal")
-        
+        # Aseguramos el tamaño de fuente fijo para evitar que se vea 'mini'
+        self.lbl_ahorro_val.setStyleSheet("font-size: 38px; color: #FF4500; font-weight: 900; border: none;")
+
         from src.utils.qt_compat import VariantFloatAnimation
-        if hasattr(self, '_ahorro_anim') and self._ahorro_anim:
-            self._ahorro_anim.stop()
-            
         self._ahorro_anim = VariantFloatAnimation(self)
-        self._ahorro_anim.setStartValue(self.current_ahorro)
+        # El usuario pidió explícitamente que SIEMPRE arranque desde cero
+        self._ahorro_anim.setStartValue(0.0)
         self._ahorro_anim.setEndValue(nuevo_ahorro)
-        self._ahorro_anim.setDuration(2000) # 2000ms (2.0s) de animación suave e impactante
-        
+        self._ahorro_anim.setDuration(1200) # 1.2 segundos (rápido pero fluido)
+
         def on_value_changed(value):
             self.lbl_ahorro_val.setText(f"🎉 +${value:,.2f}")
-            
+
         def on_finished():
             self.current_ahorro = nuevo_ahorro
             self.lbl_ahorro_val.setText(f"🎉 AHORRAS: ${nuevo_ahorro:,.2f}")
-            # Al terminar el conteo, iniciar el bucle continuo de respiración (zoom + glow flash)
+            # Al terminar, inicia una respiración solo de sombra (glow), sin cambiar el tamaño
             self.iniciar_respiracion_ahorro()
-            
+
         self._ahorro_anim.valueChanged.connect(on_value_changed)
         self._ahorro_anim.finished.connect(on_finished)
         self._ahorro_anim.start()
 
     def iniciar_respiracion_ahorro(self):
         """
-        Inicia un efecto continuo de respiración (zoom + brillo intermitente) 
-        en la etiqueta de ahorro para que se vea súper llamativa y orgánica.
+        Efecto continuo de brillo (glow) para llamar la atención sobre el ahorro,
+        pero manteniendo el tamaño de la fuente estrictamente estático en 38px.
         """
         from src.utils.qt_compat import VariantFloatAnimation, easing_sine_curve
-        
+
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             return
-            
+
         self._respiracion_anim = VariantFloatAnimation(self)
         self._respiracion_anim.setStartValue(0.0)
         self._respiracion_anim.setEndValue(1.0)
-        self._respiracion_anim.setDuration(1500) # Ciclo suave de 1.5 segundos
+        self._respiracion_anim.setDuration(1500)
         self._respiracion_anim.setEasingCurve(easing_sine_curve())
         self._respiracion_anim.setLoopCount(-1) # Bucle infinito
-        
+
         def on_step(t):
-            # Normalizar el valor del seno (-1.0 a 1.0) a un rango limpio de 0.0 a 1.0
             val_norm = (t + 1.0) / 2.0
-            
-            # 1. Efecto Zoom: Oscila suavemente entre 36px y 46px
-            size = int(36 + (10 * val_norm))
-            
-            # 2. Efecto Brillo (Glow Flash): El radio va de 10 a 30 y la opacidad de 80 a 230
-            glow_radius = int(10 + (20 * val_norm))
-            alpha = int(80 + (150 * val_norm))
-            
-            # Aplicar estilos con naranja vibrante premium (#FF4500)
-            self.lbl_ahorro_val.setStyleSheet(f"font-size: {size}px; color: #FF4500; font-weight: 900; border: none;")
-            
+
+            # Solo efecto brillo, SIN modificar tamaño
+            glow_radius = int(10 + (15 * val_norm))
+            alpha = int(100 + (120 * val_norm))
+
+            from PyQt6.QtGui import QColor
             if hasattr(self, 'ahorro_glow') and self.ahorro_glow:
                 self.ahorro_glow.setBlurRadius(glow_radius)
                 self.ahorro_glow.setColor(QColor(255, 69, 0, alpha))
-                
+
         self._respiracion_anim.valueChanged.connect(on_step)
         self._respiracion_anim.start()
 
@@ -1865,12 +1826,12 @@ class Paso5Terminal(QWidget):
         """Abre el panel rápido de retiro de efectivo de caja (F5)."""
         from src.config import config
         c_id = config.get("caja_id", 1)
-        efectivo = db_manager.get_efectivo_en_caja(c_id)
+        efectivo = self.controller.movimientos_caja.obtener_efectivo_caja(c_id)
         from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
-        
+
         dlg = DialogoRetiroEfectivo(efectivo, parent=self)
         if qt_exec(dlg) and dlg.monto_retirado > 0:
             # Solicitar PIN de confirmación del operador activo
@@ -1881,21 +1842,16 @@ class Paso5Terminal(QWidget):
                 usuario = CajeroActivo.nombre
                 from src.config import config
                 c_id = config.get("caja_id", 1)
-                query = "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id) VALUES ('RETIRO', ?, ?, ?, ?)"
-                if db_manager.execute_non_query(query, (monto, usuario, motivo, c_id)):
+                if self.controller.movimientos_caja.registrar_retiro_efectivo(monto, usuario, motivo, c_id):
                     self.flash_feedback(success=True)
                     # Marcar apertura como autorizada para el monitor de seguridad
                     self._apertura_autorizada = True
-                    # Abrir cajón físicamente
-                    printer_manager.abrir_cajon()
-                    # Imprimir ticket de comprobante físico
-                    printer_manager.imprimir_movimiento_caja('RETIRO DE EFECTIVO', monto, motivo, usuario, c_id)
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
                     from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el retiro en la base de datos.")
-        
+
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
@@ -1905,7 +1861,7 @@ class Paso5Terminal(QWidget):
         blur = QGraphicsBlurEffect()
         blur.setBlurRadius(10)
         self.setGraphicsEffect(blur)
-        
+
         dlg = DialogoIngresoEfectivo(parent=self)
         if qt_exec(dlg) and dlg.monto_ingresado > 0:
             # Solicitar PIN de confirmación del operador activo
@@ -1916,7 +1872,7 @@ class Paso5Terminal(QWidget):
                 usuario = CajeroActivo.nombre
                 from src.config import config
                 c_id = config.get("caja_id", 1)
-                
+
                 # Novedad: Si es un abono a Fiado, procesar la deuda en DB
                 if getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None):
                     from src.repositories.cliente_repository import ClienteRepository
@@ -1924,19 +1880,14 @@ class Paso5Terminal(QWidget):
                     if exito:
                         motivo = f"Abono Fiado: {nombre_cli} - Saldo restante: ${nuevo_saldo:,.2f}"
 
-                query = "INSERT INTO movimientos_caja (tipo, monto, usuario, observaciones, caja_id) VALUES ('INGRESO', ?, ?, ?, ?)"
-                if db_manager.execute_non_query(query, (monto, usuario, motivo, c_id)):
+                if self.controller.movimientos_caja.registrar_ingreso_efectivo(monto, usuario, motivo, c_id):
                     self.flash_feedback(success=True)
-                    # Abrir cajón físicamente
-                    printer_manager.abrir_cajon()
-                    # Imprimir ticket de comprobante físico
-                    printer_manager.imprimir_movimiento_caja('INGRESO DE EFECTIVO', monto, motivo, usuario, c_id)
                     self.monitor_cajon_bloqueante(manual=True)
                     self.check_alertas_efectivo()
                 else:
                     from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
-        
+
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
@@ -1948,12 +1899,12 @@ class Paso5Terminal(QWidget):
 
     def keyPressEvent(self, event):
         k = event.key()
-        
+
         # F1: Foco al buscador
         if k == Qt.Key_F1:
             self.txt_scan.setFocus(); self.txt_scan.selectAll()
             return
-            
+
         # F3: Historial
         if k == Qt.Key_F3:
             self.abrir_historial_dia()
@@ -2012,16 +1963,16 @@ class Paso5Terminal(QWidget):
                     old_v = float(self.tabla.item(row, 3).text())
                     inc = 1 if k == Qt.Key_Right else -1
                     new_v = max(0, old_v + inc)
-                    
+
                     if new_v <= 0:
                         self.tabla.removeRow(row)
                         self.actualizar_totales()
                         self.txt_scan.setFocus()
                         return
-                        
+
                     # 1. "Se infla para que el cliente lo vea"
                     self.tabla.setRowHeight(row, 70)
-                    
+
                     it_edit = self.tabla.item(row, 3)
                     it_edit.setText(f"{new_v:.2f}" if new_v % 1 != 0 else f"{int(new_v)}")
                     font_inflada = it_edit.font()
@@ -2029,15 +1980,15 @@ class Paso5Terminal(QWidget):
                     font_inflada.setBold(True)
                     it_edit.setFont(font_inflada)
                     it_edit.setForeground(QColor("#FF0000")) # Rojo advertencia
-                    
+
                     # Verificación dinámica de ofertas al ajustar cantidad
                     p_id = self.tabla.item(row, 0).text()
-                    res_of = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta FROM productos WHERE id=?", (p_id,))
+                    res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
                     if res_of and p_id != "000":
                         p_base = float(res_of[0]['precio'])
                         c_of = float(res_of[0]['cant_oferta'] or 0.0)
                         p_of = float(res_of[0]['precio_oferta'] or 0.0)
-                        
+
                         if c_of > 0 and p_of > 0 and new_v >= c_of:
                             p_ap = p_of
                             desc_t = (p_base - p_of) * new_v
@@ -2051,52 +2002,52 @@ class Paso5Terminal(QWidget):
                             if "🔥 [OFERTA]" in nombre_txt:
                                 clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
                                 self.tabla.item(row, 1).setText(clean_name)
-                                
+
                         self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                         self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                         p_unit = p_ap
                     else:
                         p_unit = parse_float_safe(self.tabla.item(row, 2).text())
-                    
+
                     # Actualizar subtotal
                     it_sub = self.tabla.item(row, 5)
                     it_sub.setText(fmt_moneda_sin_centavos(new_v * p_unit))
-                    
+
                     font_normal = it_sub.font()
                     font_normal.setPointSize(18)
                     it_sub.setFont(font_normal)
                     it_sub.setForeground(QColor("#FF0000"))
-                    
+
                     self._reaplicar_estilo_fila(row)
                     self.actualizar_totales()
                     return # intercepted
-                    
+
                 elif event.key() == Qt.Key_Delete:
                     suprimir_articulo(self, row)
                     return True
-                    
+
                 elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                     nombre = self.tabla.item(row, 1).text()
                     cant_actual = float(self.tabla.item(row, 3).text())
-                    
+
                     dlg = DialogoEditarCantidad(cant_actual, nombre, self)
                     if qt_exec(dlg):
                         new_cant = dlg.get_value()
                         self.tabla.item(row, 3).setText(f"{new_cant:.2f}" if new_cant % 1 != 0 else f"{int(new_cant)}")
-                        
+
                         # Verificación dinámica de ofertas al ingresar con el Enter
                         p_id = self.tabla.item(row, 0).text()
-                        res_of = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
+                        res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
                         if res_of and p_id != "000":
                             p_base = float(res_of[0]['precio'])
                             c_of = float(res_of[0]['cant_oferta'] or 0.0)
                             p_of = float(res_of[0]['precio_oferta'] or 0.0)
                             c_may = float(res_of[0]['cant_mayoreo'] or 0.0)
                             p_may = float(res_of[0]['precio_mayoreo'] or 0.0)
-                            
+
                             nombre_txt = self.tabla.item(row, 1).text()
                             clean_name = nombre_txt.replace("🔥 [OFERTA] ", "").replace("📦 [MAYOREO] ", "")
-                            
+
                             if c_may > 0 and p_may > 0 and new_cant >= c_may:
                                 p_ap = p_may
                                 desc_t = (p_base - p_may) * new_cant
@@ -2109,22 +2060,22 @@ class Paso5Terminal(QWidget):
                                 p_ap = p_base
                                 desc_t = 0.0
                                 self.tabla.item(row, 1).setText(clean_name)
-                                    
+
                             self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                             self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                             p_unit = p_ap
                         else:
                             p_unit = parse_float_safe(self.tabla.item(row, 2).text())
-                        
+
                         # Actualizar Subtotal
                         self.tabla.item(row, 5).setText(fmt_moneda_sin_centavos(new_cant * p_unit))
                         self._reaplicar_estilo_fila(row)
                         self.actualizar_totales()
-                    
+
                     self.tabla.setRowHeight(row, 40) # Volver al tamaño normal suave
                     QTimer.singleShot(50, self.txt_scan.setFocus)
                     return
-                    
+
             # Permitir que las flechas naveguen por las casillas de la tabla de forma fluida
             if k in (Qt.Key_Up, Qt.Key_Down):
                 super().keyPressEvent(event)
@@ -2138,14 +2089,14 @@ class Paso5Terminal(QWidget):
     def finalizar_venta(self):
         # Evitar doble apertura accidental
         if hasattr(self, '_cobro_abierto') and self._cobro_abierto: return
-        
-        try: 
+
+        try:
             # Como ahora el total visual no tiene decimales ni comas de miles (son puntos),
             # lo calculamos directamente de la tabla para no perder precisión
             total = sum(parse_float_safe(self.tabla.item(i, 5).text()) for i in range(self.tabla.rowCount()))
         except: return
         if total <= 0: return
-        
+
         self._cobro_abierto = True
         items = []
         for i in range(self.tabla.rowCount()):
@@ -2156,45 +2107,45 @@ class Paso5Terminal(QWidget):
                 "cant": float(self.tabla.item(i, 3).text().replace(",", ".")),
                 "subtotal": parse_float_safe(self.tabla.item(i, 5).text())
             })
-            
+
         # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
         from PyQt6.QtWidgets import QGraphicsBlurEffect
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
-        
+
         from src.cajero.paso6_cobro import Paso6Cobro
         dlg = Paso6Cobro(total, items, self)
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
-        
+
         # Ejecutamos el cobro
         ok = qt_exec(dlg)
         self._cobro_abierto = False
-        
+
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)
-        
+
         if ok:
             # Capturar info de la venta exitosa antes de limpiar
             res = getattr(dlg, 'resultado_venta', None)
-            
+
             self.tabla.setRowCount(0)
             self.en_venta = False
             self.actualizar_totales()
             self.flash_feedback(success=True)
-            
+
             if res:
                 self.lbl_side_total.setText(fmt_moneda_sin_centavos(res['total']))
                 self.lbl_side_pagos.setText(fmt_moneda_sin_centavos(res['pago_con']))
                 self.lbl_side_cambio.setText(fmt_moneda_sin_centavos(res['cambio']))
                 self.panel_totales.actualizar_estilo_cambio(True)
-                
+
             # Al cobrar exitosamente, si hay un ticket en espera, lo cargamos automáticamente
             if getattr(self, 'tickets_espera', None):
                 self._swap_ticket_espera()
         else:
             self.flash_feedback(success=False)
-            
+
         QTimer.singleShot(100, self.txt_scan.setFocus)
 
     def _get_ticket_actual_dict(self):
@@ -2359,23 +2310,23 @@ class Paso5Terminal(QWidget):
 
         from PyQt6.QtWidgets import QDialog, QVBoxLayout
         from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
-        
+
         dlg = QDialog(self)
         dlg.setWindowTitle("Cierre de Caja Global")
         dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         dlg.setFixedSize(1200, 900)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(0, 0, 0, 0)
-        
+
         cierre = CierreGlobalUI(self, is_terminal=True)
         cierre.btn_back.setText("❌ Cerrar")
         cierre.request_dashboard.connect(dlg.reject)
         cierre.turno_cerrado.connect(dlg.accept)
-        
+
         lay.addWidget(cierre)
-        
+
         ok = qt_exec(dlg)
-        
+
         # Quitamos el desenfoque
         self.setGraphicsEffect(None)
 
@@ -2388,11 +2339,11 @@ class Paso5Terminal(QWidget):
             # Flash de cierre: el rolling del día ya corrió en background; solo sella
             try:
                 from src.ui_components.backup_flash import mostrar_flash_backup_dia
-                from src.base_de_datos.database import db_manager
-                engine = getattr(db_manager, "db_engine_type", "mariadb") or "mariadb"
+
+                engine, host = self.controller.get_db_engine_info()
                 host = "127.0.0.1"
                 try:
-                    host = getattr(getattr(db_manager, "mariadb_engine", None), "host", None) or host
+                    pass
                 except Exception:
                     pass
                 mostrar_flash_backup_dia(self, engine, host)
@@ -2422,10 +2373,10 @@ class Paso5Terminal(QWidget):
         blur_effect = QGraphicsBlurEffect()
         blur_effect.setBlurRadius(10)
         self.setGraphicsEffect(blur_effect)
-        
+
         dlg = DialogoHistorialDia(self)
         qt_exec(dlg)
-        
+
         self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
@@ -2470,33 +2421,33 @@ class Paso5Terminal(QWidget):
             desc_val = parse_float_safe(self.tabla.item(row, 4).text())
         except Exception:
             desc_val = 0.0
-            
+
         is_oferta = desc_val > 0
         is_ultimo = (row == getattr(self, "last_active_row", -1))
         is_nav = self._is_fila_navegacion(row)
         activa = is_ultimo or is_nav
-        
+
         if activa:
             bg_color = QColor(SCAN_ROW_BG)
         elif is_oferta:
             bg_color = QColor("#FFEDD5")
         else:
             bg_color = QColor("#FFFFFF") if row % 2 == 0 else QColor("#F8FAFC")
-            
+
         for col in range(self.tabla.columnCount()):
             it = self.tabla.item(row, col)
             if not it: continue
-            
+
             if col == 5:
                 it.setBackground(QColor("#D1FAE5") if activa else QColor("#F0FAF4"))
             else:
                 it.setBackground(bg_color)
-            
+
             f = it.font()
             f.setBold(True)
             f.setPointSize(20 if activa else 16)
             it.setFont(f)
-            
+
             if col == 1:
                 it.setForeground(QColor("#1E3A8A") if activa else (QColor("#C2410C") if is_oferta else QColor("#1E3A8A")))
             elif col == 4:

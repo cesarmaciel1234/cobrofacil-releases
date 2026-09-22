@@ -116,3 +116,7 @@ carteleria_cache.json
 
 # ─── Extracciones / dumps temporales ────────────────────────────────────────
 extract_tmp/
+
+# Config and Dumps
+config.json
+*.sql

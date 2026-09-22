@@ -98,10 +98,15 @@ def launch_app(direct_role=None):
 
     try:
         from src.updater.silent_auto_updater import apply_pending_update_on_startup
-        apply_pending_update_on_startup()
+        try:
+            from src.updater.ui.dialogs import ApplyUpdateDialogDelegate
+            delegate = ApplyUpdateDialogDelegate()
+        except ImportError:
+            delegate = None
+        apply_pending_update_on_startup(delegate)
     except Exception:
         pass
-    
+
     app = QApplication.instance()
     if not app:
         app = QApplication(sys.argv)
@@ -110,7 +115,7 @@ def launch_app(direct_role=None):
         from src.central_red_global.network_engine import shutdown_network_engine
         app.aboutToQuit.connect(shutdown_network_engine)
         app._network_engine_shutdown_hook = True
-    
+
     # Tras reinicio 888: cerrar ventanas/diÃ¡logos que hayan quedado abiertos
     if main_window is not None:
         try:
@@ -126,13 +131,13 @@ def launch_app(direct_role=None):
         except Exception:
             pass
     app.processEvents()
-    
+
     # FORZAR ESTILO FUSION (VITAL PARA QUE LOS SCROLLBARS ACEPTEN CSS EN WINDOWS)
     app.setStyle('Fusion')
 
     from src.utils.qt_dpi import apply_app_screen_adaptation
     apply_app_screen_adaptation(app)
-    
+
     is_direct = bool(direct_role)
 
     # --- SPLASH SCREEN MODERNA (DISEÃ‘O 2026) ---
@@ -141,7 +146,7 @@ def launch_app(direct_role=None):
         splash = CobroFacilSplash()
         splash.show()
         app.processEvents()
-        
+
         def update_status(text, progress_val=None):
             splash.update_status(text, progress_val)
     else:
@@ -166,7 +171,7 @@ def launch_app(direct_role=None):
     from src.config import config
     config._load_config()
     config.current_user = None # Limpiar sesiÃ³n anterior si reinicia en el mismo proceso
-    
+
     # 2. BD en hilo: el import dispara _init_db; no bloquear el splash en el hilo UI
     try:
         from src.central_red_global.store_server import is_store_server_online
@@ -228,11 +233,11 @@ def launch_app(direct_role=None):
     # --- PASO 3: LICENCIA Y SEGURIDAD ---
     update_status("Verificando licencia de seguridad...", 60)
     from src.inicio_y_perfiles.licencia_pantalla import LicenciaPantalla, check_license_active
-    
+
     if not is_direct:
         lic_active = [False]
         run_heavy_task_fluid(lambda: lic_active.__setitem__(0, check_license_active()), timeout_sec=5)
-        
+
         if not lic_active[0]:
             if splash: splash.finish(None)
             lic = LicenciaPantalla()
@@ -243,18 +248,18 @@ def launch_app(direct_role=None):
     update_status("Cargando perfiles de acceso...", 80)
     from src.inicio_y_perfiles.logica.auth_controller import AuthController
     AuthController().ensure_default_jefe()
-    
+
     from src.inicio_y_perfiles.perfil_pantalla import PerfilPantalla
     from src.inicio_y_perfiles.login_pantalla import LoginPantalla
     from src.inicio_y_perfiles.apertura_pantalla import AperturaCajaPantalla
     from src.services.caja_service import verificar_y_realizar_autocierre
-    
+
     update_status("Inicializando sistema (Lazy Loading)...", 100)
     from src.main_window import MainWindow
-    
+
     # Â¡Gracias al verdadero Lazy Loading, esto es instantÃ¡neo!
     main_window = MainWindow()
-    
+
     # Precarga extrema de animaciones pesadas
     try:
         from src.ui_components.welcome_transition import WelcomeOverlay
@@ -262,16 +267,16 @@ def launch_app(direct_role=None):
         main_window._welcome_overlay.hide()
     except Exception as e:
         print("Error precargando WelcomeOverlay:", e)
-    
+
     # Cerramos Splash si existe y empezamos el flujo
     if splash:
         splash.finish(None)
 
     if not is_direct and not ok:
-        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE", 
+        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE",
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
             "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
-        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE", 
+        QMessageBox.warning(None, "âš ï¸ AVISO DE HARDWARE",
             f"No se pudo conectar con la impresora.\n\n{msg}\n\n"
             "El sistema funcionarÃ¡ en modo simulaciÃ³n.")
 
@@ -284,7 +289,7 @@ def launch_app(direct_role=None):
             enviar_reporte_semanal_si_es_necesario()
         except Exception as e:
             print(f"Error en hilo de reporte semanal: {e}")
-            
+
     threading.Thread(target=check_and_send_weekly_report, daemon=True).start()
 
     # --- MODO EJECUCIÃ“N DIRECTA DE PERFIL ---
@@ -323,20 +328,20 @@ def launch_app(direct_role=None):
                 from src.carteleria.carteleria import lanzar_app
                 perfil_dlg.hide()
                 return lanzar_app(app)
-                
+
             login_dlg = LoginPantalla(role_selected)
             if qt_exec(login_dlg):
                 login_dlg.hide()
                 app.processEvents()
-                
+
                 from src.config import config
                 from src.motor_turnos.nucleo.gestor_turnos import GestorTurnos
-                
+
                 user = config.current_user.get("username", "cajero") if config.current_user else "cajero"
                 c_id = config.get("caja_id", 1)
-                
+
                 necesita_abrir = GestorTurnos.iniciar_o_reanudar_turno(user, role_selected, c_id)
-                
+
                 if role_selected == "cajero" and necesita_abrir:
                     step = 3
                 else:
@@ -370,12 +375,12 @@ def launch_app(direct_role=None):
             main_window.apply_roles()
             from src.utils.qt_dpi import present_main_window
             present_main_window(main_window)
-            
+
             # --- ANIMACIÃ“N PRECARGADA (Arranca al instante) ---
             if hasattr(main_window, '_welcome_overlay') and main_window._welcome_overlay is not None:
                 main_window._welcome_overlay.show()
                 main_window._welcome_overlay.raise_()
-            
+
             result = qt_exec(app)
             try:
                 from src.central_red_global.network_engine import shutdown_network_engine
@@ -500,7 +505,12 @@ if __name__ == "__main__":
             apply_pending_update_on_startup,
             end_apply_guard,
         )
-        apply_pending_update_on_startup()
+        try:
+            from src.updater.ui.dialogs import ApplyUpdateDialogDelegate
+            delegate = ApplyUpdateDialogDelegate()
+        except ImportError:
+            delegate = None
+        apply_pending_update_on_startup(delegate)
     except Exception:
         pass
     finally:
@@ -603,7 +613,12 @@ if __name__ == "__main__":
                 is_update_staged,
             )
             if is_update_staged():
-                exit_and_relaunch_for_update()
+                try:
+                    from src.updater.ui.dialogs import RelaunchUpdateDialogDelegate
+                    delegate = RelaunchUpdateDialogDelegate()
+                except ImportError:
+                    delegate = None
+                exit_and_relaunch_for_update(delegate)
             # Si no hay paquete, caer a reinicio suave
             continue
         if exit_code == 888:

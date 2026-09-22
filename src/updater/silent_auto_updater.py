@@ -27,7 +27,6 @@ from src.updater.cerebro.engine import (
     heal_broken_binaries,
     restore_old_backups,
     get_status_message,
-    SilentUpdateWorker,
     _load_pending,
     _save_pending,
     _emit_progress,
@@ -37,6 +36,8 @@ from src.updater.cerebro.engine import (
     _zip_path,
     _stop_blocking_processes,
 )
+
+from src.updater.ui.worker import SilentUpdateWorker
 
 # Preferir proceso --updater autónomo (fallback hilo si el spawn falla)
 from src.updater.cerebro.background_service import start_background_update_service

@@ -95,6 +95,23 @@ def _ultimo_path() -> str:
     return os.path.join(get_external_root(), "ultimo_cobro.json")
 
 
+def _anotar_medicion_stock(evento: dict) -> None:
+    """Rastro append-only para una futura herramienta de merma / materia prima."""
+    try:
+        path = os.path.join(get_external_root(), "medicion_stock.jsonl")
+        evento = dict(evento or {})
+        evento.setdefault("fecha", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(evento, ensure_ascii=False) + "\n")
+    except Exception:
+        try:
+            from src.logger import logger
+
+            logger.warning("No se pudo anotar medicion de stock")
+        except Exception:
+            pass
+
+
 def _normalize_items(items: Iterable[Any] | None) -> list[dict]:
     out: list[dict] = []
     for it in items or []:
@@ -141,6 +158,7 @@ def _build_payload(id_venta: Any, header: dict | None, items: Iterable[Any] | No
         "descuento": hdr.get("descuento", 0),
         "recargo": hdr.get("recargo", 0),
         "cliente_nombre": hdr.get("cliente_nombre") or "",
+        "request_id": hdr.get("request_id") or "",
         "items": _normalize_items(items),
         "enqueued_at": datetime.now().isoformat(timespec="seconds"),
     }
@@ -305,9 +323,19 @@ def _iter_payloads(max_archivos: int = 500) -> list[dict]:
     return out
 
 
-def _venta_existe(vid: Any) -> bool:
+def _venta_existe(vid: Any, req_id: str = "") -> bool:
     try:
         from src.base_de_datos.database import db_manager
+
+        if req_id:
+            try:
+                row = db_manager.execute_query(
+                    "SELECT id FROM ventas WHERE request_id = ? LIMIT 1", (req_id,)
+                )
+                if row:
+                    return True
+            except Exception:
+                pass
 
         row = db_manager.execute_query(
             "SELECT id FROM ventas WHERE id = ? LIMIT 1", (vid,)
@@ -350,8 +378,8 @@ def _insertar_faltante(payload: dict) -> bool:
                     """
                     INSERT INTO ventas (
                         id, total, pago_con, cambio, pago_efectivo, pago_otro,
-                        usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         vid,
@@ -368,6 +396,7 @@ def _insertar_faltante(payload: dict) -> bool:
                         venta_data["descuento"],
                         venta_data["recargo"],
                         venta_data["cliente_nombre"],
+                        payload.get("request_id"),
                     ),
                 )
                 new_id = vid
@@ -376,8 +405,8 @@ def _insertar_faltante(payload: dict) -> bool:
                     """
                     INSERT INTO ventas (
                         total, pago_con, cambio, pago_efectivo, pago_otro,
-                        usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        usuario, estado, metodo_pago, fecha, caja_id, descuento, recargo, cliente_nombre, request_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         venta_data["total"],
@@ -393,11 +422,20 @@ def _insertar_faltante(payload: dict) -> bool:
                         venta_data["descuento"],
                         venta_data["recargo"],
                         venta_data["cliente_nombre"],
+                        payload.get("request_id"),
                     ),
                 )
                 new_id = cur.lastrowid
 
             for it in items:
+                vals = (
+                    new_id,
+                    it.get("id"),
+                    it.get("nombre") or "",
+                    it.get("cant") or 0,
+                    it.get("precio") or 0,
+                    it.get("subtotal") or 0,
+                )
                 try:
                     cur.execute(
                         """
@@ -405,37 +443,68 @@ def _insertar_faltante(payload: dict) -> bool:
                             id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal
                         ) VALUES (?, ?, ?, ?, ?, ?)
                         """,
-                        (
-                            new_id,
-                            it.get("id"),
-                            it.get("nombre") or "",
-                            it.get("cant") or 0,
-                            it.get("precio") or 0,
-                            it.get("subtotal") or 0,
-                        ),
+                        vals,
                     )
                 except Exception:
+                    cur.execute(
+                        """
+                        INSERT INTO detalle_ventas (
+                            id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal
+                        ) VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        vals,
+                    )
+
+                prod_id = it.get("id")
+                cant = it.get("cant") or 0
+                if prod_id and str(prod_id).strip() not in ("000", ""):
                     try:
-                        cur.execute(
-                            """
-                            INSERT INTO detalle_ventas (
-                                id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal
-                            ) VALUES (?, ?, ?, ?, ?, ?)
-                            """,
-                            (
-                                new_id,
-                                it.get("id"),
-                                it.get("nombre") or "",
-                                it.get("cant") or 0,
-                                it.get("precio") or 0,
-                                it.get("subtotal") or 0,
-                            ),
+                        from src.config import config
+                        opt_negativo = config.get("opt_stock_negativo", False)
+                        if opt_negativo:
+                            cur.execute(
+                                "UPDATE productos SET stock = stock - ? WHERE id = ?",
+                                (cant, prod_id),
+                            )
+                        else:
+                            cur.execute(
+                                "UPDATE productos SET stock = CASE WHEN (stock - ?) < 0 THEN 0 ELSE stock - ? END WHERE id = ?",
+                                (cant, cant, prod_id),
+                            )
+                        rc = getattr(cur, "rowcount", None)
+                        _anotar_medicion_stock(
+                            {
+                                "origen": "hidratacion",
+                                "venta_id": new_id,
+                                "producto_id": prod_id,
+                                "nombre": it.get("nombre") or "",
+                                "cantidad": cant,
+                                "ok": rc != 0,
+                                "rowcount": rc,
+                            }
                         )
-                    except Exception:
-                        pass
+                    except Exception as e_stk:
+                        _anotar_medicion_stock(
+                            {
+                                "origen": "hidratacion",
+                                "venta_id": new_id,
+                                "producto_id": prod_id,
+                                "nombre": it.get("nombre") or "",
+                                "cantidad": cant,
+                                "ok": False,
+                                "error": str(e_stk),
+                            }
+                        )
+
             conn.commit()
             return True
-        except Exception:
+        except Exception as e:
+            try:
+                from src.logger import logger
+
+                logger.warning(f"Hidratacion de venta abortada (rollback): {e}")
+            except Exception:
+                pass
             try:
                 conn.rollback()
             except Exception:
@@ -456,10 +525,11 @@ def hidratar_faltantes(max_archivos: int = 500) -> int:
     try:
         for payload in _iter_payloads(max_archivos=max_archivos):
             vid = payload.get("id")
+            req_id = payload.get("request_id", "")
             if vid is None:
                 continue
             try:
-                if _venta_existe(vid):
+                if _venta_existe(vid, req_id):
                     continue
             except Exception:
                 continue

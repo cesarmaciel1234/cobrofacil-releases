@@ -1,15 +1,15 @@
 {
     "carteleria": 26,
     "inventario": 46,
-    "etiquetas": 10,
-    "clientes": 28,
-    "red_lan": 38,
+    "etiquetas": 11,
+    "clientes": 29,
+    "red_lan": 39,
     "nexus_pro": 25,
     "configuracion": 21,
     "hardware": 6,
     "ofertas": 37,
     "proveedores": 12,
-    "cierre": 30,
+    "cierre": 31,
     "mercadopago": 3,
-    "auditoria": 28
+    "auditoria": 29
 }

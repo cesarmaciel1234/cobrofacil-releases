@@ -1,58 +1,49 @@
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QSizePolicy
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
 
 _ESTILO = """
 QFrame#PanelTotales {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
+    border-top: 1px solid #E2E8F0;
 }
 QLineEdit#TerminalScan {
-    background: #FFFFFF;
-    border: 2px solid #3B82F6;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 20px;
-    font-weight: 700;
+    background: #F8FAFC;
+    border: 2px solid #CBD5E1;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 26px;
+    font-weight: 800;
     color: #0F172A;
-    min-height: 56px;
+    min-height: 60px;
 }
 QLineEdit#TerminalScan:focus {
-    border: 2px solid #2563EB;
-    background: #F8FAFF;
-}
-QLabel#TotalGrande {
-    background: #F0FDF4;
-    border: 2px solid #22C55E;
-    color: #166534;
-    font-size: 48px;
-    font-weight: 900;
-    padding: 0 18px;
-    border-radius: 6px;
-    min-height: 72px;
+    border: 2px solid #3B82F6;
+    background: #FFFFFF;
 }
 QFrame#CajaResumen {
-    background: #FFFFFF;
+    background: #F8FAFC;
     border: 1px solid #E2E8F0;
-    border-radius: 6px;
+    border-radius: 12px;
 }
 QFrame#CajaResumen QLabel[tipo="titulo"] {
     color: #64748B;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 13px;
     border: none;
     background: transparent;
 }
 QFrame#CajaResumen QLabel[tipo="valor"] {
     color: #0F172A;
-    font-weight: 800;
-    font-size: 15px;
+    font-weight: 900;
+    font-size: 16px;
     border: none;
     background: transparent;
 }
-QFrame#CajaResumen QLabel#TituloCambio { color: #DC2626; }
+QFrame#CajaResumen QLabel#TituloCambio { color: #EF4444; }
 QFrame#CajaResumen QLabel[tipo="valor"][resaltado="true"] {
     color: #059669;
-    font-size: 17px;
+    font-size: 18px;
 }
 """
 
@@ -65,8 +56,8 @@ class PanelDeTotales(QFrame):
         self.setStyleSheet(_ESTILO)
 
         layout_principal = QHBoxLayout(self)
-        layout_principal.setContentsMargins(10, 5, 10, 5)
-        layout_principal.setSpacing(12)
+        layout_principal.setContentsMargins(16, 12, 16, 12)
+        layout_principal.setSpacing(16)
 
         self.entrada_codigo = QLineEdit()
         self.entrada_codigo.setObjectName("TerminalScan")
@@ -82,12 +73,13 @@ class PanelDeTotales(QFrame):
         self.etiqueta_total_grande.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         self.etiqueta_total_grande.setMinimumWidth(280)
         self.etiqueta_total_grande.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.etiqueta_total_grande.setAutoFillBackground(True)
+        self.etiqueta_total_grande.setAutoFillBackground(False)
+        # Flat Premium Design: Sin sombras, bordes redondeados limpios, contraste alto.
         self.etiqueta_total_grande.setStyleSheet(
             "QLabel#TotalGrande {"
-            " background-color: #16A34A; color: #FFFFFF;"
-            " border: 3px solid #15803D; border-radius: 8px;"
-            " font-size: 48px; font-weight: 900; padding: 0 18px;"
+            " background-color: #FFFFFF; color: #16A34A;"
+            " border: 2px solid #DCFCE7; border-radius: 12px;"
+            " font-size: 56px; font-weight: 900; padding: 0 18px;"
             "}"
         )
 
@@ -98,10 +90,10 @@ class PanelDeTotales(QFrame):
 
         self.caja_resumen = QFrame()
         self.caja_resumen.setObjectName("CajaResumen")
-        self.caja_resumen.setMinimumWidth(220)
+        self.caja_resumen.setMinimumWidth(240)
         layout_resumen = QVBoxLayout(self.caja_resumen)
-        layout_resumen.setContentsMargins(10, 5, 10, 5)
-        layout_resumen.setSpacing(2)
+        layout_resumen.setContentsMargins(16, 10, 16, 10)
+        layout_resumen.setSpacing(4)
 
         self.titulo_cant, self.valor_cant = self._crear_fila(layout_resumen, "ARTÍCULOS")
         self.titulo_total, self.valor_total = self._crear_fila(layout_resumen, "TOTAL")

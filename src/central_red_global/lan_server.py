@@ -107,15 +107,21 @@ class LANRequestHandler(BaseHTTPRequestHandler):
         if self.path == '/api/guardar_venta':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
-            
+
             try:
                 data = json.loads(post_data.decode('utf-8'))
-                venta_data = data.get('venta_data')
+                venta_data = data.get('venta_data') or {}
                 items = data.get('items')
-                
-                # Guardar en base de datos local
-                id_venta = db_manager.guardar_venta_completa(venta_data, items)
-                
+                fiado = data.get('fiado')
+                if not fiado and str(venta_data.get('metodo_pago') or '') in ('Fiado', 'Clientes'):
+                    cid = venta_data.get('cliente_id') or venta_data.get('fiado_cliente_id')
+                    if cid:
+                        fiado = {
+                            'cliente_id': cid,
+                            'total': float(venta_data.get('total') or 0),
+                        }
+                id_venta = db_manager.guardar_venta_completa(venta_data, items, fiado=fiado)
+
                 if id_venta and id_venta != 9999999:
                     try:
                         from src.base_de_datos.diario_ventas_externo import encolar_venta
@@ -129,25 +135,25 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 logger.error(f"API LAN Error: {e}")
                 self._send_response(500, {"status": "error", "message": str(e)})
-                
+
         elif self.path == '/api/set_master':
             content_length = int(self.headers.get('Content-Length', 0))
             post_data = self.rfile.read(content_length)
-            
+
             try:
                 data = json.loads(post_data.decode('utf-8'))
-                
+
                 auth_token = data.get('token', '')
                 if auth_token != config.get("update_auth_token", "1234"):
                     self._send_response(401, {"status": "error", "message": "Acceso denegado: Token inválido."})
                     return
-                
+
                 master_ip = data.get('master_ip')
                 if not master_ip:
                     self._send_response(400, {"status": "error", "message": "Falta el parámetro master_ip."})
                     return
                 logger.info(f"Petición remota para cambiar a rol ESCLAVA con Maestra en {master_ip}")
-                
+
                 # Test connection to master on 3306 using '1234' then fallback to ''
                 import pymysql
                 try:
@@ -159,11 +165,11 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         conn.close()
                     except Exception as e:
                         self._send_response(500, {
-                            "status": "error", 
+                            "status": "error",
                             "message": f"No se pudo establecer conexión TCP/MariaDB con {master_ip}:3306. Detalle: {str(e)}"
                         })
                         return
-                        
+
                 # Reconexión en caliente (sin matar el proceso). Cartelería y
                 # terminales deben seguir abiertos al pasar a ESCLAVA.
                 from src.central_red_global.motor_red import MotorRed
@@ -214,7 +220,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
             from src.utils.paths import get_base_path
             import os
             import json
-            
+
             path_ls = os.path.join(get_base_path(), "live_scan.json")
             if os.path.exists(path_ls):
                 try:
@@ -223,13 +229,13 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     self._send_response(200, data)
                 except Exception as e:
                     self._send_response(500, {"error": str(e)})
-    
+
         elif self.path == '/api/carteleria/grilla':
             try:
                 import json
                 query = 'SELECT departamento, nombre_producto, precio_normal, precio_oferta, regla_texto FROM carteleria_global ORDER BY departamento, nombre_producto'
                 rows = db_manager.execute_query(query)
-                
+
                 # Format to dictionary: {'ALMACEN': [('nombre', 100, 50, 'regla')], ...}
                 agrupados = {}
                 for r in rows:
@@ -245,10 +251,10 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         pn = float(r[2] or 0)
                         po = float(r[3] or 0)
                         rt = str(r[4] or '')
-                    
+
                     if cat not in agrupados: agrupados[cat] = []
                     agrupados[cat].append((nombre, pn, po, rt))
-                
+
                 self._send_response(200, agrupados)
             except Exception as e:
                 self._send_response(500, {'error': str(e)})
@@ -263,14 +269,14 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                 if os.path.exists(config_path):
                     with open(config_path, "r", encoding="utf-8") as f:
                         cfg_data = json.load(f)
-                        
+
                 is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
                 rand_func = "RAND()" if is_mariadb else "RANDOM()"
-                
+
                 # SOS
                 sos_query = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock FROM productos WHERE precio_oferta_relampago > 0 AND (precio > 0 OR precio_oferta > 0 OR precio_oferta_relampago > 0) AND LOWER(nombre) NOT LIKE '%articulo comun%' AND LOWER(nombre) NOT LIKE '%venta libre%' ORDER BY {rand_func} LIMIT 10"
                 oferta_sos = db_manager.execute_query(sos_query)
-                
+
                 # Precios (mismas columnas que DbSyncWorker: PNG + departamento)
                 precios_query = (
                     "SELECT categoria, nombre, precio, precio_oferta, precio_oferta_relampago, "
@@ -281,7 +287,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     "ORDER BY categoria"
                 )
                 rows_precios = db_manager.execute_query(precios_query)
-                
+
                 # Top Ventas Reales (Hoy, Semana, Mes)
                 if is_mariadb:
                     cond_hoy = "DATE(v.fecha) = CURDATE()"
@@ -293,10 +299,10 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     cond_semana = "date(v.fecha) >= date('now', '-7 days', 'localtime')"
                     cond_mes = "date(v.fecha) >= date('now', '-30 days', 'localtime')"
                     join_cond = "dv.id_producto = p.codigo OR dv.id_producto = CAST(p.id AS TEXT)"
-                
+
                 def get_top_query(cond_date):
                     return f"""
-                        SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago, 
+                        SELECT p.nombre, p.precio, p.precio_oferta, p.precio_oferta_relampago,
                                p.precio_oferta_promedio, p.cant_oferta, p.tipo_unidad_oferta, p.stock, p.es_pesable
                         FROM detalles_ventas dv
                         JOIN ventas v ON dv.id_venta = v.id
@@ -306,34 +312,34 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                         ORDER BY SUM(dv.cantidad) DESC
                         LIMIT 10
                     """
-                
+
                 top_dict = {"hoy": [], "semana": [], "mes": []}
-                
+
                 try:
                     # SQLite usa CAST(p.id AS TEXT), MariaDB usa CAST(p.id AS CHAR)
                     q_hoy = get_top_query(cond_hoy)
                     q_sem = get_top_query(cond_semana)
                     q_mes = get_top_query(cond_mes)
-                    
+
                     if not is_mariadb:
                         q_hoy = q_hoy.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
                         q_sem = q_sem.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
                         q_mes = q_mes.replace("CAST(p.id AS CHAR)", "CAST(p.id AS TEXT)").replace("VARCHAR(50)", "TEXT")
-                    
+
                     top_dict["hoy"] = db_manager.execute_query(q_hoy)
                     top_dict["semana"] = db_manager.execute_query(q_sem)
                     top_dict["mes"] = db_manager.execute_query(q_mes)
                 except Exception as e_sql:
                     # Fallback si las tablas no están listas o hay un error de JOIN
                     pass
-                
+
                 # Si el real falló o está vacío por falta de ventas, rellenar con aleatorios
                 fallback_q = f"SELECT nombre, precio, precio_oferta, precio_oferta_relampago, precio_oferta_promedio, cant_oferta, tipo_unidad_oferta, stock, es_pesable FROM productos WHERE precio > 0 ORDER BY {rand_func} LIMIT 10"
                 if not top_dict["hoy"]: top_dict["hoy"] = db_manager.execute_query(fallback_q)
                 if not top_dict["semana"]: top_dict["semana"] = top_dict["hoy"]
                 if not top_dict["mes"]: top_dict["mes"] = top_dict["hoy"]
 
-                
+
                 # Resumen para el dashboard
                 response_data = {
                     "config": {
@@ -351,7 +357,7 @@ class LANRequestHandler(BaseHTTPRequestHandler):
                     "publicidad": _payload_publicidad(),
                     "reporte": _payload_reporte(),
                 }
-                
+
                 self._send_response(200, response_data)
             except Exception as e:
                 self._send_response(500, {"error": str(e)})
@@ -379,12 +385,12 @@ def start_udp_discovery_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    
+
     try:
         sock.bind(('0.0.0.0', UDP_PORT))
         sock.settimeout(2.0)
         logger.info(f"Servidor UDP Discovery LAN iniciado en puerto {UDP_PORT}")
-        
+
         while not lan_exit_event.is_set():
             try:
                 data, addr = sock.recvfrom(1024)
@@ -393,7 +399,7 @@ def start_udp_discovery_server():
             except Exception as e:
                 logger.error(f"Error procesando peticion UDP Discovery: {e}")
                 continue
-                
+
             try:
                 if data == b"PUNPRO_DISCOVER":
                     if not _esta_pc_anuncia_tienda():
@@ -432,12 +438,12 @@ _udp_server_started = False
 def init_lan_server():
     """Inicia los servidores LAN (API HTTP y UDP Discovery) en segundo plano si no están iniciados."""
     global _http_server_started, _udp_server_started
-    
+
     if not _http_server_started:
         t_http = threading.Thread(target=start_http_server, daemon=True)
         t_http.start()
         _http_server_started = True
-        
+
     if not _udp_server_started:
         t_udp = threading.Thread(target=start_udp_discovery_server, daemon=True)
         t_udp.start()

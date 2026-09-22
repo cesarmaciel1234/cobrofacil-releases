@@ -3,6 +3,9 @@ import sqlite3
 import os
 import sys
 from src.logger import logger
+from src.base_de_datos.core.db_path import normalize_db_path
+from src.base_de_datos.core.red_rol import leer_rol_red_desde_config
+from src.base_de_datos.core.mariadb_probe import puerto_mariadb_abierto
 
 class ConnectionMixin:
     """Professional management of SQLite database operations."""
@@ -38,41 +41,21 @@ class ConnectionMixin:
         )
 
     def _normalize_db_path(self, path: str, base_app_path: str) -> str:
-        """Normaliza rutas de base de datos con soporte para UNC, unidades mapeadas y variables de entorno."""
-        path = str(path or "").strip()
-        if not path:
-            return ""
-
-        path = os.path.expandvars(path)
-        path = path.replace("/", os.sep)
-
-        if path.startswith("\\\\") or path.startswith("//"):
-            return os.path.normpath(path)
-
-        if os.path.isabs(path):
-            return os.path.normpath(path)
-
-        return os.path.normpath(os.path.join(base_app_path, path))
+        return normalize_db_path(path, base_app_path)
 
     @staticmethod
     def _leer_rol_red_desde_config(config_data: dict) -> tuple[bool, str]:
-        """(es_esclava, host_remoto). Respeta is_master / db_host / IPs preferidas."""
-        host = str(config_data.get("db_host", "") or "").strip()
-        host_l = host.lower()
-        remoto = host if host and host_l not in ("localhost", "127.0.0.1") else ""
-        if not remoto:
-            for key in ("preferred_master_ip", "carteleria_master_ip"):
-                cand = str(config_data.get(key, "") or "").strip()
-                if cand and cand.lower() not in ("localhost", "127.0.0.1"):
-                    remoto = cand
-                    break
-        if config_data.get("is_master") is False:
-            return True, remoto
-        if config_data.get("carteleria_is_slave") and remoto:
-            return True, remoto
-        if remoto:
-            return True, remoto
-        return False, host
+        return leer_rol_red_desde_config(config_data)
+
+    def _activar_sqlite_offline(self, base_app_path: str, config_data: dict) -> None:
+        """Esclava sin maestra: SQLite local, sin promover is_master."""
+        db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
+        self.is_master = False
+        self._forced_local_offline = True
+        self.db_path = os.path.join(base_app_path, db_name)
+        self.db_engine_type = "sqlite"
+        self.mariadb_engine = None
+        self._create_tables()
 
     def _init_db(self):
         # 1. Intentar cargar db_path desde config.json para MODO SERVIDOR RED
@@ -120,21 +103,21 @@ class ConnectionMixin:
             if getattr(self, "_forced_local_offline", False):
                 # Mantener identidad esclava si la config lo pide (solo BD local temporal)
                 es_off, _ = self._leer_rol_red_desde_config(config_data)
-                self.is_master = not es_off
                 self.db_engine_type = "sqlite"
                 self.mariadb_engine = None
                 db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
                 self.db_path = os.path.join(base_app_path, db_name)
+                self.is_master = not es_off
                 logger.info("Modo local offline de sesión activo (SQLite). Se omite reintento a la Maestra.")
                 self._create_tables()
                 self._ensure_test_users()
                 return
-            
+
             # --- INTEGRACION MARIADB ---
             if self.db_engine_type == "mariadb":
                 from src.db_engines.mariadb_engine import MariaDBEngine
                 from src.services.mariadb_controller import mariadb_controller
-                
+
                 es_esclava, host_remoto = self._leer_rol_red_desde_config(config_data)
                 custom_ip = str(config_data.get("db_host", "")).strip()
                 if not custom_ip and not es_esclava:
@@ -145,7 +128,7 @@ class ConnectionMixin:
                         parts = custom_path.replace("\\", "/").split("/")
                         if len(parts) > 2:
                             custom_ip = parts[2]
-                
+
                 if es_esclava:
                     host = host_remoto or custom_ip
                     if not host or host.lower() in ("localhost", "127.0.0.1"):
@@ -153,41 +136,17 @@ class ConnectionMixin:
                             "Config ESCLAVA sin IP de maestra válida. "
                             "Quedá offline local sin promover a maestra."
                         )
-                        self.is_master = False
-                        self._forced_local_offline = True
-                        db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
-                        self.db_path = os.path.join(base_app_path, db_name)
-                        self.db_engine_type = "sqlite"
-                        self.mariadb_engine = None
-                        self._create_tables()
+                        self._activar_sqlite_offline(base_app_path, config_data)
                         self._ensure_test_users()
                         return
-                    
-                    # Validar conexión al servidor remoto antes de forzar offline
-                    try:
-                        import socket
-                        test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        test_sock.settimeout(2.0)
-                        result = test_sock.connect_ex((host, 3306))
-                        test_sock.close()
-                        if result == 0:
-                            logger.info(f"Servidor MariaDB en {host} es accesible, forzando conexión")
-                            # No forzar offline si el servidor está disponible
-                            pass
-                        else:
-                            logger.warning(f"Servidor MariaDB en {host} no responde, modo offline")
-                            self.is_master = False
-                            self._forced_local_offline = True
-                            db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
-                            self.db_path = os.path.join(base_app_path, db_name)
-                            self.db_engine_type = "sqlite"
-                            self.mariadb_engine = None
-                            self._create_tables()
-                            self._ensure_test_users()
-                            return
-                    except Exception as test_e:
-                        logger.warning(f"Error validando conexión a {host}: {test_e}")
-                        # Continuar intentando conexión normal
+
+                    if puerto_mariadb_abierto(host, 2.0):
+                        logger.info(f"Servidor MariaDB en {host} es accesible, forzando conexión")
+                    else:
+                        logger.warning(f"Servidor MariaDB en {host} no responde, modo offline")
+                        self._activar_sqlite_offline(base_app_path, config_data)
+                        self._ensure_test_users()
+                        return
                     # Restaurar db_host si solo estaba en preferred_*
                     if str(config_data.get("db_host", "") or "").strip().lower() in (
                         "", "localhost", "127.0.0.1"
@@ -206,35 +165,11 @@ class ConnectionMixin:
                     if host in ("localhost", "127.0.0.1", socket.gethostname().lower()) or not custom_ip:
                         self.is_master = True
                         host = "127.0.0.1"
-                        logger.info("MariaDB configurado en modo MAESTRO. Arrancando Auto-Servidor...")
-                        mariadb_controller.start_server()
+                        logger.info("MariaDB configurado en modo MAESTRO.")
                     else:
                         self.is_master = False
                 self.mariadb_engine = MariaDBEngine(host=host)
 
-                # Autoblindaje solo en el proceso dueño (--server o maestra sin servidor dedicado)
-                _skip_blindaje = False
-                try:
-                    from src.utils.candados import is_store_server_running
-                    if is_store_server_running() and "--server" not in sys.argv:
-                        _skip_blindaje = True
-                except Exception:
-                    pass
-                # Autoblindaje/cerebro solo en MAESTRA local. En ESCLAVA el host
-                # es remoto: no respaldar ni restaurar la BD de la maestra.
-                if not _skip_blindaje and self.is_master:
-                    try:
-                        from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-                        AutoBlindajeDB.verificar_y_respaldar_diario("mariadb", host)
-                    except Exception as e:
-                        logger.warning(f"Aviso en autoblindaje MariaDB: {e}")
-                    # Motor de backup autónomo (si no hay Servidor de Tienda dedicado)
-                    try:
-                        from src.cerebro_global.backup_cerebro import cerebro_backup
-                        cerebro_backup.start("mariadb", host)
-                    except Exception as e_cb:
-                        logger.warning(f"Aviso CerebroBackup: {e_cb}")
-                
                 # --- FALLBACK OFFLINE (esclava sin maestra) ---
                 # Antes: un break mal puesto dejaba db_path en MariaDB remota y el
                 # arranque se colgaba minutos con timeouts a 192.168.0.x.
@@ -244,11 +179,7 @@ class ConnectionMixin:
 
                     master_ok = False
                     try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.settimeout(1.5)
-                        result = sock.connect_ex((host, 3306))
-                        sock.close()
-                        if result == 0:
+                        if puerto_mariadb_abierto(host, 1.5):
                             conn = self.mariadb_engine.get_connection()
                             conn._conn.ping()
                             logger.info("Conexión OK a la PC Maestra.")
@@ -257,65 +188,12 @@ class ConnectionMixin:
                         master_ok = False
 
                     if not master_ok:
-                        logger.info("Intentando auto-descubrir maestra en la red...")
-                        try:
-                            sock_scan = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                            sock_scan.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-                            sock_scan.settimeout(2.0)
-                            sock_scan.sendto(b"PUNPRO_DISCOVER", ("255.255.255.255", 37020))
-                            data, addr = sock_scan.recvfrom(1024)
-                            sock_scan.close()
-                            info = _json.loads(data.decode("utf-8"))
-                            from src.central_red_global.lan_server import es_anuncio_tienda
-
-                            if es_anuncio_tienda(info):
-                                discovered_host = info.get("server_ip", addr[0])
-                                try:
-                                    s_self = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                                    s_self.connect(("8.8.8.8", 80))
-                                    mi_ip = s_self.getsockname()[0]
-                                    s_self.close()
-                                except Exception:
-                                    mi_ip = ""
-                                if discovered_host and discovered_host not in (
-                                    mi_ip, "127.0.0.1", "localhost", host,
-                                ):
-                                    logger.info(
-                                        f"Nueva Maestra auto-descubierta en {discovered_host}."
-                                    )
-                                    host = discovered_host
-                                    from src.config import config
-                                    config.set("db_host", host)
-                                    config.set("is_master", False)
-                                    config.set("api_url", f"http://{host}:8000")
-                                    config.save()
-                                    self.mariadb_engine = MariaDBEngine(host=host)
-                                    try:
-                                        conn = self.mariadb_engine.get_connection()
-                                        conn._conn.ping()
-                                        master_ok = True
-                                    except Exception:
-                                        master_ok = False
-                                else:
-                                    logger.warning(
-                                        f"Discovery no usable ({discovered_host}); offline local."
-                                    )
-                        except Exception as e:
-                            logger.info(f"Auto-descubrimiento falló: {e}")
-
-                    if not master_ok:
                         logger.error(f"Fallo de conexión a la Maestra en {host}")
                         logger.info(
                             "Esclava offline temporal (SQLite local). "
                             "Se conserva is_master=false en config para el próximo arranque."
                         )
-                        self.is_master = False
-                        self._forced_local_offline = True
-                        db_name = config_data.get("db_name", "punpro.db") or "punpro.db"
-                        self.db_path = os.path.join(base_app_path, db_name)
-                        self.db_engine_type = "sqlite"
-                        self.mariadb_engine = None
-                        self._create_tables()
+                        self._activar_sqlite_offline(base_app_path, config_data)
                         # Sin migrate faltan columnas (precio_oferta_relampago, etc.)
                         # y la TV de cartelería se rompe / parece congelada.
                         try:
@@ -329,28 +207,7 @@ class ConnectionMixin:
                             schedule_hidratar_faltantes()
                         except Exception:
                             pass
-                        
-                        # Programar reintento de conexión al servidor remoto
-                        try:
-                            from PyQt6.QtCore import QTimer
-                            def _retry_mariadb_connection():
-                                try:
-                                    import socket
-                                    test_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                                    test_sock.settimeout(2.0)
-                                    result = test_sock.connect_ex((host, 3306))
-                                    test_sock.close()
-                                    if result == 0:
-                                        logger.info(f"Servidor MariaDB en {host} ahora disponible, reconectando...")
-                                        self.reconectar_mariadb(host)
-                                except Exception as retry_e:
-                                    logger.debug(f"Reintento conexión falló: {retry_e}")
-                            
-                            # Reintentar cada 30 segundos
-                            QTimer.singleShot(30000, _retry_mariadb_connection)
-                        except Exception as timer_e:
-                            logger.warning(f"No se pudo programar reintento: {timer_e}")
-                        
+
                         return
 
                 self.db_path = "mariadb://" + host
@@ -358,7 +215,7 @@ class ConnectionMixin:
                     self._create_tables()
                     self._migrate_db()
                     self._ensure_test_users()
-                    
+
                     # Migración transparente si MariaDB está vacía pero SQLite tiene datos
                     try:
                         conn = self.get_connection()
@@ -409,7 +266,7 @@ class ConnectionMixin:
 
             if custom_path and not is_loopback:
                 tentative_path = self._normalize_db_path(custom_path, base_app_path)
-                
+
                 # Probar conexión LAN antes de asignarla (Fail-Safe)
                 is_reachable = False
                 try:
@@ -428,7 +285,7 @@ class ConnectionMixin:
                     self.is_master = True
                     db_name = str(config_data.get("db_name", "punpro.db")).strip() or "punpro.db"
                     self.db_path = os.path.join(base_app_path, db_name)
-                    
+
                     # Eliminar la ruta customizada rota de config.json
                     try:
                         config_data["db_path"] = ""
@@ -471,9 +328,9 @@ class ConnectionMixin:
             self.db_path = os.path.join(base_app_path, "punpro.db")
             self.is_master = True
             self.db_engine_type = "sqlite"
-            
+
         logger.info(f"DatabaseManager initialized with path: {self.db_path}")
-        
+
         # Intentar conectar. Si falla (ej. red caída), mostrar alerta y volver a local.
         import sqlite3
         import threading
@@ -492,18 +349,18 @@ class ConnectionMixin:
                         reachable = True
                     except:
                         pass
-                
+
                 t = threading.Thread(target=check_access)
                 t.start()
                 t.join(timeout=8.0) # Aumentado a 8s porque Windows suele tardar en despertar discos de red
-                
+
                 if not reachable:
                     raise sqlite3.OperationalError(f"La ruta de red {self.db_path} no responde.")
 
             # Prueba de conexión rápida
             conn = sqlite3.connect(self.db_path, timeout=15.0)
             conn.close()
-            
+
             # Solo el Master (dueño de la BD) debe crear tablas y migrar la estructura.
             # Los clientes de red solo leen/escriben datos, así evitamos colapsar los bloqueos.
             if self.is_master:
@@ -513,33 +370,33 @@ class ConnectionMixin:
             import json
             from src.utils.paths import get_base_path
             from PyQt6.QtWidgets import QApplication, QMessageBox
-            
+
             # Asegurar QApplication para poder mostrar la alerta bonita
             # (sys ya importado a nivel de módulo — no reimportar aquí)
             if not QApplication.instance():
                 app = QApplication(sys.argv)
             else:
                 app = QApplication.instance()
-                
+
             msg = (f"🚨 ERROR CRÍTICO DE RED LAN 🚨\n\n"
                    f"No se pudo contactar con la base de datos en la PC Principal:\n{self.db_path}\n\n"
                    f"¿Qué deseas hacer?\n\n"
                    f"► COBRO LOCAL: Desvincula esta PC de la red para que puedas cobrar localmente.\n"
                    f"► SALIR Y REINTENTAR: Cierra el programa para intentar reconectar cuando la PC Principal esté lista.")
-                   
+
             box = QMessageBox()
             box.setIcon(QMessageBox.Critical)
             box.setWindowTitle("Conexión Perdida")
             box.setText(msg)
-            
+
             btn_local = box.addButton("Cobro Local", QMessageBox.AcceptRole)
             btn_salir = box.addButton("Salir y Reintentar", QMessageBox.RejectRole)
-            
+
             qt_exec(box)
-            
+
             if box.clickedButton() == btn_salir:
                 sys.exit(1)
-                
+
             # Eligió COBRO LOCAL, procedemos a borrar configuración y volver a local
             base_path = get_base_path()
             cfg_path = os.path.join(base_path, "config.json")
@@ -552,10 +409,10 @@ class ConnectionMixin:
                 self.db_path = os.path.join(base_path, cfg_data.get("db_name", "punpro.db"))
             except:
                 self.db_path = os.path.join(base_path, "punpro.db")
-                
+
             self._create_tables()
             self._migrate_db()
-            
+
         self._ensure_test_users()
 
         # [AUTO-RECOVERY PARA ACTUALIZACIONES Y REINSTALACIONES]
@@ -589,7 +446,7 @@ class ConnectionMixin:
         logger.info("Recargando configuracion de base de datos dinámicamente...")
         # Check current engine and master state
         was_master = getattr(self, "is_master", True)
-        
+
         # Stop MariaDB if transitioning or reloading, _init_db will start it again if needed
         # It's safer to let _init_db handle the MariaDB auto-server logic, but we can explicitly stop it if we are now slave
         import json
@@ -706,7 +563,7 @@ class ConnectionMixin:
             except Exception as e:
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
-            
+
         try:
             conn = sqlite3.connect(self.db_path, timeout=30.0)
             conn.row_factory = sqlite3.Row  # Allow access by column name

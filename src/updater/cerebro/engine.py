@@ -852,7 +852,7 @@ EXIT_SOFT_RESTART = 888
 EXIT_APPLY_RELAUNCH = 889
 
 
-def apply_pending_update_on_startup() -> bool:
+def apply_pending_update_on_startup(ui_delegate=None) -> bool:
     """Aplica la actualización pendiente antes de iniciar la UI (estilo PWA)."""
     # Pedido explícito del relaunch: forzar apply si hay staging
     apply_flag = os.path.join(_cache_dir(), "apply_now.flag")
@@ -901,20 +901,11 @@ def apply_pending_update_on_startup() -> bool:
     except Exception:
         logger = None
 
-    progress_dialog = None
-    try:
-        from PyQt6.QtWidgets import QApplication, QProgressDialog
-        from PyQt6.QtCore import Qt
-        app = QApplication.instance() or QApplication(sys.argv)
-        progress_dialog = QProgressDialog("Instalando actualización, por favor espere...\nNo cierre el programa.", None, 0, 0)
-        progress_dialog.setWindowTitle("CobroFacil PRO 2026 - Actualizando")
-        progress_dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
-        progress_dialog.setCancelButton(None)
-        progress_dialog.setMinimumDuration(0)
-        progress_dialog.show()
-        app.processEvents()
-    except Exception:
-        pass
+    if ui_delegate:
+        try:
+            ui_delegate.on_start()
+        except Exception:
+            pass
 
     try:
         begin_apply_guard()
@@ -940,12 +931,9 @@ def apply_pending_update_on_startup() -> bool:
                 dst = os.path.join(base, rel_root, name)
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
 
-                if progress_dialog:
+                if ui_delegate:
                     try:
-                        from PyQt6.QtWidgets import QApplication
-                        app = QApplication.instance()
-                        if app:
-                            app.processEvents()
+                        ui_delegate.on_progress()
                     except Exception:
                         pass
 
@@ -1042,8 +1030,8 @@ def apply_pending_update_on_startup() -> bool:
             pass
         end_apply_guard()
         try:
-            if "progress_dialog" in locals() and progress_dialog:
-                progress_dialog.close()
+            if ui_delegate:
+                ui_delegate.on_finish()
         except Exception:
             pass
         if logger:
@@ -1083,7 +1071,7 @@ def _hidden_popen(cmd: list, cwd: str | None = None) -> None:
     )
 
 
-def exit_and_relaunch_for_update() -> None:
+def exit_and_relaunch_for_update(ui_delegate=None) -> None:
     """
     Cierra este proceso y reabre el POS cuando el PID ya murió (sin CMD a la vista).
     Así Windows libera CobroFacil_POS.exe / DLLs y apply_pending puede copiar.
@@ -1092,33 +1080,11 @@ def exit_and_relaunch_for_update() -> None:
     import tempfile
 
     # Aviso breve: el usuario no debe hacer clic en nada
-    try:
-        from PyQt6.QtWidgets import QApplication, QProgressDialog
-        from PyQt6.QtCore import Qt
-
-        app = QApplication.instance()
-        if app:
-            tip = QProgressDialog(
-                "Actualizando CobroFacil…\n"
-                "El sistema se cierra y vuelve solo.\n"
-                "No abras el ejecutable a mano.",
-                None,
-                0,
-                0,
-            )
-            tip.setWindowTitle("CobroFacil — Actualizando")
-            tip.setWindowFlags(
-                Qt.WindowType.WindowStaysOnTopHint
-                | Qt.WindowType.Tool
-                | Qt.WindowType.CustomizeWindowHint
-                | Qt.WindowType.WindowTitleHint
-            )
-            tip.setCancelButton(None)
-            tip.setMinimumDuration(0)
-            tip.show()
-            app.processEvents()
-    except Exception:
-        pass
+    if ui_delegate:
+        try:
+            ui_delegate.on_start()
+        except Exception:
+            pass
 
     begin_apply_guard()
     try:
@@ -1381,49 +1347,3 @@ def get_status_message() -> str | None:
     return None
 
 
-try:
-    from PyQt6.QtCore import QThread, pyqtSignal
-
-    class SilentUpdateWorker(QThread):
-        """Worker Qt para descarga manual desde el banner."""
-        progreso = pyqtSignal(int, str)
-        terminado = pyqtSignal(object)
-
-        def __init__(self, dry_run: bool = False):
-            super().__init__()
-            self.dry_run = dry_run
-
-        def run(self):
-            from src.updater.github_updater import ResultadoGitHub
-
-            res = ResultadoGitHub()
-            available, local, remote = is_update_available()
-            res.version_local = local
-            res.version_nueva = remote
-            if not available:
-                self.progreso.emit(100, "Ya estás en la última versión.")
-                self.terminado.emit(res)
-                return
-            if self.dry_run:
-                res.actualizados = ["CobroFacil_POS_Release.zip"]
-                self.terminado.emit(res)
-                return
-
-            def _cb(pct_or_msg, msg=None):
-                if msg is None:
-                    self.progreso.emit(50, str(pct_or_msg))
-                else:
-                    self.progreso.emit(int(pct_or_msg), str(msg))
-
-            if download_and_stage_update(progress_callback=_cb):
-                res.actualizados = ["CobroFacil_POS_Release.zip"]
-                res.necesita_reinicio = True
-            else:
-                pending = _load_pending()
-                err = pending.get("last_error") or "No se pudo descargar la actualización."
-                res.errores.append(str(err))
-            self.progreso.emit(100, "Listo.")
-            self.terminado.emit(res)
-
-except ImportError:
-    SilentUpdateWorker = None

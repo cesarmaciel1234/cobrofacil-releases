@@ -76,8 +76,6 @@ class UsuarioCampo(QLineEdit):
         pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#0F172A"))
         popup.setPalette(pal)
         self.setCompleter(completer)
-        if len(self._usuarios) == 1:
-            self.setText(self._usuarios[0])
 
     def completar(self):
         txt = (self.text() or "").strip()
