@@ -95,9 +95,9 @@ class DialogoEditarCantidad(QDialog):
         layout.addLayout(btns)
 
     def keyPressEvent(self, event):
-        if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
+        if event.key() in [Qt.Key.Key_Return, Qt.Key.Key_Enter]:
             self.accept()
-        elif event.key() == Qt.Key_Escape:
+        elif event.key() == Qt.Key.Key_Escape:
             self.reject()
         else:
             super().keyPressEvent(event)
@@ -198,7 +198,7 @@ class DialogoPIN(QDialog):
             self.txt_pin.setFocus()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             return  # No se puede saltar el PIN con ESC
         super().keyPressEvent(event)
 
@@ -328,12 +328,12 @@ class DialogoCandado(QDialog):
             self.accept()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             return  # No se puede escapar sin acción
-        if event.key() == Qt.Key_1:
+        if event.key() == Qt.Key.Key_1:
             self._pedir_pin(1)
             return
-        if event.key() == Qt.Key_2:
+        if event.key() == Qt.Key.Key_2:
             self._pedir_pin(2)
             return
 

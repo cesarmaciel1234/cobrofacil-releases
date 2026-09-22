@@ -41,10 +41,10 @@ class TouchFeedbackManager(QObject):
                 
         # Capturar pulsaciones de teclado (Enter/Espacio en botón con foco)
         elif event.type() == EventType.KeyPress:
-            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key_Space):
+            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key.Key_Space):
                 self.trigger_button_feedback(obj)
         elif event.type() == EventType.KeyRelease:
-            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key_Space):
+            if isinstance(obj, QPushButton) and getattr(event, "key", lambda: 0)() in (Qt.Key.Key_Enter if hasattr(Qt, "Key") else Qt.Key.Key_Enter, Qt.Key.Key_Return if hasattr(Qt, "Key") else Qt.Key.Key_Return, Qt.Key.Key_Space if hasattr(Qt, "Key") else Qt.Key.Key_Space):
                 self.release_button_feedback(obj)
                 
         # Capturar atajos de teclado globales (ej. F1, F4 ligados a botones)

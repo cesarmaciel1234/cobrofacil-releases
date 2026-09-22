@@ -30,10 +30,10 @@ if hasattr(Qt, 'WidgetAttribute'):
 if hasattr(Qt, 'MouseButton'):
     Qt.LeftButton = Qt.MouseButton.LeftButton
 if hasattr(Qt, 'Key'):
-    Qt.Key_Left = Qt.Key.Key_Left
-    Qt.Key_Right = Qt.Key.Key_Right
-    Qt.Key_Return = Qt.Key.Key_Return
-    Qt.Key_Enter = Qt.Key.Key_Enter
+    Qt.Key.Key_Left = Qt.Key.Key_Left
+    Qt.Key.Key_Right = Qt.Key.Key_Right
+    Qt.Key.Key_Return = Qt.Key.Key_Return
+    Qt.Key.Key_Enter = Qt.Key.Key_Enter
 if hasattr(Qt, 'KeyboardModifier'):
     Qt.NoModifier = Qt.KeyboardModifier.NoModifier
 
@@ -512,14 +512,14 @@ class PerfilPantalla(QDialog):
                         btn._set_idle_style()
 
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Left, Qt.Key_Right):
-            delta = 1 if event.key() == Qt.Key_Right else -1
+        if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            delta = 1 if event.key() == Qt.Key.Key_Right else -1
             original_idx = self.selected_index
             self.selected_index = (self.selected_index + delta) % 4
             if original_idx != self.selected_index:
                 self.update_selection_ui()
             event.accept()
-        elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._elegir(self._ROLES[self.selected_index])
             event.accept()
         else:

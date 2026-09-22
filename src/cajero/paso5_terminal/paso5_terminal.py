@@ -544,17 +544,17 @@ class Paso5Terminal(QWidget):
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
     def keyPressEvent(self, event):
         k = event.key()
-        if k == Qt.Key_F1: self._do_busqueda()
-        elif k == Qt.Key_F3: self.abrir_historial_dia()
-        elif k == Qt.Key_F12: self.finalizar_venta()
-        elif k == Qt.Key_F5: self.abrir_retiro_efectivo()
-        elif k == Qt.Key_F6: self.abrir_ingreso_efectivo()
-        elif k == Qt.Key_F7: self._leer_bascula()
-        elif k == Qt.Key_F10: self.bloquear_terminal()
-        elif k == Qt.Key_F8: self._swap_ticket_espera()
-        elif k == Qt.Key_F4: self.abrir_cierre_caja()
-        elif k == Qt.Key_F11: self.llamar_supervisor()
-        elif k == Qt.Key_Escape:
+        if k == Qt.Key.Key_F1: self._do_busqueda()
+        elif k == Qt.Key.Key_F3: self.abrir_historial_dia()
+        elif k == Qt.Key.Key_F12: self.finalizar_venta()
+        elif k == Qt.Key.Key_F5: self.abrir_retiro_efectivo()
+        elif k == Qt.Key.Key_F6: self.abrir_ingreso_efectivo()
+        elif k == Qt.Key.Key_F7: self._leer_bascula()
+        elif k == Qt.Key.Key_F10: self.bloquear_terminal()
+        elif k == Qt.Key.Key_F8: self._swap_ticket_espera()
+        elif k == Qt.Key.Key_F4: self.abrir_cierre_caja()
+        elif k == Qt.Key.Key_F11: self.llamar_supervisor()
+        elif k == Qt.Key.Key_Escape:
             if getattr(self, 'list_results', None) is not None and not self.list_results.isHidden():
                 self._ocultar_busqueda()
             self.txt_scan.setFocus()
@@ -789,11 +789,11 @@ class Paso5Terminal(QWidget):
         from PyQt6.QtCore import QEvent
 
         if getattr(self, 'list_results', None) is not None and obj == self.list_results:
-            if event.type() == QEvent.KeyPress:
-                if event.key() == Qt.Key_Up and self.list_results.currentRow() == 0:
+            if event.type() == QEvent.Type.KeyPress:
+                if event.key() == Qt.Key.Key_Up and self.list_results.currentRow() == 0:
                     self.txt_scan.setFocus()
                     return True
-                elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+                elif event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                     self.seleccionar_item_busqueda()
                     return True
 
@@ -801,50 +801,50 @@ class Paso5Terminal(QWidget):
             # INTERCEPTAR TECLAS DE FUNCIÓN: el QLineEdit consume los KeyPress
             # antes de que lleguen al keyPressEvent del widget padre.
             # Los capturamos aquí para garantizar que siempre funcionen.
-            if event.type() == QEvent.KeyPress:
+            if event.type() == QEvent.Type.KeyPress:
                 key = event.key()
-                if key == Qt.Key_F4:
+                if key == Qt.Key.Key_F4:
                     self.abrir_cierre_caja()
                     return True  # Consumir el evento, no propagarlo
-                elif key == Qt.Key_F3:
+                elif key == Qt.Key.Key_F3:
                     self.abrir_historial_dia()
                     return True
-                elif key == Qt.Key_F12:
+                elif key == Qt.Key.Key_F12:
                     self.finalizar_venta()
                     return True
-                elif key == Qt.Key_F1:
+                elif key == Qt.Key.Key_F1:
                     self.txt_scan.selectAll()
                     return True
-                elif key == Qt.Key_F10:
+                elif key == Qt.Key.Key_F10:
                     self.bloquear_terminal()
                     return True
-                elif key == Qt.Key_F8:
+                elif key == Qt.Key.Key_F8:
                     self._swap_ticket_espera()
                     return True
-                elif key == Qt.Key_F5:
+                elif key == Qt.Key.Key_F5:
                     self.abrir_retiro_efectivo()
                     return True
-                elif key == Qt.Key_F6:
+                elif key == Qt.Key.Key_F6:
                     self.abrir_ingreso_efectivo()
                     return True
-                elif key == Qt.Key_F11:
+                elif key == Qt.Key.Key_F11:
                     self.llamar_supervisor()
                     return True
-                elif key == Qt.Key_Down:
+                elif key == Qt.Key.Key_Down:
                     if self.list_results.isVisible() and self.list_results.count() > 0:
                         self.list_results.setFocus()
                         self.list_results.setCurrentRow(0)
                         return True
-                elif key == Qt.Key_Up:
+                elif key == Qt.Key.Key_Up:
                     if self.list_results.isVisible() and self.list_results.count() > 0:
                         self.list_results.setFocus()
                         self.list_results.setCurrentRow(self.list_results.count() - 1)
                         return True
-                elif key == Qt.Key_Escape:
+                elif key == Qt.Key.Key_Escape:
                     self.txt_scan.clear()
                     self._ocultar_busqueda()
                     return True
-                elif key == Qt.Key_Down:
+                elif key == Qt.Key.Key_Down:
                     if not self.list_results.isHidden() and self.list_results.count() > 0:
                         self.list_results.setFocus()
                         self.list_results.setCurrentRow(0)
@@ -855,14 +855,14 @@ class Paso5Terminal(QWidget):
                         self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
                         QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
-                elif key == Qt.Key_Up:
+                elif key == Qt.Key.Key_Up:
                     if self.tabla.rowCount() > 0:
                         self.tabla.setFocus()
                         self.tabla.selectRow(self.tabla.rowCount() - 1)
                         self.tabla.setCurrentCell(self.tabla.rowCount() - 1, 3)
                         QTimer.singleShot(0, self._on_tabla_nav_row_only)
                         return True
-                elif key in (Qt.Key_Return, Qt.Key_Enter):
+                elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                     # Si la lista de resultados está desplegada, procesamos el ítem seleccionado directamente
                     if not self.list_results.isHidden() and self.list_results.currentRow() >= 0:
                         self.seleccionar_item_busqueda()
@@ -874,7 +874,7 @@ class Paso5Terminal(QWidget):
                     # De lo contrario, no lo consumimos para que siga el flujo natural a procesar_scan o al keyPressEvent del QLineEdit
 
             # GUARDIA DE FOCO: Si algo intenta quitarle el foco al buscador, lo devolvemos
-            elif event.type() == QEvent.FocusOut:
+            elif event.type() == QEvent.Type.FocusOut:
                 # CRÍTICO: Si el terminal no está visible (ej: estamos en IA Boss), no forzamos el foco
                 if not self.isVisible():
                     return super().eventFilter(obj, event)
@@ -891,12 +891,12 @@ class Paso5Terminal(QWidget):
                     QTimer.singleShot(50, restore_focus)
 
         elif obj == self.tabla:
-            if event.type() == QEvent.FocusOut:
+            if event.type() == QEvent.Type.FocusOut:
                 QTimer.singleShot(0, self._sync_nav_border_overlay)
-            elif event.type() == QEvent.FocusIn:
+            elif event.type() == QEvent.Type.FocusIn:
                 QTimer.singleShot(0, self._sync_nav_border_overlay)
-            elif event.type() == QEvent.KeyPress:
-                if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            elif event.type() == QEvent.Type.KeyPress:
+                if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                     row = self.tabla.currentRow()
                     if row != -1:
                         nombre = self.tabla.item(row, 1).text()
@@ -944,7 +944,7 @@ class Paso5Terminal(QWidget):
 
                         QTimer.singleShot(50, self.txt_scan.setFocus)
                     return True # Consumido incondicionalmente
-                elif event.key() == Qt.Key_Delete:
+                elif event.key() == Qt.Key.Key_Delete:
                     row = self.tabla.currentRow()
                     suprimir_articulo(self, row)
                     return True
@@ -1901,42 +1901,42 @@ class Paso5Terminal(QWidget):
         k = event.key()
 
         # F1: Foco al buscador
-        if k == Qt.Key_F1:
+        if k == Qt.Key.Key_F1:
             self.txt_scan.setFocus(); self.txt_scan.selectAll()
             return
 
         # F3: Historial
-        if k == Qt.Key_F3:
+        if k == Qt.Key.Key_F3:
             self.abrir_historial_dia()
             return
 
         # F12: Cobrar
-        if k == Qt.Key_F12:
+        if k == Qt.Key.Key_F12:
             self.finalizar_venta()
             return
 
         # F5: Retiro
-        if k == Qt.Key_F5:
+        if k == Qt.Key.Key_F5:
             self.abrir_retiro_efectivo()
             return
 
         # F6: Ingreso
-        if k == Qt.Key_F6:
+        if k == Qt.Key.Key_F6:
             self.abrir_ingreso_efectivo()
             return
 
         # F10: Bloquear
-        if k == Qt.Key_F10:
+        if k == Qt.Key.Key_F10:
             self.bloquear_terminal()
             return
 
         # F4: Cierre de Caja
-        if k == Qt.Key_F4:
+        if k == Qt.Key.Key_F4:
             self.abrir_cierre_caja()
             return
 
         # Flecha Abajo desde el buscador
-        if self.txt_scan.hasFocus() and k == Qt.Key_Down:
+        if self.txt_scan.hasFocus() and k == Qt.Key.Key_Down:
             if not self.list_results.isHidden():
                 self.list_results.setFocus()
             elif self.tabla.rowCount() > 0:
@@ -1948,10 +1948,10 @@ class Paso5Terminal(QWidget):
 
         # Navegar en lista de resultados
         if self.list_results.hasFocus():
-            if k == Qt.Key_Up and self.list_results.currentRow() == 0:
+            if k == Qt.Key.Key_Up and self.list_results.currentRow() == 0:
                 self.txt_scan.setFocus()
                 return
-            if k in [Qt.Key_Return, Qt.Key_Enter]:
+            if k in [Qt.Key.Key_Return, Qt.Key.Key_Enter]:
                 self.seleccionar_item_busqueda()
                 return
 
@@ -1959,9 +1959,9 @@ class Paso5Terminal(QWidget):
         if self.tabla.hasFocus():
             row = self.tabla.currentRow()
             if row != -1:
-                if k in [Qt.Key_Left, Qt.Key_Right]:
+                if k in [Qt.Key.Key_Left, Qt.Key.Key_Right]:
                     old_v = float(self.tabla.item(row, 3).text())
-                    inc = 1 if k == Qt.Key_Right else -1
+                    inc = 1 if k == Qt.Key.Key_Right else -1
                     new_v = max(0, old_v + inc)
 
                     if new_v <= 0:
@@ -2022,11 +2022,11 @@ class Paso5Terminal(QWidget):
                     self.actualizar_totales()
                     return # intercepted
 
-                elif event.key() == Qt.Key_Delete:
+                elif event.key() == Qt.Key.Key_Delete:
                     suprimir_articulo(self, row)
                     return True
 
-                elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+                elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
                     nombre = self.tabla.item(row, 1).text()
                     cant_actual = float(self.tabla.item(row, 3).text())
 
@@ -2077,7 +2077,7 @@ class Paso5Terminal(QWidget):
                     return
 
             # Permitir que las flechas naveguen por las casillas de la tabla de forma fluida
-            if k in (Qt.Key_Up, Qt.Key_Down):
+            if k in (Qt.Key.Key_Up, Qt.Key.Key_Down):
                 super().keyPressEvent(event)
                 QTimer.singleShot(0, self._on_tabla_nav_row_only)
                 return

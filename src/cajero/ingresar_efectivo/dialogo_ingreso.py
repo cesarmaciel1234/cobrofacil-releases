@@ -208,16 +208,16 @@ class DialogoIngresoEfectivo(QDialog):
             self.lbl_err.setText("⚠️ Error interno al procesar el ingreso")
 
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self._procesar()
-        elif event.key() == Qt.Key_Escape:
+        elif event.key() == Qt.Key.Key_Escape:
             self.reject()
-        elif event.key() == Qt.Key_Left:
+        elif event.key() == Qt.Key.Key_Left:
             if self.tipo_ingreso == "FIADO":
                 self._set_modo("CAMBIO")
             elif self.tipo_ingreso == "OTROS":
                 self._set_modo("FIADO")
-        elif event.key() == Qt.Key_Right:
+        elif event.key() == Qt.Key.Key_Right:
             if self.tipo_ingreso == "CAMBIO":
                 self._set_modo("FIADO")
             elif self.tipo_ingreso == "FIADO":

@@ -389,7 +389,7 @@ class DialogoProducto(QDialog):
         """)
 
     def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.focusNextChild()
         else:
             super().keyPressEvent(event)

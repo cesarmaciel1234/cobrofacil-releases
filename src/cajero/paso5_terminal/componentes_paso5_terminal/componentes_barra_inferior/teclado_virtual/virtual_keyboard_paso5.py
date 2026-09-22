@@ -31,23 +31,23 @@ class VirtualKeyboardPaso5(QWidget):
         
         # Mapeo completo de caracteres a Qt.Key
         self.key_map = {
-            'a': Qt.Key_A, 'b': Qt.Key_B, 'c': Qt.Key_C, 'd': Qt.Key_D, 'e': Qt.Key_E,
-            'f': Qt.Key_F, 'g': Qt.Key_G, 'h': Qt.Key_H, 'i': Qt.Key_I, 'j': Qt.Key_J,
-            'k': Qt.Key_K, 'l': Qt.Key_L, 'm': Qt.Key_M, 'n': Qt.Key_N, 'o': Qt.Key_O,
-            'p': Qt.Key_P, 'q': Qt.Key_Q, 'r': Qt.Key_R, 's': Qt.Key_S, 't': Qt.Key_T,
-            'u': Qt.Key_U, 'v': Qt.Key_V, 'w': Qt.Key_W, 'x': Qt.Key_X, 'y': Qt.Key_Y,
-            'z': Qt.Key_Z,
-            'ñ': Qt.Key_Ntilde,
-            '0': Qt.Key_0, '1': Qt.Key_1, '2': Qt.Key_2, '3': Qt.Key_3, '4': Qt.Key_4,
-            '5': Qt.Key_5, '6': Qt.Key_6, '7': Qt.Key_7, '8': Qt.Key_8, '9': Qt.Key_9,
-            '-': Qt.Key_Minus, '=': Qt.Key_Equal, '+': Qt.Key_Plus, '*': Qt.Key_Asterisk,
-            '/': Qt.Key_Slash, '%': Qt.Key_Percent, '$': Qt.Key_Dollar, '@': Qt.Key_At,
-            '&': Qt.Key_Ampersand, '?': Qt.Key_Question, '!': Qt.Key_Exclam,
-            '(': Qt.Key_ParenLeft, ')': Qt.Key_ParenRight, '[': Qt.Key_BracketLeft, ']': Qt.Key_BracketRight,
-            '{': Qt.Key_BraceLeft, '}': Qt.Key_BraceRight, '<': Qt.Key_Less, '>': Qt.Key_Greater,
-            '#': Qt.Key_NumberSign, '_': Qt.Key_Underscore, '\\': Qt.Key_Backslash, '|': Qt.Key_Bar,
-            ';': Qt.Key_Semicolon, ':': Qt.Key_Colon, '"': Qt.Key_QuoteDbl, ',': Qt.Key_Comma,
-            '.': Qt.Key_Period
+            'a': Qt.Key.Key_A, 'b': Qt.Key.Key_B, 'c': Qt.Key.Key_C, 'd': Qt.Key.Key_D, 'e': Qt.Key.Key_E,
+            'f': Qt.Key.Key_F, 'g': Qt.Key.Key_G, 'h': Qt.Key.Key_H, 'i': Qt.Key.Key_I, 'j': Qt.Key.Key_J,
+            'k': Qt.Key.Key_K, 'l': Qt.Key.Key_L, 'm': Qt.Key.Key_M, 'n': Qt.Key.Key_N, 'o': Qt.Key.Key_O,
+            'p': Qt.Key.Key_P, 'q': Qt.Key.Key_Q, 'r': Qt.Key.Key_R, 's': Qt.Key.Key_S, 't': Qt.Key.Key_T,
+            'u': Qt.Key.Key_U, 'v': Qt.Key.Key_V, 'w': Qt.Key.Key_W, 'x': Qt.Key.Key_X, 'y': Qt.Key.Key_Y,
+            'z': Qt.Key.Key_Z,
+            'ñ': Qt.Key.Key_Ntilde,
+            '0': Qt.Key.Key_0, '1': Qt.Key.Key_1, '2': Qt.Key.Key_2, '3': Qt.Key.Key_3, '4': Qt.Key.Key_4,
+            '5': Qt.Key.Key_5, '6': Qt.Key.Key_6, '7': Qt.Key.Key_7, '8': Qt.Key.Key_8, '9': Qt.Key.Key_9,
+            '-': Qt.Key.Key_Minus, '=': Qt.Key.Key_Equal, '+': Qt.Key.Key_Plus, '*': Qt.Key.Key_Asterisk,
+            '/': Qt.Key.Key_Slash, '%': Qt.Key.Key_Percent, '$': Qt.Key.Key_Dollar, '@': Qt.Key.Key_At,
+            '&': Qt.Key.Key_Ampersand, '?': Qt.Key.Key_Question, '!': Qt.Key.Key_Exclam,
+            '(': Qt.Key.Key_ParenLeft, ')': Qt.Key.Key_ParenRight, '[': Qt.Key.Key_BracketLeft, ']': Qt.Key.Key_BracketRight,
+            '{': Qt.Key.Key_BraceLeft, '}': Qt.Key.Key_BraceRight, '<': Qt.Key.Key_Less, '>': Qt.Key.Key_Greater,
+            '#': Qt.Key.Key_NumberSign, '_': Qt.Key.Key_Underscore, '\\': Qt.Key.Key_Backslash, '|': Qt.Key.Key_Bar,
+            ';': Qt.Key.Key_Semicolon, ':': Qt.Key.Key_Colon, '"': Qt.Key.Key_QuoteDbl, ',': Qt.Key.Key_Comma,
+            '.': Qt.Key.Key_Period
         }
         
         self.init_ui()
@@ -288,11 +288,11 @@ class VirtualKeyboardPaso5(QWidget):
         modifiers = Qt.ShiftModifier if self.shift_active else Qt.NoModifier
         
         if key_text == "⌫":
-            self.send_key_event(focused, Qt.Key_Backspace, "", modifiers)
+            self.send_key_event(focused, Qt.Key.Key_Backspace, "", modifiers)
         elif key_text == "ESPACIO":
-            self.send_key_event(focused, Qt.Key_Space, " ", modifiers)
+            self.send_key_event(focused, Qt.Key.Key_Space, " ", modifiers)
         elif key_text == "ENTER":
-            self.send_key_event(focused, Qt.Key_Return, "\n", modifiers)
+            self.send_key_event(focused, Qt.Key.Key_Return, "\n", modifiers)
             self.hide()
             return
         else:
@@ -301,16 +301,16 @@ class VirtualKeyboardPaso5(QWidget):
             if self.layout_mode == "abc" and not self.shift_active and len(char_to_send) == 1:
                 char_to_send = char_to_send.lower()
                 
-            key_code = self.key_map.get(char_to_send.lower() if len(char_to_send) == 1 else char_to_send, Qt.Key_unknown)
+            key_code = self.key_map.get(char_to_send.lower() if len(char_to_send) == 1 else char_to_send, Qt.Key.Key_unknown)
             self.send_key_event(focused, key_code, char_to_send, modifiers)
 
     def send_key_event(self, target, key_code, text, modifiers):
         # Enviar evento de presionar tecla
-        event_press = QKeyEvent(QEvent.KeyPress, key_code, modifiers, text)
+        event_press = QKeyEvent(QEvent.Type.KeyPress, key_code, modifiers, text)
         QApplication.sendEvent(target, event_press)
         
         # Enviar evento de liberar tecla
-        event_release = QKeyEvent(QEvent.KeyRelease, key_code, modifiers, text)
+        event_release = QKeyEvent(QEvent.Type.KeyRelease, key_code, modifiers, text)
         QApplication.sendEvent(target, event_release)
 
     # Implementar arrastre de la ventana frameless

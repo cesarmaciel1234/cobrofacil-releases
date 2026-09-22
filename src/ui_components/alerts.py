@@ -65,6 +65,6 @@ class MensajeAtencion(QDialog):
         layout.addLayout(footer_layout)
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape or event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+        if event.key() == Qt.Key.Key_Escape or event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
             self.accept()
         super().keyPressEvent(event)
