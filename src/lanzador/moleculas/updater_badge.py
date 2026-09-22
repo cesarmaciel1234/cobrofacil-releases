@@ -392,7 +392,12 @@ class SmartLauncherUpdater(QFrame):
         try:
             from src.updater.silent_auto_updater import exit_and_relaunch_for_update
 
-            try:\n                from src.updater.ui.dialogs import RelaunchUpdateDialogDelegate\n                delegate = RelaunchUpdateDialogDelegate()\n            except ImportError:\n                delegate = None\n            exit_and_relaunch_for_update(delegate)
+            try:
+                from src.updater.ui.dialogs import RelaunchUpdateDialogDelegate
+                delegate = RelaunchUpdateDialogDelegate()
+            except ImportError:
+                delegate = None
+            exit_and_relaunch_for_update(delegate)
         except Exception:
             app = QApplication.instance()
             if app:
