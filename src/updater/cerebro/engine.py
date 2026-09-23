@@ -991,18 +991,21 @@ def apply_pending_update_on_startup(ui_delegate=None) -> bool:
                 "EXE post-update corrupto (PKG PyInstaller) y no hay .old usable."
             )
 
-        remote_ver = pending.get("remote_version") or read_remote_version()
-        if remote_ver:
-            version_path = _local_version_file()
-            try:
-                with open(version_path, encoding="utf-8") as f:
-                    local_data = json.load(f)
-            except (OSError, json.JSONDecodeError):
-                local_data = {}
-            local_data["app_version"] = remote_ver
-            local_data["last_silent_update"] = datetime.now(timezone.utc).isoformat()
-            with open(version_path, "w", encoding="utf-8") as f:
-                json.dump(local_data, f, indent=2, ensure_ascii=False)
+        version_path = _local_version_file()
+        try:
+            with open(version_path, encoding="utf-8") as f:
+                local_data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            local_data = {}
+        # La versión queda la del ZIP aplicado. No se pisa con la de GitHub,
+        # que puede adelantarse mientras el ejecutable todavía se está compilando.
+        if not str(local_data.get("app_version") or "").strip():
+            remote_ver = pending.get("remote_version") or read_remote_version()
+            if remote_ver:
+                local_data["app_version"] = remote_ver
+        local_data["last_silent_update"] = datetime.now(timezone.utc).isoformat()
+        with open(version_path, "w", encoding="utf-8") as f:
+            json.dump(local_data, f, indent=2, ensure_ascii=False)
 
         shutil.rmtree(staging, ignore_errors=True)
         try:
