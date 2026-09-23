@@ -35,9 +35,15 @@ def aplicar_tema(app: QApplication, qss_file: str = "estilo_noche.qss") -> bool:
             with open(base_path, "r", encoding="utf-8") as f_base:
                 estilo_base = f_base.read()
 
-        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import anexar
+        estilo_completo = estilo_base + "\n" + estilo_tema
+        try:
+            from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import (
+                anexar,
+            )
 
-        estilo_completo = anexar(estilo_base + "\n" + estilo_tema)
+            estilo_completo = anexar(estilo_completo)
+        except Exception as exc:
+            logger.error(f"Apariencia del cajero no cargada: {exc}")
 
         # Opcional: Reemplazar rutas relativas de assets si usamos imǭgenes en el QSS
         # base_dir = os.path.dirname(os.path.dirname(current_dir))

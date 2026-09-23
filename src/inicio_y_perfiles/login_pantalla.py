@@ -136,8 +136,15 @@ class LoginPantalla(QDialog):
         super().__init__(parent)
         self.role = role
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setProperty("theme", "light")
+        self.setStyleSheet(
+            "QDialog { background-color: #F8FAFC; }"
+            "QFrame#LoginContainer {"
+            " background-color: #FFFFFF; border-radius: 24px; border: 1px solid #E2E8F0;"
+            "}"
+            "QLabel { color: #0F172A; background: transparent; }"
+        )
         if parent is not None:
             w = min(max(560, int(parent.width() * 0.32)), 720)
             h = min(max(640, int(parent.height() * 0.72)), 860)

@@ -1172,7 +1172,7 @@ QFrame#LicenciaContainer { background: #FFFFFF; border-radius: 30px; border: non
 
 QDialog[theme="dark"] QFrame#LicenciaContainer { background: #F8FAFC; }
 
-QLabel#LicenciaTit { color: #FFFFFF; font-size: 26px; font-weight: 900; font-family: 'Segoe UI Black', sans-serif; }
+QLabel#LicenciaTit { color: #0F172A; font-size: 26px; font-weight: 900; font-family: 'Segoe UI Black', sans-serif; }
 
 QDialog[theme="dark"] QLabel#LicenciaTit { color: #1E3A8A; }
 
@@ -1182,7 +1182,7 @@ QLabel#LicenciaSub[estado="caducada"] { color: #F59E0B; font-size: 12px; }
 
 
 QLineEdit#LicenciaInput {
-    background: #1E3A8A; border: 2px dashed #E2E8F0; border-radius: 12px;
+    background: #FFFFFF; color: #0F172A; border: 2px dashed #E2E8F0; border-radius: 12px;
 }
 
 QDialog[theme="dark"] QLineEdit#LicenciaInput { background: #FFFFFF; border-color: #E2E8F0; color: #1E3A8A; }
@@ -1204,7 +1204,7 @@ QFrame#SplashContainer { background: #FFFFFF; border-radius: 35px; border: none;
 QDialog[theme="dark"] QFrame#SplashContainer { background: #F8FAFC; }
 
 
-QLabel#SplashTitle { color: white; font-size: 28px; font-weight: 900; border: none; }
+QLabel#SplashTitle { color: #0F172A; font-size: 28px; font-weight: 900; border: none; }
 
 QLabel#SplashStatus { color: #64748B; font-size: 12px; border: none; }
 
@@ -1212,7 +1212,7 @@ QProgressBar#SplashProgress::chunk { background: #10B981; border-radius: 3px; }
 
 
 /* --- Perfil Pantalla --- */
-QDialog#PerfilPantalla { background: transparent; border: none; }
+QDialog#PerfilPantalla { background: #FEF8EF; border: none; }
 
 QFrame#PerfilContainer { background: #FFFFFF; border-radius: 40px; border: none; }
 
@@ -1226,7 +1226,7 @@ QDialog[theme="dark"] QFrame#PerfilStripe { background: #FFFFFF; }
 
 QLabel#PerfilBadge { background: #FFFFFF; color: #1E3A8A; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 10px; letter-spacing: 2px; }
 
-QLabel#PerfilTitle { color: #FFFFFF; font-size: 28px; font-weight: 900; font-family: 'Segoe UI Black', sans-serif; letter-spacing: -1px; border: none; }
+QLabel#PerfilTitle { color: #1C1917; font-size: 28px; font-weight: 900; font-family: 'Segoe UI Black', sans-serif; letter-spacing: -1px; border: none; }
 
 QDialog[theme="dark"] QLabel#PerfilTitle { color: #1E3A8A; }
 
@@ -1238,7 +1238,7 @@ QLabel#PerfilHint { color: #64748B; font-size: 11px; font-weight: bold; border: 
 
 
 /* Perfil Card */
-QFrame#PerfilCardInner { background: #1E3A8A; border-radius: 20px; border: 1.5px solid #E2E8F0; }
+QFrame#PerfilCardInner { background: #FFFFFF; border-radius: 20px; border: 1.5px solid #E2E8F0; }
 
 QDialog[theme="dark"] QFrame#PerfilCardInner { background: #FFFFFF; border-color: #E2E8F0; }
 
