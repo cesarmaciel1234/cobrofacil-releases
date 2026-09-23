@@ -23,12 +23,12 @@ class CajaResumen(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("CajaResumen")
-        self.setMinimumWidth(230)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        self.setFixedWidth(320)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(4)
+        lay.setContentsMargins(10, 6, 10, 6)
+        lay.setSpacing(0)
 
         self.articulos = ContenedorArticulos(self)
         self.total = ContenedorTotal(self)

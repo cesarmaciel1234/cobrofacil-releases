@@ -31,7 +31,10 @@ class FilaResumen(QFrame):
         self.valor = EtiquetaFila("0")
         self.titulo.setProperty("tipo", "titulo")
         self.valor.setProperty("tipo", "valor")
+        self.titulo.setWordWrap(False)
+        self.valor.setWordWrap(False)
         self.valor.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self.setFixedHeight(26)
         lay.addWidget(self.titulo)
         lay.addWidget(self.valor, 1)
 

@@ -9,5 +9,5 @@ class TotalGrande(QLabel):
         super().__init__("$0,00", parent)
         self.setObjectName("TotalGrande")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setMinimumWidth(420)
+        self.setMinimumWidth(180)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)

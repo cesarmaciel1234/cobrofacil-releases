@@ -1,57 +1,58 @@
 ESTILO_BARRA = """
 QFrame#PanelTotales {
     background: #FFFFFF;
-    border-top: 1px solid #E2E8F0;
+    border: none; border-top: 2px solid #E2E8F0;
+    border-radius: 0px;
 }
 QLineEdit#TerminalScan {
-    background: #F8FAFC;
-    border: 2px solid #CBD5E1;
-    border-radius: 12px;
-    padding: 12px 18px;
-    font-size: 26px;
+    background: #FFFFFF;
+    border: 2px solid #475569;
+    border-radius: 16px;
+    padding: 12px 20px;
+    font-size: 22px;
     font-weight: 800;
     color: #0F172A;
-    min-height: 60px;
+    min-height: 0px;
 }
 QLineEdit#TerminalScan:focus {
-    border: 2px solid #3B82F6;
+    border: 2px solid #15293C;
     background: #FFFFFF;
 }
 QFrame#CajaResumen {
-    background: transparent;
-    border: none;
+    background: #FFFFFF;
+    border: 2px solid #475569;
+    border-radius: 14px;
 }
 QFrame#FilaResumen {
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #E2E8F0;
 }
 QFrame#FilaResumen QLabel[tipo="titulo"] {
-    color: #64748B;
+    color: #475569;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 13px;
+    letter-spacing: 0.4px;
     border: none;
     background: transparent;
 }
 QFrame#FilaResumen QLabel[tipo="valor"] {
     color: #0F172A;
-    font-weight: 900;
-    font-size: 13px;
+    font-weight: 800;
+    font-size: 15px;
     border: none;
     background: transparent;
 }
 QFrame#FilaResumen QLabel#TituloCambio { color: #EF4444; }
 QFrame#FilaResumen QLabel[tipo="valor"][resaltado="true"] {
-    color: #059669;
-    font-size: 14px;
+    color: #15803D;
+    font-size: 15px;
+    font-weight: 800;
 }
 QLabel#TotalGrande {
-    background-color: #FFFFFF;
-    color: #16A34A;
-    border: 2px solid #DCFCE7;
-    border-radius: 12px;
-    font-size: 52px;
-    font-weight: 900;
-    padding: 6px 28px;
+    background: transparent;
+    color: #15803D;
+    border: none;
+    padding: 0 8px;
 }
 """
