@@ -7,9 +7,12 @@ from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_
 from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.bloquear import (
     BotonBloquear,
 )
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.chatbot import (
-    BotonChatbot,
-)
+try:
+    from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.chatbot import (
+        BotonChatbot,
+    )
+except ImportError:
+    BotonChatbot = None
 from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.espera import (
     BotonEspera,
 )
@@ -125,9 +128,11 @@ class BarraDeHerramientasInferior(QFrame):
         self.boton_bloquear.clicked.connect(self.bloquear_presionado.emit)
         layout_principal.addWidget(self.boton_bloquear)
 
-        self.boton_chatbot = BotonChatbot()
-        self.boton_chatbot.clicked.connect(self.chatbot_presionado.emit)
-        layout_principal.addWidget(self.boton_chatbot)
+        self.boton_chatbot = None
+        if BotonChatbot is not None:
+            self.boton_chatbot = BotonChatbot()
+            self.boton_chatbot.clicked.connect(self.chatbot_presionado.emit)
+            layout_principal.addWidget(self.boton_chatbot)
 
     def actualizar_texto_espera(self, texto: str):
         self.boton_espera.setText(texto)
