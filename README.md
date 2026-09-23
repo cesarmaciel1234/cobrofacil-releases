@@ -1,6 +1,6 @@
 # Punto de Venta Pro
 
-Las IA leen `docs/piramide/README.md` antes de modificar código. Ahí está la documentación de la pirámide.
+Cómo se modulariza: `modularizacion.md`. Al mejorar un módulo se aplica esa forma. La auditoría de inventario arranca en `src/admin/auditoria_inventario/plano.md`.
 
 Sistema completo y editable de Punto de Venta.
 

@@ -71,6 +71,7 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --hidden-import "jinja2" ^
   --hidden-import "werkzeug" ^
   --add-data "src/ui_components;src/ui_components" ^
+  --add-data "src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia;src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia" ^
   --add-data "src/assets;src/assets" ^
   --add-data "src/carteleria/assets;src/carteleria/assets" ^
   --add-data "build/tv_cara.bin;." ^

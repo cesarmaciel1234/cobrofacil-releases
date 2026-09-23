@@ -1,6 +1,6 @@
 # Punto de Venta Pro
 
-Las IA leen `piramide/README.md` antes de modificar código.
+Cómo se modulariza está en `../modularizacion.md`, en la raíz. Al mejorar un módulo se aplica esa forma.
 
 Sistema completo y editable de Punto de Venta.
 

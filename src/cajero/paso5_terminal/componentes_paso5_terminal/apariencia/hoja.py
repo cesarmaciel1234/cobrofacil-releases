@@ -2,11 +2,22 @@
 
 from pathlib import Path
 
+from src.utils.paths import get_resource_path
+
 _AQUI = Path(__file__).resolve().parent
+_EN_PAQUETE = Path("src") / "cajero" / "paso5_terminal" / "componentes_paso5_terminal" / "apariencia"
 
 
 def _leer(relativo):
-    return (_AQUI / relativo).read_text(encoding="utf-8")
+    """Lee el qss al lado del código o dentro del ejecutable. Si no está, no tumba la venta."""
+    candidatos = (
+        _AQUI / relativo,
+        Path(get_resource_path(str(_EN_PAQUETE / relativo))),
+    )
+    for ruta in candidatos:
+        if ruta.is_file():
+            return ruta.read_text(encoding="utf-8")
+    return ""
 
 
 def hoja_cajero():
