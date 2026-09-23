@@ -19,7 +19,7 @@ class TecladoNumericoLateral(QFrame):
 
         kb_layout = QVBoxLayout(self)
         kb_layout.setContentsMargins(0, 0, 0, 0)
-        kb_layout.setSpacing(5)
+        kb_layout.setSpacing(10)
 
         rows = [
             ["1", "2", "3"],
@@ -35,13 +35,13 @@ class TecladoNumericoLateral(QFrame):
                 QPushButton {
                     background-color: #334155;
                     color: #F8FAFC;
-                    font-size: 16px;
+                    font-size: 24px;
                     font-weight: 800;
                     font-family: 'Segoe UI', sans-serif;
                     border: none;
                     border-radius: 14px;
-                    min-width: 48px;
-                    min-height: 48px;
+                    min-width: 64px;
+                    min-height: 64px;
                 }
                 QPushButton:hover {
                     background-color: #475569;
@@ -56,13 +56,13 @@ class TecladoNumericoLateral(QFrame):
                 QPushButton {
                     background-color: #FFFFFF;
                     color: #1E293B;
-                    font-size: 16px;
+                    font-size: 24px;
                     font-weight: 800;
                     font-family: 'Segoe UI', sans-serif;
                     border: none;
                     border-radius: 14px;
-                    min-width: 48px;
-                    min-height: 48px;
+                    min-width: 64px;
+                    min-height: 64px;
                 }
                 QPushButton:hover {
                     background-color: #E2E8F0;
@@ -78,7 +78,7 @@ class TecladoNumericoLateral(QFrame):
                 kb_layout.addStretch()
 
             row_lay = QHBoxLayout()
-            row_lay.setSpacing(5)
+            row_lay.setSpacing(10)
             row_lay.setContentsMargins(0, 0, 0, 0)
 
             for key in row:

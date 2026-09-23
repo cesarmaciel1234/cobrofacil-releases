@@ -49,7 +49,10 @@ class Paso6Cobro(QDialog):
 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(1200, 780)
+        screen = QApplication.primaryScreen().availableGeometry()
+        w = min(1200, screen.width() - 40)
+        h = min(780, screen.height() - 40)
+        self.setFixedSize(w, h)
 
         self.current_metodo = "Efectivo"
         self._fondo_blur_pixmap = None   # fondo desenfocado capturado
@@ -138,42 +141,59 @@ class Paso6Cobro(QDialog):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.stack = QStackedWidget(self)
+        self.stack.setObjectName("Paso6Stack")
         layout.addWidget(self.stack)
 
         # PÁGINA 0: SELECCIÓN DE MÉTODO
         self.page_method = QFrame()
-        self.page_method.setObjectName("Paso6Main")
+        self.page_method.setObjectName("Paso6Metodos")
         page_method_lay = QVBoxLayout(self.page_method)
-        page_method_lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        page_method_lay.setContentsMargins(0, 0, 0, 0)
+        page_method_lay.setSpacing(0)
 
-        lbl_title = QLabel("SELECCIONE EL MÉTODO DE PAGO")
-        lbl_title.setStyleSheet("font-size: 32px; font-weight: bold; color: #1E293B;")
+        barra = QFrame()
+        barra.setObjectName("Paso6MetodoBarra")
+        barra.setFixedHeight(72)
+        barra_lay = QHBoxLayout(barra)
+        barra_lay.setContentsMargins(32, 0, 32, 0)
+        lbl_title = QLabel("Método de pago")
+        lbl_title.setObjectName("Paso6MetodoTitulo")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        page_method_lay.addWidget(lbl_title)
-        page_method_lay.addSpacing(40)
+        barra_lay.addWidget(lbl_title)
+        page_method_lay.addWidget(barra)
 
         self.selector_metodos = SelectorMetodoPago(self)
         self.selector_metodos.metodo_seleccionado.connect(self.procesar_click_metodo)
         self.btns = self.selector_metodos.get_botones()
-        page_method_lay.addWidget(self.selector_metodos)
+        page_method_lay.addStretch(1)
+        page_method_lay.addWidget(self.selector_metodos, 0, Qt.AlignmentFlag.AlignHCenter)
+        page_method_lay.addStretch(1)
 
-        page_method_lay.addSpacing(60)
+        estilo_pie = (
+            "QPushButton { background-color: #FFFFFF; color: #0F172A; "
+            "border: 1px solid #E2E8F0; border-radius: 10px; font-size: 18px; font-weight: 800; } "
+            "QPushButton:hover { background-color: #F8FAFC; border-color: #CBD5E1; }"
+        )
 
-        btn_cancelar = QPushButton("❌ Volver al Carrito")
-        btn_cancelar.setFixedHeight(60)
-        btn_cancelar.setFixedWidth(300)
-        btn_cancelar.setStyleSheet("QPushButton { background-color: #EF4444; color: white; font-size: 20px; font-weight: bold; border-radius: 12px; } QPushButton:hover { background-color: #DC2626; }")
+        btn_cancelar = QPushButton("Volver al carrito")
+        btn_cancelar.setObjectName("Paso6Volver")
+        btn_cancelar.setFixedHeight(64)
+        btn_cancelar.setFixedWidth(220)
+        btn_cancelar.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_cancelar.setStyleSheet(estilo_pie)
         btn_cancelar.clicked.connect(self.reject)
 
 
         # Botón de Otras Opciones (Fiado, Clientes)
-        self.btn_otras = QPushButton("🌟 Otras Opciones")
-        self.btn_otras.setFixedHeight(60)
-        self.btn_otras.setFixedWidth(250)
-        self.btn_otras.setStyleSheet("QPushButton { background-color: #64748B; color: white; font-size: 20px; font-weight: bold; border-radius: 12px; } QPushButton:hover { background-color: #475569; }")
+        self.btn_otras = QPushButton("Otras opciones")
+        self.btn_otras.setObjectName("Paso6Otras")
+        self.btn_otras.setFixedHeight(64)
+        self.btn_otras.setFixedWidth(220)
+        self.btn_otras.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_otras.setStyleSheet(estilo_pie)
 
         # Crear Menú Desplegable
         from PyQt6.QtWidgets import QMenu
@@ -185,25 +205,27 @@ class Paso6Cobro(QDialog):
             QMenu::item:selected { background-color: #F1F5F9; color: #0F172A; }
         """)
 
-        act_fiado = QAction("👥 Fiado", self)
+        act_fiado = QAction("Fiado", self)
         act_fiado.triggered.connect(lambda: self.procesar_click_metodo("Fiado"))
         menu_otras.addAction(act_fiado)
 
-        act_clientes = QAction("👤 Cuenta Corriente", self)
+        act_clientes = QAction("Cuenta corriente", self)
         act_clientes.triggered.connect(lambda: self.procesar_click_metodo("Clientes"))
         menu_otras.addAction(act_clientes)
 
         self.btn_otras.setMenu(menu_otras)
 
-        lay_btn = QHBoxLayout()
+        pie = QFrame()
+        pie.setObjectName("Paso6MetodoPie")
+        pie.setFixedHeight(88)
+        lay_btn = QHBoxLayout(pie)
+        lay_btn.setContentsMargins(32, 0, 32, 0)
         lay_btn.addStretch()
         lay_btn.addWidget(btn_cancelar)
-        lay_btn.addSpacing(20)
+        lay_btn.addSpacing(16)
         lay_btn.addWidget(self.btn_otras)
         lay_btn.addStretch()
-
-
-        page_method_lay.addLayout(lay_btn)
+        page_method_lay.addWidget(pie)
         self.stack.addWidget(self.page_method)
 
         # PÁGINA 1: COBRO
@@ -254,6 +276,8 @@ class Paso6Cobro(QDialog):
 
         self.txt_pago = QLineEdit("")
         self.txt_pago.setObjectName("InputPago")
+        self.txt_pago.setFixedHeight(72)
+        self.txt_pago.setStyleSheet("font-size: 32px; font-weight: 900; border-radius: 12px; border: 2px solid #CBD5E1; color: #0F172A; background: #FFFFFF;")
         self.txt_pago.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_pago.setPlaceholderText("$ 0.00")
         self.txt_pago.textChanged.connect(self.calcular_vuelto)
@@ -267,6 +291,8 @@ class Paso6Cobro(QDialog):
 
         self.txt_otro = QLineEdit("0.00")
         self.txt_otro.setObjectName("InputPago")
+        self.txt_otro.setFixedHeight(72)
+        self.txt_otro.setStyleSheet("font-size: 32px; font-weight: 900; border-radius: 12px; border: 2px solid #CBD5E1; color: #0F172A; background: #FFFFFF;")
         self.txt_otro.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.txt_otro.textChanged.connect(self.calcular_vuelto)
         self.txt_otro.returnPressed.connect(self.intentar_finalizar)
@@ -299,6 +325,8 @@ class Paso6Cobro(QDialog):
 
         self.txt_desc = QLineEdit("")
         self.txt_desc.setObjectName("InputDesc")
+        self.txt_desc.setFixedHeight(48)
+        self.txt_desc.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
         self.txt_desc.setPlaceholderText("0.00")
         self.txt_desc.textChanged.connect(self.on_descuento_changed)
         self.txt_desc.installEventFilter(self)
@@ -310,6 +338,8 @@ class Paso6Cobro(QDialog):
 
         self.txt_rec = QLineEdit("")
         self.txt_rec.setObjectName("InputRec")
+        self.txt_rec.setFixedHeight(48)
+        self.txt_rec.setStyleSheet("font-size: 20px; font-weight: bold; border-radius: 8px; border: 1px solid #CBD5E1;")
         self.txt_rec.setPlaceholderText("0.00")
         self.txt_rec.textChanged.connect(self.on_recargo_changed)
         self.txt_rec.installEventFilter(self)
@@ -498,7 +528,7 @@ class Paso6Cobro(QDialog):
                 if os.path.exists(icon_path):
                     pixmap = QPixmap(icon_path)
                     # Tamaño según actividad (zoom de 110x95 en activo, 96x82 en inactivo)
-                    w_icon, h_icon = (110, 95) if is_active else (96, 82)
+                    w_icon, h_icon = (80, 70) if is_active else (64, 56)
                     lbl_icon.setPixmap(pixmap.scaled(w_icon, h_icon, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
 
             if lbl_text:
