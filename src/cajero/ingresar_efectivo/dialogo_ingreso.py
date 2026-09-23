@@ -26,8 +26,8 @@ class DialogoIngresoEfectivo(QDialog):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # Unified size for all panels to prevent layout collapse
-        self._ancho = 500
-        self._altura = 500
+        self._ancho = 560
+        self._altura = 600
         self.setFixedSize(self._ancho, self._altura)
 
         self._build()

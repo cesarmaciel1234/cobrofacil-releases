@@ -77,9 +77,8 @@ class CentroCobranzasPanel(QWidget):
         # Cabecera
         head = QFrame()
         head.setStyleSheet(
-            f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-            f"stop:0 {_EXEC['head_from']}, stop:1 {_EXEC['head_to']}); "
-            f"border: none; border-radius: 12px;"
+            f"background: transparent; "
+            f"border: none;"
         )
         head_lay = QVBoxLayout(head)
         head_lay.setContentsMargins(16, 14, 16, 14)
@@ -105,7 +104,7 @@ class CentroCobranzasPanel(QWidget):
         self.lbl_modo = QLabel("Mostrando: todos los deudores")
         self.lbl_modo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_modo.setStyleSheet(
-            f"font-size: 11px; color: {_EXEC['accent']}; font-weight: 700; "
+            f"font-size: 11px; color: #3B82F6; font-weight: 700; "
             "border: none; background: transparent; padding-top: 4px;"
         )
         lay.addWidget(self.lbl_modo)
@@ -123,7 +122,7 @@ class CentroCobranzasPanel(QWidget):
                 background: {_EXEC['bg']};
             }}
             QLineEdit:focus {{
-                border: 2px solid {_EXEC['accent']};
+                border: 2px solid #3B82F6;
                 background: white;
             }}
         """)
@@ -199,14 +198,14 @@ class CentroCobranzasPanel(QWidget):
         self.txt_monto.setMinimumHeight(70)
         self.txt_monto.setStyleSheet(f"""
             QLineEdit {{
-                font-size: 34px; font-weight: 900; color: {_EXEC['accent']};
+                font-size: 34px; font-weight: 900; color: {_EXEC['navy']};
                 border: 2px solid {_EXEC['border']};
                 border-radius: 12px;
                 padding: 10px;
                 background: white;
             }}
             QLineEdit:focus {{
-                border: 2px solid {_EXEC['accent']};
+                border: 2px solid #3B82F6;
             }}
         """)
         lay.addWidget(self.txt_monto)
