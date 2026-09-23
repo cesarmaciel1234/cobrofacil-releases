@@ -1,4 +1,6 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QFrame, QLineEdit
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QLabel, QPushButton, QFrame, QLineEdit, QGraphicsDropShadowEffect,
+)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QLinearGradient, QPalette, QBrush
 

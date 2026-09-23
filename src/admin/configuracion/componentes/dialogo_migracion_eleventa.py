@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
 import os, shutil, datetime, glob
 from src.config import config
+from src.admin.configuracion.componentes.migration_worker import MigrationWorker
 try:
     from src.base_de_datos.database import db_manager
 except ImportError:

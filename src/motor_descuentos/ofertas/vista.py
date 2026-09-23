@@ -1,5 +1,5 @@
 from src.utils.qt_compat import qt_exec
-from PyQt6.QtWidgets import (
+from PyQt6.QtWidgets import ( QFormLayout,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QFrame, QPushButton, QMessageBox, QDialog,
     QSplitter, QComboBox, QCheckBox, QRadioButton

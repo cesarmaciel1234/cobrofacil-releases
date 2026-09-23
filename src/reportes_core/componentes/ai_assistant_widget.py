@@ -18,7 +18,7 @@ try:
 except ImportError:
     from database import db_manager
 
-from src.jefe.reportes.admin_reportes.componentes.modern_card import ModernCard
+from src.reportes_core.componentes.modern_card import ModernCard
 
 def get_depto_icon(depto_name):
     if not depto_name:
@@ -98,9 +98,12 @@ class AIAssistantWidget(ModernCard):
         self.full_text = ""
         self.current_char = 0
 
-    def update_insights(self, chart_data, pago_sum, donut_data):
+    def update_insights(self, chart_data, pago_sum, donut_data, kpis=None):
         self.lbl_status.show()
         self.lbl_content.setText("")
+        chart_data = chart_data or {}
+        pago_sum = pago_sum or {}
+        donut_data = donut_data or {}
 
         # Generar texto de insights
         total_ventas = sum([d.get('ventas', 0) for d in chart_data.values()])

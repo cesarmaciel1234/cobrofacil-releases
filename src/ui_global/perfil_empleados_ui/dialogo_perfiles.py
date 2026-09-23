@@ -71,7 +71,8 @@ class DialogoPerfiles(QDialog):
 
         # --- CARD DE EDICIÓN ---
         card = QFrame()
-        card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 16px;")        card_lay = QVBoxLayout(card)
+        card.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 16px;")
+        card_lay = QVBoxLayout(card)
         card_lay.setContentsMargins(25, 25, 25, 25)
         card_lay.setSpacing(15)
 

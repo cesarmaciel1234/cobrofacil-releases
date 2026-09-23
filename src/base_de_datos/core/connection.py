@@ -2,6 +2,7 @@ from typing import List, Tuple, Any, Optional
 import sqlite3
 import os
 import sys
+from src.utils.qt_compat import qt_exec
 from src.logger import logger
 from src.base_de_datos.core.db_path import normalize_db_path
 from src.base_de_datos.core.red_rol import leer_rol_red_desde_config

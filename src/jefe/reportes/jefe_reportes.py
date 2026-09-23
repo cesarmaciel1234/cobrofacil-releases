@@ -1120,7 +1120,6 @@ class JefeReportes(QWidget):
             f"border-color: #BFDBFE; }}"
         )
 
-        from src.jefe.reportes.admin_reportes.componentes.modern_card import ModernCard
         filter_card = ModernCard()
         fv_lay = QVBoxLayout(filter_card)
         fv_lay.setContentsMargins(25, 18, 25, 18)

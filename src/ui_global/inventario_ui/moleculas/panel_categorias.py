@@ -69,7 +69,8 @@ class PanelCategorias(QWidget):
         # Formulario
         form_frame = QFrame()
         form_frame.setObjectName("formFrame")
-        form_frame.setStyleSheet("QFrame#formFrame { background: white; border-radius: 12px; border: 1px solid #E2E8F0; }")        form_lay = QVBoxLayout(form_frame)
+        form_frame.setStyleSheet("QFrame#formFrame { background: white; border-radius: 12px; border: 1px solid #E2E8F0; }")
+        form_lay = QVBoxLayout(form_frame)
         form_lay.setContentsMargins(20, 20, 20, 20)
         form_lay.setSpacing(15)
 

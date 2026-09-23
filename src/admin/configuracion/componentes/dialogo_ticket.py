@@ -62,7 +62,8 @@ class DialogoTicket(QDialog):
                 border-top: 2px dashed #9CA3AF;
                 border-bottom: 2px dashed #9CA3AF;
             }
-        """)        self.        self.ticket_frame.setFixedWidth(280)
+        """)
+        self.ticket_frame.setFixedWidth(280)
 
         t_lay = QVBoxLayout(self.ticket_frame)
         t_lay.setContentsMargins(15, 20, 15, 20)

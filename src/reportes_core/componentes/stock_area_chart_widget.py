@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
     QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QRect, QPoint, QSize, QThread, QUrl
+from PyQt6.QtCore import Qt, pyqtSignal, QRect, QPoint, QPointF, QSize, QThread, QUrl
 from PyQt6.QtGui import QColor, QFont, QPainter, QBrush, QPen, QLinearGradient, QPolygon, QPainterPath
 import datetime
 

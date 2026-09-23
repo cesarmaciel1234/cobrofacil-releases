@@ -91,7 +91,8 @@ class PanelDepartamentos(QWidget):
 
         form_card = QFrame()
         form_card.setObjectName("formCard")
-        form_card.setStyleSheet("QFrame#formCard { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }")        rl = QVBoxLayout(form_card)
+        form_card.setStyleSheet("QFrame#formCard { background: white; border: 1px solid #E2E8F0; border-radius: 12px; }")
+        rl = QVBoxLayout(form_card)
         rl.setContentsMargins(20, 20, 20, 20)
         rl.setSpacing(15)
 

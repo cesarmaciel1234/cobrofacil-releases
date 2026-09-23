@@ -135,7 +135,14 @@ class PosPrinter:
         if config.get("printer_3nstar_mode", False):
             comando = GS_A_1 + comando
 
-        return self._send_raw_data(comando, printer_name_override=p_name)
+        ok = self._send_raw_data(comando, printer_name_override=p_name)
+        try:
+            from src.notificaciones.motor.estado import publicar
+
+            publicar("cajon", "💵 CAJÓN ABIERTO", segundos=12)
+        except Exception:
+            pass
+        return ok
 
     def check_drawer_status(self, printer_name_override=None):
         """

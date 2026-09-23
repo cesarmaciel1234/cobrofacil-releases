@@ -34,7 +34,7 @@ class AdminEtiquetas(QWidget):
         theme_manager.theme_changed.connect(self._apply_theme)
         QTimer.singleShot(50, self._apply_theme)
 
-    def _create_shadow(self):        return shadow
+    def _create_shadow(self): return None
 
     def setup_ui(self):
         main_layout = QVBoxLayout(self)

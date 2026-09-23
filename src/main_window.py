@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
             border: none;
             letter-spacing: 5px;
         """)
-        # Sombra de impacto        self.        self.layout_alerta.addWidget(self.lbl_watermark)
+        self.layout_alerta.addWidget(self.lbl_watermark)
 
         self.lbl_timestamp = QLabel("00/00/0000 00:00:00")
         self.lbl_timestamp.setAlignment(Qt.AlignCenter)

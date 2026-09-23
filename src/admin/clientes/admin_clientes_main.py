@@ -3,7 +3,8 @@ from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QLineEdit, QMessageBox, QDialog,
-                             QFormLayout, QDoubleSpinBox, QComboBox)
+                             QFormLayout, QDoubleSpinBox, QComboBox,
+                             QGraphicsDropShadowEffect)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
@@ -105,7 +106,11 @@ class AdminClientes(QWidget):
         panel_tabla.setStyleSheet(
             f"background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px;"
         )
-        tbl_        tbl_        tbl_        tbl_        panel_tabla.setGraphicsEffect(tbl_shadow)
+        tbl_shadow = QGraphicsDropShadowEffect(self)
+        tbl_shadow.setBlurRadius(18)
+        tbl_shadow.setColor(QColor(15, 23, 42, 30))
+        tbl_shadow.setOffset(0, 4)
+        panel_tabla.setGraphicsEffect(tbl_shadow)
         pt_lay = QVBoxLayout(panel_tabla)
         pt_lay.setContentsMargins(20, 20, 20, 20)
 

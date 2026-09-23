@@ -46,7 +46,8 @@ class VistaProveedor(QWidget):
                 border: 1px solid {PAL['border']};
                 border-radius: 16px;
             }}
-        """)        fl = QGridLayout(left_panel)
+        """)
+        fl = QGridLayout(left_panel)
         fl.setContentsMargins(25, 25, 25, 25); fl.setSpacing(15)
 
         title_lbl = QLabel("🧾 DATOS DEL REMITO")
@@ -119,7 +120,8 @@ class VistaProveedor(QWidget):
         totals_card.setStyleSheet(f"""
             QFrame {{ background: #0F172A; border-radius: 16px; border: 2px solid #1E293B; }}
             QLabel {{ color: white; background: transparent; }}
-        """)        t_lay = QVBoxLayout(totals_card)
+        """)
+        t_lay = QVBoxLayout(totals_card)
         t_lay.setContentsMargins(20, 20, 20, 20)
 
         lbl_t1 = QLabel("RESUMEN DE ROMANEO")

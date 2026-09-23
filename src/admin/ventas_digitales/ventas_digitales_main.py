@@ -388,9 +388,9 @@ class Admin14VentasDigitales(QWidget):
             c.setStyleSheet(
                 "QFrame{background:white;border:1px solid #e2e8f0;"
                 "border-radius:12px;padding:12px;}")
-            sh = QGraphicsDropShadowEffect(c)
-            sh.setBlurRadius(12); sh.setOffset(0, 3)
-            sh.setColor(QColor(0, 0, 0, 25)); c.setGraphicsEffect(sh)
+            # sh = QGraphicsDropShadowEffect(c)
+            # sh.setBlurRadius(12); sh.setOffset(0, 3)
+            # sh.setColor(QColor(0, 0, 0, 25)); c.setGraphicsEffect(sh)
             cl = QVBoxLayout(c); cl.setSpacing(4)
             lt = QLabel(title)
             lt.setStyleSheet("font-size:10px; font-weight:900;  letter-spacing:1px;")

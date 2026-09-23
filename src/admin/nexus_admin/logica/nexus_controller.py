@@ -157,10 +157,8 @@ class NexusController(QObject):
         if is_new_filter and hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'add_log'):
             self.view.panel_izq.add_log(f"[FILTRO APLICADO] Auditando: {origen}")
 
-        if hasattr(self.view, 'panel_der'):
-            self.view.panel_der.caja_filter = str(origen)
-            if hasattr(self.view.panel_der, 'filtrar_auditoria'):
-                self.view.panel_der.filtrar_auditoria()
+        if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'set_caja_filter'):
+            self.view.panel_der.set_caja_filter(origen)
         self._sync_live_data()
 
     def _force_z_close_from_panel(self, monto_fisico):

@@ -1,4 +1,6 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame
+from PyQt6.QtWidgets import (
+    QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QGraphicsDropShadowEffect,
+)
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont
 from src.base_de_datos.database import db_manager
@@ -115,7 +117,11 @@ class AperturaCajaPantalla(QDialog):
                 background: #047857;
             }
         """)
-        btn_        btn_        btn_        btn_        btn.setGraphicsEffect(btn_shadow)
+        btn_shadow = QGraphicsDropShadowEffect(self)
+        btn_shadow.setBlurRadius(16)
+        btn_shadow.setColor(QColor(16, 185, 129, 70))
+        btn_shadow.setOffset(0, 4)
+        btn.setGraphicsEffect(btn_shadow)
         btn.clicked.connect(self.guardar_y_seguir)
         content.addWidget(btn)
 

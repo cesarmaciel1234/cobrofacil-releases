@@ -16,4 +16,10 @@ def ejecutar_comun(datos, extra_validar=None):
     if resultado.get("cliente_nombre"):
         datos["cliente_nombre"] = resultado["cliente_nombre"]
     post_cobro(datos, id_v, resultado)
+    try:
+        from src.notificaciones.motor.estado import publicar
+
+        publicar("cobro_ok", f"✅ COBRO EXITOSO — ticket {id_v}", segundos=10)
+    except Exception:
+        pass
     return True, None

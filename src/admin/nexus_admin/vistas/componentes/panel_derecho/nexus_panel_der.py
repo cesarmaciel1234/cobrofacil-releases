@@ -196,9 +196,14 @@ class NexusPanelDer(QFrame):
             q += " AND fecha >= ? AND fecha <= ?"
             p.extend([hoy.strftime("%Y-%m-01 00:00:00"), hoy.strftime("%Y-%m-31 23:59:59")])
 
-        if self.caja_filter > 0:
+        try:
+            caja_id = int(self.caja_filter)
+        except (TypeError, ValueError):
+            num = re.search(r"\d+", str(self.caja_filter or ""))
+            caja_id = int(num.group()) if num else 0
+        if caja_id > 0:
             q += " AND caja_id=?"
-            p.append(self.caja_filter)
+            p.append(caja_id)
 
         q_count = "SELECT COUNT(*) " + q[q.find("FROM movimientos_caja"):]
         try:

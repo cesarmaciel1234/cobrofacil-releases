@@ -18,7 +18,8 @@ class MetricCard(QFrame):
         self.setFixedHeight(108)
         self.setStyleSheet(
             f"background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px;"
-        )        lay = QHBoxLayout(self)
+        )
+        lay = QHBoxLayout(self)
         lay.setContentsMargins(20, 10, 20, 10)
         lay.setSpacing(15)
 

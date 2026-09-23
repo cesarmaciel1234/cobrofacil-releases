@@ -189,9 +189,14 @@ class Paso5Terminal(QWidget):
 
 
     def _refresh_urgencia_stock_banner(self):
-        activo = bool(config.get("opt_stock_negativo", False))
-        if hasattr(self, "urgencia_stock_banner"):
-            self.urgencia_stock_banner.set_active(activo)
+        self._refrescar_notificaciones()
+
+    def _refrescar_notificaciones(self):
+        try:
+            if hasattr(self, "notificador"):
+                self.notificador.refrescar()
+        except Exception:
+            pass
 
     def refresh_terminal_title(self):
         title = config.get('business_name', 'Punto de Venta [20.09.02]')
@@ -206,8 +211,7 @@ class Paso5Terminal(QWidget):
 
         # Determinar si la base de datos es local (Maestra) o remota (Cliente)
         is_local = base_path in db_path or not db_path or db_path == "punpro.db"
-        estado_text = "Estado:           MAESTRA" if is_local else "Estado:           CLIENTE"
-        self.lbl_estado.setText(estado_text)
+        self.lbl_estado.setText("Maestra" if is_local else "Cliente")
 
         # Generar código de instalación único a partir de la dirección MAC
         mac_str = f"{uuid.getnode():012X}"
@@ -237,12 +241,7 @@ class Paso5Terminal(QWidget):
 
             # Registrar presencia de este terminal
             self.controller.registrar_heartbeat(caja_id, hostname)
-
-            # Obtener cantidad de terminales activos
-            total_activos = self.controller.get_terminales_activos_count()
-
-            # Actualizar etiqueta
-            self.lbl_caja_num.setText(f"Caja №:        [{caja_id:02d}]{hostname}  ({total_activos} PC(s) online)")
+            self.lbl_caja_num.setText(f"{caja_id:02d}   ·   {hostname}")
 
             # Efecto Destello (Flash LED Blanco a Verde estilo router)
             self.led_status.setProperty("estado", "parpadeo"); self.led_status.style().unpolish(self.led_status); self.led_status.style().polish(self.led_status)
@@ -253,23 +252,12 @@ class Paso5Terminal(QWidget):
             try:
                 caja_id = config.get("caja_id", 1)
                 hostname = socket.gethostname().upper()
-                self.lbl_caja_num.setText(f"Caja №:        [{caja_id:02d}]{hostname}  (Desconectado)")
+                self.lbl_caja_num.setText(f"{caja_id:02d}   ·   {hostname}")
             except Exception:
-                self.lbl_caja_num.setText("Caja №:        Desconectado")
+                self.lbl_caja_num.setText("Caja")
 
     def verificar_stock_minimo(self):
-        try:
-            bajos = self.controller.stock_ofertas.get_stock_critico_count()
-
-            if bajos > 0:
-                self.lbl_stock_alert.setText(f"🔔 ALERTA DE INVENTARIO: Hay {bajos} productos con stock crítico/debajo del mínimo.")
-                if self.stock_alert_bar.isHidden():
-                    self.stock_alert_bar.show()
-            else:
-                if not self.stock_alert_bar.isHidden():
-                    self.stock_alert_bar.hide()
-        except Exception as e:
-            logger.debug(f"Stock checker error: {e}")
+        self._refrescar_notificaciones()
 
     def verificar_autocierre(self):
         try:
@@ -380,16 +368,9 @@ class Paso5Terminal(QWidget):
         self._orig_title = title
 
         # 2. Centro de Notificaciones (Reemplaza banner y alertas de stock)
-        self.notificador = CentroDeNotificaciones()
+        self.notificador = CentroDeNotificaciones(zona_iconos=self.cabecera.zona_alertas)
         self.main_layout.addWidget(self.notificador)
-
-        # Mapeo de alertas
-        self.stock_alert_bar = self.notificador.alerta_stock
-        self.lbl_stock_alert = self.notificador.etiqueta_alerta_stock
-        self.urgencia_stock_banner = self.notificador.alerta_urgencia
-        # Parche para que el método .set_active() antiguo de UrgenciaStockBanner funcione
-        self.urgencia_stock_banner.set_active = lambda activo: self.urgencia_stock_banner.show() if activo else self.urgencia_stock_banner.hide()
-        self._refresh_urgencia_stock_banner()
+        self._refrescar_notificaciones()
 
         # Inicializar datos en la barra y cabecera
         self.refresh_status_bar()
@@ -974,7 +955,8 @@ class Paso5Terminal(QWidget):
         return super().eventFilter(obj, event)
 
     def flash_feedback(self, success=True):
-        color = "#10B981" if success else "#EF4444"
+        """Pinta el borde. El texto del cobro lo muestra el notificador."""
+        self._flash_borde = True
         estado_str = "exito" if success else "alerta"
 
         self.dashboard_frame.setProperty("estado", estado_str)
@@ -990,6 +972,7 @@ class Paso5Terminal(QWidget):
         self.cabecera.style().polish(self.cabecera)
 
         def reset_style():
+            self._flash_borde = False
             self.dashboard_frame.setProperty("estado", "normal")
             self.dashboard_frame.style().unpolish(self.dashboard_frame)
             self.dashboard_frame.style().polish(self.dashboard_frame)
@@ -1066,8 +1049,10 @@ class Paso5Terminal(QWidget):
         title_px = m["title_font"]
         row_h = m["table_row"]
 
-        self.lbl_terminal_title.setObjectName("TerminalTitle")
-        self.lbl_terminal_title.setStyleSheet(f"font-size: {title_px}px; font-weight: 900; color: white; letter-spacing: 2px;")
+        self.lbl_terminal_title.setObjectName("TerminalCabeceraTitulo")
+        self.lbl_terminal_title.setStyleSheet(
+            f"font-size: {title_px}px; font-weight: 800; color: white; letter-spacing: 4px; background: transparent;"
+        )
         self.lbl_total_val.setObjectName("TotalGrande")
         self.txt_scan.setObjectName("TerminalScan")
         self.panel_totales.actualizar_estilo_cambio(False)
@@ -1200,7 +1185,7 @@ class Paso5Terminal(QWidget):
 
     def actualizar_reloj(self):
         ahora = datetime.now()
-        self.lbl_fecha.setText(f"Fecha:  {ahora.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.cabecera.actualizar_reloj(ahora)
 
         # Cada 5 segundos verificamos los niveles de efectivo en caja para activar alertas SOS
         if ahora.second % 5 == 0:
@@ -1232,7 +1217,10 @@ class Paso5Terminal(QWidget):
 
     def check_alertas_efectivo(self):
         """Monitorea el efectivo en caja y parpadea los bordes si excede los límites."""
-        # Evitar parpadeos superpuestos si ya hay un feedback temporal corriendo
+        self._refrescar_notificaciones()
+        # El borde verde/rojo del cobro manda. El exceso queda solo en el notificador.
+        if getattr(self, "_flash_borde", False):
+            return
         if hasattr(self, '_parpadeo_activo') and self._parpadeo_activo:
             return
         from src.config import config
@@ -1439,70 +1427,6 @@ class Paso5Terminal(QWidget):
             self.txt_scan.selectAll()
             self.txt_scan.setFocus()
             return
-
-        # Si hay lista de búsqueda abierta
-        if not self.list_results.isHidden():
-            current = self.list_results.currentItem()
-            if current:
-                p = current.data(Qt.UserRole)
-                if p:
-                    self.agregar_a_tabla(p, cantidad_multiplicador)
-                    self.txt_scan.clear()
-                    self._ocultar_busqueda()
-                    self.txt_scan.setFocus()
-                    return
-
-        # --- BUSQUEDA DE PRODUCTO ---
-        # 1. Intentar búsqueda por ID exacto (Barcode completo) primero
-        res_direct = [self.controller.carrito.buscar_producto_exacto(txt)] if self.controller.carrito.buscar_producto_exacto(txt) else []
-        if res_direct:
-            p = res_direct[0]
-            self.agregar_a_tabla(p, cantidad_multiplicador)
-            self.txt_scan.clear()
-            self._ocultar_busqueda()
-            self.txt_scan.setFocus()
-            return
-
-        # 2. Lógica PRO: Códigos de Balanza (Configuración Dinámica)
-        if BarcodeParser.is_balanza_ean(txt):
-            from src.repositories.producto_repository import ProductoRepository
-            plu, plu_limpio = BarcodeParser.extract_plu_from_barcode(txt)
-            p = ProductoRepository.obtener_por_plu_balanza(plu)
-            if p:
-                precio_unitario = float(p['precio'])
-                _, cantidad_balanza = BarcodeParser.parse_balanza_code(txt, precio_unitario)
-                if cantidad_balanza is not None and cantidad_balanza > 0:
-                    self.agregar_a_tabla(p, cantidad_balanza)
-                    self.txt_scan.clear()
-                    self._ocultar_busqueda()
-                    self.txt_scan.setFocus()
-                    return
-            else:
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.warning(
-                    self, "Balanza: Producto no encontrado",
-                    f"Etiqueta de balanza leída (PLU {plu_limpio}), pero no hay producto con ese código en inventario.\n\n"
-                    f"El ID del producto debe coincidir con el PLU de la balanza (ej. producto 2050 → PLU 02050).\n"
-                    f"Código escaneado: {txt}"
-                )
-                self.txt_scan.selectAll()
-                self.txt_scan.setFocus()
-                return
-
-        # 3. Escaneo directo o búsqueda por nombre (Productos Normales)
-        res = self.controller.carrito.buscar_productos(txt)
-
-        if res:
-            p = res[0]
-            self.agregar_a_tabla(p, cantidad_multiplicador)
-            self.txt_scan.clear()
-            self._ocultar_busqueda()
-            self.txt_scan.setFocus()
-        else:
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "No Encontrado", f"No se encontró ningún producto con el código o nombre: '{txt}'")
-            self.txt_scan.selectAll()
-            self.txt_scan.setFocus()
 
     def agregar_a_tabla(self, p, cantidad=1.0):
         # OPTIMIZACION: Congelar el renderizado de la tabla hasta que terminen todos los calculos
@@ -1791,7 +1715,9 @@ class Paso5Terminal(QWidget):
         self.lbl_ahorro_val.show()
         self.lbl_ahorro_val.setObjectName("AhorroVal")
         # Aseguramos el tamaño de fuente fijo para evitar que se vea 'mini'
-        self.lbl_ahorro_val.setStyleSheet("font-size: 38px; color: #FF4500; font-weight: 900; border: none;")
+        self.lbl_ahorro_val.setStyleSheet(
+            "font-size: 32px; color: #FF4500; font-weight: 900; border: none; padding: 0 16px;"
+        )
 
         from src.utils.qt_compat import VariantFloatAnimation
         self._ahorro_anim = VariantFloatAnimation(self)
@@ -2148,9 +2074,8 @@ class Paso5Terminal(QWidget):
         # Ejecutamos el cobro
         ok = qt_exec(dlg)
         self._cobro_abierto = False
-
-        # Quitamos el desenfoque
         self.setGraphicsEffect(None)
+        self._refrescar_notificaciones()
 
         if ok:
             # Capturar info de la venta exitosa antes de limpiar

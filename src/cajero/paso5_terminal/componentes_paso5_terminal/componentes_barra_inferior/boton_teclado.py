@@ -1,10 +1,5 @@
-from PyQt6.QtWidgets import QPushButton
-from PyQt6.QtCore import Qt
+from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.teclado import (
+    BotonTeclado,
+)
 
-class BotonTeclado(QPushButton):
-    def __init__(self, parent=None):
-        super().__init__("⌨️ TECLADO", parent)
-        self.setFixedHeight(40)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        pass
+__all__ = ["BotonTeclado"]

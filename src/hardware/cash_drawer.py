@@ -117,10 +117,12 @@ class CashDrawerManager(QObject):
         if status != self._last_status:
             if status is True:
                 self.drawer_opened.emit()
+                _avisar_cajon(True)
                 if not self._apertura_autorizada:
                     self.intrusion_detected.emit()
             else:
                 self.drawer_closed.emit()
+                _avisar_cajon(False)
                 self._apertura_autorizada = False
 
             self._last_status = status
@@ -142,6 +144,18 @@ class CashDrawerManager(QObject):
     @property
     def is_authorized(self):
         return self._apertura_autorizada
+
+
+def _avisar_cajon(abierto: bool) -> None:
+    try:
+        from src.notificaciones.motor.estado import publicar, retirar
+
+        if abierto:
+            publicar("cajon", "💵 CAJÓN ABIERTO", segundos=600)
+        else:
+            retirar("cajon")
+    except Exception:
+        pass
 
 # Instancia única (Singleton) para todo el sistema
 drawer_manager = None

@@ -44,7 +44,8 @@ class DialogoNotificacionesCorreo(QDialog):
         lay.addWidget(self.chk_activo)
 
         form_frame = QFrame()
-        form_frame.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px;")        f_lay = QVBoxLayout(form_frame)
+        form_frame.setStyleSheet("background: white; border: 1px solid #E2E8F0; border-radius: 12px;")
+        f_lay = QVBoxLayout(form_frame)
         f_lay.setContentsMargins(20, 20, 20, 20)
         f_lay.setSpacing(10)
 

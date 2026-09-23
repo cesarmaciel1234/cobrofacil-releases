@@ -123,7 +123,7 @@ class Admin10MP(QWidget):
                 }}
             """)
 
-            # Drop shadow            cl = QVBoxLayout(card)
+            cl = QVBoxLayout(card)
             cl.setSpacing(5)
 
             lbl_title = QLabel(title)

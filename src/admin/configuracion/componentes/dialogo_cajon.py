@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QDialog, QTableWidget, QTableWidgetItem, QHeaderView, QLineEdit, QComboBox, QMessageBox, QInputDialog, QCheckBox,
     QFileDialog, QTextEdit
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QCursor, QFont, QColor
 import os, shutil, datetime, glob
 from src.config import config

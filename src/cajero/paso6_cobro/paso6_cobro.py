@@ -1014,7 +1014,14 @@ class Paso6Cobro(QDialog):
     def reject(self):
         try:
             self.timer_mp.stop()
-        except: pass
+        except Exception:
+            pass
+        try:
+            from src.notificaciones.motor.estado import publicar
+
+            publicar("cobro_cancelado", "⛔ COBRO CANCELADO", segundos=10)
+        except Exception:
+            pass
         super().reject()
 
     def eventFilter(self, watched, event):

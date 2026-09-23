@@ -39,9 +39,13 @@ class AIBubble(QPushButton):
             }
         """)
 
-        # Efecto de sombra/resplandor
-                from PyQt6.QtGui import QColor
-        self.        self.        self.        self.        self.setGraphicsEffect(self.shadow)
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtGui import QColor
+        self.shadow = QGraphicsDropShadowEffect(self)
+        self.shadow.setBlurRadius(18)
+        self.shadow.setColor(QColor(168, 85, 247, 110))
+        self.shadow.setOffset(0, 0)
+        self.setGraphicsEffect(self.shadow)
 
         # Timer para animación de pulsación sutil
         self.pulse_timer = QTimer(self)
@@ -58,7 +62,7 @@ class AIBubble(QPushButton):
             self.pulse_scale -= 0.05
             if self.pulse_scale <= 1.0: self.growing = True
 
-        self.        self.update()
+        self.update()
 
     def mousePressEvent(self, event):
         # Permitir que el botón sea arrastrable en el futuro (opcional)
@@ -67,6 +71,6 @@ class AIBubble(QPushButton):
 if __name__ == "__main__":
     from PyQt6.QtWidgets import QApplication
     app = QApplication(sys.argv)
-    win = Admin12AIBoss()
+    win = QWidget()
     win.showMaximized()
     sys.exit(qt_exec(app))

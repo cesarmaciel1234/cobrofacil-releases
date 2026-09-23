@@ -171,11 +171,11 @@ Paso5Terminal[theme="light"] QTableWidget#TerminalTabla::item {
 }
 
 QLabel#TerminalCabeceraEstado, QLabel#TerminalCabeceraInstalacion, QLabel#TerminalCabeceraCaja, QLabel#TerminalCabeceraFecha {
- font-weight: bold; font-size: 16px; 
+ font-weight: 700; font-size: 20px; 
 }
 
 QLabel#TerminalCabeceraTitulo {
- font-size: 26px; font-weight: bold; 
+ font-size: 30px; font-weight: 800; 
 }
 
 QFrame#EditCantDialog QDoubleSpinBox {
@@ -682,9 +682,9 @@ QPushButton[is_shortcut="true"] {
    CORRECCION DE TEXTO DE INSTALACION (MACIEL CARNICERIA)
    ========================================= */
 QLabel#TerminalCabeceraInstalacion {
-    font-size: 24px !important;
-    font-weight: 900 !important;
-    letter-spacing: 1px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.4px !important;
 }
 
 

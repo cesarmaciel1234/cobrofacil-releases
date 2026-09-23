@@ -16,7 +16,7 @@ class BotonFlotanteRegreso(QPushButton):
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         self.setCursor(Qt.PointingHandCursor)
 
-        # Sombra profunda para estética Midnight Premium        self.old_pos = None
+        self.old_pos = None
         self.press_pos = None
         self._emergency_state = False
 

@@ -37,7 +37,8 @@ class DialogoProducto(QDialog):
 
         # --- SECCIÓN: CÓDIGO DE BARRAS (ALTA VISIBILIDAD) ---
         barcode_frame = QFrame()
-        barcode_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #CBD5E1;")        bar_lay = QVBoxLayout(barcode_frame)
+        barcode_frame.setStyleSheet("background: white; border-radius: 16px; border: 1px solid #CBD5E1;")
+        bar_lay = QVBoxLayout(barcode_frame)
         bar_lay.setContentsMargins(20, 15, 20, 15)
 
         lbl_bc = QLabel("CÓDIGO DE BARRAS / PLU:")
@@ -141,7 +142,8 @@ class DialogoProducto(QDialog):
 
         # Tarjeta Finanzas (Derecha)
         price_card = QFrame()
-        price_card.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 16px; padding: 15px;")        p_lay = QFormLayout(price_card)
+        price_card.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 16px; padding: 15px;")
+        p_lay = QFormLayout(price_card)
         p_lay.setSpacing(12)
 
         self.txt_costo = self.create_price_input(str(dict(datos).get('costo', '0.00')) if datos else '0.00')

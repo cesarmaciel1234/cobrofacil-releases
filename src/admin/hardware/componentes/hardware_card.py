@@ -38,7 +38,9 @@ class HardwareCard(QFrame):
             }
         """)
 
-        # Sombra de impacto suave        layout = QVBoxLayout(self); layout.setContentsMargins(20,20,20,20); layout.setSpacing(8)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(8)
 
         lbl_icon = QLabel(icon)
         lbl_icon.setStyleSheet("font-size: 32px; border: none; background: transparent;")

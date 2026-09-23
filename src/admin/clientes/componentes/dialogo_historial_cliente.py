@@ -3,11 +3,13 @@ from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QLineEdit, QMessageBox, QDialog,
-                             QFormLayout, QDoubleSpinBox, QComboBox)
+                             QFormLayout, QDoubleSpinBox, QComboBox,
+                             QGraphicsDropShadowEffect)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
-from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
+from src.repositories.cliente_repository import ClienteRepository
+from src.admin.clientes.componentes.dialogo_editar_cliente import DialogoEditarCliente, FIADO_EXPRESS_LIMITE_DEFAULT
 
 
 from src.admin.clientes.theme import _CLI
@@ -37,7 +39,11 @@ class DialogoHistorialCliente(QDialog):
         panel.setStyleSheet(
             f"QFrame {{ background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px; }}"
         )
-        p_        p_        p_        p_        panel.setGraphicsEffect(p_shadow)
+        p_shadow = QGraphicsDropShadowEffect(self)
+        p_shadow.setBlurRadius(18)
+        p_shadow.setColor(QColor(15, 23, 42, 30))
+        p_shadow.setOffset(0, 4)
+        panel.setGraphicsEffect(p_shadow)
         p_lay = QVBoxLayout(panel)
         p_lay.setContentsMargins(22, 20, 22, 20)
         p_lay.setSpacing(12)

@@ -120,6 +120,16 @@ class DialogoHistorialDia(QDialog):
         if res == QMessageBox.Yes:
             success = self.controller.cancelar_venta(self.ticket_seleccionado, username)
             if success:
+                try:
+                    from src.notificaciones.motor.estado import publicar
+
+                    publicar(
+                        "cobro_cancelado",
+                        f"⛔ COBRO CANCELADO — ticket {self.ticket_seleccionado}",
+                        segundos=10,
+                    )
+                except Exception:
+                    pass
                 QMessageBox.information(
                     self, "Éxito",
                     f"Venta #{self.ticket_seleccionado} cancelada. Inventario actualizado.",
