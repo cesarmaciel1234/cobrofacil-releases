@@ -63,9 +63,9 @@ class CentroCobranzasPanel(QWidget):
         self.card.setObjectName("CobranzaCard")
         self.card.setStyleSheet(f"""
             QFrame#CobranzaCard {{
-                background: {_EXEC['card']};
-                border: 1px solid {_EXEC['border']};
-                border-radius: 18px;
+                background: transparent;
+                border: none;
+                border-radius: 0px;
             }}
         """)
         # Se elimina la sombra (QGraphicsDropShadowEffect) para optimizar rendimiento.
@@ -79,7 +79,7 @@ class CentroCobranzasPanel(QWidget):
         head.setStyleSheet(
             f"background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
             f"stop:0 {_EXEC['head_from']}, stop:1 {_EXEC['head_to']}); "
-            f"border: 1px solid {_EXEC['border']}; border-radius: 12px;"
+            f"border: none; border-radius: 12px;"
         )
         head_lay = QVBoxLayout(head)
         head_lay.setContentsMargins(16, 14, 16, 14)
@@ -138,7 +138,7 @@ class CentroCobranzasPanel(QWidget):
         self.lista.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.lista.setStyleSheet(f"""
             QListWidget {{
-                border: 1px solid {_EXEC['border']};
+                border: none;
                 border-radius: 10px;
                 background: {_EXEC['bg']};
                 font-size: 13px;
@@ -279,7 +279,7 @@ class CentroCobranzasPanel(QWidget):
         self.lista.show()
 
         if not consulta:
-            self.lbl_modo.setText("Escriba para buscar por privacidad...")
+            self.lbl_modo.setText("Escriba para buscar un cliente...")
             self.lbl_cliente.setText("Esperando búsqueda...")
             self.btn_imprimir.setVisible(False)
             if not self._cliente:

@@ -38,7 +38,7 @@ class DialogoIngresoEfectivo(QDialog):
 
         self._card = QFrame()
         self._card.setStyleSheet(
-            "QFrame { background: #FFFFFF; border: 3px solid #1E3A8A; border-radius: 18px; }"
+            "QFrame { background: #FFFFFF; border: 2px solid #E2E8F0; border-radius: 18px; }"
         )
         outer.addWidget(self._card)
 
@@ -106,18 +106,18 @@ class DialogoIngresoEfectivo(QDialog):
         btn_cancel = QPushButton("  ESC  Cancelar")
         btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cancel.setStyleSheet(
-            "QPushButton { background: #DC2626; color: white; font-weight: bold; "
-            "font-size: 14px; padding: 12px 20px; border-radius: 10px; border: none; }"
-            "QPushButton:hover { background: #B91C1C; }"
+            "QPushButton { background: #FEE2E2; color: #DC2626; font-weight: 800; "
+            "font-size: 14px; padding: 14px; border-radius: 12px; border: none; }"
+            "QPushButton:hover { background: #FCA5A5; color: #991B1B; }"
         )
         btn_cancel.clicked.connect(self.reject)
 
         btn_ok = QPushButton("✅ CONFIRMAR")
         btn_ok.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_ok.setStyleSheet(
-            "QPushButton { background: #2563EB; color: white; font-weight: 900; font-size: 14px; "
-            "padding: 12px 20px; border-radius: 10px; border: none; letter-spacing: 1px; }"
-            "QPushButton:hover { background: #1D4ED8; }"
+            "QPushButton { background: #3B82F6; color: white; font-weight: 900; font-size: 14px; "
+            "padding: 14px; border-radius: 12px; border: none; letter-spacing: 1px; }"
+            "QPushButton:hover { background: #2563EB; }"
         )
         btn_ok.clicked.connect(self._procesar)
 
