@@ -43,7 +43,51 @@ QLabel#LoginFieldLbl {
     background: transparent;
     border: none;
     padding: 0px;
-    margin-top: 8px;
+    margin-top: 12px;
+    margin-bottom: 2px;
+}
+QLabel#LoginTitle {
+    color: #0F172A !important;
+    font-size: 26px;
+    font-weight: 900;
+    background: transparent;
+    border: none;
+    letter-spacing: -0.5px;
+}
+QLabel#LoginBadge {
+    color: #64748B;
+    background: #F1F5F9;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 800;
+}
+QLabel#LoginHeaderLbl {
+    color: #0F172A !important;
+    font-size: 13px;
+    font-weight: 800;
+}
+QPushButton#BtnLogin {
+    background: #10B981;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 800;
+}
+QPushButton#BtnLogin:hover {
+    background: #059669;
+}
+QPushButton#BtnLoginCancel {
+    color: #64748B;
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+}
+QPushButton#BtnLoginCancel:hover {
+    color: #0F172A;
+    text-decoration: underline;
 }
 """
 
@@ -67,7 +111,9 @@ class UsuarioCampo(QLineEdit):
         popup.setStyleSheet(
             "QAbstractItemView { background: #FFFFFF; color: #0F172A; "
             "selection-background-color: #DBEAFE; selection-color: #0F172A; "
-            "border: 1px solid #E2E8F0; outline: none; }"
+            "border: 1px solid #E2E8F0; border-radius: 8px; outline: none; padding: 4px; font-size: 16px; }"
+            "QAbstractItemView::item { padding: 12px; border-radius: 6px; }"
+            "QAbstractItemView::item:selected { background: #DBEAFE; color: #0F172A; }"
         )
         pal = popup.palette()
         pal.setColor(QPalette.ColorRole.Base, QColor("#FFFFFF"))
