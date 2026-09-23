@@ -144,12 +144,30 @@ class LoginPantalla(QDialog):
         else:
             w, h = 600, 760
         self.setFixedSize(w, h)
+        
+        self._dragging = False
+        self._drag_pos = QPoint()
+
         self._setup_ui()
         try:
             from src.utils.bot_state import update_bot_state
             update_bot_state("paso3")
         except Exception:
             pass
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = True
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self._dragging and event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self._dragging = False
 
     def _setup_ui(self):
         root = QVBoxLayout(self)

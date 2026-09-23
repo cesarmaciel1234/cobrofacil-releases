@@ -35,9 +35,7 @@ def aplicar_tema(app: QApplication, qss_file: str = "estilo_noche.qss") -> bool:
             with open(base_path, "r", encoding="utf-8") as f_base:
                 estilo_base = f_base.read()
 
-        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import (
-            anexar,
-        )
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import anexar
 
         estilo_completo = anexar(estilo_base + "\n" + estilo_tema)
 

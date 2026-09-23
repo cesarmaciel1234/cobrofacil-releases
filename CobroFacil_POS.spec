@@ -7,13 +7,21 @@ a = Analysis(
     binaries=[],
     datas=[
         ('src/assets', 'src/assets'),
-        ('src/ui_components/*.qss', 'src/ui_components')
+        ('src/ui_components/*.qss', 'src/ui_components'),
+        ('src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia/aviso/*.qss', 'src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia/aviso'),
+        ('src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia/perfil/*.qss', 'src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia/perfil')
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja',
+        'src.cajero.paso6_cobro.mercadopago_core',
+        'src.reportes_core',
+        'src.services.db_network_service',
+        'qrcode'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['PyQt5'],
     noarchive=False,
     optimize=0,
 )
