@@ -8,6 +8,7 @@ class EntradaCodigo(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("TerminalScan")
-        self.setPlaceholderText("Código o producto")
-        self.setFixedSize(420, 120)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setPlaceholderText("Código o Producto (F1)...")
+        self.setMinimumWidth(420)
+        self.setFixedHeight(72)
+        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)

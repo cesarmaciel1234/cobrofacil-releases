@@ -1,8 +1,8 @@
 ESTILO_BARRA = """
 QFrame#PanelTotales {
     background: #FFFFFF;
-    border: none; border-top: 2px solid #E2E8F0;
-    border-radius: 0px;
+    border: 2px solid #475569;
+    border-radius: 18px;
 }
 QLineEdit#TerminalScan {
     background: #FFFFFF;
