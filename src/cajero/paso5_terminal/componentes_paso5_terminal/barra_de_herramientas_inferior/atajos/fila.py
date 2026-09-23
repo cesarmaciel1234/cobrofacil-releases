@@ -29,13 +29,14 @@ class BotonesAtajos(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setObjectName("TerminalScrollAtajos")
-        self.setFixedHeight(50)
+        self.setStyleSheet("QScrollArea { background: transparent; border: none; } QWidget#TerminalContenedorAtajos { background: transparent; }")
+        self.setFixedHeight(70)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         self.contenedor_atajos = QWidget()
         self.contenedor_atajos.setObjectName("TerminalContenedorAtajos")
         layout_atajos = QHBoxLayout(self.contenedor_atajos)
-        layout_atajos.setSpacing(8)
+        layout_atajos.setSpacing(12)
         layout_atajos.setContentsMargins(0, 0, 0, 0)
 
         self.botones_f = []

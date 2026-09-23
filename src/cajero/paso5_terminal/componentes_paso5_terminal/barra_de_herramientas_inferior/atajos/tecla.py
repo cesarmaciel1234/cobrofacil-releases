@@ -8,5 +8,5 @@ class TeclaAtajo(QPushButton):
         self.setProperty("is_shortcut", "true")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setFixedSize(44, 40)
+        self.setFixedSize(70, 50)
         self.setToolTip(tooltip)

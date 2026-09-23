@@ -12,7 +12,7 @@ barra_de_herramientas_inferior/
   espera/                  tickets en espera
   atajos/
     tecla.py               una tecla F
-    cobrar.py              F12, al final, en azul
+    cobrar.py              F12, al final, mismo color que las demás
     fila.py                F1 F3 F4 F5 F6 F7 F8 F11 y después F12
   bloquear/                candado
   chatbot/                 botón del asistente

@@ -34,10 +34,62 @@ class BarraDeHerramientasInferior(QFrame):
 
     def __init__(self, mostrar_teclado=True, version_sistema="COBRO FACIL", parent=None):
         super().__init__(parent)
-        self.setFixedHeight(55)
+        self.setFixedHeight(70)
+        self.setStyleSheet('''
+            BarraDeHerramientasInferior {
+                background-color: #F8FAFC;
+                border-top: 1px solid #CBD5E1;
+            }
+            QPushButton {
+                background-color: #FFFFFF;
+                border: 2px solid #CBD5E1;
+                border-radius: 8px;
+                color: #0F172A;
+                font-weight: 800;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #F1F5F9;
+                border-color: #94A3B8;
+            }
+            QPushButton:pressed {
+                background-color: #E2E8F0;
+                border-color: #64748B;
+            }
+            QPushButton[is_shortcut="true"] {
+                color: #1E3A8A;
+                font-size: 16px;
+                font-weight: 900;
+            }
+            QPushButton#BtnTeclado, QPushButton#BtnTheme, QPushButton#BtnEspera {
+                padding: 0 20px;
+                font-size: 15px;
+            }
+            QPushButton#TerminalBtnBloquear {
+                background-color: #0F172A;
+                border: none;
+                border-radius: 8px;
+            }
+            QPushButton#TerminalBtnBloquear:hover {
+                background-color: #334155;
+            }
+            QPushButton#TerminalBtnChatbot {
+                background-color: #10B981;
+                border: none;
+                border-radius: 8px;
+            }
+            QPushButton#TerminalBtnChatbot:hover {
+                background-color: #059669;
+            }
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #475569;
+            }
+        ''')
 
         layout_principal = QHBoxLayout(self)
-        layout_principal.setContentsMargins(15, 0, 5, 0)
+        layout_principal.setContentsMargins(15, 0, 15, 0)
 
         if mostrar_teclado:
             self.boton_teclado = BotonTeclado()
