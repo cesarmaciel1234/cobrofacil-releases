@@ -103,26 +103,7 @@ class UsuarioCampo(QLineEdit):
 
     def set_usuarios(self, users):
         self._usuarios = list(users or [])
-        completer = QCompleter(self._usuarios, self)
-        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-        completer.setFilterMode(Qt.MatchFlag.MatchContains)
-        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-        popup = completer.popup()
-        popup.setStyleSheet(
-            "QAbstractItemView { background: #FFFFFF; color: #0F172A; "
-            "selection-background-color: #DBEAFE; selection-color: #0F172A; "
-            "border: 1px solid #E2E8F0; border-radius: 8px; outline: none; padding: 4px; font-size: 16px; }"
-            "QAbstractItemView::item { padding: 12px; border-radius: 6px; }"
-            "QAbstractItemView::item:selected { background: #DBEAFE; color: #0F172A; }"
-        )
-        pal = popup.palette()
-        pal.setColor(QPalette.ColorRole.Base, QColor("#FFFFFF"))
-        pal.setColor(QPalette.ColorRole.Text, QColor("#0F172A"))
-        pal.setColor(QPalette.ColorRole.Highlight, QColor("#DBEAFE"))
-        pal.setColor(QPalette.ColorRole.HighlightedText, QColor("#0F172A"))
-        popup.setPalette(pal)
-        self.setCompleter(completer)
-
+        # Autocompletado eliminado a peticion del usuario
     def completar(self):
         txt = (self.text() or "").strip()
         if not txt:
