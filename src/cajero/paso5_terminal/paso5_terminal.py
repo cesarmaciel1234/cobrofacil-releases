@@ -521,7 +521,9 @@ class Paso5Terminal(QWidget):
         self.lbl_version = self.barra_herramientas.etiqueta_version
         self.btn_espera = self.barra_herramientas.boton_espera
         self._shortcuts_scroll = self.barra_herramientas.scroll_atajos
-        self.shortcut_buttons = self.barra_herramientas.scroll_atajos.botones_f
+        self.shortcut_buttons = (
+            self._shortcuts_scroll.botones_f if self._shortcuts_scroll is not None else {}
+        )
         self.btn_candado = self.barra_herramientas.boton_bloquear
         self.btn_chatbot = self.barra_herramientas.boton_chatbot
 
@@ -668,8 +670,8 @@ class Paso5Terminal(QWidget):
         if hasattr(self, 'lbl_total_val'): self.lbl_total_val.setObjectName("TotalGrande")
         if hasattr(self, 'side_box'): self.side_box.setObjectName("TerminalSideBox")
         if hasattr(self, 'status_bar'): self.status_bar.setObjectName("TerminalStatusBar")
-        if hasattr(self, 'btn_teclado'): self.btn_teclado.setObjectName("BtnTeclado")
-        if hasattr(self, 'btn_theme'): self.btn_theme.setObjectName("BtnTheme")
+        if getattr(self, "btn_teclado", None): self.btn_teclado.setObjectName("BtnTeclado")
+        if getattr(self, "btn_theme", None): self.btn_theme.setObjectName("BtnTheme")
         if hasattr(self, 'icon_lbl'): self.icon_lbl.setObjectName("TerminalIconLbl")
         if hasattr(self, 'tabla'): self.tabla.setObjectName("TerminalTabla")
 
@@ -973,22 +975,23 @@ class Paso5Terminal(QWidget):
     def _actualizar_barra_cajero(self):
         """Refresca el label de la barra de estado con el cajero activo."""
         nombre_str = CajeroActivo.nombre.upper()
-        if CajeroActivo.numero == 2:
-            from src.updater.github_updater import get_local_version
-            self.lbl_version.setText(f"🟢 {nombre_str}  |  CF {get_local_version()}")
-            self.lbl_version.setObjectName("VersionLabel"); self.lbl_version.setProperty("estado", "normal"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
-            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
-
-            # Activar el tema rosado para el auxiliar
-            self._pintar_perfil_cajero()
-        else:
-            from src.updater.github_updater import get_local_version
-            self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
-            self.lbl_version.setProperty("estado", "offline"); self.lbl_version.style().unpolish(self.lbl_version); self.lbl_version.style().polish(self.lbl_version)
-            self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
-
-            # Volver al tema azul para cajero normal
-            self._pintar_perfil_cajero()
+        from src.updater.github_updater import get_local_version
+        if self.lbl_version is not None:
+            if CajeroActivo.numero == 2:
+                self.lbl_version.setText(f"🟢 {nombre_str}  |  CF {get_local_version()}")
+                self.lbl_version.setObjectName("VersionLabel")
+                self.lbl_version.setProperty("estado", "normal")
+            else:
+                self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
+                self.lbl_version.setProperty("estado", "offline")
+            self.lbl_version.style().unpolish(self.lbl_version)
+            self.lbl_version.style().polish(self.lbl_version)
+        if self.btn_candado is not None:
+            self.btn_candado.setObjectName("BtnCandado")
+            self.btn_candado.setProperty("estado", "normal")
+            self.btn_candado.style().unpolish(self.btn_candado)
+            self.btn_candado.style().polish(self.btn_candado)
+        self._pintar_perfil_cajero()
 
     def _pintar_perfil_cajero(self):
         """Azul Francia o rosa. La hoja está en apariencia/perfil."""
@@ -2188,6 +2191,8 @@ class Paso5Terminal(QWidget):
         CarteleriaService.notificar_escaneo(carrito, total_ahorro, ultimo_producto)
 
     def _actualizar_boton_espera(self):
+        if self.btn_espera is None:
+            return
         c = len(self.tickets_espera)
         if c > 0:
             self.btn_espera.setText(f"{c} en espera")

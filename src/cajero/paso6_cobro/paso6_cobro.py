@@ -1,7 +1,6 @@
 from src.utils.qt_compat import qt_exec
 import hashlib
 import os
-from PIL import Image, ImageChops
 from PyQt6.QtWidgets import (
 
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,

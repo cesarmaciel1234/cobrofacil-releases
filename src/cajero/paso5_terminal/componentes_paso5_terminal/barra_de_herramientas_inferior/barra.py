@@ -1,29 +1,43 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QFrame, QHBoxLayout
 
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.atajos import (
-    BotonesAtajos,
+
+def _cargar(ruta, nombre):
+    """Si una pieza no viajó en el ejecutable, la barra sigue y la venta abre."""
+    try:
+        modulo = __import__(ruta, fromlist=[nombre])
+        return getattr(modulo, nombre)
+    except ImportError:
+        return None
+
+
+BotonesAtajos = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.atajos",
+    "BotonesAtajos",
 )
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.bloquear import (
-    BotonBloquear,
+BotonBloquear = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.bloquear",
+    "BotonBloquear",
 )
-try:
-    from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.chatbot import (
-        BotonChatbot,
-    )
-except ImportError:
-    BotonChatbot = None
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.espera import (
-    BotonEspera,
+BotonChatbot = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.chatbot",
+    "BotonChatbot",
 )
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.teclado import (
-    BotonTeclado,
+BotonEspera = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.espera",
+    "BotonEspera",
 )
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.tema import (
-    BotonTema,
+BotonTeclado = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.teclado",
+    "BotonTeclado",
 )
-from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.version import (
-    EtiquetaVersion,
+BotonTema = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.tema",
+    "BotonTema",
+)
+EtiquetaVersion = _cargar(
+    "src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.version",
+    "EtiquetaVersion",
 )
 
 
@@ -96,37 +110,48 @@ class BarraDeHerramientasInferior(QFrame):
         layout_principal = QHBoxLayout(self)
         layout_principal.setContentsMargins(15, 0, 15, 0)
 
-        if mostrar_teclado:
+        self.boton_teclado = None
+        if mostrar_teclado and BotonTeclado is not None:
             self.boton_teclado = BotonTeclado()
             self.boton_teclado.clicked.connect(self.teclado_presionado.emit)
             layout_principal.addWidget(self.boton_teclado)
             layout_principal.addSpacing(10)
 
-        self.boton_tema = BotonTema()
-        self.boton_tema.clicked.connect(self.tema_presionado.emit)
-        layout_principal.addWidget(self.boton_tema)
-        layout_principal.addSpacing(10)
+        self.boton_tema = None
+        if BotonTema is not None:
+            self.boton_tema = BotonTema()
+            self.boton_tema.clicked.connect(self.tema_presionado.emit)
+            layout_principal.addWidget(self.boton_tema)
+            layout_principal.addSpacing(10)
 
-        self.etiqueta_version = EtiquetaVersion(version_sistema)
-        layout_principal.addWidget(self.etiqueta_version)
-        layout_principal.addSpacing(10)
-
-        layout_principal.addStretch(1)
-
-        self.boton_espera = BotonEspera()
-        self.boton_espera.clicked.connect(self.espera_presionado.emit)
-        layout_principal.addWidget(self.boton_espera)
+        self.etiqueta_version = None
+        if EtiquetaVersion is not None:
+            self.etiqueta_version = EtiquetaVersion(version_sistema)
+            layout_principal.addWidget(self.etiqueta_version)
+            layout_principal.addSpacing(10)
 
         layout_principal.addStretch(1)
 
-        self.scroll_atajos = BotonesAtajos()
-        self.scroll_atajos.tecla_f_presionada.connect(self.tecla_f_presionada.emit)
-        layout_principal.addWidget(self.scroll_atajos, stretch=2)
-        layout_principal.addSpacing(10)
+        self.boton_espera = None
+        if BotonEspera is not None:
+            self.boton_espera = BotonEspera()
+            self.boton_espera.clicked.connect(self.espera_presionado.emit)
+            layout_principal.addWidget(self.boton_espera)
 
-        self.boton_bloquear = BotonBloquear()
-        self.boton_bloquear.clicked.connect(self.bloquear_presionado.emit)
-        layout_principal.addWidget(self.boton_bloquear)
+        layout_principal.addStretch(1)
+
+        self.scroll_atajos = None
+        if BotonesAtajos is not None:
+            self.scroll_atajos = BotonesAtajos()
+            self.scroll_atajos.tecla_f_presionada.connect(self.tecla_f_presionada.emit)
+            layout_principal.addWidget(self.scroll_atajos, stretch=2)
+            layout_principal.addSpacing(10)
+
+        self.boton_bloquear = None
+        if BotonBloquear is not None:
+            self.boton_bloquear = BotonBloquear()
+            self.boton_bloquear.clicked.connect(self.bloquear_presionado.emit)
+            layout_principal.addWidget(self.boton_bloquear)
 
         self.boton_chatbot = None
         if BotonChatbot is not None:
@@ -135,7 +160,9 @@ class BarraDeHerramientasInferior(QFrame):
             layout_principal.addWidget(self.boton_chatbot)
 
     def actualizar_texto_espera(self, texto: str):
-        self.boton_espera.setText(texto)
+        if self.boton_espera is not None:
+            self.boton_espera.setText(texto)
 
     def set_tema_texto(self, texto: str):
-        self.boton_tema.setText(texto)
+        if self.boton_tema is not None:
+            self.boton_tema.setText(texto)
