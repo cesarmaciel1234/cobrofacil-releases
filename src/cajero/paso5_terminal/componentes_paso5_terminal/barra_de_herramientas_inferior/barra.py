@@ -38,53 +38,55 @@ class BarraDeHerramientasInferior(QFrame):
         self.setStyleSheet('''
             BarraDeHerramientasInferior {
                 background-color: #F8FAFC;
-                border-top: 1px solid #CBD5E1;
+                border-top: 1px solid #E2E8F0;
             }
             QPushButton {
                 background-color: #FFFFFF;
-                border: 2px solid #CBD5E1;
-                border-radius: 8px;
+                border: 2px solid #475569;
+                border-radius: 10px;
                 color: #0F172A;
                 font-weight: 800;
-                font-size: 14px;
+                font-size: 15px;
             }
             QPushButton:hover {
+                background-color: #F8FAFC;
+                border-color: #334155;
+            }
+            QPushButton:pressed {
                 background-color: #F1F5F9;
                 border-color: #94A3B8;
             }
-            QPushButton:pressed {
-                background-color: #E2E8F0;
-                border-color: #64748B;
-            }
             QPushButton[is_shortcut="true"] {
                 color: #1E3A8A;
-                font-size: 16px;
-                font-weight: 900;
+                font-size: 15px;
+                font-weight: 800;
             }
             QPushButton#BtnTeclado, QPushButton#BtnTheme, QPushButton#BtnEspera {
-                padding: 0 20px;
-                font-size: 15px;
+                padding: 0 16px;
+                font-size: 14px;
+                font-weight: 800;
+                letter-spacing: 0.4px;
             }
             QPushButton#TerminalBtnBloquear {
-                background-color: #0F172A;
+                background-color: #15293C;
                 border: none;
                 border-radius: 8px;
             }
             QPushButton#TerminalBtnBloquear:hover {
-                background-color: #334155;
+                background-color: #1E3A4C;
             }
             QPushButton#TerminalBtnChatbot {
-                background-color: #10B981;
+                background-color: #15803D;
                 border: none;
                 border-radius: 8px;
             }
             QPushButton#TerminalBtnChatbot:hover {
-                background-color: #059669;
+                background-color: #166534;
             }
             QLabel {
                 font-size: 14px;
-                font-weight: bold;
-                color: #475569;
+                font-weight: 800;
+                color: #64748B;
             }
         ''')
 

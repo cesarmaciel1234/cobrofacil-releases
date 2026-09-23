@@ -7,14 +7,12 @@ from PyQt6.QtGui import QColor, QFont
 
 class DialogoPagosMixtos(QDialog):
     """
-    Dialogo Avanzado para Pagos Multimoneda y Multimetodo
-    Permite dividir el pago entre Efectivo, Tarjeta, MercadoPago y Dólares.
+    Divide el pago entre Efectivo, Tarjeta, Transferencia y QR.
     """
 
-    def __init__(self, total_a_pagar, tasa_usd=1000.0, parent=None):
+    def __init__(self, total_a_pagar, parent=None):
         super().__init__(parent)
         self.total_a_pagar = total_a_pagar
-        self.tasa_usd = tasa_usd
 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -24,7 +22,7 @@ class DialogoPagosMixtos(QDialog):
             "efectivo": 0.0,
             "tarjeta": 0.0,
             "mercadopago": 0.0,
-            "usd": 0.0
+            "qr": 0.0
         }
 
         self._setup_ui()
@@ -87,17 +85,12 @@ class DialogoPagosMixtos(QDialog):
         self.lbl_ef, self.txt_efectivo = crear_input("Efectivo ($)", "💵", "#10B981")
         self.lbl_tj, self.txt_tarjeta = crear_input("Tarjeta ($)", "💳", "#F59E0B")
         self.lbl_mp, self.txt_mercadopago = crear_input("Transferencia ($)", "🏦", "#0EA5E9")
-        self.lbl_us, self.txt_usd = crear_input(f"Dólares (U$S)", "🗽", "#8B5CF6")
-
-        self.lbl_tasa = QLabel(f"(Tasa de cambio: ${self.tasa_usd:,.2f})")
-        self.lbl_tasa.setStyleSheet("font-size: 12px; color: #94A3B8; border: none;")
-        self.lbl_tasa.setAlignment(Qt.AlignCenter)
+        self.lbl_qr, self.txt_qr = crear_input("QR ($)", "📱", "#7C3AED")
 
         grid.addWidget(self.lbl_ef, 0, 0); grid.addWidget(self.txt_efectivo, 0, 1)
         grid.addWidget(self.lbl_tj, 1, 0); grid.addWidget(self.txt_tarjeta, 1, 1)
         grid.addWidget(self.lbl_mp, 2, 0); grid.addWidget(self.txt_mercadopago, 2, 1)
-        grid.addWidget(self.lbl_us, 3, 0); grid.addWidget(self.txt_usd, 3, 1)
-        grid.addWidget(self.lbl_tasa, 4, 1)
+        grid.addWidget(self.lbl_qr, 3, 0); grid.addWidget(self.txt_qr, 3, 1)
 
         layout.addLayout(grid)
 
@@ -148,16 +141,14 @@ class DialogoPagosMixtos(QDialog):
         efectivo = self._safe_float(self.txt_efectivo.text())
         tarjeta = self._safe_float(self.txt_tarjeta.text())
         mp = self._safe_float(self.txt_mercadopago.text())
-        usd = self._safe_float(self.txt_usd.text())
-
-        usd_en_pesos = usd * self.tasa_usd
+        qr = self._safe_float(self.txt_qr.text())
 
         self.valores["efectivo"] = efectivo
         self.valores["tarjeta"] = tarjeta
         self.valores["mercadopago"] = mp
-        self.valores["usd"] = usd
+        self.valores["qr"] = qr
 
-        total_ingresado = efectivo + tarjeta + mp + usd_en_pesos
+        total_ingresado = efectivo + tarjeta + mp + qr
         diferencia = total_ingresado - self.total_a_pagar
 
         if diferencia < -0.01: # Faltante

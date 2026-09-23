@@ -1,22 +1,18 @@
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QLabel
+
+from src.cajero.paso5_terminal.componentes_paso5_terminal.cabecera_superior.linea import (
+    LineaDato,
+)
 
 
-class BloqueEstado(QWidget):
-    """Una línea: Estado: Cliente. El número de instalación no se muestra."""
+class BloqueEstado(LineaDato):
+    """Estado: Cliente. El número de instalación no se muestra."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        lay = QHBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(8)
-        prefijo = QLabel("Estado:")
-        prefijo.setObjectName("TerminalCabeceraPrefijo")
-        prefijo.setMinimumWidth(78)
-        self.etiqueta_estado = QLabel("Maestra")
+        super().__init__("Estado:", parent)
+        self.etiqueta_estado = self.valor
         self.etiqueta_estado.setObjectName("TerminalCabeceraEstado")
+        self.etiqueta_estado.setText("Maestra")
         self.etiqueta_instalacion = QLabel("")
         self.etiqueta_instalacion.setObjectName("TerminalCabeceraInstalacion")
         self.etiqueta_instalacion.hide()
-        lay.addWidget(prefijo)
-        lay.addWidget(self.etiqueta_estado)
-        lay.addStretch()

@@ -14,5 +14,5 @@ Un cobro no puede devolver un ticket inventado (`9999999`). Tampoco puede insert
 - No borrar `request_id` de cobro / motor / controller.
 - En bases viejas la migración (`migrator.py`, al arrancar) agrega la columna. Si aún no está, el INSERT cae al formato anterior (13 campos) para no frenar la caja.
 - No hacer `ALTER TABLE` dentro de `guardar_venta_completa` ni de `sync_venta_to_master`. En MariaDB un ALTER confirma la transacción solo y el ticket puede quedar a medias.
-- La llave entre cajas es `lan_api_token` (o el PIN en texto, si todavía no se cambió). El hash del PIN local no es esa llave: cambiar la contraseña no tiene que dejar afuera a las otras cajas.
+- La llave entre cajas es `CLAVE_RED` (`1234`) en `src/config.py`. No se lee de `local_pin` ni de `lan_api_token`, y no hay pantalla para cambiarla. Así todas las cajas usan la misma.
 - El índice único permite varios `NULL` (ventas viejas). No rellenar esas filas a la fuerza.

@@ -18,15 +18,9 @@ class PointService:
 
         if self.parent.current_metodo == "QR":
             if not token:
-                QMessageBox.warning(
-                    self.parent, "Configuración Faltante",
-                    "Falta el Access Token de Mercado Pago.\n\n"
-                    "Admin → Configuración → Terminales TPV."
-                )
-                return
+                return False
         elif not token or not device_id:
-            QMessageBox.warning(self.parent, "Configuración Faltante", "Falta el Access Token o el Device ID de Mercado Pago Point en la configuración.")
-            return
+            return False
 
         if self.parent.current_metodo not in ["Tarjeta", "Mixto", "QR"]:
             self.parent.set_metodo("Tarjeta")
@@ -50,8 +44,7 @@ class PointService:
 
         if self.parent.current_metodo == "QR":
             from src.cajero.paso6_cobro.mercadopago_core.qr_service import QRService
-            QRService(self.parent).procesar_cobro_qr_pantalla(token, monto)
-            return
+            return QRService(self.parent).procesar_cobro_qr_pantalla(token, monto)
 
         url = f"https://api.mercadopago.com/point/integration-api/devices/{device_id}/payment-intents"
         intent_id = str(uuid.uuid4())

@@ -108,7 +108,7 @@ class MainWindow(QMainWindow):
 
         try:
             drawer_manager.intrusion_detected.connect(self._on_security_breach)
-            drawer_manager.drawer_closed.connect(lambda: self.mostrar_alerta_perimetral(False))
+            drawer_manager.drawer_closed.connect(self._punto_cajon)
             drawer_manager.drawer_opened.connect(self._on_operational_opening)
         except Exception:
             logger.exception("No se pudieron conectar señales del cajón")
@@ -147,24 +147,28 @@ class MainWindow(QMainWindow):
             print(f"[DEBUG] Error inicializando Network Engine: {e}")
 
     def _on_security_breach(self):
-        self.mostrar_alerta_perimetral(True, modo="security")
+        self._punto_cajon()
         from src.central_red_global.network_engine import get_network_engine
         engine = get_network_engine()
         if engine:
             engine.broadcast("ALERTA_SEGURIDAD", {"mensaje": "[CRITICO] CAJON FORZADO / INTRUSION DETECTADA"})
 
-        # Sonido de alerta (opcional, beep del sistema)
-        QApplication.beep()
-
     def _on_operational_opening(self):
-        from src.hardware.cash_drawer import drawer_manager
         from src.central_red_global.network_engine import get_network_engine
         engine = get_network_engine()
         if engine:
             engine.broadcast("HARDWARE_SENSOR", {"evento": "DRAWER_OPEN"})
+        self._punto_cajon()
 
-        if drawer_manager.is_authorized:
-            self.mostrar_alerta_perimetral(True, modo="info")
+    def _punto_cajon(self):
+        """El cajón no pinta marco ni franja. Solo el punto rojo del cabezal."""
+        if hasattr(self, "marco_alerta"):
+            self.marco_alerta.hide()
+        if hasattr(self, "blink_timer"):
+            self.blink_timer.stop()
+        ventas = self.screens[1] if getattr(self, "screens", None) else None
+        if ventas is not None and hasattr(ventas, "_refrescar_notificaciones"):
+            ventas._refrescar_notificaciones()
 
     def _init_global_alarm(self):
         """ Inicializa el sistema de alerta perimetral global. """
@@ -472,7 +476,11 @@ class MainWindow(QMainWindow):
                 qss_path = get_resource_path(os.path.join("src", "ui_components", theme_file))
             try:
                 with open(qss_path, "r", encoding="utf-8") as f:
-                    _QSS_CACHE[theme_file] = f.read()
+                    from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import (
+                        anexar,
+                    )
+
+                    _QSS_CACHE[theme_file] = anexar(f.read())
             except Exception as e:
                 print(f"Error precargando tema {theme_file}: {e}")
                 _QSS_CACHE[theme_file] = ""
@@ -931,33 +939,8 @@ class MainWindow(QMainWindow):
         self._posicionar_banner()
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
-        if visible:
-            import datetime
-            ahora = datetime.datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
-
-            if modo == "security":
-                self.lbl_watermark.setText("⚠️ CAJÓN ABIERTO ⚠️\nSIN AUTORIZACIÓN")
-                self.lbl_watermark.setStyleSheet("font-size: 80px; font-weight: 900; color: rgba(255, 255, 255, 200); background: transparent; border: none; letter-spacing: 5px;")
-                self.lbl_timestamp.setText(f"DETECCIÓN: {ahora}")
-                self.marco_alerta.setStyleSheet("border: 30px solid #B91C1C; background: transparent;")
-                self.blink_timer.start(400)
-            else:
-                # MODO INFO (MENOS INVASIVO)
-                self.lbl_watermark.setText("📥 CAJÓN ABIERTO\nCIERRE PRONTO")
-                self.lbl_watermark.setStyleSheet("font-size: 50px; font-weight: 900; color: rgba(30, 58, 138, 180); background: transparent; border: none;")
-                self.lbl_timestamp.setText(f"Operación: {ahora}")
-                self.marco_alerta.setStyleSheet("border: none; background: rgba(248, 250, 252, 100);")
-                self.blink_timer.stop() # Sin parpadeo en modo info
-
-            self.marco_alerta.show()
-            self.marco_alerta.raise_()
-        else:
-            self.marco_alerta.hide()
-            self.blink_timer.stop()
-            # Restaurar visibilidad normal
-            if hasattr(self.pantalla_ventas, 'lbl_terminal_title'):
-                title = config.get('business_name', 'Punto de Venta [20.09.02]')
-                self.pantalla_ventas.lbl_terminal_title.setText(title)
+        """El cajón no usa este marco. El aviso es el punto rojo."""
+        self._punto_cajon()
 
     def _toggle_chatbot_overlay(self):
         self._chatbot_active = not self._chatbot_active

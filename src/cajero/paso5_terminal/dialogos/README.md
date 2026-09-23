@@ -4,11 +4,13 @@ Ventanas del cajero. Cada dialogo vive en su carpeta.
 
 ```
 dialogos/
-  dialogo_editar_cantidad/   ← cantidad (Enter / Esc)
-  dialogo_pin.py
-  dialogo_candado.py
+  candado/                   bloqueo de terminal
+  pin/                       PIN del cajero
+  dialogo_editar_cantidad/   cantidad (Enter / Esc)
 ```
 
-Import publico (no cambies el path desde `paso5_terminal.py`):
+`from src.cajero.paso5_terminal.dialogos.candado.dialogo_candado import DialogoCandado`
+
+`from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN`
 
 `from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad`

@@ -316,6 +316,15 @@ QPushButton#BtnCierreTurno:hover { background: #059669; }
    PASO 8 HISTORIAL
    ========================================================= */
 QDialog > QFrame, QFrame#HistorialMain, QFrame#AdminMain, QFrame#InventarioMain, QFrame#ReportesMain, QFrame#ConfigMain, QFrame#CierreMain { background-color: #0F172A; border-radius: 16px; border: 4px solid #1E3A8A !important; }
+QDialog > QStackedWidget#Paso6Stack { background: transparent; border: none !important; }
+QFrame#Paso6Metodos { background: #0F172A; border: none; border-radius: 0; }
+QFrame#Paso6MetodoBarra { background: #15293C; border: none; }
+QFrame#Paso6MetodoPie { background: #0F172A; border: none; border-top: 1px solid #334155; }
+QLabel#Paso6MetodoKicker { color: #94A3B8; font-size: 13px; font-weight: 600; letter-spacing: 3px; background: transparent; border: none; }
+QLabel#Paso6MetodoTotal { color: #4ADE80; font-size: 42px; font-weight: 700; background: transparent; border: none; }
+QLabel#Paso6MetodoTitulo { color: #FFFFFF; font-size: 22px; font-weight: 600; background: transparent; border: none; }
+QPushButton#Paso6Volver, QPushButton#Paso6Otras { background: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 10px; font-size: 16px; font-weight: 600; }
+QPushButton#Paso6Volver:hover, QPushButton#Paso6Otras:hover { background: #334155; border-color: #475569; }
 
 QPushButton#BtnRefresh { background-color: #0EA5E9; color: white; font-weight: bold; }
 
@@ -430,7 +439,7 @@ Paso5Terminal[theme="light"] QTableWidget#TerminalTabla QHeaderView::section {
 
 
 /* --- COMPONENTES TERMINAL --- */
-QFrame#TerminalCabecera { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0B1F3A, stop:0.55 #14386B, stop:1 #1D4ED8); border-radius: 16px; }
+QFrame#TerminalCabecera { background-color: #15293C; border-radius: 12px; }
 
 QFrame#TerminalCabecera QLabel { background: transparent; color: #F8FAFC; }
 
@@ -453,15 +462,22 @@ QLabel#TerminalNotificacionStockLbl { color: #D97706; font-weight: bold; font-si
 
 QFrame#TerminalNotificacionUrgencia { background: #FEE2E2; border: 1px solid #EF4444; border-radius: 6px; }
 
-QLabel#TerminalNotificacionUrgenciaLbl { color: #B91C1C; font-weight: bold; font-size: 14px; border: none; }
+QLabel#TerminalNotificacionUrgenciaLbl { color: #B91C1C; font-weight: 800; font-size: 15px; letter-spacing: 1.4px; border: none; background: transparent; }
 
 QFrame#TerminalAlertasCabecera { background: transparent; border: none; }
-QLabel#TerminalAlertaLampara { border: 2px solid rgba(255,255,255,0.92); border-radius: 11px; }
+QLabel#TerminalAlertaLampara { border: none; border-radius: 11px; }
 
-QFrame#TerminalCabeceraGrupo {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 16px;
+QFrame#TerminalCabeceraGrupo,
+QFrame#TerminalCabeceraMarca,
+QFrame#TerminalCabeceraMarcoTitulo,
+QFrame#TerminalCabeceraMarcoFecha {
+    background: transparent;
+    border: none;
+}
+QLabel#TerminalCabeceraFecha {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(248, 250, 252, 0.78);
 }
 QFrame#TerminalCabeceraSeparador {
     background: rgba(255, 255, 255, 0.38);
@@ -1284,19 +1300,4 @@ QFrame.kpi-card, QFrame.jefe-card { background-color: #1E293B; border-color: #33
 QLabel.kpi-title { color: #64748B; }
 QLabel.kpi-value { color: #F8FAFC; }
 
-/* ==================================================== */
-/* 🎀 ESTILOS DE PERFIL AUXILIAR (ROSADO) */
-/* ==================================================== */
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] { background-color: #FDF2F8 !important; }
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #BE185D, stop:1 #F472B6) !important; }
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox { background: #BE185D !important; border-color: #9D174D !important; }
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalStatusBar { background: #FCE7F3 !important; border-top: 1px solid #FBCFE8 !important; }
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalTablaContainer { border-color: #DB2777 !important; border-bottom: 4px solid #9D174D !important; }
-Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#PanelTotales { border-color: #DB2777 !important; border-bottom: 4px solid #9D174D !important; }
-
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] { background-color: #4C0519 !important; }
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera { background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #831843, stop:1 #BE185D) !important; }
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox { background: #831843 !important; border-color: #9D174D !important; }
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalStatusBar { background: #4C0519 !important; border-top: 1px solid #831843 !important; }
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalTablaContainer { border-color: #9D174D !important; border-bottom: 4px solid #4C0519 !important; }
-Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#PanelTotales { border-color: #9D174D !important; border-bottom: 4px solid #4C0519 !important; }
+/* Perfil y aviso del cajero: componentes_paso5_terminal/apariencia/ */

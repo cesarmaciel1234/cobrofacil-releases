@@ -103,7 +103,7 @@ class DialogoHistorialDia(QDialog):
         username = self.controller.get_username()
 
         if not role:
-            from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
+            from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
             from src.utils.qt_compat import qt_exec
             pin_dlg = DialogoPIN("admin", parent=self)
             if not qt_exec(pin_dlg) or not pin_dlg.ok:

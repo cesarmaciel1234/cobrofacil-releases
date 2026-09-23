@@ -26,17 +26,21 @@ class BotonesAtajos(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setObjectName("TerminalScrollAtajos")
-        self.setStyleSheet("QScrollArea { background: transparent; border: none; } QWidget#TerminalContenedorAtajos { background: transparent; }")
-        self.setFixedHeight(70)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setStyleSheet(
+            "QScrollArea { background: transparent; border: none; } "
+            "QWidget#TerminalContenedorAtajos { background: transparent; }"
+        )
+        self.viewport().setAutoFillBackground(False)
+        self.viewport().setStyleSheet("background: transparent;")
+        self.setFixedHeight(52)
 
         self.contenedor_atajos = QWidget()
         self.contenedor_atajos.setObjectName("TerminalContenedorAtajos")
         layout_atajos = QHBoxLayout(self.contenedor_atajos)
-        layout_atajos.setSpacing(12)
+        layout_atajos.setSpacing(8)
         layout_atajos.setContentsMargins(0, 0, 0, 0)
 
         self.botones_f = []
@@ -51,3 +55,5 @@ class BotonesAtajos(QScrollArea):
         layout_atajos.addWidget(cobrar, 0, Qt.AlignmentFlag.AlignVCenter)
         self.botones_f.append(cobrar)
         self.setWidget(self.contenedor_atajos)
+        self.setMinimumWidth(layout_atajos.sizeHint().width())
+        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)

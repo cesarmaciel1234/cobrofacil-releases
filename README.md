@@ -1,5 +1,7 @@
 # Punto de Venta Pro
 
+Las IA leen `docs/piramide/README.md` antes de modificar código. Ahí está la documentación de la pirámide.
+
 Sistema completo y editable de Punto de Venta.
 
 Características:

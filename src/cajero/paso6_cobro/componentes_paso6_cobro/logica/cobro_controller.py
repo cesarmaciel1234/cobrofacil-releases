@@ -14,8 +14,12 @@ class CobroController:
         """
         try:
             if metodo == "Mixto" and valores_mixtos:
-                p1 = valores_mixtos.get("efectivo", 0) + (valores_mixtos.get("usd", 0) * config.get("tasa_usd", 1200.0))
-                p2 = valores_mixtos.get("tarjeta", 0) + valores_mixtos.get("mercadopago", 0)
+                p1 = valores_mixtos.get("efectivo", 0)
+                p2 = (
+                    valores_mixtos.get("tarjeta", 0)
+                    + valores_mixtos.get("mercadopago", 0)
+                    + valores_mixtos.get("qr", 0)
+                )
             else:
                 p1 = float(p1_t) if p1_t else 0.0
                 p2 = float(p2_t) if p2_t and metodo == "Mixto" else 0.0

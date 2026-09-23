@@ -26,7 +26,7 @@ PROFILE_CARD_W_MAX = 230
 PROFILE_CARD_W_MIN = 140
 
 # Terminal cajero @ 1920×1080 (monitor POS 24")
-TERMINAL_HEADER_H = 128
+TERMINAL_HEADER_H = 124
 TERMINAL_DASHBOARD_H = 230
 TERMINAL_STATUS_H = 68
 TERMINAL_STATUS_CTRL_H = 46
@@ -225,21 +225,21 @@ def terminal_layout_metrics(screen=None, app=None) -> dict:
     dash_base = TERMINAL_DASHBOARD_H
     header_base = TERMINAL_HEADER_H
     if screen_h < 768:
-        dash_base, header_base = 160, 108
+        dash_base, header_base = 160, 116
     elif screen_h < 900:
-        dash_base, header_base = 190, 116
+        dash_base, header_base = 190, 120
 
     font_scale = max(0.85, ls)
     return {
         "layout_scale": ls,
         "screen_width": geo.width() if geo else REF_WIDTH,
         "screen_height": screen_h,
-        "header_height": scale_px(header_base, ls),
-        "dashboard_height": scale_px(dash_base, ls),
-        "status_height": scale_px(TERMINAL_STATUS_H, ls),
+        "header_height": max(112, scale_px(header_base, ls)),
+        "dashboard_height": max(168, scale_px(dash_base, ls)),
+        "status_height": max(64, scale_px(TERMINAL_STATUS_H, ls)),
         "status_control_height": scale_px(TERMINAL_STATUS_CTRL_H, ls),
         "status_icon_size": scale_px(TERMINAL_STATUS_ICON_H, ls),
-        "shortcuts_height": scale_px(TERMINAL_SHORTCUTS_H, ls),
+        "shortcuts_height": max(52, scale_px(TERMINAL_SHORTCUTS_H, ls)),
         "scan_min_height": scale_px(TERMINAL_SCAN_MIN_H, ls),
         "scan_font": max(18, int(TERMINAL_SCAN_FONT * font_scale)),
         "total_font": max(42, int(TERMINAL_TOTAL_FONT * font_scale)),

@@ -1,4 +1,8 @@
-ESTILO_BARRA = """
+from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import (
+    borde_barra,
+)
+
+_CUERPO = """
 QFrame#PanelTotales {
     background: #FFFFFF;
     border: 2px solid #475569;
@@ -56,3 +60,5 @@ QLabel#TotalGrande {
     padding: 0 8px;
 }
 """
+
+ESTILO_BARRA = _CUERPO + borde_barra()

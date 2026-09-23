@@ -1,0 +1,12 @@
+QFrame#PanelTotales[aviso="exito"],
+QFrame#TerminalDashboard[aviso="exito"] {
+    background: #FFFFFF;
+    border: 8px solid #16A34A;
+    border-radius: 18px;
+}
+QFrame#PanelTotales[aviso="alerta"],
+QFrame#TerminalDashboard[aviso="alerta"] {
+    background: #FFFFFF;
+    border: 8px solid #DC2626;
+    border-radius: 18px;
+}

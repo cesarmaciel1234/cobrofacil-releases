@@ -1,0 +1,32 @@
+/* Cobro: marco verde. Anulación: marco rojo. El encabezado no entra. */
+Paso5Terminal[cajero_perfil="cajero"][aviso="exito"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="principal"][aviso="exito"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="exito"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="cajero"][aviso="exito"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="principal"][aviso="exito"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="exito"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="cajero"][aviso="exito"] QFrame#PanelTotales,
+Paso5Terminal[cajero_perfil="principal"][aviso="exito"] QFrame#PanelTotales,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="exito"] QFrame#PanelTotales,
+QFrame#TerminalDashboard[aviso="exito"],
+QFrame#PanelTotales[aviso="exito"] {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 8px solid #16A34A !important;
+}
+
+Paso5Terminal[cajero_perfil="cajero"][aviso="alerta"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="principal"][aviso="alerta"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="alerta"] QFrame#TerminalTablaContainer,
+Paso5Terminal[cajero_perfil="cajero"][aviso="alerta"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="principal"][aviso="alerta"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="alerta"] QFrame#TerminalDashboard,
+Paso5Terminal[cajero_perfil="cajero"][aviso="alerta"] QFrame#PanelTotales,
+Paso5Terminal[cajero_perfil="principal"][aviso="alerta"] QFrame#PanelTotales,
+Paso5Terminal[cajero_perfil="auxiliar"][aviso="alerta"] QFrame#PanelTotales,
+QFrame#TerminalDashboard[aviso="alerta"],
+QFrame#PanelTotales[aviso="alerta"] {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 8px solid #DC2626 !important;
+}

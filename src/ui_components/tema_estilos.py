@@ -35,7 +35,11 @@ def aplicar_tema(app: QApplication, qss_file: str = "estilo_noche.qss") -> bool:
             with open(base_path, "r", encoding="utf-8") as f_base:
                 estilo_base = f_base.read()
 
-        estilo_completo = estilo_base + "\n" + estilo_tema
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.hoja import (
+            anexar,
+        )
+
+        estilo_completo = anexar(estilo_base + "\n" + estilo_tema)
 
         # Opcional: Reemplazar rutas relativas de assets si usamos imǭgenes en el QSS
         # base_dir = os.path.dirname(os.path.dirname(current_dir))

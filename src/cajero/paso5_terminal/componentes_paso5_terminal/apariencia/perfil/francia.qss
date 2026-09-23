@@ -1,0 +1,50 @@
+/* Cajero principal. Azul Francia. */
+Paso5Terminal[theme="light"][cajero_perfil="principal"],
+Paso5Terminal[theme="light"][cajero_perfil="cajero"] {
+    background-color: #F4F8FE !important;
+}
+Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#TerminalCabecera,
+Paso5Terminal[theme="light"][cajero_perfil="cajero"] QFrame#TerminalCabecera {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1B4F9C, stop:1 #7EB6F6) !important;
+    border: none !important;
+}
+Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#TerminalSideBox,
+Paso5Terminal[theme="light"][cajero_perfil="cajero"] QFrame#TerminalSideBox {
+    background: #1B4F9C !important;
+    border-color: #163E7A !important;
+}
+Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#TerminalTablaContainer,
+Paso5Terminal[theme="light"][cajero_perfil="cajero"] QFrame#TerminalTablaContainer {
+    border-color: #318CE7 !important;
+    border-bottom: 4px solid #1B4F9C !important;
+}
+Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#PanelTotales,
+Paso5Terminal[theme="light"][cajero_perfil="cajero"] QFrame#PanelTotales {
+    border-color: #318CE7 !important;
+    border-bottom: 4px solid #1B4F9C !important;
+}
+
+Paso5Terminal[theme="dark"][cajero_perfil="principal"],
+Paso5Terminal[theme="dark"][cajero_perfil="cajero"] {
+    background-color: #0B1E3F !important;
+}
+Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#TerminalCabecera,
+Paso5Terminal[theme="dark"][cajero_perfil="cajero"] QFrame#TerminalCabecera {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #163E7A, stop:1 #1B4F9C) !important;
+    border: none !important;
+}
+Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#TerminalSideBox,
+Paso5Terminal[theme="dark"][cajero_perfil="cajero"] QFrame#TerminalSideBox {
+    background: #163E7A !important;
+    border-color: #1B4F9C !important;
+}
+Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#TerminalTablaContainer,
+Paso5Terminal[theme="dark"][cajero_perfil="cajero"] QFrame#TerminalTablaContainer {
+    border-color: #1B4F9C !important;
+    border-bottom: 4px solid #0B1E3F !important;
+}
+Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#PanelTotales,
+Paso5Terminal[theme="dark"][cajero_perfil="cajero"] QFrame#PanelTotales {
+    border-color: #1B4F9C !important;
+    border-bottom: 4px solid #0B1E3F !important;
+}

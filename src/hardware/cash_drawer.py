@@ -116,13 +116,13 @@ class CashDrawerManager(QObject):
         # Lógica de cambio de estado
         if status != self._last_status:
             if status is True:
-                self.drawer_opened.emit()
                 _avisar_cajon(True)
+                self.drawer_opened.emit()
                 if not self._apertura_autorizada:
                     self.intrusion_detected.emit()
             else:
-                self.drawer_closed.emit()
                 _avisar_cajon(False)
+                self.drawer_closed.emit()
                 self._apertura_autorizada = False
 
             self._last_status = status

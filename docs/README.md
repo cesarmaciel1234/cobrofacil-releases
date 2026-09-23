@@ -1,4 +1,6 @@
-# Punto de Venta Pro 
+# Punto de Venta Pro
+
+Las IA leen `piramide/README.md` antes de modificar código.
 
 Sistema completo y editable de Punto de Venta.
 

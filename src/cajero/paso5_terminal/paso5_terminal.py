@@ -20,10 +20,10 @@ from src.cajero.paso8_historial import DialogoHistorialDia, fmt_moneda
 from src.config import config
 from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.suprimir_articulo import suprimir_articulo
 from src.cajero.paso5_terminal.dialogos.dialogo_editar_cantidad import DialogoEditarCantidad
-from src.cajero.paso5_terminal.dialogos.dialogo_pin import DialogoPIN
+from src.cajero.paso5_terminal.dialogos.pin.dialogo_pin import DialogoPIN
 from src.cajero.sacar_efectivo import DialogoRetiroEfectivo
 from src.cajero.ingresar_efectivo import DialogoIngresoEfectivo
-from src.cajero.paso5_terminal.dialogos.dialogo_candado import DialogoCandado
+from src.cajero.paso5_terminal.dialogos.candado.dialogo_candado import DialogoCandado
 from src.cajero.paso5_terminal.logica.terminal_controller import TerminalController
 
 from src.hardware.cash_drawer import drawer_manager
@@ -44,10 +44,10 @@ except Exception as e:
 # --- Componentes Visuales Modularizados ---
 from src.cajero.paso5_terminal.componentes_paso5_terminal.cabecera_superior import CabeceraSuperior
 from src.cajero.paso5_terminal.componentes_paso5_terminal.centro_de_notificaciones import CentroDeNotificaciones
-from src.cajero.paso5_terminal.componentes_paso5_terminal.tabla_de_productos import TablaDeProductos
+from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.tabla_de_productos import TablaDeProductos
 from src.cajero.paso5_terminal.componentes_paso5_terminal.panel_de_totales import PanelDeTotales
 from src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior import BarraDeHerramientasInferior
-from src.cajero.paso5_terminal.componentes_paso5_terminal.nav_row_border_overlay import NavRowBorderOverlay
+from src.cajero.paso5_terminal.componentes_paso5_terminal.componente_tabla_de_productos.nav_row_border_overlay import NavRowBorderOverlay
 
 def fmt_moneda_sin_centavos(val):
     try:
@@ -227,11 +227,7 @@ class Paso5Terminal(QWidget):
             QTimer.singleShot(500, self.actualizar_red_heartbeat)
 
         from src.cajero.cajero_activo import CajeroActivo
-        perfil = "auxiliar" if CajeroActivo.numero == 2 else "cajero"
-        if self.property("cajero_perfil") != perfil:
-            self.setProperty("cajero_perfil", perfil)
-            self.style().unpolish(self)
-            self.style().polish(self)
+        self._pintar_perfil_cajero()
 
     def actualizar_red_heartbeat(self):
         try:
@@ -333,17 +329,10 @@ class Paso5Terminal(QWidget):
         pass
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
-        """ Llama a la alerta global de la ventana principal con el modo especificado. """
+        """El cajón no pinta la barra. El punto rojo lo pone el notificador."""
         parent = self.window()
-        if hasattr(parent, 'mostrar_alerta_perimetral'):
+        if parent is not self and hasattr(parent, "mostrar_alerta_perimetral"):
             parent.mostrar_alerta_perimetral(visible, modo=modo)
-
-        # Efecto local en dashboard_frame solo en modo seguridad
-        if visible and modo == "security":
-            if not hasattr(self, '_orig_style'): self._orig_style = self.dashboard_frame.styleSheet()
-            self.dashboard_frame.setProperty("estado", "alerta"); self.dashboard_frame.style().unpolish(self.dashboard_frame); self.dashboard_frame.style().polish(self.dashboard_frame)
-        else:
-            self.dashboard_frame.setProperty("estado", "normal"); self.dashboard_frame.style().unpolish(self.dashboard_frame); self.dashboard_frame.style().polish(self.dashboard_frame)
 
     def setup_ui(self):
         self.setObjectName("TerminalMain")
@@ -519,7 +508,6 @@ class Paso5Terminal(QWidget):
             elif tecla_str == "F5": self.abrir_retiro_efectivo()
             elif tecla_str == "F6": self.abrir_ingreso_efectivo()
             elif tecla_str == "F7": self._leer_bascula()
-            elif tecla_str == "F10": self.bloquear_terminal()
             elif tecla_str == "F8": self._swap_ticket_espera()
             elif tecla_str == "F4": self.abrir_cierre_caja()
             elif tecla_str == "F11": self.llamar_supervisor()
@@ -540,7 +528,16 @@ class Paso5Terminal(QWidget):
         QTimer.singleShot(0, self._apply_screen_layout)
         self.txt_scan.setFocus()
         QTimer.singleShot(500, self.txt_scan.setFocus) # Asegurar foco inicial
+        QTimer.singleShot(1200, self._precalentar_cobro)
         self.txt_scan.installEventFilter(self) # Para monitoreo PRO
+
+    def _precalentar_cobro(self):
+        """Carga el cobro en segundo plano. En un ejecutable el primer import es el que espera."""
+        try:
+            from src.cajero.paso6_cobro import Paso6Cobro  # noqa: F401
+        except Exception:
+            pass
+
     def keyPressEvent(self, event):
         k = event.key()
         if k == Qt.Key.Key_F1: self._do_busqueda()
@@ -549,7 +546,6 @@ class Paso5Terminal(QWidget):
         elif k == Qt.Key.Key_F5: self.abrir_retiro_efectivo()
         elif k == Qt.Key.Key_F6: self.abrir_ingreso_efectivo()
         elif k == Qt.Key.Key_F7: self._leer_bascula()
-        elif k == Qt.Key.Key_F10: self.bloquear_terminal()
         elif k == Qt.Key.Key_F8: self._swap_ticket_espera()
         elif k == Qt.Key.Key_F4: self.abrir_cierre_caja()
         elif k == Qt.Key.Key_F11: self.llamar_supervisor()
@@ -653,7 +649,7 @@ class Paso5Terminal(QWidget):
     def apply_theme(self):
         theme = config.get("theme", "light")
         if hasattr(self, 'barra_herramientas') and hasattr(self.barra_herramientas, 'boton_tema'):
-            self.barra_herramientas.boton_tema.setText("☀️ TEMAS" if theme == "dark" else "🌙 TEMAS")
+            self.barra_herramientas.boton_tema.setText("TEMAS")
 
         self.setProperty("theme", theme)
 
@@ -814,9 +810,6 @@ class Paso5Terminal(QWidget):
                 elif key == Qt.Key.Key_F1:
                     self.txt_scan.selectAll()
                     return True
-                elif key == Qt.Key.Key_F10:
-                    self.bloquear_terminal()
-                    return True
                 elif key == Qt.Key.Key_F8:
                     self._swap_ticket_espera()
                     return True
@@ -955,37 +948,12 @@ class Paso5Terminal(QWidget):
         return super().eventFilter(obj, event)
 
     def flash_feedback(self, success=True):
-        """Pinta el borde. El texto del cobro lo muestra el notificador."""
-        self._flash_borde = True
-        estado_str = "exito" if success else "alerta"
+        """Marco verde o rojo. El texto del cobro lo muestra el notificador."""
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.aviso.flash import (
+            flash,
+        )
 
-        self.dashboard_frame.setProperty("estado", estado_str)
-        self.dashboard_frame.style().unpolish(self.dashboard_frame)
-        self.dashboard_frame.style().polish(self.dashboard_frame)
-
-        self.setProperty("estado", estado_str)
-        self.style().unpolish(self)
-        self.style().polish(self)
-
-        self.cabecera.setProperty("estado", estado_str)
-        self.cabecera.style().unpolish(self.cabecera)
-        self.cabecera.style().polish(self.cabecera)
-
-        def reset_style():
-            self._flash_borde = False
-            self.dashboard_frame.setProperty("estado", "normal")
-            self.dashboard_frame.style().unpolish(self.dashboard_frame)
-            self.dashboard_frame.style().polish(self.dashboard_frame)
-
-            self.setProperty("estado", "normal")
-            self.style().unpolish(self)
-            self.style().polish(self)
-
-            self.cabecera.setProperty("estado", "normal")
-            self.cabecera.style().unpolish(self.cabecera)
-            self.cabecera.style().polish(self.cabecera)
-
-        QTimer.singleShot(10000, reset_style) # Duración a 10 segundos
+        flash(self, success)
     def bloquear_terminal(self):
         """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo."""
         from PyQt6.QtWidgets import QGraphicsBlurEffect
@@ -1012,8 +980,7 @@ class Paso5Terminal(QWidget):
             self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
 
             # Activar el tema rosado para el auxiliar
-            self.setProperty("cajero_perfil", "auxiliar")
-            self.apply_theme()
+            self._pintar_perfil_cajero()
         else:
             from src.updater.github_updater import get_local_version
             self.lbl_version.setText(f"🔵 {nombre_str}  |  CF {get_local_version()}")
@@ -1021,8 +988,15 @@ class Paso5Terminal(QWidget):
             self.btn_candado.setObjectName("BtnCandado"); self.btn_candado.setProperty("estado", "normal"); self.btn_candado.style().unpolish(self.btn_candado); self.btn_candado.style().polish(self.btn_candado)
 
             # Volver al tema azul para cajero normal
-            self.setProperty("cajero_perfil", "principal")
-            self.apply_theme()
+            self._pintar_perfil_cajero()
+
+    def _pintar_perfil_cajero(self):
+        """Azul Francia o rosa. La hoja está en apariencia/perfil."""
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.apariencia.perfil.pintar import (
+            pintar,
+        )
+
+        pintar(self)
 
 
 
@@ -1042,7 +1016,7 @@ class Paso5Terminal(QWidget):
         self._shortcuts_scroll.setFixedHeight(m["shortcuts_height"])
         self._apply_status_bar_controls(m)
 
-        self.txt_scan.setMinimumHeight(m["scan_min_height"])
+        self.txt_scan.setFixedSize(420, 64)
         scan_px = m["scan_font"]
         total_px = m["total_font"]
         side_px = m["side_font"]
@@ -1051,7 +1025,7 @@ class Paso5Terminal(QWidget):
 
         self.lbl_terminal_title.setObjectName("TerminalCabeceraTitulo")
         self.lbl_terminal_title.setStyleSheet(
-            f"font-size: {title_px}px; font-weight: 800; color: white; letter-spacing: 4px; background: transparent;"
+            "font-size: 28px; font-weight: 800; color: white; letter-spacing: 0px; background: transparent;"
         )
         self.lbl_total_val.setObjectName("TotalGrande")
         self.txt_scan.setObjectName("TerminalScan")
@@ -1668,6 +1642,7 @@ class Paso5Terminal(QWidget):
         # El total grande vuelve a usar el formato sin centavos con comas de miles
         total_str = fmt_moneda_sin_centavos(total)
         self.lbl_total_val.setText(total_str)
+        self.panel_totales.ajustar_cuerpo()
         self.lbl_cant_val.setText(f"{int(cant)}")
 
         # Si estamos agregando items, limpiamos los "Pagos" y "Cambio" de la venta anterior
@@ -1707,17 +1682,22 @@ class Paso5Terminal(QWidget):
             self._ahorro_anim.stop()
             self._ahorro_anim = None
 
+        if hasattr(self, '_zoom_ahorro_anim') and self._zoom_ahorro_anim:
+            self._zoom_ahorro_anim.stop()
+            self._zoom_ahorro_anim = None
+        self.panel_totales._ahorro_en_zoom = False
+
         if nuevo_ahorro <= 0:
             self.current_ahorro = 0.0
             self.lbl_ahorro_val.hide()
+            self.panel_totales.repartir_centro(False)
             return
 
+        self.panel_totales.repartir_centro(True)
+        self.lbl_ahorro_val.set_escala(0.28)
         self.lbl_ahorro_val.show()
         self.lbl_ahorro_val.setObjectName("AhorroVal")
-        # Aseguramos el tamaño de fuente fijo para evitar que se vea 'mini'
-        self.lbl_ahorro_val.setStyleSheet(
-            "font-size: 32px; color: #FF4500; font-weight: 900; border: none; padding: 0 16px;"
-        )
+        self._zoom_ahorro()
 
         from src.utils.qt_compat import VariantFloatAnimation
         self._ahorro_anim = VariantFloatAnimation(self)
@@ -1727,17 +1707,46 @@ class Paso5Terminal(QWidget):
         self._ahorro_anim.setDuration(1200) # 1.2 segundos (rápido pero fluido)
 
         def on_value_changed(value):
-            self.lbl_ahorro_val.setText(f"🎉 +${value:,.2f}")
+            self.lbl_ahorro_val.setText(f"+${value:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            self.panel_totales.ajustar_cuerpo()
 
         def on_finished():
             self.current_ahorro = nuevo_ahorro
-            self.lbl_ahorro_val.setText(f"🎉 AHORRAS: ${nuevo_ahorro:,.2f}")
-            # Al terminar, inicia una respiración solo de sombra (glow), sin cambiar el tamaño
-            self.iniciar_respiracion_ahorro()
+            plata = f"${nuevo_ahorro:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            self.lbl_ahorro_val.setText(f"AHORRÁS {plata}")
+            self.panel_totales.ajustar_cuerpo()
 
         self._ahorro_anim.valueChanged.connect(on_value_changed)
         self._ahorro_anim.finished.connect(on_finished)
         self._ahorro_anim.start()
+
+    def _zoom_ahorro(self):
+        """Escala el cartel: entra chico y crece hasta su tamaño. La letra no se toca."""
+        etiqueta = self.lbl_ahorro_val
+        etiqueta.set_escala(0.28)
+
+        from PyQt6.QtCore import QEasingCurve
+        from src.utils.qt_compat import VariantFloatAnimation
+
+        if hasattr(self, '_zoom_ahorro_anim') and self._zoom_ahorro_anim:
+            self._zoom_ahorro_anim.stop()
+
+        anim = VariantFloatAnimation(self)
+        anim.setStartValue(0.28)
+        anim.setEndValue(1.0)
+        anim.setDuration(620)
+        anim.setEasingCurve(QEasingCurve(QEasingCurve.Type.OutCubic))
+
+        def on_step(escala):
+            etiqueta.set_escala(float(escala))
+
+        def on_done():
+            etiqueta.set_escala(1.0)
+
+        anim.valueChanged.connect(on_step)
+        anim.finished.connect(on_done)
+        self._zoom_ahorro_anim = anim
+        anim.start()
 
     def iniciar_respiracion_ahorro(self):
         """
@@ -1872,11 +1881,6 @@ class Paso5Terminal(QWidget):
         # F6: Ingreso
         if k == Qt.Key.Key_F6:
             self.abrir_ingreso_efectivo()
-            return
-
-        # F10: Bloquear
-        if k == Qt.Key.Key_F10:
-            self.bloquear_terminal()
             return
 
         # F4: Cierre de Caja
@@ -2061,12 +2065,6 @@ class Paso5Terminal(QWidget):
             })
         items = redondear_items_carrito(items)
 
-        # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur_effect = QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(10)
-        self.setGraphicsEffect(blur_effect)
-
         from src.cajero.paso6_cobro import Paso6Cobro
         dlg = Paso6Cobro(total, items, self)
         dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
@@ -2074,7 +2072,6 @@ class Paso5Terminal(QWidget):
         # Ejecutamos el cobro
         ok = qt_exec(dlg)
         self._cobro_abierto = False
-        self.setGraphicsEffect(None)
         self._refrescar_notificaciones()
 
         if ok:
@@ -2193,10 +2190,10 @@ class Paso5Terminal(QWidget):
     def _actualizar_boton_espera(self):
         c = len(self.tickets_espera)
         if c > 0:
-            self.btn_espera.setText(f"🔄 {c} Ticket en Espera")
+            self.btn_espera.setText(f"{c} en espera")
             self.btn_espera.setProperty("estado", "con_espera")
         else:
-            self.btn_espera.setText("⏳ 0 Espera")
+            self.btn_espera.setText("Espera")
             self.btn_espera.setProperty("estado", "sin_espera")
         self.btn_espera.style().unpolish(self.btn_espera)
         self.btn_espera.style().polish(self.btn_espera)

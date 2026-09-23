@@ -17,12 +17,7 @@ class QRService:
         external_pos_id = config.get("mp_external_pos_id", "")
 
         if not user_id or not external_pos_id:
-            QMessageBox.warning(
-                self.parent, "Configuración Faltante",
-                "Para cobro por QR dinámico en pantalla faltan configuraciones.\n\n"
-                "Asegúrate de llenar:\n- User ID (collector_id)\n- Identificador Sucursal\n- Punto de Venta (Pos ID)\n\nen Admin → Configuración → Terminales TPV."
-            )
-            return
+            return False
 
         ref = str(uuid.uuid4())
 

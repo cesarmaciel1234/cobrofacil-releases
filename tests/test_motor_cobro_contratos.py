@@ -81,20 +81,12 @@ def test_stock_sigue_la_opcion(monkeypatch):
     assert alcanza_stock(None, 5, False) is True
 
 
-def test_token_lan_no_inventa_secreto(monkeypatch):
-    from src.config import config
-
-    monkeypatch.setitem(config.data, "lan_api_token", "")
-    monkeypatch.setitem(config.data, "local_pin", "4321")
-    assert config.token_api_lan() == "4321"
-    assert config.data.get("lan_api_token") == ""
+def test_token_lan_es_fijo(monkeypatch):
+    from src.config import CLAVE_RED, config
 
     monkeypatch.setitem(config.data, "lan_api_token", "secreto-compartido")
-    assert config.token_api_lan() == "secreto-compartido"
-
-    monkeypatch.setitem(config.data, "lan_api_token", "")
     monkeypatch.setitem(config.data, "local_pin", "a" * 64)
-    assert config.pin_es_hash(config.data["local_pin"])
+    assert config.token_api_lan() == CLAVE_RED
     assert config.token_api_lan() == "1234"
 
 

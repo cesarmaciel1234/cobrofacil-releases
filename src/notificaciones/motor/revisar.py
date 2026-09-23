@@ -38,7 +38,7 @@ def _alertas() -> list[dict]:
     if "cobro_ok" in vivos:
         alertas.append(_fila("cobro_ok", vivos["cobro_ok"]["texto"], "ok", "Cobro exitoso", True))
     if "cajon" in vivos:
-        alertas.append(_fila("cajon", vivos["cajon"]["texto"], "aviso", "Cajón abierto", True))
+        alertas.append(_fila("cajon", "", "urgente", "Cajón abierto", False))
     urgencia = _urgencia()
     if urgencia:
         alertas.append(_fila("urgencia", "", "urgente", "Venta permitida sin stock", False))
