@@ -132,6 +132,16 @@ class VirtualKeyboardPaso5(QWidget):
         theme = config.get("theme", "light")
         if theme == "dark":
             # Dark Mode Styles
+            self.main_frame.setStyleSheet("""
+                QFrame#VkMainFrame {
+                    background-color: #1E293B;
+                    border: 2px solid #334155;
+                    border-radius: 12px;
+                }
+                QLabel#VkTitle { color: #94A3B8; font-size: 11px; font-weight: bold; }
+                QPushButton#VkCloseBtn { background: #334155; color: #F8FAFC; border: none; border-radius: 11px; font-weight: 800; font-size: 12px; }
+                QPushButton#VkCloseBtn:hover { background: #EF4444; color: #FFFFFF; }
+            """)
             self.main_frame.setObjectName("VkMainFrame")
             if hasattr(self, 'drag_bar'):
                 self.drag_bar.setObjectName("VkDragBar")
@@ -139,6 +149,16 @@ class VirtualKeyboardPaso5(QWidget):
                 self.title_lbl.setObjectName("VkTitle")
         else:
             # Light Mode Styles
+            self.main_frame.setStyleSheet("""
+                QFrame#VkMainFrame {
+                    background-color: #F8FAFC;
+                    border: 2px solid #CBD5E1;
+                    border-radius: 12px;
+                }
+                QLabel#VkTitle { color: #64748B; font-size: 11px; font-weight: bold; }
+                QPushButton#VkCloseBtn { background: #E2E8F0; color: #0F172A; border: none; border-radius: 11px; font-weight: 800; font-size: 12px; }
+                QPushButton#VkCloseBtn:hover { background: #EF4444; color: #FFFFFF; }
+            """)
             self.main_frame.setObjectName("VkMainFrame")
             if hasattr(self, 'drag_bar'):
                 self.drag_bar.setObjectName("VkDragBar")
