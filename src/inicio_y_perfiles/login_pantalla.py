@@ -114,15 +114,15 @@ class UsuarioCampo(QLineEdit):
             self.setText(exactos[0])
             return
         prefijos = [u for u in self._usuarios if u.lower().startswith(bajos)]
-        if len(prefijos) == 1:
+        if prefijos:
             self.setText(prefijos[0])
             return
         contiene = [u for u in self._usuarios if bajos in u.lower()]
-        if len(contiene) == 1:
+        if contiene:
             self.setText(contiene[0])
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Tab:
+        if event.key() in (Qt.Key.Key_Tab, Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.completar()
             if self._on_tab:
                 self._on_tab()
