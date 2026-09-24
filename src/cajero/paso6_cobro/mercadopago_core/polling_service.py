@@ -82,6 +82,9 @@ class PollingService:
                             db_manager.execute_non_query("INSERT INTO mp_transferencias_usadas (payment_id) VALUES (?)", (p_id,))
                         except:
                             pass
+                        anotar = getattr(self.parent, "_anotar_pago_mp", None)
+                        if anotar:
+                            anotar(transferencia_encontrada, monto)
 
                         QMessageBox.information(self.parent, "Cobro Aprobado", "Pago validado correctamente. Emitiendo ticket...")
                         self.parent.txt_pago.setText(str(monto))
@@ -180,6 +183,12 @@ class PollingService:
             nombre = payer.get("email") or "Desconocido"
         aviso = getattr(self.parent, "_avisar", None)
         if abs(monto - esperado) > 0.05:
+            try:
+                from src.admin.mercadopago.historial.archivo import guardar
+
+                guardar([pago])
+            except Exception:
+                pass
             if aviso:
                 aviso(
                     f"Llegó ${monto:,.2f} de {nombre}. "
@@ -198,7 +207,11 @@ class PollingService:
             )
         except Exception:
             pass
-        self.parent._mp_pago_usado = {"id": str(pago.get("id")), "monto": monto}
+        anotar = getattr(self.parent, "_anotar_pago_mp", None)
+        if anotar:
+            anotar(pago, monto)
+        else:
+            self.parent._mp_pago_usado = {"id": str(pago.get("id")), "monto": monto}
         self.parent.txt_pago.setText(f"{monto:.2f}")
         self.parent.finalizar(True)
 

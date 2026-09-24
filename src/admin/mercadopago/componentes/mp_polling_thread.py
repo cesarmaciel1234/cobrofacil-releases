@@ -49,7 +49,10 @@ class MPPollingThread(QThread):
                 except: pass
 
             # Buscamos los últimos 10 pagos para tener un margen seguro ante ráfagas
-            url = "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=10"
+            url = (
+                "https://api.mercadopago.com/v1/payments/search"
+                "?sort=date_created&criteria=desc&limit=10&status=approved"
+            )
             try:
                 response = requests.get(url, headers=headers, timeout=10, verify=False)
                 if response.status_code == 200:

@@ -16,7 +16,7 @@ El token es `mp_access_token` de la configuración del TPV. Lo lee `EscuchaMP.to
 
 `iniciar_monitor` llama `EscuchaMP.asegurar()`. Es el mismo hilo que el cajero, `MPPollingThread` en `componentes/`. No se frena al salir del monitor.
 
-`historial/sincronizar.py`, `bajar_mes`, baja los cobros aprobados del mes. `historial/archivo.py` los escribe en `reportes/mercado_pago_sync.csv` y `leer` arma las tarjetas. Un pago nuevo del hilo entra por `_guardar_llegada`.
+`historial/sincronizar.py`, `bajar_mes`, baja los cobros aprobados del mes. `historial/archivo.py` los escribe en `reportes/mercado_pago_sync.csv` y `leer` arma las tarjetas. Un pago nuevo del hilo entra por `_guardar_llegada`. El QR y la transferencia que detecta el cobro también se anotan ahí. La columna Ticket sale de `vinculo_mp`.
 
 `Admin10MP.ultimo_pago_detectado` lo escribe `EscuchaMP.publicar`. El cobro lo lee para cerrar la transferencia si el monto coincide.
 

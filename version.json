@@ -1,7 +1,7 @@
 {
-  "app_version": "v19.6",
+  "app_version": "v19.7",
   "channel": "stable",
-  "build_date": "2026-09-24 16:09:50",
+  "build_date": "2026-09-24 16:17:22",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -120,9 +120,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "2e190285ffc1543097092b5be3d75ac5",
+      "checksum": "26b992a5aa56b26819890cf44ce345ed",
       "channel": "stable",
-      "size": 1059049
+      "size": 1059624
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -3498,15 +3498,15 @@
     },
     "src/admin/mercadopago/mercadopago_main.py": {
       "version": "1.0.0",
-      "checksum": "3f730b772566d490ef72445d263f7235",
+      "checksum": "5444605e5d4a923284b68249a917a120",
       "channel": "stable",
-      "size": 14781
+      "size": 15008
     },
     "src/admin/mercadopago/plano.md": {
       "version": "1.0.0",
-      "checksum": "0a03da7ab570989e8b71fc9c9a56ccc2",
+      "checksum": "1c14066b075d3d5d22985036346d438c",
       "channel": "stable",
-      "size": 1414
+      "size": 1525
     },
     "src/admin/mercadopago/__init__.py": {
       "version": "1.0.0",
@@ -3516,9 +3516,9 @@
     },
     "src/admin/mercadopago/componentes/mp_polling_thread.py": {
       "version": "1.0.0",
-      "checksum": "25354f8c23dd9c5cbd894b192a7e902d",
+      "checksum": "bc84f780d5853a4877eebc8ffe6c0cac",
       "channel": "stable",
-      "size": 5796
+      "size": 5866
     },
     "src/admin/mercadopago/componentes/README.md": {
       "version": "1.0.0",
@@ -3540,9 +3540,9 @@
     },
     "src/admin/mercadopago/historial/README.md": {
       "version": "1.0.0",
-      "checksum": "10bb6e87688d3a096c1248786997b4d5",
+      "checksum": "42e1173c0ff454dfb9d3fca632497541",
       "channel": "stable",
-      "size": 654
+      "size": 733
     },
     "src/admin/mercadopago/historial/sincronizar.py": {
       "version": "1.0.0",
@@ -4884,9 +4884,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "df144b3f3b37e5d1c222dfefa3243f2b",
+      "checksum": "e54cf4a091fb6075b7b1c0a44d3b88f6",
       "channel": "stable",
-      "size": 75834
+      "size": 76716
     },
     "src/cajero/paso6_cobro/punta del piramide.md": {
       "version": "1.0.0",
@@ -5136,9 +5136,9 @@
     },
     "src/cajero/paso6_cobro/mercadopago_core/polling_service.py": {
       "version": "1.0.0",
-      "checksum": "dda03b56d54bf8296fe89fafbe420e44",
+      "checksum": "4478635bef555a9f24e277739def0653",
       "channel": "stable",
-      "size": 10181
+      "size": 10685
     },
     "src/cajero/paso6_cobro/mercadopago_core/qr_service.py": {
       "version": "1.0.0",
@@ -5232,9 +5232,9 @@
     },
     "src/cajero/paso6_cobro/motor_pagos/comandos/post_cobro.py": {
       "version": "1.0.0",
-      "checksum": "5bd2218250eb091a3f047ed57bf4420b",
+      "checksum": "fbbd08c9e850b8c0f9580534de785f60",
       "channel": "stable",
-      "size": 1289
+      "size": 1501
     },
     "src/cajero/paso6_cobro/motor_pagos/comandos/README.md": {
       "version": "1.0.0",
@@ -5400,21 +5400,21 @@
     },
     "src/cajero/paso6_cobro/qr_en_cobro/panel.py": {
       "version": "1.0.0",
-      "checksum": "ee9097d3c25c48d743f48c3b34ca060b",
+      "checksum": "4a5cc1bfa053a7b2116e04233a3710b0",
       "channel": "stable",
-      "size": 8791
+      "size": 8875
     },
     "src/cajero/paso6_cobro/qr_en_cobro/pedido.py": {
       "version": "1.0.0",
-      "checksum": "92a190fad83034b2d185c1d740ac4b41",
+      "checksum": "a23ab34e6ec23a7d8681ed5ca4dfc294",
       "channel": "stable",
-      "size": 3932
+      "size": 3972
     },
     "src/cajero/paso6_cobro/qr_en_cobro/README.md": {
       "version": "1.0.0",
-      "checksum": "6bc5d5d322f171e39fa70150fa908178",
+      "checksum": "4c0bc9c86a81d528ec3427347c8627f7",
       "channel": "stable",
-      "size": 1009
+      "size": 1085
     },
     "src/cajero/paso6_cobro/qr_en_cobro/__init__.py": {
       "version": "1.0.0",
@@ -8682,9 +8682,9 @@
     },
     "src/services/mp_escucha.py": {
       "version": "1.0.0",
-      "checksum": "84e3d568bd0e63b3b884ad5339ce4f79",
+      "checksum": "de7093a1ae712a04b87bfb354d427a4c",
       "channel": "stable",
-      "size": 3167
+      "size": 3330
     },
     "src/services/network_service.py": {
       "version": "1.0.0",

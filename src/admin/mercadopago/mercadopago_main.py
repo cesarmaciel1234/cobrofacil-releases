@@ -19,6 +19,7 @@ class Admin10MP(QWidget):
         self.poller = None
         self.pagos_hoy = []
         self.todos_los_pagos = []
+        Admin10MP.vista = self
         self.setup_ui()
         self.cargar_datos_locales()
         self.iniciar_monitor()
@@ -201,8 +202,8 @@ class Admin10MP(QWidget):
         body.addSpacing(10)
 
         # Tabla de Pagos
-        self.tabla = QTableWidget(0, 5)
-        self.tabla.setHorizontalHeaderLabels(["Fecha", "ID de Pago", "Cliente", "Monto", "Estado"])
+        self.tabla = QTableWidget(0, 6)
+        self.tabla.setHorizontalHeaderLabels(["Fecha", "ID de Pago", "Cliente", "Monto", "Estado", "Ticket"])
         self.tabla.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tabla.setStyleSheet("background: white; alternate- font-size: 14px;")
         self.tabla.setAlternatingRowColors(True)
@@ -301,7 +302,8 @@ class Admin10MP(QWidget):
 
             pagos_filtrados.append(p)
 
-        # Rellenar la tabla
+        from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
+
         self.tabla.setRowCount(0)
         for p in pagos_filtrados:
             row = self.tabla.rowCount()
@@ -330,6 +332,8 @@ class Admin10MP(QWidget):
                 elif p["estado"].upper() == "OMITIDO":
                     item_estado.setForeground(QColor("#94A3B8"))
             self.tabla.setItem(row, 4, item_estado)
+            vinculo = asociado(p["id"]) or {}
+            self.tabla.setItem(row, 5, QTableWidgetItem(str(vinculo.get("ticket") or "—")))
 
     def on_combo_fecha_changed(self, index):
         if self.cmb_fecha.currentText() == "Día Específico...":

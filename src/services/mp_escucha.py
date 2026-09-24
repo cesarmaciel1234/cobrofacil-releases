@@ -65,6 +65,12 @@ class EscuchaMP:
             "nombre": nombre,
             "timestamp": time.time(),
         }
+        try:
+            from src.admin.mercadopago.historial.archivo import guardar
+
+            guardar([pago])
+        except Exception:
+            pass
         if EscuchaMP.con_sonido():
             EscuchaMP.avisar(nombre, monto)
 

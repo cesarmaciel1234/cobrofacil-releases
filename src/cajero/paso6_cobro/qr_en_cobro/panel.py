@@ -22,6 +22,7 @@ class PanelQrCobro(QFrame):
         self._modo = "oculto"
         self._monto = 0.0
         self._ref = ""
+        self._pago = {}
         self._token = ""
         self._borrar_url = ""
         self._generacion = 0
@@ -188,11 +189,11 @@ class PanelQrCobro(QFrame):
 
         def _trabajo():
             try:
-                listo = pago_aprobado(token, ref)
+                pago = pago_aprobado(token, ref)
             except Exception:
-                listo = False
-            if listo:
-                self._llegada.emit({"generacion": generacion, "pagado": True})
+                pago = None
+            if pago:
+                self._llegada.emit({"generacion": generacion, "pagado": True, "pago": pago})
 
         threading.Thread(target=_trabajo, daemon=True).start()
 
@@ -204,6 +205,7 @@ class PanelQrCobro(QFrame):
                 return
             self._modo = "oculto"
             self._reloj.stop()
+            self._pago = dato.get("pago") or {}
             self.estado.setText("Pago recibido.")
             self.pago_listo.emit(self._monto)
             return

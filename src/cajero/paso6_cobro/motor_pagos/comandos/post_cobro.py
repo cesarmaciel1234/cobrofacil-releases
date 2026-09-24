@@ -25,6 +25,11 @@ def post_cobro(datos, id_v, resultado_venta):
             from src.cajero.paso6_cobro.vinculo_mp.libro import asociar
 
             asociar(pago.get("id"), pago.get("monto"), id_v)
+            from src.admin.mercadopago.mercadopago_main import Admin10MP
+
+            vista = getattr(Admin10MP, "vista", None)
+            if vista is not None:
+                vista.cargar_datos_locales()
         except Exception as e:
             logger.warning("No se vinculo el pago MP %s: %s", pago.get("id"), e)
     try:

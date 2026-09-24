@@ -118,5 +118,6 @@ def pago_aprobado(token, ref):
     )
     resp = MPApiClient.get(url, token, timeout=5)
     if resp.status_code != 200:
-        return False
-    return bool((resp.json() or {}).get("results"))
+        return None
+    pagos = (resp.json() or {}).get("results") or []
+    return pagos[0] if pagos else None

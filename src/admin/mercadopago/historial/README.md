@@ -4,7 +4,7 @@ El CSV local `reportes/mercado_pago_sync.csv`. La grilla y las tarjetas leen de 
 
 `archivo.py`
 
-- `guardar(pagos)` agrega filas nuevas. No repite el id. No guarda un id con `SIMULADO`. Si no puede escribir, devuelve 0.
+- `guardar(pagos)` agrega filas nuevas. No repite el id. No guarda un id con `SIMULADO`. Si no puede escribir, devuelve 0. Lo llama el hilo y también el cobro cuando detecta un QR o una transferencia.
 - `leer()` devuelve los pagos y los totales del mes y de hoy. Una fila simulada vieja no entra.
 - `omitir(id_pago)` cambia `APPROVED` por `OMITIDO`, o al revés. Devuelve False si no hay archivo.
 

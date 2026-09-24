@@ -1519,7 +1519,31 @@ class Paso6Cobro(QDialog):
         else:
             self.panel_qr.mostrar(monto, forzar=True)
 
+    def _anotar_pago_mp(self, pago, monto=None):
+        """Deja el cobro en el monitor y, si hay id, listo para el ticket."""
+        if not isinstance(pago, dict) or not pago.get("id"):
+            return
+        self._mp_pago_usado = {
+            "id": str(pago.get("id")),
+            "monto": float(pago.get("transaction_amount") or monto or 0),
+        }
+        try:
+            from src.admin.mercadopago.historial.archivo import guardar
+
+            guardar([pago])
+        except Exception:
+            pass
+        try:
+            from src.admin.mercadopago.mercadopago_main import Admin10MP
+
+            vista = getattr(Admin10MP, "vista", None)
+            if vista is not None:
+                vista.cargar_datos_locales()
+        except Exception:
+            pass
+
     def _cerrar_venta_por_qr(self, monto):
+        self._anotar_pago_mp(getattr(self.panel_qr, "_pago", None), monto)
         if getattr(self, "_mixto_esperando_qr", False):
             self._mixto_esperando_qr = False
             self.panel_qr.ocultar()
