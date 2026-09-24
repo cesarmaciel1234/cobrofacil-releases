@@ -17,6 +17,7 @@ class PointService:
         device_id = config.get("mp_device_id", "")
 
         if not token or not device_id:
+            self._avisar("Falta el token o la terminal Point en la configuración del TPV.")
             return False
 
         if self.parent.current_metodo not in ["Tarjeta", "Mixto"]:

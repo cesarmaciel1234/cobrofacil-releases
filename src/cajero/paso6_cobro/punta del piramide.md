@@ -9,6 +9,7 @@ paso6_cobro/
   componentes_paso6_cobro/
     selector_metodo_pago/  tres tarjetas arriba y dos abajo
   mercadopago_core/        Point y QR, si el TPV está activo
+  vinculo_mp/              el id de Mercado Pago queda junto al ticket
   motor_pagos/             guarda la venta
   widgets/                 pago mixto, fiado y cliente
 ```
@@ -41,7 +42,9 @@ Efectivo y transferencia arman el medio en `monto_en_cobro/`. Un marco para el c
 
 Mixto abre la misma hoja, en `mixto_en_cobro/`. No abre `widgets/pagos_mixtos.py`. El teclado escribe en el casillero con foco. F1 imprime. Enter registra, que es lo que hacía F2.
 
-Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarjeta, la escucha de Mercado Pago espera solo la transferencia, y el panel de QR muestra el código por el monto de QR. El efectivo queda anotado. Al terminar esos pasos, el motor mixto guarda una sola venta.
+Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarjeta, la escucha de Mercado Pago espera solo la transferencia, y el panel de QR muestra el código por el monto de QR. El efectivo queda anotado. Al terminar esos pasos, el motor mixto guarda una sola venta. El botón Point de mixto manda esa parte de tarjeta aunque el resto todavía no cubra el total.
+
+`vinculo_mp/libro.py` guarda en `reportes/mp_vinculos.json` el id del cobro de Mercado Pago junto al ticket. El último monto saltea los que ya tienen ticket. Si no queda uno nuevo, el cartel dice que no hay transferencia nueva.
 
 ## Producción
 

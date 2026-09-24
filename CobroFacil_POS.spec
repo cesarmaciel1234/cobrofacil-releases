@@ -36,6 +36,7 @@ a = Analysis(
         'src.admin.mercadopago.historial.archivo',
         'src.admin.mercadopago.historial.sincronizar',
         'src.services.mp_escucha',
+        'src.cajero.paso6_cobro.vinculo_mp.libro',
     ],
     hookspath=[],
     hooksconfig={},

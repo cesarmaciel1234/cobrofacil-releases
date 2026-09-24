@@ -58,6 +58,7 @@ echo Ensamblando el ejecutable principal...
   --hidden-import "src.admin.mercadopago.historial.archivo" ^
   --hidden-import "src.admin.mercadopago.historial.sincronizar" ^
   --hidden-import "src.services.mp_escucha" ^
+  --hidden-import "src.cajero.paso6_cobro.vinculo_mp.libro" ^
   --collect-submodules "src.motor_descuentos" ^
   --hidden-import "src.carteleria.creador_png.app" ^
   --hidden-import "flask" ^

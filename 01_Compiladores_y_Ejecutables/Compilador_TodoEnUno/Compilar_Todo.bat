@@ -78,6 +78,7 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --hidden-import "src.admin.mercadopago.historial.archivo" ^
   --hidden-import "src.admin.mercadopago.historial.sincronizar" ^
   --hidden-import "src.services.mp_escucha" ^
+  --hidden-import "src.cajero.paso6_cobro.vinculo_mp.libro" ^
   --collect-submodules "src.carteleria" ^
   --collect-submodules "src.motor_descuentos" ^
   --hidden-import "src.motor_descuentos.vistas.dialog_gestor_publicidad" ^

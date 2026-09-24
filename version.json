@@ -1,7 +1,7 @@
 {
-  "app_version": "v19.5",
+  "app_version": "v19.6",
   "channel": "stable",
-  "build_date": "2026-09-24 15:41:43",
+  "build_date": "2026-09-24 16:09:50",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -120,9 +120,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "53bffc450d3cf8433a7eafac4f7a8309",
+      "checksum": "2e190285ffc1543097092b5be3d75ac5",
       "channel": "stable",
-      "size": 1054967
+      "size": 1059049
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -4884,15 +4884,15 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "ff905519b4dbb7d9039d663a86a2cb20",
+      "checksum": "df144b3f3b37e5d1c222dfefa3243f2b",
       "channel": "stable",
-      "size": 75441
+      "size": 75834
     },
     "src/cajero/paso6_cobro/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "c21163ef3bc4c28c3c103298628e7b6b",
+      "checksum": "2c3d1b59b97737b0e5b468a042c470e7",
       "channel": "stable",
-      "size": 4343
+      "size": 4743
     },
     "src/cajero/paso6_cobro/README.md": {
       "version": "1.0.0",
@@ -5130,15 +5130,15 @@
     },
     "src/cajero/paso6_cobro/mercadopago_core/point_service.py": {
       "version": "1.0.0",
-      "checksum": "14868939bef241ad13be4b6a284f1ff6",
+      "checksum": "bc3a760f0cc31b0e2474e4966264382b",
       "channel": "stable",
-      "size": 3720
+      "size": 3814
     },
     "src/cajero/paso6_cobro/mercadopago_core/polling_service.py": {
       "version": "1.0.0",
-      "checksum": "994332f92a60f96b6930769f57567135",
+      "checksum": "dda03b56d54bf8296fe89fafbe420e44",
       "channel": "stable",
-      "size": 9079
+      "size": 10181
     },
     "src/cajero/paso6_cobro/mercadopago_core/qr_service.py": {
       "version": "1.0.0",
@@ -5232,9 +5232,9 @@
     },
     "src/cajero/paso6_cobro/motor_pagos/comandos/post_cobro.py": {
       "version": "1.0.0",
-      "checksum": "85ccadb9cb8ae3173d2cb581685132cc",
+      "checksum": "5bd2218250eb091a3f047ed57bf4420b",
       "channel": "stable",
-      "size": 961
+      "size": 1289
     },
     "src/cajero/paso6_cobro/motor_pagos/comandos/README.md": {
       "version": "1.0.0",
@@ -5454,17 +5454,35 @@
     },
     "src/cajero/paso6_cobro/transferencia_en_cobro/panel.py": {
       "version": "1.0.0",
-      "checksum": "8a728c2380d82e13b10534b1e3817d88",
+      "checksum": "49fef62f905bca7cff615e83b376c052",
       "channel": "stable",
-      "size": 5012
+      "size": 5091
     },
     "src/cajero/paso6_cobro/transferencia_en_cobro/README.md": {
       "version": "1.0.0",
-      "checksum": "2e7a5e094b49f467b80fa9f9742aeb03",
+      "checksum": "1527b9f4fe2564cf582b2df70e81776a",
       "channel": "stable",
-      "size": 570
+      "size": 567
     },
     "src/cajero/paso6_cobro/transferencia_en_cobro/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "channel": "stable",
+      "size": 0
+    },
+    "src/cajero/paso6_cobro/vinculo_mp/libro.py": {
+      "version": "1.0.0",
+      "checksum": "0306757ddd16ef46f6a9c6ba2d6f12d3",
+      "channel": "stable",
+      "size": 1520
+    },
+    "src/cajero/paso6_cobro/vinculo_mp/README.md": {
+      "version": "1.0.0",
+      "checksum": "e867ecb759413d286480d37331ebcaf6",
+      "channel": "stable",
+      "size": 575
+    },
+    "src/cajero/paso6_cobro/vinculo_mp/__init__.py": {
       "version": "1.0.0",
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",

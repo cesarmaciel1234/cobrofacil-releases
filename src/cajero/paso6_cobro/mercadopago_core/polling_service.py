@@ -147,9 +147,20 @@ class PollingService:
                 aviso("No se pudo leer el último cobro.")
             return
 
+        from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
+
+        esperado = self._monto_transferencia()
+        if esperado is None:
+            aviso = getattr(self.parent, "_avisar", None)
+            if aviso:
+                aviso("No hay transferencia nueva.")
+            return
+
         pago = None
         for p in (resp.json() or {}).get("results") or []:
             p_id = str(p.get("id"))
+            if asociado(p_id):
+                continue
             existe = db_manager.execute_query(
                 "SELECT id FROM mp_transferencias_usadas WHERE payment_id = ?", (p_id,)
             )
@@ -159,7 +170,7 @@ class PollingService:
         if not pago:
             aviso = getattr(self.parent, "_avisar", None)
             if aviso:
-                aviso("No hay un monto nuevo en las últimas horas.")
+                aviso("No hay transferencia nueva.")
             return
 
         monto = float(pago.get("transaction_amount") or 0)
@@ -168,11 +179,11 @@ class PollingService:
         if not nombre:
             nombre = payer.get("email") or "Desconocido"
         aviso = getattr(self.parent, "_avisar", None)
-        if abs(monto - float(self.parent.total_final or 0)) > 0.05:
+        if abs(monto - esperado) > 0.05:
             if aviso:
                 aviso(
                     f"Llegó ${monto:,.2f} de {nombre}. "
-                    f"El ticket es ${float(self.parent.total_final):,.2f}."
+                    f"El ticket es ${esperado:,.2f}."
                 )
             return
         from src.services.mp_escucha import EscuchaMP
@@ -187,5 +198,22 @@ class PollingService:
             )
         except Exception:
             pass
+        self.parent._mp_pago_usado = {"id": str(pago.get("id")), "monto": monto}
         self.parent.txt_pago.setText(f"{monto:.2f}")
         self.parent.finalizar(True)
+
+    def _monto_transferencia(self):
+        """El importe que se está esperando. None si este cobro no busca una transferencia."""
+        padre = self.parent
+        if padre.current_metodo == "Mixto":
+            espera = getattr(padre, "_mixto_espera_transferencia", None)
+            if espera is not None:
+                return float(espera)
+            valores = padre.panel_mixto.valores() if hasattr(padre, "panel_mixto") else {}
+            parte = float(valores.get("mercadopago") or 0)
+            if parte > 0.009:
+                return parte
+            return None
+        if padre.current_metodo == "Transferencia":
+            return float(padre.total_final or 0)
+        return None

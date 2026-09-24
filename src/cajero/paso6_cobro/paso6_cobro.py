@@ -951,14 +951,9 @@ class Paso6Cobro(QDialog):
             if monto_escucha is None:
                 monto_escucha = self.total_final
 
-            # Zoom logic
-            self.mp_font_size += self.mp_font_dir
-            if self.mp_font_size >= 24:
-                self.mp_font_dir = -1
-            elif self.mp_font_size <= 20:
-                self.mp_font_dir = 1
-
-            self.lbl_mp_status.setStyleSheet(f"font-size: {self.mp_font_size}px; font-weight: 900;")
+            self.lbl_mp_status.setStyleSheet(
+                "font-size: 20px; font-weight: 800; color: #1E3A8A; background: transparent; border: none;"
+            )
             self.lbl_mp_status.setText(f" {char} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${monto_escucha:.2f})")
             if getattr(self, "_mixto_espera_transferencia", None) is not None and hasattr(self, "panel_mixto"):
                 self.panel_mixto.estado.setText(
@@ -980,14 +975,17 @@ class Paso6Cobro(QDialog):
 
                 # Validar que el pago haya ocurrido hace menos de 90 segundos
                 if ahora - pago['timestamp'] <= 90:
-                    # Validar que el monto coincida exactamente con self.total_final (permitiendo un margen de 0.05)
+                    from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
+                    if asociado(pago.get("id")):
+                        Admin10MP.ultimo_pago_detectado = None
+                        return
                     monto_pago = pago['monto']
                     esperado = getattr(self, "_mixto_espera_transferencia", None)
                     if esperado is None:
                         esperado = self.total_final
                     if abs(monto_pago - esperado) <= 0.05:
-                        # Consumir el pago para evitar duplicados
                         Admin10MP.ultimo_pago_detectado = None
+                        self._mp_pago_usado = {"id": pago.get("id"), "monto": monto_pago}
 
                         self.timer_mp.stop()
                         self.timer_spinner.stop()
@@ -1256,7 +1254,8 @@ class Paso6Cobro(QDialog):
                 "cliente_id": cliente_id,
                 "imprimir": imprimir,
                 "force_fiscal": force_fiscal,
-                "request_id": getattr(self, "request_id", None)
+                "request_id": getattr(self, "request_id", None),
+                "mp_pago": getattr(self, "_mp_pago_usado", None),
             }
 
             exito, mensaje = MotorPrincipalCobros.iniciar_transaccion(
@@ -1582,7 +1581,12 @@ class Paso6Cobro(QDialog):
         if self.current_metodo == "QR":
             return
         if self.current_metodo == "Mixto":
-            self._entrar_mixto(False)
+            self.valores_mixtos = self.panel_mixto.valores()
+            if float(self.valores_mixtos.get("tarjeta") or 0) <= 0.009:
+                self._avisar("No hay monto de tarjeta para el Point.")
+                return
+            from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
+            PointService(self).procesar_pago_mercadopago_point(cerrar=False)
             return
         if self.current_metodo == "Tarjeta":
             self._refrescar_tarjeta()

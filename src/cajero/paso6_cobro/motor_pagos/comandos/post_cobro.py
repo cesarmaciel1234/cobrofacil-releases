@@ -19,6 +19,14 @@ def post_cobro(datos, id_v, resultado_venta):
         datos.get("recargo") or 0,
         datos.get("force_fiscal", False),
     )
+    pago = datos.get("mp_pago") or {}
+    if pago.get("id"):
+        try:
+            from src.cajero.paso6_cobro.vinculo_mp.libro import asociar
+
+            asociar(pago.get("id"), pago.get("monto"), id_v)
+        except Exception as e:
+            logger.warning("No se vinculo el pago MP %s: %s", pago.get("id"), e)
     try:
         from src.base_de_datos.diario_ventas_externo import encolar_venta
 

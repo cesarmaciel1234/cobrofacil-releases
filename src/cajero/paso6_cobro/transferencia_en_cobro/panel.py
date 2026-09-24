@@ -53,9 +53,9 @@ class PanelAliasCobro(QFrame):
         self.alias = QLabel("Buscando alias…")
         self.alias.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.alias.setWordWrap(True)
-        self.alias.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.alias.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.alias.setStyleSheet(
-            "color: #1E3A8A; font-size: 64px; font-weight: 900; background: transparent; border: none;"
+            "color: #1E3A8A; font-size: 56px; font-weight: 800; background: transparent; border: none;"
         )
         self.caja = QLineEdit()
         self.caja.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -67,16 +67,19 @@ class PanelAliasCobro(QFrame):
         )
         self.caja.returnPressed.connect(self._guardar)
         self.caja.hide()
-        lay.addWidget(self.alias, 1)
+        lay.addStretch(1)
+        lay.addWidget(self.alias)
         lay.addWidget(self.caja)
+        lay.addSpacing(10)
 
         self.nombre = QLabel("")
         self.nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.nombre.setWordWrap(True)
         self.nombre.setStyleSheet(
-            "color: #0F172A; font-size: 36px; font-weight: 900; background: transparent; border: none;"
+            "color: #475569; font-size: 28px; font-weight: 600; background: transparent; border: none;"
         )
         lay.addWidget(self.nombre)
+        lay.addStretch(1)
 
     def mostrar(self):
         config._load_config()
