@@ -360,12 +360,8 @@ def launch_app(direct_role=None):
         elif step == 3:
             hizo_cierre, monto_c = verificar_y_realizar_autocierre()
             if hizo_cierre:
-                QMessageBox.information(
-                    None,
-                    "Sistema de seguridad",
-                    f"Se detectaron ventas abiertas de días anteriores.\n\n"
-                    f"El sistema realizó un cierre automático de ${monto_c:.2f}.",
-                )
+                from src.inicio_y_perfiles.aviso_cierre_automatico import AvisoCierreAutomatico
+                qt_exec(AvisoCierreAutomatico(monto_c))
 
             apertura = AperturaCajaPantalla()
             if qt_exec(apertura):

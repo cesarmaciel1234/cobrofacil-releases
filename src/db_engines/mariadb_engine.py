@@ -122,8 +122,10 @@ class MariaDBEngine:
             self._last_fail_time = 0
             return MariaDBConnectionWrapper(conn, engine=self)
         except Exception as e:
-            # Fallback a contraseña vacía por compatibilidad hacia atrás
-            if self.password != "":
+            from src.base_de_datos.core.mariadb_probe import error_indica_maestra_caida
+
+            # Si la maestra no contesta, no repetir con clave vacía: eso duplica la espera.
+            if self.password != "" and not error_indica_maestra_caida(e):
                 try:
                     conn = pymysql.connect(**self._connect_kwargs(password=""))
                     self._last_fail_time = 0

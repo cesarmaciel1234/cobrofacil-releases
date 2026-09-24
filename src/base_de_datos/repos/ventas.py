@@ -78,7 +78,8 @@ class VentasRepoMixin:
             venta_data['request_id'] = request_id
 
         # Esclava: si ya hay MariaDB de la maestra, guardar ahí (misma BD).
-        # La API LAN solo se usa si NO hay motor MariaDB (offline / mal cableada).
+        # La API LAN solo se usa si NO hay motor MariaDB y el puerto de la maestra sí responde.
+        # Si la maestra no contesta, no se espera el timeout ni se cancela: se guarda en SQLite.
         if not self.is_master:
             from src.config import config
             mariadb_ok = (
@@ -86,7 +87,9 @@ class VentasRepoMixin:
                 and getattr(self, "mariadb_engine", None) is not None
             )
             api_url = str(config.get("api_url", "") or "").rstrip("/")
-            if api_url and not mariadb_ok:
+            host = self._host_tienda() if not mariadb_ok else ""
+            maestra_viva = bool(host) and self._puerto_maestra_vivo(host)
+            if api_url and not mariadb_ok and maestra_viva:
                 try:
                     import requests
                     payload = {
@@ -106,8 +109,13 @@ class VentasRepoMixin:
                     logger.warning(f"Error del Servidor API LAN: HTTP {response.status_code}")
                 except Exception as e:
                     logger.error(f"Fallo de conexión a la API LAN: {e}")
-                logger.warning("Fallo en API LAN y sin MariaDB de maestra. Cancelando venta.")
-                return None
+                    self._maestra_viva_hasta = 0.0
+                if self._puerto_maestra_vivo(host):
+                    logger.warning("Fallo en API LAN con la maestra en línea. Cancelando venta.")
+                    return None
+                logger.warning("La maestra dejó de responder. La venta se guarda en SQLite local.")
+            elif api_url and not mariadb_ok and not maestra_viva:
+                logger.warning("Maestra no responde. La venta se guarda en SQLite local.")
 
         conn = None
         try:
@@ -209,6 +217,16 @@ class VentasRepoMixin:
                         pass
 
             conn.commit()
+            if (
+                not self.is_master
+                and self._host_tienda()
+                and getattr(self, "db_engine_type", "sqlite") != "mariadb"
+            ):
+                try:
+                    from src.base_de_datos.offline_sync import offline_sync_manager
+                    offline_sync_manager.guardar_venta_offline(venta_data, items)
+                except Exception as e_off:
+                    logger.warning(f"Venta local guardada; no se pudo encolar para la maestra: {e_off}")
             return id_venta
         except Exception as e:
             if conn: conn.rollback()
@@ -230,10 +248,14 @@ class VentasRepoMixin:
 
     def sync_venta_to_master(self, venta_data, items):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb" or not getattr(self, "mariadb_engine", None):
+            return False
+        if getattr(self, "_forced_local_offline", False):
+            return False
         conn = None
         request_id = (venta_data or {}).get("request_id")
         try:
-            conn = self.get_connection()
+            conn = self.get_connection(caer_si_maestra_caida=False)
             cursor = conn.cursor()
             if request_id and _buscar_por_request(cursor, request_id):
                 return True

@@ -1,4 +1,17 @@
+import datetime
+from urllib.parse import quote
+
 import requests
+
+
+def fecha_busqueda_mp(resta=None):
+    """Formato de /v1/payments/search: 2026-09-24T12:35:50.000-03:00."""
+    zona = datetime.timezone(datetime.timedelta(hours=-3))
+    momento = datetime.datetime.now(zona)
+    if resta:
+        momento = momento - resta
+    return quote(momento.strftime("%Y-%m-%dT%H:%M:%S.000-03:00"), safe="")
+
 
 class MPApiClient:
     @staticmethod

@@ -94,6 +94,7 @@ from src.cajero.cajero_activo import CajeroActivo
 class Paso5Terminal(QWidget):
     request_admin_jump = pyqtSignal()
     request_chatbot_toggle = pyqtSignal()
+    bascula_leida = pyqtSignal(object)
     """
     PASO 5: TERMINAL INDUSTRIAL EXACTA (100% Foto + Búsqueda Rápida)
     """
@@ -145,6 +146,9 @@ class Paso5Terminal(QWidget):
         self.timer_alerta_espera = QTimer(self)
         self.timer_alerta_espera.timeout.connect(self._alerta_tickets_espera)
         self.timer_alerta_espera.start(120000)
+        self.bascula_leida.connect(self._aplicar_lectura_bascula)
+        if HAS_KEYBOARD:
+            QTimer.singleShot(0, self._enganchar_foco_teclado)
 
     def _stock_disponible(self, p, p_id):
         if p_id == "000":
@@ -583,46 +587,89 @@ class Paso5Terminal(QWidget):
         except Exception:
             pass
 
-    def _leer_bascula(self):
-        try:
-            import serial
-            import re
-            # Intentar abrir el puerto COM1 (o el configurado)
-            puerto = config.get("puerto_bascula", "COM1")
-            ser = serial.Serial(puerto, 9600, timeout=1)
-            # Solicitar peso (depende de la bascula, normalmente enviando una letra como 'P' o Enter)
-            ser.write(b'P\r\n')
-            time.sleep(0.2)
-            respuesta = ser.readline().decode('ascii', errors='ignore').strip()
-            ser.close()
+    def _enganchar_foco_teclado(self):
+        if getattr(self, "_foco_teclado_enganchado", False) or not HAS_KEYBOARD:
+            return
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app is None:
+            return
+        app.focusChanged.connect(self.on_focus_changed)
+        self._foco_teclado_enganchado = True
 
-            if respuesta:
-                # Extraer solo numeros
-                peso_match = re.search(r'([0-9]+\.[0-9]+)', respuesta)
-                if peso_match:
-                    peso = peso_match.group(1)
-                    # Insertar peso en la caja de multiplicador
-                    self.txt_scan.setText(f"{peso}*")
-                    QMessageBox.information(self, "Báscula", f"Peso leído: {peso} kg")
+    def _leer_bascula(self):
+        """Lee el puerto fuera de la pantalla. El escáner sigue recibiendo teclas."""
+        if getattr(self, "_bascula_leyendo", False):
+            return
+        self._bascula_leyendo = True
+        puerto = config.get("puerto_bascula", "COM1")
+
+        def _trabajo():
+            import re
+            aviso = "falla"
+            peso = ""
+            detalle = ""
+            try:
+                import serial
+                ser = serial.Serial(puerto, 9600, timeout=0.45)
+                try:
+                    ser.write(b"P\r\n")
+                    respuesta = ser.readline().decode("ascii", errors="ignore").strip()
+                finally:
+                    ser.close()
+                if respuesta:
+                    peso_match = re.search(r"([0-9]+\.[0-9]+)", respuesta)
+                    if peso_match:
+                        aviso = "leido"
+                        peso = peso_match.group(1)
+                    else:
+                        aviso = "raro"
+                        detalle = respuesta
                 else:
-                    QMessageBox.warning(self, "Báscula", f"Lectura no reconocida: {respuesta}")
-            else:
-                # Simulador si no hay respuesta real
-                peso_simulado = "1.250"
-                self.txt_scan.setText(f"{peso_simulado}*")
-                QMessageBox.information(self, "Báscula (Simulador)", f"Báscula no encontrada en {puerto}.\nSe simuló un peso de {peso_simulado} kg para pruebas.")
-        except ImportError:
+                    aviso = "vacio"
+            except ImportError:
+                aviso = "sin_pyserial"
+            except Exception as e:
+                aviso = "falla"
+                detalle = str(e)
+            self.bascula_leida.emit(
+                {"aviso": aviso, "peso": peso, "detalle": detalle, "puerto": puerto}
+            )
+
+        threading.Thread(target=_trabajo, daemon=True).start()
+
+    def _aplicar_lectura_bascula(self, dato):
+        from PyQt6.QtWidgets import QMessageBox
+        self._bascula_leyendo = False
+        aviso = (dato or {}).get("aviso")
+        puerto = (dato or {}).get("puerto") or "COM1"
+        if aviso == "leido":
+            peso = dato.get("peso") or ""
+            self.txt_scan.setText(f"{peso}*")
+            QMessageBox.information(self, "Báscula", f"Peso leído: {peso} kg")
+        elif aviso == "raro":
+            QMessageBox.warning(self, "Báscula", f"Lectura no reconocida: {dato.get('detalle')}")
+        elif aviso == "sin_pyserial":
             QMessageBox.critical(self, "Error", "Falta instalar pyserial (pip install pyserial).")
-        except Exception as e:
-            # Simulador de falla segura
+        elif aviso == "vacio":
+            peso_simulado = "1.250"
+            self.txt_scan.setText(f"{peso_simulado}*")
+            QMessageBox.information(
+                self,
+                "Báscula (Simulador)",
+                f"Báscula no encontrada en {puerto}.\nSe simuló un peso de {peso_simulado} kg para pruebas.",
+            )
+        else:
             peso_simulado = "0.750"
             self.txt_scan.setText(f"{peso_simulado}*")
-            QMessageBox.information(self, "Báscula (Simulador)", f"No se detectó báscula física en el puerto configurado.\nSe simuló un peso de {peso_simulado} kg para pruebas.\n\nDetalle técnico: {e}")
-
-        # Conectar detector de foco para teclado virtual automático (estilo celular)
-        if HAS_KEYBOARD:
-            from PyQt6.QtWidgets import QApplication
-            QApplication.instance().focusChanged.connect(self.on_focus_changed)
+            QMessageBox.information(
+                self,
+                "Báscula (Simulador)",
+                "No se detectó báscula física en el puerto configurado.\n"
+                f"Se simuló un peso de {peso_simulado} kg para pruebas.\n\n"
+                f"Detalle técnico: {dato.get('detalle')}",
+            )
+        self.txt_scan.setFocus()
 
     def mousePressEvent(self, event):
         # Al hacer click en cualquier parte, el cursor vuelve al buscador y se oculta la lista
@@ -1270,10 +1317,25 @@ class Paso5Terminal(QWidget):
             self._cierre_en_progreso = False
             print(f"Error verificando cierre remoto: {e}")
 
+    def _texto_es_codigo(self, txt):
+        """Un código de barras o una cantidad*código se resuelve al Enter, sin LIKE."""
+        if not txt or txt.startswith("+"):
+            return False
+        if "*" in txt:
+            _, der = txt.split("*", 1)
+            der = der.strip()
+            return (not der) or der.isdigit()
+        return txt.isdigit()
+
     def actualizar_busqueda(self):
-        # En lugar de buscar en cada tecla, esperamos 250ms.
-        # Si entra otra tecla (como hace un escáner), el timer se reinicia.
-        self.search_timer.start(80)
+        # El nombre espera 160 ms. El código no consulta hasta Enter.
+        txt = self.txt_scan.text().strip()
+        if self._texto_es_codigo(txt):
+            self.search_timer.stop()
+            if getattr(self, "list_results", None) is not None and not self.list_results.isHidden():
+                self._ocultar_busqueda()
+            return
+        self.search_timer.start(160)
 
     def _do_busqueda(self):
         txt = self.txt_scan.text().strip()
@@ -1371,6 +1433,7 @@ class Paso5Terminal(QWidget):
 
     def procesar_scan(self):
         from src.utils.barcode_parser import BarcodeParser
+        self.search_timer.stop()
         txt_raw = self.txt_scan.text()
 
         if not self.list_results.isHidden():
@@ -1406,8 +1469,14 @@ class Paso5Terminal(QWidget):
             return
 
     def agregar_a_tabla(self, p, cantidad=1.0):
-        # OPTIMIZACION: Congelar el renderizado de la tabla hasta que terminen todos los calculos
+        # Congela el dibujo hasta el final. El finally lo suelta aunque falle el cálculo.
         self.setUpdatesEnabled(False)
+        try:
+            self._agregar_a_tabla_calculado(p, cantidad)
+        finally:
+            self.setUpdatesEnabled(True)
+
+    def _agregar_a_tabla_calculado(self, p, cantidad=1.0):
         self.en_venta = True
         p_id = str(p['id'])
         precio_base = float(p['precio'])
@@ -1527,6 +1596,19 @@ class Paso5Terminal(QWidget):
         if getattr(self, '_evaluando_combos', False): return
         self._evaluando_combos = True
         try:
+            combos_activos = self.controller.stock_ofertas.combos_para_ticket()
+            if not combos_activos:
+                if getattr(self, "_ticket_tiene_combo", False):
+                    i = 0
+                    while i < self.tabla.rowCount():
+                        celda = self.tabla.item(i, 0)
+                        if celda and celda.text().startswith("COMBO-"):
+                            self.tabla.removeRow(i)
+                        else:
+                            i += 1
+                    self._ticket_tiene_combo = False
+                return
+
             # 1. Eliminar filas previas de combo
             i = 0
             while i < self.tabla.rowCount():
@@ -1545,25 +1627,9 @@ class Paso5Terminal(QWidget):
                     canasta[id_p] = {"cant": 0, "precio": precio}
                 canasta[id_p]["cant"] += cant
 
-            # 3. Buscar combos en BD
-
-            import json, socket
-            combos_activos = []
-            try:
-                res = self.controller.stock_ofertas.obtener_combos()
-                if res:
-                    for r in res:
-                        try:
-                            reqs = json.loads(r.get('productos_json', r[3] if isinstance(r, tuple) else '[]'))
-                            combos_activos.append({
-                                "id": r.get('id', r[0] if isinstance(r, tuple) else ''),
-                                "nombre": r.get('nombre', r[1] if isinstance(r, tuple) else ''),
-                                "precio_combo": float(r.get('precio_combo', r[2] if isinstance(r, tuple) else 0)),
-                                "reqs": reqs
-                            })
-                        except: pass
-            except: pass
-
+            # 3. Aplicar combos ya recordados
+            import json
+            import socket
             # 4. Aplicar Combos
             combos_aplicados_ahora = []
             for combo in combos_activos:
@@ -1611,27 +1677,50 @@ class Paso5Terminal(QWidget):
                         # Emitir señal UDP
                         try:
                             udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                            from src.config import config
-                            msg = json.dumps({
-                                "type": "COMBO_TRIGGERED",
-                                "combo": combo["nombre"],
-                                "precio_original": costo_original_por_combo * veces_aplicable,
-                                "precio_final": precio_final_combo * veces_aplicable,
-                                "ahorro": ahorro_total_desc,
-                                "caja_id": config.get("caja_id", 1)
-                            })
-                            udp_s.sendto(msg.encode('utf-8'), ("<broadcast>", 37021)) # Broadcast port for carteleria
-                        except Exception as e: pass
+                            try:
+                                from src.config import config
+                                msg = json.dumps({
+                                    "type": "COMBO_TRIGGERED",
+                                    "combo": combo["nombre"],
+                                    "precio_original": costo_original_por_combo * veces_aplicable,
+                                    "precio_final": precio_final_combo * veces_aplicable,
+                                    "ahorro": ahorro_total_desc,
+                                    "caja_id": config.get("caja_id", 1)
+                                })
+                                udp_s.sendto(msg.encode('utf-8'), ("<broadcast>", 37021))
+                            finally:
+                                udp_s.close()
+                        except Exception:
+                            pass
 
+            self._ticket_tiene_combo = bool(combos_aplicados_ahora)
         finally:
             self._evaluando_combos = False
 
     def actualizar_totales(self):
+        filas_antes = self.tabla.rowCount()
+        tenia_combo = getattr(self, "_ticket_tiene_combo", False)
         self._evaluar_combos()
 
-        # Refrescar en cascada los estilos para que el destaque azul y el subtotal verde agua se muevan dinámicamente
-        for i in range(self.tabla.rowCount()):
-            self._reaplicar_estilo_fila(i)
+        filas = self.tabla.rowCount()
+        hay_combo = getattr(self, "_ticket_tiene_combo", False)
+        pintadas = getattr(self, "_filas_pintadas", -1)
+        linea_nueva = (
+            not tenia_combo and not hay_combo and pintadas >= 0
+            and filas == filas_antes + 1 and filas == pintadas + 1
+        )
+        if hay_combo or (filas != filas_antes and not linea_nueva) or (filas != pintadas and not linea_nueva):
+            for i in range(filas):
+                self._reaplicar_estilo_fila(i)
+        else:
+            previa = getattr(self, "_fila_pintada", -1)
+            actual = getattr(self, "last_active_row", -1)
+            if previa != actual and 0 <= previa < filas:
+                self._reaplicar_estilo_fila(previa)
+            if 0 <= actual < filas:
+                self._reaplicar_estilo_fila(actual)
+        self._filas_pintadas = filas
+        self._fila_pintada = getattr(self, "last_active_row", -1)
 
         from src.utils.dinero import redondear_dinero
         total = redondear_dinero(
@@ -1676,6 +1765,9 @@ class Paso5Terminal(QWidget):
         """
         if not hasattr(self, 'current_ahorro'):
             self.current_ahorro = 0.0
+
+        if nuevo_ahorro > 0 and abs(self.current_ahorro - float(nuevo_ahorro)) < 0.005:
+            return
 
         if hasattr(self, '_respiracion_anim') and self._respiracion_anim:
             self._respiracion_anim.stop()
@@ -1939,7 +2031,8 @@ class Paso5Terminal(QWidget):
 
                     # Verificación dinámica de ofertas al ajustar cantidad
                     p_id = self.tabla.item(row, 0).text()
-                    res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
+                    oferta = self.controller.stock_ofertas.obtener_ofertas_producto(p_id)
+                    res_of = [oferta] if oferta else []
                     if res_of and p_id != "000":
                         p_base = float(res_of[0]['precio'])
                         c_of = float(res_of[0]['cant_oferta'] or 0.0)
@@ -1993,7 +2086,8 @@ class Paso5Terminal(QWidget):
 
                         # Verificación dinámica de ofertas al ingresar con el Enter
                         p_id = self.tabla.item(row, 0).text()
-                        res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
+                        oferta = self.controller.stock_ofertas.obtener_ofertas_producto(p_id)
+                        res_of = [oferta] if oferta else []
                         if res_of and p_id != "000":
                             p_base = float(res_of[0]['precio'])
                             c_of = float(res_of[0]['cant_oferta'] or 0.0)

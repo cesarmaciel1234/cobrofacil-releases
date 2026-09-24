@@ -20,6 +20,8 @@ Las métricas, las ventas en vivo y los eventos se piden al cerebro. Prohibido `
 
 El efectivo esperado de Nexus es el del turno abierto, el mismo que la caja espera en el cajón. No es la suma de todo el día si ya hubo otros turnos.
 
+Una venta guardada en la esclava mientras la maestra no contesta llega por UDP `VENTA_NUEVA` con `fuera_de_maestra`. Nexus la muestra en el acto y suma el monto al turno. Cuando `CerebroNexus.request_ids_en_maestra` encuentra ese `request_id`, el monto deja de sumarse aparte: ya está en la maestra. No se anota dos veces en la pantalla.
+
 ## Qué no cambiar
 
 No cerrar el turno desde un botón propio de Nexus. No dar a un perfil de guardia la base histórica para que la modifique.

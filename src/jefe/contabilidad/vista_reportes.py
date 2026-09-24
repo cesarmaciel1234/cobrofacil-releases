@@ -102,7 +102,7 @@ class VistaReportesMixin:
                 f"backup_contabilidad_{datetime.date.today().strftime('%Y-%m-%d')}.db",
                 "SQLite (*.db)")
             if not dest: return
-            shutil.copy2(DB_PATH, dest)
+            shutil.copy2(self._db.db_name, dest)
             QMessageBox.information(self.window(), "✅ Backup", f"Guardado en:\n{dest}")
         except Exception as e:
             QMessageBox.critical(self.window(), "Error", str(e))

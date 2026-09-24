@@ -5,7 +5,7 @@ from src.config import config
 from src.utils.qt_compat import qt_exec
 from src.utils.parser import parse_float_regional
 from src.base_de_datos.database import db_manager
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient
+from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
 
 class PollingService:
     def __init__(self, parent_cobro):
@@ -37,9 +37,8 @@ class PollingService:
         progreso.show()
 
         try:
-            now = datetime.datetime.utcnow()
-            begin_date = (now - datetime.timedelta(hours=2)).isoformat() + "Z"
-            end_date = now.isoformat() + "Z"
+            begin_date = fecha_busqueda_mp(datetime.timedelta(hours=2))
+            end_date = fecha_busqueda_mp()
 
             url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=50&status=approved&range=date_created&begin_date={begin_date}&end_date={end_date}"
 
@@ -111,3 +110,79 @@ class PollingService:
         except Exception as e:
             progreso.close()
             QMessageBox.critical(self.parent, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+
+    def ultimo_monto_recibido(self):
+        """El cobro aprobado más reciente, para corroborar una transferencia."""
+        config._load_config()
+        token = str(config.get("mp_access_token", "") or "").strip()
+        if not token:
+            QMessageBox.warning(self.parent, "Configuración Faltante", "Falta el Access Token de Mercado Pago.")
+            return
+
+        progreso = QProgressDialog("Buscando el último monto recibido...", "Cancelar", 0, 0, self.parent)
+        progreso.setWindowTitle("Último monto")
+        progreso.setWindowModality(Qt.WindowModality.WindowModal)
+        progreso.show()
+        try:
+            begin_date = fecha_busqueda_mp(datetime.timedelta(hours=2))
+            end_date = fecha_busqueda_mp()
+            url = (
+                "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc"
+                f"&limit=10&status=approved&range=date_created&begin_date={begin_date}&end_date={end_date}"
+            )
+            resp = MPApiClient.get(url, token, timeout=15)
+            progreso.close()
+        except Exception as e:
+            progreso.close()
+            QMessageBox.critical(self.parent, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+            return
+
+        if resp.status_code != 200:
+            QMessageBox.critical(self.parent, "Error MP", f"No se pudo leer el último cobro:\n{resp.text}")
+            return
+
+        pago = None
+        for p in (resp.json() or {}).get("results") or []:
+            p_id = str(p.get("id"))
+            existe = db_manager.execute_query(
+                "SELECT id FROM mp_transferencias_usadas WHERE payment_id = ?", (p_id,)
+            )
+            if not existe:
+                pago = p
+                break
+        if not pago:
+            QMessageBox.information(self.parent, "Sin cobros", "No hay un monto nuevo recibido en las últimas horas.")
+            return
+
+        monto = float(pago.get("transaction_amount") or 0)
+        payer = pago.get("payer") or {}
+        nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip()
+        if not nombre:
+            nombre = payer.get("email") or "Desconocido"
+        cuando = str(pago.get("date_created") or "")[:16].replace("T", " ")
+        texto = f"Último monto recibido: ${monto:,.2f}\n\nOrigen: {nombre}\nHora: {cuando}"
+        if abs(monto - float(self.parent.total_final or 0)) > 0.05:
+            QMessageBox.information(
+                self.parent,
+                "Último monto",
+                texto + f"\n\nEl ticket es ${float(self.parent.total_final):,.2f}. No coincide.",
+            )
+            return
+
+        reply = QMessageBox.question(
+            self.parent,
+            "Último monto",
+            texto + "\n\nCoincide con el ticket. ¿Cerrar la venta?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            db_manager.execute_non_query(
+                "INSERT INTO mp_transferencias_usadas (payment_id) VALUES (?)",
+                (str(pago.get("id")),),
+            )
+        except Exception:
+            pass
+        self.parent.txt_pago.setText(f"{monto:.2f}")
+        self.parent.finalizar(True)

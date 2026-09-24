@@ -2,7 +2,7 @@ import datetime
 import requests
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
 from PyQt6.QtCore import QTimer, Qt
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient
+from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient, fecha_busqueda_mp
 
 class MPPollingDialog(QDialog):
     def __init__(self, parent_dlg, token, device_id, intent_id, monto_original, modo="Tarjeta"):
@@ -143,9 +143,8 @@ class QRDialog(QDialog):
 
     def buscar_pago(self):
         try:
-            now = datetime.datetime.utcnow()
-            begin = (now - datetime.timedelta(minutes=5)).isoformat() + "Z"
-            end = now.isoformat() + "Z"
+            begin = fecha_busqueda_mp(datetime.timedelta(minutes=5))
+            end = fecha_busqueda_mp()
             search_url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=10&status=approved&external_reference={self.ref}&range=date_created&begin_date={begin}&end_date={end}"
             r = MPApiClient.get(search_url, self.token, timeout=5)
             if r.status_code == 200:

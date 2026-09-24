@@ -468,8 +468,29 @@ class ConnectionMixin:
         # Re-run initialization
         self._init_db()
 
+    def _puerto_maestra_vivo(self, host: str) -> bool:
+        """True si 3306 de la maestra acepta conexión. El sí se recuerda 8s para no frenar cada lectura."""
+        import time
+
+        ahora = time.monotonic()
+        if ahora < float(getattr(self, "_maestra_viva_hasta", 0) or 0):
+            return True
+        if puerto_mariadb_abierto(host, 0.6):
+            self._maestra_viva_hasta = ahora + 8.0
+            return True
+        self._maestra_viva_hasta = 0.0
+        return False
+
+    def _abrir_sqlite(self):
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
+        conn.row_factory = sqlite3.Row
+        return conn
+
     def reconectar_local(self):
-        """Vuelve a modo MAESTRA usando la base de datos SQLite local. Sin reiniciar."""
+        """Esclava sin maestra: SQLite local. No promueve is_master. Sin reiniciar."""
+        if getattr(self, "_reconectando_local", False):
+            return
+        self._reconectando_local = True
         try:
             from src.utils.paths import get_base_path
             import json
@@ -507,6 +528,12 @@ class ConnectionMixin:
             except Exception:
                 self.is_master = True
             self._forced_local_offline = True
+            self._maestra_viva_hasta = 0.0
+            try:
+                import time as _time
+                self._last_master_try = _time.monotonic()
+            except Exception:
+                pass
 
             # Verificar/crear tablas en la BD local
             self._create_tables()
@@ -516,6 +543,8 @@ class ConnectionMixin:
         except Exception as e:
             logger.error(f"[RED LAN] Error en reconectar_local: {e}")
             raise
+        finally:
+            self._reconectando_local = False
 
     def reconectar_mariadb(self, host: str):
         """Conecta a MariaDB en `host`. Solo cambia el motor activo si el ping funciona."""
@@ -554,21 +583,56 @@ class ConnectionMixin:
         except Exception:
             return False
 
-    def get_connection(self):
-        """Returns a new connection to the database (SQLite o MariaDB)."""
+    def get_connection(self, caer_si_maestra_caida: bool = True):
+        """Returns a new connection to the database (SQLite o MariaDB).
+
+        Si esta PC es esclava y la maestra no contesta, pasa a SQLite local
+        y devuelve esa conexión. caer_si_maestra_caida=False lo usa la sync,
+        que tiene que fallar y reintentar: no debe dar por subida una venta
+        que solo se escribió en el respaldo.
+        """
         if self._host_tienda() and getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            self.asegurar_lectura_tienda()
+            if not getattr(self, "_reconectando_local", False):
+                self.asegurar_lectura_tienda()
         if getattr(self, "db_engine_type", "sqlite") == "mariadb":
+            host = self._host_tienda() if not getattr(self, "is_master", True) else ""
+            if (
+                caer_si_maestra_caida
+                and host
+                and not getattr(self, "_reconectando_local", False)
+                and not self._puerto_maestra_vivo(host)
+            ):
+                logger.warning(
+                    f"[RED LAN] Puerto 3306 de {host} cerrado. La esclava sigue en SQLite local."
+                )
+                try:
+                    self.reconectar_local()
+                except Exception:
+                    if getattr(self, "db_engine_type", "sqlite") != "sqlite":
+                        raise
+                return self._abrir_sqlite()
             try:
                 return self.mariadb_engine.get_connection()
             except Exception as e:
+                from src.base_de_datos.core.mariadb_probe import error_indica_maestra_caida
+
+                esclava = (not getattr(self, "is_master", True)) and bool(self._host_tienda())
+                if (
+                    caer_si_maestra_caida
+                    and esclava
+                    and error_indica_maestra_caida(e)
+                    and not getattr(self, "_reconectando_local", False)
+                ):
+                    logger.warning(
+                        f"[RED LAN] Maestra no responde ({e}). La esclava sigue en SQLite local."
+                    )
+                    self.reconectar_local()
+                    return self._abrir_sqlite()
                 logger.error(f"Error connecting to MariaDB database: {e}")
                 raise
 
         try:
-            conn = sqlite3.connect(self.db_path, timeout=30.0)
-            conn.row_factory = sqlite3.Row  # Allow access by column name
-            return conn
+            return self._abrir_sqlite()
         except sqlite3.Error as e:
             logger.error(f"Error connecting to database: {e}")
             raise

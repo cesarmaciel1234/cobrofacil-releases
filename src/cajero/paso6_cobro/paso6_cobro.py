@@ -75,7 +75,7 @@ class Paso6Cobro(QDialog):
         parent = self.parent()
         ancho = parent.width() if parent is not None else 1280
         alto = parent.height() if parent is not None else 800
-        return min(1200, max(720, ancho - 80)), min(780, max(560, alto - 80))
+        return min(1360, max(720, ancho - 24)), min(920, max(560, alto - 24))
 
     def _cubrir_paso5(self):
         parent = self.parent()
@@ -87,6 +87,8 @@ class Paso6Cobro(QDialog):
     def showEvent(self, event):
         self._cubrir_paso5()
         super().showEvent(event)
+        if hasattr(self, "btn_f11"):
+            self._ajustar_botones_mp()
 
     def paintEvent(self, event):
         from PyQt6.QtGui import QPainter
@@ -264,13 +266,47 @@ class Paso6Cobro(QDialog):
 
         # CONTENIDO IZQUIERDO
         content_lay = QVBoxLayout()
-        content_lay.setContentsMargins(40, 30, 40, 20)
-        content_lay.setSpacing(30)
+        content_lay.setContentsMargins(28, 8, 28, 8)
+        content_lay.setSpacing(10)
 
+        self.lbl_precio_real = QLabel("")
+        self.lbl_precio_real.setObjectName("PrecioLista")
+        self.lbl_precio_real.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fuente_lista = QFont("Segoe UI", 16)
+        fuente_lista.setBold(True)
+        fuente_lista.setStrikeOut(True)
+        self.lbl_precio_real.setFont(fuente_lista)
+        self.lbl_precio_real.setStyleSheet(
+            "color: #EF4444; font-size: 22px; font-weight: 800; background: transparent; border: none;"
+        )
+        self.lbl_precio_real.setTextFormat(Qt.TextFormat.RichText)
+        self.lbl_precio_real.setMinimumHeight(28)
+        self.lbl_precio_real.hide()
         self.lbl_total = QLabel(self._monto(self.total_original))
         self.lbl_total.setObjectName("CobroTotal")
         self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        content_lay.addWidget(self.lbl_total)
+        caja_total = QVBoxLayout()
+        caja_total.setSpacing(0)
+        caja_total.addWidget(self.lbl_precio_real)
+        caja_total.addWidget(self.lbl_total)
+        content_lay.addLayout(caja_total)
+
+        from src.cajero.paso6_cobro.qr_en_cobro.panel import PanelQrCobro
+        self.panel_qr = PanelQrCobro(self)
+        self.panel_qr.pago_listo.connect(self._cerrar_venta_por_qr)
+        self.panel_qr.cambio_modo.connect(self._vista_monto_qr)
+        self.panel_qr.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        content_lay.addWidget(self.panel_qr, 1)
+        from src.cajero.paso6_cobro.mixto_en_cobro.panel import PanelMixtoCobro
+        self.panel_mixto = PanelMixtoCobro(self)
+        self.panel_mixto.cambio.connect(self._tomar_mixto)
+        content_lay.addWidget(self.panel_mixto)
+        from src.cajero.paso6_cobro.monto_en_cobro.panel import PanelMontoCobro
+        self.panel_monto = PanelMontoCobro(self)
+        content_lay.addWidget(self.panel_monto, 0)
+        self._qr_monto_timer = QTimer(self)
+        self._qr_monto_timer.setSingleShot(True)
+        self._qr_monto_timer.timeout.connect(self._refrescar_qr_si_vivo)
 
         self.aviso_monto = QLabel("INGRESÁ EL MONTO RECIBIDO")
         self.aviso_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -280,10 +316,11 @@ class Paso6Cobro(QDialog):
             "letter-spacing: 1px; border: 3px solid #F59E0B; border-radius: 14px; padding: 12px;"
         )
         self.aviso_monto.hide()
-        content_lay.addWidget(self.aviso_monto)
+        self.panel_monto.zona_pago.contenido.addWidget(self.aviso_monto)
 
-        # Cargar lista de clientes para fiado
-        self.lista_clientes = db_manager.execute_query("SELECT id, nombre, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC")
+        # La lista se carga al abrir Fiado o Clientes, no al pintar el cobro.
+        self.lista_clientes = []
+        self._clientes_cargados = False
 
 
         # Inputs de Pago
@@ -327,16 +364,13 @@ class Paso6Cobro(QDialog):
         self.lbl_cliente.setObjectName("InputLabel")
         self.cmb_cliente = QComboBox()
         self.cmb_cliente.setObjectName("CmbClienteCobro")
-        for c in self.lista_clientes:
-            disp = float(c['limite_credito']) - float(c['deuda_actual'])
-            self.cmb_cliente.addItem(f"{c['nombre']} (Disp: ${disp:,.2f})", c['id'])
 
         self.lbl_cliente.hide()
         self.cmb_cliente.hide()
 
         grid_inputs.addWidget(self.lbl_cliente, 2, 0)
         grid_inputs.addWidget(self.cmb_cliente, 2, 1)
-        content_lay.addLayout(grid_inputs)
+        self.panel_monto.zona_pago.contenido.addLayout(grid_inputs)
 
         # NUEVA LÍNEA HORIZONTAL DE MODIFICADORES COMPACTA
         grid_desc_rec = QGridLayout()
@@ -367,9 +401,6 @@ class Paso6Cobro(QDialog):
         self.txt_rec.installEventFilter(self)
         grid_desc_rec.addWidget(self.txt_rec, 0, 3)
 
-        content_lay.addSpacing(10)
-        content_lay.addLayout(grid_desc_rec)
-
         # NUEVO: Neto a cobrar destacado abajo
         self.lbl_neto = QLabel(f"NETO: $ {self.total_final:,.2f}")
         self.lbl_neto.setObjectName("NetoLabel")
@@ -377,11 +408,13 @@ class Paso6Cobro(QDialog):
         self.lbl_neto.setStyleSheet(
             "color: #1E3A8A; font-size: 28px; font-weight: 800; background: transparent; border: none;"
         )
-        content_lay.addWidget(self.lbl_neto)
+        self.lbl_neto.hide()
+        self.panel_monto.zona_estado.contenido.addWidget(self.lbl_neto)
 
         # Vuelto (Extraído modularmente)
         self.resumen_vuelto = ResumenVuelto(self)
-        content_lay.addWidget(self.resumen_vuelto)
+        self.resumen_vuelto.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        self.panel_monto.zona_estado.contenido.addWidget(self.resumen_vuelto)
 
         # Barra de Estado Mercado Pago con animación
         self.lbl_mp_status = QLabel("")
@@ -389,11 +422,13 @@ class Paso6Cobro(QDialog):
         self.lbl_mp_status.setProperty("estado", "info")
         self.lbl_mp_status.setStyleSheet("font-size: 20px; font-weight: 900;") # Más grande y fuerte
         self.lbl_mp_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_mp_status.setWordWrap(True)
+        self.lbl_mp_status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
         self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
         self.lbl_mp_status.style().polish(self.lbl_mp_status)
         self.lbl_mp_status.hide()
-        content_lay.addWidget(self.lbl_mp_status)
+        self.panel_monto.zona_estado.contenido.addWidget(self.lbl_mp_status)
 
         self.timer_mp = QTimer(self)
         self.timer_mp.timeout.connect(self.verificar_pago_mp_automatico)
@@ -406,8 +441,14 @@ class Paso6Cobro(QDialog):
         self.timer_spinner = QTimer(self)
         self.timer_spinner.timeout.connect(self._actualizar_spinner_mp)
 
-        # Empujar el pie de página hasta abajo
-        content_lay.addStretch()
+        self.content_lay = content_lay
+        self.hueco_pie = QWidget()
+        self.hueco_pie.setMinimumHeight(0)
+        content_lay.addWidget(self.hueco_pie, 1)
+        self._idx_monto = content_lay.indexOf(self.panel_monto)
+        self._idx_hueco = content_lay.indexOf(self.hueco_pie)
+        content_lay.addLayout(grid_desc_rec)
+        content_lay.addSpacing(8)
 
         # Línea separadora
         line = QFrame()
@@ -453,27 +494,50 @@ class Paso6Cobro(QDialog):
             btn.clicked.connect(callback)
             return btn
 
-        actions_grid = QGridLayout()
-        actions_grid.setSpacing(5)
-        actions_grid.setContentsMargins(0, 0, 0, 0)
-        actions_grid.setColumnStretch(0, 1)
-        actions_grid.setColumnStretch(1, 1)
-        actions_grid.setColumnStretch(2, 1)
+        def columna_fija():
+            caja = QFrame()
+            caja.setObjectName("ColumnaAccion")
+            caja.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            lay = QVBoxLayout(caja)
+            lay.setContentsMargins(0, 0, 0, 0)
+            lay.setSpacing(5)
+            return caja, lay
 
-        actions_grid.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 0, 0)
+        fila_acciones = QHBoxLayout()
+        fila_acciones.setSpacing(5)
+        fila_acciones.setContentsMargins(0, 0, 0, 0)
+        col_imprime, lay_imprime = columna_fija()
+        col_registra, lay_registra = columna_fija()
+        col_ajuste, lay_ajuste = columna_fija()
+        for col in (col_imprime, col_registra, col_ajuste):
+            fila_acciones.addWidget(col, 1)
+
+        lay_imprime.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 1)
         self.btn_f2 = create_action_btn("F2", "s/imprime", lambda: self.finalizar(False), style="featured")
-        actions_grid.addWidget(self.btn_f2, 0, 1)
+        lay_registra.addWidget(self.btn_f2, 1)
         self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="green")
-        actions_grid.addWidget(self.btn_descuento, 0, 2)
+        lay_ajuste.addWidget(self.btn_descuento, 1)
 
         self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="orange")
-        actions_grid.addWidget(self.btn_recargo, 1, 0)
+        lay_imprime.addWidget(self.btn_recargo, 1)
+        self.pila_point = QStackedWidget()
+        self.pila_point.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.pila_point.setMinimumHeight(78)
         self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point(), style="mp")
-        actions_grid.addWidget(self.btn_f11, 1, 1)
+        self.pila_point.addWidget(self.btn_f11)
+        self.pila_point.addWidget(QWidget())
+        lay_registra.addWidget(self.pila_point, 1)
+        self.pila_extra = QStackedWidget()
+        self.pila_extra.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.pila_extra.setMinimumHeight(78)
         self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp(), style="qr")
-        actions_grid.addWidget(self.btn_f12, 1, 2)
+        self.btn_ultimo = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="qr")
+        self.pila_extra.addWidget(self.btn_f12)
+        self.pila_extra.addWidget(self.btn_ultimo)
+        self.pila_extra.addWidget(QWidget())
+        lay_ajuste.addWidget(self.pila_extra, 1)
 
-        right_lay.addLayout(actions_grid, 2)
+        right_lay.addLayout(fila_acciones, 2)
 
         btn_f10 = create_action_btn("F10", "AFIP", lambda: self.finalizar_fiscal_efectivo())
         btn_f10.hide()
@@ -482,7 +546,8 @@ class Paso6Cobro(QDialog):
         # Teclado numérico extraído modularmente
         self.teclado_lateral = TecladoNumericoLateral(self)
         self.teclado_lateral.key_clicked.connect(self.on_teclado_key_clicked)
-        right_lay.addWidget(self.teclado_lateral, 5)
+        right_lay.addWidget(self.teclado_lateral, 0)
+        right_lay.addStretch(1)
 
         main_lay.addWidget(right_panel, 6)
         self.apply_theme()
@@ -498,10 +563,11 @@ class Paso6Cobro(QDialog):
         self.setFocus()
 
     def procesar_click_metodo(self, key):
-        if key not in ("Mixto", "Fiado", "Clientes"):
-            # Solo los métodos simples (Efectivo, Tarjeta, QR) pasan a la Pantalla 1
+        if key not in ("Fiado", "Clientes"):
+            # Efectivo, tarjeta, QR y mixto abren la hoja del monto.
             self.stack.setCurrentIndex(1)
-            self.txt_pago.setFocus()
+            if key != "Mixto":
+                self.txt_pago.setFocus()
 
         if key == "Clientes":
             self._activar_cliente_express()
@@ -526,33 +592,31 @@ class Paso6Cobro(QDialog):
         self.resumen_vuelto.lbl_vuelto_tit.setObjectName("LblVueltoTit")
 
     def set_metodo(self, key):
+        self._mixto_pasos = None
+        self._mixto_esperando_qr = False
+        self._mixto_espera_transferencia = None
         metodo_previo = self.current_metodo
         marcar_tarjeta(self, key)
+        self._ajustar_botones_mp()
+        if key not in ("QR", "Mixto"):
+            self.lbl_input1.show()
+            self.txt_pago.show()
+        self.lbl_neto.hide()
 
         if key == "Mixto":
-            from src.cajero.paso6_cobro.widgets.pagos_mixtos import DialogoPagosMixtos
-            dlg = DialogoPagosMixtos(self.total_final, self)
-            if qt_exec(dlg):
-                self.valores_mixtos = dlg.get_valores()
-                self.current_metodo = "Mixto"
-                self.lbl_input1.setText("MÚLTIPLES PAGOS ($):")
-                self.lbl_input2.hide(); self.txt_otro.hide()
-                self.lbl_cliente.hide(); self.cmb_cliente.hide()
-                self.txt_pago.setText(self._monto(self.total_final))
-                self.txt_pago.setReadOnly(True)
-                self.lbl_mp_status.hide()
-                self.timer_mp.stop()
-
-                # Si hay monto de tarjeta, mandarlo al Point antes de finalizar
-                monto_tarjeta = self.valores_mixtos.get("tarjeta", 0.0)
-                if monto_tarjeta > 0 and self._tpv_point_listo():
-                    QTimer.singleShot(200, lambda: self.procesar_pago_mercadopago_point())
-                else:
-                    # Sin tarjeta, finalizar directo
-                    QTimer.singleShot(200, lambda: self.finalizar(True))
-            else:
-                self.set_metodo("Efectivo")
-            return
+            if hasattr(self, "panel_qr"):
+                self.panel_qr.ocultar()
+            self.lbl_input1.hide()
+            self.txt_pago.hide()
+            self.lbl_input2.hide()
+            self.txt_otro.hide()
+            self.lbl_cliente.hide()
+            self.cmb_cliente.hide()
+            self.lbl_mp_status.hide()
+            self.timer_mp.stop()
+            self.timer_spinner.stop()
+            self.panel_mixto.mostrar(self.total_final)
+            self.valores_mixtos = self.panel_mixto.valores()
         elif key in ["Tarjeta", "Transferencia", "QR"]:
             self.lbl_input1.setText("PAGA CON ($):")
             self.lbl_input2.hide(); self.txt_otro.hide()
@@ -611,12 +675,51 @@ class Paso6Cobro(QDialog):
             self.txt_pago.clear()
             self.lbl_mp_status.hide()
             self.timer_mp.stop()
+        if key != "Mixto" and hasattr(self, "panel_mixto"):
+            self.panel_mixto.ocultar()
+        if key == "QR" and hasattr(self, "panel_qr"):
+            self._pintar_luz_tpv()
+            if not getattr(self, "_tpv_listo", False):
+                self._vista_monto_qr("manual")
+                self.panel_qr.ofrecer_foto()
+            else:
+                self._vista_monto_qr("buscando")
+                self.panel_qr.mostrar(self.total_final, forzar=True)
+        elif hasattr(self, "panel_qr"):
+            self.panel_qr.ocultar()
         self.calcular_vuelto()
+        self._ajustar_botones_mp()
+        self._ajustar_contenedor_monto()
+        if key == "Mixto":
+            self.panel_mixto.campo_foco().setFocus()
+            return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             self.setFocus()
             return
         self.txt_pago.setFocus()
         self.txt_pago.selectAll()
+
+    def _asegurar_lista_clientes(self):
+        """Una sola lectura de clientes, la primera vez que hace falta Fiado o Clientes."""
+        if getattr(self, "_clientes_cargados", False):
+            return
+        self._clientes_cargados = True
+        try:
+            filas = db_manager.execute_query(
+                "SELECT id, nombre, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC"
+            ) or []
+        except Exception:
+            filas = []
+        self.lista_clientes = filas
+        self.cmb_cliente.blockSignals(True)
+        self.cmb_cliente.clear()
+        for c in filas:
+            try:
+                disp = float(c["limite_credito"]) - float(c["deuda_actual"])
+                self.cmb_cliente.addItem(f"{c['nombre']} (Disp: ${disp:,.2f})", c["id"])
+            except Exception:
+                continue
+        self.cmb_cliente.blockSignals(False)
 
     def _activar_cliente_express(self):
         """Clic en tarjeta Clientes → resalta y abre Cliente Express."""
@@ -634,6 +737,7 @@ class Paso6Cobro(QDialog):
 
         rev = revertir_a if revertir_a != "Clientes" else getattr(self, "_revertir_tras_fiado", "Efectivo")
         terminal = self.parent()
+        self._asegurar_lista_clientes()
         self._fiado_flujo_activo = True
 
         cliente_ok = None
@@ -694,6 +798,7 @@ class Paso6Cobro(QDialog):
 
         rev = revertir_a if revertir_a != "Fiado" else getattr(self, "_revertir_tras_fiado", "Efectivo")
         terminal = self.parent()
+        self._asegurar_lista_clientes()
         self._fiado_flujo_activo = True
 
         cliente_ok = None
@@ -773,6 +878,9 @@ class Paso6Cobro(QDialog):
         try:
             self.mp_spinner_idx = (self.mp_spinner_idx + 1) % len(self.mp_spinner_chars)
             char = self.mp_spinner_chars[self.mp_spinner_idx]
+            monto_escucha = getattr(self, "_mixto_espera_transferencia", None)
+            if monto_escucha is None:
+                monto_escucha = self.total_final
 
             # Zoom logic
             self.mp_font_size += self.mp_font_dir
@@ -782,7 +890,14 @@ class Paso6Cobro(QDialog):
                 self.mp_font_dir = 1
 
             self.lbl_mp_status.setStyleSheet(f"font-size: {self.mp_font_size}px; font-weight: 900;")
-            self.lbl_mp_status.setText(f" {char} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${self.total_final:.2f})")
+            self.lbl_mp_status.setText(f" {char} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${monto_escucha:.2f})")
+            if getattr(self, "_mixto_espera_transferencia", None) is not None and hasattr(self, "panel_mixto"):
+                self.panel_mixto.estado.setText(
+                    f"{char} Escuchando transferencia ${monto_escucha:,.2f}"
+                )
+                self.panel_mixto.estado.setStyleSheet(
+                    "color: #0EA5E9; font-size: 20px; font-weight: 800; background: transparent; border: none;"
+                )
         except Exception as e:
             pass
 
@@ -798,7 +913,10 @@ class Paso6Cobro(QDialog):
                 if ahora - pago['timestamp'] <= 90:
                     # Validar que el monto coincida exactamente con self.total_final (permitiendo un margen de 0.05)
                     monto_pago = pago['monto']
-                    if abs(monto_pago - self.total_final) <= 0.05:
+                    esperado = getattr(self, "_mixto_espera_transferencia", None)
+                    if esperado is None:
+                        esperado = self.total_final
+                    if abs(monto_pago - esperado) <= 0.05:
                         # Consumir el pago para evitar duplicados
                         Admin10MP.ultimo_pago_detectado = None
 
@@ -818,8 +936,13 @@ class Paso6Cobro(QDialog):
                             self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
                             self.lbl_mp_status.style().polish(self.lbl_mp_status)
 
-                        # Esperar 1.5 segundos para la animación y finalizar con ticket
-                        QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
+                        if getattr(self, "_mixto_espera_transferencia", None) is not None:
+                            self._mixto_espera_transferencia = None
+                            self.lbl_mp_status.hide()
+                            self._mixto_i += 1
+                            QTimer.singleShot(200, self._seguir_mixto)
+                        else:
+                            QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
         except Exception as e:
             print(f"Error verificando auto-pago MP: {e}")
 
@@ -829,7 +952,9 @@ class Paso6Cobro(QDialog):
         p2_t = self.txt_otro.text().replace('$', '').replace(',', '').strip()
 
         if not p1_t:
-            if self.current_metodo in ("Tarjeta", "Transferencia", "QR"):
+            if self.current_metodo == "Mixto":
+                p1_t = "0"
+            elif self.current_metodo in ("Tarjeta", "Transferencia", "QR"):
                 self.txt_pago.setText(self._monto(self.total_final))
                 p1_t = f"{self.total_final:.2f}"
             else:
@@ -876,23 +1001,23 @@ class Paso6Cobro(QDialog):
                 QMessageBox.critical(self, "ERROR", "Monto inválido ingresado.")
             else:
                 # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
-                if self.current_metodo != "Mixto":
-                    try:
-                        p1_val = float(p1_t) if p1_t else 0.0
-                    except ValueError:
-                        p1_val = 0.0
-                    self.set_metodo("Mixto")
-                    faltante = self.total_final - p1_val
-                    self.txt_otro.setText(f"{faltante:.2f}")
-                    self.txt_otro.setFocus()
-                    self.txt_otro.selectAll()
-                else:
-                    QMessageBox.critical(self, "MONTO INSUFICIENTE", "Falta dinero para cubrir el total.")
+                if self.current_metodo == "Mixto":
+                    return None
+                try:
+                    p1_val = float(p1_t) if p1_t else 0.0
+                except ValueError:
+                    p1_val = 0.0
+                self.set_metodo("Mixto")
+                self.panel_mixto.txt_efectivo.setText(f"{p1_val:.2f}")
+                self.panel_mixto.txt_efectivo.setFocus()
             return None
 
         return (p1, p2)
 
     def intentar_finalizar(self):
+        if self.current_metodo == "Mixto":
+            self._entrar_mixto(False)
+            return
         if self.current_metodo in ("Fiado", "Clientes"):
             if getattr(self, "_fiado_flujo_activo", False):
                 return
@@ -901,10 +1026,7 @@ class Paso6Cobro(QDialog):
             else:
                 self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
             return
-        if self.current_metodo == "QR" and self._tpv_qr_listo():
-            self._procesar_cobro_qr_pantalla(
-                config.get("mp_access_token", ""), self.total_final
-            )
+        if self.current_metodo == "QR" and self.panel_qr.bloquea_enter():
             return
         vals = self._validar_pago()
         if vals:
@@ -918,11 +1040,30 @@ class Paso6Cobro(QDialog):
         from src.utils.dinero import redondear_dinero
         self.total_final = redondear_dinero(max(0.0, self.total_original - monto_desc + monto_rec))
 
-        # El total de arriba sigue mostrando el original fijo
-        self.lbl_total.setText(self._monto(self.total_original))
+        hay_descuento = (
+            getattr(self, "descuento_monto", 0.0) > 0.009
+            and self.total_original > self.total_final + 0.009
+        )
+        if self.current_metodo == "QR" or hay_descuento:
+            self.lbl_total.setText(self._monto(self.total_final))
+        else:
+            self.lbl_total.setText(self._monto(self.total_original))
+        self.lbl_precio_real.setVisible(hay_descuento)
+        if hay_descuento:
+            self.lbl_precio_real.setText(
+                f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(self.total_original)}</span>'
+            )
 
         # El neto destacado de abajo se actualiza en caliente
         self.lbl_neto.setText(f"NETO A PAGAR: ${self.total_final:,.2f}")
+        if (
+            self.current_metodo == "QR"
+            and hasattr(self, "panel_qr")
+            and self.panel_qr._modo in ("buscando", "esperando")
+        ):
+            self._qr_monto_timer.start(500)
+        if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):
+            self.panel_mixto.fijar_total(self.total_final)
 
         # Actualizar visualización del botón de Descuento (Premium UX!)
         _btn_compact = "border-radius: 8px; font-weight: 900; font-size: 14px; border: none; padding: 8px 12px;"
@@ -941,7 +1082,10 @@ class Paso6Cobro(QDialog):
             self.btn_recargo.setStyleSheet(f"background: #F59E0B; color: white; {_btn_compact}")
 
         # Si el método es electrónico, actualizar el autocompletado del pago de inmediato
-        if self.current_metodo in ["Tarjeta", "Transferencia"]:
+        foto_qr = self.current_metodo == "QR" and getattr(self.panel_qr, "_modo", "") == "foto"
+        if self.current_metodo in ["Tarjeta", "Transferencia"] or (
+            self.current_metodo == "QR" and not foto_qr
+        ):
             self.txt_pago.setText(self._monto(self.total_final))
 
         self.calcular_vuelto()
@@ -991,6 +1135,9 @@ class Paso6Cobro(QDialog):
         self.finalizar(True, force_fiscal=True)
 
     def finalizar(self, imprimir=True, force_fiscal=False):
+        if self.current_metodo == "Mixto" and not getattr(self, "_mixto_cerrando", False):
+            self._entrar_mixto(imprimir)
+            return
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0:
             if self.current_metodo not in ("Mixto", "Fiado", "Clientes"):
                 return
@@ -1089,10 +1236,11 @@ class Paso6Cobro(QDialog):
 
             # Asegurarnos de que las teclas de función (F1-F12) se procesen siempre, aunque el cursor esté en el casillero
             if k == Qt.Key.Key_F11:
-                self.procesar_pago_mercadopago_point()
+                if self.btn_f11.isVisible():
+                    self.procesar_pago_mercadopago_point()
                 return True
             elif k == Qt.Key.Key_F12:
-                self.verificar_transferencia_mp()
+                self._tecla_f12()
                 return True
             elif k == Qt.Key.Key_F1:
                 self.finalizar(True)
@@ -1116,7 +1264,13 @@ class Paso6Cobro(QDialog):
         return bool(token and user and pos)
 
     def _pintar_luz_tpv(self):
-        listo = self._tpv_point_listo() or self._tpv_qr_listo()
+        config._load_config()
+        token = str(config.get("mp_access_token", "") or "").strip()
+        device = str(config.get("mp_device_id", "") or "").strip()
+        user = str(config.get("mp_user_id", "") or "").strip()
+        pos = str(config.get("mp_external_pos_id", "") or "").strip()
+        listo = bool(token and device) or bool(token and user and pos)
+        self._tpv_listo = listo
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (
@@ -1128,8 +1282,151 @@ class Paso6Cobro(QDialog):
             luz.setStyleSheet(estilo)
             luz.setToolTip(texto)
 
+    def _ajustar_contenedor_monto(self):
+        if not hasattr(self, "panel_monto"):
+            return
+        foto = self.current_metodo == "QR" and getattr(self.panel_qr, "_modo", "") == "foto"
+        llena = self.panel_monto.ajustar(self.current_metodo, foto)
+        if llena:
+            self.content_lay.setStretch(self._idx_monto, 1)
+            self.content_lay.setStretch(self._idx_hueco, 0)
+            self.hueco_pie.setMaximumHeight(0)
+        else:
+            self.content_lay.setStretch(self._idx_monto, 0)
+            self.content_lay.setStretch(self._idx_hueco, 1)
+            self.hueco_pie.setMaximumHeight(16777215)
+
+    def _vista_monto_qr(self, modo=""):
+        """En QR se van «paga con» y el neto. La foto vuelve a pedir el monto."""
+        if self.current_metodo != "QR":
+            return
+        foto = (modo or getattr(self.panel_qr, "_modo", "")) == "foto"
+        self.lbl_neto.hide()
+        self.lbl_input1.setVisible(foto)
+        self.txt_pago.setVisible(foto)
+        if foto:
+            self.lbl_input1.setText("PAGA CON ($):")
+            self.txt_pago.setReadOnly(False)
+            self.txt_pago.setFocus()
+            self.txt_pago.selectAll()
+        self._ajustar_contenedor_monto()
+
+    def _refrescar_qr_si_vivo(self):
+        if self.current_metodo != "QR":
+            return
+        if self.panel_qr._modo not in ("buscando", "esperando"):
+            return
+        self.panel_qr.mostrar(self.total_final, forzar=True)
+
+    def _entrar_mixto(self, imprimir):
+        if getattr(self, "_mixto_pasos", None) is not None:
+            if getattr(self, "_mixto_esperando_qr", False) and not self.panel_qr.bloquea_enter():
+                self._mixto_esperando_qr = False
+                self._mixto_i += 1
+                self._seguir_mixto()
+            return
+        if not self.panel_mixto.cubre():
+            return
+        from src.cajero.paso6_cobro.mixto_en_cobro.confirmar import pasos_vivos
+        self.valores_mixtos = self.panel_mixto.valores()
+        self._mixto_imprimir = imprimir
+        self._mixto_pasos = pasos_vivos(self.valores_mixtos)
+        self._mixto_i = 0
+        self._mixto_esperando_qr = False
+        self._mixto_espera_transferencia = None
+        self._seguir_mixto()
+
+    def _seguir_mixto(self):
+        pasos = getattr(self, "_mixto_pasos", None) or []
+        if self._mixto_i >= len(pasos):
+            self._mixto_pasos = None
+            self._mixto_cerrando = True
+            try:
+                self.finalizar(getattr(self, "_mixto_imprimir", False))
+            finally:
+                self._mixto_cerrando = False
+            return
+        tipo, monto = pasos[self._mixto_i]
+        if tipo == "tarjeta":
+            from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
+            aviso = PointService(self).procesar_pago_mercadopago_point(cerrar=False)
+            if aviso is None:
+                self._mixto_pasos = None
+                self.panel_mixto.show()
+                return
+            self._mixto_i += 1
+            self._seguir_mixto()
+            return
+        if tipo == "transferencia":
+            self._mixto_espera_transferencia = float(monto)
+            self.panel_mixto.estado.setText(f"Escuchando transferencia {self._monto(monto)}")
+            self.panel_mixto.estado.setStyleSheet(
+                "color: #0EA5E9; font-size: 20px; font-weight: 800; background: transparent; border: none;"
+            )
+            self.lbl_mp_status.show()
+            self.timer_mp.start(1000)
+            self.timer_spinner.start(60)
+            return
+        self.panel_mixto.ocultar()
+        self.lbl_mp_status.hide()
+        self._mixto_esperando_qr = True
+        self._pintar_luz_tpv()
+        if not getattr(self, "_tpv_listo", False):
+            self.panel_qr.ofrecer_foto()
+            self.panel_qr.estado.setText(
+                f"Foto del QR por {self._monto(monto)}. Enter registra esta parte."
+            )
+        else:
+            self.panel_qr.mostrar(monto, forzar=True)
+
+    def _cerrar_venta_por_qr(self, monto):
+        if getattr(self, "_mixto_esperando_qr", False):
+            self._mixto_esperando_qr = False
+            self.panel_qr.ocultar()
+            self._mixto_i += 1
+            self._seguir_mixto()
+            return
+        if getattr(self, "_qr_ya_cerrado", False):
+            return
+        self._qr_ya_cerrado = True
+        self.txt_pago.setText(self._monto(monto))
+        self.finalizar(True)
+
+    def _tomar_mixto(self, valores):
+        if getattr(self, "_mixto_pasos", None) is not None:
+            return
+        self.valores_mixtos = valores
+
+    def _ajustar_botones_mp(self):
+        """Cada columna conserva el hueco. Solo se ve el botón del medio elegido."""
+        if not hasattr(self, "pila_point"):
+            return
+        metodo = self.current_metodo
+        self.pila_point.setCurrentIndex(0 if metodo in ("Tarjeta", "Mixto") else 1)
+        if metodo == "Transferencia":
+            self.pila_extra.setCurrentIndex(1)
+        else:
+            self.pila_extra.setCurrentIndex(2)
+
+    def _tecla_f12(self):
+        if self.current_metodo == "Transferencia":
+            self.corroborar_ultimo_monto()
+        elif self.current_metodo == "Tarjeta" and self.btn_f12.isVisible():
+            self.verificar_transferencia_mp()
+
+    def corroborar_ultimo_monto(self):
+        if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
+            return
+        from src.cajero.paso6_cobro.mercadopago_core.polling_service import PollingService
+        PollingService(self).ultimo_monto_recibido()
+
     def procesar_pago_mercadopago_point(self):
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0: return
+        if self.current_metodo == "QR":
+            return
+        if self.current_metodo == "Mixto":
+            self._entrar_mixto(False)
+            return
         from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
         if PointService(self).procesar_pago_mercadopago_point() is False:
             self.finalizar(False)
@@ -1162,8 +1459,11 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
         elif k == Qt.Key.Key_F10: self.finalizar_fiscal_efectivo()
-        elif k == Qt.Key.Key_F11: self.procesar_pago_mercadopago_point()
-        elif k == Qt.Key.Key_F12: self.verificar_transferencia_mp()
+        elif k == Qt.Key.Key_F11:
+            if self.btn_f11.isVisible():
+                self.procesar_pago_mercadopago_point()
+        elif k == Qt.Key.Key_F12:
+            self._tecla_f12()
         elif k == Qt.Key.Key_Escape: self.reject()
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
@@ -1197,7 +1497,12 @@ class Paso6Cobro(QDialog):
             return
 
         focused = self.focusWidget()
-        if not focused or not isinstance(focused, QLineEdit):
+        if self.current_metodo == "Mixto":
+            focused = self.panel_mixto.campo_foco()
+            if key == "ENTER":
+                self.intentar_finalizar()
+                return
+        elif not focused or not isinstance(focused, QLineEdit):
             focused = self.txt_pago
 
         if key == "⌫":

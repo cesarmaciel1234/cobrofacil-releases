@@ -3,6 +3,7 @@ import sqlite3
 import os
 import sys
 from src.logger import logger
+from src.base_de_datos.core.mariadb_probe import error_indica_maestra_caida
 
 class QueryExecutorMixin:
     def _normalize_query(self, query: str) -> str:
@@ -38,7 +39,26 @@ class QueryExecutorMixin:
         )
         return query
 
-    def execute_query(self, query: str, params: tuple = ()) -> List[sqlite3.Row]:
+    def _caer_a_sqlite_si_maestra_caida(self, err, reintento: bool) -> bool:
+        """Esclava: un corte de red pasa a SQLite. No promueve a maestra. Una sola vez."""
+        if reintento or getattr(self, "_reconectando_local", False):
+            return False
+        if getattr(self, "is_master", True):
+            return False
+        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
+            return False
+        if not self._host_tienda():
+            return False
+        if not error_indica_maestra_caida(err):
+            return False
+        try:
+            logger.warning("[RED LAN] Maestra no responde. La esclava sigue en SQLite local.")
+            self.reconectar_local()
+        except Exception:
+            return False
+        return getattr(self, "db_engine_type", "sqlite") == "sqlite"
+
+    def execute_query(self, query: str, params: tuple = (), _reintento: bool = False) -> List[sqlite3.Row]:
         """Executes a query and returns all matching rows (for SELECT)."""
         conn = None
         try:
@@ -53,35 +73,20 @@ class QueryExecutorMixin:
         except Exception as e:
             self.last_error = str(e)
             logger.error(f"Query execution error: {e} | Query: {query} | Params: {params}")
-            if getattr(self, "db_engine_type", "sqlite") == "mariadb" and not getattr(self, "is_master", True):
-                err_l = str(e).lower()
-                caida = any(
-                    x in err_l
-                    for x in (
-                        "lost connection",
-                        "can't connect",
-                        "cannot connect",
-                        "gone away",
-                        "timed out",
-                        "timeout",
-                        "2003",
-                        "2006",
-                        "2013",
-                        "10061",
-                    )
-                )
-                if caida:
+            if self._caer_a_sqlite_si_maestra_caida(e, _reintento):
+                if conn:
                     try:
-                        logger.warning("[RED LAN] Caída de conexión a Maestra. Transicionando a BD Local SQLite...")
-                        self.reconectar_local()
+                        conn.close()
                     except Exception:
                         pass
+                    conn = None
+                return self.execute_query(query, params, _reintento=True)
             return []
         finally:
             if conn:
                 conn.close()
 
-    def execute_non_query(self, query: str, params: tuple = ()) -> bool:
+    def execute_non_query(self, query: str, params: tuple = (), _reintento: bool = False) -> bool:
         """Executes a non-query (INSERT, UPDATE, DELETE) and commits changes."""
         conn = None
         try:
@@ -100,12 +105,20 @@ class QueryExecutorMixin:
                     conn.rollback()
                 except Exception:
                     pass
+            if self._caer_a_sqlite_si_maestra_caida(e, _reintento):
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
+                return self.execute_non_query(query, params, _reintento=True)
             return False
         finally:
             if conn:
                 conn.close()
 
-    def execute_many(self, query: str, params_list: List[tuple]) -> bool:
+    def execute_many(self, query: str, params_list: List[tuple], _reintento: bool = False) -> bool:
         """Executes a bulk non-query operation using executemany and commits changes."""
         conn = None
         try:
@@ -121,12 +134,20 @@ class QueryExecutorMixin:
                     conn.rollback()
                 except Exception:
                     pass
+            if self._caer_a_sqlite_si_maestra_caida(e, _reintento):
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
+                return self.execute_many(query, params_list, _reintento=True)
             return False
         finally:
             if conn:
                 conn.close()
 
-    def execute_scalar(self, query: str, params: tuple = ()) -> Any:
+    def execute_scalar(self, query: str, params: tuple = (), _reintento: bool = False) -> Any:
         """Executes a query and returns the first column of the first row (e.g., COUNT)."""
         conn = None
         try:
@@ -143,6 +164,14 @@ class QueryExecutorMixin:
             return None
         except Exception as e:
             logger.error(f"Scalar query error: {e} | Query: {query} | Params: {params}")
+            if self._caer_a_sqlite_si_maestra_caida(e, _reintento):
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+                    conn = None
+                return self.execute_scalar(query, params, _reintento=True)
             return None
         finally:
             if conn:

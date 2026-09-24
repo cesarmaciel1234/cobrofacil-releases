@@ -11,18 +11,15 @@ class PointService:
     def __init__(self, parent_cobro):
         self.parent = parent_cobro
 
-    def procesar_pago_mercadopago_point(self):
+    def procesar_pago_mercadopago_point(self, cerrar=True):
         config._load_config()
         token = config.get("mp_access_token", "")
         device_id = config.get("mp_device_id", "")
 
-        if self.parent.current_metodo == "QR":
-            if not token:
-                return False
-        elif not token or not device_id:
+        if not token or not device_id:
             return False
 
-        if self.parent.current_metodo not in ["Tarjeta", "Mixto", "QR"]:
+        if self.parent.current_metodo not in ["Tarjeta", "Mixto"]:
             self.parent.set_metodo("Tarjeta")
 
         if self.parent.current_metodo == "Mixto":
@@ -39,12 +36,9 @@ class PointService:
 
         if monto <= 0:
             msg = "El monto de Tarjeta (Point) en pago Mixto es cero." if self.parent.current_metodo == "Mixto" else "Ingrese un monto a cobrar válido."
-            QMessageBox.warning(self.parent, "Monto inválido", msg)
-            return
-
-        if self.parent.current_metodo == "QR":
-            from src.cajero.paso6_cobro.mercadopago_core.qr_service import QRService
-            return QRService(self.parent).procesar_cobro_qr_pantalla(token, monto)
+            if cerrar:
+                QMessageBox.warning(self.parent, "Monto inválido", msg)
+            return None
 
         url = f"https://api.mercadopago.com/point/integration-api/devices/{device_id}/payment-intents"
         intent_id = str(uuid.uuid4())
@@ -57,9 +51,7 @@ class PointService:
                 "print_on_terminal": True
             }
         }
-        msg_progreso = "Enviando monto a la Terminal Point (modo QR)..." if self.parent.current_metodo == "QR" else "Enviando monto a la Terminal Point..."
-        if self.parent.current_metodo == "QR":
-            payload["payment_mode"] = "qr"
+        msg_progreso = "Enviando monto a la Terminal Point..."
 
         progreso = QProgressDialog(msg_progreso, "Cancelar", 0, 0, self.parent)
         progreso.setWindowTitle("Mercado Pago Point")
@@ -76,8 +68,11 @@ class PointService:
 
                 dialog = MPPollingDialog(self.parent, token, device_id, mp_intent_id, monto, modo=self.parent.current_metodo)
                 if qt_exec(dialog) == QDialog.DialogCode.Accepted:
-                    self.parent.txt_pago.setText(str(monto))
-                    self.parent.finalizar(True)
+                    if cerrar:
+                        self.parent.txt_pago.setText(str(monto))
+                        self.parent.finalizar(True)
+                    return True
+                return None
             else:
                 try:
                     err_data = response.json()
@@ -85,6 +80,8 @@ class PointService:
                 except:
                     msg = response.text
                 QMessageBox.critical(self.parent, "Error MP", f"No se pudo enviar el monto a la terminal:\n{msg}")
+                return None
         except Exception as e:
             progreso.close()
             QMessageBox.critical(self.parent, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+            return None

@@ -16,6 +16,10 @@ class NexusController(QObject):
         self.current_caja_filter = "todas"
         self.glitch_count = 0
         self.last_cash_sales = {}  # AI Security: origen -> timestamp
+        self._ventas_sin_maestra = {}
+        self._ventas_ya_vistas = set()
+        self._bitacora_sin_maestra = {}
+        self._metricas_maestra = None
 
 
         self._connect_signals()
@@ -99,7 +103,20 @@ class NexusController(QObject):
             if "EFECTIVO" in str(mp).upper():
                 self.last_cash_sales[origen] = time.time()
 
-            self._registrar_evento_caja(origen, "VENTA", f"{mp} - $ {tot}")
+            rid = str(datos.get("request_id") or "")
+            msg = f"{mp} - $ {tot}"
+            if datos.get("fuera_de_maestra") and rid:
+                self._ventas_sin_maestra[rid] = {
+                    "pago_efectivo": datos.get("pago_efectivo", 0),
+                    "pago_otro": datos.get("pago_otro", 0),
+                    "total": tot,
+                    "metodo_pago": mp,
+                    "caja_id": datos.get("caja_id", 1),
+                }
+                self._ventas_ya_vistas.add(rid)
+            ok = self._registrar_evento_caja(origen, "VENTA", msg)
+            if datos.get("fuera_de_maestra") and rid and not ok:
+                self._bitacora_sin_maestra[rid] = (origen, msg, None)
             self._sync_live_data()
 
         elif tipo == "HARDWARE_SENSOR" and datos.get("evento") == "DRAWER_OPEN":
@@ -202,21 +219,25 @@ class NexusController(QObject):
 
     def _sync_live_data(self):
         try:
-            metrics = CerebroNexus.obtener_metricas_live(self.current_caja_filter)
+            self._soltar_ventas_ya_en_maestra()
+            try:
+                self._metricas_maestra = CerebroNexus.obtener_metricas_live(self.current_caja_filter)
+            except Exception:
+                pass
+            self._pintar_metricas(self._metricas_maestra)
 
-            str_efectivo = f"$ {int(metrics.get('total_efectivo', 0)):,}"
-            str_digital  = f"$ {int(metrics.get('total_digital', 0)):,}"
-
-            if hasattr(self.view, 'panel_cen'):
-                self.view.panel_cen.lbl_efectivo.val_label.setText(str_efectivo)
-                self.view.panel_cen.lbl_digital.val_label.setText(str_digital)
-                self.view.panel_cen.lbl_fondo.val_label.setText(f"$ {int(metrics.get('fondo_inicial', 0)):,}")
-                self.view.panel_cen.lbl_live_esperado.setText(f"$ {int(metrics.get('esperado_live', 0)):,}")
-
-            nuevas_ventas = CerebroNexus.obtener_nuevas_ventas(self.last_sale_id)
+            try:
+                nuevas_ventas = CerebroNexus.obtener_nuevas_ventas(self.last_sale_id)
+            except Exception:
+                nuevas_ventas = []
             if nuevas_ventas:
                 for v in nuevas_ventas:
                     self.last_sale_id = v['id']
+                    rid = str(v.get("request_id") or "")
+                    if rid and rid in self._ventas_ya_vistas:
+                        self._ventas_sin_maestra.pop(rid, None)
+                        self._reintentar_bitacora(rid)
+                        continue
                     tot_str = f"{int(v['total']):,}"
                     try:
                         fecha_val = v['fecha']
@@ -224,11 +245,10 @@ class NexusController(QObject):
                             sale_date = datetime.strptime(fecha_val, "%Y-%m-%d %H:%M:%S")
                         else:
                             sale_date = fecha_val
-                    except:
+                    except Exception:
                         sale_date = None
                     self._registrar_evento_caja(v.get('caja_id', 1), "VENTA", f"{v.get('metodo_pago')} - $ {tot_str}", sale_date)
-            else:
-                pass
+            self._pintar_metricas(self._metricas_maestra)
 
             # Actualizar reloj y contadores
             ahora = time.time()
@@ -250,11 +270,77 @@ class NexusController(QObject):
             pass
 
 
+    def _caja_del_filtro(self):
+        filtro = str(getattr(self, "current_caja_filter", "todas") or "todas")
+        if filtro == "todas":
+            return None
+        import re
+        hallado = re.search(r"\d+", filtro)
+        return int(hallado.group()) if hallado else None
+
+    def _sumar_sin_maestra(self):
+        caja = self._caja_del_filtro()
+        efectivo = 0.0
+        digital = 0.0
+        for venta in self._ventas_sin_maestra.values():
+            try:
+                caja_venta = int(venta.get("caja_id") or 0)
+            except (TypeError, ValueError):
+                caja_venta = 0
+            if caja is not None and caja_venta != caja:
+                continue
+            pago_efectivo = float(venta.get("pago_efectivo") or 0)
+            pago_otro = float(venta.get("pago_otro") or 0)
+            if pago_efectivo == 0 and pago_otro == 0:
+                total = float(venta.get("total") or 0)
+                if "EFECTIVO" in str(venta.get("metodo_pago") or "").upper():
+                    pago_efectivo = total
+                else:
+                    pago_otro = total
+            efectivo += pago_efectivo
+            digital += pago_otro
+        return efectivo, digital
+
+    def _pintar_metricas(self, metrics):
+        if not hasattr(self.view, "panel_cen"):
+            return
+        base = metrics or {}
+        extra_efectivo, extra_digital = self._sumar_sin_maestra()
+        efectivo = float(base.get("total_efectivo", 0) or 0) + extra_efectivo
+        digital = float(base.get("total_digital", 0) or 0) + extra_digital
+        fondo = float(base.get("fondo_inicial", 0) or 0)
+        esperado = float(base.get("esperado_live", 0) or 0) + extra_efectivo
+        panel = self.view.panel_cen
+        panel.lbl_efectivo.val_label.setText(f"$ {int(efectivo):,}")
+        panel.lbl_digital.val_label.setText(f"$ {int(digital):,}")
+        panel.lbl_fondo.val_label.setText(f"$ {int(fondo):,}")
+        panel.lbl_live_esperado.setText(f"$ {int(esperado):,}")
+
+    def _soltar_ventas_ya_en_maestra(self):
+        ids = list(self._ventas_sin_maestra.keys())
+        if not ids:
+            return
+        try:
+            presentes = CerebroNexus.request_ids_en_maestra(ids)
+        except Exception:
+            return
+        for rid in presentes:
+            self._ventas_sin_maestra.pop(rid, None)
+            self._reintentar_bitacora(rid)
+
+    def _reintentar_bitacora(self, request_id):
+        pendiente = self._bitacora_sin_maestra.get(request_id)
+        if not pendiente:
+            return
+        origen, msg, sale_date = pendiente
+        if CerebroNexus.registrar_evento_caja(origen, "VENTA", msg, sale_date):
+            self._bitacora_sin_maestra.pop(request_id, None)
+
     def _registrar_evento_caja(self, origen_id, cat, msg, sale_date=None):
         if hasattr(self.view, '_play_sound'):
             self.view._play_sound("sale" if cat == "VENTA" else "alert")
 
-        CerebroNexus.registrar_evento_caja(origen_id, cat, msg, sale_date)
+        escrito = bool(CerebroNexus.registrar_evento_caja(origen_id, cat, msg, sale_date))
 
         if hasattr(self.view, 'panel_izq') and hasattr(self.view.panel_izq, 'inject_ai_log'):
             time_str = datetime.now().strftime("%H:%M:%S")
@@ -279,6 +365,7 @@ class NexusController(QObject):
 
         if hasattr(self.view, 'panel_der') and hasattr(self.view.panel_der, 'agregar_log'):
             self.view.panel_der.agregar_log(f"PC-{origen_id}", f"[{cat}] {msg}", None)
+        return escrito
 
     def _inyectar_ruido_red(self):
         eventos = [

@@ -56,12 +56,27 @@ class RedRepoMixin:
         return ""
 
     def asegurar_lectura_tienda(self) -> bool:
-        """Esclava: si hay maestra en la LAN, deja de leer la SQLite local."""
+        """Esclava: si hay maestra en la LAN, deja de leer la SQLite local.
+
+        Si ya había motor MariaDB pero el puerto 3306 no contesta, no se queda
+        pegada: pasa a SQLite y sigue. No pone is_master en true.
+        """
+        if getattr(self, "_reconectando_local", False):
+            return False
         host = self._host_tienda()
         if not host:
             return getattr(self, "db_engine_type", "sqlite") == "mariadb"
         if getattr(self, "db_engine_type", "sqlite") == "mariadb" and getattr(self, "mariadb_engine", None):
-            return True
+            if self._puerto_maestra_vivo(host):
+                return True
+            logger.warning(
+                f"Esclava: maestra {host} no responde. Se sigue vendiendo en SQLite local."
+            )
+            try:
+                self.reconectar_local()
+            except Exception as e:
+                logger.error(f"Esclava: no se pudo abrir el SQLite local ({e})")
+            return False
         import time
         ahora = time.monotonic()
         if ahora - float(getattr(self, "_last_master_try", 0) or 0) < 5:

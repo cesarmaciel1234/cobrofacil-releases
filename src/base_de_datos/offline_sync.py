@@ -39,8 +39,54 @@ class OfflineSync:
             with open(self.queue_file, "w", encoding="utf-8") as f:
                 json.dump(queue, f, indent=4)
             logger.info("Venta guardada en BUFFER OFFLINE.")
+            self._avisar_venta_sin_maestra(venta_data)
         except Exception as e:
             logger.error(f"Error escribiendo en buffer offline: {e}")
+
+    def _avisar_venta_sin_maestra(self, venta_data):
+        """Nexus escucha este aviso en la LAN. No espera a que la venta suba a la maestra."""
+        datos = {
+            "total": (venta_data or {}).get("total", 0),
+            "metodo_pago": (venta_data or {}).get("metodo_pago", ""),
+            "caja_id": (venta_data or {}).get("caja_id", 1),
+            "request_id": (venta_data or {}).get("request_id") or "",
+            "pago_efectivo": (venta_data or {}).get("pago_efectivo", 0),
+            "pago_otro": (venta_data or {}).get("pago_otro", 0),
+            "fuera_de_maestra": True,
+        }
+        try:
+            from src.central_red_global.network_engine import get_network_engine
+
+            engine = get_network_engine()
+            if engine is not None:
+                engine.broadcast("VENTA_NUEVA", datos)
+                return
+        except Exception as e:
+            logger.warning(f"No se pudo avisar la venta por el motor de red: {e}")
+        try:
+            import socket
+            from src.central_red_global.network_engine import NEXUS_UDP_PORT
+            from src.config import config
+
+            host = socket.gethostname()
+            caja = datos["caja_id"] or config.get("caja_id", 1)
+            payload = {
+                "origen": f"{host}|cajero|caja{caja}",
+                "tipo": "VENTA_NUEVA",
+                "datos": datos,
+                "ts": time.time(),
+            }
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                sock.sendto(
+                    json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                    ("255.255.255.255", NEXUS_UDP_PORT),
+                )
+            finally:
+                sock.close()
+        except Exception as e:
+            logger.warning(f"Venta en cola; Nexus no recibió el aviso: {e}")
 
     def sync_pendientes(self):
         """Sincroniza ventas en offline_queue.json hacia la base de datos."""
@@ -130,6 +176,19 @@ class OfflineSync:
                 continue
 
             logger.info(f"Intentando sincronizar {len(queue)} ventas offline...")
+
+            if getattr(db_manager, "_forced_local_offline", False) or getattr(db_manager, "db_engine_type", "") != "mariadb":
+                host = ""
+                try:
+                    host = db_manager._host_tienda()
+                except Exception:
+                    host = ""
+                if host and db_manager._puerto_maestra_vivo(host):
+                    try:
+                        db_manager.reconectar_mariadb(host)
+                        db_manager.is_master = False
+                    except Exception:
+                        pass
 
             exitosas = []
             for i, record in enumerate(queue):

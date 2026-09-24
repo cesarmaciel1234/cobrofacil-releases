@@ -3,7 +3,66 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 import os
 from src.utils.paths import get_base_path
-from src.jefe.theme_pro import THEME_PRO as PAL
+def paleta_global():
+    """Colores del tema día/noche. No usa theme_pro.py."""
+    from src.config import config
+    from src.utils.theme_manager import theme_manager
+
+    theme_manager.refresh_from_config()
+    if config.get("theme", "light") == "dark" or theme_manager.is_dark():
+        return {
+            "bg": theme_manager.get_color("app_bg"),
+            "surface": theme_manager.get_color("bg_fila_par"),
+            "surface2": theme_manager.get_color("bg_fila_impar"),
+            "border": theme_manager.get_color("nav_border"),
+            "border2": theme_manager.get_color("btn_border"),
+            "text": theme_manager.get_color("texto_primario"),
+            "text2": theme_manager.get_color("texto_secundario"),
+            "text3": theme_manager.get_color("nav_text"),
+            "primary": "#3B82F6",
+            "primary_h": "#2563EB",
+            "success": theme_manager.get_color("stock_saludable"),
+            "danger": theme_manager.get_color("stock_agotado"),
+            "warning": theme_manager.get_color("stock_bajo"),
+            "info": "#38BDF8",
+            "sidebar_bg": theme_manager.get_color("bg_fila_par"),
+            "sidebar_sel": "#1E3A8A",
+            "nav_bg": theme_manager.get_color("nav_bg"),
+            "nav_border": theme_manager.get_color("nav_border"),
+        }
+    return {
+        "bg": theme_manager.get_color("app_bg"),
+        "surface": theme_manager.get_color("bg_fila_par"),
+        "surface2": theme_manager.get_color("bg_fila_impar"),
+        "border": theme_manager.get_color("btn_border"),
+        "border2": "#C7C7CC",
+        "text": theme_manager.get_color("texto_primario"),
+        "text2": theme_manager.get_color("texto_secundario"),
+        "text3": theme_manager.get_color("nav_text"),
+        "primary": theme_manager.get_color("btn_text"),
+        "primary_h": "#0051D5",
+        "success": theme_manager.get_color("stock_saludable"),
+        "danger": theme_manager.get_color("stock_agotado"),
+        "warning": theme_manager.get_color("stock_bajo"),
+        "info": theme_manager.get_color("tipo_producto"),
+        "sidebar_bg": theme_manager.get_color("bg_fila_par"),
+        "sidebar_sel": "#E8F2FF",
+        "nav_bg": theme_manager.get_color("nav_bg"),
+        "nav_border": theme_manager.get_color("nav_border"),
+    }
+
+
+class _Paleta:
+    """Lee el tema global cada vez. Los widgets ya armados no cambian solos."""
+
+    def __getitem__(self, clave):
+        return paleta_global()[clave]
+
+    def get(self, clave, default=None):
+        return paleta_global().get(clave, default)
+
+
+PAL = _Paleta()
 
 # ── Categorías de operación ───────────────────────────────────────────────────
 CAT_GASTO   = ["Mercadería / Stock", "Servicios", "Sueldos", "Mantenimiento",

@@ -29,4 +29,36 @@ class StockOfertasService:
         return res[0] if res else None
 
     def obtener_combos(self):
-        return db_manager.execute_query("SELECT id, nombre, precio_combo, productos_json FROM combos") or []
+        """Lista cruda de combos. Se recuerda 15 s para no pegarle a la base en cada escaneo."""
+        self._combos_recordados()
+        return self._combos_cache[1]
+
+    def combos_para_ticket(self):
+        """Combos ya leídos del JSON. El ticket no vuelve a parsear en cada producto."""
+        self._combos_recordados()
+        return self._combos_cache[2]
+
+    def _combos_recordados(self):
+        import json
+        import time
+        ahora = time.monotonic()
+        cache = getattr(self, "_combos_cache", None)
+        if cache and (ahora - cache[0]) < 15:
+            return
+        filas = db_manager.execute_query(
+            "SELECT id, nombre, precio_combo, productos_json FROM combos"
+        ) or []
+        listos = []
+        for r in filas:
+            try:
+                crudo = r.get("productos_json", r[3] if isinstance(r, tuple) else "[]")
+                reqs = json.loads(crudo or "[]")
+                listos.append({
+                    "id": r.get("id", r[0] if isinstance(r, tuple) else ""),
+                    "nombre": r.get("nombre", r[1] if isinstance(r, tuple) else ""),
+                    "precio_combo": float(r.get("precio_combo", r[2] if isinstance(r, tuple) else 0)),
+                    "reqs": reqs,
+                })
+            except Exception:
+                continue
+        self._combos_cache = (ahora, filas, listos)

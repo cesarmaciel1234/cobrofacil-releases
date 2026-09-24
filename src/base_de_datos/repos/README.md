@@ -8,7 +8,9 @@ Acá está el acceso a las tablas. La pantalla no escribe SQL. El plano de la ve
 
 Toma `venta_data['request_id']`. Si no viene, crea un UUID y lo deja en el diccionario.
 
-En una esclava, si `db_engine_type` es mariadb y hay `mariadb_engine`, guarda en esa base y no usa la API. Si hay `api_url` y no hay MariaDB, hace POST a `{api_url}/api/guardar_venta` con bearer `config.token_api_lan()` y timeout 5 segundos. 200 y `status` success devuelve `id_venta`. Cualquier otro caso devuelve `None`. No inventa `9999999`.
+En una esclava, si `db_engine_type` es mariadb y hay `mariadb_engine`, guarda en esa base y no usa la API. Si hay `api_url`, no hay MariaDB y `_puerto_maestra_vivo` es verdadero, hace POST a `{api_url}/api/guardar_venta` con bearer `config.token_api_lan()` y timeout 5 segundos. 200 y `status` success devuelve `id_venta`. Si esa API falla y el puerto sigue abierto, devuelve `None`. Si la maestra no contesta, no cancela: inserta en SQLite y encola con `offline_sync_manager.guardar_venta_offline`. Ese encolado avisa `VENTA_NUEVA` por UDP. No inventa `9999999`.
+
+`sync_venta_to_master` sale enseguida con `False` si `_forced_local_offline` está prendido o no hay motor MariaDB. Así la cola no se borra creyendo que la venta ya está en la maestra. `get_connection(caer_si_maestra_caida=False)` en esa sync no cambia el motor.
 
 `_buscar_por_request` hace `SELECT id FROM ventas WHERE request_id = ?`. Si encuentra fila, `guardar_venta_completa` devuelve ese id y no inserta de nuevo.
 

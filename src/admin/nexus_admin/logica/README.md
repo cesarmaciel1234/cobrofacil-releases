@@ -8,7 +8,7 @@ No pinta y no ejecuta SQL. Recibe la vista en el constructor y le habla por mét
 
 `_connect_to_network` se engancha al motor UDP. `_on_udp_heartbeat` anota la hora del nodo en `active_terminals`, lo escribe en el log del panel izquierdo y lo registra en el panel central.
 
-`_on_udp_message` marca el nodo activo. Si el tipo es `VENTA_NUEVA` y el método contiene EFECTIVO, guarda la hora en `last_cash_sales` para ese origen, registra el evento y sincroniza. Si es `HARDWARE_SENSOR` con `evento` DRAWER_OPEN, llama `_evaluate_smart_drawer`. Si es `CIERRE_TURNO`, registra el cierre y sincroniza. Si es `ALERTA_SEGURIDAD`, registra el mensaje y, si dice CRITICO, arranca el destello.
+`_on_udp_message` marca el nodo activo. Si el tipo es `VENTA_NUEVA` y el método contiene EFECTIVO, guarda la hora en `last_cash_sales` para ese origen, registra el evento y sincroniza. Si el dato trae `fuera_de_maestra` y `request_id`, el monto queda en `_ventas_sin_maestra` y se suma a las métricas del turno hasta que ese id está en la maestra. La pantalla no vuelve a anunciar ese ticket cuando la cola sube. Si es `HARDWARE_SENSOR` con `evento` DRAWER_OPEN, llama `_evaluate_smart_drawer`. Si es `CIERRE_TURNO`, registra el cierre y sincroniza. Si es `ALERTA_SEGURIDAD`, registra el mensaje y, si dice CRITICO, arranca el destello.
 
 `_evaluate_smart_drawer` lee el rol que viene después de `|` en el origen. Si no viene, asume CAJERO. Admin o jefe se anotan como INTERVENCION, texto de prueba, sin alerta crítica. Si no, mira cuántos segundos pasaron desde la última venta en efectivo de ese origen. Hasta 7 segundos se anota como apertura justificada. Después de eso registra `[CRITICO] CAJON FISICO ABIERTO SIN VENTA` y prende el destello.
 

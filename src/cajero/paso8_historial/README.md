@@ -16,3 +16,5 @@ paso8_historial/
 Desde el terminal:
 
 `from src.cajero.paso8_historial import DialogoHistorialDia`
+
+En `ui/filtros.py`, el combo de método empieza con el texto `TODOS`. Es un valor del filtro, no un comentario `TODO`.

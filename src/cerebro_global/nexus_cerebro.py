@@ -29,17 +29,36 @@ class CerebroNexus:
     @staticmethod
     def obtener_nuevas_ventas(last_id):
         hoy = datetime.now().strftime("%Y-%m-%d")
-        query = (
-            "SELECT id, caja_id, metodo_pago, total, usuario, fecha"
-            " FROM ventas WHERE DATE(fecha) = ?"
-        )
         params = [hoy]
+        filtro_id = ""
         if last_id:
-            query += " AND id > ?"
+            filtro_id = " AND id > ?"
             params.append(last_id)
-        query += " ORDER BY id ASC LIMIT 5"
+        orden = " ORDER BY id ASC LIMIT 5"
+        base = " FROM ventas WHERE DATE(fecha) = ?" + filtro_id + orden
+        try:
+            return db_manager.execute_query(
+                "SELECT id, caja_id, metodo_pago, total, usuario, fecha, request_id" + base,
+                tuple(params),
+            ) or []
+        except Exception:
+            return db_manager.execute_query(
+                "SELECT id, caja_id, metodo_pago, total, usuario, fecha" + base,
+                tuple(params),
+            ) or []
 
-        return db_manager.execute_query(query, tuple(params)) or []
+    @staticmethod
+    def request_ids_en_maestra(request_ids):
+        """Ids que ya están en ventas. Si la maestra no contesta, el llamador conserva el aviso."""
+        ids = [str(x) for x in (request_ids or []) if x]
+        if not ids:
+            return set()
+        marcas = ",".join(["?"] * len(ids))
+        filas = db_manager.execute_query(
+            f"SELECT request_id FROM ventas WHERE request_id IN ({marcas})",
+            tuple(ids),
+        ) or []
+        return {str(f.get("request_id")) for f in filas if f.get("request_id")}
 
     @staticmethod
     def registrar_evento_caja(origen_id, cat, msg, sale_date=None):
@@ -80,8 +99,10 @@ class CerebroNexus:
                     "INSERT INTO movimientos_caja (fecha, tipo, observaciones, caja_id, usuario, monto) VALUES (?, ?, ?, ?, ?, ?)",
                     (ts, tipo_db, obs_db, c_id, "SISTEMA", 0.0)
                 )
+            return True
         except Exception as e:
             print(f"Error insertando evento de caja en DB: {e}")
+            return False
 
     @staticmethod
     def obtener_bitacora(limit, offset, tipo_filtro, search_term, caja_filter):

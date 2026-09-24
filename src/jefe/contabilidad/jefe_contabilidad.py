@@ -100,19 +100,36 @@ class JefeContabilidad(QWidget, VistaResumenMixin, VistaIngresosMixin, VistaGast
     # ── Carga diferida al primer showEvent ────────────────────────────────────
     def showEvent(self, event):
         super().showEvent(event)
+        tema = config.get("theme", "light")
         if not self._loaded:
             self._loaded = True
+            self._tema_pintado = tema
             QTimer.singleShot(60, self._load_db_and_build)
+            return
+        if tema != getattr(self, "_tema_pintado", ""):
+            self._tema_pintado = tema
+            self._repintar_por_tema()
+
+    def _repintar_por_tema(self):
+        """Día/noche cambió. La barra y las vistas se arman de nuevo con PAL."""
+        self.setStyleSheet(f"QWidget#JefeContabilidad {{ background: {PAL['bg']}; }}")
+        nav = self._build_navbar()
+        self._root_layout.replaceWidget(self._nav, nav)
+        self._nav.deleteLater()
+        self._nav = nav
+        if getattr(self, "_db", None):
+            self._build_full_ui()
 
     def _load_db_and_build(self):
         try:
             from src.jefe.contabilidad.database import Database
-            self._db = Database(DB_PATH)
+            ruta = get_jefe_db_path()
+            self._db = Database(ruta)
             self._build_full_ui()
         except Exception as e:
             logger.error(f"Error cargando DB de contabilidad: {e}")
             self._lbl_loading.setText(
-                f"❌  Error al inicializar la base de datos contable:\n\n{e}\n\nRuta: {DB_PATH}")
+                f"❌  Error al inicializar la base de datos contable:\n\n{e}\n\nRuta: {get_jefe_db_path()}")
             self._lbl_loading.setStyleSheet(
                 f"font-size: 12px; color: {PAL['danger']}; padding: 30px; background: transparent;")
             self._lbl_loading.setWordWrap(True)

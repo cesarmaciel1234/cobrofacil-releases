@@ -12,14 +12,13 @@ class TecladoNumericoLateral(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("KeyboardFrame")
-        self.setMinimumHeight(330)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
         self.apply_theme()
 
         kb_layout = QVBoxLayout(self)
         kb_layout.setContentsMargins(0, 0, 0, 0)
-        kb_layout.setSpacing(10)
+        kb_layout.setSpacing(8)
 
         rows = [
             ["1", "2", "3"],
@@ -41,7 +40,8 @@ class TecladoNumericoLateral(QFrame):
                     border: none;
                     border-radius: 14px;
                     min-width: 64px;
-                    min-height: 64px;
+                    min-height: 58px;
+                    max-height: 64px;
                 }
                 QPushButton:hover {
                     background-color: #475569;
@@ -62,7 +62,8 @@ class TecladoNumericoLateral(QFrame):
                     border: none;
                     border-radius: 14px;
                     min-width: 64px;
-                    min-height: 64px;
+                    min-height: 58px;
+                    max-height: 64px;
                 }
                 QPushButton:hover {
                     background-color: #E2E8F0;
@@ -74,11 +75,8 @@ class TecladoNumericoLateral(QFrame):
             color_esc = "#FFFFFF"
 
         for row in rows:
-            if row == ["Salir", "ENTER"]:
-                kb_layout.addStretch()
-
             row_lay = QHBoxLayout()
-            row_lay.setSpacing(10)
+            row_lay.setSpacing(8)
             row_lay.setContentsMargins(0, 0, 0, 0)
 
             for key in row:

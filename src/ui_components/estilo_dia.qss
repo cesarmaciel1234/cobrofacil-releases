@@ -243,7 +243,8 @@ QFrame#Paso6Main[theme="light"] { background-color: #FFFFFF; border-radius: 28px
 
 QFrame#Paso6Main[theme="light"] QLabel#CobroHeader { background-color: transparent; color: #1E3A8A; font-size: 16px; font-weight: 900; border: none; padding-left: 24px; letter-spacing: 3px; }
 
-QFrame#Paso6Main[theme="light"] QLabel#CobroTotal { color: #1E3A8A; font-size: 85px; font-weight: 900; font-family: 'Segoe UI Black'; border: none; }
+QFrame#Paso6Main[theme="light"] QLabel#CobroTotal { color: #1E3A8A; font-size: 64px; font-weight: 900; font-family: 'Segoe UI Black'; border: none; }
+QFrame#Paso6Main[theme="light"] QLabel#PrecioLista { color: #EF4444 !important; font-size: 22px; font-weight: 800; background: transparent; border: none; }
 
 QFrame#Paso6Main[theme="light"] QFrame#RightPanel { background-color: #1E3A8A; border: none; border-top-right-radius: 28px; border-bottom-right-radius: 28px; }
 

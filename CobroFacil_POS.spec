@@ -16,6 +16,13 @@ a = Analysis(
         'src.cajero.paso6_cobro.mercadopago_core',
         'src.reportes_core',
         'src.services.db_network_service',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.atajos',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.bloquear',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.chatbot',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.espera',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.teclado',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.tema',
+        'src.cajero.paso5_terminal.componentes_paso5_terminal.barra_de_herramientas_inferior.version',
         'qrcode'
     ],
     hookspath=[],
