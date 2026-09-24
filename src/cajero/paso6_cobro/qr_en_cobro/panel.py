@@ -38,8 +38,8 @@ class PanelQrCobro(QFrame):
             "QFrame#PanelQrCobro { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; }"
         )
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(20, 10, 20, 16)
-        lay.setSpacing(6)
+        lay.setContentsMargins(12, 8, 12, 8)
+        lay.setSpacing(4)
 
         self.distintivo = QLabel("")
         self.distintivo.setAlignment(Qt.AlignmentFlag.AlignCenter)

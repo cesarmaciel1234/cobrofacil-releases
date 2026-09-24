@@ -43,7 +43,7 @@ class PanelMontoCobro(QFrame):
         """True si este panel debe ocupar el hueco del medio."""
         compacto = metodo == "QR" and foto
         usar = compacto or metodo in (
-            "Efectivo", "Tarjeta", "Transferencia", "Fiado", "Clientes"
+            "Efectivo", "Transferencia", "Fiado", "Clientes"
         )
         self.setVisible(usar)
         if not usar:
@@ -61,6 +61,15 @@ class PanelMontoCobro(QFrame):
         self.setMaximumHeight(tope)
         self.zona_pago.setMaximumHeight(tope)
         self.zona_pago.setMinimumHeight(150)
+        caja = self.zona_pago.layout()
+        if metodo == "Transferencia":
+            caja.setStretch(0, 0)
+            caja.setStretch(1, 1)
+            caja.setStretch(2, 0)
+        else:
+            caja.setStretch(0, 1)
+            caja.setStretch(1, 0)
+            caja.setStretch(2, 1)
         self.zona_estado.setMaximumHeight(tope)
         self.zona_estado.setMinimumHeight(120 if self.zona_estado.isVisible() else 0)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)

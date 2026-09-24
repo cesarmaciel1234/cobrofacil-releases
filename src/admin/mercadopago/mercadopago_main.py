@@ -1,28 +1,14 @@
 from src.utils.qt_compat import qt_exec
-from src.utils.theme_manager import theme_manager
-import os
-import json
-import subprocess
-import time
 from datetime import datetime
 from PyQt6.QtWidgets import (
-
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QMessageBox, QDialog, QDateEdit, QCheckBox, QFileDialog
+    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
-from src.config import config
-from src.base_de_datos.database import db_manager
 
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except ImportError:
-    REQUESTS_AVAILABLE = False
-
-
-from src.admin.mercadopago.componentes.mp_polling_thread import MPPollingThread
+from src.admin.mercadopago.historial.archivo import leer, omitir
+from src.admin.mercadopago.historial.sincronizar import bajar_mes
 
 class Admin10MP(QWidget):
     request_dashboard = pyqtSignal()
@@ -35,7 +21,7 @@ class Admin10MP(QWidget):
         self.todos_los_pagos = []
         self.setup_ui()
         self.cargar_datos_locales()
-        self.verificar_token_guardado()
+        self.iniciar_monitor()
 
     def setup_ui(self):
         self.setStyleSheet(" font-family: 'Segoe UI';")
@@ -60,6 +46,24 @@ class Admin10MP(QWidget):
         lbl_title.setStyleSheet("font-size: 22px; font-weight: bold;")
         hl.addWidget(lbl_title)
         hl.addStretch()
+        self.btn_aviso = QPushButton("")
+        self.btn_aviso.setCheckable(True)
+        self.btn_aviso.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_aviso.setStyleSheet(
+            "background: white; color: #1e293b; font-weight: bold; border-radius: 8px; padding: 8px 14px;"
+        )
+        self.btn_aviso.clicked.connect(self._alternar_aviso)
+        self._pintar_aviso()
+        hl.addWidget(self.btn_aviso)
+        hl.addSpacing(12)
+        self.btn_sync = QPushButton("Actualizar")
+        self.btn_sync.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_sync.setStyleSheet(
+            "background: white; color: #1e293b; font-weight: bold; border-radius: 8px; padding: 8px 14px;"
+        )
+        self.btn_sync.clicked.connect(self.sincronizar_historico)
+        hl.addWidget(self.btn_sync)
+        hl.addSpacing(12)
 
         # Estado
         self.lbl_estado = QLabel("🔴 DETENIDO")
@@ -70,43 +74,6 @@ class Admin10MP(QWidget):
         # --- BODY ---
         body = QVBoxLayout()
         body.setContentsMargins(20, 20, 20, 20)
-
-        # Configuracion Token
-        frame_token = QFrame()
-        frame_token.setStyleSheet("background: white; border: 1px solid #CBD5E1; border-radius: 8px;")
-        ftl = QHBoxLayout(frame_token)
-
-        lbl_tok = QLabel("Access Token de Producción:")
-        lbl_tok.setStyleSheet("font-weight: bold; ")
-        self.txt_token = QLineEdit()
-        self.txt_token.setPlaceholderText("APP_USR-...")
-        self.txt_token.setStyleSheet("padding: 5px; border: 1px solid #94A3B8; border-radius: 4px; ")
-        self.txt_token.setEchoMode(QLineEdit.PasswordEchoOnEdit)
-
-        btn_guardar = QPushButton("Guardar e Iniciar")
-        btn_guardar.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
-        btn_guardar.clicked.connect(self.iniciar_monitor)
-
-        btn_sync = QPushButton("🔄 Sincronizar Histórico")
-        btn_sync.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
-        btn_sync.clicked.connect(self.sincronizar_historico)
-
-        btn_import_csv = QPushButton("📥 Importar CSV Oficial MP")
-        btn_import_csv.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
-        btn_import_csv.clicked.connect(self.importar_csv_mercado_pago)
-
-        btn_probar = QPushButton("Simular")
-        btn_probar.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; padding: 8px 15px; border-radius: 4px;")
-        btn_probar.clicked.connect(self.simular_pago)
-
-        ftl.addWidget(lbl_tok)
-        ftl.addWidget(self.txt_token, stretch=1)
-        ftl.addWidget(btn_guardar)
-        ftl.addWidget(btn_sync)
-        ftl.addWidget(btn_import_csv)
-        ftl.addWidget(btn_probar)
-        body.addWidget(frame_token)
-        body.addSpacing(15)
 
         # KPI Dashboard Cards
         kpi_lay = QHBoxLayout()
@@ -246,325 +213,44 @@ class Admin10MP(QWidget):
 
         layout.addLayout(body)
 
-    def verificar_token_guardado(self):
-        token = config.get("mp_access_token", "")
-        if token:
-            self.txt_token.setText(token)
-            self.iniciar_monitor()
 
     def iniciar_monitor(self):
-        token = self.txt_token.text().strip()
-        if not token:
-            QMessageBox.warning(self, "Error", "Debes ingresar un Access Token válido.")
+        from src.services.mp_escucha import EscuchaMP
+        if not EscuchaMP.asegurar():
+            self.lbl_estado.setText("SIN TOKEN")
             return
-
-        config.set("mp_access_token", token)
-
-        if self.poller is not None:
-            self.poller.stop()
-            self.poller.wait()
-
-        self.poller = MPPollingThread(token)
-        self.poller.new_payment.connect(self.procesar_pago)
-        self.poller.error_signal.connect(self.mostrar_error)
-        self.poller.start()
-
-        self.lbl_estado.setText("🟢 ESCUCHANDO")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
-
-        # Sincronizar historial cada vez que se inicia
+        hilo = EscuchaMP._hilo
+        try:
+            hilo.new_payment.disconnect(self._guardar_llegada)
+        except TypeError:
+            pass
+        hilo.new_payment.connect(self._guardar_llegada)
+        self.lbl_estado.setText("ESCUCHANDO")
         self.sincronizar_historico()
 
     def sincronizar_historico(self):
-        token = self.txt_token.text().strip()
-        if not token: return
-
+        from src.services.mp_escucha import EscuchaMP
         try:
-            import requests
-            headers = {"Authorization": f"Bearer {token}"}
+            bajar_mes(EscuchaMP.token())
+        except Exception as error:
+            print("Error en sincronizacion MP:", error)
+        self.cargar_datos_locales()
 
-            mi_id = None
-            try:
-                me_resp = requests.get("https://api.mercadopago.com/users/me", headers=headers, timeout=5, verify=False)
-                if me_resp.status_code == 200:
-                    mi_id = me_resp.json().get("id")
-            except: pass
-
-            now = datetime.now()
-            mes_str = now.strftime("%Y-%m")
-            hoy_str = now.strftime("%Y-%m-%d")
-
-            # 1. Cargar IDs ya archivados localmente para optimizar la descarga
-            ids_existentes = set()
-            csv_dir = "reportes"
-            csv_file = os.path.join(csv_dir, "mercado_pago_sync.csv")
-            if os.path.exists(csv_file):
-                try:
-                    import csv
-                    with open(csv_file, mode="r", encoding="utf-8-sig") as f:
-                        reader = csv.reader(f)
-                        next(reader, None) # Saltar cabecera
-                        for r in reader:
-                            if r and len(r) > 1:
-                                ids_existentes.add(str(r[1]).strip())
-                except: pass
-
-            # 2. Paginación mensual inteligente para poblar base de datos local (CSV) con el historial real del mes
-            begin_date = f"{mes_str}-01T00:00:00.000-03:00"
-            limit = 100
-            offset = 0
-            results_acumulados = []
-
-            # Buscaremos hasta 100 páginas (10.000 transacciones) para cubrir el mes actual de forma completa
-            for page in range(100):
-                url = f"https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit={limit}&offset={offset}&status=approved&range=date_created&begin_date={begin_date}"
-                response = requests.get(url, headers=headers, timeout=12, verify=False)
-                if response.status_code == 200:
-                    data = response.json().get("results", [])
-                    if not data:
-                        break
-                    results_acumulados.extend(data)
-
-                    # Optimización: si todos los IDs de esta página ya están archivados, cortamos la descarga
-                    todos_duplicados = True
-                    for p in data:
-                        p_id = str(p.get("id", "")).strip()
-                        if p_id not in ids_existentes:
-                            todos_duplicados = False
-                            break
-
-                    if todos_duplicados and ids_existentes:
-                        break
-
-                    if len(data) < limit:
-                        break
-                    offset += limit
-                else:
-                    break
-
-            # Filtrar por collector_id para asegurar que son ventas propias
-            cobros_mes = []
-            for p in results_acumulados:
-                if p.get("transaction_amount", 0) <= 0: continue
-                if mi_id and str(p.get("collector_id")) != str(mi_id): continue
-                cobros_mes.append(p)
-
-            # Guardar/actualizar en el CSV local (de-duplica automáticamente)
-            if cobros_mes:
-                self.resguardar_pagos_csv(cobros_mes)
-
-        except Exception as e:
-            print("Error en sincronización MP:", e)
-        finally:
-            # 3. Recargar la grilla y las métricas desde el CSV local (funciona con y sin internet)
-            self.cargar_datos_locales()
-
-    def resguardar_pagos_csv(self, pagos_list):
-        """
-        Guarda una lista de pagos en el archivo CSV de reportes (reportes/mercado_pago_sync.csv),
-        evitando duplicaciones mediante verificación de IDs.
-        """
-        import csv
-        from src.logger import logger
-        csv_dir = "reportes"
-        csv_file = os.path.join(csv_dir, "mercado_pago_sync.csv")
-
-        os.makedirs(csv_dir, exist_ok=True)
-
-        ids_existentes = set()
-
-        # Leer IDs existentes si el archivo ya existe
-        if os.path.exists(csv_file):
-            try:
-                with open(csv_file, mode="r", encoding="utf-8-sig") as f:
-                    reader = csv.reader(f)
-                    header = next(reader, None) # Omitir cabecera
-                    for row in reader:
-                        if row and len(row) > 1:
-                            ids_existentes.add(str(row[1]).strip())
-            except Exception as e:
-                print("Error leyendo CSV existente:", e)
-
-        nuevas_filas = []
-        for p in pagos_list:
-            id_pago = str(p.get("id", "")).strip()
-            if not id_pago or id_pago in ids_existentes:
-                continue
-            if "SIMULADO" in id_pago:
-                continue
-
-            fecha_aprobado = p.get("date_approved", "")
-            # Formatear fecha para Excel
-            if fecha_aprobado:
-                fecha_aprobado = fecha_aprobado.replace("T", " ").replace(".000Z", "").split("+")[0]
-            else:
-                fecha_aprobado = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            try:
-                monto = float(p.get("transaction_amount", 0))
-            except:
-                monto = 0.0
-
-            payer = p.get("payer", {})
-            nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip() or "Cliente"
-            email = payer.get("email", "") or "sin_email@mercadopago.com"
-            estado = p.get("status", "approved")
-            fecha_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            op_type = p.get("operation_type", "regular_payment")
-
-            # Obtener neto recibido y tarifa
-            detalles = p.get("transaction_details", {})
-            neto_val = detalles.get("net_received_amount")
-            if neto_val is None:
-                neto_val = monto
-            else:
-                try:
-                    neto_val = float(neto_val)
-                except:
-                    neto_val = monto
-
-            tarifa_val = monto - neto_val
-
-            nuevas_filas.append([
-                fecha_aprobado,
-                id_pago,
-                f"{monto:.2f}",
-                nombre,
-                email,
-                estado.upper(),
-                fecha_local,
-                op_type,
-                f"{neto_val:.2f}",
-                f"{tarifa_val:.2f}"
-            ])
-            ids_existentes.add(id_pago)
-
-        if nuevas_filas:
-            es_nuevo = not os.path.exists(csv_file)
-            try:
-                with open(csv_file, mode="a", newline="", encoding="utf-8-sig") as f:
-                    writer = csv.writer(f)
-                    if es_nuevo:
-                        writer.writerow([
-                            "Fecha Aprobacion",
-                            "ID de Pago",
-                            "Monto",
-                            "Cliente",
-                            "Email Cliente",
-                            "Estado",
-                            "Fecha Registro Local",
-                            "Tipo Operacion",
-                            "Monto Neto",
-                            "Tarifa"
-                        ])
-                    writer.writerows(nuevas_filas)
-                logger.info(f"Se sincronizaron y respaldaron {len(nuevas_filas)} pagos nuevos en CSV.")
-            except Exception as e:
-                logger.error(f"Fallo al escribir en CSV de Mercado Pago: {e}")
+    def _guardar_llegada(self, pago):
+        from src.admin.mercadopago.historial.archivo import guardar
+        guardar([pago])
+        self.cargar_datos_locales()
 
     def cargar_datos_locales(self):
-        """
-        Lee el archivo CSV local completando el historial y actualiza las métricas y la tabla,
-        permitiendo operar al 100% en modo offline.
-        """
-        self.todos_los_pagos = []
-        csv_file = os.path.join("reportes", "mercado_pago_sync.csv")
-
-        now = datetime.now()
-        mes_str = now.strftime("%Y-%m")
-        hoy_str = now.strftime("%Y-%m-%d")
-
-        total_mes = 0.0
-        total_neto_mes = 0.0
-        total_hoy = 0.0
-        cant_hoy = 0
-
-        if os.path.exists(csv_file):
-            try:
-                import csv
-                filas_limpias = []
-                hubo_simulado = False
-                header = None
-
-                with open(csv_file, mode="r", encoding="utf-8-sig") as f:
-                    reader = csv.reader(f)
-                    header = next(reader, None) # Saltar cabecera
-                    for row in reader:
-                        if row and len(row) > 5:
-                            id_pago = row[1].strip()
-                            if "SIMULADO" in id_pago:
-                                hubo_simulado = True
-                                continue
-                            filas_limpias.append(row)
-
-                            fecha_aprob = row[0].strip()
-                            try:
-                                monto = float(row[2])
-                            except:
-                                monto = 0.0
-                            nombre = row[3].strip()
-                            email = row[4].strip()
-                            estado = row[5].strip()
-
-                            # Cargar neto si existe
-                            try:
-                                neto = float(row[8]) if len(row) > 8 else monto
-                            except:
-                                neto = monto
-
-                            # Detección inteligente de cargas propias/autotransferencias
-                            if len(row) > 7:
-                                op_type = row[7].strip()
-                            else:
-                                if email == "cesar-th123@live.com":
-                                    op_type = "account_fund"
-                                else:
-                                    op_type = "regular_payment"
-
-                            pago_dict = {
-                                "fecha": fecha_aprob,
-                                "id": id_pago,
-                                "monto": monto,
-                                "nombre": nombre,
-                                "email": email,
-                                "estado": estado,
-                                "op_type": op_type,
-                                "neto": neto
-                            }
-                            self.todos_los_pagos.append(pago_dict)
-
-                            # Acumuladores (excluir autotransferencias y omitidos)
-                            if estado.upper() == "APPROVED" and op_type != "account_fund":
-                                if fecha_aprob.startswith(mes_str):
-                                    total_mes += monto
-                                    total_neto_mes += neto
-                                if fecha_aprob.startswith(hoy_str):
-                                    total_hoy += monto
-                                    cant_hoy += 1
-
-                # Si había registros simulados guardados, reescribimos el CSV limpio
-                if hubo_simulado:
-                    with open(csv_file, mode="w", newline="", encoding="utf-8-sig") as f:
-                        writer = csv.writer(f)
-                        if header:
-                            writer.writerow(header)
-                        writer.writerows(filas_limpias)
-
-            except Exception as e:
-                print("Error cargando CSV local:", e)
-
-        # Ordenar cronológicamente (más recientes arriba)
-        self.todos_los_pagos.sort(key=lambda x: x["fecha"], reverse=True)
-
-        # Actualizar KPIs
-        self.lbl_kpi_total_mes.setText(f"${total_mes:,.2f}")
-        self.lbl_kpi_neto_mes.setText(f"${total_neto_mes:,.2f}")
-        self.lbl_kpi_total.setText(f"${total_hoy:,.2f}")
-        self.lbl_kpi_count.setText(str(cant_hoy))
-        prom = (total_hoy / cant_hoy) if cant_hoy > 0 else 0
+        datos = leer()
+        self.todos_los_pagos = datos["pagos"]
+        self.lbl_kpi_total_mes.setText(f"${datos['total_mes']:,.2f}")
+        self.lbl_kpi_neto_mes.setText(f"${datos['neto_mes']:,.2f}")
+        self.lbl_kpi_total.setText(f"${datos['total_hoy']:,.2f}")
+        self.lbl_kpi_count.setText(str(datos["cant_hoy"]))
+        cant = datos["cant_hoy"]
+        prom = (datos["total_hoy"] / cant) if cant else 0
         self.lbl_kpi_avg.setText(f"${prom:,.2f}")
-
-        # Aplicar filtros a la grilla
         self.aplicar_filtros()
 
     def aplicar_filtros(self):
@@ -680,182 +366,18 @@ class Admin10MP(QWidget):
 
             qt_exec(menu, self.tabla.mapToGlobal(pos))
 
+
     def toggle_omitir_pago(self, id_pago):
-        csv_file = os.path.join("reportes", "mercado_pago_sync.csv")
-        if not os.path.exists(csv_file): return
-
-        filas_actualizadas = []
-        try:
-            import csv
-            with open(csv_file, mode="r", encoding="utf-8-sig") as f:
-                reader = csv.reader(f)
-                header = next(reader, None)
-                for row in reader:
-                    if row and len(row) > 1:
-                        if row[1].strip() == id_pago:
-                            if row[5].strip() == "OMITIDO":
-                                row[5] = "APPROVED"
-                            else:
-                                row[5] = "OMITIDO"
-                        filas_actualizadas.append(row)
-
-            with open(csv_file, mode="w", newline="", encoding="utf-8-sig") as f:
-                writer = csv.writer(f)
-                if header:
-                    writer.writerow(header)
-                writer.writerows(filas_actualizadas)
-
-            self.cargar_datos_locales()
-        except Exception as e:
-            print("Error al toggle omitir pago:", e)
-
-    def mostrar_error(self, msg):
-        self.lbl_estado.setText("🔴 ERROR DE TOKEN")
-        self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
-        QMessageBox.critical(self, "Mercado Pago", msg)
-
-    def simular_pago(self):
-        pago_simulado = {
-            "id": "SIMULADO_123",
-            "date_approved": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-            "transaction_amount": 1500.50,
-            "payer": {"first_name": "Juan", "last_name": "Perez"},
-            "status": "approved"
-        }
-        self.procesar_pago(pago_simulado)
-
-    def procesar_pago(self, pago):
-        id_pago = str(pago.get("id", ""))
-        fecha = pago.get("date_approved", "")[:10]
-        monto = pago.get("transaction_amount", 0)
-
-        # Extraer nombre
-        payer = pago.get("payer", {})
-        nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip()
-        if not nombre:
-            nombre = "Cliente"
-
-        estado = pago.get("status", "")
-
-        # Guardar en variable de clase para que la pantalla de cobro (Paso 6) pueda auto-detectar el pago
-        Admin10MP.ultimo_pago_detectado = {
-            "id": id_pago,
-            "monto": float(monto),
-            "nombre": nombre,
-            "timestamp": time.time()
-        }
-
-        # Resguardar en CSV local (solo si no es simulado)
-        if "SIMULADO" not in id_pago:
-            self.resguardar_pagos_csv([pago])
-            self.cargar_datos_locales()
-        else:
-            # Para pagos simulados, lo agregamos en memoria temporalmente
-            pago_dict = {
-                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "id": id_pago,
-                "monto": float(monto),
-                "nombre": nombre,
-                "email": payer.get("email", "") or "sin_email@mercadopago.com",
-                "estado": estado,
-                "op_type": "regular_payment"
-            }
-            self.todos_los_pagos.insert(0, pago_dict)
-            self.aplicar_filtros()
-
-            # Programar remoción automática tras 8 segundos
-            QTimer.singleShot(8000, self.remover_pago_simulado)
-
-        # Audio TTS (Liviano via PowerShell)
-        mensaje = f"Llegó {monto:.0f} pesos, gracias por su compra."
-        self.reproducir_audio(mensaje)
-
-        # Popup Notificación
-        self.mostrar_popup_verde(nombre, monto)
-
-    def remover_pago_simulado(self):
-        self.todos_los_pagos = [p for p in getattr(self, "todos_los_pagos", []) if "SIMULADO" not in p["id"]]
-        self.aplicar_filtros()
-
-    def reproducir_audio(self, texto):
-        try:
-            escaped_text = texto.replace('"', '""').replace("\n", " ")
-            subprocess.Popen([
-                "powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command",
-                f'Add-Type -AssemblyName System.Speech; $s=New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.Speak("{escaped_text}");'
-            ])
-        except Exception:
-            pass
-
-    def mostrar_popup_verde(self, nombre, monto):
-        import sys, os
-        from src.utils.paths import get_resource_path
-        monto_str = f"${monto:.0f}" if monto == int(monto) else f"${monto:.2f}"
-        script_path = get_resource_path(os.path.join("src", "admin", "mp_explosion.py"))
-
-        try:
-            if hasattr(sys, '_MEIPASS'):
-                # En modo ejecutable, intentamos usar el python que suele estar en el path o ignorar si falla
-                subprocess.Popen(["python", script_path, nombre, monto_str],
-                               creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-            else:
-                subprocess.Popen([sys.executable, script_path, nombre, monto_str])
-        except Exception:
-            pass # Si no hay python instalado en el sistema destino, simplemente no muestra la animación explosiva
-
-    def importar_csv_mercado_pago(self):
-        """
-        Importa CSV oficial descargado desde el panel de Mercado Pago.
-        Guarda el original en reportes/ventas_digitales/originales/mercadopago/
-        y recarga los datos locales.
-        """
-        import shutil
-        from src.admin.admin14_ventas_digitales import (
-            DIR_ORIGINALES_MP, parsear_csv_mercado_pago, crear_estructura
-        )
-        paths, _ = QFileDialog.getOpenFileNames(
-            self, "Importar CSV Oficial de Mercado Pago", "",
-            "Archivos CSV (*.csv);;Todos los archivos (*)"
-        )
-        if not paths:
-            return
-
-        crear_estructura()
-        total_nuevos = 0
-        errores = []
-
-        for src in paths:
-            fname = os.path.basename(src)
-            dst = os.path.join(DIR_ORIGINALES_MP,
-                               f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{fname}")
-            shutil.copy2(src, dst)
-
-            # Parsear e integrar en nuestro CSV del sistema (de-duplicado)
-            try:
-                filas = parsear_csv_mercado_pago(dst)
-                pagos_api_fmt = []
-                for f_row in filas:
-                    pagos_api_fmt.append({
-                        "id": f_row["id"],
-                        "date_approved": f_row["fecha"],
-                        "transaction_amount": f_row["bruto"],
-                        "payer": {"first_name": "", "last_name": "", "email": ""},
-                        "status": "approved",
-                        "operation_type": "regular_payment",
-                        "transaction_details": {
-                            "net_received_amount": f_row["neto"]
-                        }
-                    })
-                self.resguardar_pagos_csv(pagos_api_fmt)
-                total_nuevos += len(pagos_api_fmt)
-            except Exception as e:
-                errores.append(f"{fname}: {e}")
-
+        omitir(id_pago)
         self.cargar_datos_locales()
 
-        msg = f"✅ Se importaron {len(paths)} archivo(s) de Mercado Pago.\n"
-        msg += f"Se integraron {total_nuevos} transacciones a tu base de datos local.\n\n"
-        msg += f"📂 Original guardado en:\n{DIR_ORIGINALES_MP}"
-        if errores:
-            msg += f"\n\n⚠️ Errores:\n" + "\n".join(errores)
-        QMessageBox.information(self, "Importación Completa", msg)
+    def _alternar_aviso(self):
+        from src.services.mp_escucha import EscuchaMP
+        EscuchaMP.fijar_sonido(self.btn_aviso.isChecked())
+        self._pintar_aviso()
+
+    def _pintar_aviso(self):
+        from src.services.mp_escucha import EscuchaMP
+        activo = EscuchaMP.con_sonido()
+        self.btn_aviso.setChecked(activo)
+        self.btn_aviso.setText("Con sonido" if activo else "Cajero silencioso")

@@ -6,10 +6,13 @@ class PanelMixtoCobro(QFrame):
     """Divide el pago en la misma pantalla. No es un cuadro aparte."""
 
     cambio = pyqtSignal(object)
+    aviso = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._total = 0.0
+        self._ultimo = None
+        self._silencio = False
         self._valores = {"efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0}
         self.hide()
         self._armar()
@@ -69,7 +72,7 @@ class PanelMixtoCobro(QFrame):
             f"QLineEdit {{ background: #FFFFFF; border: 2px solid {color}; border-radius: 10px; "
             f"font-size: 22px; font-weight: 800; color: {color}; }}"
         )
-        caja.textChanged.connect(self._recalcular)
+        caja.textChanged.connect(lambda _texto, campo=caja: self._marcar(campo))
         return caja
 
     def campos(self):
@@ -111,13 +114,31 @@ class PanelMixtoCobro(QFrame):
         except ValueError:
             return 0.0
 
+    def _marcar(self, campo):
+        self._ultimo = campo
+        self._recalcular()
+
+    def _claves(self):
+        return (
+            ("efectivo", self.txt_efectivo),
+            ("tarjeta", self.txt_tarjeta),
+            ("mercadopago", self.txt_mercadopago),
+            ("qr", self.txt_qr),
+        )
+
     def _recalcular(self):
-        self._valores = {
-            "efectivo": self._numero(self.txt_efectivo.text()),
-            "tarjeta": self._numero(self.txt_tarjeta.text()),
-            "mercadopago": self._numero(self.txt_mercadopago.text()),
-            "qr": self._numero(self.txt_qr.text()),
-        }
+        if self._silencio:
+            return
+        self._valores = {clave: self._numero(campo.text()) for clave, campo in self._claves()}
+        activos = [clave for clave, valor in self._valores.items() if valor > 0.009]
+        if len(activos) > 2 and self._ultimo is not None and self._numero(self._ultimo.text()) > 0.009:
+            self._silencio = True
+            self._ultimo.blockSignals(True)
+            self._ultimo.clear()
+            self._ultimo.blockSignals(False)
+            self._silencio = False
+            self.aviso.emit("El pago mixto admite solo dos medios.")
+            self._valores = {clave: self._numero(campo.text()) for clave, campo in self._claves()}
         diferencia = sum(self._valores.values()) - self._total
         if diferencia < -0.01:
             self.estado.setText(f"Falta cubrir: ${abs(diferencia):,.2f}")

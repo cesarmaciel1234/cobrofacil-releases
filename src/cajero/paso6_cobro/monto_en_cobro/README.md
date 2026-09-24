@@ -1,6 +1,6 @@
 # Monto en la pantalla de cobro
 
-Efectivo, tarjeta y transferencia. El QR vive en `qr_en_cobro/` y el mixto en `mixto_en_cobro/`. Esta carpeta no los pinta.
+Efectivo y transferencia. La tarjeta vive en `tarjeta_en_cobro/`, el QR en `qr_en_cobro/` y el mixto en `mixto_en_cobro/`. Esta carpeta no los pinta.
 
 `panel.py`, clase `PanelMontoCobro`. Dos marcos fijos: `zona_pago` (el casillero) y `zona_estado` (el vuelto o la escucha de Mercado Pago). El marco crece con la hoja. Lo de adentro conserva su alto y queda centrado, así no se estira ni se sale.
 

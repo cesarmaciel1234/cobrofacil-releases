@@ -116,7 +116,9 @@ class PollingService:
         config._load_config()
         token = str(config.get("mp_access_token", "") or "").strip()
         if not token:
-            QMessageBox.warning(self.parent, "Configuración Faltante", "Falta el Access Token de Mercado Pago.")
+            aviso = getattr(self.parent, "_avisar", None)
+            if aviso:
+                aviso("Falta el token de Mercado Pago en la configuración del TPV.")
             return
 
         progreso = QProgressDialog("Buscando el último monto recibido...", "Cancelar", 0, 0, self.parent)
@@ -132,13 +134,17 @@ class PollingService:
             )
             resp = MPApiClient.get(url, token, timeout=15)
             progreso.close()
-        except Exception as e:
+        except Exception:
             progreso.close()
-            QMessageBox.critical(self.parent, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+            aviso = getattr(self.parent, "_avisar", None)
+            if aviso:
+                aviso("No se pudo consultar Mercado Pago.")
             return
 
         if resp.status_code != 200:
-            QMessageBox.critical(self.parent, "Error MP", f"No se pudo leer el último cobro:\n{resp.text}")
+            aviso = getattr(self.parent, "_avisar", None)
+            if aviso:
+                aviso("No se pudo leer el último cobro.")
             return
 
         pago = None
@@ -151,7 +157,9 @@ class PollingService:
                 pago = p
                 break
         if not pago:
-            QMessageBox.information(self.parent, "Sin cobros", "No hay un monto nuevo recibido en las últimas horas.")
+            aviso = getattr(self.parent, "_avisar", None)
+            if aviso:
+                aviso("No hay un monto nuevo en las últimas horas.")
             return
 
         monto = float(pago.get("transaction_amount") or 0)
@@ -159,24 +167,19 @@ class PollingService:
         nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip()
         if not nombre:
             nombre = payer.get("email") or "Desconocido"
-        cuando = str(pago.get("date_created") or "")[:16].replace("T", " ")
-        texto = f"Último monto recibido: ${monto:,.2f}\n\nOrigen: {nombre}\nHora: {cuando}"
+        aviso = getattr(self.parent, "_avisar", None)
         if abs(monto - float(self.parent.total_final or 0)) > 0.05:
-            QMessageBox.information(
-                self.parent,
-                "Último monto",
-                texto + f"\n\nEl ticket es ${float(self.parent.total_final):,.2f}. No coincide.",
-            )
+            if aviso:
+                aviso(
+                    f"Llegó ${monto:,.2f} de {nombre}. "
+                    f"El ticket es ${float(self.parent.total_final):,.2f}."
+                )
             return
-
-        reply = QMessageBox.question(
-            self.parent,
-            "Último monto",
-            texto + "\n\nCoincide con el ticket. ¿Cerrar la venta?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
+        from src.services.mp_escucha import EscuchaMP
+        if EscuchaMP.con_sonido():
+            EscuchaMP.avisar(nombre, monto)
+        elif aviso:
+            aviso(f"Llegó ${monto:,.2f}. Se registra la venta.")
         try:
             db_manager.execute_non_query(
                 "INSERT INTO mp_transferencias_usadas (payment_id) VALUES (?)",

@@ -2164,7 +2164,10 @@ class Paso5Terminal(QWidget):
 
         from src.cajero.paso6_cobro import Paso6Cobro
         dlg = Paso6Cobro(total, items, self)
-        dlg.descuentaso_oferta = sum(parse_float_safe(self.tabla.item(i, 4).text()) for i in range(self.tabla.rowCount()))
+        dlg.descuentaso_oferta = sum(
+            abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount())
+        )
+        dlg.recargar_total_final()
 
         # Ejecutamos el cobro
         ok = qt_exec(dlg)

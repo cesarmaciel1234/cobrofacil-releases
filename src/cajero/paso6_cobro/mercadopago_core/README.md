@@ -6,7 +6,7 @@ This module provides a modular architecture for MercadoPago integration, replaci
 - `api_client.py`: Provides helper functions for making API requests to MercadoPago.
 - `point_service.py`: Handles payments using MercadoPago Point devices. Manda el monto como tarjeta. No activa QR en la terminal. El QR en pantalla es `paso6_cobro/qr_en_cobro/`.
 - `qr_service.py`: Ventana vieja del POS. El cobro de QR ya no la abre. No la vuelvas a enganchar al clic de QR ni a Enter.
-- `polling_service.py`: Handles polling and verification of MercadoPago transfers. La búsqueda de pagos usa `fecha_busqueda_mp`: `2026-09-24T12:35:50.000-03:00`. No vuelvas a `isoformat()` con `Z`.
+- `polling_service.py`: Handles polling and verification of MercadoPago transfers. La búsqueda de pagos usa `fecha_busqueda_mp`: `2026-09-24T12:35:50.000-03:00`. No vuelvas a `isoformat()` con `Z`. El último monto no pregunta si cerrar: si coincide, registra. El token sale de la config del TPV, el mismo que el monitor de admin. El aviso con sonido se prende con `mp_aviso_sonido` en `src/services/mp_escucha.py`.
 - `ui_dialogs.py`: Contains the UI dialogs for waiting and polling for payments.
 
 ## Usage:

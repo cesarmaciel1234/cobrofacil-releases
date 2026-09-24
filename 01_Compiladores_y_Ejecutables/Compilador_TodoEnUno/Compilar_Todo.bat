@@ -59,7 +59,25 @@ python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
   --collect-all "flask" ^
   --collect-all "werkzeug" ^
   --collect-submodules "src.admin" ^
+  --collect-submodules "src.cajero" ^
   --collect-submodules "src.jefe" ^
+  --collect-submodules "src.utils" ^
+  --collect-submodules "src.base_de_datos" ^
+  --collect-submodules "src.inicio_y_perfiles" ^
+  --collect-submodules "src.central_red_global" ^
+  --collect-submodules "src.ui_global" ^
+  --hidden-import "src.cajero.paso6_cobro.transferencia_en_cobro.panel" ^
+  --hidden-import "src.cajero.paso6_cobro.transferencia_en_cobro.cuenta" ^
+  --hidden-import "src.cajero.paso6_cobro.aviso_en_cobro.toast" ^
+  --hidden-import "src.cajero.paso6_cobro.tarjeta_en_cobro.panel" ^
+  --hidden-import "src.cajero.paso6_cobro.tarjeta_en_cobro.envio" ^
+  --hidden-import "src.cajero.paso6_cobro.qr_en_cobro.panel" ^
+  --hidden-import "src.cajero.paso6_cobro.mixto_en_cobro.panel" ^
+  --hidden-import "src.cajero.paso6_cobro.mixto_en_cobro.confirmar" ^
+  --hidden-import "src.cajero.paso6_cobro.monto_en_cobro.panel" ^
+  --hidden-import "src.admin.mercadopago.historial.archivo" ^
+  --hidden-import "src.admin.mercadopago.historial.sincronizar" ^
+  --hidden-import "src.services.mp_escucha" ^
   --collect-submodules "src.carteleria" ^
   --collect-submodules "src.motor_descuentos" ^
   --hidden-import "src.motor_descuentos.vistas.dialog_gestor_publicidad" ^

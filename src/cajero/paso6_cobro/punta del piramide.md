@@ -29,15 +29,17 @@ No inyectar `db_manager` en `validar_monto_suficiente`. No hacer que los motores
 
 La tabla `clientes` no se lee al abrir el cobro. `_asegurar_lista_clientes` la carga la primera vez que se abre Fiado o Clientes. No la vuelvas al `__init__`.
 
-Elegir QR abre la pantalla del monto, igual que tarjeta. El código se pinta ahí, en `qr_en_cobro/`. En QR no se ven «paga con» ni el neto: quedan redondeo y recargo, y si el código está en vivo se vuelve a pedir con el monto nuevo. El precio de lista, si hay redondeo, queda arriba en rojo y tachado. Si Mercado Pago lo entrega, el cartel dice EN VIVO y la venta se cierra sola. Si el TPV está en rojo, el cartel dice FOTO y se carga una imagen. Point no entra en ese panel. El punto de venta es `mp_qr_pos_external_id`, no `mp_external_pos_id`.
+Elegir QR abre la pantalla del monto, igual que tarjeta. El código se pinta ahí, en `qr_en_cobro/`. En QR no se ven «paga con» ni el neto: quedan redondeo y recargo, y si el código está en vivo se vuelve a pedir con el monto nuevo. Si Mercado Pago lo entrega, el cartel dice EN VIVO y la venta se cierra sola. Si el TPV está en rojo, el cartel dice FOTO y se carga una imagen. Point no entra en ese panel. El punto de venta es `mp_qr_pos_external_id`, no `mp_external_pos_id`.
 
-Los seis botones de la derecha están en tres columnas fijas. Ocultar Point o el último monto deja el hueco: F1 a F4 no se estiran. Efectivo y QR no muestran esos dos. Tarjeta y mixto muestran Point. Transferencia muestra «último monto».
+Los seis botones de la derecha están en tres columnas fijas. Ocultar Point o el último monto deja el hueco: F1 a F4 no se estiran. Efectivo y QR no muestran esos dos. Tarjeta muestra Point. En mixto no se ve F2: Enter registra y F1 imprime. En el lugar de F2 queda «último monto» y en el hueco de la tercera columna «Verif QR». Point sigue en mixto. Transferencia muestra «último monto» y el interruptor «Cajero silencioso» / «Con sonido». Debajo de Salir y Enter está F10: imprime ticket y, abajo, fiscal. Si `facturacion_afip_global` está apagado, el botón se ve gris y no factura. El token es el del TPV. Si coincide, registra sin preguntar. Con sonido usa el aviso del monitor de admin.
 
-`NETO A PAGAR` no se muestra. El número grande de arriba es el importe.
+`NETO A PAGAR` no se muestra. El número grande de arriba es lo que se cobra. Si el ticket trae oferta, o se toca el redondeo o el recargo, el importe anterior queda tachado en rojo, en cualquier forma de pago.
 
-Efectivo, tarjeta y transferencia arman el medio en `monto_en_cobro/`. Un marco para el casillero y otro para el vuelto o la escucha. Cada marco ocupa su parte y lo de adentro no se estira. El QR y el mixto siguen en sus carpetas.
+En transferencia no se escribe el monto: lo cambian el redondeo y el recargo. En ese lugar, `transferencia_en_cobro/` muestra el alias y, debajo, el nombre. El lápiz guarda el alias si la API no lo trae.
 
-Mixto abre la misma hoja, en `mixto_en_cobro/`. No abre `widgets/pagos_mixtos.py`. El teclado escribe en el casillero con foco. F1 imprime y F2 registra cuando la suma cubre el total.
+Efectivo y transferencia arman el medio en `monto_en_cobro/`. Un marco para el casillero y otro para el vuelto o la escucha. El QR ocupa el alto libre, en `qr_en_cobro/`. La tarjeta no pide el monto: `tarjeta_en_cobro/` manda el importe al TPV y, si la terminal no lo toma, Enter registra la venta. El mixto admite solo dos medios. Esos avisos son un cartel en `aviso_en_cobro/`: no hay ventana que cerrar.
+
+Mixto abre la misma hoja, en `mixto_en_cobro/`. No abre `widgets/pagos_mixtos.py`. El teclado escribe en el casillero con foco. F1 imprime. Enter registra, que es lo que hacía F2.
 
 Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarjeta, la escucha de Mercado Pago espera solo la transferencia, y el panel de QR muestra el código por el monto de QR. El efectivo queda anotado. Al terminar esos pasos, el motor mixto guarda una sola venta.
 

@@ -79,9 +79,16 @@ class PointService:
                     msg = err_data.get("message", "Error desconocido")
                 except:
                     msg = response.text
-                QMessageBox.critical(self.parent, "Error MP", f"No se pudo enviar el monto a la terminal:\n{msg}")
+                self._avisar("La terminal no recibió el monto.")
                 return None
-        except Exception as e:
+        except Exception:
             progreso.close()
-            QMessageBox.critical(self.parent, "Error de Conexión", f"Error de conexión con Mercado Pago:\n{e}")
+            self._avisar("La terminal no recibió el monto.")
             return None
+
+    def _avisar(self, texto):
+        aviso = getattr(self.parent, "_avisar", None)
+        if aviso:
+            aviso(texto)
+            return
+        QMessageBox.critical(self.parent, "Error MP", texto)

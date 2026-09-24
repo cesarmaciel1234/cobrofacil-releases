@@ -40,8 +40,8 @@ class TecladoNumericoLateral(QFrame):
                     border: none;
                     border-radius: 14px;
                     min-width: 64px;
-                    min-height: 58px;
-                    max-height: 64px;
+                    min-height: 48px;
+                    max-height: 56px;
                 }
                 QPushButton:hover {
                     background-color: #475569;
@@ -62,8 +62,8 @@ class TecladoNumericoLateral(QFrame):
                     border: none;
                     border-radius: 14px;
                     min-width: 64px;
-                    min-height: 58px;
-                    max-height: 64px;
+                    min-height: 48px;
+                    max-height: 56px;
                 }
                 QPushButton:hover {
                     background-color: #E2E8F0;
@@ -97,6 +97,37 @@ class TecladoNumericoLateral(QFrame):
                 row_lay.addWidget(btn, 1)
 
             kb_layout.addLayout(row_lay)
+
+        self.btn_fiscal = QPushButton("F10\nimprime ticket\nfiscal")
+        self.btn_fiscal.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_fiscal.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_fiscal.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.btn_fiscal.setMinimumHeight(72)
+        self.btn_fiscal.setMaximumHeight(80)
+        self.btn_fiscal.setStyleSheet(
+            "QPushButton { background-color: #1E3A8A; color: white; font-size: 16px; "
+            "font-weight: 800; font-family: 'Segoe UI', sans-serif; border: none; "
+            "border-radius: 14px; }"
+            "QPushButton:hover { background-color: #1D4ED8; }"
+        )
+        self.btn_fiscal.clicked.connect(lambda: self.key_clicked.emit("F10"))
+        kb_layout.addWidget(self.btn_fiscal)
+
+    def mostrar_fiscal(self, activo):
+        self.btn_fiscal.show()
+        if activo:
+            self.btn_fiscal.setStyleSheet(
+                "QPushButton { background-color: #1E3A8A; color: white; font-size: 16px; "
+                "font-weight: 800; font-family: 'Segoe UI', sans-serif; border: none; "
+                "border-radius: 14px; }"
+                "QPushButton:hover { background-color: #1D4ED8; }"
+            )
+        else:
+            self.btn_fiscal.setStyleSheet(
+                "QPushButton { background-color: #94A3B8; color: white; font-size: 16px; "
+                "font-weight: 800; font-family: 'Segoe UI', sans-serif; border: none; "
+                "border-radius: 14px; }"
+            )
 
     def apply_theme(self):
         theme = config.get("theme", "light")

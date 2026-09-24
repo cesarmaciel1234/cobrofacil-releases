@@ -89,6 +89,8 @@ class Paso6Cobro(QDialog):
         super().showEvent(event)
         if hasattr(self, "btn_f11"):
             self._ajustar_botones_mp()
+        if hasattr(self, "aviso_toast"):
+            self.aviso_toast.ubicar()
 
     def paintEvent(self, event):
         from PyQt6.QtGui import QPainter
@@ -237,6 +239,7 @@ class Paso6Cobro(QDialog):
 
         # --- SECCIÓN IZQUIERDA: PAGO (75%) ---
         left_panel = QWidget()
+        self.left_panel = left_panel
         left_panel.setObjectName("LeftPanelCobro")
         left_lay = QVBoxLayout(left_panel)
         left_lay.setContentsMargins(0, 0, 0, 0)
@@ -297,9 +300,15 @@ class Paso6Cobro(QDialog):
         self.panel_qr.cambio_modo.connect(self._vista_monto_qr)
         self.panel_qr.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         content_lay.addWidget(self.panel_qr, 1)
+        from src.cajero.paso6_cobro.tarjeta_en_cobro.panel import PanelTarjetaCobro
+        self.panel_tarjeta = PanelTarjetaCobro(self)
+        self.panel_tarjeta.pago_listo.connect(self._cerrar_venta_por_tarjeta)
+        self.panel_tarjeta.cambio.connect(self._aviso_tarjeta)
+        content_lay.addWidget(self.panel_tarjeta, 0)
         from src.cajero.paso6_cobro.mixto_en_cobro.panel import PanelMixtoCobro
         self.panel_mixto = PanelMixtoCobro(self)
         self.panel_mixto.cambio.connect(self._tomar_mixto)
+        self.panel_mixto.aviso.connect(self._avisar)
         content_lay.addWidget(self.panel_mixto)
         from src.cajero.paso6_cobro.monto_en_cobro.panel import PanelMontoCobro
         self.panel_monto = PanelMontoCobro(self)
@@ -307,6 +316,11 @@ class Paso6Cobro(QDialog):
         self._qr_monto_timer = QTimer(self)
         self._qr_monto_timer.setSingleShot(True)
         self._qr_monto_timer.timeout.connect(self._refrescar_qr_si_vivo)
+        self._tarjeta_monto_timer = QTimer(self)
+        self._tarjeta_monto_timer.setSingleShot(True)
+        self._tarjeta_monto_timer.timeout.connect(self._refrescar_tarjeta)
+        from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro
+        self.aviso_toast = AvisoCobro(left_panel)
 
         self.aviso_monto = QLabel("INGRESÁ EL MONTO RECIBIDO")
         self.aviso_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -371,6 +385,9 @@ class Paso6Cobro(QDialog):
         grid_inputs.addWidget(self.lbl_cliente, 2, 0)
         grid_inputs.addWidget(self.cmb_cliente, 2, 1)
         self.panel_monto.zona_pago.contenido.addLayout(grid_inputs)
+        from src.cajero.paso6_cobro.transferencia_en_cobro.panel import PanelAliasCobro
+        self.panel_alias = PanelAliasCobro(self)
+        self.panel_monto.zona_pago.contenido.addWidget(self.panel_alias, 1)
 
         # NUEVA LÍNEA HORIZONTAL DE MODIFICADORES COMPACTA
         grid_desc_rec = QGridLayout()
@@ -429,6 +446,18 @@ class Paso6Cobro(QDialog):
         self.lbl_mp_status.style().polish(self.lbl_mp_status)
         self.lbl_mp_status.hide()
         self.panel_monto.zona_estado.contenido.addWidget(self.lbl_mp_status)
+        self.btn_aviso_mp = QPushButton("Cajero silencioso")
+        self.btn_aviso_mp.setCheckable(True)
+        self.btn_aviso_mp.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_aviso_mp.setFixedHeight(54)
+        self.btn_aviso_mp.setStyleSheet(
+            "QPushButton { background: #FFFFFF; color: #1E3A8A; border: 2px solid #CBD5E1; "
+            "border-radius: 12px; font-size: 16px; font-weight: 900; }"
+            "QPushButton:checked { background: #DBEAFE; border-color: #2563EB; }"
+        )
+        self.btn_aviso_mp.clicked.connect(self._alternar_aviso_mp)
+        self.btn_aviso_mp.hide()
+        self.panel_monto.zona_estado.contenido.addWidget(self.btn_aviso_mp)
 
         self.timer_mp = QTimer(self)
         self.timer_mp.timeout.connect(self.verificar_pago_mp_automatico)
@@ -445,6 +474,8 @@ class Paso6Cobro(QDialog):
         self.hueco_pie = QWidget()
         self.hueco_pie.setMinimumHeight(0)
         content_lay.addWidget(self.hueco_pie, 1)
+        self._idx_qr = content_lay.indexOf(self.panel_qr)
+        self._idx_tarjeta = content_lay.indexOf(self.panel_tarjeta)
         self._idx_monto = content_lay.indexOf(self.panel_monto)
         self._idx_hueco = content_lay.indexOf(self.hueco_pie)
         content_lay.addLayout(grid_desc_rec)
@@ -514,7 +545,13 @@ class Paso6Cobro(QDialog):
 
         lay_imprime.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 1)
         self.btn_f2 = create_action_btn("F2", "s/imprime", lambda: self.finalizar(False), style="featured")
-        lay_registra.addWidget(self.btn_f2, 1)
+        self.pila_f2 = QStackedWidget()
+        self.pila_f2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.pila_f2.setMinimumHeight(78)
+        self.btn_ultimo_mixto = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="qr")
+        self.pila_f2.addWidget(self.btn_f2)
+        self.pila_f2.addWidget(self.btn_ultimo_mixto)
+        lay_registra.addWidget(self.pila_f2, 1)
         self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="green")
         lay_ajuste.addWidget(self.btn_descuento, 1)
 
@@ -538,10 +575,6 @@ class Paso6Cobro(QDialog):
         lay_ajuste.addWidget(self.pila_extra, 1)
 
         right_lay.addLayout(fila_acciones, 2)
-
-        btn_f10 = create_action_btn("F10", "AFIP", lambda: self.finalizar_fiscal_efectivo())
-        btn_f10.hide()
-        right_lay.addWidget(btn_f10)
 
         # Teclado numérico extraído modularmente
         self.teclado_lateral = TecladoNumericoLateral(self)
@@ -617,7 +650,18 @@ class Paso6Cobro(QDialog):
             self.timer_spinner.stop()
             self.panel_mixto.mostrar(self.total_final)
             self.valores_mixtos = self.panel_mixto.valores()
-        elif key in ["Tarjeta", "Transferencia", "QR"]:
+        elif key == "Tarjeta":
+            self.lbl_input1.hide()
+            self.txt_pago.hide()
+            self.lbl_input2.hide()
+            self.txt_otro.hide()
+            self.lbl_cliente.hide()
+            self.cmb_cliente.hide()
+            self.txt_pago.setText(self._monto(self.total_final))
+            self.lbl_mp_status.hide()
+            self.timer_mp.stop()
+            self.timer_spinner.stop()
+        elif key in ["Transferencia", "QR"]:
             self.lbl_input1.setText("PAGA CON ($):")
             self.lbl_input2.hide(); self.txt_otro.hide()
             self.lbl_cliente.hide(); self.cmb_cliente.hide()
@@ -625,6 +669,9 @@ class Paso6Cobro(QDialog):
             self.txt_pago.setText(self._monto(self.total_final))
 
             if key == "Transferencia":
+                self.lbl_input1.hide()
+                self.txt_pago.hide()
+                self.panel_alias.mostrar()
                 self.lbl_mp_status.setText(f" {self.mp_spinner_chars[0]} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${self.total_final:.2f})")
                 theme = config.get("theme", "light")
                 if theme == "dark":
@@ -636,10 +683,18 @@ class Paso6Cobro(QDialog):
                     self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
                     self.lbl_mp_status.style().polish(self.lbl_mp_status)
                 self.lbl_mp_status.show()
+                self._pintar_aviso_mp()
+                self.btn_aviso_mp.show()
+                from src.services.mp_escucha import EscuchaMP
+                EscuchaMP.asegurar()
                 self.timer_mp.start(1000)
                 self.timer_spinner.start(60) # Gira y palpita rápido
             else:
+                if hasattr(self, "panel_alias"):
+                    self.panel_alias.ocultar()
                 self.lbl_mp_status.hide()
+                if hasattr(self, "btn_aviso_mp"):
+                    self.btn_aviso_mp.hide()
                 self.timer_mp.stop()
                 self.timer_spinner.stop()
         elif key == "Clientes":
@@ -687,11 +742,25 @@ class Paso6Cobro(QDialog):
                 self.panel_qr.mostrar(self.total_final, forzar=True)
         elif hasattr(self, "panel_qr"):
             self.panel_qr.ocultar()
+        if key == "Tarjeta" and hasattr(self, "panel_tarjeta"):
+            self.panel_tarjeta.mostrar(self.total_final)
+        elif hasattr(self, "panel_tarjeta"):
+            self.panel_tarjeta.ocultar()
+        if key != "Transferencia" and hasattr(self, "btn_aviso_mp"):
+            self.btn_aviso_mp.hide()
+        if key != "Transferencia" and hasattr(self, "panel_alias"):
+            self.panel_alias.ocultar()
         self.calcular_vuelto()
         self._ajustar_botones_mp()
         self._ajustar_contenedor_monto()
         if key == "Mixto":
             self.panel_mixto.campo_foco().setFocus()
+            return
+        if key == "Tarjeta":
+            self.setFocus()
+            return
+        if key == "Transferencia":
+            self.setFocus()
             return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             self.setFocus()
@@ -904,7 +973,7 @@ class Paso6Cobro(QDialog):
     def verificar_pago_mp_automatico(self):
         try:
             import time
-            from src.admin.admin10_mp import Admin10MP
+            from src.admin.mercadopago.mercadopago_main import Admin10MP
             if hasattr(Admin10MP, 'ultimo_pago_detectado') and Admin10MP.ultimo_pago_detectado is not None:
                 pago = Admin10MP.ultimo_pago_detectado
                 ahora = time.time()
@@ -958,7 +1027,7 @@ class Paso6Cobro(QDialog):
                 self.txt_pago.setText(self._monto(self.total_final))
                 p1_t = f"{self.total_final:.2f}"
             else:
-                self.aviso_monto.show()
+                self._avisar("Debe ingresar con cuánto pagó.")
                 self.txt_pago.setStyleSheet(
                     "font-size: 40px; font-weight: 900; border-radius: 12px; "
                     "border: 3px solid #F59E0B; color: #0F172A; background: #FFFBEB;"
@@ -998,7 +1067,7 @@ class Paso6Cobro(QDialog):
 
         if p1 is None and p2 is None:
             if self.current_metodo != "Mixto" and not p1_t.strip().replace('.', '', 1).isdigit():
-                QMessageBox.critical(self, "ERROR", "Monto inválido ingresado.")
+                self._avisar("El monto ingresado no es válido.")
             else:
                 # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
                 if self.current_metodo == "Mixto":
@@ -1015,6 +1084,12 @@ class Paso6Cobro(QDialog):
         return (p1, p2)
 
     def intentar_finalizar(self):
+        if self.current_metodo == "Tarjeta":
+            if self.panel_tarjeta.bloquea_enter():
+                return
+            self.txt_pago.setText(self._monto(self.total_final))
+            self.finalizar(imprimir=False)
+            return
         if self.current_metodo == "Mixto":
             self._entrar_mixto(False)
             return
@@ -1039,20 +1114,16 @@ class Paso6Cobro(QDialog):
 
         from src.utils.dinero import redondear_dinero
         self.total_final = redondear_dinero(max(0.0, self.total_original - monto_desc + monto_rec))
-
-        hay_descuento = (
-            getattr(self, "descuento_monto", 0.0) > 0.009
-            and self.total_original > self.total_final + 0.009
-        )
-        if self.current_metodo == "QR" or hay_descuento:
-            self.lbl_total.setText(self._monto(self.total_final))
-        else:
-            self.lbl_total.setText(self._monto(self.total_original))
-        self.lbl_precio_real.setVisible(hay_descuento)
-        if hay_descuento:
+        oferta = abs(float(getattr(self, "descuentaso_oferta", 0.0) or 0.0))
+        lista = redondear_dinero(self.total_original + oferta)
+        self.lbl_total.setText(self._monto(self.total_final))
+        if abs(lista - self.total_final) > 0.009:
             self.lbl_precio_real.setText(
-                f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(self.total_original)}</span>'
+                f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(lista)}</span>'
             )
+            self.lbl_precio_real.show()
+        else:
+            self.lbl_precio_real.hide()
 
         # El neto destacado de abajo se actualiza en caliente
         self.lbl_neto.setText(f"NETO A PAGAR: ${self.total_final:,.2f}")
@@ -1064,6 +1135,8 @@ class Paso6Cobro(QDialog):
             self._qr_monto_timer.start(500)
         if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):
             self.panel_mixto.fijar_total(self.total_final)
+        if self.current_metodo == "Tarjeta" and hasattr(self, "panel_tarjeta") and self.panel_tarjeta.isVisible():
+            self._tarjeta_monto_timer.start(500)
 
         # Actualizar visualización del botón de Descuento (Premium UX!)
         _btn_compact = "border-radius: 8px; font-weight: 900; font-size: 14px; border: none; padding: 8px 12px;"
@@ -1131,10 +1204,21 @@ class Paso6Cobro(QDialog):
         self.txt_rec.selectAll()
 
     def finalizar_fiscal_efectivo(self):
+        config._load_config()
+        if not config.get("facturacion_afip_global", False):
+            self._avisar("La facturación AFIP está apagada en la configuración.")
+            return
         self.set_metodo("Efectivo")
         self.finalizar(True, force_fiscal=True)
 
     def finalizar(self, imprimir=True, force_fiscal=False):
+        if (
+            self.current_metodo == "Tarjeta"
+            and hasattr(self, "panel_tarjeta")
+            and self.panel_tarjeta.bloquea_enter()
+            and not getattr(self, "_tarjeta_cerrando", False)
+        ):
+            return
         if self.current_metodo == "Mixto" and not getattr(self, "_mixto_cerrando", False):
             self._entrar_mixto(imprimir)
             return
@@ -1282,19 +1366,33 @@ class Paso6Cobro(QDialog):
             luz.setStyleSheet(estilo)
             luz.setToolTip(texto)
 
+    def _repartir_hueco(self, qr=0, tarjeta=0, monto=0, hueco=0):
+        self.content_lay.setStretch(self._idx_qr, qr)
+        self.content_lay.setStretch(self._idx_tarjeta, tarjeta)
+        self.content_lay.setStretch(self._idx_monto, monto)
+        self.content_lay.setStretch(self._idx_hueco, hueco)
+        if hueco:
+            self.hueco_pie.setMaximumHeight(16777215)
+        else:
+            self.hueco_pie.setMaximumHeight(0)
+
     def _ajustar_contenedor_monto(self):
         if not hasattr(self, "panel_monto"):
             return
         foto = self.current_metodo == "QR" and getattr(self.panel_qr, "_modo", "") == "foto"
+        if self.current_metodo == "QR":
+            self.panel_monto.ajustar(self.current_metodo, foto)
+            self._repartir_hueco(qr=1, hueco=0)
+            return
+        if self.current_metodo == "Tarjeta":
+            self.panel_monto.hide()
+            self._repartir_hueco(tarjeta=1)
+            return
         llena = self.panel_monto.ajustar(self.current_metodo, foto)
         if llena:
-            self.content_lay.setStretch(self._idx_monto, 1)
-            self.content_lay.setStretch(self._idx_hueco, 0)
-            self.hueco_pie.setMaximumHeight(0)
+            self._repartir_hueco(monto=1)
         else:
-            self.content_lay.setStretch(self._idx_monto, 0)
-            self.content_lay.setStretch(self._idx_hueco, 1)
-            self.hueco_pie.setMaximumHeight(16777215)
+            self._repartir_hueco(hueco=1)
 
     def _vista_monto_qr(self, modo=""):
         """En QR se van «paga con» y el neto. La foto vuelve a pedir el monto."""
@@ -1317,6 +1415,47 @@ class Paso6Cobro(QDialog):
         if self.panel_qr._modo not in ("buscando", "esperando"):
             return
         self.panel_qr.mostrar(self.total_final, forzar=True)
+
+    def _alternar_aviso_mp(self):
+        from src.services.mp_escucha import EscuchaMP
+        EscuchaMP.fijar_sonido(self.btn_aviso_mp.isChecked())
+        self._pintar_aviso_mp()
+
+    def _pintar_aviso_mp(self):
+        from src.services.mp_escucha import EscuchaMP
+        activo = EscuchaMP.con_sonido()
+        self.btn_aviso_mp.setChecked(activo)
+        self.btn_aviso_mp.setText("Con sonido" if activo else "Cajero silencioso")
+
+    def _avisar(self, mensaje):
+        if hasattr(self, "aviso_toast"):
+            self.aviso_toast.mostrar(mensaje)
+
+    def _aviso_tarjeta(self, modo):
+        if modo == "fallo" and self.panel_tarjeta.isVisible():
+            self._avisar(self.panel_tarjeta.estado.text())
+
+    def _refrescar_tarjeta(self):
+        if self.current_metodo != "Tarjeta":
+            return
+        self.txt_pago.setText(self._monto(self.total_final))
+        self.panel_tarjeta.mostrar(self.total_final)
+
+    def _cerrar_venta_por_tarjeta(self, monto):
+        if getattr(self, "_tarjeta_ya_cerrado", False):
+            return
+        self._tarjeta_ya_cerrado = True
+        self.txt_pago.setText(self._monto(monto))
+        self._tarjeta_cerrando = True
+        try:
+            self.finalizar(True)
+        finally:
+            self._tarjeta_cerrando = False
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, "aviso_toast"):
+            self.aviso_toast.ubicar()
 
     def _entrar_mixto(self, imprimir):
         if getattr(self, "_mixto_pasos", None) is not None:
@@ -1359,6 +1498,8 @@ class Paso6Cobro(QDialog):
             return
         if tipo == "transferencia":
             self._mixto_espera_transferencia = float(monto)
+            from src.services.mp_escucha import EscuchaMP
+            EscuchaMP.asegurar()
             self.panel_mixto.estado.setText(f"Escuchando transferencia {self._monto(monto)}")
             self.panel_mixto.estado.setStyleSheet(
                 "color: #0EA5E9; font-size: 20px; font-weight: 800; background: transparent; border: none;"
@@ -1403,14 +1544,30 @@ class Paso6Cobro(QDialog):
             return
         metodo = self.current_metodo
         self.pila_point.setCurrentIndex(0 if metodo in ("Tarjeta", "Mixto") else 1)
-        if metodo == "Transferencia":
+        if hasattr(self, "pila_f2"):
+            self.pila_f2.setCurrentIndex(1 if metodo == "Mixto" else 0)
+        if metodo == "Mixto":
+            self.pila_extra.setCurrentIndex(0)
+        elif metodo == "Transferencia":
             self.pila_extra.setCurrentIndex(1)
         else:
             self.pila_extra.setCurrentIndex(2)
+        self._pintar_boton_fiscal()
+
+    def _pintar_boton_fiscal(self):
+        if not hasattr(self, "teclado_lateral"):
+            return
+        config._load_config()
+        self.teclado_lateral.mostrar_fiscal(bool(config.get("facturacion_afip_global", False)))
 
     def _tecla_f12(self):
         if self.current_metodo == "Transferencia":
             self.corroborar_ultimo_monto()
+        elif self.current_metodo == "Mixto":
+            if getattr(self, "_mixto_esperando_qr", False):
+                self.verificar_transferencia_mp()
+            else:
+                self.corroborar_ultimo_monto()
         elif self.current_metodo == "Tarjeta" and self.btn_f12.isVisible():
             self.verificar_transferencia_mp()
 
@@ -1426,6 +1583,9 @@ class Paso6Cobro(QDialog):
             return
         if self.current_metodo == "Mixto":
             self._entrar_mixto(False)
+            return
+        if self.current_metodo == "Tarjeta":
+            self._refrescar_tarjeta()
             return
         from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
         if PointService(self).procesar_pago_mercadopago_point() is False:
@@ -1497,11 +1657,17 @@ class Paso6Cobro(QDialog):
             return
 
         focused = self.focusWidget()
+        if key == "F10":
+            self.finalizar_fiscal_efectivo()
+            return
         if self.current_metodo == "Mixto":
             focused = self.panel_mixto.campo_foco()
             if key == "ENTER":
                 self.intentar_finalizar()
                 return
+        elif self.current_metodo == "Tarjeta" and key == "ENTER":
+            self.intentar_finalizar()
+            return
         elif not focused or not isinstance(focused, QLineEdit):
             focused = self.txt_pago
 

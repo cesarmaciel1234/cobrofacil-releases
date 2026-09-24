@@ -1,6 +1,6 @@
 # QR en la pantalla de cobro
 
-Se ve en la misma pantalla del monto, solo cuando el medio es QR. No abre un cuadro aparte y no toca efectivo, tarjeta ni Point.
+Se ve en la misma pantalla del monto, solo cuando el medio es QR. El código ocupa el alto libre de la hoja. No abre un cuadro aparte y no toca efectivo, tarjeta ni Point.
 
 `panel.py`, clase `PanelQrCobro`. `mostrar(monto)` pide el código. `ocultar()` lo saca. `bloquea_enter()` es verdadero mientras busca o espera el escaneo. `pago_listo` avisa el monto cuando Mercado Pago aprueba.
 

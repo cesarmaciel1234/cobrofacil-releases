@@ -1,19 +1,6 @@
-from src.utils.qt_compat import qt_exec
-from src.utils.theme_manager import theme_manager
-import os
-import json
-import subprocess
 import time
-from datetime import datetime
-from PyQt6.QtWidgets import (
 
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QMessageBox, QDialog, QDateEdit, QCheckBox, QFileDialog
-)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QColor, QFont
-from src.config import config
-from src.base_de_datos.database import db_manager
+from PyQt6.QtCore import QThread, pyqtSignal
 
 try:
     import requests
