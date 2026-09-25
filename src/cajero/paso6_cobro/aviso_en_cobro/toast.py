@@ -191,12 +191,14 @@ class EsperaPoint(QFrame):
         self._device = ""
         self._intent = ""
         self._monto = 0.0
+        self._pago = None
         self.hide()
 
     def esperar(self, token, device, monto):
         self._generacion += 1
         self._abortado = False
         self._aprobado = False
+        self._pago = None
         self.motivo = ""
         self._token = token
         self._device = device
@@ -282,10 +284,12 @@ class EsperaPoint(QFrame):
         token, intent, generacion = self._token, self._intent, self._generacion
 
         def _trabajo():
-            from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import estado_intent
+            from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import detalle_orden
+            estado, pago = detalle_orden(token, intent)
             self._llegada.emit({
                 "generacion": generacion,
-                "estado": estado_intent(token, intent),
+                "estado": estado,
+                "pago": pago,
             })
 
         threading.Thread(target=_trabajo, daemon=True).start()
@@ -296,6 +300,7 @@ class EsperaPoint(QFrame):
         estado = dato.get("estado")
         if estado == "FINISHED":
             self._aprobado = True
+            self._pago = dato.get("pago")
             self._reloj.stop()
             self._intent = ""
             loop = self._loop

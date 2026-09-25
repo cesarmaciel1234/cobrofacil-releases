@@ -52,22 +52,39 @@ def enviar_monto(token, device_id, monto):
     }
 
 
-def estado_intent(token, intent_id):
+def detalle_orden(token, intent_id):
+    """Estado de la orden y, si ya cobró, el id del pago para el ticket."""
     if not token or not intent_id:
-        return ""
+        return "", None
     url = f"https://api.mercadopago.com/v1/orders/{intent_id}"
     try:
         response = MPApiClient.get(url, token, timeout=5)
     except Exception:
-        return ""
+        return "", None
     if response.status_code != 200:
-        return ""
-    estado = str((response.json() or {}).get("status") or "")
+        return "", None
+    data = response.json() or {}
+    estado = str(data.get("status") or "")
+    pago = None
+    pagos = ((data.get("transactions") or {}).get("payments") or [])
+    if pagos and isinstance(pagos[0], dict):
+        item = pagos[0]
+        ref = item.get("reference_id") or item.get("id")
+        if ref:
+            pago = {
+                "id": ref,
+                "transaction_amount": item.get("amount") or item.get("paid_amount"),
+            }
     if estado == "processed":
-        return "FINISHED"
+        return "FINISHED", pago
     if estado in ("failed", "canceled", "expired", "refunded"):
-        return "CANCELED"
-    return ""
+        return "CANCELED", pago
+    return "", pago
+
+
+def estado_intent(token, intent_id):
+    estado, _pago = detalle_orden(token, intent_id)
+    return estado
 
 
 def cancelar_intent(token, device_id, intent_id, en_terminal=False):

@@ -765,7 +765,7 @@ class Paso6Cobro(QDialog):
             self.panel_mixto.ocultar()
         if key == "QR" and hasattr(self, "panel_qr"):
             self._pintar_luz_tpv()
-            if not getattr(self, "_tpv_listo", False):
+            if not self._tpv_qr_listo():
                 self._vista_monto_qr("manual")
                 self.panel_qr.ofrecer_foto()
             else:
@@ -777,7 +777,7 @@ class Paso6Cobro(QDialog):
             self._pintar_luz_tpv()
             if hasattr(self, "panel_tarjeta"):
                 self.panel_tarjeta.ocultar()
-            if getattr(self, "_tpv_listo", False) and not getattr(self, "_point_en_curso", False):
+            if self._tpv_point_listo() and not getattr(self, "_point_en_curso", False):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
@@ -1352,6 +1352,7 @@ class Paso6Cobro(QDialog):
                 "force_fiscal": force_fiscal,
                 "request_id": getattr(self, "request_id", None),
                 "mp_pago": getattr(self, "_mp_pago_usado", None),
+                "mp_pagos": list(getattr(self, "_mp_pagos", None) or []),
             }
 
             exito, mensaje = MotorPrincipalCobros.iniciar_transaccion(
@@ -1450,20 +1451,24 @@ class Paso6Cobro(QDialog):
         device = str(config.get("mp_device_id", "") or "").strip()
         return bool(token and device)
 
+    def _pos_qr(self):
+        pos = str(config.get("mp_qr_pos_external_id", "") or "").strip()
+        if not pos:
+            pos = str(config.get("mp_external_pos_id", "") or "").strip()
+        return pos
+
     def _tpv_qr_listo(self):
         config._load_config()
         token = str(config.get("mp_access_token", "") or "").strip()
         user = str(config.get("mp_user_id", "") or "").strip()
-        pos = str(config.get("mp_external_pos_id", "") or "").strip()
-        return bool(token and user and pos)
+        return bool(token and user and self._pos_qr())
 
     def _pintar_luz_tpv(self):
         config._load_config()
         token = str(config.get("mp_access_token", "") or "").strip()
         device = str(config.get("mp_device_id", "") or "").strip()
         user = str(config.get("mp_user_id", "") or "").strip()
-        pos = str(config.get("mp_external_pos_id", "") or "").strip()
-        listo = bool(token and device) or bool(token and user and pos)
+        listo = bool(token and device) or bool(token and user and self._pos_qr())
         self._tpv_listo = listo
         if hasattr(self, "teclado_lateral"):
             self.teclado_lateral.mostrar_emergencia(listo)
@@ -1724,6 +1729,7 @@ class Paso6Cobro(QDialog):
             self._cerrar_manual()
             return
         if ok is True and self.current_metodo == "Tarjeta":
+            self._anotar_point()
             self._cerrar_venta_por_tarjeta(self.total_final)
             return
         if self._tarjeta_cancelada():
@@ -1825,6 +1831,7 @@ class Paso6Cobro(QDialog):
                 if self.current_metodo == "Mixto" and self.isVisible():
                     self.panel_mixto.show()
                 return
+            self._anotar_point()
             self._mixto_i += 1
             self._seguir_mixto()
             return
@@ -1848,7 +1855,7 @@ class Paso6Cobro(QDialog):
         self._mixto_esperando_qr = True
         self._repartir_hueco(qr=1)
         self._pintar_luz_tpv()
-        if not getattr(self, "_tpv_listo", False):
+        if not self._tpv_qr_listo():
             self.panel_qr.ofrecer_foto()
             self.panel_qr.estado.setText(
                 f"Foto del QR por {self._monto(monto)}. Enter registra esta parte."
@@ -1856,14 +1863,26 @@ class Paso6Cobro(QDialog):
         else:
             self.panel_qr.mostrar(monto, forzar=True)
 
+    def _anotar_point(self):
+        pago = getattr(getattr(self, "espera_point", None), "_pago", None)
+        self._anotar_pago_mp(pago, self.total_final)
+
     def _anotar_pago_mp(self, pago, monto=None):
         """Deja el cobro en el monitor y, si hay id, listo para el ticket."""
         if not isinstance(pago, dict) or not pago.get("id"):
             return
-        self._mp_pago_usado = {
-            "id": str(pago.get("id")),
-            "monto": float(pago.get("transaction_amount") or monto or 0),
-        }
+        try:
+            importe = float(pago.get("transaction_amount") or monto or 0)
+        except (TypeError, ValueError):
+            importe = float(monto or 0)
+        ficha = {"id": str(pago.get("id")), "monto": importe}
+        lista = [
+            item for item in (getattr(self, "_mp_pagos", None) or [])
+            if str(item.get("id")) != ficha["id"]
+        ]
+        lista.append(ficha)
+        self._mp_pagos = lista
+        self._mp_pago_usado = ficha
         try:
             from src.admin.mercadopago.historial.archivo import guardar
 

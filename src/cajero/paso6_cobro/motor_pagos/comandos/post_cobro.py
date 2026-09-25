@@ -19,19 +19,23 @@ def post_cobro(datos, id_v, resultado_venta):
         datos.get("recargo") or 0,
         datos.get("force_fiscal", False),
     )
-    pago = datos.get("mp_pago") or {}
-    if pago.get("id"):
+    pagos = list(datos.get("mp_pagos") or [])
+    uno = datos.get("mp_pago") or {}
+    if uno.get("id") and all(str(item.get("id")) != str(uno.get("id")) for item in pagos):
+        pagos.append(uno)
+    if pagos:
         try:
             from src.cajero.paso6_cobro.vinculo_mp.libro import asociar
-
-            asociar(pago.get("id"), pago.get("monto"), id_v)
             from src.admin.mercadopago.mercadopago_main import Admin10MP
 
+            for pago in pagos:
+                if pago.get("id"):
+                    asociar(pago.get("id"), pago.get("monto"), id_v)
             vista = getattr(Admin10MP, "vista", None)
             if vista is not None:
                 vista.cargar_datos_locales()
         except Exception as e:
-            logger.warning("No se vinculo el pago MP %s: %s", pago.get("id"), e)
+            logger.warning("No se vinculo el pago MP: %s", e)
     try:
         from src.base_de_datos.diario_ventas_externo import encolar_venta
 
