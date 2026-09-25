@@ -331,6 +331,44 @@ def release_store_server_spawn_guard() -> None:
         pass
 
 
+def focus_pid_window(pid: int) -> bool:
+    """Trae al frente una ventana visible de ese proceso."""
+    if sys.platform != "win32":
+        return False
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return False
+    if pid <= 0:
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        encontradas = []
+
+        @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+        def _recorrer(hwnd, _lparam):
+            if not user32.IsWindowVisible(hwnd):
+                return True
+            dueño = wintypes.DWORD()
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(dueño))
+            if int(dueño.value) == pid:
+                encontradas.append(hwnd)
+            return True
+
+        user32.EnumWindows(_recorrer, 0)
+        if not encontradas:
+            return False
+        hwnd = encontradas[0]
+        user32.ShowWindow(hwnd, 9)
+        user32.SetForegroundWindow(hwnd)
+        return True
+    except Exception:
+        return False
+
+
 def focus_existing_store_server() -> bool:
     if sys.platform == "win32":
         try:

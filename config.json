@@ -26,6 +26,7 @@
     "machine_hostname": "cesar",
     "install_date": "2026-09-11T09:57:57.607046",
     "auto_virtual_keyboard": false,
+    "teclado_virtual_modo": "tactil",
     "facturacion_afip_global": false,
     "db_engine": "mariadb",
     "db_host": "192.168.0.13",
@@ -53,10 +54,13 @@
     "email_report_active": true,
     "email_dest": "cesarjaviermaciel@gmail.com",
     "mp_user_id": "171085024",
-    "mp_access_token": "",
+    "mp_access_token": "APP_USR-6971489794897295-092419-9af4b4bea6d860133a617d475cdb698a-171085024",
     "mp_device_id": "NEWLAND_N950__N950NCBA01604854",
     "mp_qr_pos_external_id": "default",
     "clover_ip": "",
     "clover_port": "1234",
-    "api_url": "http://192.168.0.13:8000"
+    "api_url": "http://192.168.0.13:8000",
+    "mp_nombre": "CESAR JAVIER MACIEL",
+    "mp_aviso_sonido": false,
+    "mp_alias": "cesar.maciel"
 }

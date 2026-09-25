@@ -6,6 +6,6 @@ Se ve en la misma hoja del monto, solo cuando el medio es Mixto. No abre un cuad
 
 El teclado de la derecha escribe en el casillero con foco. F1 imprime y F2 registra. Esos botones no viven acá.
 
-Al confirmar, `confirmar.py` arma los pasos vivos: tarjeta, después transferencia, después QR. El efectivo no tiene paso. Si mientras espera la transferencia ese monto pasa al QR, suelta la escucha y muestra el código por el importe de QR.
+Al confirmar, con la luz del TPV en verde, `confirmar.py` arma los pasos vivos: tarjeta, después transferencia, después QR. El efectivo no tiene paso. Si mientras espera la transferencia ese monto pasa al QR, suelta la escucha y muestra el código por el importe de QR. Con la luz en rojo, Enter no arma esos pasos: guarda la venta con el reparto escrito.
 
 `widgets/pagos_mixtos.py` es la ventana vieja. El clic de Mixto ya no la abre.

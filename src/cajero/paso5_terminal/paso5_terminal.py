@@ -119,6 +119,7 @@ class Paso5Terminal(QWidget):
         self.autofocus_timer = QTimer(self)
         self.autofocus_timer.timeout.connect(self.asegurar_foco_escaner)
         self.autofocus_timer.start(150)
+        self._foco_lejos_ms = 0
 
         # Timer de stock crítico (cada 5 minutos)
         if config.get("stock_alerta_activa", True):
@@ -595,7 +596,51 @@ class Paso5Terminal(QWidget):
         if app is None:
             return
         app.focusChanged.connect(self.on_focus_changed)
+        self._enganchar_motivo_foco(app)
         self._foco_teclado_enganchado = True
+
+    def _enganchar_motivo_foco(self, app):
+        if getattr(self, "_filtro_motivo_foco", None) is not None:
+            return
+        from PyQt6.QtCore import QObject, QEvent
+
+        terminal = self
+
+        class _MotivoFoco(QObject):
+            def eventFilter(self, obj, event):
+                if event.type() == QEvent.Type.FocusIn:
+                    terminal._motivo_foco = event.reason()
+                return False
+
+        self._filtro_motivo_foco = _MotivoFoco(self)
+        app.installEventFilter(self._filtro_motivo_foco)
+
+    def _pantalla_tactil(self):
+        if getattr(self, "_es_tactil", None) is not None:
+            return self._es_tactil
+        tactil = False
+        try:
+            import sys
+            if sys.platform == "win32":
+                import ctypes
+                user32 = ctypes.windll.user32
+                digito = int(user32.GetSystemMetrics(94))
+                toques = int(user32.GetSystemMetrics(95))
+                tactil = bool(digito & 0x03) or toques > 0
+        except Exception:
+            tactil = False
+        self._es_tactil = tactil
+        return tactil
+
+    def _conviene_abrir_teclado(self):
+        """El teclado en pantalla se abre al tocar un cuadro. El teclado físico no."""
+        from PyQt6.QtCore import Qt
+        from src.config import config
+        if config.get("teclado_virtual_modo", "tactil") == "nunca":
+            return False
+        if getattr(self, "_motivo_foco", None) != Qt.FocusReason.MouseFocusReason:
+            return False
+        return self._pantalla_tactil()
 
     def _leer_bascula(self):
         """Lee el puerto fuera de la pantalla. El escáner sigue recibiendo teclas."""
@@ -752,9 +797,11 @@ class Paso5Terminal(QWidget):
 
         if self.teclado_virtual.isVisible():
             self.teclado_virtual.hide()
+            self._teclado_abierto_a_mano = False
         else:
             self.teclado_virtual.reposition_keyboard()
             self.teclado_virtual.show()
+            self._teclado_abierto_a_mano = True
 
     def hideEvent(self, event):
         if HAS_KEYBOARD and hasattr(self, 'teclado_virtual'):
@@ -763,10 +810,6 @@ class Paso5Terminal(QWidget):
 
     def on_focus_changed(self, old_widget, new_widget):
         if not HAS_KEYBOARD:
-            return
-
-        from src.config import config
-        if not config.get("auto_virtual_keyboard", True):
             return
 
         # Sanitizar referencia de teclado virtual si el objeto C++ subyacente fue eliminado
@@ -799,6 +842,12 @@ class Paso5Terminal(QWidget):
                     self.teclado_virtual.hide()
                 return
 
+            if not self._conviene_abrir_teclado():
+                if not getattr(self, "_teclado_abierto_a_mano", False):
+                    if getattr(self, 'teclado_virtual', None) is not None and self.teclado_virtual.isVisible():
+                        self.teclado_virtual.hide()
+                return
+
             active_win = new_widget.window()
             if not active_win:
                 active_win = self.window()
@@ -821,12 +870,15 @@ class Paso5Terminal(QWidget):
                 )
 
             # En el buscador principal usamos layout alfabético por defecto (abc)
+            self._teclado_abierto_a_mano = False
             self.teclado_virtual.set_layout_mode("abc")
             self.teclado_virtual.reposition_keyboard()
             self.teclado_virtual.show()
         else:
-            # Si el foco cambia a cualquier otra cosa, ocultamos
+            if new_widget is getattr(self, "btn_teclado", None):
+                return
             if getattr(self, 'teclado_virtual', None) is not None and self.teclado_virtual.isVisible():
+                self._teclado_abierto_a_mano = False
                 self.teclado_virtual.hide()
 
     def eventFilter(self, obj, event):
@@ -834,6 +886,7 @@ class Paso5Terminal(QWidget):
 
         if getattr(self, 'list_results', None) is not None and obj == self.list_results:
             if event.type() == QEvent.Type.KeyPress:
+                self._foco_lejos_ms = 0
                 if event.key() == Qt.Key.Key_Up and self.list_results.currentRow() == 0:
                     self.txt_scan.setFocus()
                     return True
@@ -937,6 +990,10 @@ class Paso5Terminal(QWidget):
             elif event.type() == QEvent.Type.FocusIn:
                 QTimer.singleShot(0, self._sync_nav_border_overlay)
             elif event.type() == QEvent.Type.KeyPress:
+                self._foco_lejos_ms = 0
+                if event.key() == Qt.Key.Key_F12:
+                    self.finalizar_venta()
+                    return True
                 if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                     row = self.tabla.currentRow()
                     if row != -1:
@@ -1005,15 +1062,8 @@ class Paso5Terminal(QWidget):
         flash(self, success)
     def bloquear_terminal(self):
         """Bloquea la terminal. Al desbloquear, el cajero seleccionado queda activo."""
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur_effect = QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(15)
-        self.setGraphicsEffect(blur_effect)
-
         dlg = DialogoCandado(parent=self)
         qt_exec(dlg)   # Si no se desbloquea, la terminal queda bloqueada
-
-        self.setGraphicsEffect(None)
 
         # Actualizar barra de estado según el cajero activo
         self._actualizar_barra_cajero()
@@ -1223,21 +1273,43 @@ class Paso5Terminal(QWidget):
         if ahora.hour == 0 and ahora.minute == 0 and ahora.second == 1:
             self.check_midnight_closure()
 
+    def _cerrar_abierto_paso5(self):
+        """Cierra lo que tapa la venta. El cobro no entra: es otro paso."""
+        from PyQt6.QtWidgets import QApplication
+        if QApplication.activeModalWidget() is not None:
+            return
+        self._ocultar_busqueda()
+        ventana = self.window()
+        asistente = getattr(ventana, "chatbot_overlay", None)
+        if asistente is not None and asistente.isVisible():
+            asistente.cerrar_chat()
+
     def asegurar_foco_escaner(self):
-        if self.isVisible() and self.txt_scan:
-            # Si el foco está en la tabla o en los resultados de búsqueda, no robarlo (están navegando)
-            if self.tabla.hasFocus() or self.list_results.hasFocus():
+        if not self.isVisible() or not getattr(self, "txt_scan", None):
+            return
+        from PyQt6.QtWidgets import QApplication, QLineEdit, QTextEdit
+        if QApplication.activeModalWidget() is not None:
+            self._foco_lejos_ms = 0
+            return
+        if self.txt_scan.hasFocus():
+            self._foco_lejos_ms = 0
+            self._firma_foco_ajeno = None
+            return
+        foco = QApplication.focusWidget()
+        if isinstance(foco, (QLineEdit, QTextEdit)) and foco is not self.txt_scan:
+            firma = foco.text() if isinstance(foco, QLineEdit) else foco.toPlainText()
+            if firma != getattr(self, "_firma_foco_ajeno", None):
+                self._firma_foco_ajeno = firma
+                self._foco_lejos_ms = 0
                 return
-            # Si hay algún widget modal activo (diálogo de cantidad, cobro, etc.), no robarlo
-            from PyQt6.QtWidgets import QApplication
-            if QApplication.activeModalWidget() is not None:
-                return
-            # Si el chatbot flotante está visible y activo, no robar el foco
-            if getattr(self, 'chatbot_widget', None) is not None and self.chatbot_widget.isVisible() and self.chatbot_widget.isActiveWindow():
-                return
-            # Si el escáner no tiene el foco, restaurarlo de inmediato
-            if not self.txt_scan.hasFocus():
-                self.txt_scan.setFocus()
+        else:
+            self._firma_foco_ajeno = None
+        self._foco_lejos_ms = getattr(self, "_foco_lejos_ms", 0) + 150
+        if self._foco_lejos_ms < 2000:
+            return
+        self._foco_lejos_ms = 0
+        self._ocultar_busqueda()
+        self.txt_scan.setFocus()
 
     def check_alertas_efectivo(self):
         """Monitorea el efectivo en caja y parpadea los bordes si excede los límites."""
@@ -1434,6 +1506,7 @@ class Paso5Terminal(QWidget):
     def procesar_scan(self):
         from src.utils.barcode_parser import BarcodeParser
         self.search_timer.stop()
+        self._cerrar_abierto_paso5()
         txt_raw = self.txt_scan.text()
 
         if not self.list_results.isHidden():
@@ -1469,6 +1542,7 @@ class Paso5Terminal(QWidget):
             return
 
     def agregar_a_tabla(self, p, cantidad=1.0):
+        self._cerrar_abierto_paso5()
         # Congela el dibujo hasta el final. El finally lo suelta aunque falle el cálculo.
         self.setUpdatesEnabled(False)
         try:
@@ -1880,10 +1954,6 @@ class Paso5Terminal(QWidget):
         from src.config import config
         c_id = config.get("caja_id", 1)
         efectivo = self.controller.movimientos_caja.obtener_efectivo_caja(c_id)
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur = QGraphicsBlurEffect()
-        blur.setBlurRadius(10)
-        self.setGraphicsEffect(blur)
 
         dlg = DialogoRetiroEfectivo(efectivo, parent=self)
         if qt_exec(dlg) and dlg.monto_retirado > 0:
@@ -1905,16 +1975,10 @@ class Paso5Terminal(QWidget):
                     from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el retiro en la base de datos.")
 
-        self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
     def abrir_ingreso_efectivo(self):
         """Abre el panel de ingreso manual de dinero a la caja (F6)."""
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur = QGraphicsBlurEffect()
-        blur.setBlurRadius(10)
-        self.setGraphicsEffect(blur)
-
         dlg = DialogoIngresoEfectivo(parent=self)
         if qt_exec(dlg) and dlg.monto_ingresado > 0:
             # Solicitar PIN de confirmación del operador activo
@@ -1941,7 +2005,6 @@ class Paso5Terminal(QWidget):
                     from PyQt6.QtWidgets import QMessageBox
                     QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
 
-        self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
     def showEvent(self, event):
@@ -2139,6 +2202,7 @@ class Paso5Terminal(QWidget):
     def finalizar_venta(self):
         # Evitar doble apertura accidental
         if hasattr(self, '_cobro_abierto') and self._cobro_abierto: return
+        self._cerrar_abierto_paso5()
 
         try:
             # Como ahora el total visual no tiene decimales ni comas de miles (son puntos),
@@ -2353,12 +2417,6 @@ class Paso5Terminal(QWidget):
             QTimer.singleShot(50, self.txt_scan.setFocus)
             return
 
-        # --- EFECTO DE DESENFOQUE CINEMÁTICO ---
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur_effect = QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(10)
-        self.setGraphicsEffect(blur_effect)
-
         from PyQt6.QtWidgets import QDialog, QVBoxLayout
         from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
 
@@ -2377,9 +2435,6 @@ class Paso5Terminal(QWidget):
         lay.addWidget(cierre)
 
         ok = qt_exec(dlg)
-
-        # Quitamos el desenfoque
-        self.setGraphicsEffect(None)
 
         if ok:
             from PyQt6.QtWidgets import QApplication
@@ -2419,16 +2474,9 @@ class Paso5Terminal(QWidget):
             QTimer.singleShot(50, self.txt_scan.setFocus)
 
     def abrir_historial_dia(self):
-        # --- EFECTO DE DESENFOQUE ---
-        from PyQt6.QtWidgets import QGraphicsBlurEffect
-        blur_effect = QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(10)
-        self.setGraphicsEffect(blur_effect)
-
         dlg = DialogoHistorialDia(self)
         qt_exec(dlg)
 
-        self.setGraphicsEffect(None)
         QTimer.singleShot(50, self.txt_scan.setFocus)
 
     def _is_fila_navegacion(self, row):

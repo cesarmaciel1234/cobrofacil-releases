@@ -6,4 +6,6 @@ Cartel grande sobre la hoja. No abre una ventana y no hay que apretar OK.
 
 `EsperaPoint.esperar(token, device, monto)` es el cartel del Point, en la misma hoja, con margen y el botón Cancelar. No abre la ventana «Esperando Pago…». Mientras espera, Enter no registra. Cancelar suelta el cobro que ya está en la terminal. Si la terminal aprueba, devuelve verdadero.
 
-Lo usa el efectivo si cobran sin monto, el mixto si cargan un tercer medio, y la tarjeta si la terminal no toma el importe.
+Con la luz del TPV en rojo, Enter no espera: `_guardar_sin_tpv` guarda la venta. El cartel rojo de alarma y F9 solo aparecen con la luz en verde.
+
+Si se espera un cobro, F1 avisa «Al pagar se imprime el ticket.», F2 avisa que la venta se cierra sola y sin ticket, y F10 avisa el ticket fiscal. El mismo clic no vuelve a mostrar el cartel.

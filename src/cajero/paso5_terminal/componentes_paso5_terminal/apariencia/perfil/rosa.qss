@@ -4,8 +4,8 @@ Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] {
 }
 Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera,
 Paso5Terminal[theme="light"] QFrame#TerminalCabecera[perfil_color="rosa"] {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #BE185D, stop:1 #F472B6) !important;
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #BE185D, stop:1 #F472B6) !important;
+    background: #BE185D !important;
+    background-color: #BE185D !important;
     border: none !important;
 }
 Paso5Terminal[theme="light"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox {
@@ -31,8 +31,8 @@ Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] {
 }
 Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalCabecera,
 Paso5Terminal[theme="dark"] QFrame#TerminalCabecera[perfil_color="rosa"] {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #831843, stop:1 #BE185D) !important;
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #831843, stop:1 #BE185D) !important;
+    background: #831843 !important;
+    background-color: #831843 !important;
     border: none !important;
 }
 Paso5Terminal[theme="dark"][cajero_perfil="auxiliar"] QFrame#TerminalSideBox {

@@ -84,12 +84,7 @@ class MainWindow(QMainWindow):
 
         self._init_update_banner()
 
-        # ChatBot: Pre-cargado aquí para evitar parpadeos/reseteos del sistema en pantalla completa por Chromium.
-        from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget as ChatBotWidget
-        self.chatbot_overlay = ChatBotWidget(self)
-        self.chatbot_overlay.hide()
-        self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, '_chatbot_active', False))
-
+        self.chatbot_overlay = None
         self._chatbot_active = False
         self._active_theme_file = None
         self._cargar_datos_timer = QTimer(self)
@@ -942,14 +937,22 @@ class MainWindow(QMainWindow):
         """El cajón no usa este marco. El aviso es el punto rojo."""
         self._punto_cajon()
 
+    def _asegurar_chat(self):
+        if self.chatbot_overlay is not None:
+            return
+        from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget
+        self.chatbot_overlay = ChatManualWidget(self)
+        self.chatbot_overlay.hide()
+        self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, "_chatbot_active", False))
+
     def _toggle_chatbot_overlay(self):
         self._chatbot_active = not self._chatbot_active
         if self._chatbot_active:
+            self._asegurar_chat()
             self.chatbot_overlay.actualizar_posicion()
             self.chatbot_overlay.abrir_y_desplegar()
-        else:
+        elif self.chatbot_overlay is not None:
             self.chatbot_overlay.cerrar_chat()
-            QTimer.singleShot(300, self.chatbot_overlay.hide)
 
     def _toggle_blink_alerta(self):
         self._blink_state = not self._blink_state

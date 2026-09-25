@@ -394,11 +394,23 @@ class Paso6Cobro(QDialog):
 
         # NUEVA LÍNEA HORIZONTAL DE MODIFICADORES COMPACTA
         grid_desc_rec = QGridLayout()
+        grid_desc_rec.setSpacing(8)
 
-        self.lbl_desc = QLabel("Redondeo ($):")
+        # REDONDEO
+        lay_lbl_desc = QHBoxLayout()
+        lay_lbl_desc.setContentsMargins(0,0,0,0)
+        self.lbl_desc = QLabel("Redondeo:")
         self.lbl_desc.setObjectName("InputLabel")
-        grid_desc_rec.addWidget(self.lbl_desc, 0, 0)
-
+        self.btn_tipo_desc = QPushButton("$")
+        self.btn_tipo_desc.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tipo_desc.setFixedSize(32, 32)
+        self.btn_tipo_desc.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; } QPushButton:hover { background: #CBD5E1; }")
+        self.btn_tipo_desc.clicked.connect(self._toggle_tipo_desc)
+        lay_lbl_desc.addWidget(self.lbl_desc)
+        lay_lbl_desc.addWidget(self.btn_tipo_desc)
+        lay_lbl_desc.addStretch()
+        grid_desc_rec.addLayout(lay_lbl_desc, 0, 0)
+        
         self.txt_desc = QLineEdit("")
         self.txt_desc.setObjectName("InputDesc")
         self.txt_desc.setFixedHeight(48)
@@ -408,9 +420,20 @@ class Paso6Cobro(QDialog):
         self.txt_desc.installEventFilter(self)
         grid_desc_rec.addWidget(self.txt_desc, 0, 1)
 
-        self.lbl_rec = QLabel("Recargo ($):")
+        # RECARGO
+        lay_lbl_rec = QHBoxLayout()
+        lay_lbl_rec.setContentsMargins(0,0,0,0)
+        self.lbl_rec = QLabel("Recargo:")
         self.lbl_rec.setObjectName("InputLabel")
-        grid_desc_rec.addWidget(self.lbl_rec, 0, 2)
+        self.btn_tipo_rec = QPushButton("$")
+        self.btn_tipo_rec.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_tipo_rec.setFixedSize(32, 32)
+        self.btn_tipo_rec.setStyleSheet("QPushButton { background: #E2E8F0; color: #1E293B; border-radius: 6px; font-weight: bold; } QPushButton:hover { background: #CBD5E1; }")
+        self.btn_tipo_rec.clicked.connect(self._toggle_tipo_rec)
+        lay_lbl_rec.addWidget(self.lbl_rec)
+        lay_lbl_rec.addWidget(self.btn_tipo_rec)
+        lay_lbl_rec.addStretch()
+        grid_desc_rec.addLayout(lay_lbl_rec, 0, 2)
 
         self.txt_rec = QLineEdit("")
         self.txt_rec.setObjectName("InputRec")
@@ -440,7 +463,7 @@ class Paso6Cobro(QDialog):
         self.lbl_mp_status = QLabel("")
         self.lbl_mp_status.setObjectName("LblMpStatus")
         self.lbl_mp_status.setProperty("estado", "info")
-        self.lbl_mp_status.setStyleSheet("font-size: 20px; font-weight: 900;") # Más grande y fuerte
+        self.lbl_mp_status.setStyleSheet("background: #E0F2FE; color: #0284C7; font-size: 20px; font-weight: 900; border-radius: 12px; padding: 10px; margin-top: 10px;")
         self.lbl_mp_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_mp_status.setWordWrap(True)
         self.lbl_mp_status.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
@@ -453,11 +476,7 @@ class Paso6Cobro(QDialog):
         self.btn_aviso_mp.setCheckable(True)
         self.btn_aviso_mp.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_aviso_mp.setFixedHeight(54)
-        self.btn_aviso_mp.setStyleSheet(
-            "QPushButton { background: #FFFFFF; color: #1E3A8A; border: 2px solid #CBD5E1; "
-            "border-radius: 12px; font-size: 16px; font-weight: 900; }"
-            "QPushButton:checked { background: #DBEAFE; border-color: #2563EB; }"
-        )
+        self.btn_aviso_mp.setStyleSheet("QPushButton { background: transparent; color: #64748B; font-size: 15px; font-weight: 700; border: none; } QPushButton:hover { color: #1E293B; } QPushButton:checked { color: #2563EB; font-weight: 800; }")
         self.btn_aviso_mp.clicked.connect(self._alternar_aviso_mp)
         self.btn_aviso_mp.hide()
         self.panel_monto.zona_estado.contenido.addWidget(self.btn_aviso_mp)
@@ -546,32 +565,32 @@ class Paso6Cobro(QDialog):
         for col in (col_imprime, col_registra, col_ajuste):
             fila_acciones.addWidget(col, 1)
 
-        lay_imprime.addWidget(create_action_btn("F1", "imprime", lambda: self.finalizar(True), style="primary"), 1)
-        self.btn_f2 = create_action_btn("F2", "s/imprime", lambda: self.finalizar(False), style="featured")
+        lay_imprime.addWidget(create_action_btn("F1", "imprime", lambda: self._elegir_cierre("imprime"), style="primary"), 1)
+        self.btn_f2 = create_action_btn("F2", "sin ticket", lambda: self._elegir_cierre("cierra"), style="default")
         self.pila_f2 = QStackedWidget()
         self.pila_f2.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pila_f2.setMinimumHeight(78)
-        self.btn_ultimo_mixto = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="qr")
+        self.btn_ultimo_mixto = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="default")
         self.pila_f2.addWidget(self.btn_f2)
         self.pila_f2.addWidget(self.btn_ultimo_mixto)
         lay_registra.addWidget(self.pila_f2, 1)
-        self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="green")
+        self.btn_descuento = create_action_btn("F3", "redondeo", self.abrir_descuento, style="default")
         lay_ajuste.addWidget(self.btn_descuento, 1)
 
-        self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="orange")
+        self.btn_recargo = create_action_btn("F4", "recargo", self.abrir_recargo, style="default")
         lay_imprime.addWidget(self.btn_recargo, 1)
         self.pila_point = QStackedWidget()
         self.pila_point.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pila_point.setMinimumHeight(78)
-        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point(), style="mp")
+        self.btn_f11 = create_action_btn("F11", "Point MP", lambda: self.procesar_pago_mercadopago_point(), style="default")
         self.pila_point.addWidget(self.btn_f11)
         self.pila_point.addWidget(QWidget())
         lay_registra.addWidget(self.pila_point, 1)
         self.pila_extra = QStackedWidget()
         self.pila_extra.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.pila_extra.setMinimumHeight(78)
-        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp(), style="qr")
-        self.btn_ultimo = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="qr")
+        self.btn_f12 = create_action_btn("F12", "Verif QR", lambda: self.verificar_transferencia_mp(), style="default")
+        self.btn_ultimo = create_action_btn("F12", "último monto", self.corroborar_ultimo_monto, style="default")
         self.pila_extra.addWidget(self.btn_f12)
         self.pila_extra.addWidget(self.btn_ultimo)
         self.pila_extra.addWidget(QWidget())
@@ -632,6 +651,7 @@ class Paso6Cobro(QDialog):
         self._mixto_esperando_qr = False
         self._mixto_espera_transferencia = None
         self._mixto_confirmado = False
+        self._ticket_al_pagar = None
         metodo_previo = self.current_metodo
         if getattr(self, "_point_en_curso", False) and key != metodo_previo:
             self.espera_point.soltar()
@@ -749,9 +769,10 @@ class Paso6Cobro(QDialog):
         elif hasattr(self, "panel_qr"):
             self.panel_qr.ocultar()
         if key == "Tarjeta":
+            self._pintar_luz_tpv()
             if hasattr(self, "panel_tarjeta"):
                 self.panel_tarjeta.ocultar()
-            if not getattr(self, "_point_en_curso", False):
+            if getattr(self, "_tpv_listo", False) and not getattr(self, "_point_en_curso", False):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
@@ -960,9 +981,7 @@ class Paso6Cobro(QDialog):
             if monto_escucha is None:
                 monto_escucha = self.total_final
 
-            self.lbl_mp_status.setStyleSheet(
-                "font-size: 20px; font-weight: 800; color: #1E3A8A; background: transparent; border: none;"
-            )
+            self.lbl_mp_status.setStyleSheet("background: #E0F2FE; color: #0284C7; font-size: 20px; font-weight: 900; border-radius: 12px; padding: 10px; margin-top: 10px;")
             self.lbl_mp_status.setText(f" {char} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${monto_escucha:.2f})")
             if getattr(self, "_mixto_espera_transferencia", None) is not None and hasattr(self, "panel_mixto"):
                 from src.utils.dinero import redondear_dinero
@@ -1009,7 +1028,7 @@ class Paso6Cobro(QDialog):
                     self.timer_mp.stop()
                     self.timer_spinner.stop()
 
-                    self.lbl_mp_status.setStyleSheet("font-size: 20px; font-weight: 900;")
+                    self.lbl_mp_status.setStyleSheet("background: #DCFCE7; color: #166534; font-size: 20px; font-weight: 900; border-radius: 12px; padding: 10px; margin-top: 10px;")
 
                     self.lbl_mp_status.setText(f"✅ ¡PAGO DE {pago['nombre'].upper()} DETECTADO Y APROBADO!")
                     theme = config.get("theme", "light")
@@ -1028,7 +1047,7 @@ class Paso6Cobro(QDialog):
                         self._mixto_i += 1
                         QTimer.singleShot(200, self._seguir_mixto)
                     else:
-                        QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
+                        QTimer.singleShot(1500, self._cerrar_como_eligio)
         except Exception as e:
             print(f"Error verificando auto-pago MP: {e}")
 
@@ -1182,13 +1201,27 @@ class Paso6Cobro(QDialog):
 
         self.calcular_vuelto()
 
+    def _toggle_tipo_desc(self):
+        if self.btn_tipo_desc.text() == "$":
+            self.btn_tipo_desc.setText("%")
+        else:
+            self.btn_tipo_desc.setText("$")
+        self.on_descuento_changed(self.txt_desc.text())
+
+    def _toggle_tipo_rec(self):
+        if self.btn_tipo_rec.text() == "$":
+            self.btn_tipo_rec.setText("%")
+        else:
+            self.btn_tipo_rec.setText("$")
+        self.on_recargo_changed(self.txt_rec.text())
+
     def on_descuento_changed(self, text):
         try:
             txt = text.strip()
             if not txt:
                 self.descuento_monto = 0.0
-            elif txt.endswith('%'):
-                val = float(txt[:-1])
+            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_desc') and self.btn_tipo_desc.text() == "%"):
+                val = float(txt.replace('%', ''))
                 self.descuento_monto = self.total_original * (max(0, min(100, val)) / 100.0)
             else:
                 val = float(txt.replace('$', '').strip())
@@ -1202,8 +1235,8 @@ class Paso6Cobro(QDialog):
             txt = text.strip()
             if not txt:
                 self.recargo_monto = 0.0
-            elif txt.endswith('%'):
-                val = float(txt[:-1])
+            elif txt.endswith('%') or (hasattr(self, 'btn_tipo_rec') and self.btn_tipo_rec.text() == "%"):
+                val = float(txt.replace('%', ''))
                 self.recargo_monto = self.total_original * (max(0, val) / 100.0)
             else:
                 val = float(txt.replace('$', '').strip())
@@ -1222,13 +1255,47 @@ class Paso6Cobro(QDialog):
         self.txt_rec.setFocus()
         self.txt_rec.selectAll()
 
-    def finalizar_fiscal_efectivo(self):
-        config._load_config()
-        if not config.get("facturacion_afip_global", False):
-            self._avisar("La facturación AFIP está apagada en la configuración.")
+    def _frase_ticket(self, modo):
+        if modo == "cierra":
+            return "Sin ticket. Al pagar, la venta se cierra sola. Si el cliente lo pide, F1."
+        if modo == "fiscal":
+            return "Al pagar se imprime el ticket fiscal."
+        return "Al pagar se imprime el ticket."
+
+    def _elegir_cierre(self, modo):
+        """F1 imprime al pagar. F2 cierra sin ticket. F10 es el fiscal.
+        Si todavía se espera el cobro, el clic no cierra: avisa una vez y queda elegido."""
+        if modo == "fiscal":
+            config._load_config()
+            if not config.get("facturacion_afip_global", False):
+                self._avisar("La facturación AFIP está apagada. F1 imprime el ticket común.")
+                return
+        if self._frase_espera():
+            if getattr(self, "_ticket_al_pagar", None) == modo:
+                return
+            self._ticket_al_pagar = modo
+            self._mixto_imprimir = modo != "cierra"
+            self._avisar(self._frase_ticket(modo))
             return
-        self.set_metodo("Efectivo")
-        self.finalizar(True, force_fiscal=True)
+        if modo == "fiscal":
+            self.set_metodo("Efectivo")
+            self.finalizar(True, force_fiscal=True)
+        elif modo == "cierra":
+            self.finalizar(False)
+        else:
+            self.finalizar(True)
+
+    def _cerrar_como_eligio(self):
+        modo = getattr(self, "_ticket_al_pagar", None) or "imprime"
+        if modo == "cierra":
+            self.finalizar(False)
+        elif modo == "fiscal":
+            self.finalizar(True, force_fiscal=True)
+        else:
+            self.finalizar(True)
+
+    def finalizar_fiscal_efectivo(self):
+        self._elegir_cierre("fiscal")
 
     def finalizar(self, imprimir=True, force_fiscal=False, emergencia=False):
         if not emergencia:
@@ -1352,7 +1419,13 @@ class Paso6Cobro(QDialog):
                 self._tecla_f12()
                 return True
             elif k == Qt.Key.Key_F1:
-                self.finalizar(True)
+                self._elegir_cierre("imprime")
+                return True
+            elif k == Qt.Key.Key_F2:
+                self._elegir_cierre("cierra")
+                return True
+            elif k == Qt.Key.Key_F10:
+                self._elegir_cierre("fiscal")
                 return True
 
         return super().eventFilter(watched, event)
@@ -1476,6 +1549,10 @@ class Paso6Cobro(QDialog):
         if hasattr(self, "aviso_toast") and self.aviso_toast.tiene_accion():
             self.aviso_toast.aceptar()
             return
+        self._pintar_luz_tpv()
+        if not getattr(self, "_tpv_listo", False) and self.current_metodo not in ("Fiado", "Clientes"):
+            self._guardar_sin_tpv(False)
+            return
         frase = self._frase_espera()
         if frase and hasattr(self, "aviso_toast"):
             self.aviso_toast.alarma(frase)
@@ -1494,6 +1571,10 @@ class Paso6Cobro(QDialog):
         self._cerrar_manual()
 
     def _cerrar_manual(self):
+        self._guardar_sin_tpv(False)
+
+    def _guardar_sin_tpv(self, imprimir):
+        """Luz roja: Enter guarda la venta. No manda el Point ni espera transferencia ni QR."""
         self._emergencia_pendiente = False
         self._mixto_pasos = None
         self._mixto_espera_transferencia = None
@@ -1509,7 +1590,7 @@ class Paso6Cobro(QDialog):
             self.valores_mixtos = self.panel_mixto.valores()
         elif self.current_metodo in ("Tarjeta", "Transferencia", "QR"):
             self.txt_pago.setText(self._monto(self.total_final))
-        self.finalizar(False, emergencia=True)
+        self.finalizar(bool(imprimir), emergencia=True)
 
     def _avisar(self, mensaje):
         if hasattr(self, "aviso_toast"):
@@ -1588,7 +1669,7 @@ class Paso6Cobro(QDialog):
                 QTimer.singleShot(200, self._seguir_mixto)
                 return
             self.txt_pago.setText(self._monto(float(monto)))
-            self.finalizar(True)
+            self._cerrar_como_eligio()
         finally:
             self._vinculando = False
 
@@ -1607,6 +1688,7 @@ class Paso6Cobro(QDialog):
         return motivo in ("usuario", "cancelo")
 
     def _volver_a_metodos(self):
+        self._ticket_al_pagar = None
         self._mixto_pasos = None
         self._mixto_confirmado = False
         self._mixto_espera_transferencia = None
@@ -1642,7 +1724,7 @@ class Paso6Cobro(QDialog):
         self.txt_pago.setText(self._monto(monto))
         self._tarjeta_cerrando = True
         try:
-            self.finalizar(True)
+            self._cerrar_como_eligio()
         finally:
             self._tarjeta_cerrando = False
 
@@ -1680,6 +1762,10 @@ class Paso6Cobro(QDialog):
             self._ajustar_contenedor_monto()
 
     def _entrar_mixto(self, imprimir):
+        self._pintar_luz_tpv()
+        if not getattr(self, "_tpv_listo", False):
+            self._guardar_sin_tpv(imprimir)
+            return
         if getattr(self, "_mixto_pasos", None) is not None:
             if getattr(self, "_mixto_esperando_qr", False) and not self.panel_qr.bloquea_enter():
                 self._mixto_esperando_qr = False
@@ -1704,7 +1790,10 @@ class Paso6Cobro(QDialog):
             self._mixto_pasos = None
             self._mixto_cerrando = True
             try:
-                self.finalizar(getattr(self, "_mixto_imprimir", False))
+                if getattr(self, "_ticket_al_pagar", None):
+                    self._cerrar_como_eligio()
+                else:
+                    self.finalizar(getattr(self, "_mixto_imprimir", False))
             finally:
                 self._mixto_cerrando = False
             return
@@ -1790,7 +1879,7 @@ class Paso6Cobro(QDialog):
             return
         self._qr_ya_cerrado = True
         self.txt_pago.setText(self._monto(monto))
-        self.finalizar(True)
+        self._cerrar_como_eligio()
 
     def _tomar_mixto(self, valores):
         if getattr(self, "_point_en_curso", False):
@@ -1901,11 +1990,11 @@ class Paso6Cobro(QDialog):
         # A partir de aquí, solo se ejecuta si estamos en la Página 1
         # =========================================================
 
-        if k == Qt.Key.Key_F1: self.finalizar(True)
-        elif k == Qt.Key.Key_F2: self.finalizar(False)
+        if k == Qt.Key.Key_F1: self._elegir_cierre("imprime")
+        elif k == Qt.Key.Key_F2: self._elegir_cierre("cierra")
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
-        elif k == Qt.Key.Key_F10: self.finalizar_fiscal_efectivo()
+        elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
         elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
             if self.btn_f11.isVisible():
@@ -1945,7 +2034,7 @@ class Paso6Cobro(QDialog):
 
         focused = self.focusWidget()
         if key == "F10":
-            self.finalizar_fiscal_efectivo()
+            self._elegir_cierre("fiscal")
             return
         if key == "ENTER" and self.current_metodo in ("Transferencia", "QR", "Tarjeta", "Mixto"):
             self._enter_cobro()
@@ -1965,22 +2054,4 @@ class Paso6Cobro(QDialog):
             event_press = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Backspace, Qt.NoModifier, "")
             QApplication.sendEvent(focused, event_press)
             event_release = QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Backspace, Qt.NoModifier, "")
-            QApplication.sendEvent(focused, event_release)
-        elif key == "ENTER":
-            event_press = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.NoModifier, "\n")
-            QApplication.sendEvent(focused, event_press)
-            event_release = QKeyEvent(QEvent.Type.KeyRelease, Qt.Key.Key_Return, Qt.NoModifier, "\n")
-            QApplication.sendEvent(focused, event_release)
-        elif key in ("ESC", "Salir"):
-            self.reject()
-        else:
-            teclado_key_map = {
-                '0': Qt.Key.Key_0, '1': Qt.Key.Key_1, '2': Qt.Key.Key_2, '3': Qt.Key.Key_3, '4': Qt.Key.Key_4,
-                '5': Qt.Key.Key_5, '6': Qt.Key.Key_6, '7': Qt.Key.Key_7, '8': Qt.Key.Key_8, '9': Qt.Key.Key_9,
-                ',': Qt.Key.Key_Comma
-            }
-            key_code = teclado_key_map.get(key, Qt.Key.Key_unknown)
-            event_press = QKeyEvent(QEvent.Type.KeyPress, key_code, Qt.NoModifier, key)
-            QApplication.sendEvent(focused, event_press)
-            event_release = QKeyEvent(QEvent.Type.KeyRelease, key_code, Qt.NoModifier, key)
             QApplication.sendEvent(focused, event_release)

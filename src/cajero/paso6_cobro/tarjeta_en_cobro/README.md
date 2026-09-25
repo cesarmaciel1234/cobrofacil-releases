@@ -1,6 +1,6 @@
 # Tarjeta en la pantalla de cobro
 
-El medio Tarjeta no abre este panel ni la ventana «Esperando Pago…». El cobro lo espera el cartel `EsperaPoint` de `aviso_en_cobro/`, el mismo envío que usa el paso de tarjeta del mixto. Si se cancela en el cartel o en la terminal, la hoja vuelve a la página de métodos.
+El medio Tarjeta no abre este panel ni la ventana «Esperando Pago…». El cobro lo espera el cartel `EsperaPoint` de `aviso_en_cobro/`, el mismo envío que usa el paso de tarjeta del mixto, solo si la luz del TPV está verde. Con la luz en rojo no se manda el Point: Enter guarda la venta. Si se cancela en el cartel o en la terminal, la hoja vuelve a la página de métodos.
 
 `panel.py`, clase `PanelTarjetaCobro`. `mostrar(monto)` sigue pudiendo mandar el importe. Un fallo no cancela el cobro que ya quedó en la terminal.
 

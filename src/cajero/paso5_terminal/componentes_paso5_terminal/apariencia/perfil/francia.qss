@@ -5,7 +5,7 @@ Paso5Terminal[theme="light"][cajero_perfil="cajero"] {
 }
 Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#TerminalCabecera,
 Paso5Terminal[theme="light"][cajero_perfil="cajero"] QFrame#TerminalCabecera {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1B4F9C, stop:1 #7EB6F6) !important;
+    background-color: #1B4F9C !important;
     border: none !important;
 }
 Paso5Terminal[theme="light"][cajero_perfil="principal"] QFrame#TerminalSideBox,
@@ -30,7 +30,7 @@ Paso5Terminal[theme="dark"][cajero_perfil="cajero"] {
 }
 Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#TerminalCabecera,
 Paso5Terminal[theme="dark"][cajero_perfil="cajero"] QFrame#TerminalCabecera {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #163E7A, stop:1 #1B4F9C) !important;
+    background-color: #163E7A !important;
     border: none !important;
 }
 Paso5Terminal[theme="dark"][cajero_perfil="principal"] QFrame#TerminalSideBox,

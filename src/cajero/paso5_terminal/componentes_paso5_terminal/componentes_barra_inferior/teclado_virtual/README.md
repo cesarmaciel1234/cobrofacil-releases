@@ -1,6 +1,6 @@
 # Teclado Virtual Paso 5
 
-This folder contains the modular implementation of the virtual keyboard for "Paso 5" (touch desktop environments).
+Teclado en pantalla del paso 5. Se abre solo al tocar un cuadro, y solo si Windows ve una pantalla táctil. Escribir con el teclado físico o el escáner no lo abre. El botón TECLADO lo abre igual.
 
 ## Architecture
 The logic has been split into several modules to enforce separation of concerns and a pyramidal structure:

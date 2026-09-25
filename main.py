@@ -20,22 +20,29 @@ import urllib3
 # Suppress InsecureRequestWarning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Desactivar aceleraciÃ³n por hardware para evitar deadlocks del chatbot Chromium
-sys.argv.append('--disable-gpu')
-sys.argv.append('--disable-software-rasterizer')
-
 from PyQt6.QtCore import QTimer, QCoreApplication
 
 configure_qt_application_attributes()
-# Vital: configurar antes de importar QApplication y QtWebEngineWidgets
+# El cajero no carga Chromium: el asistente es un panel. Admin y jefe sí, antes de QApplication.
 set_share_opengl_contexts()
 
-import os
-os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--disable-gpu --disable-software-rasterizer'
-try:
-    from PyQt6 import QtWebEngineWidgets  # noqa: F401
-except (ImportError, OSError, Exception):
-    QtWebEngineWidgets = None
+def _rol_sin_chromium():
+    args = sys.argv
+    for i, arg in enumerate(args):
+        if arg in ("--role", "--profile") and i + 1 < len(args):
+            return args[i + 1].strip().lower() == "cajero"
+        if arg.startswith("--role=") or arg.startswith("--profile="):
+            return arg.split("=", 1)[1].strip().lower() == "cajero"
+    return False
+
+if not _rol_sin_chromium():
+    sys.argv.append("--disable-gpu")
+    sys.argv.append("--disable-software-rasterizer")
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --disable-software-rasterizer"
+    try:
+        from PyQt6 import QtWebEngineWidgets  # noqa: F401
+    except (ImportError, OSError, Exception):
+        QtWebEngineWidgets = None
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
 
@@ -301,7 +308,14 @@ def launch_app(direct_role=None):
     if direct_role:
         from src.utils.candados import PerfilLocker
         if not PerfilLocker.lock_profile(direct_role):
-            QMessageBox.warning(None, "Error", f"El perfil '{direct_role}' ya estÃ¡ en uso.")
+            pid = PerfilLocker.get_locked_pid(direct_role)
+            from src.utils.candados import focus_pid_window
+            if not (pid and focus_pid_window(pid)):
+                QMessageBox.warning(
+                    None,
+                    "Error",
+                    f"El perfil '{direct_role}' ya está en uso.",
+                )
             return 0
         from src.central_red_global.network_engine import init_network_engine
         init_network_engine(direct_role)

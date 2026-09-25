@@ -12,4 +12,4 @@ apariencia/
 
 Se pega al final del tema, después de `estilo_dia.qss` o `estilo_noche.qss`. Por eso gana.
 
-El encabezado no cambia cuando se cobra o se anula. Solo se pintan el marco del ticket y el de la barra de totales.
+El encabezado no cambia cuando se cobra o se anula. Solo se pintan el marco del ticket y el de la barra de totales. La cabecera es un color solo: azul `#1B4F9C` o `#163E7A`, rosa `#BE185D` o `#831843`. Sin degradé.

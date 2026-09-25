@@ -345,11 +345,13 @@ class Admin0Dashboard(QWidget):
         filtered       = [m for m in self.modules_info if m[0] in visible_ids]
         sorted_modules = sorted(filtered, key=lambda m: stats.get(m[0], 0), reverse=True)
 
-        # Limpiar grid
+        # Limpiar grid de forma segura
         for i in reversed(range(self.grid_layout.count())):
             item = self.grid_layout.takeAt(i)
-            if item.widget():
-                item.widget().setParent(None)
+            w = item.widget()
+            if w:
+                w.hide()
+                self.grid_layout.removeWidget(w)
 
         n    = len(sorted_modules)
         cols = 3 if n <= 6 else 4
@@ -357,6 +359,7 @@ class Admin0Dashboard(QWidget):
         for idx, (m_id, *_) in enumerate(sorted_modules):
             card = self.cards[m_id]
             self.grid_layout.addWidget(card, idx // cols, idx % cols)
+            card.show()
             card.show()
 
         for m_id in self.cards:

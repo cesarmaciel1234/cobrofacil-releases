@@ -212,7 +212,6 @@ class DialogoCandado(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Dialog)
-        self.setAttribute(Qt.WA_TranslucentBackground)
         if parent:
             self.setFixedSize(parent.size())
         else:
@@ -221,10 +220,9 @@ class DialogoCandado(QDialog):
 
     def _build(self):
         from src.config import config
-        # Fondo desenfocado leve (el blur real lo hace el padre)
         fondo = QFrame(self)
         fondo.setGeometry(0, 0, self.width(), self.height())
-        fondo.setStyleSheet("background: rgba(248, 250, 252, 0.65);")
+        fondo.setStyleSheet("background: #F8FAFC;")
 
         # Contenedor central más alto (500px como pidió el usuario) y con bordes suaves
         w, h = 600, 500

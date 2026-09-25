@@ -154,7 +154,7 @@ class Admin13Hardware(QWidget):
         vk_lay = QVBoxLayout(card_vk)
         vk_lay.setContentsMargins(20, 20, 20, 20)
         vk_lay.addWidget(QLabel("⌨️ TECLADO AUTOMÁTICO", styleSheet="font-weight: 900; font-size: 13px;  border: none;"))
-        vk_desc = QLabel("Activa o desactiva la aparición automática del teclado táctil al seleccionar cuadros de texto.")
+        vk_desc = QLabel("En una pantalla táctil se abre al tocar un cuadro. No se abre al escribir con el teclado ni con el escáner. En una PC sin tactil queda apagado. El botón TECLADO de la venta lo abre a mano.")
         vk_desc.setWordWrap(True)
         vk_desc.setStyleSheet(" font-size: 11px; border: none; background: transparent;")
         vk_lay.addWidget(vk_desc)
@@ -162,18 +162,21 @@ class Admin13Hardware(QWidget):
         self.btn_toggle_vk = QPushButton()
         self.btn_toggle_vk.setCursor(Qt.PointingHandCursor)
         self.btn_toggle_vk.setCheckable(True)
-        self.btn_toggle_vk.setChecked(config.get("auto_virtual_keyboard", True))
+        self.btn_toggle_vk.setChecked(config.get("teclado_virtual_modo", "tactil") != "nunca")
 
         def update_vk_btn_style(checked):
             if checked:
-                self.btn_toggle_vk.setText("✅ AUTOMÁTICO: ENCENDIDO")
+                self.btn_toggle_vk.setText("TÁCTIL: SE ABRE AL TOCAR")
                 self.btn_toggle_vk.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
             else:
-                self.btn_toggle_vk.setText("❌ AUTOMÁTICO: APAGADO")
-                self.btn_toggle_vk.setStyleSheet(" background-color: #3b82f6; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
-            config.set("auto_virtual_keyboard", checked)
+                self.btn_toggle_vk.setText("AUTOMÁTICO: APAGADO")
+                self.btn_toggle_vk.setStyleSheet(" background-color: #64748b; color: white; font-weight: bold; border-radius: 5px; padding: 10px;")
 
-        self.btn_toggle_vk.toggled.connect(update_vk_btn_style)
+        def guardar_modo_teclado(checked):
+            update_vk_btn_style(checked)
+            config.set("teclado_virtual_modo", "tactil" if checked else "nunca")
+
+        self.btn_toggle_vk.toggled.connect(guardar_modo_teclado)
         update_vk_btn_style(self.btn_toggle_vk.isChecked())
 
         vk_lay.addStretch()

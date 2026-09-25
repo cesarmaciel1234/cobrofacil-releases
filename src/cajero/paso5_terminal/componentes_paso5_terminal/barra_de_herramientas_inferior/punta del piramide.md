@@ -18,6 +18,6 @@ barra_de_herramientas_inferior/
   chatbot/                 botón del asistente
 ```
 
-El chat completo y el teclado en pantalla siguen en `componentes_barra_inferior/chatbot` y `componentes_barra_inferior/teclado_virtual`. Esta barra solo los llama.
+El chat y el teclado en pantalla siguen en `componentes_barra_inferior/chatbot` y `componentes_barra_inferior/teclado_virtual`. Esta barra solo los llama. El asistente es un panel de la venta: no usa el navegador de la cartelería ni abre otra ventana. No se crea hasta el primer clic. A los 2 s el cursor vuelve al buscador. Un escaneo o F12 lo cierra. El detalle está en `src/cajero/README.md`, sección «El paso 5 es dueño de la venta».
 
 El terminal sigue usando `BarraDeHerramientasInferior`, `actualizar_texto_espera` y `set_tema_texto`.

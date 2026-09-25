@@ -9,58 +9,60 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout
-from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
-try:
-    from PyQt6.QtWebEngineWidgets import QWebEngineView
-    from PyQt6.QtWebEngineCore import QWebEnginePage
-    from src.utils.qt_compat import create_webengine_page, webengine_page_transparent
-    _WEBENGINE_AVAILABLE = True
-except ImportError as e:
-    QWebEngineView = QWidget
-    QWebEnginePage = object
-    _WEBENGINE_AVAILABLE = False
-    print(f"Advertencia: No se pudo cargar QtWebEngineWidgets ({e}). El chatbot estará deshabilitado.")
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QTextEdit,
+    QLineEdit,
+    QPushButton,
+)
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 
-# ─── Rutas ──────────────────────────────────────────────────────────────────
-_DIR       = os.path.dirname(os.path.abspath(__file__))
+_DIR = os.path.dirname(os.path.abspath(__file__))
 MANUAL_JSON = os.path.join(_DIR, "manual_cajero.json")
 
-# ─── Pasos del Tutor (sin login / perfil / apertura) ────────────────────────
 PASOS_TUTOR = [
-    {"msg": "👋 ¡Hola! Soy tu asistente de CobroFacil POS. Estoy aquí para ayudarte.", "espera": 3},
-    {"msg": "🛒 TERMINAL DE VENTAS: Simplemente pasa el código de barras del producto con el lector láser.", "espera": 4},
-    {"msg": "✏️ Multiplicador: escribe CANTIDAD * CÓDIGO  (Ej: 6*779001234) y presiona ENTER.", "espera": 4},
-    {"msg": "➕ Artículo sin código: escribe +PRECIO  (Ej: +500) y presiona ENTER.", "espera": 4},
-    {"msg": "⚖️ BALANZA: escanea el código de la balanza (Systel/Kretz). El sistema calcula el precio automáticamente.", "espera": 4},
-    {"msg": "💳 COBRAR: presiona F12 (o ENTER con el buscador vacío) para ir a la pantalla de cobro.", "espera": 4},
-    {"msg": "💰 Selecciona el método de pago con las flechas ←→: Efectivo, Tarjeta o Mixto. Luego ENTER.", "espera": 4},
-    {"msg": "🖨️ FINALIZAR: F1 = cobra e imprime ticket · F2 = cobra sin ticket · ENTER = igual que F2.", "espera": 4},
-    {"msg": "🏷️ DESCUENTOS/RECARGOS: F3 = descuento · F4 = recargo (desde la pantalla de cobro).", "espera": 4},
-    {"msg": "🚨 CAJÓN ABIERTO: si el borde parpadea en rojo, cierra el cajón físicamente. Se desbloqueará solo.", "espera": 4},
-    {"msg": "👮 SUPERVISOR (F11): si necesitás ayuda, presioná F11 y llamá al supervisor.", "espera": 4},
-    {"msg": "📋 HISTORIAL (F3): presioná F3 desde el terminal para ver las ventas del día.", "espera": 4},
-    {"msg": "🏁 CIERRE DE TURNO (F4): contá el efectivo, ingresá el total y el sistema cerrará tu sesión.", "espera": 4},
-    {"msg": "⌨️ RESUMEN DE TECLAS:\nF1=ticket · F2=sin ticket · F3=historial · F4=cierre · F5=retiro · F11=supervisor · F12=cobrar", "espera": 5},
-    {"msg": "✅ ¡Tutorial completo! Ahora podés consultarme cualquier duda escribiendo en el chat. 💬", "espera": 3},
+    {"msg": "Hola. Soy el asistente de CobroFacil. Estoy para ayudarte.", "espera": 3},
+    {"msg": "Terminal: pasá el código de barras con el lector.", "espera": 4},
+    {"msg": "Multiplicador: CANTIDAD * CÓDIGO (ej. 6*779001234) y ENTER.", "espera": 4},
+    {"msg": "Sin código: +PRECIO (ej. +500) y ENTER.", "espera": 4},
+    {"msg": "Balanza: escaneá el código. El precio sale solo.", "espera": 4},
+    {"msg": "Cobrar: F12, o ENTER con el buscador vacío.", "espera": 4},
+    {"msg": "Elegí el medio con las flechas y ENTER.", "espera": 4},
+    {"msg": "F1 imprime el ticket. F2 cierra sin ticket. ENTER es como F2.", "espera": 4},
+    {"msg": "En el cobro, F3 es redondeo y F4 es recargo.", "espera": 4},
+    {"msg": "Si el cajón queda abierto, cerralo. Se destraba solo.", "espera": 4},
+    {"msg": "F11 llama al supervisor.", "espera": 4},
+    {"msg": "F3 en la venta abre el historial del día.", "espera": 4},
+    {"msg": "F4 cierra el turno: contá el efectivo e ingresá el total.", "espera": 4},
+    {"msg": "F1 ticket. F2 sin ticket. F3 historial. F4 cierre. F5 retiro. F11 supervisor. F12 cobrar.", "espera": 5},
+    {"msg": "Listo. Escribí la consulta acá.", "espera": 3},
 ]
 
-# ─── Motor de Consultas ──────────────────────────────────────────────────────
+
 def _normalizar(texto: str) -> str:
     nfkd = unicodedata.normalize("NFKD", texto.lower())
     sin_tildes = "".join(c for c in nfkd if not unicodedata.combining(c))
     return re.sub(r"[^\w\s]", "", sin_tildes).strip()
 
+
 class ChatManual:
     def __init__(self):
-        self.entradas = []
+        self.entradas = None
+
+    def _cargar(self):
         try:
             with open(MANUAL_JSON, "r", encoding="utf-8") as f:
                 self.entradas = json.load(f).get("entradas", [])
         except Exception as e:
-            self.entradas = [{"id": "error", "preguntas": [], "respuesta": f"⚠️ Error cargando manual: {e}"}]
+            self.entradas = [{"id": "error", "preguntas": [], "respuesta": f"Error cargando manual: {e}"}]
 
     def consultar(self, texto: str) -> str:
+        if self.entradas is None:
+            self._cargar()
         q = _normalizar(texto.strip())
         if not q:
             return ""
@@ -76,603 +78,138 @@ class ChatManual:
         for entrada in self.entradas:
             if entrada.get("id") == "no_encontrado":
                 return entrada["respuesta"]
-        return "🤔 No encontré información. Consultá con tu supervisor."
+        return "No encontré eso. Consultá al supervisor."
 
-# ─── HTML del Bot (clonado de bot_burbuja, sin UDP/E2E) ─────────────────────
-HTML_CHAT = r"""
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<style>
-    html, body {
-        height: 100%; margin: 0; padding: 0;
-        overflow: hidden;
-        background: transparent;
-        font-family: 'Segoe UI', -apple-system, sans-serif;
-        user-select: none;
-    }
-    .app-container {
-        position: relative; width: 100%; height: 100%;
-        display: flex; flex-direction: column;
-        align-items: flex-end; justify-content: flex-end;
-        padding: 8px; box-sizing: border-box;
-    }
-    .app-container.chat-open {
-        align-items: stretch;
-        justify-content: flex-end;
-    }
-    .app-container.chat-open .thought-bubble.active {
-        position: relative;
-        right: auto; bottom: auto;
-        width: 100%;
-        flex: 1 1 auto;
-        min-height: 0;
-        max-height: none;
-        margin-bottom: 6px;
-    }
-    .app-container.chat-open .robot-head {
-        flex-shrink: 0;
-        align-self: flex-end;
-        margin-right: 4px;
-    }
 
-    /* ── Robot ── */
-    .robot-head {
-        position: relative; width: 90px; height: 90px;
-        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M 16,50 A 20,20 0 0,1 50,30 A 20,20 0 0,1 84,50 C 92,68 80,88 50,88 C 20,88 8,68 16,50 Z" fill="%23161616" stroke="%23888888" stroke-width="6" stroke-linejoin="round"/></svg>') no-repeat center/contain;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-        filter: drop-shadow(0 8px 16px rgba(15,23,42,0.45));
-        transition: transform 0.3s cubic-bezier(0.175,0.885,0.32,1.275), filter 0.3s ease;
-        animation: floatBot 4s ease-in-out infinite;
-        z-index: 10;
-    }
-    .robot-head:hover {
-        filter: drop-shadow(0 12px 24px rgba(15,23,42,0.5)) drop-shadow(0 0 8px rgba(56,189,248,0.45));
-        transform: scale(1.08) translateY(-4px);
-    }
-    .robot-head:active { transform: scale(0.92,1.08) translateY(2px); }
-    @keyframes floatBot {
-        0%,100% { transform: translateY(0px) rotate(0deg); }
-        50%      { transform: translateY(-8px) rotate(1.5deg); }
-    }
-
-    /* Antena */
-    .antenna { position:absolute; top:-14px; display:flex; flex-direction:column; align-items:center; pointer-events:none; }
-    .antenna-shaft { width:4px; height:12px; background:#38BDF8; border:2px solid #0F172A; border-bottom:none; }
-    .antenna-ball {
-        width:10px; height:10px; background:#38BDF8; border:2px solid #0F172A;
-        border-radius:50%; box-shadow:0 0 10px #38BDF8;
-        animation: pulseLed 1.5s infinite alternate ease-in-out;
-    }
-    @keyframes pulseLed {
-        from { background:#38BDF8; box-shadow:0 0 6px #38BDF8; }
-        to   { background:#F43F5E; box-shadow:0 0 14px #F43F5E; }
-    }
-
-    /* Órbita */
-    .orbit-ring {
-        position:absolute; top:-8px; left:-8px; width:102px; height:102px;
-        border:2px dashed rgba(56,189,248,0.4); border-radius:50%;
-        animation: rotateOrbit 15s linear infinite; pointer-events:none;
-        transition: border-color 0.3s ease;
-    }
-    .robot-head:hover .orbit-ring { border-color:rgba(56,189,248,0.8); animation-duration:8s; }
-    @keyframes rotateOrbit { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-
-    /* Rubor */
-    .blush { position:absolute; width:10px; height:6px; background:#F43F5E; border-radius:50%; filter:blur(1px); opacity:0.15; bottom:26px; transition:opacity 0.3s ease; }
-    .blush-left { left:14px; } .blush-right { right:14px; }
-    .robot-head:hover .blush { opacity:0.7; }
-
-    /* Ojos */
-    .eyes-container { display:flex; gap:12px; margin-top:32px; z-index:2; }
-    .eye { position:relative; width:18px; height:18px; background:#000; border:3px solid #888; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-    .eye-pupil { position:absolute; width:6px; height:10px; background:#38BDF8; border-radius:2px; box-shadow:0 0 8px #38BDF8; transition:opacity 0.18s ease,transform 0.18s ease; }
-    .eye.blinking { animation: normalBlink 0.15s ease-in-out; }
-    @keyframes normalBlink { 0%,100%{transform:scaleY(1);} 50%{transform:scaleY(0.05);} }
-    .eye-wink-shape { position:absolute; top:2px; left:-1px; width:18px; height:10px; border-top:4px solid #38BDF8; border-radius:50% 50% 0 0; box-shadow:0 -2px 6px rgba(56,189,248,0.6); opacity:0; transform:scaleY(0); transform-origin:bottom; transition:opacity 0.18s ease,transform 0.18s ease; }
-    .eye.wink-active .eye-pupil { opacity:0; transform:scaleY(0.1); }
-    .eye.wink-active .eye-wink-shape { opacity:1; transform:scaleY(1); }
-    .talking .eye-left .eye-pupil  { animation:pupilTalkLeft 1.2s infinite; }
-    .talking .eye-left .eye-wink-shape { animation:winkTalkLeft 1.2s infinite; }
-    .talking .eye-right .eye-pupil { animation:pupilTalkRight 1.5s infinite; }
-    .talking .eye-right .eye-wink-shape { animation:winkTalkRight 1.5s infinite; }
-    @keyframes pupilTalkLeft  { 0%,40%,100%{opacity:1;transform:scale(1);} 45%,95%{opacity:0;transform:scaleY(0.1);} }
-    @keyframes winkTalkLeft   { 0%,40%,100%{opacity:0;transform:scaleY(0);} 45%,95%{opacity:1;transform:scaleY(1);} }
-    @keyframes pupilTalkRight { 0%,50%,100%{opacity:1;transform:scale(1);} 55%,95%{opacity:0;transform:scaleY(0.1);} }
-    @keyframes winkTalkRight  { 0%,50%,100%{opacity:0;transform:scaleY(0);} 55%,95%{opacity:1;transform:scaleY(1);} }
-
-    /* Boca */
-    .mouth { width:24px; height:12px; border:3.5px solid #888; border-radius:0 0 8px 8px; border-top:none; background:#161616; position:relative; margin-top:10px; box-shadow:0 2px 4px rgba(0,0,0,0.5); transition:all 0.25s cubic-bezier(0.175,0.885,0.32,1.275); z-index:2; }
-    .mouth::before,.mouth::after { content:""; position:absolute; width:4px; height:6px; background:#fff; border:1.5px solid #161616; top:-1px; }
-    .mouth::before { left:5px; } .mouth::after { right:5px; }
-    .mouth.happy-mouth { width:28px; height:14px; border-radius:0 0 10px 10px; }
-    .talking .mouth { animation:mouthTalk 0.16s infinite alternate ease-in-out; }
-    @keyframes mouthTalk { 0%{width:20px;height:10px;border-radius:0 0 8px 8px;} 100%{width:26px;height:14px;border-radius:0 0 10px 10px;} }
-
-    /* Puntos de pensamiento */
-    .thought-dots { position:absolute; right:110px; bottom:105px; display:flex; flex-direction:row-reverse; align-items:flex-end; gap:6px; pointer-events:none; opacity:0; transition:opacity 0.25s ease; z-index:4; }
-    .thought-dots.active { opacity:1; }
-    .tdot { background:rgba(255,255,255,0.82); backdrop-filter:blur(10px); border:2.5px solid #0F172A; border-radius:50%; box-shadow:2px 2px 0px rgba(15,23,42,0.15); transform:scale(0); transition:transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275); }
-    .thought-dots.active .tdot-2 { transform:scale(1); transition-delay:0.0s; }
-    .thought-dots.active .tdot-1 { transform:scale(1); transition-delay:0.06s; }
-    .tdot-1{width:14px;height:14px;} .tdot-2{width:8px;height:8px;}
-
-    /* Globo principal */
-    .thought-bubble {
-        position:absolute; right:20px; bottom:110px;
-        background:rgba(255,255,255,0.98);
-        backdrop-filter:blur(12px);
-        border:3px solid #0F172A; border-radius:16px;
-        width:calc(100% - 16px); max-width:100%; padding:0; box-sizing:border-box;
-        box-shadow:5px 5px 0px rgba(15,23,42,0.2);
-        opacity:0; transform:scale(0.92) translateY(12px);
-        pointer-events:none;
-        transition:opacity 0.3s ease, transform 0.3s ease;
-        z-index:5;
-        max-height:calc(100vh - 160px);
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-    }
-    .thought-bubble.active {
-        opacity:1;
-        transform:scale(1) translateY(0);
-        pointer-events:auto;
-    }
-    .toast-bubble { min-height:0; }
-
-    /* Techo superior del chat */
-    .bubble-techo {
-        flex-shrink:0;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:12px 14px;
-        background:linear-gradient(135deg, #1E3A8A 0%, #2563EB 55%, #1D4ED8 100%);
-        border-bottom:3px solid #0F172A;
-        border-radius:17px 17px 0 0;
-    }
-    .bubble-techo-title {
-        color:#F8FAFC;
-        font-size:15px;
-        font-weight:900;
-        letter-spacing:0.6px;
-    }
-    .btn-close-techo {
-        background:rgba(255,255,255,0.14);
-        border:1.5px solid rgba(255,255,255,0.35);
-        color:#F8FAFC;
-        font-weight:bold;
-        font-size:16px;
-        width:28px;
-        height:28px;
-        border-radius:8px;
-        cursor:pointer;
-        line-height:1;
-        transition:background 0.2s, border-color 0.2s;
-    }
-    .btn-close-techo:hover {
-        background:rgba(239,68,68,0.85);
-        border-color:#FCA5A5;
-    }
-
-    .bubble-body {
-        display:flex;
-        flex-direction:column;
-        flex:1;
-        min-height:0;
-        padding:0;
-        overflow:hidden;
-    }
-
-    .bubble-chat-zone {
-        flex:1;
-        min-height:0;
-        display:flex;
-        flex-direction:column;
-        padding:8px 12px 0;
-        overflow:hidden;
-    }
-
-    .bubble-footer {
-        flex-shrink:0;
-        padding:8px 12px 12px;
-        border-top:1.5px solid #E2E8F0;
-        background:#FAFBFC;
-    }
-    .toast-category { font-size:11px; font-weight:900; color:#64748B; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; border-bottom:1.5px dashed #E2E8F0; padding-bottom:6px; }
-    .toast-content { color:#0F172A; font-size:15px; font-weight:600; line-height:1.5; white-space:pre-line; }
-
-    /* Chat messages */
-    .msg-list {
-        display:flex;
-        flex-direction:column;
-        gap:8px;
-        flex:1;
-        min-height:0;
-        overflow-y:auto;
-        margin:0;
-        padding-right:2px;
-    }
-    .msg-list::-webkit-scrollbar{width:5px;} .msg-list::-webkit-scrollbar-thumb{background:rgba(15,23,42,0.2);border-radius:3px;}
-    .msg-bot { align-self:flex-start; background:#EFF6FF; border:1.5px solid #BFDBFE; border-radius:12px; border-top-left-radius:2px; padding:10px 12px; font-size:14px; font-weight:600; color:#1E3A5F; line-height:1.4; max-width:92%; white-space:pre-line; }
-    .msg-user { align-self:flex-end; background:#4F46E5; border-radius:12px; border-top-right-radius:2px; padding:10px 12px; font-size:14px; font-weight:700; color:#fff; max-width:80%; }
-
-    /* Input chat */
-    .chat-input-row { display:flex; gap:6px; margin:0; }
-    .input-field { flex:1; background:#F1F5F9; border:2px solid #0F172A; border-radius:8px; padding:8px 12px; box-sizing:border-box; color:#0F172A; font-size:14px; font-weight:600; outline:none; transition:border-color 0.2s; }
-    .input-field:focus { background:#fff; border-color:#4F46E5; }
-    .btn-send { background:#4F46E5; color:#fff; font-weight:900; font-size:16px; border:2px solid #0F172A; border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:2px 2px 0px #0F172A; transition:transform 0.1s,box-shadow 0.1s,background 0.2s; }
-    .btn-send:hover { background:#6366F1; }
-    .btn-send:active { transform:translate(1px,1px); box-shadow:1px 1px 0px #0F172A; }
-
-    /* Sugerencias */
-    .sugerencias {
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:6px;
-        margin:0 0 8px 0;
-    }
-    .sug-btn {
-        background:#F8FAFC;
-        border:1.5px solid #CBD5E1;
-        border-radius:12px;
-        padding:6px 8px;
-        font-size:11px;
-        font-weight:800;
-        color:#334155;
-        cursor:pointer;
-        transition:background 0.15s;
-        text-align:center;
-    }
-    .sug-btn:hover { background:#E2E8F0; }
-
-    /* Tutor progress */
-    .tutor-bar { display:none; align-items:center; gap:8px; margin:0 0 8px 0; flex-shrink:0; }
-    .tutor-bar.active { display:flex; }
-    .tutor-progress { flex:1; height:6px; background:#E2E8F0; border-radius:3px; overflow:hidden; }
-    .tutor-fill { height:100%; background:#4F46E5; border-radius:3px; transition:width 0.4s ease; }
-    .tutor-label { font-size:11px; font-weight:700; color:#64748B; white-space:nowrap; }
-    .btn-tutor-skip { background:transparent; border:1.5px solid #CBD5E1; border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700; color:#94A3B8; cursor:pointer; }
-    .btn-tutor-skip:hover { color:#EF4444; border-color:#EF4444; }
-
-    /* Keycap */
-    .keycap { background:#F8FAFC; border:1.5px solid #0F172A; border-radius:4px; box-shadow:1px 1px 0 #0F172A; padding:1px 5px; font-family:monospace; font-size:13px; font-weight:900; color:#0F172A; display:inline-block; vertical-align:middle; }
-</style>
-</head>
-<body>
-<div class="app-container">
-
-  <!-- Puntos pensamiento -->
-  <div id="dots" class="thought-dots">
-    <div class="tdot tdot-1"></div>
-    <div class="tdot tdot-2"></div>
-  </div>
-
-  <!-- Globo principal (chat + tutor) -->
-  <div id="toastBubble" class="thought-bubble toast-bubble">
-
-    <div class="bubble-techo">
-      <span class="bubble-techo-title">📖 Manual del Cajero</span>
-      <button class="btn-close-techo" onclick="cerrar()" title="Cerrar">✕</button>
-    </div>
-
-    <div class="bubble-body">
-
-    <div class="bubble-chat-zone">
-    <!-- Barra tutor -->
-    <div id="tutorBar" class="tutor-bar">
-      <span class="tutor-label" id="tutorLabel">Paso 1/15</span>
-      <div class="tutor-progress"><div class="tutor-fill" id="tutorFill" style="width:0%"></div></div>
-      <button class="btn-tutor-skip" onclick="skipTutor()">Saltar</button>
-    </div>
-
-    <!-- Mensajes -->
-    <div class="msg-list" id="msgList"></div>
-    </div>
-
-    <div class="bubble-footer">
-    <!-- Sugerencias -->
-    <div class="sugerencias" id="sugerencias">
-      <button class="sug-btn" onclick="preguntar('atajos de teclado')">⌨️ Atajos</button>
-      <button class="sug-btn" onclick="preguntar('como cobro')">💳 Cobrar</button>
-      <button class="sug-btn" onclick="preguntar('balanza')">⚖️ Balanza</button>
-      <button class="sug-btn" onclick="preguntar('cerrar turno')">🏁 Cierre</button>
-      <button class="sug-btn" onclick="preguntar('cajon abierto')">🚨 Cajón</button>
-      <button class="sug-btn" onclick="iniciarTutor()">🎓 Tutorial</button>
-    </div>
-
-    <!-- Input -->
-    <div class="chat-input-row">
-      <input type="text" id="chatInput" class="input-field" placeholder="Escribí tu consulta..."
-             onkeypress="if(event.key==='Enter') enviar()">
-      <button class="btn-send" onclick="enviar()">➤</button>
-    </div>
-    </div>
-
-    </div>
-  </div>
-
-  <!-- Cabeza del Robot -->
-  <div id="robot" class="robot-head" onclick="toggleBubble()">
-    <div class="antenna">
-      <div class="antenna-shaft"></div>
-      <div class="antenna-ball"></div>
-    </div>
-    <div class="orbit-ring"></div>
-    <div class="visor">
-      <div class="blush blush-left"></div>
-      <div class="blush blush-right"></div>
-      <div class="eyes-container">
-        <div id="eyeLeft"  class="eye eye-left"><div class="eye-pupil"></div><div class="eye-wink-shape"></div></div>
-        <div id="eyeRight" class="eye eye-right"><div class="eye-pupil"></div><div class="eye-wink-shape"></div></div>
-      </div>
-      <div id="mouth" class="mouth"></div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-const robot   = document.getElementById("robot");
-const mouth   = document.getElementById("mouth");
-const eyeL    = document.getElementById("eyeLeft");
-const eyeR    = document.getElementById("eyeRight");
-const bubble  = document.getElementById("toastBubble");
-const msgList = document.getElementById("msgList");
-const dots    = document.getElementById("dots");
-const tutorBar  = document.getElementById("tutorBar");
-const tutorFill = document.getElementById("tutorFill");
-const tutorLabel= document.getElementById("tutorLabel");
-const appRoot   = document.querySelector(".app-container");
-
-let bubbleOpen   = false;
-let tutorRunning = false;
-let tutorIdx     = 0;
-
-// ── Animaciones del robot ────────────────────────────────────────────────────
-function blink() {
-  if (!robot.classList.contains("talking")) {
-    eyeL.classList.add("blinking"); eyeR.classList.add("blinking");
-    setTimeout(()=>{ eyeL.classList.remove("blinking"); eyeR.classList.remove("blinking"); }, 150);
-  }
-  setTimeout(blink, 3000 + Math.random()*4000);
-}
-function wink() {
-  if (!robot.classList.contains("talking")) {
-    const left = Math.random()>0.5;
-    const eye  = left ? eyeL : eyeR;
-    eye.classList.add("wink-active"); mouth.classList.add("happy-mouth");
-    setTimeout(()=>{ eye.classList.remove("wink-active"); mouth.classList.remove("happy-mouth"); }, 1200);
-  }
-  setTimeout(wink, 7000 + Math.random()*6000);
-}
-setTimeout(blink, 2000); setTimeout(wink, 5000);
-robot.addEventListener("mouseenter",()=>{ eyeL.classList.add("wink-active"); eyeR.classList.add("wink-active"); mouth.classList.add("happy-mouth"); });
-robot.addEventListener("mouseleave",()=>{ if(!robot.classList.contains("talking")){ eyeL.classList.remove("wink-active"); eyeR.classList.remove("wink-active"); mouth.classList.remove("happy-mouth"); } });
-
-// ── Hablar (animación) ───────────────────────────────────────────────────────
-function hablar(on) {
-  if(on) robot.classList.add("talking");
-  else   robot.classList.remove("talking");
-}
-
-// ── Burbuja ──────────────────────────────────────────────────────────────────
-function setChatOpen(open) {
-  bubbleOpen = open;
-  appRoot.classList.toggle("chat-open", open);
-  if (open) { bubble.classList.add("active"); dots.classList.remove("active"); }
-  else      { bubble.classList.remove("active"); }
-}
-function toggleBubble() { setChatOpen(!bubbleOpen); }
-function cerrar() { setChatOpen(false); console.log("close://"); }
-
-// ── Agregar mensaje ───────────────────────────────────────────────────────────
-function addMsg(txt, esBot) {
-  const d = document.createElement("div");
-  d.className = esBot ? "msg-bot" : "msg-user";
-  d.textContent = txt;
-  msgList.appendChild(d);
-  msgList.scrollTop = msgList.scrollHeight;
-}
-
-// ── Consulta desde Python ────────────────────────────────────────────────────
-function recibirRespuesta(respuesta) {
-  hablar(false);
-  dots.classList.remove("active");
-  addMsg(respuesta, true);
-}
-
-// ── Enviar pregunta ───────────────────────────────────────────────────────────
-function enviar() {
-  const inp = document.getElementById("chatInput");
-  const txt = inp.value.trim();
-  if(!txt) return;
-  inp.value = "";
-  preguntar(txt);
-}
-function preguntar(txt) {
-  if(!bubbleOpen) { setChatOpen(true); }
-  addMsg(txt, false);
-  hablar(true);
-  dots.classList.add("active");
-  // Llamar a Python para resolver la consulta
-  console.log("query://" + encodeURIComponent(txt));
-}
-
-// ── Tutor ─────────────────────────────────────────────────────────────────────
-function iniciarTutor() {
-  tutorRunning = true; tutorIdx = 0;
-  tutorBar.classList.add("active");
-  if(!bubbleOpen){ setChatOpen(true); }
-  nextTutorStep();
-}
-function nextTutorStep() {
-  // Señal a Python para el siguiente paso
-  console.log("tutor://next?idx=" + tutorIdx);
-}
-function recibirPasoTutor(msg, idx, total) {
-  addMsg(msg, true);
-  tutorFill.style.width = ((idx/total)*100) + "%";
-  tutorLabel.textContent = "Paso " + idx + "/" + total;
-  hablar(true);
-  setTimeout(()=>hablar(false), 1500);
-}
-function tutorFin() {
-  tutorRunning = false;
-  tutorBar.classList.remove("active");
-  addMsg("✅ ¡Tutorial completado! Ahora podés consultarme lo que necesites.", true);
-}
-function skipTutor() {
-  tutorRunning = false;
-  tutorBar.classList.remove("active");
-  addMsg("⏭️ Tutorial omitido. ¡Estoy disponible para tus consultas!", true);
-  console.log("tutor://skip");
-}
-
-// Inicio
-setTimeout(()=>{
-  addMsg("👋 ¡Hola! Soy tu asistente de CobroFacil POS. Hacé clic en 🎓 Tutorial para empezar, o escribí tu consulta directamente.", true);
-}, 300);
-</script>
-</body>
-</html>
-"""
-
-# ─── Widget Principal ────────────────────────────────────────────────────────
 class ChatManualWidget(QWidget):
-    """
-    Manual del Cajero con interfaz del bot_burbuja + tutor integrado.
-    """
+    """Panel del asistente. No abre Chromium ni otra ventana."""
+
     request_dashboard = pyqtSignal()
     chat_closed = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_window = parent
-        # No usamos Qt.Tool ni window flags para que sea un widget hijo real
-        # Esto evita que Windows minimice o parpadee la ventana principal al abrirlo.
-        self.resize(520, 700)
-        self.motor     = ChatManual()
+        self.resize(420, 520)
+        self.motor = ChatManual()
         self._tutor_idx = 0
         self._tutor_activo = False
-        self._tutor_timer  = QTimer(self)
+        self._tutor_timer = QTimer(self)
         self._tutor_timer.setSingleShot(True)
-        self._tutor_timer.timeout.connect(self._tutor_avanzar)
+        self._tutor_timer.timeout.connect(self._tutor_ejecutar_paso)
         self._setup_ui()
 
     def _setup_ui(self):
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setStyleSheet("background: transparent;")
+        self.setObjectName("AsistenteCajero")
+        self.setStyleSheet(
+            "QWidget#AsistenteCajero { background: #0F172A; border: 1px solid #334155; }"
+            "QLabel#AsistenteTitulo { color: #F8FAFC; font-size: 16px; font-weight: 800; background: transparent; border: none; }"
+            "QTextEdit#AsistenteTexto { background: #1E293B; color: #F8FAFC; border: none; font-size: 15px; }"
+            "QLineEdit#AsistenteEntrada { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
+            "border-radius: 8px; padding: 8px; font-size: 15px; }"
+            "QPushButton { background: #1E293B; color: #F8FAFC; border: 1px solid #334155; "
+            "border-radius: 8px; font-weight: 800; padding: 8px 12px; }"
+            "QPushButton#AsistenteEnviar { background: #2563EB; color: white; border: none; }"
+        )
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        lay.setSpacing(0)
+        lay.setContentsMargins(12, 12, 12, 12)
+        lay.setSpacing(8)
 
-        if not _WEBENGINE_AVAILABLE:
-            from PyQt6.QtWidgets import QLabel
-            self.web = QLabel("Chatbot no disponible (Falta QtWebEngine)")
-            self.web.setStyleSheet("color: white; background: red; padding: 10px; border-radius: 5px;")
-            self.web.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lay.addWidget(self.web)
+        cabeza = QHBoxLayout()
+        titulo = QLabel("Asistente")
+        titulo.setObjectName("AsistenteTitulo")
+        cabeza.addWidget(titulo)
+        cabeza.addStretch(1)
+        tutorial = QPushButton("Tutorial")
+        tutorial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        tutorial.clicked.connect(self._empezar_tutor)
+        cerrar = QPushButton("Cerrar")
+        cerrar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        cerrar.clicked.connect(self.cerrar_chat)
+        cabeza.addWidget(tutorial)
+        cabeza.addWidget(cerrar)
+        lay.addLayout(cabeza)
+
+        self.texto = QTextEdit()
+        self.texto.setObjectName("AsistenteTexto")
+        self.texto.setReadOnly(True)
+        self.texto.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        lay.addWidget(self.texto, 1)
+
+        fila = QHBoxLayout()
+        self.entrada = QLineEdit()
+        self.entrada.setObjectName("AsistenteEntrada")
+        self.entrada.setPlaceholderText("Escribí la consulta")
+        self.entrada.returnPressed.connect(self._preguntar)
+        enviar = QPushButton("Enviar")
+        enviar.setObjectName("AsistenteEnviar")
+        enviar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        enviar.clicked.connect(self._preguntar)
+        fila.addWidget(self.entrada, 1)
+        fila.addWidget(enviar)
+        lay.addLayout(fila)
+        self._linea("Asistente", "Escribí una consulta o tocá Tutorial.")
+
+    def _linea(self, quien, mensaje):
+        self.texto.append(f"{quien}: {mensaje}")
+        self.texto.verticalScrollBar().setValue(self.texto.verticalScrollBar().maximum())
+
+    def _preguntar(self):
+        texto = self.entrada.text().strip()
+        if not texto:
             return
+        self.entrada.clear()
+        self._linea("Vos", texto)
+        self._linea("Asistente", self.motor.consultar(texto))
 
-        self.web = QWebEngineView()
-        self.web.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.web.setStyleSheet("background: transparent;")
-        page = self._make_page()
-        webengine_page_transparent(page)
-        self.web.setPage(page)
-        self.web.setHtml(HTML_CHAT, QUrl("about:blank"))
-        lay.addWidget(self.web)
-
-    def _make_page(self):
-        if not _WEBENGINE_AVAILABLE: return None
-        page = create_webengine_page(self.web, self._on_js_message)
-        return page
-
-    def _on_js_message(self, level, message, line, source):
-        """Captura los console.log del HTML para comunicarse con Python."""
-        if message.startswith("query://"):
-            from urllib.parse import unquote
-            texto = unquote(message[len("query://"):])
-            respuesta = self.motor.consultar(texto)
-            self._js(f'recibirRespuesta({json.dumps(respuesta)})')
-
-        elif message.startswith("tutor://next"):
-            self._tutor_ejecutar_paso()
-
-        elif message.startswith("tutor://skip"):
-            self._tutor_activo = False
-            self._tutor_timer.stop()
-
-        elif message.startswith("close://"):
-            self.cerrar_chat()
-
-    def _js(self, code: str):
-        if not _WEBENGINE_AVAILABLE or not self.web or not self.web.page():
-            return
-        self.web.page().runJavaScript(code)
-
-    # ── Tutor ────────────────────────────────────────────────────────────────
-    def _tutor_ejecutar_paso(self):
-        if self._tutor_idx >= len(PASOS_TUTOR):
-            self._js("tutorFin()")
-            self._tutor_activo = False
-            return
-
-        paso  = PASOS_TUTOR[self._tutor_idx]
-        total = len(PASOS_TUTOR)
-        idx   = self._tutor_idx + 1
-        msg   = paso["msg"]
-        espera= paso.get("espera", 3)
-
-        self._js(f'recibirPasoTutor({json.dumps(msg)}, {idx}, {total})')
-
-        self._tutor_idx += 1
-        if self._tutor_idx < total:
-            self._tutor_timer.start(espera * 1000)
-        else:
-            QTimer.singleShot(espera * 1000, lambda: self._js("tutorFin()"))
-
-    def _tutor_avanzar(self):
+    def _empezar_tutor(self):
+        self._tutor_timer.stop()
+        self._tutor_idx = 0
+        self._tutor_activo = True
         self._tutor_ejecutar_paso()
+
+    def _tutor_ejecutar_paso(self):
+        if not self._tutor_activo:
+            return
+        if self._tutor_idx >= len(PASOS_TUTOR):
+            self._tutor_activo = False
+            return
+        paso = PASOS_TUTOR[self._tutor_idx]
+        self._linea("Asistente", paso["msg"])
+        self._tutor_idx += 1
+        if self._tutor_idx < len(PASOS_TUTOR):
+            self._tutor_timer.start(int(paso.get("espera", 3) * 1000))
+        else:
+            self._tutor_activo = False
 
     def actualizar_posicion(self):
         pw = self.parent_window or self.parent()
         if not pw:
             return
-
-        # Ajustar alto dinamicamente para evitar recortes en monitores pequeos (ej. 768p)
-        # Dejamos ~220px libres en la parte inferior para evitar tapar el panel de totales y la botonera
-        margen_inferior = 220
-        target_h = min(700, pw.height() - margen_inferior - 20)
-        self.resize(520, max(300, target_h))
-
-        # Al ser un widget hijo, nos movemos relativo al tamao del padre
-        x = pw.width() - self.width() - 20
-        y = pw.height() - self.height() - margen_inferior
+        margen = 96
+        alto = min(560, max(320, pw.height() - margen - 24))
+        ancho = min(440, max(320, pw.width() - 40))
+        self.resize(ancho, alto)
+        x = pw.width() - self.width() - 16
+        y = pw.height() - self.height() - margen
         self.move(max(0, x), max(0, y))
 
     def abrir_y_desplegar(self):
         self.actualizar_posicion()
         self.show()
         self.raise_()
-        # No usamos activateWindow() porque roba el foco de la ventana padre
-        self._js("setChatOpen(true);")
 
     def cerrar_chat(self):
+        self._tutor_activo = False
+        self._tutor_timer.stop()
         self.hide()
         self.chat_closed.emit()
 
 
-# ─── Test standalone ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = ChatManualWidget()
-    win.setWindowTitle("Manual del Cajero - CobroFacil POS")
-    win.resize(900, 700)
+    win.setWindowTitle("Asistente")
+    win.resize(440, 560)
     win.show()
     sys.exit(qt_exec(app))

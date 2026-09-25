@@ -33,8 +33,12 @@ No partir la clase. No subir los imports internos al tope. No crear `plano.md` a
 
 ## Producción
 
-Los relojes están en `Paso5Terminal.__init__`: reloj 1 s, búsqueda de un solo tiro, foco del escáner 150 ms, stock 5 min si `stock_alerta_activa`, autocierre 1 min si `cierre_auto_activo`.
+Los relojes están en `Paso5Terminal.__init__`: reloj 1 s, búsqueda de un solo tiro, foco del escáner 150 ms, stock 5 min si `stock_alerta_activa`, autocierre 1 min si `cierre_auto_activo`. Si el cajero toca el ticket, la lista o el asistente, el cursor vuelve al buscador a los 2 s. Si deja de escribir en el asistente, también. Un escaneo cierra el asistente y la lista, y carga el producto. F12 hace lo mismo antes de abrir el cobro. El cobro no se toca: es el paso 6.
 
 F7 es `_leer_bascula`. El puerto se lee fuera de la pantalla. Si no lee, deja `0.750*` o `1.250*` en el escáner. El puerto se cierra en el hilo de la lectura. `focusChanged` se engancha una sola vez.
+
+El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la venta. La pantalla queda plana.
+
+El teclado en pantalla no se abre al escribir ni cuando el escáner toma el foco. Se abre si la pantalla es táctil y el cuadro se tocó (`MouseFocusReason`). `teclado_virtual_modo` en `nunca` lo apaga. El botón TECLADO lo abre a mano.
 
 Un código numérico no busca por nombre hasta Enter. `obtener_combos` se recuerda 15 s. Un combo aplicado manda UDP al puerto 37021 y cierra ese socket. El detalle de la caja está en `src/cajero/README.md`, sección Producción.
