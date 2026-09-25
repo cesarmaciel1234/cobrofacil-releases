@@ -3,8 +3,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QLineEdit, QMessageBox, QDialog,
-                             QFormLayout, QDoubleSpinBox, QComboBox,
-                             QGraphicsDropShadowEffect)
+                             QFormLayout, QDoubleSpinBox, QComboBox)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
@@ -59,8 +58,7 @@ class AdminClientes(QWidget):
         self.btn_nuevo.setCursor(Qt.PointingHandCursor)
         self.btn_nuevo.setStyleSheet(f"""
             QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {_CLI['accent']}, stop:1 {_CLI['accent_hover']});
+                background: {_CLI['accent']};
                 color: white; padding: 12px 24px; font-weight: 900; border-radius: 10px; font-size: 13px;
                 border: none;
             }}
@@ -106,11 +104,6 @@ class AdminClientes(QWidget):
         panel_tabla.setStyleSheet(
             f"background: {_CLI['card']}; border: 1px solid {_CLI['border']}; border-radius: 18px;"
         )
-        tbl_shadow = QGraphicsDropShadowEffect(self)
-        tbl_shadow.setBlurRadius(18)
-        tbl_shadow.setColor(QColor(15, 23, 42, 30))
-        tbl_shadow.setOffset(0, 4)
-        panel_tabla.setGraphicsEffect(tbl_shadow)
         pt_lay = QVBoxLayout(panel_tabla)
         pt_lay.setContentsMargins(20, 20, 20, 20)
 

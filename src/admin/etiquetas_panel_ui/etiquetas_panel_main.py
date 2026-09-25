@@ -129,7 +129,7 @@ class AdminEtiquetas(QWidget):
         self.btn_print = QPushButton("🏭 LANZAR IMPRESIÓN GÓNDOLA (PDF)", objectName="btnPrint")
         self.btn_print.clicked.connect(self.generar_pdf)
         self.btn_print.setCursor(Qt.PointingHandCursor)
-        self.btn_print.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #6366f1); color: white; font-size: 14px; font-weight: bold; padding: 12px 24px; border-radius: 8px; border: none;")
+        self.btn_print.setStyleSheet("background: #2563EB; color: white; font-size: 15px; font-weight: bold; padding: 12px 24px; border-radius: 8px; border: none;")
 
         btn_layout.addWidget(self.btn_select_all)
         btn_layout.addStretch()
@@ -208,6 +208,14 @@ class AdminEtiquetas(QWidget):
         self.cargar_productos()
 
     def cargar_productos(self):
+        try:
+            self._llenar_tabla()
+        except Exception as e:
+            self.tabla.blockSignals(False)
+            from src.logger import logger
+            logger.exception("Etiquetas de góndola: %s", e)
+
+    def _llenar_tabla(self):
         txt = self.txt_search.text().strip()
         is_dark = theme_manager.current_theme == "dark"
 
@@ -265,7 +273,11 @@ class AdminEtiquetas(QWidget):
             self.tabla.setItem(i, 2, nom_item)
 
             # Precio
-            pr_item = QTableWidgetItem(f"${p['precio']:.2f}")
+            try:
+                precio_txt = f"${float(p['precio']):.2f}"
+            except (TypeError, ValueError):
+                precio_txt = "$0.00"
+            pr_item = QTableWidgetItem(precio_txt)
             pr_item.setFont(QFont("Segoe UI", 11, QFont.Bold))
             self.tabla.setItem(i, 3, pr_item)
 
@@ -353,6 +365,12 @@ class AdminEtiquetas(QWidget):
         self.actualizar_contador_seleccionados()
 
     def generar_pdf(self):
+        try:
+            self._armar_pdf_gondola()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo generar el PDF: {e}")
+
+    def _armar_pdf_gondola(self):
         rubro = self.txt_rubro.text().strip() or "CARNICERÍA"
         negocio = self.txt_negocio.text().strip() or "MACIEL"
 
@@ -376,8 +394,14 @@ class AdminEtiquetas(QWidget):
         seleccionados = []
         for p_data in self.productos_seleccionados.values():
             p_id = str(p_data["id"])
-            cant_of = float(p_data.get("cant_oferta") or 0)
-            precio_of = float(p_data.get("precio_oferta") or 0)
+            try:
+                cant_of = float(p_data.get("cant_oferta") or 0)
+            except (TypeError, ValueError):
+                cant_of = 0.0
+            try:
+                precio_of = float(p_data.get("precio_oferta") or 0)
+            except (TypeError, ValueError):
+                precio_of = 0.0
             is_db_oferta = (cant_of > 0 and precio_of > 0)
             is_oferta = is_db_oferta or (p_id in self.productos_impresos_ofertas)
             precio_final = precio_of if (is_db_oferta and precio_of > 0) else p_data["precio"]
@@ -409,8 +433,8 @@ class AdminEtiquetas(QWidget):
         dlg.setStyleSheet(f"""
             QDialog {{ background: {dlg_bg}; color: {dlg_fg}; font-family: 'Segoe UI'; font-size: 14px; }}
             QLabel {{ color: {dlg_fg}; }}
-            QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #6366f1); color: white; font-weight: bold; padding: 12px; border-radius: 8px; border: none; font-size: 14px; }}
-            QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #4f46e5); }}
+            QPushButton {{ background: #2563EB; color: white; font-weight: bold; padding: 12px; border-radius: 8px; border: none; font-size: 15px; }}
+            QPushButton:hover {{ background: #1D4ED8; }}
             QLineEdit, QComboBox {{ padding: 10px; border: 1px solid {dlg_brd}; border-radius: 8px; background: {dlg_inp}; color: {dlg_fg}; }}
             QRadioButton, QCheckBox {{ spacing: 10px; font-weight: 500; color: {dlg_fg}; }}
             QRadioButton::indicator, QCheckBox::indicator {{ width: 18px; height: 18px; border: 1px solid {dlg_brd}; border-radius: 9px; background: {dlg_inp}; }}

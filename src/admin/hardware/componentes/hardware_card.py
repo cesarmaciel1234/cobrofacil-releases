@@ -28,7 +28,7 @@ class HardwareCard(QFrame):
         self.setFixedSize(300, 190)
         self.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ffffff, stop:1 #f8fafc);
+                background: #FFFFFF;
                 border: 1px solid #e2e8f0;
                 border-radius: 20px;
             }

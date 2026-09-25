@@ -279,13 +279,7 @@ class Admin0Dashboard(QWidget):
             QScrollBar::handle:vertical { background: #E2E8F0; border-radius: 2px; }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
             QFrame#AdminHero {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0.00 #3B82F6,
-                    stop:0.40 #6366F1,
-                    stop:0.75 #8B5CF6,
-                    stop:1.00 #10B981
-                );
+                background: #1D4ED8;
                 border-radius: 18px;
                 border: none;
             }

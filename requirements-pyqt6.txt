@@ -19,3 +19,8 @@ pyserial
 pymysql
 xlrd
 numpy
+Flask
+reportlab
+qrcode
+sqlalchemy
+bcrypt

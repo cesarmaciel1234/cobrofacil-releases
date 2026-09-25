@@ -69,6 +69,33 @@ def print_document(doc, printer) -> None:
         doc.print_(printer)
 
 
+def abrir_documento_pdf(pdf_path: str, margen_mm: float = 5, resolucion: int = 120):
+    """Arma el PDF sin la impresora de Windows.
+
+    QPrinter busca el plugin printsupport. En el ejecutable ese plugin no va,
+    y Qt cierra el programa al generar la etiqueta.
+    """
+    from PyQt6.QtCore import QMarginsF, QSizeF
+    from PyQt6.QtGui import QPageLayout, QPageSize, QPdfWriter, QTextDocument
+
+    writer = QPdfWriter(pdf_path)
+    writer.setResolution(int(resolucion))
+    writer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+    writer.setPageMargins(
+        QMarginsF(margen_mm, margen_mm, margen_mm, margen_mm),
+        QPageLayout.Unit.Millimeter,
+    )
+    doc = QTextDocument()
+    doc.setDefaultStyleSheet("body { background-color: #ffffff; color: #000000; }")
+    doc.setDocumentMargin(0)
+    ancho = int(writer.width() or 0)
+    alto = int(writer.height() or 0)
+    if ancho < 50 or alto < 50:
+        ancho, alto = 794, 1123
+    doc.setPageSize(QSizeF(float(ancho), float(alto)))
+    return writer, doc
+
+
 def available_printer_names():
     QPrinterInfo = _qprinterinfo()
     if IS_QT6:

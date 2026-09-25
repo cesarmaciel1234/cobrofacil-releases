@@ -2,16 +2,7 @@ import os
 import html
 import shutil
 from datetime import datetime
-from PyQt6.QtGui import QTextDocument, QPageSize
-from PyQt6.QtPrintSupport import QPrinter
-from src.utils.qt_printer import (
-    available_printer_names,
-    print_document,
-    printer_high_resolution,
-    printer_pdf_format,
-    set_page_margins_mm,
-    set_page_orientation_portrait,
-)
+from src.utils.qt_printer import abrir_documento_pdf, print_document
 import barcode
 from barcode.writer import ImageWriter
 
@@ -109,9 +100,6 @@ class EtiquetaRenderer:
 
         html_content = self.generar_html(productos, rubro, negocio)
 
-        doc = QTextDocument()
-        doc.setHtml(html_content)
-
         # ── CARPETA CENTRALIZADA Y ARCHIVO CON TIMESTAMP PARA EVITAR BLOQUEOS ──
         base_dir = os.path.join(self.base_path, "Etiquetas_Impresas")
         os.makedirs(base_dir, exist_ok=True)
@@ -120,18 +108,10 @@ class EtiquetaRenderer:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Gondola_{timestamp}.pdf")
 
-        printer = QPrinter(printer_high_resolution())
-        printer.setOutputFormat(printer_pdf_format())
-        printer.setOutputFileName(pdf_path)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        printer.setResolution(600)
-        # Margen estándar de 2mm para evitar cortes
-        set_page_margins_mm(printer, 2, 2, 2, 2)
-
-        print_document(doc, printer)
-
-        # ── LIBERACIÓN EXPLÍCITA DE MANEJADORES DE ARCHIVO ──
-        del printer
+        writer, doc = abrir_documento_pdf(pdf_path, margen_mm=2, resolucion=120)
+        doc.setHtml(html_content)
+        print_document(doc, writer)
+        del writer
         del doc
 
         self.limpiar_tmp()
@@ -294,22 +274,25 @@ class EtiquetaRenderer:
         """
 
     def generar_barcode(self, codigo, filename_seguro=None):
-        if not os.path.exists(self.tmp_dir):
-            os.makedirs(self.tmp_dir, exist_ok=True)
+        try:
+            if not os.path.exists(self.tmp_dir):
+                os.makedirs(self.tmp_dir, exist_ok=True)
 
-        nombre_archivo = filename_seguro if filename_seguro else "".join(filter(str.isalnum, codigo))
-        barcode_path = os.path.join(self.tmp_dir, nombre_archivo)
-        CODE128 = barcode.get_barcode_class("code128")
-        barcode_img = CODE128(codigo, writer=ImageWriter())
-        filename = barcode_img.save(barcode_path, {
-            "write_text": True,
-            "module_height": 2.5,
-            "module_width": 0.16,
-            "quiet_zone": 0.5,
-            "font_size": 5.5,
-            "text_distance": 2.2
-        })
-        return "file:///" + os.path.abspath(filename).replace("\\", "/")
+            nombre_archivo = filename_seguro if filename_seguro else "".join(filter(str.isalnum, str(codigo)))
+            barcode_path = os.path.join(self.tmp_dir, nombre_archivo)
+            CODE128 = barcode.get_barcode_class("code128")
+            barcode_img = CODE128(str(codigo), writer=ImageWriter())
+            filename = barcode_img.save(barcode_path, {
+                "write_text": True,
+                "module_height": 2.5,
+                "module_width": 0.16,
+                "quiet_zone": 0.5,
+                "font_size": 5.5,
+                "text_distance": 2.2
+            })
+            return "file:///" + os.path.abspath(filename).replace("\\", "/")
+        except Exception:
+            return ""
 
     def dibujar_flama(self, c, fx, fy, scale=1.0):
         # Dibuja una flama vectorial estilizada de alto impacto
@@ -846,19 +829,7 @@ class EtiquetaRenderer:
         os.makedirs(base_dir, exist_ok=True)
         pdf_path = os.path.join(base_dir, "Folleto_Ofertas.pdf")
 
-        printer = QPrinter(printer_high_resolution())
-        printer.setOutputFormat(printer_pdf_format())
-        printer.setOutputFileName(pdf_path)
-        printer.setResolution(300)
-        printer.setFullPage(True)
-        set_page_margins_mm(printer, 10, 10, 10, 10)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        set_page_orientation_portrait(printer)
-
-        doc = QTextDocument()
-        from PyQt6.QtCore import QSizeF
-        doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
-        doc.setDocumentMargin(0)
+        writer, doc = abrir_documento_pdf(pdf_path, margen_mm=10, resolucion=120)
         fecha = datetime.now().strftime("%d/%m/%Y")
 
         html_pages = []
@@ -1033,9 +1004,9 @@ class EtiquetaRenderer:
         """
 
         doc.setHtml(full_html)
-        print_document(doc, printer)
+        print_document(doc, writer)
 
-        del printer
+        del writer
         del doc
         self.limpiar_tmp()
         return pdf_path
@@ -1082,19 +1053,7 @@ class EtiquetaRenderer:
         stamp = datetime.now().strftime("%Y%m%d_%H%M")
         pdf_path = os.path.join(base_dir, f"Catalogo_Clientes_{stamp}.pdf")
 
-        printer = QPrinter(printer_high_resolution())
-        printer.setOutputFormat(printer_pdf_format())
-        printer.setOutputFileName(pdf_path)
-        printer.setResolution(300)
-        printer.setFullPage(True)
-        set_page_margins_mm(printer, 10, 10, 10, 10)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        set_page_orientation_portrait(printer)
-
-        doc = QTextDocument()
-        from PyQt6.QtCore import QSizeF
-        doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
-        doc.setDocumentMargin(0)
+        writer, doc = abrir_documento_pdf(pdf_path, margen_mm=10, resolucion=120)
         fecha = datetime.now().strftime("%d/%m/%Y")
         negocio_e = html.escape(str(negocio or "").upper())
         titulo_e = html.escape(str(titulo_folleto or "CATÁLOGO"))
@@ -1239,9 +1198,9 @@ class EtiquetaRenderer:
 
         full_html = f"<html><head><style>body {{ margin:0; padding:0; background:white; }}</style></head><body>{''.join(html_pages)}</body></html>"
         doc.setHtml(full_html)
-        print_document(doc, printer)
+        print_document(doc, writer)
 
-        del printer
+        del writer
         del doc
         self.limpiar_tmp()
         return pdf_path
@@ -1261,20 +1220,7 @@ class EtiquetaRenderer:
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(base_dir, f"Etiquetas_Personalizadas_{timestamp}.pdf")
 
-        printer = QPrinter(printer_high_resolution())
-        printer.setOutputFormat(printer_pdf_format())
-        printer.setOutputFileName(pdf_path)
-        printer.setResolution(300)
-        printer.setFullPage(True)
-        set_page_margins_mm(printer, 5, 5, 5, 5)
-        printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        set_page_orientation_portrait(printer)
-
-        doc = QTextDocument()
-        doc.setDefaultStyleSheet("body { background-color: #ffffff; color: #000000; }")
-        from PyQt6.QtCore import QSizeF
-        doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.DevicePixel).size()))
-        doc.setDocumentMargin(0)
+        writer, doc = abrir_documento_pdf(pdf_path, margen_mm=5, resolucion=120)
         fecha = datetime.now().strftime("%d/%m/%Y")
 
         # Determinar dimensiones de la grilla
@@ -1309,8 +1255,11 @@ class EtiquetaRenderer:
                             if not filename_seguro: filename_seguro = "temp_code"
                             barcode_img_url = self.generar_barcode(codigo_real, filename_seguro)
 
-                        nombre = html.escape(str(p['nombre']).upper())
-                        precio = f"{float(p['precio']):.2f}"
+                        nombre = html.escape(str(p.get('nombre') or "").upper())
+                        try:
+                            precio = f"{float(p.get('precio') or 0):.2f}"
+                        except (TypeError, ValueError):
+                            precio = "0.00"
                         unidad = html.escape(str(p.get('unidad', 'UN')).upper())
 
                         is_oferta = p.get("is_oferta", False)
@@ -1457,9 +1406,9 @@ class EtiquetaRenderer:
         """
 
         doc.setHtml(full_html)
-        print_document(doc, printer)
+        print_document(doc, writer)
 
-        del printer
+        del writer
         del doc
         self.limpiar_tmp()
         return pdf_path

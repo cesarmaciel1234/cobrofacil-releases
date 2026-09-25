@@ -30,7 +30,7 @@ class AdminCard(QFrame):
             }}
             AdminCard:hover {{
                 background-color: #F8FAFC;
-                border-color: {{txt_dark}};
+                border: 2px solid {txt_dark};
             }}
         """)
         self.setFixedSize(190, 160)
@@ -50,12 +50,12 @@ class AdminCard(QFrame):
         h_icon.addStretch()
 
         lbl_title = QLabel(title)
-        lbl_title.setStyleSheet("font-weight: 800; font-size: 13px; color: #0F172A; background: transparent; border: none;")
+        lbl_title.setStyleSheet("font-weight: 800; font-size: 15px; color: #0F172A; background: transparent; border: none;")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_title.setWordWrap(True)
 
         lbl_sub = QLabel(sub)
-        lbl_sub.setStyleSheet("font-weight: 600; font-size: 10px; color: #64748B; background: transparent; border: none;")
+        lbl_sub.setStyleSheet("font-weight: 700; font-size: 13px; color: #1E293B; background: transparent; border: none;")
         lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_sub.setWordWrap(True)
 

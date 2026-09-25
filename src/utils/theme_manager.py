@@ -41,13 +41,13 @@ class ThemeManager(QObject):
     def get_color(self, element):
         palettes = {
             "light": {
-                "nav_bg": "rgba(255, 255, 255, 0.85)",
-                "nav_border": "#E5E5EA",
-                "nav_brand": "#1D1D1F",
-                "nav_text": "#86868B",
-                "app_bg": "#F5F5F7",
-                "text_title": "#1D1D1F",
-                "text_desc": "#86868B",
+                "nav_bg": "#FFFFFF",
+                "nav_border": "#CBD5E1",
+                "nav_brand": "#0F172A",
+                "nav_text": "#1E293B",
+                "app_bg": "#F8FAFC",
+                "text_title": "#0F172A",
+                "text_desc": "#1E293B",
                 "btn_bg": "#FFFFFF",
                 "btn_text": "#007AFF",
                 "btn_border": "#E5E5EA",
@@ -60,7 +60,7 @@ class ThemeManager(QObject):
                 "stock_agotado": "#DC2626",
                 "bg_stock_agotado": "#FEF2F2",
                 "texto_primario": "#0F172A",
-                "texto_secundario": "#64748b",
+                "texto_secundario": "#1E293B",
                 "oferta": "#EA580C",
                 "tipo_producto": "#2563EB",
                 "bg_fila_impar": "#F8FAFC",
@@ -70,10 +70,10 @@ class ThemeManager(QObject):
                 "nav_bg": "#020617",
                 "nav_border": "#1E293B",
                 "nav_brand": "#F8FAFC",
-                "nav_text": "#94A3B8",
+                "nav_text": "#E2E8F0",
                 "app_bg": "#0B0E14",
                 "text_title": "#F8FAFC",
-                "text_desc": "#94A3B8",
+                "text_desc": "#E2E8F0",
                 "btn_bg": "#1E293B",
                 "btn_text": "#F8FAFC",
                 "btn_border": "#334155",
@@ -86,7 +86,7 @@ class ThemeManager(QObject):
                 "stock_agotado": "#EF4444",
                 "bg_stock_agotado": "#7F1D1D",
                 "texto_primario": "#F8FAFC",
-                "texto_secundario": "#94A3B8",
+                "texto_secundario": "#E2E8F0",
                 "oferta": "#F97316",
                 "tipo_producto": "#3B82F6",
                 "bg_fila_impar": "#1E293B",
@@ -124,10 +124,10 @@ class ThemeManager(QObject):
         hdr_bg = "#F1F5F9" if self.current_theme == "light" else "#1E293B"
 
         widget.setStyleSheet(f"""
-            QWidget                     {{ background-color: {bg}; color: {fg}; font-family: 'Segoe UI', sans-serif; font-size: 13px; }}
+            QWidget                     {{ background-color: {bg}; color: {fg}; font-family: 'Segoe UI', sans-serif; font-size: 15px; font-weight: 600; }}
             QFrame                      {{ background: transparent; border: none; color: {fg}; }}
             QFrame#card                 {{ background: {btn}; border: 1px solid {brd}; border-radius: 8px; }}
-            QLabel                      {{ background: transparent; color: {fg}; border: none; }}
+            QLabel                      {{ background: transparent; color: {fg}; border: none; font-size: 15px; font-weight: 700; }}
             QPushButton                 {{ background-color: {btn}; color: {btn_txt}; border: 1px solid {brd}; border-radius: 6px; padding: 8px 14px; font-weight: bold; }}
             QPushButton:hover           {{ background-color: {brd}; }}
             QPushButton:pressed         {{ background-color: {fg2}; color: {btn}; }}

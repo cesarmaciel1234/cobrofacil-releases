@@ -39,14 +39,6 @@ class AIBubble(QPushButton):
             }
         """)
 
-        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-        from PyQt6.QtGui import QColor
-        self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(18)
-        self.shadow.setColor(QColor(168, 85, 247, 110))
-        self.shadow.setOffset(0, 0)
-        self.setGraphicsEffect(self.shadow)
-
         # Timer para animación de pulsación sutil
         self.pulse_timer = QTimer(self)
         self.pulse_timer.timeout.connect(self.animate_pulse)

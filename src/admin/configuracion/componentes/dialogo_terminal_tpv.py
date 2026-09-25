@@ -82,9 +82,8 @@ class DialogoTerminalTPV(QDialog):
         btn_autoconfig.setCursor(QCursor(Qt.PointingHandCursor))
         btn_autoconfig.setFixedHeight(38)
         btn_autoconfig.setStyleSheet(
-            "QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
-            "stop:0 #7C3AED, stop:1 #4F46E5); color: white; font-weight: 800; "
-            "font-size: 13px; padding: 0 18px; border-radius: 6px; border: none; }"
+            "QPushButton { background: #5B21B6; color: white; font-weight: 800; "
+            "font-size: 15px; padding: 0 18px; border-radius: 6px; border: none; }"
             "QPushButton:hover { background: #6D28D9; }"
         )
         btn_autoconfig.clicked.connect(self._buscar_devices_mp)

@@ -29,84 +29,13 @@ echo =====================================================================
 if exist "..\build" rd /s /q "..\build"
 if exist "..\dist\CobroFacil_POS" rd /s /q "..\dist\CobroFacil_POS"
 
-cd ..
-python -m PyInstaller --noconfirm --onedir --windowed --name "CobroFacil_POS" ^
-  --exclude-module "rembg" ^
-  --exclude-module "scipy" ^
-  --exclude-module "src.carteleria.creador_png.convertir_imagen" ^
-  --hidden-import "reportlab.graphics.barcode.code93" ^
-  --hidden-import "reportlab.graphics.barcode.code128" ^
-  --hidden-import "reportlab.graphics.barcode.code39" ^
-  --hidden-import "reportlab.graphics.barcode.eanbc" ^
-  --hidden-import "lxml" ^
-  --hidden-import "html5lib" ^
-  --hidden-import "openpyxl" ^
-  --hidden-import "win32com" ^
-  --hidden-import "win32com.client" ^
-  --hidden-import "PyQt6.QtWebEngineWidgets" ^
-  --hidden-import "PyQt6.QtWebEngineCore" ^
-  --collect-all "PyQt6.QtWebEngineCore" ^
-  --collect-all "PyQt6.QtWebEngineWidgets" ^
-  --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_qt_dll_path.py" ^
-  --runtime-hook "01_Compiladores_y_Ejecutables/rthooks/pyi_rth_pkg_metadata.py" ^
-  --copy-metadata "werkzeug" ^
-  --copy-metadata "flask" ^
-  --copy-metadata "jinja2" ^
-  --copy-metadata "markupsafe" ^
-  --copy-metadata "itsdangerous" ^
-  --copy-metadata "blinker" ^
-  --copy-metadata "click" ^
-  --collect-all "flask" ^
-  --collect-all "werkzeug" ^
-  --collect-submodules "src.admin" ^
-  --collect-submodules "src.cajero" ^
-  --collect-submodules "src.jefe" ^
-  --collect-submodules "src.utils" ^
-  --collect-submodules "src.base_de_datos" ^
-  --collect-submodules "src.inicio_y_perfiles" ^
-  --collect-submodules "src.central_red_global" ^
-  --collect-submodules "src.ui_global" ^
-  --hidden-import "src.cajero.paso6_cobro.transferencia_en_cobro.panel" ^
-  --hidden-import "src.cajero.paso6_cobro.transferencia_en_cobro.cuenta" ^
-  --hidden-import "src.cajero.paso6_cobro.aviso_en_cobro.toast" ^
-  --hidden-import "src.cajero.paso6_cobro.tarjeta_en_cobro.panel" ^
-  --hidden-import "src.cajero.paso6_cobro.tarjeta_en_cobro.envio" ^
-  --hidden-import "src.cajero.paso6_cobro.qr_en_cobro.panel" ^
-  --hidden-import "src.cajero.paso6_cobro.mixto_en_cobro.panel" ^
-  --hidden-import "src.cajero.paso6_cobro.mixto_en_cobro.confirmar" ^
-  --hidden-import "src.cajero.paso6_cobro.monto_en_cobro.panel" ^
-  --hidden-import "src.admin.mercadopago.historial.archivo" ^
-  --hidden-import "src.admin.mercadopago.historial.sincronizar" ^
-  --hidden-import "src.services.mp_escucha" ^
-  --hidden-import "src.cajero.paso6_cobro.vinculo_mp.libro" ^
-  --hidden-import "src.cajero.paso6_cobro.qr_en_cobro.pedido" ^
-  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.api_client" ^
-  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.point_service" ^
-  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.polling_service" ^
-  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.ui_dialogs" ^
-  --hidden-import "src.utils.dinero" ^
-  --hidden-import "src.admin.mercadopago.mercadopago_main" ^
-  --hidden-import "src.admin.mercadopago.componentes.mp_polling_thread" ^
-  --collect-submodules "src.carteleria" ^
-  --collect-submodules "src.motor_descuentos" ^
-  --hidden-import "src.motor_descuentos.vistas.dialog_gestor_publicidad" ^
-  --hidden-import "src.motor_descuentos.vistas.ofertas_main" ^
-  --collect-submodules "src.services" ^
-  --hidden-import "src.carteleria.creador_png.app" ^
-  --hidden-import "src.carteleria.creador_png.servidor" ^
-  --hidden-import "flask" ^
-  --hidden-import "jinja2" ^
-  --hidden-import "werkzeug" ^
-  --add-data "src/ui_components;src/ui_components" ^
-  --add-data "src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia;src/cajero/paso5_terminal/componentes_paso5_terminal/apariencia" ^
-  --add-data "src/assets;src/assets" ^
-  --add-data "src/carteleria/assets;src/carteleria/assets" ^
-  --add-data "build/tv_cara.bin;." ^
-  --add-data "src/carteleria/creador_png/templates;src/carteleria/creador_png/templates" ^
-  --add-data "src/carteleria/creador_png/static;src/carteleria/creador_png/static" ^
-  --add-data "Catalogos;Catalogos" ^
-  main.py
-
+cd /d "%~dp0\..\.."
+python 01_Compiladores_y_Ejecutables\empaquetar_pos.py
+if errorlevel 1 (
+  echo FALLO el empaquetado. Revisar requirements.txt y empaquetar_pos.py
+  pause
+  exit /b 1
+)
 echo.
 echo Compilando worker Creador PNG (recorte IA)...
 python -m PyInstaller --noconfirm --onedir --console --name "Creador_PNG_Worker" ^
@@ -123,6 +52,7 @@ echo.
 echo =====================================================================
 echo PASO 2: EMPAQUETANDO ZIP DE RELEASE
 echo =====================================================================
+cd /d "%~dp0\.."
 python prepare_mariadb_release.py
 python package_release_zip.py
 

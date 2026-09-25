@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QApplication, QSizePolicy, QStackedWidget
 )
 from PyQt6.QtCore import Qt, QTimer, QEvent, QPropertyAnimation, QEasingCurve
-from PyQt6.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent
+from PyQt6.QtGui import QFont, QIcon, QPixmap, QColor, QKeyEvent, QKeySequence, QShortcut
 from src.base_de_datos.database import db_manager
 from src.config import config
 from src.hardware.cash_drawer import drawer_manager
@@ -309,6 +309,8 @@ class Paso6Cobro(QDialog):
         self.panel_mixto = PanelMixtoCobro(self)
         self.panel_mixto.cambio.connect(self._tomar_mixto)
         self.panel_mixto.aviso.connect(self._avisar)
+        for caja in self.panel_mixto.campos():
+            caja.installEventFilter(self)
         content_lay.addWidget(self.panel_mixto)
         from src.cajero.paso6_cobro.monto_en_cobro.panel import PanelMontoCobro
         self.panel_monto = PanelMontoCobro(self)
@@ -324,6 +326,9 @@ class Paso6Cobro(QDialog):
         self.espera_point = EsperaPoint(left_panel)
         self._point_en_curso = False
         self._emergencia_pendiente = False
+        self._atajo_f9 = QShortcut(QKeySequence(Qt.Key.Key_F9), self)
+        self._atajo_f9.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._atajo_f9.activated.connect(self._emergencia)
 
         self.aviso_monto = QLabel("INGRESÁ EL MONTO RECIBIDO")
         self.aviso_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1395,7 +1400,11 @@ class Paso6Cobro(QDialog):
         if not hasattr(self, 'txt_pago') or not hasattr(self, 'txt_otro') or not hasattr(self, 'txt_desc') or not hasattr(self, 'txt_rec'):
             return super().eventFilter(watched, event)
 
-        if watched in [self.txt_pago, self.txt_otro, self.txt_desc, self.txt_rec] and event.type() == QEvent.Type.KeyPress:
+        campos = [self.txt_pago, self.txt_otro, self.txt_desc, self.txt_rec]
+        mixto = getattr(self, "panel_mixto", None)
+        if mixto is not None:
+            campos.extend(mixto.campos())
+        if watched in campos and event.type() == QEvent.Type.KeyPress:
             k = event.key()
             if getattr(self, "stack", None) and self.stack.currentIndex() == 0 and es_flecha(k):
                 marcar_tarjeta(self, metodo_con_flecha(self, k))
@@ -1426,6 +1435,9 @@ class Paso6Cobro(QDialog):
                 return True
             elif k == Qt.Key.Key_F10:
                 self._elegir_cierre("fiscal")
+                return True
+            elif k == Qt.Key.Key_F9:
+                self._emergencia()
                 return True
 
         return super().eventFilter(watched, event)
