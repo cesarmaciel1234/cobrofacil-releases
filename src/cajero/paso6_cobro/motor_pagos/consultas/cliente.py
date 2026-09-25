@@ -1,10 +1,9 @@
-from src.repositories.cliente_repository import ClienteRepository
-
-
 def obtener_cliente(cliente_id):
     if not cliente_id:
         return None
-    c = ClienteRepository.obtener_por_id(cliente_id)
+    from src.clientes_fiado.cerebro.cerebro import cerebro
+
+    c = cerebro.obtener(cliente_id)
     return dict(c) if c else None
 
 

@@ -100,7 +100,7 @@ El teclado en pantalla no se abre al escribir ni al tomar el foco el escáner. S
 
 ### Cobro
 
-`_abrir` el flujo de clientes y `_abrir_fiado_express_original` usan `while True` para los dos diálogos. Si el cajero cancela, hacen `return`. No quedan girando solos.
+Fiado y Clientes se piden en `HojaCuentaCobro`, en la misma hoja que la espera de la tarjeta. No abren la ventana oscura. Cancelar vuelve a los medios.
 
 La venta se escribe en `persistir_cobro`, que llama `db_manager.guardar_venta_completa`. Cabecera, renglones, stock y fiado van en esa transacción. El plano está en `src/base_de_datos/plano.md`.
 
@@ -114,7 +114,9 @@ Un código numérico no dispara la búsqueda por nombre. Esa búsqueda espera 16
 
 `_evaluar_combos`, cuando aplica un combo, manda un UDP `COMBO_TRIGGERED` al broadcast, puerto 37021, y cierra ese socket.
 
-F12 abre el cobro sin leer la tabla `clientes`. Esa lista se carga la primera vez que se abre Fiado o Clientes (`_asegurar_lista_clientes`). `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
+F12 abre el cobro sin leer la tabla `clientes`. Esa lista se carga la primera vez que se abre Fiado o Clientes (`_asegurar_lista_clientes`, que llama `cerebro.listar`). Fiado y Clientes autorizan en `src/clientes_fiado` y solo entonces mandan la orden ok al cobro. El plano está en `src/clientes_fiado/plano.md`. `_pintar_luz_tpv` lee el config una vez. `_tpv_point_listo` y `_tpv_qr_listo` siguen leyendo el config cada uno cuando se cobra con Point o QR. Con la luz en rojo, Enter llama `_guardar_sin_tpv`: guarda efectivo, tarjeta, transferencia, QR y mixto, sin Point, sin espera de transferencia y sin QR en vivo. Fiado y clientes siguen pidiendo el cliente. F9 no está. Con la luz en verde, Enter no registra mientras se espera: sale el cartel rojo. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Llega aunque el cursor esté en el monto o en el mixto. Si el Point está esperando, suelta esa espera y guarda.
+
+El redondeo es automático. `redondear_dinero`, en `src/utils/dinero.py`, deja cada monto en dos centavos con `Decimal` y `ROUND_HALF_UP`. El total del cobro es la suma de los subtotales del ticket, redondeada en `finalizar_venta`. No se toma del rótulo grande. `recargar_total_final` vuelve a redondear después de F3 y F4. Al guardar, `armar_resultado_venta` y `persistir_cobro` redondean otra vez. No lo reemplaces por `round` de float. La nota completa está en `paso6_cobro/punta del piramide.md`, sección Redondeo.
 
 F1 imprime el ticket. F2 dice «sin ticket» y cierra la venta sin imprimir. F10 imprime el fiscal si `facturacion_afip_global` está prendido. Si todavía se espera la tarjeta, la transferencia o el QR, esas tres teclas no cierran: `_elegir_cierre` avisa una vez y queda elegido para cuando pague. Si no se tocó ninguna, al pagar se imprime. Si no hay espera, cierran en el momento. Un segundo clic de la misma tecla no repite el cartel. Si el cliente pide el ticket después de F2, F1 vuelve a imprimir.
 

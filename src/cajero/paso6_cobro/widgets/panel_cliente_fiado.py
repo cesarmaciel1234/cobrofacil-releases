@@ -96,10 +96,10 @@ class PanelClienteFiado(QWidget):
 
     def cargar_clientes_abono(self):
         """Solo clientes con deuda (F6 abono)."""
-        from src.repositories.cliente_repository import ClienteRepository
+        from src.clientes_fiado.cerebro.cerebro import cerebro
 
         self.cmb.clear()
-        res = ClienteRepository.obtener_clientes_con_deuda()
+        res = cerebro.listar_con_deuda()
         if res:
             for r in res:
                 self.cmb.addItem(r["nombre"], userData=r)

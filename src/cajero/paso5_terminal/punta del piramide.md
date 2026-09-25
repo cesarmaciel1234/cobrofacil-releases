@@ -42,3 +42,5 @@ El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la ven
 El teclado en pantalla no se abre al escribir ni cuando el escáner toma el foco. Se abre si la pantalla es táctil y el cuadro se tocó (`MouseFocusReason`). `teclado_virtual_modo` en `nunca` lo apaga. El botón TECLADO lo abre a mano.
 
 Un código numérico no busca por nombre hasta Enter. `obtener_combos` se recuerda 15 s. Un combo aplicado manda UDP al puerto 37021 y cierra ese socket. El detalle de la caja está en `src/cajero/README.md`, sección Producción.
+
+El total que pasa al cobro lo calcula `finalizar_venta`: suma la columna de subtotales con `parse_float_safe` y la cierra `redondear_dinero`. No usa el texto del total grande. `redondear_items_carrito` deja precio y subtotal en dos centavos. `actualizar_totales` usa la misma suma para lo que se ve en la venta. `fmt_moneda_sin_centavos` pinta con dos decimales y separador argentino. El nombre viejo se queda. El redondeo de la venta está en `paso6_cobro/punta del piramide.md`, sección Redondeo.

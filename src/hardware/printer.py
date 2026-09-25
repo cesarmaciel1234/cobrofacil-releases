@@ -493,28 +493,28 @@ class PosPrinter:
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 
-    def imprimir_estado_deuda(self, cliente_nombre, dni, deuda_actual, usuario):
-        """ Imprime el estado actual de la cuenta corriente de un cliente """
+    def imprimir_saldo_fiado(self, cliente_nombre, saldo_anterior, credito, saldo_restante):
+        """Ticket del cajero: saldo anterior, crédito y saldo restante."""
+        def linea(etiqueta, valor):
+            monto = f"${float(valor or 0):,.2f}"
+            hueco = 32 - len(etiqueta) - len(monto)
+            if hueco < 1:
+                return f"{etiqueta}\n{monto}\n"
+            return f"{etiqueta}{' ' * hueco}{monto}\n"
+
         data = bytearray()
-        data.extend(ESC + b'\x40') # Reset
+        data.extend(ESC + b'\x40')
         data.extend(ALIGN_CENTER)
         data.extend(BOLD_ON)
         data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
-        data.extend(b"ESTADO DE CUENTA CORRIENTE\n")
+        data.extend(f"{cliente_nombre}\n".encode('cp850', errors='replace'))
         data.extend(BOLD_OFF)
-        data.extend(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n".encode('cp850'))
-        data.extend(f"Operador: {usuario}\n".encode('cp850', errors='replace'))
         data.extend(b"--------------------------------\n")
-
         data.extend(ALIGN_LEFT)
-        data.extend(f"CLIENTE: {cliente_nombre}\n".encode('cp850', errors='replace'))
-        if dni:
-            data.extend(f"DNI/CUIT: {dni}\n".encode('cp850', errors='replace'))
-        data.extend(b"\n")
-
-        data.extend(ALIGN_CENTER)
+        data.extend(linea("Saldo anterior", saldo_anterior).encode('cp850', errors='replace'))
+        data.extend(linea("Credito", credito).encode('cp850', errors='replace'))
         data.extend(BOLD_ON)
-        data.extend(f"DEUDA ACTUAL: ${deuda_actual:,.2f}\n".encode('cp850'))
+        data.extend(linea("Saldo", saldo_restante).encode('cp850', errors='replace'))
         data.extend(BOLD_OFF)
         data.extend(b"--------------------------------\n")
         data.extend(b"\n\n\n\n\n")

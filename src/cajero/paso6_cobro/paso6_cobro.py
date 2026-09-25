@@ -324,6 +324,10 @@ class Paso6Cobro(QDialog):
         from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro, EsperaPoint
         self.aviso_toast = AvisoCobro(left_panel)
         self.espera_point = EsperaPoint(left_panel)
+        from src.clientes_fiado.interfaz.cobro.hoja import HojaCuentaCobro
+        self.hoja_cuenta = HojaCuentaCobro(left_panel)
+        self.hoja_cuenta.listo.connect(self._cuenta_lista)
+        self.hoja_cuenta.cancelado.connect(self._cuenta_cancelada)
         self._point_en_curso = False
         self._emergencia_pendiente = False
         self._atajo_f9 = QShortcut(QKeySequence(Qt.Key.Key_F9), self)
@@ -630,9 +634,11 @@ class Paso6Cobro(QDialog):
                 self.txt_pago.setFocus()
 
         if key == "Clientes":
+            self.stack.setCurrentIndex(1)
             self._activar_cliente_express()
             return
         elif key == "Fiado":
+            self.stack.setCurrentIndex(1)
             self._activar_fiado_express()
             return
         else:
@@ -731,7 +737,8 @@ class Paso6Cobro(QDialog):
         elif key == "Clientes":
             if metodo_previo != "Clientes":
                 self._revertir_tras_fiado = metodo_previo or "Efectivo"
-            self.lbl_input1.setText("MONTO A FIAR ($):")
+            self.lbl_input1.hide()
+            self.txt_pago.hide()
             self.lbl_input2.hide()
             self.txt_otro.hide()
             self.lbl_cliente.hide()
@@ -743,7 +750,8 @@ class Paso6Cobro(QDialog):
         elif key == "Fiado":
             if metodo_previo != "Fiado":
                 self._revertir_tras_fiado = metodo_previo or "Efectivo"
-            self.lbl_input1.setText("MONTO A FIAR ($):")
+            self.lbl_input1.hide()
+            self.txt_pago.hide()
             self.lbl_input2.hide()
             self.txt_otro.hide()
             self.lbl_cliente.hide()
@@ -781,6 +789,8 @@ class Paso6Cobro(QDialog):
                 QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
+        if key not in ("Fiado", "Clientes") and hasattr(self, "hoja_cuenta"):
+            self.hoja_cuenta.ocultar()
         if key != "Transferencia" and hasattr(self, "btn_aviso_mp"):
             self.btn_aviso_mp.hide()
         if key != "Transferencia" and hasattr(self, "panel_alias"):
@@ -797,6 +807,9 @@ class Paso6Cobro(QDialog):
         if key == "Transferencia":
             self.setFocus()
             return
+        if key in ("Fiado", "Clientes"):
+            self.setFocus()
+            return
         if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
             self.setFocus()
             return
@@ -809,9 +822,9 @@ class Paso6Cobro(QDialog):
             return
         self._clientes_cargados = True
         try:
-            filas = db_manager.execute_query(
-                "SELECT id, nombre, limite_credito, deuda_actual FROM clientes ORDER BY nombre ASC"
-            ) or []
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            filas = cerebro.listar()
         except Exception:
             filas = []
         self.lista_clientes = filas
@@ -826,122 +839,79 @@ class Paso6Cobro(QDialog):
         self.cmb_cliente.blockSignals(False)
 
     def _activar_cliente_express(self):
-        """Clic en tarjeta Clientes → resalta y abre Cliente Express."""
-        rev = self.current_metodo if self.current_metodo != "Clientes" else "Efectivo"
+        """Clic en Clientes: la misma hoja del cobro, no una ventana oscura."""
+        if self.current_metodo != "Clientes":
+            self._revertir_tras_fiado = self.current_metodo or "Efectivo"
+        self.stack.setCurrentIndex(1)
         self.set_metodo("Clientes")
-        self._abrir_cliente_express(rev)
+        self._mostrar_hoja_cuenta("Clientes")
 
     def _abrir_cliente_express(self, revertir_a="Efectivo"):
-        """Cliente Express en 2 ventanas."""
-        from PyQt6.QtWidgets import QDialog
-        from src.cajero.paso6_cobro.widgets.cliente_express import (
-            DialogoClienteExpressPaso1,
-            DialogoClienteExpressPaso2,
-        )
-
-        rev = revertir_a if revertir_a != "Clientes" else getattr(self, "_revertir_tras_fiado", "Efectivo")
-        terminal = self.parent()
-        self._asegurar_lista_clientes()
-        self._fiado_flujo_activo = True
-
-        cliente_ok = None
-        dni_ref = ""
-
-        while True:
-            dlg1 = DialogoClienteExpressPaso1(self.total_final, self)
-            if qt_exec(dlg1) != QDialog.DialogCode.Accepted:
-                self._fiado_flujo_activo = False
-                self._fiado_cliente_id = None
-                self.set_metodo(rev)
-                return
-
-            cliente_ok = dlg1.cliente
-            nombre_ref = getattr(dlg1, "nombre_ref", "")
-
-            dlg2 = DialogoClienteExpressPaso2(
-                self.total_final, cliente_ok, nombre_ref, terminal
-            )
-            res2 = qt_exec(dlg2)
-
-            if res2 == QDialog.DialogCode.Accepted:
-                self.current_metodo = "Clientes"
-                self._fiado_cliente_id = dlg2.cliente_id
-                idx = self.cmb_cliente.findData(dlg2.cliente_id)
-                if idx >= 0:
-                    self.cmb_cliente.setCurrentIndex(idx)
-                self.txt_pago.setText(self._monto(self.total_final))
-                self._fiado_flujo_activo = False
-                QTimer.singleShot(80, lambda: self.finalizar(imprimir=False))
-                return
-
-            if getattr(dlg2, "reintentar_dni", False):
-                continue
-
-            self._fiado_flujo_activo = False
-            self._fiado_cliente_id = None
-            self.set_metodo(rev)
+        """Cliente en la hoja del cobro. El nombre se pide dos veces."""
+        if self.current_metodo != "Clientes":
+            self._revertir_tras_fiado = revertir_a if revertir_a != "Clientes" else "Efectivo"
+            self._activar_cliente_express()
             return
+        self._mostrar_hoja_cuenta("Clientes")
 
     def _activar_fiado_express(self):
-        """Clic en tarjeta Fiado → resalta y abre Fiado Express."""
-        rev = self.current_metodo if self.current_metodo != "Fiado" else "Efectivo"
+        """Clic en Fiado: la misma hoja del cobro, no una ventana oscura."""
+        if self.current_metodo != "Fiado":
+            self._revertir_tras_fiado = self.current_metodo or "Efectivo"
+        self.stack.setCurrentIndex(1)
         self.set_metodo("Fiado")
-        self._abrir_fiado_express_original(rev)
+        self._mostrar_hoja_cuenta("Fiado")
 
     def _abrir_fiado_express(self, revertir_a="Efectivo"):
-        """Abre el flujo de Fiado Express."""
+        """Abre el fiado en la hoja del cobro."""
         return self._abrir_fiado_express_original(revertir_a)
 
     def _abrir_fiado_express_original(self, revertir_a="Efectivo"):
-        """Fiado Express original."""
-        from PyQt6.QtWidgets import QDialog
-        from src.cajero.paso6_cobro.widgets.fiado_express import (
-            DialogoFiadoExpressPaso1,
-            DialogoFiadoExpressConfirmacion,
-        )
+        """Fiado en la hoja del cobro. El DNI se pide dos veces."""
+        if self.current_metodo != "Fiado":
+            self._revertir_tras_fiado = revertir_a if revertir_a != "Fiado" else "Efectivo"
+            self._activar_fiado_express()
+            return
+        self._mostrar_hoja_cuenta("Fiado")
 
-        rev = revertir_a if revertir_a != "Fiado" else getattr(self, "_revertir_tras_fiado", "Efectivo")
-        terminal = self.parent()
+    def _reabrir_cuenta(self):
+        if self.current_metodo == "Clientes":
+            self._abrir_cliente_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+        else:
+            self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+
+    def _mostrar_hoja_cuenta(self, modo):
         self._asegurar_lista_clientes()
         self._fiado_flujo_activo = True
+        self._fiado_cliente_id = None
+        self.stack.setCurrentIndex(1)
+        self.hoja_cuenta.abrir(modo, self.total_final)
 
-        cliente_ok = None
-        dni_ref = ""
+    def _cuenta_lista(self, cliente_id):
+        self._fiado_cliente_id = int(cliente_id)
+        idx = self.cmb_cliente.findData(self._fiado_cliente_id)
+        if idx >= 0:
+            self.cmb_cliente.setCurrentIndex(idx)
+        self.txt_pago.setText(self._monto(self.total_final))
+        self._fiado_flujo_activo = False
+        QTimer.singleShot(80, lambda: self.finalizar(imprimir=False))
 
-        while True:
-            dlg1 = DialogoFiadoExpressPaso1(self.total_final, self)
-            if qt_exec(dlg1) != QDialog.DialogCode.Accepted:
-                self._fiado_flujo_activo = False
-                self._fiado_cliente_id = None
-                self.set_metodo(rev)
-                return
-
-            cliente_ok = dlg1.cliente
-            dni_ref = dlg1.dni_ref
-
-            dlg2 = DialogoFiadoExpressConfirmacion(
-                self.total_final, cliente_ok, dni_ref, terminal
-            )
-            res2 = qt_exec(dlg2)
-
-            if res2 == QDialog.DialogCode.Accepted:
-                self.current_metodo = "Fiado"
-                self._fiado_cliente_id = dlg2.cliente_id
-                idx = self.cmb_cliente.findData(dlg2.cliente_id)
-                if idx >= 0:
-                    self.cmb_cliente.setCurrentIndex(idx)
-                self.txt_pago.setText(self._monto(self.total_final))
-                self._fiado_flujo_activo = False
-                QTimer.singleShot(80, lambda: self.finalizar(imprimir=False))
-                return
-
-            if getattr(dlg2, "reintentar_dni", False):
-                continue
-
+    def _cuenta_cancelada(self):
+        if getattr(self, "_cuenta_cerrando", False):
+            return
+        self._cuenta_cerrando = True
+        try:
             self._fiado_flujo_activo = False
             self._fiado_cliente_id = None
+            rev = getattr(self, "_revertir_tras_fiado", "Efectivo") or "Efectivo"
+            if rev in ("Fiado", "Clientes"):
+                rev = "Efectivo"
+            self.hoja_cuenta.ocultar()
+            self.stack.setCurrentIndex(0)
             self.set_metodo(rev)
-            return
+            self.setFocus()
+        finally:
+            self._cuenta_cerrando = False
 
     def _monto(self, valor):
         return f"${float(valor):,.2f}"
@@ -1079,20 +1049,20 @@ class Paso6Cobro(QDialog):
             self.aviso_monto.hide()
 
         if self.current_metodo in ("Fiado", "Clientes"):
-            from src.repositories.cliente_repository import ClienteRepository
+            from src.clientes_fiado.cerebro.cerebro import cerebro
 
             cliente_id = getattr(self, "_fiado_cliente_id", None) or self.cmb_cliente.currentData()
             if not cliente_id:
                 if not getattr(self, "_fiado_flujo_activo", False):
-                    self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+                    self._reabrir_cuenta()
                 else:
                     QMessageBox.warning(self, "Clientes", "No se seleccionó cliente.")
                 return None
-            c = ClienteRepository.obtener_por_id(cliente_id)
+            c = cerebro.obtener(cliente_id)
             if not c:
                 QMessageBox.warning(self, "Clientes", "Cliente no encontrado.")
                 return None
-            disp = ClienteRepository.credito_disponible(c)
+            disp = cerebro.credito_disponible(c)
             p1_float = float(p1_t) if p1_t else 0
             if p1_float > disp + 0.01:
                 QMessageBox.warning(self, "Clientes", f"Crédito insuficiente.\nDisp: ${disp:.2f}\nReq: ${p1_float:.2f}")
@@ -1142,7 +1112,7 @@ class Paso6Cobro(QDialog):
             if getattr(self, "_fiado_cliente_id", None):
                 self.finalizar(imprimir=False)
             else:
-                self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+                self._reabrir_cuenta()
             return
         if self.current_metodo == "QR" and self.panel_qr.bloquea_enter():
             return
@@ -1160,6 +1130,8 @@ class Paso6Cobro(QDialog):
         oferta = abs(float(getattr(self, "descuentaso_oferta", 0.0) or 0.0))
         lista = redondear_dinero(self.total_original + oferta)
         self.lbl_total.setText(self._monto(self.total_final))
+        if hasattr(self, "hoja_cuenta") and self.hoja_cuenta.isVisible():
+            self.hoja_cuenta.fijar_monto(self.total_final)
         if abs(lista - self.total_final) > 0.009:
             self.lbl_precio_real.setText(
                 f'<span style="color:#EF4444; text-decoration:line-through;">{self._monto(lista)}</span>'
@@ -1752,6 +1724,8 @@ class Paso6Cobro(QDialog):
             self.aviso_toast.ubicar()
         if hasattr(self, "espera_point") and self.espera_point.isVisible():
             self.espera_point.ubicar()
+        if hasattr(self, "hoja_cuenta") and self.hoja_cuenta.isVisible():
+            self.hoja_cuenta.ubicar()
 
     def _reparto_mixto(self, valores):
         from src.utils.dinero import redondear_dinero
@@ -2032,16 +2006,21 @@ class Paso6Cobro(QDialog):
                 self.procesar_pago_mercadopago_point()
         elif k == Qt.Key.Key_F12:
             self._tecla_f12()
-        elif k == Qt.Key.Key_Escape: self.reject()
+        elif k == Qt.Key.Key_Escape:
+            if self.current_metodo in ("Fiado", "Clientes") and self.hoja_cuenta.isVisible():
+                self.hoja_cuenta._cancelar()
+                return
+            self.reject()
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
             if self.current_metodo in ("Fiado", "Clientes"):
-                if getattr(self, "_fiado_flujo_activo", False):
+                if self.hoja_cuenta.isVisible():
+                    self.hoja_cuenta.confirmar()
                     return
                 if getattr(self, "_fiado_cliente_id", None):
                     self.finalizar(imprimir=False)
                 else:
-                    self._abrir_fiado_express(getattr(self, "_revertir_tras_fiado", "Efectivo"))
+                    self._reabrir_cuenta()
                 return
             if isinstance(foco, QPushButton) and foco in self.btns.values():
                 # 1. ENTER ELIGE MÉTODO -> Salta al casillero de monto
@@ -2067,6 +2046,20 @@ class Paso6Cobro(QDialog):
         if key == "F10":
             self._elegir_cierre("fiscal")
             return
+        if (
+            self.current_metodo in ("Fiado", "Clientes")
+            and hasattr(self, "hoja_cuenta")
+            and self.hoja_cuenta.isVisible()
+        ):
+            if key == "ENTER":
+                self.hoja_cuenta.confirmar()
+                return
+            if key == "⌫":
+                self.hoja_cuenta.borrar()
+                return
+            if len(str(key)) == 1:
+                self.hoja_cuenta.escribir(key)
+                return
         if key == "ENTER" and self.current_metodo in ("Transferencia", "QR", "Tarjeta", "Mixto"):
             self._enter_cobro()
             return

@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import DatabaseManager
-from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
+from src.clientes_fiado.cerebro.cerebro import cerebro
+from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 from src.admin.clientes.theme import _CLI
 
 
@@ -96,7 +97,7 @@ class DialogoNuevoCliente(QDialog):
 
     def get_data(self):
         dni_raw = self.txt_dni.text().strip()
-        dni = ClienteRepository.normalizar_dni(dni_raw) if dni_raw else ""
+        dni = cerebro.normalizar_dni(dni_raw) if dni_raw else ""
         return {
             "nombre": self.txt_nombre.text().strip(),
             "telefono": self.txt_telefono.text().strip(),

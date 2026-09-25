@@ -160,7 +160,9 @@ class VistaHistorial(QWidget):
 
         filt.addWidget(_lbl("Pago"), 2, 0)
         self.cb_pago = QComboBox()
-        self.cb_pago.addItems(["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO"])
+        self.cb_pago.addItems(
+            ["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO", "FIADO", "CLIENTES"]
+        )
         self.cb_pago.currentIndexChanged.connect(self.refrescar)
         filt.addWidget(self.cb_pago, 2, 1)
 

@@ -189,7 +189,7 @@ class CentroCobranzasPanel(QWidget):
 
         btn_lay = QHBoxLayout()
         btn_lay.addStretch(1)
-        self.btn_imprimir = QPushButton("🖨 IMPRIMIR TICKET DEUDA")
+        self.btn_imprimir = QPushButton("🖨 IMPRIMIR SALDO")
         self.btn_imprimir.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_imprimir.setStyleSheet(f"""
             QPushButton {{
@@ -337,14 +337,18 @@ class CentroCobranzasPanel(QWidget):
             self.btn_imprimir.setVisible(True)
 
     def _imprimir_estado_deuda(self):
-        if not self._cliente: return
+        if not self._cliente:
+            return
         from src.hardware.printer import printer_manager
-        from src.admin.logueo_usuarios.CajeroActivo import CajeroActivo
-        printer_manager.imprimir_estado_deuda(
+        anterior = float(self._deuda_actual or 0)
+        credito = min(self.monto(), anterior)
+        if credito < 0:
+            credito = 0.0
+        printer_manager.imprimir_saldo_fiado(
             self._cliente.get("nombre", ""),
-            self._cliente.get("dni", ""),
-            self._deuda_actual,
-            CajeroActivo.nombre
+            anterior,
+            credito,
+            anterior - credito,
         )
         self.txt_buscar.setFocus()
 

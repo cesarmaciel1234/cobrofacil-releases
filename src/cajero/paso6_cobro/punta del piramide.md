@@ -28,7 +28,9 @@ No inyectar `db_manager` en `validar_monto_suficiente`. No hacer que los motores
 
 `_tpv_point_listo` y `_tpv_qr_listo` llaman `config._load_config()` antes del token. `config.get` no lee el disco. No saques esas llamadas. Lo mismo en `PointService.procesar_pago_mercadopago_point`. `_pintar_luz_tpv` lee el config una sola vez y no llama a esos dos métodos.
 
-La tabla `clientes` no se lee al abrir el cobro. `_asegurar_lista_clientes` la carga la primera vez que se abre Fiado o Clientes. No la vuelvas al `__init__`.
+La tabla `clientes` no se lee al abrir el cobro. `_asegurar_lista_clientes` llama `cerebro.listar` la primera vez que se abre Fiado o Clientes. No la vuelvas al `__init__`.
+
+Fiado y Clientes no se mezclan con efectivo, tarjeta, transferencia, QR ni mixto. Se piden en `HojaCuentaCobro`, en `src/clientes_fiado/interfaz/cobro/hoja.py`. No abren la ventana oscura. Fiado solo toma números. Cuenta corriente toma el nombre. El primer Enter muestra saldo y disponible y limpia el campo para confirmar. El segundo Enter registra. El cartel no repite el monto ni trae Cancelar. Esc vuelve a los medios. Si el DNI ya está en el módulo, Fiado cruza con ese cliente. `MotorFiado` y `MotorClientes` solo llaman `cerebro.cobrar`. El cerebro autoriza el cupo y, si la orden viene ok, `garante/despacho/despacho.py` llama `ejecutar_comun`. El plano está en `src/clientes_fiado/plano.md`.
 
 Elegir QR abre la pantalla del monto, igual que tarjeta. El código se pinta ahí, en `qr_en_cobro/`. En QR no se ven «paga con» ni el neto: quedan redondeo y recargo, y si el código está en vivo se vuelve a pedir con el monto nuevo. Si Mercado Pago lo entrega, el cartel dice EN VIVO y la venta se cierra sola. Si el TPV está en rojo, el cartel dice FOTO y se carga una imagen. Point no entra en ese panel. El punto de venta es `mp_qr_pos_external_id`, no `mp_external_pos_id`.
 
@@ -48,10 +50,24 @@ Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarje
 
 ## Producción
 
-El flujo de clientes y `_abrir_fiado_express_original` repiten el diálogo con `while True`. Cancelar hace `return`.
+Fiado y Clientes usan `HojaCuentaCobro` en la hoja del cobro. Cancelar vuelve a los medios. No se vuelve a abrir la ventana oscura.
 
 `persistir_cobro` llama `guardar_venta_completa`. Esa es la transacción de la venta. No se parte en varios commits para un pase a producción.
 
-## Descuentos y Recargos
+## Redondeo
 
-Los inputs de redondeo y recargo incluyen botones de cambio rpido entre $ y %. Al presionarlos, el estado del botn cambia y recalcula el monto automticamente (pasando de un valor fijo a un porcentaje del total original o viceversa). Si se teclea manualmente el smbolo % al final del texto (ej. 10%), el sistema lo toma como porcentaje ignorando el estado visual del botn.
+Es automático. El cajero no redondea a mano. La función es `redondear_dinero` en `src/utils/dinero.py`: `Decimal` a dos centavos, `ROUND_HALF_UP`. Si el valor no es un número, devuelve `0.0`. No la cambies por `round` de float.
+
+El total que cobra sale de la suma de la columna de subtotales del ticket, ya pasada por `redondear_dinero` en `finalizar_venta`. No se lee el rótulo grande. Cada renglón entra por `redondear_items_carrito`: precio y subtotal a dos centavos. Si el subtotal ya viene pintado, se redondea ese número. No se vuelve a multiplicar cantidad por precio.
+
+En el cobro, `recargar_total_final` hace `redondear_dinero(max(0, total_original - redondeo + recargo))`. Ese es el número grande. F3 y F4 lo recalculan al escribir. Tarjeta, transferencia y el QR en vivo copian ese número al pago. El precio tachado es `redondear_dinero(total_original + oferta)`.
+
+F3 se llama redondeo. Es un descuento. F4 es el recargo. El botón al lado cambia `$` y `%` y vuelve a calcular. Si el texto termina en `%`, es porcentaje del total original aunque el botón diga `$`. El porcentaje del redondeo no pasa de 100. El importe del porcentaje no se redondea antes de restar: se redondea el total a pagar, una sola vez.
+
+`CobroController.validar_monto_suficiente` redondea los dos montos y compara `redondear_dinero(p1 + p2) + 0.001` contra el total ya redondeado. El `0.001` es el margen del centavo. No abre la base. `calcular_vuelto_y_totales` no redondea y no lo llama nadie. El total vivo es `recargar_total_final`.
+
+En mixto, cada casillero pasa por `PanelMixtoCobro._numero`, que llama `redondear_dinero`. `cubre` usa el mismo margen de `0.001`. `_reparto_mixto` vuelve a redondear efectivo, tarjeta, transferencia y QR. `confirmar.py` redondea otra vez la parte de tarjeta, la de transferencia y la de QR antes de cobrarlas.
+
+Al guardar, `armar_resultado_venta` redondea total, pagos, vuelto, redondeo, oferta y recargo. El vuelto solo existe en efectivo y en mixto. `persistir_cobro` redondea los renglones otra vez y, si es fiado, el total de la deuda.
+
+Si la transferencia no coincide y se asocia, la diferencia de más de `0.05` se escribe sola en F3 o en F4 y el total se recalcula. Hasta `0.05` se toma como el mismo monto y no toca el redondeo. Ese `0.05` no es el redondeo a dos centavos. No los juntes.

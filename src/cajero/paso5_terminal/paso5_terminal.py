@@ -1992,8 +1992,10 @@ class Paso5Terminal(QWidget):
 
                 # Novedad: Si es un abono a Fiado, procesar la deuda en DB
                 if getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None):
-                    from src.repositories.cliente_repository import ClienteRepository
-                    exito, nuevo_saldo, nombre_cli = ClienteRepository.registrar_abono(dlg.cliente_id, monto)
+                    from src.clientes_fiado.cerebro.cerebro import cerebro
+                    exito, nuevo_saldo, nombre_cli = cerebro.abonar_caja(
+                        dlg.cliente_id, monto, dlg.deuda_actual
+                    )
                     if exito:
                         motivo = f"Abono Fiado: {nombre_cli} - Saldo restante: ${nuevo_saldo:,.2f}"
 

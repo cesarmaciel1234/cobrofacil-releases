@@ -6,4 +6,6 @@ La punta de esta rama es `punta del piramide.md`. Cada carpeta de adentro tiene 
 
 El despacho de medios está en `motor_pagos/motores/__init__.py`, diccionario `REGISTRO`. Lo usa `MotorPrincipalCobros.iniciar_transaccion`.
 
-Al abrir el cobro no se lee `clientes`. Esa lista entra en `_asegurar_lista_clientes`, la primera vez que se abre Fiado o Clientes.
+Al abrir el cobro no se lee `clientes`. Esa lista entra en `_asegurar_lista_clientes`, la primera vez que se abre Fiado o Clientes, por `cerebro.listar`.
+
+Fiado y Clientes salen de `src/clientes_fiado`. El motor del medio solo pide la orden ok. No comparte lógica con los otros cobros.

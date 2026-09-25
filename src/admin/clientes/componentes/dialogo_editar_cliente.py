@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
-from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
+from src.clientes_fiado.cerebro.cerebro import cerebro
+from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 
 
 from src.admin.clientes.theme import _CLI
@@ -19,7 +20,7 @@ class DialogoEditarCliente(QDialog):
         super().__init__(parent)
         self.cliente_id = cliente_id
         self.db = db_manager
-        self.cliente = ClienteRepository.obtener_por_id(cliente_id) or {}
+        self.cliente = cerebro.obtener(cliente_id) or {}
         self.setWindowTitle("Editar cliente")
         self.setFixedSize(420, 440)
         self.setStyleSheet(f"""
@@ -106,12 +107,12 @@ class DialogoEditarCliente(QDialog):
             return
 
         dni_raw = self.txt_dni.text().strip()
-        dni = ClienteRepository.normalizar_dni(dni_raw) if dni_raw else None
+        dni = cerebro.normalizar_dni(dni_raw) if dni_raw else None
         if dni_raw and not dni:
             QMessageBox.warning(self, "DNI inválido", "El DNI debe tener al menos 7 dígitos.")
             return
         if dni:
-            otro = ClienteRepository.buscar_por_dni(dni)
+            otro = cerebro.buscar_por_dni(dni)
             if otro and int(dict(otro).get("id", 0)) != int(self.cliente_id):
                 QMessageBox.warning(self, "DNI duplicado", f"El DNI {dni} ya pertenece a otro cliente.")
                 return
@@ -119,9 +120,8 @@ class DialogoEditarCliente(QDialog):
         telefono = self.txt_telefono.text().strip()
         direccion = self.txt_direccion.text().strip()
         tipo = self.cmb_perfil.currentData() or "regular"
-        ok = self.db.execute_non_query(
-            "UPDATE clientes SET nombre = ?, dni = ?, telefono = ?, direccion = ?, tipo_cliente = ? WHERE id = ?",
-            (nombre, dni, telefono or None, direccion or None, tipo, self.cliente_id),
+        ok = cerebro.actualizar_ficha(
+            self.cliente_id, nombre, dni, telefono, direccion, tipo
         )
         if ok:
             self.accept()

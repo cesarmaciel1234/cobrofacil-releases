@@ -2,7 +2,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from src.base_de_datos.database import db_manager
-from src.repositories.cliente_repository import ClienteRepository
+from src.clientes_fiado.cerebro.cerebro import cerebro
 
 def _parse_fecha(texto: str) -> str | None:
     t = texto.strip()
@@ -47,7 +47,7 @@ def parse_consulta_cobranza(texto: str) -> dict:
     if not raw:
         return {"tipo": "todos", "valor": "", "etiqueta": "Todos los deudores"}
 
-    dni = ClienteRepository.normalizar_dni(raw)
+    dni = cerebro.normalizar_dni(raw)
     digits_only = re.sub(r"\D", "", raw)
     if dni and len(digits_only) >= 7 and len(digits_only) / max(len(raw.replace(" ", "")), 1) >= 0.85:
         return {"tipo": "dni", "valor": dni, "etiqueta": f"DNI {dni}"}

@@ -75,6 +75,13 @@ class DialogoIngresoEfectivo(QDialog):
 
         self._set_modo("FIADO")
 
+    def abrir_para_cliente(self, cliente):
+        """Deja el Centro de Cobranzas parado en esa ficha."""
+        self._set_modo("FIADO")
+        ficha = dict(cliente) if hasattr(cliente, "keys") else {}
+        clave = (ficha.get("dni") or "").strip() or (ficha.get("nombre") or "")
+        self.panel_fiado.txt_buscar.setText(clave)
+
     def _set_modo(self, modo):
         self.tipo_ingreso = modo
         self.btn_cambio.setChecked(modo == "CAMBIO")

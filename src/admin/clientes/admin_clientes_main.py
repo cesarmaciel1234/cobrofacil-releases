@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
-from src.repositories.cliente_repository import ClienteRepository, FIADO_EXPRESS_LIMITE_DEFAULT
+from src.repositories.cliente_repository import FIADO_EXPRESS_LIMITE_DEFAULT
 
 
 from src.admin.clientes.theme import _CLI
@@ -164,14 +164,11 @@ class AdminClientes(QWidget):
         self.cargar_clientes()
 
     def cargar_clientes(self):
+        from src.clientes_fiado.cerebro.cerebro import cerebro
+
         self.tabla.setRowCount(0)
         busqueda = self.txt_buscar.text().strip()
-
-        clientes = self.db.execute_query(
-            "SELECT * FROM clientes WHERE nombre LIKE ? OR COALESCE(dni, '') LIKE ? "
-            "ORDER BY deuda_actual DESC, nombre ASC",
-            (f"%{busqueda}%", f"%{busqueda}%"),
-        )
+        clientes = cerebro.buscar(busqueda)
 
         total_deuda = 0
         deudores = 0
@@ -181,7 +178,7 @@ class AdminClientes(QWidget):
             for i, c in enumerate(clientes):
                 deuda = float(dict(c).get('deuda_actual') or 0)
                 limite = float(dict(c).get('limite_credito') or 0)
-                disponible = ClienteRepository.credito_disponible(c)
+                disponible = cerebro.credito_disponible(c)
                 dni = (dict(c).get('dni') or '').strip()
                 tipo = (dict(c).get('tipo_cliente') or 'regular').lower()
                 tipo_txt = "⚡ Express" if tipo == 'express' else "Regular"
@@ -223,10 +220,7 @@ class AdminClientes(QWidget):
 
                 dias_atraso = 0
                 if deuda > 0:
-                    ultima_compra = self.db.execute_scalar(
-                        "SELECT fecha FROM cuenta_corriente WHERE cliente_id = ? AND tipo = 'CARGO' ORDER BY fecha DESC LIMIT 1",
-                        (c['id'],)
-                    )
+                    ultima_compra = cerebro.ultimo_cargo(c["id"])
                     if ultima_compra:
                         try:
                             dt = datetime.strptime(str(ultima_compra).split('.')[0], "%Y-%m-%d %H:%M:%S")
@@ -355,8 +349,10 @@ class AdminClientes(QWidget):
             dni = data.get('dni')
 
             # Verificar si existe cliente por DNI o Nombre
-            existente_dni = ClienteRepository.buscar_por_dni(dni) if dni else None
-            existente_nombre = ClienteRepository.buscar_por_nombre(nombre)
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            existente_dni = cerebro.buscar_por_dni(dni) if dni else None
+            existente_nombre = cerebro.buscar_por_nombre(nombre)
             existente = existente_dni or existente_nombre
 
             if existente:
@@ -368,20 +364,19 @@ class AdminClientes(QWidget):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
                 if resp == QMessageBox.StandardButton.Yes:
-                    self.db.execute_non_query(
-                        "UPDATE clientes SET nombre = ?, telefono = ?, limite_credito = ?, dni = ? WHERE id = ?",
-                        (nombre, data['telefono'], data['limite_credito'], dni or existente.get('dni'), existente['id']),
+                    cerebro.actualizar_existente(
+                        existente["id"],
+                        nombre,
+                        data["telefono"],
+                        data["limite_credito"],
+                        dni or existente.get("dni"),
                     )
                     self.cargar_clientes()
                     return
                 else:
                     return
 
-            self.db.execute_non_query(
-                "INSERT INTO clientes (nombre, telefono, limite_credito, dni, tipo_cliente) "
-                "VALUES (?, ?, ?, ?, 'regular')",
-                (nombre, data['telefono'], data['limite_credito'], dni),
-            )
+            cerebro.alta_regular(nombre, data["telefono"], data["limite_credito"], dni)
             self.cargar_clientes()
 
     def editar_limite_credito(self, cliente_id, nombre, limite_actual):
@@ -396,28 +391,31 @@ class AdminClientes(QWidget):
             2,
         )
         if ok and nuevo >= 0:
-            self.db.execute_non_query(
-                "UPDATE clientes SET limite_credito = ? WHERE id = ?",
-                (nuevo, cliente_id),
-            )
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            cerebro.fijar_limite(cliente_id, nuevo)
             QMessageBox.information(self, "Listo", f"Límite actualizado a ${nuevo:,.2f}")
             self.cargar_clientes()
 
     def abonar_deuda_admin(self, cliente_id, nombre, deuda_actual):
-        from PyQt6.QtWidgets import QInputDialog
-        monto, ok = QInputDialog.getDouble(
-            self,
-            "Abonar a Deuda",
-            f"Cliente: {nombre}\nDeuda actual: ${deuda_actual:,.2f}\n\nIngrese monto a abonar ($):",
-            0, 0, deuda_actual, 2,
+        from src.utils.qt_compat import qt_exec
+        from src.cajero.ingresar_efectivo import DialogoIngresoEfectivo
+        from src.clientes_fiado.cerebro.cerebro import cerebro
+
+        cliente = cerebro.obtener(cliente_id) or {
+            "id": cliente_id,
+            "nombre": nombre,
+            "deuda_actual": deuda_actual,
+        }
+        dlg = DialogoIngresoEfectivo(parent=self)
+        dlg.abrir_para_cliente(cliente)
+        if not (qt_exec(dlg) and dlg.tipo_ingreso == "FIADO" and dlg.monto_ingresado > 0 and dlg.cliente_id):
+            return
+        exito, nuevo_saldo, _nombre = cerebro.abonar_caja(
+            dlg.cliente_id, dlg.monto_ingresado, dlg.deuda_actual
         )
-        if ok and monto > 0:
-            nuevo_saldo = deuda_actual - monto
-            self.db.execute_non_query("UPDATE clientes SET deuda_actual = ? WHERE id = ?", (nuevo_saldo, cliente_id))
-            self.db.execute_non_query(
-                "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (cliente_id, 'ABONO', monto, nuevo_saldo, 'Abono manual desde panel Admin'),
-            )
-            QMessageBox.information(self, "Éxito", f"Abono registrado.\nNuevo saldo: ${nuevo_saldo:,.2f}")
-            self.cargar_clientes()
+        if not exito:
+            QMessageBox.warning(self, "Abono", "No se pudo registrar el abono.")
+            return
+        QMessageBox.information(self, "Éxito", f"Abono registrado.\nNuevo saldo: ${nuevo_saldo:,.2f}")
+        self.cargar_clientes()

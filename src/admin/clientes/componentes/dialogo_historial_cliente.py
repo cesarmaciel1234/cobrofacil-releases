@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QCursor
 from src.base_de_datos.database import db_manager
-from src.repositories.cliente_repository import ClienteRepository
+from src.clientes_fiado.cerebro.cerebro import cerebro
 from src.admin.clientes.componentes.dialogo_editar_cliente import DialogoEditarCliente, FIADO_EXPRESS_LIMITE_DEFAULT
 
 
@@ -20,7 +20,7 @@ class DialogoHistorialCliente(QDialog):
         super().__init__(parent)
         self.cliente_id = cliente_id
         self.db = db_manager
-        self.cliente = ClienteRepository.obtener_por_id(cliente_id) or {}
+        self.cliente = cerebro.obtener(cliente_id) or {}
         self._datos_editados = False
         self.setWindowTitle("Historial del cliente")
         self.setMinimumSize(820, 560)
@@ -58,6 +58,18 @@ class DialogoHistorialCliente(QDialog):
         )
         btn_edit.clicked.connect(self._editar_cliente)
         tit_row.addWidget(btn_edit)
+
+        btn_saldo = QPushButton("✏️")
+        btn_saldo.setFixedSize(44, 44)
+        btn_saldo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_saldo.setToolTip("Cargar saldo manual")
+        btn_saldo.setStyleSheet(
+            "QPushButton { background: #ECFDF5; border: 1px solid #6EE7B7; border-radius: 10px; "
+            "font-size: 18px; }"
+            "QPushButton:hover { background: #D1FAE5; border-color: #10B981; }"
+        )
+        btn_saldo.clicked.connect(self._cargar_saldo)
+        tit_row.addWidget(btn_saldo)
         p_lay.addLayout(tit_row)
 
         self.lbl_meta = QLabel()
@@ -131,7 +143,7 @@ class DialogoHistorialCliente(QDialog):
         deuda = float(dict(self.cliente).get("deuda_actual") or 0)
         if tipo == "express" and limite <= 0:
             limite = FIADO_EXPRESS_LIMITE_DEFAULT
-        disponible = ClienteRepository.credito_disponible(self.cliente)
+        disponible = cerebro.credito_disponible(self.cliente)
         telefono = (dict(self.cliente).get("telefono") or "").strip()
         direccion = (dict(self.cliente).get("direccion") or "").strip()
 
@@ -151,18 +163,45 @@ class DialogoHistorialCliente(QDialog):
         dlg = DialogoEditarCliente(self.cliente_id, self)
         if qt_exec(dlg) == QDialog.DialogCode.Accepted:
             self._datos_editados = True
-            self.cliente = ClienteRepository.obtener_por_id(self.cliente_id) or {}
+            self.cliente = cerebro.obtener(self.cliente_id) or {}
             self._actualizar_cabecera()
             parent = self.parent()
             if parent and hasattr(parent, "cargar_clientes"):
                 parent.cargar_clientes()
 
-    def _cargar_movimientos(self):
-        movs = self.db.execute_query(
-            "SELECT fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
-            "FROM cuenta_corriente WHERE cliente_id = ? ORDER BY fecha DESC, id DESC",
-            (self.cliente_id,),
+    def _cargar_saldo(self):
+        from PyQt6.QtWidgets import QInputDialog
+
+        nombre = dict(self.cliente).get("nombre", "—")
+        deuda = float(dict(self.cliente).get("deuda_actual") or 0)
+        monto, ok = QInputDialog.getDouble(
+            self,
+            "Cargar saldo",
+            f"Cliente: {nombre}\nDeuda actual: ${deuda:,.2f}\n\nMonto a cargar ($):",
+            0,
+            0,
+            99_999_999,
+            2,
         )
+        if not ok or monto <= 0:
+            return
+        exito, nuevo_saldo, _nombre = cerebro.cargar_manual(
+            self.cliente_id, monto, "Cargo manual desde panel Admin"
+        )
+        if not exito:
+            QMessageBox.warning(self, "Saldo", "No se pudo cargar el saldo.")
+            return
+        self._datos_editados = True
+        self.cliente = cerebro.obtener(self.cliente_id) or {}
+        self._actualizar_cabecera()
+        self._cargar_movimientos()
+        parent = self.parent()
+        if parent and hasattr(parent, "cargar_clientes"):
+            parent.cargar_clientes()
+        QMessageBox.information(self, "Saldo", f"Saldo cargado.\nNueva deuda: ${nuevo_saldo:,.2f}")
+
+    def _cargar_movimientos(self):
+        movs = cerebro.movimientos(self.cliente_id)
         self.tabla.setRowCount(0)
         if not movs:
             self.lbl_resumen.setText("Sin movimientos registrados para este cliente.")
