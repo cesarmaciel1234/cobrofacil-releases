@@ -213,8 +213,15 @@ class PanelQrCobro(QFrame):
         if pedido.get("ok"):
             imagen = QImage()
             imagen.loadFromData(pedido.get("png") or b"")
+            if imagen.isNull():
+                self._modo = "manual"
+                self.estado.setText("QR no disponible. Cargá una foto o Enter registra la venta.")
+                self._marcar("foto")
+                self.cambio_modo.emit("manual")
+                return
             self._fuente = QPixmap.fromImage(imagen)
             self._pintar_imagen()
+            QTimer.singleShot(0, self._pintar_imagen)
             self._ref = pedido.get("ref") or ""
             self._token = pedido.get("token") or ""
             self._borrar_url = pedido.get("borrar_url") or ""

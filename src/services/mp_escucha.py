@@ -54,8 +54,9 @@ class EscuchaMP:
         if not id_pago or id_pago in EscuchaMP._vistos:
             return
         EscuchaMP._vistos.add(id_pago)
-        payer = (pago or {}).get("payer") or {}
-        nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip() or "Cliente"
+        from src.admin.mercadopago.historial.archivo import _rotulo
+
+        _, nombre = _rotulo(pago or {})
         monto = float((pago or {}).get("transaction_amount") or 0)
         from src.admin.mercadopago.mercadopago_main import Admin10MP
 

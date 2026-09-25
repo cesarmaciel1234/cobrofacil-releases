@@ -1,6 +1,8 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QVBoxLayout
 
+from src.utils.dinero import redondear_dinero
+
 
 class PanelMixtoCobro(QFrame):
     """Divide el pago en la misma pantalla. No es un cuadro aparte."""
@@ -102,15 +104,15 @@ class PanelMixtoCobro(QFrame):
         return dict(self._valores)
 
     def cubre(self):
-        suma = sum(self._valores.values())
-        return suma + 0.01 >= self._total
+        suma = redondear_dinero(sum(self._valores.values()))
+        return suma + 0.001 >= redondear_dinero(self._total)
 
     def _numero(self, texto):
         limpio = (texto or "").strip().replace("$", "").replace(",", ".")
         if not limpio:
             return 0.0
         try:
-            return float(limpio)
+            return redondear_dinero(limpio)
         except ValueError:
             return 0.0
 
@@ -139,7 +141,7 @@ class PanelMixtoCobro(QFrame):
             self._silencio = False
             self.aviso.emit("El pago mixto admite solo dos medios.")
             self._valores = {clave: self._numero(campo.text()) for clave, campo in self._claves()}
-        diferencia = sum(self._valores.values()) - self._total
+        diferencia = redondear_dinero(sum(self._valores.values()) - self._total)
         if diferencia < -0.01:
             self.estado.setText(f"Falta cubrir: ${abs(diferencia):,.2f}")
             self.estado.setStyleSheet(

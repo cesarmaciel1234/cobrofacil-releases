@@ -319,8 +319,11 @@ class Paso6Cobro(QDialog):
         self._tarjeta_monto_timer = QTimer(self)
         self._tarjeta_monto_timer.setSingleShot(True)
         self._tarjeta_monto_timer.timeout.connect(self._refrescar_tarjeta)
-        from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro
+        from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro, EsperaPoint
         self.aviso_toast = AvisoCobro(left_panel)
+        self.espera_point = EsperaPoint(left_panel)
+        self._point_en_curso = False
+        self._emergencia_pendiente = False
 
         self.aviso_monto = QLabel("INGRESÁ EL MONTO RECIBIDO")
         self.aviso_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -628,7 +631,10 @@ class Paso6Cobro(QDialog):
         self._mixto_pasos = None
         self._mixto_esperando_qr = False
         self._mixto_espera_transferencia = None
+        self._mixto_confirmado = False
         metodo_previo = self.current_metodo
+        if getattr(self, "_point_en_curso", False) and key != metodo_previo:
+            self.espera_point.soltar()
         marcar_tarjeta(self, key)
         self._ajustar_botones_mp()
         if key not in ("QR", "Mixto"):
@@ -742,8 +748,11 @@ class Paso6Cobro(QDialog):
                 self.panel_qr.mostrar(self.total_final, forzar=True)
         elif hasattr(self, "panel_qr"):
             self.panel_qr.ocultar()
-        if key == "Tarjeta" and hasattr(self, "panel_tarjeta"):
-            self.panel_tarjeta.mostrar(self.total_final)
+        if key == "Tarjeta":
+            if hasattr(self, "panel_tarjeta"):
+                self.panel_tarjeta.ocultar()
+            if not getattr(self, "_point_en_curso", False):
+                QTimer.singleShot(0, self._cobrar_tarjeta_point)
         elif hasattr(self, "panel_tarjeta"):
             self.panel_tarjeta.ocultar()
         if key != "Transferencia" and hasattr(self, "btn_aviso_mp"):
@@ -956,6 +965,12 @@ class Paso6Cobro(QDialog):
             )
             self.lbl_mp_status.setText(f" {char} ESCUCHANDO MERCADO PAGO EN TIEMPO REAL... (${monto_escucha:.2f})")
             if getattr(self, "_mixto_espera_transferencia", None) is not None and hasattr(self, "panel_mixto"):
+                from src.utils.dinero import redondear_dinero
+
+                parte = redondear_dinero(self.panel_mixto.valores().get("mercadopago") or 0)
+                if abs(parte - float(monto_escucha)) > 0.009:
+                    self._tomar_mixto(self.panel_mixto.valores())
+                    return
                 self.panel_mixto.estado.setText(
                     f"{char} Escuchando transferencia ${monto_escucha:,.2f}"
                 )
@@ -983,33 +998,37 @@ class Paso6Cobro(QDialog):
                     esperado = getattr(self, "_mixto_espera_transferencia", None)
                     if esperado is None:
                         esperado = self.total_final
-                    if abs(monto_pago - esperado) <= 0.05:
-                        Admin10MP.ultimo_pago_detectado = None
-                        self._mp_pago_usado = {"id": pago.get("id"), "monto": monto_pago}
+                    if abs(monto_pago - esperado) > 0.05:
+                        if getattr(self, "_mp_oferta_id", None) != str(pago.get("id")):
+                            self._mp_oferta_id = str(pago.get("id"))
+                            self._ofrecer_vinculo(pago.get("id"), monto_pago, pago.get("nombre"))
+                        return
+                    Admin10MP.ultimo_pago_detectado = None
+                    self._mp_pago_usado = {"id": pago.get("id"), "monto": monto_pago}
 
-                        self.timer_mp.stop()
-                        self.timer_spinner.stop()
+                    self.timer_mp.stop()
+                    self.timer_spinner.stop()
 
-                        self.lbl_mp_status.setStyleSheet("font-size: 20px; font-weight: 900;")
+                    self.lbl_mp_status.setStyleSheet("font-size: 20px; font-weight: 900;")
 
-                        self.lbl_mp_status.setText(f"✅ ¡PAGO DE {pago['nombre'].upper()} DETECTADO Y APROBADO!")
-                        theme = config.get("theme", "light")
-                        if theme == "dark":
-                            self.lbl_mp_status.setProperty("estado", "success")
-                            self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
-                            self.lbl_mp_status.style().polish(self.lbl_mp_status)
-                        else:
-                            self.lbl_mp_status.setProperty("estado", "success")
-                            self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
-                            self.lbl_mp_status.style().polish(self.lbl_mp_status)
+                    self.lbl_mp_status.setText(f"✅ ¡PAGO DE {pago['nombre'].upper()} DETECTADO Y APROBADO!")
+                    theme = config.get("theme", "light")
+                    if theme == "dark":
+                        self.lbl_mp_status.setProperty("estado", "success")
+                        self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
+                        self.lbl_mp_status.style().polish(self.lbl_mp_status)
+                    else:
+                        self.lbl_mp_status.setProperty("estado", "success")
+                        self.lbl_mp_status.style().unpolish(self.lbl_mp_status)
+                        self.lbl_mp_status.style().polish(self.lbl_mp_status)
 
-                        if getattr(self, "_mixto_espera_transferencia", None) is not None:
-                            self._mixto_espera_transferencia = None
-                            self.lbl_mp_status.hide()
-                            self._mixto_i += 1
-                            QTimer.singleShot(200, self._seguir_mixto)
-                        else:
-                            QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
+                    if getattr(self, "_mixto_espera_transferencia", None) is not None:
+                        self._mixto_espera_transferencia = None
+                        self.lbl_mp_status.hide()
+                        self._mixto_i += 1
+                        QTimer.singleShot(200, self._seguir_mixto)
+                    else:
+                        QTimer.singleShot(1500, lambda: self.finalizar(imprimir=True))
         except Exception as e:
             print(f"Error verificando auto-pago MP: {e}")
 
@@ -1082,6 +1101,8 @@ class Paso6Cobro(QDialog):
         return (p1, p2)
 
     def intentar_finalizar(self):
+        if getattr(self, "_point_en_curso", False):
+            return
         if self.current_metodo == "Tarjeta":
             if self.panel_tarjeta.bloquea_enter():
                 return
@@ -1209,17 +1230,20 @@ class Paso6Cobro(QDialog):
         self.set_metodo("Efectivo")
         self.finalizar(True, force_fiscal=True)
 
-    def finalizar(self, imprimir=True, force_fiscal=False):
-        if (
-            self.current_metodo == "Tarjeta"
-            and hasattr(self, "panel_tarjeta")
-            and self.panel_tarjeta.bloquea_enter()
-            and not getattr(self, "_tarjeta_cerrando", False)
-        ):
-            return
-        if self.current_metodo == "Mixto" and not getattr(self, "_mixto_cerrando", False):
-            self._entrar_mixto(imprimir)
-            return
+    def finalizar(self, imprimir=True, force_fiscal=False, emergencia=False):
+        if not emergencia:
+            if getattr(self, "_point_en_curso", False):
+                return
+            if (
+                self.current_metodo == "Tarjeta"
+                and hasattr(self, "panel_tarjeta")
+                and self.panel_tarjeta.bloquea_enter()
+                and not getattr(self, "_tarjeta_cerrando", False)
+            ):
+                return
+            if self.current_metodo == "Mixto" and not getattr(self, "_mixto_cerrando", False):
+                self._entrar_mixto(imprimir)
+                return
         if getattr(self, 'stack', None) and self.stack.currentIndex() == 0:
             if self.current_metodo not in ("Mixto", "Fiado", "Clientes"):
                 return
@@ -1289,6 +1313,8 @@ class Paso6Cobro(QDialog):
             self.timer_mp.stop()
         except Exception:
             pass
+        if getattr(self, "_point_en_curso", False):
+            self.espera_point.soltar()
         try:
             from src.notificaciones.motor.estado import publicar
 
@@ -1354,6 +1380,8 @@ class Paso6Cobro(QDialog):
         pos = str(config.get("mp_external_pos_id", "") or "").strip()
         listo = bool(token and device) or bool(token and user and pos)
         self._tpv_listo = listo
+        if hasattr(self, "teclado_lateral"):
+            self.teclado_lateral.mostrar_emergencia(listo)
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (
@@ -1426,19 +1454,186 @@ class Paso6Cobro(QDialog):
         self.btn_aviso_mp.setChecked(activo)
         self.btn_aviso_mp.setText("Con sonido" if activo else "Cajero silencioso")
 
+    def _frase_espera(self):
+        """Con el TPV activo, Enter no registra: hay que esperar el cobro."""
+        if not getattr(self, "_tpv_listo", False):
+            return ""
+        if getattr(self, "_point_en_curso", False):
+            return "Espere la tarjeta."
+        if getattr(self, "_mixto_espera_transferencia", None) is not None:
+            return "Espere la transferencia."
+        if self.current_metodo == "Transferencia":
+            return "Espere la transferencia."
+        if getattr(self, "_mixto_esperando_qr", False) and self.panel_qr.bloquea_enter():
+            return "Espere el QR."
+        if self.current_metodo == "QR" and self.panel_qr.bloquea_enter():
+            return "Espere el QR."
+        if self.current_metodo == "Tarjeta" and self.panel_tarjeta.bloquea_enter():
+            return "Espere la tarjeta."
+        return ""
+
+    def _enter_cobro(self):
+        if hasattr(self, "aviso_toast") and self.aviso_toast.tiene_accion():
+            self.aviso_toast.aceptar()
+            return
+        frase = self._frase_espera()
+        if frase and hasattr(self, "aviso_toast"):
+            self.aviso_toast.alarma(frase)
+            return
+        self.intentar_finalizar()
+
+    def _emergencia(self):
+        if not getattr(self, "_tpv_listo", False):
+            return
+        if getattr(self, "stack", None) and self.stack.currentIndex() == 0:
+            return
+        if getattr(self, "_point_en_curso", False):
+            self._emergencia_pendiente = True
+            self.espera_point.soltar()
+            return
+        self._cerrar_manual()
+
+    def _cerrar_manual(self):
+        self._emergencia_pendiente = False
+        self._mixto_pasos = None
+        self._mixto_espera_transferencia = None
+        self._mixto_esperando_qr = False
+        try:
+            self.timer_mp.stop()
+            self.timer_spinner.stop()
+        except Exception:
+            pass
+        if hasattr(self, "aviso_toast"):
+            self.aviso_toast.cerrar()
+        if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):
+            self.valores_mixtos = self.panel_mixto.valores()
+        elif self.current_metodo in ("Tarjeta", "Transferencia", "QR"):
+            self.txt_pago.setText(self._monto(self.total_final))
+        self.finalizar(False, emergencia=True)
+
     def _avisar(self, mensaje):
         if hasattr(self, "aviso_toast"):
             self.aviso_toast.mostrar(mensaje)
+
+    def _esperado_transferencia(self):
+        espera = getattr(self, "_mixto_espera_transferencia", None)
+        if espera is not None:
+            return float(espera)
+        if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):
+            parte = float(self.panel_mixto.valores().get("mercadopago") or 0)
+            if parte > 0.009:
+                return parte
+        return float(self.total_final or 0)
+
+    def _ofrecer_vinculo(self, pago_id, monto, nombre=None):
+        """El monto no coincide: el cartel deja atar esa transferencia a esta venta."""
+        importe = float(monto or 0)
+        quien = str(nombre or "").strip()
+        if quien.lower() in ("", "none", "none none", "cliente", "desconocido", "transferencia recibida"):
+            texto = f"Llegó ${importe:,.2f}. ¿Asociar al ticket o espere otro monto?"
+        else:
+            texto = f"Llegó ${importe:,.2f} de {quien}. ¿Asociar al ticket o espere otro monto?"
+        if not hasattr(self, "aviso_toast"):
+            return
+        self.aviso_toast.mostrar(
+            texto,
+            accion=lambda: self._vincular_transferencia(str(pago_id), importe),
+            rotulo="Asociar",
+        )
+
+    def _vincular_transferencia(self, pago_id, monto):
+        """La diferencia queda en redondeo o recargo y esa transferencia no se vuelve a usar."""
+        from src.cajero.paso6_cobro.vinculo_mp.libro import asociado
+
+        if asociado(pago_id):
+            self._avisar("No hay nueva transferencia.")
+            return
+        if getattr(self, "_vinculando", False):
+            return
+        self._vinculando = True
+        try:
+            diferencia = float(monto) - self._esperado_transferencia()
+            if diferencia < -0.05:
+                nuevo = float(getattr(self, "descuento_monto", 0) or 0) + abs(diferencia)
+                self.txt_desc.setText(f"{nuevo:.2f}")
+            elif diferencia > 0.05:
+                nuevo = float(getattr(self, "recargo_monto", 0) or 0) + diferencia
+                self.txt_rec.setText(f"{nuevo:.2f}")
+            if self.current_metodo == "Mixto":
+                valores = getattr(self, "valores_mixtos", None) or {}
+                valores["mercadopago"] = float(monto)
+                self.valores_mixtos = valores
+            try:
+                from src.base_de_datos.database import db_manager
+
+                db_manager.execute_non_query(
+                    "INSERT INTO mp_transferencias_usadas (payment_id) VALUES (?)",
+                    (str(pago_id),),
+                )
+            except Exception:
+                pass
+            self._anotar_pago_mp(
+                {"id": pago_id, "transaction_amount": float(monto)},
+                float(monto),
+            )
+            from src.admin.mercadopago.mercadopago_main import Admin10MP
+
+            Admin10MP.ultimo_pago_detectado = None
+            if getattr(self, "_mixto_espera_transferencia", None) is not None:
+                self._mixto_espera_transferencia = None
+                self.lbl_mp_status.hide()
+                self.timer_mp.stop()
+                self.timer_spinner.stop()
+                self._mixto_i += 1
+                QTimer.singleShot(200, self._seguir_mixto)
+                return
+            self.txt_pago.setText(self._monto(float(monto)))
+            self.finalizar(True)
+        finally:
+            self._vinculando = False
 
     def _aviso_tarjeta(self, modo):
         if modo == "fallo" and self.panel_tarjeta.isVisible():
             self._avisar(self.panel_tarjeta.estado.text())
 
     def _refrescar_tarjeta(self):
-        if self.current_metodo != "Tarjeta":
+        if self.current_metodo != "Tarjeta" or getattr(self, "_point_en_curso", False):
             return
         self.txt_pago.setText(self._monto(self.total_final))
-        self.panel_tarjeta.mostrar(self.total_final)
+        self._cobrar_tarjeta_point()
+
+    def _tarjeta_cancelada(self):
+        motivo = getattr(getattr(self, "espera_point", None), "motivo", "")
+        return motivo in ("usuario", "cancelo")
+
+    def _volver_a_metodos(self):
+        self._mixto_pasos = None
+        self._mixto_confirmado = False
+        self._mixto_espera_transferencia = None
+        self._mixto_esperando_qr = False
+        try:
+            self.timer_mp.stop()
+            self.timer_spinner.stop()
+        except Exception:
+            pass
+        if hasattr(self, "aviso_toast"):
+            self.aviso_toast.cerrar()
+        self.stack.setCurrentIndex(0)
+        self.setFocus()
+
+    def _cobrar_tarjeta_point(self):
+        if self.current_metodo != "Tarjeta" or getattr(self, "_point_en_curso", False):
+            return
+        from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
+        ok = PointService(self).procesar_pago_mercadopago_point(cerrar=False)
+        if getattr(self, "_emergencia_pendiente", False):
+            self._cerrar_manual()
+            return
+        if ok is True and self.current_metodo == "Tarjeta":
+            self._cerrar_venta_por_tarjeta(self.total_final)
+            return
+        if self._tarjeta_cancelada():
+            self._volver_a_metodos()
 
     def _cerrar_venta_por_tarjeta(self, monto):
         if getattr(self, "_tarjeta_ya_cerrado", False):
@@ -1455,6 +1650,34 @@ class Paso6Cobro(QDialog):
         super().resizeEvent(event)
         if hasattr(self, "aviso_toast"):
             self.aviso_toast.ubicar()
+        if hasattr(self, "espera_point") and self.espera_point.isVisible():
+            self.espera_point.ubicar()
+
+    def _reparto_mixto(self, valores):
+        from src.utils.dinero import redondear_dinero
+
+        datos = valores or {}
+        return tuple(
+            redondear_dinero(datos.get(clave) or 0)
+            for clave in ("efectivo", "tarjeta", "mercadopago", "qr")
+        )
+
+    def _soltar_pasos_mixto(self):
+        """Suelta la escucha, el QR o el Point que quedó de un reparto anterior."""
+        self._mixto_pasos = None
+        self._mixto_esperando_qr = False
+        self._mixto_espera_transferencia = None
+        self.timer_mp.stop()
+        self.timer_spinner.stop()
+        self.lbl_mp_status.hide()
+        if hasattr(self, "panel_qr") and self.panel_qr.isVisible():
+            self.panel_qr.ocultar()
+        if hasattr(self, "panel_tarjeta") and self.panel_tarjeta.isVisible():
+            self.panel_tarjeta.ocultar()
+        if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):
+            self.panel_mixto.show()
+            self.panel_mixto._recalcular()
+            self._ajustar_contenedor_monto()
 
     def _entrar_mixto(self, imprimir):
         if getattr(self, "_mixto_pasos", None) is not None:
@@ -1468,6 +1691,7 @@ class Paso6Cobro(QDialog):
         from src.cajero.paso6_cobro.mixto_en_cobro.confirmar import pasos_vivos
         self.valores_mixtos = self.panel_mixto.valores()
         self._mixto_imprimir = imprimir
+        self._mixto_confirmado = True
         self._mixto_pasos = pasos_vivos(self.valores_mixtos)
         self._mixto_i = 0
         self._mixto_esperando_qr = False
@@ -1488,9 +1712,17 @@ class Paso6Cobro(QDialog):
         if tipo == "tarjeta":
             from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
             aviso = PointService(self).procesar_pago_mercadopago_point(cerrar=False)
+            if getattr(self, "_emergencia_pendiente", False):
+                self._mixto_pasos = None
+                self._cerrar_manual()
+                return
             if aviso is None:
                 self._mixto_pasos = None
-                self.panel_mixto.show()
+                if self._tarjeta_cancelada():
+                    self._volver_a_metodos()
+                    return
+                if self.current_metodo == "Mixto" and self.isVisible():
+                    self.panel_mixto.show()
                 return
             self._mixto_i += 1
             self._seguir_mixto()
@@ -1508,8 +1740,12 @@ class Paso6Cobro(QDialog):
             self.timer_spinner.start(60)
             return
         self.panel_mixto.ocultar()
+        self._mixto_espera_transferencia = None
+        self.timer_mp.stop()
+        self.timer_spinner.stop()
         self.lbl_mp_status.hide()
         self._mixto_esperando_qr = True
+        self._repartir_hueco(qr=1)
         self._pintar_luz_tpv()
         if not getattr(self, "_tpv_listo", False):
             self.panel_qr.ofrecer_foto()
@@ -1557,9 +1793,31 @@ class Paso6Cobro(QDialog):
         self.finalizar(True)
 
     def _tomar_mixto(self, valores):
+        if getattr(self, "_point_en_curso", False):
+            return
+        if getattr(self, "_mixto_rearmando", False):
+            self.valores_mixtos = valores
+            return
         if getattr(self, "_mixto_pasos", None) is not None:
+            if self._reparto_mixto(valores) == self._reparto_mixto(getattr(self, "valores_mixtos", None)):
+                return
+            self._mixto_rearmando = True
+            try:
+                self._soltar_pasos_mixto()
+                self.valores_mixtos = valores
+                if self.current_metodo == "Mixto" and self.panel_mixto.cubre():
+                    self._entrar_mixto(getattr(self, "_mixto_imprimir", False))
+            finally:
+                self._mixto_rearmando = False
             return
         self.valores_mixtos = valores
+        if (
+            getattr(self, "_mixto_confirmado", False)
+            and self.current_metodo == "Mixto"
+            and getattr(self, "_mixto_pasos", None) is None
+            and self.panel_mixto.cubre()
+        ):
+            self._entrar_mixto(getattr(self, "_mixto_imprimir", False))
 
     def _ajustar_botones_mp(self):
         """Cada columna conserva el hueco. Solo se ve el botón del medio elegido."""
@@ -1613,7 +1871,8 @@ class Paso6Cobro(QDialog):
             PointService(self).procesar_pago_mercadopago_point(cerrar=False)
             return
         if self.current_metodo == "Tarjeta":
-            self._refrescar_tarjeta()
+            if not getattr(self, "_point_en_curso", False):
+                self._cobrar_tarjeta_point()
             return
         from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
         if PointService(self).procesar_pago_mercadopago_point() is False:
@@ -1647,6 +1906,7 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
         elif k == Qt.Key.Key_F10: self.finalizar_fiscal_efectivo()
+        elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
             if self.btn_f11.isVisible():
                 self.procesar_pago_mercadopago_point()
@@ -1668,8 +1928,7 @@ class Paso6Cobro(QDialog):
                 self.txt_pago.setFocus()
                 self.txt_pago.selectAll()
             else:
-                # 2 y 3. ENTER CONFIRMA Y CIERRA (Sin Ticket)
-                self.intentar_finalizar()
+                self._enter_cobro()
         else:
             super().keyPressEvent(event)
 
@@ -1687,6 +1946,9 @@ class Paso6Cobro(QDialog):
         focused = self.focusWidget()
         if key == "F10":
             self.finalizar_fiscal_efectivo()
+            return
+        if key == "ENTER" and self.current_metodo in ("Transferencia", "QR", "Tarjeta", "Mixto"):
+            self._enter_cobro()
             return
         if self.current_metodo == "Mixto":
             focused = self.panel_mixto.campo_foco()

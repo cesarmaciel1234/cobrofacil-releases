@@ -1,17 +1,21 @@
-import uuid
-from PyQt6.QtWidgets import QDialog, QMessageBox, QProgressDialog
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 from src.config import config
-from src.utils.qt_compat import qt_exec
 from src.utils.parser import parse_float_regional
-from src.cajero.paso6_cobro.mercadopago_core.api_client import MPApiClient
-from src.cajero.paso6_cobro.mercadopago_core.ui_dialogs import MPPollingDialog
 
 class PointService:
     def __init__(self, parent_cobro):
         self.parent = parent_cobro
 
     def procesar_pago_mercadopago_point(self, cerrar=True):
+        if getattr(self.parent, "_point_en_curso", False):
+            return None
+        self.parent._point_en_curso = True
+        try:
+            return self._cobrar(cerrar)
+        finally:
+            self.parent._point_en_curso = False
+
+    def _cobrar(self, cerrar):
         config._load_config()
         token = config.get("mp_access_token", "")
         device_id = config.get("mp_device_id", "")
@@ -32,60 +36,45 @@ class PointService:
             monto_str = self.parent.txt_pago.text().replace("$", "").replace(" ", "").strip()
             try:
                 monto = parse_float_regional(monto_str)
-            except:
+            except Exception:
                 monto = self.parent.total_final
 
         if monto <= 0:
             msg = "El monto de Tarjeta (Point) en pago Mixto es cero." if self.parent.current_metodo == "Mixto" else "Ingrese un monto a cobrar válido."
             if cerrar:
                 QMessageBox.warning(self.parent, "Monto inválido", msg)
+            else:
+                self._avisar(msg)
             return None
 
-        url = f"https://api.mercadopago.com/point/integration-api/devices/{device_id}/payment-intents"
-        intent_id = str(uuid.uuid4())
-        monto_centavos = int(round(monto * 100))
-
-        payload = {
-            "amount": monto_centavos,
-            "additional_info": {
-                "external_reference": intent_id,
-                "print_on_terminal": True
-            }
-        }
-        msg_progreso = "Enviando monto a la Terminal Point..."
-
-        progreso = QProgressDialog(msg_progreso, "Cancelar", 0, 0, self.parent)
-        progreso.setWindowTitle("Mercado Pago Point")
-        progreso.setWindowModality(Qt.WindowModality.WindowModal)
-        progreso.show()
-
-        try:
-            response = MPApiClient.post(url, payload, token, timeout=10)
-            progreso.close()
-
-            if response.status_code in [200, 201]:
-                data = response.json()
-                mp_intent_id = data.get("id")
-
-                dialog = MPPollingDialog(self.parent, token, device_id, mp_intent_id, monto, modo=self.parent.current_metodo)
-                if qt_exec(dialog) == QDialog.DialogCode.Accepted:
-                    if cerrar:
-                        self.parent.txt_pago.setText(str(monto))
-                        self.parent.finalizar(True)
-                    return True
-                return None
-            else:
-                try:
-                    err_data = response.json()
-                    msg = err_data.get("message", "Error desconocido")
-                except:
-                    msg = response.text
-                self._avisar("La terminal no recibió el monto.")
-                return None
-        except Exception:
-            progreso.close()
+        espera = getattr(self.parent, "espera_point", None)
+        if espera is None:
             self._avisar("La terminal no recibió el monto.")
             return None
+        if not espera.esperar(token, device_id, monto):
+            self._avisar_motivo(espera.motivo)
+            return None
+        if self.parent.current_metodo not in ("Tarjeta", "Mixto"):
+            return None
+        if cerrar:
+            self.parent._point_en_curso = False
+            self.parent.txt_pago.setText(str(monto))
+            self.parent.finalizar(True)
+        return True
+
+    def _avisar_motivo(self, motivo):
+        if motivo in ("usuario", "cancelo"):
+            return
+        if motivo == "ocupada":
+            self._avisar("La terminal ya tiene un cobro. Cancelalo en el Point y reenviá.")
+        elif motivo == "minimo":
+            self._avisar("El Point cobra desde $15.")
+        elif motivo == "sin_terminal":
+            self._avisar("Falta el token o la terminal Point en la configuración del TPV.")
+        elif motivo == "cancelo":
+            self._avisar("La terminal canceló el cobro. Enter registra la venta.")
+        elif motivo:
+            self._avisar("La terminal no recibió el monto.")
 
     def _avisar(self, texto):
         aviso = getattr(self.parent, "_avisar", None)

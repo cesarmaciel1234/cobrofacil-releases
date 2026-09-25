@@ -15,20 +15,39 @@ class MPPollingDialog(QDialog):
 
         self.setWindowTitle("Esperando Pago...")
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint | Qt.WindowType.WindowTitleHint)
-        self.setFixedSize(350, 150)
+        self.setFixedSize(920, 560)
+        self.setStyleSheet("QDialog { background: #F8FAFC; }")
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(48, 36, 48, 36)
+        layout.setSpacing(28)
         if modo == "QR":
-            msg_label = f"📱 Mostre el QR de la terminal al cliente.\nEsperando pago QR por:\n${monto_original:,.2f}"
+            aviso = "Mostrá el QR de la terminal al cliente."
         else:
-            msg_label = f"💳 Por favor, pida al cliente que pase la tarjeta por:\n${monto_original:,.2f}"
-        self.lbl_status = QLabel(msg_label)
+            aviso = "Pida al cliente que pase la tarjeta."
+        self.lbl_status = QLabel(aviso)
+        self.lbl_status.setWordWrap(True)
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lbl_status.setStyleSheet("font-size: 14px; font-weight: bold;")
+        self.lbl_status.setStyleSheet(
+            "color: #1E3A8A; font-size: 36px; font-weight: 800; background: transparent;"
+        )
         layout.addWidget(self.lbl_status)
 
-        self.btn_cancel = QPushButton("Cancelar Cobro en la Terminal")
-        self.btn_cancel.setStyleSheet("background-color: #EF4444; color: white; padding: 10px; font-weight: bold; border-radius: 5px;")
+        self.lbl_monto = QLabel(f"${monto_original:,.2f}")
+        self.lbl_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_monto.setStyleSheet(
+            "color: #0F172A; font-size: 84px; font-weight: 900; background: transparent;"
+        )
+        layout.addWidget(self.lbl_monto)
+
+        self.btn_cancel = QPushButton("Cancelar cobro en la terminal")
+        self.btn_cancel.setMinimumHeight(92)
+        self.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_cancel.setStyleSheet(
+            "QPushButton { background: #EF4444; color: white; font-size: 28px; font-weight: 900;"
+            " border: none; border-radius: 16px; padding: 18px 24px; }"
+            "QPushButton:hover { background: #DC2626; }"
+        )
         self.btn_cancel.clicked.connect(self.cancelar_cobro)
         layout.addWidget(self.btn_cancel)
 
@@ -37,20 +56,19 @@ class MPPollingDialog(QDialog):
         self.timer.start(2500)
 
     def check_status(self):
-        poll_url = f"https://api.mercadopago.com/point/integration-api/payment-intents/{self.intent_id}"
+        from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import estado_intent
+
         try:
-            res = MPApiClient.get(poll_url, self.token, timeout=5)
-            if res.status_code == 200:
-                state = res.json().get("state")
-                if state == "FINISHED":
-                    self.timer.stop()
-                    self.aprobado = True
-                    self.accept()
-                elif state in ["CANCELED", "ERROR"]:
-                    self.timer.stop()
-                    QMessageBox.warning(self, "Cobro Cancelado", f"El cobro fue cancelado o rechazado en la terminal (Estado: {state}).")
-                    self.reject()
-        except:
+            state = estado_intent(self.token, self.intent_id)
+            if state == "FINISHED":
+                self.timer.stop()
+                self.aprobado = True
+                self.accept()
+            elif state in ("CANCELED", "ERROR"):
+                self.timer.stop()
+                QMessageBox.warning(self, "Cobro Cancelado", "El cobro fue cancelado o rechazado en la terminal.")
+                self.reject()
+        except Exception:
             pass
 
     def cancelar_cobro(self):
@@ -58,10 +76,11 @@ class MPPollingDialog(QDialog):
         self.btn_cancel.setText("Cancelando...")
         self.timer.stop()
 
-        cancel_url = f"https://api.mercadopago.com/point/integration-api/devices/{self.device_id}/payment-intents/{self.intent_id}"
+        from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import cancelar_intent
+
         try:
-            MPApiClient.delete(cancel_url, self.token, timeout=5)
-        except:
+            cancelar_intent(self.token, self.device_id, self.intent_id)
+        except Exception:
             pass
 
         self.reject()

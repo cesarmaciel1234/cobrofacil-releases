@@ -4,11 +4,29 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame, QDateEdit, QCheckBox,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 
 from src.admin.mercadopago.historial.archivo import leer, omitir
 from src.admin.mercadopago.historial.sincronizar import bajar_mes
+
+
+class _BajadaMes(QThread):
+    """Baja el mes fuera de la ventana. listo trae cuántos pagos nuevos guardó."""
+
+    listo = pyqtSignal(int)
+
+    def __init__(self, token):
+        super().__init__()
+        self.token = token
+
+    def run(self):
+        try:
+            cuantos = bajar_mes(self.token)
+        except Exception:
+            cuantos = -1
+        self.listo.emit(cuantos)
+
 
 class Admin10MP(QWidget):
     request_dashboard = pyqtSignal()
@@ -20,6 +38,9 @@ class Admin10MP(QWidget):
         self.pagos_hoy = []
         self.todos_los_pagos = []
         Admin10MP.vista = self
+        self._marcas_archivos = None
+        self._reloj_ticket = QTimer(self)
+        self._reloj_ticket.timeout.connect(self._refrescar_si_cambio)
         self.setup_ui()
         self.cargar_datos_locales()
         self.iniciar_monitor()
@@ -226,23 +247,80 @@ class Admin10MP(QWidget):
         except TypeError:
             pass
         hilo.new_payment.connect(self._guardar_llegada)
+        try:
+            hilo.error_signal.disconnect(self._error_escucha)
+        except TypeError:
+            pass
+        hilo.error_signal.connect(self._error_escucha)
         self.lbl_estado.setText("ESCUCHANDO")
         self.sincronizar_historico()
 
-    def sincronizar_historico(self):
-        from src.services.mp_escucha import EscuchaMP
-        try:
-            bajar_mes(EscuchaMP.token())
-        except Exception as error:
-            print("Error en sincronizacion MP:", error)
+    def showEvent(self, event):
+        super().showEvent(event)
         self.cargar_datos_locales()
+        self._marcas_archivos = self._marcas()
+        self._reloj_ticket.start(1000)
+
+    def hideEvent(self, event):
+        self._reloj_ticket.stop()
+        super().hideEvent(event)
+
+    def sincronizar_historico(self):
+        self.cargar_datos_locales()
+        self._marcas_archivos = self._marcas()
+        bajada = getattr(self, "_bajando", None)
+        if bajada is not None and bajada.isRunning():
+            return
+        from src.services.mp_escucha import EscuchaMP
+        token = EscuchaMP.token()
+        if not token:
+            self.lbl_estado.setText("SIN TOKEN")
+            return
+        self.lbl_estado.setText("ACTUALIZANDO")
+        self._bajando = _BajadaMes(token)
+        self._bajando.listo.connect(self._fin_bajada)
+        self._bajando.start()
+
+    def _fin_bajada(self, cuantos):
+        self.cargar_datos_locales()
+        self._marcas_archivos = self._marcas()
+        if cuantos < 0:
+            self.lbl_estado.setText("SIN DATOS")
+            return
+        self.lbl_estado.setText("ESCUCHANDO")
+
+    def _error_escucha(self, _texto):
+        self.lbl_estado.setText("DETENIDO")
 
     def _guardar_llegada(self, pago):
         from src.admin.mercadopago.historial.archivo import guardar
         guardar([pago])
         self.cargar_datos_locales()
 
+    def _marcas(self):
+        import os
+
+        from src.admin.mercadopago.historial.archivo import RUTA as csv_mp
+        from src.cajero.paso6_cobro.vinculo_mp.libro import RUTA as vinculos
+
+        marcas = []
+        for ruta in (csv_mp, vinculos):
+            try:
+                marcas.append(os.path.getmtime(ruta))
+            except OSError:
+                marcas.append(0)
+        return tuple(marcas)
+
+    def _refrescar_si_cambio(self):
+        marcas = self._marcas()
+        if marcas == self._marcas_archivos:
+            return
+        self._marcas_archivos = marcas
+        self.cargar_datos_locales()
+
     def cargar_datos_locales(self):
+        barra = self.tabla.verticalScrollBar()
+        puesto = barra.value()
         datos = leer()
         self.todos_los_pagos = datos["pagos"]
         self.lbl_kpi_total_mes.setText(f"${datos['total_mes']:,.2f}")
@@ -253,6 +331,7 @@ class Admin10MP(QWidget):
         prom = (datos["total_hoy"] / cant) if cant else 0
         self.lbl_kpi_avg.setText(f"${prom:,.2f}")
         self.aplicar_filtros()
+        barra.setValue(puesto)
 
     def aplicar_filtros(self):
         """

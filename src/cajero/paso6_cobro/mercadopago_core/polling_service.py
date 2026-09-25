@@ -156,31 +156,21 @@ class PollingService:
         if esperado is None:
             aviso = getattr(self.parent, "_avisar", None)
             if aviso:
-                aviso("No hay transferencia nueva.")
+                aviso("No hay nueva transferencia.")
             return
 
-        pago = None
-        for p in (resp.json() or {}).get("results") or []:
-            p_id = str(p.get("id"))
-            if asociado(p_id):
-                continue
-            existe = db_manager.execute_query(
-                "SELECT id FROM mp_transferencias_usadas WHERE payment_id = ?", (p_id,)
-            )
-            if not existe:
-                pago = p
-                break
-        if not pago:
+        resultados = (resp.json() or {}).get("results") or []
+        pago = resultados[0] if resultados else None
+        if not pago or asociado(str(pago.get("id"))):
             aviso = getattr(self.parent, "_avisar", None)
             if aviso:
-                aviso("No hay transferencia nueva.")
+                aviso("No hay nueva transferencia.")
             return
 
         monto = float(pago.get("transaction_amount") or 0)
-        payer = pago.get("payer") or {}
-        nombre = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip()
-        if not nombre:
-            nombre = payer.get("email") or "Desconocido"
+        from src.admin.mercadopago.historial.archivo import _rotulo
+
+        _, nombre = _rotulo(pago)
         aviso = getattr(self.parent, "_avisar", None)
         if abs(monto - esperado) > 0.05:
             try:
@@ -189,7 +179,10 @@ class PollingService:
                 guardar([pago])
             except Exception:
                 pass
-            if aviso:
+            ofrecer = getattr(self.parent, "_ofrecer_vinculo", None)
+            if ofrecer:
+                ofrecer(pago.get("id"), monto, nombre)
+            elif aviso:
                 aviso(
                     f"Llegó ${monto:,.2f} de {nombre}. "
                     f"El ticket es ${esperado:,.2f}."

@@ -38,13 +38,13 @@ Los seis botones de la derecha están en tres columnas fijas. Ocultar Point o el
 
 En transferencia no se escribe el monto: lo cambian el redondeo y el recargo. En ese lugar, `transferencia_en_cobro/` muestra el alias y, debajo, el nombre. El lápiz guarda el alias si la API no lo trae.
 
-Efectivo y transferencia arman el medio en `monto_en_cobro/`. Un marco para el casillero y otro para el vuelto o la escucha. El QR ocupa el alto libre, en `qr_en_cobro/`. La tarjeta no pide el monto: `tarjeta_en_cobro/` manda el importe al TPV y, si la terminal no lo toma, Enter registra la venta. El mixto admite solo dos medios. Esos avisos son un cartel en `aviso_en_cobro/`: no hay ventana que cerrar.
+Efectivo y transferencia arman el medio en `monto_en_cobro/`. Un marco para el casillero y otro para el vuelto o la escucha. El QR ocupa el alto libre, en `qr_en_cobro/`. La tarjeta no pide el monto y no abre la ventana chica de espera: `aviso_en_cobro/` pinta un cartel con margen y el botón Cancelar. El mismo envío cobra en Tarjeta y en el paso de tarjeta del mixto. Elegir Tarjeta no cancela el cobro que ya está en el Point. Cancelar en el cartel, o que la terminal cancele, vuelve a la página de métodos. El QR no sale en el Point: se ve en el sistema. Si la terminal no toma el importe, Enter registra la venta. El mixto admite solo dos medios. Esos avisos son un cartel en `aviso_en_cobro/`: no hay ventana que cerrar.
 
 Mixto abre la misma hoja, en `mixto_en_cobro/`. No abre `widgets/pagos_mixtos.py`. El teclado escribe en el casillero con foco. F1 imprime. Enter registra, que es lo que hacía F2.
 
 Al confirmar, la misma hoja sigue el reparto: Point cobra solo la parte de tarjeta, la escucha de Mercado Pago espera solo la transferencia, y el panel de QR muestra el código por el monto de QR. El efectivo queda anotado. Al terminar esos pasos, el motor mixto guarda una sola venta. El botón Point de mixto manda esa parte de tarjeta aunque el resto todavía no cubra el total.
 
-`vinculo_mp/libro.py` guarda en `reportes/mp_vinculos.json` el id del cobro de Mercado Pago junto al ticket. El último monto saltea los que ya tienen ticket. Si no queda uno nuevo, el cartel dice que no hay transferencia nueva.
+`vinculo_mp/libro.py` guarda en `reportes/mp_vinculos.json` el id del cobro de Mercado Pago junto al ticket. La escucha muestra la transferencia apenas llega. Si el monto coincide, registra. Si llega otro importe y no tiene ticket, el cartel pregunta si se asocia o se espera otro monto: Enter acepta «Asociar» y la diferencia queda en redondeo o recargo. Si ya tiene ticket, el cartel dice que no hay nueva transferencia. Con la luz del TPV en verde, Enter no registra mientras se espera transferencia, QR o tarjeta: sale el cartel rojo de alarma. F9, debajo de F10, cobra a mano y no se aprieta con el mouse. Con la luz en rojo, F9 no está y Enter registra.
 
 ## Producción
 

@@ -85,8 +85,15 @@ class PanelTarjetaCobro(QFrame):
         return self.isVisible() and self._modo in ("enviando", "esperando")
 
     def mostrar(self, monto):
+        monto = float(monto or 0)
+        if (
+            self.isVisible()
+            and self._modo in ("enviando", "esperando")
+            and abs(self._monto - monto) < 0.01
+        ):
+            return
         self._soltar()
-        self._monto = float(monto or 0)
+        self._monto = monto
         self._generacion += 1
         self._modo = "enviando"
         self._intent = ""
@@ -160,19 +167,26 @@ class PanelTarjetaCobro(QFrame):
             self._device = pedido.get("device") or ""
             self._intent = pedido.get("intent") or ""
             self._modo = "esperando"
-            self.estado.setText("Monto enviado al TPV.")
+            self.estado.setText("Apoye la tarjeta.")
             self.detalle.setText(
-                f"${self._monto:,.2f}\nEl sistema controla el pago. No toque nada."
+                f"${self._monto:,.2f}\nNo toque la terminal."
             )
             self._reloj.start()
             self.cambio.emit("esperando")
             return
-        self._fallo("La terminal no tomó el monto. Enter registra la venta.")
+        motivo = pedido.get("motivo")
+        if motivo == "ocupada":
+            self._fallo("La terminal ya tiene un cobro. Cancelalo en el Point y reenviá.")
+        elif motivo == "minimo":
+            self._fallo("El Point cobra desde $15. Enter registra la venta.")
+        elif motivo == "sin_terminal":
+            self._fallo("Falta el token o la terminal Point en la configuración.")
+        else:
+            self._fallo("La terminal no tomó el monto. Enter registra la venta.")
 
     def _fallo(self, texto):
         self._modo = "fallo"
         self._reloj.stop()
-        self._soltar()
         self.estado.setText(texto)
         self.detalle.setText(f"${self._monto:,.2f}")
         self.cambio.emit("fallo")

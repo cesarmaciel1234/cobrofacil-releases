@@ -59,6 +59,14 @@ echo Ensamblando el ejecutable principal...
   --hidden-import "src.admin.mercadopago.historial.sincronizar" ^
   --hidden-import "src.services.mp_escucha" ^
   --hidden-import "src.cajero.paso6_cobro.vinculo_mp.libro" ^
+  --hidden-import "src.cajero.paso6_cobro.qr_en_cobro.pedido" ^
+  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.api_client" ^
+  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.point_service" ^
+  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.polling_service" ^
+  --hidden-import "src.cajero.paso6_cobro.mercadopago_core.ui_dialogs" ^
+  --hidden-import "src.utils.dinero" ^
+  --hidden-import "src.admin.mercadopago.mercadopago_main" ^
+  --hidden-import "src.admin.mercadopago.componentes.mp_polling_thread" ^
   --collect-submodules "src.motor_descuentos" ^
   --hidden-import "src.carteleria.creador_png.app" ^
   --hidden-import "flask" ^

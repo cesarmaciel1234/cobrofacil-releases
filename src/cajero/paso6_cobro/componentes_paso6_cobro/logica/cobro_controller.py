@@ -1,4 +1,5 @@
 from src.config import config
+from src.utils.dinero import redondear_dinero
 
 class CobroController:
     """
@@ -24,7 +25,9 @@ class CobroController:
                 p1 = float(p1_t) if p1_t else 0.0
                 p2 = float(p2_t) if p2_t and metodo == "Mixto" else 0.0
 
-            if (p1 + p2) < total_final:
+            p1 = redondear_dinero(p1)
+            p2 = redondear_dinero(p2)
+            if redondear_dinero(p1 + p2) + 0.001 < redondear_dinero(total_final):
                 return None, None
 
             return p1, p2

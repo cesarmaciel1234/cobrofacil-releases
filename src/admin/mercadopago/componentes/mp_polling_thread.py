@@ -113,7 +113,7 @@ class MPPollingThread(QThread):
             except Exception:
                 pass # Evita spam de errores de red
 
-            for _ in range(10): # Duerme en ciclos de 1 seg para poder detenerlo rápido
+            for _ in range(2): # Duerme en ciclos de 1 seg para poder detenerlo rápido
                 if not self.running: break
                 self.msleep(1000)
 

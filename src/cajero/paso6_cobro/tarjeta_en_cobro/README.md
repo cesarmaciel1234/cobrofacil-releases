@@ -1,9 +1,9 @@
 # Tarjeta en la pantalla de cobro
 
-Se ve cuando el medio es Tarjeta. No pide «paga con» y no abre el cuadro de Point.
+El medio Tarjeta no abre este panel ni la ventana «Esperando Pago…». El cobro lo espera el cartel `EsperaPoint` de `aviso_en_cobro/`, el mismo envío que usa el paso de tarjeta del mixto. Si se cancela en el cartel o en la terminal, la hoja vuelve a la página de métodos.
 
-`panel.py`, clase `PanelTarjetaCobro`. `mostrar(monto)` manda el importe a la terminal. Mientras espera, `bloquea_enter()` es verdadero: el cartel dice que no se toque nada. Si Mercado Pago aprueba, `pago_listo` cierra la venta.
+`panel.py`, clase `PanelTarjetaCobro`. `mostrar(monto)` sigue pudiendo mandar el importe. Un fallo no cancela el cobro que ya quedó en la terminal.
 
-`envio.py`: `enviar_monto` crea el cobro en la terminal. `estado_intent` mira si terminó. `cancelar_intent` suelta el anterior cuando cambia el redondeo o el recargo.
+`envio.py`: `enviar_monto` manda el importe al Point solo como tarjeta (`credit_card`). La terminal pide apoyar la tarjeta y no ofrece QR: el código se ve en el sistema. El mínimo del Point es $15. `estado_intent` mira si terminó. `cancelar_intent` sin `en_terminal` no baja un cobro que ya se está viendo en el Point. El botón Cancelar del cartel sí pasa `en_terminal=True`.
 
 Si la terminal no toma el monto, el cartel avisa y Enter registra la venta igual.

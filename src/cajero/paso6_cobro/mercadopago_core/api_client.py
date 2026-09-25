@@ -22,8 +22,11 @@ class MPApiClient:
         return headers
 
     @staticmethod
-    def post(url, payload, token, timeout=10):
-        return requests.post(url, json=payload, headers=MPApiClient.get_headers(token), timeout=timeout)
+    def post(url, payload, token, timeout=10, extra_headers=None):
+        headers = MPApiClient.get_headers(token)
+        if extra_headers:
+            headers.update(extra_headers)
+        return requests.post(url, json=payload, headers=headers, timeout=timeout)
 
     @staticmethod
     def put(url, payload, token, timeout=10):

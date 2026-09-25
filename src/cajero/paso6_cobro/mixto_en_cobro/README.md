@@ -6,6 +6,6 @@ Se ve en la misma hoja del monto, solo cuando el medio es Mixto. No abre un cuad
 
 El teclado de la derecha escribe en el casillero con foco. F1 imprime y F2 registra. Esos botones no viven acá.
 
-Al confirmar, `confirmar.py` arma los pasos vivos: tarjeta, después transferencia, después QR. El efectivo no tiene paso. La pantalla llama a cada motor por su lado y, cuando terminan, el motor mixto guarda la venta una sola vez.
+Al confirmar, `confirmar.py` arma los pasos vivos: tarjeta, después transferencia, después QR. El efectivo no tiene paso. Si mientras espera la transferencia ese monto pasa al QR, suelta la escucha y muestra el código por el importe de QR.
 
 `widgets/pagos_mixtos.py` es la ventana vieja. El clic de Mixto ya no la abre.

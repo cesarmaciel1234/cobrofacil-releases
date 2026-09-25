@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, Qt
 from src.config import config
 
@@ -112,6 +112,20 @@ class TecladoNumericoLateral(QFrame):
         )
         self.btn_fiscal.clicked.connect(lambda: self.key_clicked.emit("F10"))
         kb_layout.addWidget(self.btn_fiscal)
+
+        self.lbl_emergencia = QLabel("Presione F9\nEmergencia")
+        self.lbl_emergencia.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_emergencia.setMinimumHeight(64)
+        self.lbl_emergencia.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.lbl_emergencia.setStyleSheet(
+            "background: #FFF7ED; color: #9A3412; font-size: 15px; font-weight: 800;"
+            " font-family: 'Segoe UI', sans-serif; border: 2px dashed #FDBA74; border-radius: 14px;"
+        )
+        self.lbl_emergencia.hide()
+        kb_layout.addWidget(self.lbl_emergencia)
+
+    def mostrar_emergencia(self, activo):
+        self.lbl_emergencia.setVisible(bool(activo))
 
     def mostrar_fiscal(self, activo):
         self.btn_fiscal.show()
