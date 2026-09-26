@@ -79,6 +79,20 @@ class AvisoCobro(QFrame):
         self.raise_()
         QTimer.singleShot(0, self.ubicar)
 
+    def pin(self, mensaje, marcas=0):
+        """Cartel rojo que espera el PIN. No se va solo."""
+        self._accion = None
+        self.boton.hide()
+        self._pintar_estilo(True)
+        llenos = max(0, min(4, int(marcas or 0)))
+        puntos = "  ".join("●" if i < llenos else "○" for i in range(4))
+        self.texto.setText(f"{mensaje}\n{puntos}")
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self._reloj.stop()
+        self.show()
+        self.raise_()
+        QTimer.singleShot(0, self.ubicar)
+
     def alarma(self, mensaje):
         self._accion = None
         self.boton.hide()

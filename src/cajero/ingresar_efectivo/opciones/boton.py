@@ -1,30 +1,33 @@
 """Una de las tres opciones: Cambio, Fiado u Otros."""
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QLabel, QPushButton, QSizePolicy, QVBoxLayout
 
 
-def boton_opcion(icono, titulo, color):
+def boton_opcion(icono, titulo, _color):
     btn = QPushButton()
-    btn.setFixedHeight(80)
+    btn.setMinimumHeight(280)
+    btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     btn.setCursor(Qt.CursorShape.PointingHandCursor)
-    btn.setCheckable(True)
-    btn.setAutoExclusive(True)
-    btn.setStyleSheet(f"""
-        QPushButton {{
-            background: white; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center;
-        }}
-        QPushButton:hover {{ border-color: {color}; background: #f8fafc; }}
-        QPushButton:checked {{ border-color: {color}; background: {color}; color: white; }}
+    btn.setStyleSheet("""
+        QPushButton {
+            background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 20px;
+        }
+        QPushButton:hover { border: 2px solid #0F172A; }
     """)
 
     caja = QVBoxLayout(btn)
     caja.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    caja.setContentsMargins(16, 28, 16, 28)
+    caja.setSpacing(14)
     dibujo = QLabel(icono)
-    dibujo.setStyleSheet("font-size: 24px; border: none; background: transparent;")
+    dibujo.setStyleSheet("font-size: 56px; border: none; background: transparent;")
     dibujo.setAlignment(Qt.AlignmentFlag.AlignCenter)
     nombre = QLabel(titulo)
-    nombre.setStyleSheet("font-weight: 900; font-size: 12px; border: none; background: transparent;")
+    nombre.setStyleSheet(
+        "font-weight: 800; font-size: 20px; color: #0F172A; "
+        "letter-spacing: 1px; border: none; background: transparent;"
+    )
     nombre.setAlignment(Qt.AlignmentFlag.AlignCenter)
     caja.addWidget(dibujo)
     caja.addWidget(nombre)

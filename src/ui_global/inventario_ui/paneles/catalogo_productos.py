@@ -53,8 +53,8 @@ class CatalogoProductos(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 8, 12, 8)
-        layout.setSpacing(8)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(12)
         self.setObjectName("catalogoProductosMain")
 
         from src.shared.urgencia_stock_banner import UrgenciaStockBanner

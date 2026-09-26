@@ -41,87 +41,91 @@ class MotorPromedios:
     @staticmethod
     def exportar_a_inventario(db, tipo_promedio: str, estado_promedios: dict):
         """
-        Exporta los precios y ofertas al inventario global de la base de datos solo para el tipo especificado.
+        Exporta precio/costo y mayoreo al inventario vía MotorMayoreo.
+        Ya no usa precio_oferta_promedio (retirado).
         """
-        estado = estado_promedios.get(tipo_promedio)
-        if not estado: return 0
+        from src.motor_descuentos.mayoreo.motor import MotorMayoreo
 
+        estado = estado_promedios.get(tipo_promedio)
+        if not estado:
+            return 0
+
+        motor = MotorMayoreo(db=db)
         actualizados = 0
         filas = estado.get("filas", [])
         for row_data in filas:
-            if len(row_data) >= 9:
-                corte = str(row_data[0]).strip()
-                costo_str = str(row_data[2]).replace(',', '').strip()
-                precio_base_str = str(row_data[4]).replace(',', '').strip()
-                oferta_str = str(row_data[5]).replace(',', '').strip()
-                cant_str = str(row_data[6]).replace(',', '').strip()
+            if len(row_data) < 9:
+                continue
+            corte = str(row_data[0]).strip()
+            if not corte:
+                continue
 
-                precio = 0.0
-                precio_oferta = 0.0
-                cant_oferta = 0.0
-                costo = 0.0
+            costo_str = str(row_data[2]).replace(",", "").strip()
+            precio_base_str = str(row_data[4]).replace(",", "").strip()
+            mayoreo_str = str(row_data[5]).replace(",", "").strip()
+            cant_str = str(row_data[6]).replace(",", "").strip()
 
-                if not corte: continue
+            precio = 0.0
+            precio_mayoreo = 0.0
+            cant_mayoreo = 0.0
+            costo = 0.0
+            try:
+                if precio_base_str:
+                    precio = float(precio_base_str)
+            except Exception:
+                pass
+            try:
+                if mayoreo_str:
+                    precio_mayoreo = float(mayoreo_str)
+            except Exception:
+                pass
+            try:
+                if cant_str:
+                    cant_mayoreo = float(cant_str)
+            except Exception:
+                pass
+            try:
+                if costo_str:
+                    costo = float(costo_str)
+            except Exception:
+                pass
 
-
-                try:
-                    if precio_base_str: precio = float(precio_base_str)
-                except: pass
-                try:
-                    if oferta_str: precio_oferta = float(oferta_str)
-                except: pass
-                try:
-                    if cant_str: cant_oferta = float(cant_str)
-                except: pass
-                try:
-                    if costo_str: costo = float(costo_str)
-                except: pass
-
-                if precio > 0 or precio_oferta > 0:
-                    # Verificar si existe
-                    res = db.execute_query("SELECT id FROM productos WHERE nombre = ?", (corte,))
-                    if res:
-                        db.execute_non_query(
-                            "UPDATE productos SET precio = ?, precio_oferta_promedio = ?, cant_oferta = ?, costo = ? WHERE nombre = ?",
-                            (precio, precio_oferta, cant_oferta, costo, corte)
-                        )
-                    else:
-                        import random
-                        cod = f"PROM-{random.randint(1000, 9999)}"
-                        db.execute_non_query(
-                            "INSERT INTO productos (nombre, precio, precio_oferta_promedio, cant_oferta, categoria, unidad, codigo, es_pesable, costo) VALUES (?, ?, ?, ?, ?, 'KG', ?, 1, ?)",
-                            (corte, precio, precio_oferta, cant_oferta, tipo_promedio.upper(), cod, costo)
-                        )
-                    actualizados += 1
+            if motor.aplicar_desde_promedios(
+                corte, precio, costo, cant_mayoreo, precio_mayoreo,
+                categoria=tipo_promedio,
+            ):
+                actualizados += 1
 
         return actualizados
 
     @staticmethod
     def sincronizar_inventario(db, tipo_promedio: str, estado_promedios: dict):
         """
-        Sincroniza desde el inventario global de la base de datos hacia los promedios solo para el tipo especificado.
+        Trae precio y mayoreo desde inventario hacia la tabla de promedios.
         """
-        estado = estado_promedios.get(tipo_promedio)
-        if not estado: return 0
+        from src.motor_descuentos.mayoreo.motor import MotorMayoreo
 
+        estado = estado_promedios.get(tipo_promedio)
+        if not estado:
+            return 0
+
+        motor = MotorMayoreo(db=db)
         actualizados = 0
         filas = estado.get("filas", [])
         for r_idx, row_data in enumerate(filas):
-            if len(row_data) >= 9:
-                corte = str(row_data[0]).strip()
-                res = db.execute_query("SELECT precio, precio_oferta_promedio, cant_oferta FROM productos WHERE nombre = ?", (corte,))
-                if res:
-                    p_normal = float(res[0]['precio'] or 0)
-                    p_oferta = float(res[0]['precio_oferta_promedio'] or 0)
-                    c_oferta = float(res[0]['cant_oferta'] or 0)
-
-                    if p_normal > 0:
-                        filas[r_idx][4] = f"{p_normal:,.2f}"
-                        actualizados += 1
-                    if p_oferta > 0:
-                        filas[r_idx][5] = f"{p_oferta:,.2f}"
-                    if c_oferta > 0:
-                        filas[r_idx][6] = str(c_oferta)
+            if len(row_data) < 9:
+                continue
+            corte = str(row_data[0]).strip()
+            if not corte:
+                continue
+            cfg = motor.obtener_por_nombre(corte)
+            if cfg.get("precio", 0) > 0:
+                filas[r_idx][4] = f"{cfg['precio']:,.2f}"
+                actualizados += 1
+            if cfg.get("precio_mayoreo", 0) > 0:
+                filas[r_idx][5] = f"{cfg['precio_mayoreo']:,.2f}"
+            if cfg.get("cant_mayoreo", 0) > 0:
+                filas[r_idx][6] = f"{cfg['cant_mayoreo']:g}"
 
         return actualizados
 

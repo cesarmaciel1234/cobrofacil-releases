@@ -71,6 +71,7 @@ class Jefe0Dashboard(QWidget):
             float(datos.get("ventas_ganancia_real", 0.0) or 0),
             float(datos.get("inventario_valor_costo", 0.0) or 0),
         )
+        self._pintar_cuentas()
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -286,6 +287,15 @@ class Jefe0Dashboard(QWidget):
         else:
             QMessageBox.critical(self, "Error al Exportar", msg)
 
+    def _pintar_cuentas(self):
+        try:
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            pagos, deuda = cerebro.resumen_cuentas()
+            self.panel_pub.set_cuentas(pagos, deuda)
+        except Exception:
+            pass
+
     def _tick(self):
         now = datetime.datetime.now()
         self.lbl_clock.setText(now.strftime("%d %b %Y  %H:%M"))
@@ -296,6 +306,7 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             nombre = "Jefe"
         self.panel_pub.set_saludo(f"{greet}, {nombre}")
+        self._pintar_cuentas()
 
     def _abrir_perfiles(self):
         try:

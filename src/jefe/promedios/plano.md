@@ -2,11 +2,19 @@
 
 ## Frente
 
-Carne, cerdo y pollo. Kilos, merma, precio y la tabla de cortes. Exportar al inventario pide la clave del jefe.
+Carne, cerdo y pollo. Kilos, merma, precio y la tabla de cortes. Columnas de volumen: **P. mayoreo** y **Cant. may.** Exportar / sincronizar pide la clave del jefe.
 
 ## Fondo
 
-`VistaPromediosMixin` pinta. `MotorPromedios.calcular_media_res` saca merma y costo por kilo. `exportar_a_inventario` escribe `productos` por el nombre del corte. Si el texto no es un número, queda `0` y esa fila no sale si precio y oferta siguen en cero.
+`VistaPromediosMixin` pinta. `MotorPromedios.calcular_media_res` saca merma y costo por kilo.
+
+Exportar → `MotorMayoreo.aplicar_desde_promedios` (rama `src/motor_descuentos/mayoreo/`). Escribe `precio`, `costo`, `cant_mayoreo`, `precio_mayoreo`.
+
+Sincronizar → `MotorMayoreo.obtener_por_nombre`.
+
+Ya no usa `precio_oferta_promedio`. Oferta de cartelería se carga en Ofertas (admin).
+
+Si el texto no es un número, queda `0` y esa fila no sale si precio y mayoreo siguen en cero.
 
 ## Qué no cambiar
 

@@ -115,6 +115,24 @@ class DetallesDialog(QDialog):
         btn_cerrar.clicked.connect(self.accept)
         lay.addWidget(btn_cerrar)
 
+class DialogoCierreCaja(QDialog):
+    """Tapa el paso 5 con gris. El cierre queda claro al frente."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+    def showEvent(self, event):
+        from src.utils.fondo_gris import cubrir
+        cubrir(self)
+        super().showEvent(event)
+
+    def paintEvent(self, event):
+        from src.utils.fondo_gris import pintar
+        pintar(self)
+
+
 class CierreGlobalUI(QWidget):
     request_dashboard = pyqtSignal()
     turno_cerrado = pyqtSignal()
@@ -621,6 +639,7 @@ class CierreGlobalUI(QWidget):
 
             self.card_totales.revelar(datos.get("ganancia_estimada", 0))
             self.panel_arq.set_esperado(datos.get("v_caja_total", 0))
+            self.panel_arq.set_pago_clientes(datos.get("abonos_efectivo", 0))
 
             self._set_modo_consolidado(consolidado or bool(datos.get("multi_caja")), datos)
             self._cargar_historial_cortes(fecha_str)

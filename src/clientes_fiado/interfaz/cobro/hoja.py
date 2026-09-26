@@ -8,6 +8,7 @@ from src.clientes_fiado.interfaz.cobro.fiado_express import (
     sonar_alarma_limite_fiado,
     sonar_dni_no_coincide,
 )
+from src.clientes_fiado.interfaz.cobro.pin_admin import quien_autoriza
 
 
 class _FilaNombre(QFrame):
@@ -117,6 +118,8 @@ class HojaCuentaCobro(QFrame):
         self._marca = -1
         self._ignorar = False
         self._silencio = False
+        self._pidiendo_pin = False
+        self._pin = ""
         self.hide()
 
     def abrir(self, modo, monto):
@@ -126,6 +129,8 @@ class HojaCuentaCobro(QFrame):
         self._ref = ""
         self._cliente = None
         self._filas = []
+        self._soltar_pin()
+        cerebro.soltar_excepcion()
         self._pintar_paso()
         self.show()
         self.raise_()
@@ -140,6 +145,14 @@ class HojaCuentaCobro(QFrame):
         self.hide()
 
     def escribir(self, texto):
+        if self._pidiendo_pin:
+            for cifra in str(texto or ""):
+                if cifra.isdigit() and len(self._pin) < 4:
+                    self._pin += cifra
+            self._pintar_pin()
+            if len(self._pin) == 4:
+                self._cerrar_pin()
+            return
         pieza = str(texto or "")
         if self._modo == "Fiado":
             pieza = "".join(c for c in pieza if c.isdigit())
@@ -151,10 +164,18 @@ class HojaCuentaCobro(QFrame):
         self.caja.insert(pieza)
 
     def borrar(self):
+        if self._pidiendo_pin:
+            self._pin = self._pin[:-1]
+            self._pintar_pin()
+            return
         self.caja.setFocus()
         self.caja.backspace()
 
     def confirmar(self):
+        if self._pidiendo_pin:
+            if len(self._pin) == 4:
+                self._cerrar_pin()
+            return
         if self._ignorar:
             return
         self._ignorar = True
@@ -168,6 +189,15 @@ class HojaCuentaCobro(QFrame):
         self._ignorar = False
 
     def eventFilter(self, obj, event):
+        if obj is self.caja and event.type() == QEvent.Type.KeyPress and self._pidiendo_pin:
+            tecla = event.key()
+            if tecla == Qt.Key.Key_Backspace:
+                self.borrar()
+            elif tecla in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                self.confirmar()
+            elif event.text() and event.text().isdigit():
+                self.escribir(event.text())
+            return True
         if obj is self.caja and event.type() == QEvent.Type.KeyPress and self.lista.isVisible():
             tecla = event.key()
             if tecla == Qt.Key.Key_Down and self._filas:
@@ -198,6 +228,10 @@ class HojaCuentaCobro(QFrame):
             y = max(margen, hoja.height() - alto - margen)
         self.setGeometry(margen, y, ancho, alto)
         self.raise_()
+        if self._pidiendo_pin:
+            aviso = self._aviso()
+            if aviso is not None:
+                aviso.raise_()
 
     def _frase(self):
         if self._modo == "Fiado":
@@ -206,6 +240,8 @@ class HojaCuentaCobro(QFrame):
 
     def _pintar_paso(self):
         self._silencio = True
+        self.aviso.setTextFormat(Qt.TextFormat.PlainText)
+        self.aviso.setStyleSheet("color: #EF4444; font-size: 18px; font-weight: 800;")
         self.aviso.clear()
         self.caja.clear()
         self._silencio = False
@@ -282,7 +318,7 @@ class HojaCuentaCobro(QFrame):
         if not (0 <= indice < len(self._filas)):
             return
         ficha = self._filas[indice]
-        self._pasar(ficha, str(ficha.get("nombre") or ""))
+        self._tomar_lista(ficha)
 
     def _cerrar_lista(self):
         while self._caja_lista.count():
@@ -303,6 +339,8 @@ class HojaCuentaCobro(QFrame):
     def _fallo(self, mensaje, alarma=False):
         if alarma:
             sonar_alarma_limite_fiado()
+        self.aviso.setTextFormat(Qt.TextFormat.PlainText)
+        self.aviso.setStyleSheet("color: #EF4444; font-size: 18px; font-weight: 800;")
         self.aviso.setText(mensaje)
         self.ubicar()
         self.caja.setFocus()
@@ -326,7 +364,7 @@ class HojaCuentaCobro(QFrame):
                 self._fallo(msg or "No se pudo identificar al cliente.")
                 return
             if cerebro.limite_excedido(cliente, self._monto):
-                self._avisar_cupo(cliente)
+                self._avisar_cupo(cliente, cerebro.normalizar_dni(texto))
                 return
             self._pasar(cliente, cerebro.normalizar_dni(texto))
             return
@@ -345,23 +383,75 @@ class HojaCuentaCobro(QFrame):
             self._fallo(msg or "No se pudo identificar al cliente.")
             return
         if cerebro.limite_excedido(cliente, self._monto):
-            self._avisar_cupo(cliente)
+            self._avisar_cupo(cliente, str(dict(cliente).get("nombre") or texto.strip()))
             return
         self._pasar(cliente, str(dict(cliente).get("nombre") or texto.strip()))
 
     def _tomar_lista(self, cliente):
         if cerebro.limite_excedido(cliente, self._monto):
-            self._avisar_cupo(cliente)
+            self._avisar_cupo(cliente, str(cliente.get("nombre") or ""))
             return
         self._pasar(cliente, str(cliente.get("nombre") or ""))
 
-    def _avisar_cupo(self, cliente):
+    def _aviso(self):
+        nodo = self.parentWidget()
+        while nodo is not None:
+            aviso = getattr(nodo, "aviso_toast", None)
+            if aviso is not None:
+                return aviso
+            nodo = nodo.parentWidget()
+        return None
+
+    def _avisar_cupo(self, cliente, ref):
+        self._cliente = cliente
+        self._ref = ref
+        self._pin = ""
+        self._pidiendo_pin = True
         limite = float(dict(cliente).get("limite_credito", 0))
         disp = cerebro.credito_disponible(cliente)
-        self._fallo(
-            f"Límite superado. Cupo ${limite:,.0f}, disponible ${disp:,.2f}.",
-            alarma=True,
+        exceso = max(0.0, float(self._monto or 0) - disp)
+        sonar_alarma_limite_fiado()
+        self.aviso.setTextFormat(Qt.TextFormat.RichText)
+        self.aviso.setStyleSheet("font-size: 18px; font-weight: 800; background: transparent; border: none;")
+        self.aviso.setText(
+            "<span style='color:#EF4444;'>Límite superado</span><br>"
+            f"<span style='color:#047857;'>crédito: $ {limite:,.0f}</span><br>"
+            f"<span style='color:#EF4444;'>exceso: $ {exceso:,.2f}</span>"
         )
+        aviso = self._aviso()
+        if aviso is not None:
+            aviso.pin("Límite superado. PIN de admin")
+        self.ubicar()
+        self.caja.setFocus()
+
+    def _pintar_pin(self, frase="Límite superado. PIN de admin"):
+        aviso = self._aviso()
+        if aviso is not None:
+            aviso.pin(frase, len(self._pin))
+
+    def _cerrar_pin(self):
+        quien = quien_autoriza(self._pin)
+        if not quien:
+            self._pin = ""
+            sonar_alarma_limite_fiado()
+            self._pintar_pin("PIN incorrecto. PIN de admin")
+            return
+        cliente = self._cliente
+        ref = self._ref
+        cliente_id = dict(cliente or {}).get("id")
+        self._soltar_pin()
+        if not cliente_id:
+            self._fallo("No se pudo identificar al cliente.")
+            return
+        cerebro.conceder_excepcion(cliente_id, self._monto, quien)
+        self._pasar(cliente, ref)
+
+    def _soltar_pin(self):
+        self._pidiendo_pin = False
+        self._pin = ""
+        aviso = self._aviso()
+        if aviso is not None:
+            aviso.cerrar()
 
     def _repetir(self):
         if self._modo == "Fiado":
@@ -388,5 +478,10 @@ class HojaCuentaCobro(QFrame):
             self.listo.emit(int(cliente_id))
 
     def _cancelar(self):
+        if self._pidiendo_pin:
+            self._soltar_pin()
+            cerebro.soltar_excepcion()
+            return
+        cerebro.soltar_excepcion()
         self.ocultar()
         self.cancelado.emit()

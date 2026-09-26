@@ -98,6 +98,8 @@ El asistente es `ChatManualWidget` en `componentes_barra_inferior/chatbot/`. No 
 
 El teclado en pantalla no se abre al escribir ni al tomar el foco el escáner. Se abre si Windows ve tactil (`GetSystemMetrics` 94 y 95) y el cuadro se tocó (`MouseFocusReason`). `teclado_virtual_modo` en `nunca` lo apaga. El botón TECLADO lo abre a mano. La cabecera es un color solo, sin degradé. El candado, el retiro, el ingreso, el historial y el cierre no desenfocan la venta.
 
+Esas ventanas, y F11, tapan la venta con el gris `#334155` (`src/utils/fondo_gris.py`), el mismo del paso 6. La hoja de cada una queda clara al frente. F6 abre tres tarjetas blancas: Cambio, Fiado y Otros. Fiado, al confirmar, pide el medio en `ingresar_efectivo/fiado/cobro/`. El clic pide el PIN y usa el motor. El QR se dibuja en esa hoja, no en la venta. La cuenta la escribe `medios/cerrar.py`. Si falla, avisa y la venta sigue. Cambio y Otros no usan esa puerta. El paso 6 no la importa. El cierre de caja del cajero es `DialogoCierreCaja`. El ingreso normal de perfiles no usa ese gris.
+
 ### Cobro
 
 Fiado y Clientes se piden en `HojaCuentaCobro`, en la misma hoja que la espera de la tarjeta. No abren la ventana oscura. Cancelar vuelve a los medios.

@@ -209,6 +209,7 @@ class DialogoHistorialCliente(QDialog):
 
         total_cargos = 0.0
         total_abonos = 0.0
+        total_anulaciones = 0.0
         for m in movs:
             row = self.tabla.rowCount()
             self.tabla.insertRow(row)
@@ -227,15 +228,19 @@ class DialogoHistorialCliente(QDialog):
                 total_cargos += monto
             elif tipo == "ABONO":
                 total_abonos += monto
+            elif tipo == "ANULACION":
+                total_anulaciones += monto
 
             self.tabla.setItem(row, 0, QTableWidgetItem(fecha_txt))
 
-            it_tipo = QTableWidgetItem(tipo)
+            it_tipo = QTableWidgetItem("ANULACIÓN" if tipo == "ANULACION" else tipo)
             it_tipo.setFont(QFont("Arial", 10, QFont.Weight.Bold))
             if tipo == "CARGO":
                 it_tipo.setForeground(QColor("#DC2626"))
             elif tipo == "ABONO":
                 it_tipo.setForeground(QColor("#059669"))
+            elif tipo == "ANULACION":
+                it_tipo.setForeground(QColor("#475569"))
             self.tabla.setItem(row, 1, it_tipo)
 
             it_monto = QTableWidgetItem(f"${monto:,.2f}")
@@ -243,16 +248,21 @@ class DialogoHistorialCliente(QDialog):
                 it_monto.setForeground(QColor("#DC2626"))
             elif tipo == "ABONO":
                 it_monto.setForeground(QColor("#059669"))
+            elif tipo == "ANULACION":
+                it_monto.setForeground(QColor("#475569"))
             self.tabla.setItem(row, 2, it_monto)
 
             self.tabla.setItem(row, 3, QTableWidgetItem(f"${saldo:,.2f}"))
             self.tabla.setItem(row, 4, QTableWidgetItem(desc))
             self.tabla.setItem(row, 5, QTableWidgetItem(ticket))
 
-        self.lbl_resumen.setText(
+        resumen = (
             f"{len(movs)} movimiento(s)  ·  "
             f"Total fiado: ${total_cargos:,.2f}  ·  "
             f"Total abonado: ${total_abonos:,.2f}"
         )
+        if total_anulaciones:
+            resumen += f"  ·  Anulado: ${total_anulaciones:,.2f}"
+        self.lbl_resumen.setText(resumen)
 
 

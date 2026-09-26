@@ -11,4 +11,4 @@ Tres mesas, sobre ese mismo libro:
 - `saldos/` dice si el cupo alcanza, y el garante lo consulta antes del ok.
 - `cartel/` llena el saludo de la confirmación. Si el nombre no está, deja `Sin datos`.
 
-El cargo de una venta fiada no se escribe acá. Lo escribe `_aplicar_fiado`, en la misma transacción que el ticket.
+El cargo de una venta fiada no se escribe acá. Lo escribe `_aplicar_fiado`, en la misma transacción que el ticket. `cuenta/cuadre.py` anota después el ticket que se vendió y no dejó cargo. Cancelar ese ticket anula el cargo en la misma transacción de la cancelación.

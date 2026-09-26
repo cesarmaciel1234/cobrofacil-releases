@@ -10,11 +10,11 @@ from src.motor_descuentos.compartido.shell_modulo import envolver_modulo, QSS_MO
 
 
 MODULOS = (
-    ("ofertas", "🏷️", "Ofertas por producto", "Carga precios promo. No imprime ni toca la TV."),
+    ("ofertas", "🏷️", "Ofertas por producto", "Carga precios promo y lista. No imprime ni toca la TV."),
     ("combos", "🎁", "Combos", "Varios artículos, un precio. Independiente de ofertas."),
     ("publicidad", "📺", "Publicidad TV", "Qué producto se inserta en la cartelería. No cambia precios."),
     ("imprenta", "🖨️", "Imprenta / PDF", "Solo PDF para clientes. Lee ofertas, no las edita."),
-    ("mayoreo", "📦", "Mayoreo", "Se carga en Inventario. Acá no se mezcla con promos."),
+    ("mayoreo", "📦", "Mayoreo", "Global: Inventario y Promedios jefe. No es cartelería."),
 )
 
 

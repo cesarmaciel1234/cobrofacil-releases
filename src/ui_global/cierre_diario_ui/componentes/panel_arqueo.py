@@ -29,6 +29,11 @@ class PanelArqueo(QFrame):
         self.lbl_esp.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         pa_lay.addWidget(self.lbl_esp)
 
+        self.lbl_pago_clientes = QLabel("")
+        self.lbl_pago_clientes.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_pago_clientes.setObjectName("PanelArqPagoClientes")
+        pa_lay.addWidget(self.lbl_pago_clientes)
+
         lbl_fisico_tit = QLabel("INGRESA EL FÍSICO CONTADO ($)")
         lbl_fisico_tit.setObjectName("PanelArqTitFis")
         lbl_fisico_tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -112,6 +117,13 @@ class PanelArqueo(QFrame):
 
     def _finalizar(self):
         self.parent()._finalizar()
+
+    def set_pago_clientes(self, valor):
+        monto = float(valor or 0)
+        if monto <= 0:
+            self.lbl_pago_clientes.setText("")
+            return
+        self.lbl_pago_clientes.setText(f"Pago de clientes  $ {monto:,.2f}")
 
     def set_esperado(self, valor):
         self.esperado = valor

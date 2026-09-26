@@ -116,14 +116,14 @@ class VistaPromediosMixin:
         self._lbl_prom_costos.setStyleSheet(f"QLabel {{ font-size: 16px; font-weight: 900; color: {PAL['danger']}; }}")
         lay.addWidget(self._lbl_prom_costos)
 
-        # NUEVAS COLUMNAS (Sin Costo Total, con Oferta)
-        self._prom_tabla = build_table(["Corte", "Kilos", "Costo $/kg", "% Ganancia", "Precio/kg Venta", "Oferta", "Cant. Oferta", "Venta Total", "Ganancia Neta"])
+        # NUEVAS COLUMNAS (mayoreo vía MotorMayoreo; no oferta promedio)
+        self._prom_tabla = build_table(["Corte", "Kilos", "Costo $/kg", "% Ganancia", "Precio/kg Venta", "P. mayoreo", "Cant. may.", "Venta Total", "Ganancia Neta"])
         self._prom_tabla.itemChanged.connect(self._on_prom_tabla_changed)
         lay.addWidget(self._prom_tabla)
 
         tot_lay = QHBoxLayout()
         self._lbl_prom_totales_normal = QLabel("Normal => Venta: $0.00 | Ganancia: $0.00")
-        self._lbl_prom_totales_oferta = QLabel("Ofertas => Venta: $0.00 | Ganancia: $0.00")
+        self._lbl_prom_totales_oferta = QLabel("Mayoreo => Venta: $0.00 | Ganancia: $0.00")
         self._lbl_prom_totales_normal.setStyleSheet(f"QLabel {{ font-size: 15px; font-weight: 900; color: {PAL['success']}; }}")
         self._lbl_prom_totales_oferta.setStyleSheet(f"QLabel {{ font-size: 15px; font-weight: 900; color: {PAL['info']}; }}")
 
@@ -341,15 +341,15 @@ class VistaPromediosMixin:
         self._lbl_prom_costos.setStyleSheet(f"QLabel {{ font-size: 16px; font-weight: 900; color: {PAL['danger']}; }}")
         lay.addWidget(self._lbl_prom_costos)
 
-        # NUEVAS COLUMNAS (Sin Costo Total, con Oferta)
-        self._prom_tabla = build_table(["Corte", "Kilos", "Costo $/kg", "% Ganancia", "Precio/kg Venta", "Oferta", "Cant. Oferta", "Venta Total", "Ganancia Neta"])
+        # NUEVAS COLUMNAS (mayoreo vía MotorMayoreo; no oferta promedio)
+        self._prom_tabla = build_table(["Corte", "Kilos", "Costo $/kg", "% Ganancia", "Precio/kg Venta", "P. mayoreo", "Cant. may.", "Venta Total", "Ganancia Neta"])
         self._prom_tabla.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed | QAbstractItemView.EditTrigger.AnyKeyPressed)
         self._prom_tabla.itemChanged.connect(self._on_prom_tabla_changed)
         lay.addWidget(self._prom_tabla)
 
         tot_lay = QHBoxLayout()
         self._lbl_prom_totales_normal = QLabel("Normal => Venta: $0.00 | Ganancia: $0.00")
-        self._lbl_prom_totales_oferta = QLabel("Ofertas => Venta: $0.00 | Ganancia: $0.00")
+        self._lbl_prom_totales_oferta = QLabel("Mayoreo => Venta: $0.00 | Ganancia: $0.00")
         self._lbl_prom_totales_normal.setStyleSheet(f"QLabel {{ font-size: 15px; font-weight: 900; color: {PAL['success']}; }}")
         self._lbl_prom_totales_oferta.setStyleSheet(f"QLabel {{ font-size: 15px; font-weight: 900; color: {PAL['info']}; }}")
 
@@ -724,7 +724,7 @@ class VistaPromediosMixin:
 
         if hasattr(self, '_lbl_prom_totales_normal') and hasattr(self, '_lbl_prom_totales_oferta'):
             self._lbl_prom_totales_normal.setText(f"Normal => Venta: ${t_venta_normal:,.2f} | Ganancia: ${t_ganancia_normal:,.2f}")
-            self._lbl_prom_totales_oferta.setText(f"Ofertas => Venta: ${t_venta_oferta:,.2f} | Ganancia: ${t_ganancia_oferta:,.2f}")
+            self._lbl_prom_totales_oferta.setText(f"Mayoreo => Venta: ${t_venta_oferta:,.2f} | Ganancia: ${t_ganancia_oferta:,.2f}")
 
         self._prom_tabla.blockSignals(False)
         self._guardar_estado_actual()

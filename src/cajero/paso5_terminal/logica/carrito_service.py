@@ -5,25 +5,33 @@ class CarritoService:
     def buscar_productos(self, txt):
         """Busca productos por ID o aproximación de nombre. Retorna lista de diccionarios."""
         res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, es_pesable, unidad, departamento FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
+            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+            "es_pesable, unidad, departamento FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
             (txt, f"%{txt}%"),
         )
         if res:
             return res
         return db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
+            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago "
+            "FROM productos WHERE id = ? OR nombre LIKE ? LIMIT 5",
             (txt, f"%{txt}%"),
         ) or []
 
     def buscar_producto_exacto(self, txt):
         """Busca un producto exactamente por su ID."""
         res = db_manager.execute_query(
-            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, es_pesable, unidad, departamento FROM productos WHERE id = ?",
+            "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+            "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago, "
+            "es_pesable, unidad, departamento FROM productos WHERE id = ?",
             (txt,),
         )
         if not res:
             res = db_manager.execute_query(
-                "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id = ?",
+                "SELECT id, nombre, precio, stock, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+                "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago "
+                "FROM productos WHERE id = ?",
                 (txt,),
             )
         return res[0] if res else None

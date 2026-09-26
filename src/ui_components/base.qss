@@ -272,7 +272,7 @@ QLabel#DialogoIngresoEfectivoError {
 }
 
 QLabel#DialogoCandadoTitulo {
- font-size: 26px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; border: none; qproperty-alignment: AlignCenter; 
+ font-size: 26px; font-weight: 900; color: #0F172A; letter-spacing: 2px; border: none; qproperty-alignment: AlignCenter; 
 }
 
 QLabel#DialogoCandadoSubtitulo {
@@ -401,6 +401,13 @@ QLabel#PanelArqValEsp {
     font-weight: 900;
     border-radius: 12px;
     padding: 10px;
+}
+
+QLabel#PanelArqPagoClientes {
+    font-size: 15px;
+    font-weight: 800;
+    background: transparent;
+    border: none;
 }
 
 

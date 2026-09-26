@@ -17,4 +17,6 @@ Desde el terminal:
 
 `from src.cajero.paso8_historial import DialogoHistorialDia`
 
-En `ui/filtros.py`, el combo de método empieza con el texto `TODOS`. Es un valor del filtro, no un comentario `TODO`.
+En `ui/filtros.py`, el combo de método empieza con el texto `TODOS`. Es un valor del filtro, no un comentario `TODO`. El filtro sigue siendo TODOS, EFECTIVO, TARJETA, TRANSFERENCIA y MIXTO.
+
+F3 tapa la venta con el gris `#334155`. La hoja del historial queda clara al frente.

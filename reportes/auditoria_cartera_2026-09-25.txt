@@ -1,0 +1,61 @@
+AUDITORIA DE CARTERA
+Fecha de la lectura: 25/09/2026
+Base: punpro_db, solo lectura. No se modificó nada.
+
+RESULTADO
+Las tres tarjetas cierran con el libro de la cuenta.
+El reporte de ventas a crédito no cierra con esa deuda: hay dos tickets sin cargo.
+
+TARJETAS
+Deuda total en la calle    $100.200,00
+Deudores activos           2
+Mayor deuda                $100.100,00   nicole
+Cobros                     $0,00
+
+CUENTA
+deuda = cargos - cobros
+
+cliente   deuda        cargos       cobros     diferencia
+cesar     $100,00      $100,00      $0,00      $0,00
+nicole    $100.100,00  $100.100,00  $0,00      $0,00
+mica      $0,00        $0,00        $0,00      $0,00
+
+La diferencia de cada ficha es cero. La planilla de cobros está vacía: no hay ningún abono. En caja no hay ningún ingreso "Pago de clientes". Eso coincide con cobros en cero.
+
+DE DONDE SALE LA DEUDA
+1. cesar, $100,00. Cargo manual desde el panel admin, 25/09/2026 18:04. No tiene ticket.
+2. nicole, $100.100,00. Venta a crédito ticket 1089690, 25/09/2026 18:27, medio Clientes, con excepción de admin. Su límite es $50.000,00.
+
+LO QUE EL REPORTE DE VENTAS DICE Y LA CUENTA NO TIENE
+Ticket 1089686  25/09 14:51  Fiado      $100,00      sin cargo en la cuenta
+Ticket 1089689  25/09 16:21  Clientes   $100,00      sin cargo en la cuenta
+Ticket 1089690  25/09 18:27  Clientes   $100.100,00  cargado en nicole
+
+Ventas a crédito del día     $100.300,00
+Cargos por esas ventas       $100.100,00
+Faltan en la cuenta          $200,00
+
+MEDIO DEL COBRO
+La base todavía no tiene la columna medio_pago en cuenta_corriente. Un abono de hoy no podría guardar Efectivo, Transferencia, Tarjeta ni QR hasta que corra esa columna. Hoy no hay abonos, así que la planilla no pierde filas: no hay filas.
+
+CAJA DEL DIA, PARA UBICAR
+Efectivo, tarjeta, transferencia y QR del historial cerrado no entran en esta cuenta. Quedan en el reporte del jefe. Hay un QR en TRANSF_PENDIENTE por $18.900,00: está cobrado en el ticket y todavía no liquidado.
+
+SEGUNDA LECTURA, 25/09/2026 21:41, sobre la maestra 192.168.0.13
+La cuenta sigue igual: cesar $100,00, nicole $100.100,00, mica $0,00. Los dos tickets siguen sin cargo. La columna del medio ya está en la tabla.
+
+COLUMNAS DE cuenta_corriente
+medio_pago, perfil y registrado_por quedaron agregadas. Un abono nuevo puede guardar Efectivo, Transferencia, Tarjeta o QR, y quién lo registró.
+
+LOS DOS TICKETS, CON NOMBRE
+Ticket 1089686  Fiado      $100,00  vendido como Express 94707566. Ese DNI es el de cesar. En Clientes, CUADRAR lo puede cargar en cesar.
+Ticket 1089689  Clientes   $100,00  vendido como kiarar. No hay una ficha con ese nombre. CUADRAR lo muestra y no lo carga.
+
+La franja ámbar de Clientes lista esos dos. Cargar escribe el cargo del primero. El segundo espera una ficha llamada kiarar.
+
+LO QUE AHORA CIERRA SOLO
+El abono baja la deuda y escribe el movimiento en la misma transacción. Si el movimiento no entra, la deuda queda como estaba.
+Si el abono de admin es en efectivo y la caja no lo anota, el aviso dice que la cuenta sí bajó.
+Cancelar un ticket a crédito baja esa deuda y deja una anulación.
+Si otra caja ya usó el cupo, la venta no se guarda.
+Una venta fiada que sube desde una caja sin red lleva el cargo a la maestra.

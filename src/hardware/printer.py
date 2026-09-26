@@ -122,6 +122,12 @@ class PosPrinter:
         comando = ESC + b'\x42\x02\x01'
         return self._send_raw_data(comando)
 
+    def cortar_papel(self, printer_name_override=None):
+        """ Envía el comando ESC/POS para cortar el papel sin imprimir texto. """
+        p_name = printer_name_override or _impresora_cajero_activo()
+        logger.info(f"Enviando señal de corte de papel a {p_name}...")
+        self._send_raw_data(CUT_PAPER, p_name)
+
     def abrir_cajon(self, printer_name_override=None):
         """ Envía el comando ESC/POS estándar para patear el cajón de dinero. """
         p_name = printer_name_override or _impresora_cajero_activo()

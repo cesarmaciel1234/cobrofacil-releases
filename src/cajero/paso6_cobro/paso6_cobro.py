@@ -687,6 +687,8 @@ class Paso6Cobro(QDialog):
             self.timer_spinner.stop()
             self.panel_mixto.mostrar(self.total_final)
             self.valores_mixtos = self.panel_mixto.valores()
+            self._mixto_vivo_hecho = None
+            self._mixto_espera_cuenta = False
         elif key == "Tarjeta":
             self.lbl_input1.hide()
             self.txt_pago.hide()
@@ -887,16 +889,42 @@ class Paso6Cobro(QDialog):
         self.stack.setCurrentIndex(1)
         self.hoja_cuenta.abrir(modo, self.total_final)
 
+    def _hoja_cuenta_al_frente(self):
+        return (
+            hasattr(self, "hoja_cuenta")
+            and self.hoja_cuenta.isVisible()
+            and (
+                self.current_metodo in ("Fiado", "Clientes")
+                or getattr(self, "_mixto_espera_cuenta", False)
+            )
+        )
+
     def _cuenta_lista(self, cliente_id):
         self._fiado_cliente_id = int(cliente_id)
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
         if idx >= 0:
             self.cmb_cliente.setCurrentIndex(idx)
+        if getattr(self, "_mixto_espera_cuenta", False):
+            self._mixto_espera_cuenta = False
+            self.hoja_cuenta.ocultar()
+            self.panel_mixto.show()
+            self._mixto_i += 1
+            self._seguir_mixto()
+            return
         self.txt_pago.setText(self._monto(self.total_final))
         self._fiado_flujo_activo = False
         QTimer.singleShot(80, lambda: self.finalizar(imprimir=False))
 
     def _cuenta_cancelada(self):
+        if getattr(self, "_mixto_espera_cuenta", False):
+            self._mixto_espera_cuenta = False
+            self._fiado_cliente_id = None
+            self.hoja_cuenta.ocultar()
+            self._mixto_pasos = None
+            self.panel_mixto.show()
+            if getattr(self, "_mixto_vivo_hecho", None):
+                self._avisar("Ese medio ya se cobró. La cuenta no se cargó.")
+            return
         if getattr(self, "_cuenta_cerrando", False):
             return
         self._cuenta_cerrando = True
@@ -1064,7 +1092,7 @@ class Paso6Cobro(QDialog):
                 return None
             disp = cerebro.credito_disponible(c)
             p1_float = float(p1_t) if p1_t else 0
-            if p1_float > disp + 0.01:
+            if p1_float > disp + 0.01 and not cerebro.excepcion_vigente(cliente_id, self.total_final):
                 QMessageBox.warning(self, "Clientes", f"Crédito insuficiente.\nDisp: ${disp:.2f}\nReq: ${p1_float:.2f}")
                 return None
 
@@ -1263,7 +1291,19 @@ class Paso6Cobro(QDialog):
             self.finalizar(True)
 
     def _cerrar_como_eligio(self):
-        modo = getattr(self, "_ticket_al_pagar", None) or "imprime"
+        modo = getattr(self, "_ticket_al_pagar", None)
+        if not modo:
+            # Por defecto verificar configuración de impresión automática
+            from src.config import config
+            metodo = str(getattr(self, "current_metodo", "efectivo")).lower()
+            key = f"auto_print_{metodo}"
+            
+            # Si el método está en la configuración de auto-print, usar ese valor
+            if config.get(key, True):
+                modo = "imprime"
+            else:
+                modo = "cierra"
+
         if modo == "cierra":
             self.finalizar(False)
         elif modo == "fiscal":
@@ -1320,6 +1360,7 @@ class Paso6Cobro(QDialog):
                 "oferta": getattr(self, 'descuentaso_oferta', 0.0),
                 "nombre_pendiente": getattr(self, 'nombre_pendiente', None),
                 "cliente_id": cliente_id,
+                "fiado_parcial": (getattr(self, "valores_mixtos", None) or {}).get("cliente") or 0,
                 "imprimir": imprimir,
                 "force_fiscal": force_fiscal,
                 "request_id": getattr(self, "request_id", None),
@@ -1733,7 +1774,7 @@ class Paso6Cobro(QDialog):
         datos = valores or {}
         return tuple(
             redondear_dinero(datos.get(clave) or 0)
-            for clave in ("efectivo", "tarjeta", "mercadopago", "qr")
+            for clave in ("efectivo", "tarjeta", "mercadopago", "qr", "cliente")
         )
 
     def _soltar_pasos_mixto(self):
@@ -1764,13 +1805,33 @@ class Paso6Cobro(QDialog):
                 self._mixto_i += 1
                 self._seguir_mixto()
             return
+        from src.cajero.paso6_cobro.mixto_en_cobro.confirmar import pasos_vivos, vivo
+        from src.utils.dinero import redondear_dinero
+        self._mixto_armando = True
+        try:
+            self.panel_mixto.completar_cliente()
+        finally:
+            self._mixto_armando = False
         if not self.panel_mixto.cubre():
             return
-        from src.cajero.paso6_cobro.mixto_en_cobro.confirmar import pasos_vivos
         self.valores_mixtos = self.panel_mixto.valores()
+        parte_cliente = redondear_dinero(self.valores_mixtos.get("cliente") or 0)
+        otros = redondear_dinero(
+            sum(self.valores_mixtos.get(clave) or 0 for clave in ("efectivo", "tarjeta", "mercadopago", "qr"))
+        )
+        if parte_cliente > 0.009 and otros <= 0.009:
+            self._avisar("Primero cargá efectivo, tarjeta, transferencia o QR.")
+            return
+        hecho = getattr(self, "_mixto_vivo_hecho", None)
+        actual = vivo(self.valores_mixtos)
+        if hecho and hecho != actual:
+            self._avisar("Ese medio ya se cobró. Dejá el mismo importe.")
+            return
         self._mixto_imprimir = imprimir
         self._mixto_confirmado = True
-        self._mixto_pasos = pasos_vivos(self.valores_mixtos)
+        self._mixto_pasos = [] if hecho else pasos_vivos(self.valores_mixtos)
+        if parte_cliente > 0.009:
+            self._mixto_pasos.append(("cuenta", parte_cliente))
         self._mixto_i = 0
         self._mixto_esperando_qr = False
         self._mixto_espera_transferencia = None
@@ -1808,6 +1869,16 @@ class Paso6Cobro(QDialog):
             self._anotar_point()
             self._mixto_i += 1
             self._seguir_mixto()
+            return
+        if tipo == "cuenta":
+            from src.cajero.paso6_cobro.mixto_en_cobro.confirmar import vivo
+            marca = vivo(self.valores_mixtos)
+            if any(parte > 0.009 for parte in marca):
+                self._mixto_vivo_hecho = marca
+            self._mixto_espera_cuenta = True
+            self.panel_mixto.ocultar()
+            self._asegurar_lista_clientes()
+            self.hoja_cuenta.abrir("Clientes", monto)
             return
         if tipo == "transferencia":
             self._mixto_espera_transferencia = float(monto)
@@ -1887,6 +1958,9 @@ class Paso6Cobro(QDialog):
         self._cerrar_como_eligio()
 
     def _tomar_mixto(self, valores):
+        if getattr(self, "_mixto_armando", False):
+            self.valores_mixtos = valores
+            return
         if getattr(self, "_point_en_curso", False):
             return
         if getattr(self, "_mixto_rearmando", False):
@@ -1921,7 +1995,7 @@ class Paso6Cobro(QDialog):
         self.pila_point.setCurrentIndex(0 if metodo in ("Tarjeta", "Mixto") else 1)
         if hasattr(self, "pila_f2"):
             self.pila_f2.setCurrentIndex(1 if metodo == "Mixto" else 0)
-        if metodo == "Mixto":
+        if metodo in ("Mixto", "QR"):
             self.pila_extra.setCurrentIndex(0)
         elif metodo == "Transferencia":
             self.pila_extra.setCurrentIndex(1)
@@ -1938,6 +2012,8 @@ class Paso6Cobro(QDialog):
     def _tecla_f12(self):
         if self.current_metodo == "Transferencia":
             self.corroborar_ultimo_monto()
+        elif self.current_metodo == "QR":
+            self.verificar_transferencia_mp()
         elif self.current_metodo == "Mixto":
             if getattr(self, "_mixto_esperando_qr", False):
                 self.verificar_transferencia_mp()
@@ -2007,12 +2083,15 @@ class Paso6Cobro(QDialog):
         elif k == Qt.Key.Key_F12:
             self._tecla_f12()
         elif k == Qt.Key.Key_Escape:
-            if self.current_metodo in ("Fiado", "Clientes") and self.hoja_cuenta.isVisible():
+            if self._hoja_cuenta_al_frente():
                 self.hoja_cuenta._cancelar()
                 return
             self.reject()
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             foco = self.focusWidget()
+            if self._hoja_cuenta_al_frente():
+                self.hoja_cuenta.confirmar()
+                return
             if self.current_metodo in ("Fiado", "Clientes"):
                 if self.hoja_cuenta.isVisible():
                     self.hoja_cuenta.confirmar()
@@ -2046,11 +2125,7 @@ class Paso6Cobro(QDialog):
         if key == "F10":
             self._elegir_cierre("fiscal")
             return
-        if (
-            self.current_metodo in ("Fiado", "Clientes")
-            and hasattr(self, "hoja_cuenta")
-            and self.hoja_cuenta.isVisible()
-        ):
+        if self._hoja_cuenta_al_frente():
             if key == "ENTER":
                 self.hoja_cuenta.confirmar()
                 return

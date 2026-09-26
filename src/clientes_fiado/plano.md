@@ -21,6 +21,7 @@ clientes_fiado/
     wasap/                 rumbo. Hoy no envía
   interfaz/
     cobro/                 la hoja del mostrador
+      medios/              efectivo, transferencia, tarjeta, QR, mixto y cerrar.py
     admin/                 el guardado de la pantalla clara
   motores/                 reexporta, para no romper el camino viejo
   ordenes/                 reexporta, para no romper el camino viejo
@@ -32,11 +33,11 @@ La pantalla pintada de admin sigue en `src/admin/clientes`. El tema claro no se 
 
 ## Frente
 
-En el cobro, Fiado y Cuenta corriente usan la hoja del cobro. Fiado solo toma el DNI, en números. Al confirmar, el hueco de arriba dice «Hola» y el nombre, o «Sin datos» si admin todavía no lo cargó. `oficina/cartel/` arma ese texto. Si un dato no carga, el cobro sigue. Cuenta corriente, al escribir, lista los nombres parecidos y debajo el DNI. El primer Enter, si está bien, muestra saldo y disponible, limpia el campo y pide confirmar. El segundo Enter registra. El cartel no repite el monto ni trae Cancelar. Esc vuelve a los medios. Si el DNI ya está cargado, Fiado cruza con ese cliente. El Express nuevo solo se crea si no existe.
+En el cobro, Fiado y Cuenta corriente usan la hoja del cobro. Fiado solo toma el DNI, en números. Si el cupo no alcanza, el cartel del cobro pide el PIN de 4 dígitos de un admin. Si coincide, esa venta pasa y el cargo dice excepción. Si no, la venta no se carga. Al confirmar, el hueco de arriba dice «Hola» y el nombre, o «Sin datos» si admin todavía no lo cargó. `oficina/cartel/` arma ese texto. Si un dato no carga, el cobro sigue. Cuenta corriente, al escribir, lista los nombres parecidos y debajo el DNI. El primer Enter, si está bien, muestra saldo y disponible, limpia el campo y pide confirmar. El segundo Enter registra. El cartel no repite el monto ni trae Cancelar. Esc vuelve a los medios. Si el DNI ya está cargado, Fiado cruza con ese cliente. El Express nuevo solo se crea si no existe.
 
 En el historial, la auditoría y el reporte del jefe, esa venta aparece como un medio más: el campo `metodo_pago` dice `Fiado` o `Clientes`. El jefe no tiene una lista aparte.
 
-En admin, alta, edición, límite, abono, lista e historial se ven igual. El guardado entra por el cerebro. En la caja, el abono de F6 también entra por el cerebro.
+En admin, alta, edición, límite, abono, lista e historial se ven igual. El guardado entra por el cerebro. En la caja, el abono de F6 también entra por el cerebro. Al confirmar, la ventana llama a `interfaz/cobro/medios`: efectivo, transferencia, tarjeta, QR o mixto. El mixto reparte el abono en dos de esos medios. F6 no arma ese cobro en la venta. La hoja `ingresar_efectivo/fiado/cobro/` pide el PIN y llama a los motores: el QR con `pedir_qr_pos`, la tarjeta con `enviar_monto`. El código se dibuja en F6. Después `medios/cerrar.py` asienta. Si fallan, no tiran y la venta sigue. Esa puerta no llama al paso 6 y el paso 6 no la importa. El movimiento queda firmado como Cajero o Admin, con el nombre y el medio entre paréntesis. Solo el efectivo entra al cajón.
 
 El agente de WhatsApp no se ve. No hay botón ni envío.
 
@@ -50,7 +51,9 @@ El paso 6 es el cobro. `MotorFiado.ejecutar` y `MotorClientes.ejecutar` solo hac
 
 La oficina no registra esa venta. `oficina/cuenta/motor.py`, `MotorCuenta`, lee y escribe `clientes` y `cuenta_corriente`. `oficina/cartel/motor.py`, `MotorCartel.armar`, llena el saludo. `SubmotorNombre` pone «Hola» o `Sin datos`. `SubmotorSaldos` pone la deuda y el disponible. Si uno falla, el otro igual devuelve. `por_cobrar` es `listar_con_deuda`, `ultimo_cargo` y `movimientos`. `cobradas` es `abonar`. `saldos` es `credito_disponible` y `limite_excedido`. El garante consulta esos saldos antes del ok.
 
-`abonar` lee la deuda, la baja en un commit y anota el `ABONO` en otro. Si no hay cliente, devuelve `(False, 0.0, "")`.
+`abonar` lee la deuda y anota el `ABONO` en la misma transacción, con `medio_pago`, `perfil` y `registrado_por`. Si el movimiento no queda escrito, la deuda no cambia y devuelve `(False, 0.0, "")`. `abonar_caja` arma la descripción `Cajero Nombre (Efectivo)`. El efectivo se anota en `movimientos_caja` como `Pago de clientes`. Si ese ingreso no entra, el admin avisa que la cuenta sí bajó y la caja no. El corte lo muestra aparte, dentro del efectivo esperado.
+
+`oficina/cuenta/cuadre.py` lista las ventas `COMPLETADA` de Fiado o Clientes que no tienen `CARGO`. En admin, la franja ámbar abre esa lista. Cargar escribe el cargo en el cliente cuyo nombre coincide con uno solo. Si la venta quedó guardada como `Express` y el DNI, la carga en la ficha que ya tiene ese DNI. Cancelar el ticket llama `_anular_cargo` en la misma transacción: baja la deuda y deja una fila `ANULACION`. El cupo se vuelve a mirar dentro de la venta, con la ficha bloqueada. Si otra caja ya usó el cupo, la venta no se guarda. Una excepción de PIN o un ticket que ya se vendió (`ya_vendido`) no frena ese control.
 
 La tabla `clientes` no se lee al abrir el cobro. `Paso6Cobro._asegurar_lista_clientes` llama `cerebro.listar` la primera vez que se abre Fiado o Clientes.
 

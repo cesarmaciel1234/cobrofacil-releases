@@ -1,4 +1,6 @@
 from src.base_de_datos.database import db_manager
+from src.motor_descuentos.ofertas.motor import MotorOfertas
+
 
 class StockOfertasService:
     def stock_disponible(self, p, p_id):
@@ -20,13 +22,26 @@ class StockOfertasService:
         query = "SELECT COUNT(*) FROM productos WHERE stock <= stock_minimo AND stock_minimo > 0"
         return db_manager.execute_scalar(query) or 0
 
+    _COLS_PRECIO = (
+        "nombre, precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo, "
+        "precio_oferta_relampago, limite_oferta_relampago, ventas_oferta_relampago"
+    )
+
     def obtener_producto_para_refresh(self, p_id):
-        res = db_manager.execute_query("SELECT nombre, precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
+        res = db_manager.execute_query(
+            f"SELECT {self._COLS_PRECIO} FROM productos WHERE id=?", (p_id,)
+        )
         return res[0] if res else None
 
     def obtener_ofertas_producto(self, p_id):
-        res = db_manager.execute_query("SELECT precio, cant_oferta, precio_oferta, cant_mayoreo, precio_mayoreo FROM productos WHERE id=?", (p_id,))
+        res = db_manager.execute_query(
+            f"SELECT {self._COLS_PRECIO} FROM productos WHERE id=?", (p_id,)
+        )
         return res[0] if res else None
+
+    def resolver_precio(self, p, cantidad):
+        """Delegá en MotorOfertas (mayoreo → relámpago → oferta → lista)."""
+        return MotorOfertas.resolver_precio_venta(p, cantidad)
 
     def obtener_combos(self):
         """Lista cruda de combos. Se recuerda 15 s para no pegarle a la base en cada escaneo."""

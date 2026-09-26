@@ -12,14 +12,24 @@ class DialogoRetiroEfectivo(QDialog):
         self.motivo = ""
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(420, 400)
         self._build()
+
+    def showEvent(self, event):
+        from src.utils.fondo_gris import cubrir
+        cubrir(self)
+        super().showEvent(event)
+
+    def paintEvent(self, event):
+        from src.utils.fondo_gris import pintar
+        pintar(self)
 
     def _build(self):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
+        outer.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         card = QFrame()
+        card.setFixedSize(420, 400)
         card.setStyleSheet(
             "QFrame { background: #FFFFFF; border: 3px solid #1E3A8A; border-radius: 18px; }"
         )

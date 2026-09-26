@@ -132,14 +132,16 @@ class UsuarioCampo(QLineEdit):
 
 class LoginPantalla(QDialog):
     """PASO 3: LOGIN — Light Premium 2026."""
-    def __init__(self, role, parent=None):
+    def __init__(self, role, parent=None, fondo_gris=False):
         super().__init__(parent)
         self.role = role
+        self._fondo_gris = fondo_gris
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setProperty("theme", "light")
+        fondo = "transparent" if fondo_gris else "#F8FAFC"
         self.setStyleSheet(
-            "QDialog { background-color: #F8FAFC; }"
+            f"QDialog {{ background-color: {fondo}; }}"
             "QFrame#LoginContainer {"
             " background-color: #FFFFFF; border-radius: 24px; border: 1px solid #E2E8F0;"
             "}"
@@ -150,7 +152,9 @@ class LoginPantalla(QDialog):
             h = min(max(640, int(parent.height() * 0.72)), 860)
         else:
             w, h = 600, 760
-        self.setFixedSize(w, h)
+        self._medida = (w, h)
+        if not fondo_gris:
+            self.setFixedSize(w, h)
         
         self._dragging = False
         self._drag_pos = QPoint()
@@ -179,6 +183,9 @@ class LoginPantalla(QDialog):
     def _setup_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 20, 20, 20)
+        if self._fondo_gris:
+            root.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         if self.role == "admin":
             role_icon = "🛡️"
@@ -194,6 +201,9 @@ class LoginPantalla(QDialog):
         self.container.setObjectName("LoginContainer")
         self.container.setProperty("rol", self.role)
         self.container.setGraphicsEffect(None)
+        if self._fondo_gris:
+            ancho, alto = self._medida
+            self.container.setFixedSize(ancho - 40, alto - 40)
         root.addWidget(self.container)
 
         main_lay = QVBoxLayout(self.container)
@@ -319,6 +329,19 @@ class LoginPantalla(QDialog):
         content_lay.addWidget(btn_cancel)
 
         main_lay.addLayout(content_lay)
+
+    def showEvent(self, event):
+        if self._fondo_gris:
+            from src.utils.fondo_gris import cubrir
+            cubrir(self)
+        super().showEvent(event)
+
+    def paintEvent(self, event):
+        if self._fondo_gris:
+            from src.utils.fondo_gris import pintar
+            pintar(self)
+            return
+        super().paintEvent(event)
 
     def _foco_password(self):
         self.txt_pass.setFocus()

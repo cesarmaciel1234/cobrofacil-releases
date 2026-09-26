@@ -113,9 +113,6 @@ class TallerOfertas(QWidget):
             "QComboBox { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 12px; }"
             "QComboBox:focus { border: 2px solid #3B82F6; }"
         )
-        self.btn_imprimir_masivo.setProperty("class", "primary-btn")
-        self.btn_asistente_promo.setProperty("class", "warn-btn")
-
     def _inicializar_datos(self):
         self._cargar_deptos()
         self.cargar_datos()
@@ -168,22 +165,15 @@ class TallerOfertas(QWidget):
         fl.addWidget(lbl_dep); fl.addWidget(self.cmb_depto)
 
         fl.addSpacing(15)
-        self.chk_ver_promos = QCheckBox("🔥 Ver Solo Promos")
+        self.chk_ver_promos = QCheckBox("Ver solo promos")
         self.chk_ver_promos.stateChanged.connect(self.cargar_datos)
         fl.addWidget(self.chk_ver_promos)
 
-        fl.addSpacing(15)
-        self.btn_imprimir_masivo = QPushButton("📚 IMPRIMIR MASIVO (A4)")
-        self.btn_imprimir_masivo.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_imprimir_masivo.setEnabled(False)
-        self.btn_imprimir_masivo.clicked.connect(self._imprimir_cartelera_masiva)
-        fl.addWidget(self.btn_imprimir_masivo)
-
-        self.btn_asistente_promo = QPushButton("🔥 ASISTENTE PROMO (A4)")
-        self.btn_asistente_promo.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_asistente_promo.setEnabled(False)
-        self.btn_asistente_promo.clicked.connect(self._configurar_ofertas_secuencial)
-        fl.addWidget(self.btn_asistente_promo)
+        # Impresión vive en Imprenta / PDF. Acá solo se cargan precios promo.
+        self.btn_imprimir_masivo = QPushButton()
+        self.btn_imprimir_masivo.setVisible(False)
+        self.btn_asistente_promo = QPushButton()
+        self.btn_asistente_promo.setVisible(False)
 
         fl.addStretch()
         root.addWidget(fb)
@@ -191,28 +181,31 @@ class TallerOfertas(QWidget):
         # ── CUERPO PRINCIPAL CON SPLITTER ──────────────────
         cuerpo = QWidget()
         lay_body = QVBoxLayout(cuerpo)
-        lay_body.setContentsMargins(12, 8, 12, 8)
+        lay_body.setContentsMargins(16, 12, 16, 12)
         lay_body.setSpacing(0)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.setStyleSheet("QSplitter::handle {  width: 1px; }")
+        splitter.setHandleWidth(6)
+        splitter.setStyleSheet(
+            "QSplitter::handle { background: #E2E8F0; width: 6px; margin: 4px 0; }"
+        )
 
-        # Componente Tabla
         self.tabla = TablaOfertas()
-        self.tabla.item_checked.connect(self._on_item_checked)
         self.tabla.necesita_mas_datos.connect(self._cargar_siguiente_pagina)
         self.tabla.itemSelectionChanged.connect(self._on_tabla_selection_changed)
         self.tabla.cellClicked.connect(self._on_tabla_cell_clicked)
         splitter.addWidget(self.tabla)
 
-        # Componente Creador Promociones
         self.panel_control = CreadorPromociones()
         self.panel_control.activar_promo.connect(self._on_activar_promo)
         self.panel_control.quitar_promo.connect(self._on_quitar_promo)
-        self.panel_control.imprimir_cartel.connect(self._on_imprimir_cartel_rapido)
+        self.panel_control.setMinimumWidth(300)
+        self.panel_control.setMaximumWidth(420)
         splitter.addWidget(self.panel_control)
 
-        splitter.setSizes([720, 480])
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([900, 360])
         lay_body.addWidget(splitter)
         root.addWidget(cuerpo)
 
@@ -299,20 +292,6 @@ class TallerOfertas(QWidget):
         self.tabla.popular_datos(filas_nuevas, inicio, self.checked_product_ids)
         self.loaded_count = fin
 
-    def _on_item_checked(self, id_p, is_checked):
-        if is_checked:
-            self.checked_product_ids.add(id_p)
-        else:
-            self.checked_product_ids.discard(id_p)
-
-        num_sel = len(self.checked_product_ids)
-        self.btn_imprimir_masivo.setEnabled(num_sel > 0)
-        self.btn_asistente_promo.setEnabled(num_sel > 0)
-        self.lbl_sel.setText(f"Seleccionados (Checks): {num_sel}" if num_sel else "")
-        p = next((r for r in self.all_rows if str(r.get("id")) == str(id_p)), None)
-        if p:
-            self.panel_control.cargar_producto(p)
-
     def _on_tabla_cell_clicked(self, row, _col):
         self._cargar_panel_fila(row)
 
@@ -325,7 +304,7 @@ class TallerOfertas(QWidget):
     def _cargar_panel_fila(self, row):
         if row is None or row < 0:
             return
-        item_id = self.tabla.item(row, 1)
+        item_id = self.tabla.item(row, 0)
         if not item_id:
             return
         id_p = _id_de_celda(item_id)
@@ -367,6 +346,7 @@ class TallerOfertas(QWidget):
             if reply == QMessageBox.StandardButton.No:
                 return
 
+        # Promo + precio de lista. Costo/stock siguen en Inventario.
         motor = MotorOfertas()
         ok = motor.aplicar_oferta(
             data['id'],
@@ -376,8 +356,6 @@ class TallerOfertas(QWidget):
             data.get('precio_oferta_promedio', 0),
             precio_regular=data.get('precio_regular'),
             limite_relampago=data.get('limite_oferta_relampago'),
-            costo=data.get('costo'),
-            stock=data.get('stock'),
         )
         if ok:
             try:
@@ -398,9 +376,8 @@ class TallerOfertas(QWidget):
                     r['precio_oferta_relampago'] = data.get('precio_oferta_relampago', 0)
                     r['precio_oferta_promedio'] = data.get('precio_oferta_promedio', 0)
                     r['limite_oferta_relampago'] = data.get('limite_oferta_relampago', 0)
-                    r['precio'] = data.get('precio_regular', r.get('precio'))
-                    r['costo'] = data.get('costo', r.get('costo'))
-                    r['stock'] = data.get('stock', r.get('stock'))
+                    if data.get('precio_regular') is not None:
+                        r['precio'] = data['precio_regular']
                     break
             self.loaded_count = 0
             self.tabla.setRowCount(0)

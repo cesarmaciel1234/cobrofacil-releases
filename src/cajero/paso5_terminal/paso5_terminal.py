@@ -295,25 +295,8 @@ class Paso5Terminal(QWidget):
             p_id = self.tabla.item(i, 0).text()
             p = self.controller.stock_ofertas.obtener_producto_para_refresh(p_id)
             if p:
-                p_base = float(p['precio'])
                 cant = float(self.tabla.item(i, 3).text())
-                c_of = float(p['cant_oferta'] or 0)
-                p_of = float(p['precio_oferta'] or 0)
-                c_may = float(p['cant_mayoreo'] or 0)
-                p_may = float(p['precio_mayoreo'] or 0)
-
-                if c_may > 0 and p_may > 0 and cant >= c_may:
-                    p_final = p_may
-                    desc = (p_base - p_may) * cant
-                    nombre = f"📦 [MAYOREO] {p['nombre']}"
-                elif c_of > 0 and p_of > 0 and cant >= c_of:
-                    p_final = p_of
-                    desc = (p_base - p_of) * cant
-                    nombre = f"🔥 [OFERTA] {p['nombre']}"
-                else:
-                    p_final = p_base
-                    desc = 0.0
-                    nombre = p['nombre']
+                p_final, desc, nombre, _tipo = self.controller.stock_ofertas.resolver_precio(p, cant)
 
                 self.tabla.item(i, 1).setText(nombre)
                 self.tabla.item(i, 2).setText(fmt_moneda_sin_centavos(p_final))
@@ -1009,26 +992,12 @@ class Paso5Terminal(QWidget):
 
                             # Verificación dinámica de ofertas al ingresar con el Enter
                             p_id = self.tabla.item(row, 0).text()
-                            res_of = [self.controller.stock_ofertas.obtener_ofertas_producto(p_id)] if self.controller.stock_ofertas.obtener_ofertas_producto(p_id) else []
-                            if res_of and p_id != "000":
-                                p_base = float(res_of[0]['precio'])
-                                c_of = float(res_of[0]['cant_oferta'] or 0.0)
-                                p_of = float(res_of[0]['precio_oferta'] or 0.0)
-
-                                if c_of > 0 and p_of > 0 and new_cant >= c_of:
-                                    p_ap = p_of
-                                    desc_t = (p_base - p_of) * new_cant
-                                    nombre_txt = self.tabla.item(row, 1).text()
-                                    if "🔥 [OFERTA]" not in nombre_txt:
-                                        self.tabla.item(row, 1).setText(f"🔥 [OFERTA] {nombre_txt}")
-                                else:
-                                    p_ap = p_base
-                                    desc_t = 0.0
-                                    nombre_txt = self.tabla.item(row, 1).text()
-                                    if "🔥 [OFERTA]" in nombre_txt:
-                                        clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
-                                        self.tabla.item(row, 1).setText(clean_name)
-
+                            oferta = self.controller.stock_ofertas.obtener_ofertas_producto(p_id)
+                            if oferta and p_id != "000":
+                                p_ap, desc_t, nom, _t = self.controller.stock_ofertas.resolver_precio(
+                                    oferta, new_cant
+                                )
+                                self.tabla.item(row, 1).setText(nom)
                                 self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                                 self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                                 p_unit = p_ap
@@ -1553,17 +1522,6 @@ class Paso5Terminal(QWidget):
     def _agregar_a_tabla_calculado(self, p, cantidad=1.0):
         self.en_venta = True
         p_id = str(p['id'])
-        precio_base = float(p['precio'])
-
-        cant_of = 0.0
-        precio_of = 0.0
-        cant_may = 0.0
-        precio_may = 0.0
-        if hasattr(p, 'keys'):
-            if 'cant_oferta' in p.keys(): cant_of = float(p['cant_oferta'] or 0.0)
-            if 'precio_oferta' in p.keys(): precio_of = float(p['precio_oferta'] or 0.0)
-            if 'cant_mayoreo' in p.keys(): cant_may = float(p['cant_mayoreo'] or 0.0)
-            if 'precio_mayoreo' in p.keys(): precio_may = float(p['precio_mayoreo'] or 0.0)
 
         # 1. Agrupar si el producto ya existe en la tabla (Auto-Suma), excepto Artículos Comunes
         if p_id != "000":
@@ -1575,19 +1533,10 @@ class Paso5Terminal(QWidget):
                         self.setUpdatesEnabled(True)
                         return
 
-                    # Verificamos si alcanza o supera la cantidad de mayoreo u oferta
-                    if cant_may > 0 and precio_may > 0 and new_cant >= cant_may:
-                        p_aplicar = precio_may
-                        desc_total = (precio_base - precio_may) * new_cant
-                        display_name = f"📦 [MAYOREO] {p['nombre']}"
-                    elif cant_of > 0 and precio_of > 0 and new_cant >= cant_of:
-                        p_aplicar = precio_of
-                        desc_total = (precio_base - precio_of) * new_cant
-                        display_name = f"🔥 [OFERTA] {p['nombre']}"
-                    else:
-                        p_aplicar = precio_base
-                        desc_total = 0.0
-                        display_name = str(p['nombre'])
+                    # Verificamos mayoreo / relámpago / oferta
+                    p_aplicar, desc_total, display_name, _t = self.controller.stock_ofertas.resolver_precio(
+                        p, new_cant
+                    )
 
                     # Actualizar Nombre con el distintivo
                     self.tabla.item(i, 1).setText(display_name)
@@ -1614,18 +1563,9 @@ class Paso5Terminal(QWidget):
             return
 
         # 2. Si no existe, calculamos para la inserción de la fila nueva
-        if cant_may > 0 and precio_may > 0 and cantidad >= cant_may:
-            p_aplicar = precio_may
-            desc_total = (precio_base - precio_may) * cantidad
-            display_name = f"📦 [MAYOREO] {p['nombre']}"
-        elif cant_of > 0 and precio_of > 0 and cantidad >= cant_of:
-            p_aplicar = precio_of
-            desc_total = (precio_base - precio_of) * cantidad
-            display_name = f"🔥 [OFERTA] {p['nombre']}"
-        else:
-            p_aplicar = precio_base
-            desc_total = 0.0
-            display_name = str(p['nombre'])
+        p_aplicar, desc_total, display_name, _t = self.controller.stock_ofertas.resolver_precio(
+            p, cantidad
+        )
 
         row = self.tabla.rowCount()
         self.tabla.insertRow(row)
@@ -1979,35 +1919,72 @@ class Paso5Terminal(QWidget):
 
     def abrir_ingreso_efectivo(self):
         """Abre el panel de ingreso manual de dinero a la caja (F6)."""
-        dlg = DialogoIngresoEfectivo(parent=self)
-        if qt_exec(dlg) and dlg.monto_ingresado > 0:
-            # Solicitar PIN de confirmación del operador activo
-            pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
-            if qt_exec(pin_dlg) and pin_dlg.ok:
-                monto = dlg.monto_ingresado
-                motivo = getattr(dlg, "motivo", "Ingreso manual de efectivo en terminal")
-                usuario = CajeroActivo.nombre
-                from src.config import config
-                c_id = config.get("caja_id", 1)
-
-                # Novedad: Si es un abono a Fiado, procesar la deuda en DB
-                if getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None):
-                    from src.clientes_fiado.cerebro.cerebro import cerebro
-                    exito, nuevo_saldo, nombre_cli = cerebro.abonar_caja(
-                        dlg.cliente_id, monto, dlg.deuda_actual
-                    )
-                    if exito:
-                        motivo = f"Abono Fiado: {nombre_cli} - Saldo restante: ${nuevo_saldo:,.2f}"
-
-                if self.controller.movimientos_caja.registrar_ingreso_efectivo(monto, usuario, motivo, c_id):
-                    self.flash_feedback(success=True)
-                    self.monitor_cajon_bloqueante(manual=True)
-                    self.check_alertas_efectivo()
-                else:
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
-
+        try:
+            self._abrir_ingreso_efectivo()
+        except Exception:
+            try:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Ingreso", "No se pudo completar el ingreso. La venta sigue.")
+            except Exception:
+                pass
         QTimer.singleShot(50, self.txt_scan.setFocus)
+
+    def _abrir_ingreso_efectivo(self):
+        dlg = DialogoIngresoEfectivo(parent=self)
+        if not (qt_exec(dlg) and dlg.monto_ingresado > 0):
+            return
+        es_fiado = getattr(dlg, "tipo_ingreso", "") == "FIADO" and getattr(dlg, "cliente_id", None)
+        resultado = getattr(dlg, "resultado", None) if es_fiado else None
+        if es_fiado and (resultado is None or not getattr(resultado, "ok", False)):
+            return
+        if not es_fiado:
+            pin_dlg = DialogoPIN(CajeroActivo.nombre, parent=self)
+            if not (qt_exec(pin_dlg) and pin_dlg.ok):
+                return
+        monto = dlg.monto_ingresado
+        motivo = getattr(dlg, "motivo", "Ingreso manual de efectivo en terminal")
+        usuario = CajeroActivo.nombre
+        from src.config import config
+        c_id = config.get("caja_id", 1)
+        entra_caja = True
+
+        if es_fiado:
+            from src.clientes_fiado.interfaz.cobro.medios.cerrar import asentar
+
+            hecho = asentar(
+                dlg.cliente_id, monto, dlg.deuda_actual, "Cajero", usuario, resultado,
+            )
+            if not hecho["ok"]:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Abono", hecho["aviso"])
+                return
+            motivo = hecho["motivo"]
+            entra_caja = hecho["entra_caja"]
+            monto = hecho["monto_caja"]
+
+        if entra_caja:
+            try:
+                ok_caja = self.controller.movimientos_caja.registrar_ingreso_efectivo(
+                    monto, usuario, motivo, c_id,
+                )
+            except Exception:
+                ok_caja = False
+            if ok_caja:
+                self.flash_feedback(success=True)
+                self.monitor_cajon_bloqueante(manual=True)
+                self.check_alertas_efectivo()
+            else:
+                from PyQt6.QtWidgets import QMessageBox
+                if es_fiado:
+                    QMessageBox.warning(
+                        self,
+                        "Caja",
+                        "El abono quedó en la cuenta del cliente. El efectivo no entró a la caja.",
+                    )
+                else:
+                    QMessageBox.critical(self, "Error", "No se pudo registrar el ingreso en la base de datos.")
+        elif es_fiado:
+            self.flash_feedback(success=True)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -2097,26 +2074,11 @@ class Paso5Terminal(QWidget):
                     # Verificación dinámica de ofertas al ajustar cantidad
                     p_id = self.tabla.item(row, 0).text()
                     oferta = self.controller.stock_ofertas.obtener_ofertas_producto(p_id)
-                    res_of = [oferta] if oferta else []
-                    if res_of and p_id != "000":
-                        p_base = float(res_of[0]['precio'])
-                        c_of = float(res_of[0]['cant_oferta'] or 0.0)
-                        p_of = float(res_of[0]['precio_oferta'] or 0.0)
-
-                        if c_of > 0 and p_of > 0 and new_v >= c_of:
-                            p_ap = p_of
-                            desc_t = (p_base - p_of) * new_v
-                            nombre_txt = self.tabla.item(row, 1).text()
-                            if "🔥 [OFERTA]" not in nombre_txt:
-                                self.tabla.item(row, 1).setText(f"🔥 [OFERTA] {nombre_txt}")
-                        else:
-                            p_ap = p_base
-                            desc_t = 0.0
-                            nombre_txt = self.tabla.item(row, 1).text()
-                            if "🔥 [OFERTA]" in nombre_txt:
-                                clean_name = nombre_txt.replace("🔥 [OFERTA] ", "")
-                                self.tabla.item(row, 1).setText(clean_name)
-
+                    if oferta and p_id != "000":
+                        p_ap, desc_t, nom, _t = self.controller.stock_ofertas.resolver_precio(
+                            oferta, new_v
+                        )
+                        self.tabla.item(row, 1).setText(nom)
                         self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                         self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                         p_unit = p_ap
@@ -2152,30 +2114,11 @@ class Paso5Terminal(QWidget):
                         # Verificación dinámica de ofertas al ingresar con el Enter
                         p_id = self.tabla.item(row, 0).text()
                         oferta = self.controller.stock_ofertas.obtener_ofertas_producto(p_id)
-                        res_of = [oferta] if oferta else []
-                        if res_of and p_id != "000":
-                            p_base = float(res_of[0]['precio'])
-                            c_of = float(res_of[0]['cant_oferta'] or 0.0)
-                            p_of = float(res_of[0]['precio_oferta'] or 0.0)
-                            c_may = float(res_of[0]['cant_mayoreo'] or 0.0)
-                            p_may = float(res_of[0]['precio_mayoreo'] or 0.0)
-
-                            nombre_txt = self.tabla.item(row, 1).text()
-                            clean_name = nombre_txt.replace("🔥 [OFERTA] ", "").replace("📦 [MAYOREO] ", "")
-
-                            if c_may > 0 and p_may > 0 and new_cant >= c_may:
-                                p_ap = p_may
-                                desc_t = (p_base - p_may) * new_cant
-                                self.tabla.item(row, 1).setText(f"📦 [MAYOREO] {clean_name}")
-                            elif c_of > 0 and p_of > 0 and new_cant >= c_of:
-                                p_ap = p_of
-                                desc_t = (p_base - p_of) * new_cant
-                                self.tabla.item(row, 1).setText(f"🔥 [OFERTA] {clean_name}")
-                            else:
-                                p_ap = p_base
-                                desc_t = 0.0
-                                self.tabla.item(row, 1).setText(clean_name)
-
+                        if oferta and p_id != "000":
+                            p_ap, desc_t, nom, _t = self.controller.stock_ofertas.resolver_precio(
+                                oferta, new_cant
+                            )
+                            self.tabla.item(row, 1).setText(nom)
                             self.tabla.item(row, 2).setText(fmt_moneda_sin_centavos(p_ap))
                             self.tabla.item(row, 4).setText(fmt_moneda_sin_centavos(desc_t))
                             p_unit = p_ap
@@ -2419,17 +2362,16 @@ class Paso5Terminal(QWidget):
             QTimer.singleShot(50, self.txt_scan.setFocus)
             return
 
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout
-        from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI
+        from PyQt6.QtWidgets import QVBoxLayout
+        from src.ui_global.cierre_diario_ui.cierre_main_ui import CierreGlobalUI, DialogoCierreCaja
 
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Cierre de Caja Global")
-        dlg.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        dlg.setFixedSize(1200, 900)
+        dlg = DialogoCierreCaja(self)
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(0, 0, 0, 0)
+        lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         cierre = CierreGlobalUI(self, is_terminal=True)
+        cierre.setFixedSize(1200, 900)
         cierre.btn_back.setText("❌ Cerrar")
         cierre.request_dashboard.connect(dlg.reject)
         cierre.turno_cerrado.connect(dlg.accept)

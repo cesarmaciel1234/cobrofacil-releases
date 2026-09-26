@@ -17,9 +17,10 @@ class PaginaMayoreo(QWidget):
         root.addWidget(barra_modulo("Mayoreo", on_back))
         body = QLabel(
             "Este módulo no comparte pantalla con ofertas ni con el catálogo.\n\n"
-            "1. Inventario → editar producto.\n"
-            "2. Completá cantidad mayoreo y precio mayoreo.\n"
-            "3. En caja, al superar esa cantidad, el motor aplica el precio solo."
+            "Mayoreo es global (`MotorMayoreo`):\n"
+            "1. Inventario → editar producto (cant. + precio mayoreo), o\n"
+            "2. Jefe → Promedios → exportar cortes.\n"
+            "3. En caja, al superar esa cantidad, aplica el precio mayoreo."
         )
         body.setWordWrap(True)
         body.setStyleSheet("padding: 32px; font-size: 14px; color: #334155; background: #F8FAFC;")

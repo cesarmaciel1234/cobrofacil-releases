@@ -24,17 +24,20 @@ class OfflineSync:
             except Exception as e:
                 logger.error(f"No se pudo crear offline_queue: {e}")
 
-    def guardar_venta_offline(self, venta_data, items):
+    def guardar_venta_offline(self, venta_data, items, fiado=None):
         """Guarda la venta en el JSON local cuando la LAN falla."""
         try:
             with open(self.queue_file, "r", encoding="utf-8") as f:
                 queue = json.load(f)
 
-            queue.append({
+            registro = {
                 "venta_data": venta_data,
                 "items": items,
-                "timestamp": time.time()
-            })
+                "timestamp": time.time(),
+            }
+            if fiado:
+                registro["fiado"] = fiado
+            queue.append(registro)
 
             with open(self.queue_file, "w", encoding="utf-8") as f:
                 json.dump(queue, f, indent=4)
@@ -102,7 +105,9 @@ class OfflineSync:
         logger.info(f"Sincronizando {len(queue)} ventas offline pendientes...")
         exitosas = []
         for i, record in enumerate(queue):
-            if db_manager.sync_venta_to_master(record["venta_data"], record["items"]):
+            if db_manager.sync_venta_to_master(
+                record["venta_data"], record["items"], record.get("fiado")
+            ):
                 exitosas.append(i)
             else:
                 break

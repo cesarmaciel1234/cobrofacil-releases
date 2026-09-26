@@ -17,6 +17,8 @@ from src.admin.clientes.componentes.dialogo_nuevo_cliente import DialogoNuevoCli
 from src.admin.clientes.componentes.dialogo_recalculo_fiado import DialogoRecalculoFiado
 from src.admin.clientes.componentes.dialogo_editar_cliente import DialogoEditarCliente
 from src.admin.clientes.componentes.dialogo_historial_cliente import DialogoHistorialCliente
+from src.admin.clientes.componentes.dialogo_cobros import DialogoCobros
+from src.admin.clientes.componentes.dialogo_cuadre import DialogoCuadre
 
 class AdminClientes(QWidget):
     request_dashboard = pyqtSignal()
@@ -84,7 +86,20 @@ class AdminClientes(QWidget):
         self.lbl_red_status.setStyleSheet(badge_css)
         header_lay.addWidget(self.lbl_red_status)
 
+        self.btn_planilla = QPushButton("PLANILLA DE COBROS")
+        self.btn_planilla.setCursor(Qt.PointingHandCursor)
+        self.btn_planilla.setStyleSheet(f"""
+            QPushButton {{
+                background: white; color: #047857; font-weight: 900; border-radius: 10px;
+                padding: 12px 18px; border: 1px solid #A7F3D0; font-size: 13px;
+            }}
+            QPushButton:hover {{ background: #ECFDF5; }}
+        """)
+        self.btn_planilla.clicked.connect(self._abrir_cobros)
+
         header_lay.addStretch()
+        header_lay.addWidget(self.btn_planilla)
+        header_lay.addSpacing(10)
         header_lay.addWidget(self.btn_nuevo)
         lay.addLayout(header_lay)
 
@@ -94,10 +109,35 @@ class AdminClientes(QWidget):
         self.card_deuda = MetricCard("Deuda Total en la Calle", "💸", "#EF4444")
         self.card_activos = MetricCard("Deudores Activos", "👥", "#3B82F6")
         self.card_mayor = MetricCard("Mayor Deuda", "🏆", "#F59E0B")
+        self.card_cobros = MetricCard("Cobros", "💵", "#059669")
         cards_lay.addWidget(self.card_deuda)
         cards_lay.addWidget(self.card_activos)
         cards_lay.addWidget(self.card_mayor)
+        cards_lay.addWidget(self.card_cobros)
         lay.addLayout(cards_lay)
+
+        self.aviso_cuadre = QFrame()
+        self.aviso_cuadre.setStyleSheet(
+            "background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 12px;"
+        )
+        aviso_lay = QHBoxLayout(self.aviso_cuadre)
+        aviso_lay.setContentsMargins(16, 10, 16, 10)
+        self.lbl_cuadre = QLabel("")
+        self.lbl_cuadre.setStyleSheet(
+            "color: #92400E; font-weight: 800; font-size: 13px; background: transparent; border: none;"
+        )
+        self.btn_cuadre = QPushButton("CUADRAR")
+        self.btn_cuadre.setCursor(Qt.PointingHandCursor)
+        self.btn_cuadre.setStyleSheet(
+            "background: #B45309; color: white; font-weight: 900; border: none; "
+            "border-radius: 8px; padding: 8px 14px;"
+        )
+        self.btn_cuadre.clicked.connect(self._abrir_cuadre)
+        aviso_lay.addWidget(self.lbl_cuadre)
+        aviso_lay.addStretch()
+        aviso_lay.addWidget(self.btn_cuadre)
+        self.aviso_cuadre.hide()
+        lay.addWidget(self.aviso_cuadre)
 
         # Tabla
         panel_tabla = QFrame()
@@ -308,6 +348,31 @@ class AdminClientes(QWidget):
         self.card_deuda.set_valor(total_deuda, True)
         self.card_activos.set_valor(deudores)
         self.card_mayor.set_valor(max_deuda, True)
+        self.card_cobros.set_valor(cerebro.total_cobros(), True)
+        self._pintar_cuadre()
+
+    def _pintar_cuadre(self):
+        try:
+            from src.clientes_fiado.cerebro.cerebro import cerebro
+
+            huecos = cerebro.ventas_sin_cargo()
+        except Exception:
+            huecos = []
+        if not huecos:
+            self.aviso_cuadre.hide()
+            return
+        total = sum(float(fila.get("total") or 0) for fila in huecos)
+        self.lbl_cuadre.setText(
+            f"{len(huecos)} ventas a crédito sin cargo en la cuenta  ·  ${total:,.2f}"
+        )
+        self.aviso_cuadre.show()
+
+    def _abrir_cuadre(self):
+        if qt_exec(DialogoCuadre(self)):
+            self.cargar_clientes()
+
+    def _abrir_cobros(self):
+        qt_exec(DialogoCobros(self))
 
     def _on_fila_cliente_clic(self, row, col):
         """Abre historial al clic en datos del cliente (no en botones de acción)."""
@@ -411,11 +476,42 @@ class AdminClientes(QWidget):
         dlg.abrir_para_cliente(cliente)
         if not (qt_exec(dlg) and dlg.tipo_ingreso == "FIADO" and dlg.monto_ingresado > 0 and dlg.cliente_id):
             return
-        exito, nuevo_saldo, _nombre = cerebro.abonar_caja(
-            dlg.cliente_id, dlg.monto_ingresado, dlg.deuda_actual
-        )
-        if not exito:
-            QMessageBox.warning(self, "Abono", "No se pudo registrar el abono.")
+        from src.clientes_fiado.interfaz.cobro.medios.cerrar import asentar
+        from src.config import config
+
+        quien = (config.current_user or {}).get("username") or ""
+        resultado = getattr(dlg, "resultado", None)
+        if resultado is None or not getattr(resultado, "ok", False):
             return
-        QMessageBox.information(self, "Éxito", f"Abono registrado.\nNuevo saldo: ${nuevo_saldo:,.2f}")
+        hecho = asentar(
+            dlg.cliente_id, dlg.monto_ingresado, dlg.deuda_actual,
+            "Admin", quien, resultado,
+        )
+        if not hecho["ok"]:
+            QMessageBox.warning(self, "Abono", hecho["aviso"])
+            return
+        medio = resultado.medio
+        if hecho["entra_caja"]:
+            from src.cajero.paso5_terminal.logica.movimientos_caja_service import MovimientosCajaService
+
+            try:
+                entro = MovimientosCajaService().registrar_ingreso_efectivo(
+                    hecho["monto_caja"],
+                    quien or "Admin",
+                    f"Pago de clientes: {hecho['nombre']} (Efectivo)",
+                    config.get("caja_id", 1),
+                )
+            except Exception:
+                entro = False
+            if not entro:
+                QMessageBox.warning(
+                    self,
+                    "Caja",
+                    "El abono quedó en la cuenta del cliente. El efectivo no entró a la caja.",
+                )
+                self.cargar_clientes()
+                return
+        QMessageBox.information(
+            self, "Éxito", f"Abono registrado por Admin ({medio}).\nNuevo saldo: ${hecho['saldo']:,.2f}"
+        )
         self.cargar_clientes()

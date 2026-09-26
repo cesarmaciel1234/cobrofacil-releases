@@ -117,8 +117,93 @@ class WorkerExportGanancias(QThread):
             for i, ancho in enumerate(anchos, 1):
                 ws.column_dimensions[get_column_letter(i)].width = ancho
 
+            self._hoja_auditoria(wb)
+
             wb.save(self.filepath)
-            self.finished.emit(True, f"Reporte de ganancias generado exitosamente:\n{self.filepath}")
+            self.finished.emit(
+                True,
+                "Reporte generado. Trae ganancias y la hoja Auditoria.\n" + self.filepath,
+            )
 
         except Exception as e:
             self.finished.emit(False, str(e))
+
+    def _hoja_auditoria(self, wb):
+        from src.clientes_fiado.oficina.cobradas.auditoria import armar_auditoria
+
+        datos = armar_auditoria()
+        ws = wb.create_sheet("Auditoria")
+        fill = PatternFill("solid", fgColor="4F46E5")
+        blanco = Font(bold=True, color="FFFFFF")
+        borde = Border(
+            left=Side(style="thin", color="DDDDDD"),
+            right=Side(style="thin", color="DDDDDD"),
+            top=Side(style="thin", color="DDDDDD"),
+            bottom=Side(style="thin", color="DDDDDD"),
+        )
+
+        def titulo(fila, texto):
+            celda = ws.cell(fila, 1, texto)
+            celda.font = Font(bold=True, size=14)
+
+        def cabezas(fila, nombres):
+            for col, nombre in enumerate(nombres, 1):
+                celda = ws.cell(fila, col, nombre)
+                celda.font = blanco
+                celda.fill = fill
+                celda.border = borde
+
+        def plata(celda):
+            celda.number_format = '"$"#,##0.00'
+            celda.border = borde
+
+        titulo(1, "Auditoria de cartera")
+        cabezas(3, ["Deuda en la calle", "Cobros", "Ventas fiado y clientes", "Cargos con ticket", "Faltan en la cuenta"])
+        valores = (
+            datos["deuda"], datos["cobros"], datos["ventas_credito"],
+            datos["cargos_venta"], datos["faltan"],
+        )
+        for col, valor in enumerate(valores, 1):
+            plata(ws.cell(4, col, valor))
+
+        titulo(6, "Fichas")
+        cabezas(7, ["Cliente", "DNI", "Deuda", "Cargos", "Cobros", "Diferencia"])
+        fila = 8
+        for ficha in datos["fichas"]:
+            ws.cell(fila, 1, ficha["nombre"]).border = borde
+            ws.cell(fila, 2, ficha["dni"] or "—").border = borde
+            for col, clave in enumerate(("deuda", "cargos", "cobros", "diferencia"), 3):
+                plata(ws.cell(fila, col, ficha[clave]))
+            if abs(ficha["diferencia"]) >= 0.01:
+                ws.cell(fila, 6).font = Font(color="DC2626", bold=True)
+            fila += 1
+
+        fila += 1
+        titulo(fila, "Tickets sin cargo")
+        fila += 1
+        cabezas(fila, ["Ticket", "Fecha", "Medio", "Total"])
+        fila += 1
+        for venta in datos["sin_cargo"]:
+            ws.cell(fila, 1, venta.get("id")).border = borde
+            ws.cell(fila, 2, str(venta.get("fecha") or "")).border = borde
+            ws.cell(fila, 3, venta.get("metodo_pago") or "").border = borde
+            plata(ws.cell(fila, 4, float(venta.get("total") or 0)))
+            fila += 1
+        if not datos["sin_cargo"]:
+            ws.cell(fila, 1, "Ninguno")
+            fila += 1
+
+        fila += 1
+        titulo(fila, "Cargos manuales")
+        fila += 1
+        cabezas(fila, ["Cliente", "Fecha", "Monto", "Descripcion"])
+        fila += 1
+        for cargo in datos["manuales"]:
+            ws.cell(fila, 1, cargo.get("nombre") or cargo.get("cliente_id")).border = borde
+            ws.cell(fila, 2, str(cargo.get("fecha") or "")).border = borde
+            plata(ws.cell(fila, 3, float(cargo.get("monto") or 0)))
+            ws.cell(fila, 4, cargo.get("descripcion") or "").border = borde
+            fila += 1
+
+        for col, ancho in enumerate((28, 22, 28, 22, 22, 16), 1):
+            ws.column_dimensions[get_column_letter(col)].width = ancho

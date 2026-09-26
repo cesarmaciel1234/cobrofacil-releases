@@ -15,7 +15,9 @@ class PanelMixtoCobro(QFrame):
         self._total = 0.0
         self._ultimo = None
         self._silencio = False
-        self._valores = {"efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0}
+        self._valores = {
+            "efectivo": 0.0, "tarjeta": 0.0, "mercadopago": 0.0, "qr": 0.0, "cliente": 0.0,
+        }
         self.hide()
         self._armar()
 
@@ -41,11 +43,13 @@ class PanelMixtoCobro(QFrame):
         self.txt_tarjeta = self._campo("Tarjeta ($)", "#F59E0B")
         self.txt_mercadopago = self._campo("Transferencia ($)", "#0EA5E9")
         self.txt_qr = self._campo("QR ($)", "#7C3AED")
+        self.txt_cliente = self._campo("Cliente ($)", "#1D4ED8")
         for fila, (rotulo, caja) in enumerate((
             ("Efectivo ($)", self.txt_efectivo),
             ("Tarjeta ($)", self.txt_tarjeta),
             ("Transferencia ($)", self.txt_mercadopago),
             ("QR ($)", self.txt_qr),
+            ("Cliente ($)", self.txt_cliente),
         )):
             lbl = QLabel(rotulo)
             lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -78,7 +82,7 @@ class PanelMixtoCobro(QFrame):
         return caja
 
     def campos(self):
-        return (self.txt_efectivo, self.txt_tarjeta, self.txt_mercadopago, self.txt_qr)
+        return (self.txt_efectivo, self.txt_tarjeta, self.txt_mercadopago, self.txt_qr, self.txt_cliente)
 
     def campo_foco(self):
         activo = self.focusWidget()
@@ -126,7 +130,21 @@ class PanelMixtoCobro(QFrame):
             ("tarjeta", self.txt_tarjeta),
             ("mercadopago", self.txt_mercadopago),
             ("qr", self.txt_qr),
+            ("cliente", self.txt_cliente),
         )
+
+    def completar_cliente(self):
+        """Un solo medio con plata y un resto: ese resto queda en el cliente."""
+        otros = [clave for clave, valor in self._valores.items() if clave != "cliente" and valor > 0.009]
+        if (self._valores.get("cliente") or 0) > 0.009 or len(otros) != 1:
+            return
+        falta = redondear_dinero(self._total - sum(self._valores.values()))
+        if falta <= 0.009:
+            return
+        self.txt_cliente.blockSignals(True)
+        self.txt_cliente.setText(f"{falta:.2f}")
+        self.txt_cliente.blockSignals(False)
+        self._recalcular()
 
     def _recalcular(self):
         if self._silencio:

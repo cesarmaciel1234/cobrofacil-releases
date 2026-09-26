@@ -30,21 +30,61 @@ def _es_duplicado(err) -> bool:
     return "unique" in msg or "duplicate" in msg or "idx_ventas_request_id" in msg
 
 
+class CreditoInsuficiente(Exception):
+    """El cupo ya no alcanza dentro de la misma transacción de la venta."""
+
+
+def _texto_cargo(id_venta, fiado):
+    texto = f"Venta a crédito Ticket #{id_venta}"
+    quien = str((fiado or {}).get("excepcion") or "").strip()
+    if quien:
+        texto = f"{texto} (excepción {quien})"
+    nota = str((fiado or {}).get("nota") or "").strip()
+    if nota:
+        texto = f"{texto} ({nota})"
+    return texto
+
+
+def _celda(row, clave, indice):
+    if row is None:
+        return None
+    try:
+        return row[clave]
+    except Exception:
+        try:
+            return row[indice]
+        except Exception:
+            return None
+
+
 def _aplicar_fiado(cursor, fiado, id_venta):
     cid = (fiado or {}).get("cliente_id")
     total = float((fiado or {}).get("total") or 0)
     if not cid:
         raise ValueError("Fiado sin cliente")
-    cursor.execute("SELECT deuda_actual, nombre FROM clientes WHERE id = ?", (cid,))
+    bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
+    cursor.execute(
+        f"SELECT deuda_actual, nombre, limite_credito FROM clientes WHERE id = ?{bloqueo}",
+        (cid,),
+    )
     row = cursor.fetchone()
     if not row:
         raise ValueError("Cliente no encontrado")
     try:
-        deuda = float(row["deuda_actual"] or 0)
-        nombre = row["nombre"] or ""
-    except Exception:
-        deuda = float(row[0] or 0)
-        nombre = row[1] or ""
+        deuda = float(_celda(row, "deuda_actual", 0) or 0)
+    except (TypeError, ValueError):
+        deuda = 0.0
+    nombre = _celda(row, "nombre", 1) or ""
+    ya_vendido = bool((fiado or {}).get("ya_vendido"))
+    excepcion = str((fiado or {}).get("excepcion") or "").strip()
+    limite_raw = _celda(row, "limite_credito", 2)
+    if not ya_vendido and not excepcion and limite_raw is not None:
+        try:
+            limite = float(limite_raw or 0)
+        except (TypeError, ValueError):
+            limite = None
+        if limite is not None and total > (limite - deuda) + 0.01:
+            raise CreditoInsuficiente("Crédito insuficiente")
     cursor.execute(
         "UPDATE clientes SET deuda_actual = COALESCE(deuda_actual, 0) + ? WHERE id = ?",
         (total, cid),
@@ -63,9 +103,54 @@ def _aplicar_fiado(cursor, fiado, id_venta):
     cursor.execute(
         "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
         "VALUES (?, ?, ?, ?, ?, ?)",
-        (cid, "CARGO", total, nueva, f"Venta a crédito Ticket #{id_venta}", id_venta),
+        (cid, "CARGO", total, nueva, _texto_cargo(id_venta, fiado), id_venta),
     )
     return nombre
+
+
+def _anular_cargo(cursor, id_venta):
+    """Baja la deuda del ticket que se cancela. Si no hubo cargo, no toca la cuenta."""
+    cursor.execute(
+        "SELECT cliente_id, monto FROM cuenta_corriente "
+        "WHERE venta_id = ? AND tipo = 'CARGO' ORDER BY id DESC LIMIT 1",
+        (id_venta,),
+    )
+    cargo = cursor.fetchone()
+    if not cargo:
+        return
+    cursor.execute(
+        "SELECT id FROM cuenta_corriente WHERE venta_id = ? AND tipo = 'ANULACION' LIMIT 1",
+        (id_venta,),
+    )
+    if cursor.fetchone():
+        return
+    cid = _celda(cargo, "cliente_id", 0)
+    try:
+        monto = float(_celda(cargo, "monto", 1) or 0)
+    except (TypeError, ValueError):
+        monto = 0.0
+    if not cid or monto <= 0:
+        return
+    bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
+    cursor.execute(
+        f"SELECT deuda_actual FROM clientes WHERE id = ?{bloqueo}",
+        (cid,),
+    )
+    fila = cursor.fetchone()
+    try:
+        deuda = float(_celda(fila, "deuda_actual", 0) or 0)
+    except (TypeError, ValueError):
+        deuda = 0.0
+    nueva = deuda - monto
+    cursor.execute(
+        "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+        (nueva, cid),
+    )
+    cursor.execute(
+        "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, 'ANULACION', ?, ?, ?, ?)",
+        (cid, monto, nueva, f"Anulación Ticket #{id_venta}", id_venta),
+    )
 
 
 class VentasRepoMixin:
@@ -224,7 +309,7 @@ class VentasRepoMixin:
             ):
                 try:
                     from src.base_de_datos.offline_sync import offline_sync_manager
-                    offline_sync_manager.guardar_venta_offline(venta_data, items)
+                    offline_sync_manager.guardar_venta_offline(venta_data, items, fiado=fiado)
                 except Exception as e_off:
                     logger.warning(f"Venta local guardada; no se pudo encolar para la maestra: {e_off}")
             return id_venta
@@ -240,13 +325,13 @@ class VentasRepoMixin:
                 return existente
             logger.warning(f"Error al guardar venta en base de datos: {e}")
             from src.base_de_datos.repos.stock_descuento import SinStock
-            if isinstance(e, SinStock):
+            if isinstance(e, (SinStock, CreditoInsuficiente)):
                 raise
             return None
         finally:
             if conn: conn.close()
 
-    def sync_venta_to_master(self, venta_data, items):
+    def sync_venta_to_master(self, venta_data, items, fiado=None):
         """Intenta guardar una venta offline en la base de datos principal sin fallback."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb" or not getattr(self, "mariadb_engine", None):
             return False
@@ -300,6 +385,11 @@ class VentasRepoMixin:
                 if it.get('id') and str(it['id']).strip() not in ('000', ''):
                     from src.base_de_datos.repos.stock_descuento import descontar_stock
                     descontar_stock(cursor, it.get('id'), it.get('cant', 1))
+
+            if fiado:
+                datos_fiado = dict(fiado)
+                datos_fiado["ya_vendido"] = True
+                _aplicar_fiado(cursor, datos_fiado, id_venta)
 
             conn.commit()
             return True
@@ -361,6 +451,8 @@ class VentasRepoMixin:
                 prod_id = det['id_producto']
                 if prod_id and str(prod_id).strip() not in ('000', ''):
                     cursor.execute("UPDATE productos SET stock = stock + ? WHERE id = ?", (det['cantidad'], prod_id))
+
+            _anular_cargo(cursor, id_venta)
 
             try:
                 cursor.execute(

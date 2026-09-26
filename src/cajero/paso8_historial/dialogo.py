@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox
+from PyQt6.QtWidgets import QDialog, QFrame, QTableWidgetItem, QMessageBox
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from datetime import datetime
@@ -17,11 +17,24 @@ class DialogoHistorialDia(QDialog):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setFixedSize(self._DLG_W, self._DLG_H)
         self.ticket_seleccionado = None
         self.controller = HistorialController()
         setup_ui(self)
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hoja = self.findChild(QFrame, "HistorialMain")
+        if hoja is not None:
+            hoja.setFixedSize(self._DLG_W, self._DLG_H)
         self.cargar_ventas()
+
+    def showEvent(self, event):
+        from src.utils.fondo_gris import cubrir
+        cubrir(self)
+        super().showEvent(event)
+
+    def paintEvent(self, event):
+        from src.utils.fondo_gris import pintar
+        pintar(self)
 
     def cargar_ventas(self):
         txt = self.txt_search.text().lower().strip()

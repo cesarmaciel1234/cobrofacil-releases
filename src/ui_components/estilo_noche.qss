@@ -635,7 +635,7 @@ QPushButton#DialogoIngresoEfectivoOk { background: #1A2332; color: #F5F0E6; font
 
 
 /* Dialogo Candado */
-QFrame#DialogoCandadoFondo { background: #F8FAFC; }
+QFrame#DialogoCandadoFondo { background: #334155; }
 
 QFrame#DialogoCandadoContenedor { background: white; border-radius: 20px; border: 1px solid #CBD5E1; }
 
@@ -842,6 +842,10 @@ QLabel#PanelArqValEsp {
     color: #94A3B8;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
+}
+
+QLabel#PanelArqPagoClientes {
+    color: #60A5FA;
 }
 
 QLabel#PanelArqValEsp[modo="revelado"] {

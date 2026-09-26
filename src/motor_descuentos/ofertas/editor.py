@@ -1,17 +1,21 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QDoubleSpinBox,
-    QFrame, QPushButton, QFormLayout, QScrollArea, QSizePolicy
+    QFrame, QPushButton, QFormLayout, QScrollArea,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
+
 class CreadorPromociones(QWidget):
+    """Reglas de promo + precio de lista. Costo/stock en Inventario. No imprime."""
+
     activar_promo = pyqtSignal(dict)
-    quitar_promo = pyqtSignal(str) # ID del producto
-    imprimir_cartel = pyqtSignal(str, float, float) # ID, cant_oferta, precio_oferta
+    quitar_promo = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.producto_id = None
+        self._precio = 0.0
+        self._costo = 0.0
         self._setup_ui()
 
     def _setup_ui(self):
@@ -30,212 +34,175 @@ class CreadorPromociones(QWidget):
                 border-left: 1px solid #E2E8F0;
             }
             QLabel { background: transparent; color: #334155; }
-            QDoubleSpinBox, QLineEdit {
+            QDoubleSpinBox {
                 background-color: #F8FAFC;
                 color: #0F172A;
                 border: 1px solid #CBD5E1;
+                border-radius: 8px;
+                min-height: 36px;
+                padding: 4px 8px;
+                font-size: 14px;
             }
         """)
-        lay_ctrl = QVBoxLayout(self.panel)
-        lay_ctrl.setContentsMargins(20, 20, 20, 20)
-        lay_ctrl.setSpacing(15)
+        lay = QVBoxLayout(self.panel)
+        lay.setContentsMargins(24, 24, 24, 24)
+        lay.setSpacing(12)
 
-        # Encabezado
-        lbl_head = QLabel("⚙️ REGLAS DEL PRODUCTO")
-        lbl_head.setStyleSheet("color: #64748B; font-size: 13px; font-weight: 900; letter-spacing: 1px;")
-        lay_ctrl.addWidget(lbl_head)
+        lbl_head = QLabel("REGLAS DE PROMOCIÓN")
+        lbl_head.setStyleSheet(
+            "color: #64748B; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+        )
+        lay.addWidget(lbl_head)
 
-        self.lbl_prod_nombre = QLabel("Hacé clic en un producto de la lista para editar")
-        self.lbl_prod_nombre.setStyleSheet("color: #1D4ED8; font-size: 18px; font-weight: 900;")
+        self.lbl_prod_nombre = QLabel("Elegí un producto de la lista")
+        self.lbl_prod_nombre.setStyleSheet(
+            "color: #1D4ED8; font-size: 18px; font-weight: 900;"
+        )
         self.lbl_prod_nombre.setWordWrap(True)
-        lay_ctrl.addWidget(self.lbl_prod_nombre)
+        lay.addWidget(self.lbl_prod_nombre)
 
-        self.lbl_prod_detalles = QLabel("ID: —  |  PLU: —")
-        self.lbl_prod_detalles.setStyleSheet("color: #64748B; font-size: 12px; font-family: 'Consolas', monospace; font-weight: bold;")
-        lay_ctrl.addWidget(self.lbl_prod_detalles)
+        self.lbl_prod_detalles = QLabel("ID: —  ·  PLU: —")
+        self.lbl_prod_detalles.setStyleSheet(
+            "color: #64748B; font-size: 12px; font-weight: 700;"
+        )
+        lay.addWidget(self.lbl_prod_detalles)
 
-        sep = QFrame(); sep.setFrameShape(QFrame.Shape.HLine); sep.setFrameShadow(QFrame.Shadow.Sunken)
-        sep.setStyleSheet("max-height: 1px; background: #E2E8F0;")
-        lay_ctrl.addWidget(sep)
+        sep = QFrame()
+        sep.setFixedHeight(1)
+        sep.setStyleSheet("background: #E2E8F0; border: none;")
+        lay.addWidget(sep)
 
-        # Sección A
-        lbl_sec_a = QLabel("📦 CONTROL DE STOCK")
-        lbl_sec_a.setStyleSheet("color: #64748B; font-weight: 800; font-size: 11px; letter-spacing: 1px;")
-        lay_ctrl.addWidget(lbl_sec_a)
+        form = QFormLayout()
+        form.setSpacing(12)
+        form.setContentsMargins(0, 8, 0, 8)
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
 
-        form_a = QFormLayout()
-        form_a.setSpacing(8)
-
-        self.txt_quick_precio = QDoubleSpinBox()
-        self.txt_quick_precio.setRange(0, 9999999)
-        self.txt_quick_precio.setDecimals(2)
-        self.txt_quick_precio.setStyleSheet("font-size: 13px; padding: 6px; font-weight: bold;")
-
-        self.txt_quick_costo = QDoubleSpinBox()
-        self.txt_quick_costo.setRange(0, 9999999)
-        self.txt_quick_costo.setDecimals(2)
-        self.txt_quick_costo.setStyleSheet("font-size: 13px; padding: 6px;")
-
-        self.txt_quick_stock = QDoubleSpinBox()
-        self.txt_quick_stock.setRange(-9999, 999999)
-        self.txt_quick_stock.setDecimals(2)
-        self.txt_quick_stock.setStyleSheet("font-size: 13px; padding: 6px; font-weight: bold; ")
-
-        form_a.addRow(QLabel("Precio Venta ($):"), self.txt_quick_precio)
-        form_a.addRow(QLabel("Costo Compra ($):"), self.txt_quick_costo)
-        form_a.addRow(QLabel("Stock Actual:"), self.txt_quick_stock)
-        lay_ctrl.addLayout(form_a)
-
-
-        # Sección B: Promociones
-        lbl_sec_b = QLabel("🏷️ REGLAS MATEMÁTICAS DE PROMOCIÓN")
-        lbl_sec_b.setStyleSheet("color: #64748B; font-weight: 800; font-size: 11px; letter-spacing: 1px;")
-        lay_ctrl.addWidget(lbl_sec_b)
-
-        form_b = QFormLayout()
-        form_b.setSpacing(8)
+        self.sp_precio_lista = QDoubleSpinBox()
+        self.sp_precio_lista.setRange(0, 9999999)
+        self.sp_precio_lista.setDecimals(2)
+        self.sp_precio_lista.setPrefix("$ ")
 
         self.sp_quick_cant_oferta = QDoubleSpinBox()
         self.sp_quick_cant_oferta.setRange(0, 99999)
         self.sp_quick_cant_oferta.setDecimals(2)
-        self.sp_quick_cant_oferta.setStyleSheet("font-size: 13px; padding: 6px;")
 
         self.sp_quick_precio_oferta = QDoubleSpinBox()
         self.sp_quick_precio_oferta.setRange(0, 9999999)
         self.sp_quick_precio_oferta.setDecimals(2)
-        self.sp_quick_precio_oferta.setStyleSheet("font-size: 13px; padding: 6px;  font-weight: bold;")
 
         self.sp_quick_oferta_relampago = QDoubleSpinBox()
         self.sp_quick_oferta_relampago.setRange(0, 9999999)
         self.sp_quick_oferta_relampago.setDecimals(2)
-        self.sp_quick_oferta_relampago.setStyleSheet("font-size: 13px; padding: 6px;")
-
-        self.sp_quick_oferta_promedio = QDoubleSpinBox()
-        self.sp_quick_oferta_promedio.setRange(0, 9999999)
-        self.sp_quick_oferta_promedio.setDecimals(2)
-        self.sp_quick_oferta_promedio.setStyleSheet("font-size: 13px; padding: 6px;")
 
         self.sp_limite_relampago = QDoubleSpinBox()
         self.sp_limite_relampago.setRange(0, 9999999)
         self.sp_limite_relampago.setDecimals(0)
-        self.sp_limite_relampago.setStyleSheet("font-size: 13px; padding: 6px;")
-        self.lbl_ventas_relampago = QLabel("Vendidos: 0 / 0")
-        self.lbl_ventas_relampago.setStyleSheet("color: #D97706; font-weight: bold;")
 
-        form_b.addRow(QLabel("Oferta desde (Cant):"), self.sp_quick_cant_oferta)
-        form_b.addRow(QLabel("Precio Of. Manual ($):"), self.sp_quick_precio_oferta)
-        form_b.addRow(QLabel("Of. Relámpago ($):"), self.sp_quick_oferta_relampago)
-        form_b.addRow(QLabel("Límite (uds):"), self.sp_limite_relampago)
-        form_b.addRow(QLabel(""), self.lbl_ventas_relampago)
-        form_b.addRow(QLabel("Of. Promedio ($):"), self.sp_quick_oferta_promedio)
-        lay_ctrl.addLayout(form_b)
+        form.addRow(QLabel("Precio lista ($)"), self.sp_precio_lista)
+        form.addRow(QLabel("Oferta desde (cant.)"), self.sp_quick_cant_oferta)
+        form.addRow(QLabel("Precio oferta ($)"), self.sp_quick_precio_oferta)
+        form.addRow(QLabel("Of. relámpago ($)"), self.sp_quick_oferta_relampago)
+        form.addRow(QLabel("Límite (uds)"), self.sp_limite_relampago)
+        self.lbl_cupo_relampago = QLabel("Cupo flash: —")
+        self.lbl_cupo_relampago.setStyleSheet("color: #D97706; font-weight: 800;")
+        form.addRow(QLabel(""), self.lbl_cupo_relampago)
+        lay.addLayout(form)
 
-        # Simulador
         self.group_simulador = QFrame()
         self.group_simulador.setStyleSheet("""
             QFrame {
                 background-color: #F8FAFC;
                 border: 1px solid #E2E8F0;
                 border-radius: 12px;
-                padding: 15px;
-                margin-top: 5px;
             }
+            QLabel { border: none; }
         """)
         lay_sim = QVBoxLayout(self.group_simulador)
-        lay_sim.setSpacing(6)
+        lay_sim.setContentsMargins(16, 14, 16, 14)
+        lay_sim.setSpacing(8)
 
-        lbl_sim_tit = QLabel("📊 SIMULADOR DE MARGEN INDUSTRIAL")
-        lbl_sim_tit.setStyleSheet("color: #475569; font-weight: 900; font-size: 12px; letter-spacing: 1px; border: none;")
+        lbl_sim_tit = QLabel("MARGEN DE LA PROMO")
+        lbl_sim_tit.setStyleSheet(
+            "color: #475569; font-weight: 900; font-size: 11px; letter-spacing: 1px;"
+        )
         lay_sim.addWidget(lbl_sim_tit)
 
-        self.lbl_margen_reg = QLabel("Margen Regular: —")
-        self.lbl_margen_reg.setStyleSheet("color: #64748B; font-size: 13px; font-weight: bold; border: none;")
+        self.lbl_margen_reg = QLabel("Margen lista: —")
+        self.lbl_margen_reg.setStyleSheet("color: #64748B; font-size: 13px; font-weight: 700;")
         lay_sim.addWidget(self.lbl_margen_reg)
 
-        self.lbl_margen_promo = QLabel("Margen Promo: —")
-        self.lbl_margen_promo.setStyleSheet("color: #059669; font-size: 18px; font-weight: 900; border: none;")
+        self.lbl_margen_promo = QLabel("Margen promo: —")
+        self.lbl_margen_promo.setStyleSheet("color: #059669; font-size: 16px; font-weight: 900;")
         lay_sim.addWidget(self.lbl_margen_promo)
 
-        self.lbl_ahorro_total = QLabel("Ahorro de Cliente: —")
-        self.lbl_ahorro_total.setStyleSheet("color: #D97706; font-size: 16px; font-weight: bold; border: none;")
+        self.lbl_ahorro_total = QLabel("Ahorro cliente: —")
+        self.lbl_ahorro_total.setStyleSheet("color: #D97706; font-size: 14px; font-weight: 800;")
         lay_sim.addWidget(self.lbl_ahorro_total)
 
-        self.lbl_semaforo = QLabel("Seleccione un producto...")
-        self.lbl_semaforo.setStyleSheet("color: #475569; font-size: 11px; font-weight: 800; border: none;")
+        self.lbl_semaforo = QLabel("Elegí un producto")
+        self.lbl_semaforo.setStyleSheet("color: #475569; font-size: 12px; font-weight: 800;")
         self.lbl_semaforo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_semaforo.setWordWrap(True)
         lay_sim.addWidget(self.lbl_semaforo)
 
-        lay_ctrl.addWidget(self.group_simulador)
+        lay.addWidget(self.group_simulador)
 
-        lay_promo_btns = QHBoxLayout()
-        self.btn_activar_promo = QPushButton("🚀 ACTIVAR PROMO")
+        lay_btns = QHBoxLayout()
+        lay_btns.setSpacing(10)
+        self.btn_activar_promo = QPushButton("ACTIVAR PROMO")
+        self.btn_activar_promo.setMinimumHeight(48)
+        self.btn_activar_promo.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_activar_promo.setStyleSheet("""
             QPushButton {
-                background-color: #2563EB; color: white; font-weight: 900; font-size: 12px;
-                padding: 12px; border-radius: 8px; border: none; letter-spacing: 1px;
+                background-color: #2563EB; color: white; font-weight: 900; font-size: 13px;
+                padding: 12px; border-radius: 10px; border: none;
             }
             QPushButton:hover { background-color: #1D4ED8; }
-            QPushButton:pressed { background-color: #1E40AF; }
         """)
         self.btn_activar_promo.clicked.connect(self._emit_activar_promo)
 
-        self.btn_quitar_promo = QPushButton("❌ QUITAR PROMO")
+        self.btn_quitar_promo = QPushButton("QUITAR PROMO")
+        self.btn_quitar_promo.setMinimumHeight(48)
+        self.btn_quitar_promo.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_quitar_promo.setStyleSheet("""
             QPushButton {
-                color: #EF4444; background: transparent; font-weight: bold; font-size: 12px;
-                padding: 12px; border-radius: 8px; border: 2px solid #EF4444; letter-spacing: 1px;
+                color: #DC2626; background: #FFFFFF; font-weight: 800; font-size: 13px;
+                padding: 12px; border-radius: 10px; border: 2px solid #FECACA;
             }
-            QPushButton:hover { background-color: #EF4444; color: white; }
+            QPushButton:hover { background-color: #FEE2E2; }
         """)
         self.btn_quitar_promo.clicked.connect(self._emit_quitar_promo)
 
-        lay_promo_btns.addWidget(self.btn_activar_promo)
-        lay_promo_btns.addWidget(self.btn_quitar_promo)
-        lay_ctrl.addLayout(lay_promo_btns)
-
-        self.btn_imprimir_quick_cartel = QPushButton("🖨️ IMPRIMIR CARTEL (A4)")
-        self.btn_imprimir_quick_cartel.setStyleSheet("""
-            QPushButton {
-                background-color: #EA580C; color: #FFFFFF; font-weight: 800; font-size: 11px;
-                padding: 8px 15px; border-radius: 8px; border: none;
-            }
-            QPushButton:hover { background-color: #C2410C; }
-        """)
-        self.btn_imprimir_quick_cartel.clicked.connect(self._emit_imprimir_cartel)
-        lay_ctrl.addWidget(self.btn_imprimir_quick_cartel)
-
-        lay_ctrl.addStretch()
+        lay_btns.addWidget(self.btn_activar_promo)
+        lay_btns.addWidget(self.btn_quitar_promo)
+        lay.addLayout(lay_btns)
+        lay.addStretch()
 
         self.scroll.setWidget(self.panel)
         root.addWidget(self.scroll)
 
-        # Conectar simulador
-        self.txt_quick_precio.valueChanged.connect(self._recargar_simulador)
-        self.txt_quick_costo.valueChanged.connect(self._recargar_simulador)
-        self.sp_quick_cant_oferta.valueChanged.connect(self._recargar_simulador)
-        self.sp_quick_precio_oferta.valueChanged.connect(self._recargar_simulador)
-        self.sp_quick_oferta_relampago.valueChanged.connect(self._recargar_simulador)
-        self.sp_quick_oferta_promedio.valueChanged.connect(self._recargar_simulador)
+        for sp in (
+            self.sp_precio_lista, self.sp_quick_cant_oferta,
+            self.sp_quick_precio_oferta, self.sp_quick_oferta_relampago,
+        ):
+            sp.valueChanged.connect(self._recargar_simulador)
+
+        self.set_enabled(False)
 
     def aplicar_tema(self):
-        self.panel.setStyleSheet("""
-            QFrame#ControlCenter {
-                background-color: #FFFFFF;
-                border-left: 1px solid #E2E8F0;
-            }
-            QLabel { background: transparent; color: #334155; }
-            QDoubleSpinBox, QLineEdit {
-                background-color: #F8FAFC;
-                color: #0F172A;
-                border: 1px solid #CBD5E1;
-            }
-        """)
+        pass
 
     def cargar_producto(self, p):
         if not p:
             self.producto_id = None
-            self.lbl_prod_nombre.setText("Hacé clic en un producto de la lista")
-            self.lbl_prod_detalles.setText("ID: —  |  PLU: —")
+            self._precio = 0.0
+            self._costo = 0.0
+            self.lbl_prod_nombre.setText("Elegí un producto de la lista")
+            self.lbl_prod_detalles.setText("ID: —  ·  PLU: —")
+            self.sp_precio_lista.blockSignals(True)
+            self.sp_precio_lista.setValue(0)
+            self.sp_precio_lista.blockSignals(False)
+            self.lbl_cupo_relampago.setText("Cupo flash: —")
             self.set_enabled(False)
             self._recargar_simulador()
             return
@@ -250,34 +217,40 @@ class CreadorPromociones(QWidget):
                 return 0.0
 
         self.producto_id = str(p.get("id") or "")
+        self._precio = _num("precio")
+        self._costo = _num("costo")
         self.lbl_prod_nombre.setText(str(p.get("nombre") or "Producto"))
-        self.lbl_prod_detalles.setText(f"ID: {p.get('id')}  |  PLU: {p.get('codigo') or 'Sin código'}")
+        self.lbl_prod_detalles.setText(
+            f"ID: {p.get('id')}  ·  PLU: {p.get('codigo') or 'Sin código'}"
+        )
 
         for w in (
-            self.txt_quick_precio, self.txt_quick_costo, self.txt_quick_stock,
-            self.sp_quick_cant_oferta, self.sp_quick_precio_oferta,
-            self.sp_quick_oferta_relampago, self.sp_quick_oferta_promedio,
+            self.sp_precio_lista, self.sp_quick_cant_oferta,
+            self.sp_quick_precio_oferta, self.sp_quick_oferta_relampago,
             self.sp_limite_relampago,
         ):
             w.blockSignals(True)
 
-        self.txt_quick_precio.setValue(_num("precio"))
-        self.txt_quick_costo.setValue(_num("costo"))
-        self.txt_quick_stock.setValue(_num("stock"))
+        self.sp_precio_lista.setValue(self._precio)
         self.sp_quick_cant_oferta.setValue(_num("cant_oferta"))
         self.sp_quick_precio_oferta.setValue(_num("precio_oferta"))
         self.sp_quick_oferta_relampago.setValue(_num("precio_oferta_relampago"))
-        self.sp_quick_oferta_promedio.setValue(_num("precio_oferta_promedio"))
         self.sp_limite_relampago.setValue(_num("limite_oferta_relampago"))
-
         ventas = _num("ventas_oferta_relampago")
         limite = _num("limite_oferta_relampago")
-        self.lbl_ventas_relampago.setText(f"Vendidos: {int(ventas)} / {int(limite) if limite > 0 else '∞'}")
+        if _num("precio_oferta_relampago") > 0 and limite > 0:
+            self.lbl_cupo_relampago.setText(
+                f"Vendidos: {ventas:g} / {limite:g}"
+                + ("  ·  AGOTADO" if ventas >= limite else "")
+            )
+        elif _num("precio_oferta_relampago") > 0:
+            self.lbl_cupo_relampago.setText("Flash activo · sin tope (no se apaga solo)")
+        else:
+            self.lbl_cupo_relampago.setText("Cupo flash: —")
 
         for w in (
-            self.txt_quick_precio, self.txt_quick_costo, self.txt_quick_stock,
-            self.sp_quick_cant_oferta, self.sp_quick_precio_oferta,
-            self.sp_quick_oferta_relampago, self.sp_quick_oferta_promedio,
+            self.sp_precio_lista, self.sp_quick_cant_oferta,
+            self.sp_quick_precio_oferta, self.sp_quick_oferta_relampago,
             self.sp_limite_relampago,
         ):
             w.blockSignals(False)
@@ -286,101 +259,103 @@ class CreadorPromociones(QWidget):
         self._recargar_simulador()
 
     def set_enabled(self, val):
-        self.panel.setEnabled(True)
         for w in (
-            self.txt_quick_precio, self.txt_quick_costo, self.txt_quick_stock,
-            self.sp_quick_cant_oferta, self.sp_quick_precio_oferta,
-            self.sp_quick_oferta_relampago, self.sp_quick_oferta_promedio,
+            self.sp_precio_lista, self.sp_quick_cant_oferta,
+            self.sp_quick_precio_oferta, self.sp_quick_oferta_relampago,
             self.sp_limite_relampago, self.btn_activar_promo, self.btn_quitar_promo,
-            self.btn_imprimir_quick_cartel,
         ):
             w.setEnabled(bool(val))
-            if hasattr(w, "lineEdit"):
-                le = w.lineEdit()
-                if le:
-                    le.setReadOnly(False)
-                    le.setEnabled(True)
 
     def _recargar_simulador(self):
         if not self.producto_id:
-            self.lbl_margen_reg.setText("Margen Regular: —")
-            self.lbl_margen_promo.setText("Margen Promo: —")
-            self.lbl_ahorro_total.setText("Ahorro de Cliente: —")
-            self.lbl_semaforo.setText("Seleccione un producto...")
-            self.lbl_semaforo.setStyleSheet("font-size: 11px; font-weight: 800;  border: none; background-color: transparent; padding: 0;")
+            self.lbl_margen_reg.setText("Margen lista: —")
+            self.lbl_margen_promo.setText("Margen promo: —")
+            self.lbl_ahorro_total.setText("Ahorro cliente: —")
+            self.lbl_semaforo.setText("Elegí un producto")
+            self.lbl_semaforo.setStyleSheet(
+                "color: #475569; font-size: 12px; font-weight: 800; background: transparent;"
+            )
             return
 
-        costo = self.txt_quick_costo.value()
-        reg_precio = self.txt_quick_precio.value()
+        costo = self._costo
+        reg_precio = self.sp_precio_lista.value()
+        self._precio = reg_precio
         promo_precio = self.sp_quick_precio_oferta.value()
         promo_cant = self.sp_quick_cant_oferta.value()
 
         if reg_precio > 0:
             margen_reg = ((reg_precio - costo) / reg_precio) * 100
-            self.lbl_margen_reg.setText(f"Margen Regular: {margen_reg:.1f}%")
+            self.lbl_margen_reg.setText(f"Margen lista: {margen_reg:.1f}%")
         else:
-            self.lbl_margen_reg.setText("Margen Regular: 0.0%")
+            self.lbl_margen_reg.setText("Margen lista: 0.0%")
 
         if promo_precio > 0:
             margen_promo = ((promo_precio - costo) / promo_precio) * 100
-            self.lbl_margen_promo.setText(f"Margen Promo: {margen_promo:.1f}%")
-
-            ahorro = max(0.0, reg_precio - promo_precio) * promo_cant
-            self.lbl_ahorro_total.setText(f"Ahorro Cliente por Compra: ${ahorro:.2f}")
+            self.lbl_margen_promo.setText(f"Margen promo: {margen_promo:.1f}%")
+            ahorro = max(0.0, reg_precio - promo_precio) * max(promo_cant, 1)
+            self.lbl_ahorro_total.setText(f"Ahorro cliente: ${ahorro:,.2f}")
 
             if promo_precio <= costo:
-                self.lbl_semaforo.setText("🚨 PÉRDIDA: ¡OFERTA POR DEBAJO DEL COSTO!")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #FEE2E2; color: #B91C1C; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setText("Pérdida: oferta bajo el costo")
+                self.lbl_semaforo.setStyleSheet(
+                    "font-size: 12px; font-weight: 900; background-color: #FEE2E2; "
+                    "color: #B91C1C; border-radius: 6px; padding: 6px;"
+                )
             elif margen_promo < 10.0:
-                self.lbl_semaforo.setText("⚠️ MARGEN CRÍTICO: RENTABILIDAD BAJA")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #FEF3C7; color: #92400E; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setText("Margen bajo")
+                self.lbl_semaforo.setStyleSheet(
+                    "font-size: 12px; font-weight: 900; background-color: #FEF3C7; "
+                    "color: #92400E; border-radius: 6px; padding: 6px;"
+                )
             else:
-                self.lbl_semaforo.setText("✅ PROMOCIÓN RENTABLE: RENTABILIDAD POSITIVA")
-                self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #DCFCE7; color: #166534; border-radius: 4px; padding: 4px; border: none;")
+                self.lbl_semaforo.setText("Promo con margen")
+                self.lbl_semaforo.setStyleSheet(
+                    "font-size: 12px; font-weight: 900; background-color: #DCFCE7; "
+                    "color: #166534; border-radius: 6px; padding: 6px;"
+                )
         else:
-            self.lbl_margen_promo.setText("Margen Promo: —")
-            self.lbl_ahorro_total.setText("Ahorro de Cliente: —")
-            self.lbl_semaforo.setText("✅ Margen Regular Comercial")
-            self.lbl_semaforo.setStyleSheet("font-size: 10px; font-weight: 900; background-color: #F1F5F9; color: #475569; border-radius: 4px; padding: 4px; border: none;")
-
+            self.lbl_margen_promo.setText("Margen promo: —")
+            self.lbl_ahorro_total.setText("Ahorro cliente: —")
+            self.lbl_semaforo.setText("Cargá un precio de oferta")
+            self.lbl_semaforo.setStyleSheet(
+                "font-size: 12px; font-weight: 800; background-color: #F1F5F9; "
+                "color: #475569; border-radius: 6px; padding: 6px;"
+            )
 
     def _emit_activar_promo(self):
-        if not self.producto_id: return
-
-        precio_reg = self.txt_quick_precio.value()
-        p_of = self.sp_quick_precio_oferta.value()
-        p_rel = self.sp_quick_oferta_relampago.value()
-        p_prom = self.sp_quick_oferta_promedio.value()
-
-        if (p_of > 0 and p_of >= precio_reg) or \
-           (p_rel > 0 and p_rel >= precio_reg) or \
-           (p_prom > 0 and p_prom >= precio_reg):
-            from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "Error", "El precio de oferta no puede ser mayor o igual al precio de venta regular.")
+        if not self.producto_id:
             return
 
-        data = {
-            'id': self.producto_id,
-            'nombre': self.lbl_prod_nombre.text(),
-            'cant_oferta': self.sp_quick_cant_oferta.value(),
-            'precio_oferta': p_of,
-            'precio_oferta_relampago': p_rel,
-            'precio_oferta_promedio': p_prom,
-            'limite_oferta_relampago': self.sp_limite_relampago.value(),
-            'precio_regular': precio_reg,
-            'costo': self.txt_quick_costo.value(),
-            'stock': self.txt_quick_stock.value(),
-        }
-        self.activar_promo.emit(data)
+        precio_reg = self.sp_precio_lista.value()
+        self._precio = precio_reg
+        p_of = self.sp_quick_precio_oferta.value()
+        p_rel = self.sp_quick_oferta_relampago.value()
+
+        if precio_reg <= 0:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Error", "El precio de lista tiene que ser mayor a cero.")
+            return
+
+        if (p_of > 0 and p_of >= precio_reg) or (p_rel > 0 and p_rel >= precio_reg):
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self, "Error",
+                "El precio de oferta tiene que ser menor al precio de lista.",
+            )
+            return
+
+        self.activar_promo.emit({
+            "id": self.producto_id,
+            "nombre": self.lbl_prod_nombre.text(),
+            "cant_oferta": self.sp_quick_cant_oferta.value(),
+            "precio_oferta": p_of,
+            "precio_oferta_relampago": p_rel,
+            "precio_oferta_promedio": 0,
+            "limite_oferta_relampago": self.sp_limite_relampago.value(),
+            "precio_regular": precio_reg,
+        })
 
     def _emit_quitar_promo(self):
-        if not self.producto_id: return
+        if not self.producto_id:
+            return
         self.quitar_promo.emit(self.producto_id)
-
-    def _emit_imprimir_cartel(self):
-        if not self.producto_id: return
-        self.imprimir_cartel.emit(
-            self.producto_id,
-            self.sp_quick_cant_oferta.value(),
-            self.sp_quick_precio_oferta.value()
-        )

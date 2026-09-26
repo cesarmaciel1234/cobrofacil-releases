@@ -13,6 +13,7 @@ class CerebroClientesFiado:
         self.fiado = MotorFiadoExpress()
         self.cliente = MotorClienteExpress()
         self.cartel_cobro = MotorCartel()
+        self._excepcion = None
 
     def normalizar_dni(self, dni):
         return self.cuenta.normalizar_dni(dni)
@@ -68,12 +69,20 @@ class CerebroClientesFiado:
     def fijar_limite(self, cliente_id, limite):
         return self.cuenta.fijar_limite(cliente_id, limite)
 
-    def abonar(self, cliente_id, monto, descripcion):
-        return self.cuenta.abonar(cliente_id, monto, descripcion)
+    def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
+        return self.cuenta.abonar(cliente_id, monto, descripcion, medio, perfil, quien)
 
-    def abonar_caja(self, cliente_id, monto, deuda_anterior):
+    def abonar_caja(self, cliente_id, monto, deuda_anterior, medio="Efectivo", perfil="Cajero", quien="", nota=""):
         """El abono del Centro de Cobranzas. Lo usan F6 y el botón Abonar del admin."""
-        exito, nuevo_saldo, nombre = self.abonar(cliente_id, monto, "Abono Fiado en Caja")
+        quien_limpio = " ".join(str(quien or "").split())
+        medio_limpio = str(medio or "Efectivo").strip() or "Efectivo"
+        perfil_limpio = str(perfil or "").strip() or "Cajero"
+        firma = f"{perfil_limpio} {quien_limpio}".strip()
+        extra = f": {nota}" if str(nota or "").strip() else ""
+        descripcion = f"{firma} ({medio_limpio}{extra})"
+        exito, nuevo_saldo, nombre = self.abonar(
+            cliente_id, monto, descripcion, medio_limpio, perfil_limpio, quien_limpio
+        )
         if exito:
             try:
                 from src.hardware.printer import printer_manager
@@ -83,8 +92,23 @@ class CerebroClientesFiado:
                 pass
         return exito, nuevo_saldo, nombre
 
+    def resumen_cuentas(self):
+        return self.cuenta.pagos_del_dia(), self.cuenta.deuda_total()
+
+    def total_cobros(self):
+        return self.cuenta.total_cobros()
+
+    def listar_cobros(self):
+        return self.cuenta.listar_cobros()
+
     def cargar_manual(self, cliente_id, monto, descripcion):
         return self.cuenta.cargar_manual(cliente_id, monto, descripcion)
+
+    def ventas_sin_cargo(self):
+        return self.cuenta.ventas_sin_cargo()
+
+    def anotar_faltante(self, venta_id):
+        return self.cuenta.anotar_faltante(venta_id)
 
     def cartel(self, cliente):
         try:
@@ -92,13 +116,55 @@ class CerebroClientesFiado:
         except Exception:
             return {"saludo": "Sin datos", "saldo": None, "disponible": None}
 
+    def conceder_excepcion(self, cliente_id, monto, quien):
+        from src.utils.dinero import redondear_dinero
+
+        self._excepcion = {
+            "cliente_id": int(cliente_id),
+            "monto": redondear_dinero(monto),
+            "quien": str(quien or "Admin").strip() or "Admin",
+        }
+
+    def soltar_excepcion(self):
+        self._excepcion = None
+
+    def excepcion_vigente(self, cliente_id, monto):
+        return bool(self._mirar_excepcion(cliente_id, monto))
+
+    def _mirar_excepcion(self, cliente_id, monto):
+        from src.utils.dinero import redondear_dinero
+
+        marca = self._excepcion
+        if not marca:
+            return ""
+        try:
+            mismo = int(marca.get("cliente_id")) == int(cliente_id)
+            mismo = mismo and marca.get("monto") == redondear_dinero(monto)
+        except (TypeError, ValueError):
+            mismo = False
+        if not mismo:
+            return ""
+        return str(marca.get("quien") or "Admin")
+
     def autorizar(self, metodo, cliente_id, monto):
         nombre = str(metodo or "")
+        if nombre not in ("Fiado", "Clientes"):
+            return OrdenCobro(False, nombre, motivo="Este medio no es una cuenta de fiado.")
+        quien = self._mirar_excepcion(cliente_id, monto)
+        if quien:
+            cliente = self.cuenta.obtener(cliente_id)
+            if cliente:
+                self._excepcion = None
+                return OrdenCobro(
+                    True,
+                    nombre,
+                    cliente_id=dict(cliente).get("id"),
+                    cliente=cliente,
+                    excepcion=quien,
+                )
         if nombre == "Fiado":
             return self.fiado.autorizar(cliente_id, monto)
-        if nombre == "Clientes":
-            return self.cliente.autorizar(cliente_id, monto)
-        return OrdenCobro(False, nombre, motivo="Este medio no es una cuenta de fiado.")
+        return self.cliente.autorizar(cliente_id, monto)
 
     def cobrar(self, metodo, datos):
         datos = dict(datos or {})

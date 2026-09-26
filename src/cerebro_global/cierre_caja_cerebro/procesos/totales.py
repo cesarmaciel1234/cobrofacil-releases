@@ -142,6 +142,18 @@ def obtener_datos_cierre(
         )
 
         entradas, salidas = movimientos_turno(caja_id, desde, db=db)
+        pago_cond = "tipo = 'INGRESO' AND observaciones LIKE ? AND fecha >= ?"
+        pago_params: list = ["Pago de clientes%", desde]
+        if caja_id is not None:
+            pago_cond += " AND caja_id = ?"
+            pago_params.append(caja_id)
+        abonos_efectivo = float(
+            db.execute_scalar(
+                f"SELECT SUM(monto) FROM movimientos_caja WHERE {pago_cond}",
+                tuple(pago_params),
+            )
+            or 0.0
+        )
 
         if caja_id is not None:
             v_caja_total = efectivo_esperado_caja(caja_id, db=db)
@@ -163,7 +175,7 @@ def obtener_datos_cierre(
             "ganancia_estimada": ganancia_estimada,
             "entradas_efectivo": entradas,
             "salidas_efectivo": salidas,
-            "abonos_efectivo": 0.0,
+            "abonos_efectivo": abonos_efectivo,
             "devoluciones_efectivo": 0.0,
             "apertura_fecha": apertura_fecha or desde,
         }

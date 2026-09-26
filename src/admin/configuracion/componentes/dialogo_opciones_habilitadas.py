@@ -42,6 +42,7 @@ class DialogoOpcionesHabilitadas(QDialog):
             ("opt_stock_negativo", "Permitir vender sin stock (Stock Negativo)", False),
             ("opt_ventas_credito", "Habilitar Ventas a Crédito (Fiado)", True),
             ("opt_impresion_auto", "Imprimir ticket automáticamente al cobrar", True),
+            ("opt_corte_papel_sin_ticket", "Cortar papel (ruido) aunque no se imprima el ticket", False),
             ("opt_control_stock", "Descontar stock del inventario al vender", True),
             ("opt_solicitar_cajero", "Solicitar seleccionar cajero al abrir el sistema", False),
             ("opt_bot_asistente", "Activar Bot Asistente Animado (Burbuja IA)", True),

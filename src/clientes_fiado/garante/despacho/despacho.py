@@ -6,6 +6,8 @@ def entregar(orden, datos):
     payload = dict(datos or {})
     payload["metodo"] = orden.metodo
     payload["cliente_id"] = orden.cliente_id
+    if getattr(orden, "excepcion", ""):
+        payload["excepcion"] = orden.excepcion
     from src.cajero.paso6_cobro.motor_pagos.motores._comun import ejecutar_comun
 
     return ejecutar_comun(payload)

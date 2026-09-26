@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QAbstractItemView, QFrame, QPushButton
+    QListWidget, QListWidgetItem, QAbstractItemView, QFrame, QPushButton,
 )
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont
@@ -21,7 +21,7 @@ class CentroCobranzasPanel(QWidget):
         super().__init__(parent)
         self._cliente: dict | None = None
         self._deuda_actual = 0.0
-        self.setStyleSheet(f"background: transparent; border: none;")
+        self.setStyleSheet("background: transparent; border: none;")
         self._build()
 
     def _build(self):
@@ -29,33 +29,17 @@ class CentroCobranzasPanel(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        # Tarjeta ejecutiva centrada
         row_center = QHBoxLayout()
         row_center.addStretch(1)
         self.card = QFrame()
         self.card.setObjectName("CobranzaCard")
-        self.card.setStyleSheet(f"""
-            QFrame#CobranzaCard {{
-                background: transparent;
-                border: none;
-                border-radius: 0px;
-            }}
-        """)
-        # Se elimina la sombra (QGraphicsDropShadowEffect) para optimizar rendimiento.
+        self.card.setStyleSheet(
+            "QFrame#CobranzaCard { background: transparent; border: none; border-radius: 0px; }"
+        )
 
         lay = QVBoxLayout(self.card)
-        lay.setContentsMargins(22, 18, 22, 20)
-        lay.setSpacing(10)
-
-        # Cabecera
-        head = QFrame()
-        head.setStyleSheet(
-            f"background: transparent; "
-            f"border: none;"
-        )
-        head_lay = QVBoxLayout(head)
-        head_lay.setContentsMargins(16, 14, 16, 14)
-        head_lay.setSpacing(4)
+        lay.setContentsMargins(22, 18, 22, 12)
+        lay.setSpacing(8)
 
         tit = QLabel("CENTRO DE COBRANZAS")
         tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -70,15 +54,14 @@ class CentroCobranzasPanel(QWidget):
             f"color: {_EXEC['text_soft']}; font-size: 11px; font-weight: 500; "
             "border: none; background: transparent;"
         )
-        head_lay.addWidget(tit)
-        head_lay.addWidget(sub)
-        lay.addWidget(head)
+        lay.addWidget(tit)
+        lay.addWidget(sub)
 
         self.lbl_modo = QLabel("Mostrando: todos los deudores")
         self.lbl_modo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_modo.setStyleSheet(
-            f"font-size: 11px; color: #3B82F6; font-weight: 700; "
-            "border: none; background: transparent; padding-top: 4px;"
+            "font-size: 11px; color: #3B82F6; font-weight: 700; "
+            "border: none; background: transparent; padding-top: 2px;"
         )
         lay.addWidget(self.lbl_modo)
 
@@ -103,24 +86,40 @@ class CentroCobranzasPanel(QWidget):
         self.txt_buscar.returnPressed.connect(self._on_enter_buscar)
         lay.addWidget(self.txt_buscar)
 
+        self.zona_lista = QFrame()
+        self.zona_lista.setObjectName("ZonaListaCobranza")
+        self.zona_lista.setStyleSheet(
+            f"QFrame#ZonaListaCobranza {{ background: {_EXEC['bg']}; border: 1px solid {_EXEC['border']};"
+            " border-radius: 10px; }}"
+        )
+        zona_lay = QVBoxLayout(self.zona_lista)
+        zona_lay.setContentsMargins(6, 6, 6, 6)
+        zona_lay.setSpacing(4)
+        self.lbl_lista = QLabel("")
+        self.lbl_lista.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_lista.setStyleSheet(
+            f"font-size: 12px; color: {_EXEC['text_muted']}; font-weight: 700; "
+            "border: none; background: transparent; padding: 2px;"
+        )
+        zona_lay.addWidget(self.lbl_lista)
         self.lista = QListWidget()
-        self.lista.setMinimumHeight(150)
-        self.lista.setMaximumHeight(190)
+        self.lista.setMinimumHeight(120)
+        self.lista.setMaximumHeight(160)
         self.lista.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.lista.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.lista.setUniformItemSizes(False)
         self.lista.setStyleSheet(f"""
             QListWidget {{
                 border: none;
-                border-radius: 10px;
-                background: {_EXEC['bg']};
+                background: transparent;
                 font-size: 13px;
-                padding: 6px;
                 outline: none;
             }}
             QListWidget::item {{
-                padding: 12px 10px;
+                padding: 8px 10px;
                 border-radius: 8px;
                 color: {_EXEC['text']};
+                margin: 2px 0;
             }}
             QListWidget::item:selected {{
                 background: {_EXEC['row_sel']};
@@ -133,25 +132,41 @@ class CentroCobranzasPanel(QWidget):
         """)
         self.lista.itemClicked.connect(self._on_item_seleccionado)
         self.lista.itemDoubleClicked.connect(lambda _: self.focus_monto())
-        lay.addWidget(self.lista)
+        zona_lay.addWidget(self.lista)
+        lay.addWidget(self.zona_lista)
 
-        # Cliente seleccionado — centrado
+        self.ficha = QFrame()
+        self.ficha.setObjectName("FichaClienteCobranza")
+        self.ficha.setStyleSheet(
+            "QFrame#FichaClienteCobranza { background: #EFF6FF; border: 1px solid #BFDBFE;"
+            " border-radius: 12px; }"
+            "QLabel { background: transparent; border: none; }"
+        )
+        ficha_lay = QVBoxLayout(self.ficha)
+        ficha_lay.setContentsMargins(14, 12, 14, 12)
+        ficha_lay.setSpacing(4)
         self.lbl_cliente = QLabel("Seleccione un cliente")
         self.lbl_cliente.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_cliente.setWordWrap(True)
         self.lbl_cliente.setStyleSheet(
-            f"font-size: 15px; color: {_EXEC['navy']}; font-weight: 800; "
-            "border: none; background: transparent; padding: 4px 0;"
+            f"font-size: 16px; color: {_EXEC['navy']}; font-weight: 800;"
         )
-        lay.addWidget(self.lbl_cliente)
-
+        ficha_lay.addWidget(self.lbl_cliente)
+        self.lbl_info = QLabel("")
+        self.lbl_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lbl_info.setWordWrap(True)
+        self.lbl_info.setStyleSheet(
+            f"font-size: 12px; color: {_EXEC['text_soft']}; font-weight: 600;"
+        )
+        ficha_lay.addWidget(self.lbl_info)
         self.lbl_deuda = QLabel("")
         self.lbl_deuda.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_deuda.setStyleSheet(
-            f"font-size: 17px; color: {_EXEC['deuda']}; font-weight: 900; "
-            "border: none; background: transparent;"
+            f"font-size: 18px; color: {_EXEC['deuda']}; font-weight: 900;"
         )
-        lay.addWidget(self.lbl_deuda)
+        ficha_lay.addWidget(self.lbl_deuda)
+        self.ficha.hide()
+        lay.addWidget(self.ficha)
 
         sep = QFrame()
         sep.setFixedHeight(1)
@@ -168,7 +183,7 @@ class CentroCobranzasPanel(QWidget):
 
         self.txt_monto = QLineEdit()
         self.txt_monto.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.txt_monto.setMinimumHeight(70)
+        self.txt_monto.setMinimumHeight(64)
         self.txt_monto.setStyleSheet(f"""
             QLineEdit {{
                 font-size: 34px; font-weight: 900; color: {_EXEC['navy']};
@@ -213,14 +228,12 @@ class CentroCobranzasPanel(QWidget):
         self.reset()
 
     def reset(self):
-        self._cliente = None
-        self._deuda_actual = 0.0
+        self._limpiar_seleccion()
         self.txt_buscar.clear()
-        self.lbl_deuda.clear()
-        self.lbl_cliente.setText("Seleccione un cliente")
-        self.txt_monto.clear()
         self.lista.clear()
-        self.lista.show()
+        self.zona_lista.show()
+        self.lbl_lista.setText("")
+        self.lbl_modo.setText("Escriba para buscar un cliente...")
         self._ejecutar_busqueda()
         QTimer.singleShot(120, self.focus_busqueda)
 
@@ -232,6 +245,16 @@ class CentroCobranzasPanel(QWidget):
         if self.txt_monto is not None:
             self.txt_monto.setFocus()
             self.txt_monto.selectAll()
+
+    def _limpiar_seleccion(self):
+        self._cliente = None
+        self._deuda_actual = 0.0
+        self.lbl_cliente.setText("Seleccione un cliente")
+        self.lbl_info.clear()
+        self.lbl_deuda.clear()
+        self.txt_monto.clear()
+        self.ficha.hide()
+        self.btn_imprimir.setVisible(False)
 
     def _on_enter_buscar(self):
         if self.lista.count() == 1 and not self._cliente:
@@ -246,53 +269,37 @@ class CentroCobranzasPanel(QWidget):
 
     def _ejecutar_busqueda(self):
         consulta = self.txt_buscar.text().strip()
-
         self.lista.clear()
-        self.lista.show()
+        self._limpiar_seleccion()
+        self.zona_lista.show()
 
         if not consulta:
             self.lbl_modo.setText("Escriba para buscar un cliente...")
-            self.lbl_cliente.setText("Esperando búsqueda...")
-            self.btn_imprimir.setVisible(False)
-            if not self._cliente:
-                self.txt_monto.clear()
-                self._deuda_actual = 0.0
-                self.lbl_deuda.clear()
+            self.lbl_lista.setText("")
             return
 
         p = parse_consulta_cobranza(consulta)
         self.lbl_modo.setText(f"Mostrando: {p['etiqueta']}")
-
         resultados = buscar_deudores(consulta)
-        self.lista.clear()
-        if not self._cliente or consulta:
-            self._cliente = None
-            self._deuda_actual = 0.0
-            self.lbl_deuda.clear()
-
         if not resultados:
-            self.lbl_cliente.setText("Sin resultados — pruebe otro criterio")
-            if not self._cliente:
-                self.txt_monto.clear()
+            self.lbl_lista.setText("Sin resultados — pruebe otro criterio")
             return
 
         for r in resultados:
             dni = (r.get("dni") or "").strip()
             tel = (r.get("telefono") or "").strip()
-            direc = (r.get("direccion") or "").strip()
             deuda = float(r.get("deuda_actual") or 0)
             ult = r.get("ultimo_cargo")
             ult_txt = f" · {str(ult).split('.')[0][:10]}" if ult else ""
-            dni_txt = f"DNI {dni}" if dni else ""
-            tel_txt = f"Tel {tel}" if tel else ""
-            direc_txt = f"{direc}" if direc else ""
-            # Build info line from available fields
-            info_parts = [p for p in (dni_txt, tel_txt, direc_txt) if p]
-            info_line = " · ".join(info_parts) if info_parts else ""
-            texto = f"{r['nombre']}\n{info_line}\nDeuda ${deuda:,.2f}{ult_txt}" if info_line else f"{r['nombre']}\nDeuda ${deuda:,.2f}{ult_txt}"
+            extra = " · ".join(p for p in (f"DNI {dni}" if dni else "", f"Tel {tel}" if tel else "") if p)
+            if extra:
+                texto = f"{r['nombre']}\n{extra} · Deuda ${deuda:,.2f}{ult_txt}"
+            else:
+                texto = f"{r['nombre']}\nDeuda ${deuda:,.2f}{ult_txt}"
             item = QListWidgetItem(texto)
             item.setData(Qt.ItemDataRole.UserRole, r)
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item.setSizeHint(item.sizeHint().expandedTo(item.sizeHint()))
             if (r.get("tipo_cliente") or "") == "express":
                 item.setForeground(QColor(_EXEC["accent"]))
                 f = item.font()
@@ -300,7 +307,7 @@ class CentroCobranzasPanel(QWidget):
                 item.setFont(f)
             self.lista.addItem(item)
 
-        self.lbl_cliente.setText(f"{len(resultados)} deudor(es) — seleccione uno")
+        self.lbl_lista.setText(f"{len(resultados)} deudor(es) — seleccione uno")
         if len(resultados) == 1:
             self.lista.setCurrentRow(0)
             self._on_item_seleccionado(self.lista.item(0))
@@ -324,17 +331,13 @@ class CentroCobranzasPanel(QWidget):
             info_parts.append(f"Tel {tel}")
         if direc:
             info_parts.append(direc)
-        info_line = " · ".join(info_parts)
-        if info_line:
-            self.lbl_cliente.setText(f"{nombre}\n{info_line}")
-        else:
-            self.lbl_cliente.setText(nombre)
+        self.lbl_cliente.setText(nombre)
+        self.lbl_info.setText(" · ".join(info_parts))
         self.lbl_deuda.setText(f"Deuda: ${self._deuda_actual:,.2f}")
         self.txt_monto.setText(f"{self._deuda_actual:.2f}")
-        self.lista.hide()
-
-        if hasattr(self, 'btn_imprimir'):
-            self.btn_imprimir.setVisible(True)
+        self.zona_lista.hide()
+        self.ficha.show()
+        self.btn_imprimir.setVisible(True)
 
     def _imprimir_estado_deuda(self):
         if not self._cliente:

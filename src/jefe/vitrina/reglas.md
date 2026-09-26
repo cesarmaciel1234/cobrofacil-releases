@@ -6,7 +6,9 @@ Columna izquierda (50%). Cuatro plazas. No inventa anuncios.
 vitrina/
   consulta.py   precio real + uno menor = oferta
   tarjeta.py    una plaza
-  vista.py      pinta saludo, KPIs y grilla 2×2
+  vista.py      pinta saludo, KPIs, pagos y deuda de clientes, y grilla 2×2
+
+Exportar ganancias guarda el Excel de ganancias y la hoja Auditoria de la cartera.
 ```
 
 ## Oferta

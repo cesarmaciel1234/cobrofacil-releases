@@ -722,6 +722,7 @@ class CierreGlobalUI(QWidget):
 
             self.card_totales.revelar(datos.get("ganancia_estimada", 0))
             self.panel_arq.set_esperado(datos.get("v_caja_total", 0))
+            self.panel_arq.set_pago_clientes(datos.get("abonos_efectivo", 0))
 
             self._set_modo_consolidado(consolidado or bool(datos.get("multi_caja")), datos)
             self._cargar_historial_cortes(fecha_str)

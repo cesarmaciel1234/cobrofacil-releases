@@ -1,6 +1,8 @@
 # Inicio y perfiles
 
-`login_pantalla.py` abre `LoginPantalla`. Pinta su propia tarjeta blanca y no usa fondo transparente.
+`login_pantalla.py` abre `LoginPantalla`. El ingreso normal pinta su tarjeta blanca sobre `#F8FAFC`.
+
+F11, desde el cajero, la abre con `fondo_gris=True`. El gris `#334155` tapa la venta y la tarjeta de usuario y contraseña queda al frente. El formulario se arma en `_setup_ui`, antes de pintar.
 
 `perfil_pantalla.py` reexporta el hub de `src/lanzador/vistas/hub_main.py`.
 

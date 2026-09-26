@@ -71,3 +71,13 @@ En mixto, cada casillero pasa por `PanelMixtoCobro._numero`, que llama `redondea
 Al guardar, `armar_resultado_venta` redondea total, pagos, vuelto, redondeo, oferta y recargo. El vuelto solo existe en efectivo y en mixto. `persistir_cobro` redondea los renglones otra vez y, si es fiado, el total de la deuda.
 
 Si la transferencia no coincide y se asocia, la diferencia de más de `0.05` se escribe sola en F3 o en F4 y el total se recalcula. Hasta `0.05` se toma como el mismo monto y no toca el redondeo. Ese `0.05` no es el redondeo a dos centavos. No los juntes.
+
+
+## Impresión Automática y F2
+
+F1 imprime el ticket y cierra. F2 cierra sin imprimir. F10 imprime factura fiscal.
+Si un cobro digital ingresa automáticamente (webhook de Transferencia, QR, o Point aprobado), el sistema cierra la venta llamando a _cerrar_como_eligio. 
+Si el cajero apretó F1, F2 o F10 mientras esperaba, el sistema respeta esa elección. 
+Si el cajero no apretó nada, el sistema lee la configuración uto_print_ del método de pago (configurable en *Diseñador de Ticket -> Impresión Automática de Ticket por Método*). 
+Si la casilla del método está marcada, actúa como F1. Si está desmarcada, actúa como F2 (solo registra sin imprimir, a máxima velocidad).
+Si se configuró opt_corte_papel_sin_ticket en opciones habilitadas, el cierre automático o manual con F2 igual ejecutará el comando CUT_PAPER a la impresora para emitir el sonido mecánico del corte, confirmando auditivamente la venta aunque no haya papel impreso.

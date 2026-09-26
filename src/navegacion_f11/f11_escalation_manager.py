@@ -48,7 +48,7 @@ class GestorEscaladaF11(QObject):
 
     def jump_to_admin_secure(self):
         from src.inicio_y_perfiles.login_pantalla import LoginPantalla
-        if qt_exec(LoginPantalla(role="admin", parent=self.main_window)):
+        if qt_exec(LoginPantalla(role="admin", parent=self.main_window, fondo_gris=True)):
             self.main_window._supervisor_mode = True
             self.btn_flotante.show()
             self.main_window.switch_tab(0)
@@ -73,7 +73,7 @@ class GestorEscaladaF11(QObject):
         if role == "cajero":
             self.main_window._prev_user_before_escalation = config.current_user.copy() if config.current_user else None
 
-            dlg = LoginPantalla(role="admin", parent=self.main_window)
+            dlg = LoginPantalla(role="admin", parent=self.main_window, fondo_gris=True)
             if qt_exec(dlg):
                 self.main_window.setUpdatesEnabled(False)
                 try:
@@ -101,7 +101,7 @@ class GestorEscaladaF11(QObject):
         if role == "admin":
             self.main_window._admin_user_before_escalation = config.current_user.copy() if config.current_user else None
 
-            dlg = LoginPantalla(role="jefe", parent=self.main_window)
+            dlg = LoginPantalla(role="jefe", parent=self.main_window, fondo_gris=True)
             if qt_exec(dlg):
                 self.main_window.setUpdatesEnabled(False)
                 try:

@@ -42,6 +42,14 @@ class PanelPublicidad(QWidget):
         kpis.addWidget(self.lbl_inv, 1)
         root.addLayout(kpis)
 
+        cuentas = QHBoxLayout()
+        cuentas.setSpacing(10)
+        self.lbl_pagos = self._chip("Pagos clientes", "—")
+        self.lbl_deuda = self._chip("Deuda clientes", "—")
+        cuentas.addWidget(self.lbl_pagos, 1)
+        cuentas.addWidget(self.lbl_deuda, 1)
+        root.addLayout(cuentas)
+
         self.btn_export = QPushButton("Exportar ganancias")
         self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_export.setFixedHeight(36)
@@ -133,6 +141,10 @@ class PanelPublicidad(QWidget):
     def set_metricas(self, ganancia: float, inventario: float):
         self.lbl_gan._valor.setText(fmt_plata(ganancia))
         self.lbl_inv._valor.setText(fmt_plata(inventario))
+
+    def set_cuentas(self, pagos: float, deuda: float):
+        self.lbl_pagos._valor.setText(fmt_plata(pagos))
+        self.lbl_deuda._valor.setText(fmt_plata(deuda))
 
     def set_saludo(self, texto: str):
         self.lbl_saludo.setText(texto)

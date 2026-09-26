@@ -20,6 +20,7 @@ class CobroController:
                     valores_mixtos.get("tarjeta", 0)
                     + valores_mixtos.get("mercadopago", 0)
                     + valores_mixtos.get("qr", 0)
+                    + valores_mixtos.get("cliente", 0)
                 )
             else:
                 p1 = float(p1_t) if p1_t else 0.0
@@ -110,8 +111,15 @@ class CobroController:
             except Exception as e:
                 import logging
                 logging.error(f"Error al imprimir ticket: {e}")
-        elif debe_abrir:
-            drawer_manager.abrir(autorizada=True)
+        else:
+            if debe_abrir:
+                drawer_manager.abrir(autorizada=True)
+            if config.get("opt_corte_papel_sin_ticket", False):
+                try:
+                    printer_manager.cortar_papel()
+                except Exception as e:
+                    import logging
+                    logging.error(f"Error al ejecutar corte de papel sin ticket: {e}")
 
     @staticmethod
     def completar_transaccion(

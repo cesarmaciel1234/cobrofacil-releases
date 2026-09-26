@@ -34,7 +34,7 @@ QWidget#AdminInventario QPushButton {
     border-radius: 8px;
     padding: 10px 18px;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14px;
 }
 QWidget#AdminInventario QPushButton:hover {
     background-color: #EFF6FF;

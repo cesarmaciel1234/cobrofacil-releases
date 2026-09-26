@@ -18,6 +18,32 @@ def _ficha(fila):
     return {}
 
 
+def _confirmar(trabajo, fallo):
+    """Una sola transacción. Si el movimiento no queda escrito, la deuda no cambia."""
+    conn = None
+    try:
+        conn = db_manager.get_connection()
+        resultado = trabajo(conn.cursor())
+        if not resultado or not resultado[0]:
+            conn.rollback()
+            return resultado or fallo
+        conn.commit()
+        return resultado
+    except Exception:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+        return fallo
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
 class MotorCuenta:
     """Lectura y escritura de la ficha. No cobra la venta."""
 
@@ -122,45 +148,149 @@ class MotorCuenta:
             (limite, cliente_id),
         )
 
-    def abonar(self, cliente_id, monto, descripcion):
-        cliente = self.obtener(cliente_id)
-        if not cliente:
-            return False, 0.0, ""
-        ficha = dict(cliente)
-        deuda_actual = float(ficha.get("deuda_actual") or 0.0)
-        nuevo_saldo = max(0.0, deuda_actual - float(monto or 0))
-        nombre = ficha.get("nombre", "")
-        db_manager.execute_non_query(
-            "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
-            (nuevo_saldo, cliente_id),
+    def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
+        def trabajo(cursor):
+            bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
+            cursor.execute(
+                f"SELECT deuda_actual, nombre FROM clientes WHERE id = ?{bloqueo}",
+                (cliente_id,),
+            )
+            fila = cursor.fetchone()
+            if not fila:
+                return False, 0.0, ""
+            ficha = _ficha(fila)
+            try:
+                deuda_actual = float(ficha.get("deuda_actual") if "deuda_actual" in ficha else fila[0] or 0)
+            except (TypeError, ValueError, KeyError, IndexError):
+                deuda_actual = 0.0
+            nombre = ""
+            try:
+                nombre = ficha.get("nombre") if isinstance(ficha, dict) and ficha.get("nombre") is not None else fila[1]
+            except Exception:
+                nombre = ficha.get("nombre", "") if isinstance(ficha, dict) else ""
+            nombre = nombre or ""
+            nuevo_saldo = max(0.0, deuda_actual - float(monto or 0))
+            cursor.execute(
+                "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+                (nuevo_saldo, cliente_id),
+            )
+            cursor.execute("SAVEPOINT abono_linea")
+            try:
+                cursor.execute(
+                    "INSERT INTO cuenta_corriente "
+                    "(cliente_id, tipo, monto, saldo_resultante, descripcion, medio_pago, perfil, registrado_por) "
+                    "VALUES (?, 'ABONO', ?, ?, ?, ?, ?, ?)",
+                    (cliente_id, monto, nuevo_saldo, descripcion, medio or None, perfil or None, quien or None),
+                )
+            except Exception:
+                cursor.execute("ROLLBACK TO SAVEPOINT abono_linea")
+                cursor.execute(
+                    "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
+                    "VALUES (?, 'ABONO', ?, ?, ?)",
+                    (cliente_id, monto, nuevo_saldo, descripcion),
+                )
+            return True, nuevo_saldo, nombre
+
+        return _confirmar(trabajo, (False, 0.0, ""))
+
+    def total_cobros(self):
+        try:
+            return float(
+                db_manager.execute_scalar(
+                    "SELECT SUM(monto) FROM cuenta_corriente WHERE tipo = 'ABONO'"
+                )
+                or 0.0
+            )
+        except Exception:
+            return 0.0
+
+    def listar_cobros(self):
+        from src.clientes_fiado.oficina.cobradas.lista import armar
+
+        sql = (
+            "SELECT cc.fecha, cc.monto, cc.saldo_resultante, cc.descripcion, "
+            "cc.medio_pago, cc.perfil, cc.registrado_por, c.nombre, c.dni "
+            "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
+            "WHERE cc.tipo = 'ABONO' ORDER BY cc.fecha DESC, cc.id DESC"
         )
-        db_manager.execute_non_query(
-            "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
-            "VALUES (?, 'ABONO', ?, ?, ?)",
-            (cliente_id, monto, nuevo_saldo, descripcion),
-        )
-        return True, nuevo_saldo, nombre
+        filas = db_manager.execute_query(sql) or []
+        err = str(getattr(db_manager, "last_error", "") or "").lower()
+        if "medio_pago" in err or "unknown column" in err or "1054" in err:
+            filas = db_manager.execute_query(
+                "SELECT cc.fecha, cc.monto, cc.saldo_resultante, cc.descripcion, "
+                "c.nombre, c.dni FROM cuenta_corriente cc "
+                "LEFT JOIN clientes c ON c.id = cc.cliente_id "
+                "WHERE cc.tipo = 'ABONO' ORDER BY cc.fecha DESC, cc.id DESC"
+            ) or []
+        return [armar(fila) for fila in filas]
+
+    def pagos_del_dia(self):
+        from datetime import datetime
+
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        try:
+            return float(
+                db_manager.execute_scalar(
+                    "SELECT SUM(monto) FROM cuenta_corriente "
+                    "WHERE tipo = 'ABONO' AND fecha >= ?",
+                    (f"{hoy} 00:00:00",),
+                )
+                or 0.0
+            )
+        except Exception:
+            return 0.0
+
+    def deuda_total(self):
+        try:
+            return float(
+                db_manager.execute_scalar(
+                    "SELECT SUM(deuda_actual) FROM clientes"
+                )
+                or 0.0
+            )
+        except Exception:
+            return 0.0
 
     def cargar_manual(self, cliente_id, monto, descripcion):
-        cliente = self.obtener(cliente_id)
-        if not cliente:
-            return False, 0.0, ""
-        ficha = dict(cliente)
-        deuda_actual = float(ficha.get("deuda_actual") or 0.0)
         monto = float(monto or 0)
-        nombre = ficha.get("nombre", "")
         if monto <= 0:
-            return False, deuda_actual, nombre
-        nuevo_saldo = deuda_actual + monto
-        bajo = db_manager.execute_non_query(
-            "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
-            (nuevo_saldo, cliente_id),
-        )
-        anotado = db_manager.execute_non_query(
-            "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
-            "VALUES (?, 'CARGO', ?, ?, ?)",
-            (cliente_id, monto, nuevo_saldo, descripcion),
-        )
-        if not bajo or not anotado:
-            return False, deuda_actual, nombre
-        return True, nuevo_saldo, nombre
+            return False, 0.0, ""
+
+        def trabajo(cursor):
+            bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
+            cursor.execute(
+                f"SELECT deuda_actual, nombre FROM clientes WHERE id = ?{bloqueo}",
+                (cliente_id,),
+            )
+            fila = cursor.fetchone()
+            if not fila:
+                return False, 0.0, ""
+            ficha = _ficha(fila)
+            try:
+                deuda_actual = float(ficha.get("deuda_actual") or 0.0)
+            except (TypeError, ValueError):
+                deuda_actual = 0.0
+            nombre = ficha.get("nombre", "") or ""
+            nuevo_saldo = deuda_actual + monto
+            cursor.execute(
+                "UPDATE clientes SET deuda_actual = ? WHERE id = ?",
+                (nuevo_saldo, cliente_id),
+            )
+            cursor.execute(
+                "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
+                "VALUES (?, 'CARGO', ?, ?, ?)",
+                (cliente_id, monto, nuevo_saldo, descripcion),
+            )
+            return True, nuevo_saldo, nombre
+
+        return _confirmar(trabajo, (False, 0.0, ""))
+
+    def ventas_sin_cargo(self):
+        from src.clientes_fiado.oficina.cuenta.cuadre import ventas_sin_cargo
+
+        return ventas_sin_cargo()
+
+    def anotar_faltante(self, venta_id):
+        from src.clientes_fiado.oficina.cuenta.cuadre import anotar
+
+        return anotar(venta_id)

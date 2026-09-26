@@ -13,14 +13,32 @@ def _n(v, d=0.0):
     except (TypeError, ValueError):
         return d
 
+
+def _fmt_plata(v):
+    n = _n(v)
+    if abs(n - round(n)) < 0.001:
+        return f"${int(round(n)):,}"
+    return f"${n:,.2f}"
+
+
+def _fmt_num(v):
+    n = _n(v)
+    if abs(n - round(n)) < 0.001:
+        return f"{int(round(n)):,}"
+    return f"{n:,.2f}"
+
+
 class TablaInventario(QTableWidget):
-    producto_doble_clic = pyqtSignal(str) # Emite el ID del producto
+    producto_doble_clic = pyqtSignal(str)  # Emite el ID del producto
     seleccion_cambiada = pyqtSignal(int)  # Emite la cantidad de filas seleccionadas
 
+    # Oferta (lectura; se edita en Ofertas). Mayoreo (Inventario + Promedios jefe).
     HEADERS = [
-        "", "ID/Cod", "Descripcion del Producto", "Departamento", "IVA (%)",
-        "Costo", "P. Venta", "C. Mayoreo", "P. Mayoreo", "Regla Promo",
-        "Of. Relampago", "Of. Promedio", "Existencia", "Inv. Minimo", "Inv. Maximo", "Tipo de Venta"
+        "", "ID / Cód", "Producto", "Depto", "IVA %",
+        "Costo", "P. venta",
+        "Cant. of.", "P. oferta", "Relámpago",
+        "Cant. may.", "P. mayoreo",
+        "Mín", "Máx", "Tipo", "Stock",
     ]
 
     def __init__(self, parent=None):
@@ -35,25 +53,29 @@ class TablaInventario(QTableWidget):
     def _setup_ui(self):
         self.setColumnCount(len(self.HEADERS))
         self.setHorizontalHeaderLabels(self.HEADERS)
-        self.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.setSelectionBehavior(QTableWidget.SelectRows)
+        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.setAlternatingRowColors(False)
         self.verticalHeader().setVisible(False)
-        self.setShowGrid(False)
+        self.setShowGrid(True)
         self.setObjectName("catalogoTable")
-        self.verticalHeader().setDefaultSectionSize(40)
+        self.verticalHeader().setDefaultSectionSize(50)
+        fuente = QFont("Segoe UI", 11)
+        fuente.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
+        self.setFont(fuente)
+        self.horizontalHeader().setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
 
-        # Configurar anchos de columna (16 columnas)
-        col_widths = [28, 80, -1, 100, 60, 75, 85, 90, 90, 110, 105, 105, 95, 85, 85, 90]
+        col_widths = [36, 100, -1, 110, 64, 90, 100, 80, 96, 96, 80, 96, 70, 70, 80, 96]
         hh = self.horizontalHeader()
+        hh.setMinimumSectionSize(56)
+        hh.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         for i, w in enumerate(col_widths):
             if w == -1:
                 hh.setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
             else:
-                hh.setSectionResizeMode(i, QHeaderView.ResizeMode.Fixed)
+                hh.setSectionResizeMode(i, QHeaderView.ResizeMode.Interactive)
                 self.setColumnWidth(i, w)
 
-        # Conectar eventos
         self.doubleClicked.connect(self._on_double_click)
         self.itemSelectionChanged.connect(self._on_selection_changed)
         self.verticalScrollBar().valueChanged.connect(self._al_hacer_scroll)
@@ -80,15 +102,18 @@ class TablaInventario(QTableWidget):
 
             self.blockSignals(True)
             self.setRowCount(fin)
+            fuente_negrita = QFont("Segoe UI", 11, QFont.Weight.Bold)
+            idx_stock = len(self.HEADERS) - 1
+            idx_tipo = len(self.HEADERS) - 2
 
             for i in range(inicio, fin):
                 r = self.all_rows[i]
-                dep = r.get('departamento') or ''
-                stock = _n(r.get('stock'))
-                uni = (r.get('unidad') or 'UN').upper()
-                tipo = "KILO" if uni == 'KG' else "UNIDAD"
+                dep = r.get("departamento") or ""
+                stock = _n(r.get("stock"))
+                uni = (r.get("unidad") or "UN").upper()
+                tipo = "KILO" if uni == "KG" else "UNIDAD"
 
-                depto_iva = r.get('depto_iva')
+                depto_iva = r.get("depto_iva")
                 if depto_iva is None:
                     from src.config import config
                     depto_iva = float(config.get("tax_percentage", 21.0))
@@ -105,58 +130,64 @@ class TablaInventario(QTableWidget):
                     base_hex = theme_manager.get_color("bg_fila_impar")
                 row_bg = QColor(base_hex)
 
-                # Checkbox item (columna 0)
                 chk = QTableWidgetItem()
                 chk.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
                 chk.setCheckState(Qt.CheckState.Unchecked)
                 chk.setBackground(row_bg)
                 self.setItem(i, 0, chk)
 
-                # Cargar valores restantes
+                cant_of = _n(r.get("cant_oferta"))
+                precio_of = _n(r.get("precio_oferta"))
+                relampago = _n(r.get("precio_oferta_relampago"))
+                cant_may = _n(r.get("cant_mayoreo"))
+                precio_may = _n(r.get("precio_mayoreo"))
                 vals = [
-                    (str(r.get('id')),       Qt.AlignmentFlag.AlignRight),
-                    (r.get('nombre') or '',  Qt.AlignmentFlag.AlignLeft),
-                    (dep,                    Qt.AlignmentFlag.AlignLeft),
-                    (f"{depto_iva:.1f}%",    Qt.AlignmentFlag.AlignCenter),
-                    (f"${_n(r.get('costo')):.2f}", Qt.AlignmentFlag.AlignRight),
-                    (f"${_n(r.get('precio')):.2f}", Qt.AlignmentFlag.AlignRight),
-                    (f"{_n(r.get('cant_mayoreo')):g}" if _n(r.get('cant_mayoreo')) > 0 else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${_n(r.get('precio_mayoreo')):.2f}" if _n(r.get('precio_mayoreo')) > 0 else "-", Qt.AlignmentFlag.AlignRight),
-                    (f"{_n(r.get('cant_oferta')):g} x ${_n(r.get('precio_oferta')):.2f}" if _n(r.get('precio_oferta')) else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${_n(r.get('precio_oferta_relampago')):.2f}" if _n(r.get('precio_oferta_relampago')) else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"${_n(r.get('precio_oferta_promedio')):.2f}" if _n(r.get('precio_oferta_promedio')) else "-", Qt.AlignmentFlag.AlignCenter),
-                    (f"{stock:.2f}",         Qt.AlignmentFlag.AlignRight),
-                    (f"{_n(r.get('stock_minimo')):.2f}", Qt.AlignmentFlag.AlignCenter),
-                    (f"{_n(r.get('stock_maximo')):.2f}", Qt.AlignmentFlag.AlignCenter),
-                    (tipo,                   Qt.AlignmentFlag.AlignCenter),
+                    (str(r.get("id")), Qt.AlignmentFlag.AlignRight),
+                    (r.get("nombre") or "", Qt.AlignmentFlag.AlignLeft),
+                    (dep, Qt.AlignmentFlag.AlignLeft),
+                    (f"{depto_iva:.0f}%", Qt.AlignmentFlag.AlignCenter),
+                    (_fmt_plata(r.get("costo")), Qt.AlignmentFlag.AlignRight),
+                    (_fmt_plata(r.get("precio")), Qt.AlignmentFlag.AlignRight),
+                    (_fmt_num(cant_of) if cant_of > 0 else "—", Qt.AlignmentFlag.AlignCenter),
+                    (_fmt_plata(precio_of) if precio_of > 0 else "—", Qt.AlignmentFlag.AlignRight),
+                    (_fmt_plata(relampago) if relampago > 0 else "—", Qt.AlignmentFlag.AlignRight),
+                    (_fmt_num(cant_may) if cant_may > 0 else "—", Qt.AlignmentFlag.AlignCenter),
+                    (_fmt_plata(precio_may) if precio_may > 0 else "—", Qt.AlignmentFlag.AlignRight),
+                    (_fmt_num(r.get("stock_minimo")), Qt.AlignmentFlag.AlignCenter),
+                    (_fmt_num(r.get("stock_maximo")), Qt.AlignmentFlag.AlignCenter),
+                    (tipo, Qt.AlignmentFlag.AlignCenter),
+                    (_fmt_num(stock), Qt.AlignmentFlag.AlignRight),
                 ]
 
                 for j, (v, align) in enumerate(vals, 1):
                     it = QTableWidgetItem(v)
                     it.setTextAlignment(Qt.AlignmentFlag.AlignVCenter | align)
                     it.setBackground(row_bg)
-                    it.setForeground(QColor(theme_manager.get_color("texto_primario")))
+                    it.setForeground(QColor("#0F172A"))
 
-                    # Ofertas
-                    if j in (9, 10) and v != "-":
+                    if j in (7, 8, 9) and v != "—":
                         it.setForeground(QColor(theme_manager.get_color("oferta")))
-                        it.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+                        it.setFont(fuente_negrita)
 
-                    # Stock colores
-                    if j == 12:
+                    if j in (10, 11) and v != "—":
+                        it.setForeground(QColor("#7C3AED"))
+                        it.setFont(fuente_negrita)
+
+                    if j == idx_stock:
                         if stock <= 0:
                             it.setForeground(QColor(theme_manager.get_color("stock_agotado")))
                             it.setBackground(QColor(theme_manager.get_color("bg_stock_agotado")))
+                            it.setFont(fuente_negrita)
                         elif stock < 5:
                             it.setForeground(QColor(theme_manager.get_color("stock_bajo")))
                             it.setBackground(QColor(theme_manager.get_color("bg_stock_bajo")))
+                            it.setFont(fuente_negrita)
                         else:
                             it.setForeground(QColor(theme_manager.get_color("stock_saludable")))
 
-                    # Tipo
-                    if j == 15:
+                    if j == idx_tipo:
                         it.setForeground(QColor(theme_manager.get_color("tipo_producto")))
-                        it.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+                        it.setFont(fuente_negrita)
 
                     self.setItem(i, j, it)
 
@@ -194,13 +225,15 @@ class TablaInventario(QTableWidget):
                 background: {bg};
                 border: 1px solid {border};
                 border-radius: 12px;
-                gridline-color: transparent;
+                gridline-color: #CBD5E1;
                 outline: none;
+                font-size: 13px;
+                color: #0F172A;
             }}
             QTableWidget::item {{
-                padding: 8px 10px;
-                color: {text};
-                border-bottom: 1px solid {hover};
+                padding: 10px 12px;
+                color: #0F172A;
+                border-bottom: 1px solid #E2E8F0;
             }}
             QTableWidget::item:hover {{
                 background-color: {hover};
@@ -208,17 +241,17 @@ class TablaInventario(QTableWidget):
             QTableWidget::item:selected {{
                 background-color: {sel_bg};
                 color: {sel_text};
-                border-bottom: 2px solid #3B82F6;
+                border-bottom: 2px solid #2563EB;
             }}
             QHeaderView::section {{
                 background-color: {header_bg};
-                color: {header_text};
-                font-weight: 900;
-                padding: 12px 8px;
+                color: #0F172A;
+                font-weight: 800;
+                padding: 14px 10px;
                 border: none;
                 border-bottom: 2px solid {border};
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                border-right: 1px solid #E2E8F0;
+                font-size: 12px;
+                letter-spacing: 0.2px;
             }}
         """)
