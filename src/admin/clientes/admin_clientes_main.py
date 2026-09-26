@@ -511,7 +511,17 @@ class AdminClientes(QWidget):
                 )
                 self.cargar_clientes()
                 return
-        QMessageBox.information(
-            self, "Éxito", f"Abono registrado por Admin ({medio}).\nNuevo saldo: ${hecho['saldo']:,.2f}"
+        mensaje = hecho.get("mensaje") or (
+            f"✅ COBRO EXITOSO — {hecho.get('nombre') or nombre}"
+            f" · saldo ${float(hecho.get('saldo') or 0):,.2f}"
         )
+        QMessageBox.information(self, "Éxito", f"{mensaje}\n({medio})")
+        try:
+            win = self.window()
+            pantallas = getattr(win, "screens", None) or []
+            ventas = pantallas[1] if len(pantallas) > 1 else None
+            if ventas is not None and hasattr(ventas, "_refrescar_notificaciones"):
+                ventas._refrescar_notificaciones()
+        except Exception:
+            pass
         self.cargar_clientes()

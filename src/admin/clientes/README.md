@@ -4,7 +4,7 @@ Pantalla clara. Lista, alta, ficha, límite, abono e historial. Abonar abre el C
 
 La tarjeta Cobros suma los abonos. El botón Planilla de cobros abre la grilla: fecha, cliente, DNI, monto, medio, perfil, quién cobró y saldo. El medio es el de «¿Con qué paga?»: Efectivo, Transferencia, Tarjeta o QR.
 
-Si hay ventas Fiado o Clientes completadas sin cargo, aparece una franja ámbar. CUADRAR abre la lista. Cargar en la cuenta escribe el cargo solo cuando el nombre de la venta coincide con un solo cliente. Si el abono es en efectivo y la caja no lo anota, el aviso dice que la cuenta sí bajó.
+Si hay ventas Fiado o Clientes completadas sin cargo, aparece una franja ámbar. CUADRAR abre la lista. Cargar en la cuenta escribe el cargo solo cuando el nombre de la venta coincide con un solo cliente. Si el abono es en efectivo y la caja no lo anota, el aviso dice que la cuenta sí bajó. Tras un abono ok, el cartel usa el mismo texto del mensajero de cobro (`COBRO EXITOSO` con nombre, pago y saldo).
 
 El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `cerebro`. El plano está en `src/clientes_fiado/plano.md`.
 

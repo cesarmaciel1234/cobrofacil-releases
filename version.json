@@ -1,7 +1,7 @@
 {
-  "app_version": "v25",
+  "app_version": "v26",
   "channel": "stable",
-  "build_date": "2026-09-26 16:39:26",
+  "build_date": "2026-09-26 17:13:11",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -126,9 +126,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "95af64b449bdf337a1dbd633a4275214",
+      "checksum": "f386eeaf2422e5ec4c1e0b6b8b2a74c8",
       "channel": "stable",
-      "size": 1076855
+      "size": 1078558
     },
     "01_Compiladores_y_Ejecutables/copiar_instalacion.py": {
       "version": "1.0.0",
@@ -3240,15 +3240,15 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "b1a8209622b86475ec4472670e576cbd",
+      "checksum": "60a8b8a88fb2af7770097b8ce3f05187",
       "channel": "stable",
-      "size": 23297
+      "size": 23767
     },
     "src/admin/clientes/README.md": {
       "version": "1.0.0",
-      "checksum": "5987c245bed3783fdedf439f5ff3996a",
+      "checksum": "5b4f2e7d5b999637d63f0dfa196e7d95",
       "channel": "stable",
-      "size": 1025
+      "size": 1139
     },
     "src/admin/clientes/theme.py": {
       "version": "1.0.0",
@@ -4062,9 +4062,9 @@
     },
     "src/cajero/ingresar_efectivo/fiado/README.md": {
       "version": "1.0.0",
-      "checksum": "c74beea9d9ac954e9ae556494ad11bbd",
+      "checksum": "7435b250e8e86e474741eadc3b0d0291",
       "channel": "stable",
-      "size": 679
+      "size": 863
     },
     "src/cajero/ingresar_efectivo/fiado/__init__.py": {
       "version": "1.0.0",
@@ -4176,9 +4176,9 @@
     },
     "src/cajero/paso5_terminal/paso5_terminal.py": {
       "version": "1.0.0",
-      "checksum": "a9732c61dcfe65c963889f15c2f4dcec",
+      "checksum": "021f5cee6979375531c94ce3ae2b8d34",
       "channel": "stable",
-      "size": 111391
+      "size": 111437
     },
     "src/cajero/paso5_terminal/punta del piramide.md": {
       "version": "1.0.0",
@@ -4980,9 +4980,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "53b4c54247e528b49d1fda44f2e7a9b8",
+      "checksum": "4ed1db4c6e7d2afb69ef2ed00bdb2587",
       "channel": "stable",
-      "size": 96093
+      "size": 96191
     },
     "src/cajero/paso6_cobro/punta del piramide.md": {
       "version": "1.0.0",
@@ -7740,9 +7740,9 @@
     },
     "src/clientes_fiado/interfaz/cobro/medios/cerrar.py": {
       "version": "1.0.0",
-      "checksum": "3cb91711996ff834d93c82f6561687bb",
+      "checksum": "82f7bf871d066d7202b74a1197f87e2e",
       "channel": "stable",
-      "size": 1382
+      "size": 2109
     },
     "src/clientes_fiado/interfaz/cobro/medios/efectivo.py": {
       "version": "1.0.0",
@@ -7776,9 +7776,9 @@
     },
     "src/clientes_fiado/interfaz/cobro/medios/README.md": {
       "version": "1.0.0",
-      "checksum": "e68a283f330858cc9fda6bbbbd85734b",
+      "checksum": "8420d7ce06172d595e58545597723952",
       "channel": "stable",
-      "size": 1119
+      "size": 1350
     },
     "src/clientes_fiado/interfaz/cobro/medios/resultado.py": {
       "version": "1.0.0",

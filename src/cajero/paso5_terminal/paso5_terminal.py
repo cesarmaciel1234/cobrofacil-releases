@@ -1961,6 +1961,7 @@ class Paso5Terminal(QWidget):
             motivo = hecho["motivo"]
             entra_caja = hecho["entra_caja"]
             monto = hecho["monto_caja"]
+            self._refrescar_notificaciones()
 
         if entra_caja:
             try:
