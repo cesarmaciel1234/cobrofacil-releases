@@ -55,7 +55,7 @@ class BarraDeHerramientasInferior(QFrame):
         self.setStyleSheet('''
             BarraDeHerramientasInferior {
                 background-color: #F8FAFC;
-                border-top: 1px solid #E2E8F0;
+                border-top: 2px solid #94A3B8;
             }
             QPushButton {
                 background-color: #FFFFFF;

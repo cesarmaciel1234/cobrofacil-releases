@@ -91,7 +91,7 @@ QComboBox::down-arrow {
 QTableWidget {
     background-color: #FFFFFF;
     alternate-background-color: #1E3A8A;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     selection-background-color: #EFF6FF;
     selection-color: #FFFFFF;
     gridline-color: #E2E8F0;
@@ -125,7 +125,7 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 
 /* --- QTabWidget --- */
 QTabWidget::pane {
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     background: #FFFFFF;
 }
 
@@ -203,7 +203,7 @@ QFrame#Paso6Main[theme="dark"] QLabel#CobroTotal { color: #38BDF8; font-size: 85
 
 QFrame#Paso6Main[theme="dark"] QFrame#RightPanel { background-color: #FFFFFF; border: none; border-top-right-radius: 28px; border-bottom-right-radius: 28px; }
 
-QFrame#Paso6Main[theme="dark"] QFrame#KbFrame { background-color: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; }
+QFrame#Paso6Main[theme="dark"] QFrame#KbFrame { background-color: #FFFFFF; border-radius: 20px; border: 2px solid #94A3B8; }
 
 
 QFrame#Paso6Main[theme="light"] QLineEdit#InputPago {
@@ -248,7 +248,7 @@ QFrame#Paso6Main[theme="light"] QLabel#PrecioLista { color: #EF4444 !important; 
 
 QFrame#Paso6Main[theme="light"] QFrame#RightPanel { background-color: #1E3A8A; border: none; border-top-right-radius: 28px; border-bottom-right-radius: 28px; }
 
-QFrame#Paso6Main[theme="light"] QFrame#KbFrame { background-color: #F1F5F9; border-radius: 20px; border: 1px solid #E2E8F0; }
+QFrame#Paso6Main[theme="light"] QFrame#KbFrame { background-color: #F1F5F9; border-radius: 20px; border: 2px solid #94A3B8; }
 
 
 QFrame#Paso6Main[theme="light"] QLineEdit#InputPago {
@@ -285,7 +285,7 @@ QFrame#Paso6Main[theme="light"] QLineEdit#InputRec:focus { border: 2px solid #F5
 /* =========================================================
    PASO 7 CIERRE (Corte de Turno)
    ========================================================= */
-QFrame#CierreMain { background: #1E3A8A; border-radius: 20px; border: 1px solid #E2E8F0; }
+QFrame#CierreMain { background: #1E3A8A; border-radius: 20px; border: 2px solid #94A3B8; }
 
 QFrame#CierreHeader { background: #1E3A8A; border-top-left-radius: 19px; border-top-right-radius: 19px; }
 
@@ -316,7 +316,7 @@ QPushButton#BtnCierreTurno:hover { background: #059669; }
 /* =========================================================
    PASO 8 HISTORIAL
    ========================================================= */
-QFrame#HistorialMain { background-color: #1E3A8A; border-radius: 20px; border: 1px solid #E2E8F0; }
+QFrame#HistorialMain { background-color: #1E3A8A; border-radius: 20px; border: 2px solid #94A3B8; }
 
 QPushButton#BtnRefresh { background-color: #0EA5E9; color: white; font-weight: bold; }
 
@@ -337,17 +337,17 @@ QPushButton#BtnCloseHist:hover { background: #CBD5E1; color: #FFFFFF; }
 /* --- DARK THEME --- */
 Paso5Terminal[theme="dark"] { background-color: #F8FAFC; color: #1E3A8A; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif; }
 
-Paso5Terminal[theme="dark"] QFrame#TerminalCentralFrame { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; }
+Paso5Terminal[theme="dark"] QFrame#TerminalCentralFrame { background-color: #FFFFFF; border-radius: 8px; border: 2px solid #94A3B8; }
 
-Paso5Terminal[theme="dark"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #E2E8F0; }
+Paso5Terminal[theme="dark"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 2px solid #94A3B8; }
 
 Paso5Terminal[theme="dark"] QLineEdit#TerminalScan { background: #F8FAFC; border: 2px solid #64748B; border-bottom: 4px solid #475569; border-radius: 12px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #38BDF8; }
 
 Paso5Terminal[theme="dark"] QLineEdit#TerminalScan:focus { border: 2px solid #3B82F6; border-bottom: 4px solid #2563EB; }
 
-Paso5Terminal[theme="dark"] QListWidget#TerminalListResults { background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
+Paso5Terminal[theme="dark"] QListWidget#TerminalListResults { background: #FFFFFF; border: 2px solid #94A3B8; color: #0F172A; font-size: 16px; font-weight: 700; }
 
-Paso5Terminal[theme="dark"] QFrame#TerminalSideBox { background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; }
+Paso5Terminal[theme="dark"] QFrame#TerminalSideBox { background-color: #F8FAFC; border: 2px solid #94A3B8; border-radius: 12px; }
 
 Paso5Terminal[theme="dark"] QFrame#TerminalStatusBar { background: #F8FAFC; border-top: 1px solid #E2E8F0; }
 
@@ -361,7 +361,7 @@ Paso5Terminal[theme="dark"] QLabel#TerminalIconLbl { color: #64748B; font-size: 
 
 
 Paso5Terminal[theme="dark"] QPushButton[is_shortcut="true"] {
-    background: #FFFFFF; color: #1E3A8A; border: 1px solid #E2E8F0; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px;
+    background: #FFFFFF; color: #1E3A8A; border: 2px solid #94A3B8; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px;
 }
 
 Paso5Terminal[theme="dark"] QPushButton[is_shortcut="true"]:hover { background: #E2E8F0; border-color: #475569; color: #FFFFFF; }
@@ -385,15 +385,15 @@ Paso5Terminal[theme="dark"] QTableWidget#TerminalTabla QHeaderView::section {
 /* --- LIGHT THEME --- */
 Paso5Terminal[theme="light"] { background-color: #1E3A8A; color: #1E3A8A; font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', sans-serif; }
 
-Paso5Terminal[theme="light"] QFrame#TerminalCentralFrame { background-color: white; border-radius: 8px; border: 1px solid #CBD5E1; }
+Paso5Terminal[theme="light"] QFrame#TerminalCentralFrame { background-color: white; border-radius: 8px; border: 2px solid #94A3B8; }
 
-Paso5Terminal[theme="light"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 1px solid #CBD5E1; }
+Paso5Terminal[theme="light"] QFrame#TerminalDashboard { background-color: #FFFFFF; border-radius: 8px; border: 2px solid #94A3B8; }
 
 Paso5Terminal[theme="light"] QLineEdit#TerminalScan { background: #F1F5F9; border: 2px solid #94A3B8; border-bottom: 4px solid #64748B; border-radius: 12px; padding: 10px 15px; font-size: 26px; font-weight: bold; color: #FFFFFF; }
 
 Paso5Terminal[theme="light"] QLineEdit#TerminalScan:focus { border: 2px solid #3B82F6; border-bottom: 4px solid #2563EB; }
 
-Paso5Terminal[theme="light"] QListWidget#TerminalListResults { background: white; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
+Paso5Terminal[theme="light"] QListWidget#TerminalListResults { background: white; border: 2px solid #94A3B8; color: #0F172A; font-size: 16px; font-weight: 700; }
 
 Paso5Terminal[theme="light"] QFrame#TerminalSideBox { background: #1E3A8A; border: 1px solid #e2e8f0; border-radius: 12px; }
 
@@ -409,7 +409,7 @@ Paso5Terminal[theme="light"] QLabel#TerminalIconLbl { color: #475569; font-size:
 
 
 Paso5Terminal[theme="light"] QPushButton[is_shortcut="true"] {
-    background: #FFFFFF; color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px;
+    background: #FFFFFF; color: #F8FAFC; border: 2px solid #94A3B8; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px;
 }
 
 Paso5Terminal[theme="light"] QPushButton[is_shortcut="true"]:hover { background: #F1F5F9; border-color: #64748B; color: #F8FAFC; }
@@ -474,7 +474,7 @@ QLabel#TerminalAlertaLampara[nivel="ok"] { background: #22C55E; }
 
 QFrame#TerminalAlertaToast {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     border-radius: 10px;
 }
 QLabel#TerminalAlertaToastLinea {
@@ -523,7 +523,7 @@ Paso5Terminal[theme="light"] QFrame#TerminalTablaContainer {
 /* Scroll Atajos */
 QScrollArea#TerminalScrollAtajos, QWidget#TerminalContenedorAtajos { background: transparent; border: none; }
 
-QPushButton[is_shortcut="true"] { background: #FFFFFF; color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px; }
+QPushButton[is_shortcut="true"] { background: #FFFFFF; color: #F8FAFC; border: 2px solid #94A3B8; border-radius: 5px; font-size: 13px; font-weight: bold; padding: 0px; }
 
 QPushButton[is_shortcut="true"]:hover { background: #F1F5F9; border-color: #64748B; }
 
@@ -618,7 +618,7 @@ QStackedWidget#DialogoIngresoEfectivoStack { background: transparent; border: no
 
 QLineEdit#DialogoIngresoEfectivoMontoTxt:focus { border-color: #10B981; }
 
-QPushButton#DialogoIngresoEfectivoCancel { background: #F1F5F9; color: #475569; font-weight: 700; padding: 12px; border-radius: 10px; border: 1px solid #E2E8F0; }
+QPushButton#DialogoIngresoEfectivoCancel { background: #F1F5F9; color: #475569; font-weight: 700; padding: 12px; border-radius: 10px; border: 2px solid #94A3B8; }
 
 QPushButton#DialogoIngresoEfectivoOk { background: #1A2332; color: #F5F0E6; font-weight: 900; font-size: 14px; padding: 12px; border-radius: 10px; letter-spacing: 1px; }
 
@@ -626,7 +626,7 @@ QPushButton#DialogoIngresoEfectivoOk { background: #1A2332; color: #F5F0E6; font
 /* Dialogo Candado */
 QFrame#DialogoCandadoFondo { background: #334155; }
 
-QFrame#DialogoCandadoContenedor { background: white; border-radius: 20px; border: 1px solid #CBD5E1; }
+QFrame#DialogoCandadoContenedor { background: white; border-radius: 20px; border: 2px solid #94A3B8; }
 
 QPushButton#DialogoCandadoBtnCajero { background: white; border-radius: 16px; border: 3px solid #1E3A8A; }
 
@@ -644,7 +644,7 @@ QPushButton#DialogoCandadoBtnAuxiliar:pressed { background: #D1FAE5; }
 /* Main Paso5Terminal Widgets */
 QFrame#TerminalCentralFrame { background-color: transparent; border: none; }
 
-QListWidget#TerminalListResults { background: white; border: 1px solid #CBD5E1; color: #0F172A; font-size: 16px; font-weight: 700; }
+QListWidget#TerminalListResults { background: white; border: 2px solid #94A3B8; color: #0F172A; font-size: 16px; font-weight: 700; }
 
 
 /* Panel de Totales */
@@ -759,7 +759,7 @@ Paso6Main[theme="dark"] QLabel#LblMpStatus[estado="success"] { color: #4ADE80; b
 /* --- Contenedor Principal --- */
 QFrame#CierreMain {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QFrame#CierreMain[theme="dark"] {
@@ -811,7 +811,7 @@ QFrame#CierreMain[theme="dark"] QLabel#CierreBanner {
 /* --- Panel Arqueo --- */
 QFrame#PanelArq {
     background: white;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QFrame#CierreMain[theme="dark"] QFrame#PanelArq {
@@ -832,7 +832,7 @@ QFrame#CierreMain[theme="dark"] QLabel#PanelArqTitFis { color: #64748B; }
 QLabel#PanelArqValEsp {
     color: #64748B;
     background: #1E3A8A;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QLabel#PanelArqPagoClientes {
@@ -885,7 +885,7 @@ QFrame#CierreMain[theme="dark"] QLineEdit#PanelArqValFis:focus {
 /* --- Diferencia (Sobrante/Faltante) --- */
 QFrame#FrameDif {
     background: #1E3A8A;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QFrame#FrameDif[estado="sobrante"] { background: #F0FDF4; border: 2px solid #10B981; }
@@ -931,7 +931,7 @@ QFrame#CierreMain[theme="dark"] QFrame#FrameDif[estado="sos"] QLabel#FrameDifVal
 /* --- Metric Card --- */
 QFrame#MetricCard {
     background: white;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QFrame#CierreMain[theme="dark"] QFrame#MetricCard {
@@ -1000,7 +1000,7 @@ QFrame#MetricCard[card_color="red"] QLabel#MetricVal[modo="revelado"] { color: #
 /* --- Corte Diario Admin --- */
 QFrame#CorteDiarioMain {
     background: white;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 QFrame#CorteDiarioMain[theme="dark"] {
@@ -1349,7 +1349,7 @@ Paso5Terminal[theme="light"] QPushButton#BtnTheme,
 Paso5Terminal[theme="light"] QPushButton#BtnEspera {
     background-color: #FFFFFF;
     color: #1E3A8A;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
 }
 
 Paso5Terminal[theme="light"] QLabel#TerminalVersion {
@@ -1578,7 +1578,7 @@ QPushButton#Paso6Volver,
 QPushButton#Paso6Otras {
     background: #FFFFFF;
     color: #0F172A;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     border-radius: 10px;
     font-size: 16px;
     font-weight: 600;
@@ -1604,7 +1604,7 @@ QFrame#HistorialTotalCard, QFrame#AdminPanel, QFrame#InventarioPanel,
 QFrame#MetricCard, QFrame#DashboardCard, QFrame#TerminalCentralFrame, 
 QFrame#TerminalDashboard, QFrame#TerminalSideBox {
     background-color: #FFFFFF !important;
-    border: 1px solid #E2E8F0 !important;
+    border: 2px solid #94A3B8 !important;
 }
 
 
@@ -1614,7 +1614,7 @@ QTableWidget {
     alternate-background-color: #F8FAFC !important;
     color: #1E3A8A !important;
     gridline-color: transparent !important;
-    border: 1px solid #E2E8F0 !important;
+    border: 2px solid #94A3B8 !important;
     outline: none !important;
 }
 
@@ -1666,7 +1666,7 @@ QCalendarWidget {
 /* Encabezado del calendario (donde está el mes y los botones de navegación) */
 QCalendarWidget QWidget#qt_calendar_navigationbar {
     background-color: #F1F5F9 !important;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     border-bottom: none;
 }
 
@@ -1698,7 +1698,7 @@ QCalendarWidget QTableView {
     background-color: #FFFFFF !important;
     selection-background-color: #3B82F6 !important;
     selection-color: #FFFFFF !important;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #94A3B8;
     color: #0F172A;
     alternate-background-color: #F8FAFC;
     font-weight: 400;
