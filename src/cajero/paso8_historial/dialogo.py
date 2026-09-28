@@ -90,6 +90,13 @@ class DialogoHistorialDia(QDialog):
             it_total.setForeground(QColor("#ef4444" if is_cancelled else "#1E3A8A"))
             self.tabla_tickets.setItem(i, 3, it_total)
 
+            redondeo_val = float(r.get("descuento") or 0.0)
+            it_red = QTableWidgetItem(fmt_moneda(redondeo_val) if redondeo_val != 0 else "-")
+            it_red.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            if redondeo_val > 0:
+                it_red.setForeground(QColor("#10B981"))
+            self.tabla_tickets.setItem(i, 4, it_red)
+
         self.lbl_total_filtrado.setText(f"Total en pantalla: {fmt_moneda(total_exitoso)}")
 
     def mostrar_detalle(self):
