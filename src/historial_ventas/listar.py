@@ -95,7 +95,15 @@ def listar_tickets(
                 if not (m0 <= mins <= m1):
                     continue
         pago = str(r["metodo_pago"] or "").upper()
-        if metodo_u != "TODOS" and metodo_u not in pago:
+        if metodo_u == "REDONDEO":
+            try: desc = float(r["descuento"]) if r["descuento"] else 0.0
+            except: desc = 0.0
+            if desc <= 0: continue
+        elif metodo_u == "RECARGO":
+            try: rec = float(r["recargo"]) if r["recargo"] else 0.0
+            except: rec = 0.0
+            if rec <= 0: continue
+        elif metodo_u != "TODOS" and metodo_u not in pago:
             continue
         if caja_filtro is not None:
             try:

@@ -132,12 +132,13 @@ class VistaHistorial(QWidget):
         self.tabla.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tabla.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
-        self.tabla.setColumnWidth(0, 50)
-        self.tabla.setColumnWidth(1, 40)
-        self.tabla.setColumnWidth(3, 40)
-        self.tabla.setColumnWidth(4, 50)
-        self.tabla.setColumnWidth(6, 60)
+        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
+        self.tabla.setColumnWidth(0, 55)
+        self.tabla.setColumnWidth(1, 45)
+        self.tabla.setColumnWidth(3, 45)
+        self.tabla.setColumnWidth(4, 60)
         self.tabla.itemSelectionChanged.connect(self._detalle)
         _aplicar_paleta_tabla(self.tabla)
         izq.addWidget(self.tabla)
@@ -167,7 +168,7 @@ class VistaHistorial(QWidget):
         filt.addWidget(_lbl("Pago"), 2, 0)
         self.cb_pago = QComboBox()
         self.cb_pago.addItems(
-            ["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO", "FIADO", "CLIENTES"]
+            ["TODOS", "EFECTIVO", "TARJETA", "TRANSFERENCIA", "MIXTO", "FIADO", "CLIENTES", "REDONDEO", "RECARGO"]
         )
         self.cb_pago.currentIndexChanged.connect(self.refrescar)
         filt.addWidget(self.cb_pago, 2, 1)
@@ -220,10 +221,13 @@ class VistaHistorial(QWidget):
         cl.addWidget(self.lbl_cuando)
         cl.addWidget(self.lbl_audit)
         self.tabla_det = QTableWidget()
-        self.tabla_det.setColumnCount(3)
-        self.tabla_det.setHorizontalHeaderLabels(["Cant.", "Producto", "Importe"])
+        self.tabla_det.setColumnCount(4)
+        self.tabla_det.setHorizontalHeaderLabels(["Cant.", "Producto", "Precio", "Importe"])
         self.tabla_det.verticalHeader().setVisible(False)
         self.tabla_det.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.tabla_det.setColumnWidth(0, 55)
+        self.tabla_det.setColumnWidth(2, 85)
+        self.tabla_det.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         _aplicar_paleta_tabla(self.tabla_det)
         cl.addWidget(self.tabla_det)
         
@@ -398,9 +402,16 @@ class VistaHistorial(QWidget):
         for i, it in enumerate(lineas or []):
             self.tabla_det.setItem(i, 0, QTableWidgetItem(f"{it['cantidad']:g}"))
             self.tabla_det.setItem(i, 1, QTableWidgetItem(str(it["nombre_producto"])))
+            
+            try: p_unit = float(it["precio_unitario"])
+            except Exception: p_unit = 0.0
+            pre = QTableWidgetItem(fmt_plata(p_unit))
+            pre.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.tabla_det.setItem(i, 2, pre)
+            
             imp = QTableWidgetItem(fmt_plata(it["subtotal"]))
             imp.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            self.tabla_det.setItem(i, 2, imp)
+            self.tabla_det.setItem(i, 3, imp)
         try:
             desc_val = float(v["descuento"]) if "descuento" in v.keys() and v["descuento"] else 0.0
             rec_val = float(v["recargo"]) if "recargo" in v.keys() and v["recargo"] else 0.0
