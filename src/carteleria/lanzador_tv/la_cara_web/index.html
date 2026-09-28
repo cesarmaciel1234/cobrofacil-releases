@@ -16,6 +16,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .skeleton-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+        }
+        .skeleton-item {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 12px;
+            opacity: 0.7;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
 </head>
 <body data-theme="temu" data-wall="4h">
     <div class="app-container">
@@ -27,19 +51,35 @@
 
         <div class="tv-wall">
             <section class="tv-panel premium-column tv-1" data-modulo="columna1" aria-label="TV 1 Ranking">
-                <div class="column-body" id="content1"></div>
+                <div class="column-body skeleton-container" id="content1">
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item" style="height: 150px;"></div>
+                </div>
             </section>
 
             <section class="tv-panel premium-column tv-2" data-modulo="columna2" aria-label="TV 2 Precios">
-                <div class="column-body" id="content2"></div>
+                <div class="column-body skeleton-container" id="content2">
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item" style="height: 180px;"></div>
+                    <div class="skeleton-item"></div>
+                </div>
             </section>
 
             <section class="tv-panel premium-column tv-3" data-modulo="columna3" aria-label="TV 3 Venta cruzada">
-                <div class="column-body" id="content3"></div>
+                <div class="column-body skeleton-container" id="content3">
+                    <div class="skeleton-item" style="height: 220px;"></div>
+                    <div class="skeleton-item"></div>
+                </div>
             </section>
 
             <section class="tv-panel premium-column tv-4" data-modulo="columna4" aria-label="TV 4 Chef">
-                <div class="column-body" id="content4"></div>
+                <div class="column-body skeleton-container" id="content4">
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                    <div class="skeleton-item"></div>
+                </div>
             </section>
         </div>
 

@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --font-primary: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
     --font-display: "Oswald", "Montserrat", "Arial Black", Arial, sans-serif;
     --shadow-elegant: 0 4px 24px rgba(0, 0, 0, 0.06);
@@ -239,3 +239,71 @@ body[data-wall="4h"] .tv-panel + .tv-panel {
 body[data-wall="4h"] .footer {
     flex: 0 0 auto;
 }
+
+
+body[data-wall="1h"] .tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.22cqw;
+    margin: 0.35cqh 0.12cqw 0.25cqh;
+    padding: 0;
+    border: 0;
+}
+body[data-wall="1h"] .tv-wall::after { display: none; }
+body[data-wall="1h"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="1h"] .tv-2, body[data-wall="1h"] .tv-3, body[data-wall="1h"] .tv-4 { display: none !important; }
+
+body[data-wall="2h"] .tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.22cqw;
+    margin: 0.35cqh 0.12cqw 0.25cqh;
+    padding: 0;
+    border: 0;
+}
+body[data-wall="2h"] .tv-wall::after { display: none; }
+body[data-wall="2h"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="2h"] .tv-3, body[data-wall="2h"] .tv-4 { display: none !important; }
+
+body[data-wall="3h"] .tv-wall {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.22cqw;
+    margin: 0.35cqh 0.12cqw 0.25cqh;
+    padding: 0;
+    border: 0;
+}
+body[data-wall="3h"] .tv-wall::after { display: none; }
+body[data-wall="3h"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="3h"] .tv-4 { display: none !important; }
+
+
+body[data-wall="precios"] .tv-wall {
+    flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.22cqw; margin: 0.35cqh 0.12cqw 0.25cqh; padding: 0; border: 0;
+}
+body[data-wall="precios"] .tv-wall::after { display: none; }
+body[data-wall="precios"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="precios"] .tv-1, body[data-wall="precios"] .tv-3, body[data-wall="precios"] .tv-4 { display: none !important; }
+
+body[data-wall="chef"] .tv-wall {
+    flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.22cqw; margin: 0.35cqh 0.12cqw 0.25cqh; padding: 0; border: 0;
+}
+body[data-wall="chef"] .tv-wall::after { display: none; }
+body[data-wall="chef"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="chef"] .tv-1, body[data-wall="chef"] .tv-2, body[data-wall="chef"] .tv-3 { display: none !important; }
+
+body[data-wall="ofertas"] .tv-wall {
+    flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.22cqw; margin: 0.35cqh 0.12cqw 0.25cqh; padding: 0; border: 0;
+}
+body[data-wall="ofertas"] .tv-wall::after { display: none; }
+body[data-wall="ofertas"] .tv-panel { height: 100%; min-height: 0; border-radius: 18px; overflow: hidden; padding: 0.45cqh 0.18cqw !important; }
+body[data-wall="ofertas"] .tv-1, body[data-wall="ofertas"] .tv-4 { display: none !important; }

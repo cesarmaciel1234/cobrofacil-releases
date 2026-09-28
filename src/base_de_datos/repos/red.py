@@ -78,18 +78,31 @@ class RedRepoMixin:
                 logger.error(f"Esclava: no se pudo abrir el SQLite local ({e})")
             return False
         import time
+        import threading
         ahora = time.monotonic()
+        
+        # Evitar reintentos seguidos o hilos simultaneos
+        if getattr(self, "_is_reconnecting_mariadb", False):
+            return False
         if ahora - float(getattr(self, "_last_master_try", 0) or 0) < 5:
             return False
+            
         self._last_master_try = ahora
-        try:
-            self.reconectar_mariadb(host)
-            self.is_master = False
-            logger.info(f"Esclava: lectura otra vez desde la maestra {host}")
-            return True
-        except Exception as e:
-            logger.warning(f"Esclava: maestra {host} no disponible ({e})")
-            return False
+        
+        def tarea_reconexion():
+            self._is_reconnecting_mariadb = True
+            try:
+                self.reconectar_mariadb(host)
+                self.is_master = False
+                logger.info(f"Esclava: lectura otra vez desde la maestra {host}")
+            except Exception as e:
+                logger.warning(f"Esclava: maestra {host} no disponible ({e})")
+            finally:
+                self._is_reconnecting_mariadb = False
+                
+        t = threading.Thread(target=tarea_reconexion, daemon=True)
+        t.start()
+        return False
 
     def registrar_heartbeat(self, caja_id, hostname):
         """ Registra el estado activo de este terminal. (OPTIMIZADO: AHORA SE MANEJA EN MEMORIA UDP) """

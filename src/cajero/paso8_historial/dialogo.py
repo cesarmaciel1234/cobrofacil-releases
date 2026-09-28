@@ -1,4 +1,6 @@
-from PyQt6.QtWidgets import QDialog, QFrame, QTableWidgetItem, QMessageBox
+from PyQt6.QtWidgets import QDialog, QFrame, QTableWidgetItem, QMessageBox, QInputDialog
+from src.historial_ventas.notas_manager import cargar_todas_notas, cargar_nota, guardar_nota
+from PyQt6.QtGui import QColor
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from datetime import datetime
@@ -103,6 +105,15 @@ class DialogoHistorialDia(QDialog):
                 cli_val = ""
             cli_name = str(cli_val or "").strip()
             self.tabla_tickets.setItem(i, 5, QTableWidgetItem(cli_name))
+            if r["id"] in notas_dict:
+                self.tabla_tickets.item(i, 0).setForeground(QColor("#D97706")) # Naranja oscuro
+                self.tabla_tickets.item(i, 1).setForeground(QColor("#D97706"))
+                self.tabla_tickets.item(i, 2).setForeground(QColor("#D97706"))
+                # Make folio bold
+                font = self.tabla_tickets.item(i, 0).font()
+                font.setBold(True)
+                self.tabla_tickets.item(i, 0).setFont(font)
+
 
         self.lbl_total_filtrado.setText(f"Total en pantalla: {fmt_moneda(total_exitoso)}")
 
@@ -118,6 +129,15 @@ class DialogoHistorialDia(QDialog):
         self.ticket_seleccionado = v["id"]
         self.panel_detalle.mostrar_venta(v, items)
 
+    def editar_nota_accion(self):
+        if not self.ticket_seleccionado:
+            return
+        nota_actual = cargar_nota(self.ticket_seleccionado)
+        text, ok = QInputDialog.getMultiLineText(self, "Nota Interna", "Observaciones del ticket:", nota_actual)
+        if ok:
+            guardar_nota(self.ticket_seleccionado, text)
+            self.cargar_ventas()
+            
     def cancelar_venta_accion(self):
         if not self.ticket_seleccionado:
             return

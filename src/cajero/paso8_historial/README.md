@@ -29,3 +29,13 @@ La cuenta y el retiro los hace la base (`src/base_de_datos/repos/README.md`, «C
 
 ## Tabla Principal
 Las 6 columnas (se sumó la columna Cliente para exponer cuentas corrientes) están proporcionadas dinámicamente (Stretch). La columna **Redondeo** obtiene los datos asíncronos y admite manejo fallback offline sin crashear (sqlite3.Row compat).
+
+### Sistema de Notas (Desacoplado)
+- El historial integra un botón de **Notas** (panel_detalle.py).
+- Utiliza src.historial_ventas.notas_manager (SQLite independiente: 
+otas_tickets.sqlite) para no alterar el esquema de MariaDB ni afectar la sincronización offline_sync.
+- **UI Feedback:** En dialogo.py, al cargar ventas, los tickets con nota se pintan con texto naranja oscuro (#D97706).
+
+### Tabla Detalle
+- Formato dinámico: No se restringe en altura.
+- 4 Columnas: Cantidad, Descripción, Precio, Importe.

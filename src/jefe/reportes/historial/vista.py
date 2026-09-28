@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.historial_ventas import motor_historial
+from src.historial_ventas.notas_manager import cargar_todas_notas, cargar_nota
 from src.jefe.reportes.financiero.dinero import fmt_plata
 from src.jefe.reportes.letra import etiqueta, fuente_limpia, paleta_clara, vestir_fecha
 from src.jefe.reportes.vista_financiero import _FIN, _aplicar_paleta_tabla
@@ -126,19 +127,19 @@ class VistaHistorial(QWidget):
 
         self.tabla = QTableWidget()
         self.tabla.setColumnCount(8)
-        self.tabla.setHorizontalHeaderLabels(["Folio", "Caja", "Cliente", "Arts", "Hora", "Total", "Extra", "Estado"])
+        self.tabla.setHorizontalHeaderLabels(["Folio", "Caja", "Arts", "Hora", "Total", "Extra", "Cliente", "Estado"])
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tabla.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tabla.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
         self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
-        self.tabla.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
+        self.tabla.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
         self.tabla.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Stretch)
         self.tabla.setColumnWidth(0, 55)
         self.tabla.setColumnWidth(1, 45)
-        self.tabla.setColumnWidth(3, 45)
-        self.tabla.setColumnWidth(4, 60)
+        self.tabla.setColumnWidth(2, 45)
+        self.tabla.setColumnWidth(3, 60)
         self.tabla.itemSelectionChanged.connect(self._detalle)
         _aplicar_paleta_tabla(self.tabla)
         izq.addWidget(self.tabla)
@@ -240,6 +241,10 @@ class VistaHistorial(QWidget):
         der.addWidget(card)
 
         fila = QHBoxLayout()
+        self.btn_nota_jefe = QPushButton("📝 Nota")
+        self.btn_nota_jefe.clicked.connect(self._ver_nota)
+        self.btn_nota_jefe.hide()
+        fila.addWidget(self.btn_nota_jefe)
         self.btn_cancel = QPushButton("Cancelar venta")
         self.btn_cancel.clicked.connect(self._cancelar)
         self.btn_print = QPushButton("Imprimir copia")
@@ -302,6 +307,7 @@ class VistaHistorial(QWidget):
         caja_filtro = self.cb_caja.currentData()
         t0 = self.t0.time()
         t1 = self.t1.time()
+        notas_dict = cargar_todas_notas()
         filas, total = motor_historial.listar(
             texto=self.txt.text(),
             metodo=self.cb_pago.currentText(),
@@ -327,22 +333,18 @@ class VistaHistorial(QWidget):
             self.tabla.setItem(i, 0, QTableWidgetItem(str(r["id"])))
             self.tabla.setItem(i, 1, QTableWidgetItem(str(caja or 1)))
             
-            try: cli_val = r["cliente_nombre"]
-            except Exception: cli_val = ""
-            self.tabla.setItem(i, 2, QTableWidgetItem(str(cli_val or "")))
-            
             try:
                 c_arts = r["cant_arts"]
             except Exception:
                 c_arts = 0
-            self.tabla.setItem(i, 3, QTableWidgetItem(str(int(float(c_arts or 0)))))
-            self.tabla.setItem(i, 4, QTableWidgetItem(hora))
+            self.tabla.setItem(i, 2, QTableWidgetItem(str(int(float(c_arts or 0)))))
+            self.tabla.setItem(i, 3, QTableWidgetItem(hora))
             
             tot = QTableWidgetItem(fmt_plata(r["total"]))
             tot.setForeground(QColor("#B91C1C" if cancel else "#0F172A"))
             if not cancel:
                 tot.setBackground(QBrush(QColor("#F0FDF4")))
-            self.tabla.setItem(i, 5, tot)
+            self.tabla.setItem(i, 4, tot)
             
             # Extra
             try: desc_val = float(r["descuento"]) if r["descuento"] else 0.0
@@ -356,12 +358,24 @@ class VistaHistorial(QWidget):
             it_ex = QTableWidgetItem(extra_txt)
             if desc_val > 0: it_ex.setForeground(QColor("#10B981"))
             elif rec_val > 0: it_ex.setForeground(QColor("#EF4444"))
-            self.tabla.setItem(i, 6, it_ex)
+            self.tabla.setItem(i, 5, it_ex)
+            
+            try: cli_val = r["cliente_nombre"]
+            except Exception: cli_val = ""
+            self.tabla.setItem(i, 6, QTableWidgetItem(str(cli_val or "")))
             
             est = QTableWidgetItem("Cancelada" if cancel else "Cerrada")
             if cancel:
                 est.setForeground(QColor("#B91C1C"))
             self.tabla.setItem(i, 7, est)
+            if r["id"] in notas_dict:
+                self.tabla.item(i, 0).setForeground(QColor("#D97706"))
+                self.tabla.item(i, 1).setForeground(QColor("#D97706"))
+                self.tabla.item(i, 2).setForeground(QColor("#D97706"))
+                font = self.tabla.item(i, 0).font()
+                font.setBold(True)
+                self.tabla.item(i, 0).setFont(font)
+
         n_ok = sum(
             1
             for r in filas
@@ -423,6 +437,14 @@ class VistaHistorial(QWidget):
         if desc_val > 0: extra_info.append(f"Desc/Redondeo: -{fmt_plata(desc_val)}")
         if rec_val > 0: extra_info.append(f"Recargo: +{fmt_plata(rec_val)}")
         
+        nota = cargar_nota(tid)
+        if nota:
+            self.btn_nota_jefe.show()
+            self.nota_actual = nota
+        else:
+            self.btn_nota_jefe.hide()
+            self.nota_actual = ""
+            
         if extra_info:
             self.lbl_extra.setText(" | ".join(extra_info))
             self.lbl_extra.show()
@@ -433,6 +455,11 @@ class VistaHistorial(QWidget):
         cancel = "CANCELAD" in str(v["estado"] or "").upper()
         self.btn_cancel.setEnabled(not cancel)
 
+
+    def _ver_nota(self):
+        if getattr(self, "nota_actual", ""):
+            QMessageBox.information(self, "Nota del Ticket", self.nota_actual)
+            
     def _cancelar(self):
         if not self.ticket_id:
             return

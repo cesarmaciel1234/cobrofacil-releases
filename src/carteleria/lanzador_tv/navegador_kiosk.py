@@ -89,7 +89,7 @@ def flags_pantalla_completa(url, profile, x, y, w, h, extra=None):
         "--disable-pinch",
         "--disable-http-cache",
         "--disk-cache-size=1",
-        "--kiosk",
+        "--start-fullscreen",
         f"--window-position={x},{y}",
         f"--window-size={w},{h}",
     ]
@@ -192,11 +192,27 @@ class TeclasTv(QObject):
         except Exception:
             return
         f5 = bool(user32.GetAsyncKeyState(VK_F5) & 0x8000)
-        f10 = bool(user32.GetAsyncKeyState(VK_F10) & 0x8000)
+        f10 = False # Handled by JS
         f11 = bool(user32.GetAsyncKeyState(VK_F11) & 0x8000)
         esc = bool(user32.GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+        if getattr(self, "_ignore_f11_until", 0) > ahora:
+            f11 = False
+            
         if not (f5 or f10 or f11 or esc):
             return
+            
+        if f10:
+            self._last = ahora
+            self._ignore_f11_until = ahora + 1.0 # Ignore F11 for 1 second
+            try:
+                import win32com.client
+                shell = win32com.client.Dispatch("WScript.Shell")
+                shell.SendKeys("{F11}")
+            except Exception:
+                user32.keybd_event(VK_F11, 0x57, 0, 0)
+                user32.keybd_event(VK_F11, 0x57, 2, 0)
+            return
+
         if f5:
             self._last = ahora
             if self.on_f5:
@@ -209,9 +225,7 @@ class TeclasTv(QObject):
             return
         self._last = ahora
         try:
-            if f10:
-                self.on_f10()
-            elif f11:
+            if f11:
                 self.on_f11()
             else:
                 self.on_esc()

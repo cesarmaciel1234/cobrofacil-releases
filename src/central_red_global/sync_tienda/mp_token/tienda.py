@@ -51,11 +51,14 @@ def leer_clave(clave: str) -> str:
         if not filas:
             return ""
         fila = filas[0]
-        if hasattr(fila, "get"):
-            return str(fila.get("valor") or "").strip()
-        if isinstance(fila, (tuple, list)) and fila:
-            return str(fila[0] or "").strip()
-        return str(fila or "").strip()
+        # Soporte para pymysql.DictCursor y sqlite3.Row
+        try:
+            return str(fila["valor"] or "").strip()
+        except Exception:
+            try:
+                return str(fila[0] or "").strip()
+            except Exception:
+                return str(fila or "").strip()
     except Exception:
         return ""
 

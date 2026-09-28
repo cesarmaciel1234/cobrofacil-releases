@@ -36,3 +36,12 @@
 - [Blindaje] Cobro Autonomo (Paso 6): Se envolvio la impresion de tickets en try-catch y se movio el envio a la terminal Point a un hilo secundario asincrono (QEventLoop). Esto evita que el cajero se congele ante timeouts de internet de hasta 10 segundos, asegurando fluidez e interrupcion manual segura via F9.
 
 - [Mejora] Historial de Caja (Paso 8): Se agrego la columna 'Cliente' en la tabla principal de tickets (UI: lista_tickets.py) y se modifico el controlador SQL (logica: historial_controller.py) para extraer el campo literal cliente_nombre. Esto permite visibilidad instantanea de las cuentas corrientes sin seleccionar el ticket.
+
+### Mejoras (2026-09-28)
+- **main_window.py**: Se blindó la lógica de F10 (_toggle_fullscreen) con un 	ry-except. F10 funciona como interruptor global para mover la aplicación al monitor secundario (TV) en pantalla completa y regresarla al monitor principal sin romperse.
+- **paso8_historial**:
+  - Se habilitó el botón de "Notas".
+  - Se conectó en rmar.py hacia dialogo.py (editar_nota_accion) mediante un QInputDialog.
+  - Se pinta de naranja oscuro el texto del Folio/Arts/Cliente en la grilla cuando un ticket tiene notas.
+  - La tabla de detalles muestra la columna "Precio" y usa barra de desplazamiento natural (se quitó setFixedHeight(255)).
+  - Las columnas se reordenaron correctamente dejando al Cliente al final.

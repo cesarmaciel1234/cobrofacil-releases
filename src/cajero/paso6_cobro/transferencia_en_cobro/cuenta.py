@@ -44,7 +44,10 @@ def datos_cuenta():
         )
         if respuesta.status_code == 200:
             datos = respuesta.json() or {}
-            nombre = f"{datos.get('first_name', '')} {datos.get('last_name', '')}".strip() or nombre
+            n = f"{datos.get('first_name', '')} {datos.get('last_name', '')}".strip()
+            if not n:
+                n = str(datos.get('company') or datos.get('nickname') or '').strip()
+            nombre = n or nombre
     except Exception:
         pass
     user_id = obtener_user_id(token)

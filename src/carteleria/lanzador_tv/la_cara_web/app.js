@@ -216,14 +216,38 @@ function setupTvKeys() {
             event.stopPropagation();
             const u = new URL(location.href);
             u.searchParams.set("r", String(Date.now()));
-            location.replace(`${u.pathname}?${u.searchParams.toString()}`);
+            location.replace(u.pathname + "?" + u.searchParams.toString());
             return;
         }
-        if (event.key !== "F10" && event.key !== "F11" && event.key !== "Escape") return;
-        event.preventDefault();
-        event.stopPropagation();
-        const action = event.key === "F10" ? "monitor" : "stop";
-        fetch(`/api/control?action=${action}`, { cache: "no-store" }).catch(() => {});
+        if (event.key === "F9") {
+            event.preventDefault();
+            event.stopPropagation();
+            const body = document.body;
+            let current = body.getAttribute("data-wall") || "4h";
+            const sequence = ["4h", "3h", "2h", "ofertas"];
+            let idx = sequence.indexOf(current);
+            if (idx === -1) idx = 0;
+            let next_wall = sequence[(idx + 1) % sequence.length];
+            body.setAttribute("data-wall", next_wall);
+            return;
+        }
+
+        
+        if (event.key === "F10") {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(()=>{});
+            } else {
+                document.exitFullscreen().catch(()=>{});
+            }
+            return;
+        }
+        if (event.key === "F11" || event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            fetch('/api/control?action=stop', { cache: "no-store" }).catch(() => {});
+        }
     }, true);
 }
 

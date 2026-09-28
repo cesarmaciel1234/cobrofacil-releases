@@ -695,10 +695,34 @@ class MainWindow(QMainWindow):
         self._sc_f10.activated.connect(self._toggle_fullscreen)
 
     def _toggle_fullscreen(self):
-        if self.isFullScreen():
-            self.showNormal()
-        else:
-            self.showFullScreen()
+        try:
+            from PyQt6.QtWidgets import QApplication
+            app = QApplication.instance()
+            if not app: return
+            screens = app.screens()
+            if not screens: return
+            
+            # Obtener el handle para asignar pantalla (puede ser None en carga)
+            handle = self.window().windowHandle() if self.window() else None
+
+            if self.isFullScreen():
+                self.showNormal()
+                if len(screens) > 1:
+                    if handle:
+                        handle.setScreen(screens[0])
+                    self.move(screens[0].availableGeometry().topLeft())
+            else:
+                if len(screens) > 1:
+                    if handle:
+                        handle.setScreen(screens[-1])
+                    self.move(screens[-1].availableGeometry().topLeft())
+                self.showFullScreen()
+        except Exception as e:
+            import logging
+            logging.getLogger("MainWindow").error(f"Error en F10: {e}")
+            # Falla segura: fallback a fullscreen normal
+            if self.isFullScreen(): self.showNormal()
+            else: self.showFullScreen()
 
     def _handle_f3_logic(self):
         if self.stacked_widget.currentIndex() == 1: # Estamos en Ventas
