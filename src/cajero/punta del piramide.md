@@ -29,3 +29,5 @@
 - Se optimizo la resiliencia en Modo Esclava: la busqueda de la Maestra por red y la impresion de tickets ahora corren en hilos asincronos. Esto elimina los bloqueos de 2 a 5 segundos en la pantalla del cajero (Cobro y escaneo) cuando la conexion Wi-Fi o LAN a la Maestra se corta.
 - Se soluciono el error (AttributeError: get) de la tabla de Historial de Caja (F3) cuando el nodo esta offline en SQLite.
 - Se distribuyo proporcionalmente el ancho de las 5 columnas del Historial de Caja (Folio, Arts, Hora, Total, Redondeo) para ocupar mejor las pantallas grandes.
+
+- [Bugfix] Corrupcion de Token MP: Se arreglo el fallo donde el cajero guardaba un token valido y funcionaba, pero al rato fallaba (Error 403). La sincronizacion automatica entre Maestra y Esclava (tienda.py) estaba leyendo mal el objeto SQLite y pisaba el token bueno con el texto de memoria <sqlite3.Row object...>. Ya quedo documentado y parchado.
