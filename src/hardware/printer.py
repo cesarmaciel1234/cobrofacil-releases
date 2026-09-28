@@ -499,6 +499,38 @@ class PosPrinter:
         result = self._send_raw_data(bytes(data), printer_name_override=p_principal)
         return result
 
+    def imprimir_ticket_saldos_compra(self, cliente_nombre, saldo_anterior, compra, saldo_disponible):
+        """Ticket extra automático para la VENTA por Cuenta Corriente/Fiado. 
+        Muestra saldo anterior, compra, y el crédito disponible (o saldo actual)"""
+        def linea(etiqueta, valor):
+            monto = f"${float(valor or 0):,.2f}"
+            hueco = 32 - len(etiqueta) - len(monto)
+            if hueco < 1:
+                return f"{etiqueta}\n{monto}\n"
+            return f"{etiqueta}{' ' * hueco}{monto}\n"
+
+        data = bytearray()
+        data.extend(ESC + b'\x40')
+        data.extend(ALIGN_CENTER)
+        data.extend(BOLD_ON)
+        data.extend(f"{self.header_empresa}\n".encode('cp850', errors='replace'))
+        data.extend(f"{cliente_nombre}\n".encode('cp850', errors='replace'))
+        data.extend(b"CUENTA CORRIENTE\n")
+        data.extend(BOLD_OFF)
+        data.extend(b"--------------------------------\n")
+        data.extend(ALIGN_LEFT)
+        data.extend(linea("Saldo anterior", saldo_anterior).encode('cp850', errors='replace'))
+        data.extend(linea("Compra", compra).encode('cp850', errors='replace'))
+        data.extend(BOLD_ON)
+        data.extend(linea("Saldo disponible", saldo_disponible).encode('cp850', errors='replace'))
+        data.extend(BOLD_OFF)
+        data.extend(b"--------------------------------\n")
+        data.extend(b"\n\n\n\n\n")
+        data.extend(CUT_PAPER)
+
+        p_principal = _impresora_cajero_activo()
+        return self._send_raw_data(bytes(data), printer_name_override=p_principal)
+
     def imprimir_saldo_fiado(self, cliente_nombre, saldo_anterior, credito, saldo_restante):
         """Ticket del cajero: saldo anterior, crédito y saldo restante."""
         def linea(etiqueta, valor):

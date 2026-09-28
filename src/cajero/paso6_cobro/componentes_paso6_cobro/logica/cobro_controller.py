@@ -108,6 +108,29 @@ class CobroController:
                     cajero=cajero_nombre, metodo_pago=metodo_pago,
                     force_fiscal=force_fiscal
                 )
+
+                # Si es Fiado o Cuenta Corriente, imprimir el ticket secundario con saldos automáticos
+                if metodo_pago in ("Fiado", "Cuenta Corriente"):
+                    cliente_id = resultado_venta.get("cliente_id")
+                    if cliente_id:
+                        try:
+                            from src.repositories.cliente_repository import obtener_por_id, credito_disponible
+                            cli = obtener_por_id(cliente_id)
+                            if cli:
+                                cli_nombre = cli.get("nombre") or cli.get("nombre_completo") or "Cliente"
+                                deuda_actual = float(cli.get("deuda_total", 0.0))
+                                compra = float(total_final)
+                                saldo_anterior = deuda_actual - compra
+                                s_disp = credito_disponible(cli)
+                                
+                                # Si no lo hizo la ticketera local, usamos el printer_manager para el ticket extra
+                                printer_manager.imprimir_ticket_saldos_compra(
+                                    cli_nombre, saldo_anterior, compra, s_disp
+                                )
+                        except Exception as e_fiado:
+                            import logging
+                            logging.error(f"Error al imprimir saldos de fiado automático: {e_fiado}")
+                            
             except Exception as e:
                 import logging
                 logging.error(f"Error al imprimir ticket: {e}")
