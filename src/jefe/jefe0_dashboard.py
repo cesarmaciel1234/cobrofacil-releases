@@ -270,7 +270,7 @@ class Jefe0Dashboard(QWidget):
         self.grid = QGridLayout()
         self.grid.setSpacing(20)
 
-        cols = 2
+        cols = 3
         for idx, (m_id, title, icon, accent, bg_soft, text_dark, screen_idx, tab_idx) in enumerate(JEFE_MODULES):
             card = JefeCard(title, icon, accent, bg_soft, text_dark)
             if screen_idx == -1:
