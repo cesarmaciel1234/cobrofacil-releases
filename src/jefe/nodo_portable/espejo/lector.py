@@ -102,4 +102,4 @@ def leyenda() -> str:
         cuando = ""
     donde = "pendrive" if p != copia.ruta() else "copia de esta PC"
     motivo = "Maestra con tablas dañadas" if _hay_tienda() else "Sin red"
-    return f"{motivo} · datos de la tienda al {cuando} ({donde})" if cuando else f"{motivo} · {donde}"
+    return f"⚠️ {motivo} — datos de la tienda al {cuando} ({donde})" if cuando else f"⚠️ {motivo} — {donde}"

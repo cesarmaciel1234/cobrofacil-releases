@@ -78,8 +78,9 @@ class PanelPublicidad(QWidget):
 
         self.lbl_origen = etiqueta("", 11)
         self.lbl_origen.setStyleSheet(
-            "color: #92400E; background: #FEF3C7; border: 1px solid #FDE68A; "
-            "border-radius: 8px; padding: 4px 10px; font-weight: 400; letter-spacing: 0px;"
+            "color: #9A3412; background: #FFF7ED; border: 1px solid #FFEDD5; "
+            "border-left: 5px solid #F97316; border-radius: 6px; "
+            "padding: 8px 14px; font-weight: 500; letter-spacing: 0px;"
         )
         self.lbl_origen.setVisible(False)
         root.addWidget(self.lbl_origen)
