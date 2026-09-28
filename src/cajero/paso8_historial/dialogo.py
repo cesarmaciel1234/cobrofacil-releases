@@ -82,7 +82,11 @@ class DialogoHistorialDia(QDialog):
 
             self.tabla_tickets.setItem(i, 0, QTableWidgetItem(str(r["id"])))
             
-            cli_name = str(r.get("cliente_nombre", "") or "").strip()
+            try:
+                cli_val = r["cliente_nombre"]
+            except Exception:
+                cli_val = ""
+            cli_name = str(cli_val or "").strip()
             self.tabla_tickets.setItem(i, 1, QTableWidgetItem(cli_name))
             
             self.tabla_tickets.setItem(i, 2, QTableWidgetItem(str(int(cant_arts))))
