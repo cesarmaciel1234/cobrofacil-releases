@@ -954,29 +954,44 @@ class MainWindow(QMainWindow):
         except RuntimeError:
             # The overlay widget was already deleted; ignore
             pass
+
         self.gestor_f11.update_floating_button_position(self.width(), self.height())
         self._posicionar_banner()
+        
+        # Conectar el buscador del TPV para auto-cerrar el chatbot si se escribe o escanea
+        if hasattr(self, "pantalla_ventas") and hasattr(self.pantalla_ventas, "txt_scan"):
+            self.pantalla_ventas.txt_scan.textChanged.connect(self._auto_cerrar_chatbot)
+
 
     def mostrar_alerta_perimetral(self, visible, modo="security"):
         """El cajón no usa este marco. El aviso es el punto rojo."""
         self._punto_cajon()
 
-    def _asegurar_chat(self):
-        if self.chatbot_overlay is not None:
-            return
-        from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import ChatManualWidget
-        self.chatbot_overlay = ChatManualWidget(self)
-        self.chatbot_overlay.hide()
-        self.chatbot_overlay.chat_closed.connect(lambda: setattr(self, "_chatbot_active", False))
 
+    def _auto_cerrar_chatbot(self, text=""):
+        if getattr(self, "_chatbot_active", False) and text.strip():
+            # Si hay texto y el chatbot está activo, lo cerramos
+            self._toggle_chatbot_overlay()
     def _toggle_chatbot_overlay(self):
-        self._chatbot_active = not self._chatbot_active
+        self._chatbot_active = not getattr(self, "_chatbot_active", False)
+        
+        # Lanzador Autónomo (Proceso Independiente)
+        import subprocess
+        import os
+        
         if self._chatbot_active:
-            self._asegurar_chat()
-            self.chatbot_overlay.actualizar_posicion()
-            self.chatbot_overlay.abrir_y_desplegar()
-        elif self.chatbot_overlay is not None:
-            self.chatbot_overlay.cerrar_chat()
+            # Ruta al chatbot clásico
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            chat_script = os.path.join(base_dir, "cajero", "paso5_terminal", "componentes_paso5_terminal", "componentes_barra_inferior", "chatbot", "chat_bot.py")
+            
+            # Lanzamos el proceso desvinculado del TPV
+            # Si el bot se cuelga o falla, el main_window sigue intacto.
+            if not hasattr(self, "chatbot_process") or self.chatbot_process.poll() is not None:
+                self.chatbot_process = subprocess.Popen([sys.executable, chat_script, str(int(self.winId()))])
+        else:
+            # Si lo apagan desde el botón, intentamos cerrarlo
+            if hasattr(self, "chatbot_process") and self.chatbot_process.poll() is None:
+                self.chatbot_process.terminate()
 
     def _toggle_blink_alerta(self):
         self._blink_state = not self._blink_state

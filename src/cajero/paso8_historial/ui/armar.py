@@ -33,7 +33,6 @@ def setup_ui(dialogo):
     dialogo.time_desde.timeChanged.connect(dialogo.cargar_ventas)
     dialogo.time_hasta.timeChanged.connect(dialogo.cargar_ventas)
     dialogo.tabla_tickets.itemSelectionChanged.connect(dialogo.mostrar_detalle)
-    dialogo.panel_detalle.btn_notas.clicked.connect(dialogo.editar_nota_accion)
 
     content_hbox.addLayout(left_vbox, 52)
 
@@ -42,4 +41,5 @@ def setup_ui(dialogo):
         dialogo.cancelar_venta_accion, dialogo.reimprimir_ticket_accion
     )
     content_hbox.addWidget(dialogo.panel_detalle, 48)
+    dialogo.panel_detalle.btn_notas.clicked.connect(dialogo.editar_nota_accion)
     main_vbox.addLayout(content_hbox)

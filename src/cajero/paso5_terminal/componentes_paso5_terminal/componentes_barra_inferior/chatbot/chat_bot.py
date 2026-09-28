@@ -1,13 +1,15 @@
-from src.utils.qt_compat import qt_exec
 import os
 import sys
 import json
 import unicodedata
 import re
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Asegurar path ANTES de importar de src
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+from src.utils.qt_compat import qt_exec
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -90,6 +92,7 @@ class ChatManualWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_window = parent
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool | Qt.WindowType.FramelessWindowHint)
         self.resize(420, 520)
         self.motor = ChatManual()
         self._tutor_idx = 0
@@ -98,18 +101,82 @@ class ChatManualWidget(QWidget):
         self._tutor_timer.setSingleShot(True)
         self._tutor_timer.timeout.connect(self._tutor_ejecutar_paso)
         self._setup_ui()
+        self._iniciar_guardian_foco()
+
+    
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Forzar el foco en la entrada de texto 150ms después de mostrarse
+        QTimer.singleShot(150, self.entrada.setFocus)
+
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint()
+
+    def mouseMoveEvent(self, event):
+        if hasattr(self, '_drag_pos') and self._drag_pos is not None:
+            delta = event.globalPosition().toPoint() - self._drag_pos
+            self.move(self.pos() + delta)
+            self._drag_pos = event.globalPosition().toPoint()
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+
+
+    def _iniciar_guardian_foco(self):
+        self._foco_lejos_ms = 0
+        self._ultima_firma = ""
+        self._guardian_timer = QTimer(self)
+        self._guardian_timer.timeout.connect(self._verificar_inactividad)
+        self._guardian_timer.start(150)
+
+    def _verificar_inactividad(self):
+        if not self.isActiveWindow():
+            self._foco_lejos_ms = 0
+            return
+            
+        texto_actual = self.entrada.text()
+        if texto_actual != getattr(self, "_ultima_firma", ""):
+            self._ultima_firma = texto_actual
+            self._foco_lejos_ms = 0
+            return
+            
+        self._foco_lejos_ms += 150
+        if self._foco_lejos_ms >= 2000:
+            self._foco_lejos_ms = 0
+            self._devolver_foco_al_tpv()
+
+    def _devolver_foco_al_tpv(self):
+        import ctypes
+        import sys
+        hwnd = 0
+        if len(sys.argv) > 1:
+            try:
+                hwnd = int(sys.argv[1])
+            except ValueError:
+                pass
+        if not hwnd:
+            hwnd = ctypes.windll.user32.FindWindowW(None, "Cobro Fácil")
+        if hwnd:
+            # Restauramos foco al TPV para que el escáner funcione
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
 
     def _setup_ui(self):
         self.setObjectName("AsistenteCajero")
         self.setStyleSheet(
-            "QWidget#AsistenteCajero { background: #0F172A; border: 1px solid #334155; }"
-            "QLabel#AsistenteTitulo { color: #F8FAFC; font-size: 16px; font-weight: 800; background: transparent; border: none; }"
-            "QTextEdit#AsistenteTexto { background: #1E293B; color: #F8FAFC; border: none; font-size: 15px; }"
-            "QLineEdit#AsistenteEntrada { background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; "
-            "border-radius: 8px; padding: 8px; font-size: 15px; }"
-            "QPushButton { background: #1E293B; color: #F8FAFC; border: 1px solid #334155; "
+            "QWidget#AsistenteCajero { background: #0F172A; border: 2px solid #3B82F6; border-radius: 12px; }"
+            "QLabel#AsistenteTitulo { color: #60A5FA; font-size: 18px; font-weight: 900; background: transparent; border: none; }"
+            "QTextEdit#AsistenteTexto { background: #1E293B; color: #F1F5F9; border: 1px solid #334155; border-radius: 8px; padding: 5px; font-size: 15px; }"
+            "QLineEdit#AsistenteEntrada { background: #334155; color: #F8FAFC; border: 1px solid #475569; "
+            "border-radius: 8px; padding: 10px; font-size: 15px; }"
+            "QPushButton { background: #1E293B; color: #94A3B8; border: 1px solid #334155; "
             "border-radius: 8px; font-weight: 800; padding: 8px 12px; }"
+            "QPushButton:hover { background: #334155; color: #F8FAFC; }"
             "QPushButton#AsistenteEnviar { background: #2563EB; color: white; border: none; }"
+            "QPushButton#AsistenteEnviar:hover { background: #3B82F6; }"
+            "QPushButton#BtnCerrar { background: #7F1D1D; color: #FECACA; border: none; }"
+            "QPushButton#BtnCerrar:hover { background: #991B1B; color: white; }"
         )
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 12, 12, 12)
@@ -124,6 +191,7 @@ class ChatManualWidget(QWidget):
         tutorial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         tutorial.clicked.connect(self._empezar_tutor)
         cerrar = QPushButton("Cerrar")
+        cerrar.setObjectName("BtnCerrar")
         cerrar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         cerrar.clicked.connect(self.cerrar_chat)
         cabeza.addWidget(tutorial)
@@ -184,15 +252,19 @@ class ChatManualWidget(QWidget):
 
     def actualizar_posicion(self):
         pw = self.parent_window or self.parent()
-        if not pw:
-            return
-        margen = 96
-        alto = min(560, max(320, pw.height() - margen - 24))
-        ancho = min(440, max(320, pw.width() - 40))
-        self.resize(ancho, alto)
-        x = pw.width() - self.width() - 16
-        y = pw.height() - self.height() - margen
-        self.move(max(0, x), max(0, y))
+        if pw:
+            margen = 96
+            alto = min(560, max(320, pw.height() - margen - 24))
+            ancho = min(440, max(320, pw.width() - 40))
+            self.resize(ancho, alto)
+            x = pw.width() - self.width() - 16
+            y = pw.height() - self.height() - margen
+            self.move(max(0, x), max(0, y))
+        else:
+            # Standalone launcher mode
+            screen = QApplication.primaryScreen().geometry()
+            self.resize(420, 560)
+            self.move(screen.width() - self.width() - 20, screen.height() - self.height() - 120)
 
     def abrir_y_desplegar(self):
         self.actualizar_posicion()
@@ -204,12 +276,14 @@ class ChatManualWidget(QWidget):
         self._tutor_timer.stop()
         self.hide()
         self.chat_closed.emit()
+        if not self.parent():
+            QApplication.quit()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = ChatManualWidget()
     win.setWindowTitle("Asistente")
-    win.resize(440, 560)
+    win.actualizar_posicion()
     win.show()
     sys.exit(qt_exec(app))

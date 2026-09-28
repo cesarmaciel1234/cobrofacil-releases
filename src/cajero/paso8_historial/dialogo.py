@@ -64,6 +64,7 @@ class DialogoHistorialDia(QDialog):
             return
 
         self.tabla_tickets.setRowCount(len(filtered_res))
+        notas_dict = cargar_todas_notas()
         for i, r in enumerate(filtered_res):
             cant_arts = r["cant_arts"] if "cant_arts" in r.keys() else 0
             try:
