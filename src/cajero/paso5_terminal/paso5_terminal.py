@@ -2161,27 +2161,29 @@ class Paso5Terminal(QWidget):
         if total <= 0: return
 
         self._cobro_abierto = True
-        items = []
-        for i in range(self.tabla.rowCount()):
-            items.append({
-                "id": self.tabla.item(i, 0).text(),
-                "nombre": self.tabla.item(i, 1).text(),
-                "precio": parse_float_safe(self.tabla.item(i, 2).text()),
-                "cant": float(self.tabla.item(i, 3).text().replace(",", ".")),
-                "subtotal": parse_float_safe(self.tabla.item(i, 5).text())
-            })
-        items = redondear_items_carrito(items)
+        try:
+            items = []
+            for i in range(self.tabla.rowCount()):
+                items.append({
+                    "id": self.tabla.item(i, 0).text(),
+                    "nombre": self.tabla.item(i, 1).text(),
+                    "precio": parse_float_safe(self.tabla.item(i, 2).text()),
+                    "cant": float(self.tabla.item(i, 3).text().replace(",", ".")),
+                    "subtotal": parse_float_safe(self.tabla.item(i, 5).text())
+                })
+            items = redondear_items_carrito(items)
 
-        from src.cajero.paso6_cobro import Paso6Cobro
-        dlg = Paso6Cobro(total, items, self)
-        dlg.descuentaso_oferta = sum(
-            abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount())
-        )
-        dlg.recargar_total_final()
+            from src.cajero.paso6_cobro import Paso6Cobro
+            dlg = Paso6Cobro(total, items, self)
+            dlg.descuentaso_oferta = sum(
+                abs(parse_float_safe(self.tabla.item(i, 4).text())) for i in range(self.tabla.rowCount())
+            )
+            dlg.recargar_total_final()
 
-        # Ejecutamos el cobro
-        ok = qt_exec(dlg)
-        self._cobro_abierto = False
+            # Ejecutamos el cobro
+            ok = qt_exec(dlg)
+        finally:
+            self._cobro_abierto = False
         self._refrescar_notificaciones()
 
         if ok:

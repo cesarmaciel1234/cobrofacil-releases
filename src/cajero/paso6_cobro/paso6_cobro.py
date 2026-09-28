@@ -1,3 +1,4 @@
+from src.utils.parser import parse_float_regional
 from src.utils.qt_compat import qt_exec
 import hashlib
 import os
@@ -960,8 +961,8 @@ class Paso6Cobro(QDialog):
             "border: 2px solid #CBD5E1; color: #0F172A; background: #FFFFFF;"
         )
         try:
-            p1_t = self.txt_pago.text().replace('$', '').replace(',', '').strip()
-            p2_t = self.txt_otro.text().replace('$', '').replace(',', '').strip()
+            p1_t = str(parse_float_regional(self.txt_pago.text()))
+            p2_t = str(parse_float_regional(self.txt_otro.text()))
             p1 = float(p1_t) if p1_t else 0
 
             if self.current_metodo == "Mixto" and hasattr(self, 'valores_mixtos'):
@@ -1061,8 +1062,8 @@ class Paso6Cobro(QDialog):
 
     def _validar_pago(self):
         """ Centraliza la validación para evitar redundancias y errores de arqueo. """
-        p1_t = self.txt_pago.text().replace('$', '').replace(',', '').strip()
-        p2_t = self.txt_otro.text().replace('$', '').replace(',', '').strip()
+        p1_t = str(parse_float_regional(self.txt_pago.text()))
+        p2_t = str(parse_float_regional(self.txt_otro.text()))
 
         if not p1_t:
             if self.current_metodo == "Mixto":
