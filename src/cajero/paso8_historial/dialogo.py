@@ -10,7 +10,7 @@ from src.cajero.paso8_historial.ui.armar import setup_ui
 
 
 class DialogoHistorialDia(QDialog):
-    _DLG_W = 1060
+    _DLG_W = 1200
     _DLG_H = 820
 
     def __init__(self, parent=None):

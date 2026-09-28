@@ -34,11 +34,11 @@ def setup_ui(dialogo):
     dialogo.time_hasta.timeChanged.connect(dialogo.cargar_ventas)
     dialogo.tabla_tickets.itemSelectionChanged.connect(dialogo.mostrar_detalle)
 
-    content_hbox.addLayout(left_vbox, 45)
+    content_hbox.addLayout(left_vbox, 52)
 
     dialogo.panel_detalle = PanelDetalle(dialogo)
     dialogo.panel_detalle.set_callbacks(
         dialogo.cancelar_venta_accion, dialogo.reimprimir_ticket_accion
     )
-    content_hbox.addWidget(dialogo.panel_detalle, 55)
+    content_hbox.addWidget(dialogo.panel_detalle, 48)
     main_vbox.addLayout(content_hbox)
