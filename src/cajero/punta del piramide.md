@@ -1,0 +1,27 @@
+﻿# Punta del Pirámide - Actualización de Cobro y Cierre
+
+**Componentes Modificados:** paso6_cobro.py, pantalla_mp.py, point_service.py, cierre.py.
+
+## Cambios Implementados (Producción Masiva)
+
+1. **Pantalla MP (Aprobado/Rechazado) Blindada:**
+   - Se instanció correctamente PantallaMP desde el inicio para evitar crasheos silenciosos (AttributeError).
+   - Se aplicó aislamiento estricto (	ry...except) alrededor de las llamadas a mostrar_aprobado y mostrar_rechazado. Si la interfaz visual falla, el sistema ignora el error y llama a self.accept() o super().reject(), asegurando que la transacción comercial en la base de datos nunca se congele.
+
+2. **Diferenciación de Cobro Autónomo vs Manual:**
+   - Se agregó la variable de estado _es_autonomo.
+   - Cuando el cobro se finaliza de forma automática (Point Service o Polling/Webhook de MP), se pinta la pantalla verde con la leyenda "Cobro Autónomo".
+   - Cuando el cajero fuerza el cobro manual (Efectivo, o saltando validación con TPV apagado/rojo), la pantalla verde se pinta pero **se oculta** el texto "Cobro Autónomo".
+
+3. **Prevención de Ventas Fantasma (Bug Crítico Solucionado):**
+   - En _cerrar_como_eligio(), si PointService.procesar_pago_mercadopago_point() devuelve False (porque el cliente canceló en el dispositivo o hubo error de red), el sistema ahora ejecuta un pass. Antes llamaba erróneamente a inalizar(False), lo que desencadenaba el guardado de la venta en base de datos.
+   - El cajero ahora puede reintentar el cobro libremente sin corromper la base de datos.
+
+4. **Experiencia de Cancelación Mejorada:**
+   - La tecla ESC y el botón táctil Salir ahora están sincronizados. Si el usuario está en un medio de pago, retroceden a la botonera principal.
+   - Al abortar totalmente la venta desde Paso6Cobro (usando "Salir" desde el menú principal), se intercepta el cierre y se pinta una pantalla gigante roja ("⛔ Cobro Cancelado" / "Venta Abortada") por 2 segundos antes de volver al ticket. Esto brinda claridad absoluta al cajero.
+
+5. **Backup en Cierre Z (Offline-safe):**
+   - Se enganchó una rutina de compresión (comprimir_backups_del_dia()) en cerrar_caja() cuando 	ipo_cierre es CIERRE_Z.
+   - Opera en un 	hreading.Thread secundario para no congelar la pantalla.
+   - Cuenta con tolerancias para archivos bloqueados (lock de SQLite), priorizando que el cajero finalice su turno al instante.

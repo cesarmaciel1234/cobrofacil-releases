@@ -91,6 +91,8 @@ class Paso6Cobro(QDialog):
             self._ajustar_botones_mp()
         if hasattr(self, "aviso_toast"):
             self.aviso_toast.ubicar()
+        if hasattr(self, "pantalla_mp"):
+            self.pantalla_mp.ubicar()
 
     def paintEvent(self, event):
         from PyQt6.QtGui import QPainter
@@ -322,8 +324,10 @@ class Paso6Cobro(QDialog):
         self._tarjeta_monto_timer.setSingleShot(True)
         self._tarjeta_monto_timer.timeout.connect(self._refrescar_tarjeta)
         from src.cajero.paso6_cobro.aviso_en_cobro.toast import AvisoCobro, EsperaPoint
+        from src.cajero.paso6_cobro.aviso_en_cobro.pantalla_mp import PantallaMP
         self.aviso_toast = AvisoCobro(left_panel)
         self.espera_point = EsperaPoint(left_panel)
+        self.pantalla_mp = PantallaMP(self)
         from src.clientes_fiado.interfaz.cobro.hoja import HojaCuentaCobro
         self.hoja_cuenta = HojaCuentaCobro(left_panel)
         self.hoja_cuenta.listo.connect(self._cuenta_lista)
@@ -1027,6 +1031,7 @@ class Paso6Cobro(QDialog):
                         return
                     Admin10MP.ultimo_pago_detectado = None
                     self._mp_pago_usado = {"id": pago.get("id"), "monto": monto_pago}
+                    self._es_autonomo = True
 
                     self.timer_mp.stop()
                     self.timer_spinner.stop()
@@ -1315,6 +1320,8 @@ class Paso6Cobro(QDialog):
         self._elegir_cierre("fiscal")
 
     def finalizar(self, imprimir=True, force_fiscal=False, emergencia=False):
+        import logging
+        logging.getLogger("PunPro").info(f"FINALIZAR CALLED, emergencia={emergencia}, proc={getattr(self, '_procesando_pago', False)}")
         if not emergencia:
             if getattr(self, "_point_en_curso", False):
                 return
@@ -1374,19 +1381,47 @@ class Paso6Cobro(QDialog):
             )
 
             if exito:
-                self.accept()
+                # Mostrar Pantalla Aprobado para TODAS las ventas exitosas
+                if not getattr(self, "_mp_screen_shown", False):
+                    self._mp_screen_shown = True
+                    try:
+                        monto = self.txt_pago.text() or f"$ {self.total_final:,.2f}"
+                    except:
+                        monto = "¡Cobro Exitoso!"
+                        
+                    try:
+                        self.pantalla_mp.mostrar_aprobado(monto, on_finish=self.accept, es_autonomo=getattr(self, "_es_autonomo", False))
+                    except Exception as e:
+                        import logging
+                        logging.getLogger("PunPro").error(f"Fallo aislando Pantalla Verde: {e}")
+                        self.accept()
+                else:
+                    self.accept()
             else:
                 self._procesando_pago = False
-                self.btn_cobrar.setEnabled(True)
-                self.btn_cancelar.setEnabled(True)
-                QMessageBox.critical(self, "Error al cobrar", mensaje)
+                try:
+                    if hasattr(self, 'btn_cobrar'): self.btn_cobrar.setEnabled(True)
+                    if hasattr(self, 'btn_cancelar'): self.btn_cancelar.setEnabled(True)
+                except: pass
+                # En lugar de un cartel gris aburrido, mostramos el ROJO GIGANTE
+                if not getattr(self, "_mp_screen_shown", False):
+                    self._mp_screen_shown = True
+                    try:
+                        self.pantalla_mp.mostrar_rechazado(mensaje, on_finish=lambda: setattr(self, "_mp_screen_shown", False))
+                    except Exception:
+                        setattr(self, "_mp_screen_shown", False)
+                        QMessageBox.critical(self, "Error al cobrar", mensaje)
+                else:
+                    QMessageBox.critical(self, "Error al cobrar", mensaje)
 
         except Exception as e:
             import traceback
             tb = traceback.format_exc()
             self._procesando_pago = False
-            self.btn_cobrar.setEnabled(True)
-            self.btn_cancelar.setEnabled(True)
+            try:
+                if hasattr(self, "btn_cobrar"): self.btn_cobrar.setEnabled(True)
+                if hasattr(self, "btn_cancelar"): self.btn_cancelar.setEnabled(True)
+            except: pass
             QMessageBox.critical(self, "Error", f"Excepción crítica al cobrar:\n{e}\n\n{tb}")
 
     def imprimir_ticket(self, id_v, abrir_manual=False, force_fiscal=False):
@@ -1403,10 +1438,25 @@ class Paso6Cobro(QDialog):
             self.espera_point.soltar()
         try:
             from src.notificaciones.motor.estado import publicar
-
             publicar("cobro_cancelado", "⛔ COBRO CANCELADO", segundos=10)
         except Exception:
             pass
+
+        # Mostrar pantalla roja antes de salir definitivamente
+        if not getattr(self, "_mp_screen_shown", False):
+            self._mp_screen_shown = True
+            try:
+                # Ocultar footer autonomo para cancelaciones manuales
+                self.pantalla_mp.lbl_footer.hide()
+                # Cambiar texto secundario para que no diga "Intenta nuevamente"
+                self.pantalla_mp.lbl_monto.setText("Venta Abortada")
+                self.pantalla_mp.mostrar_rechazado("Cobro Cancelado", on_finish=super().reject)
+                return
+            except Exception as e:
+                import logging
+                logging.getLogger("PunPro").error(f"Fallo pantalla roja cancelacion: {e}")
+                pass
+                
         super().reject()
 
     def eventFilter(self, watched, event):
@@ -1749,6 +1799,7 @@ class Paso6Cobro(QDialog):
             self._volver_a_metodos()
 
     def _cerrar_venta_por_tarjeta(self, monto):
+        self._es_autonomo = True
         if getattr(self, "_tarjeta_ya_cerrado", False):
             return
         self._tarjeta_ya_cerrado = True
@@ -1763,6 +1814,8 @@ class Paso6Cobro(QDialog):
         super().resizeEvent(event)
         if hasattr(self, "aviso_toast"):
             self.aviso_toast.ubicar()
+        if hasattr(self, "pantalla_mp"):
+            self.pantalla_mp.ubicar()
         if hasattr(self, "espera_point") and self.espera_point.isVisible():
             self.espera_point.ubicar()
         if hasattr(self, "hoja_cuenta") and self.hoja_cuenta.isVisible():
@@ -2046,7 +2099,7 @@ class Paso6Cobro(QDialog):
             return
         from src.cajero.paso6_cobro.mercadopago_core.point_service import PointService
         if PointService(self).procesar_pago_mercadopago_point() is False:
-            self.finalizar(False)
+            pass
 
     def _procesar_cobro_qr_pantalla(self, token, monto):
         from src.cajero.paso6_cobro.mercadopago_core.qr_service import QRService
@@ -2121,6 +2174,10 @@ class Paso6Cobro(QDialog):
                     self.procesar_click_metodo(self.current_metodo)
             return
 
+        if key in ("ESC", "Salir"):
+            self._volver_a_metodos()
+            return
+
         focused = self.focusWidget()
         if key == "F10":
             self._elegir_cierre("fiscal")
@@ -2135,17 +2192,12 @@ class Paso6Cobro(QDialog):
             if len(str(key)) == 1:
                 self.hoja_cuenta.escribir(key)
                 return
-        if key == "ENTER" and self.current_metodo in ("Transferencia", "QR", "Tarjeta", "Mixto"):
+        if key == "ENTER":
             self._enter_cobro()
             return
+            
         if self.current_metodo == "Mixto":
             focused = self.panel_mixto.campo_foco()
-            if key == "ENTER":
-                self.intentar_finalizar()
-                return
-        elif self.current_metodo == "Tarjeta" and key == "ENTER":
-            self.intentar_finalizar()
-            return
         elif not focused or not isinstance(focused, QLineEdit):
             focused = self.txt_pago
 

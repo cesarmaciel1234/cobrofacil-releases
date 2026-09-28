@@ -59,6 +59,7 @@ class PointService:
         if cerrar:
             self.parent._point_en_curso = False
             self.parent.txt_pago.setText(str(monto))
+            self.parent._es_autonomo = True
             self.parent.finalizar(True)
         return True
 

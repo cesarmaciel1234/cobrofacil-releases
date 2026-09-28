@@ -195,4 +195,12 @@ def cerrar_caja(
         fisico,
     )
 
+    # Trigger backup compression if it's a daily Z closure
+    if tipo_cierre in ("CIERRE_Z", "CIERRE_DIARIO"):
+        try:
+            from src.cerebro_global.backup_cerebro.compresor import comprimir_backups_del_dia
+            comprimir_backups_del_dia()
+        except Exception as e:
+            logger.error(f"Fallo al comprimir backups durante el cierre Z: {e}")
+
     return True
