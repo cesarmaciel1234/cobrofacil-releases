@@ -28,4 +28,4 @@ F3 tapa la venta con el gris `#334155`. La hoja del historial queda clara al fre
 La cuenta y el retiro los hace la base (`src/base_de_datos/repos/README.md`, «Cancelar un ticket»). Esta pantalla no escribe movimientos de caja.
 
 ## Tabla Principal
-Las 5 columnas están proporcionadas dinámicamente (Stretch). La columna **Redondeo** obtiene los datos asíncronos y admite manejo fallback offline sin crashear (sqlite3.Row compat).
+Las 6 columnas (se sumó la columna Cliente para exponer cuentas corrientes) están proporcionadas dinámicamente (Stretch). La columna **Redondeo** obtiene los datos asíncronos y admite manejo fallback offline sin crashear (sqlite3.Row compat).

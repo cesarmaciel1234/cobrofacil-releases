@@ -34,3 +34,5 @@
 
 - [Mejora] Interfaz Terminal (Paso 5): Se remarcaron los bordes de los contenedores principales (Panel de Totales, Tabla, Barra Inferior) a 2px solid #94A3B8 para mayor definicion visual estructural, sobreescribiendo el estilo difuminado global.
 - [Blindaje] Cobro Autonomo (Paso 6): Se envolvio la impresion de tickets en try-catch y se movio el envio a la terminal Point a un hilo secundario asincrono (QEventLoop). Esto evita que el cajero se congele ante timeouts de internet de hasta 10 segundos, asegurando fluidez e interrupcion manual segura via F9.
+
+- [Mejora] Historial de Caja (Paso 8): Se agrego la columna 'Cliente' en la tabla principal de tickets (UI: lista_tickets.py) y se modifico el controlador SQL (logica: historial_controller.py) para extraer el campo literal cliente_nombre. Esto permite visibilidad instantanea de las cuentas corrientes sin seleccionar el ticket.
