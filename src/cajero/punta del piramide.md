@@ -31,3 +31,6 @@
 - Se distribuyo proporcionalmente el ancho de las 5 columnas del Historial de Caja (Folio, Arts, Hora, Total, Redondeo) para ocupar mejor las pantallas grandes.
 
 - [Bugfix] Corrupcion de Token MP: Se arreglo el fallo donde el cajero guardaba un token valido y funcionaba, pero al rato fallaba (Error 403). La sincronizacion automatica entre Maestra y Esclava (tienda.py) estaba leyendo mal el objeto SQLite y pisaba el token bueno con el texto de memoria <sqlite3.Row object...>. Ya quedo documentado y parchado.
+
+- [Mejora] Interfaz Terminal (Paso 5): Se remarcaron los bordes de los contenedores principales (Panel de Totales, Tabla, Barra Inferior) a 2px solid #94A3B8 para mayor definicion visual estructural, sobreescribiendo el estilo difuminado global.
+- [Blindaje] Cobro Autonomo (Paso 6): Se envolvio la impresion de tickets en try-catch y se movio el envio a la terminal Point a un hilo secundario asincrono (QEventLoop). Esto evita que el cajero se congele ante timeouts de internet de hasta 10 segundos, asegurando fluidez e interrupcion manual segura via F9.
