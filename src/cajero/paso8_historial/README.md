@@ -26,3 +26,6 @@ F3 tapa la venta con el gris `#334155`. La hoja del historial queda clara al fre
 `dialogo.cancelar_venta_accion`: el cajero pide PIN de admin (el admin no). Antes de confirmar, `HistorialController.plan_devolucion` y `texto_devolucion` arman el aviso: «DEBERÁ DEVOLVER $X EN EFECTIVO al cliente. Se descontará del cierre al finalizar el turno.» En fiado y clientes dice que no se devuelve efectivo y se anula la deuda. El mismo aviso sale al terminar, y la franja de notificaciones muestra «⛔ COBRO CANCELADO — ticket N · devolver $X en efectivo».
 
 La cuenta y el retiro los hace la base (`src/base_de_datos/repos/README.md`, «Cancelar un ticket»). Esta pantalla no escribe movimientos de caja.
+
+## Tabla Principal
+Las 5 columnas están proporcionadas dinámicamente (Stretch). La columna **Redondeo** obtiene los datos asíncronos y admite manejo fallback offline sin crashear (sqlite3.Row compat).

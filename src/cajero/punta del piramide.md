@@ -25,3 +25,7 @@
    - Se enganchó una rutina de compresión (comprimir_backups_del_dia()) en cerrar_caja() cuando 	ipo_cierre es CIERRE_Z.
    - Opera en un 	hreading.Thread secundario para no congelar la pantalla.
    - Cuenta con tolerancias para archivos bloqueados (lock de SQLite), priorizando que el cajero finalice su turno al instante.
+
+- Se optimizo la resiliencia en Modo Esclava: la busqueda de la Maestra por red y la impresion de tickets ahora corren en hilos asincronos. Esto elimina los bloqueos de 2 a 5 segundos en la pantalla del cajero (Cobro y escaneo) cuando la conexion Wi-Fi o LAN a la Maestra se corta.
+- Se soluciono el error (AttributeError: get) de la tabla de Historial de Caja (F3) cuando el nodo esta offline en SQLite.
+- Se distribuyo proporcionalmente el ancho de las 5 columnas del Historial de Caja (Folio, Arts, Hora, Total, Redondeo) para ocupar mejor las pantallas grandes.

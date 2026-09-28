@@ -29,3 +29,8 @@ Fondo: `restaurar/` (README). Sirve igual un respaldo `.sql` / `.zip` / `.db` o 
 ## Qué no cambiar
 
 No devolver `9999999`. No borrar `request_id` del cobro ni del motor. No ignorar `opt_stock_negativo`.
+
+## Reconexion de Red (Esclava)
+
+src/base_de_datos/repos/red.py (asegurar_lectura_tienda)
+Cuando una caja esclava pierde red, entra en SQLite local. Los intentos de reconexion al MariaDB de la Maestra (reconectar_mariadb) se realizan en un hilo asincrono (threading.Thread). Esto evita colgar la UI (2 a 5 segundos de timeout) cada vez que el cajero escanea o cobra mientras la red esta caida.
