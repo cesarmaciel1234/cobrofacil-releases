@@ -7,18 +7,21 @@ logger = logging.getLogger(__name__)
 
 def post_cobro(datos, id_v, resultado_venta):
     descuento_total = float(datos.get("descuento") or 0) + float(datos.get("oferta") or 0)
-    CobroController.procesar_cajon_impresion(
-        datos.get("metodo"),
-        datos.get("imprimir", True),
-        id_v,
-        datos.get("items_carrito") or [],
-        datos.get("total_final"),
-        resultado_venta,
-        datos.get("cajero") or "",
-        descuento_total,
-        datos.get("recargo") or 0,
-        datos.get("force_fiscal", False),
-    )
+    try:
+        CobroController.procesar_cajon_impresion(
+            datos.get("metodo"),
+            datos.get("imprimir", True),
+            id_v,
+            datos.get("items_carrito") or [],
+            datos.get("total_final"),
+            resultado_venta,
+            datos.get("cajero") or "",
+            descuento_total,
+            datos.get("recargo") or 0,
+            datos.get("force_fiscal", False),
+        )
+    except Exception as e:
+        logger.error(f"Error critico en impresion/cajon (ignorado por blindaje): {e}")
     pagos = list(datos.get("mp_pagos") or [])
     uno = datos.get("mp_pago") or {}
     if uno.get("id") and all(str(item.get("id")) != str(uno.get("id")) for item in pagos):

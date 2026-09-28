@@ -268,29 +268,18 @@ class EsperaPoint(QFrame):
     def _enviar(self):
         if self._abortado:
             return
-        try:
-            from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import enviar_monto
-            generacion = self._generacion
-            pedido = enviar_monto(self._token, self._device, self._monto)
-        except Exception:
-            pedido = {"ok": False, "motivo": "red"}
-            generacion = self._generacion
-        if generacion != self._generacion or self._abortado:
-            intent = (pedido or {}).get("intent") or ""
-            if intent:
-                from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import cancelar_intent
-                cancelar_intent(self._token, self._device, intent, en_terminal=True)
-            return
-        if not pedido.get("ok") or not pedido.get("intent"):
-            self.motivo = pedido.get("motivo") or "rechazo"
-            loop = self._loop
-            if loop is not None and loop.isRunning():
-                loop.quit()
-            return
-        self._intent = pedido.get("intent") or ""
-        self.texto.setText("Pida al cliente que pase la tarjeta.")
-        self.ubicar()
-        self._reloj.start()
+        generacion = self._generacion
+        
+        def _hilo_enviar():
+            try:
+                from src.cajero.paso6_cobro.tarjeta_en_cobro.envio import enviar_monto
+                pedido = enviar_monto(self._token, self._device, self._monto)
+            except Exception:
+                pedido = {"ok": False, "motivo": "red"}
+            self._llegada.emit({"tipo": "envio_listo", "generacion": generacion, "pedido": pedido})
+            
+        import threading
+        threading.Thread(target=_hilo_enviar, daemon=True).start()
 
     def _consultar(self):
         if self._abortado or not self._intent:
@@ -310,6 +299,21 @@ class EsperaPoint(QFrame):
 
     def _pintar(self, dato):
         if not dato or dato.get("generacion") != self._generacion or self._abortado:
+            return
+        tipo = dato.get("tipo")
+        if tipo == "envio_listo":
+            pedido = dato.get("pedido") or {}
+            intent = pedido.get("intent") or ""
+            if not pedido.get("ok") or not intent:
+                self.motivo = pedido.get("motivo") or "rechazo"
+                loop = self._loop
+                if loop is not None and loop.isRunning():
+                    loop.quit()
+                return
+            self._intent = intent
+            self.texto.setText("Pida al cliente que pase la tarjeta.")
+            self.ubicar()
+            self._reloj.start()
             return
         estado = dato.get("estado")
         if estado == "FINISHED":
