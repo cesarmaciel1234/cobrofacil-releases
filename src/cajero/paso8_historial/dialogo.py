@@ -81,21 +81,25 @@ class DialogoHistorialDia(QDialog):
                 hora_fmt = "S/D"
 
             self.tabla_tickets.setItem(i, 0, QTableWidgetItem(str(r["id"])))
-            self.tabla_tickets.setItem(i, 1, QTableWidgetItem(str(int(cant_arts))))
-            self.tabla_tickets.setItem(i, 2, QTableWidgetItem(hora_fmt))
+            
+            cli_name = str(r.get("cliente_nombre", "") or "").strip()
+            self.tabla_tickets.setItem(i, 1, QTableWidgetItem(cli_name))
+            
+            self.tabla_tickets.setItem(i, 2, QTableWidgetItem(str(int(cant_arts))))
+            self.tabla_tickets.setItem(i, 3, QTableWidgetItem(hora_fmt))
 
             is_cancelled = str(r["estado"]).upper().startswith("CANCELAD")
             it_total = QTableWidgetItem(fmt_moneda(r["total"]))
             it_total.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             it_total.setForeground(QColor("#ef4444" if is_cancelled else "#1E3A8A"))
-            self.tabla_tickets.setItem(i, 3, it_total)
+            self.tabla_tickets.setItem(i, 4, it_total)
 
             redondeo_val = float(r["descuento"]) if r["descuento"] is not None else 0.0
             it_red = QTableWidgetItem(fmt_moneda(redondeo_val) if redondeo_val != 0 else "-")
             it_red.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             if redondeo_val > 0:
                 it_red.setForeground(QColor("#10B981"))
-            self.tabla_tickets.setItem(i, 4, it_red)
+            self.tabla_tickets.setItem(i, 5, it_red)
 
         self.lbl_total_filtrado.setText(f"Total en pantalla: {fmt_moneda(total_exitoso)}")
 

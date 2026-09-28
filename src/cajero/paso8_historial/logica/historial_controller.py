@@ -16,7 +16,7 @@ class HistorialController:
         role = (config.current_user or {}).get("role", "cajero")
         # El admin ve todo, el cajero en teoría también en esta versión
         query = """
-            SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, v.descuento,
+            SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, v.descuento, v.cliente_nombre,
                    IFNULL(SUM(dv.cantidad), 0) as cant_arts,
                    GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names
             FROM ventas v
