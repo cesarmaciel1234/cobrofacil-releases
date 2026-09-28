@@ -90,7 +90,7 @@ class DialogoHistorialDia(QDialog):
             it_total.setForeground(QColor("#ef4444" if is_cancelled else "#1E3A8A"))
             self.tabla_tickets.setItem(i, 3, it_total)
 
-            redondeo_val = float(r.get("descuento") or 0.0)
+            redondeo_val = float(r["descuento"]) if r["descuento"] is not None else 0.0
             it_red = QTableWidgetItem(fmt_moneda(redondeo_val) if redondeo_val != 0 else "-")
             it_red.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             if redondeo_val > 0:
