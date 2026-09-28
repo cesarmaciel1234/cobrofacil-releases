@@ -125,13 +125,19 @@ class VistaHistorial(QWidget):
         izq.addWidget(self.txt)
 
         self.tabla = QTableWidget()
-        self.tabla.setColumnCount(6)
-        self.tabla.setHorizontalHeaderLabels(["Folio", "Caja", "Arts", "Hora", "Total", "Estado"])
+        self.tabla.setColumnCount(8)
+        self.tabla.setHorizontalHeaderLabels(["Folio", "Caja", "Cliente", "Arts", "Hora", "Total", "Extra", "Estado"])
         self.tabla.verticalHeader().setVisible(False)
         self.tabla.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tabla.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tabla.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.tabla.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.tabla.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.tabla.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+        self.tabla.setColumnWidth(0, 50)
+        self.tabla.setColumnWidth(1, 40)
+        self.tabla.setColumnWidth(3, 40)
+        self.tabla.setColumnWidth(4, 50)
+        self.tabla.setColumnWidth(6, 60)
         self.tabla.itemSelectionChanged.connect(self._detalle)
         _aplicar_paleta_tabla(self.tabla)
         izq.addWidget(self.tabla)
@@ -220,6 +226,11 @@ class VistaHistorial(QWidget):
         self.tabla_det.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         _aplicar_paleta_tabla(self.tabla_det)
         cl.addWidget(self.tabla_det)
+        
+        self.lbl_extra = _lbl("", 13, 600)
+        self.lbl_extra.setStyleSheet("color: #10B981;") # Green for extras
+        cl.addWidget(self.lbl_extra)
+        
         self.lbl_total = _lbl("Total  —", 18, 600)
         cl.addWidget(self.lbl_total)
         der.addWidget(card)
@@ -311,17 +322,42 @@ class VistaHistorial(QWidget):
             caja = r["caja_id"] if "caja_id" in r.keys() else 1
             self.tabla.setItem(i, 0, QTableWidgetItem(str(r["id"])))
             self.tabla.setItem(i, 1, QTableWidgetItem(str(caja or 1)))
-            self.tabla.setItem(i, 2, QTableWidgetItem(str(int(float(r["cant_arts"] or 0)))))
-            self.tabla.setItem(i, 3, QTableWidgetItem(hora))
+            
+            try: cli_val = r["cliente_nombre"]
+            except Exception: cli_val = ""
+            self.tabla.setItem(i, 2, QTableWidgetItem(str(cli_val or "")))
+            
+            try:
+                c_arts = r["cant_arts"]
+            except Exception:
+                c_arts = 0
+            self.tabla.setItem(i, 3, QTableWidgetItem(str(int(float(c_arts or 0)))))
+            self.tabla.setItem(i, 4, QTableWidgetItem(hora))
+            
             tot = QTableWidgetItem(fmt_plata(r["total"]))
             tot.setForeground(QColor("#B91C1C" if cancel else "#0F172A"))
             if not cancel:
                 tot.setBackground(QBrush(QColor("#F0FDF4")))
-            self.tabla.setItem(i, 4, tot)
+            self.tabla.setItem(i, 5, tot)
+            
+            # Extra
+            try: desc_val = float(r["descuento"]) if r["descuento"] else 0.0
+            except Exception: desc_val = 0.0
+            try: rec_val = float(r["recargo"]) if r["recargo"] else 0.0
+            except Exception: rec_val = 0.0
+            
+            extra_txt = ""
+            if desc_val > 0: extra_txt = f"-{fmt_plata(desc_val)}"
+            elif rec_val > 0: extra_txt = f"+{fmt_plata(rec_val)}"
+            it_ex = QTableWidgetItem(extra_txt)
+            if desc_val > 0: it_ex.setForeground(QColor("#10B981"))
+            elif rec_val > 0: it_ex.setForeground(QColor("#EF4444"))
+            self.tabla.setItem(i, 6, it_ex)
+            
             est = QTableWidgetItem("Cancelada" if cancel else "Cerrada")
             if cancel:
                 est.setForeground(QColor("#B91C1C"))
-            self.tabla.setItem(i, 5, est)
+            self.tabla.setItem(i, 7, est)
         n_ok = sum(
             1
             for r in filas
@@ -365,6 +401,23 @@ class VistaHistorial(QWidget):
             imp = QTableWidgetItem(fmt_plata(it["subtotal"]))
             imp.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.tabla_det.setItem(i, 2, imp)
+        try:
+            desc_val = float(v["descuento"]) if "descuento" in v.keys() and v["descuento"] else 0.0
+            rec_val = float(v["recargo"]) if "recargo" in v.keys() and v["recargo"] else 0.0
+        except Exception:
+            desc_val = 0.0
+            rec_val = 0.0
+            
+        extra_info = []
+        if desc_val > 0: extra_info.append(f"Desc/Redondeo: -{fmt_plata(desc_val)}")
+        if rec_val > 0: extra_info.append(f"Recargo: +{fmt_plata(rec_val)}")
+        
+        if extra_info:
+            self.lbl_extra.setText(" | ".join(extra_info))
+            self.lbl_extra.show()
+        else:
+            self.lbl_extra.hide()
+            
         self.lbl_total.setText(f"Total  {fmt_plata(v['total'])}")
         cancel = "CANCELAD" in str(v["estado"] or "").upper()
         self.btn_cancel.setEnabled(not cancel)

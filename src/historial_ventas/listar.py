@@ -58,14 +58,14 @@ def listar_tickets(
     group = "GROUP BY v.id ORDER BY v.id DESC LIMIT 4000"
     cols_full = (
         "SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, "
-        "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, "
+        "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, v.cliente_nombre, "
         "v.cancelado_por, v.fecha_cancel, v.perfil_cancel, v.caja_cancel, "
         "IFNULL(SUM(dv.cantidad), 0) as cant_arts, "
         "GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names"
     )
     cols_min = (
         "SELECT v.id, v.fecha, v.total, v.usuario, v.estado, v.metodo_pago, "
-        "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, "
+        "v.descuento, v.recargo, v.pago_con, v.cambio, v.caja_id, v.cliente_nombre, "
         "IFNULL(SUM(dv.cantidad), 0) as cant_arts, "
         "GROUP_CONCAT(dv.nombre_producto, ' ') as prod_names"
     )
