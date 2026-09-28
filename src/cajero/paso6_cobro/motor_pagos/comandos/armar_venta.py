@@ -12,7 +12,7 @@ def armar_resultado_venta(datos):
     overpay = redondear_dinero((p1 + p2) - total_final)
     cambio = redondear_dinero(max(0.0, overpay)) if es_caja else 0.0
     estado = "COMPLETADA"
-    nombre = ""
+    nombre = datos.get("cliente_nombre") or ""
     if datos.get("nombre_pendiente"):
         estado = "TRANSF_PENDIENTE"
         nombre = datos.get("nombre_pendiente") or ""

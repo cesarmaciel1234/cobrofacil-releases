@@ -1367,6 +1367,7 @@ class Paso6Cobro(QDialog):
                 "oferta": getattr(self, 'descuentaso_oferta', 0.0),
                 "nombre_pendiente": getattr(self, 'nombre_pendiente', None),
                 "cliente_id": cliente_id,
+                "cliente_nombre": self.cmb_cliente.currentText() if cliente_id else "",
                 "fiado_parcial": (getattr(self, "valores_mixtos", None) or {}).get("cliente") or 0,
                 "imprimir": imprimir,
                 "force_fiscal": force_fiscal,

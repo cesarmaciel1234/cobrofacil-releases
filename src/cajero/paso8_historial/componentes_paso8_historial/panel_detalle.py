@@ -134,6 +134,11 @@ class PanelDetalle(QWidget):
         self.lbl_det_folio.setText(str(v['id']))
         self.lbl_det_cajero.setText(str(v['usuario']).upper())
         self.lbl_det_metodo.setText(str(v['metodo_pago'] if 'metodo_pago' in v.keys() else 'Efectivo').upper())
+        
+        cli_nom = ""
+        if "cliente_nombre" in v.keys() and v["cliente_nombre"]:
+            cli_nom = str(v["cliente_nombre"]).strip()
+        self.lbl_det_cliente.setText(cli_nom if cli_nom else "Público en general")
 
         try:
             fecha_str = str(v['fecha'])
