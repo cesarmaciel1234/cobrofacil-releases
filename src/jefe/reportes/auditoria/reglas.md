@@ -13,6 +13,7 @@ auditoria/
 ## Arrancar
 
 - Nueva columna: `consulta.listar_lineas` y después la tabla en `vista.py`.
+- Buscar: `consulta.filtro(texto, metodo)`. El texto busca en producto, código, pago, cajero, estado, depto y categoría; si es número (o `#número`) también busca el ticket. El combo «Pago» filtra por método exacto (`METODOS`); Efectivo incluye pago vacío. La misma condición va al listado y a «Vs periodo anterior».
 - Fechas: `periodo/sql.where_fecha`. No copies DATE() ni LIKE.
 - Comparar: `financiero.rango_igual_anterior`.
 - Esclava: `db_manager` = maestra.

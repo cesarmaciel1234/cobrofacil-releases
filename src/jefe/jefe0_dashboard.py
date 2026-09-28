@@ -66,12 +66,55 @@ class Jefe0Dashboard(QWidget):
         self.worker_analitica.datos_listos.connect(self._on_analitica_lista)
         self.worker_analitica.start()
 
+        try:
+            from src.jefe.nodo_portable import espejo
+
+            espejo.arrancar()
+        except Exception:
+            pass
+
     def _on_analitica_lista(self, datos):
-        self.panel_pub.set_metricas(
-            float(datos.get("ventas_ganancia_real", 0.0) or 0),
-            float(datos.get("inventario_valor_costo", 0.0) or 0),
-        )
+        valor = float(datos.get("inventario_valor_costo", 0.0) or 0)
+        try:
+            from src.jefe.nodo_portable.espejo import en_copia
+            from src.jefe.vitrina.metricas import inventario_costo
+
+            if en_copia():
+                valor = inventario_costo()
+        except Exception:
+            pass
+        self.panel_pub.set_inventario(valor)
         self._pintar_cuentas()
+        self._pintar_cobros_dia()
+
+    def _on_periodo_vitrina(self, desde, hasta, _etiqueta):
+        self._vitrina_desde = desde
+        self._vitrina_hasta = hasta
+        self._pintar_cuentas()
+        self._pintar_cobros_dia()
+
+    def _rango_vitrina(self):
+        """(desde, hasta) elegido en la vitrina. None, None = hoy."""
+        return getattr(self, "_vitrina_desde", None), getattr(self, "_vitrina_hasta", None)
+
+    def _pintar_cobros_dia(self):
+        try:
+            from src.jefe.nodo_portable.espejo import leyenda
+
+            self.panel_pub.set_origen(leyenda())
+        except Exception:
+            pass
+        try:
+            from src.jefe.vitrina import metricas
+
+            desde, hasta = self._rango_vitrina()
+            self.panel_pub.set_ganancia(metricas.ganancia(desde, hasta))
+            sin, tot = metricas.digitales(desde, hasta)
+            self.panel_pub.set_cobros_dia(metricas.redondeo(desde, hasta), sin, tot)
+            self.panel_pub.set_tickets_dia(*metricas.tickets(desde, hasta))
+            self.panel_pub.set_cancelaciones_dia(metricas.cancelaciones(desde, hasta))
+        except Exception:
+            pass
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -206,6 +249,7 @@ class Jefe0Dashboard(QWidget):
         main_split_lay.addWidget(right_col, stretch=1)
 
         self.panel_pub = PanelPublicidad()
+        self.panel_pub.periodo_cambiado.connect(self._on_periodo_vitrina)
         self.btn_export_ganancias = self.panel_pub.btn_export
         self.btn_export_ganancias.clicked.connect(self._exportar_ganancias)
         page_lay.addWidget(self.panel_pub, 1)
@@ -290,9 +334,15 @@ class Jefe0Dashboard(QWidget):
     def _pintar_cuentas(self):
         try:
             from src.clientes_fiado.cerebro.cerebro import cerebro
+            from src.jefe.nodo_portable.espejo import en_copia
+            from src.jefe.vitrina.metricas import deuda_clientes, pagos_clientes
 
-            pagos, deuda = cerebro.resumen_cuentas()
-            self.panel_pub.set_cuentas(pagos, deuda)
+            desde, hasta = self._rango_vitrina()
+            if en_copia():
+                deuda = deuda_clientes()
+            else:
+                _pagos_hoy, deuda = cerebro.resumen_cuentas()
+            self.panel_pub.set_cuentas(pagos_clientes(desde, hasta), deuda)
         except Exception:
             pass
 
@@ -306,7 +356,10 @@ class Jefe0Dashboard(QWidget):
         except Exception:
             nombre = "Jefe"
         self.panel_pub.set_saludo(f"{greet}, {nombre}")
-        self._pintar_cuentas()
+        _desde, hasta = self._rango_vitrina()
+        if hasta is None or hasta >= now.strftime("%Y-%m-%d"):
+            self._pintar_cuentas()
+            self._pintar_cobros_dia()
 
     def _abrir_perfiles(self):
         try:
@@ -378,13 +431,16 @@ class Jefe0Dashboard(QWidget):
             box.setIcon(QMessageBox.Icon.Question)
             box.setText(
                 "Ya tenés un nodo en USB/OneDrive.\n\n"
-                "• Sincronizar hacia Nodo: Envía las nuevas ventas del negocio al USB.\n"
-                "• Importar de Nodo (Bidireccional): Trae productos/precios que editaste en tu casa.\n"
+                "• Esta PC guarda sola una copia de la tienda mientras está en la red. "
+                "Sin red, el panel la muestra con la fecha arriba.\n"
+                "• Sincronizar: pasa esa copia al pendrive (ventas, cancelaciones, cierres, "
+                "caja, clientes y su auditoría) para revisar en otra PC.\n"
+                "• Clientes cargados afuera: no hay que apretar nada. La maestra los toma sola, "
+                "con su ID único, PC, usuario y hora.\n"
                 "• Promover: usá este nodo si la PC del negocio cayó.\n"
-                "• Copiar de nuevo: elige otra carpeta y hace copia completa 0–100%."
+                "• Reemplazar: elige otra carpeta y hace copia completa 0–100%."
             )
             btn_sync = box.addButton("Sincronizar", QMessageBox.ButtonRole.AcceptRole)
-            btn_import = box.addButton("Importar", QMessageBox.ButtonRole.ActionRole)
             btn_promo = box.addButton("Promover", QMessageBox.ButtonRole.ActionRole)
             btn_full = box.addButton("Reemplazar", QMessageBox.ButtonRole.ActionRole)
             box.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
@@ -395,8 +451,6 @@ class Jefe0Dashboard(QWidget):
             clicked = box.clickedButton()
             if clicked == btn_sync:
                 self._run_nodo_job("sync")
-            elif clicked == btn_import:
-                self._run_nodo_job("import")
             elif clicked == btn_promo:
                 self._promover_nodo_ui()
             elif clicked == btn_full:
@@ -408,7 +462,8 @@ class Jefe0Dashboard(QWidget):
             "• Contabilidad del jefe\n"
             "• Espejo del negocio (ventas, productos, clientes…)\n\n"
             "Mostrará progreso hasta 100%. Después este botón pasará a «Sincronizar».\n"
-            "Conectate antes como Esclava (Servidor LAN) para copiar la DB de la maestra.\n\n"
+            "Lleva la copia de la tienda que guarda esta PC. Si nunca estuvo en la red, "
+            "conectate antes como Esclava (Servidor LAN).\n\n"
             "¿Continuar?"
         )
         if QMessageBox.question(
@@ -458,8 +513,6 @@ class Jefe0Dashboard(QWidget):
         title_text = "Copiando nodo…"
         if mode == "sync":
             title_text = "Sincronizando hacia el nodo…"
-        elif mode == "import":
-            title_text = "Importando catálogo desde el nodo…"
         elif mode == "promote":
             title_text = "Promoviendo nodo (Rescatando datos)…"
         title = QLabel(title_text)
@@ -491,7 +544,7 @@ class Jefe0Dashboard(QWidget):
 
             def run(self):
                 try:
-                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes, importar_catalogo_desde_nodo, promover_nodo
+                    from src.jefe.nodo_portable import copiar_nodo_completo, sincronizar_faltantes, promover_nodo
 
                     def cb(pct, msg):
                         self.progress.emit(pct, msg)
@@ -499,9 +552,6 @@ class Jefe0Dashboard(QWidget):
                     if self._mode == "full":
                         root = copiar_nodo_completo(self._dest, progress_cb=cb)
                         self.finished_ok.emit({"mode": "full", "root": root})
-                    elif self._mode == "import":
-                        stats = importar_catalogo_desde_nodo(progress_cb=cb)
-                        self.finished_ok.emit({"mode": "import", "stats": stats})
                     elif self._mode == "promote":
                         root = promover_nodo(progress_cb=cb)
                         self.finished_ok.emit({"mode": "promote", "root": root})
@@ -538,22 +588,15 @@ class Jefe0Dashboard(QWidget):
                     "Reiniciá el perfil para aplicar del todo.",
                 )
                 self.request_logout.emit()
-            elif payload.get("mode") == "import":
-                stats = payload.get("stats") or {}
-                detail = "\n".join(f"• {k}: {v} importados" for k, v in stats.items() if v)
-                QMessageBox.information(
-                    self,
-                    "Importación Exitosa",
-                    "Catálogo fusionado desde el Nodo.\n\n" + (detail or "Sin cambios nuevos."),
-                )
             else:
-                stats = payload.get("stats") or {}
-                detail = ", ".join(f"{k}:{v}" for k, v in stats.items() if v)
-                QMessageBox.information(
-                    self,
-                    "Sincronizado",
-                    "Solo se enviaron datos faltantes al nodo.\n\n" + (detail or "Sin cambios nuevos."),
-                )
+                stats = dict(payload.get("stats") or {})
+                tomados = int(stats.get("clientes_tomados", 0) or 0)
+                texto = f"El pendrive tiene la tienda al {stats.get('copia_de') or '—'}."
+                if stats.get("aviso"):
+                    texto += f"\n\n{stats['aviso']}"
+                if tomados:
+                    texto += f"\n\nLa maestra tomó {tomados} movimiento(s) de clientes cargados afuera."
+                QMessageBox.information(self, "Sincronizado", texto)
 
         def on_fail(err):
             dlg.reject()

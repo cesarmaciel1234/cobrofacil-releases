@@ -76,26 +76,36 @@ class Admin5Configuracion(QWidget):
         self.stack.addWidget(self._armar_hub())
 
     def _barra(self, titulo, sub, on_back, texto_back="← Módulos"):
+        from src.utils.qt_dpi import scale_px
+
         header = QFrame()
-        header.setFixedHeight(72)
+        header.setFixedHeight(max(80, scale_px(84)))
         header.setStyleSheet("QFrame { background-color: #FFFFFF; border-bottom: 1px solid #E2E8F0; }")
         h = QHBoxLayout(header)
         h.setContentsMargins(28, 0, 28, 0)
+        btn_px = max(14, scale_px(15))
         btn = QPushButton(texto_back)
         btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         btn.setStyleSheet(
-            "QPushButton { background-color: #2563EB; color: #FFFFFF; font-weight: 700;"
-            " font-size: 13px; border: none; border-radius: 8px; padding: 9px 18px; }"
+            "QPushButton { background-color: #2563EB; color: #FFFFFF; font-weight: 700; "
+            f"font-size: {btn_px}px; "
+            "border: none; border-radius: 8px; padding: 10px 20px; }"
             "QPushButton:hover { background-color: #1D4ED8; }"
         )
         btn.clicked.connect(on_back)
         h.addWidget(btn)
         col = QVBoxLayout()
         col.setSpacing(2)
+        tit_px = max(22, scale_px(24))
+        sub_px = max(14, scale_px(15))
         t = QLabel(titulo)
-        t.setStyleSheet("font-size: 20px; font-weight: 800; color: #0F172A; background: transparent; border: none;")
+        t.setStyleSheet(
+            f"font-size: {tit_px}px; font-weight: 800; color: #0F172A; background: transparent; border: none;"
+        )
         s = QLabel(sub)
-        s.setStyleSheet("font-size: 12px; font-weight: 500; color: #64748B; background: transparent; border: none;")
+        s.setStyleSheet(
+            f"font-size: {sub_px}px; font-weight: 500; color: #64748B; background: transparent; border: none;"
+        )
         col.addWidget(t)
         col.addWidget(s)
         h.addSpacing(16)

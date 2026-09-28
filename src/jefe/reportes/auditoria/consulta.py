@@ -7,8 +7,9 @@ from src.jefe.reportes.periodo.sql import where_fecha, where_ventas
 
 
 def _db():
-    from src.base_de_datos.database import db_manager
-    return db_manager
+    """La tienda en vivo; sin maestra, la copia de la tienda (`nodo_portable/espejo`)."""
+    from src.jefe.nodo_portable.espejo import fuente
+    return fuente()
 
 
 _COLS = """
@@ -22,19 +23,45 @@ _COLS = """
     LEFT JOIN productos p ON dv.id_producto = p.id
 """
 
+METODOS = ("Todos", "Efectivo", "Transferencia", "Tarjeta", "QR", "Mixto", "Fiado", "Clientes")
 
-def listar_lineas(start_str: str, end_str: str, texto: str = "") -> list[dict]:
+_BUSCA_EN = (
+    "dv.nombre_producto", "dv.id_producto", "v.metodo_pago", "v.usuario",
+    "v.estado", "p.departamento", "p.categoria",
+)
+
+
+def filtro(texto: str = "", metodo: str = "") -> tuple[str, list]:
+    """Texto libre + método exacto. Devuelve ' AND …' listo para pegar."""
+    sql = ""
+    params: list = []
+    t = (texto or "").strip()
+    if t:
+        ors = [f"{c} LIKE ?" for c in _BUSCA_EN]
+        params += [f"%{t}%"] * len(_BUSCA_EN)
+        if t.lstrip("#").isdigit():
+            ors.append("v.id = ?")
+            params.append(int(t.lstrip("#")))
+        sql += " AND (" + " OR ".join(ors) + ")"
+    m = (metodo or "").strip()
+    if m and m.upper() != "TODOS":
+        if m.upper() == "EFECTIVO":
+            sql += " AND (v.metodo_pago IS NULL OR TRIM(v.metodo_pago) = '' OR UPPER(TRIM(v.metodo_pago)) = ?)"
+        else:
+            sql += " AND UPPER(TRIM(v.metodo_pago)) = ?"
+        params.append(m.upper())
+    return sql, params
+
+
+def listar_lineas(start_str: str, end_str: str, texto: str = "", metodo: str = "") -> list[dict]:
     db = _db()
     try:
         db.asegurar_lectura_tienda()
     except Exception:
         pass
-    prod = (texto or "").strip()
-    sql_f, params = where_fecha("v.fecha", start_str, end_str)
-    extra = ""
-    if prod:
-        extra = " AND (dv.nombre_producto LIKE ? OR dv.id_producto LIKE ?)"
-        params = [f"%{prod}%", f"%{prod}%"] + list(params)
+    extra, params = filtro(texto, metodo)
+    sql_f, p_f = where_fecha("v.fecha", start_str, end_str)
+    params = params + list(p_f)
     q = f"{_COLS} WHERE 1=1{extra} AND {sql_f} ORDER BY v.fecha DESC"
     filas = db.execute_query(q, tuple(params)) or []
     out = []
@@ -90,23 +117,24 @@ def totales(filas: list[dict]) -> dict:
     }
 
 
-def comparativa(start_str: str, end_str: str) -> tuple[float, float]:
-    db = _db()
-    prev_s, prev_e = rango_igual_anterior(start_str, end_str)
+def _suma(db, start_str: str, end_str: str, texto: str, metodo: str) -> float:
     w, p = where_ventas("v", start_str, end_str)
+    extra, pf = filtro(texto, metodo)
     q = (
         "SELECT SUM(dv.subtotal) as tot FROM detalles_ventas dv "
-        f"JOIN ventas v ON dv.id_venta = v.id WHERE {w}"
+        "JOIN ventas v ON dv.id_venta = v.id "
+        "LEFT JOIN productos p ON dv.id_producto = p.id "
+        f"WHERE {w}{extra}"
     )
-    curr = db.execute_query(q, tuple(p))
-    w2, p2 = where_ventas("v", prev_s, prev_e)
-    q2 = (
-        "SELECT SUM(dv.subtotal) as tot FROM detalles_ventas dv "
-        f"JOIN ventas v ON dv.id_venta = v.id WHERE {w2}"
-    )
-    prev = db.execute_query(q2, tuple(p2))
-    curr_m = float(curr[0]["tot"] or 0) if curr and curr[0] else 0.0
-    prev_m = float(prev[0]["tot"] or 0) if prev and prev[0] else 0.0
+    r = db.execute_query(q, tuple(list(p) + pf))
+    return float(r[0]["tot"] or 0) if r and r[0] else 0.0
+
+
+def comparativa(start_str: str, end_str: str, texto: str = "", metodo: str = "") -> tuple[float, float]:
+    db = _db()
+    prev_s, prev_e = rango_igual_anterior(start_str, end_str)
+    curr_m = _suma(db, start_str, end_str, texto, metodo)
+    prev_m = _suma(db, prev_s, prev_e, texto, metodo)
     if prev_m == 0:
         diff = 100.0 if curr_m > 0 else 0.0
     else:

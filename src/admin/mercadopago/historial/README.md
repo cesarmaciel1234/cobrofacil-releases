@@ -8,4 +8,6 @@ El CSV local `reportes/mercado_pago_sync.csv`. La grilla y las tarjetas leen de 
 - `leer()` devuelve los pagos y los totales del mes y de hoy. Una fila simulada vieja no entra.
 - `omitir(id_pago)` cambia `APPROVED` por `OMITIDO`, o al revés. Devuelve False si no hay archivo.
 
+El historial largo (tabla `mp_pagos` de la tienda, recuperar lo que entró con la PC apagada, enlace ticket ↔ pago y veredicto) es otra rama: `src/motor_cobros_digitales/plano.md`.
+
 `sincronizar.py`, `bajar_mes(token)`. Baja los cobros aprobados del mes, página por página, con el token de la configuración del TPV y los pasa a `guardar`. La búsqueda lleva `begin_date` (día 1) y `end_date` (ahora), las dos en el formato de `fecha_busqueda_mp`. Sin `end_date` Mercado Pago responde 400 y no entra nada. Cada página se intenta tres veces. Recorre el mes entero: no corta porque la primera página ya esté en el archivo. Si no hay token, devuelve 0. Si no pudo leer la primera página, o había pagos nuevos y no pudo escribirlos, devuelve -1. No pide el token en pantalla.

@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -20,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.jefe.reportes.auditoria.consulta import comparativa, listar_lineas, totales
+from src.jefe.reportes.auditoria.consulta import METODOS, comparativa, listar_lineas, totales
 from src.jefe.reportes.auditoria.exportar import WorkerExportAudit
 from src.jefe.reportes.auditoria.kpis import pie, tarjeta_comparativa
 from src.jefe.reportes.financiero.dinero import fmt_plata
@@ -66,11 +67,22 @@ class VistaAuditoria(QWidget):
 
         fila = QHBoxLayout()
         self.txt_audit_prod = QLineEdit()
-        self.txt_audit_prod.setPlaceholderText("Producto o codigo")
+        self.txt_audit_prod.setPlaceholderText("Producto, código, ticket, cajero, depto o pago (fiado, clientes…)")
         self.txt_audit_prod.setStyleSheet(
             f"background: white; border: 1px solid {_FIN['card_border']}; "
             f"border-radius: 8px; padding: 8px 12px; font-weight: 400;"
         )
+        self.txt_audit_prod.returnPressed.connect(self._buscar_auditoria)
+        self.cmb_audit_pago = QComboBox()
+        self.cmb_audit_pago.addItems([f"Pago: {m}" for m in METODOS])
+        self.cmb_audit_pago.setMinimumWidth(170)
+        self.cmb_audit_pago.setStyleSheet(
+            f"QComboBox {{ background: white; color: {_FIN['text_soft']}; border: 1px solid {_FIN['card_border']}; "
+            f"border-radius: 8px; padding: 7px 12px; font-weight: 400; }}"
+            f"QComboBox QAbstractItemView {{ background: white; color: #0F172A; "
+            f"selection-background-color: {_FIN['accent_light']}; selection-color: {_FIN['accent']}; }}"
+        )
+        self.cmb_audit_pago.currentIndexChanged.connect(lambda _i: self._buscar_auditoria())
         b1 = QPushButton("Filtrar")
         b1.clicked.connect(self._buscar_auditoria)
         b2 = QPushButton("Reiniciar")
@@ -81,6 +93,7 @@ class VistaAuditoria(QWidget):
             b.setStyleSheet(idle)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
         fila.addWidget(self.txt_audit_prod, 1)
+        fila.addWidget(self.cmb_audit_pago)
         fila.addWidget(b1)
         fila.addWidget(b2)
         fila.addWidget(self.btn_audit_exportar)
@@ -125,7 +138,13 @@ class VistaAuditoria(QWidget):
 
     def _limpiar_filtros_audit(self):
         self.txt_audit_prod.clear()
+        self.cmb_audit_pago.blockSignals(True)
+        self.cmb_audit_pago.setCurrentIndex(0)
+        self.cmb_audit_pago.blockSignals(False)
         self.cargar_datos("Hoy")
+
+    def _metodo_elegido(self) -> str:
+        return METODOS[max(0, self.cmb_audit_pago.currentIndex())]
 
     def cargar_datos(self, periodo="Hoy"):
         self.current_period = periodo
@@ -143,7 +162,7 @@ class VistaAuditoria(QWidget):
         end = getattr(self, "current_end_str", None)
         if not start or not end:
             return
-        self.audit_all_rows = listar_lineas(start, end, self.txt_audit_prod.text())
+        self.audit_all_rows = listar_lineas(start, end, self.txt_audit_prod.text(), self._metodo_elegido())
         tot = totales(self.audit_all_rows)
         textos = pie(tot)
         self.lbl_foot_regs.setText(textos["regs"])
@@ -163,7 +182,10 @@ class VistaAuditoria(QWidget):
             it = self.audit_kpi_layout.takeAt(0)
             if it.widget():
                 it.widget().deleteLater()
-        _, diff = comparativa(self.current_start_str, self.current_end_str)
+        _, diff = comparativa(
+            self.current_start_str, self.current_end_str,
+            self.txt_audit_prod.text(), self._metodo_elegido(),
+        )
         comp, tono = tarjeta_comparativa(diff)
         for titulo, valor, bg in (
             ("Facturado", fmt_plata(monto), "#ECFDF5"),

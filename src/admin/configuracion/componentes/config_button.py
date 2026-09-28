@@ -4,6 +4,8 @@ from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QMessageBo
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QFont
 
+from src.utils.qt_dpi import scale_px
+
 
 class ConfigButton(QFrame):
     clicked = pyqtSignal()
@@ -11,13 +13,17 @@ class ConfigButton(QFrame):
     def __init__(self, icon_emoji, text, parent=None):
         super().__init__(parent)
         self.setObjectName("ConfigTile")
-        self.setFixedSize(118, 108)
+        # Tamaño y tipografía solo de este módulo (no cambia QT_SCALE global).
+        # Los max() compensan el layout compacto de laptop (~0.70).
+        tile_w = max(168, scale_px(176))
+        tile_h = max(148, scale_px(156))
+        self.setFixedSize(tile_w, tile_h)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setStyleSheet("""
             QFrame#ConfigTile {
                 background-color: #FFFFFF;
                 border: 1px solid #E2E8F0;
-                border-radius: 12px;
+                border-radius: 14px;
             }
             QFrame#ConfigTile:hover {
                 background-color: #EFF6FF;
@@ -26,12 +32,13 @@ class ConfigButton(QFrame):
         """)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(6, 14, 6, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 18, 10, 12)
+        layout.setSpacing(8)
 
+        icon_pt = max(32, scale_px(34))
         self.lbl_icon = QLabel(icon_emoji)
         self.lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        font = QFont("Segoe UI Emoji", 24)
+        font = QFont("Segoe UI Emoji", icon_pt)
         font.setStyleStrategy(
             QFont.StyleStrategy.PreferAntialias | QFont.StyleStrategy.PreferQuality
         )
@@ -39,21 +46,23 @@ class ConfigButton(QFrame):
         self.lbl_icon.setStyleSheet("background: transparent; border: none;")
         layout.addWidget(self.lbl_icon)
 
+        text_px = max(15, scale_px(16))
         self.lbl_text = QLabel(text)
         self.lbl_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_text.setWordWrap(True)
         self.lbl_text.setStyleSheet(
-            "font-family: 'Segoe UI'; font-size: 11px; font-weight: 700; "
+            f"font-family: 'Segoe UI'; font-size: {text_px}px; font-weight: 800; "
             "color: #0F172A; background: transparent; border: none;"
         )
         layout.addWidget(self.lbl_text)
 
+        help_s = max(24, scale_px(24))
         self.btn_help = QPushButton("?", self)
-        self.btn_help.setFixedSize(20, 20)
-        self.btn_help.move(92, 6)
+        self.btn_help.setFixedSize(help_s, help_s)
+        self.btn_help.move(tile_w - help_s - 6, 6)
         self.btn_help.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_help.setStyleSheet(
-            "QPushButton { border: none; font-size: 11px; font-weight: 700; "
+            "QPushButton { border: none; font-size: 14px; font-weight: 700; "
             "color: #94A3B8; background: transparent; }"
             "QPushButton:hover { color: #2563EB; }"
         )

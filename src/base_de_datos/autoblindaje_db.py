@@ -1025,12 +1025,30 @@ class AutoBlindajeDB:
             pass
         return True
 
+    @staticmethod
+    def _host_es_esta_pc(host: str | None) -> bool:
+        h = str(host or "").strip().lower()
+        if h in ("", "localhost", "127.0.0.1", "::1"):
+            return True
+        try:
+            import socket
+
+            nombre = socket.gethostname()
+            return h in {nombre.lower(), *socket.gethostbyname_ex(nombre)[2]}
+        except Exception:
+            return False
+
     @classmethod
     def _aplicar_archivo_restore(
         cls, latest_backup: str, engine_type: str, mariadb_host: str = "127.0.0.1"
     ) -> bool:
         """Aplica un .sql / .zip / .db sobre la BD actual (reemplazo de archivo)."""
         base_dir = get_base_path()
+        host_local = cls._host_es_esta_pc(mariadb_host)
+
+        if engine_type == "mariadb" and latest_backup.lower().endswith(".db"):
+            logger.error("Un respaldo SQLite (.db) no reemplaza la MariaDB: se suma con src/base_de_datos/restaurar.")
+            return False
 
         if engine_type == "sqlite" or latest_backup.lower().endswith(".db"):
             db_file = os.path.join(base_dir, "punpro.db")
@@ -1045,19 +1063,29 @@ class AutoBlindajeDB:
         if latest_backup.endswith(".sql"):
             try:
                 mysql_exe = os.path.join(base_dir, "mariadb_server", "bin", "mysql.exe")
+                if not os.path.isfile(mysql_exe):
+                    logger.error(f"Restauración MariaDB: no está {mysql_exe}")
+                    return False
                 flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
                 with open(latest_backup, "r", encoding="utf-8") as f:
-                    subprocess.run(
-                        [mysql_exe, "-u", "root", "-p1234", "punpro_db"],
-                        stdin=f, creationflags=flags, timeout=120,
+                    r = subprocess.run(
+                        [mysql_exe, f"--host={mariadb_host or '127.0.0.1'}", "--port=3306",
+                         "-u", "root", "-p1234", "punpro_db"],
+                        stdin=f, creationflags=flags, timeout=300, capture_output=True, text=True,
                     )
-                logger.info("✅ Restauración MariaDB desde SQL completada.")
+                if r.returncode != 0:
+                    logger.error(f"Restauración MariaDB desde SQL falló: {(r.stderr or '').strip()[:500]}")
+                    return False
+                logger.info(f"✅ Restauración MariaDB desde SQL completada en {mariadb_host}.")
                 return True
             except Exception as e:
                 logger.error(f"Error restaurando MariaDB SQL: {e}")
                 return False
 
         if latest_backup.endswith(".zip"):
+            if not host_local:
+                logger.error(f"El respaldo físico .zip no se aplica a otra PC ({mariadb_host}): solo en la maestra.")
+                return False
             try:
                 data_dir = os.path.join(base_dir, "mariadb_server", "data")
 

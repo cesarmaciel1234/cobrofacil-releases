@@ -124,31 +124,41 @@ class MotorCuenta:
         ) or []
 
     def alta_regular(self, nombre, telefono, limite, dni):
-        return db_manager.execute_non_query(
-            "INSERT INTO clientes (nombre, telefono, limite_credito, dni, tipo_cliente) "
-            "VALUES (?, ?, ?, ?, 'regular')",
-            (nombre, telefono, limite, dni),
+        from src.clientes_fiado.oficina.huella.eventos import alta
+
+        return alta(
+            {"nombre": nombre, "telefono": telefono, "limite_credito": limite, "dni": dni, "tipo_cliente": "regular"},
+            via="cartera",
         )
 
     def actualizar_existente(self, cliente_id, nombre, telefono, limite, dni):
-        return db_manager.execute_non_query(
-            "UPDATE clientes SET nombre = ?, telefono = ?, limite_credito = ?, dni = ? WHERE id = ?",
-            (nombre, telefono, limite, dni, cliente_id),
+        from src.clientes_fiado.oficina.huella.eventos import editar
+
+        return editar(
+            cliente_id,
+            {"nombre": nombre, "telefono": telefono, "limite_credito": limite, "dni": dni},
         )
 
     def actualizar_ficha(self, cliente_id, nombre, dni, telefono, direccion, tipo):
-        return db_manager.execute_non_query(
-            "UPDATE clientes SET nombre = ?, dni = ?, telefono = ?, direccion = ?, tipo_cliente = ? WHERE id = ?",
-            (nombre, dni, telefono or None, direccion or None, tipo, cliente_id),
+        from src.clientes_fiado.oficina.huella.eventos import editar
+
+        return editar(
+            cliente_id,
+            {"nombre": nombre, "dni": dni, "telefono": telefono or None,
+             "direccion": direccion or None, "tipo_cliente": tipo},
         )
 
     def fijar_limite(self, cliente_id, limite):
-        return db_manager.execute_non_query(
-            "UPDATE clientes SET limite_credito = ? WHERE id = ?",
-            (limite, cliente_id),
-        )
+        from src.clientes_fiado.oficina.huella.eventos import editar
+
+        return editar(cliente_id, {"limite_credito": limite}, accion="LIMITE")
 
     def abonar(self, cliente_id, monto, descripcion, medio="", perfil="", quien=""):
+        from src.clientes_fiado.oficina.huella import tabla
+        from src.clientes_fiado.oficina.huella.eventos import movimiento_en
+
+        tabla.asegurar()
+
         def trabajo(cursor):
             bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
             cursor.execute(
@@ -189,6 +199,7 @@ class MotorCuenta:
                     "VALUES (?, 'ABONO', ?, ?, ?)",
                     (cliente_id, monto, nuevo_saldo, descripcion),
                 )
+            movimiento_en(cursor, "ABONO", cliente_id, monto, descripcion, medio)
             return True, nuevo_saldo, nombre
 
         return _confirmar(trabajo, (False, 0.0, ""))
@@ -255,6 +266,10 @@ class MotorCuenta:
         monto = float(monto or 0)
         if monto <= 0:
             return False, 0.0, ""
+        from src.clientes_fiado.oficina.huella import tabla
+        from src.clientes_fiado.oficina.huella.eventos import movimiento_en
+
+        tabla.asegurar()
 
         def trabajo(cursor):
             bloqueo = " FOR UPDATE" if type(cursor).__name__ == "MariaDBCursorWrapper" else ""
@@ -281,6 +296,7 @@ class MotorCuenta:
                 "VALUES (?, 'CARGO', ?, ?, ?)",
                 (cliente_id, monto, nuevo_saldo, descripcion),
             )
+            movimiento_en(cursor, "CARGO", cliente_id, monto, descripcion)
             return True, nuevo_saldo, nombre
 
         return _confirmar(trabajo, (False, 0.0, ""))

@@ -123,11 +123,14 @@ class DialogoHistorialDia(QDialog):
                 return
             username = f"{username} (Autorizado por Admin)"
 
+        plan = self.controller.plan_devolucion(self.ticket_seleccionado)
+        aviso_dinero = self.controller.texto_devolucion(plan)
         res = QMessageBox.question(
             self,
             "Cancelar Venta",
             f"¿Seguro que desea cancelar la venta #{self.ticket_seleccionado}?\n\n"
-            "Esto devolverá el stock de todos los artículos al inventario.",
+            "Esto devolverá el stock de todos los artículos al inventario.\n\n"
+            f"{aviso_dinero}",
             QMessageBox.Yes | QMessageBox.No,
         )
         if res == QMessageBox.Yes:
@@ -136,16 +139,19 @@ class DialogoHistorialDia(QDialog):
                 try:
                     from src.notificaciones.motor.estado import publicar
 
+                    devolver = float((plan or {}).get("a_devolver") or 0)
+                    extra = f" · devolver {self.controller.texto_monto(devolver)} en efectivo" if devolver > 0 else ""
                     publicar(
                         "cobro_cancelado",
-                        f"⛔ COBRO CANCELADO — ticket {self.ticket_seleccionado}",
+                        f"⛔ COBRO CANCELADO — ticket {self.ticket_seleccionado}{extra}",
                         segundos=10,
                     )
                 except Exception:
                     pass
                 QMessageBox.information(
                     self, "Éxito",
-                    f"Venta #{self.ticket_seleccionado} cancelada. Inventario actualizado.",
+                    f"Venta #{self.ticket_seleccionado} cancelada. Inventario actualizado.\n\n"
+                    f"{aviso_dinero}",
                 )
             else:
                 QMessageBox.critical(

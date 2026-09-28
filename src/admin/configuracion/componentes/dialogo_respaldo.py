@@ -40,9 +40,8 @@ class DialogoRespaldo(QDialog):
 
         lbl_desc = QLabel(
             "Guarda una copia segura o restaura una anterior.\n\n"
-            "Al restaurar una copia de AYER, el sistema COMPLEMENTA con las ventas "
-            "y el stock de HOY (no se pisan). El backup del día se actualiza solo "
-            "en segundo plano; al cerrar turno solo se sella el cierre."
+            "Para restaurar sirve un respaldo o el pendrive del jefe: elegís la carpeta "
+            "y queda marcada la copia más nueva. Lo de HOY no se pierde."
         )
         lbl_desc.setStyleSheet("font-size: 13px; color: #334155; border: none;")
         lbl_desc.setWordWrap(True)
@@ -70,7 +69,14 @@ class DialogoRespaldo(QDialog):
         import shutil
         import subprocess
 
-        is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
+        from src.base_de_datos.restaurar import SinTienda, destino_actual
+
+        try:
+            destino = destino_actual()
+        except SinTienda as e:
+            QMessageBox.warning(self, "Sin maestra", f"{e}\n\nEl respaldo tiene que salir de la tienda, no de esta caja.")
+            return
+        is_mariadb = destino.motor == "mariadb"
         ext = "sql" if is_mariadb else "db"
         default_name = f"respaldo_tpv_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
 
@@ -88,77 +94,21 @@ class DialogoRespaldo(QDialog):
                 if not os.path.exists(mysqldump_exe):
                     raise FileNotFoundError(f"No se encontró mysqldump en {mysqldump_exe}")
 
-                cmd = [mysqldump_exe, "-u", "root", "punpro_db"]
-                # Intentar conectar con o sin pass (default MariaDBEngine)
-                from src.db_engines.mariadb_engine import MariaDBEngine
-                cmd.append("--password=1234")
-
+                cmd = [
+                    mysqldump_exe, f"--host={destino.host}", "--port=3306", "-u", "root",
+                    "--password=1234", "--single-transaction", "--quick", "punpro_db",
+                ]
                 with open(filepath, "w", encoding="utf-8") as f:
                     subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
             else:
-                shutil.copy2(db_manager.db_path, filepath)
+                shutil.copy2(destino.archivo, filepath)
 
             QMessageBox.information(self, "Éxito", f"Respaldo creado correctamente en:\n{filepath}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Ocurrió un error al crear el respaldo:\n{e}")
 
     def _importar(self):
-        from PyQt6.QtWidgets import QFileDialog, QMessageBox
-        from src.base_de_datos.database import db_manager
-        import os
-        import shutil
-        import subprocess
+        from src.admin.configuracion.componentes.dialogo_restaurar import DialogoRestaurar
 
-        is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-        ext = "sql" if is_mariadb else "db"
-
-        filepath, _ = QFileDialog.getOpenFileName(self, "Seleccionar Respaldo", "", f"Archivos de Respaldo (*.{ext})")
-        if not filepath:
-            return
-
-        from PyQt6.QtWidgets import QInputDialog, QLineEdit
-        pwd, ok = QInputDialog.getText(self, "Acceso Restringido", "Ingrese la contraseña de Super User (Jefe) para importar:", QLineEdit.Password)
-        if not ok: return
-
-        if pwd != CLAVE_RED and pwd != "209470":
-            QMessageBox.critical(self, "Acceso Denegado", "Contraseña incorrecta. Solo el administrador puede importar datos.")
-            return
-
-        reply = QMessageBox.question(
-            self,
-            "Confirmar Restauración",
-            "RESTAURACIÓN CON COMPLEMENTO\n\n"
-            "Se restaurará la copia seleccionada y el sistema intentará "
-            "CONSERVAR las ventas / stock de HOY (merge: ayer + hoy, no se pisan).\n\n"
-            "También se guarda un snapshot pre_restore de emergencia.\n\n"
-            "¿Continuar?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        try:
-            from src.base_de_datos.autoblindaje_db import AutoBlindajeDB
-            engine = "mariadb" if is_mariadb else "sqlite"
-            host = "127.0.0.1"
-            try:
-                host = getattr(getattr(db_manager, "mariadb_engine", None), "host", None) or host
-            except Exception:
-                pass
-
-            ok = AutoBlindajeDB.restaurar_archivo_con_merge(filepath, engine, host)
-            if not ok:
-                raise RuntimeError("El motor de restauración devolvió error. Revisá los logs.")
-
-            QMessageBox.information(
-                self,
-                "Éxito",
-                "Restauración completada.\n\n"
-                "Las ventas de hoy se reinyectaron sobre la copia restaurada "
-                "(complemento, no reemplazo ciego).\n\n"
-                "REINICIÁ EL PROGRAMA para aplicar los cambios.",
-            )
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Ocurrió un error al restaurar:\n{e}")
+        qt_exec(DialogoRestaurar(self))
 

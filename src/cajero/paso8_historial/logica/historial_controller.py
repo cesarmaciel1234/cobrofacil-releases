@@ -95,6 +95,33 @@ class HistorialController:
         """Cancela la venta e impacta el inventario."""
         return db_manager.cancelar_venta_transaccional(id_venta, username)
 
+    def plan_devolucion(self, id_venta: int) -> dict:
+        try:
+            return db_manager.plan_devolucion(id_venta) or {}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def texto_monto(monto: float) -> str:
+        from src.cajero.paso8_historial.logica.formato import fmt_moneda
+
+        return fmt_moneda(float(monto or 0))
+
+    @staticmethod
+    def texto_devolucion(plan: dict) -> str:
+        """El aviso de plata para el cajero: devolver en efectivo y se descuenta del cierre."""
+        from src.cajero.paso8_historial.logica.formato import fmt_moneda
+
+        if not plan:
+            return "Deberá devolver el importe en efectivo. Se descontará del cierre al finalizar el turno."
+        monto = float(plan.get("a_devolver") or 0)
+        if monto <= 0:
+            return f"Venta {plan.get('metodo') or 'a cuenta'}: no se devuelve efectivo, se anula la deuda del cliente."
+        return (
+            f"DEBERÁ DEVOLVER {fmt_moneda(monto)} EN EFECTIVO al cliente.\n"
+            "Se descontará del cierre al finalizar el turno."
+        )
+
     def reimprimir_ticket(self, id_venta: int):
         v = db_manager.execute_query("SELECT * FROM ventas WHERE id = ?", (id_venta,))
         if not v:

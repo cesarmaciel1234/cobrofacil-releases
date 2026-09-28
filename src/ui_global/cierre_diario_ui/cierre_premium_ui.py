@@ -266,7 +266,8 @@ class CierreGlobalUI(QWidget):
         self.card_movs.setToolTip("Click para ver entradas y salidas")
         self.card_movs.clicked.connect(lambda: self._mostrar_detalles("Entradas y Salidas de Caja", [
             ("Entradas Manuales", self.datos_actuales.get("entradas_efectivo", 0), False),
-            ("Salidas Manuales", self.datos_actuales.get("salidas_efectivo", 0), True)
+            ("Salidas Manuales", self.datos_actuales.get("salidas_efectivo", 0) - self.datos_actuales.get("devoluciones_efectivo", 0), True),
+            ("Devoluciones por cancelación", self.datos_actuales.get("devoluciones_efectivo", 0), True)
         ]))
 
         self.card_totales = ClickableMetricCard("Ganancia Estimada", "📈", "#14B8A6")

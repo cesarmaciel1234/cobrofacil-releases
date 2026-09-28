@@ -25,15 +25,37 @@ class EscuchaMP:
 
     @staticmethod
     def token():
+        """Token TPV. En esclava prioriza el de la tienda (MariaDB), sin pegarlo a mano."""
         config._load_config()
-        return str(config.get("mp_access_token", "") or "").strip()
+        local = str(config.get("mp_access_token", "") or "").strip()
+        try:
+            from src.central_red_global.sync_tienda.rol import es_esclava
+            from src.central_red_global.sync_tienda.mp_token import traer
 
+            if es_esclava():
+                remoto = traer()
+                if remoto:
+                    return remoto
+        except Exception:
+            pass
+        return local
+
+    @staticmethod
     @staticmethod
     def asegurar():
         """Arranca la escucha si hay token en la config. No pide otro."""
         token = EscuchaMP.token()
         if not token:
             return False
+        # Maestra: deja el token en la tienda para que las esclavas lo lean
+        try:
+            from src.central_red_global.sync_tienda.rol import es_esclava
+            from src.central_red_global.sync_tienda.mp_token import publicar
+
+            if not es_esclava():
+                publicar()
+        except Exception:
+            pass
         hilo = EscuchaMP._hilo
         if hilo is not None and hilo.isRunning():
             if getattr(hilo, "token", "") == token:
@@ -70,6 +92,12 @@ class EscuchaMP:
             from src.admin.mercadopago.historial.archivo import guardar
 
             guardar([pago])
+        except Exception:
+            pass
+        try:
+            from src.motor_cobros_digitales import anotar_llegada
+
+            anotar_llegada(pago)
         except Exception:
             pass
         if EscuchaMP.con_sonido():

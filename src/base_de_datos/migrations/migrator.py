@@ -318,6 +318,10 @@ class MigratorMixin:
                     "negocio_telefono":  _cfg_data.get("phone", ""),
                     "moneda_simbolo":    _cfg_data.get("currency_symbol", "$"),
                     "impresora_fiscal":  _cfg_data.get("fiscal_printer_mode", "0"),
+                    "mp_access_token":   _cfg_data.get("mp_access_token", ""),
+                    "mp_user_id":        _cfg_data.get("mp_user_id", ""),
+                    "mp_device_id":      _cfg_data.get("mp_device_id", ""),
+                    "mp_qr_pos_external_id": _cfg_data.get("mp_qr_pos_external_id", ""),
                 }
                 for _k, _v in _sync_map.items():
                     cursor.execute(

@@ -20,3 +20,9 @@ Desde el terminal:
 En `ui/filtros.py`, el combo de método empieza con el texto `TODOS`. Es un valor del filtro, no un comentario `TODO`. El filtro sigue siendo TODOS, EFECTIVO, TARJETA, TRANSFERENCIA y MIXTO.
 
 F3 tapa la venta con el gris `#334155`. La hoja del historial queda clara al frente.
+
+## Cancelar un ticket
+
+`dialogo.cancelar_venta_accion`: el cajero pide PIN de admin (el admin no). Antes de confirmar, `HistorialController.plan_devolucion` y `texto_devolucion` arman el aviso: «DEBERÁ DEVOLVER $X EN EFECTIVO al cliente. Se descontará del cierre al finalizar el turno.» En fiado y clientes dice que no se devuelve efectivo y se anula la deuda. El mismo aviso sale al terminar, y la franja de notificaciones muestra «⛔ COBRO CANCELADO — ticket N · devolver $X en efectivo».
+
+La cuenta y el retiro los hace la base (`src/base_de_datos/repos/README.md`, «Cancelar un ticket»). Esta pantalla no escribe movimientos de caja.

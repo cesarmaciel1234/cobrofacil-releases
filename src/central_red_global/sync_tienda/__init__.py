@@ -6,6 +6,8 @@ from src.central_red_global.sync_tienda.inventario.empujar import empujar_produc
 from src.central_red_global.sync_tienda.al_conectar import al_conectar_esclava
 from src.central_red_global.sync_tienda.ranking.motor import ranking_carteleria
 from src.central_red_global.sync_tienda.ranking.desde_payload import asegurar_ranking
+from src.central_red_global.sync_tienda.mp_token import publicar as publicar_mp_token
+from src.central_red_global.sync_tienda.mp_token import traer as traer_mp_token
 
 __all__ = [
     "es_esclava",
@@ -16,4 +18,6 @@ __all__ = [
     "al_conectar_esclava",
     "ranking_carteleria",
     "asegurar_ranking",
+    "publicar_mp_token",
+    "traer_mp_token",
 ]

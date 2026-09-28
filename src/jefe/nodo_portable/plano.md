@@ -1,23 +1,42 @@
 # Plano — nodo portable
 
-El código está en `motor_nodo.py`. La función de entrada del catálogo es `importar_catalogo_desde_nodo`.
+El código está en `motor_nodo.py` y `espejo/`.
 
 ## Frente
 
-La pantalla del jefe dispara la sync. No decide qué tablas viajan. Eso está fijo en el motor.
+El botón del panel del jefe: la primera vez «Copiar nodo»; después «Sincronizar nodo». El diálogo ofrece Sincronizar, Promover y Reemplazar. No hay «Importar».
+
+Sin red, la vitrina muestra la franja ámbar «Sin red · datos de la tienda al …» y los números salen de la copia.
 
 ## Fondo
 
-La maestra del negocio es dueña de las ventas. El nodo de casa es dueño de los cambios de catálogo.
+La maestra es dueña de todo.
 
-Hacia el nodo viajan ventas, cierres, auditoría, detalle de venta y movimientos de caja. El nodo las lee. No inventa ventas.
+1. `espejo/` guarda en esta PC una copia de la tienda y la refresca sola cada 5 minutos mientras hay maestra (`espejo/README.md`). Si se pierde el pendrive o se borra su carpeta, la PC sigue teniendo todo.
+2. El pendrive (`nodo_negocio.db`) es una copia de ese archivo. Sincronizar: refresca la copia si hay maestra, la tienda toma los eventos de clientes que traía el pendrive (`_chupar_antes`), vuelca la copia (`espejo.volcar_a`) y vuelve a poner los eventos hechos sin red que traía (`_devolver_eventos`). Sin maestra lleva la última copia buena.
+3. Sin maestra, `espejo.fuente()` hace que vitrina, reportes financieros y auditoría lean la copia de esta PC; si no hay (otra PC en casa), la del pendrive.
 
-Hacia la maestra viajan productos, proveedores, departamentos, categorías, combos y clientes. Al volver al negocio, el catálogo de la maestra se actualiza con lo hecho en casa.
+Viaja toda la tienda: ventas, detalle, movimientos de caja, productos, clientes (con huella), `clientes_auditoria`, `cuenta_corriente`, `mp_pagos` y el resto (usuarios, configuración, categorías…), con todas sus columnas. Menos `terminales_activos`.
 
-No hay «importar ventas desde el nodo», salvo que ese nodo haya sido promovido porque cayó el servidor. Las ventas salen del negocio. El catálogo entra desde casa.
+4. El mismo pendrive, o la copia de esta PC, sirve para restaurar la tienda: Configuración → Mantenimiento → Respaldo → Importar / Restaurar. Es el motor de `src/base_de_datos/restaurar`, el mismo que usan los respaldos. El jefe copia cada 5 minutos y el respaldo guarda como siempre; ninguno sabe del otro.
 
-Los PNG de productos se sincronizan aparte, con los archivos de `Catalogos/png_productos`. No van dentro del upsert de la tabla.
+Para leer el pendrive hace falta el sistema instalado. La tienda trabaja con MariaDB; el pendrive es un SQLite de viaje y lleva usuarios y configuración: se cuida como una llave.
+
+Clientes cargados afuera: no se importan fichas; los lleva `src/clientes_fiado/oficina/huella` como eventos.
+
+Promover (si cayó el servidor) importa del nodo a la base local. Los PNG de productos se sincronizan aparte (`Catalogos/png_productos`).
 
 ## Qué no cambiar
 
-No invertir las dos vías. Un choque de id deja las dos bases distintas.
+- No volver a copiar fichas del nodo a la maestra (`ON DUPLICATE KEY UPDATE`): pisa deudas con datos viejos y choca ids.
+- No meter la copia de la tienda en `punpro.db`: es la base de vender sin red, con su cola aparte y sus números de ticket.
+- El pendrive y la copia se abren con `sqlite3`, no con `db_manager`.
+- El diario de AppData no entra en la copia: sus ids locales pueden repetir un ticket que ya subió con otro número.
+
+
+## Tolerancia a Fallos y Sincronización en Esclava
+
+El nodo jefe (notebook del dueño) funciona como esclava y sincroniza en background cada 5 minutos.
+- **Doble Vía (Espejo vs Ruta Externa):** El sistema guarda los datos que chupa de la maestra en una **ruta externa** seleccionada, pero siempre mantiene un **espejo interno** en la carpeta del sistema.
+- **Seguridad:** El sistema del jefe *lee del espejo interno*. Si la ruta externa (ej. pendrive) es extraída o eliminada, el sistema no crashea. Al intentar sincronizar manualmente y detectar que la ruta no existe, muestra el mensaje: *"La ruta no existe, elija uno nuevo"* (necesario para volver a tener el backup externo seguro).
+- **Indicador Offline:** Al cortarse la red, la interfaz no se congela (la sincronización ocurre en un QThread). El dashboard debe indicar visualmente a qué hora fue la última sincronización exitosa (ej. 🔴 *Sin red - Últimos datos: 14:30 hs*).

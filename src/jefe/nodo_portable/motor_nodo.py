@@ -5,11 +5,12 @@ Carpeta (USB / OneDrive):
   CobroFacil_Nodo/
     nodo.json
     contabilidad_jefe.db
-    nodo_negocio.db   (ventas, detalles, productos, clientes, movimientos_caja)
+    nodo_negocio.db   copia de espejo/ (la copia de la tienda que esta PC refresca sola)
 
 1ª vez: copiar_nodo_completo (0–100%)
-Después: sincronizar_faltantes (solo ids nuevos)
+Después: sincronizar_faltantes (refresca la copia local y la vuelca al pendrive)
 Si cae el negocio: promover_nodo()
+Clientes cargados afuera: los chupa la tienda sola (src/clientes_fiado/oficina/huella).
 """
 from __future__ import annotations
 
@@ -18,8 +19,9 @@ import os
 import shutil
 import socket
 import sqlite3
+import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Callable
 
 NODO_DIR_NAME = "CobroFacil_Nodo"
 NODO_JSON = "nodo.json"
@@ -33,6 +35,9 @@ TABLAS_NEGOCIO = (
     "ventas",
     "detalles_ventas",
     "movimientos_caja",
+    "clientes_auditoria",
+    "cuenta_corriente",
+    "mp_pagos",
 )
 
 ProgressCb = Callable[[int, str], None]
@@ -224,69 +229,131 @@ def _ensure_negocio_schema(conn: sqlite3.Connection) -> None:
         );
         """
     )
+    from src.clientes_fiado.oficina.huella.tabla import COLUMNAS_CLIENTE, DDL_EVENTOS
+
+    cur.execute(DDL_EVENTOS)
+    tiene = {r[1] for r in cur.execute("PRAGMA table_info(clientes)").fetchall()}
+    for col, tipo in COLUMNAS_CLIENTE:
+        if col not in tiene:
+            cur.execute(f"ALTER TABLE clientes ADD COLUMN {col} {tipo}")
     conn.commit()
 
 
-def _row_to_dict(row: Any) -> dict:
-    if isinstance(row, dict):
-        return dict(row)
+def _hay_tienda() -> bool:
+    from src.clientes_fiado.oficina.huella.tabla import es_tienda
+
+    return es_tienda()
+
+
+def _chupar_antes(neg_path: str) -> dict:
+    """Antes de pisar el pendrive, la tienda toma los eventos de clientes que trajo. Sin tienda, nada."""
+    if not _hay_tienda():
+        return {}
     try:
-        return dict(row)
+        from src.clientes_fiado.oficina.huella.absorber import aplicar, leer_eventos
+
+        return aplicar(leer_eventos(neg_path), "NODO")
     except Exception:
         return {}
 
 
-def _fetch_table(table: str) -> list[dict]:
-    from src.base_de_datos.database import db_manager
+def _devolver_eventos(neg_path: str, eventos: list[dict]) -> None:
+    """Los eventos hechos sin red que traía el pendrive siguen viajando en la copia nueva."""
+    if not eventos:
+        return
+    from src.clientes_fiado.oficina.huella.tabla import COLUMNAS_EVENTO, DDL_EVENTOS
 
+    conn = sqlite3.connect(neg_path, timeout=10)
     try:
-        rows = db_manager.execute_query(f"SELECT * FROM {table}")
-        if not rows:
-            return []
-        return [_row_to_dict(r) for r in rows]
-    except Exception:
-        # detalles_ventas vs detalle_ventas
-        if table == "detalles_ventas":
-            try:
-                rows = db_manager.execute_query("SELECT * FROM detalle_ventas")
-                return [_row_to_dict(r) for r in (rows or [])]
-            except Exception:
-                return []
-        return []
+        conn.execute(DDL_EVENTOS)
+        conn.executemany(
+            f"INSERT OR IGNORE INTO clientes_auditoria ({', '.join(COLUMNAS_EVENTO)}) "
+            f"VALUES ({', '.join('?' * len(COLUMNAS_EVENTO))})",
+            [tuple(ev.get(c) for c in COLUMNAS_EVENTO) for ev in eventos],
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
 
-def _table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
-    cur = conn.cursor()
-    cur.execute(f"PRAGMA table_info({table})")
-    return [r[1] for r in cur.fetchall()]
+def _copia_al_dia(progress_cb: ProgressCb | None) -> dict:
+    """Con maestra, refresca la copia de esta PC. Sin maestra (o tienda con error) va la última buena."""
+    from src.jefe.nodo_portable import espejo
+
+    _emit(progress_cb, 15, "Actualizando la copia de la tienda en esta PC…")
+    res = espejo.refrescar()
+    for _ in range(180):
+        if res.get("estado") != "ocupado":
+            break
+        time.sleep(1)
+        res = espejo.refrescar()
+    if not espejo.existe():
+        raise RuntimeError(
+            "Esta PC todavía no tiene copia de la tienda.\n\n"
+            "Conectate una vez a la maestra (Servidor LAN) y volvé a intentar."
+        )
+    return res
 
 
-def _upsert_rows(conn: sqlite3.Connection, table: str, rows: list[dict], only_missing: bool = False) -> int:
-    if not rows:
-        return 0
-    cols = _table_columns(conn, table)
-    if not cols:
-        return 0
-    cur = conn.cursor()
-    written = 0
-    for row in rows:
-        data = {k: row.get(k) for k in cols if k in row}
-        if not data:
-            continue
-        keys = list(data.keys())
-        placeholders = ",".join("?" * len(keys))
-        col_sql = ",".join(keys)
-        if only_missing:
-            sql = f"INSERT OR IGNORE INTO {table} ({col_sql}) VALUES ({placeholders})"
-        else:
-            sql = f"INSERT OR REPLACE INTO {table} ({col_sql}) VALUES ({placeholders})"
+def _llevar_al_pendrive(root: str, progress_cb: ProgressCb | None) -> dict:
+    from src.jefe.nodo_portable import espejo
+
+    neg_path = _negocio_db_path(root)
+    tomados, sueltos = {}, []
+    if os.path.isfile(neg_path):
+        _emit(progress_cb, 45, "Tomando clientes cargados afuera…")
+        tomados = _chupar_antes(neg_path)
         try:
-            cur.execute(sql, tuple(data[k] for k in keys))
-            written += 1
+            from src.clientes_fiado.oficina.huella.absorber import leer_eventos
+
+            sueltos = leer_eventos(neg_path)
         except Exception:
-            pass
-    conn.commit()
-    return written
+            sueltos = []
+    _emit(progress_cb, 60, "Copiando al pendrive…")
+    espejo.volcar_a(neg_path)
+    conn = sqlite3.connect(neg_path, timeout=10)
+    try:
+        _ensure_negocio_schema(conn)
+    finally:
+        conn.close()
+    _devolver_eventos(neg_path, sueltos)
+    try:
+        from src.clientes_fiado.oficina.huella.absorber import llevar_al_nodo
+
+        llevar_al_nodo(neg_path)
+    except Exception:
+        pass
+    return tomados
+
+
+def _copiar_contabilidad(root: str, progress_cb: ProgressCb | None, siempre: bool) -> str:
+    src_conta = _contabilidad_origen()
+    dst_conta = _conta_path_in_nodo(root)
+    try:
+        if os.path.isfile(src_conta):
+            if siempre or not os.path.isfile(dst_conta) or os.path.getmtime(src_conta) >= os.path.getmtime(dst_conta):
+                _emit(progress_cb, 8, "Copiando contabilidad del jefe…")
+                shutil.copy2(src_conta, dst_conta)
+        elif not os.path.isfile(dst_conta):
+            sqlite3.connect(dst_conta).close()
+    except Exception:
+        pass
+    return dst_conta
+
+
+def _resumen(res: dict, tomados: dict) -> dict:
+    from src.jefe.nodo_portable import espejo
+
+    m = espejo.estado()
+    stats = {
+        "copia_de": m.get("ultima_copia", ""),
+        "clientes_tomados": int((tomados or {}).get("aplicado", 0)),
+    }
+    if res.get("estado") == "sin_tienda":
+        stats["aviso"] = "Sin maestra: se llevó la última copia de esta PC."
+    elif res.get("estado") == "error":
+        stats["aviso"] = f"La tienda dio error al leer; se llevó la última copia buena. ({res.get('detalle', '')[:160]})"
+    return stats
 
 
 def _ensure_nodo_root(dest_folder: str) -> str:
@@ -303,65 +370,24 @@ def _ensure_nodo_root(dest_folder: str) -> str:
 
 
 def copiar_nodo_completo(dest_folder: str, progress_cb: ProgressCb | None = None) -> str:
-    """
-    Copia completa 0–100%. Devuelve ruta del nodo.
-    Incluye contabilidad + espejo negocio desde la DB conectada (maestra vía esclava).
-    """
+    """Primera copia (o Reemplazar): contabilidad + copia de la tienda de esta PC. Devuelve la ruta del nodo."""
     root = _ensure_nodo_root(dest_folder)
     _emit(progress_cb, 2, "Preparando carpeta del nodo…")
-
-    # 1) Contabilidad
-    _emit(progress_cb, 8, "Copiando contabilidad del jefe…")
-    src_conta = _contabilidad_origen()
-    dst_conta = _conta_path_in_nodo(root)
-    if os.path.isfile(src_conta):
-        shutil.copy2(src_conta, dst_conta)
-    else:
-        # Crear vacío usable
-        os.makedirs(os.path.dirname(dst_conta) or root, exist_ok=True)
-        sqlite3.connect(dst_conta).close()
-
-    # 2) Espejo negocio
-    _emit(progress_cb, 15, "Creando espejo del negocio…")
-    neg_path = _negocio_db_path(root)
-    if os.path.isfile(neg_path):
-        try:
-            os.remove(neg_path)
-        except OSError:
-            pass
-    conn = sqlite3.connect(neg_path)
-    try:
-        _ensure_negocio_schema(conn)
-        n_tables = len(TABLAS_NEGOCIO)
-        for i, table in enumerate(TABLAS_NEGOCIO):
-            pct = 20 + int((i / max(n_tables, 1)) * 70)
-            _emit(progress_cb, pct, f"Exportando {table}…")
-            rows = _fetch_table(table)
-            _upsert_rows(conn, table, rows, only_missing=False)
-        # Diario AppData como refuerzo de ventas
-        _emit(progress_cb, 92, "Integrando diario externo…")
-        _merge_diario_into_nodo(conn)
-    finally:
-        conn.close()
-
+    dst_conta = _copiar_contabilidad(root, progress_cb, siempre=True)
+    res = _copia_al_dia(progress_cb)
+    tomados = _llevar_al_pendrive(root, progress_cb)
     _sync_catalogos_dir(progress_cb, root, upload=True)
 
+    ahora = datetime.now().isoformat(timespec="seconds")
     meta = {
-        "version": 1,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
-        "last_full": datetime.now().isoformat(timespec="seconds"),
-        "last_sync": datetime.now().isoformat(timespec="seconds"),
+        "version": 2,
+        "created_at": ahora,
+        "last_full": ahora,
+        "last_sync": ahora,
+        "last_sync_stats": _resumen(res, tomados),
         "source_host": _origen_host(),
         "path": root,
     }
-    try:
-        from src.base_de_datos.database import db_manager
-
-        meta["source_engine"] = getattr(db_manager, "db_engine_type", "")
-        meta["source_is_master"] = bool(getattr(db_manager, "is_master", False))
-    except Exception:
-        pass
-
     _save_meta(root, meta)
     set_nodo_path(root)
     try:
@@ -374,116 +400,20 @@ def copiar_nodo_completo(dest_folder: str, progress_cb: ProgressCb | None = None
     return root
 
 
-def _merge_diario_into_nodo(conn: sqlite3.Connection) -> int:
-    """Suma ventas del diario AppData que falten en el nodo."""
-    try:
-        from src.base_de_datos.diario_ventas_externo import _iter_payloads
-
-        payloads = _iter_payloads(max_archivos=2000)
-    except Exception:
-        return 0
-    n = 0
-    for p in payloads:
-        vid = p.get("id")
-        if vid is None:
-            continue
-        venta = {
-            "id": vid,
-            "fecha": p.get("fecha"),
-            "total": p.get("total"),
-            "pago_con": p.get("pago_con"),
-            "cambio": p.get("cambio"),
-            "pago_efectivo": p.get("pago_efectivo"),
-            "pago_otro": p.get("pago_otro"),
-            "usuario": p.get("usuario"),
-            "estado": p.get("estado") or "COMPLETADA",
-            "metodo_pago": p.get("metodo_pago"),
-            "caja_id": p.get("caja_id") or 1,
-            "descuento": p.get("descuento") or 0,
-            "recargo": p.get("recargo") or 0,
-            "cliente_nombre": p.get("cliente_nombre") or "",
-        }
-        n += _upsert_rows(conn, "ventas", [venta], only_missing=True)
-        detalles = []
-        for it in p.get("items") or []:
-            detalles.append(
-                {
-                    "id_venta": vid,
-                    "id_producto": it.get("id"),
-                    "nombre_producto": it.get("nombre") or "",
-                    "cantidad": it.get("cant") or 0,
-                    "precio_unitario": it.get("precio") or 0,
-                    "subtotal": it.get("subtotal") or 0,
-                }
-            )
-        if detalles:
-            # detalles sin id propio: insert ignore por no tener PK estable → usar REPLACE suelto
-            cur = conn.cursor()
-            for d in detalles:
-                try:
-                    cur.execute(
-                        "SELECT 1 FROM detalles_ventas WHERE id_venta=? AND id_producto=? AND cantidad=? LIMIT 1",
-                        (d["id_venta"], d["id_producto"], d["cantidad"]),
-                    )
-                    if cur.fetchone():
-                        continue
-                    cur.execute(
-                        """
-                        INSERT INTO detalles_ventas
-                        (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, subtotal)
-                        VALUES (?,?,?,?,?,?)
-                        """,
-                        (
-                            d["id_venta"],
-                            d["id_producto"],
-                            d["nombre_producto"],
-                            d["cantidad"],
-                            d["precio_unitario"],
-                            d["subtotal"],
-                        ),
-                    )
-                    n += 1
-                except Exception:
-                    pass
-            conn.commit()
-    return n
-
-
 def sincronizar_faltantes(progress_cb: ProgressCb | None = None, path: str | None = None) -> dict:
-    """Solo inserta filas cuyo id no está en el nodo. Devuelve contadores."""
+    """
+    Pendrive = copia de la tienda de esta PC, para auditar. Con maestra la refresca antes;
+    sin maestra lleva la última. La tienda toma antes los eventos de clientes que traía el pendrive.
+    """
     root = (path or get_nodo_path() or "").strip()
     if estado_nodo(root) != "ready":
         raise RuntimeError("No hay nodo configurado. Primero copiá el nodo completo.")
 
-    _emit(progress_cb, 5, "Abriendo nodo…")
-    # Contabilidad: si la local es más nueva, copiar; si no, dejar
-    src_conta = _contabilidad_origen()
-    dst_conta = _conta_path_in_nodo(root)
-    if os.path.isfile(src_conta):
-        try:
-            if (not os.path.isfile(dst_conta)) or (
-                os.path.getmtime(src_conta) >= os.path.getmtime(dst_conta)
-            ):
-                _emit(progress_cb, 12, "Actualizando contabilidad…")
-                shutil.copy2(src_conta, dst_conta)
-        except Exception:
-            pass
-
-    conn = sqlite3.connect(_negocio_db_path(root))
-    stats = {t: 0 for t in TABLAS_NEGOCIO}
-    try:
-        _ensure_negocio_schema(conn)
-        n_tables = len(TABLAS_NEGOCIO)
-        for i, table in enumerate(TABLAS_NEGOCIO):
-            pct = 15 + int((i / max(n_tables, 1)) * 70)
-            _emit(progress_cb, pct, f"Sincronizando faltantes: {table}…")
-            rows = _fetch_table(table)
-            stats[table] = _upsert_rows(conn, table, rows, only_missing=True)
-        _emit(progress_cb, 90, "Diario externo…")
-        stats["diario"] = _merge_diario_into_nodo(conn)
-        _sync_catalogos_dir(progress_cb, root, upload=True)
-    finally:
-        conn.close()
+    _copiar_contabilidad(root, progress_cb, siempre=False)
+    res = _copia_al_dia(progress_cb)
+    tomados = _llevar_al_pendrive(root, progress_cb)
+    _sync_catalogos_dir(progress_cb, root, upload=True)
+    stats = _resumen(res, tomados)
 
     meta = _load_meta(root)
     meta["last_sync"] = datetime.now().isoformat(timespec="seconds")
@@ -591,65 +521,3 @@ def promover_nodo(progress_cb=None, path: str | None = None) -> str:
     _save_meta(root, meta)
     _emit(progress_cb, 100, "¡Restauración exitosa!")
     return root
-
-def importar_catalogo_desde_nodo(progress_cb=None, path: str | None = None) -> dict:
-    """Lee el catalogo del nodo y hace MERGE (INSERT/UPDATE) en la Maestra."""
-    from src.base_de_datos.database import db_manager
-    import sqlite3
-    import os
-
-    root = (path or get_nodo_path() or "").strip()
-    if estado_nodo(root) != "ready":
-        raise RuntimeError("No hay nodo configurado. Primero crea el nodo.")
-
-    _emit(progress_cb, 5, "Conectando al Nodo...")
-    db_nodo_path = _negocio_db_path(root)
-    if not os.path.exists(db_nodo_path):
-        raise RuntimeError("No se encontro la base de datos en el nodo.")
-
-    src_conn = sqlite3.connect(db_nodo_path)
-    src_conn.row_factory = sqlite3.Row
-    src_cur = src_conn.cursor()
-
-    tablas_catalogo = ["departamentos", "categorias", "proveedores", "productos", "combos", "clientes"]
-    stats = {t: 0 for t in tablas_catalogo}
-
-    is_mariadb = getattr(db_manager, "db_engine_type", "sqlite") == "mariadb"
-
-    try:
-        total = len(tablas_catalogo)
-        for i, table in enumerate(tablas_catalogo):
-            _emit(progress_cb, 10 + int((i / total) * 80), f"Fusionando {table}...")
-            try:
-                src_cur.execute(f"SELECT * FROM {table}")
-                rows = [dict(r) for r in src_cur.fetchall()]
-            except Exception:
-                continue
-
-            if not rows:
-                continue
-
-            for row in rows:
-                keys = list(row.keys())
-                vals = [row[k] for k in keys]
-                col_str = ",".join(keys)
-                ph_str = ",".join(["?"] * len(keys))
-
-                if is_mariadb:
-                    update_str = ", ".join([f"{k}=VALUES({k})" for k in keys if k != "id"])
-                    if not update_str: update_str = "id=id"
-                    q = f"INSERT INTO {table} ({col_str}) VALUES ({ph_str}) ON DUPLICATE KEY UPDATE {update_str}"
-                else:
-                    q = f"INSERT OR REPLACE INTO {table} ({col_str}) VALUES ({ph_str})"
-
-                try:
-                    db_manager.execute_non_query(q, tuple(vals))
-                    stats[table] += 1
-                except Exception as e:
-                    pass
-    finally:
-        src_conn.close()
-
-    _sync_catalogos_dir(progress_cb, root, upload=False)
-    _emit(progress_cb, 100, "Catalogo fusionado con exito!")
-    return stats

@@ -38,7 +38,9 @@ Cualquier perfil en PC esclava lee la maestra. Ver `src/base_de_datos/reglas.md`
 
 No crear `plano.md` en `src/jefe`.
 
-No pasar el espejo del nodo por `db_manager`. En `motor_nodo.copiar_nodo_completo`, `sqlite3.connect` abre el archivo del USB. La tienda se lee con `db_manager` en `_fetch_table`. El plano de `nodo_portable` fija las dos vías.
+No pasar el espejo del nodo por `db_manager`. La copia de la tienda de esta PC (`nodo_portable/espejo`) y el pendrive se abren con `sqlite3`; la tienda se lee con una conexión pymysql propia. Sin maestra, los `_db()` de vitrina, financiero y auditoría devuelven `espejo.fuente()`. El plano de `nodo_portable` fija las vías.
+
+La copia y el pendrive llevan toda la tienda (usuarios y configuración incluidos) y sirven para restaurarla con `src/base_de_datos/restaurar`. El jefe no restaura desde su panel: se hace en Mantenimiento → Respaldo. Para leer el pendrive hace falta el sistema instalado; la tienda trabaja con MariaDB.
 
 En promedios, un `except` desnudo deja el número en `0` si la celda no es un número. Una fila vacía no se exporta. No los cambies por un log que escriba otro precio.
 

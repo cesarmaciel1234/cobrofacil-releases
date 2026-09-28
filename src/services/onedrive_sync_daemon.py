@@ -83,9 +83,8 @@ class OneDriveSyncDaemon(threading.Thread):
             sq_cursor.execute("SELECT * FROM productos")
             productos = [dict(row) for row in sq_cursor.fetchall()]
 
-            # Extraemos clientes
-            sq_cursor.execute("SELECT * FROM clientes")
-            clientes = [dict(row) for row in sq_cursor.fetchall()]
+            # Clientes no: los toma src/clientes_fiado/oficina/huella por eventos (no pisa deudas).
+            clientes = []
 
             # Extraemos departamentos
             sq_cursor.execute("SELECT * FROM departamentos")

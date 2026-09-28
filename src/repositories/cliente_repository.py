@@ -71,12 +71,14 @@ class ClienteRepository:
         if existente:
             return existente, "identificado", existente["nombre"]
 
+        from src.clientes_fiado.oficina.huella.eventos import alta
+
         limite = ClienteRepository._limite_express_default()
         nombre = f"Express {dni}"
-        ok = db_manager.execute_non_query(
-            "INSERT INTO clientes (nombre, telefono, limite_credito, deuda_actual, dni, tipo_cliente) "
-            "VALUES (?, ?, ?, 0, ?, 'express')",
-            (nombre, None, limite, dni),
+        ok = alta(
+            {"nombre": nombre, "telefono": None, "limite_credito": limite, "deuda_actual": 0,
+             "dni": dni, "tipo_cliente": "express"},
+            via="fiado_express",
         )
         if not ok:
             return None, "error", "No se pudo crear el cliente Express"
@@ -114,11 +116,13 @@ class ClienteRepository:
         if existente:
             return existente, "identificado", existente["nombre"]
 
+        from src.clientes_fiado.oficina.huella.eventos import alta
+
         limite = 50000.0  # Límite fijo de 50 mil para creación por nombre
-        ok = db_manager.execute_non_query(
-            "INSERT INTO clientes (nombre, telefono, limite_credito, deuda_actual, dni, tipo_cliente) "
-            "VALUES (?, ?, ?, 0, '', 'cliente_express')",
-            (nombre, None, limite),
+        ok = alta(
+            {"nombre": nombre, "telefono": None, "limite_credito": limite, "deuda_actual": 0,
+             "dni": "", "tipo_cliente": "cliente_express"},
+            via="cuenta_corriente",
         )
         if not ok:
             return None, "error", "No se pudo crear el cliente"

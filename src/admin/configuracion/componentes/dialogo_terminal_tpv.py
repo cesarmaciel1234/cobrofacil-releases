@@ -342,5 +342,12 @@ class DialogoTerminalTPV(QDialog):
                 pass
 
         QMessageBox.information(self, "Guardado", "Configuración de terminales guardada correctamente.")
+        try:
+            from src.central_red_global.sync_tienda.mp_token import publicar
+
+            if publicar():
+                pass
+        except Exception:
+            pass
         self.accept()
 

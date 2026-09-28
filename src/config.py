@@ -70,8 +70,7 @@ class Config:
         if os.path.exists(self.config_path):
             self._last_mtime = os.path.getmtime(self.config_path)
             try:
-                with open(self.config_path, 'r', encoding='utf-8') as f:
-                    self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
+                self.data = {**self.DEFAULT_CONFIG, **self._leer_json()}
 
                 # --- AUTO-LIMPIEZA DE RED SI SE COPIÓ A OTRA PC ---
                 import socket
@@ -91,6 +90,8 @@ class Config:
             except Exception as e:
                 logger.error(f"Error loading config.json: {e}")
                 self.data = self.DEFAULT_CONFIG.copy()
+                # Sin esto, el próximo save() pisa el archivo bueno con valores de fábrica.
+                self._no_guardar = True
         else:
             self.data = self.DEFAULT_CONFIG.copy()
             import socket
@@ -105,21 +106,58 @@ class Config:
             current_mtime = os.path.getmtime(self.config_path)
             if current_mtime > getattr(self, '_last_mtime', 0):
                 try:
-                    with open(self.config_path, 'r', encoding='utf-8') as f:
-                        self.data = {**self.DEFAULT_CONFIG, **json.load(f)}
+                    self.data = {**self.DEFAULT_CONFIG, **self._leer_json()}
                     self._last_mtime = current_mtime
+                    self._no_guardar = False
                 except Exception:
                     pass
 
+    def _leer_json(self) -> dict:
+        """Otro proceso (jefe, admin, cajero) puede estar guardando: reintenta antes de rendirse."""
+        import time
+
+        ultimo = None
+        for _ in range(5):
+            try:
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (ValueError, OSError) as e:
+                ultimo = e
+                time.sleep(0.2)
+        raise ultimo
+
     def save(self):
         """Saves current configuration to disk."""
+        if getattr(self, "_no_guardar", False):
+            try:
+                self.data = {**self.data, **self._leer_json()}
+                self._no_guardar = False
+            except Exception:
+                logger.error("config.json ilegible: no se guarda para no borrarlo con valores de fábrica.")
+                return
+        import time
+
+        tmp = f"{self.config_path}.{os.getpid()}.tmp"
         try:
-            with open(self.config_path, 'w', encoding='utf-8') as f:
+            with open(tmp, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, indent=4)
+            # Reemplazo atómico: quien lea ve el archivo viejo o el nuevo, nunca uno a medio escribir.
+            for intento in range(5):
+                try:
+                    os.replace(tmp, self.config_path)
+                    break
+                except PermissionError:
+                    if intento == 4:
+                        raise
+                    time.sleep(0.1)
             self._last_mtime = os.path.getmtime(self.config_path)
             logger.info("Configuration saved successfully.")
         except Exception as e:
             logger.error(f"Error saving config.json: {e}")
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
 
     def get(self, key, default=None):
         return self.data.get(key, default)

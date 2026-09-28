@@ -45,7 +45,8 @@ class DialogoAlertasEfectivo(QDialog):
         h1 = QHBoxLayout()
         h1.addWidget(QLabel("🟡 Alerta Amarilla ($):", styleSheet="font-weight: bold;  font-size: 13px;"))
         self.txt_nar = QLineEdit()
-        self.txt_nar.setText(str(int(float(config.get("limite_efectivo_naranja", 50000)))))
+        valor_naranja = config.get("limite_efectivo_naranja", 50000)
+        self.txt_nar.setText(str(int(float(valor_naranja))))
         self.txt_nar.setStyleSheet("padding: 6px; border: 1px solid #CBD5E1; border-radius: 5px; font-weight: bold; font-size: 14px;")
         self.txt_nar.setAlignment(Qt.AlignRight)
         h1.addWidget(self.txt_nar)
@@ -55,7 +56,8 @@ class DialogoAlertasEfectivo(QDialog):
         h2 = QHBoxLayout()
         h2.addWidget(QLabel("🟠 Alerta Naranja ($):", styleSheet="font-weight: bold;  font-size: 13px;"))
         self.txt_roj = QLineEdit()
-        self.txt_roj.setText(str(int(float(config.get("limite_efectivo_rojo", 70000)))))
+        valor_rojo = config.get("limite_efectivo_rojo", 70000)
+        self.txt_roj.setText(str(int(float(valor_rojo))))
         self.txt_roj.setStyleSheet("padding: 6px; border: 1px solid #CBD5E1; border-radius: 5px; font-weight: bold; font-size: 14px;")
         self.txt_roj.setAlignment(Qt.AlignRight)
         h2.addWidget(self.txt_roj)
@@ -74,7 +76,13 @@ class DialogoAlertasEfectivo(QDialog):
             roj = float(self.txt_roj.text().strip())
             if nar >= roj:
                 QMessageBox.warning(self, "Advertencia", "El límite rojo debe ser estrictamente mayor al límite naranja.")
+                return
+            
+            config.set("limite_efectivo_naranja", nar)
+            config.set("limite_efectivo_rojo", roj)
+            config.save()
+            
+            QMessageBox.information(self, "Éxito", "Configuración guardada correctamente.")
+            self.accept()
         except ValueError:
             QMessageBox.warning(self, "Error", "Ingresá valores numéricos válidos.")
-
-

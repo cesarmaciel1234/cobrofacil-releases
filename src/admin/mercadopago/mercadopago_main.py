@@ -88,10 +88,19 @@ class Admin10MP(QWidget):
         hl.addSpacing(12)
 
         # Estado
-        self.lbl_estado = QLabel("🔴 DETENIDO")
+        self.lbl_estado = QLabel("DETENIDO")
         self.lbl_estado.setStyleSheet("font-weight: bold; font-size: 16px;   padding: 5px 15px; border-radius: 10px;")
         hl.addWidget(self.lbl_estado)
         layout.addWidget(header)
+
+        self.lbl_aviso_esclava = QLabel("")
+        self.lbl_aviso_esclava.setWordWrap(True)
+        self.lbl_aviso_esclava.setStyleSheet(
+            "background: #FEF3C7; color: #92400E; font-size: 13px; font-weight: 700; "
+            "padding: 10px 16px; border-bottom: 1px solid #F59E0B;"
+        )
+        self.lbl_aviso_esclava.hide()
+        layout.addWidget(self.lbl_aviso_esclava)
 
         # --- BODY ---
         body = QVBoxLayout()
@@ -238,9 +247,20 @@ class Admin10MP(QWidget):
 
     def iniciar_monitor(self):
         from src.services.mp_escucha import EscuchaMP
+        # Esclava: intenta traer el token de la tienda antes de arrancar
+        try:
+            from src.central_red_global.sync_tienda.rol import es_esclava
+            from src.central_red_global.sync_tienda.mp_token import traer
+
+            if es_esclava():
+                traer()
+        except Exception:
+            pass
         if not EscuchaMP.asegurar():
             self.lbl_estado.setText("SIN TOKEN")
+            self._avisar_esclava_sin_token()
             return
+        self.lbl_aviso_esclava.hide()
         hilo = EscuchaMP._hilo
         try:
             hilo.new_payment.disconnect(self._guardar_llegada)
@@ -254,6 +274,32 @@ class Admin10MP(QWidget):
         hilo.error_signal.connect(self._error_escucha)
         self.lbl_estado.setText("ESCUCHANDO")
         self.sincronizar_historico()
+
+    def _avisar_esclava_sin_token(self):
+        """Esclava sin token en tienda: la maestra aún no publicó o no hay MariaDB."""
+        try:
+            from src.config import config
+
+            es_esclava = not bool(config.get("is_master", True))
+        except Exception:
+            es_esclava = False
+        if not es_esclava:
+            self.lbl_aviso_esclava.hide()
+            return
+        try:
+            from src.central_red_global.sync_tienda.mp_token import traer
+
+            if traer():
+                self.lbl_aviso_esclava.hide()
+                return
+        except Exception:
+            pass
+        self.lbl_aviso_esclava.setText(
+            "PC esclava · sin token en la tienda — El token MP lo publica la PC maestra "
+            "(Configuración → Terminal TPV → Guardar). Se copia solo por MariaDB; "
+            "no hace falta pegarlo acá. Ventas y stock ya van a la maestra."
+        )
+        self.lbl_aviso_esclava.show()
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -275,7 +321,9 @@ class Admin10MP(QWidget):
         token = EscuchaMP.token()
         if not token:
             self.lbl_estado.setText("SIN TOKEN")
+            self._avisar_esclava_sin_token()
             return
+        self.lbl_aviso_esclava.hide()
         self.lbl_estado.setText("ACTUALIZANDO")
         self._bajando = _BajadaMes(token)
         self._bajando.listo.connect(self._fin_bajada)

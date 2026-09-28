@@ -17,6 +17,7 @@ clientes_fiado/
     cobradas/              el abono
     saldos/                cupo y disponible
     cartel/                saludo de la confirmación
+    huella/                ID único, auditoría y la tienda que chupa lo cargado sin red
   agentes/
     wasap/                 rumbo. Hoy no envía
   interfaz/
@@ -60,6 +61,8 @@ La tabla `clientes` no se lee al abrir el cobro. `Paso6Cobro._asegurar_lista_cli
 El SQL de alta express sigue en `ClienteRepository`. El motor de cuenta lo usa. `registrar_abono` termina en `cerebro.abonar`.
 
 `agentes/wasap` no tiene cliente ni token. No lo llama el cobro.
+
+Huella: toda alta pasa por `oficina/huella/eventos.alta` (uid + PC + usuario + hora) y toda edición, límite, cargo manual y abono deja un evento en `clientes_auditoria`. Lo hecho sin red (casa, notebook) lo aplica la tienda sola, una vez por evento: hilo `huella.arrancar()` en `main.py`. En admin, el nombre muestra la huella y el botón AUDITORÍA lista los eventos. Detalle en `oficina/huella/README.md`.
 
 ## Qué no cambiar
 

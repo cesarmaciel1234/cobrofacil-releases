@@ -20,6 +20,12 @@ La llave entre cajas es `CLAVE_RED` (`1234`) en `src/config.py`. No sale de `loc
 
 `src/base_de_datos/repos/stock_descuento.py`, `descontar_stock`. Si `opt_stock_negativo` está apagado, el update exige `stock >= cantidad`. Si no afectó filas, lanza `SinStock` y la venta se deshace. Si está prendido, resta igual y el stock puede quedar negativo. El id `000` o vacío no descuenta.
 
+## Restaurar
+
+Frente: Configuración → Mantenimiento → Respaldo. «Exportar» guarda un `.sql` de la maestra (o el `punpro.db` si la tienda es SQLite sola); en una caja sin maestra no exporta. «Importar / Restaurar» abre `src/admin/configuracion/componentes/dialogo_restaurar.py`: botones «Copias de esta PC», «Elegir carpeta o pendrive…», «Elegir archivo…»; una tabla con las copias encontradas, la más nueva marcada; avisos en ámbar, bloqueos en rojo; pide la clave del jefe y confirma.
+
+Fondo: `restaurar/` (README). Sirve igual un respaldo `.sql` / `.zip` / `.db` o la copia del jefe (`nodo_negocio.db` del pendrive, `espejo_tienda.db` de una PC). Respaldo = reemplazo más las ventas de hoy. Copia del jefe = suma sin borrar ni pisar. La tienda trabaja con MariaDB: para leer o restaurar cualquier copia hace falta el sistema instalado.
+
 ## Qué no cambiar
 
 No devolver `9999999`. No borrar `request_id` del cobro ni del motor. No ignorar `opt_stock_negativo`.

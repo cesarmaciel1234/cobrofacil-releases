@@ -26,19 +26,22 @@ class ConfigCategory(QWidget):
         lay.setContentsMargins(18, 14, 18, 16)
         lay.setSpacing(12)
 
+        from src.utils.qt_dpi import scale_px
+
+        titulo_px = max(14, scale_px(15))
         lbl_title = QLabel(title.upper())
         lbl_title.setStyleSheet(
-            "font-family: 'Segoe UI'; font-size: 12px; font-weight: 800; "
+            f"font-family: 'Segoe UI'; font-size: {titulo_px}px; font-weight: 800; "
             "color: #64748B; letter-spacing: 1px; background: transparent; border: none;"
         )
         lay.addWidget(lbl_title)
 
         grid = QGridLayout()
-        grid.setSpacing(10)
+        grid.setSpacing(14)
         grid.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         row, col = 0, 0
-        max_cols = 7
+        max_cols = 6
 
         for icon, text in items:
             btn = ConfigButton(icon, text)

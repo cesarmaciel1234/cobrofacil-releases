@@ -8,3 +8,5 @@ El panel Red LAN decide el puesto **una vez**. Después cada PC arranca sola.
 Tras un corte, no hay que volver a “Buscar” si la IP maestra no cambió.
 
 **Esclava:** jefe, reportes e historial leen la maestra. No el `punpro.db` de esta notebook. Ver `src/base_de_datos/reglas.md`.
+
+**Token Mercado Pago:** lo publica la maestra en `configuracion` (Terminal TPV → Guardar). La esclava lo trae sola (`sync_tienda/mp_token`). No pegar el token en la notebook.

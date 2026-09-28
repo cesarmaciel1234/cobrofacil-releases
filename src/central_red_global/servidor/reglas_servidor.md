@@ -25,3 +25,5 @@ Compat: `store_server.py` y `motor_red.py` solo reexportan.
 El puesto vive en `config.json`. Maestra: despierta servidor. Esclava: no.
 
 Cualquier perfil en PC esclava lee y graba en la maestra. SQLite local solo si `3306` no responde; al volver la tienda, se reengancha. Ver `src/base_de_datos/reglas.md`.
+
+La maestra contesta `PUNPRO_DISCOVER` (UDP 37020) con su IP desde `lan_server.start_udp_discovery_server`. Con eso una esclava encuentra la maestra si cambió de IP, pero solo al arrancar. Qué pasa con los datos: `src/base_de_datos/reglas.md`, sección «Si la maestra cambia de IP».

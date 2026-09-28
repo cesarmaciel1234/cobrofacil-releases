@@ -155,6 +155,19 @@ def obtener_datos_cierre(
             or 0.0
         )
 
+        dev_cond = "tipo = 'RETIRO' AND observaciones LIKE ? AND fecha >= ?"
+        dev_params: list = ["Devolución ticket #%", desde]
+        if caja_id is not None:
+            dev_cond += " AND caja_id = ?"
+            dev_params.append(caja_id)
+        devoluciones_efectivo = float(
+            db.execute_scalar(
+                f"SELECT SUM(monto) FROM movimientos_caja WHERE {dev_cond}",
+                tuple(dev_params),
+            )
+            or 0.0
+        )
+
         if caja_id is not None:
             v_caja_total = efectivo_esperado_caja(caja_id, db=db)
         else:
@@ -176,7 +189,7 @@ def obtener_datos_cierre(
             "entradas_efectivo": entradas,
             "salidas_efectivo": salidas,
             "abonos_efectivo": abonos_efectivo,
-            "devoluciones_efectivo": 0.0,
+            "devoluciones_efectivo": devoluciones_efectivo,
             "apertura_fecha": apertura_fecha or desde,
         }
     except Exception as e:

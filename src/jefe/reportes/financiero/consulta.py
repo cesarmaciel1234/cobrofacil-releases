@@ -8,11 +8,13 @@ from src.jefe.reportes.periodo.sql import en_rango, where_ventas
 
 
 def _db():
+    """La tienda en vivo; sin maestra, la copia de la tienda (`nodo_portable/espejo`)."""
     try:
-        from src.base_de_datos.database import db_manager
+        from src.jefe.nodo_portable.espejo import fuente
     except ImportError:
         from database import db_manager
-    return db_manager
+        return db_manager
+    return fuente()
 
 
 def kpis_rango(start_str: str, end_str: str) -> dict:

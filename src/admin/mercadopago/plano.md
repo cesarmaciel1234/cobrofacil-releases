@@ -14,9 +14,15 @@ El cuerpo son las cinco tarjetas, el buscador, el filtro de fecha y la tabla. El
 
 El token es `mp_access_token` de la configuración del TPV. Lo lee `EscuchaMP.token()` en `src/services/mp_escucha.py`. Esta pantalla no lo guarda.
 
-`iniciar_monitor` llama `EscuchaMP.asegurar()`. Es el mismo hilo que el cajero, `MPPollingThread` en `componentes/`. No se frena al salir del monitor.
+**Token de tienda (nuevo):** la maestra, al guardar Terminal TPV, publica el token en MariaDB `configuracion` (`sync_tienda/mp_token`). La esclava lo trae sola al conectar y al abrir el monitor. No hay que pegar el token en cada notebook. Si aún dice SIN TOKEN, en la PC de caja (maestra) hay que Guardar una vez el Terminal TPV para publicarlo.
+
+**Esclava:** ventas/stock = MariaDB. Historial MP (CSV) se baja con ese token vía API. `mp_vinculos.json` sigue siendo local a la PC que cobró.
+
+`iniciar_monitor` llama `traer()` y después `EscuchaMP.asegurar()`. Es el mismo hilo que el cajero, `MPPollingThread` en `componentes/`. No se frena al salir del monitor.
 
 `historial/sincronizar.py`, `bajar_mes`, baja los cobros aprobados del mes, de punta a punta. Actualizar y la apertura del monitor lo corren en `_BajadaMes`, fuera de la ventana: el estado pasa a ACTUALIZANDO y después vuelve a ESCUCHANDO. El botón pinta la grilla al toque, desde el archivo, aunque la bajada siga. Si la primera página no responde, el estado queda en SIN DATOS. La consulta lleva fecha de inicio y de fin; sin la de fin la API no devuelve pagos. La hora de la grilla es la de Argentina. Una transferencia recibida no se esconde con las cargas propias. Point y el QR llevan el mismo nombre que la app. `historial/archivo.py` los escribe en `reportes/mercado_pago_sync.csv` y `leer` arma las tarjetas. Un pago nuevo del hilo entra por `_guardar_llegada`. El QR y la transferencia que detecta el cobro también se anotan ahí. La columna Ticket sale de `vinculo_mp`. Con el monitor abierto se vuelve a leer cada segundo: el ticket asociado aparece sin salir de la pantalla.
+
+**Historial largo y veredicto:** otra rama, `src/motor_cobros_digitales/` (ver su `plano.md`). Guarda cada pago en `mp_pagos` de la tienda, recupera lo que entró con la PC apagada, enlaza ticket ↔ id de pago y dice si el cobro digital es verdadero. Este monitor no espera por él.
 
 `Admin10MP.ultimo_pago_detectado` lo escribe `EscuchaMP.publicar`. El cobro lo lee para cerrar la transferencia si el monto coincide.
 

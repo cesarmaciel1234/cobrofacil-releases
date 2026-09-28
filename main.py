@@ -216,6 +216,26 @@ def launch_app(direct_role=None):
         from src.cerebro_global.carteleria_cerebro.sincronizador_carteleria import sincronizador_carteleria
         sincronizador_carteleria.start()
 
+    try:
+        from src.motor_cobros_digitales import arrancar as arrancar_cobros_digitales
+        arrancar_cobros_digitales()
+    except Exception:
+        pass
+
+    try:
+        from src.clientes_fiado.oficina.huella import arrancar as arrancar_huella_clientes
+        arrancar_huella_clientes()
+    except Exception:
+        pass
+
+    try:
+        from src.jefe.nodo_portable import espejo
+
+        if espejo.existe():
+            espejo.arrancar()
+    except Exception:
+        pass
+
     app.processEvents()
 
     # --- PASO 1: CARGAR RUTAS E ICONOS ---

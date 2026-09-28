@@ -108,6 +108,46 @@ def _aplicar_fiado(cursor, fiado, id_venta):
     return nombre
 
 
+OBS_DEVOLUCION = "Devolución ticket #"
+_SIN_DEVOLUCION = ("FIADO", "CLIENTES")
+
+
+def calcular_devolucion(venta, caja_accion: int) -> dict:
+    """
+    Al cancelar un ticket se le devuelve al cliente el total en efectivo (fiado y clientes: no, se anula la deuda).
+    `retiro`: lo que hay que sacar del cajón de `caja_accion` como RETIRO para que el cierre cuadre.
+      La parte en efectivo de una venta COMPLETADA de la misma caja ya sale sola del esperado
+      (la venta cancelada deja de sumar); el resto (digital, o venta de un turno ya cerrado) es retiro.
+    `ingreso_origen`: si otra caja cancela una venta COMPLETADA con efectivo, ese efectivo sigue en la
+      caja de origen; se le reingresa para que su esperado no baje.
+    """
+    def dato(clave, indice):
+        return _celda(venta, clave, indice)
+
+    metodo = str(dato("metodo_pago", 4) or "")
+    estado = str(dato("estado", 0) or "").upper()
+    try:
+        total = float(dato("total", 3) or 0)
+        pago_efectivo = float(dato("pago_efectivo", 5) or 0)
+        cambio = float(dato("cambio", 6) or 0)
+        caja_origen = int(dato("caja_id", 1) or 1)
+    except (TypeError, ValueError):
+        total, pago_efectivo, cambio, caja_origen = 0.0, 0.0, 0.0, 1
+    mueve_cajon = metodo in ("Efectivo", "Mixto") or "EFECTIVO" in metodo.upper()
+    efectivo_neto = max(0.0, pago_efectivo - max(cambio, 0.0)) if mueve_cajon else 0.0
+    a_devolver = 0.0 if metodo.upper() in _SIN_DEVOLUCION else total
+    en_turno = estado in ("COMPLETADA", "COMPLETADO")
+    misma_caja = caja_origen == int(caja_accion or 1)
+    ya_descontado = efectivo_neto if (en_turno and misma_caja) else 0.0
+    return {
+        "metodo": metodo,
+        "a_devolver": round(a_devolver, 2),
+        "retiro": round(max(0.0, a_devolver - ya_descontado), 2),
+        "ingreso_origen": round(efectivo_neto, 2) if (en_turno and not misma_caja and a_devolver > 0) else 0.0,
+        "caja_origen": caja_origen,
+    }
+
+
 def _anular_cargo(cursor, id_venta):
     """Baja la deuda del ticket que se cancela. Si no hubo cargo, no toca la cuenta."""
     cursor.execute(
@@ -406,11 +446,27 @@ class VentasRepoMixin:
         finally:
             if conn: conn.close()
 
+    def plan_devolucion(self, id_venta: int) -> dict:
+        """Lo que va a salir del cajón si se cancela ese ticket en esta caja. Solo lee."""
+        filas = self.execute_query(
+            "SELECT estado, caja_id, usuario, total, metodo_pago, pago_efectivo, cambio FROM ventas WHERE id = ?",
+            (id_venta,),
+        )
+        if not filas:
+            return {}
+        try:
+            from src.config import config
+            caja_accion = int(config.get("caja_id", 1) or 1)
+        except Exception:
+            caja_accion = 1
+        return calcular_devolucion(filas[0], caja_accion)
+
     def cancelar_venta_transaccional(self, id_venta: int, username: str) -> bool:
         """
         Cancela una venta de forma transaccional y devuelve stock
-        (excepto el artículo común '000'). El esperado de caja se corrige solo
-        al excluir la venta CANCELADA del SUM (sin RETIRO duplicado).
+        (excepto el artículo común '000'). Al cliente se le devuelve el total en efectivo:
+        la parte que ya estaba en el esperado del turno sale sola (la venta CANCELADA deja
+        de sumar); el resto queda como RETIRO «Devolución ticket #N» (`calcular_devolucion`).
         """
         conn = None
         try:
@@ -418,7 +474,7 @@ class VentasRepoMixin:
             cursor = conn.cursor()
 
             cursor.execute(
-                "SELECT estado, caja_id, usuario, total FROM ventas WHERE id = ?",
+                "SELECT estado, caja_id, usuario, total, metodo_pago, pago_efectivo, cambio FROM ventas WHERE id = ?",
                 (id_venta,),
             )
             venta = cursor.fetchone()
@@ -472,6 +528,28 @@ class VentasRepoMixin:
                 )
             except Exception as e:
                 logger.warning(f"Auditoría de cancelación no grabada (ticket {id_venta}): {e}")
+
+            plan = calcular_devolucion(venta, caja_accion)
+            if plan["retiro"] > 0:
+                cursor.execute(
+                    "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
+                    "VALUES (?, 'RETIRO', ?, ?, ?, ?)",
+                    (
+                        ahora, plan["retiro"], username or "—",
+                        f"{OBS_DEVOLUCION}{id_venta} (cancelación, {plan['metodo'] or 'venta'})",
+                        caja_accion,
+                    ),
+                )
+            if plan["ingreso_origen"] > 0:
+                cursor.execute(
+                    "INSERT INTO movimientos_caja (fecha, tipo, monto, usuario, observaciones, caja_id) "
+                    "VALUES (?, 'INGRESO', ?, ?, ?, ?)",
+                    (
+                        ahora, plan["ingreso_origen"], username or "—",
+                        f"Ticket #{id_venta} cancelado en caja {caja_accion}: el efectivo sigue en esta caja",
+                        plan["caja_origen"],
+                    ),
+                )
 
             conn.commit()
             return True

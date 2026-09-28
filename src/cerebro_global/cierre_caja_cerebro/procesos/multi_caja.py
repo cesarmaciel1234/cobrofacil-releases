@@ -136,6 +136,7 @@ def resumen_multi_caja(fecha_str: str | None = None, db: Any = None) -> dict:
             "ganancia_estimada",
             "entradas_efectivo",
             "salidas_efectivo",
+            "devoluciones_efectivo",
         ):
             agg[k] = float(agg.get(k, 0) or 0) + float(datos.get(k, 0) or 0)
 

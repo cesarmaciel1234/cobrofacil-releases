@@ -9,6 +9,11 @@ Reglas:
 - NO usar SetProcessDpiAwareness (provoca doble escalado con Qt).
 - layout_scale() achica UI en pantallas físicamente chicas (<17").
 - Soporte Multi-Monitor integrado para Pantalla de Cajero y Pantalla de Cliente.
+
+FUNDAMENTAL — NO TOCAR para un sector:
+Este archivo fija QT_SCALE_FACTOR de toda la app. Letras/tiles chicos se
+agrandan en el módulo (ej. ConfigButton), no acá. Ver AGENTS.md y
+src/utils/README.md.
 """
 
 from __future__ import annotations

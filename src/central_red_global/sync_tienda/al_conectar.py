@@ -44,6 +44,16 @@ def al_conectar_esclava() -> int:
             logger.info("Esclava: %s PNG copiados desde la maestra", n_png)
     except Exception as exc:
         logger.warning("Sync PNG al conectar esclava: %s", exc)
+    try:
+        from src.central_red_global.sync_tienda.mp_token import traer
+
+        tok = traer()
+        if tok:
+            logger.info("Esclava: token MP de la tienda sincronizado")
+        else:
+            logger.info("Esclava: la tienda aún no publicó token MP")
+    except Exception as exc:
+        logger.warning("Sync token MP al conectar esclava: %s", exc)
     _traer_publicidad_maestra()
     _patear_tv()
     return n_png

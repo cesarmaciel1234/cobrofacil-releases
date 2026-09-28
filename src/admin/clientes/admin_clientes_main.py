@@ -97,7 +97,21 @@ class AdminClientes(QWidget):
         """)
         self.btn_planilla.clicked.connect(self._abrir_cobros)
 
+        self.btn_auditoria = QPushButton("AUDITORÍA")
+        self.btn_auditoria.setCursor(Qt.PointingHandCursor)
+        self.btn_auditoria.setToolTip("Quién creó o cambió cada cliente, en qué PC y cuándo")
+        self.btn_auditoria.setStyleSheet("""
+            QPushButton {
+                background: white; color: #1E40AF; font-weight: 900; border-radius: 10px;
+                padding: 12px 18px; border: 1px solid #BFDBFE; font-size: 13px;
+            }
+            QPushButton:hover { background: #EFF6FF; }
+        """)
+        self.btn_auditoria.clicked.connect(self._abrir_auditoria)
+
         header_lay.addStretch()
+        header_lay.addWidget(self.btn_auditoria)
+        header_lay.addSpacing(10)
         header_lay.addWidget(self.btn_planilla)
         header_lay.addSpacing(10)
         header_lay.addWidget(self.btn_nuevo)
@@ -205,6 +219,7 @@ class AdminClientes(QWidget):
 
     def cargar_clientes(self):
         from src.clientes_fiado.cerebro.cerebro import cerebro
+        from src.clientes_fiado.oficina.huella.consulta import huella_texto
 
         self.tabla.setRowCount(0)
         busqueda = self.txt_buscar.text().strip()
@@ -236,7 +251,9 @@ class AdminClientes(QWidget):
                 it_id = QTableWidgetItem(str(c['id']))
                 it_id.setData(Qt.ItemDataRole.UserRole, int(c['id']))
                 self.tabla.setItem(i, 0, it_id)
-                self.tabla.setItem(i, 1, QTableWidgetItem(c['nombre']))
+                it_nombre = QTableWidgetItem(c['nombre'])
+                it_nombre.setToolTip(huella_texto(c))
+                self.tabla.setItem(i, 1, it_nombre)
                 self.tabla.setItem(i, 2, QTableWidgetItem(dni or "—"))
                 it_tipo = QTableWidgetItem(tipo_txt)
                 if tipo == 'express':
@@ -373,6 +390,11 @@ class AdminClientes(QWidget):
 
     def _abrir_cobros(self):
         qt_exec(DialogoCobros(self))
+
+    def _abrir_auditoria(self):
+        from src.admin.clientes.componentes.dialogo_auditoria_clientes import DialogoAuditoriaClientes
+
+        qt_exec(DialogoAuditoriaClientes(self))
 
     def _on_fila_cliente_clic(self, row, col):
         """Abre historial al clic en datos del cliente (no en botones de acción)."""
