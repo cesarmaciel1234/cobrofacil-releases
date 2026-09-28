@@ -81,7 +81,7 @@ class HistorialController:
         if not venta:
             return None, []
         v = venta[0]
-        items = db_manager.execute_query("SELECT cantidad, nombre_producto, subtotal FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
+        items = db_manager.execute_query("SELECT cantidad, nombre_producto, precio_unitario, subtotal FROM detalles_ventas WHERE id_venta = ?", (id_venta,))
         return v, items
 
     def is_admin(self):

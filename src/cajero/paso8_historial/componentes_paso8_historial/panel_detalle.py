@@ -195,6 +195,14 @@ class PanelDetalle(QWidget):
             for i, it in enumerate(items):
                 self.tabla_detalle.setItem(i, 0, QTableWidgetItem(f"{it['cantidad']:g}"))
                 self.tabla_detalle.setItem(i, 1, QTableWidgetItem(str(it['nombre_producto'])))
+                
+                try: p_unit = float(it['precio_unitario'])
+                except Exception: p_unit = 0.0
+                
+                it_pre = QTableWidgetItem(fmt_moneda(p_unit))
+                it_pre.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.tabla_detalle.setItem(i, 2, it_pre)
+                
                 it_imp = QTableWidgetItem(fmt_moneda(it['subtotal']))
                 it_imp.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-                self.tabla_detalle.setItem(i, 2, it_imp)
+                self.tabla_detalle.setItem(i, 3, it_imp)
