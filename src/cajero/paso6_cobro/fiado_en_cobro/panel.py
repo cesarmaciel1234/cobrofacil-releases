@@ -33,6 +33,7 @@ class PanelFiadoCobro(QFrame):
         lay.setContentsMargins(24, 18, 24, 18)
         lay.setSpacing(12)
         
+        lay.addStretch(1)
         self.hoja_cuenta = HojaCuentaCobro(self)
         self.hoja_cuenta.listo.connect(self._al_cliente_encontrado)
         self.hoja_cuenta.cancelado.connect(self._al_cancelar_busqueda)

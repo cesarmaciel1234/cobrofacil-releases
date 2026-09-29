@@ -60,6 +60,7 @@ class HojaCuentaCobro(QFrame):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(40, 36, 40, 36)
         lay.setSpacing(16)
+        lay.addStretch(1)
         self.texto = QLabel("Pida el nombre del cliente.")
         self.texto.setWordWrap(True)
         self.texto.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -189,6 +190,15 @@ class HojaCuentaCobro(QFrame):
         self._ignorar = False
 
     def eventFilter(self, obj, event):
+        if obj is self.caja and event.type() == QEvent.Type.KeyPress:
+            tecla = event.key()
+            if self._paso == 2 and tecla == Qt.Key.Key_F4:
+                cartel = cerebro.cartel(self._cliente)
+                deuda = cartel.get("saldo", 0)
+                self.caja.setText(str(deuda))
+                self.confirmar()
+                return True
+                
         if obj is self.caja and event.type() == QEvent.Type.KeyPress and self._pidiendo_pin:
             tecla = event.key()
             if tecla == Qt.Key.Key_Backspace:
@@ -273,7 +283,9 @@ class HojaCuentaCobro(QFrame):
             self.caja.setValidator(None) # Allow numbers
             self.caja.setText("0")
             self.caja.selectAll()
+            self.btn_f4.show()
         else:
+            self.btn_f4.hide()
             self.texto.setText(self._frase())
             self.texto.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 800;")
             self.saldo.clear()
