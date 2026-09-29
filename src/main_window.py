@@ -987,7 +987,7 @@ class MainWindow(QMainWindow):
             # Lanzamos el proceso desvinculado del TPV
             # Si el bot se cuelga o falla, el main_window sigue intacto.
             if not hasattr(self, "chatbot_process") or self.chatbot_process.poll() is not None:
-                self.chatbot_process = subprocess.Popen([sys.executable, chat_script, str(int(self.winId()))])
+                self.chatbot_process = subprocess.Popen([sys.executable, "--chatbot", str(int(self.winId()))])
         else:
             # Si lo apagan desde el botón, intentamos cerrarlo
             if hasattr(self, "chatbot_process") and self.chatbot_process.poll() is None:

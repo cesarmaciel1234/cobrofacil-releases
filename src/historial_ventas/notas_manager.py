@@ -1,7 +1,10 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "base_de_datos", "notas_tickets.sqlite")
+from src.utils.paths import get_base_path
+DB_DIR = os.path.join(get_base_path(), "base_de_datos")
+os.makedirs(DB_DIR, exist_ok=True)
+DB_PATH = os.path.join(DB_DIR, "notas_tickets.sqlite")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)

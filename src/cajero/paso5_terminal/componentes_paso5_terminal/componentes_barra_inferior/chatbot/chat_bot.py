@@ -280,10 +280,13 @@ class ChatManualWidget(QWidget):
             QApplication.quit()
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
+def main():
+    app = QApplication.instance() or QApplication(sys.argv)
     win = ChatManualWidget()
     win.setWindowTitle("Asistente")
     win.actualizar_posicion()
     win.show()
     sys.exit(qt_exec(app))
+
+if __name__ == "__main__":
+    main()

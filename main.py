@@ -25,6 +25,14 @@ from PyQt6.QtCore import QTimer, QCoreApplication
 configure_qt_application_attributes()
 # El cajero no carga Chromium: el asistente es un panel. Admin y jefe sí, antes de QApplication.
 set_share_opengl_contexts()
+# --- RUTEO DEL CHATBOT EN EL EJECUTABLE ---
+if len(sys.argv) > 1 and sys.argv[1] == "--chatbot":
+    from src.cajero.paso5_terminal.componentes_paso5_terminal.componentes_barra_inferior.chatbot.chat_bot import main as run_chatbot
+    sys.argv.pop(1)
+    run_chatbot()
+    sys.exit(0)
+# ------------------------------------------
+
 
 def _rol_sin_chromium():
     args = sys.argv
