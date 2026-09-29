@@ -21,10 +21,7 @@ class PanelFiadoCobro(QFrame):
         self._cliente_id = None
         self._armar()
 
-        # Instanciamos el buscador flotante como hijo directo de este panel
-        self.hoja_cuenta = HojaCuentaCobro(self)
-        self.hoja_cuenta.listo.connect(self._al_cliente_encontrado)
-        self.hoja_cuenta.cancelado.connect(self._al_cancelar_busqueda)
+
 
     def _armar(self):
         self.setObjectName("PanelFiadoCobro")
@@ -35,6 +32,12 @@ class PanelFiadoCobro(QFrame):
         lay = QVBoxLayout(self)
         lay.setContentsMargins(24, 18, 24, 18)
         lay.setSpacing(12)
+        
+        self.hoja_cuenta = HojaCuentaCobro(self)
+        self.hoja_cuenta.listo.connect(self._al_cliente_encontrado)
+        self.hoja_cuenta.cancelado.connect(self._al_cancelar_busqueda)
+        lay.addWidget(self.hoja_cuenta)
+
         lay.addStretch(1)
 
         self.icono = QLabel("✓")

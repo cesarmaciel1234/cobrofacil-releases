@@ -214,6 +214,15 @@ class HojaCuentaCobro(QFrame):
         hoja = self.parentWidget()
         if hoja is None:
             return
+        if hoja.__class__.__name__ == "PanelFiadoCobro":
+            # If managed by layout, do not use absolute geometry
+            self.raise_()
+            if self._pidiendo_pin:
+                aviso = self._aviso()
+                if aviso is not None:
+                    aviso.raise_()
+            return
+            
         margen = 36
         ancho = max(480, hoja.width() - margen * 2)
         self.setFixedWidth(ancho)
