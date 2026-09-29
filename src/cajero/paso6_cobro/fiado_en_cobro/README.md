@@ -1,6 +1,6 @@
 # Fiado en Paso 6
 
-`panel.py`, clase `PanelFiadoCobro`, contiene la selección del cliente y confirma que la compra actual se cargue a su cuenta. `HojaCuentaCobro` conserva el flujo normal: elegir cliente, revisar saldo y presionar Enter para autorizar la venta fiada.
+`panel.py`, clase `PanelFiadoCobro`, contiene la selección del cliente y confirma que la compra actual se cargue a su cuenta. `HojaCuentaCobro` conserva el flujo normal: elegir cliente, revisar saldo y presionar Enter. Ese Enter muestra la confirmación verde. El siguiente Enter, en el teclado o en la pantalla, llama `procesar_enter` y cierra la venta con `pago_listo`. Si el campo de texto oculto vuelve a emitir `listo`, esa repetición también cierra la venta.
 
 ## Abono previo opcional
 

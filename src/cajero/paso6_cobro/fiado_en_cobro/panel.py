@@ -101,9 +101,12 @@ class PanelFiadoCobro(QFrame):
         self.hide()
 
     def _al_cliente_encontrado(self, cliente_id, _abono=0.0):
+        if self._modo == "confirmando" and int(self._cliente_id or 0) == int(cliente_id):
+            self.procesar_enter()
+            return
         self._cliente_id = cliente_id
 
-        cliente = cerebro.cliente(cliente_id)
+        cliente = cerebro.obtener(cliente_id)
         if not cliente:
             self.cancelado.emit()
             return
@@ -112,13 +115,19 @@ class PanelFiadoCobro(QFrame):
         disp = cerebro.credito_disponible(cliente)
         
         self._modo = "confirmando"
-        # Cambiamos al estilo "Green Box" de confirmación
+        self.hoja_cuenta.ocultar()
+        self.hoja_cuenta.caja.clearFocus()
         self.setStyleSheet("QFrame#PanelFiadoCobro { background: #ECFDF5; border: 2px solid #34D399; border-radius: 16px; }")
         self.icono.show()
         self.estado.setText(f"FIADO APROBADO\n{nombre}")
-        self.detalle.setText(f"Límite Disponible: \nCompra Actual: ")
+        self.detalle.setText(
+            f"Límite Disponible: ${disp:,.2f}\nCompra Actual: ${self._monto:,.2f}"
+        )
         self.instruccion.show()
         self.cambio.emit("confirmando")
+        ventana = self.window()
+        if ventana is not None:
+            ventana.setFocus()
         
     def _al_cancelar_busqueda(self):
         self._modo = "oculto"

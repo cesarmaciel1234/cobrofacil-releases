@@ -908,6 +908,16 @@ class Paso6Cobro(QDialog):
             )
         )
 
+    def _f5_pagar_cuenta(self):
+        """F5 cobra deuda previa con la ficha ya elegida, sin cerrar la venta."""
+        if self.current_metodo not in ("Fiado", "Clientes") or not hasattr(self, "panel_fiado"):
+            return False
+        hoja = self.panel_fiado.hoja_cuenta
+        if getattr(hoja, "_paso", 1) != 2 or not hoja._cliente:
+            return False
+        hoja._abrir_dialogo_cobranza()
+        return True
+
     def _cuenta_lista(self, cliente_id, _abono=0.0):
         self._fiado_cliente_id = int(cliente_id)
         idx = self.cmb_cliente.findData(self._fiado_cliente_id)
@@ -1082,6 +1092,8 @@ class Paso6Cobro(QDialog):
         """ Centraliza la validación para evitar redundancias y errores de arqueo. """
         p1_t = str(parse_float_regional(self.txt_pago.text()))
         p2_t = str(parse_float_regional(self.txt_otro.text()))
+        if self.current_metodo in ("Fiado", "Clientes"):
+            p1_t = f"{float(self.total_final or 0):.2f}"
 
         if not p1_t:
             if self.current_metodo == "Mixto":
@@ -1134,6 +1146,9 @@ class Paso6Cobro(QDialog):
             else:
                 # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
                 if self.current_metodo == "Mixto":
+                    return None
+                if self.current_metodo in ("Fiado", "Clientes"):
+                    self._avisar("No se pudo cargar el total a la cuenta.")
                     return None
                 try:
                     p1_val = float(p1_t) if p1_t else 0.0
@@ -2169,6 +2184,9 @@ class Paso6Cobro(QDialog):
             self._elegir_cierre("cierra")
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
+        elif k == Qt.Key.Key_F5:
+            if self._f5_pagar_cuenta():
+                return
         elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
         elif k == Qt.Key.Key_F9: self._emergencia()
         elif k == Qt.Key.Key_F11:
@@ -2225,6 +2243,8 @@ class Paso6Cobro(QDialog):
         focused = self.focusWidget()
         if key == "F10":
             self._elegir_cierre("fiscal")
+            return
+        if key == "F5" and self._f5_pagar_cuenta():
             return
         if self._hoja_cuenta_al_frente():
             if key == "ENTER":

@@ -331,6 +331,7 @@ class HojaCuentaCobro(QFrame):
             self._pintar_numeros(cartel.get("saldo"), cartel.get("disponible"))
             
             self.caja.hide()
+            self.caja.clearFocus()
             self.btn_f4.show()
             self.btn_enter.show()
             self.setFocus()
@@ -343,7 +344,7 @@ class HojaCuentaCobro(QFrame):
             self.texto.setStyleSheet("color: #1E3A8A; font-size: 28px; font-weight: 800;")
             self.saldo.clear()
             self.disponible.clear()
-        self.caja.setFocus()
+            self.caja.setFocus()
 
     def _pintar_numeros(self, saldo, disponible):
         if saldo is None:
