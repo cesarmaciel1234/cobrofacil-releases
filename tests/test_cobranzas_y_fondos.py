@@ -241,6 +241,58 @@ def test_f6_dibuja_el_qr_con_el_motor():
     assert PaginaCobroAbono.__name__ == "PaginaCobroAbono"
 
 
+def test_efectivo_pide_recibido_antes_del_pin_y_abre_cajon_al_final(monkeypatch):
+    from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+    from src.hardware.cash_drawer import drawer_manager
+
+    eventos = []
+
+    class Dialogo:
+        def cerrar_con_medio(self, resultado):
+            assert resultado.ok
+            eventos.append("registrar")
+
+    monkeypatch.setattr(
+        drawer_manager, "set_authorized", lambda _autorizada: eventos.append("autorizar_cajon")
+    )
+    monkeypatch.setattr(
+        drawer_manager, "abrir", lambda **_kwargs: eventos.append("abrir_cajon")
+    )
+    pagina = PaginaCobroAbono(Dialogo())
+    monkeypatch.setattr(pagina, "_pin", lambda: eventos.append("pin") or True)
+
+    pagina.abrir(100, "cajero", "Ana")
+    pagina._elegir("Efectivo")
+
+    assert eventos == []
+    assert pagina.contenedor.currentWidget() is pagina.efectivo
+    pagina.efectivo.txt.setText("150")
+    pagina.efectivo._confirmar()
+
+    assert eventos == ["pin", "autorizar_cajon", "abrir_cajon", "registrar"]
+
+
+def test_cancelar_pin_de_efectivo_no_abre_cajon_ni_registra(monkeypatch):
+    from src.cajero.ingresar_efectivo.fiado.cobro.pagina import PaginaCobroAbono
+    from src.hardware.cash_drawer import drawer_manager
+
+    aperturas = []
+    monkeypatch.setattr(drawer_manager, "set_authorized", lambda *_args: aperturas.append("autorizar"))
+    monkeypatch.setattr(drawer_manager, "abrir", lambda **_kwargs: aperturas.append("abrir"))
+
+    pagina = PaginaCobroAbono(QWidget())
+    monkeypatch.setattr(pagina, "_pin", lambda: False)
+    pagina.abrir(100, "cajero", "Ana")
+    pagina._elegir("Efectivo")
+    pagina.efectivo.txt.setText("120")
+    pagina.efectivo._confirmar()
+
+    assert aperturas == []
+    assert pagina.contenedor.currentWidget() is pagina.efectivo
+    assert pagina.efectivo.txt.text() == "120"
+    assert "no se registró" in pagina.efectivo.aviso.text()
+
+
 def test_medios_del_abono_no_pasan_por_la_venta():
     import inspect
     from pathlib import Path
@@ -280,13 +332,42 @@ def test_f6_abre_tres_tarjetas_blancas_sobre_gris():
     assert dlg.width() == 900
     assert dlg.height() == 700
     assert dlg.paginas.currentIndex() == 0
-    assert dlg.paginas.width() == 680
+    assert dlg.paginas.width() == 836
+    assert dlg.paginas.height() == 660
     assert "#FFFFFF" in dlg.paginas.widget(0).styleSheet()
     assert dlg.btn_cambio is not None and dlg.btn_fiado is not None and dlg.btn_otros is not None
     from PyQt6.QtWidgets import QLabel
     textos = [etiqueta.text() for etiqueta in dlg.paginas.widget(0).findChildren(QLabel)]
     assert "CENTRO DE COBRANZAS" in textos
+    assert "¿Qué ingreso vas a registrar?" in textos
     assert "CAMBIO" in textos and "FIADO" in textos and "OTROS" in textos
+    assert "Registrar fondo fijo o cambio de caja" in textos
+    assert dlg.btn_cambio.accessibleName() == "Cambio"
+    assert dlg.btn_fiado.accessibleDescription() == "Buscar un cliente y registrar un abono"
+    assert dlg.btn_cambio.property("resaltada") is False
+    assert 'QPushButton[resaltada="true"]' in dlg.btn_cambio.styleSheet()
+    assert "border: 4px solid #D97706" in dlg.btn_cambio.styleSheet()
+    from PyQt6.QtCore import QEvent, Qt
+    from PyQt6.QtGui import QFocusEvent, QKeyEvent
+    from PyQt6.QtWidgets import QApplication
+    QApplication.sendEvent(dlg.btn_cambio, QEvent(QEvent.Type.Enter))
+    assert dlg.btn_cambio.property("resaltada") is False
+    QApplication.sendEvent(
+        dlg.btn_cambio,
+        QFocusEvent(QEvent.Type.FocusIn, Qt.FocusReason.MouseFocusReason),
+    )
+    assert dlg.btn_cambio.property("resaltada") is False
+    QApplication.sendEvent(
+        dlg.btn_fiado,
+        QFocusEvent(QEvent.Type.FocusIn, Qt.FocusReason.TabFocusReason),
+    )
+    assert dlg.btn_fiado.property("resaltada") is True
+    QApplication.sendEvent(
+        dlg.btn_fiado,
+        QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Right, Qt.KeyboardModifier.NoModifier),
+    )
+    assert dlg.btn_otros.property("resaltada") is True
+    assert dlg.btn_fiado.property("resaltada") is False
     assert inspect.getsource(DialogoIngresoEfectivo).count("def showEvent") == 1
     dlg.abrir_para_cliente({"dni": "94707566", "nombre": "Ana"})
     assert dlg._directo is True

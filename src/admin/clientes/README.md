@@ -8,6 +8,8 @@ Si hay ventas Fiado o Clientes completadas sin cargo, aparece una franja ámbar.
 
 El guardado no está en esta carpeta. Entra por `src/clientes_fiado`, objeto `cerebro`. El plano está en `src/clientes_fiado/plano.md`.
 
+En el historial del cliente, pulsar el número azul de Ticket de una fila `CARGO` abre el desglose de la venta. La lectura va por un motor independiente y se ejecuta fuera del hilo de interfaz. Ver `componentes/README.md` y `plano.md`.
+
 `dialogo_recalculo_fiado.py` solo analiza cargos. No escribe la deuda.
 
 Al pasar el mouse por el nombre se ve la huella: qué PC lo creó, quién y cuándo. El botón AUDITORÍA (`componentes/dialogo_auditoria_clientes.py`) lista cada alta, edición, límite, cargo, abono y fusión: fecha, PC, caja, usuario y por dónde llegó (directo, sin red, nodo). Solo lee `clientes_auditoria` (`src/clientes_fiado/oficina/huella/consulta.py`).

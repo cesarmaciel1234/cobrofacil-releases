@@ -35,6 +35,7 @@ class DialogoIngresoEfectivo(QDialog):
     def showEvent(self, event):
         from src.utils.fondo_gris import cubrir
         cubrir(self)
+        self._ajustar_pagina()
         super().showEvent(event)
 
     def paintEvent(self, event):
@@ -47,13 +48,17 @@ class DialogoIngresoEfectivo(QDialog):
         exterior.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.paginas = QStackedWidget()
-        self.paginas.setFixedSize(680, 620)
         exterior.addWidget(self.paginas)
         self.paginas.addWidget(self._pagina_opciones())
         self.paginas.addWidget(self._pagina_formulario())
         self.pagina_cobro = None
         self.paginas.addWidget(self._pagina_cobro())
         self._mostrar_opciones()
+
+    def _ajustar_pagina(self):
+        ancho = max(400, min(960, self.width() - 64))
+        alto = max(400, min(700, self.height() - 40))
+        self.paginas.setFixedSize(ancho, alto)
 
     def _pagina_opciones(self):
         hoja = QFrame()
@@ -63,20 +68,38 @@ class DialogoIngresoEfectivo(QDialog):
             "QLabel { background: transparent; border: none; color: #0F172A; }"
         )
         caja = QVBoxLayout(hoja)
-        caja.setContentsMargins(40, 44, 40, 44)
-        caja.setSpacing(28)
-        titulo = QLabel("CENTRO DE COBRANZAS")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        titulo.setStyleSheet(
-            "color: #0F172A; font-size: 18px; font-weight: 800; letter-spacing: 1.5px;"
+        caja.setContentsMargins(56, 52, 56, 52)
+        caja.setSpacing(12)
+        marca = QLabel("CENTRO DE COBRANZAS")
+        marca.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        marca.setStyleSheet(
+            "color: #64748B; font-size: 12px; font-weight: 900; letter-spacing: 2px;"
         )
+        caja.addWidget(marca)
+        titulo = QLabel("¿Qué ingreso vas a registrar?")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo.setStyleSheet("color: #0F172A; font-size: 25px; font-weight: 900;")
         caja.addWidget(titulo)
+        subtitulo = QLabel("Elige una opción para continuar")
+        subtitulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitulo.setStyleSheet("color: #64748B; font-size: 14px; font-weight: 500;")
+        caja.addWidget(subtitulo)
+        caja.addSpacing(8)
         fila = QHBoxLayout()
-        fila.setSpacing(18)
-        fila.setContentsMargins(8, 8, 8, 8)
-        self.btn_cambio = boton_opcion("🪙", "CAMBIO", "#3B82F6")
-        self.btn_fiado = boton_opcion("👥", "FIADO", PALETA["accent"])
-        self.btn_otros = boton_opcion("📦", "OTROS", "#6366F1")
+        fila.setSpacing(16)
+        fila.setContentsMargins(0, 0, 0, 0)
+        self.btn_cambio = boton_opcion(
+            "🪙", "CAMBIO", "#D97706", "Registrar fondo fijo o cambio de caja"
+        )
+        self.btn_fiado = boton_opcion(
+            "👥", "FIADO", PALETA["accent"], "Buscar un cliente y registrar un abono"
+        )
+        self.btn_otros = boton_opcion(
+            "📦", "OTROS", "#6366F1", "Ingresar dinero con otro concepto"
+        )
+        opciones = (self.btn_cambio, self.btn_fiado, self.btn_otros)
+        for opcion in opciones:
+            opcion.establecer_opciones(opciones)
         self.btn_cambio.clicked.connect(lambda: self._set_modo("CAMBIO"))
         self.btn_fiado.clicked.connect(lambda: self._set_modo("FIADO"))
         self.btn_otros.clicked.connect(lambda: self._set_modo("OTROS"))
@@ -84,6 +107,10 @@ class DialogoIngresoEfectivo(QDialog):
         fila.addWidget(self.btn_fiado, 1)
         fila.addWidget(self.btn_otros, 1)
         caja.addLayout(fila, 1)
+        pie = QLabel("Selecciona una tarjeta para abrir el formulario")
+        pie.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pie.setStyleSheet("color: #94A3B8; font-size: 12px; font-weight: 600;")
+        caja.addWidget(pie)
         return hoja
 
     def _pagina_formulario(self):

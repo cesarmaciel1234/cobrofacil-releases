@@ -12,6 +12,7 @@ clientes_fiado/
     fiado/                 puerta por DNI
     cuenta_corriente/      puerta por nombre
   oficina/                 fichas, deudas, abonos, saldos
+    ticket/                lectura de ventas asociadas a cargos
     cuenta/                MotorCuenta
     por_cobrar/            quién debe
     cobradas/              el abono
@@ -51,6 +52,8 @@ El paso 6 es el cobro. `MotorFiado.ejecutar` y `MotorClientes.ejecutar` solo hac
 `garante/fiado/motor.py`, `MotorFiadoExpress.autorizar`, y `garante/cuenta_corriente/motor.py`, `MotorClienteExpress.autorizar`, arman `OrdenCobro`. Si `ok` es falso, no hay venta. `garante/despacho/despacho.py`, `entregar`, llama `ejecutar_comun`. No abre Point, ni QR, ni la escucha de transferencia. El cargo de la deuda va en la misma transacción que el ticket, en `src/base_de_datos/repos/ventas.py`, `_aplicar_fiado`.
 
 La oficina no registra esa venta. `oficina/cuenta/motor.py`, `MotorCuenta`, lee y escribe `clientes` y `cuenta_corriente`. `oficina/cartel/motor.py`, `MotorCartel.armar`, llena el saludo. `SubmotorNombre` pone «Hola» o `Sin datos`. `SubmotorSaldos` pone la deuda y el disponible. Si uno falla, el otro igual devuelve. `por_cobrar` es `listar_con_deuda`, `ultimo_cargo` y `movimientos`. `cobradas` es `abonar`. `saldos` es `credito_disponible` y `limite_excedido`. El garante consulta esos saldos antes del ok.
+
+El detalle de una venta enlazada a un cargo se lee por `oficina/ticket/motor.py`, clase `MotorTicket`. Consulta la base activa y luego las copias disponibles. No modifica ventas ni deuda.
 
 `abonar` lee la deuda y anota el `ABONO` en la misma transacción, con `medio_pago`, `perfil` y `registrado_por`. Si el movimiento no queda escrito, la deuda no cambia y devuelve `(False, 0.0, "")`. `abonar_caja` arma la descripción `Cajero Nombre (Efectivo)`. El efectivo se anota en `movimientos_caja` como `Pago de clientes`. Si ese ingreso no entra, el admin avisa que la cuenta sí bajó y la caja no. El corte lo muestra aparte, dentro del efectivo esperado.
 

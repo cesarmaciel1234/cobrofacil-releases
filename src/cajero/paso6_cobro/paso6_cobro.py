@@ -1552,7 +1552,10 @@ class Paso6Cobro(QDialog):
         listo = bool(token and device) or bool(token and user and self._pos_qr())
         self._tpv_listo = listo
         if hasattr(self, "teclado_lateral"):
-            self.teclado_lateral.mostrar_emergencia(listo)
+            if self.current_metodo in ("Fiado", "Clientes"):
+                self.teclado_lateral.mostrar_emergencia(False)
+            else:
+                self.teclado_lateral.mostrar_emergencia(listo)
         color = "#22C55E" if listo else "#EF4444"
         texto = "TPV listo" if listo else "TPV sin activar"
         estilo = (

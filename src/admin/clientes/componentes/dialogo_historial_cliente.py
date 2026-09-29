@@ -102,6 +102,7 @@ class DialogoHistorialCliente(QDialog):
         self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
         self.tabla.setAlternatingRowColors(True)
+        self.tabla.cellClicked.connect(self._abrir_ticket)
         self.tabla.setStyleSheet("""
             QTableWidget {
                 border: 1px solid #E2E8F0; border-radius: 10px;
@@ -254,7 +255,15 @@ class DialogoHistorialCliente(QDialog):
 
             self.tabla.setItem(row, 3, QTableWidgetItem(f"${saldo:,.2f}"))
             self.tabla.setItem(row, 4, QTableWidgetItem(desc))
-            self.tabla.setItem(row, 5, QTableWidgetItem(ticket))
+            it_ticket = QTableWidgetItem(ticket)
+            if tipo == "CARGO" and venta_id:
+                it_ticket.setForeground(QColor("#2563EB"))
+                fuente = it_ticket.font()
+                fuente.setUnderline(True)
+                it_ticket.setFont(fuente)
+                it_ticket.setToolTip("Pulse para ver los artículos del ticket")
+                it_ticket.setData(Qt.ItemDataRole.UserRole, str(venta_id))
+            self.tabla.setItem(row, 5, it_ticket)
 
         resumen = (
             f"{len(movs)} movimiento(s)  ·  "
@@ -265,4 +274,17 @@ class DialogoHistorialCliente(QDialog):
             resumen += f"  ·  Anulado: ${total_anulaciones:,.2f}"
         self.lbl_resumen.setText(resumen)
 
+    def _abrir_ticket(self, fila, columna):
+        if columna != 5:
+            return
+        item_tipo = self.tabla.item(fila, 1)
+        item_ticket = self.tabla.item(fila, 5)
+        if not item_tipo or item_tipo.text().upper() != "CARGO" or not item_ticket:
+            return
+        ticket = item_ticket.data(Qt.ItemDataRole.UserRole)
+        if not ticket:
+            return
+        from src.admin.clientes.componentes.dialogo_ticket import abrir_detalle_ticket
+
+        abrir_detalle_ticket(str(ticket), self)
 

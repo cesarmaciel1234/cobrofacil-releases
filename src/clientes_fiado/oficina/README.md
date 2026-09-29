@@ -4,6 +4,8 @@ Acá se llevan los créditos. El paso 5 ya vendió y el paso 6 ya registró el m
 
 `cuenta/motor.py`, clase `MotorCuenta`, es el libro. Lee y escribe `clientes` y `cuenta_corriente`.
 
+`ticket/motor.py`, clase `MotorTicket`, es un lector de solo consulta para abrir el desglose de ventas enlazadas a cargos. No modifica el libro de deuda.
+
 Tres mesas, sobre ese mismo libro:
 
 - `por_cobrar/` mira quién debe.

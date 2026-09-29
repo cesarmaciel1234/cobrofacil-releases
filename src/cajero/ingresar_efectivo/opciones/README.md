@@ -1,3 +1,3 @@
 # Opciones
 
-Tres tarjetas blancas: Cambio, Fiado y Otros. Llenan el alto de la hoja con margen amplio. El gris `#334155` queda atrás, el mismo del paso 6, para que la ventana resalte. El clic abre esa opción. No cobra.
+Tres tarjetas para Cambio, Fiado y Otros, dentro de una hoja con margen interior amplio. Cada tarjeta muestra un icono en una insignia de color, el nombre de la opción y una explicación breve. `boton_opcion(icono, titulo, color, descripcion)` configura apariencia y accesibilidad. El resaltado depende del foco de teclado; mover el mouse no lo activa. Tab recorre las tarjetas y las flechas izquierda/derecha (o arriba/abajo) mueven la selección; Enter/Espacio activa la enfocada. El fondo, borde, icono y título usan el acento de esa tarjeta. El gris `#334155` queda atrás, igual que en el paso 6. No cobra ni cambia la navegación con Escape.

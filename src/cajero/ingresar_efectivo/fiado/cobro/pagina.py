@@ -27,6 +27,7 @@ class PaginaCobroAbono(QFrame):
         self._en_motor = False
         self._pendiente = None
         self._cola = []
+        self._abrir_cajon_pendiente = False
         self._cerrando = False
         self.setObjectName("IngresoCobro")
         self.setStyleSheet(
@@ -106,6 +107,7 @@ class PaginaCobroAbono(QFrame):
         self._nombre = (nombre or "").strip() or "cliente"
         self._pendiente = None
         self._cola = []
+        self._abrir_cajon_pendiente = False
         self._cerrando = False
         self.aviso.setText("")
         self.titulo.setText(f"Hola {self._nombre}")
@@ -128,12 +130,12 @@ class PaginaCobroAbono(QFrame):
 
     def _elegir(self, nombre):
         try:
-            if not self._pin():
-                return
             if nombre == "Efectivo":
                 self._pendiente = ResultadoMedio(True, "Efectivo", True, monto_caja=self.monto)
                 self._cola = []
                 self._abrir_motor("Efectivo", self.monto)
+                return
+            if not self._pin():
                 return
             if nombre == "Mixto":
                 self._mixto()
@@ -159,13 +161,7 @@ class PaginaCobroAbono(QFrame):
             for clave in ("Transferencia", "Tarjeta", "QR")
             if float(partes.get(clave) or 0) > 0.009
         ]
-        if float(partes.get("Efectivo") or 0) > 0.009:
-            try:
-                from src.hardware.cash_drawer import drawer_manager
-                drawer_manager.set_authorized(True)
-                drawer_manager.abrir(autorizada=True)
-            except Exception:
-                pass
+        self._abrir_cajon_pendiente = float(partes.get("Efectivo") or 0) > 0.009
         self._siguiente()
 
     def _siguiente(self):
@@ -193,7 +189,11 @@ class PaginaCobroAbono(QFrame):
             self.transferencia.arrancar(monto)
 
     def _efectivo_listo(self, monto):
+        if not self._pin():
+            self.efectivo.aviso.setText("PIN incorrecto o cancelado. El abono no se registró.")
+            return
         try:
+            self._abrir_cajon()
             self._terminar(cobrar_efectivo(monto))
         except Exception:
             self._motor_fallo("No se pudo cobrar. La venta sigue.")
@@ -215,6 +215,7 @@ class PaginaCobroAbono(QFrame):
     def _motor_fallo(self, texto):
         self._cola = []
         self._pendiente = None
+        self._abrir_cajon_pendiente = False
         self._cerrar_lienzos()
         self._mostrar_botones()
         self.aviso.setText(str(texto or "No se pudo cobrar. La venta sigue."))
@@ -222,6 +223,7 @@ class PaginaCobroAbono(QFrame):
     def _cancelar_motor(self):
         self._cola = []
         self._pendiente = None
+        self._abrir_cajon_pendiente = False
         self._cerrar_lienzos()
         self._mostrar_botones()
 
@@ -235,7 +237,20 @@ class PaginaCobroAbono(QFrame):
             self.aviso.setText("No se pudo cobrar. La venta sigue.")
             self._mostrar_botones()
             return
+        if self._abrir_cajon_pendiente:
+            self._abrir_cajon()
+            self._abrir_cajon_pendiente = False
         self.dialogo.cerrar_con_medio(resultado)
+
+    @staticmethod
+    def _abrir_cajon():
+        try:
+            from src.hardware.cash_drawer import drawer_manager
+
+            drawer_manager.set_authorized(True)
+            drawer_manager.abrir(autorizada=True)
+        except Exception:
+            pass
 
     def _pin(self):
         try:

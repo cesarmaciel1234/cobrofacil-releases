@@ -1,4 +1,4 @@
-"""Monto recibido y vuelto del abono en efectivo. Abre el cajón. No abre la venta."""
+"""Pide el monto recibido y calcula el vuelto. No abre el cajón ni registra el abono."""
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
@@ -84,12 +84,6 @@ class LienzoEfectivo(QWidget):
         self._calcular()
         self.show()
         self.txt.setFocus()
-        try:
-            from src.hardware.cash_drawer import drawer_manager
-            drawer_manager.set_authorized(True)
-            drawer_manager.abrir(autorizada=True)
-        except Exception:
-            pass
 
     def cerrar(self):
         self.hide()
