@@ -47,5 +47,12 @@
     "preferred_master_ip": "192.168.0.13",
     "jefe_nodo_path": "C:\\Users\\cesar\\Desktop\\ventas negocio\\CobroFacil_Nodo",
     "limite_efectivo_naranja": 51000.0,
-    "limite_efectivo_rojo": 71000.0
+    "limite_efectivo_rojo": 71000.0,
+    "mp_access_token": "APP_USR-6971489794897295-092419-9af4b4bea6d860133a617d475cdb698a-171085024",
+    "mp_user_id": "171085024",
+    "mp_device_id": "NEWLAND_N950__N950NCBA01604854",
+    "mp_qr_pos_external_id": "default",
+    "clover_ip": "",
+    "clover_port": "1234",
+    "mp_nombre": "CESAR JAVIER MACIEL"
 }
