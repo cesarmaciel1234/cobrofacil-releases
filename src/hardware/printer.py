@@ -443,10 +443,10 @@ class PosPrinter:
             data.extend(BOLD_OFF)
             data.extend(ALIGN_LEFT)
             data.extend(f"Cliente: {cliente_nombre}\n".encode('cp850', errors='replace'))
-            data.extend(f"Saldo anterior:   \\n".encode('cp850'))
-            data.extend(f"Compra actual:    \\n".encode('cp850'))
+            data.extend(f"Saldo anterior:   ${saldo_anterior:.2f}\n".encode('cp850'))
+            data.extend(f"Compra actual:    ${total:.2f}\n".encode('cp850'))
             data.extend(BOLD_ON)
-            data.extend(f"Saldo disponible: \\n".encode('cp850'))
+            data.extend(f"Saldo disponible: ${saldo_disponible:.2f}\n".encode('cp850'))
             data.extend(BOLD_OFF)
             data.extend(b"--------------------------------\n")
 
