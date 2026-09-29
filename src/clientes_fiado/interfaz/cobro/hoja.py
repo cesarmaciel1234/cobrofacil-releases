@@ -110,7 +110,7 @@ class HojaCuentaCobro(QFrame):
         lay.addWidget(self.disponible)
         
         # Boton F4
-        self.btn_f4 = QLabel("[ F4 ] PAGAR CUENTA")
+        self.btn_f4 = QLabel("[ F5 ] PAGAR CUENTA")
         self.btn_f4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_f4.setStyleSheet("color: #FFFFFF; background: #3B82F6; font-size: 16px; font-weight: 800; border-radius: 8px; padding: 12px; margin-top: 10px;")
         self.btn_f4.hide()
@@ -207,7 +207,7 @@ class HojaCuentaCobro(QFrame):
     def keyPressEvent(self, event):
         if getattr(self, "_paso", 1) == 2:
             tecla = event.key()
-            if tecla == Qt.Key.Key_F4:
+            if tecla == Qt.Key.Key_F5:
                 self._abrir_dialogo_cobranza()
                 return
             elif tecla == Qt.Key.Key_Return or tecla == Qt.Key.Key_Enter:

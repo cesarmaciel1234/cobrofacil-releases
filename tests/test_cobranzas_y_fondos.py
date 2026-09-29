@@ -346,6 +346,12 @@ def test_f6_varios_clientes_se_pueden_elegir_con_enter(monkeypatch):
     panel._timer_buscar.stop()
     panel._ejecutar_busqueda()
     assert "flechas y Enter" in panel.lbl_lista.text()
+    assert panel.card.minimumWidth() == 600
+    assert panel.card.maximumWidth() == 760
+    for indice, cliente in enumerate(clientes):
+        texto = panel.lista.item(indice).text()
+        assert texto.splitlines() == [cliente["nombre"], f'DNI {cliente["dni"]}']
+        assert "Deuda" not in texto
     panel._on_enter_buscar()
     QApplication.processEvents()
 
@@ -354,9 +360,27 @@ def test_f6_varios_clientes_se_pueden_elegir_con_enter(monkeypatch):
     panel.lista.itemActivated.emit(panel.lista.currentItem())
 
     assert panel.cliente_actual()["nombre"] == "Ana Perez"
+    assert panel.lbl_deuda.text() == "Deuda: $100.00"
+    assert panel.lbl_info.text().startswith("DNI 12345671")
     assert panel.txt_monto.hasFocus()
     assert panel.zona_lista.isHidden()
     panel.close()
+
+
+def test_f6_busqueda_solo_devuelve_clientes_con_deuda(monkeypatch):
+    from src.cajero.ingresar_efectivo.fiado.consulta import buscar_deudores
+    from src.base_de_datos.database import db_manager
+
+    consultas = []
+    monkeypatch.setattr(
+        db_manager,
+        "execute_query",
+        lambda sql, params=(): consultas.append((sql, params)) or [],
+    )
+
+    assert buscar_deudores("Ana") == []
+    assert len(consultas) == 1
+    assert "c.deuda_actual > 0.01" in consultas[0][0]
 
 
 def test_cancelar_pin_de_efectivo_no_abre_cajon_ni_registra(monkeypatch):

@@ -70,7 +70,7 @@ def buscar_deudores(consulta: str) -> list:
                (SELECT MAX(cc.fecha) FROM cuenta_corriente cc
                 WHERE cc.cliente_id = c.id AND cc.tipo = 'CARGO') AS ultimo_cargo
         FROM clientes c
-        WHERE 1=1
+        WHERE c.deuda_actual > 0.01
     """
     params: list = []
 
@@ -85,17 +85,6 @@ def buscar_deudores(consulta: str) -> list:
     base += " ORDER BY c.deuda_actual DESC, c.nombre ASC LIMIT 50"
     rows = db_manager.execute_query(base, tuple(params)) or []
 
-    # Si no hay deudores con saldo > 0.01 y p["tipo"] es "todos", mostrar todos los clientes registrados
-    if p["tipo"] == "todos" and not rows:
-        base_fallback = """
-            SELECT c.id, c.nombre, c.dni, c.telefono, c.direccion,
-                   c.deuda_actual, c.limite_credito, c.tipo_cliente,
-                   (SELECT MAX(cc.fecha) FROM cuenta_corriente cc
-                    WHERE cc.cliente_id = c.id AND cc.tipo = 'CARGO') AS ultimo_cargo
-            FROM clientes c
-            ORDER BY c.nombre ASC LIMIT 50
-        """
-        rows = db_manager.execute_query(base_fallback) or []
     result = []
     for r in rows:
         row_dict = dict(r)

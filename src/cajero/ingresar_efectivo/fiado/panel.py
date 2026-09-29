@@ -32,14 +32,16 @@ class CentroCobranzasPanel(QWidget):
         row_center = QHBoxLayout()
         row_center.addStretch(1)
         self.card = QFrame()
+        self.card.setMinimumWidth(600)
+        self.card.setMaximumWidth(760)
         self.card.setObjectName("CobranzaCard")
         self.card.setStyleSheet(
             "QFrame#CobranzaCard { background: transparent; border: none; border-radius: 0px; }"
         )
 
         lay = QVBoxLayout(self.card)
-        lay.setContentsMargins(22, 18, 22, 12)
-        lay.setSpacing(8)
+        lay.setContentsMargins(36, 28, 36, 24)
+        lay.setSpacing(10)
 
         tit = QLabel("CENTRO DE COBRANZAS")
         tit.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -104,7 +106,7 @@ class CentroCobranzasPanel(QWidget):
         zona_lay.addWidget(self.lbl_lista)
         self.lista = QListWidget()
         self.lista.setMinimumHeight(120)
-        self.lista.setMaximumHeight(160)
+        self.lista.setMaximumHeight(200)
         self.lista.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.lista.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.lista.setUniformItemSizes(False)
@@ -116,10 +118,10 @@ class CentroCobranzasPanel(QWidget):
                 outline: none;
             }}
             QListWidget::item {{
-                padding: 8px 10px;
+                padding: 10px 12px;
                 border-radius: 8px;
                 color: {_EXEC['text']};
-                margin: 2px 0;
+                margin: 3px 0;
             }}
             QListWidget::item:selected {{
                 background: {_EXEC['row_sel']};
@@ -294,15 +296,7 @@ class CentroCobranzasPanel(QWidget):
 
         for r in resultados:
             dni = (r.get("dni") or "").strip()
-            tel = (r.get("telefono") or "").strip()
-            deuda = float(r.get("deuda_actual") or 0)
-            ult = r.get("ultimo_cargo")
-            ult_txt = f" · {str(ult).split('.')[0][:10]}" if ult else ""
-            extra = " · ".join(p for p in (f"DNI {dni}" if dni else "", f"Tel {tel}" if tel else "") if p)
-            if extra:
-                texto = f"{r['nombre']}\n{extra} · Deuda ${deuda:,.2f}{ult_txt}"
-            else:
-                texto = f"{r['nombre']}\nDeuda ${deuda:,.2f}{ult_txt}"
+            texto = f"{r['nombre']}\nDNI {dni}" if dni else f"{r['nombre']}\nSin DNI registrado"
             item = QListWidgetItem(texto)
             item.setData(Qt.ItemDataRole.UserRole, r)
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
