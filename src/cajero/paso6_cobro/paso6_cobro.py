@@ -1276,6 +1276,8 @@ class Paso6Cobro(QDialog):
     def _elegir_cierre(self, modo):
         """F1 imprime al pagar. F2 cierra sin ticket. F10 es el fiscal.
         Si todavía se espera el cobro, el clic no cierra: avisa una vez y queda elegido."""
+        if self.current_metodo in ("Fiado", "Clientes"):
+            return
         if modo == "fiscal":
             config._load_config()
             if not config.get("facturacion_afip_global", False):
@@ -2127,8 +2129,12 @@ class Paso6Cobro(QDialog):
         # A partir de aquí, solo se ejecuta si estamos en la Página 1
         # =========================================================
 
-        if k == Qt.Key.Key_F1: self._elegir_cierre("imprime")
-        elif k == Qt.Key.Key_F2: self._elegir_cierre("cierra")
+        if k == Qt.Key.Key_F1:
+            if self.current_metodo in ("Fiado", "Clientes"): return
+            self._elegir_cierre("imprime")
+        elif k == Qt.Key.Key_F2:
+            if self.current_metodo in ("Fiado", "Clientes"): return
+            self._elegir_cierre("cierra")
         elif k == Qt.Key.Key_F3: self.abrir_descuento()
         elif k == Qt.Key.Key_F4: self.abrir_recargo()
         elif k == Qt.Key.Key_F10: self._elegir_cierre("fiscal")
